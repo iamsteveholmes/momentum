@@ -255,16 +255,6 @@ The research that informed the practice design:
 - [Claude Code Tool Permissions](docs/research/technical-claude-code-tool-permissions-research-2026-03-07.md) — permission model for agent tool access
 - [Subagent Permissions Reference](docs/research/technical-subagent-permissions-reference-2026-03-07.md) — schema for sub-agent capability constraints
 
-**Framework Evaluations**
-- [Koog vs PydanticAI](docs/research/Koog%20vs.%20PydanticAI%20for%20KMP.md) — agent framework comparison
-- [PydanticAI for TTRPG Assistant](docs/research/PydanticAI%20for%20TTRPG%20Assistant.md) — PydanticAI evaluation in a product context
-
-**Adjacent Research**
-- [Consumer AI Pricing Models](docs/research/market-research-consumer-ai-pricing-models-2026-03-02-FINAL.md) — pricing strategy research
-- [Community Content Strategy](docs/research/technical-community-content-strategy-research-2026-02-28-FINAL.md) — community building approaches
-- [AI Pricing Models for Hobbyists](docs/research/AI%20Pricing%20Models%20for%20Hobbyists.md) — hobbyist market pricing
-- [AI Companion UX Research Brief](docs/research/AI%20Companion%20UX%20Research%20Brief.md) — companion AI interaction patterns
-
 ---
 
 ## Project Structure
