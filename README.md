@@ -39,25 +39,23 @@ graph TD
 The agent that writes code does not review it. Verification happens in a separate context with a separate agent whose only job is to find problems. Verifiers produce findings — they never modify code.
 
 ```mermaid
-graph LR
+graph TD
     subgraph producer ["PRODUCER CONTEXT"]
-        direction TB
-        P1["Read spec and<br/>acceptance criteria"]
+        P1["Read spec and acceptance criteria"]
         P2["Write implementation"]
         P3["Write unit tests"]
         P1 --> P2 --> P3
     end
 
     subgraph verifier ["VERIFIER CONTEXT"]
-        direction TB
-        V1["Read spec, code,<br/>and test results"]
+        V1["Read spec, code, and test results"]
         V2["Challenge every claim"]
         V3["Produce findings report"]
         V1 --> V2 --> V3
     end
 
     P3 -- "handoff" --> V1
-    V3 -- "findings<br/>(never code changes)" --> P1
+    V3 -- "findings only, never code changes" --> P1
 
     style producer fill:#EBF4F6,stroke:#088395,color:#333
     style verifier fill:#EBF4F6,stroke:#09637E,color:#333
