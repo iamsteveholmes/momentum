@@ -1,13 +1,15 @@
 # OS
 .DS_Store
 
-# Editor
+# Editor / IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+*.iml
 
-# Claude Code session data
+# Claude Code session data and local settings
 .claude/projects/
 .claude/audio/
 .claude/*.jsonl
+.claude/settings.local.json
