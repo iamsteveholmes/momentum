@@ -1,8 +1,8 @@
 # Momentum
 
-**A practice framework for solo agentic engineering.**
+**A practice framework for agentic engineering.**
 
-Momentum is a philosophy and process for building software with AI agents as primary producers. It defines how specifications govern code generation, how quality is enforced without a team, and how the practice itself improves over time.
+Momentum is a philosophy and process for building software with AI agents as primary code producers. It defines how specifications govern code generation, how quality is enforced when AI writes the code, and how the practice itself improves over time. The principles apply whether you're a solo developer or a team — anyone directing AI agents to produce code faces the same quality challenges.
 
 Momentum is currently implemented using [BMAD Method](https://github.com/bmadcode/BMAD-METHOD) and [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but the principles and process are tool-agnostic. Any agentic coding tool and workflow framework could serve as the implementation layer.
 
