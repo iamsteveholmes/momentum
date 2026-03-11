@@ -1,12 +1,11 @@
 # Momentum — Agentic Engineering Practice Module
 
-This is a BMAD module project. Momentum provides the practice layer for solo agentic engineering: global rules, agents, hooks, and workflows that enforce quality standards across all projects.
+Momentum provides the practice layer for agentic engineering: global rules, agents, hooks, and workflows that enforce quality standards across all projects.
 
 ## Project Structure
 
 - `docs/` — Planning artifacts, research, process backlog, implementation specs
-- `module/` — The BMAD module itself (canonical rules, agents, workflows, hooks)
-- `bin/` — Shell scripts (momentum-install)
+- `module/` — Canonical practice files (rules, agents, templates)
 
 ## Key Documents
 

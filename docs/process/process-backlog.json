@@ -62,7 +62,7 @@
       "source": "plan-roadmap-6.1.3",
       "planReference": "Section 6.1.3",
       "created": "2026-03-08",
-      "notes": "An early version already exists at .claude/agents/bmad-review/code-reviewer.md (project-scoped). This task moves it to global scope and refines it based on the plan's requirements. Available to all projects once done.",
+      "notes": "An early version already exists at module/canonical/agents/code-reviewer.md. This task moves it to global scope (~/.claude/agents/) and refines it based on the plan's requirements. Available to all projects once done.",
       "resolved": null,
       "resolution": null
     },
