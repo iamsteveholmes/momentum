@@ -16,7 +16,7 @@ Specifications are the primary engineering artifact. Human-written acceptance cr
 
 ### Authority Hierarchy
 
-**Specifications > Tests > Code.** Agents never modify specifications or pre-existing tests to make code pass. If a test fails, the code is wrong. If a spec is ambiguous, the agent asks — it doesn't assume.
+**Specifications > Tests > Code.** Agents never modify specifications or pre-existing tests to make code pass. If a test fails, the code is wrong. If a spec is ambiguous, the agent asks — it doesn't assume. This hierarchy is encoded into machine-readable `derives_from` chains in document frontmatter, enforced by tooling — not just a guideline, but navigable infrastructure.
 
 ```mermaid
 graph TD
@@ -69,7 +69,7 @@ graph TD
 
 ### Evaluation Flywheel
 
-When output fails quality standards, trace the failure upstream. Don't just fix the code — fix the workflow, specification, or rule that caused the defect. Every upstream fix prevents a class of errors permanently. Each sprint's learnings compound into the next, building continuous improvement momentum.
+When output fails quality standards, trace the failure upstream via navigable `derives_from` chains. Don't just fix the code — fix the workflow, specification, or rule that caused the defect. Every upstream fix prevents a class of errors permanently. Each sprint's learnings compound into the next, building continuous improvement momentum.
 
 ```mermaid
 graph TD
@@ -94,23 +94,6 @@ graph TD
     style TRACE fill:#09637E,stroke:#074f65,color:#fff
     style FIX fill:#09637E,stroke:#074f65,color:#fff
 ```
-
-### Impermanence Principle
-
-Processes and tooling that grow and improve are better than those that stay unchanged. Research has a short half-life in fast-moving domains. Decisions must be revisited, tools must be re-evaluated, and the practice itself must evolve. The anti-pattern is not change — it's unmanaged change.
-
----
-
-## Quality Model
-
-### Four AI-Induced Debt Types
-
-Momentum's quality rules are organized around four categories of debt that AI code generation amplifies:
-
-- **Verification Debt** — Unreviewed or inadequately tested AI-generated output accumulates faster than human-written code because generation is cheap. Layered verification (acceptance tests, unit tests, adversarial review, human review) counteracts this.
-- **Cognitive Debt** — Code the developer cannot explain is a liability. If generated code can't be clearly explained, it gets rewritten. Understanding is not optional.
-- **Pattern Drift** — AI amplifies whatever patterns it sees. If the codebase has anti-patterns, the AI will replicate them at scale. Architectural standards and explicit rules counteract this.
-- **Technical Debt** — Compounds exponentially with AI-generated code because the volume is higher and the feedback loop is weaker. Adversarial review and refactoring discipline counteract this.
 
 ### Three Tiers of Enforcement
 
@@ -162,6 +145,35 @@ graph TD
     style A3 fill:#7AB2B2,stroke:#629e9e,color:#333
     style A4 fill:#7AB2B2,stroke:#629e9e,color:#333
 ```
+
+### Cost as a Managed Dimension
+
+Model selection, effort levels, and retry loop economics are engineering decisions, not afterthoughts. The **cognitive hazard rule:** for outputs without automated validation, use flagship models — invisible errors from cheaper models cost more than the price premium. Effort levels control thinking depth and therefore cost; every skill and agent specifies `model:` and `effort:` frontmatter explicitly.
+
+### Provenance as Infrastructure
+
+Every specification claim traces to a source. Every artifact tracks what it derives from (`derives_from` frontmatter) and what depends on it (auto-generated `referenced_by`). Ungrounded claims are marked, not assumed valid. When upstream documents change, downstream documents are flagged as suspect. This is not documentation hygiene — it is load-bearing infrastructure that enables the flywheel, prevents hallucination propagation, and stops obsolete decisions from resurfacing.
+
+### Protocol-Based Integration
+
+Every integration point in the practice is a configurable protocol. The project configures which implementation satisfies each protocol — which agent performs a role, which tool runs tests, which LLM provides research, which document structure constitutes the spec tree. Implementations can be substituted across teams, tools, and environments without modifying the workflows that depend on them. This is dependency inversion applied to the practice layer.
+
+### Impermanence Principle
+
+Processes and tooling that grow and improve are better than those that stay unchanged. Research has a short half-life in fast-moving domains. Decisions must be revisited, tools must be re-evaluated, and the practice itself must evolve. The anti-pattern is not change — it's unmanaged change.
+
+---
+
+## Quality Model
+
+### Four AI-Induced Debt Types
+
+Momentum's quality rules are organized around four categories of debt that AI code generation amplifies:
+
+- **Verification Debt** — Unreviewed or inadequately tested AI-generated output accumulates faster than human-written code because generation is cheap. Layered verification (acceptance tests, unit tests, adversarial review, human review) counteracts this.
+- **Cognitive Debt** — Code the developer cannot explain is a liability. If generated code can't be clearly explained, it gets rewritten. Understanding is not optional.
+- **Pattern Drift** — AI amplifies whatever patterns it sees. If the codebase has anti-patterns, the AI will replicate them at scale. Architectural standards and explicit rules counteract this.
+- **Technical Debt** — Compounds exponentially with AI-generated code because the volume is higher and the feedback loop is weaker. Adversarial review and refactoring discipline counteract this.
 
 ### Anti-Pattern Awareness
 
@@ -268,4 +280,4 @@ Momentum is in early development. The philosophy and process are defined. Implem
 
 ## License
 
-TBD
+Apache License 2.0 — see [LICENSE](LICENSE)

@@ -13,3 +13,6 @@
 .claude/audio/
 .claude/*.jsonl
 .claude/settings.local.json
+
+# BMAD session memory (local/ephemeral)
+_bmad/_memory/
