@@ -1,0 +1,669 @@
+{
+  "name": "validate-fix-loop",
+  "version": "3.0.0",
+  "description": "Reusable validation framework with three intensity profiles (gate/checkpoint/full), dual-reviewer cross-checking, and staged application guidance for multi-step workflows. Defines validation DIMENSIONS (universal) not specific checks (domain-dependent). Validators derive their own checks from the dimension taxonomy based on domain context.",
+
+  "sources": {
+    "frameworks": ["ISO 25010 (Software Quality Model)", "Wang & Strong (Data Quality Dimensions)", "Microsoft Azure AI Evaluation Metrics", "DeepEval LLM Evaluation"],
+    "patterns": ["BMAD adversarial review", "BMAD editorial review (structure + prose)", "BMAD traceability validation", "BMAD edge-case hunting", "BMAD quality gate decisions"],
+    "research": {
+      "dual_review": "Meta-Judge (2025): 2 agents + majority voting = 77.26% vs single-agent 68.89%. Adding 3rd agent decreased performance. PoLL (2024): panel of 3 beat single GPT-4 on every benchmark. Different framings are critical - same-prompt reviewers capture far less benefit.",
+      "error_propagation": "73% probability of downstream failure from single error (Huang 2023). 90% per-step accuracy across 8 steps = 43% overall. But only 5-10% of decisions are 'key tokens' where errors matter (2025).",
+      "late_stage_fragility": "ASCoT (2025): Error at step 2/4 = 14.64% accuracy drop. Error at step 4/4 = 51.69% drop. Late-stage errors are far more damaging due to 'semantic commitment' - models lock into trajectories with reduced self-correction.",
+      "staged_validation": "Process Reward Models are >8% more accurate and 1.5-5x more compute-efficient than outcome-only evaluation, but only when focused on steps that matter. 'Bookend + critical gates' pattern hits best cost/quality tradeoff for content generation."
+    }
+  },
+
+  "parameters": {
+    "domain_expert": {
+      "description": "The agent type to use for validation and fixing. Should match the agent that produced the output.",
+      "required": true
+    },
+    "task_context": {
+      "description": "Brief description of what was produced. Validators use this to derive domain-appropriate checks from the dimension taxonomy.",
+      "required": true
+    },
+    "output_to_validate": {
+      "description": "The content or file path to validate.",
+      "required": true
+    },
+    "source_material": {
+      "description": "Source material, schemas, or reference docs to check against. Ground truth for factual accuracy and traceability. CRITICAL: pass original source material through the entire pipeline — do not let intermediate steps compress it into lossy representations.",
+      "required": false,
+      "default": null
+    },
+    "validation_focus": {
+      "description": "Optional narrowing of scope. If provided, validators prioritize these dimensions.",
+      "required": false,
+      "default": null
+    },
+    "profile": {
+      "description": "Which validation profile to use: gate, checkpoint, or full. See validation_profiles section.",
+      "required": false,
+      "default": "full"
+    }
+  },
+
+  "config": {
+    "max_iterations": 4,
+    "pass_threshold": 95,
+    "starting_score": 100
+  },
+
+  "scoring": {
+    "scale": [0, 100],
+    "severity_weights": {
+      "critical": { "points": -15, "description": "Fundamentally broken, wrong, or dangerous. Output is unusable without fixing this." },
+      "high":     { "points": -8,  "description": "Significant error that undermines quality or correctness. Must fix." },
+      "medium":   { "points": -3,  "description": "Notable issue that degrades quality. Should fix." },
+      "low":      { "points": -1,  "description": "Minor issue, cosmetic, or nitpick. Fix if easy." }
+    },
+    "severity_guidance": {
+      "critical_examples": "Schema won't parse. Key section missing entirely. Fabricated entity presented as real. Math error that breaks downstream use. Wrong source material used.",
+      "high_examples": "Factual error against source material. Logic contradiction between sections. Required field present but wrong type/value. Domain rule violated.",
+      "medium_examples": "Incomplete coverage of a topic. Inconsistent terminology. Unclear phrasing that could mislead. Minor calculation error.",
+      "low_examples": "Typo. Slightly verbose. Style inconsistency. Redundant sentence. Formatting nitpick."
+    },
+    "grades": {
+      "clean":    { "min": 95, "result": "pass",     "label": "Clean - production ready" },
+      "good":     { "min": 85, "result": "continue",  "label": "Good - minor issues remain" },
+      "fair":     { "min": 70, "result": "continue",  "label": "Fair - notable issues found" },
+      "poor":     { "min": 50, "result": "continue",  "label": "Poor - significant problems" },
+      "failing":  { "min": 0,  "result": "continue",  "label": "Failing - major rework needed" }
+    },
+    "examples": {
+      "1_critical":              "100 - 15 = 85 (FAIL)",
+      "2_high":                  "100 - 16 = 84 (FAIL)",
+      "1_high_1_medium":         "100 - 11 = 89 (FAIL)",
+      "5_medium":                "100 - 15 = 85 (FAIL)",
+      "1_medium_2_low":          "100 - 5  = 95 (PASS: borderline clean)",
+      "5_low":                   "100 - 5  = 95 (PASS: borderline clean)",
+      "3_low":                   "100 - 3  = 97 (PASS: clean)"
+    }
+  },
+
+  "dimension_taxonomy": {
+    "description": "Validation dimensions organized by tier. Tier 1 dimensions apply to ALL content. Higher tiers apply when the content has the relevant characteristics. Validators use this taxonomy to derive specific checks appropriate to the domain and content type. The dimensions tell you WHAT to look for; the domain tells you HOW.",
+
+    "tier_1_universal": {
+      "description": "Apply to all content regardless of domain. Every validator should consider these.",
+      "dimensions": {
+        "correctness": {
+          "question": "Are the facts true?",
+          "description": "Claims, data, stats, names, and references match reality and source material. Calculations are mathematically correct. No misattributions or misrepresentations.",
+          "common_failures": "Hallucinated facts, wrong numbers, false attributions, incorrect calculations",
+          "varies_by_domain": "What counts as a 'fact' and how you verify it (game math vs. market data vs. code behavior)"
+        },
+        "consistency": {
+          "question": "Does the content contradict itself?",
+          "description": "No internal contradictions. Same data point says the same thing everywhere it appears. Terminology is stable throughout.",
+          "common_failures": "Says X in section 2, says not-X in section 5. Uses different terms for same concept. Numbers disagree across sections.",
+          "varies_by_domain": "What constitutes a contradiction (narrative inconsistency vs. schema mismatch vs. logic error)"
+        },
+        "completeness": {
+          "question": "Is anything missing?",
+          "description": "All required elements are present. No quietly omitted sections, dropped requirements, or gaps where the hard parts should be.",
+          "common_failures": "LLMs generate plausible-looking content that omits difficult parts. Required sections present but empty or skeletal.",
+          "varies_by_domain": "What's 'required' (schema fields vs. document sections vs. game mechanics)"
+        },
+        "relevance": {
+          "question": "Does this address what was asked?",
+          "description": "Content serves the stated purpose. No tangential material, padding, or scope drift. Stays on topic.",
+          "common_failures": "Fluent text that doesn't actually answer the question. Scope creep. Filler disguised as substance.",
+          "varies_by_domain": "What constitutes the 'scope' and what's tangential"
+        },
+        "structural_validity": {
+          "question": "Does the format/structure conform?",
+          "description": "Output matches expected structure. Schema validates. Required fields present with correct types. Nesting and hierarchy correct.",
+          "common_failures": "Invalid JSON. Missing required fields. Wrong data types. Truncated output. Broken references.",
+          "varies_by_domain": "Which schema or template applies (JSON schema vs. document outline vs. stat block format)"
+        }
+      }
+    },
+
+    "tier_2_compositional": {
+      "description": "Apply when content has internal structure with parts that must relate correctly. Most non-trivial outputs qualify.",
+      "dimensions": {
+        "logical_soundness": {
+          "question": "Do the arguments hold up?",
+          "description": "Reasoning chains are valid. Conclusions follow from premises. No unstated assumptions, non-sequiturs, or circular logic.",
+          "common_failures": "Plausible-sounding reasoning with logical gaps. Conclusions not supported by evidence. Hidden assumptions.",
+          "varies_by_domain": "What counts as valid reasoning (game balance logic vs. business case vs. architectural tradeoffs)"
+        },
+        "traceability": {
+          "question": "Can every claim be traced to a source?",
+          "description": "Content is grounded in provided source material, not model imagination. Every significant claim points back to an authoritative source or stated assumption.",
+          "common_failures": "Content that blends real source material with fabricated additions. Invented details that sound right. Extrapolation presented as fact.",
+          "varies_by_domain": "What the authoritative sources are (adventure export vs. API docs vs. market data)",
+          "note": "This is the primary anti-hallucination dimension. Distinct from correctness (which checks if facts are true) - this checks if facts are sourced."
+        },
+        "conciseness": {
+          "question": "Is anything unnecessary?",
+          "description": "Content says what it needs to without padding, repetition, or restating the obvious. Respects the reader's time.",
+          "common_failures": "LLM verbosity. Restating what was just said. Conversational filler. Redundant qualifiers.",
+          "varies_by_domain": "Appropriate length and density (terse stat block vs. narrative session prep vs. detailed architecture doc)"
+        },
+        "clarity": {
+          "question": "Can the intended audience understand this?",
+          "description": "Content is understandable by its target audience. No jargon misuse, ambiguous phrasing, or unnecessarily complex structure.",
+          "common_failures": "Unclear antecedents. Jargon without context. Overcomplicated sentences. Ambiguous instructions.",
+          "varies_by_domain": "Who the audience is and what they already know (GM vs. developer vs. stakeholder)"
+        }
+      }
+    },
+
+    "tier_3_contextual": {
+      "description": "Require knowledge of the surrounding ecosystem - other documents, established conventions, prior state.",
+      "dimensions": {
+        "cross_reference_integrity": {
+          "question": "Do references to external entities actually resolve?",
+          "description": "References to other documents, entities, data, or systems are valid and current. Named things exist where they're said to exist.",
+          "common_failures": "LLMs frequently generate plausible-sounding references to things that don't exist. Links to nonexistent sections. NPC names that aren't in the index.",
+          "varies_by_domain": "What the reference targets are (NPC index vs. API endpoints vs. file paths)"
+        },
+        "temporal_coherence": {
+          "question": "Is this appropriate for its point in time?",
+          "description": "Content reflects the correct state of the world at the relevant time. No anachronisms, references to superseded information, or future knowledge leaking into present context.",
+          "common_failures": "Session prep referencing events that haven't happened yet. Docs referencing deprecated APIs. Content that confuses past and present state.",
+          "varies_by_domain": "What timeline matters (campaign timeline vs. sprint timeline vs. product lifecycle)"
+        },
+        "tonal_consistency": {
+          "question": "Is the voice and register appropriate and stable?",
+          "description": "Maintains appropriate tone for context and audience throughout. No unintended shifts between formal/informal, first/third person, or character/narrator voice.",
+          "common_failures": "GM notes that read like player handouts. Technical docs that shift to marketing language. Mixed perspective.",
+          "varies_by_domain": "What tone is appropriate (in-world narrative vs. technical spec vs. executive summary)"
+        },
+        "convention_adherence": {
+          "question": "Does this follow established project conventions?",
+          "description": "Follows project-level conventions beyond format spec: naming patterns, terminology choices, file organization, established patterns.",
+          "common_failures": "Using different terms than the project standard. Ignoring naming conventions. Breaking established patterns.",
+          "varies_by_domain": "What the project conventions are (BMAD patterns vs. team coding standards vs. campaign style guide)"
+        }
+      }
+    },
+
+    "tier_4_domain_specific": {
+      "description": "Can only be evaluated by someone with domain expertise. The dimension names are universal but the checks are entirely domain-dependent.",
+      "dimensions": {
+        "domain_rule_compliance": {
+          "question": "Does this obey the rules of its domain?",
+          "description": "Content complies with domain-specific rules, constraints, and best practices that require expertise to evaluate.",
+          "common_failures": "LLMs generate domain-plausible content that violates actual rules. This is the most dangerous failure mode because it looks right to non-experts.",
+          "varies_by_domain": "Entirely domain-dependent. PF2e: game math, action economy, level appropriateness. Software: type safety, security, performance. Business: regulatory compliance, market accuracy.",
+          "examples": {
+            "ttrpg": "Do stat blocks follow creature building tables? Are DCs level-appropriate? Does action economy work?",
+            "software": "Does the code compile? Are there security vulnerabilities? Does it handle edge cases?",
+            "business": "Are market sizing numbers defensible? Do financial projections follow accounting standards?",
+            "documentation": "Does the API doc match the actual API? Are code examples runnable?"
+          }
+        },
+        "fitness_for_purpose": {
+          "question": "Does this actually serve its intended use?",
+          "description": "The ultimate 'so what?' check. Content may be correct, consistent, complete, and well-structured but still fail to serve its purpose.",
+          "common_failures": "Technically correct but practically useless. All the right pieces but not actionable. Checks every box but misses the point.",
+          "varies_by_domain": "What 'useful' means (runnable session vs. implementable spec vs. defensible strategy)"
+        }
+      }
+    }
+  },
+
+  "validation_lenses": {
+    "description": "Dimensions grouped into parallel validation lenses. Each lens has a distinct mindset and approach. Validators derive specific checks from the dimensions assigned to their lens, adapted to the domain_expert and task_context.",
+
+    "lens_1_structural_integrity": {
+      "id": "structural",
+      "name": "Structural Integrity",
+      "parallel_group": 1,
+      "mindset": "Mechanical verification. Systematic, methodical, exhaustive. Check every field, every reference, every required element.",
+      "dimensions": ["structural_validity", "completeness", "cross_reference_integrity"],
+      "approach": "Enumerate all structural requirements for this content type, then verify each one. This is the most automatable lens - be thorough and literal."
+    },
+
+    "lens_2_factual_accuracy": {
+      "id": "accuracy",
+      "name": "Factual Accuracy",
+      "parallel_group": 1,
+      "mindset": "Fact-checker. Compare every claim against source material. Trust nothing - verify everything against ground truth.",
+      "dimensions": ["correctness", "traceability", "logical_soundness"],
+      "approach": "For each significant claim, stat, name, or reference in the output, find the corresponding source material and verify. Flag anything that can't be traced to a source. Check that reasoning chains are valid, not just that conclusions sound plausible."
+    },
+
+    "lens_3_coherence_and_craft": {
+      "id": "coherence",
+      "name": "Coherence & Craft",
+      "parallel_group": 1,
+      "mindset": "Editor. Read holistically as the intended audience would. Focus on the reading experience and whether the content works as a unified whole.",
+      "dimensions": ["consistency", "relevance", "conciseness", "clarity", "tonal_consistency", "temporal_coherence"],
+      "approach": "Read the full output end-to-end. Note contradictions, scope drift, unnecessary padding, unclear passages, and tonal shifts. Judge quality as a human reader would, not as a checklist."
+    },
+
+    "lens_4_domain_fitness": {
+      "id": "domain",
+      "name": "Domain Fitness",
+      "parallel_group": 1,
+      "mindset": "Domain expert. Apply specialized knowledge to evaluate whether this content would actually work in practice.",
+      "dimensions": ["domain_rule_compliance", "convention_adherence", "fitness_for_purpose"],
+      "approach": "Evaluate using domain expertise. Would a practitioner in this field accept this output? Does it follow the domain's rules and conventions? Would it actually be useful for its intended purpose?"
+    }
+  },
+
+  "validation_profiles": {
+    "description": "Three intensity levels for applying validation at different stages of a workflow. Not every validation point needs the full treatment. Use gate for quick checks, checkpoint for important intermediate steps, and full for final deliverables.",
+
+    "gate": {
+      "description": "Lightweight pass/fail check. Fast and cheap. No fix loop — either passes or halts.",
+      "agents": 1,
+      "dual_review": false,
+      "lenses_active": ["structural"],
+      "dimensions_focus": ["structural_validity", "completeness"],
+      "fix_loop": false,
+      "on_fail": "halt_and_report",
+      "when_to_use": [
+        "Input validation — verify source material is parseable, complete, and accessible",
+        "Format transitions — after converting between formats (e.g., JSON to YAML)",
+        "Middle steps in a pipeline — basic sanity that output is well-formed",
+        "Anywhere you need a fast 'does this even make sense' check"
+      ]
+    },
+
+    "checkpoint": {
+      "description": "Medium-intensity validation at critical decision points. One reviewer per relevant lens. One fix attempt if issues found, then continue (no loop).",
+      "agents": "1 per active lens (up to 4)",
+      "dual_review": false,
+      "lenses_active": "Determined by step type — typically 2-3 lenses relevant to the decision being validated",
+      "fix_loop": false,
+      "max_fix_attempts": 1,
+      "on_fail_after_fix": "continue_with_warning",
+      "when_to_use": [
+        "After the first interpretation step — where source material is first transformed into derived content (this is where the 73% error propagation chain starts)",
+        "After irreversible narrowing decisions — choosing a structure, selecting an approach, committing to an interpretation",
+        "At the penultimate step — late-stage fragility means errors here are 3.5x more damaging than early errors",
+        "After any step whose output becomes ground truth for subsequent steps"
+      ]
+    },
+
+    "full": {
+      "description": "Maximum-intensity validation with dual reviewers and iterative fix loop. Used for final deliverables and critical outputs.",
+      "agents": "2 per active lens (up to 8 parallel)",
+      "dual_review": true,
+      "lenses_active": "All 4 lenses",
+      "fix_loop": true,
+      "max_iterations": 4,
+      "pass_threshold": 95,
+      "when_to_use": [
+        "Final output of a workflow — the deliverable",
+        "Any artifact that will be consumed by humans or downstream systems without further review",
+        "High-stakes content where errors have significant consequences"
+      ]
+    }
+  },
+
+  "dual_review": {
+    "description": "When dual_review is enabled (full profile), each lens runs TWO independent reviewers with different evaluation framings. Cross-checking their findings dramatically improves accuracy and filters hallucinated findings.",
+
+    "rationale": {
+      "accuracy_gain": "2 agents + cross-check: 77.26% accuracy vs 68.89% single-agent (Meta-Judge 2025). ~12% absolute improvement.",
+      "hallucination_filtering": "Findings confirmed by both reviewers are almost certainly real. Findings from only one reviewer are flagged for consolidator scrutiny. This is the primary mechanism for preventing validator hallucinations.",
+      "diminishing_returns": "Adding a 3rd reviewer decreased performance in Meta-Judge study. 2 is the sweet spot.",
+      "diversity_required": "Same-prompt reviewers capture far less benefit. The two reviewers MUST use different evaluation approaches."
+    },
+
+    "reviewer_framings": {
+      "reviewer_a": {
+        "name": "Enumerator",
+        "approach": "Systematic and methodical. Derive explicit checks from the dimensions, enumerate them, verify each one in order. Mechanical, thorough, literal. Works through the content section by section."
+      },
+      "reviewer_b": {
+        "name": "Adversary",
+        "approach": "Intuitive and skeptical. Read the content as someone trying to find what's wrong. Look for what feels off, what's suspiciously convenient, what seems too good to be true. Follow hunches, then verify with evidence. Works across the content holistically."
+      }
+    },
+
+    "cross_check": {
+      "description": "During consolidation, findings are tagged with confidence based on cross-reviewer agreement.",
+      "both_found": {
+        "confidence": "HIGH",
+        "action": "Almost certainly a real issue. Keep with highest severity from either reviewer."
+      },
+      "one_found": {
+        "confidence": "MEDIUM",
+        "action": "Consolidator investigates against source material. Keep if evidence supports it; discard if it appears to be a reviewer hallucination."
+      },
+      "neither_found": {
+        "confidence": "N/A",
+        "action": "Dimension is clean. No further action."
+      }
+    }
+  },
+
+  "staged_application": {
+    "description": "How to apply validation profiles across a multi-step workflow. The general pattern is 'bookend + critical gates': maximum validation at input and final output, targeted checkpoints at critical decision points, light gates elsewhere. But WHICH dimensions matter at each stage varies by what kind of work the workflow does.",
+
+    "general_pattern": {
+      "input": {
+        "profile": "gate",
+        "why": "Garbage in, garbage out. Verify source material is accessible, parseable, and complete before any work begins. This is the single highest-leverage validation point in any pipeline."
+      },
+      "first_interpretation": {
+        "profile": "checkpoint",
+        "why": "The step where source material is first transformed into derived content. Errors here have 73% probability of propagating downstream. Catch misinterpretations before they compound."
+      },
+      "middle_steps": {
+        "profile": "gate",
+        "why": "Basic structural sanity. Is the output well-formed? Are required fields present? Don't evaluate semantic quality here — it over-constrains creative/synthesis work and the output may not be independently meaningful yet."
+      },
+      "penultimate_step": {
+        "profile": "checkpoint",
+        "why": "Late-stage fragility. Errors at step N-1 are 3.5x more damaging than errors at step 2 because the model has committed to a trajectory with reduced self-correction ability. Catch them before final assembly."
+      },
+      "final_output": {
+        "profile": "full",
+        "why": "The deliverable. Full dimensional validation with dual reviewers. This is the only point where fitness-for-purpose can be evaluated because you need the complete artifact to judge whether it serves its intended use."
+      }
+    },
+
+    "critical_principle": "Always pass original source material alongside derived data through the entire pipeline. Every validator at every stage should check against original ground truth, not just the previous step's output. Do not let intermediate steps compress source data into lossy representations.",
+
+    "domain_variations": {
+      "description": "The profile pattern (gate/checkpoint/full) is constant, but which dimensions are prioritized at each stage varies by domain. Below are illustrative examples — not exhaustive recipes. The domain expert should determine the right emphasis based on the specific workflow.",
+
+      "research": {
+        "nature": "Research workflows gather external information, synthesize it, and draw conclusions. The primary risk is that fabricated sources or misrepresented findings propagate unchallenged into the final report.",
+        "emphasis": "Traceability and correctness dominate. Every claim must trace to a real source.",
+        "stages": {
+          "source_gathering": "Gate: Are sources real and accessible? This is uniquely critical for research — a hallucinated citation at step 1 poisons everything downstream.",
+          "extraction": "Checkpoint: Does the extracted content accurately represent what the source actually says? Misquotes and mischaracterizations start here. Focus: correctness, traceability.",
+          "synthesis": "Gate: Structure and completeness only. Synthesis is inherently creative — don't over-constrain it.",
+          "final_report": "Full: Traceability is the dominant lens. Can every conclusion trace back through the reasoning to a real source? Logical soundness matters heavily — do the conclusions follow from the evidence?"
+        }
+      },
+
+      "structured_data_generation": {
+        "nature": "Workflows that produce schema-bound output (creature stat blocks, JSON configs, data transforms). The primary risk is domain rule violations that look plausible but are mechanically wrong.",
+        "emphasis": "Structural validity and domain rule compliance dominate. The math must be right.",
+        "stages": {
+          "base_selection": "Gate: Does the chosen base/template exist and is it loaded correctly?",
+          "stat_derivation": "Checkpoint: This is where game math / domain rules first apply. Verify calculations against building tables, schemas, or rule references. Focus: domain_rule_compliance, correctness.",
+          "ability_design": "Gate: Are abilities well-formed? Do they follow the action economy? Light structural check.",
+          "final_output": "Full: Domain fitness lens is critical. Does the JSON validate? Do the numbers follow the building rules? Would this actually work in play/production?"
+        }
+      },
+
+      "narrative_content": {
+        "nature": "Session preps, chapter designs, story content. The primary risk is fabricating content the audience would recognize as wrong, or breaking perspective (revealing what characters don't know).",
+        "emphasis": "Temporal coherence and tonal consistency dominate. The content must respect what the audience knows and maintain the right voice.",
+        "stages": {
+          "context_loading": "Gate: Is the living memory / campaign state loaded and current?",
+          "recap_or_framing": "Checkpoint: This sets the audience's frame. Focus: temporal_coherence (only what characters know), tonal_consistency (player-facing vs. GM-facing), traceability (sourced from actual events).",
+          "scene_design": "Gate: Structural completeness. Are all required scenes/sections present?",
+          "final_prep": "Full: Fitness for purpose is the dominant question — does this actually help the GM run the session? Coherence lens matters heavily (does it read well as a unified document?)."
+        }
+      },
+
+      "code_implementation": {
+        "nature": "Implementing features from specs. The primary risk is acceptance criteria gaps and silent deviations from the spec that look intentional.",
+        "emphasis": "Completeness and domain rule compliance dominate. Every acceptance criterion must be implemented, and the code must work.",
+        "stages": {
+          "spec_reading": "Gate: Is the spec complete and unambiguous? Are acceptance criteria clear?",
+          "implementation": "Checkpoint: Does the code address all acceptance criteria? Focus: completeness (no AC dropped), correctness (logic matches spec intent).",
+          "test_writing": "Gate: Do tests exist for each AC? Do they pass? Structural check.",
+          "final_review": "Full: Domain fitness (does it compile, pass tests, handle edge cases?), cross_reference_integrity (do imports resolve, do API calls match signatures?), completeness (nothing silently omitted)."
+        }
+      },
+
+      "document_authoring": {
+        "nature": "PRDs, architecture docs, technical writing. The primary risk is plausible-sounding content that is internally contradictory or makes unsupported claims.",
+        "emphasis": "Consistency and logical soundness dominate. The document must not contradict itself and its arguments must hold up.",
+        "stages": {
+          "outline": "Gate: Are required sections present? Does the structure match the template?",
+          "section_drafting": "Checkpoint at first major section only. Focus: consistency with outline intent, relevance (on scope). Middle sections get gates only.",
+          "assembly": "Checkpoint: Cross-section consistency — do the sections agree with each other? Focus: consistency, cross_reference_integrity.",
+          "final_document": "Full: All lenses active. Coherence lens is particularly important — does the document read as a unified whole, not a collection of independently drafted sections?"
+        }
+      }
+    }
+  },
+
+  "calibration": {
+    "description": "Principles for tough-but-fair validation. These prevent both under-reporting (missing real issues) and over-reporting (hallucinated findings).",
+
+    "principles": {
+      "evidence_required": "Every finding MUST include concrete evidence: quote the specific text, value, or section that is wrong. A finding without evidence is a hallucination.",
+      "method_over_attitude": "Be systematic, not hostile. Validation is a method (enumerate and verify) not an attitude (assume everything is garbage).",
+      "no_quotas": "There is no minimum finding count. If the output is clean, report it as clean. But if you find zero issues, re-examine once before reporting - a second look catches what the first missed.",
+      "no_padding": "Do not manufacture findings to appear thorough. A false positive wastes more time than a missed issue, because it sends the fixer on a wild goose chase.",
+      "severity_honesty": "Assign severity based on actual impact, not to hit a target score. Do not inflate severity to force a failure, and do not deflate severity to force a pass.",
+      "scope_discipline": "Stay within your lens. If you notice something outside your lens, note it briefly but don't deep-dive - another validator owns that dimension.",
+      "conservative_flagging": "When uncertain whether something is an error: if you can find evidence it's wrong, flag it. If you can't find evidence either way, don't flag it. Uncertainty is not a finding."
+    },
+
+    "anti_patterns": [
+      "Flagging stylistic preferences as errors",
+      "Inventing plausible-sounding issues that aren't actually in the content",
+      "Restating the same issue multiple times with different wording",
+      "Flagging things that are correct but not how the validator would have done it",
+      "Using vague descriptions like 'could be improved' without specifying what's wrong",
+      "Inflating severity to ensure the output fails",
+      "Reporting issues in source material rather than in the output being validated"
+    ]
+  },
+
+  "finding_schema": {
+    "description": "Schema for individual findings reported by validators.",
+    "fields": {
+      "id":          "Unique finding identifier: LENS_ID-NNN (e.g., STRUCTURAL-001, ACCURACY-003)",
+      "severity":    "critical | high | medium | low",
+      "dimension":   "Which dimension from the taxonomy this finding falls under",
+      "location":    "Specific section, field, line, or element where the issue exists",
+      "description": "What is wrong - specific and concrete",
+      "evidence":    "Quote or reference proving this is a real issue. MANDATORY - findings without evidence are discarded.",
+      "suggestion":  "How to fix it - actionable and concrete",
+      "confidence":  "HIGH (both reviewers found it) | MEDIUM (one reviewer found it) — only present when dual_review is enabled"
+    }
+  },
+
+  "phases": {
+    "validate": {
+      "description": "Run validation lenses against the current output. Number of agents and lenses varies by profile.",
+      "execution": "parallel",
+      "profile_variations": {
+        "gate": "1 agent, structural lens only",
+        "checkpoint": "1 agent per active lens (2-3 lenses based on step type)",
+        "full": "2 agents per lens (8 total) — Enumerator and Adversary framings"
+      },
+      "process": [
+        "Validator receives their lens definition (mindset, dimensions, approach) and reviewer framing (if dual_review)",
+        "Validator examines the task_context and output to determine which dimensions from their lens are applicable",
+        "Validator derives specific checks from each applicable dimension, appropriate to the domain",
+        "Validator systematically evaluates each check, producing findings with evidence",
+        "If validation_focus is set, validator prioritizes those dimensions but still checks others"
+      ],
+      "output": "Array of findings per lens/reviewer, each following finding_schema"
+    },
+
+    "consolidate": {
+      "description": "Merge results from all lenses/reviewers into a single scored report.",
+      "execution": "sequential",
+      "steps": [
+        "If dual_review: tag each finding with confidence (HIGH if both reviewers found it, MEDIUM if only one)",
+        "Merge all findings into one list",
+        "Deduplicate: same issue from multiple sources → keep most specific description and highest severity",
+        "Investigate MEDIUM-confidence findings against source material — keep if evidence supports, discard if reviewer hallucination",
+        "Remove findings that lack evidence or where evidence doesn't support the claim",
+        "Calculate score: starting_score + sum(severity_weights for each remaining finding)",
+        "Assign grade based on score thresholds",
+        "Sort findings by severity (critical first) then by location"
+      ],
+      "output": {
+        "score": "Calculated quality score (0-100)",
+        "grade": "Grade label from scoring.grades",
+        "findings_count": "{ critical: N, high: N, medium: N, low: N, total: N }",
+        "findings": "Deduplicated, evidence-backed, sorted findings list with confidence tags",
+        "duplicates_removed": "Count of duplicates eliminated",
+        "false_positives_removed": "Count of findings removed for lacking evidence or failing cross-check"
+      }
+    },
+
+    "evaluate": {
+      "description": "Check exit conditions and decide next action. Behavior varies by profile.",
+      "profile_variations": {
+        "gate": "Pass (score >= 95) → continue workflow. Fail → halt and report to user.",
+        "checkpoint": "Pass → continue. Fail → one fix attempt, then continue with warning regardless.",
+        "full": "Pass → exit clean. Fail with iterations remaining → fix and re-validate. Fail at max iterations → report to user."
+      },
+      "conditions": {
+        "pass": {
+          "test": "score >= config.pass_threshold",
+          "action": "exit_clean (full) | continue_workflow (gate/checkpoint)"
+        },
+        "max_iterations_reached": {
+          "test": "iteration >= config.max_iterations AND score < config.pass_threshold",
+          "action": "exit_max_iterations (full) | continue_with_warning (checkpoint)"
+        },
+        "continue": {
+          "test": "score < config.pass_threshold AND iteration < config.max_iterations",
+          "action": "proceed_to_fix"
+        }
+      }
+    },
+
+    "fix": {
+      "description": "Fix identified issues in priority order.",
+      "execution": "sequential",
+      "agent": "Same domain_expert as the original task",
+      "input": "Consolidated findings + current output + source material (original, not intermediate)",
+      "priority_order": ["critical", "high", "medium", "low"],
+      "instructions": [
+        "Fix each issue in severity order, critical first",
+        "For each fix, note: finding ID, what you changed, why",
+        "Do NOT introduce new problems while fixing existing ones",
+        "If a fix conflicts with another finding, resolve in favor of the higher-severity finding",
+        "If a finding is ambiguous, make the conservative choice (closest to source material)",
+        "After all fixes, produce the complete updated output"
+      ],
+      "output": "Updated output with fixes applied + fix log mapping finding IDs to changes made"
+    }
+  },
+
+  "flow": {
+    "full_profile": {
+      "sequence": [
+        { "phase": "validate",    "next": "consolidate" },
+        { "phase": "consolidate", "next": "evaluate" },
+        { "phase": "evaluate",    "on_pass": "exit_clean", "on_max": "exit_max_iterations", "on_continue": "fix" },
+        { "phase": "fix",         "next": "validate", "note": "Loop back to validate the fixed output" }
+      ],
+      "diagram": [
+        "",
+        "  [Output] ──> VALIDATE (8 agents: 4 lenses × 2 reviewers)",
+        "                          │                                ",
+        "                   CONSOLIDATE (cross-check, dedupe, score)",
+        "                          │                                ",
+        "                      EVALUATE                             ",
+        "                    ┌───┼───┐                              ",
+        "                 PASS  MAX  CONTINUE                       ",
+        "                  │    │       │                           ",
+        "               [Done] [Report] FIX                         ",
+        "                               │                           ",
+        "                        ┌──────┘                           ",
+        "                        │                                  ",
+        "                     VALIDATE (loop)                       ",
+        ""
+      ]
+    },
+    "checkpoint_profile": {
+      "sequence": [
+        { "phase": "validate",    "next": "consolidate" },
+        { "phase": "consolidate", "next": "evaluate" },
+        { "phase": "evaluate",    "on_pass": "continue_workflow", "on_fail": "fix" },
+        { "phase": "fix",         "next": "continue_workflow_with_warning" }
+      ]
+    },
+    "gate_profile": {
+      "sequence": [
+        { "phase": "validate",    "next": "evaluate" },
+        { "phase": "evaluate",    "on_pass": "continue_workflow", "on_fail": "halt_and_report" }
+      ]
+    }
+  },
+
+  "exit_conditions": {
+    "clean": {
+      "trigger": "score >= 95",
+      "report": {
+        "status": "CLEAN",
+        "message": "Output passed validation with score {score}/100 after {iteration} iteration(s).",
+        "include": ["final_score", "iteration_count", "scores_per_iteration", "total_findings_fixed"]
+      }
+    },
+    "max_iterations": {
+      "trigger": "iteration == 4 AND score < 95",
+      "report": {
+        "status": "MAX_ITERATIONS_REACHED",
+        "message": "Unable to achieve clean score after {max_iterations} iterations. Current score: {score}/100. {remaining_count} findings remain.",
+        "include": ["final_score", "scores_per_iteration", "remaining_findings", "iteration_history"],
+        "user_action": "Review remaining findings and decide: accept as-is, manually fix, or adjust validation criteria."
+      }
+    },
+    "gate_halt": {
+      "trigger": "gate profile fails",
+      "report": {
+        "status": "GATE_FAILED",
+        "message": "Structural validation failed at pipeline stage '{stage}'. Score: {score}/100. Cannot proceed until resolved.",
+        "include": ["findings", "stage_name"]
+      }
+    },
+    "checkpoint_warning": {
+      "trigger": "checkpoint profile fails after fix attempt",
+      "report": {
+        "status": "CHECKPOINT_WARNING",
+        "message": "Validation at '{stage}' did not achieve clean after fix attempt. Score: {score}/100. Continuing with {remaining_count} known issues.",
+        "include": ["findings", "stage_name", "fix_log"]
+      }
+    }
+  },
+
+  "prompts": {
+    "validator_system": "You are a {domain_expert} performing quality validation on a {task_context}.\n\nYour validation lens: {lens_name}\nYour mindset: {lens_mindset}\nYour approach: {lens_approach}\n{reviewer_framing}\n\nYour dimensions (derive specific checks from these based on the domain):\n{lens_dimensions_with_descriptions}\n\nCALIBRATION RULES:\n- Every finding MUST include concrete evidence. Quote the specific text, value, or section that is wrong. A finding without evidence is a hallucination and will be discarded.\n- Be systematic, not hostile. Enumerate and verify - don't assume everything is wrong.\n- No finding quotas. If the output is clean in your area, say so. But re-examine once before reporting clean.\n- Do not manufacture findings. A false positive wastes more time than a missed issue.\n- Stay within your lens. Note issues outside your scope briefly but don't deep-dive.\n- When uncertain: if you can find evidence it's wrong, flag it. If you can't find evidence either way, don't flag it.\n- Severity is about impact, not about hitting a target score.",
+
+    "validator_task": "Validate the following {task_context} output through your lens: {lens_name}.\n\n{validation_focus_if_set}\n\nFor each dimension in your lens, determine what specific checks are appropriate for this domain and content type, then evaluate systematically.\n\nSOURCE MATERIAL (ground truth - if provided):\n{source_material}\n\nOUTPUT TO VALIDATE:\n{output_to_validate}\n\nReport each finding as:\n- id: {LENS_ID}-NNN\n- severity: critical|high|medium|low\n- dimension: [which dimension from your lens]\n- location: [specific section/field/line]\n- description: [what is wrong]\n- evidence: [quote or reference proving this is real - MANDATORY]\n- suggestion: [how to fix]\n\nIf you find no issues in your dimensions, report: NO FINDINGS. Do not manufacture issues.",
+
+    "consolidator": "You received findings from {reviewer_count} reviewers across {lens_count} validation lenses reviewing a {task_context}.\n\nConsolidate:\n1. Cross-check: Tag findings as HIGH confidence (both reviewers in a lens found it) or MEDIUM confidence (only one reviewer found it)\n2. Merge all findings into one list\n3. Deduplicate: same underlying issue → keep most specific description, highest severity, note sources\n4. Investigate MEDIUM-confidence findings against source material — keep if evidence supports, discard if reviewer hallucination\n5. Remove findings that lack evidence\n6. Calculate score: Start at {starting_score}, apply weights: critical={critical_weight}, high={high_weight}, medium={medium_weight}, low={low_weight}\n7. Sort by severity (critical first), then by location\n\nReport: consolidated findings with confidence tags, score, grade, counts, duplicates removed, false positives removed.",
+
+    "fixer": "You are a {domain_expert} tasked with fixing {finding_count} validated issues in a {task_context}.\n\nFINDINGS TO FIX (priority order):\n{consolidated_findings}\n\nCURRENT OUTPUT:\n{current_output}\n\nSOURCE MATERIAL (original ground truth - NOT intermediate representations):\n{source_material}\n\nINSTRUCTIONS:\n1. Fix each issue in order listed (critical first)\n2. For each fix, note: finding ID, what you changed, why\n3. Do NOT introduce new problems while fixing\n4. If fixes conflict, resolve in favor of higher-severity finding\n5. When ambiguous, stay closest to source material\n6. Produce the complete corrected output\n7. After the output, provide a fix log: finding ID → what was done"
+  },
+
+  "usage": {
+    "invocation": {
+      "from_workflow": "Reference this file path and provide required parameters. Set profile based on the stage in your workflow pipeline.",
+      "standalone": "Load this document, set parameters (default profile: full), execute the flow sequence.",
+      "as_rule": "Reference this document in CLAUDE.md or workflow instructions as the standard validation pattern."
+    },
+    "examples": [
+      {
+        "scenario": "Validate a PF2e creature stat block (final output)",
+        "profile": "full",
+        "domain_expert": "skuld",
+        "task_context": "PF2e creature stat block (JSON)",
+        "source_material": "creature-building-rules.md + base creature JSON",
+        "validation_focus": "Domain rule compliance — game math must be correct per building tables"
+      },
+      {
+        "scenario": "Check extracted adventure text before indexing (intermediate step)",
+        "profile": "checkpoint",
+        "domain_expert": "urd",
+        "task_context": "Extracted adventure chapter text",
+        "source_material": "Original adventure PDF",
+        "validation_focus": "Correctness and completeness — did the extraction capture everything without mangling content?"
+      },
+      {
+        "scenario": "Verify JSON schema after format conversion (mechanical step)",
+        "profile": "gate",
+        "domain_expert": "any",
+        "task_context": "JSON output from YAML conversion",
+        "source_material": "JSON schema file",
+        "validation_focus": null
+      }
+    ]
+  }
+}

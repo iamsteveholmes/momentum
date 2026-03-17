@@ -5,13 +5,13 @@
 >
 > See [AI-Solo-Dev-Workflow-Plan Section 6.4](../planning-artifacts/AI-Solo-Dev-Workflow-Plan-2026-03-07-final.md) for the backlog model.
 
-**Last updated:** 2026-03-08
+**Last updated:** 2026-03-14
 
 **Scope key:** `global` = ~/.claude/ or cross-project BMAD module, applies to all projects | `project` = lives in project repo
 
 | Status | Critical | High | Low | Total |
 |--------|----------|------|-----|-------|
-| Open | 6 | 6 | 10 | 22 |
+| Open | 6 | 8 | 9 | 23 |
 | In Progress | 0 | 0 | 0 | 0 |
 | Done | 0 | 0 | 0 | 0 |
 
@@ -26,7 +26,7 @@
 | PT-001a | Global practice CLAUDE.md and rules (~/.claude/) | global | direct-edit | open | 4.6, 6.1.2 |
 | PT-003 | code-reviewer sub-agent (adversarial, read-only) | global | agent-builder | open | 6.1.3 |
 | PT-004 | Process Backlog add/resolve workflows | global | workflow-builder | open | 6.4 |
-| PT-021 | Momentum module (install + bootstrap + operational workflows) | global | module-builder, workflow-builder | open | 8.2 |
+| PT-021 | Momentum module (install + bootstrap + operational workflows + cost observability) | global | module-builder, workflow-builder | open | 8.2 |
 | PT-001b | Project CLAUDE.md (build commands, @imports) | project | direct-edit | open | 4.6, 6.1.2 |
 | PT-002 | Hook Infrastructure (Stop hook, auto-lint, test protection) | project | direct-edit | open | 6.1.1 |
 
@@ -44,8 +44,10 @@
 | PT-008 | Findings ledger (docs/quality/findings-ledger.json) | project | direct-edit | open | 5.5 |
 | PT-009 | Quality Rules File | project | direct-edit | open | 6.2.1 |
 | PT-010 | Stop Hook Quality Gate (conditional logic enhancement) | project | direct-edit | open | 6.2.6 |
+| PT-016 | Model Routing Strategy (model selection guide, agent frontmatter, routing rule) | global | direct-edit, agent-builder | open | 6.3.2, benchmarking |
+| PT-022 | Benchmarking Harness (promptfoo, bash script, golden dataset, Pydantic AI harness) | global | direct-edit | open | benchmarking handoff |
 
-**Note:** PT-008 and PT-009 are scaffolded by the Momentum bootstrap workflow (PT-021) but may need refinement during the first sprint.
+**Note:** PT-008 and PT-009 are scaffolded by the Momentum bootstrap workflow (PT-021) but may need refinement during the first sprint. PT-016 and PT-022 are based on the multi-model benchmarking research (March 2026).
 
 ## Low
 
@@ -58,7 +60,6 @@
 | PT-013 | Automated Flywheel (retrospective wrapper) | project | module-builder | open | 6.2.4 | Manual retros work until then |
 | PT-014 | Discord MCP Integration | global | direct-edit | open | 6.1.4 | Externally gated on admin approval |
 | PT-015 | Pipeline Orchestrator | project | workflow-builder | open | 6.3.1 | "Level 4 unlock" |
-| PT-016 | Cross-Model Verification | global | direct-edit | open | 6.3.2 | Practice-level skill |
 | PT-017 | Property-Based Testing (TEA extension) | project | workflow-builder | open | 6.3.3 | |
 | PT-018 | Architectural Fitness Tests | project | direct-edit | open | 6.3.4 | Needs accumulated code |
 | PT-019 | Mutation Testing | project | direct-edit | open | 6.3.5 | Optional |

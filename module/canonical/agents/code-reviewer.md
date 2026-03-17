@@ -1,6 +1,8 @@
 ---
 name: adversarial-code-reviewer
 description: Pure verifier that reviews implementation against story acceptance criteria. Read-only — produces findings only, never modifies code. Use after dev-story completion for quick adversarial verification before formal BMAD code review.
+model: sonnet
+effort: medium
 tools:
   - Read
   - Glob

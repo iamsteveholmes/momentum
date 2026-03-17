@@ -2,7 +2,7 @@
   "meta": {
     "description": "Process task backlog — concurrent with product sprints, evaluated every retrospective. See AI-Solo-Dev-Workflow-Plan Section 6.4 for the model.",
     "created": "2026-03-08",
-    "lastUpdated": "2026-03-08",
+    "lastUpdated": "2026-03-14",
     "scopes": {
       "global": "Lives in ~/.claude/ — applies to all projects. Set up once.",
       "project": "Lives in project repo — project-specific content, paths, commands.",
@@ -235,15 +235,15 @@
     },
     {
       "id": "PT-016",
-      "description": "Cross-Model Verification — skill that formats completed work + original spec for review by a competing model.",
+      "description": "Model Routing Strategy — model selection guide as canonical module resource (condensed from benchmarking research Section 1.4 task-type mapping + Section 8 decision matrix), default model: and effort frontmatter for all momentum agents and skills, and a rule in .claude/rules/ about when to override model defaults. Produces: module/canonical/resources/model-routing-guide.md, model/effort frontmatter on all agents/skills, module/canonical/rules/model-routing.md.",
       "scope": "global",
-      "priority": "low",
+      "priority": "high",
       "status": "open",
-      "agents": ["direct-edit"],
-      "source": "plan-roadmap-6.3.2",
-      "planReference": "Section 6.3.2",
+      "agents": ["direct-edit", "agent-builder"],
+      "source": "plan-roadmap-6.3.2, benchmarking-research",
+      "planReference": "Sections 3.5 (cognitive load), 6.3.2, benchmarking guide",
       "created": "2026-03-08",
-      "notes": "Practice-level skill, reusable across projects.",
+      "notes": "Elevated from Phase 3/low to high priority based on multi-model benchmarking research (2026-03-14). Scope expanded from single skill to comprehensive model routing strategy. Produces three artifacts: (1) model-routing-guide.md condensing benchmarking guide Sections 1.4 and 8, (2) model/effort frontmatter defaults on all canonical agents and skills, (3) model-routing.md rule for .claude/rules/. Includes cognitive hazard argument: for outputs without automated validation, use flagship models.",
       "resolved": null,
       "resolution": null
     },
@@ -304,7 +304,7 @@
     },
     {
       "id": "PT-021",
-      "description": "Momentum module — create the cross-project custom BMAD module with three roles: (1) `momentum install` workflow that deploys canonical global practice files (rules, agents, CLAUDE.md) from Momentum to ~/.claude/ — idempotent, re-runnable, solves new-machine problem; (2) `momentum bootstrap` interactive workflow that scaffolds project-specific config (project CLAUDE.md, hooks, findings ledger, process backlog, quality rules) based on developer decisions about stack/framework/test commands — run once, output committed to project repo; (3) home for operational workflows (backlog add/resolve, retrospective wrapper, hybrid research, etc.) that run for the life of the project.",
+      "description": "Momentum module — create the cross-project custom BMAD module with three roles: (1) `momentum install` workflow that deploys canonical global practice files (rules, agents, CLAUDE.md) from Momentum to ~/.claude/ — idempotent, re-runnable, solves new-machine problem; (2) `momentum bootstrap` interactive workflow that scaffolds project-specific config (project CLAUDE.md, hooks, findings ledger, process backlog, quality rules) based on developer decisions about stack/framework/test commands — including cost observability setup: showTurnDuration in settings.json, ccusage as recommended install, and optional OTel configuration (CLAUDE_CODE_ENABLE_TELEMETRY=1) for projects that need telemetry — run once, output committed to project repo; (3) home for operational workflows (backlog add/resolve, retrospective wrapper, hybrid research, etc.) that run for the life of the project.",
       "scope": "global",
       "priority": "critical",
       "status": "open",
@@ -312,7 +312,21 @@
       "source": "plan-roadmap-8.2",
       "planReference": "Section 8.2",
       "created": "2026-03-09",
-      "notes": "The module is the source of truth for global practice — ~/.claude/ is deployed state, not canonical. Bootstrap generates project config that gets committed to git; second person cloning the project gets it via git clone, no bootstrap needed. Operational workflows (backlog, retro wrapper, etc.) keep running after bootstrap is done.",
+      "notes": "The module is the source of truth for global practice — ~/.claude/ is deployed state, not canonical. Bootstrap generates project config that gets committed to git; second person cloning the project gets it via git clone, no bootstrap needed. Operational workflows (backlog, retro wrapper, etc.) keep running after bootstrap is done. Bootstrap also sets up cost observability: showTurnDuration: true in .claude/settings.json, recommendation to install ccusage for cross-session cost tracking, and optional CLAUDE_CODE_ENABLE_TELEMETRY=1 for OTel export. These are part of the cost management discipline added in the March 2026 plan update.",
+      "resolved": null,
+      "resolution": null
+    },
+    {
+      "id": "PT-022",
+      "description": "Benchmarking Harness — build the runnable testing infrastructure for empirical model routing decisions. Five deliverables from the benchmarking handoff: (1) promptfoo configuration for BMAD skills using Claude Agent SDK provider, (2) bash benchmarking script (claude -p --model X --output-format json for each model), (3) golden dataset starter (5-10 reference outputs per skill type), (4) Pydantic AI benchmarking harness using agent.override() + Pydantic Evals, (5) model configuration (model:/effort frontmatter) for existing skills and agents.",
+      "scope": "global",
+      "priority": "high",
+      "status": "open",
+      "agents": ["direct-edit"],
+      "source": "benchmarking-handoff-2026-03-14",
+      "planReference": "Benchmarking handoff deliverables 1-5, benchmarking guide Sections 4.2, 5.3, 6.4",
+      "created": "2026-03-14",
+      "notes": "Implementation-ready based on completed research. PT-016 (Model Routing Strategy) produces the decision framework; this task produces the tooling to validate those decisions empirically. Depends on PT-016 for the model selection guide that determines what to benchmark. Key tools: promptfoo (Claude Agent SDK provider), claude -p --output-format json, Pydantic Evals.",
       "resolved": null,
       "resolution": null
     }

@@ -10,7 +10,7 @@
 
 ### 1.1 The Practice in One Paragraph
 
-I practice **Agentic Engineering** using **Spec-Driven Development** governed by the **BMAD Method V6**. Specifications are the primary engineering artifact — human-written acceptance criteria define correctness, and code is a generated, verified output. Quality is enforced through **three tiers** — deterministic hooks, structured BMAD workflows, and advisory CLAUDE.md rules — and **layered verification**: immutable ATDD acceptance tests, dev-authored TDD tests, adversarial sub-agent review implementing the **Producer-Verifier** pattern, formal BMAD code review, and strategic human review. The system is governed by the **Authority Hierarchy** (specifications > tests > code) — agents may never modify existing tests or specifications to make code pass. When AI output fails standards, the agent surfaces the failure to the developer and I apply the **Evaluation Flywheel** — tracing upstream to fix the workflow, specification, or rule rather than patching the code, creating compounding improvement where each upstream fix prevents a class of errors permanently. Quality failures are recorded in a **findings ledger** so patterns become visible across stories. The entire system is designed for **adaptability over permanence** — processes and tooling that grow and improve are better than those that stay unchanged, and research is actively managed on a monthly-or-faster cadence to prevent decisions from resting on stale foundations. This actively prevents the four AI-induced debt types: **verification debt** through layered automated verification, **cognitive debt** through spec-first development and the "explain it or reject it" rule, **pattern drift** through persistent architectural guard agents and deterministic lint rules, and **technical debt** through adversarial review and enforced refactoring discipline.
+I practice **Agentic Engineering** using **Spec-Driven Development** governed by the **BMAD Method V6**. Specifications are the primary engineering artifact — human-written acceptance criteria define correctness, and code is a generated, verified output. Quality is enforced through **three tiers** — deterministic hooks, structured BMAD workflows, and advisory CLAUDE.md rules — and **layered verification**: immutable ATDD acceptance tests, dev-authored TDD tests, adversarial sub-agent review implementing the **Producer-Verifier** pattern, formal BMAD code review, and strategic human review. The system is governed by the **Authority Hierarchy** (specifications > tests > code) — agents may never modify existing tests or specifications to make code pass. When AI output fails standards, the agent surfaces the failure to the developer and I apply the **Evaluation Flywheel** — tracing upstream to fix the workflow, specification, or rule rather than patching the code, creating compounding improvement where each upstream fix prevents a class of errors permanently. **Cost is a managed dimension, not an afterthought** — effort level selection is part of every skill and agent definition, the bootstrap workflow sets up cost observability (`/cost`, `ccusage`, OTel), and retry loops are capped at 4-5 iterations because context accumulation makes later iterations progressively more expensive (the validate-fix-loop pattern codifies this). Quality failures are recorded in a **findings ledger** so patterns become visible across stories. The entire system is designed for **adaptability over permanence** — processes and tooling that grow and improve are better than those that stay unchanged, and research is actively managed on a monthly-or-faster cadence to prevent decisions from resting on stale foundations. This actively prevents the four AI-induced debt types: **verification debt** through layered automated verification, **cognitive debt** through spec-first development and the "explain it or reject it" rule, **pattern drift** through persistent architectural guard agents and deterministic lint rules, and **technical debt** through adversarial review and enforced refactoring discipline.
 
 ### 1.2 What This Document Adds
 
@@ -24,6 +24,7 @@ The process builds on an existing BMAD V6 foundation. BMAD already provides the 
 - **Specific protections** against the four formally identified types of AI-induced debt
 - **Integration with Claude Code's native capabilities** to enforce standards deterministically, not just advisorily
 - A **research lifecycle** that keeps the entire practice grounded in current knowledge, not stale training data
+- A **cost management discipline** where model selection, effort levels, and retry loop caps are codified in agent definitions and validated through benchmarking — treating cost as an engineering dimension alongside quality and speed
 - An **adaptability philosophy** for managing framework evolution, customization persistence, and cross-project knowledge sharing
 
 The goal is not Level 4 autonomy for its own sake. The goal is: **high throughput with near-zero tolerance for accumulating technical debt, achieved by treating specifications as the product and code as a verified, generated artifact.**
@@ -407,6 +408,7 @@ Both paths use the same enforcement infrastructure (hooks, CLAUDE.md, sub-agents
 - Specifications are human-written or human-reviewed; the developer understands the intent before code exists
 - BMAD's story files encode the full context (PRD references, architectural constraints, acceptance criteria) — the "why" is always available alongside the "what"
 - The authority hierarchy rule ("if the human cannot explain how the code works, the code must be rejected") makes cognitive debt a gate, not a latent risk
+- The model routing guide codifies the cognitive hazard rule: for outputs without automated validation, use flagship models because invisible errors (embedded hallucinations, subtle logic flaws) cost more in human review burden than the model price premium. Derived from cognitive load research in the benchmarking guide (Section 3) — see `module/canonical/resources/model-routing-guide.md` and `module/canonical/rules/model-routing.md`
 - ADRs document significant structural choices for future sessions
 
 **Pattern Drift** (AI reproducing/amplifying bad patterns)
@@ -550,7 +552,9 @@ The result is a test sandwich: ATDD tests (spec-derived, immutable) bracket the 
 
 **6.3.1 Pipeline Orchestrator** — New BMAD workflow (built via BMB) that chains the full pipeline: PRD Validate → Architecture → Implementation Readiness → Sprint Plan → (for each story: ATDD → Dev → Code Review → Test Automation) → Retrospective → Apply Learnings. Human touchpoints only at gates and critical findings.
 
-**6.3.2 Cross-Model Verification** — Skill that formats completed work + original spec for review by a competing model, following the Cross-Model Verification pattern documented in the research.
+**6.3.2 Model Routing Strategy** (elevated from Phase 3 to High priority based on benchmarking research, March 2026) — Comprehensive model selection infrastructure producing three artifacts: (1) a model routing guide as canonical module resource (`module/canonical/resources/model-routing-guide.md`) condensing the benchmarking research's task-type mapping and decision matrix, (2) default `model:` and `effort` frontmatter for all momentum agents and skills, and (3) a rule in `.claude/rules/` (`module/canonical/rules/model-routing.md`) about when to override model defaults. Incorporates the cognitive hazard argument: for outputs without automated validation, use flagship models because invisible errors cost more than the price premium. The companion Benchmarking Harness (PT-022) provides the tooling to validate these routing decisions empirically.
+
+**6.3.7 Benchmarking Harness** (new, March 2026) — Build the runnable testing infrastructure for empirical model routing decisions. Five deliverables: (1) promptfoo configuration for BMAD skills using the Claude Agent SDK provider for full agentic workflow testing, (2) bash benchmarking script using `claude -p --model X --output-format json` to capture time/cost/tokens across models, (3) golden dataset starter with 5-10 reference outputs per skill type for promptfoo test cases, (4) Pydantic AI benchmarking harness using `agent.override()` and Pydantic Evals for multi-model comparison, (5) model configuration (`model:`/`effort` frontmatter) for existing skills and agents. Research and methodology are implementation-ready from the multi-model benchmarking guide; this task produces the executable tooling. See `docs/research/multi-model-benchmarking-handoff-2026-03-14.md` for detailed specifications.
 
 **6.3.3 Property-Based Testing** — TEA extension that derives properties and invariants from specifications (not implementation) and generates Hypothesis/fast-check tests. Properties resist gaming because they express what should always be true.
 
@@ -751,34 +755,36 @@ Given the "should this change?" frame, the strategy matches each type of customi
 
 ### 8.2 The Momentum Module
 
+> **⚠️ OBSOLESCENCE NOTE (2026-03-15):** The `momentum install` shell script approach and custom BMAD module packaging described in this section are **superseded** by the Agent Skills standard. Momentum's deliverables should be standard Agent Skills (`SKILL.md` with YAML frontmatter) installable via `npx skills` or equivalent standard package manager, not a proprietary install script. BMAD is already converting to skills-based architecture (see [BMAD CHANGELOG](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/CHANGELOG.md)). The closer Momentum follows the official skills standard, the closer it gets to cross-IDE support (Cursor, Windsurf, Codex, Copilot). See `docs/research/preliminary-findings-momentum-as-skills-2026-03-13.md` for full analysis. The operational workflows and bootstrap concepts below may still apply but the delivery mechanism has changed.
+
 A cross-project custom BMAD module named **Momentum** serves as the home for the agentic engineering practice layer — wrapper workflows, quality infrastructure, and customizations that apply across projects. The name reflects the core design: each sprint's learnings compound into the next, building continuous improvement momentum.
 
 **Momentum is both the source of truth and the installer for the practice.** Global practice files (`~/.claude/CLAUDE.md`, `~/.claude/rules/`, `~/.claude/agents/`) are *deployed* state — the canonical versions live inside Momentum. This means the global layer is reproducible: new machine, run `momentum install`, practice restored. The module itself travels across projects via BMAD installation, so any project with BMAD can restore the global layer.
 
 **Three roles:**
 
-1. **`momentum install`** — deploy global practice to this machine. Copies canonical rule files, agent definitions, and global CLAUDE.md from Momentum to `~/.claude/`. Idempotent: detects existing files, backs up if different, reports what changed. Re-runnable after Momentum updates to propagate rule changes to the global layer. This solves the "new machine" problem.
+1. ~~**`momentum install`** — deploy global practice to this machine.~~ **OBSOLETE: Use standard Agent Skills installation (`npx skills` or equivalent).** ~~Copies canonical rule files, agent definitions, and global CLAUDE.md from Momentum to `~/.claude/`. Idempotent: detects existing files, backs up if different, reports what changed. Re-runnable after Momentum updates to propagate rule changes to the global layer. This solves the "new machine" problem.~~
 
-2. **`momentum bootstrap`** — interactively generate initial project config for a new project. Walks the developer through decisions (stack, test framework, test commands, acceptance test directory) and scaffolds: project CLAUDE.md, `.claude/settings.json` (hooks), process backlog, findings ledger, quality rules file. The output is committed to the project repo like any other project file. Run once per project — after that, the project's `.claude/` files live in git and evolve through the flywheel. A second person cloning the project gets everything via `git clone`; they don't need to run bootstrap.
+2. **`momentum bootstrap`** — interactively generate initial project config for a new project. Walks the developer through decisions (stack, test framework, test commands, acceptance test directory) and scaffolds: project CLAUDE.md, `.claude/settings.json` (hooks), process backlog, findings ledger, quality rules file, cost observability config (`showTurnDuration` in settings.json, `ccusage` recommendation, optional OTel setup). The output is committed to the project repo like any other project file. Run once per project — after that, the project's `.claude/` files live in git and evolve through the flywheel. A second person cloning the project gets everything via `git clone`; they don't need to run bootstrap.
 
 3. **Operational workflows** — ongoing workflows that support the practice for the life of the project: backlog add/resolve, retrospective wrapper with findings ledger integration, hybrid research workflow (Section 7.1.4), and future workflows as the practice evolves. Bootstrap is the one you outgrow; these keep running.
 
 **Module structure:**
 
-- Lives in `_bmad/_config/custom/momentum/` (or as a standalone module in `_bmad/momentum/`)
+- ~~Lives in `_bmad/_config/custom/momentum/` (or as a standalone module in `_bmad/momentum/`)~~ **Delivered as standard Agent Skills packages**
 - Contains canonical source files for global practice (rules, agents, CLAUDE.md templates)
 - Contains the bootstrap workflow and operational workflows
 - Contains shared templates and data files used across projects
-- Is copied or symlinked across project directories (the cross-project portability question — see Section 8.4)
-- Has `version: null` and `source: custom` in the manifest — not touched by npm updates
+- ~~Is copied or symlinked across project directories (the cross-project portability question — see Section 8.4)~~ **Installed via standard skill package manager**
+- ~~Has `version: null` and `source: custom` in the manifest — not touched by npm updates~~
 
 **What lives where:**
 
 | What | Source of truth | Deployed to | How it travels |
 |------|----------------|-------------|----------------|
-| Practice rules, global agents, global CLAUDE.md | Momentum module (canonical files) | `~/.claude/` | `momentum install` |
+| Practice rules, global agents, global CLAUDE.md | Momentum skills package | `~/.claude/` | Standard skill installation (`npx skills` or equivalent) |
 | Project config, hooks, project rules | The project repo (`./.claude/`, root `CLAUDE.md`) | Already in repo | `git clone` |
-| Momentum module itself | Its own repo/package | `_bmad/` in any project | BMAD install / git |
+| Momentum skills | Published package / repo | `.claude/skills/` in any project | Standard skill installation |
 
 Note: The Momentum module pattern itself may be a temporary workaround. As BMAD evolves — particularly with the BMB overhaul toward skills-based architecture — native mechanisms for cross-cutting customization may emerge that make a separate module unnecessary. This is exactly the kind of thing that should be re-evaluated during BMAD change tracking (Section 8.3). The thin wrapper discipline makes migration easier when better patterns arrive.
 
