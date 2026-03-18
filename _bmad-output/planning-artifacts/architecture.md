@@ -1,5 +1,6 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
+status: complete
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-momentum-2026-03-13.md
   - _bmad-output/planning-artifacts/prd.md
@@ -58,7 +59,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, Stop conditional quality gate. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
 
-4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Auto-loaded in every session including subagents — the always-present advisory layer.
+4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Global rules auto-load only after `momentum setup` has been run once to copy them to `~/.claude/rules/`.
 
 5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection). Both use `context: fork` for producer-verifier isolation. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
 
@@ -100,6 +101,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 - **Agent Skills standard** — SKILL.md format; Claude Code-specific frontmatter silently ignored by other tools; one file, dual behavior by design
 - **Subagents cannot spawn subagents** — VFL orchestration chains through main conversation; affects Full-profile parallel execution design
 - **context:fork isolation** — Skills/agents using context:fork cannot maintain persona across main-conversation interactions; determines plugin vs. flat skill classification
+- **Spike required: plugin-agent invocation** — The mechanism for a flat skill (Impetus) to programmatically invoke plugin-registered agents (context:fork) must be verified before build. If plugin agents cannot be programmatically invoked by skills, code-reviewer and architecture-guard will be implemented as flat skills with tool restrictions (Read-only) instead of context:fork plugin agents. Producer-verifier separation is preserved either way.
 
 ---
 
@@ -187,7 +189,7 @@ npx skills add momentum/momentum-skills -a cursor
 
 ### Version Management
 
-Plugin and flat skills share a single `version.md` at repo root. A pre-commit hook validates they match. Release tags version both units together to prevent drift.
+Plugin and flat skills share a single `version.md` at repo root. A standard git pre-commit hook (Husky/pre-commit framework — not a Claude Code hook) validates they match. Release tags version both units together to prevent drift.
 
 ---
 
@@ -247,6 +249,8 @@ Architecture:
 - **Reviewers are context:fork agents** defined in `plugin/agents/` — isolated, read-only where appropriate
 - **VFL consolidates results** in main context after all reviewers complete
 - Context window consideration: all reviewer results return to main context; keep reviewer output structured and bounded
+- **Execution mode:** context:fork agents invoked during interactive workflows run as **background subagents** (non-blocking — main conversation continues); automated hook-triggered passes may use foreground (blocking) where dead air is acceptable. Background execution is what enables productive waiting (Decision 4c).
+- **Reviewer output bound:** Reviewers return structured JSON (not free-form prose). VFL framework (vfl-framework-v3.json) specifies per-reviewer output schema. Impetus enforces this to keep context accumulation bounded across all reviewer results.
 
 Updated deployment: VFL skill moves from `plugin/skills/` to `skills/` (flat skill alongside Impetus).
 
@@ -256,6 +260,8 @@ Impetus is the only agent that speaks to the user. All subagents return:
 { "status": "complete | needs_input | blocked", "result": {}, "question": "optional" }
 ```
 Impetus synthesizes into its own voice. Subagent identity never surfaces to user.
+
+Confidence weighting: low-confidence results surface as questions to the user rather than assertions; medium-confidence results are flagged explicitly; high-confidence results are synthesized directly. Exact weighting logic is an implementation-time decision for Impetus.
 
 **Decision 3c — MCP Servers**
 
@@ -284,7 +290,8 @@ active story/task, current phase, last completed action, suggested next action.
 User never hunts for context.
 
 **Decision 4c — Productive Waiting**
-While a context:fork subagent runs, Impetus maintains dialogue on the same topic.
+While a context:fork subagent runs in background, Impetus maintains dialogue on the same topic.
+Background execution (confirmed: Claude Code subagents explicitly support foreground/background modes) means the main conversation is not blocked — Impetus can continue responding to the user while isolated agents run concurrently.
 Default: surface implementation summary ("here's what was built and how it maps to the ACs").
 Dead air is a failure mode, not an acceptable pause.
 
@@ -301,15 +308,19 @@ Resolution: Impetus includes a `momentum setup` menu option that interactively c
 `.claude/rules/` automatically. Global rules are a one-time interactive setup, not silent
 automation. Promote to automatic if Claude Code plugin capabilities expand.
 
-**Decision 5b — BMAD Enhancement Touch Points (MVP)**
-Impetus proactively suggests Momentum enhancements at BMAD workflow boundaries:
+Update mechanism: `momentum setup` must be re-run after Momentum version upgrades to refresh global rules. Impetus surfaces a version-drift warning at session start when the hash of installed global rules differs from the current version's rules hash — preventing silent drift between installed rules and the current Momentum version.
 
-| BMAD Event | Momentum Enhancement |
-|---|---|
-| Any BMAD artifact generated (user selects C) | Impetus proposes `derives_from` frontmatter + git commit |
-| BMAD code-review complete | Impetus offers Momentum code-reviewer as additional adversarial pass |
-| BMAD dev-story complete | Impetus gates on acceptance tests passing before closing story |
-| BMAD retrospective | Impetus adds findings ledger summary to retrospective input |
+**Decision 5b — BMAD Enhancement Touch Points (MVP)**
+Impetus proactively enhances BMAD workflow boundaries. Each touchpoint is classified: **Gate** (blocks progress) or **Proposal** (user-discretionary).
+
+| BMAD Event | Momentum Enhancement | Type |
+|---|---|---|
+| Any BMAD artifact generated (user selects C) | Impetus proposes `derives_from` frontmatter + git commit | Proposal |
+| BMAD code-review complete | Impetus offers Momentum code-reviewer as additional adversarial pass | Proposal |
+| BMAD dev-story complete | Impetus gates on acceptance tests passing before closing story | **Gate** |
+| BMAD retrospective | Impetus adds findings ledger summary to retrospective input | Proposal |
+
+The dev-story acceptance test gate is the only hard gate at MVP — quality guarantee without friction. All other touchpoints are proposals; the developer retains discretion. This boundary may shift based on flywheel findings.
 
 Long-term: evaluate all BMAD workflows and agents for Momentum enhancement opportunities.
 Goal is that running any BMAD workflow inside Momentum automatically inherits provenance,
@@ -613,6 +624,9 @@ momentum/                                    ← Root
 │   ├── anti-patterns.md
 │   └── model-routing.md
 │
+├── mcp/                                     ← Custom MCP server source
+│   └── findings-server/                     ← Lightweight findings-ledger MCP server
+│
 ├── docs/                                    ← Project documentation
 │   ├── research/                            ← Research documents
 │   ├── planning-artifacts/                  ← Older plan (superseded by _bmad-output)
@@ -711,7 +725,7 @@ momentum/                                    ← Root
 
 **Impetus ↔ Subagents:** Structured JSON output contract (`status`, `result`, `question`, `confidence`)
 
-**Impetus ↔ BMAD:** Soft enhancement at BMAD workflow completion boundaries — Impetus proposes provenance, commits, and validation passes; user approves each
+**Impetus ↔ BMAD:** Enhancement at BMAD workflow completion boundaries — one hard gate (acceptance tests before story close) plus user-discretionary proposals at other boundaries
 
 **Skills ↔ Claude Code:** SKILL.md frontmatter matching at startup; full skill loaded on invocation; `references/` loaded on demand
 
@@ -719,4 +733,33 @@ momentum/                                    ← Root
 
 **MCP Servers ↔ Agents:** Git MCP provides file history and blame for provenance; Findings MCP provides structured read/write of findings-ledger.json
 
-**Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start
+**Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start. Placement: implemented as `references/provenance-scan.md` within `momentum-impetus/` — runs as part of session orientation, not a separate skill.
+
+---
+
+## Validation Summary (Steps 7–8)
+
+### Dual-Reviewer Pass Results
+
+Adversarial validation conducted per the dual-reviewer pattern from VFL framework (HANDOFF-BRIEF-001 §Provenance). Enumerator (systematic) + Adversary (failure-focused) passes run against the full document.
+
+**10 findings triaged. All resolved:**
+
+| Finding | Severity | Resolution |
+|---|---|---|
+| A-1: context:fork + productive waiting contradiction | Revised to Low | Resolved: foreground/background is orthogonal to context:fork isolation. Background subagents confirmed in Claude Code docs. Decision 4c updated. |
+| A-2: Global rules auto-load stated as unconditional | High | Fixed: subsystem 4 now states conditional on `momentum setup` |
+| A-3: Copied global rules go stale | High | Fixed: update mechanism added to Decision 5a; Impetus surfaces version-drift warning |
+| A-4: Plugin-agent invocation assumed, not verified | High | Fixed: Spike required added to Technical Constraints |
+| A-5: VFL reviewer output unbounded | Medium | Fixed: reviewer output bound added to Decision 3a |
+| A-6: Gate vs. proposal distinction undefined | Medium | Fixed: Decision 5b table now includes Type column; one hard gate identified |
+| E-1: Provenance scanner has no home | Low | Fixed: placed in momentum-impetus/references/provenance-scan.md |
+| E-2: Custom MCP server has no source location | Low | Fixed: mcp/findings-server/ added to repository structure |
+| E-4: Version pre-commit hook type ambiguous | Low | Fixed: clarified as standard git pre-commit hook (Husky/pre-commit framework) |
+| A-7: Confidence weighting unresolved | Low | Fixed: implementation-time decision noted in Decision 3b |
+
+### Architecture Status
+
+**Complete.** All 10 subsystems covered, all 6 NFRs addressed, all 10 potential conflict points specified, all adversarial findings resolved. One spike identified (plugin-agent invocation mechanism) — must be verified before build.
+
+**Ready for:** Epic and story creation.
