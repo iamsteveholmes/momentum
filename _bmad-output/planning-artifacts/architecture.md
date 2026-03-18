@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2]
+stepsCompleted: [1, 2, 3]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-momentum-2026-03-13.md
   - _bmad-output/planning-artifacts/prd.md
@@ -126,3 +126,67 @@ The vision: a developer running BMAD workflows gets Momentum's quality layer for
 4. **Model routing** — model: and effort: frontmatter required on every SKILL.md and agent definition. Cognitive hazard rule applies universally.
 5. **Visual progress** — ✓ Built / → Now / ◦ Next at every phase transition across all orchestrated workflows.
 6. **Protocol interfaces** — Every integration point defines an interface before any implementation is wired.
+
+---
+
+## Deployment Structure
+
+### Classification Rule: Plugin vs. Flat Skills
+
+The defining question for each component: *does this need main-context persona persistence, or does it benefit from isolation?*
+
+| Component | Deployment | Rationale |
+|---|---|---|
+| Impetus (orchestrating agent) | Flat skill | Must persist persona across interactions |
+| upstream-fix, create-story, dev-story | Flat skills | Stateful workflows needing main context |
+| code-reviewer | Plugin agent | Pure verifier — isolation is its purpose |
+| architecture-guard | Plugin agent | Pattern analysis — isolation prevents drift |
+| VFL skill | Plugin skill | Spawns multiple agents, benefits from isolation |
+| Hooks | Plugin hooks/hooks.json | Deterministic enforcement requires plugin container |
+| Rules | Plugin → ~/.claude/rules/ | Written globally on install, auto-load every session |
+| MCP config | Plugin .mcp.json | Bundled alongside enforcement layer |
+
+### Repository Structure
+
+```
+momentum/
+├── plugin/                          ← Unit 1: Claude Code Plugin
+│   ├── .claude-plugin/
+│   │   └── plugin.json
+│   ├── agents/
+│   │   ├── code-reviewer.agent.md
+│   │   └── architecture-guard.agent.md
+│   ├── hooks/
+│   │   └── hooks.json
+│   ├── skills/
+│   │   └── vfl/SKILL.md
+│   └── .mcp.json
+│
+├── skills/                          ← Unit 2: Standard Agent Skills (flat)
+│   ├── impetus/SKILL.md
+│   ├── upstream-fix/SKILL.md
+│   ├── create-story/SKILL.md
+│   └── dev-story/SKILL.md
+│
+├── rules/                           ← Unit 3: Always-loaded advisory rules
+│   ├── authority-hierarchy.md
+│   ├── anti-patterns.md
+│   └── model-routing.md
+│
+└── docs/                            ← Reference content loaded on demand
+```
+
+### Install Experience
+
+```bash
+# Full Claude Code install
+/plugin install momentum/momentum-plugin       # hooks + agents + enforcement skills
+npx skills add momentum/momentum-skills -a claude-code  # orchestrating workflows
+
+# Cursor install (skills + rules only)
+npx skills add momentum/momentum-skills -a cursor
+```
+
+### Version Management
+
+Plugin and flat skills share a single `version.md` at repo root. A pre-commit hook validates they match. Release tags version both units together to prevent drift.
