@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3]
+stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-momentum-2026-03-13.md
   - _bmad-output/planning-artifacts/prd.md
@@ -190,3 +190,129 @@ npx skills add momentum/momentum-skills -a cursor
 ### Version Management
 
 Plugin and flat skills share a single `version.md` at repo root. A pre-commit hook validates they match. Release tags version both units together to prevent drift.
+
+---
+
+## Core Architectural Decisions
+
+### Storage & State Architecture
+
+**Decision 1a — Provenance Graph: Pure YAML Frontmatter**
+- Each document carries its own `derives_from` in frontmatter (downstream-only authoring)
+- `referenced_by` is computed on demand by a provenance scanner — never manually maintained
+- Content hashes use git blob SHAs (`git hash-object <file>`) — zero extra tooling
+- Staleness detection: compare stored hash in `derives_from` against current `git hash-object`
+- One-hop propagation only; human/Impetus-gated at each level
+
+**Decision 1b — Session Ledger: JSON with Markdown View**
+- Location: `.claude/momentum/ledger.json`
+- Impetus reads/writes JSON for reliable structured updates
+- Auto-generated `.claude/momentum/ledger-view.md` for human readability
+- Tracks: active story, current phase, last completed action, open threads
+
+**Decision 1c — Findings Ledger: JSON**
+- Location: `.claude/momentum/findings-ledger.json`
+- Structured array of findings with fields: `story_ref`, `severity`, `pattern_tags`, `provenance_status`, `phase`, `description`, `evidence`, `upstream_fix_applied`
+- Queryable for cross-story pattern detection (same pattern across S-04, S-07, S-11)
+- Only flywheel workflow writes findings; read by Impetus at retrospective and upstream trace
+
+---
+
+### Security & Integrity
+
+**Decision 2a — File Protection Targets (PreToolUse hook blocks)**
+
+| Protected Path | Rationale |
+|---|---|
+| `tests/acceptance/` and `**/*.feature` | Acceptance tests are immutable — agents never modify to make code pass |
+| `_bmad-output/planning-artifacts/*.md` | Spec authority — coding agents read, never write |
+| `.claude/rules/` | Global enforcement rules — protected from coding agent modification |
+| `.claude/momentum/findings-ledger.json` | Ledger integrity — only flywheel workflow writes |
+
+**Decision 2b — Provenance Integrity Rules (Tier 3, promotable to Tier 1)**
+- Agents may not remove or modify `derives_from` frontmatter in spec files
+- Every significant claim classified as SOURCED / DERIVED / ADDED / UNGROUNDED
+- Violations tracked in findings ledger; repeated violations trigger hook promotion
+
+---
+
+### Agent Communication & Orchestration
+
+**Decision 3a — VFL Parallel Execution: Main Context Orchestration**
+
+The main conversation CAN spawn multiple subagents simultaneously (confirmed: official Claude Code docs explicitly document parallel subagent spawning as a supported pattern). The constraint is only that subagents cannot spawn further subagents.
+
+Architecture:
+- **VFL runs as a flat skill** (main context, not context:fork) — orchestration needs main context to spawn agents
+- **Impetus invokes VFL** from main conversation
+- **VFL spawns all reviewers in parallel** — up to 8 simultaneous subagents (2 per lens × 4 lenses for Full profile)
+- **Reviewers are context:fork agents** defined in `plugin/agents/` — isolated, read-only where appropriate
+- **VFL consolidates results** in main context after all reviewers complete
+- Context window consideration: all reviewer results return to main context; keep reviewer output structured and bounded
+
+Updated deployment: VFL skill moves from `plugin/skills/` to `skills/` (flat skill alongside Impetus).
+
+**Decision 3b — Hub-and-Spoke Voice Contract**
+Impetus is the only agent that speaks to the user. All subagents return:
+```json
+{ "status": "complete | needs_input | blocked", "result": {}, "question": "optional" }
+```
+Impetus synthesizes into its own voice. Subagent identity never surfaces to user.
+
+**Decision 3c — MCP Servers**
+
+| Server | Phase | Purpose |
+|---|---|---|
+| `@modelcontextprotocol/server-git` | MVP | File history, blame, diff for provenance tracking |
+| Momentum findings MCP (lightweight, custom) | MVP | Read/write findings-ledger.json as a structured resource |
+| `@rlabs-inc/gemini-mcp` | Growth | Multi-model deep research |
+| GPT deep research MCP | Growth | Cross-model verification |
+
+---
+
+### Workflow & UX Architecture
+
+**Decision 4a — Visual Progress Format (non-negotiable)**
+```
+✓ Built: [accumulated value]
+→ Now:   [this step and why it matters]
+◦ Next:  [what follows]
+```
+Never `Step N/M`. Always narrative. Every phase transition in every Impetus-orchestrated workflow.
+
+**Decision 4b — Session Orientation Contract**
+At every session start, Impetus reads the session ledger and within two exchanges surfaces:
+active story/task, current phase, last completed action, suggested next action.
+User never hunts for context.
+
+**Decision 4c — Productive Waiting**
+While a context:fork subagent runs, Impetus maintains dialogue on the same topic.
+Default: surface implementation summary ("here's what was built and how it maps to the ACs").
+Dead air is a failure mode, not an acceptable pause.
+
+---
+
+### Packaging & Deployment
+
+**Decision 5a — Global Rules Scope: Confirmed Limitation, Accepted**
+Claude Code plugins physically cannot write to `~/.claude/rules/` (verified March 17, 2026).
+Plugin files go to `~/.claude/plugins/cache/` only; no loose file deployment to any `~/.claude/` subdirectory.
+
+Resolution: Impetus includes a `momentum setup` menu option that interactively copies
+`momentum/rules/*` to `~/.claude/rules/` on first run. Project-scoped rules deploy to
+`.claude/rules/` automatically. Global rules are a one-time interactive setup, not silent
+automation. Promote to automatic if Claude Code plugin capabilities expand.
+
+**Decision 5b — BMAD Enhancement Touch Points (MVP)**
+Impetus proactively suggests Momentum enhancements at BMAD workflow boundaries:
+
+| BMAD Event | Momentum Enhancement |
+|---|---|
+| Any BMAD artifact generated (user selects C) | Impetus proposes `derives_from` frontmatter + git commit |
+| BMAD code-review complete | Impetus offers Momentum code-reviewer as additional adversarial pass |
+| BMAD dev-story complete | Impetus gates on acceptance tests passing before closing story |
+| BMAD retrospective | Impetus adds findings ledger summary to retrospective input |
+
+Long-term: evaluate all BMAD workflows and agents for Momentum enhancement opportunities.
+Goal is that running any BMAD workflow inside Momentum automatically inherits provenance,
+enforcement, flywheel, and versioning without workflow authors needing to explicitly add it.
