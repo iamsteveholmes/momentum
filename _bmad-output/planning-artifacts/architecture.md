@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5]
+stepsCompleted: [1, 2, 3, 4, 5, 6]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-momentum-2026-03-13.md
   - _bmad-output/planning-artifacts/prd.md
@@ -564,3 +564,161 @@ Good: `"Run validate-fix-loop validation on an artifact. Profiles: gate/checkpoi
 - Tier 1: SKILL.md frontmatter validated by `claude plugin validate` and pre-commit hook
 - Tier 2: VFL Structural Integrity lens checks format compliance on generated artifacts
 - Tier 3: These patterns loaded as rules in every agent session via `.claude/rules/`
+
+---
+
+## Project Structure & Boundaries
+
+### Repository Structure
+
+```
+momentum/                                    ← Root
+├── README.md
+├── LICENSE
+├── CLAUDE.md
+├── version.md                               ← Single version source for all units
+│
+├── plugin/                                  ← Unit 1: Claude Code Plugin
+│   ├── .claude-plugin/
+│   │   └── plugin.json                      ← name, version, description, paths
+│   ├── agents/
+│   │   ├── code-reviewer.agent.md           ← Read-only pure verifier
+│   │   └── architecture-guard.agent.md      ← Pattern drift detector
+│   ├── hooks/
+│   │   └── hooks.json                       ← All Tier 1 deterministic enforcement
+│   └── .mcp.json                            ← Git MCP + findings MCP config
+│
+├── skills/                                  ← Unit 2: Standard Agent Skills (flat)
+│   ├── momentum-impetus/
+│   │   ├── SKILL.md                         ← Orchestrating agent
+│   │   └── references/
+│   │       ├── practice-overview.md
+│   │       └── phase-guide.md
+│   ├── momentum-vfl/
+│   │   ├── SKILL.md                         ← Validate-fix-loop orchestrator
+│   │   └── references/
+│   │       └── vfl-framework-v3.json        ← Dimension taxonomy + profiles
+│   ├── momentum-upstream-fix/
+│   │   ├── SKILL.md
+│   │   └── steps/
+│   │       ├── step-01-detect.md
+│   │       ├── step-02-trace.md
+│   │       ├── step-03-solution.md
+│   │       └── step-04-verify.md
+│   ├── momentum-create-story/
+│   │   └── SKILL.md
+│   └── momentum-dev-story/
+│       └── SKILL.md
+│
+├── rules/                                   ← Unit 3: Advisory rules (source)
+│   ├── authority-hierarchy.md
+│   ├── anti-patterns.md
+│   └── model-routing.md
+│
+├── docs/                                    ← Project documentation
+│   ├── research/                            ← Research documents
+│   ├── planning-artifacts/                  ← Older plan (superseded by _bmad-output)
+│   ├── process/                             ← Process backlog
+│   └── implementation-artifacts/            ← Tech specs, handoffs
+│
+├── _bmad-output/                            ← BMAD workflow output
+│   └── planning-artifacts/
+│       ├── prd.md
+│       ├── ux-design-specification.md
+│       └── architecture.md                  ← This document
+│
+├── _bmad/                                   ← BMAD framework (managed by BMAD)
+│
+└── .claude/                                 ← Claude Code project config
+    ├── rules/                               ← Project-scoped rules (symlinked from rules/)
+    ├── skills/                              ← BMAD skills (managed by BMAD installer)
+    └── settings.json
+```
+
+---
+
+### Installed Structure (after `momentum setup`)
+
+```
+~/.claude/                                   ← Global Claude Code config
+├── rules/
+│   ├── authority-hierarchy.md               ← Copied by `momentum setup` (one-time)
+│   ├── anti-patterns.md
+│   └── model-routing.md
+└── plugins/
+    └── cache/
+        └── momentum-plugin/                 ← Plugin files (via /plugin install)
+            ├── agents/
+            ├── hooks/
+            └── .mcp.json
+
+[project-root]/
+└── .claude/
+    ├── skills/
+    │   ├── momentum-impetus/                ← Installed via npx skills add
+    │   ├── momentum-vfl/
+    │   ├── momentum-upstream-fix/
+    │   ├── momentum-create-story/
+    │   └── momentum-dev-story/
+    └── momentum/                            ← Per-project Momentum state
+        ├── ledger.json                      ← Session ledger (Impetus reads/writes)
+        ├── ledger-view.md                   ← Human-readable view (auto-generated)
+        └── findings-ledger.json             ← Quality findings (flywheel writes)
+```
+
+---
+
+### Architectural Boundaries
+
+**Read/Write Authority:**
+
+| Component | Reads | Writes |
+|---|---|---|
+| Impetus | ledger.json, specs (read-only), findings-ledger.json | ledger.json, ledger-view.md |
+| code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
+| architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
+| VFL | Any artifact being validated, source material | consolidated findings report |
+| Flywheel (upstream-fix) | findings-ledger.json, rules, specs | findings-ledger.json, rules/, specs |
+| Hooks | Filesystem (reads), git status | Terminal output only (never modifies files) |
+| ATDD workflow | Gherkin spec | `tests/acceptance/` only |
+| Coding agents (dev-story) | Specs, rules, existing code | Source code, unit tests |
+
+**Protection boundaries (PreToolUse blocks writes to):**
+- `tests/acceptance/` — acceptance test immutability
+- `_bmad-output/planning-artifacts/` — spec authority
+- `.claude/rules/` — enforcement rule integrity
+- `.claude/momentum/findings-ledger.json` — ledger integrity
+
+---
+
+### Requirements to Structure Mapping
+
+| Subsystem | Source File(s) | Installed Location |
+|---|---|---|
+| Impetus | `skills/momentum-impetus/` | `.claude/skills/momentum-impetus/` |
+| VFL | `skills/momentum-vfl/` | `.claude/skills/momentum-vfl/` |
+| Upstream Fix / Flywheel | `skills/momentum-upstream-fix/` | `.claude/skills/momentum-upstream-fix/` |
+| code-reviewer | `plugin/agents/code-reviewer.agent.md` | `~/.claude/plugins/cache/momentum-plugin/agents/` |
+| architecture-guard | `plugin/agents/architecture-guard.agent.md` | `~/.claude/plugins/cache/momentum-plugin/agents/` |
+| Hook infrastructure | `plugin/hooks/hooks.json` | Active via plugin registration in settings.json |
+| Global rules | `rules/*.md` | `~/.claude/rules/` (manual, via `momentum setup`) |
+| Project rules | `rules/*.md` (symlinked) | `.claude/rules/` |
+| MCP servers | `plugin/.mcp.json` | Active via plugin |
+| Session ledger | (runtime) | `.claude/momentum/ledger.json` |
+| Findings ledger | (runtime) | `.claude/momentum/findings-ledger.json` |
+
+---
+
+### Integration Points
+
+**Impetus ↔ Subagents:** Structured JSON output contract (`status`, `result`, `question`, `confidence`)
+
+**Impetus ↔ BMAD:** Soft enhancement at BMAD workflow completion boundaries — Impetus proposes provenance, commits, and validation passes; user approves each
+
+**Skills ↔ Claude Code:** SKILL.md frontmatter matching at startup; full skill loaded on invocation; `references/` loaded on demand
+
+**Plugin ↔ Claude Code:** Registered in `settings.json`; hooks merge with existing hook config; agents appear in `/agents`; MCP servers register alongside existing
+
+**MCP Servers ↔ Agents:** Git MCP provides file history and blame for provenance; Findings MCP provides structured read/write of findings-ledger.json
+
+**Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start
