@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4]
+stepsCompleted: [1, 2, 3, 4, 5]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-momentum-2026-03-13.md
   - _bmad-output/planning-artifacts/prd.md
@@ -316,3 +316,251 @@ Impetus proactively suggests Momentum enhancements at BMAD workflow boundaries:
 Long-term: evaluate all BMAD workflows and agents for Momentum enhancement opportunities.
 Goal is that running any BMAD workflow inside Momentum automatically inherits provenance,
 enforcement, flywheel, and versioning without workflow authors needing to explicitly add it.
+
+---
+
+## Implementation Patterns & Consistency Rules
+
+### Potential Conflict Points
+
+10 areas where different AI agents could make incompatible choices when implementing Momentum:
+
+1. SKILL.md frontmatter fields (required vs. optional, values)
+2. Agent definition structure and tool restriction format
+3. `derives_from` frontmatter format and relationship vocabulary
+4. Findings JSON schema field names and value enumerations
+5. Visual progress format (the ✓/→/◦ pattern)
+6. Subagent structured output contract
+7. Hook announcement output format
+8. Skill naming conventions
+9. Commit message format and trigger timing
+10. VFL profile selection criteria
+
+---
+
+### Naming Patterns
+
+**Skills (flat):**
+```
+momentum-[concept]          e.g. momentum-impetus, momentum-upstream-fix
+momentum-[verb]-[noun]      e.g. momentum-create-story, momentum-dev-story
+```
+Lowercase, hyphen-separated, `momentum-` prefix for all Momentum skills.
+BMAD skills retain their existing names — no renaming.
+
+**Plugin skills:**
+```
+[concept]                   e.g. vfl, validate (namespaced by plugin as momentum:vfl)
+```
+No prefix needed — plugin namespace provides isolation.
+
+**Agents:**
+```
+[role].agent.md             e.g. code-reviewer.agent.md, architecture-guard.agent.md
+```
+
+**Rules files:**
+```
+[concept].md                e.g. authority-hierarchy.md, anti-patterns.md, model-routing.md
+```
+
+**Hook event names:** Use standard Claude Code lifecycle events verbatim:
+`PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`, `UserPromptSubmit`
+
+**Findings pattern tags:** kebab-case noun phrases:
+`direct-db-access`, `missing-provenance`, `test-modification`, `pattern-drift`, `cognitive-debt`
+
+---
+
+### Structural Patterns
+
+**Every SKILL.md MUST have this frontmatter (no exceptions):**
+```yaml
+---
+name: momentum-[concept]
+description: "[One sentence. Action verb. What it does and when to use it.]"
+model: claude-sonnet-4-6        # or claude-opus-4-6 for high-stakes outputs
+effort: normal                  # normal | high | low
+---
+```
+
+**Enforcement skills (context:fork) add:**
+```yaml
+context: fork
+disable-model-invocation: true  # prevent accidental auto-trigger of heavy skills
+```
+
+**Workflow skills with heavy reference content use `references/` subdirectory:**
+```
+skills/momentum-impetus/
+├── SKILL.md              ← Instructions + frontmatter (under 500 lines)
+└── references/
+    ├── practice-overview.md
+    └── phase-guide.md    ← Loaded on demand, not at startup
+```
+
+**Agent definitions (.agent.md) MUST include:**
+```yaml
+---
+name: [role]
+description: "[What this agent does and when Impetus invokes it]"
+model: claude-opus-4-6          # agents get flagship — cognitive hazard rule
+tools:
+  - Read                        # list allowed tools explicitly
+  # code-reviewer: Read only — never Edit, Write, Bash
+---
+```
+
+**Workflow step files (micro-file architecture for multi-step skills):**
+```
+skills/momentum-[workflow]/
+├── SKILL.md
+└── steps/
+    ├── step-01-[name].md       ← Each step self-contained with embedded rules
+    ├── step-02-[name].md
+    └── step-N-complete.md      ← Always a completion step
+```
+
+---
+
+### Format Patterns
+
+**derives_from frontmatter (ALL spec-generating artifacts):**
+```yaml
+derives_from:
+  - id: UNIQUE-DOC-ID-001       # SCREAMING-KEBAB-CASE, unique across project
+    path: relative/path/to/source.md
+    relationship: derives_from  # or: depends_on, satisfies
+    description: "One sentence: what this source contributed"
+    hash: ""                    # filled by provenance scanner on first check
+```
+
+**Provenance status vocabulary (5 values, no others):**
+
+| Status | Meaning | When to use |
+|---|---|---|
+| `VERIFIED` | Source exists, claim is accurate | High trust — cite without caveat |
+| `CITED` | Source URL provided, accessible on research date | Moderate trust |
+| `INFERRED` | Derived through reasoning from verified sources | Lower trust — note the inference |
+| `UNGROUNDED` | No source; based on training data | Low trust — must verify before spec |
+| `SUSPECT` | Was VERIFIED/CITED but upstream source has since changed | Re-verify required |
+
+**Visual progress (every phase transition, no exceptions):**
+```
+✓ Built: [what exists now — value accumulated, not tasks completed]
+→ Now:   [this step and why it matters to the work]
+◦ Next:  [what follows after this step]
+```
+Never: "Step 3/8", "Continuing...", "Moving on to...", "Great work!"
+
+**Hook announcement output (every hook, every fire):**
+```
+[hook-name] ✓ checked [what was checked] — [one-line result]
+```
+On failure:
+```
+[hook-name] ✗ [specific issue] — [exact file/line if applicable]
+```
+Silent hooks build no trust. Verbose hooks create noise. One line, always.
+
+**Subagent structured output contract (all agents returning to Impetus):**
+```json
+{
+  "status": "complete",          // complete | needs_input | blocked
+  "result": { ... },             // domain-specific structured result
+  "question": null,              // non-null if status=needs_input; Impetus decides whether to ask user
+  "confidence": "high"           // high | medium | low — Impetus weights synthesis accordingly
+}
+```
+Agents NEVER address the user directly. All output goes through Impetus.
+
+**Findings schema (findings-ledger.json entries):**
+```json
+{
+  "id": "F-[story]-[seq]",        // e.g. F-S04-003
+  "story_ref": "S-04",
+  "phase": "code-review",         // spec | atdd | implement | code-review | flywheel
+  "severity": "critical",         // critical | high | medium | low
+  "pattern_tags": ["direct-db-access"],
+  "description": "One sentence describing the finding",
+  "evidence": "Exact quote or file:line reference",
+  "provenance_status": "VERIFIED",
+  "upstream_fix_applied": false,
+  "upstream_fix_ref": null,       // ID of the fix story/rule if applied
+  "timestamp": "2026-03-17T00:00:00Z"
+}
+```
+
+---
+
+### Communication Patterns
+
+**Impetus voice register:** Guide's voice. Oriented, substantive, forward-moving.
+- Synthesizes before delivering: reads subagent output, forms a view, delivers as Impetus
+- Acknowledges uncertainty honestly: "I'm not certain — here's what I know and where the gap is"
+- Returns agency explicitly at completion: "That's done — here's what was produced. What's next?"
+- Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent machinery
+
+**Error and blocker communication:**
+```
+⚠ [what was attempted] — [what went wrong in one sentence]
+  Action: [what to do next]
+```
+
+**Proactive gap detection (only when conversational floor is open):**
+```
+I notice [observation]. Before [next action], do you want [suggested step]?
+```
+Never interrupt mid-task. Surface gaps at natural handoffs.
+
+---
+
+### Process Patterns
+
+**Commit trigger points (per git-discipline.md — every logical unit of work):**
+- Any SKILL.md created or substantially modified
+- Any agent definition created or modified
+- Any rule file created or modified
+- Any workflow step file created
+- Any spec artifact (PRD, architecture, story) created or substantially modified
+- VFL validation complete (commit the validated artifact)
+- Flywheel fix applied (commit the rule/workflow change)
+
+**VFL profile selection criteria:**
+
+| Situation | Profile |
+|---|---|
+| Input validation (is source material present and complete?) | Gate |
+| After first interpretation step | Checkpoint |
+| Before irreversible decisions | Checkpoint |
+| Final deliverable artifacts (PRD, architecture, stories) | Full |
+| Penultimate step in any workflow | Checkpoint |
+| Ad-hoc quality check on any artifact | Full |
+
+**Upstream fix process (always this order, never skip steps):**
+`Detection → Review → Upstream Trace → Solution → Verify → Log`
+Finding logged to findings ledger at Detection. Fix logged at Solution. Never patch code without tracing first.
+
+**SKILL.md description budget rule:**
+Descriptions are loaded at startup for ALL installed skills. Keep under 150 characters.
+Heavy content goes in `references/` — loaded only on invocation.
+Bad: `"A comprehensive workflow that orchestrates the full validate-fix-loop process including dual-reviewer patterns across four validation lenses with configurable profiles"`
+Good: `"Run validate-fix-loop validation on an artifact. Profiles: gate/checkpoint/full."`
+
+---
+
+### Enforcement Guidelines
+
+**All AI agents implementing Momentum MUST:**
+- Include `model:` and `effort:` frontmatter on every SKILL.md and agent definition
+- Use `derives_from` frontmatter on every spec-generating artifact
+- Follow the visual progress format exactly (✓/→/◦) — no numeric steps
+- Return structured JSON from all subagents (never free-form text to Impetus)
+- Use the findings schema exactly — no ad-hoc fields
+- Follow the commit trigger points — no end-of-session batching
+- Keep SKILL.md descriptions under 150 characters
+
+**Pattern enforcement tiers:**
+- Tier 1: SKILL.md frontmatter validated by `claude plugin validate` and pre-commit hook
+- Tier 2: VFL Structural Integrity lens checks format compliance on generated artifacts
+- Tier 3: These patterns loaded as rules in every agent session via `.claude/rules/`
