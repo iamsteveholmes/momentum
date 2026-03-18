@@ -1,6 +1,7 @@
 ---
 stepsCompleted:
   - step-01-validate-prerequisites
+  - step-02-design-epics
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -188,8 +189,131 @@ UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive,
 
 ### FR Coverage Map
 
-{{requirements_coverage_map}}
+| FR | Epic | Description |
+|---|---|---|
+| FR1 | Epic 1 | Install skills via npx skills add |
+| FR2 | Epic 1 | Install full Momentum plugin into Claude Code |
+| FR3 | Epic 1 | Re-run installation to propagate updates |
+| FR4 | Epic 1 | Project config received via git clone |
+| FR5 | Epic 1 | Detect missing global components and guide setup |
+| FR6 | Epic 2 | Orchestrating agent with menu-driven workflow access |
+| FR7 | Epic 2 | Visual status graphics (ASCII) for workflow position |
+| FR8 | Epic 2 | Human-readable implementation summaries during review |
+| FR9 | Epic 2 | Detect and resolve ambiguous project configuration conversationally |
+| FR10 | Epic 2 | Just-in-time spec contextualization |
+| FR11 | Epic 2 | Follow-up questions treated as discovery opportunities |
+| FR12 | Epic 5 | derives_from frontmatter declarations |
+| FR13 | Epic 5 | Staleness detection (hash-based + time-based) |
+| FR14 | Epic 5 | Auto-generated referenced_by from derives_from |
+| FR15 | Epic 5 | Top-level spec self-identification via frontmatter |
+| FR16 | Epic 5 | Provenance status tracking (VERIFIED/CITED/INFERRED/UNGROUNDED/SUSPECT) |
+| FR17 | Epic 5 | Human vs AI-generated content distinction in provenance |
+| FR18 | Epic 3 | Auto-lint and auto-format on every file edit (PostToolUse hook) |
+| FR19 | Epic 3 | Block modifications to acceptance test directories (PreToolUse hook) |
+| FR20 | Epic 3 | Conditional quality gates before session end (Stop hook) |
+| FR21 | Epic 3 | File protection via PreToolUse hook |
+| FR22 | Epic 3 | Authority hierarchy rules auto-load via .claude/rules/ |
+| FR23 | Epic 3 | Model routing via model: and effort: frontmatter |
+| FR24 | Epic 4 | Code-reviewer adversarial review with read-only tools |
+| FR25 | Epic 4 | Code-reviewer triggered automatically at implementation completion |
+| FR26 | Epic 4 | Findings reports include provenance status |
+| FR27 | Epic 4 | Every finding requires evidence from the reviewed artifact |
+| FR28 | Epic 6 | Findings ledger accumulates across stories |
+| FR29 | Epic 6 | Cross-story pattern detection |
+| FR30 | Epic 6 | Flywheel explains issues and suggests upstream trace with visual status |
+| FR31 | Epic 6 | Developer approves/rejects each flywheel suggestion |
+| FR32 | Epic 6 | Upstream fixes applied at any level |
+| FR33 | Epic 6 | Ratio of upstream to code-level fixes as practice health metric |
+| FR34 | Epic 7 | Developer configures protocol implementations at project level |
+| FR35 | Epic 7 | Project config maps protocols to implementations with provenance |
+| FR36 | Epic 7 | Impetus reads config, detects gaps, helps fill them conversationally |
+| FR37 | Epic 7 | Workflow steps resolve through protocol interfaces, not specific implementations |
+| FR38 | Epic 7 | Substitute any protocol implementation without modifying consuming workflows |
+| FR39 | Epic 4 | Gherkin acceptance criteria — behavioral, technology-agnostic |
+| FR40 | Epic 4 | ATDD workflow generates failing acceptance tests from Gherkin |
+| FR41 | Epic 4 | Full story cycle guided by orchestrating agent |
+| FR42 | Epic 4 | Visual progress through story cycle (current phase + next phase) |
+| FR43 | Epic 4 | Upstream fix skill analyzes quality failure and proposes correction |
+| FR44 | Epic 8 | Multi-model research via MCP-integrated providers |
+| FR45 | Epic 8 | Enforce date-anchoring and primary-source directives in research prompts |
+| FR46 | Epic 8 | Archive outdated documents while preserving reference chain |
+| FR47 | Epic 8 | Track document freshness using domain-specific freshness windows |
+
+**NFR mapping:** NFR1–3 (context/token budget) → Epic 1 & 2. NFR4 (context budget architecture decision, blocking) → Epic 1. NFR5–8 (portability/degradation) → Epic 1. NFR9–11 (ecosystem resilience) → Epic 1. NFR12–15 (integration compatibility) → Epic 1. NFR16–17 (dogfooding integrity) → cross-cutting, applied across all epics.
 
 ## Epic List
 
-{{epics_list}}
+### Epic 1: Foundation & Bootstrap
+A developer installs Momentum from scratch — global practice files in place, project bootstrapped, all structure scaffolded by the module. Epic 2 onwards can start.
+**FRs covered:** FR1, FR2, FR3, FR4, FR5
+**NFRs covered:** NFR1–13 (portability, resilience, compatibility, token budget architecture decision)
+**Additional:** Repo structure, plugin/skills/rules layout, version.md, `momentum setup` global rules copy, cost observability (showTurnDuration, ccusage recommendation)
+**Priority:** Day 1
+
+---
+
+### Epic 2: Stay Oriented with Impetus
+A developer always knows where they are and what to do next. Session ledger tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Tony's unified voice keeps backstage invisible.
+**FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
+**NFRs covered:** NFR1, NFR2, NFR3
+**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
+**Priority:** Day 1
+
+---
+
+### Epic 3: Automatic Quality Enforcement
+Quality gates fire without developer intervention. Lint and format run on save. Acceptance tests are protected from modification. Model routing is configured by frontmatter so every skill and agent uses the right model by default. Authority hierarchy rules auto-load every session.
+**FRs covered:** FR18, FR19, FR20, FR21, FR22, FR23
+**NFRs covered:** NFR7, NFR8
+**UX-DRs covered:** UX-DR3
+**Additional:** Model routing strategy (PT-016): model-routing-guide.md, model/effort frontmatter on all skills/agents, model-routing.md rule
+**Priority:** Sprint 1
+
+---
+
+### Epic 4: Complete Story Cycles
+A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
+**FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
+**UX-DRs covered:** UX-DR6, UX-DR8
+**Additional:** code-reviewer agent (plugin, read-only), VFL flat skill (momentum-vfl), create-story skill, dev-story skill, ATDD workflow, plugin-agent invocation spike
+**Priority:** Sprint 1
+
+---
+
+### Epic 5: Trust Artifact Provenance
+A developer can trace every artifact to its origins, detect stale references, and know the confidence level of every significant claim. The provenance graph is maintained in frontmatter — no external tooling required.
+**FRs covered:** FR12, FR13, FR14, FR15, FR16, FR17
+**Additional:** derives_from frontmatter format, content hash staleness (git hash-object), referenced_by auto-generation, provenance scanner (in Impetus references/)
+**Priority:** Sprint 1–2
+
+---
+
+### Epic 6: The Practice Compounds
+Findings accumulate across stories. Systemic patterns surface. Upstream fixes are applied at the right level — spec, rule, workflow, or one-off patch. Each sprint the practice gets measurably smarter. The flywheel makes invisible improvement visible.
+**FRs covered:** FR28, FR29, FR30, FR31, FR32, FR33
+**UX-DRs covered:** UX-DR7
+**Additional:** findings-ledger.json (with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server
+**Priority:** Sprint 2
+
+---
+
+### Epic 7: Bring Your Own Tools
+A developer configures which agent, model, test framework, or MCP provider satisfies each protocol. Swapping any component doesn't touch workflow definitions. The practice layer is unchanged even when the tooling changes underneath it.
+**FRs covered:** FR34, FR35, FR36, FR37, FR38
+**NFRs covered:** NFR14, NFR15
+**Priority:** Sprint 2
+
+---
+
+### Epic 8: Research & Knowledge Management
+A developer runs multi-model research with freshness guarantees. Research prompts are date-anchored. Documents have domain-specific freshness windows. Outdated docs are archived with their reference chain intact.
+**FRs covered:** FR44, FR45, FR46, FR47
+**Additional:** Gemini MCP + GPT MCP integration (growth), hybrid research workflow (PT-020), freshness windows per domain
+**Priority:** Growth
+
+---
+
+### Epic 9: Performance Validation
+The model routing decisions made in earlier epics are validated empirically. The benchmarking harness measures real task performance across models so routing rules are grounded in evidence, not just judgment.
+**Scope:** PT-022 — promptfoo config, bash benchmarking script, golden dataset starter, Pydantic AI harness with agent.override(), updated model/effort frontmatter based on results
+**Priority:** Growth (requires Epics 2–4 to have real skills to benchmark)
