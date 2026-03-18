@@ -141,7 +141,7 @@ The defining question for each component: *does this need main-context persona p
 | upstream-fix, create-story, dev-story | Flat skills | Stateful workflows needing main context |
 | code-reviewer | Plugin agent | Pure verifier — isolation is its purpose |
 | architecture-guard | Plugin agent | Pattern analysis — isolation prevents drift |
-| VFL skill | Plugin skill | Spawns multiple agents, benefits from isolation |
+| VFL skill | Flat skill | Must orchestrate parallel spawning from main context |
 | Hooks | Plugin hooks/hooks.json | Deterministic enforcement requires plugin container |
 | Rules | Plugin → ~/.claude/rules/ | Written globally on install, auto-load every session |
 | MCP config | Plugin .mcp.json | Bundled alongside enforcement layer |
@@ -158,8 +158,6 @@ momentum/
 │   │   └── architecture-guard.agent.md
 │   ├── hooks/
 │   │   └── hooks.json
-│   ├── skills/
-│   │   └── vfl/SKILL.md
 │   └── .mcp.json
 │
 ├── skills/                          ← Unit 2: Standard Agent Skills (flat)
