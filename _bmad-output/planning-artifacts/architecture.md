@@ -53,13 +53,13 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 Momentum's FRs organize into 10 architectural subsystems:
 
-1. **Deployment Packaging** — Standard Agent Skills (SKILL.md) as the portable core; Claude Code-specific frontmatter (`context: fork`, `model:`, `effort:`) optimizes for Claude Code while remaining standards-compliant. Hooks and subagents travel via Claude Code Plugin container. One set of SKILL.md files serves all targets.
+1. **Deployment Packaging** — Standard Agent Skills (SKILL.md) as the sole deployment mechanism; no plugin required. Claude Code-specific frontmatter (`context: fork`, `model:`, `effort:`) optimizes for Claude Code while remaining standards-compliant. Flat skills run in main context; `context: fork` skills run in isolated subagent contexts for pure verifiers. Rules, hooks config, and MCP config are bundled in `momentum/references/` and written by Impetus on first invocation — `npx skills add` handles SKILL.md files; Impetus handles the rest. One set of SKILL.md files serves all targets.
 
 2. **Provenance Infrastructure** — `derives_from` frontmatter (downstream-only authoring), content hash staleness detection, suspect link flagging (pull-based), auto-generated `referenced_by`, Chain of Evidences prompting, Citations API integration for mechanical grounding.
 
-3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, Stop conditional quality gate. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
+3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, Stop conditional quality gate. Hook configuration template is bundled in `momentum/references/hooks-config.json`; Impetus writes it to `.claude/settings.json` on first invocation using the Write tool. Skill-lifecycle hooks can additionally be defined in SKILL.md `hooks:` frontmatter for session-bounded enforcement. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
 
-4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Global rules auto-load only after `momentum setup` has been run once to copy them to `~/.claude/rules/`.
+4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `momentum/references/rules/` and written to both targets by Impetus on first invocation — no separate setup step.
 
 5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection). Both use `context: fork` for producer-verifier isolation. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
 
@@ -79,7 +79,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 - **Portability gradient** — Tier 1 (hooks) = Claude Code only; Tier 2 (structured workflows) = partially portable; Tier 3 (rules) = all tools. System degrades gracefully — Cursor gets skills + rules, Claude Code gets full enforcement.
 - **Context budget** — Agent Skills three-stage loading (description at startup ~100 tokens, full SKILL.md on invocation, references/ on demand) means startup overhead is manageable with good authoring discipline. Concise descriptions, heavy content in references/. Hygiene note, not a hard constraint.
-- **Evolvability (Impermanence Principle)** — Thin packaging layer. Practice portable even if plugin ecosystem changes. Monthly ecosystem review. Interfaces before implementations everywhere.
+- **Evolvability (Impermanence Principle)** — Thin packaging layer. Practice portable even if skills ecosystem changes. Monthly ecosystem review. Interfaces before implementations everywhere.
 - **Solo developer efficiency** — One person, limited hours, concurrent with other projects. MVP deploys in days. Real work on real projects is the test harness.
 - **Cost as managed dimension** — `model:` + `effort:` frontmatter on every skill. Cognitive hazard rule universal. VFL max 4 iterations (context accumulation makes later iterations progressively more expensive).
 - **Terminal-native UX** — No web UI. ASCII/text visual progress. Structured markdown artifacts. Everything works beautifully in a terminal environment.
@@ -97,11 +97,10 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 ### Technical Constraints & Dependencies
 
-- **Claude Code Plugin ecosystem** — pre-1.0 as of March 2026; Impermanence Principle requires thin packaging layer; practice survives packaging changes
 - **Agent Skills standard** — SKILL.md format; Claude Code-specific frontmatter silently ignored by other tools; one file, dual behavior by design
 - **Subagents cannot spawn subagents** — VFL orchestration chains through main conversation; affects Full-profile parallel execution design
-- **context:fork isolation** — Skills/agents using context:fork cannot maintain persona across main-conversation interactions; determines plugin vs. flat skill classification
-- **Spike required: plugin-agent invocation** — The mechanism for a flat skill (Impetus) to programmatically invoke plugin-registered agents (context:fork) must be verified before build. If plugin agents cannot be programmatically invoked by skills, code-reviewer and architecture-guard will be implemented as flat skills with tool restrictions (Read-only) instead of context:fork plugin agents. Producer-verifier separation is preserved either way.
+- **context:fork isolation** — `context: fork` is a SKILL.md frontmatter field, not a plugin-only feature (verified March 18, 2026 from agentskills.io specification and Claude Code docs). Skills with `context: fork` run in isolated subagent contexts without access to conversation history. code-reviewer and architecture-guard are implemented as `context: fork` SKILL.md files — no plugin required. The `allowed-tools` frontmatter field restricts tool access (e.g., `Read` only for pure verifiers). The previously-noted spike for plugin-agent invocation is eliminated.
+- **Non-skills deployment: bundled and agent-written** — `npx skills add` deploys SKILL.md files only. Rules, hook config templates, MCP config templates, and the install/upgrade manifest are bundled inside `skills/momentum/references/`. Impetus uses `${CLAUDE_SKILL_DIR}` to locate its own skill directory and writes these files directly to their targets. Install/upgrade logic is governed by `momentum-manifest.json` and `installed.json` (Decision 5c). The UX interaction for install/upgrade is defined in the UX specification.
 
 ---
 
@@ -124,7 +123,7 @@ The vision: a developer running BMAD workflows gets Momentum's quality layer for
 
 1. **Provenance** — Every artifact, every agent output, every specification claim carries derives_from and provenance_status. Affects all 10 subsystems.
 2. **Enforcement tier assignment** — Every mechanism has a tier designation. Nothing floats undefined.
-3. **Producer-verifier separation** — context:fork isolation on all review steps. The producing context never reviews its own output.
+3. **Producer-verifier separation** — `context: fork` isolation on all review steps. The producing context never reviews its own output. Each reviewer invocation = one isolated subagent; VFL spawns N reviewers via N Agent tool calls.
 4. **Model routing** — model: and effort: frontmatter required on every SKILL.md and agent definition. Cognitive hazard rule applies universally.
 5. **Visual progress** — ✓ Built / → Now / ◦ Next at every phase transition across all orchestrated workflows.
 6. **Protocol interfaces** — Every integration point defines an interface before any implementation is wired.
@@ -133,63 +132,66 @@ The vision: a developer running BMAD workflows gets Momentum's quality layer for
 
 ## Deployment Structure
 
-### Classification Rule: Plugin vs. Flat Skills
+> _[Changed 2026-03-18: Removed two-unit plugin + skills model. All deployment is now via standard Agent Skills only (`npx skills add`). Plugin/Unit 1 concept eliminated. code-reviewer and architecture-guard are `context: fork` SKILL.md files, not plugin agents. Reason: product owner direction; plugin model rejected. Research source: agentskills.io/specification + github.com/vercel-labs/skills README, verified March 18, 2026.]_
+
+### Skills Deployment Classification
 
 The defining question for each component: *does this need main-context persona persistence, or does it benefit from isolation?*
 
 | Component | Deployment | Rationale |
 |---|---|---|
 | Impetus (orchestrating agent) | Flat skill | Must persist persona across interactions |
-| upstream-fix, create-story, dev-story | Flat skills | Stateful workflows needing main context |
-| code-reviewer | Plugin agent | Pure verifier — isolation is its purpose |
-| architecture-guard | Plugin agent | Pattern analysis — isolation prevents drift |
 | VFL skill | Flat skill | Must orchestrate parallel spawning from main context |
-| Hooks | Plugin hooks/hooks.json | Deterministic enforcement requires plugin container |
-| Rules | Plugin → ~/.claude/rules/ | Written globally on install, auto-load every session |
-| MCP config | Plugin .mcp.json | Bundled alongside enforcement layer |
+| upstream-fix, create-story, dev-story | Flat skills | Stateful workflows needing main context |
+| code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only |
+| architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only |
+| Always-on hooks | `.claude/settings.json` | Template bundled in `momentum/references/hooks-config.json`; Impetus writes on first run |
+| Global rules | `~/.claude/rules/` | Bundled in `momentum/references/rules/`; Impetus copies on first run |
+| Project rules | `.claude/rules/` | Bundled in `momentum/references/rules/`; Impetus copies on first run |
+| MCP config | `.mcp.json` | Template bundled in `momentum/references/mcp-config.json`; Impetus writes on first run |
 
-### Repository Structure
+### Repository Structure (preview — full structure in Project Structure section)
 
 ```
 momentum/
-├── plugin/                          ← Unit 1: Claude Code Plugin
-│   ├── .claude-plugin/
-│   │   └── plugin.json
-│   ├── agents/
-│   │   ├── code-reviewer.agent.md
-│   │   └── architecture-guard.agent.md
-│   ├── hooks/
-│   │   └── hooks.json
-│   └── .mcp.json
+├── skills/                          ← All skills: flat + context:fork
+│   ├── momentum/SKILL.md
+│   ├── momentum-vfl/SKILL.md
+│   ├── momentum-code-reviewer/SKILL.md    ← context: fork, allowed-tools: Read
+│   ├── momentum-architecture-guard/SKILL.md ← context: fork, allowed-tools: Read
+│   ├── momentum-upstream-fix/SKILL.md
+│   ├── momentum-create-story/SKILL.md
+│   └── momentum-dev-story/SKILL.md
 │
-├── skills/                          ← Unit 2: Standard Agent Skills (flat)
-│   ├── impetus/SKILL.md
-│   ├── upstream-fix/SKILL.md
-│   ├── create-story/SKILL.md
-│   └── dev-story/SKILL.md
-│
-├── rules/                           ← Unit 3: Always-loaded advisory rules
+├── rules/                           ← Advisory rules source
 │   ├── authority-hierarchy.md
 │   ├── anti-patterns.md
 │   └── model-routing.md
 │
-└── docs/                            ← Reference content loaded on demand
+└── .claude/                         ← Project config (committed to repo)
+    ├── rules/                       ← Project-scoped rules (committed)
+    └── settings.json                ← Always-on hook definitions (Tier 1 enforcement; committed)
 ```
 
 ### Install Experience
 
-```bash
-# Full Claude Code install
-/plugin install momentum/momentum-plugin       # hooks + agents + enforcement skills
-npx skills add momentum/momentum-skills -a claude-code  # orchestrating workflows
+> _[Changed 2026-03-18: Two-command plugin + skills install replaced with single `npx skills add`. Changed again (2026-03-18): removed separate `momentum setup` step — Impetus handles all first-run configuration automatically. Reason: single entry point; no separate installer.]_
 
-# Cursor install (skills + rules only)
-npx skills add momentum/momentum-skills -a cursor
+```bash
+# Install Momentum into any Claude Code project
+npx skills add momentum/momentum -a claude-code
+
+# Single entry point:
+/momentum
 ```
+
+Impetus handles install and upgrade via the manifest mechanism (Decision 5c). What triggers install vs. upgrade checks, and how the user experience unfolds, is defined in the UX specification — not here. The architectural guarantee: `/momentum` is the only interface; all setup and upgrade paths flow through it.
 
 ### Version Management
 
-Plugin and flat skills share a single `version.md` at repo root. A standard git pre-commit hook (Husky/pre-commit framework — not a Claude Code hook) validates they match. Release tags version both units together to prevent drift.
+> _[Changed 2026-03-18: Removed plugin-skills sync requirement. Single version source covers all skills.]_
+
+All skills share a single `version.md` at repo root. A standard git pre-commit hook (Husky/pre-commit framework — not a Claude Code hook) validates SKILL.md frontmatter consistency. Release tags version all skills together.
 
 ---
 
@@ -209,6 +211,12 @@ Plugin and flat skills share a single `version.md` at repo root. A standard git 
 - Impetus reads/writes JSON for reliable structured updates
 - Auto-generated `.claude/momentum/ledger-view.md` for human readability
 - Tracks: active story, current phase, last completed action, open threads
+
+**Decision 1d — Installed State: JSON**
+- Location: `.claude/momentum/installed.json`
+- Written by Impetus on first install; updated on each upgrade
+- Tracks: `momentum_version` at last install/upgrade, per-component version + hash
+- Impetus reads this at session start to detect version drift (see Decision 5c for full schema)
 
 **Decision 1c — Findings Ledger: JSON**
 - Location: `.claude/momentum/findings-ledger.json`
@@ -245,14 +253,43 @@ The main conversation CAN spawn multiple subagents simultaneously (confirmed: of
 Architecture:
 - **VFL runs as a flat skill** (main context, not context:fork) — orchestration needs main context to spawn agents
 - **Impetus invokes VFL** from main conversation
-- **VFL spawns all reviewers in parallel** — up to 8 simultaneous subagents (2 per lens × 4 lenses for Full profile)
-- **Reviewers are context:fork agents** defined in `plugin/agents/` — isolated, read-only where appropriate
+- **VFL spawns all reviewers in parallel** — up to 8 simultaneous subagents for Full profile (2 per lens × 4 lenses)
+- **Reviewers are context:fork skills** defined in `skills/momentum-code-reviewer/` — isolated via `context: fork`, read-only via `allowed-tools: Read` in their SKILL.md frontmatter
 - **VFL consolidates results** in main context after all reviewers complete
 - Context window consideration: all reviewer results return to main context; keep reviewer output structured and bounded
-- **Execution mode:** context:fork agents invoked during interactive workflows run as **background subagents** (non-blocking — main conversation continues); automated hook-triggered passes may use foreground (blocking) where dead air is acceptable. Background execution is what enables productive waiting (Decision 4c).
+- **Execution mode:** reviewer subagents run as **background agents** (non-blocking — main conversation continues); automated hook-triggered passes may use foreground (blocking) where dead air is acceptable. Background execution is what enables productive waiting (Decision 4c).
 - **Reviewer output bound:** Reviewers return structured JSON (not free-form prose). VFL framework (vfl-framework-v3.json) specifies per-reviewer output schema. Impetus enforces this to keep context accumulation bounded across all reviewer results.
 
-Updated deployment: VFL skill moves from `plugin/skills/` to `skills/` (flat skill alongside Impetus).
+**context:fork agent count — explicit model:**
+
+> _[Added 2026-03-18: Clarifying how multiple agents are actually created. `context: fork` = one agent per invocation.]_
+
+`context: fork` creates **exactly one** isolated subagent per invocation. Multiple parallel agents = multiple Agent tool calls. VFL's parallel execution works as follows:
+
+- VFL (flat skill, main context) issues **N separate Agent tool calls**, each with `run_in_background: true`
+- Each call spawns one isolated subagent running momentum-code-reviewer with different lens criteria passed via `$ARGUMENTS`
+- The same skill is invoked N times with different parameters — NOT N different skill types
+- **Full profile agent count:** 8 Agent tool calls = 8 concurrent reviewer agents (2 per lens × 4 lenses: Structural Integrity, Factual Accuracy, Coherence & Craft, Domain Fitness)
+- **Checkpoint profile:** 2–4 Agent tool calls (1–2 lenses, 1 reviewer each)
+- **Gate profile:** 1 Agent tool call
+
+architecture-guard is a **separate** skill, invoked independently by Impetus (not inside VFL). It is one additional Agent tool call when pattern drift checking is needed — not part of the VFL reviewer count.
+
+Invocation flow for Full VFL:
+```
+VFL (flat, main context)
+├── Agent tool call 1 → momentum-code-reviewer [structural, reviewer-A] (background)
+├── Agent tool call 2 → momentum-code-reviewer [structural, reviewer-B] (background)
+├── Agent tool call 3 → momentum-code-reviewer [factual, reviewer-A] (background)
+├── Agent tool call 4 → momentum-code-reviewer [factual, reviewer-B] (background)
+├── Agent tool call 5 → momentum-code-reviewer [coherence, reviewer-A] (background)
+├── Agent tool call 6 → momentum-code-reviewer [coherence, reviewer-B] (background)
+├── Agent tool call 7 → momentum-code-reviewer [domain, reviewer-A] (background)
+└── Agent tool call 8 → momentum-code-reviewer [domain, reviewer-B] (background)
+     ↓ (all complete)
+VFL consolidates 8 structured JSON results → sends to Impetus
+```
+
 
 **Decision 3b — Hub-and-Spoke Voice Contract**
 Impetus is the only agent that speaks to the user. All subagents return:
@@ -299,16 +336,18 @@ Dead air is a failure mode, not an acceptable pause.
 
 ### Packaging & Deployment
 
-**Decision 5a — Global Rules Scope: Confirmed Limitation, Accepted**
-Claude Code plugins physically cannot write to `~/.claude/rules/` (verified March 17, 2026).
-Plugin files go to `~/.claude/plugins/cache/` only; no loose file deployment to any `~/.claude/` subdirectory.
+**Decision 5a — Global Rules Deployment: Bundled in Skills, Written by Impetus**
 
-Resolution: Impetus includes a `momentum setup` menu option that interactively copies
-`momentum/rules/*` to `~/.claude/rules/` on first run. Project-scoped rules deploy to
-`.claude/rules/` automatically. Global rules are a one-time interactive setup, not silent
-automation. Promote to automatic if Claude Code plugin capabilities expand.
+> _[Changed 2026-03-18 (twice): First from "plugin limitation" to "skills CLI limitation"; then rewritten — rules are bundled inside the skills package and Impetus writes them directly. No separate setup step. Reason: single /momentum entry point; rules travel with the skill.]_
 
-Update mechanism: `momentum setup` must be re-run after Momentum version upgrades to refresh global rules. Impetus surfaces a version-drift warning at session start when the hash of installed global rules differs from the current version's rules hash — preventing silent drift between installed rules and the current Momentum version.
+`npx skills add` deploys SKILL.md files only — it cannot write to `~/.claude/rules/` directly. Resolution: rules are bundled inside the momentum skill at `references/rules/`. Impetus uses `${CLAUDE_SKILL_DIR}` to locate its own skill directory and writes rules to the appropriate targets using the Write tool:
+
+- `~/.claude/rules/` — global rules (all projects for this user)
+- `.claude/rules/` — project-scoped rules (this project only)
+
+This happens on first invocation and on upgrade — governed by the manifest/installed state mechanism defined in Decision 5c. No separate CLI, no separate command. The UX interaction pattern (when to prompt, what to show) is defined in the UX specification.
+
+Update mechanism: Impetus compares the hash of installed global rules against the bundled rules in `${CLAUDE_SKILL_DIR}/references/rules/` using git blob SHA — zero extra tooling. See Decision 5c for the full version tracking schema.
 
 **Decision 5b — BMAD Enhancement Touch Points (MVP)**
 Impetus proactively enhances BMAD workflow boundaries. Each touchpoint is classified: **Gate** (blocks progress) or **Proposal** (user-discretionary).
@@ -325,6 +364,63 @@ The dev-story acceptance test gate is the only hard gate at MVP — quality guar
 Long-term: evaluate all BMAD workflows and agents for Momentum enhancement opportunities.
 Goal is that running any BMAD workflow inside Momentum automatically inherits provenance,
 enforcement, flywheel, and versioning without workflow authors needing to explicitly add it.
+
+**Decision 5c — Installation & Upgrade Manifest**
+
+> _[Added 2026-03-18: Defines the data structures that drive install, upgrade, and version drift detection. The UX interaction for these operations (when to prompt, how to present, what to show) is defined in the UX specification — not here.]_
+
+Two files govern Momentum's install and upgrade lifecycle:
+
+**`skills/momentum/references/momentum-manifest.json`** — bundled with the skills package; the authoritative record of what this Momentum version includes:
+
+```json
+{
+  "version": "1.0.0",
+  "components": [
+    { "id": "rules-global", "type": "rules", "scope": "global",
+      "target": "~/.claude/rules/",
+      "files": ["authority-hierarchy.md", "anti-patterns.md", "model-routing.md"] },
+    { "id": "rules-project", "type": "rules", "scope": "project",
+      "target": ".claude/rules/",
+      "files": ["architecture-conventions.md"] },
+    { "id": "hooks", "type": "config",
+      "source": "hooks-config.json", "target": ".claude/settings.json" },
+    { "id": "mcp", "type": "config",
+      "source": "mcp-config.json", "target": ".mcp.json" }
+  ],
+  "upgrade_notes": {
+    "1.0.0": "Initial install — all components",
+    "1.1.0": {
+      "from": ">=1.0.0",
+      "summary": "Added domain-fitness lens; updated MCP config",
+      "changed_components": ["rules-global", "mcp"]
+    }
+  }
+}
+```
+
+**`.claude/momentum/installed.json`** — written to the target project; records what was installed and at what version:
+
+```json
+{
+  "momentum_version": "1.0.0",
+  "installed_at": "2026-03-18T00:00:00Z",
+  "components": {
+    "rules-global":  { "version": "1.0.0", "hash": "<git-blob-sha>" },
+    "rules-project": { "version": "1.0.0", "hash": "<git-blob-sha>" },
+    "hooks":         { "version": "1.0.0" },
+    "mcp":           { "version": "1.0.0" }
+  }
+}
+```
+
+**Mechanisms:**
+- **First install** — Impetus reads manifest, installs all components, writes `installed.json`
+- **Session-start check** — Impetus compares `manifest.version` vs `installed.json.momentum_version`; per-component hashes detect manual drift (user edited an installed file)
+- **Upgrade** — Impetus reads `upgrade_notes` for the version delta, applies only `changed_components`, updates `installed.json`
+- **Hash comparison** — git blob SHA (`git hash-object`) on bundled file vs. installed file; zero extra tooling
+
+What the UX specification defines: when Impetus presents these checks (session start? on demand?), how it prompts the user, what it shows for upgrade diffs, and how it handles partial or failed installs.
 
 ---
 
@@ -351,22 +447,20 @@ enforcement, flywheel, and versioning without workflow authors needing to explic
 
 **Skills (flat):**
 ```
-momentum-[concept]          e.g. momentum-impetus, momentum-upstream-fix
+momentum                    ← Entry point only (exception: bare name for /momentum UX)
+momentum-[concept]          e.g. momentum-vfl, momentum-upstream-fix
 momentum-[verb]-[noun]      e.g. momentum-create-story, momentum-dev-story
 ```
-Lowercase, hyphen-separated, `momentum-` prefix for all Momentum skills.
+Lowercase, hyphen-separated, `momentum-` prefix for all skills except the entry point (`momentum`).
 BMAD skills retain their existing names — no renaming.
 
-**Plugin skills:**
+**context:fork skills (verifier/enforcer subagents):**
 ```
-[concept]                   e.g. vfl, validate (namespaced by plugin as momentum:vfl)
+momentum-[role]             e.g. momentum-code-reviewer, momentum-architecture-guard
 ```
-No prefix needed — plugin namespace provides isolation.
+Same `momentum-` prefix as flat skills — distinguished by `context: fork` in SKILL.md frontmatter, not by naming convention.
 
-**Agents:**
-```
-[role].agent.md             e.g. code-reviewer.agent.md, architecture-guard.agent.md
-```
+> _[Changed 2026-03-18: Removed "Plugin skills" and "Agents (.agent.md)" naming sections. code-reviewer and architecture-guard are now `context: fork` SKILL.md files following flat skill naming. Reason: skills-only deployment model.]_
 
 **Rules files:**
 ```
@@ -401,22 +495,24 @@ disable-model-invocation: true  # prevent accidental auto-trigger of heavy skill
 
 **Workflow skills with heavy reference content use `references/` subdirectory:**
 ```
-skills/momentum-impetus/
+skills/momentum/
 ├── SKILL.md              ← Instructions + frontmatter (under 500 lines)
 └── references/
     ├── practice-overview.md
     └── phase-guide.md    ← Loaded on demand, not at startup
 ```
 
-**Agent definitions (.agent.md) MUST include:**
+**context:fork skills (verifier/enforcer subagents) MUST include:**
+
+> _[Changed 2026-03-18: Replaced `.agent.md` pattern with `context: fork` SKILL.md pattern. code-reviewer and architecture-guard are now skills, not plugin agents. Reason: skills-only deployment model.]_
+
 ```yaml
 ---
-name: [role]
-description: "[What this agent does and when Impetus invokes it]"
-model: claude-opus-4-6          # agents get flagship — cognitive hazard rule
-tools:
-  - Read                        # list allowed tools explicitly
-  # code-reviewer: Read only — never Edit, Write, Bash
+name: momentum-[role]
+description: "[What this skill does and when Impetus invokes it — under 150 chars]"
+model: claude-opus-4-6          # verifiers get flagship — cognitive hazard rule
+context: fork                   # isolated subagent context — no conversation history
+allowed-tools: Read             # code-reviewer and architecture-guard: Read only — never Edit, Write, Bash
 ---
 ```
 
@@ -570,7 +666,7 @@ Good: `"Run validate-fix-loop validation on an artifact. Profiles: gate/checkpoi
 - Keep SKILL.md descriptions under 150 characters
 
 **Pattern enforcement tiers:**
-- Tier 1: SKILL.md frontmatter validated by `claude plugin validate` and pre-commit hook
+- Tier 1: SKILL.md frontmatter validated by pre-commit hook (Husky/pre-commit framework)
 - Tier 2: VFL Structural Integrity lens checks format compliance on generated artifacts
 - Tier 3: These patterns loaded as rules in every agent session via `.claude/rules/`
 
@@ -580,33 +676,36 @@ Good: `"Run validate-fix-loop validation on an artifact. Profiles: gate/checkpoi
 
 ### Repository Structure
 
+> _[Changed 2026-03-18: Removed `plugin/` directory entirely. code-reviewer and architecture-guard moved to `skills/` as `context: fork` SKILL.md files. `.claude/settings.json` now carries committed always-on hook definitions. Reason: skills-only deployment model.]_
+
 ```
 momentum/                                    ← Root
 ├── README.md
 ├── LICENSE
 ├── CLAUDE.md
-├── version.md                               ← Single version source for all units
+├── version.md                               ← Single version source for all skills
 │
-├── plugin/                                  ← Unit 1: Claude Code Plugin
-│   ├── .claude-plugin/
-│   │   └── plugin.json                      ← name, version, description, paths
-│   ├── agents/
-│   │   ├── code-reviewer.agent.md           ← Read-only pure verifier
-│   │   └── architecture-guard.agent.md      ← Pattern drift detector
-│   ├── hooks/
-│   │   └── hooks.json                       ← All Tier 1 deterministic enforcement
-│   └── .mcp.json                            ← Git MCP + findings MCP config
-│
-├── skills/                                  ← Unit 2: Standard Agent Skills (flat)
-│   ├── momentum-impetus/
-│   │   ├── SKILL.md                         ← Orchestrating agent
+├── skills/                                  ← All skills: flat + context:fork
+│   ├── momentum/
+│   │   ├── SKILL.md                         ← Orchestrating agent (flat skill)
 │   │   └── references/
 │   │       ├── practice-overview.md
-│   │       └── phase-guide.md
+│   │       ├── phase-guide.md
+│   │       ├── momentum-manifest.json       ← Install/upgrade manifest (versions + component list)
+│   │       ├── rules/                       ← Bundled rules (written to ~/.claude/rules/ on install)
+│   │       │   ├── authority-hierarchy.md
+│   │       │   ├── anti-patterns.md
+│   │       │   └── model-routing.md
+│   │       ├── hooks-config.json            ← Hook config template (written to .claude/settings.json)
+│   │       └── mcp-config.json             ← MCP config template (written to .mcp.json)
 │   ├── momentum-vfl/
-│   │   ├── SKILL.md                         ← Validate-fix-loop orchestrator
+│   │   ├── SKILL.md                         ← Validate-fix-loop orchestrator (flat skill)
 │   │   └── references/
 │   │       └── vfl-framework-v3.json        ← Dimension taxonomy + profiles
+│   ├── momentum-code-reviewer/
+│   │   └── SKILL.md                         ← context:fork, allowed-tools: Read — pure verifier
+│   ├── momentum-architecture-guard/
+│   │   └── SKILL.md                         ← context:fork, allowed-tools: Read — pattern drift detector
 │   ├── momentum-upstream-fix/
 │   │   ├── SKILL.md
 │   │   └── steps/
@@ -619,7 +718,7 @@ momentum/                                    ← Root
 │   └── momentum-dev-story/
 │       └── SKILL.md
 │
-├── rules/                                   ← Unit 3: Advisory rules (source)
+├── rules/                                   ← Advisory rules source
 │   ├── authority-hierarchy.md
 │   ├── anti-patterns.md
 │   └── model-routing.md
@@ -641,41 +740,43 @@ momentum/                                    ← Root
 │
 ├── _bmad/                                   ← BMAD framework (managed by BMAD)
 │
-└── .claude/                                 ← Claude Code project config
-    ├── rules/                               ← Project-scoped rules (symlinked from rules/)
+└── .claude/                                 ← Claude Code project config (committed to repo)
+    ├── rules/                               ← Project-scoped rules (committed; symlinked from rules/)
     ├── skills/                              ← BMAD skills (managed by BMAD installer)
-    └── settings.json
+    └── settings.json                        ← Always-on hook definitions (Tier 1 enforcement; committed)
 ```
 
 ---
 
-### Installed Structure (after `momentum setup`)
+### Installed Structure (after `npx skills add` + first `/momentum` invocation)
+
+> _[Changed 2026-03-18 (twice): Removed plugin cache; then removed `momentum setup` step — Impetus writes all config files on first run from bundled references/. Reason: single entry point model.]_
 
 ```
 ~/.claude/                                   ← Global Claude Code config
 ├── rules/
-│   ├── authority-hierarchy.md               ← Copied by `momentum setup` (one-time)
+│   ├── authority-hierarchy.md               ← Written by Impetus on first run (from bundled references/)
 │   ├── anti-patterns.md
 │   └── model-routing.md
-└── plugins/
-    └── cache/
-        └── momentum-plugin/                 ← Plugin files (via /plugin install)
-            ├── agents/
-            ├── hooks/
-            └── .mcp.json
+└── skills/
+    └── (optional: if installed with -g flag)
 
 [project-root]/
 └── .claude/
     ├── skills/
-    │   ├── momentum-impetus/                ← Installed via npx skills add
+    │   ├── momentum/                ← Installed via npx skills add
     │   ├── momentum-vfl/
+    │   ├── momentum-code-reviewer/          ← context:fork skill (pure verifier)
+    │   ├── momentum-architecture-guard/     ← context:fork skill (pattern drift)
     │   ├── momentum-upstream-fix/
     │   ├── momentum-create-story/
     │   └── momentum-dev-story/
+    ├── settings.json                        ← Always-on hooks (written by Impetus on first run)
     └── momentum/                            ← Per-project Momentum state
         ├── ledger.json                      ← Session ledger (Impetus reads/writes)
         ├── ledger-view.md                   ← Human-readable view (auto-generated)
-        └── findings-ledger.json             ← Quality findings (flywheel writes)
+        ├── findings-ledger.json             ← Quality findings (flywheel writes)
+        └── installed.json                   ← Install/upgrade state (version + per-component hashes)
 ```
 
 ---
@@ -705,19 +806,22 @@ momentum/                                    ← Root
 
 ### Requirements to Structure Mapping
 
+> _[Changed 2026-03-18: Removed plugin rows. code-reviewer and architecture-guard now install as `context:fork` skills to `.claude/skills/`. Hooks, rules, and MCP config are bundled in `momentum/references/` and written by Impetus on first run. Reason: skills-only, single-entry-point model.]_
+
 | Subsystem | Source File(s) | Installed Location |
 |---|---|---|
-| Impetus | `skills/momentum-impetus/` | `.claude/skills/momentum-impetus/` |
+| Impetus | `skills/momentum/` | `.claude/skills/momentum/` |
 | VFL | `skills/momentum-vfl/` | `.claude/skills/momentum-vfl/` |
 | Upstream Fix / Flywheel | `skills/momentum-upstream-fix/` | `.claude/skills/momentum-upstream-fix/` |
-| code-reviewer | `plugin/agents/code-reviewer.agent.md` | `~/.claude/plugins/cache/momentum-plugin/agents/` |
-| architecture-guard | `plugin/agents/architecture-guard.agent.md` | `~/.claude/plugins/cache/momentum-plugin/agents/` |
-| Hook infrastructure | `plugin/hooks/hooks.json` | Active via plugin registration in settings.json |
-| Global rules | `rules/*.md` | `~/.claude/rules/` (manual, via `momentum setup`) |
-| Project rules | `rules/*.md` (symlinked) | `.claude/rules/` |
-| MCP servers | `plugin/.mcp.json` | Active via plugin |
+| code-reviewer | `skills/momentum-code-reviewer/SKILL.md` | `.claude/skills/momentum-code-reviewer/` |
+| architecture-guard | `skills/momentum-architecture-guard/SKILL.md` | `.claude/skills/momentum-architecture-guard/` |
+| Hook infrastructure | `skills/momentum/references/hooks-config.json` | `.claude/settings.json` (written by Impetus on first run) |
+| Global rules | `skills/momentum/references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
+| Project rules | `skills/momentum/references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
+| MCP servers | `skills/momentum/references/mcp-config.json` + `mcp/` source | `.mcp.json` (written by Impetus on first run) |
 | Session ledger | (runtime) | `.claude/momentum/ledger.json` |
 | Findings ledger | (runtime) | `.claude/momentum/findings-ledger.json` |
+| Install state | (runtime) | `.claude/momentum/installed.json` |
 
 ---
 
@@ -729,11 +833,11 @@ momentum/                                    ← Root
 
 **Skills ↔ Claude Code:** SKILL.md frontmatter matching at startup; full skill loaded on invocation; `references/` loaded on demand
 
-**Plugin ↔ Claude Code:** Registered in `settings.json`; hooks merge with existing hook config; agents appear in `/agents`; MCP servers register alongside existing
+**Hooks ↔ Claude Code:** Defined in `.claude/settings.json` (committed to repo); merge with any existing project hook config automatically on session start
 
 **MCP Servers ↔ Agents:** Git MCP provides file history and blame for provenance; Findings MCP provides structured read/write of findings-ledger.json
 
-**Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start. Placement: implemented as `references/provenance-scan.md` within `momentum-impetus/` — runs as part of session orientation, not a separate skill.
+**Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start. Placement: implemented as `references/provenance-scan.md` within `momentum/` — runs as part of session orientation, not a separate skill.
 
 ---
 
@@ -750,16 +854,16 @@ Adversarial validation conducted per the dual-reviewer pattern from VFL framewor
 | A-1: context:fork + productive waiting contradiction | Revised to Low | Resolved: foreground/background is orthogonal to context:fork isolation. Background subagents confirmed in Claude Code docs. Decision 4c updated. |
 | A-2: Global rules auto-load stated as unconditional | High | Fixed: subsystem 4 now states conditional on `momentum setup` |
 | A-3: Copied global rules go stale | High | Fixed: update mechanism added to Decision 5a; Impetus surfaces version-drift warning |
-| A-4: Plugin-agent invocation assumed, not verified | High | Fixed: Spike required added to Technical Constraints |
+| A-4: Plugin-agent invocation assumed, not verified | High | Resolved (2026-03-18): `context: fork` is a SKILL.md frontmatter field, not a plugin-only feature. code-reviewer and architecture-guard are `context: fork` SKILL.md files — no plugin required. Spike eliminated. Plugin model dropped entirely. |
 | A-5: VFL reviewer output unbounded | Medium | Fixed: reviewer output bound added to Decision 3a |
 | A-6: Gate vs. proposal distinction undefined | Medium | Fixed: Decision 5b table now includes Type column; one hard gate identified |
-| E-1: Provenance scanner has no home | Low | Fixed: placed in momentum-impetus/references/provenance-scan.md |
+| E-1: Provenance scanner has no home | Low | Fixed: placed in momentum/references/provenance-scan.md |
 | E-2: Custom MCP server has no source location | Low | Fixed: mcp/findings-server/ added to repository structure |
 | E-4: Version pre-commit hook type ambiguous | Low | Fixed: clarified as standard git pre-commit hook (Husky/pre-commit framework) |
 | A-7: Confidence weighting unresolved | Low | Fixed: implementation-time decision noted in Decision 3b |
 
 ### Architecture Status
 
-**Complete.** All 10 subsystems covered, all 6 NFRs addressed, all 10 potential conflict points specified, all adversarial findings resolved. One spike identified (plugin-agent invocation mechanism) — must be verified before build.
+**Complete.** All 10 subsystems covered, all 6 NFRs addressed, all 10 potential conflict points specified, all adversarial findings resolved. Plugin model eliminated; all deployment via standard Agent Skills only (revised 2026-03-18). Previously-noted plugin-agent invocation spike is resolved — `context: fork` is a SKILL.md feature requiring no plugin.
 
 **Ready for:** Epic and story creation.
