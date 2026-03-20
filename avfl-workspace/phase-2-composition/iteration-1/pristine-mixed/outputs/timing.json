@@ -1,0 +1,6 @@
+{
+  "total_tokens": 42403,
+  "duration_ms": 264134,
+  "total_duration_seconds": 264.1,
+  "note": "Re-run on fixed fixture. Score: 95/100 exactly (borderline CLEAN). Original run was on fixture with 2 genuine embedded errors."
+}

@@ -1,0 +1,6 @@
+{
+  "total_tokens": 55845,
+  "duration_ms": 460450,
+  "total_duration_seconds": 460.5,
+  "note": "Second trial. First trial: 38977 tokens, 241.7s, iter1 score 87, all MEDIUM confidence. This trial: iter1 score 80, 3 HIGH confidence findings. Significant variance across both score and confidence distribution."
+}

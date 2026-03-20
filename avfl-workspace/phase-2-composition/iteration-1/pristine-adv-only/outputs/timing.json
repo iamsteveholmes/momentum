@@ -1,0 +1,6 @@
+{
+  "total_tokens": 37622,
+  "duration_ms": 180562,
+  "total_duration_seconds": 180.6,
+  "note": "Re-run on fixed fixture. Original run (37413 tokens, 161.4s) was on fixture with 2 genuine embedded errors."
+}
