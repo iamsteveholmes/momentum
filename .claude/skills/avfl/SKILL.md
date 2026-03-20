@@ -24,7 +24,38 @@ Collect these before starting. If any are missing, ask before proceeding.
 | `output_to_validate` | Yes | — | The content or file path to validate |
 | `source_material` | No | null | Ground truth to check against. Pass original source through the entire pipeline — never let intermediate steps compress it |
 | `profile` | No | `full` | `gate`, `checkpoint`, or `full` |
-| `validation_focus` | No | null | Narrow which dimensions to prioritize |
+| `stage` | No | `final` | Artifact maturity: `draft`, `checkpoint`, or `final`. Controls what absence counts as a gap — see Stage section below |
+| `skepticism` | No | `3` | Reviewer intensity: `1` (conservative), `2` (balanced), `3` (aggressive). Controls how hard reviewers search and their default assumption |
+
+---
+
+## Stage
+
+Controls what absence counts as a finding — the maturity expectations for the artifact at the time of validation. Independent of `profile`.
+
+| Value | Completeness expectation | When to use |
+|---|---|---|
+| `draft` | Expected gaps are not findings. Evaluate only what IS present — is it coherent and internally consistent? Do not penalize for sections not yet written. | Early-stage artifacts where incompleteness is intentional |
+| `checkpoint` | Major sections must be present. Implementation details may still be incomplete. Flag major structural gaps; don't penalize missing fine-grained specs. | Mid-workflow artifacts where primary concerns should be addressed |
+| `final` | All required sections must be complete. Flag all gaps. | Deliverables intended for handoff, human consumption, or downstream systems |
+
+Default: `final`. When invoking AVFL from within a skill workflow, set `stage` to match the artifact's maturity at that workflow step.
+
+---
+
+## Skepticism
+
+Controls how intensely reviewers search and their default assumption about the content. Applies equally to both reviewer styles (Enumerator and Adversary). The reviewer style describes HOW they read; skepticism describes HOW HARD they look.
+
+| Level | Label | Approach | Re-examine if clean |
+|---|---|---|---|
+| `1` | Conservative | Report only what evidence clearly shows is wrong. Default assumption: content is correct. Skip borderline findings. | No — clean is clean |
+| `2` | Balanced | Follow leads that seem promising. Give benefit of the doubt on borderline cases. | Optional |
+| `3` | Aggressive | Look for what feels off. Follow hunches, then verify. Default assumption: something might be wrong. | Yes — once |
+
+Default: `3` (current behavior).
+
+**Consecutive-pass schedule:** For fix loops, consider declining skepticism across iterations — `3` on iteration 1 (cast wide net), `2` on iteration 2 (verify fixes, catch regressions), `1` on iteration 3+ (confirm only obvious issues). This converges the loop faster and avoids the re-validator generating new borderline findings in already-fixed content. Specify this as a workflow instruction when embedding AVFL in a skill.
 
 ---
 
@@ -75,11 +106,13 @@ For full dimension definitions, questions, common failure modes, and examples, s
 
 ## Dual-Reviewer Framings (full profile only)
 
-Each lens gets two reviewers with deliberately different approaches. The diversity of framings is the mechanism — same-prompt reviewers capture far less benefit.
+Each lens gets two reviewers with deliberately different reading styles. The diversity of approach is the mechanism — same-prompt reviewers capture far less benefit.
 
-**Enumerator** — Systematic and methodical. Derives explicit checks from the dimensions, enumerates them, verifies each in order. Mechanical, thorough, literal. Works through content section by section.
+**Enumerator** — Systematic and methodical. Derives explicit checks from the dimensions, enumerates them, verifies each in order. Works through content section by section.
 
-**Adversary** — Intuitive and skeptical. Reads content as someone trying to find what's wrong. Follows hunches and then verifies with evidence. Works holistically across the full artifact.
+**Adversary** — Intuitive and pattern-aware. Reads holistically, looking for what feels off or inconsistent. Follows hunches, then verifies with evidence. Works across the full artifact, not section by section.
+
+These styles describe HOW each reviewer reads. `skepticism` controls HOW HARD both reviewers look — it applies equally to both framings and is the primary lever for adjusting aggressiveness across iterations or workflow stages.
 
 Cross-check confidence during consolidation:
 - Both found it → **HIGH confidence** — almost certainly a real issue. Keep with highest severity from either reviewer.
@@ -145,7 +178,7 @@ These prevent both under-reporting (missed issues) and over-reporting (hallucina
 
 - **Evidence required** — every finding must quote the specific text, value, or section that is wrong. No evidence = discard.
 - **Method over attitude** — systematic enumeration and verification, not adversarial hostility.
-- **No quotas** — if the output is clean in your lens, say so. Re-examine once before reporting clean, but don't manufacture issues.
+- **No quotas** — if the output is clean in your lens, say so. Whether to re-examine before reporting clean depends on skepticism level — see the skepticism instruction you received.
 - **Scope discipline** — stay within your lens. Note out-of-scope issues briefly but don't deep-dive — another lens owns it.
 - **Conservative flagging** — if you find evidence it's wrong, flag it. If you can't find evidence either way, don't flag it. Uncertainty is not a finding.
 - **Severity honesty** — assign based on actual impact. Don't inflate severity to force failure or deflate to force a pass.

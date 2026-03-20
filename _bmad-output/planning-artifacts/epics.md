@@ -4,7 +4,7 @@ stepsCompleted:
   - step-02-design-epics
   - step-03-epic-1-stories
   - step-03-epic-2-stories-vfl-gate-applied
-  - step-03-epic-3-stories
+  - step-03-epic-3-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -761,7 +761,8 @@ So that formatting violations never accumulate and I never have to run a separat
 
 **Given** the project has no lint/format tool configured
 **When** the PostToolUse hook fires
-**Then** it skips silently — no output, no false failure
+**Then** it outputs: `[lint] ◦ skipped — no lint tool configured`
+**And** exits successfully — no false failure
 
 ---
 
@@ -784,8 +785,9 @@ So that test integrity and critical config are preserved automatically — no ac
 **And** the policy name and reason are specific (e.g. "acceptance-test-dir: no modification after ATDD phase begins")
 
 **Given** a PreToolUse hook allows a write (non-protected path)
-**When** the hook fires
-**Then** it adds no output — protection passes are silent (only failures announced)
+**When** the hook fires (UX-DR3)
+**Then** it outputs: `[file-protection] ✓ [path] — ok`
+**Note:** One compact line per write — UX-DR3 requires every hook fire to produce output; pass output must stay minimal to avoid noise on frequent writes
 
 **Given** `.claude/momentum/installed.json` contains a project-customized protected path list
 **When** the PreToolUse hook evaluates a write
@@ -821,7 +823,7 @@ So that I never close a session with failing tests or unresolved lint errors.
 **Given** the Stop hook runs and finds lint failures (UX-DR3)
 **When** the hook completes
 **Then** it outputs: `[stop-gate] ✗ lint: [N issues] — [file:line of first] — fix before closing`
-**And** the session is held open
+**And** the hook exits with a non-zero exit code to signal Claude Code that session termination should not proceed
 
 **Given** the Stop hook runs tests and they pass (UX-DR3)
 **When** the hook completes
@@ -830,7 +832,7 @@ So that I never close a session with failing tests or unresolved lint errors.
 **Given** the Stop hook runs tests and they fail (UX-DR3)
 **When** the hook completes
 **Then** it outputs: `[stop-gate] ✗ tests: [N failed] — [failing test name] — [failure summary]`
-**And** the session is held open
+**And** the hook exits with a non-zero exit code to signal Claude Code that session termination should not proceed
 
 **Given** the Stop hook runs and the project has no test runner configured
 **When** the test step would run
@@ -870,8 +872,9 @@ So that practice standards are enforced consistently in primary sessions and all
 
 **Given** any Momentum workflow definition
 **When** reviewed for Claude Code API references (NFR8)
-**Then** no workflow definition imports or references any Claude Code-specific API directly
-**And** all workflow steps invoke protocol interfaces — not tool-specific implementations
+**Then** no workflow definition invokes a Claude Code tool by name (e.g. no `Bash(git ...)`, no `Edit`, no `Read` called from workflow step logic)
+**And** all workflow steps invoke protocol types by name (e.g. `code-reviewer:review`, `test-runner:run`) — the protocol implementation is resolved from the project config, not hard-coded
+**And** "Claude Code-specific API" is defined as: any tool from the Claude Code tool set invoked by name in workflow SKILL.md instructions rather than via a protocol interface lookup
 
 ---
 
@@ -883,20 +886,21 @@ So that the right model is used for every task automatically — no manual overr
 
 **Acceptance Criteria:**
 
-**Given** the model routing guide exists at `skills/momentum/references/model-routing-guide.md`
+**Given** the model routing guide exists at `module/canonical/resources/model-routing-guide.md` (canonical source; also bundled into `skills/momentum/references/` for runtime access)
 **When** a contributor creates a new Momentum skill or agent (FR23)
 **Then** they set `model:` and `effort:` frontmatter according to the routing guide
-**And** the routing guide documents the default strategy: current Sonnet-tier at medium effort for general skills; Opus for complex reasoning or outputs without automated validation (cognitive-hazard tasks); Haiku for constrained tasks with downstream automated validation
+**And** the routing guide documents the default strategy: Sonnet 4.6 at medium effort for general skills; Opus for complex reasoning or outputs without automated validation (cognitive-hazard tasks); Haiku for constrained tasks with downstream automated validation
 
 **Given** a Momentum skill's `model:` and `effort:` frontmatter is set
 **When** Claude Code invokes the skill
-**Then** the specified model tier is used for that skill's execution
-**And** no developer override is required to get correct model behavior
+**Then** the `model:` frontmatter value is used as the default model for that skill's execution
+**And** higher-priority settings (e.g. `CLAUDE_CODE_SUBAGENT_MODEL` env var, `availableModels` project configuration) take precedence if set — frontmatter is the default, not an absolute guarantee
+**And** no developer override is required in the normal case to get correct model behavior
 
 **Given** the model routing guide is updated (e.g. a new model tier releases)
 **When** the guide is applied to existing skills
-**Then** all affected skills have their frontmatter updated to reflect the new guidance
-**And** the guide is the single source of truth — no model strings exist outside frontmatter and the guide itself
+**Then** all Momentum SKILL.md files have their `model:` frontmatter updated to reflect the new guidance
+**And** the guide is reviewed as the source of truth — changes to model names happen first in the guide, then propagate to frontmatter
 
 **Given** a Momentum skill is deployed in a non-Claude Code tool (NFR6)
 **When** the tool parses `model:` and `effort:` frontmatter
