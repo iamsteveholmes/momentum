@@ -13,6 +13,15 @@ stepsCompleted:
   - step-09-functional
   - step-10-nonfunctional
   - step-11-polish
+  - step-e-01-discovery
+  - step-e-02-review
+  - step-e-03-edit
+lastEdited: '2026-03-20'
+editHistory:
+  - date: '2026-03-20'
+    changes: 'Removed plugin deployment model; replaced with skills-only architecture (npx skills add momentum/momentum -a claude-code + Impetus interactive setup). Updated FR2, NFR4, NFR7, NFR9, NFR10, NFR11, Journey 1 narrative, deployment table, repository structure, installation architecture, implementation considerations.'
+  - date: '2026-03-20'
+    changes: 'Disambiguated FR2 (solo first-install) and FR5 (team member joining); added FR2b (current version → orientation) and FR2c (version mismatch → upgrade); decomposed FR3 into FR3a/FR3b/FR3c (upgrade mechanism); corrected NFR1 to ≤150 characters; removed duplicate token constraint from NFR4; updated NFR7 Tier 3 validation method; marked J1 ✓ for global install detection in Journey Requirements Summary; corrected all npx skills add momentum occurrences to full org/package -a adapter form throughout.'
 classification:
   projectType: developer_tool
   domain: agentic-engineering
@@ -69,7 +78,7 @@ Momentum is a practice system for agentic engineering — the discipline of dire
 
 Industry data is unambiguous: AI code generation without governance fails. 67.3% of AI-generated PRs are rejected (vs 15.6% for human code). AI-generated code produces 1.7x more issues per PR. Experienced developers are 19% slower with AI tools while believing they're 20% faster. Organizations see PR volume increase 98% but delivery metrics stay flat. The problem is not the tools. The problem is the absence of a verification architecture, a quality discipline, and a continuous improvement practice around them.
 
-Momentum provides that missing layer through eight composable principles: spec-driven development, an authority hierarchy (specifications > tests > code — encoded into machine-readable `derives_from` chains enforced by tooling), producer-verifier separation, an evaluation flywheel that traces failures upstream via navigable `derives_from` chains, three tiers of enforcement (deterministic hooks, structured workflows, advisory rules), cost as a managed dimension (the cognitive hazard rule: for outputs without automated validation, use flagship models — invisible errors cost more than the price premium), provenance as infrastructure, and protocol-based integration (each major capability defines an interface so implementations can be substituted across teams, tools, and environments). The system is delivered as standard Agent Skills — installable via `npx skills`, portable across 17+ AI coding tools, with Claude Code-specific enforcement (hooks, subagents, rules) bundled as a plugin for full Tier 1 deterministic governance.
+Momentum provides that missing layer through eight composable principles: spec-driven development, an authority hierarchy (specifications > tests > code — encoded into machine-readable `derives_from` chains enforced by tooling), producer-verifier separation, an evaluation flywheel that traces failures upstream via navigable `derives_from` chains, three tiers of enforcement (deterministic hooks, structured workflows, advisory rules), cost as a managed dimension (the cognitive hazard rule: for outputs without automated validation, use flagship models — invisible errors cost more than the price premium), provenance as infrastructure, and protocol-based integration (each major capability defines an interface so implementations can be substituted across teams, tools, and environments). The system is delivered as standard Agent Skills — installable via `npx skills add momentum/momentum -a claude-code`, portable across 17+ AI coding tools, with Claude Code-specific enforcement (hooks, subagents, rules) configured by Impetus on first run for full Tier 1 deterministic governance.
 
 The primary user is a solo developer using AI coding tools who has experienced the initial thrill of speed and hit the wall: code that looks right but isn't, patterns that drift without anyone noticing, and growing unease about accumulating debt they can't see. Momentum is designed for this person first, with team adaptation as a future consideration.
 
@@ -85,7 +94,7 @@ The primary user is a solo developer using AI coding tools who has experienced t
 
 - **Project Type:** Developer Tool (practice system delivered as Agent Skills)
 - **Domain:** Agentic Engineering
-- **Complexity:** Medium — no regulatory compliance, but multi-tool portability, evolving ecosystem dependencies (BMAD, Agent Skills standard, Claude Code plugins), and the meta-nature of a practice that governs practices
+- **Complexity:** Medium — no regulatory compliance, but multi-tool portability, evolving ecosystem dependencies (BMAD, Agent Skills standard), and the meta-nature of a practice that governs practices
 - **Project Context:** Greenfield
 
 ## Success Criteria
@@ -119,7 +128,7 @@ These metrics apply when Momentum is used by team members beyond the solo develo
 
 ### Technical Success
 
-- **Day 1: Deployable skill package installs and runs.** A prototype skill package — with hooks, rules, and at least one functional skill — deploys via `npx skills` (or plugin install for full enforcement). It doesn't need to be feature-complete. It needs to be *installable and usable*. If it can't be installed, nothing else can be verified.
+- **Day 1: Deployable skill package installs and runs.** A prototype skill package — with hooks, rules, and at least one functional skill — deploys via `npx skills add momentum/momentum -a claude-code`; Impetus handles global configuration interactively on first run. It doesn't need to be feature-complete. It needs to be *installable and usable*. If it can't be installed, nothing else can be verified.
 - **Day 2+: Iterate on functionality in real use.** The developer uses Momentum with other active projects concurrently. Real work is the test harness. Every feature is validated by using it, not by synthetic testing.
 - **Hooks fire correctly** — lint on edit, test protection on acceptance tests, quality gate on stop
 - **Provenance tracking works** — artifacts reference sources, dependencies are visible, staleness gets flagged
@@ -149,7 +158,7 @@ These metrics apply when Momentum is used by team members beyond the solo develo
 
 **Opening Scene:** Steve has been using BMAD V6 with Claude Code for months. The initial creation of any project goes great — specs are sharp, code generation is fast, the first few stories feel like magic. But it gets worse every day after that. He constantly fights outdated docs — decisions made in the brief that were superseded by research, but nobody flagged the brief. Specs get updated in ways that don't match his expectations. Code does things he wasn't aware of because the AI followed a pattern from three stories ago that was never corrected. He can *see* the debt accumulating. It's not invisible — it's visible and exhausting, and the effort to keep everything aligned grows instead of shrinking.
 
-**Rising Action:** Steve runs `npx skills add momentum -a claude-code` and installs the plugin. The orchestrating agent greets him, shows a menu of available workflows, and understands what practice artifacts already exist in his project. He picks a current side project as the first test bed. The hooks wire up immediately — auto-lint fires on his first edit, the acceptance test directory gets protected. The rules auto-load in every session.
+**Rising Action:** Steve runs `npx skills add momentum/momentum -a claude-code` and then `/momentum`. Impetus greets him, explains what it needs to configure — global rules, enforcement hooks, MCP servers — and with his confirmation sets everything up. Impetus then shows a menu of available workflows and understands what practice artifacts already exist in his project. He picks a current side project as the first test bed. The hooks wire up immediately — auto-lint fires on his first edit, the acceptance test directory gets protected. The rules auto-load in every session.
 
 He starts a story. The orchestrating agent shows him where he is in the process — a clear ASCII status graphic: **[Spec Review] → ATDD → Implement → Review → Flywheel**. He reviews the spec. When implementation completes, the agent prompts him: "Implementation complete. Ready to fire off the code-reviewer for adversarial review? While it runs, here's a summary of what was built..." The code-reviewer launches in a separate context. While it works, Steve reads a concise explanation of what the code does — not the code itself, but what it accomplishes, what architectural decisions it made, and how it maps to the acceptance criteria. He'd half-forgotten the details of the third AC. The summary brings him back in. The status graphic updates: **Spec Review → ATDD → Implement → [Review] → Flywheel**.
 
@@ -157,7 +166,7 @@ He starts a story. The orchestrating agent shows him where he is in the process 
 
 **Resolution:** By the end of the first sprint, Steve has completed a full story cycle with the practice: spec → Gherkin ATDD → implement → code review → flywheel. At every step he knew where he was, what the agent was doing, and what came next. The code review surfaces a finding. The flywheel explains the issue and suggests tracing upstream. He agrees. The system learned — and so did he.
 
-**Requirements revealed:** Skill installation, plugin bundling, orchestrating agent with menu, hook infrastructure, provenance/staleness detection, code-reviewer subagent (prompted/automatic, not manual), visual status graphics showing current phase and next phase, human-readable implementation summaries during review, `derives_from` frontmatter, upstream fix workflow.
+**Requirements revealed:** Skill installation, Impetus-guided interactive setup, orchestrating agent with menu, hook infrastructure, provenance/staleness detection, code-reviewer subagent (prompted/automatic, not manual), visual status graphics showing current phase and next phase, human-readable implementation summaries during review, `derives_from` frontmatter, upstream fix workflow.
 
 ---
 
@@ -219,8 +228,8 @@ More than that: during the process, they asked two questions that revealed an am
 
 | Capability | J1 | J2 | J3 | J4 |
 |---|---|---|---|---|
-| Skill/plugin installation | ✓ | | | |
-| Global install detection + guided setup | | | | ✓ |
+| Skill installation (npx skills add momentum/momentum -a claude-code) | ✓ | | | |
+| Global install detection + guided setup | ✓ | | | ✓ |
 | Orchestrating agent with menu | ✓ | | | ✓ |
 | Visual status graphics (phase + next) | ✓ | ✓ | | ✓ |
 | Hook infrastructure | ✓ | | ✓ | ✓ |
@@ -277,7 +286,7 @@ Each innovation area validates through dogfooding — Momentum is built using it
 ### Day 1 (Proves the Pipeline)
 
 1. LICENSE committed (open source, first task, non-negotiable)
-2. Skill package installs via `npx skills` or plugin install
+2. Skill package installs via `npx skills add momentum/momentum -a claude-code`
 3. At least one hook fires (auto-lint on edit — simplest to verify)
 4. Orchestrating agent loads and shows a menu
 5. The install is repeatable
@@ -333,8 +342,8 @@ Each innovation area validates through dogfooding — Momentum is built using it
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| Plugin ecosystem is pre-1.0 — packaging may change | High | Impermanence Principle: thin packaging layer, practice portable even if packaging changes. Monthly ecosystem review. |
-| Context budget exhaustion — 68 BMAD + Momentum skills | Medium | Concise descriptions, monitor matching quality, plugin namespacing may help (unverified) |
+| Agent Skills ecosystem is pre-1.0 — packaging may change | High | Impermanence Principle: thin packaging layer, practice portable even if packaging changes. Monthly ecosystem review. |
+| Context budget exhaustion — 68 BMAD + Momentum skills | Medium | Concise descriptions (≤150 characters each), monitor matching quality |
 | BMAD coexistence friction — two systems in `.claude/skills/` | Medium | BMAD is an implementation detail. As BMAD migrates to skills, friction decreases. Momentum works with or without BMAD. |
 | Solo developer bottleneck — no peer review safety net | High | Momentum's own practice (code-reviewer, adversarial review) provides the safety net. Dogfooding is both the risk and the mitigation. |
 | Protocol abstraction over-engineering | Medium | Define with one implementation. Refine when second implementation reveals what the first got wrong. |
@@ -350,30 +359,34 @@ One developer, limited hours, concurrent with other projects. The MVP must be le
 
 ### Installation Architecture
 
-**Source separation by portability layer, merged at distribution time:**
+**Single entry point via Agent Skills standard:**
 
 ```
 momentum/
-├── skills/                  # Portable SKILL.md files (Agent Skills standard)
-├── ide/
-│   ├── claude-code/         # Hooks, agents, rules, plugin manifest
-│   └── cursor/              # Future: Cursor-specific rules and config
+├── skills/
+│   └── momentum/
+│       ├── SKILL.md                  # /momentum command (Impetus orchestrator)
+│       ├── references/               # Bundled configuration written by Impetus on first run
+│       │   ├── rules/                # Global rules → .claude/rules/
+│       │   ├── hooks/                # Hook definitions → .claude/settings.json
+│       │   └── mcp/                  # MCP server configs → .claude/claude_desktop_config.json
+│       └── skills/                   # context:fork subagent skills (code-reviewer, architecture-guard)
 └── package.json
 ```
 
-- Standard skills live in `skills/` — portable across all 17+ Agent Skills-adopting tools
-- IDE-specific enforcement lives in `ide/<ide-name>/` — cleanly separated for contribution
-- Distribution merges the appropriate layers: Claude Code plugin assembles `skills/` + `ide/claude-code/`; Cursor package assembles `skills/` + `ide/cursor/`
-- Contributing a new IDE requires only adding `ide/<new-ide>/` — no changes to base skills or other IDE layers
+- All Momentum capabilities deploy via `npx skills add momentum/momentum -a claude-code` (Agent Skills standard)
+- No plugin manifest, no plugin install — single distribution method
+- Impetus writes rules, hooks, and MCP config to their target locations on first run (`momentum-versions.json` tracks what to write per version; `.claude/momentum/installed.json` records project configuration state)
+- `context:fork` skills (code-reviewer, architecture-guard) are SKILL.md files with `context:fork` frontmatter — not plugin agents
 
 **Installation methods:**
 
 | Method | Target | What's Installed |
 |---|---|---|
-| Claude Code plugin install | Claude Code | Full system: skills + hooks + agents + rules |
-| `npx skills add momentum -a cursor` | Cursor | Skills only (advisory enforcement) |
+| `npx skills add momentum/momentum -a claude-code` | Claude Code | Full system: skills + Impetus-managed global configuration (rules, hooks, MCP) |
+| `npx skills add momentum/momentum -a claude-code` | Cursor | Skills only (advisory enforcement) |
 | `git clone` (project repo) | Team members | Project-level config via `.claude/settings.json` |
-| Global install (prompted by local agent) | New team member's machine | `~/.claude/` rules, agents, global practice |
+| Global setup (prompted by Impetus) | New team member's machine | `~/.claude/` rules, hooks, MCP — written by Impetus on first `/momentum` run |
 
 ### Protocol-Based Integration Architecture
 
@@ -430,8 +443,11 @@ momentum/
 ├── LICENSE
 ├── README.md
 ├── CONTRIBUTING.md
-├── skills/                  # Portable Agent Skills
-├── ide/                     # IDE-specific layers
+├── skills/                  # Agent Skills package (deployed via npx skills add momentum/momentum -a claude-code)
+│   └── momentum/
+│       ├── SKILL.md         # /momentum command (Impetus orchestrator)
+│       ├── references/      # Rules, hooks, MCP config — written to target locations by Impetus
+│       └── skills/          # context:fork subagent skills
 ├── docs/
 │   ├── archive/             # Outdated docs, still referenced, not deleted
 │   ├── research/            # Active research documents
@@ -448,7 +464,7 @@ momentum/
 
 ### Adoption Path
 
-**Solo developer (MVP):** Install via `npx skills` or plugin install. Ships with documented default protocol implementations (built-in validator, Gherkin ATDD, standard code-reviewer). The orchestrating agent detects missing configuration and helps fill gaps conversationally.
+**Solo developer (MVP):** Install via `npx skills add momentum/momentum -a claude-code`, then run `/momentum`. Impetus handles global configuration interactively on first run. Ships with documented default protocol implementations (built-in validator, Gherkin ATDD, standard code-reviewer). The orchestrating agent detects missing configuration and helps fill gaps conversationally.
 
 **Team member:** `git clone` delivers project-level config. Orchestrating agent detects missing global components and prompts one-time setup. After initial global install, no further configuration is needed — project-level settings propagate via the repo.
 
@@ -458,19 +474,23 @@ momentum/
 
 ### Implementation Considerations
 
-- **Context budget management:** With 68 BMAD skills installed, keep Momentum skill descriptions extremely concise (~100 tokens each). Monitor for skill matching degradation as total count grows. Plugin-namespaced skills may not count against the flat budget (unverified — flagged in deployment research F-06).
-- **Version management:** Semantic versioning in `plugin.json`. Always bump version on changes (caching issue with git SHA pinning). Consider stable/latest channels via marketplace refs.
-- **Testing strategy:** promptfoo for skill output quality, `run_eval.py` for trigger precision, `claude plugin validate` for manifest integrity, `--plugin-dir` for local development iteration.
+- **Context budget management:** With 68 BMAD skills installed, keep Momentum skill descriptions ≤150 characters each. All Momentum skills are flat skills (no plugin namespacing). Monitor for skill matching degradation as total count grows.
+- **Version management:** `momentum-versions.json` bundled in the package — machine-readable per-version action list (what files to write, where, for each version). `.claude/momentum/installed.json` written by Impetus at project level — records what version the project is currently configured for. Always bump version on changes.
+- **Testing strategy:** promptfoo for skill output quality, `run_eval.py` for trigger precision, local `npx skills` development iteration.
 
 ## Functional Requirements
 
 ### Installation & Deployment
 
 - **FR1:** Developer can install Momentum skills via `npx skills add` into any Agent Skills-adopting IDE
-- **FR2:** Developer can install the full Momentum plugin (skills + hooks + agents + rules) into Claude Code
-- **FR3:** Developer can re-run installation after updates and receive propagated changes
+- **FR2:** Developer (solo, first install) runs `npx skills add momentum/momentum -a claude-code` then `/momentum`; Impetus detects no `installed.json` exists, presents a pre-consent summary of what will be configured (global rules, hooks, MCP), and with explicit developer confirmation completes setup and writes `installed.json` with `current_version`
+- **FR2b:** When Impetus starts and `installed.json` exists with `configured_for_version` matching `momentum-versions.json` `current_version`, Impetus skips install and upgrade flows and proceeds directly to session orientation
+- **FR2c:** When Impetus starts and `installed.json` exists but `configured_for_version` does not match `current_version`, Impetus triggers the upgrade flow (FR3b)
+- **FR3a:** Developer can run `npx skills update` to pull the latest Momentum package to disk; the updated package contains a revised `momentum-versions.json` with per-version action lists
+- **FR3b:** When Impetus starts and detects `momentum-versions.json` `current_version` differs from `installed.json` `configured_for_version`, Impetus presents a structured upgrade summary — which files change, what each change does, which steps require restart — and requires explicit user confirmation before proceeding
+- **FR3c:** Impetus executes upgrade actions sequentially across all intermediate versions between `configured_for_version` and `current_version`, updating `installed.json` on successful completion; partial failures are reported with the step that failed and project state left unchanged from that step onward
 - **FR4:** Team member can receive project-level Momentum configuration via `git clone` without manual setup
-- **FR5:** Orchestrating agent can detect missing global Momentum components and guide one-time installation
+- **FR5:** Developer joining a project that has `.claude/momentum/installed.json` committed but lacks global Momentum components on their machine (rules, hooks) runs `/momentum`; Impetus detects missing global components and guides them through one-time global setup without re-running the full install sequence
 
 ### Orchestrating Agent
 
@@ -542,23 +562,23 @@ momentum/
 
 ### Context Window & Token Economics
 
-- **NFR1:** Each Momentum skill description must be ≤100 tokens to minimize startup context budget impact
+- **NFR1:** Each Momentum skill description must be ≤150 characters to minimize startup context budget impact
 - **NFR2:** Skill matching accuracy must remain >=95% (correct skill invoked on first attempt) when Momentum skills are added to an environment with 68+ existing BMAD skills, as measured by manual spot-checks during dogfooding
 - **NFR3:** Skill instructions should stay under 500 lines / 5000 tokens per the Agent Skills spec recommendation
-- **NFR4:** Architecture must determine whether plugin-namespaced skills count against the flat skill context budget and design the packaging strategy accordingly — this is a blocking architecture decision that gates plugin vs flat skill deployment choice
+- **NFR4:** All Momentum skills are flat skills deployed via Agent Skills standard; no plugin namespacing is used or required.
 
 ### Portability & Graceful Degradation
 
 - **NFR5:** All SKILL.md files must be valid Agent Skills standard — parseable by any of the 17+ adopting tools
 - **NFR6:** Claude Code-specific frontmatter (`context: fork`, `model`, `effort`) must be additive — skills must function correctly when these fields are ignored by non-Claude Code tools
-- **NFR7:** Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code with plugin — hooks fire, subagents enforce, rules auto-load), Tier 2 advisory (Cursor/other tools with skills only — skill instructions guide but don't enforce), Tier 3 philosophy only (no tooling — principles documented in README). Each tier must be explicitly tested: Tier 1 via plugin install, Tier 2 via `npx skills add` into a non-Claude Code tool, Tier 3 via documentation review.
+- **NFR7:** Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code — hooks fire via `.claude/settings.json` written by Impetus, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus), Tier 2 advisory (Cursor/other tools with skills only — skill instructions guide but don't enforce), Tier 3 philosophy only (no tooling — principles documented in README). Each tier must be explicitly tested: Tier 1 via `npx skills add momentum/momentum -a claude-code` + `/momentum` first-run setup, Tier 2 via `npx skills add` into a non-Claude Code tool, Tier 3 validated by: verifying rules are present in `~/.claude/rules/` after Impetus first-run; verifying rules content is loaded in agent session context during a test session with no other rules present.
 - **NFR8:** No Momentum workflow definition may import or reference a Claude Code-specific API directly. Workflows depend on protocol interfaces; protocol implementations resolve to Claude Code features at runtime. Validated by: every workflow SKILL.md must parse and execute (at advisory level) in at least one non-Claude Code tool.
 
 ### Ecosystem Resilience
 
-- **NFR9:** A breaking change in any single ecosystem dependency (BMAD major version, Claude Code plugin API, Agent Skills spec) must be absorbable by modifying only the packaging/distribution layer (plugin manifest, install scripts, frontmatter), not the practice content (skill instructions, rules, agent definitions). Validated by: practice content files have zero imports of ecosystem-specific APIs.
-- **NFR10:** All ecosystem dependencies (BMAD version, Claude Code plugin API, Agent Skills spec version) must be tracked and reviewed at minimum monthly
-- **NFR11:** The packaging/distribution layer must comprise <=5% of total Momentum files (by count). Replacing the entire packaging mechanism (e.g., migrating from plugin to flat skills or vice versa) must not require changes to any skill instruction, rule, or agent definition file.
+- **NFR9:** A breaking change in any single ecosystem dependency (BMAD major version, Agent Skills spec) must be absorbable by modifying only the packaging/distribution layer (install scripts, frontmatter, momentum-versions.json), not the practice content (skill instructions, rules, agent definitions). Validated by: practice content files have zero imports of ecosystem-specific APIs.
+- **NFR10:** All ecosystem dependencies (BMAD version, Agent Skills spec version) must be tracked and reviewed at minimum monthly
+- **NFR11:** The packaging/distribution layer must comprise <=5% of total Momentum files (by count). Replacing the entire packaging mechanism must not require changes to any skill instruction, rule, or agent definition file.
 
 ### Integration Compatibility
 
