@@ -5,6 +5,7 @@ stepsCompleted:
   - step-03-epic-1-stories
   - step-03-epic-2-stories-vfl-gate-applied
   - step-03-epic-3-stories-vfl-gate-applied
+  - step-03-epic-4-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -910,3 +911,186 @@ So that the right model is used for every task automatically — no manual overr
 **Given** a model routing rule file is written to `~/.claude/rules/model-routing.md` by Impetus (Story 1.3)
 **When** a developer starts a Claude Code session
 **Then** the model routing rule auto-loads and is active for all unspecified routing decisions
+
+---
+
+## Epic 4: Complete Story Cycles
+
+A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
+
+**FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
+**UX-DRs covered:** UX-DR6, UX-DR8
+
+### Story 4.1: Code-Reviewer Skill Performs Adversarial Review
+
+As a developer,
+I want a code-reviewer skill to perform adversarial, evidence-grounded review with read-only access,
+So that every implementation is checked by an independent context before it is considered done.
+
+**Acceptance Criteria:**
+
+**Given** the code-reviewer skill is installed
+**When** Claude Code parses `momentum-code-reviewer/SKILL.md`
+**Then** the skill has `context: fork` frontmatter — it runs in a forked context isolated from the primary session
+**And** the skill has `allowed-tools: Read` — it cannot write files, run commands, or call external services
+**And** the skill has `disable-model-invocation: true` frontmatter — it cannot spawn nested model calls
+**And** the skill description is ≤150 characters (NFR1)
+
+**Given** the code-reviewer skill is invoked (FR24)
+**When** it reviews an implementation artifact
+**Then** it produces a structured findings report as JSON matching the subagent output contract (Architecture Decision 3b): `{status, result: {findings: [{id, severity, location, description, evidence, provenance_status}], summary}, question, confidence}`
+**And** every finding includes a `evidence` field quoting the specific artifact content that supports the finding (FR27)
+**And** findings without direct evidence from the reviewed artifact are not emitted — fabricated findings are a critical defect
+
+**Given** the findings report includes traceability-dimension findings (FR26)
+**When** a finding relates to a derives_from reference, a staleness concern, or an ungrounded claim
+**Then** the finding's `provenance_status` field is populated (VERIFIED/CITED/INFERRED/UNGROUNDED/SUSPECT)
+**And** findings without a provenance dimension leave `provenance_status` null — not defaulted to any value
+
+**Given** a story cycle implementation step completes in Impetus (FR25)
+**When** Impetus transitions to the review phase
+**Then** the code-reviewer is invoked automatically — the developer is not required to run a separate command
+**And** Impetus announces the review has started and maintains productive dialogue while it runs (UX-DR12)
+
+**Given** the code-reviewer returns its structured JSON findings (UX-DR6)
+**When** Impetus synthesizes the result
+**Then** Impetus presents a summary in Impetus's voice — severity grouped, most critical first
+**And** raw JSON is never shown to the developer
+**And** the `! critical` and `· minor` severity indicators are used in the synthesis
+**And** any critical finding triggers an explicit flywheel offer
+
+---
+
+### Story 4.2: Gherkin ACs and ATDD Workflow Active
+
+As a developer,
+I want to define acceptance criteria in Gherkin that generates failing tests before I write code,
+So that the test suite captures intent from the spec, not from the implementation.
+
+**Acceptance Criteria:**
+
+**Given** a developer writes acceptance criteria for a story (FR39)
+**When** the criteria are reviewed
+**Then** each AC is expressed as a Given/When/Then scenario
+**And** each scenario is behavioral — it describes what the system does, not how
+**And** each scenario is technology-agnostic — no specific library, framework, or tool name appears
+**And** each scenario is implementation-independent — passing or failing is determinable without reading the implementation
+
+**Given** the ATDD skill is installed
+**When** Claude Code parses `momentum-atdd/SKILL.md`
+**Then** the skill file exists at that path and its description is ≤150 characters (NFR1)
+
+**Given** the ATDD workflow is invoked with a story's Gherkin ACs (FR40)
+**When** the workflow runs
+**Then** it generates failing acceptance tests before any implementation code is written
+**And** each generated test maps 1:1 to a Given/When/Then scenario
+**And** the tests fail initially because the implementation does not yet exist — not because the test is malformed
+**And** the tests are written to `tests/acceptance/` and are protected from modification (Story 3.2) once written
+
+**Given** the developer inspects the generated failing tests
+**When** they run the test suite
+**Then** the failure messages reference the scenario name and the specific assertion that failed
+**And** the developer can determine what code to write from the failure message alone — no spec re-reading required
+
+**Given** a Gherkin scenario references a specific implementation detail (e.g. a function name, a database column, a URL path)
+**When** the ATDD workflow validates the scenario
+**Then** it flags the scenario as implementation-coupled and requests a behavioral rewrite
+**And** the test is not generated until the scenario is corrected
+
+---
+
+### Story 4.3: Full Story Cycle Guided by Impetus
+
+As a developer,
+I want Impetus to guide me through the complete story cycle from spec to flywheel,
+So that I always know the next step and every handoff happens without me having to ask.
+
+**Acceptance Criteria:**
+
+**Given** a developer begins a story cycle with Impetus (FR41)
+**When** the cycle starts
+**Then** Impetus presents the five phases in order: Spec Review → ATDD → Implement → Code Review → Flywheel
+**And** Impetus drives each phase transition automatically when the prior phase completes — the developer is prompted to confirm before proceeding to the next phase (FR25: transitions are automatic when unambiguous, or prompted when the developer's intent is needed)
+**And** the developer may also invoke any phase explicitly at any time — Impetus never blocks manual phase invocation (UX-DR15: user control always last)
+
+**Given** the story cycle is in progress (FR42)
+**When** any phase begins or completes
+**Then** Impetus displays the visual story-cycle progress: completed phases with ✓ summary, current phase with → description, remaining phases collapsed to ◦ one-liner
+**And** the current phase and next phase are always visible — no phase is invisible to the developer
+
+**Given** Impetus detects the developer is about to skip a required phase (e.g. moving to Implement without completing ATDD) (UX-DR8)
+**When** the conversational floor is open (no subagent running, no pending decision)
+**Then** Impetus proactively surfaces the skip: "The ATDD step hasn't run yet — tests should come before implementation. Want to run it now?"
+**And** Impetus offers, never blocks — if the developer explicitly declines, the cycle continues
+**And** the developer's decision is respected and not re-asked unless context changes
+
+**Given** Impetus detects a knowledge gap relevant to the current phase (e.g. an architectural decision the developer may be unaware of) (UX-DR8)
+**When** the conversational floor is open
+**Then** Impetus surfaces the knowledge gap with a one-sentence summary and a question: "There's an architecture decision here that might affect this step — want a quick summary?"
+**And** the developer controls whether to hear it — Impetus never dumps context unsolicited
+
+**Given** the story cycle's code review phase completes with critical findings
+**When** Impetus synthesizes results (UX-DR6)
+**Then** Impetus presents the findings summary and asks whether to trigger the flywheel
+**And** the flywheel offer is explicit — the developer must approve before it runs
+**And** if the developer declines, Impetus notes the open findings and closes the cycle
+
+---
+
+### Story 4.4: Create-Story and Dev-Story Skills Active
+
+As a developer,
+I want dedicated skills for creating story files and executing story implementations,
+So that Impetus can delegate each phase to a focused, context-rich agent.
+
+**Acceptance Criteria:**
+
+**Given** the create-story skill is installed
+**When** Impetus delegates story creation
+**Then** `momentum-create-story/SKILL.md` exists and runs in the main context (not forked)
+**And** it produces a story file that contains: story title, user story statement, Gherkin ACs, architecture context relevant to the story, derives_from pointers to the spec documents it was created from
+**And** the story file is written to a path that Impetus tells the developer before writing (completion signal per UX-DR5)
+
+**Given** the dev-story skill is installed
+**When** Impetus delegates implementation to dev-story
+**Then** `momentum-dev-story/SKILL.md` exists and accepts a story file path as input
+**And** it reads the story file and implements to the Gherkin ACs — not to implementation details it infers independently
+**And** it does not modify acceptance test files in `tests/acceptance/` (enforced by Story 3.2 hooks)
+**And** it signals completion with a structured output matching the subagent output contract (Architecture Decision 3b): `{status, result: {files_modified: [], tests_run: bool, test_result: pass|fail|not_run}, question, confidence}`
+
+**Given** a dev-story run completes
+**When** Impetus receives the structured output
+**Then** Impetus synthesizes the completion signal per UX-DR5: files produced, test results, what's next
+**And** transitions the story cycle to the Code Review phase automatically (FR41 handoff)
+
+---
+
+### Story 4.5: Upstream Fix Skill Analyzes Quality Failures
+
+As a developer,
+I want an upstream fix skill that traces quality failures back to their root cause and proposes the right fix at the right level,
+So that defects get fixed in specs and rules — not just patched in the code.
+
+**Acceptance Criteria:**
+
+**Given** the upstream-fix skill is installed
+**When** invoked with a quality failure (a findings report, a test failure, a VFL finding) (FR43)
+**Then** `momentum-upstream-fix/SKILL.md` exists and reads the failure description plus the relevant artifacts
+**And** it proposes the fix level: spec-generating workflow, specification (story/epic/PRD), CLAUDE.md/rules, tooling, or one-off code fix
+**And** it outputs a structured proposal matching the subagent output contract (Architecture Decision 3b): `{status, result: {failure_summary, root_cause, proposed_fix_level, proposed_fix_description}, question, confidence}`
+
+**Given** the upstream-fix skill proposes a fix
+**When** Impetus presents the proposal to the developer
+**Then** Impetus presents it in Impetus's voice — not the raw JSON
+**And** the developer must explicitly approve before any fix is applied
+**And** if the fix modifies a spec or rule, Impetus identifies which file will change and shows the change before applying
+
+**Given** a fix is applied at the spec or rule level
+**When** the fix is complete
+**Then** the story cycle continues from the phase where the failure was detected — not from the beginning
+
+**Given** an upstream fix is approved and applied
+**When** Impetus records the fix
+**Then** the fix is appended to the findings ledger (`.claude/momentum/findings-ledger.json`) — not the session ledger
+**And** the ledger entry includes: `story_ref`, `phase`, `severity`, `description`, `upstream_fix_applied: true`, `upstream_fix_ref` (the file changed and nature of change)
+**And** Impetus records the upstream fix application in the session ledger with fix level and artifact modified
