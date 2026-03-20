@@ -25,7 +25,6 @@ Collect these before starting. If any are missing, ask before proceeding.
 | `source_material` | No | null | Ground truth to check against. Pass original source through the entire pipeline — never let intermediate steps compress it |
 | `profile` | No | `full` | `gate`, `checkpoint`, or `full` |
 | `stage` | No | `final` | Artifact maturity: `draft`, `checkpoint`, or `final`. Controls what absence counts as a gap — see Stage section below |
-| `skepticism` | No | `3` | Reviewer intensity: `1` (conservative), `2` (balanced), `3` (aggressive). Controls how hard reviewers search and their default assumption |
 
 ---
 
@@ -45,17 +44,18 @@ Default: `final`. When invoking AVFL from within a skill workflow, set `stage` t
 
 ## Skepticism
 
-Controls how intensely reviewers search and their default assumption about the content. Applies equally to both reviewer styles (Enumerator and Adversary). The reviewer style describes HOW they read; skepticism describes HOW HARD they look.
+Controls how intensely reviewers search and their default assumption. The reviewer style describes HOW they read; skepticism describes HOW HARD they look.
 
 | Level | Label | Approach | Re-examine if clean |
 |---|---|---|---|
-| `1` | Conservative | Report only what evidence clearly shows is wrong. Default assumption: content is correct. Skip borderline findings. | No — clean is clean |
-| `2` | Balanced | Follow leads that seem promising. Give benefit of the doubt on borderline cases. | Optional |
-| `3` | Aggressive | Look for what feels off. Follow hunches, then verify. Default assumption: something might be wrong. | Yes — once |
+| `high` (3) | Aggressive | Look for what feels off. Follow hunches, then verify. Default assumption: something might be wrong. | Yes — once |
+| `low` (2) | Balanced | Follow leads that seem promising. Give benefit of the doubt on borderline cases. | Optional |
 
-Default: `3` (current behavior).
+**Skepticism is not a user parameter.** It is hardcoded by the pipeline:
+- Iteration 1: `high` (3) — cast a wide net, maximize recall
+- Iteration 2+: `low` (2) — verify fixes, catch regressions, don't re-litigate settled issues
 
-**Consecutive-pass schedule:** For fix loops, consider declining skepticism across iterations — `3` on iteration 1 (cast wide net), `2` on iteration 2+ (verify fixes, catch regressions). Floor is `2`, not `1` — benchmarking showed skepticism=1 makes Enumerator and Adversary framings produce identical output, eliminating dual-review value. Specify this as a workflow instruction when embedding AVFL in a skill, or use the `avfl-declining` variant which implements it automatically.
+Floor is `2`. Benchmarking showed skepticism=1 collapses Enumerator and Adversary to identical output, eliminating dual-review value entirely.
 
 ---
 
@@ -124,19 +124,42 @@ Cross-check confidence during consolidation:
 
 Read `references/framework.json` → `prompts` for the exact prompt templates to give each subagent type. Use those templates — they encode the calibration rules that make findings structured and evidence-backed.
 
+### Role Configuration (Benchmarked Defaults)
+
+Each role has a prescribed model and effort level derived from Phase 4 benchmarking (36 runs across 3 models × 3 effort levels × all roles). Use these — they represent measured optima, not guesses.
+
+| Role | Model | Effort | Skill path | Rationale |
+|---|---|---|---|---|
+| Enumerator validator | `sonnet` | `medium` | `avfl-validator-enum-medium` | Reliable recall; no false-pass risk |
+| Adversary validator | `opus` | `high` | `avfl-validator-adv-high` | Best severity calibration; critical findings correctly classified |
+| Consolidator | `haiku` | `low` | `avfl-consolidator-low` | Fully invariant across all model/effort combos — cheapest is sufficient |
+| Fixer | `sonnet` | `medium` | `avfl-fixer-medium` | Handles both mechanical and generative fixes |
+
+**How to apply:** When spawning subagents via the Agent tool, set the `model` parameter explicitly (`"sonnet"`, `"opus"`, `"haiku"`). Point the subagent at the appropriate skill path — the skill carries the `effort` frontmatter that overrides the session level.
+
+**Do not use Haiku for Enumerator validators.** Benchmarking showed Haiku enum-medium produces false-pass scores (92/100 while missing a critical architectural contradiction) — the most dangerous failure mode.
+
+**Do not use Sonnet for Adversary validators.** Benchmarking showed Sonnet Adversary systematically downgrades critical findings to high severity across all effort levels — a calibration defect that causes the pipeline to underreport severity.
+
+---
+
 ### Phase 1: VALIDATE
 
-Spawn validator subagents in parallel based on the profile:
+Spawn validator subagents **in parallel** based on the profile. Set `model` and skill path per the Role Configuration table above.
 
-- **gate:** 1 subagent — structural lens, no framing needed
-- **checkpoint:** 1 subagent per active lens (2–3, based on what's relevant to the step)
-- **full:** 8 subagents total — 1 Enumerator + 1 Adversary per lens, all launched in the same turn
+- **gate:** 1 subagent — Enumerator framing, structural lens only. Model: `sonnet`.
+- **checkpoint:** 1 subagent per active lens (2–3 lenses relevant to the step). Enumerator framing. Model: `sonnet`.
+- **full:** 8 subagents total — 1 Enumerator + 1 Adversary per lens × 4 lenses, all in one turn. Enumerator: `sonnet`/medium. Adversary: `opus`/high.
 
-Each validator receives: their lens definition, their reviewer framing (full only), and all parameters (`domain_expert`, `task_context`, `output_to_validate`, `source_material`, `validation_focus`). They produce findings in the finding schema — id, severity, dimension, location, description, evidence (mandatory), suggestion. Findings without evidence are hallucinations and get discarded.
+Pass the current skepticism value explicitly in each subagent prompt: `high` (3) on iteration 1, `low` (2) on all subsequent iterations.
+
+Each validator receives: lens definition, reviewer framing, skepticism level, and all parameters (`domain_expert`, `task_context`, `output_to_validate`, `source_material`). They produce findings in the finding schema — id, severity, dimension, location, description, evidence (mandatory), suggestion. Findings without evidence are hallucinations and get discarded.
 
 ### Phase 2: CONSOLIDATE
 
-Run sequentially after all validators complete. Use the consolidator prompt from `references/framework.json` → `prompts.consolidator`.
+Run sequentially after all validators complete. Model: `haiku`. Skill: `avfl-consolidator-low`.
+
+Use the consolidator prompt from `references/framework.json` → `prompts.consolidator`.
 
 1. Tag each finding with confidence (HIGH / MEDIUM) — full profile only
 2. Merge all findings from all lenses into one list
@@ -159,7 +182,7 @@ Check exit conditions based on the profile:
 
 ### Phase 4: FIX
 
-Use the fixer prompt from `references/framework.json` → `prompts.fixer`. Run as the `domain_expert` role.
+Model: `sonnet`. Skill: `avfl-fixer-medium`. Use the fixer prompt from `references/framework.json` → `prompts.fixer`. Run as the `domain_expert` role.
 
 - Fix in severity order: critical → high → medium → low
 - Log each fix: finding ID → what was changed and why
