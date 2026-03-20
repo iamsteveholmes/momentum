@@ -1,0 +1,9 @@
+{
+  "total_tokens": 49640,
+  "duration_ms": 411386,
+  "total_duration_seconds": 411.4,
+  "config": "adv-skep3",
+  "skill": "avfl-3lens-adv-only",
+  "skepticism": 3,
+  "framing": "Adversary"
+}

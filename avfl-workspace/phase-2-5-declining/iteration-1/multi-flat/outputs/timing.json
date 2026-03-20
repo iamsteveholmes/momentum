@@ -1,0 +1,9 @@
+{
+  "total_tokens": 45621,
+  "duration_ms": 302617,
+  "total_duration_seconds": 302.6,
+  "config": "multi-flat",
+  "skill": "avfl-3lens",
+  "fixture": "pipeline-arch-multi-iter",
+  "skepticism_all_iters": 3
+}

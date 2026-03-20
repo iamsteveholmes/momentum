@@ -1,0 +1,9 @@
+{
+  "total_tokens": 41503,
+  "duration_ms": 264216,
+  "total_duration_seconds": 264.2,
+  "config": "enum-skep1",
+  "skill": "avfl-3lens-enum-only",
+  "skepticism": 1,
+  "framing": "Enumerator"
+}

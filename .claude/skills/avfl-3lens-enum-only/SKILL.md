@@ -20,7 +20,8 @@ Read `references/framework.json` for dimension definitions, prompt templates, fi
 | `output_to_validate` | Yes | — | Content or file path to validate |
 | `source_material` | No | null | Ground truth to check against |
 | `profile` | No | `full` | `gate`, `checkpoint`, or `full` |
-| `validation_focus` | No | null | Narrow which dimensions to prioritize |
+| `stage` | No | `final` | Artifact maturity: `draft`, `checkpoint`, or `final`. Controls what absence counts as a gap |
+| `skepticism` | No | `3` | Reviewer intensity: `1` (conservative), `2` (balanced), `3` (aggressive). Applied to the Enumerator — this benchmark tests whether skepticism changes Enumerator behavior |
 
 ---
 
@@ -57,6 +58,8 @@ Spawn in parallel based on profile:
 - **gate**: 1 agent, structural lens, Enumerator framing
 - **checkpoint**: 1 Enumerator per active lens (1–3)
 - **full**: 3 agents — 1 Enumerator for each of the 3 active lenses, all launched in same turn
+
+Look up the `skepticism_approach_modifier` and `skepticism_reexamine_rule` for the active `skepticism` level from `references/framework.json` → `skepticism_levels`. Pass them to each Enumerator along with the `stage_completeness_instruction` from `references/framework.json` → `stage_definitions[stage]`.
 
 Use validator prompts from `references/framework.json` → `prompts.validator_system` and `prompts.validator_task`. Apply the Enumerator framing from `references/framework.json` → `dual_review.reviewer_framings.reviewer_a`. Evidence is mandatory on every finding.
 

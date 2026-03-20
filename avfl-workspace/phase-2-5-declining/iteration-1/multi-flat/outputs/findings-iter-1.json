@@ -1,0 +1,120 @@
+{
+  "iteration": 1,
+  "skepticism": 3,
+  "profile": "full",
+  "stage": "final",
+  "domain_expert": "technical writer",
+  "task_context": "data processing pipeline architecture brief",
+  "score": 50,
+  "grade": "Failing - major rework needed",
+  "findings_count": {
+    "critical": 1,
+    "high": 3,
+    "medium": 3,
+    "low": 2,
+    "total": 9
+  },
+  "duplicates_removed": 8,
+  "false_positives_removed": 0,
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "critical",
+      "dimension": "consistency",
+      "location": "Overview paragraph 1 vs Stage 2 — Transformation paragraph 1",
+      "description": "Direct logical contradiction between the Overview's claim that all pipeline stages run in parallel and Stage 2's requirement that Stage 2 must complete before Stage 3 begins. These two statements are mutually exclusive.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Remove the blanket parallelism claim from the Overview. Replace with an accurate description of the execution model — e.g., that Stage 1 and Stage 2 may run concurrently with ingestion but that Stage 2 must complete before Stage 3 begins. Alternatively, if the intent is that stages run in parallel pipelines across different events, clarify that.",
+      "confidence": "HIGH",
+      "seeded_issue": "C1"
+    },
+    {
+      "id": "F-002",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring, final sentence",
+      "description": "The document references 'Section 6' for security considerations, but no Section 6 exists. The document contains five sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, and Conclusions.",
+      "evidence": "'Security considerations are documented in Section 6.' The document ends at Conclusions with no subsequent section.",
+      "suggestion": "Remove the reference to Section 6. Either add a Security section or change the sentence to acknowledge that security documentation is pending (e.g., 'Security considerations are not yet documented in this brief').",
+      "confidence": "HIGH",
+      "seeded_issue": "C2"
+    },
+    {
+      "id": "F-003",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "The claim that batch processing is 3× faster than streaming for files under 10MB is factually backwards. For small files, streaming generally outperforms batch because batch incurs setup overhead (chunking, buffering, I/O initialization) that provides no benefit at small file sizes. The document's own next sentence — 'For larger payloads, streaming is preferred' — contradicts the expected performance curve.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.' Standard data engineering benchmarks show the opposite: streaming is efficient for small/continuous data; batch processing advantages emerge at larger payload sizes.",
+      "suggestion": "Correct to: 'Benchmarks show that streaming is 3× faster than batch for files under 10MB. For larger payloads, batch processing is preferred.' Or rephrase to accurately describe the actual performance relationship.",
+      "confidence": "HIGH",
+      "seeded_issue": "H1"
+    },
+    {
+      "id": "F-004",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery, paragraph 1",
+      "description": "The claim that the in-memory delivery cache reduces end-to-end latency by 99.9% is an extraordinary, unsupported assertion. A 99.9% reduction would mean reducing latency from e.g. 1000ms to 1ms — an implausible improvement from a caching layer alone. No methodology, baseline, or citation is provided.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No supporting data, test conditions, or baseline measurement is provided.",
+      "suggestion": "Remove or qualify this claim. If a real benchmark supports it, cite the conditions and baseline. Otherwise, use a credible figure (e.g., 'significantly reduces write latency') or remove the percentage entirely.",
+      "confidence": "HIGH",
+      "seeded_issue": "H2"
+    },
+    {
+      "id": "F-005",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "'Standard retry policy' is referenced but never defined anywhere in the document. A reader cannot implement or configure the system based on this reference alone.",
+      "evidence": "'Transformation applies the standard retry policy on transient failures.' No retry policy (number of retries, backoff strategy, timeout, failure thresholds) is defined in this document.",
+      "suggestion": "Define the retry policy inline (e.g., 'applies an exponential backoff retry policy: up to 3 attempts with 1s, 2s, 4s delays') or reference a specific external document where it is defined.",
+      "confidence": "HIGH",
+      "seeded_issue": "M1"
+    },
+    {
+      "id": "F-006",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 3",
+      "description": "'Large files are handled separately' but 'large' is never defined. The threshold between normal and large files is not specified, making this operationally meaningless.",
+      "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold (e.g., '>100MB', '>10MB') is given.",
+      "suggestion": "Define the threshold, e.g., 'Files exceeding 100MB are handled separately from the primary transformation path via an overflow queue.'",
+      "confidence": "HIGH",
+      "seeded_issue": "M2"
+    },
+    {
+      "id": "F-007",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Operational Notes bullet 2; Conclusions paragraph 2",
+      "description": "'Pipeline' and 'workflow' are used interchangeably throughout the document without being defined as synonymous or distinct concepts. This creates ambiguity about whether the system has one entity or two.",
+      "evidence": "Operational Notes: 'The pipeline and workflow are monitored by the on-call team via the Prometheus dashboard' — both terms in one sentence suggesting they may be different things. Conclusions: 'real-time streaming workflow alongside the existing batch pipeline' — again both terms used apparently to describe distinct things, but no definition distinguishes them.",
+      "suggestion": "Choose one term for the system ('pipeline') and use it consistently throughout, or explicitly define both terms: e.g., 'pipeline' refers to the full data processing system, while 'workflow' refers to a specific execution path within it.",
+      "confidence": "HIGH",
+      "seeded_issue": "M3"
+    },
+    {
+      "id": "F-008",
+      "severity": "low",
+      "dimension": "clarity",
+      "location": "Overview paragraph 1",
+      "description": "The acronym 'ETL' is used on first occurrence without expansion, reducing accessibility for non-specialist readers.",
+      "evidence": "'an internal ETL system that handles batch ingestion, transformation, and delivery' — ETL (Extract, Transform, Load) is not expanded.",
+      "suggestion": "Expand on first use: 'an internal ETL (Extract, Transform, Load) system'.",
+      "confidence": "HIGH",
+      "seeded_issue": "L1"
+    },
+    {
+      "id": "F-009",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion, paragraph 2",
+      "description": "Authentication is mentioned but the type is not specified. In an architecture brief, the authentication mechanism is essential information.",
+      "evidence": "'Authentication is used to verify each request before processing begins.' No authentication type (API key, OAuth 2.0, mTLS, JWT, etc.) is specified.",
+      "suggestion": "Specify the authentication mechanism: e.g., 'API key authentication is used to verify each request before processing begins.' If not yet decided, note it as TBD.",
+      "confidence": "HIGH",
+      "seeded_issue": "L2"
+    }
+  ]
+}

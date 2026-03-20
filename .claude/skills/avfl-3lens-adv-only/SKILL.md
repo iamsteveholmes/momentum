@@ -20,7 +20,8 @@ Read `references/framework.json` for dimension definitions, prompt templates, fi
 | `output_to_validate` | Yes | — | Content or file path to validate |
 | `source_material` | No | null | Ground truth to check against |
 | `profile` | No | `full` | `gate`, `checkpoint`, or `full` |
-| `validation_focus` | No | null | Narrow which dimensions to prioritize |
+| `stage` | No | `final` | Artifact maturity: `draft`, `checkpoint`, or `final`. Controls what absence counts as a gap |
+| `skepticism` | No | `3` | Reviewer intensity: `1` (conservative), `2` (balanced), `3` (aggressive). Applied to the Adversary — this benchmark tests whether skepticism changes Adversary behavior |
 
 ---
 
@@ -44,7 +45,7 @@ Dimensions: consistency, relevance, conciseness, clarity, tonal_consistency, tem
 
 Each lens gets exactly **1 Adversary** reviewer. No Enumerator. No dual-review cross-check.
 
-**Adversary** — Intuitive and skeptical. Reads content as someone trying to find what's wrong. Follows hunches and then verifies with evidence. Works holistically across the full artifact, not section by section. Finds what systematic approaches miss: things that feel off, conclusions that seem too convenient, gaps that aren't obvious from the structure.
+**Adversary** — Intuitive and pattern-aware. Reads holistically, looking for what feels off or inconsistent. Follows hunches, then verifies with evidence. Works across the full artifact, not section by section. The `skepticism` parameter controls how hard the Adversary looks — skepticism=3 means actively following hunches and re-examining before reporting clean; skepticism=1 means reporting only what evidence clearly shows is wrong.
 
 Since there is no dual-review, all findings are treated as MEDIUM confidence by default. The consolidator does not apply cross-check logic — simply merge, deduplicate, and score.
 
@@ -57,6 +58,8 @@ Spawn in parallel based on profile:
 - **gate**: 1 agent, structural lens, Adversary framing
 - **checkpoint**: 1 Adversary per active lens (1–3)
 - **full**: 3 agents — 1 Adversary for each of the 3 active lenses, all launched in same turn
+
+Look up the `skepticism_approach_modifier` and `skepticism_reexamine_rule` for the active `skepticism` level from `references/framework.json` → `skepticism_levels`. Pass them to each Adversary along with the `stage_completeness_instruction` from `references/framework.json` → `stage_definitions[stage]`.
 
 Use validator prompts from `references/framework.json` → `prompts.validator_system` and `prompts.validator_task`. Apply the Adversary framing from `references/framework.json` → `dual_review.reviewer_framings.reviewer_b`. Evidence is mandatory on every finding.
 

@@ -1,0 +1,122 @@
+{
+  "iteration": 1,
+  "phase": "validate-consolidate",
+  "profile": "full",
+  "skepticism": 3,
+  "stage": "final",
+  "domain_expert": "technical writer",
+  "task_context": "data processing pipeline architecture brief",
+  "reviewer_composition": "Adversary-only (3 agents: 1 per lens)",
+  "score": 31,
+  "grade": "Failing — major rework needed",
+  "pass_threshold": 95,
+  "result": "FAIL — proceed to fix",
+  "findings_count": {
+    "critical": 2,
+    "high": 4,
+    "medium": 2,
+    "low": 1,
+    "total": 9
+  },
+  "duplicates_removed": 1,
+  "false_positives_removed": 0,
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "critical",
+      "dimension": "logical_soundness",
+      "location": "Overview (final sentence) vs. Stage 2 — Transformation (first sentence)",
+      "description": "Direct logical contradiction: the Overview states all pipeline stages run in parallel, but Stage 2 explicitly states a sequential dependency — Stage 2 must complete before Stage 3 begins. These statements are mutually exclusive.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.' If Stage 2 must complete before Stage 3, the stages cannot all be running in parallel.",
+      "suggestion": "Correct the Overview to accurately describe the execution model. If the architecture has sequential dependencies between stages, remove 'All pipeline stages run in parallel.' A more accurate statement would be: 'Stages within the pipeline are designed for independent scalability; Stage 2 completes before Stage 3 begins.'"
+    },
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "critical",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring, paragraph 2",
+      "description": "The document references 'Section 6' for security considerations, but no Section 6 exists anywhere in the document. The document has five sections: Overview, Architecture Components (with 4 stages), Performance Characteristics, Operational Notes, and Conclusions. None covers security.",
+      "evidence": "'Security considerations are documented in Section 6.' Document sections enumerated: (1) Overview, (2) Architecture Components, (3) Performance Characteristics, (4) Operational Notes, (5) Conclusions. No Section 6 exists.",
+      "suggestion": "Either add a Section 6 — Security Considerations covering authentication, authorization, encryption in transit, and data access controls; or remove the reference and integrate security details inline."
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Performance Characteristics, first sentence",
+      "description": "The claim that batch processing is 3× faster than streaming for files under 10MB is factually backwards. Streaming has lower overhead for small, continuous data. Batch processing's efficiency advantage emerges for large datasets where per-job setup costs are amortized. For files under 10MB, streaming typically outperforms batch.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' No benchmark source, methodology, or test conditions are cited. The directional claim contradicts established understanding of batch vs. streaming performance trade-offs for small files.",
+      "suggestion": "Correct the directional claim: streaming is typically more efficient for small files (under ~100MB); batch processing excels for large datasets. Corrected: 'Benchmarks show that streaming is 3× faster than batch processing for files under 10MB. For larger payloads, batch processing is preferred.' If proprietary benchmarks genuinely show the original result, add source and methodology."
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery, second sentence",
+      "description": "The claim that the in-memory delivery cache reduces end-to-end latency by 99.9% is an extraordinary unsupported claim. A 99.9% reduction implies a 1000× improvement with no baseline, methodology, or test conditions cited.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No measurement source, baseline latency figure, test conditions, or methodology is provided. The claim is presented as a measured fact without supporting evidence.",
+      "suggestion": "Remove the specific unsupported percentage. Reframe as a design characteristic: 'The in-memory delivery cache significantly reduces end-to-end latency compared to unbuffered writes by batching warehouse write operations.' If a real benchmark supports this figure, cite the source and baseline."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "The 'standard retry policy' is referenced but never defined anywhere in the document. A final architecture brief must define operational policies, not silently assume shared knowledge. Compounding the inconsistency: Stage 3 defines retry behavior explicitly (3 attempts) while Stage 2 defers to this undefined policy.",
+      "evidence": "'Transformation applies the standard retry policy on transient failures.' No retry policy definition, description, or link to an external specification appears anywhere in the document. Stage 3 by contrast specifies: 'the batch is requeued for up to 3 retry attempts.'",
+      "suggestion": "Define the retry policy inline. Example: 'Transformation applies exponential backoff retry on transient failures: up to 3 attempts with delays of 1s, 2s, and 4s.' Alternatively, define it in a dedicated Operations section and reference that definition."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 3",
+      "description": "'Large files are handled separately' — 'large' is never defined. The threshold determining which files take the overflow path vs. the primary transformation path is unspecified, making the operational boundary ambiguous.",
+      "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold or definition of 'large' appears anywhere in the document.",
+      "suggestion": "Define the threshold. Example: 'Files exceeding 100MB are handled separately from the primary transformation path via an overflow queue.' Place the threshold in configuration if it is environment-dependent, but document the default."
+    },
+    {
+      "id": "COHERENCE-002",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Operational Notes (bullet 2) and Conclusions (final sentence)",
+      "description": "'Pipeline' and 'workflow' are used as if interchangeable but are never distinguished. In the Conclusions they appear as apparently distinct concepts in the same sentence; in Operational Notes they are coupled together without clarification.",
+      "evidence": "Operational Notes: 'The pipeline and workflow are monitored by the on-call team via the Prometheus dashboard.' Conclusions: 'Future work includes adding a real-time streaming workflow alongside the existing batch pipeline.' If 'workflow' is distinct from 'pipeline,' it is never defined. If they are synonyms, using both creates needless ambiguity.",
+      "suggestion": "Standardize on 'pipeline' throughout, as it is the document's primary subject. In the Conclusions, rewrite as: 'Future work includes adding a real-time streaming pipeline alongside the existing batch pipeline.' In Operational Notes: 'The pipeline is monitored by the on-call team via the Prometheus dashboard.'"
+    },
+    {
+      "id": "COHERENCE-003",
+      "severity": "medium",
+      "dimension": "clarity",
+      "location": "Stage 1 — Ingestion, paragraph 2",
+      "description": "'Authentication is used' specifies that authentication occurs but provides no actionable specification of the authentication type or mechanism. For a final architecture brief, this is insufficient.",
+      "evidence": "'Authentication is used to verify each request before processing begins.' No authentication type (API key, OAuth 2.0, mTLS, JWT, etc.) is specified anywhere in the document.",
+      "suggestion": "Specify the authentication mechanism. Example: 'API key authentication is used to verify each request before processing begins.' Use the actual mechanism deployed in the system."
+    },
+    {
+      "id": "STRUCTURAL-004",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Overview, sentence 2",
+      "description": "The acronym ETL is used on first occurrence without expansion. For a final deliverable architecture brief, acronyms should be expanded on first use.",
+      "evidence": "'an internal ETL system' — ETL is not expanded at its first occurrence. ETL = Extract, Transform, Load.",
+      "suggestion": "Change to: 'an internal ETL (Extract, Transform, Load) system' on first use."
+    }
+  ],
+  "score_breakdown": {
+    "starting_score": 100,
+    "deductions": [
+      {"id": "ACCURACY-001", "severity": "critical", "points": -15},
+      {"id": "STRUCTURAL-001", "severity": "critical", "points": -15},
+      {"id": "ACCURACY-002", "severity": "high", "points": -8},
+      {"id": "ACCURACY-003", "severity": "high", "points": -8},
+      {"id": "STRUCTURAL-002", "severity": "high", "points": -8},
+      {"id": "STRUCTURAL-003", "severity": "high", "points": -8},
+      {"id": "COHERENCE-002", "severity": "medium", "points": -3},
+      {"id": "COHERENCE-003", "severity": "medium", "points": -3},
+      {"id": "STRUCTURAL-004", "severity": "low", "points": -1}
+    ],
+    "total_deductions": -69,
+    "final_score": 31
+  }
+}
