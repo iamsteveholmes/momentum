@@ -9,6 +9,7 @@ stepsCompleted:
   - step-03-epic-5-stories-vfl-gate-applied
   - step-03-epic-6-stories-vfl-gate-applied
   - step-03-epic-7-stories-vfl-gate-applied
+  - step-03-epic-8-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -1633,4 +1634,147 @@ So that I don't accidentally make my Cursor environment non-functional by enabli
 **When** MCP provider configuration runs
 **Then** the tool ceiling check is skipped — no warning is shown
 **And** all MCP providers that were configured function identically regardless of the host tool (protocol-level behavior, not tool-specific behavior)
+
+---
+
+## Epic 8: Research & Knowledge Management
+
+A developer runs multi-model research with freshness guarantees. Research prompts are date-anchored. Documents have domain-specific freshness windows. Outdated docs are archived with their reference chain intact.
+
+**FRs covered:** FR44, FR45, FR46, FR47
+**Additional:** Gemini MCP + GPT MCP integration (growth), hybrid research workflow (PT-020), freshness windows per domain
+**Priority:** Growth
+**UX-DRs covered:** UX-DR5 (research findings surfaced in Impetus's voice), UX-DR8 (warnings are advisory — do not block flow), UX-DR15 (archive operations are reversible)
+
+### Story 8.1: Multi-Model Research Workflow Active
+
+As a developer,
+I want to run research across multiple AI models using MCP-integrated providers,
+So that I can cross-validate findings and reduce the risk of single-model hallucination in research artifacts.
+
+**Acceptance Criteria:**
+
+**Given** the multi-model research workflow is configured (FR44)
+**When** a developer runs a research task via Impetus
+**Then** Impetus dispatches the research query to multiple providers in parallel — at minimum two distinct providers from: `@rlabs-inc/gemini-mcp`, GPT deep research MCP, or any provider bound to the `research-provider` protocol (Story 7.1)
+**And** each provider runs independently — providers do not see each other's output during generation
+**And** Impetus synthesizes the results from all providers and presents a cross-validated summary in Impetus's voice (UX-DR10) — raw provider output is never shown directly
+
+**Given** the research providers return results
+**When** Impetus synthesizes the cross-model output
+**Then** it identifies claims where providers agree (high confidence), claims where they differ (flagged for manual verification), and claims present in only one provider's output (flagged as single-source)
+**And** each synthesized claim carries a `research_confidence` field — `CORROBORATED` (all providers agree), `DIVERGENT` (providers disagree — flagged for manual review), or `SINGLE_SOURCE` (only one provider cited this claim) — this vocabulary is orthogonal to FR16's epistemic vocabulary and does not redefine any FR16 terms
+**And** the research output carries `authored_by: ai` and `sourced_date` frontmatter reflecting the date of the research run
+
+**Given** a research provider is unavailable at research time
+**When** Impetus dispatches the research query
+**Then** it proceeds with the remaining available providers — single-provider results are flagged as `single_source: true` in the output
+**And** Impetus surfaces: `! research ran on [N] of [M] providers — [provider] was unavailable. Results are single-source for this run.`
+
+**Given** a research provider returns a result (FR44, Architecture Decision 3b)
+**When** Impetus processes the provider's output
+**Then** the provider's response conforms to the structured output contract `{status, result, question, confidence}` before synthesis proceeds
+**And** if a provider returns malformed output (missing required fields), Impetus treats that provider as unavailable for this run and surfaces: `! [provider] returned malformed output — excluded from synthesis`
+**And** Impetus never exposes raw provider JSON to the developer — only the synthesized narrative in Impetus's voice (UX-DR10)
+
+---
+
+### Story 8.2: Research Prompts Are Date-Anchored with Primary-Source Directives
+
+As a developer,
+I want every research prompt to include the current date and a directive to cite primary sources,
+So that research agents can't silently use outdated knowledge and research outputs are traceable.
+
+**Acceptance Criteria:**
+
+**Given** Impetus constructs a research prompt (FR45)
+**When** the prompt is sent to any research provider
+**Then** it includes a date-anchor directive: "Today's date is [ISO 8601 date]. Only consider information that was accurate as of this date. If your training data predates this date, say so."
+**And** it includes a primary-source directive: "Cite primary sources for every significant claim. Do not cite secondary summaries or blog posts as the primary reference. If the primary source is unavailable, say the claim is unverified."
+**And** these directives are injected automatically — the developer does not need to manually include them in their research query
+
+**Given** Impetus constructs a research prompt but `currentDate` is not available in context
+**When** the prompt is sent to a research provider
+**Then** Impetus omits the date-anchor directive and sets `date_unchecked: true` in the artifact's frontmatter
+**And** Impetus surfaces: `! currentDate unavailable — research prompt was sent without a date anchor. Results may use outdated training data.`
+**And** the research run still proceeds — missing currentDate is a degraded-mode warning, not a blocking error
+
+**Given** a research result is produced with these directives
+**When** Impetus records the output as a research artifact
+**Then** the artifact's frontmatter records: `sourced_date` (the date of the research run), `research_providers` (the list of providers used), and `authored_by: ai`
+**And** the artifact's derives_from block includes one entry per provider used, with `sourced_date` set to the research date and `relationship: derives_from`
+**And** derives_from entries for MCP provider invocations are point-in-time snapshots — they are not subject to time-based staleness scanning (Story 5.4); only persistent document paths are scanned for staleness
+
+**Given** a research prompt covers a time-sensitive domain (AI/LLM, tooling)
+**When** the date-anchor is applied
+**Then** Impetus additionally warns the developer: "This research covers [domain] — results may be outdated within [freshness_window] days (FR47 domain window). Plan to re-verify on [sourced_date + freshness_window]."
+**And** this warning is advisory — it does not block the research run
+
+---
+
+### Story 8.3: Domain-Specific Freshness Windows Define Document Currency
+
+As a developer,
+I want documents to carry domain-specific freshness windows so I know when to re-verify,
+So that I'm not relying on a research doc that was current 18 months ago in a field that moves every 90 days.
+
+**Acceptance Criteria:**
+
+**Given** a document is classified by domain (FR47)
+**When** the provenance scanner evaluates its currency
+**Then** it applies the canonical freshness window for that domain:
+- AI/LLM domain: 90 days
+- Tooling/frameworks domain: 180 days (6 months)
+- Standards/specifications domain: 365 days (12 months)
+- Principles/fundamentals domain: 730 days (24 months)
+**And** this taxonomy is the authoritative source referenced by Story 5.4 — freshness windows in Story 5.4 defer to this list
+
+**Given** a document has no explicit domain classification
+**When** the freshness window is applied
+**Then** Impetus uses the document's title and `derives_from` relationship types to infer the most likely domain from the FR47 taxonomy
+**And** if domain cannot be inferred, the Tooling/frameworks window (180 days) is applied as the conservative default — this matches the FR47 tier, not a separate general-research category — and Impetus prompts the developer to set an explicit domain classification
+
+**Given** a developer sets an explicit `freshness_window` in document frontmatter or a `derives_from` entry
+**When** the scanner evaluates staleness
+**Then** the explicit value takes precedence over the domain taxonomy default
+**And** the scanner records which rule was applied: `domain_default` | `explicit_override` — so reviewers can see why a particular window was used
+
+**Given** the freshness window taxonomy is updated (e.g. a new domain tier is added)
+**When** the update is applied to `references/provenance-scan.md`
+**Then** documents with `explicit_override` are not affected — their override remains authoritative
+**And** all other documents will pick up the new taxonomy on their next scanner evaluation — no batch re-evaluation trigger is needed since the scanner reads the taxonomy at evaluation time
+
+---
+
+### Story 8.4: Outdated Documents Archived with Reference Chain Intact
+
+As a developer,
+I want to archive outdated documents rather than delete them,
+So that reference chains remain valid and I can trace what changed and why.
+
+**Acceptance Criteria:**
+
+**Given** a document is identified as outdated (SUSPECT status confirmed by developer, or freshness window exceeded and developer elects to archive) (FR46)
+**When** Impetus archives the document
+**Then** it moves the file to `docs/archive/[original-relative-path]` (preserving directory structure within the archive)
+**And** the document's frontmatter is updated with: `archived_at` (ISO 8601 timestamp), `archived_by` (`"impetus"` or `"developer"`), `archived_reason` (one sentence)
+**And** if the archive was triggered by a confirmed-SUSPECT finding, `archived_reason` includes the findings-ledger entry ID: `"confirmed-suspect: [finding-id]"` — linking the archive decision to its audit trail
+**And** the document retains its full `derives_from` block — the reference chain is preserved in the archive
+
+**Given** the archive target path matches the protected spec pattern (`_bmad-output/planning-artifacts/*.md`)
+**When** Impetus attempts the archive operation
+**Then** the operation is rejected — Impetus surfaces: `! [path] is a protected spec file and cannot be archived. Protected spec files must be managed by their authoring workflow.`
+**And** the rejection is non-negotiable — no confirmation prompt is offered for protected paths
+
+**Given** other documents reference the archived document via `derives_from`
+**When** the archive operation completes
+**Then** Impetus scans the `referenced_by` graph (Story 5.2) for all documents that cited the now-archived document
+**And** it offers to update each referencing document's `derives_from` entry `path` to the new archive path: "3 documents reference [doc] — update their derives_from paths to the archive location?"
+**And** if the developer confirms, the paths are updated — if they decline, the stale paths remain and Impetus flags them as SUSPECT for the next scan
+**And** after any path updates are applied (or declined), the `referenced_by` graph is rebuilt to reflect the new archive path — referencing documents that were updated now point to the archive location in the graph
+
+**Given** a developer wants to un-archive a document
+**When** they request restoration
+**Then** Impetus moves the file back to its original path, removes the `archived_at`, `archived_by`, and `archived_reason` fields, and offers to restore the derives_from paths in referencing documents
+**And** the git history preserves the archive/restore cycle — no data is ever deleted, only moved
 
