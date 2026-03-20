@@ -3,6 +3,7 @@ stepsCompleted:
   - step-01-validate-prerequisites
   - step-02-design-epics
   - step-03-epic-1-stories
+  - step-03-epic-2-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -11,6 +12,8 @@ lastEdited: '2026-03-20'
 editHistory:
   - date: '2026-03-20'
     changes: 'Synced FR numbering with PRD edits: FR2 updated to solo first-install path; FR2b/FR2c added for Nth-run routing; FR3 decomposed to FR3a/FR3b/FR3c; FR5 updated to team member joining path; NFR1 corrected to ≤150 characters; NFR4 updated to remove plugin reference; Epic 1 FRs covered list updated; FR Coverage Map updated with new FR entries.'
+  - date: '2026-03-20'
+    changes: 'Validation fix pass: C-01 purged plugin model throughout (Deployment & Packaging block replaced, Spike Required block replaced with Architecture Decision Closed, Epic 1 Additional field updated, Epic 4 Additional field updated, NFR7 updated, NFR10 updated); C-02 renamed configured_for_version → momentum_version in FR2/FR2b/FR2c/FR3b/FR3c; C-05 fixed Story 1.2 AC ≤100 tokens → ≤150 characters; C-06 replaced all Tony references with Impetus throughout (UX-DR6/10/13/18, Epic 2 description, Story 2.1/2.4 ACs); C-16 updated NFR4 label in NFR mapping comment.'
 ---
 
 # Momentum - Epic Breakdown
@@ -25,12 +28,12 @@ This document provides the complete epic and story breakdown for Momentum, decom
 
 **Installation & Deployment**
 FR1: Developer can install Momentum skills via `npx skills add` into any Agent Skills-adopting IDE
-FR2: Developer (solo, first install) runs `npx skills add momentum/momentum -a claude-code` then `/momentum`; Impetus detects no `installed.json`, presents pre-consent summary of what will be configured, and with explicit confirmation completes setup and writes `installed.json` with `current_version`
-FR2b: When Impetus starts and `installed.json` exists with `configured_for_version` matching `momentum-versions.json` `current_version`, Impetus skips install/upgrade flows and proceeds directly to session orientation
-FR2c: When Impetus starts and `installed.json` exists but `configured_for_version` does not match `current_version`, Impetus triggers the upgrade flow (FR3b)
+FR2: Developer (solo, first install) runs `npx skills add momentum/momentum -a claude-code` then `/momentum`; Impetus detects no `installed.json`, presents pre-consent summary of what will be configured, and with explicit confirmation completes setup and writes `installed.json` recording `momentum_version` (set to the value of `current_version` from `momentum-versions.json`), `installed_at`, and per-component hashes
+FR2b: When Impetus starts and `installed.json` exists with `momentum_version` matching `momentum-versions.json` `current_version`, Impetus skips install/upgrade flows and proceeds directly to session orientation
+FR2c: When Impetus starts and `installed.json` exists but `momentum_version` does not match `current_version`, Impetus triggers the upgrade flow (FR3b)
 FR3a: Developer can run `npx skills update` to pull the latest Momentum package to disk; the updated package contains a revised `momentum-versions.json` with per-version action lists
-FR3b: When Impetus starts and detects `momentum-versions.json` `current_version` differs from `installed.json` `configured_for_version`, Impetus presents a structured upgrade summary and requires explicit user confirmation before proceeding
-FR3c: Impetus executes upgrade actions sequentially across all intermediate versions between `configured_for_version` and `current_version`, updating `installed.json` on successful completion; partial failures are reported with the step that failed
+FR3b: When Impetus starts and detects `momentum-versions.json` `current_version` differs from `installed.json` `momentum_version`, Impetus presents a structured upgrade summary and requires explicit user confirmation before proceeding
+FR3c: Impetus executes upgrade actions sequentially across all intermediate versions between `momentum_version` and `current_version`, updating `installed.json` on successful completion; partial failures are reported with the step that failed
 FR4: Team member can receive project-level Momentum configuration via `git clone` without manual setup
 FR5: Developer joining a project that has `.claude/momentum/installed.json` committed but lacks global Momentum components on their machine runs `/momentum`; Impetus detects missing global components and guides one-time global setup without re-running the full install sequence
 
@@ -103,12 +106,12 @@ NFR4: All Momentum skills are flat skills deployed via Agent Skills standard; no
 **Portability & Graceful Degradation**
 NFR5: All SKILL.md files must be valid Agent Skills standard — parseable by any of the 17+ adopting tools
 NFR6: Claude Code-specific frontmatter must be additive — skills must function correctly when ignored by non-Claude Code tools
-NFR7: Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code + plugin), Tier 2 advisory (Cursor/other tools with skills only), Tier 3 philosophy only (no tooling). Each tier explicitly tested.
+NFR7: Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code — hooks fire via `.claude/settings.json` written by Impetus, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus), Tier 2 advisory (Cursor/other tools with skills only), Tier 3 philosophy only (no tooling). Each tier explicitly tested.
 NFR8: No Momentum workflow definition may import or reference a Claude Code-specific API directly — workflows depend on protocol interfaces
 
 **Ecosystem Resilience**
 NFR9: A breaking change in any single ecosystem dependency must be absorbable by modifying only the packaging/distribution layer, not practice content
-NFR10: All ecosystem dependencies (BMAD version, Claude Code plugin API, Agent Skills spec) must be tracked and reviewed monthly
+NFR10: All ecosystem dependencies (BMAD version, Agent Skills spec version) must be tracked and reviewed monthly
 NFR11: Packaging/distribution layer must comprise ≤5% of total Momentum files (by count); replacing the entire packaging mechanism must not require changes to any skill instruction, rule, or agent definition file
 
 **Integration Compatibility**
@@ -124,11 +127,12 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 ### Additional Requirements
 
 **From Architecture — Deployment & Packaging**
-- Starter template: No starter template specified. Momentum is greenfield — Epic 1 Story 1 establishes the repository structure per the architecture's documented layout (plugin/, skills/, rules/, mcp/, docs/)
-- Plugin vs. flat skill classification rule must be implemented: context:fork = plugin agent (code-reviewer, architecture-guard); main context = flat skill (Impetus, VFL, upstream-fix, create-story, dev-story)
-- Plugin and flat skills must share a single `version.md` at repo root; standard git pre-commit hook (Husky/pre-commit framework) validates they match
-- Release tags must version both plugin and skills units together to prevent drift
-- Global rules cannot be deployed silently by the plugin (verified March 17, 2026 limitation); `momentum setup` menu option in Impetus handles one-time interactive copy to `~/.claude/rules/`
+- Starter template: No starter template specified. Momentum is greenfield — Epic 1 Story 1 establishes the repository structure per the architecture's documented layout (skills/, rules/, mcp/, docs/)
+- All skills are flat skills deployed via `npx skills add momentum/momentum -a claude-code`; no plugin directory
+- `context:fork` is a SKILL.md frontmatter feature; code-reviewer and architecture-guard are `context:fork` SKILL.md files, not plugin agents
+- Rules, hooks config, and MCP config are bundled in `skills/momentum/references/` and written by Impetus on first `/momentum` invocation
+- Version tracking: `momentum-versions.json` (per-version action list, bundled in package) + `.claude/momentum/installed.json` (project state, committed to repo)
+- Single entry point: `/momentum` command
 - Impetus must surface a version-drift warning at session start when installed global rules hash differs from current version's rules hash
 
 **From Architecture — Storage & State**
@@ -152,8 +156,8 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 - VFL consolidates findings in main context; context accumulation bounded by structured output contract
 - Execution mode: background (non-blocking) during interactive workflows; foreground acceptable for hook-triggered passes
 
-**From Architecture — Spike Required**
-- Spike: plugin-agent invocation mechanism must be verified before build. If plugin agents cannot be programmatically invoked by flat skills, code-reviewer and architecture-guard implemented as flat skills with Read-only tool restrictions instead of context:fork plugin agents. Producer-verifier separation preserved either way.
+**From Architecture — Architecture Decision Closed**
+- The plugin-agent invocation spike (previously open) is resolved: `context: fork` is a SKILL.md frontmatter feature requiring no plugin. code-reviewer and architecture-guard are implemented as `context:fork` SKILL.md files with `allowed-tools: Read`.
 
 **From Architecture — BMAD Integration**
 - BMAD enhancement touchpoints at MVP: (1) Any BMAD artifact generated → Impetus proposes derives_from frontmatter + git commit [Proposal]; (2) BMAD code-review complete → Impetus offers Momentum code-reviewer as additional adversarial pass [Proposal]; (3) BMAD dev-story complete → Impetus gates on acceptance tests passing before closing story [Gate — the only hard gate at MVP]; (4) BMAD retrospective → Impetus adds findings ledger summary [Proposal]
@@ -170,7 +174,7 @@ UX-DR4: Implement Workflow Step component — orientation line (never "step N/M"
 
 UX-DR5: Implement Completion Signal component — explicit ownership return ("this is yours to review and adjust"), what was produced (file list), what's next question. Every story cycle and workflow completion must use this.
 
-UX-DR6: Implement Subagent Return component — Tony's voice synthesizes subagent findings; severity indicators (! critical, · minor); critical findings surface flywheel trigger. User never sees raw subagent output.
+UX-DR6: Implement Subagent Return component — Impetus's voice synthesizes subagent findings; severity indicators (! critical, · minor); critical findings surface flywheel trigger. User never sees raw subagent output.
 
 UX-DR7: Implement Flywheel Notice component — surfaced after upstream fix applied; shows finding, root cause, fix applied, what it prevents. Makes invisible improvement visible.
 
@@ -178,13 +182,13 @@ UX-DR8: Implement Proactive Orientation component — surfaces knowledge gap or 
 
 UX-DR9: Implement consistent Symbol Vocabulary across all agents and hooks: ✓ completed/passing, → current/active, ◦ upcoming/pending, ! warning/attention, ✗ failed/blocked, ? question/decision. Symbols always paired with text — meaning must survive any rendering context.
 
-UX-DR10: Implement Hub-and-Spoke Voice Contract — Impetus (Tony) is the sole user-facing voice; all subagents return structured JSON `{status, result, question, confidence}`; subagent identity never surfaces to user; Tony synthesizes before presenting.
+UX-DR10: Implement Hub-and-Spoke Voice Contract — Impetus is the sole user-facing voice; all subagents return structured JSON `{status, result, question, confidence}`; subagent identity never surfaces to user; Impetus synthesizes before presenting.
 
 UX-DR11: Implement Session Orientation Contract — at every session start, Impetus reads ledger and within two exchanges surfaces: active story/task, current phase, last completed action, suggested next action. Agent speaks first; user never hunts for context.
 
 UX-DR12: Implement Productive Waiting pattern — while a background subagent runs, Impetus maintains dialogue on the same topic (never context-switches). Dead air is a failure mode. Brief acknowledged pauses acceptable for very short tasks only.
 
-UX-DR13: Implement Multi-Thread Ledger Awareness — each Tony instance (per Claude Code tab) reads/writes the shared ledger; recently-timestamped entries signal intentional concurrent work; conflicting thread starts flagged with user decision required.
+UX-DR13: Implement Multi-Thread Ledger Awareness — each Impetus instance (per Claude Code tab) reads/writes the shared ledger; recently-timestamped entries signal intentional concurrent work; conflicting thread starts flagged with user decision required.
 
 UX-DR14: Implement Thread Hygiene — surface dormant threads beyond a threshold; low-friction closure (one confirmation); contextually triggered when dependent work completes or ledger grows unwieldy.
 
@@ -194,7 +198,7 @@ UX-DR16: Implement Input Interpretation patterns — number selects ledger item;
 
 UX-DR17: Implement Workflow Resumability — every workflow must be resumable from any step; sufficient context saved in ledger entry to re-orient a fresh agent session without user re-explanation. Step re-entry after interruption always confirms ("continue from here, or restart this step?").
 
-UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive, forward-moving. Synthesizes before delivering. Returns agency explicitly at completion. Acknowledges uncertainty honestly. Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent machinery. Named Tony internally; surface name is Impetus/Momentum.
+UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive, forward-moving. Synthesizes before delivering. Returns agency explicitly at completion. Acknowledges uncertainty honestly. Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent machinery. Surface name and implementation name: Impetus.
 
 ### FR Coverage Map
 
@@ -252,7 +256,7 @@ UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive,
 | FR46 | Epic 8 | Archive outdated documents while preserving reference chain |
 | FR47 | Epic 8 | Track document freshness using domain-specific freshness windows |
 
-**NFR mapping:** NFR1–3 (context/token budget) → Epic 1 & 2. NFR4 (context budget architecture decision, blocking) → Epic 1. NFR5–8 (portability/degradation) → Epic 1. NFR9–11 (ecosystem resilience) → Epic 1. NFR12–15 (integration compatibility) → Epic 1. NFR16–17 (dogfooding integrity) → cross-cutting, applied across all epics.
+**NFR mapping:** NFR1–3 (context/token budget) → Epic 1 & 2. NFR4 (flat skills deployment — no plugin namespacing required) → Epic 1. NFR5–8 (portability/degradation) → Epic 1. NFR9–11 (ecosystem resilience) → Epic 1. NFR12–15 (integration compatibility) → Epic 1. NFR16–17 (dogfooding integrity) → cross-cutting, applied across all epics.
 
 ## Epic List
 
@@ -260,13 +264,13 @@ UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive,
 A developer installs Momentum from scratch — global practice files in place, project bootstrapped, all structure scaffolded by the module. Epic 2 onwards can start.
 **FRs covered:** FR1, FR2, FR2b, FR2c, FR3a, FR3b, FR3c, FR4, FR5
 **NFRs covered:** NFR1–13 (portability, resilience, compatibility, token budget architecture decision)
-**Additional:** Repo structure, plugin/skills/rules layout, version.md, `momentum setup` global rules copy, cost observability (showTurnDuration, ccusage recommendation)
+**Additional:** Repo structure, skills/rules layout, version.md, cost observability (showTurnDuration, ccusage recommendation)
 **Priority:** Day 1
 
 ---
 
 ### Epic 2: Stay Oriented with Impetus
-A developer always knows where they are and what to do next. Session ledger tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Tony's unified voice keeps backstage invisible.
+A developer always knows where they are and what to do next. Session ledger tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
 **FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
 **NFRs covered:** NFR1, NFR2, NFR3
 **UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
@@ -288,7 +292,7 @@ Quality gates fire without developer intervention. Lint and format run on save. 
 A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
 **FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
 **UX-DRs covered:** UX-DR6, UX-DR8
-**Additional:** code-reviewer agent (plugin, read-only), VFL flat skill (momentum-vfl), create-story skill, dev-story skill, ATDD workflow, plugin-agent invocation spike
+**Additional:** code-reviewer (`context:fork` skill, `allowed-tools: Read`), VFL flat skill (momentum-vfl), create-story skill, dev-story skill, ATDD workflow
 **Priority:** Sprint 1
 
 ---
@@ -378,7 +382,7 @@ So that Impetus and all supporting skills are available in my Claude Code enviro
 
 **Given** the installed skills
 **When** Claude Code starts
-**Then** each Momentum skill description is ≤100 tokens
+**Then** each Momentum skill description is ≤150 characters
 **And** the correct Momentum skill is invoked on first attempt when tested manually alongside BMAD skills (validated by spot-check during dogfooding per NFR16)
 
 **Given** the installed skills in a non-Claude Code tool (e.g. Cursor)
@@ -484,3 +488,225 @@ So that teams using any tool can adopt Momentum at the level their environment s
 **Then** all three enforcement tiers are defined: Tier 1 (Claude Code — full deterministic), Tier 2 (Cursor/other tools with skills — advisory), Tier 3 (no tooling — philosophy/documentation only)
 **And** each tier lists what works and what does not
 **And** instructions for adopting at each tier are present
+
+---
+
+## Epic 2: Stay Oriented with Impetus
+
+A developer always knows where they are and what to do next. Session ledger tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
+
+**FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
+**NFRs covered:** NFR1, NFR2, NFR3
+**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6, UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
+**Note:** UX-DR3 (Hook Announcement) → Epic 3. UX-DR7 (Flywheel Notice) → Epic 6. UX-DR8 (Proactive Orientation) — the proactive-offer-never-block pattern is established here in Stories 2.2/2.5 and fully exercised once story cycles (Epic 4) provide real workflow steps.
+
+### Story 2.1: Impetus Skill Created with Correct Persona and Input Handling
+
+As a developer,
+I want Impetus available as a skill with Impetus's consistent voice and clear menu,
+So that I have a single, reliable orchestrating agent for every Momentum workflow.
+
+**Acceptance Criteria:**
+
+**Given** the Momentum skills are installed
+**When** Claude Code starts
+**Then** `momentum/SKILL.md` exists with a description ≤150 characters (NFR1)
+**And** the skill name is `momentum` (entry-point, no prefix) — all other Momentum skills are prefixed `momentum-` to prevent naming collision with BMAD skills (NFR12)
+**And** the skill's `model:` is set to a current Sonnet-tier model and `effort:` is `high` per the model routing guide (FR23); the specific model string is read from `references/model-routing-guide.md`, not hard-coded
+**And** skill instructions stay under 500 lines / 5000 tokens; overflow content is in `references/` (NFR3)
+**And** when tested by invoking `/momentum` manually alongside 68+ BMAD skills, the correct Momentum skill matches on first attempt — spot-checked during dogfooding per NFR16 (NFR2)
+
+**Given** a developer invokes `/momentum`
+**When** Impetus presents its first response
+**Then** a numbered menu lists all available practice workflows and entry points
+**And** the response follows the Response Architecture Pattern (UX-DR15): orientation line → substantive content → transition signal → user control
+**And** the orientation line is narrative (never "step N/M")
+**And** user control is always the final element and always visible
+
+**Given** Impetus is responding to any user action
+**When** formulating the response
+**Then** Impetus's voice is used: oriented, substantive, forward-moving (UX-DR18)
+**And** no generic praise appears ("Great!", "Excellent!", "Sure!")
+**And** no step counts appear ("Step 3/8")
+**And** no agent machinery is visible — no internal names, no model references
+**And** subagent findings are synthesized by Impetus before presenting (never raw output)
+**And** when Impetus is uncertain, it acknowledges uncertainty explicitly rather than fabricating confidence
+
+**Given** a developer enters a number, letter, or natural language phrase
+**When** Impetus interprets input (UX-DR16)
+**Then** a number selects the corresponding ledger item or menu item
+**And** a letter command is case-insensitive
+**And** "continue" / "yes" / "go ahead" / "proceed" all map to C
+**And** natural language intent is extracted and confirmed before acting ("Starting the story cycle for Story 4.2 — correct?")
+**And** ambiguous input triggers exactly one clarifying question (never two)
+
+---
+
+### Story 2.2: Session Orientation and Thread Management
+
+As a developer,
+I want Impetus to tell me where I am at every session start and track open threads across sessions and tabs,
+So that I can pick up any thread without hunting for context.
+
+**Acceptance Criteria:**
+
+**Given** a developer invokes `/momentum`
+**When** Impetus starts (UX-DR11)
+**Then** within two exchanges, Impetus surfaces: active story/task, current phase, last completed action, and suggested next action
+**And** Impetus speaks first — the developer is never required to ask "where were we?"
+
+**Given** the ledger at `.claude/momentum/ledger.json` contains one or more open thread entries
+**When** Impetus starts (UX-DR1)
+**Then** Impetus displays the Session Ledger: numbered list of open threads, each showing workflow phase and elapsed time
+**And** threads are ordered by most-recently-active
+**And** each thread is directly selectable by its number
+
+**Given** no ledger exists or the ledger is empty (user has never started a workflow — `installed.json` exists but no ledger entries)
+**When** Impetus starts
+**Then** the Session Ledger display is absent
+**And** Impetus transitions directly to new-session orientation
+**Note:** If `installed.json` does not exist, Story 1.3 (FR2) governs — this AC applies only to post-install sessions with no prior workflow activity.
+
+**Given** a developer is running a workflow in Tab A
+**When** they open Tab B and invoke `/momentum` (UX-DR13)
+**Then** Impetus in Tab B reads the shared ledger and surfaces Tab A's active thread
+**And** if the entry was timestamped within the last 30 minutes, Impetus flags it as likely intentional concurrent work
+**And** asks the developer to confirm before starting a competing thread on the same story
+
+**Given** a ledger entry has had no activity beyond the configured dormancy threshold (default: 3 days)
+**When** Impetus starts (UX-DR14 — time-based trigger)
+**Then** Impetus surfaces the dormant thread with brief context and offers one-action closure ("is this thread complete?")
+**And** closure requires exactly one developer confirmation
+**And** if the developer confirms, the thread is marked closed in the ledger
+
+**Given** a story or workflow that another ledger thread depended on has just completed
+**When** Impetus detects the dependency is satisfied (UX-DR14 — contextual trigger)
+**Then** Impetus surfaces the waiting thread at session start: "The work this thread was waiting on is complete — ready to continue?"
+**And** the developer decides whether to activate the waiting thread
+
+**Given** the session ledger has grown to more than 5 open threads
+**When** Impetus starts (UX-DR14 — unwieldy-ledger trigger)
+**Then** Impetus flags the ledger size and offers a triage pass before starting new work
+**And** triage surfaces each thread's status and age with a single-action close option
+
+**Given** the developer starts Impetus in a fresh context after an interruption
+**When** Impetus reads the ledger entry for the interrupted workflow (UX-DR17)
+**Then** Impetus re-orients using saved ledger context — no developer re-explanation required
+**And** offers: "continue from here, or restart this step?" before proceeding
+
+---
+
+### Story 2.3: Visual Progress Tracks Workflow Position
+
+As a developer,
+I want Impetus to show me exactly where I am in any workflow with a consistent 3-line indicator,
+So that I'm never lost and always know what's completed and what's next.
+
+**Acceptance Criteria:**
+
+**Given** a developer enters any Momentum workflow via Impetus
+**When** a workflow is entered or a phase transitions (UX-DR2)
+**Then** Impetus displays the Progress Indicator using ✓/→/◦ symbols
+**And** completed steps collapse to a single ✓ line with a value summary phrase
+**And** the current step stands alone with a one-phrase description
+**And** upcoming steps collapse to a single ◦ line
+
+**Given** a developer is at the very first step of a workflow (no completed steps yet)
+**When** the Progress Indicator is displayed
+**Then** the ✓ completed line is absent (there is nothing to collapse)
+**And** the indicator shows → current step and ◦ upcoming steps only — the indicator is 2 lines at workflow start
+
+**Given** a developer is at the very last step of a workflow (no upcoming steps)
+**When** the Progress Indicator is displayed
+**Then** the ◦ upcoming line is absent
+**And** the indicator shows ✓ completed and → current step only — the indicator is 2 lines at workflow end
+
+**Given** any symbol appears in any Impetus, hook, or subagent response
+**When** rendered in any terminal or text context (UX-DR9)
+**Then** each symbol is paired with text — meaning is recoverable without symbol rendering
+**And** the symbol vocabulary is consistent across all Momentum components: ✓ completed/passing, → current/active, ◦ upcoming/pending, ! warning/attention, ✗ failed/blocked, ? question/decision
+
+**Given** a developer is at a Workflow Step
+**When** Impetus renders it (UX-DR4)
+**Then** the step contains: narrative orientation line, substantive content, transition signal, explicit user control [A/P/C or equivalent]
+**And** the orientation line is narrative — it never contains a step count in "Step N/M" format
+**And** user control is always the final element
+
+**Given** a workflow is interrupted mid-step
+**When** the developer re-invokes `/momentum` in a new session (UX-DR17)
+**Then** Impetus identifies the interrupted workflow from the ledger
+**And** presents the Progress Indicator showing which steps are complete
+**And** asks: "continue from here, or restart this step?"
+**And** sufficient context is in the ledger entry to re-orient without developer re-explanation
+
+**Given** a developer asks for their current position in any workflow (FR7)
+**When** Impetus responds
+**Then** a visual ASCII status graphic shows completed / current / upcoming phases
+**And** the representation uses only characters available in any terminal
+
+---
+
+### Story 2.4: Completion Signals and Productive Waiting
+
+As a developer,
+I want Impetus to surface clear completion signals and maintain dialogue during background tasks,
+So that I always know when something is mine to act on and I'm never left in silence.
+
+**Acceptance Criteria:**
+
+**Given** a story cycle, workflow, or major workflow step completes
+**When** Impetus delivers the Completion Signal (UX-DR5)
+**Then** the signal contains: explicit ownership return ("this is yours to review and adjust"), a file list of what was produced with paths, and a "what's next?" question
+**And** the developer is never left unsure whether Impetus is still working
+
+**Given** Impetus dispatches a background subagent (e.g. code-reviewer, VFL)
+**When** the subagent is running (UX-DR12)
+**Then** Impetus maintains dialogue on the same topic — does not context-switch to unrelated subjects
+**And** for tasks taking more than a few seconds, Impetus offers substantive discussion or an acknowledged pause
+**And** silence (dead air) is never the response to a running background task
+
+**Given** a subagent returns findings
+**When** Impetus synthesizes the result (UX-DR10)
+**Then** Impetus's voice synthesizes the findings — raw subagent JSON or output is never presented to the developer
+**And** severity indicators are used: ! for critical findings, · for minor findings
+**And** critical findings trigger an explicit flywheel offer when the flywheel skill is available; if Epic 6 is not yet implemented, Impetus notes the finding and logs it for later flywheel processing
+
+**Given** Impetus is orchestrating any subagent
+**When** results arrive (UX-DR6)
+**Then** subagent identity is never surfaced to the developer (hub-and-spoke contract maintained)
+**And** the developer interacts only with Impetus — no awareness of which subagent ran is required
+**And** subagents return structured JSON with at minimum `{status, result, question, confidence}` — Impetus synthesizes from this contract, not from free-form prose
+
+**Given** implementation of a story cycle or workflow step has completed and a review process is being dispatched (FR8)
+**When** the review runs
+**Then** Impetus provides a human-readable summary of what was built or produced during the implementation phase
+**And** this summary is delivered at the moment review is dispatched — the developer reads it while review runs, not after
+
+---
+
+### Story 2.5: Spec Contextualization and Configuration Gap Detection
+
+As a developer,
+I want Impetus to surface relevant spec context at the moment I need it and guide me through configuration gaps,
+So that I never need to manually hunt for specs or figure out how to fix missing configuration.
+
+**Acceptance Criteria:**
+
+**Given** a developer is in a workflow step that references an architectural decision, acceptance criterion, or prior choice
+**When** Impetus presents that step (FR10)
+**Then** it surfaces the relevant spec context inline — file reference and key decision, not the full document
+**And** the developer can act on the step without opening another file
+
+**Given** a developer asks a follow-up question during any workflow step
+**When** Impetus receives the question (FR11)
+**Then** Impetus treats it as a discovery opportunity — gathers artifact context before answering
+**And** returns an answer grounded in the current artifact (not generic)
+**And** if the question reveals an ambiguity or gap in the current spec, Impetus flags it explicitly ("This question reveals an ambiguity in the acceptance criteria — worth clarifying before we continue")
+**And** after answering, re-presents the user control so the workflow continues
+
+**Given** the developer's project is missing required Momentum configuration (e.g. protocol mapping undefined, MCP provider unconfigured)
+**When** Impetus detects the gap at session start or when a workflow step encounters it (FR9)
+**Then** Impetus surfaces the gap with a clear description of what's missing and why it matters
+**And** guides the developer through resolution conversationally — never dumps a raw config file
+**And** does not block other workflows while resolution is pending unless the missing config would cause data loss or irreversible action in that workflow
+**And** blocking gaps are defined as: missing MCP server required for the next workflow step, missing write target that would silently skip a required output
