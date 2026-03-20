@@ -1,0 +1,9 @@
+{
+  "status": "CLEAN",
+  "final_score": 100,
+  "iterations": 2,
+  "scores_per_iteration": [43, 100],
+  "total_findings_fixed": 9,
+  "seeded_found": 9,
+  "additional_findings": 0
+}

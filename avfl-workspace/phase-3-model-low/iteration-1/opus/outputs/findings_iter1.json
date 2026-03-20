@@ -1,0 +1,144 @@
+{
+  "iteration": 1,
+  "skepticism": 3,
+  "profile": "full",
+  "skill": "avfl-3lens",
+  "score": 43,
+  "grade": "Failing - major rework needed",
+  "pass_threshold": 95,
+  "status": "CONTINUE",
+  "findings_count": {
+    "critical": 2,
+    "high": 2,
+    "medium": 3,
+    "low": 2,
+    "total": 9
+  },
+  "duplicates_removed": 3,
+  "false_positives_removed": 0,
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "critical",
+      "dimension": "consistency",
+      "location": "Overview (paragraph 1) vs. Stage 2 (paragraph 1)",
+      "description": "The Overview states 'All pipeline stages run in parallel to maximize throughput.' Stage 2 opens with 'Stage 2 must complete before Stage 3 begins.' These are direct contradictions — the pipeline cannot both run all stages in parallel AND require sequential completion between stages.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Remove 'All pipeline stages run in parallel to maximize throughput' from the Overview and replace with an accurate description of the pipeline's execution model (e.g., 'Stages execute sequentially, with horizontal scaling within each stage to maximize throughput').",
+      "confidence": "HIGH",
+      "source_validators": ["STRUCTURAL-001", "COHERENCE-001"],
+      "seeded_match": "C1"
+    },
+    {
+      "id": "F-002",
+      "severity": "critical",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring (last sentence)",
+      "description": "The Monitoring section references 'Section 6' for security considerations, but the document has no Section 6. The document contains: Overview, Architecture Components (Stages 1-4), Performance Characteristics, Operational Notes, and Conclusions. The referenced content does not exist.",
+      "evidence": "Stage 4: 'Security considerations are documented in Section 6.' No Section 6 exists in the document.",
+      "suggestion": "Either add a Security section to the document and update the reference, or remove the dangling reference entirely.",
+      "confidence": "HIGH",
+      "source_validators": ["STRUCTURAL-002", "STRUCTURAL-004"],
+      "seeded_match": "C2"
+    },
+    {
+      "id": "F-003",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Performance Characteristics (paragraph 1)",
+      "description": "The claim that 'batch processing is 3x faster than streaming for files under 10MB' appears reversed. In a high-volume event pipeline processing 50K events/sec, streaming is the standard approach for small, high-frequency events. Batch processing is typically preferred for large aggregations, not small payloads. The guidance would send implementers in the wrong direction.",
+      "evidence": "Performance Characteristics: 'Benchmarks show that batch processing is 3x faster than streaming for files under 10MB. For larger payloads, streaming is preferred.'",
+      "suggestion": "Reverse the claim: 'streaming is 3x faster than batch processing for files under 10MB. For larger payloads, batch processing is preferred.' Or provide context for why this pipeline's characteristics differ from the norm.",
+      "confidence": "HIGH",
+      "source_validators": ["ACCURACY-001", "ACCURACY-003"],
+      "seeded_match": "H1"
+    },
+    {
+      "id": "F-004",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery (paragraph 1)",
+      "description": "The claim that the in-memory delivery cache 'reduces end-to-end latency by 99.9%' is implausible. A 99.9% reduction means a 1000x improvement (e.g., 1 second to 1ms). Typical caching improvements for write operations are 10-100x (90-99%). No evidence or benchmark is provided to support this extraordinary claim.",
+      "evidence": "Stage 3: 'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.'",
+      "suggestion": "Replace with a defensible figure (e.g., '90%' or 'by an order of magnitude') or provide supporting benchmark data for the 99.9% claim.",
+      "confidence": "HIGH",
+      "source_validators": ["ACCURACY-002", "COHERENCE-003"],
+      "seeded_match": "H2"
+    },
+    {
+      "id": "F-005",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation (paragraph 2)",
+      "description": "'The standard retry policy' is referenced but never defined in the document. A reader cannot determine retry count, backoff strategy, or timeout behavior.",
+      "evidence": "Stage 2: 'Transformation applies the standard retry policy on transient failures.'",
+      "suggestion": "Define the retry policy (e.g., '3 retries with exponential backoff, 30-second max timeout') or reference a separate operational runbook where it is defined.",
+      "confidence": "HIGH",
+      "source_validators": ["STRUCTURAL-003", "ACCURACY-004"],
+      "seeded_match": "M1"
+    },
+    {
+      "id": "F-006",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation (paragraph 3)",
+      "description": "'Large files' are routed to an overflow queue but 'large' is never defined. Without a threshold, operators cannot predict which events will take the overflow path.",
+      "evidence": "Stage 2: 'Large files are handled separately from the primary transformation path via an overflow queue.'",
+      "suggestion": "Define the threshold (e.g., 'Files exceeding 10MB are routed to the overflow queue').",
+      "confidence": "HIGH",
+      "source_validators": ["STRUCTURAL-005", "COHERENCE-004"],
+      "seeded_match": "M2"
+    },
+    {
+      "id": "F-007",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Operational Notes (bullet 2) vs. Conclusions",
+      "description": "The document uses 'pipeline' and 'workflow' inconsistently. Operational Notes: 'The pipeline and workflow are monitored' implies they are separate things. Conclusions: 'adding a real-time streaming workflow alongside the existing batch pipeline' uses 'workflow' to mean a processing mode. The first usage is ambiguous and confusing.",
+      "evidence": "Operational Notes: 'The pipeline and workflow are monitored by the on-call team via the Prometheus dashboard.' Conclusions: 'adding a real-time streaming workflow alongside the existing batch pipeline.'",
+      "suggestion": "In Operational Notes, change to 'The pipeline is monitored by the on-call team via the Prometheus dashboard.' Reserve 'workflow' for its specific meaning in Conclusions.",
+      "confidence": "HIGH",
+      "source_validators": ["COHERENCE-002", "COHERENCE-005"],
+      "seeded_match": "M3"
+    },
+    {
+      "id": "F-008",
+      "severity": "low",
+      "dimension": "clarity",
+      "location": "Overview (paragraph 1)",
+      "description": "The acronym ETL is used without expansion on first use. While common in data engineering, an architecture brief should expand acronyms for broader audience accessibility.",
+      "evidence": "Overview: 'an internal ETL system' — ETL (Extract, Transform, Load) is not expanded.",
+      "suggestion": "Change to 'an internal ETL (Extract, Transform, Load) system'.",
+      "confidence": "MEDIUM",
+      "source_validators": ["COHERENCE-006"],
+      "seeded_match": "L1"
+    },
+    {
+      "id": "F-009",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion (paragraph 2)",
+      "description": "Authentication is mentioned but the type is not specified. For an architecture brief, the authentication mechanism (API key, OAuth2, mTLS, etc.) is a relevant architectural decision.",
+      "evidence": "Stage 1: 'Authentication is used to verify each request before processing begins.'",
+      "suggestion": "Specify the authentication mechanism, e.g., 'API key authentication is used to verify each request before processing begins.'",
+      "confidence": "MEDIUM",
+      "source_validators": ["STRUCTURAL-006"],
+      "seeded_match": "L2"
+    }
+  ],
+  "score_breakdown": {
+    "starting_score": 100,
+    "deductions": [
+      {"id": "F-001", "severity": "critical", "points": -15},
+      {"id": "F-002", "severity": "critical", "points": -15},
+      {"id": "F-003", "severity": "high", "points": -8},
+      {"id": "F-004", "severity": "high", "points": -8},
+      {"id": "F-005", "severity": "medium", "points": -3},
+      {"id": "F-006", "severity": "medium", "points": -3},
+      {"id": "F-007", "severity": "medium", "points": -3},
+      {"id": "F-008", "severity": "low", "points": -1},
+      {"id": "F-009", "severity": "low", "points": -1}
+    ],
+    "final_score": 43
+  }
+}

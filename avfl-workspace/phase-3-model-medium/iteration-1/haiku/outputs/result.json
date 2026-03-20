@@ -1,0 +1,9 @@
+{
+  "status": "MAX_ITERATIONS_REACHED",
+  "final_score": 84,
+  "iterations": 2,
+  "scores_per_iteration": [7, 84],
+  "total_findings_fixed": 18,
+  "seeded_found": 9,
+  "additional_findings": 9
+}

@@ -1,0 +1,49 @@
+{
+  "status": "CLEAN",
+  "final_score": 98,
+  "iterations": 2,
+  "scores_per_iteration": [55, 98],
+  "total_findings_fixed": 8,
+  "seeded_found": 0,
+  "additional_findings": 8,
+  "notes": {
+    "fixture_seeded_issues": "The fixture file (pipeline-arch-multi-iter.md) does not contain a '## Seeded Issues' section at the end. The file ends at line 53 with the Conclusions section. Therefore, seeded_found count cannot be determined against documented issues. All 8 findings reported represent domain expert validation using skepticism=3 (aggressive) across 3 lenses (Structural Integrity, Factual Accuracy, Coherence & Craft) with dual reviewers per lens.",
+    "validation_approach": "AVFL 3-lens full profile executed with:",
+    "configuration": {
+      "domain_expert": "technical writer",
+      "task_context": "data processing pipeline architecture brief",
+      "profile": "full",
+      "stage": "final",
+      "skepticism": 3,
+      "lenses_active": ["Structural Integrity", "Factual Accuracy", "Coherence & Craft"]
+    },
+    "issues_by_iteration": {
+      "iteration_1": {
+        "findings": 8,
+        "score": 55,
+        "severity_distribution": "3 high, 5 medium"
+      },
+      "iteration_2": {
+        "findings_remaining": 2,
+        "findings_residual_low": "2 low-severity (accepted as not requiring fixes for final brief)",
+        "score": 98,
+        "status": "CLEAN (≥95 threshold)"
+      }
+    },
+    "critical_findings_fixed": [
+      "STRUCTURAL-001: Broken cross-reference to non-existent Section 6",
+      "COHERENCE-001: Contradiction between 'all parallel' and 'Stage 2 must complete before Stage 3'"
+    ],
+    "high_findings_fixed": [
+      "ACCURACY-001: Unsupported '99.9% latency reduction' claim",
+      "ACCURACY-002: Performance benchmark without methodology",
+      "ACCURACY-003: Undefined deduplication window mechanics",
+      "STRUCTURAL-002: Insufficient Monitoring stage detail",
+      "COHERENCE-002: Unexplained overflow queue trigger"
+    ],
+    "residual_low_findings": [
+      "LOW-001: Prometheus format could be more explicit (architectural brief context makes current phrasing acceptable)",
+      "LOW-002: Operational escalation not detailed (outside scope of architecture brief, not operational runbook)"
+    ]
+  }
+}
