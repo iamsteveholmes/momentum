@@ -289,11 +289,11 @@ Defined communication style for each agent type:
 - *Architecture guard*: pattern steward — precise, principled, not alarmist
 
 **5. Subagent Orchestration (Hub-and-Spoke) Pattern**
-The orchestrating agent (Tony) is the sole user-facing voice. All subagents work backstage and return to Tony with structured output. Tony synthesizes results into his own voice before presenting to the user.
+The orchestrating agent (Impetus) is the sole user-facing voice. All subagents work backstage and return to Impetus with structured output. Impetus synthesizes results into his own voice before presenting to the user.
 
-Subagents are designed with **explicit checkpoint contracts**: they pause at decision points and return structured output (`{ status, result, question }`) rather than running to completion blindly. Tony reads the checkpoint, decides whether to answer it himself, ask the user, or send a directive back via SendMessage. Subagents are resumable by design.
+Subagents are designed with **explicit checkpoint contracts**: they pause at decision points and return structured output (`{ status, result, question }`) rather than running to completion blindly. Impetus reads the checkpoint, decides whether to answer it himself, ask the user, or send a directive back via SendMessage. Subagents are resumable by design.
 
-**Engagement continuity principle:** The goal is maintaining the user's thread of attention — not eliminating every pause. Brief pauses are acceptable when context is clear and the user won't disengage. For longer-running tasks, Tony maintains dialogue on the *same topic* rather than switching subjects — staying in the thread is more engaging than a context switch. For very brief tasks, an acknowledged pause with prior explanation is sufficient. Dead air becomes a problem only when the user loses their sense of where they are or what's happening.
+**Engagement continuity principle:** The goal is maintaining the user's thread of attention — not eliminating every pause. Brief pauses are acceptable when context is clear and the user won't disengage. For longer-running tasks, Impetus maintains dialogue on the *same topic* rather than switching subjects — staying in the thread is more engaging than a context switch. For very brief tasks, an acknowledged pause with prior explanation is sufficient. Dead air becomes a problem only when the user loses their sense of where they are or what's happening.
 
 *Open architecture question:* Reliable checkpoint/resume with SendMessage + background agents requires a technical spike to validate before workflows are built on it.
 
@@ -312,7 +312,7 @@ Each agent persona can have distinct voice characteristics while sharing the str
 
 **"Tell the agent where you want to go — it knows how to get you there correctly."**
 
-Not "run this command." Not "read this doc." Not "figure out what step you're on." The user arrives with intent and the agent immediately knows the context, knows the process, and begins guiding. The user's job is to express intent and engage; the agent's job is to orient and drive. The mental model: *Tony knows what's going on. Tell Tony what you need.*
+Not "run this command." Not "read this doc." Not "figure out what step you're on." The user arrives with intent and the agent immediately knows the context, knows the process, and begins guiding. The user's job is to express intent and engage; the agent's job is to orient and drive. The mental model: *Impetus knows what's going on. Tell Impetus what you need.*
 
 ### User Mental Model
 
@@ -339,7 +339,7 @@ The defining interaction is novel: proactive orientation is not how IDE tools cu
 |-------|-------------|
 | **Initiation** | User opens session. Agent fires immediately — reads ledger, surfaces active threads, asks one targeted question to confirm intent |
 | **Interaction** | Conversational back-and-forth through workflow steps. Agent synthesizes, user confirms or redirects. Progress narrative visible at each transition |
-| **Feedback** | ✓ Built / → Now / ◦ Next at every phase boundary. Hooks announce results. Subagents surface through Tony's voice |
+| **Feedback** | ✓ Built / → Now / ◦ Next at every phase boundary. Hooks announce results. Subagents surface through Impetus's voice |
 | **Completion** | Agent explicitly hands ownership back: "That's done — here's what was produced. What's next?" Never just stops |
 
 ### Multi-Thread Work Model
@@ -348,7 +348,7 @@ Momentum must meet users in a fundamentally non-linear, multi-session, multi-tab
 
 **The Session Ledger**
 
-The orchestrating agent's first act in any session is to surface the user's current state across *all active threads* — not just the current tab. This requires a persistent ledger (e.g. `_bmad-output/session-ledger.yaml`) that every Tony instance reads and writes.
+The orchestrating agent's first act in any session is to surface the user's current state across *all active threads* — not just the current tab. This requires a persistent ledger (e.g. `_bmad-output/session-ledger.yaml`) that every Impetus instance reads and writes.
 
 Each entry contains: thread ID, workflow type, current step, last-active timestamp, and a one-sentence context summary sufficient to re-orient the user instantly.
 
@@ -362,11 +362,11 @@ You have 3 open threads:
 Continue one of these, or start something new?
 ```
 
-The user says "continue the story" and Tony re-orients immediately. Or "I want to do X" — Tony opens a new ledger entry and starts fresh, concurrent with the others.
+The user says "continue the story" and Impetus re-orients immediately. Or "I want to do X" — Impetus opens a new ledger entry and starts fresh, concurrent with the others.
 
 **Multi-Tab Awareness**
 
-Each Claude Code tab is an independent Tony instance sharing the same ledger. Tony in tab A sees that tab B has an active story thread. Recently-timestamped entries signal intentional concurrent work and are left undisturbed. Conflicting thread starts (two tabs trying to open the same story) are flagged.
+Each Claude Code tab is an independent Impetus instance sharing the same ledger. Impetus in tab A sees that tab B has an active story thread. Recently-timestamped entries signal intentional concurrent work and are left undisturbed. Conflicting thread starts (two tabs trying to open the same story) are flagged.
 
 **Thread Hygiene**
 
@@ -499,9 +499,125 @@ Hooks fire independently of workflow state. Pass is minimal; failure is diagnost
 
 ## User Journey Flows
 
+### Journey 0: First-Time Install
+
+The very first `/momentum` invocation in a new project. No `installed.json` exists — Impetus detects first run, explains what it needs to do, and waits for consent before touching anything.
+
+```
+  Momentum 1.0.0 — first time here
+
+  Before we get started, I need to configure a few things for this project:
+
+    · 3 global rules → ~/.claude/rules/
+      (authority hierarchy, anti-patterns, model routing)
+    · Enforcement hooks → .claude/settings.json
+    · MCP servers → .mcp.json
+
+  After setup, you'll need to restart Claude Code once for the
+  enforcement hooks to activate. Rules and MCP are available immediately.
+
+  Set up now?
+  [Y] Yes · [S] I'll handle it manually
+```
+
+After **[Y]** — Impetus executes each action and reports each one:
+
+```
+  Setting up Momentum 1.0.0...
+
+  ✓  ~/.claude/rules/authority-hierarchy.md
+  ✓  ~/.claude/rules/anti-patterns.md
+  ✓  ~/.claude/rules/model-routing.md
+  ✓  .claude/settings.json — enforcement hooks configured
+  ✓  .mcp.json — Git MCP + Findings MCP configured
+
+  !  Restart Claude Code when ready — hooks activate on restart.
+     Rules and MCP are working now.
+
+  What are you working on?
+```
+
+After **[S]** — Impetus explains what manual setup requires and proceeds to orientation. Enforcement hooks won't fire until setup is complete, but the agent can still help.
+
+**Design principles:**
+- Impetus never installs anything without saying what it's about to do and getting consent
+- Each install action is reported individually — no "done" without showing the work
+- The `!` restart signal is clear but not blocking; conversation continues immediately
+- Setup failure (permission error, file conflict) surfaces with specific diagnosis, not a generic error
+- Journey transitions directly to onboarding once setup is confirmed
+
+---
+
+### Journey 4: Version Upgrade
+
+`npx skills update` has already run — the Momentum package on disk is now a newer version. When Impetus starts up, it reads the manifest (new version) and `installed.json` (old version), detects the delta, reads the per-version upgrade instructions, and presents what needs to happen to the user.
+
+The key framing: **Momentum was updated on your machine. Your project hasn't caught up yet. Here's what that means.**
+
+```
+  Momentum has been updated to 1.1.0 — your project is configured for 1.0.0.
+
+  Here's what changed and what I need to do:
+
+    · authority-hierarchy.md — revised authority precedence rules
+      → update ~/.claude/rules/authority-hierarchy.md
+
+    · mcp-config.json — Findings MCP updated to v2
+      → update .mcp.json
+
+  No restart needed for these changes — they take effect immediately.
+
+  Update now, or continue with 1.0.0 for this session?
+  [U] Update · [S] Skip for now
+```
+
+After **[U]**:
+
+```
+  Updating to Momentum 1.1.0...
+
+  ✓  ~/.claude/rules/authority-hierarchy.md updated
+  ✓  .mcp.json updated
+
+  Project is now on Momentum 1.1.0.
+```
+
+Then immediately transitions to session orientation (ledger display). No lingering on upgrade state.
+
+When hooks config changes (requires restart):
+
+```
+  ✓  .claude/settings.json — hooks updated
+
+  !  Restart Claude Code for updated enforcement hooks to activate.
+```
+
+**Design principles:**
+- The "what changed / what I need to do" pairing is non-negotiable — every upgrade action shows both the reason and the action
+- Impetus reads upgrade instructions from the versions manifest; it never guesses what to do
+- Skip is always available — 1.0.0 continues to work, just with older rules/config
+- Multi-version gaps (skipped updates) apply instructions sequentially: 1.0.0 → 1.1.0 → 1.2.0, each step's changes presented and confirmed
+- Upgrade state is never shown again once applied — `installed.json` is updated immediately on success
+
+---
+
+### The `/momentum` Entry Point
+
+`/momentum` is the single command. There is no separate installer, no setup wizard, no second command to remember. Impetus reads `installed.json` at startup and routes:
+
+| State | What Impetus does |
+|-------|------------------|
+| No `installed.json` | Journey 0 — first-time install |
+| `installed.json` version < manifest version | Journey 4 — version upgrade |
+| Versions match | Normal session start — ledger display |
+
+The user never decides which of these applies. Impetus determines context and acts accordingly.
+
+---
+
 ### Journey 1: First-Time User (Onboarding)
 
-The knowledge gap persona's first encounter. Agent speaks first — user doesn't need to know any commands.
+The knowledge gap persona's first session after install is complete. Agent speaks first — user doesn't need to know any commands.
 
 ```mermaid
 flowchart TD
@@ -530,7 +646,7 @@ flowchart TD
     E --> F{Tests pass?}
     F -->|No| G[Agent surfaces failure\nwith diagnostic context]
     G --> D
-    F -->|Yes| H[Code review subagent\nReturns through Tony's voice]
+    F -->|Yes| H[Code review subagent\nReturns through Impetus's voice]
     H --> I{Critical findings?}
     I -->|Yes| J[Flywheel: trace upstream\nWhat rule/spec/workflow caused this?]
     J --> K[Upstream fix applied\nRule · spec · or workflow updated]
@@ -642,7 +758,7 @@ States: pass (minimal), fail (with diagnostic context)
 ---
 
 **5. Subagent Return**
-*Appears at:* whenever a subagent completes and Tony surfaces the result in his own voice
+*Appears at:* whenever a subagent completes and Impetus surfaces the result in his own voice
 
 ```
   The code review found 2 items worth your attention:
@@ -704,6 +820,38 @@ Constraint: always returns ownership explicitly — "this is yours"
 ```
 Constraint: offer, never block. Decision always returned to the user.
 
+---
+
+**9. Install/Upgrade Status**
+*Appears at:* first-time install and version upgrade — each action reported individually
+
+First-run install:
+```
+  Setting up Momentum 1.0.0...
+
+  ✓  ~/.claude/rules/authority-hierarchy.md
+  ✓  ~/.claude/rules/anti-patterns.md
+  ✓  ~/.claude/rules/model-routing.md
+  ✓  .claude/settings.json — enforcement hooks configured
+  ✓  .mcp.json — MCP servers configured
+
+  !  Restart Claude Code for enforcement hooks to activate.
+```
+
+Version upgrade:
+```
+  Updating to Momentum 1.1.0...
+
+  ✓  ~/.claude/rules/authority-hierarchy.md updated
+  ✓  .mcp.json updated
+
+  !  No restart needed.
+```
+
+States: first-run (all components listed), upgrade (changed components only), restart-required variant, no-restart variant, partial-failure (specific failed action surfaced with diagnosis).
+
+---
+
 ### Component Implementation Strategy
 
 Components are implemented as agent instruction patterns — structured prose in workflow and agent files that consistently produce these output shapes. Not code components; behavioural contracts enforced through agent design.
@@ -712,7 +860,7 @@ Components are implemented as agent instruction patterns — structured prose in
 
 | Phase | Components | Rationale |
 |-------|-----------|-----------|
-| Day 1 | Progress Indicator, Hook Announcement, Session Ledger | Orientation and enforcement — practice doesn't work without these |
+| Day 1 | Install/Upgrade Status, Progress Indicator, Hook Announcement, Session Ledger | Setup must work before anything else; orientation and enforcement follow |
 | Sprint 1 | Workflow Step, Completion Signal | Story cycle can't run without them |
 | Sprint 2 | Subagent Return, Flywheel Notice, Proactive Orientation | Quality layer and compounding improvement |
 

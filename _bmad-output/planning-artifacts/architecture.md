@@ -26,7 +26,7 @@ derives_from:
   - id: RESEARCH-SKILLS-DEPLOY-001
     path: _bmad-output/planning-artifacts/research/technical-agent-skills-deployment-research-2026-03-15.md
     relationship: derives_from
-    description: "Agent Skills deployment research — plugin vs flat skills, hybrid architecture, BMAD coexistence"
+    description: "Agent Skills deployment research — skills-only model, hooks/rules/MCP deployment constraints, context:fork behavior"
   - id: HANDOFF-BRIEF-001
     path: docs/research/handoff-product-brief-2026-03-14.md
     relationship: derives_from
@@ -53,13 +53,13 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 Momentum's FRs organize into 10 architectural subsystems:
 
-1. **Deployment Packaging** — Standard Agent Skills (SKILL.md) as the sole deployment mechanism; no plugin required. Claude Code-specific frontmatter (`context: fork`, `model:`, `effort:`) optimizes for Claude Code while remaining standards-compliant. Flat skills run in main context; `context: fork` skills run in isolated subagent contexts for pure verifiers. Rules, hooks config, and MCP config are bundled in `momentum/references/` and written by Impetus on first invocation — `npx skills add` handles SKILL.md files; Impetus handles the rest. One set of SKILL.md files serves all targets.
+1. **Deployment Packaging** — Standard Agent Skills (SKILL.md) as the sole deployment mechanism; no plugin required. Claude Code-specific frontmatter (`context: fork`, `model:`, `effort:`) optimizes for Claude Code while remaining standards-compliant. Flat skills run in main context; `context: fork` skills run in isolated subagent contexts for pure verifiers. Rules, hooks config, and MCP config are bundled in `skills/momentum/references/` and written by Impetus on first `/momentum` invocation — `npx skills add` deploys SKILL.md files only; Impetus handles all non-skills config. One set of SKILL.md files serves all targets.
 
 2. **Provenance Infrastructure** — `derives_from` frontmatter (downstream-only authoring), content hash staleness detection, suspect link flagging (pull-based), auto-generated `referenced_by`, Chain of Evidences prompting, Citations API integration for mechanical grounding.
 
-3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, Stop conditional quality gate. Hook configuration template is bundled in `momentum/references/hooks-config.json`; Impetus writes it to `.claude/settings.json` on first invocation using the Write tool. Skill-lifecycle hooks can additionally be defined in SKILL.md `hooks:` frontmatter for session-bounded enforcement. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
+3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, Stop conditional quality gate. Two hook deployment mechanisms: (1) **Always-on hooks** — configuration template bundled in `skills/momentum/references/hooks-config.json`; Impetus writes it to `.claude/settings.json` on first `/momentum` invocation using the Write tool; these fire on every matching tool event in every session regardless of which skill is active. (2) **Skill-lifecycle hooks** — defined in SKILL.md `hooks:` frontmatter; scoped to the skill's lifetime; only fire while that skill is active; automatically cleaned up when the skill completes. Research confirmation (2026-03-19): hooks in SKILL.md frontmatter are a Claude Code-exclusive feature; `npx skills add` does not deploy hooks independently — they are embedded in the SKILL.md file itself or written to `.claude/settings.json` by Impetus. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
 
-4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `momentum/references/rules/` and written to both targets by Impetus on first invocation — no separate setup step.
+4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `skills/momentum/references/rules/` and written to both targets by Impetus on first `/momentum` invocation — no separate setup step. Research confirmation (2026-03-19): `npx skills add` cannot write to `~/.claude/rules/` or `.claude/rules/`; it deploys SKILL.md files only. Rules deployment via Impetus's Write tool is the correct and only mechanism.
 
 5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection). Both use `context: fork` for producer-verifier isolation. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
 
@@ -96,11 +96,13 @@ Momentum's FRs organize into 10 architectural subsystems:
 ---
 
 ### Technical Constraints & Dependencies
+<!-- REVISED: Verified deployment constraints against github.com/vercel-labs/skills README and agentskills.io/specification (2026-03-19). Confirmed: npx skills add deploys SKILL.md files only — no hooks, rules, agents, or MCP config. Hooks in SKILL.md frontmatter are skill-lifecycle-scoped (Claude Code + Cline only). context:fork is Claude Code-exclusive. Plugin-agent spike confirmed eliminated. -->
 
 - **Agent Skills standard** — SKILL.md format; Claude Code-specific frontmatter silently ignored by other tools; one file, dual behavior by design
 - **Subagents cannot spawn subagents** — VFL orchestration chains through main conversation; affects Full-profile parallel execution design
-- **context:fork isolation** — `context: fork` is a SKILL.md frontmatter field, not a plugin-only feature (verified March 18, 2026 from agentskills.io specification and Claude Code docs). Skills with `context: fork` run in isolated subagent contexts without access to conversation history. code-reviewer and architecture-guard are implemented as `context: fork` SKILL.md files — no plugin required. The `allowed-tools` frontmatter field restricts tool access (e.g., `Read` only for pure verifiers). The previously-noted spike for plugin-agent invocation is eliminated.
-- **Non-skills deployment: bundled and agent-written** — `npx skills add` deploys SKILL.md files only. Rules, hook config templates, MCP config templates, and the install/upgrade manifest are bundled inside `skills/momentum/references/`. Impetus uses `${CLAUDE_SKILL_DIR}` to locate its own skill directory and writes these files directly to their targets. Install/upgrade logic is governed by `momentum-manifest.json` and `installed.json` (Decision 5c). The UX interaction for install/upgrade is defined in the UX specification.
+- **context:fork isolation** — `context: fork` is a SKILL.md frontmatter field, Claude Code-exclusive (confirmed: compatibility table in vercel-labs/skills README — only Claude Code = Yes; all other agents = No). Skills with `context: fork` run in isolated subagent contexts without access to conversation history. code-reviewer and architecture-guard are implemented as `context: fork` SKILL.md files — no plugin required. The `allowed-tools` frontmatter field restricts tool access (e.g., `Read` only for pure verifiers). Plugin-agent invocation spike is eliminated — `context: fork` is a SKILL.md frontmatter feature.
+- **Non-skills deployment: bundled and agent-written** — `npx skills add` deploys SKILL.md files and their bundled supporting files (scripts/, references/, assets/) only. It cannot write to `~/.claude/rules/`, `.claude/settings.json`, `.mcp.json`, or any config target outside the skills directory. Rules, hook config templates, MCP config templates, and the install/upgrade manifest are bundled inside `skills/momentum/references/`. Impetus uses `${CLAUDE_SKILL_DIR}` to locate its own skill directory and writes these files directly to their targets. Install/upgrade logic is governed by `momentum-versions.json` and `installed.json` (Decision 5c). The UX interaction for install/upgrade is defined in the UX specification.
+- **Hooks: two deployment paths** — Always-on hooks (fire every session regardless of skill) are written to `.claude/settings.json` by Impetus. Skill-lifecycle hooks (fire only while a specific skill is active) are defined in SKILL.md `hooks:` frontmatter and require no separate deployment — they travel with the skill. Both are Claude Code-exclusive features confirmed by the hooks row in the vercel-labs/skills compatibility table (Claude Code = Yes; all other agents except Cline = No).
 
 ---
 
@@ -131,8 +133,10 @@ The vision: a developer running BMAD workflows gets Momentum's quality layer for
 ---
 
 ## Deployment Structure
+<!-- REVISED: Plugin/Unit 1/Unit 2 model removed; skills-only deployment confirmed against live research sources (2026-03-19). npx skills add deploys SKILL.md files only — hooks, rules, and MCP config deploy via Impetus. -->
 
 > _[Changed 2026-03-18: Removed two-unit plugin + skills model. All deployment is now via standard Agent Skills only (`npx skills add`). Plugin/Unit 1 concept eliminated. code-reviewer and architecture-guard are `context: fork` SKILL.md files, not plugin agents. Reason: product owner direction; plugin model rejected. Research source: agentskills.io/specification + github.com/vercel-labs/skills README, verified March 18, 2026.]_
+> _[Verified 2026-03-19: Research pass against live sources confirms npx skills add deploys SKILL.md + bundled files only; no hooks/rules/MCP deployment via skills CLI. Deployment table and descriptions are accurate.]_
 
 ### Skills Deployment Classification
 
@@ -145,10 +149,10 @@ The defining question for each component: *does this need main-context persona p
 | upstream-fix, create-story, dev-story | Flat skills | Stateful workflows needing main context |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only |
-| Always-on hooks | `.claude/settings.json` | Template bundled in `momentum/references/hooks-config.json`; Impetus writes on first run |
-| Global rules | `~/.claude/rules/` | Bundled in `momentum/references/rules/`; Impetus copies on first run |
-| Project rules | `.claude/rules/` | Bundled in `momentum/references/rules/`; Impetus copies on first run |
-| MCP config | `.mcp.json` | Template bundled in `momentum/references/mcp-config.json`; Impetus writes on first run |
+| Always-on hooks | `.claude/settings.json` | Template bundled in `skills/momentum/references/hooks-config.json`; Impetus writes on first `/momentum` run |
+| Global rules | `~/.claude/rules/` | Bundled in `skills/momentum/references/rules/`; Impetus writes on first `/momentum` run |
+| Project rules | `.claude/rules/` | Bundled in `skills/momentum/references/rules/`; Impetus writes on first `/momentum` run |
+| MCP config | `.mcp.json` | Template bundled in `skills/momentum/references/mcp-config.json`; Impetus writes on first `/momentum` run |
 
 ### Repository Structure (preview — full structure in Project Structure section)
 
@@ -174,16 +178,20 @@ momentum/
 ```
 
 ### Install Experience
+<!-- REVISED: Plugin+setup command replaced with single npx skills add; momentum setup and momentum bootstrap CLIs eliminated. Install command format verified against vercel-labs/skills README (2026-03-19). -->
 
 > _[Changed 2026-03-18: Two-command plugin + skills install replaced with single `npx skills add`. Changed again (2026-03-18): removed separate `momentum setup` step — Impetus handles all first-run configuration automatically. Reason: single entry point; no separate installer.]_
+> _[Verified 2026-03-19: Install command format confirmed against vercel-labs/skills README. No momentum setup CLI, no momentum bootstrap CLI. Impetus is the sole post-install entry point.]_
 
 ```bash
 # Install Momentum into any Claude Code project
 npx skills add momentum/momentum -a claude-code
 
-# Single entry point:
+# Single entry point — all setup, config, and upgrades flow through here:
 /momentum
 ```
+
+`npx skills add` installs the SKILL.md files and their bundled `references/` content to `.claude/skills/`. It does not install hooks, rules, or MCP config — those are written by Impetus on first `/momentum` invocation. No `momentum setup` command. No `momentum bootstrap` command. No separate plugin install.
 
 Impetus handles install and upgrade via the manifest mechanism (Decision 5c). What triggers install vs. upgrade checks, and how the user experience unfolds, is defined in the UX specification — not here. The architectural guarantee: `/momentum` is the only interface; all setup and upgrade paths flow through it.
 
@@ -337,10 +345,12 @@ Dead air is a failure mode, not an acceptable pause.
 ### Packaging & Deployment
 
 **Decision 5a — Global Rules Deployment: Bundled in Skills, Written by Impetus**
+<!-- REVISED: Rules cannot be deployed via npx skills add — confirmed against vercel-labs/skills README compatibility table (2026-03-19). No "Rules" row exists in the table; only Basic skills, allowed-tools, context:fork, and Hooks are listed. Rules deployment via Impetus Write tool is the correct and only mechanism. -->
 
 > _[Changed 2026-03-18 (twice): First from "plugin limitation" to "skills CLI limitation"; then rewritten — rules are bundled inside the skills package and Impetus writes them directly. No separate setup step. Reason: single /momentum entry point; rules travel with the skill.]_
+> _[Verified 2026-03-19: Confirmed against live research — npx skills add deploys SKILL.md files only. The vercel-labs/skills compatibility table contains no rules deployment feature. Bundled-and-agent-written is the definitive model.]_
 
-`npx skills add` deploys SKILL.md files only — it cannot write to `~/.claude/rules/` directly. Resolution: rules are bundled inside the momentum skill at `references/rules/`. Impetus uses `${CLAUDE_SKILL_DIR}` to locate its own skill directory and writes rules to the appropriate targets using the Write tool:
+`npx skills add` deploys SKILL.md files only — it cannot write to `~/.claude/rules/` directly. Resolution: rules are bundled inside the momentum skill at `skills/momentum/references/rules/`. Impetus uses `${CLAUDE_SKILL_DIR}` to locate its own skill directory and writes rules to the appropriate targets using the Write tool:
 
 - `~/.claude/rules/` — global rules (all projects for this user)
 - `.claude/rules/` — project-scoped rules (this project only)
@@ -371,35 +381,45 @@ enforcement, flywheel, and versioning without workflow authors needing to explic
 
 Two files govern Momentum's install and upgrade lifecycle:
 
-**`skills/momentum/references/momentum-manifest.json`** — bundled with the skills package; the authoritative record of what this Momentum version includes:
+**`skills/momentum/references/momentum-versions.json`** — bundled with the skills package; the authoritative per-version action list. Each version entry contains machine-readable instructions that tell Impetus exactly what to do — not a summary, but executable steps:
 
 ```json
 {
-  "version": "1.0.0",
-  "components": [
-    { "id": "rules-global", "type": "rules", "scope": "global",
-      "target": "~/.claude/rules/",
-      "files": ["authority-hierarchy.md", "anti-patterns.md", "model-routing.md"] },
-    { "id": "rules-project", "type": "rules", "scope": "project",
-      "target": ".claude/rules/",
-      "files": ["architecture-conventions.md"] },
-    { "id": "hooks", "type": "config",
-      "source": "hooks-config.json", "target": ".claude/settings.json" },
-    { "id": "mcp", "type": "config",
-      "source": "mcp-config.json", "target": ".mcp.json" }
-  ],
-  "upgrade_notes": {
-    "1.0.0": "Initial install — all components",
+  "current_version": "1.1.0",
+  "versions": {
+    "1.0.0": {
+      "description": "Initial release",
+      "actions": [
+        { "action": "write_file", "source": "rules/authority-hierarchy.md",
+          "target": "~/.claude/rules/authority-hierarchy.md" },
+        { "action": "write_file", "source": "rules/anti-patterns.md",
+          "target": "~/.claude/rules/anti-patterns.md" },
+        { "action": "write_file", "source": "rules/model-routing.md",
+          "target": "~/.claude/rules/model-routing.md" },
+        { "action": "write_config", "source": "hooks-config.json",
+          "target": ".claude/settings.json", "requires_restart": true },
+        { "action": "write_config", "source": "mcp-config.json",
+          "target": ".mcp.json", "requires_restart": false }
+      ]
+    },
     "1.1.0": {
-      "from": ">=1.0.0",
-      "summary": "Added domain-fitness lens; updated MCP config",
-      "changed_components": ["rules-global", "mcp"]
+      "description": "Revised authority hierarchy; Findings MCP v2",
+      "from": "1.0.0",
+      "actions": [
+        { "action": "update_file", "source": "rules/authority-hierarchy.md",
+          "target": "~/.claude/rules/authority-hierarchy.md",
+          "description": "Revised authority precedence rules" },
+        { "action": "update_config", "source": "mcp-config.json",
+          "target": ".mcp.json",
+          "description": "Findings MCP updated to v2",
+          "requires_restart": false }
+      ]
     }
   }
 }
 ```
 
-**`.claude/momentum/installed.json`** — written to the target project; records what was installed and at what version:
+**`.claude/momentum/installed.json`** — written to the target project on install; records what version was last applied to THIS project. `npx skills update` updates the package on disk; `installed.json` records what the project has actually been configured for:
 
 ```json
 {
@@ -407,7 +427,6 @@ Two files govern Momentum's install and upgrade lifecycle:
   "installed_at": "2026-03-18T00:00:00Z",
   "components": {
     "rules-global":  { "version": "1.0.0", "hash": "<git-blob-sha>" },
-    "rules-project": { "version": "1.0.0", "hash": "<git-blob-sha>" },
     "hooks":         { "version": "1.0.0" },
     "mcp":           { "version": "1.0.0" }
   }
@@ -415,12 +434,13 @@ Two files govern Momentum's install and upgrade lifecycle:
 ```
 
 **Mechanisms:**
-- **First install** — Impetus reads manifest, installs all components, writes `installed.json`
-- **Session-start check** — Impetus compares `manifest.version` vs `installed.json.momentum_version`; per-component hashes detect manual drift (user edited an installed file)
-- **Upgrade** — Impetus reads `upgrade_notes` for the version delta, applies only `changed_components`, updates `installed.json`
-- **Hash comparison** — git blob SHA (`git hash-object`) on bundled file vs. installed file; zero extra tooling
+- **First install** — no `installed.json` exists; Impetus reads `versions["1.0.0"].actions`, executes each, writes `installed.json`
+- **Session-start check** — Impetus reads `current_version` from `momentum-versions.json`; compares against `installed.json.momentum_version`; if they differ, the project needs upgrading
+- **Upgrade** — Impetus reads the action list for each version between installed and current; presents to user with description + action per step; executes on confirmation; updates `installed.json`
+- **Multi-version gaps** — actions applied sequentially (1.0.0 → 1.1.0 → 1.2.0); each version's changes presented and confirmed as a group
+- **Hash comparison** — per-component git blob SHA detects manual drift (user edited an installed file); surfaced as a warning, not a blocker
 
-What the UX specification defines: when Impetus presents these checks (session start? on demand?), how it prompts the user, what it shows for upgrade diffs, and how it handles partial or failed installs.
+The UX interaction for install and upgrade — when to prompt, how to present each action, how to handle restarts and partial failures — is defined in the UX specification (Journeys 0 and 4).
 
 ---
 
@@ -675,8 +695,10 @@ Good: `"Run validate-fix-loop validation on an artifact. Profiles: gate/checkpoi
 ## Project Structure & Boundaries
 
 ### Repository Structure
+<!-- REVISED: plugin/ directory removed; no Unit 1/Unit 2 split. All deployment via skills/. Hooks in settings.json (always-on) and SKILL.md frontmatter (skill-lifecycle). Verified against research (2026-03-19). -->
 
 > _[Changed 2026-03-18: Removed `plugin/` directory entirely. code-reviewer and architecture-guard moved to `skills/` as `context: fork` SKILL.md files. `.claude/settings.json` now carries committed always-on hook definitions. Reason: skills-only deployment model.]_
+> _[Verified 2026-03-19: Structure confirmed correct for skills-only deployment. npx skills add installs to .claude/skills/. Non-skills config (rules, hooks-config, mcp-config) bundled in skills/momentum/references/ for Impetus to deploy.]_
 
 ```
 momentum/                                    ← Root
@@ -691,7 +713,7 @@ momentum/                                    ← Root
 │   │   └── references/
 │   │       ├── practice-overview.md
 │   │       ├── phase-guide.md
-│   │       ├── momentum-manifest.json       ← Install/upgrade manifest (versions + component list)
+│   │       ├── momentum-versions.json       ← Per-version action list (install + upgrade instructions)
 │   │       ├── rules/                       ← Bundled rules (written to ~/.claude/rules/ on install)
 │   │       │   ├── authority-hierarchy.md
 │   │       │   ├── anti-patterns.md
@@ -749,8 +771,10 @@ momentum/                                    ← Root
 ---
 
 ### Installed Structure (after `npx skills add` + first `/momentum` invocation)
+<!-- REVISED: Removed plugin cache and momentum setup step. npx skills add installs SKILL.md files to .claude/skills/; Impetus writes all config on first /momentum invocation. Verified (2026-03-19). -->
 
 > _[Changed 2026-03-18 (twice): Removed plugin cache; then removed `momentum setup` step — Impetus writes all config files on first run from bundled references/. Reason: single entry point model.]_
+> _[Verified 2026-03-19: No momentum setup CLI, no momentum bootstrap CLI. Structure reflects what npx skills add actually installs (.claude/skills/ only) plus what Impetus writes on first invocation.]_
 
 ```
 ~/.claude/                                   ← Global Claude Code config
@@ -805,8 +829,10 @@ momentum/                                    ← Root
 ---
 
 ### Requirements to Structure Mapping
+<!-- REVISED: Plugin rows removed. Classification Rule (Plugin vs Flat Skills) eliminated — all deployment is via skills. Hooks/rules/MCP config deployed by Impetus from bundled references/, not by npx skills add. Verified (2026-03-19). -->
 
-> _[Changed 2026-03-18: Removed plugin rows. code-reviewer and architecture-guard now install as `context:fork` skills to `.claude/skills/`. Hooks, rules, and MCP config are bundled in `momentum/references/` and written by Impetus on first run. Reason: skills-only, single-entry-point model.]_
+> _[Changed 2026-03-18: Removed plugin rows. code-reviewer and architecture-guard now install as `context:fork` skills to `.claude/skills/`. Hooks, rules, and MCP config are bundled in `skills/momentum/references/` and written by Impetus on first run. Reason: skills-only, single-entry-point model.]_
+> _[Verified 2026-03-19: Table confirmed correct. No plugin classification — flat skills and context:fork skills are the only two deployment types. Hooks row correctly shows settings.json as target (Impetus-written), not a skills-installed path.]_
 
 | Subsystem | Source File(s) | Installed Location |
 |---|---|---|
@@ -852,7 +878,7 @@ Adversarial validation conducted per the dual-reviewer pattern from VFL framewor
 | Finding | Severity | Resolution |
 |---|---|---|
 | A-1: context:fork + productive waiting contradiction | Revised to Low | Resolved: foreground/background is orthogonal to context:fork isolation. Background subagents confirmed in Claude Code docs. Decision 4c updated. |
-| A-2: Global rules auto-load stated as unconditional | High | Fixed: subsystem 4 now states conditional on `momentum setup` |
+| A-2: Global rules auto-load stated as unconditional | High | Fixed: subsystem 4 now states conditional on first `/momentum` invocation — Impetus writes rules to `~/.claude/rules/` on first run; no separate `momentum setup` CLI (eliminated 2026-03-18) |
 | A-3: Copied global rules go stale | High | Fixed: update mechanism added to Decision 5a; Impetus surfaces version-drift warning |
 | A-4: Plugin-agent invocation assumed, not verified | High | Resolved (2026-03-18): `context: fork` is a SKILL.md frontmatter field, not a plugin-only feature. code-reviewer and architecture-guard are `context: fork` SKILL.md files — no plugin required. Spike eliminated. Plugin model dropped entirely. |
 | A-5: VFL reviewer output unbounded | Medium | Fixed: reviewer output bound added to Decision 3a |
