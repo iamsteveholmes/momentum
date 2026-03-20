@@ -7,6 +7,7 @@ stepsCompleted:
   - step-03-epic-3-stories-vfl-gate-applied
   - step-03-epic-4-stories-vfl-gate-applied
   - step-03-epic-5-stories-vfl-gate-applied
+  - step-03-epic-6-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -1285,3 +1286,200 @@ So that I know which claims are verified facts, which are inferences, and which 
 **When** Impetus encounters this in an artifact review
 **Then** Impetus (not the scanner) evaluates the claim: if the claim has a provenance_status of VERIFIED but the derives_from block has no entry that could substantiate it, Impetus surfaces the discrepancy and asks the developer to confirm or reclassify
 **And** the scanner never evaluates claim semantics — it only checks structural completeness of derives_from blocks and entry fields
+
+---
+
+## Epic 6: The Practice Compounds
+
+Findings accumulate across stories. Systemic patterns surface. Upstream fixes are applied at the right level — spec, rule, workflow, or one-off patch. Each sprint the practice gets measurably smarter. The flywheel makes invisible improvement visible.
+
+**FRs covered:** FR28, FR29, FR30, FR31, FR32, FR33
+**UX-DRs covered:** UX-DR7
+**Additional:** findings-ledger.json (with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server
+
+### Story 6.1: Findings Ledger Accumulates Quality Findings Across Stories
+
+As a developer,
+I want all quality findings — from code reviews, VFL runs, and flywheel traces — to accumulate in a structured ledger,
+So that nothing is lost between sessions and every defect has a traceable record.
+
+**Acceptance Criteria:**
+
+**Given** the findings ledger is initialized (FR28)
+**When** Momentum is first installed
+**Then** `.claude/momentum/findings-ledger.json` is created as an empty array `[]`
+**And** only the flywheel workflow (momentum-upstream-fix) is authorized to write to this file — all other agents submit findings via structured output to Impetus, which triggers the flywheel to write (Architecture Decision 1c / Decision 2a)
+**And** when the Momentum findings MCP server is available (`mcp/findings-server/` — installed as part of Momentum, configured by Impetus in Story 1.3), the flywheel uses it as the write mechanism; if the MCP server is unavailable, direct JSON append is the fallback — the flywheel's write authority does not depend on the MCP server
+
+**Given** a quality finding is produced (from code-reviewer, VFL, or architecture-guard)
+**When** the flywheel records the finding
+**Then** the ledger entry contains all required schema fields: `id` (`F-[story-ref]-[seq]`, e.g. `F-S04-003`), `story_ref`, `phase` (one of: `spec` | `atdd` | `implement` | `code-review` | `flywheel`), `severity` (`critical` | `high` | `medium` | `low`), `pattern_tags` (kebab-case noun phrases), `description` (one sentence), `evidence` (exact quote or `file:line` reference), `provenance_status` (one of the five FR16 values, or `null` if not applicable), `upstream_fix_applied` (boolean, initially `false`), `upstream_fix_ref` (`null` until a fix is applied), `upstream_fix_level` (`null` until a fix is applied; then one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`), `timestamp` (ISO 8601)
+**And** subagent findings submitted to Impetus must use the structured output contract (Architecture Decision 3b): `{status, result: {findings: [...]}, question, confidence}` — Impetus extracts finding objects and passes them to the flywheel for ledger ingestion
+**And** an entry with any missing required field is rejected — the flywheel does not write partial entries
+
+**Given** the Momentum findings MCP server is installed (`mcp/findings-server/` — part of Momentum distribution, configured by Story 1.3)
+**When** Impetus or the flywheel queries the ledger
+**Then** the MCP server provides structured read/write access to findings-ledger.json as a resource
+**And** Impetus reads the ledger at retrospective and upstream trace phases to build pattern context
+**And** when the MCP server is available it is the preferred programmatic access path; direct JSON file access is the fallback when it is not available — developer can always inspect the file directly
+
+**Given** the ledger has grown across multiple sprints
+**When** Impetus generates a session summary
+**Then** it includes a one-line ledger summary: `[N] findings across [S] stories — [C] critical open, [H] high open` (where "open" means `upstream_fix_applied: false` for that severity level)
+**And** if no findings exist, the summary is omitted — no placeholder text
+
+---
+
+### Story 6.2: Cross-Story Pattern Detection Surfaces Systemic Issues
+
+As a developer,
+I want Impetus to detect when the same type of defect keeps appearing across different stories,
+So that I know when a problem is systemic and needs a root-level fix rather than another patch.
+
+**Acceptance Criteria:**
+
+**Given** the findings ledger contains entries from two or more stories (FR29)
+**When** Impetus runs pattern detection (at session start, retrospective, or explicit query)
+**Then** it groups findings by `pattern_tags` across all stories
+**And** a pattern is considered systemic when the same `pattern_tag` appears in findings from 2 or more distinct `story_ref` values
+**And** Impetus surfaces each systemic pattern: `⚠ systemic pattern: [tag] — appeared in [N] stories ([story-refs]) / Action: run flywheel to trace root cause`
+
+**Given** a systemic pattern is detected
+**When** Impetus presents the pattern to the developer
+**Then** it shows: the tag name, the count of affected stories, the severity distribution (how many critical/high/medium/low), and the most recent evidence quote
+**And** Impetus does not automatically trigger the flywheel — it offers: "Want to run the flywheel to trace root cause for [tag]?"
+**And** the developer must explicitly approve before the flywheel starts (FR31)
+
+**Given** a pattern was surfaced and the developer declined to act on it
+**When** the pattern appears in a subsequent session
+**Then** Impetus surfaces it again with an updated count — it does not remember that the developer declined unless the developer explicitly says "suppress this pattern"
+**And** if the developer suppresses a pattern, Impetus records the suppression in the findings ledger as a special entry: `{id, story_ref: null, phase: "pattern-suppression", pattern_tags: [tag], description: "Developer suppressed pattern", upstream_fix_applied: false, upstream_fix_level: null, timestamp}` — this persists the suppression across sessions
+**And** Impetus does not surface the same tag again until the findings-ledger entry count for that tag increases beyond the count at suppression time
+
+**Given** no systemic patterns exist in the ledger
+**When** pattern detection runs
+**Then** the result is omitted from the session summary — no "no patterns found" message is shown
+
+---
+
+### Story 6.3: Flywheel Workflow Explains Issues and Guides Upstream Trace
+
+As a developer,
+I want the flywheel to walk me through a structured trace from finding to root cause to fix,
+So that I fix defects at the right level instead of patching symptoms.
+
+**Acceptance Criteria:**
+
+**Given** the flywheel is triggered for a finding or systemic pattern (FR30)
+**When** the workflow begins
+**Then** it executes the six phases in order: Detection → Review → Upstream Trace → Solution → Verify → Log (per the upstream fix process defined in architecture.md; the Log phase is the sixth phase not listed in the architecture summary but present in the process rules)
+**And** at each phase transition, Impetus displays the Workflow Step component (UX-DR4): an orientation line (never "phase N/6"), substantive content for the current phase, a transition signal, and explicit user control (A/P/C or Approve/Reject as context requires)
+**And** no phase may be skipped — the Log phase is required even if the solution is a "no-fix" decision
+**And** the finding is written to the findings ledger during the Detection phase, not at the end of the workflow — the finding exists in the ledger before any trace or fix is applied
+
+**Given** the Detection phase runs
+**When** Impetus presents the detected finding
+**Then** it displays: finding id, description, evidence, severity, and whether a prior upstream fix was applied to this pattern
+**And** if this is a systemic pattern, it shows the full list of affected stories
+**And** the finding is written to the findings ledger at this phase (if not already present from the originating review)
+
+**Given** the Review phase runs (second phase — examination before root-cause tracing)
+**When** Impetus presents the review
+**Then** it examines the finding in context: reads the artifact where the finding was detected, reads the relevant spec/rule that governs that area, and summarizes: "This finding is in [artifact], governed by [rule/spec], and appears to be caused by [preliminary hypothesis]"
+**And** Impetus asks the developer: "Does this match your understanding, or should I adjust the scope before tracing?" (explicit developer checkpoint before Upstream Trace proceeds)
+**And** the developer must confirm or redirect before the workflow advances to Upstream Trace
+
+**Given** the Upstream Trace phase runs
+**When** Impetus presents the trace result
+**Then** it identifies the root level: one of `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`
+**And** it explains why this level was chosen: "The root cause is in [artifact] because [one sentence]"
+**And** the explanation is Impetus's synthesis — never raw subagent output (UX-DR10)
+**And** Impetus asks the developer: "Does this root level look correct before proposing a fix?" — developer must explicitly confirm before Solution phase begins
+
+**Given** the Log phase runs (final phase)
+**When** all prior phases are complete
+**Then** Impetus records the complete flywheel run: finding id, phases completed, fix level applied (or "no-fix"), fix ref, outcome (resolved | unresolved | deferred), and timestamp
+**And** the findings ledger entry is updated with `upstream_fix_applied`, `upstream_fix_level`, and `upstream_fix_ref` values
+**And** if the developer rejected the fix, the outcome is recorded as "deferred" — not "resolved"
+
+**Given** the Solution phase completes and a fix is applied
+**When** Impetus presents the outcome (UX-DR7)
+**Then** it displays the Flywheel Notice component:
+- `Finding:` [description of the original defect]
+- `Root cause:` [one sentence]
+- `Fix applied:` [what changed and where]
+- `What it prevents:` [the class of future defects this fix eliminates]
+**And** this notice makes the improvement visible — the developer can see that practice quality increased, not just that a bug was fixed
+
+---
+
+### Story 6.4: Developer Consent Required at Every Flywheel Step
+
+As a developer,
+I want to control every step of the flywheel — approve, modify, or reject — before anything changes,
+So that the system never applies a fix I haven't reviewed.
+
+**Acceptance Criteria:**
+
+**Given** the flywheel reaches the Solution phase (FR31)
+**When** a fix is proposed
+**Then** Impetus presents the full proposed fix: what file changes, what the change is, and which finding it addresses
+**And** the developer must explicitly approve (`A`) or reject (`R`) before any change is applied
+**And** if the developer rejects, the flywheel records the rejection in the Log phase and closes — no changes are made
+
+**Given** the flywheel proposes a fix to a specification or rule file
+**When** the proposal is shown
+**Then** Impetus displays the exact diff of the proposed change before asking for approval
+**And** the developer may request modifications: "change X to Y before applying"
+**And** Impetus applies modifications and shows the revised diff before re-asking for approval — the cycle repeats until the developer approves or rejects
+
+**Given** the flywheel reaches a consent gate (after Review, after Upstream Trace, or at Solution)
+**When** Impetus is about to ask for developer approval
+**Then** the flywheel writes the pending consent state to the session ledger immediately before presenting the consent prompt: `{flywheel_ref, finding_id, phase: "[current-phase]", status: "awaiting_consent", timestamp}`
+**And** the phase value is the actual current phase name — not hardcoded to "solution"
+**And** at the next session start, Impetus reads the session ledger, detects any `status: "awaiting_consent"` entries, and surfaces them: "A flywheel trace is awaiting your decision — [finding description] at [phase]. Want to resume?"
+
+**Given** the flywheel's Verify phase runs after a fix is applied
+**When** verification executes
+**Then** Impetus re-reads the artifact where the finding was originally detected and checks whether the condition described in the finding's `evidence` field is still present
+**And** if the evidence condition is no longer present, verification passes: Impetus confirms "The fix has been applied and the finding is resolved"
+**And** if the evidence condition is still present or a new related finding is produced, verification fails and Impetus surfaces: "The fix didn't fully resolve the issue — want to re-trace or apply a different fix level?"
+**And** the developer controls whether to re-trace — the flywheel never automatically restarts
+
+---
+
+### Story 6.5: Practice Health Metric and Fix Level Tracking
+
+As a developer,
+I want to see the ratio of upstream fixes to code-level patches,
+So that I know whether my practice is improving or just accumulating code debt.
+
+**Acceptance Criteria:**
+
+**Given** findings have been resolved over time (FR33)
+**When** Impetus computes the practice health metric
+**Then** it calculates: `upstream_fix_ratio = upstream_fixes / total_fixes` where `upstream_fixes` = entries where `upstream_fix_applied: true` AND `upstream_fix_level != "one-off-code-fix"`, and `total_fixes` = all entries where `upstream_fix_applied: true`
+**And** this ratio represents: of all fixes applied so far, what fraction reached a root level (spec, rule, tooling, or workflow) vs. staying in code — a value of 0% means every fix was a patch; 100% means every fix reached root cause
+**And** a ratio ≥ 0.5 is reported as healthy: `✓ practice health: [N]% upstream fixes — the practice is compounding`
+**And** a ratio < 0.5 is reported as degraded: `! practice health: [N]% upstream fixes — most fixes are patches, not root fixes`
+**And** if fewer than 5 fixes exist, the metric is reported as `◦ practice health: insufficient data ([N] fixes recorded)`
+
+**Given** the practice health metric is degraded
+**When** Impetus surfaces it at session start or retrospective
+**Then** Impetus offers context: "Most recent code-level patches: [top 3 by severity]" and asks if the developer wants to run the flywheel on any of them
+**And** Impetus does not force a flywheel run — it offers, never blocks (FR31)
+
+**Given** an upstream fix is applied (FR32)
+**When** the flywheel records the fix in the Log phase
+**Then** the findings ledger entry is updated: `upstream_fix_applied: true`, `upstream_fix_ref` set to the id of the fix artifact (rule file modified, spec corrected, workflow updated)
+**And** the `upstream_fix_level` field in the ledger entry is set to one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`
+**And** all five fix levels are valid — the flywheel accepts `one-off-code-fix` as a legitimate choice when the root cause is genuinely isolated to a single code location
+
+**Given** a retrospective runs (via BMAD retrospective or explicit request)
+**When** Impetus contributes to the retrospective input
+**Then** it includes a findings summary using the following structure:
+- Total findings: [N] ([C] critical, [H] high, [M] medium, [L] low)
+- Systemic patterns: [tag-1] ([N] stories), [tag-2] ([N] stories) — or "none detected"
+- Practice health: [upstream_fix_ratio]% upstream fixes ([N] of [total] resolved)
+- Top fixed patterns: [top 3 tags by fix count]
+**And** this summary is included in the developer's response at the retrospective step — it is not passed directly to a BMAD agent; Impetus presents it and the developer decides how to incorporate it
