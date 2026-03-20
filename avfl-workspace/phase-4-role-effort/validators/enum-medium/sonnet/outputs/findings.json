@@ -1,0 +1,92 @@
+{
+  "validator": "avfl-validator-enum-medium",
+  "lens": "Structural Integrity",
+  "lens_id": "STRUCTURAL",
+  "dimensions": ["structural_validity", "completeness", "cross_reference_integrity"],
+  "framing": "Enumerator",
+  "skepticism": 3,
+  "stage": "final",
+  "domain_expert": "technical writer",
+  "task_context": "data processing pipeline architecture brief",
+  "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+  "score": 63,
+  "grade": "Fair - notable issues found",
+  "result": "continue",
+  "findings_count": {
+    "critical": 1,
+    "high": 2,
+    "medium": 3,
+    "low": 1,
+    "total": 7
+  },
+  "score_calculation": "100 - 15 (critical) - 8 (high) - 8 (high) - 3 (medium) - 3 (medium) - 3 (medium) - 1 (low) = 59",
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "critical",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring section",
+      "description": "The document references 'Section 6' for security considerations, but no Section 6 exists anywhere in the document. The document has five named sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, and Conclusions. The reference is a broken internal pointer.",
+      "evidence": "\"Security considerations are documented in Section 6.\" — The document contains no Section 6 and no Security section.",
+      "suggestion": "Either add a Section 6 covering security considerations, or remove the forward reference and inline the essential security notes where relevant."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Overview vs. Stage 2 — Transformation",
+      "description": "The Overview states all pipeline stages run in parallel, but Stage 2 explicitly states it must complete before Stage 3 begins. This is a direct architectural contradiction that leaves the pipeline's execution model undefined for a final architecture brief. A final artifact must resolve this.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Correct the Overview to accurately state the execution model. If stages 1 and 4 run independently/in parallel while stages 2 and 3 are sequential, say so explicitly."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion; Stage 2 — Transformation; Stage 3 — Delivery",
+      "description": "Three undefined components are referenced as architectural elements but never described: (1) the dead-letter queue (Stage 1), (2) the overflow queue (Stage 2), and (3) the reference database (Stage 2). For a final architecture brief, each component that appears in the architecture must be defined. These are load-bearing architectural elements with no specification.",
+      "evidence": "Stage 1: \"logged to the dead-letter queue\" — no definition. Stage 2: \"via an overflow queue\" — no definition. Stage 2: \"customer metadata from the reference database\" — no definition.",
+      "suggestion": "Add an Architecture Components subsection or appendix defining each supporting component: dead-letter queue (retention, consumer), overflow queue (trigger threshold, consumer), and reference database (type, access pattern, latency expectations)."
+    },
+    {
+      "id": "STRUCTURAL-004",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion",
+      "description": "Authentication is mentioned as occurring but is not specified. For a final architecture brief, the authentication mechanism must be identified (e.g., API key, OAuth2, mTLS). The current text is a placeholder-level description.",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\" — No mechanism, credential type, or authority is named.",
+      "suggestion": "Specify the authentication mechanism: e.g., 'Requests are authenticated via HMAC-signed API keys included in the X-API-Key header.'"
+    },
+    {
+      "id": "STRUCTURAL-005",
+      "severity": "medium",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 2 — Transformation",
+      "description": "The 'standard retry policy' is referenced as if defined elsewhere, but no such definition exists in this document and no external reference is provided. A final architecture brief must either define it or cite where it is defined.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" — No definition of 'standard retry policy' appears anywhere in the document.",
+      "suggestion": "Define the retry policy inline (e.g., exponential backoff with up to N attempts over T seconds) or cite the policy document by name and location."
+    },
+    {
+      "id": "STRUCTURAL-006",
+      "severity": "medium",
+      "dimension": "structural_validity",
+      "location": "Stage 3 — Delivery",
+      "description": "The claim that the in-memory delivery cache reduces latency by 99.9% is presented as a factual specification with no basis, source, or measurement conditions stated. This is an extraordinary quantitative claim that cannot be verified from the document. In a final architecture brief, unsubstantiated performance figures undermine the document's reliability.",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\"",
+      "suggestion": "Either provide the measurement basis (benchmark conditions, test environment, data volume) or restate as an approximation with appropriate hedging. If the figure is erroneous, correct it."
+    },
+    {
+      "id": "STRUCTURAL-007",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Operational Notes",
+      "description": "The Operational Notes section references 'the Prometheus dashboard' with a definite article implying a specific known artifact, but the dashboard is never named, linked, or described. Minor completeness gap for a final artifact.",
+      "evidence": "\"The pipeline and workflow are monitored by the on-call team via the Prometheus dashboard.\"",
+      "suggestion": "Name or link the dashboard (e.g., 'via the Meridian Pipeline Grafana dashboard at <url>') so operators can locate it."
+    }
+  ],
+  "notes": {
+    "reexamine_performed": true,
+    "reexamine_result": "Second pass confirmed all findings. No findings were added or removed during re-examination. The parallel-vs-sequential contradiction (STRUCTURAL-002) was identified on re-examination as a high-severity structural validity issue, not merely a consistency observation."
+  }
+}

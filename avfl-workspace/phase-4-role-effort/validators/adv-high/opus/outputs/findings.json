@@ -1,0 +1,93 @@
+{
+  "validator": {
+    "role": "adversary",
+    "effort": "high",
+    "model": "opus",
+    "lens": "Factual Accuracy",
+    "lens_id": "accuracy",
+    "dimensions": ["correctness", "traceability", "logical_soundness"],
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief"
+  },
+  "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+  "source_material": null,
+  "score": 59,
+  "grade": "Poor - significant problems",
+  "result": "continue",
+  "findings_count": {
+    "critical": 1,
+    "high": 2,
+    "medium": 3,
+    "low": 1,
+    "total": 7
+  },
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "critical",
+      "dimension": "logical_soundness",
+      "location": "Overview (line 5) vs Stage 2 — Transformation (line 21)",
+      "description": "The document makes two mutually exclusive claims about the pipeline execution model. The Overview states all stages run in parallel; Stage 2 explicitly states sequential dependency.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Decide on the actual execution model. If stages are sequential (as the stage descriptions imply), remove the parallel claim from the Overview. If some stages run in parallel, specify which ones."
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery (line 29)",
+      "description": "A 99.9% latency reduction from an in-memory cache is an extraordinary and implausible claim. This would mean reducing latency by three orders of magnitude (e.g., 1s to 1ms). In-memory buffering improves write throughput but not by this factor compared to unbuffered writes to a data warehouse.",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\"",
+      "suggestion": "Replace with a defensible metric. Typical improvements from write buffering are 5-20x, not 1000x. If the number is real, provide the benchmark context that supports it."
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 4 — Monitoring (line 37)",
+      "description": "References a 'Section 6' that does not exist in the document. The document has five sections (Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions) with no Section 6.",
+      "evidence": "\"Security considerations are documented in Section 6.\"",
+      "suggestion": "Either add the missing security section or update this reference to point to the correct location where security is documented."
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Performance Characteristics (line 41)",
+      "description": "The performance section discusses 'files' and a 'batch vs streaming' comparison, but the architecture describes an event pipeline processing HTTP POST events. There is no prior mention of file-based processing or a streaming mode. This claim cannot be traced to the architecture described.",
+      "evidence": "Architecture describes: \"events via HTTP POST from customer SDK agents\" and \"micro-batches of 500 records.\" Performance claims: \"batch processing is 3x faster than streaming for files under 10MB.\"",
+      "suggestion": "Align the performance section with the actual architecture. If the pipeline processes events, benchmark events. If file processing exists, describe it in the architecture section first."
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Stage 2 — Transformation (line 23)",
+      "description": "References an undefined 'standard retry policy' without specifying what it is. In a final architecture document, this is an unresolvable reference -- the reader cannot verify or implement the retry behavior.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\"",
+      "suggestion": "Define the retry policy (e.g., exponential backoff, max 3 retries, 1s/2s/4s intervals) or reference the specific document where it is defined."
+    },
+    {
+      "id": "ACCURACY-006",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Stage 1 — Ingestion (line 15)",
+      "description": "Claims authentication is used but provides no detail about the mechanism. In a final architecture brief, an unspecified authentication claim is unverifiable and could be a placeholder that was never filled in.",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\"",
+      "suggestion": "Specify the authentication mechanism (API key, OAuth, mTLS, etc.) or reference the security document where it is detailed."
+    },
+    {
+      "id": "ACCURACY-007",
+      "severity": "low",
+      "dimension": "logical_soundness",
+      "location": "Stage 2 — Transformation (line 25)",
+      "description": "Introduces 'large files' handled via an overflow queue, but the pipeline processes events received via HTTP POST. The concept of 'large files' is incongruent with the event-based architecture described elsewhere.",
+      "evidence": "\"Large files are handled separately from the primary transformation path via an overflow queue.\"",
+      "suggestion": "Clarify what 'large files' means in an event pipeline context, or replace with terminology consistent with the event-processing architecture (e.g., 'oversized event payloads')."
+    }
+  ],
+  "duplicates_removed": 0,
+  "false_positives_removed": 0
+}

@@ -1,0 +1,164 @@
+{
+  "config": "consolidator-high-sonnet",
+  "effort": "high",
+  "model": "sonnet",
+  "document": "pipeline-arch-multi-iter.md",
+  "task_context": "data processing pipeline architecture brief",
+  "score": 42,
+  "grade": "Failing - major rework needed",
+  "result": "continue",
+  "findings_count": {
+    "critical": 1,
+    "high": 3,
+    "medium": 5,
+    "low": 4,
+    "total": 13
+  },
+  "duplicates_removed": 8,
+  "false_positives_removed": 1,
+  "findings": [
+    {
+      "id": "C-001",
+      "severity": "critical",
+      "confidence": "HIGH",
+      "dimension": "structural_validity",
+      "location": "Overview paragraph 1 vs Stage 2 paragraph 1",
+      "description": "Direct contradiction on execution topology: Overview states all pipeline stages run in parallel while Stage 2 states Stage 2 must complete before Stage 3 begins. The document cannot be both.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Resolve the contradiction by choosing the correct topology. If the pipeline has sequential dependencies (Stage 2 → Stage 3), remove the blanket parallel claim from the Overview or qualify it (e.g., 'Stages 1 and 4 run in parallel with the core transformation chain').",
+      "sources": ["SE-001", "SA-001"]
+    },
+    {
+      "id": "C-002",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring, final sentence",
+      "description": "Dangling reference to a Section 6 that does not exist in the document. The document ends at Conclusions; there is no Section 6.",
+      "evidence": "'Security considerations are documented in Section 6.' Document ends at Conclusions with no Section 6 present.",
+      "suggestion": "Either add a Section 6 covering security, inline the security considerations into Stage 4, or remove the reference.",
+      "sources": ["SE-002", "SA-002"]
+    },
+    {
+      "id": "C-003",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "correctness",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "The batch/streaming performance comparison is factually inverted. Batch incurs per-job setup overhead that makes it slower, not faster, than streaming for small files. The claim contradicts standard data engineering knowledge.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' Standard data engineering: streaming outperforms batch at small sizes due to batch setup overhead.",
+      "suggestion": "Correct the claim to accurately reflect the performance characteristics. If the benchmark is real, cite the methodology and conditions; if it was invented, replace with an accurate statement.",
+      "sources": ["AE-001", "AA-001"]
+    },
+    {
+      "id": "C-004",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery, paragraph 1",
+      "description": "The 99.9% latency reduction claim is an extraordinary claim with no supporting data: no baseline, no conditions, no methodology. The figure is implausible without qualification.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No baseline, conditions, or methodology provided.",
+      "suggestion": "Replace with a defensible claim backed by actual benchmark data, or qualify it with conditions and a cited source. Remove the precise percentage if it cannot be substantiated.",
+      "sources": ["AE-002", "AA-002"]
+    },
+    {
+      "id": "C-005",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "traceability",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "The benchmark claim uses 'Benchmarks show' with no attribution — no source, no methodology, no conditions stated. No reader can verify or reproduce this claim.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' No source named.",
+      "suggestion": "Attribute the benchmark: name the tool, version, hardware, file types, and conditions. If internal, say 'Internal benchmarks (conditions: X)' or cite the test methodology.",
+      "sources": ["AE-003", "AA-003"]
+    },
+    {
+      "id": "C-006",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "consistency",
+      "location": "Operational Notes bullet 2; Conclusions paragraph 2",
+      "description": "The terms 'pipeline' and 'workflow' are used interchangeably throughout the document with no definitions. In some places they appear to be distinct; in others they are synonymous. The document never resolves what each term means.",
+      "evidence": "Operational Notes: 'The pipeline and workflow are monitored.' (treating them as distinct) Conclusions: 'a real-time streaming workflow alongside the existing batch pipeline.' (treating them as distinct in a different way, with no definition of either).",
+      "suggestion": "Define 'pipeline' and 'workflow' in the Overview or a Terminology section, then apply consistently throughout.",
+      "sources": ["CE-001", "CA-001"]
+    },
+    {
+      "id": "C-007",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "'Standard retry policy' is referenced as if it exists and is understood, but it is never defined anywhere in the document. An architecture brief must specify retry behavior.",
+      "evidence": "'Transformation applies the standard retry policy on transient failures.' No definition of retry count, backoff strategy, or timeout exists in the document.",
+      "suggestion": "Define the retry policy inline (e.g., 'up to 3 retries with exponential backoff starting at 1s, max 30s timeout') or reference a specific external document where it is defined.",
+      "sources": ["CE-002", "CA-002"]
+    },
+    {
+      "id": "C-008",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "structural_validity",
+      "location": "Conclusions, future enhancements paragraph",
+      "description": "The Conclusions section lists 'adding a real-time streaming workflow alongside the existing batch pipeline' as a future enhancement, but Stage 2 already describes the system as handling both batch and streaming modes. The document implies the capability is both current and future simultaneously.",
+      "evidence": "Conclusions: 'Future enhancements include adding a real-time streaming workflow alongside the existing batch pipeline.' Stage 2 already discusses both batch and streaming processing modes as current functionality.",
+      "suggestion": "Reconcile: if streaming is already implemented, remove it from the future enhancements list. If it is genuinely future, remove references to current streaming capability from Stage 2.",
+      "sources": ["SA-003"]
+    },
+    {
+      "id": "C-009",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "logical_soundness",
+      "location": "Stage 4 — Monitoring vs Stage 3 — Delivery",
+      "description": "The 5-minute monitoring polling interval is logically incompatible with the sub-second end-to-end latency implied by the 99.9% latency reduction claim. A system that delivers results in sub-second time cannot be meaningfully monitored by a system that polls every 5 minutes.",
+      "evidence": "Stage 4: 'The monitoring system polls health endpoints every 5 minutes.' Stage 3: 'reduces end-to-end latency by 99.9%' (implying sub-second delivery). These figures are logically incompatible.",
+      "suggestion": "Align the monitoring interval with the performance tier. For a sub-second delivery system, monitoring should operate at second or sub-second granularity, not 5-minute intervals.",
+      "sources": ["AE-004"]
+    },
+    {
+      "id": "C-010",
+      "severity": "low",
+      "confidence": "HIGH",
+      "dimension": "clarity",
+      "location": "Overview paragraph 1",
+      "description": "The ETL acronym is not expanded on first use.",
+      "evidence": "'an internal ETL system' — ETL (Extract, Transform, Load) is not spelled out at first mention.",
+      "suggestion": "Expand on first use: 'an internal ETL (Extract, Transform, Load) system'.",
+      "sources": ["CE-004", "CA-003"]
+    },
+    {
+      "id": "C-011",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion, paragraph 2",
+      "description": "The authentication mechanism is stated to exist but never specified. An architecture brief for a final-stage artifact should name the authentication type.",
+      "evidence": "'Authentication is used to verify each request before processing begins.' No mechanism type (API key, OAuth, mTLS, etc.) named.",
+      "suggestion": "Specify the authentication mechanism: e.g., 'API key authentication' or 'mTLS client certificates'.",
+      "sources": ["SE-003"]
+    },
+    {
+      "id": "C-012",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 3",
+      "description": "'Large files' are described as handled via an overflow queue but the size threshold defining 'large' is never specified.",
+      "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold defined.",
+      "suggestion": "Define the threshold: e.g., 'Files exceeding 100MB are routed to the overflow queue.'",
+      "sources": ["CE-003"]
+    },
+    {
+      "id": "C-013",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "conciseness",
+      "location": "Stage 4 — Monitoring; Operational Notes",
+      "description": "Substantially identical information about the Prometheus dashboard appears in both Stage 4 and Operational Notes, adding length without adding information.",
+      "evidence": "Stage 4: 'The monitoring system uses a Prometheus dashboard.' Operational Notes bullet 1: 'Monitored via the Prometheus dashboard.' Near-duplicate.",
+      "suggestion": "State the Prometheus dashboard once (in Stage 4) and cross-reference from Operational Notes, or consolidate monitoring information into one location.",
+      "sources": ["CA-004"]
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "validator": {
+    "skill": "avfl-validator-adv-medium",
+    "model": "claude-opus-4-6",
+    "lens": "Factual Accuracy",
+    "lens_id": "accuracy",
+    "dimensions": ["correctness", "traceability", "logical_soundness"],
+    "reviewer_framing": "Adversary",
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief"
+  },
+  "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+  "source_material": null,
+  "score": 62,
+  "grade": "Fair - notable issues found",
+  "result": "continue",
+  "findings_count": {
+    "critical": 1,
+    "high": 3,
+    "medium": 2,
+    "low": 1,
+    "total": 7
+  },
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "critical",
+      "dimension": "logical_soundness",
+      "location": "Overview (line 5) vs Stage 2 (line 21)",
+      "description": "The document contains a direct self-contradiction about pipeline execution model. The Overview states 'All pipeline stages run in parallel to maximize throughput' while Stage 2 opens with 'Stage 2 must complete before Stage 3 begins', which is sequential, not parallel.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Resolve the contradiction: either the pipeline is parallel (stages operate concurrently on different event batches) or sequential (stages execute in order). Clarify the execution model in both locations consistently."
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 - Delivery (line 29)",
+      "description": "The claim that an in-memory delivery cache 'reduces end-to-end latency by 99.9%' is an extraordinary and almost certainly incorrect figure. A 99.9% reduction means a 10-second operation becomes 10 milliseconds. For a micro-batch write to a data warehouse, this magnitude of improvement from a simple cache is not credible without substantiation. Additionally, 'end-to-end latency' includes all stages, not just delivery writes, making the claim logically incoherent as a cache in one stage cannot reduce total pipeline latency by 99.9%.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.'",
+      "suggestion": "Replace with a defensible claim. Either cite actual benchmark data or use a more conservative and scoped statement, e.g., 'reduces delivery-stage write latency by approximately N%'."
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "logical_soundness",
+      "location": "Stage 3 (line 31) vs Performance Characteristics (line 43)",
+      "description": "The document claims 'sub-second end-to-end latency for 95th-percentile events' while also stating that batch completion polling uses a '5-minute interval'. If the delivery layer polls every 5 minutes to check batch completion, the minimum latency contribution from delivery alone is up to 5 minutes. Sub-second end-to-end latency is logically impossible under this design.",
+      "evidence": "Stage 3: 'Polling for batch completion uses a 5-minute interval.' Performance: 'the pipeline maintains sub-second end-to-end latency for 95th-percentile events.'",
+      "suggestion": "Reconcile the polling interval with the latency claim. Either the polling interval is much shorter (sub-second), or the latency claim needs to be scoped to exclude delivery confirmation, or the architecture uses push-based notification rather than polling."
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 4 - Monitoring (line 37)",
+      "description": "The document references 'Section 6' for security considerations, but the document has no numbered sections and contains no Section 6. The document uses named headings (Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions). This is a broken internal reference pointing to nonexistent content.",
+      "evidence": "'Security considerations are documented in Section 6.'",
+      "suggestion": "Either add a Security section to the document and reference it by name, or remove the dangling reference."
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Performance Characteristics (line 41)",
+      "description": "The claim that 'batch processing is 3x faster than streaming for files under 10MB' is presented as benchmark fact but has no source, no test conditions, and no methodology. Additionally, the pipeline is described throughout as an event stream processor (events via HTTP POST, message queues, micro-batches of records), yet this benchmark discusses 'files under 10MB' -- a concept not mentioned anywhere else in the architecture, making the claim contextually untraceable to the system being described.",
+      "evidence": "'Benchmarks show that batch processing is 3x faster than streaming for files under 10MB.'",
+      "suggestion": "Either cite the benchmark source and conditions, or remove the claim. If the pipeline does handle file payloads, describe that capability in the architecture before referencing benchmarks about it."
+    },
+    {
+      "id": "ACCURACY-006",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Overview (line 7), Stage 1 (line 15)",
+      "description": "Multiple quantitative and architectural claims lack any source or substantiation. '50,000 events per second' peak load figure has no benchmark source. 'Authentication is used to verify each request' names no authentication mechanism, protocol, or standard -- for a final architecture brief this is an empty claim that cannot be verified or implemented from.",
+      "evidence": "Overview: 'handles approximately 50,000 events per second under peak load.' Stage 1: 'Authentication is used to verify each request before processing begins.'",
+      "suggestion": "Provide sources for the throughput figure (load test results, capacity planning). Specify the authentication mechanism (OAuth 2.0, API keys, mTLS, etc.)."
+    },
+    {
+      "id": "ACCURACY-007",
+      "severity": "low",
+      "dimension": "correctness",
+      "location": "Stage 2 (line 25)",
+      "description": "The transformation stage references 'large files' handled via an 'overflow queue', but the pipeline is described as processing analytics events, not files. Events arriving via HTTP POST and placed on a message queue are not typically 'files'. This terminology mismatch suggests either imprecise language or an undocumented capability.",
+      "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.'",
+      "suggestion": "Clarify whether 'large files' means large event payloads, batch uploads, or something else. Use terminology consistent with the event-processing model described elsewhere."
+    }
+  ],
+  "duplicates_removed": 0,
+  "false_positives_removed": 0
+}

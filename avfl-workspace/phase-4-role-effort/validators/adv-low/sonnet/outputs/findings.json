@@ -1,0 +1,75 @@
+{
+  "validator": "avfl-validator-adv-low",
+  "lens": "Factual Accuracy",
+  "lens_id": "ACCURACY",
+  "dimensions": ["correctness", "traceability", "logical_soundness"],
+  "framing": "Adversary",
+  "effort": "low",
+  "skepticism": 3,
+  "stage": "final",
+  "domain_expert": "technical writer",
+  "task_context": "data processing pipeline architecture brief",
+  "artifact": "pipeline-arch-multi-iter.md",
+  "score": 67,
+  "grade": "Fair - notable issues found",
+  "result": "continue",
+  "findings_count": {
+    "critical": 0,
+    "high": 2,
+    "medium": 2,
+    "low": 1,
+    "total": 5
+  },
+  "score_calculation": "100 - 8 - 8 - 3 - 3 - 1 = 77 ... recalc: 100 - 8(ACCURACY-001) - 8(ACCURACY-002) - 3(ACCURACY-003) - 3(ACCURACY-004) - 1(ACCURACY-005) = 77",
+  "score_final": 77,
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "high",
+      "dimension": "logical_soundness",
+      "location": "Overview paragraph 1 vs. Stage 2 — Transformation",
+      "description": "Direct contradiction between the stated parallel execution model and the explicit sequential dependency declared in Stage 2. The Overview claims all stages run in parallel; Stage 2 asserts a hard sequential constraint.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Resolve the contradiction. If Stage 2 → Stage 3 is sequential, remove or qualify the 'all stages run in parallel' claim in the Overview. If parallelism is the intent, remove the sequential constraint from Stage 2 and explain how data flows."
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery, paragraph 2",
+      "description": "The claim that an in-memory delivery cache 'reduces end-to-end latency by 99.9% compared to unbuffered writes' is an extraordinary and implausible performance figure with no source, benchmark, or basis provided. A 99.9% latency reduction implies unbuffered writes are 1000× slower — inconsistent with any standard data warehouse write path and unsupported by any cited evidence.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.'",
+      "suggestion": "Provide the actual benchmark source for this claim, or replace with a defensible number with a reference. If this is illustrative, replace with a realistic figure or remove the specific percentage."
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Stage 4 — Monitoring, paragraph 2",
+      "description": "The document references 'Section 6' for security considerations, but no Section 6 exists anywhere in the document. The document has five top-level sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, and Conclusions.",
+      "evidence": "'Security considerations are documented in Section 6.'",
+      "suggestion": "Remove the reference to Section 6 and either add a Security section or reference an external document by name. A broken internal reference in a final architecture brief is unacceptable."
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "A specific benchmark claim — 'batch processing is 3× faster than streaming for files under 10MB' — is stated as fact with no source. Additionally, the framing of 'files under 10MB' is incongruent with the system's domain: the pipeline processes event streams measured in events per second (50,000/sec), not files. The benchmark appears to belong to a different system or context.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.'",
+      "suggestion": "Cite the benchmark source, or reframe the claim in terms consistent with the system's actual workload (events/second, batch sizes in record counts). If this is from a different context, remove or replace it."
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "low",
+      "dimension": "traceability",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "The document references a 'standard retry policy' applied during transformation but never defines what that policy entails (retry count, backoff strategy, failure conditions). In a final architecture brief, a named policy with no definition or cross-reference leaves the claim ungrounded.",
+      "evidence": "'Transformation applies the standard retry policy on transient failures.'",
+      "suggestion": "Define the retry policy inline (e.g., '3 retries with exponential backoff') or add a reference to where it is defined (e.g., 'see Operations Runbook §4.2'). The word 'standard' implies an established definition that should be traceable."
+    }
+  ],
+  "duplicates_removed": 0,
+  "false_positives_removed": 0,
+  "notes": "No source material was provided for this validation. Correctness and traceability findings were evaluated against internal consistency, cross-section coherence, and domain plausibility for a data processing pipeline architecture brief. The parallel/sequential contradiction (ACCURACY-001) and the broken Section 6 reference (ACCURACY-003) are self-evident from the document text. The 99.9% latency figure (ACCURACY-002) and the file-size benchmark (ACCURACY-004) are flagged as untraceable extraordinary claims — no source material could confirm or deny them, but the claims themselves are internally suspicious given the domain framing."
+}

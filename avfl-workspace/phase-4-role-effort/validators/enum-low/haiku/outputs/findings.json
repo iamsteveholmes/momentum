@@ -1,0 +1,68 @@
+{
+  "validation_metadata": {
+    "lens": "Structural Integrity",
+    "lens_mindset": "Mechanical verification. Systematic, exhaustive, literal. Check every field, reference, and required element section by section.",
+    "dimensions": ["structural_validity", "completeness", "cross_reference_integrity"],
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+    "reviewer_framing": "Enumerator",
+    "timestamp": "2026-03-20"
+  },
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "critical",
+      "dimension": "cross_reference_integrity",
+      "location": "Section 4 (Monitoring), line 37",
+      "description": "Reference to non-existent Section 6 for security documentation. The document only contains 4 major sections (Ingestion, Transformation, Delivery, Monitoring) plus Overview, Performance Characteristics, Operational Notes, and Conclusions. There is no Section 6.",
+      "evidence": "Line 37 states: 'Security considerations are documented in Section 6.' However, no Section 6 exists in the document. The document structure ends with Conclusions (Section 5).",
+      "suggestion": "Either: (1) Create Section 6 with security considerations, or (2) Remove this reference if security documentation is not yet available, or (3) Clarify that security is documented elsewhere (e.g., 'in the separate security documentation' or 'in the deployment guide')."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "critical",
+      "dimension": "structural_validity",
+      "location": "Line 5 (Overview) vs. Line 21 (Stage 2 description)",
+      "description": "Fundamental contradiction about pipeline execution model. The Overview states all stages run in parallel; Stage 2 description states it must complete before Stage 3 begins. These are mutually exclusive architectural claims.",
+      "evidence": "Line 5: 'All pipeline stages run in parallel to maximize throughput.' Line 21: 'Stage 2 must complete before Stage 3 begins.' These statements cannot both be true in the same architecture.",
+      "suggestion": "Clarify the actual execution model: (1) If stages truly run in parallel, revise line 21 to reflect parallel execution with any required handshake mechanisms, or (2) If Stage 2 → Stage 3 is sequential, revise the Overview to accurately describe the execution model (e.g., 'Ingestion runs in parallel; transformation and delivery are sequential stages'). This is a foundational architectural decision and must be clear in the final document."
+    }
+  ],
+  "summary": {
+    "total_findings": 2,
+    "by_severity": {
+      "critical": 2,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "by_dimension": {
+      "structural_validity": 1,
+      "completeness": 0,
+      "cross_reference_integrity": 1
+    },
+    "dimensions_checked": 3,
+    "dimensions_with_findings": 2,
+    "dimensions_clean": 1
+  },
+  "score_calculation": {
+    "starting_score": 100,
+    "critical_findings": 2,
+    "critical_weight_per_finding": -15,
+    "total_deduction": -30,
+    "final_score": 70,
+    "grade": "Fair - notable issues found",
+    "pass_threshold": 95,
+    "result": "FAIL"
+  },
+  "validation_notes": {
+    "structural_scope": "Validated document structure, format conformance, field presence and type, reference resolution, and internal structural consistency. Did not evaluate factual accuracy, traceability, or domain rule compliance (those are outside this lens scope).",
+    "re_examination_performed": true,
+    "re_examination_notes": "At skepticism level 3, after initial findings, performed second pass searching for additional structural issues. Found no additional structural problems beyond the two critical findings. Note: Document contains several unsourced performance claims (lines 29, 41, 43) but these are Factual Accuracy/Traceability dimension issues, not structural validity issues and thus outside this lens scope.",
+    "completeness_check_notes": "For final-stage artifact, verified all major sections present (Ingestion, Transformation, Delivery, Monitoring). Completeness is technically satisfied (sections are all present), but the missing Section 6 creates a completeness gap in the intended content scope.",
+    "cross_reference_check": "Systematically traced all internal references. Found one broken reference (Section 6). All other references to systems (Redis, Prometheus, reference database, data warehouse) are contextually appropriate and do not require external validation in this lens."
+  }
+}

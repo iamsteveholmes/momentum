@@ -1,0 +1,71 @@
+{
+  "description": "Standardized consolidated findings fixture for fixer benchmark. Based on Phase 3 Sonnet/high run consolidated output. All 9 seeded issues represented. Consolidator score: 47/100.",
+  "score": 47,
+  "grade": "Poor",
+  "document_to_fix": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+  "findings": [
+    {
+      "id": "F-001", "severity": "critical", "dimension": "consistency", "confidence": "HIGH",
+      "location": "Overview paragraph 1 vs Stage 2 — Transformation paragraph 1",
+      "description": "Direct logical contradiction: Overview states all pipeline stages run in parallel; Stage 2 requires Stage 2 to complete before Stage 3 begins.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Remove the blanket parallelism claim. Replace with accurate description: 'Ingestion and transformation stages operate sequentially; delivery begins only after transformation is complete.'"
+    },
+    {
+      "id": "F-002", "severity": "high", "dimension": "cross_reference_integrity", "confidence": "HIGH",
+      "location": "Stage 4 — Monitoring, final sentence",
+      "description": "Dangling cross-reference to non-existent Section 6. The document has no Section 6 and sections are not numbered.",
+      "evidence": "'Security considerations are documented in Section 6.' No Section 6 exists.",
+      "suggestion": "Add a Security Considerations section addressing authentication, encryption in transit, encryption at rest, and access control — OR remove the reference and note security is out of scope."
+    },
+    {
+      "id": "F-003", "severity": "high", "dimension": "correctness", "confidence": "HIGH",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "Batch/streaming performance claim is factually inverted. Streaming outperforms batch for small files; batch is preferred for large payloads.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.' Both sentences are inverted.",
+      "suggestion": "Correct to: 'Internal benchmarks show that streaming is 3× faster than batch for files under 10MB. For larger payloads, batch processing is preferred.'"
+    },
+    {
+      "id": "F-004", "severity": "high", "dimension": "correctness", "confidence": "HIGH",
+      "location": "Stage 3 — Delivery, paragraph 1",
+      "description": "99.9% latency reduction claim is extraordinary and unsupported. No baseline, methodology, test conditions, or citation.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.'",
+      "suggestion": "Remove the percentage. Use qualified language: 'significantly reduces end-to-end write latency.' If real data exists, cite it with conditions."
+    },
+    {
+      "id": "F-005", "severity": "medium", "dimension": "completeness", "confidence": "HIGH",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "'Standard retry policy' referenced but never defined in the document.",
+      "evidence": "'Transformation applies the standard retry policy on transient failures.' No retry parameters defined.",
+      "suggestion": "Define inline: 'applies an exponential backoff retry policy (up to 3 attempts, doubling delay on each transient failure)'"
+    },
+    {
+      "id": "F-006", "severity": "medium", "dimension": "completeness", "confidence": "HIGH",
+      "location": "Stage 2 — Transformation, paragraph 3",
+      "description": "'Large files' threshold undefined — operationally meaningless without a size boundary.",
+      "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold given.",
+      "suggestion": "Define threshold: 'Files exceeding 100MB are handled separately...'"
+    },
+    {
+      "id": "F-007", "severity": "medium", "dimension": "consistency", "confidence": "HIGH",
+      "location": "Operational Notes bullet 2; Conclusions paragraph 2",
+      "description": "'Pipeline' and 'workflow' used interchangeably and inconsistently throughout without definition.",
+      "evidence": "Operational Notes: 'The pipeline and workflow are monitored.' Conclusions: 'real-time streaming workflow alongside the existing batch pipeline.'",
+      "suggestion": "Choose one term and use consistently, or define both explicitly."
+    },
+    {
+      "id": "F-008", "severity": "low", "dimension": "clarity", "confidence": "HIGH",
+      "location": "Overview paragraph 1",
+      "description": "ETL acronym not expanded on first use.",
+      "evidence": "'an internal ETL system' — ETL (Extract, Transform, Load) not expanded.",
+      "suggestion": "Expand on first use: 'an internal ETL (Extract, Transform, Load) system'"
+    },
+    {
+      "id": "F-009", "severity": "low", "dimension": "completeness", "confidence": "MEDIUM",
+      "location": "Stage 1 — Ingestion, paragraph 2",
+      "description": "Authentication mechanism unspecified in a final architecture brief.",
+      "evidence": "'Authentication is used to verify each request before processing begins.' No type specified.",
+      "suggestion": "Specify mechanism: e.g., 'API key authentication is used...' or mark TBD."
+    }
+  ]
+}

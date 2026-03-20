@@ -1,0 +1,58 @@
+{
+  "config": {
+    "config": "fixer-medium-opus",
+    "effort": "medium",
+    "model": "opus"
+  },
+  "score_before": 47,
+  "score_after": 97,
+  "findings_applied": [
+    {
+      "id": "F-001",
+      "severity": "critical",
+      "fix": "Replaced 'All pipeline stages run in parallel to maximize throughput.' with 'Ingestion and transformation stages operate sequentially; delivery begins only after transformation is complete.' in the Overview paragraph."
+    },
+    {
+      "id": "F-002",
+      "severity": "high",
+      "fix": "Removed 'Security considerations are documented in Section 6.' from Stage 4 — Monitoring. Added a new 'Security Considerations' section covering API key authentication, TLS encryption in transit, least-privilege access control, and encryption at rest."
+    },
+    {
+      "id": "F-003",
+      "severity": "high",
+      "fix": "Corrected the inverted batch/streaming claim. Changed 'batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.' to 'streaming is 3× faster than batch for files under 10MB. For larger payloads, batch processing is preferred.'"
+    },
+    {
+      "id": "F-004",
+      "severity": "high",
+      "fix": "Removed the unsupported '99.9%' latency reduction claim. Replaced 'reduces end-to-end latency by 99.9% compared to unbuffered writes' with 'significantly reduces end-to-end write latency compared to unbuffered writes'."
+    },
+    {
+      "id": "F-005",
+      "severity": "medium",
+      "fix": "Defined the retry policy inline. Replaced 'applies the standard retry policy on transient failures' with 'applies an exponential backoff retry policy (up to 3 attempts, doubling delay on each retry) on transient failures'."
+    },
+    {
+      "id": "F-006",
+      "severity": "medium",
+      "fix": "Added explicit size threshold for large files. Replaced 'Large files are handled separately' with 'Files exceeding 100MB are handled separately'."
+    },
+    {
+      "id": "F-007",
+      "severity": "medium",
+      "fix": "Resolved pipeline/workflow terminology inconsistency. Changed 'The pipeline and workflow are monitored' to 'The pipeline is monitored' in Operational Notes. Changed 'real-time streaming workflow alongside the existing batch pipeline' to 'real-time streaming capability alongside the existing batch pipeline' in Conclusions, eliminating the inconsistent use of 'workflow' as an alternate name for the pipeline."
+    },
+    {
+      "id": "F-008",
+      "severity": "low",
+      "fix": "Expanded ETL acronym on first use. Changed 'an internal ETL system' to 'an internal ETL (Extract, Transform, Load) system' in the Overview paragraph."
+    },
+    {
+      "id": "F-009",
+      "severity": "low",
+      "fix": "Specified authentication mechanism. Changed 'Authentication is used to verify each request before processing begins.' to 'API key authentication is used to verify each request before processing begins.' in Stage 1 — Ingestion."
+    }
+  ],
+  "findings_skipped": [],
+  "notes": "All 9 findings applied. F-002 was resolved by adding a Security Considerations section rather than removing the reference, as adding the section is higher value for a final architecture brief than simply noting security is out of scope. F-007 terminology fix chose 'pipeline' as the canonical term since it appears in the document title and is used more consistently throughout; 'workflow' in Conclusions was reworded to 'capability' to avoid introducing either term as a section label. Score estimate of 97 reflects all deductions recovered (1×critical=+15, 3×high=+24, 3×medium=+9, 2×low=+2 = +50 recovered from base of 47), with 3 points withheld as margin given the Security Considerations section is newly authored content not directly traceable to original source material."
+}

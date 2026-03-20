@@ -1,0 +1,156 @@
+{
+  "description": "Synthetic raw findings fixture for consolidator benchmark. Simulates output from 6 validators (1 Enum + 1 Adv per lens × 3 lenses) on pipeline-arch-multi-iter.md. Designed to test consolidator deduplication, confidence tagging, and hallucination filtering.",
+  "document": "pipeline-arch-multi-iter.md",
+  "task_context": "data processing pipeline architecture brief",
+  "validators": {
+    "structural_enum": [
+      {
+        "id": "SE-001", "severity": "critical", "dimension": "structural_validity",
+        "location": "Overview paragraph 1 vs Stage 2 paragraph 1",
+        "description": "Direct contradiction: Overview states 'All pipeline stages run in parallel' while Stage 2 states 'Stage 2 must complete before Stage 3 begins'.",
+        "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'"
+      },
+      {
+        "id": "SE-002", "severity": "high", "dimension": "cross_reference_integrity",
+        "location": "Stage 4 — Monitoring, final sentence",
+        "description": "Dangling reference: 'Security considerations are documented in Section 6.' No Section 6 exists in this document.",
+        "evidence": "'Security considerations are documented in Section 6.' Document ends at Conclusions with no Section 6 present."
+      },
+      {
+        "id": "SE-003", "severity": "low", "dimension": "completeness",
+        "location": "Stage 1 — Ingestion, paragraph 2",
+        "description": "Authentication type unspecified: 'Authentication is used to verify each request' with no mechanism named.",
+        "evidence": "'Authentication is used to verify each request before processing begins.' No type (API key, OAuth, mTLS) specified."
+      }
+    ],
+    "structural_adv": [
+      {
+        "id": "SA-001", "severity": "critical", "dimension": "structural_validity",
+        "location": "Overview vs Stage 2",
+        "description": "The document contradicts itself on execution topology — parallel claim in Overview vs sequential dependency in Stage 2.",
+        "evidence": "'All pipeline stages run in parallel' (Overview) contradicts 'Stage 2 must complete before Stage 3 begins' (Stage 2)."
+      },
+      {
+        "id": "SA-002", "severity": "high", "dimension": "cross_reference_integrity",
+        "location": "Stage 4 — Monitoring",
+        "description": "Reference to non-existent Section 6 for security documentation.",
+        "evidence": "'Security considerations are documented in Section 6.' No such section exists."
+      },
+      {
+        "id": "SA-003", "severity": "medium", "dimension": "structural_validity",
+        "location": "Conclusions",
+        "description": "Conclusions reference 'adding a real-time streaming workflow alongside the existing batch pipeline' as a future enhancement, but the current document describes the system as already handling both batch and streaming — this reads as a contradiction in scope.",
+        "evidence": "'Future enhancements include adding a real-time streaming workflow alongside the existing batch pipeline.' Stage 2 already discusses both batch and streaming processing modes."
+      },
+      {
+        "id": "SA-HAL-001", "severity": "high", "dimension": "cross_reference_integrity",
+        "location": "Stage 3 — Delivery",
+        "description": "The document references SLA targets in Stage 3 that are contradicted by the Performance Characteristics section.",
+        "evidence": "Stage 3 mentions SLA targets — no such text exists in Stage 3."
+      }
+    ],
+    "accuracy_enum": [
+      {
+        "id": "AE-001", "severity": "high", "dimension": "correctness",
+        "location": "Performance Characteristics, paragraph 1",
+        "description": "Batch/streaming performance claim is factually inverted. Streaming is more efficient for small files; batch incurs setup overhead that yields no benefit at small sizes.",
+        "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' Standard data engineering: streaming outperforms batch at small sizes."
+      },
+      {
+        "id": "AE-002", "severity": "high", "dimension": "correctness",
+        "location": "Stage 3 — Delivery, paragraph 1",
+        "description": "99.9% latency reduction claim is implausible without supporting data.",
+        "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No baseline, conditions, or methodology."
+      },
+      {
+        "id": "AE-003", "severity": "medium", "dimension": "traceability",
+        "location": "Performance Characteristics, paragraph 1",
+        "description": "Benchmark claim unattributed — 'Benchmarks show' with no source, methodology, or conditions.",
+        "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.'"
+      },
+      {
+        "id": "AE-004", "severity": "medium", "dimension": "logical_soundness",
+        "location": "Performance Characteristics, paragraphs 1-2",
+        "description": "The 5-minute polling interval in Stage 4 contradicts the sub-second latency claim in Stage 3 — you cannot achieve sub-second end-to-end latency while polling every 5 minutes.",
+        "evidence": "Stage 4: 'The monitoring system polls health endpoints every 5 minutes.' Stage 3: 'reduces end-to-end latency by 99.9%' (implying sub-second delivery)."
+      }
+    ],
+    "accuracy_adv": [
+      {
+        "id": "AA-001", "severity": "high", "dimension": "correctness",
+        "location": "Performance Characteristics",
+        "description": "The batch/streaming performance claim reads backwards — batch is not faster than streaming for small files in standard architectures.",
+        "evidence": "'batch processing is 3× faster than streaming for files under 10MB' — contradicts standard knowledge: streaming wins at small sizes due to batch setup overhead."
+      },
+      {
+        "id": "AA-002", "severity": "high", "dimension": "correctness",
+        "location": "Stage 3 — Delivery",
+        "description": "99.9% latency reduction is an extraordinary claim with no backing evidence.",
+        "evidence": "'reduces end-to-end latency by 99.9%' with no methodology, baseline, or citation."
+      },
+      {
+        "id": "AA-003", "severity": "medium", "dimension": "traceability",
+        "location": "Performance Characteristics",
+        "description": "'Benchmarks show' — attribution missing entirely.",
+        "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' No source named."
+      }
+    ],
+    "coherence_enum": [
+      {
+        "id": "CE-001", "severity": "medium", "dimension": "consistency",
+        "location": "Operational Notes bullet 2; Conclusions paragraph 2",
+        "description": "'Pipeline' and 'workflow' used interchangeably and inconsistently — same sentence treats them as distinct, Conclusions treats them as distinct entities.",
+        "evidence": "Operational Notes: 'The pipeline and workflow are monitored.' Conclusions: 'a real-time streaming workflow alongside the existing batch pipeline.' No definitions provided."
+      },
+      {
+        "id": "CE-002", "severity": "medium", "dimension": "completeness",
+        "location": "Stage 2 — Transformation, paragraph 2",
+        "description": "'Standard retry policy' referenced but never defined.",
+        "evidence": "'Transformation applies the standard retry policy on transient failures.' No definition of retry count, backoff, or timeout."
+      },
+      {
+        "id": "CE-003", "severity": "medium", "dimension": "completeness",
+        "location": "Stage 2 — Transformation, paragraph 3",
+        "description": "'Large files' handled differently but threshold undefined.",
+        "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold specified."
+      },
+      {
+        "id": "CE-004", "severity": "low", "dimension": "clarity",
+        "location": "Overview paragraph 1",
+        "description": "ETL acronym not expanded on first use.",
+        "evidence": "'an internal ETL system' — ETL not expanded."
+      }
+    ],
+    "coherence_adv": [
+      {
+        "id": "CA-001", "severity": "medium", "dimension": "consistency",
+        "location": "Throughout",
+        "description": "Pipeline/workflow terminology drift — document never settles on which term means what.",
+        "evidence": "Operational Notes: 'pipeline and workflow' as if distinct. Conclusions: 'streaming workflow...batch pipeline' as if distinct in a different way."
+      },
+      {
+        "id": "CA-002", "severity": "medium", "dimension": "completeness",
+        "location": "Stage 2",
+        "description": "'Standard retry policy' is a named thing that goes undefined.",
+        "evidence": "'applies the standard retry policy' — no definition anywhere in document."
+      },
+      {
+        "id": "CA-003", "severity": "low", "dimension": "clarity",
+        "location": "Overview",
+        "description": "ETL unexpanded.",
+        "evidence": "'an internal ETL system' without expansion."
+      },
+      {
+        "id": "CA-004", "severity": "low", "dimension": "conciseness",
+        "location": "Operational Notes",
+        "description": "Operational Notes and Stage 4 Monitoring section repeat substantially the same information about the Prometheus dashboard.",
+        "evidence": "Stage 4: 'The monitoring system uses a Prometheus dashboard.' Operational Notes bullet 1: 'Monitored via the Prometheus dashboard.' Near-duplicate."
+      }
+    ]
+  },
+  "notes": {
+    "high_confidence_candidates": ["SE-001/SA-001 (C1)", "SE-002/SA-002 (C2)", "AE-001/AA-001 (H1)", "AE-002/AA-002 (H2)", "AE-003/AA-003 (benchmark traceability)", "CE-001/CA-001 (M3)", "CE-002/CA-002 (M1)", "CE-004/CA-003 (L1)"],
+    "medium_confidence_candidates": ["SE-003 (L2, Enum only)", "SA-003 (future/current scope tension)", "AE-004 (latency/polling contradiction)", "CA-004 (redundancy)"],
+    "hallucination": "SA-HAL-001 — references SLA text that does not exist in Stage 3. Consolidator should discard this after investigating."
+  }
+}

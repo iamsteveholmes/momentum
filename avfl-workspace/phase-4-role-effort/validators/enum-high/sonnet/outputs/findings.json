@@ -1,0 +1,102 @@
+{
+  "validator": "avfl-validator-enum-high",
+  "lens": "Structural Integrity",
+  "dimensions": ["structural_validity", "completeness", "cross_reference_integrity"],
+  "framing": "Enumerator",
+  "skepticism": 3,
+  "stage": "final",
+  "domain_expert": "technical writer",
+  "task_context": "data processing pipeline architecture brief",
+  "artifact": "pipeline-arch-multi-iter.md",
+  "score": 62,
+  "grade": "Fair - notable issues found",
+  "findings_count": {
+    "critical": 0,
+    "high": 3,
+    "medium": 4,
+    "low": 1,
+    "total": 8
+  },
+  "score_calculation": "100 - (3×8) - (4×3) - (1×1) = 100 - 24 - 12 - 1 = 63",
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring section",
+      "description": "The document contains a forward reference to a section that does not exist. 'Section 6' is cited for security considerations, but the document has no Section 6 and sections are not numbered. Security content is entirely absent.",
+      "evidence": "\"Security considerations are documented in Section 6.\" — No Section 6 exists anywhere in the document. The document has five heading-level sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, and Conclusions. There is no sixth section and no security content.",
+      "suggestion": "Either add a Section 6 covering security considerations, or remove the forward reference. For a final architecture brief, security must be addressed, not deferred to a phantom section."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion section",
+      "description": "Authentication mechanism is not specified. The document states authentication is used but does not identify the method, credential type, or protocol. For a final architecture brief, authentication is a required design decision.",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\" — No authentication type (API key, OAuth, mTLS, JWT, etc.) is named or described anywhere in the document.",
+      "suggestion": "Specify the authentication mechanism: type, credential management, token validation approach, and where in the request lifecycle it occurs."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation section",
+      "description": "The 'standard retry policy' is referenced but never defined. For a final architecture brief, retry behavior is a required operational specification — retry count, backoff strategy, and timeout must be defined.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" — 'Standard retry policy' is not defined in this document, not referenced to an external document, and does not appear elsewhere.",
+      "suggestion": "Define the retry policy inline (e.g., 3 attempts, exponential backoff starting at 1s, max 30s) or add a cross-reference to the document where it is defined."
+    },
+    {
+      "id": "STRUCTURAL-004",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation section",
+      "description": "The overflow queue for large files is introduced but not specified. Threshold for 'large', queue type, consumer behavior, and whether records rejoin the primary path are all absent.",
+      "evidence": "\"Large files are handled separately from the primary transformation path via an overflow queue.\" — No size threshold is defined. The overflow queue is not described further and does not appear in any other section.",
+      "suggestion": "Define: (1) the file size threshold that triggers overflow routing, (2) the overflow queue's consumer and processing behavior, (3) whether overflow records ultimately reach the same delivery destination."
+    },
+    {
+      "id": "STRUCTURAL-005",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 3 — Delivery section",
+      "description": "The in-memory delivery cache is cited with a specific performance claim but is not described. Cache size, eviction policy, durability behavior, and failure mode are unspecified for a final architecture document.",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\" — The cache is not described anywhere: no size, no eviction policy, no behavior on process restart or crash.",
+      "suggestion": "Add a description of the delivery cache: capacity, eviction strategy (LRU, TTL, etc.), behavior on cache miss, and behavior on process failure (data loss risk vs. persistence)."
+    },
+    {
+      "id": "STRUCTURAL-006",
+      "severity": "medium",
+      "dimension": "structural_validity",
+      "location": "Overview section vs. Stage 2 — Transformation section",
+      "description": "The Overview states all pipeline stages run in parallel, but Stage 2 explicitly imposes a sequential ordering constraint. These two statements are structurally contradictory and one is incorrect.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" — Stage 2: \"Stage 2 must complete before Stage 3 begins.\" These statements cannot both be true. A parallel pipeline has no ordering constraint between stages; an ordered pipeline is not fully parallel.",
+      "suggestion": "Correct the Overview to accurately describe the pipeline's execution model. If stages are pipelined (not fully parallel), describe the actual ordering constraints."
+    },
+    {
+      "id": "STRUCTURAL-007",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Conclusions section",
+      "description": "The Conclusions section omits the monitoring stage from its summary of the staged architecture, despite Stage 4 being a named pipeline component.",
+      "evidence": "\"The staged architecture enables independent scaling of ingestion, transformation, and delivery based on load patterns.\" — Monitoring (Stage 4) is not mentioned despite being a defined architectural stage in the document.",
+      "suggestion": "Either include monitoring in the Conclusions summary or clarify that monitoring is infrastructure rather than a pipeline stage (and adjust the Stage 4 heading accordingly)."
+    },
+    {
+      "id": "STRUCTURAL-008",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Document header / metadata",
+      "description": "The document has no version, author, date, or status metadata. For a final architecture brief intended for handoff or downstream use, these fields are required.",
+      "evidence": "The document begins directly with '# Data Processing Pipeline — Architecture Brief' followed by '## Overview'. No metadata block, front matter, or header table is present.",
+      "suggestion": "Add a metadata block with at minimum: version, date, author(s), and status (e.g., Final / Under Review)."
+    }
+  ],
+  "notes": {
+    "clean_dimensions": [],
+    "out_of_scope_observations": [
+      "Performance claim '3× faster than streaming for files under 10MB' is unsourced — this is a correctness/traceability concern for the Factual Accuracy lens, not flagged here.",
+      "Redis cache (Stage 2) operational requirements absent from Operational Notes — borderline cross_reference_integrity; not escalated as the cache is not referenced by name elsewhere, it is described in context."
+    ]
+  }
+}

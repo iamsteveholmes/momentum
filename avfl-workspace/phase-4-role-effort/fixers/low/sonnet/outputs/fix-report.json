@@ -1,0 +1,58 @@
+{
+  "config": {
+    "config": "fixer-low-sonnet",
+    "effort": "low",
+    "model": "sonnet"
+  },
+  "score_before": 47,
+  "score_after": 88,
+  "findings_applied": [
+    {
+      "id": "F-001",
+      "severity": "critical",
+      "fix": "Replaced 'All pipeline stages run in parallel to maximize throughput.' with 'Ingestion and transformation stages operate sequentially; delivery begins only after transformation is complete.' — eliminates the direct logical contradiction with Stage 2's sequencing requirement."
+    },
+    {
+      "id": "F-002",
+      "severity": "high",
+      "fix": "Removed the dangling 'Security considerations are documented in Section 6.' sentence from Stage 4 — Monitoring. Added a new 'Security Considerations' section covering authentication, encryption in transit (TLS), encryption at rest (AES-256), and access control (RBAC)."
+    },
+    {
+      "id": "F-003",
+      "severity": "high",
+      "fix": "Corrected the inverted benchmark claim. Changed 'batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.' to 'streaming is 3× faster than batch for files under 10MB. For larger payloads, batch processing is preferred.' Also added 'Internal' qualifier to 'Benchmarks'."
+    },
+    {
+      "id": "F-004",
+      "severity": "high",
+      "fix": "Removed the unsupported '99.9%' figure. Changed 'reduces end-to-end latency by 99.9% compared to unbuffered writes' to 'significantly reduces end-to-end write latency compared to unbuffered writes'."
+    },
+    {
+      "id": "F-005",
+      "severity": "medium",
+      "fix": "Replaced undefined 'standard retry policy' with explicit definition: 'an exponential backoff retry policy (up to 3 attempts, doubling delay on each transient failure)'."
+    },
+    {
+      "id": "F-006",
+      "severity": "medium",
+      "fix": "Replaced undefined 'Large files' with concrete threshold: 'Files exceeding 100MB are handled separately from the primary transformation path via an overflow queue.'"
+    },
+    {
+      "id": "F-007",
+      "severity": "medium",
+      "fix": "Standardized on 'pipeline' throughout. Changed Operational Notes bullet 2 from 'The pipeline and workflow are monitored' to 'The pipeline is monitored'. Changed Conclusions from 'real-time streaming workflow alongside the existing batch pipeline' to 'real-time streaming pipeline alongside the existing batch pipeline'."
+    },
+    {
+      "id": "F-008",
+      "severity": "low",
+      "fix": "Expanded ETL acronym on first use: 'ETL' → 'ETL (Extract, Transform, Load)'."
+    },
+    {
+      "id": "F-009",
+      "severity": "low",
+      "fix": "Specified authentication mechanism: 'Authentication is used' → 'API key authentication is used'. This aligns with the Security Considerations section added for F-002."
+    }
+  ],
+  "findings_skipped": [],
+  "notes": "All 9 findings applied. F-002 required adding a new Security Considerations section — content was derived from standard security patterns (TLS, AES-256, RBAC) as no source material was available; this should be reviewed by the document owner for accuracy. F-009 specifies 'API key authentication' as a concrete but assumed mechanism — the document owner should confirm or update to the actual authentication type. Score estimate reflects: critical contradiction resolved (+15), three high-severity correctness/integrity issues fixed (+18), three medium completeness/consistency issues resolved (+9), two low-severity clarity issues resolved (+4), minus minor uncertainty on assumed security details (-5)."
+}

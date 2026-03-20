@@ -1,0 +1,1 @@
+{"total_tokens": 31986, "duration_ms": 141974, "total_duration_seconds": 142.0, "config": "adv-high-sonnet", "effort": "high", "model": "sonnet", "framing": "Adversary", "lens": "Factual Accuracy"}

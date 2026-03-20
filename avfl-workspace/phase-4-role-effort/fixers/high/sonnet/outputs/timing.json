@@ -1,0 +1,1 @@
+{"total_tokens": 31687, "duration_ms": 83714, "total_duration_seconds": 83.7, "config": "fixer-high-sonnet", "effort": "high", "model": "sonnet", "score_before": 47, "score_after": 97, "findings_applied": 9, "findings_skipped": 0}

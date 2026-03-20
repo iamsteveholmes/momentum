@@ -1,0 +1,1 @@
+{"total_tokens": 31461, "duration_ms": 79616, "total_duration_seconds": 79.6, "config": "fixer-low-opus", "effort": "low", "model": "opus", "score_before": 47, "score_after": 97, "findings_applied": 9, "findings_skipped": 0}

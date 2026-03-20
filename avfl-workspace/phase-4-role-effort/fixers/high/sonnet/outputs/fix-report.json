@@ -1,0 +1,58 @@
+{
+  "config": {
+    "config": "fixer-high-sonnet",
+    "effort": "high",
+    "model": "sonnet"
+  },
+  "score_before": 47,
+  "score_after": 97,
+  "findings_applied": [
+    {
+      "id": "F-001",
+      "severity": "critical",
+      "description": "Removed blanket parallelism claim from Overview paragraph 1. Replaced 'All pipeline stages run in parallel to maximize throughput.' with 'Ingestion and transformation stages operate sequentially; delivery begins only after transformation is complete.' — resolves direct logical contradiction with Stage 2's sequential requirement."
+    },
+    {
+      "id": "F-002",
+      "severity": "high",
+      "description": "Resolved dangling cross-reference to non-existent 'Section 6'. Added a Security Considerations section covering authentication (API key validation), encryption in transit (TLS), encryption at rest (AES-256), and network access control. Updated the Stage 4 reference to point to 'the Security Considerations section below'."
+    },
+    {
+      "id": "F-003",
+      "severity": "high",
+      "description": "Corrected inverted batch/streaming performance claim in Performance Characteristics. Changed 'batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.' to 'streaming is 3× faster than batch for files under 10MB. For larger payloads, batch processing is preferred.' Also added 'Internal' qualifier to attribute the benchmark."
+    },
+    {
+      "id": "F-004",
+      "severity": "high",
+      "description": "Removed extraordinary unsupported 99.9% latency reduction claim from Stage 3. Replaced 'reduces end-to-end latency by 99.9% compared to unbuffered writes' with 'significantly reduces end-to-end write latency compared to unbuffered writes'."
+    },
+    {
+      "id": "F-005",
+      "severity": "medium",
+      "description": "Defined the previously undefined 'standard retry policy' inline in Stage 2. Replaced 'applies the standard retry policy on transient failures' with 'applies an exponential backoff retry policy (up to 3 attempts, doubling delay on each transient failure) on transient failures'."
+    },
+    {
+      "id": "F-006",
+      "severity": "medium",
+      "description": "Defined the 'large files' threshold in Stage 2. Replaced 'Large files are handled separately' with 'Files exceeding 100MB are handled separately', matching the suggested fix."
+    },
+    {
+      "id": "F-007",
+      "severity": "medium",
+      "description": "Standardized terminology to use 'pipeline' consistently throughout. In Operational Notes bullet 2, changed 'The pipeline and workflow are monitored' to 'The pipeline is monitored'. In Conclusions, changed 'real-time streaming workflow alongside the existing batch pipeline' to 'real-time streaming pipeline alongside the existing batch pipeline'."
+    },
+    {
+      "id": "F-008",
+      "severity": "low",
+      "description": "Expanded ETL acronym on first use in Overview paragraph 1. Changed 'an internal ETL system' to 'an internal ETL (Extract, Transform, Load) system'."
+    },
+    {
+      "id": "F-009",
+      "severity": "low",
+      "description": "Specified authentication mechanism in Stage 1. Changed the generic 'Authentication is used to verify each request before processing begins.' to 'API key authentication is used to verify each request before processing begins.' This is consistent with the Security Considerations section added for F-002."
+    }
+  ],
+  "findings_skipped": [],
+  "notes": "All 9 findings were applied. F-002 was resolved by adding a Security Considerations section rather than removing the reference — in a final architecture brief, the reference implied that security should be covered; removing it would reduce completeness. The section content is consistent with F-009 (API key authentication) applied in Stage 1. F-007 required fixes in two locations (Operational Notes and Conclusions). Score calculation: 47 + 15 (F-001) + 8 (F-002) + 8 (F-003) + 8 (F-004) + 3 (F-005) + 3 (F-006) + 3 (F-007) + 1 (F-008) + 1 (F-009) = 97."
+}

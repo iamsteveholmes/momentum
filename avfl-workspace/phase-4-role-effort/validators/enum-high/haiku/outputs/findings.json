@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "lens": "Structural Integrity",
+    "lens_mindset": "Mechanical verification. Systematic, exhaustive, literal. Check every field, reference, and required element section by section.",
+    "dimensions": [
+      "structural_validity",
+      "completeness",
+      "cross_reference_integrity"
+    ],
+    "skepticism": 3,
+    "skepticism_label": "Aggressive",
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "output_file": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+    "validation_date": "2026-03-20"
+  },
+  "validation_summary": {
+    "total_findings": 2,
+    "critical": 0,
+    "high": 2,
+    "medium": 0,
+    "low": 0,
+    "final_score": 84,
+    "final_grade": "good",
+    "result": "continue"
+  },
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Line 37, Monitoring section",
+      "description": "Document references Section 6 for security considerations, but no Section 6 exists. The referenced forward reference is unresolved.",
+      "evidence": "Line 37 states: 'Security considerations are documented in Section 6.' Full document scan confirms only five logical sections exist: 1) Overview, 2) Architecture Components (with 4 subsections), 3) Performance Characteristics, 4) Operational Notes, 5) Conclusions. No Section 6 is present.",
+      "suggestion": "Either create Section 6 with substantive security details, or revise line 37 to incorporate security considerations into an existing section (e.g., 'Security considerations are discussed in the Operational Notes section') and remove the missing section reference."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "high",
+      "dimension": "structural_validity",
+      "location": "Lines 5 and 21 (contradiction across sections)",
+      "description": "The document makes mutually exclusive architectural claims: line 5 asserts all stages run in parallel, while line 21 asserts stage 2 must complete before stage 3 begins. Parallel execution and mandatory sequential dependencies are contradictory.",
+      "evidence": "Line 5: 'All pipeline stages run in parallel to maximize throughput.' Line 21 (Stage 2 description): 'Stage 2 must complete before Stage 3 begins.' Parallel execution means concurrent, asynchronous processing. Mandatory completion dependencies create sequential bottlenecks. These statements cannot both be true for the same pipeline.",
+      "suggestion": "Clarify the actual execution model and make both statements consistent. Either: (A) Revise line 5 to acknowledge the Stage 2→Stage 3 dependency: 'Stages 1 and 4 run in parallel with stages 2-3, which execute sequentially,' OR (B) Revise line 21 to remove the dependency if stages truly run in parallel. Specify the definitive architecture and update both claims accordingly."
+    }
+  ],
+  "scoring_details": {
+    "starting_score": 100,
+    "deductions": [
+      {
+        "finding_id": "STRUCTURAL-001",
+        "severity": "high",
+        "weight": -8,
+        "reason": "Unresolved cross-reference makes content unreliable for downstream navigation"
+      },
+      {
+        "finding_id": "STRUCTURAL-002",
+        "severity": "high",
+        "weight": -8,
+        "reason": "Internal logical contradiction undermines architectural validity"
+      }
+    ],
+    "final_score": 84,
+    "calculation": "100 - 8 - 8 = 84"
+  },
+  "checks_performed": {
+    "markdown_structure": "PASS - valid markdown, proper heading hierarchy, no truncation",
+    "required_sections": "PASS - all major sections present (Overview, Components, Performance, Operations, Conclusions)",
+    "internal_cross_references": "FAIL - Section 6 referenced but does not exist",
+    "stage_dependencies": "FAIL - contradiction between parallel execution claim and Stage 2→3 sequence requirement",
+    "performance_claims": "PASS - no internal contradictions detected; numerical claims consistent where comparable",
+    "component_descriptions": "PASS - each stage has substantive content appropriate for brief artifact",
+    "entity_name_consistency": "PASS - Meridian pipeline name, tool names, queue concepts used consistently",
+    "numerical_consistency": "PASS - no contradicting numbers or metrics"
+  },
+  "re_examination_note": "Per skepticism level 3 (aggressive) protocol, document was re-examined after initial review to confirm findings. Re-examination verified both findings: (1) Section 6 reference definitively unresolved by document content, (2) Parallelism vs. sequencing contradiction stands as stated. No additional findings emerged on re-examination."
+}

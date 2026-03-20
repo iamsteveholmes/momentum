@@ -1,0 +1,125 @@
+{
+  "validation_metadata": {
+    "validator": "haiku-adversary-low",
+    "lens": "Factual Accuracy",
+    "dimensions": [
+      "correctness",
+      "traceability",
+      "logical_soundness"
+    ],
+    "skepticism_level": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "artifact": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+    "reviewer_framing": "Adversary — intuitive and pattern-aware, reading holistically for inconsistencies",
+    "review_strategy": "Read end-to-end looking for what feels off. Specific numbers cited without sources. Internal contradictions. Unverified performance claims."
+  },
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "critical",
+      "dimension": "logical_soundness",
+      "location": "Overview (line 5) vs Stage 2 description (line 21)",
+      "description": "Fundamental architectural contradiction: Overview states 'all pipeline stages run in parallel to maximize throughput.' Stage 2 description explicitly states 'Stage 2 must complete before Stage 3 begins' — sequential dependency, not parallel. These statements are mutually exclusive.",
+      "evidence": "Line 5: 'All pipeline stages run in parallel to maximize throughput.' Line 21: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Clarify actual architecture. Either: (a) stages ARE parallel and line 21 is wrong, OR (b) stages ARE sequential with a dependency and line 5's 'all...in parallel' claim is incorrect. Cannot be both.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Performance Characteristics section (line 29)",
+      "description": "Claim: 'reduces end-to-end latency by 99.9% compared to unbuffered writes.' This is an extraordinarily specific performance improvement (three nines) with no source, benchmark, or supporting evidence provided. No basis for verification.",
+      "evidence": "Line 29: 'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' — No source material, benchmark methodology, or assumptions stated.",
+      "suggestion": "Either provide the benchmark/source that produced this figure, or qualify it as an estimate pending validation (e.g., 'expected to reduce latency by up to 99.9%' with methodology noted).",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Performance Characteristics section (line 41)",
+      "description": "Claim: 'batch processing is 3× faster than streaming for files under 10MB.' Specific numerical comparison with no source material, benchmark conditions, or supporting data. No methodology disclosed.",
+      "evidence": "Line 41: 'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' — References 'Benchmarks' without providing them or their source.",
+      "suggestion": "Provide the benchmark report/source, or reframe as a hypothesis ('expected to be') pending validation. Specify test conditions, payload sizes, concurrency, etc.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Overview section (line 7)",
+      "description": "Claim: 'handles approximately 50,000 events per second under peak load.' No source, benchmark data, or load test results provided. Unverified capacity specification.",
+      "evidence": "Line 7: 'The pipeline is designed for high-volume event streams and handles approximately 50,000 events per second under peak load.' — No supporting data, testing methodology, or source.",
+      "suggestion": "Provide load test results, capacity planning document, or reference to stress test outcomes that validated this figure. Or qualify as design target rather than validated capacity.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Performance Characteristics section (line 43)",
+      "description": "Claim: 'maintains sub-second end-to-end latency for 95th-percentile events.' No production data, benchmarks, or testing methodology provided to support this claim. Unverified performance assertion.",
+      "evidence": "Line 43: 'Under nominal load, the pipeline maintains sub-second end-to-end latency for 95th-percentile events.' — No source material or test results provided.",
+      "suggestion": "Provide performance test results, production monitoring data, or SLA documentation that validates this latency figure. Specify what 'nominal load' means numerically.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-006",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Stage 2 description (line 21)",
+      "description": "Claim: 'deduplicates events within a 5-minute window using a Redis cache.' The 5-minute window duration is stated as fact but has no justification. What determines this window? Is this a design choice, a constraint, or derived from requirements?",
+      "evidence": "Line 21: 'deduplicates events within a 5-minute window using a Redis cache' — window duration stated without rationale or source.",
+      "suggestion": "Explain why 5 minutes is the chosen window: Is it SLA-driven? Business-logic requirement? Performance constraint? Add brief justification or reference to design spec.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "id": "ACCURACY-007",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Stage 3 description (line 31)",
+      "description": "Claim: 'requeued for up to 3 retry attempts.' The retry count (3) is specific but has no basis. What drives this number? Is it derived from failure analysis, SLA requirements, or system constraints?",
+      "evidence": "Line 31: 'requeued for up to 3 retry attempts' — retry count stated as fact without justification.",
+      "suggestion": "Explain why 3 retries: What is the success rate after N retries? Is this from incident analysis? Is it tunable? Add rationale or reference to operational runbook.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "id": "ACCURACY-008",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Stage 3 description (line 31) and Stage 4 description (line 35)",
+      "description": "Multiple polling intervals are specified without justification: '5-minute interval' for batch completion (line 31) and '10-minute interval' for status updates (line 35). These values appear arbitrary. What determines them?",
+      "evidence": "Line 31: 'Polling for batch completion uses a 5-minute interval.' Line 35: 'Polling for status updates uses a 10-minute interval.' — No rationale for choice of intervals.",
+      "suggestion": "Explain the polling interval choices: Are they tuned from latency/load tradeoffs? Configurable? Driven by SLA requirements? Add brief justification.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "id": "ACCURACY-009",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 4 description (line 37)",
+      "description": "Reference to Section 6 ('Security considerations are documented in Section 6') but the document has no Section 6. Either the document is incomplete or the reference is wrong.",
+      "evidence": "Line 37: 'Security considerations are documented in Section 6.' — No Section 6 exists in the provided document (ends at Conclusions, ~line 54).",
+      "suggestion": "Either: (a) add Section 6 with security considerations, OR (b) remove the forward reference and integrate security briefly in Stage 4, OR (c) note that security doc is in a separate file.",
+      "confidence": "HIGH"
+    }
+  ],
+  "summary": {
+    "total_findings": 9,
+    "by_severity": {
+      "critical": 1,
+      "high": 5,
+      "medium": 3,
+      "low": 0
+    },
+    "score": 100 - 15 - (5 * 8) - (3 * 3),
+    "score_calculated": 46,
+    "grade": "failing",
+    "pass_threshold": 95,
+    "validation_result": "FAIL"
+  },
+  "reviewer_notes": "Adversary approach: read holistically for inconsistency and suspicious claims. Key pattern detected: the document makes very specific numeric claims (99.9%, 3×, 50k eps, 95th-percentile sub-second, specific retry/polling intervals) but provides zero source material, benchmarks, load test results, or design rationale for any of them. Fatal flaw: direct contradiction between the headline claim (all stages run in parallel) and Stage 2 constraint (must complete before Stage 3). This is not a minor inconsistency — it's a fundamental architectural claim that cannot be both true. Under skepticism level 3 with final stage, all unverified performance claims become findable because the artifact claims to be a finished architecture brief, not a design proposal."
+}

@@ -1,0 +1,104 @@
+{
+  "meta": {
+    "validator": "avfl-validator-adv-high",
+    "lens": "Factual Accuracy",
+    "lens_id": "ACCURACY",
+    "dimensions": ["correctness", "traceability", "logical_soundness"],
+    "reviewer_framing": "Adversary",
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+    "source_material": null,
+    "iteration": 1
+  },
+  "score": 61,
+  "grade": "Fair - notable issues found",
+  "result": "continue",
+  "findings_count": {
+    "critical": 0,
+    "high": 3,
+    "medium": 2,
+    "low": 1,
+    "total": 6
+  },
+  "score_calculation": {
+    "starting_score": 100,
+    "deductions": [
+      { "id": "ACCURACY-001", "severity": "high", "points": -8 },
+      { "id": "ACCURACY-002", "severity": "high", "points": -8 },
+      { "id": "ACCURACY-003", "severity": "high", "points": -8 },
+      { "id": "ACCURACY-004", "severity": "medium", "points": -3 },
+      { "id": "ACCURACY-005", "severity": "medium", "points": -3 },
+      { "id": "ACCURACY-006", "severity": "low", "points": -1 }
+    ],
+    "total_deducted": -31,
+    "final_score": 69
+  },
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Overview (paragraph 1) vs. Stage 2 — Transformation (paragraph 1)",
+      "description": "The Overview states all pipeline stages run in parallel, but Stage 2 explicitly requires sequential execution with Stage 3. These two claims directly contradict each other.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Correct one of these two statements to match the actual architecture. If Stage 2→3 is sequential, remove or qualify the 'all stages run in parallel' claim in the Overview. If the intent is partial parallelism, describe which stages are parallel and which are sequential.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "logical_soundness",
+      "location": "Stage 3 — Delivery (paragraph 1) vs. Stage 3 — Delivery (paragraph 2) and Performance Characteristics",
+      "description": "The document claims the in-memory delivery cache reduces end-to-end latency by 99.9%, and separately that the pipeline maintains sub-second 95th-percentile latency. However, Stage 3 also states batch completion polling uses a 5-minute interval. Polling every 5 minutes for completion detection makes sub-second latency logically impossible — the polling interval is itself a latency floor orders of magnitude above one second. The 99.9% latency reduction claim is undermined by the same constraint.",
+      "evidence": "Stage 3: 'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' Stage 3: 'Polling for batch completion uses a 5-minute interval.' Performance Characteristics: 'the pipeline maintains sub-second end-to-end latency for 95th-percentile events.'",
+      "suggestion": "Clarify whether 'sub-second latency' refers to the transformation path only (not including batch delivery polling), or correct the polling interval to match the latency claim. The 99.9% figure also requires a baseline and methodology to be verifiable.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Stage 3 — Delivery (paragraph 1)",
+      "description": "The claim that the in-memory delivery cache 'reduces end-to-end latency by 99.9%' is an extraordinary quantitative assertion with no source, no comparison baseline, no test conditions, and no methodology. No source material is provided and nothing in the document establishes this figure. It cannot be traced to any ground truth.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.'",
+      "suggestion": "Either source this figure (reference a benchmark document, test conditions, and methodology) or replace it with a qualitative description of the improvement. If retaining the number, define the baseline: what system configuration, what load, what measurement window.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Performance Characteristics (paragraph 1)",
+      "description": "The benchmark claim — '3× faster than streaming for files under 10MB' — is unattributed and the domain framing is inconsistent with the rest of the document. The pipeline processes events (50,000 events per second), not files. 'Files under 10MB' is not a unit used anywhere else in the architecture. This claim cannot be traced to the system described, and may belong to a different domain or context.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.'",
+      "suggestion": "If this benchmark is relevant, restate it in terms consistent with the pipeline's actual units (events, batch sizes in record counts, throughput). If it was sourced from external material, cite the source. If it does not apply to this pipeline, remove it.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "medium",
+      "dimension": "correctness",
+      "location": "Stage 1 — Ingestion (paragraph 2)",
+      "description": "Authentication is mentioned in a single vague sentence with no specification of the mechanism, scheme, or verifiable claim. As a final-stage architecture brief, 'Authentication is used to verify each request' provides no checkable assertion — it is not wrong but is not a claim that can be confirmed or falsified, making it untraceable. For a document at final stage, this omission rises to a completeness and traceability gap.",
+      "evidence": "'Authentication is used to verify each request before processing begins.'",
+      "suggestion": "Specify the authentication mechanism (e.g., API key in header, mTLS, OAuth token) so the claim becomes a traceable technical assertion rather than a placeholder.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "id": "ACCURACY-006",
+      "severity": "low",
+      "dimension": "traceability",
+      "location": "Stage 4 — Monitoring (paragraph 2)",
+      "description": "The cross-reference 'Security considerations are documented in Section 6' points to a section that does not exist in the document. This is primarily a structural integrity issue, but it also means a factual claim about where security documentation lives cannot be verified. Noted here as a traceability concern; the structural dimension owns the primary finding.",
+      "evidence": "'Security considerations are documented in Section 6.' The document contains no Section 6.",
+      "suggestion": "Either add Section 6 with security content, or update the reference to point to where security is actually documented.",
+      "confidence": "HIGH"
+    }
+  ],
+  "duplicates_removed": 0,
+  "false_positives_removed": 0,
+  "notes": "No source material was provided. Validation was conducted against internal consistency, domain plausibility, and the document's own stated facts. All findings are grounded in direct quotes from the document. The 'Section 6' cross-reference (ACCURACY-006) is flagged as a traceability concern; the structural lens owns the primary broken-reference finding."
+}

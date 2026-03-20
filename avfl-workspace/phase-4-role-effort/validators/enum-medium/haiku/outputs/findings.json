@@ -1,0 +1,94 @@
+{
+  "metadata": {
+    "validator": "AVFL Enumerator (Medium Effort)",
+    "lens": "Structural Integrity",
+    "skepticism_level": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "artifact_path": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+    "validation_date": "2026-03-20"
+  },
+  "validation_approach": {
+    "methodology": "Enumerator - Systematic and methodical enumeration of structural checks",
+    "dimensions_evaluated": [
+      "structural_validity",
+      "completeness",
+      "cross_reference_integrity"
+    ],
+    "examination_strategy": "Section-by-section review of document structure, required elements, and all internal/external references. Re-examined before reporting findings per skepticism level 3 protocol.",
+    "re_examination_performed": true,
+    "re_examination_findings": "Confirmed one critical structural issue: forward reference to non-existent section. All other structural elements verified as present and correctly formed."
+  },
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring section, line 37",
+      "description": "Forward reference to non-existent section: document references 'Section 6' for security considerations, but document only contains 5 sections (Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions)",
+      "evidence": "Line 37 states: 'Security considerations are documented in Section 6.' Counting all document sections yields only 5 sections total; there is no Section 6.",
+      "suggestion": "Either: (1) Add the missing Section 6 with security documentation, or (2) Remove the reference if security documentation should be addressed elsewhere, or (3) Update the reference to point to the correct section number if security content exists elsewhere in the document"
+    }
+  ],
+  "completeness_check": {
+    "stage": "final",
+    "required_elements_checklist": {
+      "overview_section": {
+        "present": true,
+        "status": "complete"
+      },
+      "architecture_components": {
+        "present": true,
+        "status": "complete - all 4 stages documented"
+      },
+      "performance_characteristics": {
+        "present": true,
+        "status": "complete"
+      },
+      "operational_considerations": {
+        "present": true,
+        "status": "complete"
+      },
+      "conclusions": {
+        "present": true,
+        "status": "complete"
+      },
+      "security_documentation": {
+        "present": false,
+        "referenced": true,
+        "issue": "Section 6 referenced but not present - see STRUCTURAL-001"
+      }
+    },
+    "overall_completeness": "Major sections present; security documentation referenced but missing (critical issue)"
+  },
+  "structural_validity_check": {
+    "document_format": "Markdown",
+    "heading_hierarchy": "Valid - proper use of H1 (#), H2 (##), H3 (###)",
+    "list_formatting": "Valid - proper bullet points and structure",
+    "reference_format": "Invalid in one case - Section 6 reference points to non-existent content",
+    "overall_validity": "Mostly valid with one critical reference integrity issue"
+  },
+  "summary": {
+    "total_findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "low": 0
+    },
+    "score_impact": {
+      "starting_score": 100,
+      "deductions": {
+        "high": -8
+      },
+      "calculated_score": 92,
+      "grade": "Good - minor issues remain"
+    }
+  },
+  "scoring_explanation": {
+    "reasoning": "One HIGH-severity finding identified: forward reference to Section 6 which does not exist. This is a cross_reference_integrity violation that undermines the structural integrity of the document and indicates missing content (security documentation) that the document itself claims to contain.",
+    "severity_justification": "HIGH (not CRITICAL) because: (1) The document remains parseable and functional without the missing section, (2) The error is a broken reference, not missing core architecture content, (3) Fixable by either adding the section or removing/correcting the reference.",
+    "reexamination_confirmation": "Re-examined document structure at skepticism level 3. Confirmed only 5 sections exist. No other structural violations found."
+  }
+}

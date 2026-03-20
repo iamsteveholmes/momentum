@@ -1,0 +1,96 @@
+{
+  "validation": {
+    "lens": "Structural Integrity",
+    "framing": "Enumerator",
+    "effort": "high",
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md"
+  },
+  "score": 63,
+  "grade": "Poor - significant problems",
+  "result": "continue",
+  "findings_count": {
+    "critical": 0,
+    "high": 3,
+    "medium": 4,
+    "low": 1,
+    "total": 8
+  },
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring (line 37)",
+      "description": "Reference to 'Section 6' does not resolve — no such section exists in the document.",
+      "evidence": "\"Security considerations are documented in Section 6.\" The document contains: Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions. No Section 6 and no security section.",
+      "suggestion": "Either add a Security section or replace the dangling reference with the actual location of security documentation."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Whole document",
+      "description": "No security section exists despite being explicitly referenced. A final architecture brief for a data pipeline handling customer data must address security.",
+      "evidence": "Line 37 states security considerations are 'documented in Section 6' but no security content exists anywhere in the document.",
+      "suggestion": "Add a dedicated Security section covering authentication details, data encryption in transit/at rest, access control, and audit logging."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "high",
+      "dimension": "structural_validity",
+      "location": "Overview (line 5) vs Stage 2 (line 21)",
+      "description": "The overview claims all pipeline stages run in parallel, but Stage 2 explicitly states sequential dependency with Stage 3.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Correct the overview to accurately describe the pipeline's execution model, or clarify what 'parallel' means in this context (e.g., parallel instances vs. parallel stages)."
+    },
+    {
+      "id": "STRUCTURAL-004",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion (line 15)",
+      "description": "Authentication mechanism is referenced but completely unspecified. A final architecture brief should name the auth approach.",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\" — No protocol (OAuth, API key, mTLS, etc.) or mechanism named.",
+      "suggestion": "Specify the authentication mechanism (e.g., API key validation, OAuth 2.0 bearer tokens, mTLS)."
+    },
+    {
+      "id": "STRUCTURAL-005",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation (line 23)",
+      "description": "References a 'standard retry policy' that is neither defined in this document nor linked to an external definition.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" — No retry policy is defined anywhere in the document.",
+      "suggestion": "Define the retry policy (max attempts, backoff strategy, timeout) or link to the external document where it is defined."
+    },
+    {
+      "id": "STRUCTURAL-006",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Whole document",
+      "description": "No architectural diagram, data flow diagram, or visual representation of the pipeline. Expected for a final architecture brief.",
+      "evidence": "The document is entirely prose with no diagrams, flowcharts, or visual aids showing how stages connect or data flows through the system.",
+      "suggestion": "Add a pipeline flow diagram showing stages, queues, data stores, and the flow of events through the system."
+    },
+    {
+      "id": "STRUCTURAL-007",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation (line 25)",
+      "description": "Large file handling via 'overflow queue' is mentioned but undefined — no size threshold, no processing details, no delivery path.",
+      "evidence": "\"Large files are handled separately from the primary transformation path via an overflow queue.\" — No definition of 'large', no description of overflow queue behavior or how these records eventually reach the warehouse.",
+      "suggestion": "Define the size threshold for overflow, describe the overflow queue processing, and explain how overflowed records are delivered."
+    },
+    {
+      "id": "STRUCTURAL-008",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 3 — Delivery (line 29)",
+      "description": "99.9% latency reduction claim is stated without supporting data or benchmarks.",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\"",
+      "suggestion": "Provide baseline and cached latency numbers to substantiate the claim, or soften the language."
+    }
+  ]
+}

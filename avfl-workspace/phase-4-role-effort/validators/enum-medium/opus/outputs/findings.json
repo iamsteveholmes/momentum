@@ -1,0 +1,53 @@
+{
+  "validation": {
+    "lens": "Structural Integrity",
+    "framing": "Enumerator",
+    "effort": "medium",
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md"
+  },
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring, line 37",
+      "description": "Dangling cross-reference to nonexistent section. The document states 'Security considerations are documented in Section 6' but the document contains no Section 6. The sections are: Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions.",
+      "evidence": "\"Security considerations are documented in Section 6.\" — No Section 6 exists in the document.",
+      "suggestion": "Either add a Security section (Section 6) covering the referenced security considerations, or remove the forward reference and incorporate security details inline."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "high",
+      "dimension": "structural_validity",
+      "location": "Overview (line 5) vs. Stage 2 — Transformation (line 21)",
+      "description": "Structural contradiction in pipeline execution model. The Overview declares all stages run in parallel, but Stage 2 explicitly states sequential dependency with Stage 3.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Reconcile the execution model. Either the overview should describe a staged/sequential pipeline with parallelism within stages, or the Stage 2 dependency statement should be revised."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "medium",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 2 — Transformation, line 23",
+      "description": "Reference to undefined 'standard retry policy'. For a final architecture brief, this is a dangling reference to an unspecified policy that is not defined anywhere in the document.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" — No retry policy is defined or referenced elsewhere in the document.",
+      "suggestion": "Define the retry policy (max retries, backoff strategy, failure escalation) or provide a reference to where it is documented."
+    }
+  ],
+  "score": {
+    "starting_score": 100,
+    "deductions": [
+      { "finding": "STRUCTURAL-001", "severity": "high", "points": -8 },
+      { "finding": "STRUCTURAL-002", "severity": "high", "points": -8 },
+      { "finding": "STRUCTURAL-003", "severity": "medium", "points": -3 }
+    ],
+    "final_score": 81,
+    "grade": "Good - minor issues remain",
+    "result": "continue"
+  },
+  "summary": "Three structural integrity issues found. Two high-severity findings: a dangling reference to a nonexistent Section 6 and a contradiction between the parallel execution claim in the overview and the sequential dependency stated in Stage 2. One medium-severity finding: an undefined 'standard retry policy' referenced without specification. The document's overall structure is sound but these reference and consistency gaps prevent a clean pass for a final artifact."
+}

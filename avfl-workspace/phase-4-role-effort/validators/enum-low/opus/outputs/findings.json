@@ -1,0 +1,79 @@
+{
+  "validation": {
+    "lens": "Structural Integrity",
+    "framing": "Enumerator",
+    "effort": "low",
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+    "source_material": null
+  },
+  "score": 84,
+  "grade": "Good - minor issues remain",
+  "result": "continue",
+  "findings_count": {
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 2,
+    "total": 5
+  },
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring, last sentence",
+      "description": "Broken internal reference to a nonexistent section",
+      "evidence": "\"Security considerations are documented in Section 6.\" The document contains five sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions. There is no Section 6.",
+      "suggestion": "Either add a Security section to the document or replace this sentence with the actual location of security documentation (e.g., an external document link)."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "Undefined retry policy referenced by name but never specified",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" No retry policy is defined anywhere in this document — retry count, backoff strategy, and failure escalation are all absent.",
+      "suggestion": "Define the retry policy inline (e.g., exponential backoff, max 3 attempts) or reference a specific external document where it is defined."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 3",
+      "description": "Overflow queue path for large files is mentioned but not elaborated for a final architecture brief",
+      "evidence": "\"Large files are handled separately from the primary transformation path via an overflow queue.\" No further detail is provided: no size threshold, no processing difference, no rejoining the main path.",
+      "suggestion": "Specify the size threshold that triggers overflow routing, how overflow processing differs, and where overflow results rejoin the pipeline."
+    },
+    {
+      "id": "STRUCTURAL-004",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion, paragraph 2",
+      "description": "Authentication mechanism mentioned without any specifics",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\" No mechanism is named (API key, OAuth, mTLS, etc.).",
+      "suggestion": "Name the authentication mechanism or reference the security specification where it is documented."
+    },
+    {
+      "id": "STRUCTURAL-005",
+      "severity": "low",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 3 — Delivery, paragraph 1",
+      "description": "Component referenced only in a performance claim but never introduced as an architectural element",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\" This cache is not described in any architecture component section and appears nowhere else in the document.",
+      "suggestion": "Introduce the delivery cache as a named component within Stage 3, describing its role and configuration, before making performance claims about it."
+    }
+  ],
+  "out_of_lens_observations": [
+    {
+      "dimension": "consistency",
+      "location": "Overview vs. Stage 2",
+      "note": "Overview states \"All pipeline stages run in parallel to maximize throughput\" but Stage 2 states \"Stage 2 must complete before Stage 3 begins.\" This is a direct contradiction. Belongs to Coherence lens."
+    }
+  ],
+  "duplicates_removed": 0,
+  "false_positives_removed": 0
+}

@@ -1,0 +1,82 @@
+{
+  "validation": {
+    "lens": "Factual Accuracy",
+    "lens_id": "accuracy",
+    "reviewer_framing": "Adversary",
+    "effort": "low",
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "model": "claude-opus-4-6",
+    "timestamp": "2026-03-20"
+  },
+  "score": 62,
+  "grade": "Fair - notable issues found",
+  "result": "continue",
+  "findings_count": {
+    "critical": 1,
+    "high": 3,
+    "medium": 1,
+    "low": 1,
+    "total": 6
+  },
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "critical",
+      "dimension": "logical_soundness",
+      "location": "Overview (line 5) vs Stage 2 (line 21)",
+      "description": "The overview states all pipeline stages run in parallel, but Stage 2 explicitly requires completion before Stage 3 begins. This is a direct logical contradiction about the fundamental architecture model.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Resolve the contradiction. If the pipeline is sequential (staged), remove the parallel claim from the overview. If some stages run in parallel, specify which ones."
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "logical_soundness",
+      "location": "Stage 3 — Delivery (line 29-31) vs Performance Characteristics (line 43)",
+      "description": "The delivery layer polls for batch completion at a 5-minute interval, which makes it impossible to achieve the claimed sub-second end-to-end latency. A 5-minute polling interval introduces minutes of latency, not sub-seconds.",
+      "evidence": "Stage 3: \"Polling for batch completion uses a 5-minute interval.\" Performance: \"the pipeline maintains sub-second end-to-end latency for 95th-percentile events.\"",
+      "suggestion": "Either the polling interval is wrong (should be sub-second) or the latency claim is wrong. Reconcile these numbers."
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery (line 29)",
+      "description": "The claim that an in-memory cache reduces latency by 99.9% is an extraordinary and unsubstantiated figure. No source, benchmark, or methodology is cited. This number implies going from, e.g., 1 second to 1 millisecond, which is implausible for a delivery cache in a batch-write pipeline.",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\"",
+      "suggestion": "Either cite a benchmark that supports this figure or replace with a defensible number. A typical in-memory cache improvement for batch writes would be an order of magnitude, not three orders of magnitude."
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Stage 4 — Monitoring (line 37)",
+      "description": "The document references a 'Section 6' for security considerations, but no Section 6 exists. The document contains five top-level sections (Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions). This is either a dangling reference to a nonexistent section or an artifact from a different version of the document.",
+      "evidence": "\"Security considerations are documented in Section 6.\"",
+      "suggestion": "Either add a Section 6 covering security considerations or remove the dangling reference. For a final architecture brief, security should be addressed, not just referenced."
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "medium",
+      "dimension": "correctness",
+      "location": "Performance Characteristics (line 41) and Stage 2 (line 25)",
+      "description": "The document describes an event processing pipeline handling 50K events/sec, but then discusses 'files under 10MB' and 'large files' as if the pipeline processes files. Events and files are different data types with different processing characteristics. The terminology is inconsistent with the pipeline's stated purpose.",
+      "evidence": "Overview: \"batch ingestion, transformation, and delivery of analytics events\" and \"50,000 events per second.\" Performance: \"batch processing is 3x faster than streaming for files under 10MB.\" Stage 2: \"Large files are handled separately from the primary transformation path via an overflow queue.\"",
+      "suggestion": "Clarify whether the pipeline handles events, files, or both. If both, explain the relationship. If events only, replace file-related language with event-appropriate terms."
+    },
+    {
+      "id": "ACCURACY-006",
+      "severity": "low",
+      "dimension": "traceability",
+      "location": "Stage 1 — Ingestion (line 15), Stage 2 — Transformation (line 23)",
+      "description": "Vague references to 'authentication' and 'standard retry policy' without any specifics. For a final architecture brief, these are untraceable claims — the reader cannot verify what authentication mechanism or retry policy is meant.",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\" and \"Transformation applies the standard retry policy on transient failures.\"",
+      "suggestion": "Name the authentication mechanism (API key, OAuth, mTLS) and define the retry policy (count, backoff strategy, timeout)."
+    }
+  ],
+  "false_positives_removed": 0,
+  "duplicates_removed": 0
+}

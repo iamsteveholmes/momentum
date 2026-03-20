@@ -1,0 +1,100 @@
+{
+  "validation_metadata": {
+    "lens": "Factual Accuracy",
+    "reviewer_framing": "Adversary",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "stage": "final",
+    "skepticism": 3,
+    "artifact": "pipeline-arch-multi-iter.md",
+    "source_material_provided": false
+  },
+  "validation_approach": "Read holistically for inconsistencies and unsupported claims. Followed hunches about specific numbers and contradictions, then verified against document text. With no source material provided, traceability findings focus on claims that lack internal grounding or verifiable basis.",
+  "score": 78,
+  "grade": "Fair - notable issues found",
+  "findings_count": {
+    "critical": 1,
+    "high": 3,
+    "medium": 2,
+    "low": 1,
+    "total": 7
+  },
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "critical",
+      "dimension": "logical_soundness",
+      "location": "Overview (line 5) vs. Stage 2 description (line 21)",
+      "description": "Document contains a fundamental logical contradiction. Overview states 'All pipeline stages run in parallel to maximize throughput.' Stage 2 description explicitly states 'Stage 2 must complete before Stage 3 begins.' These statements cannot both be true.",
+      "evidence": "Line 5: 'All pipeline stages run in parallel to maximize throughput.' Line 21: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Clarify actual stage execution model: either stages truly run in parallel (then remove the sequential constraint on Stage 2→3), or stages are partially sequential (revise overview). Choose one and ensure consistency throughout.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Performance Characteristics section, line 29",
+      "description": "Claim that in-memory delivery cache 'reduces end-to-end latency by 99.9%' is an extremely specific quantitative assertion with no source material, calculation shown, or baseline provided. This lacks traceability to any supporting evidence.",
+      "evidence": "Line 29: 'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No supporting metrics, benchmarks, or calculation provided anywhere in document.",
+      "suggestion": "Either provide source benchmark data showing the 99.9% reduction (with baseline metrics), or reframe as a qualitative benefit ('significantly reduces latency'). For a final architecture brief, specific performance claims require supporting evidence.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Performance Characteristics section, line 41",
+      "description": "Benchmark claim 'batch processing is 3× faster than streaming for files under 10MB' lacks any source reference, methodology, or test conditions. This specific ratio appears to be unsourced.",
+      "evidence": "Line 41: 'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' No citation, test plan, or data provided.",
+      "suggestion": "Reference specific benchmark data (date, conditions, test harness), or remove the specific '3×' multiplier and reframe as qualitative ('batch processing shows better performance for files under 10MB').",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Overview section, line 7",
+      "description": "Peak load specification '50,000 events per second' is a significant quantitative claim with no source, context, or historical basis provided. How was this peak load determined? When was it measured?",
+      "evidence": "Line 7: 'handles approximately 50,000 events per second under peak load.' No source material, measurement date, or derivation provided.",
+      "suggestion": "Add context: what production scenario, time period, or SLA drives this number? Or reference source capacity planning documentation.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "medium",
+      "dimension": "correctness",
+      "location": "Operational Notes section, line 37",
+      "description": "Document references 'Section 6' for security considerations ('Security considerations are documented in Section 6'), but the document structure does not contain a Section 6. The brief has 5 main sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, and Conclusions.",
+      "evidence": "Line 37: 'Security considerations are documented in Section 6.' Scanning full document: sections 1-5 are present, section 6 is absent.",
+      "suggestion": "Either add Section 6 (Security Considerations) as a complete section, or remove the reference and incorporate security notes into existing sections.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-006",
+      "severity": "medium",
+      "dimension": "traceability",
+      "location": "Stage 2 description, line 21",
+      "description": "Design parameter '5-minute deduplication window' is mentioned without justification. This is an important operational decision—what drove this specific window size? No source material or design rationale provided.",
+      "evidence": "Line 21: 'deduplicates events within a 5-minute window using a Redis cache.' No explanation of why 5 minutes was chosen.",
+      "suggestion": "Add brief rationale: e.g., 'based on typical customer event patterns' or reference design documentation. Or note this as a configurable parameter.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "id": "ACCURACY-007",
+      "severity": "low",
+      "dimension": "traceability",
+      "location": "Stage 3 description, line 31",
+      "description": "Batch polling parameters (5-minute interval for batch completion, 10-minute interval for status updates in Stage 4) are operational details with no justification. How were these intervals determined?",
+      "evidence": "Line 31: 'Polling for batch completion uses a 5-minute interval.' Line 35: 'Polling for status updates uses a 10-minute interval.' Neither has supporting rationale.",
+      "suggestion": "Add brief note on tuning basis (e.g., 'tuned for typical workload patterns') or reference operational runbooks.",
+      "confidence": "MEDIUM"
+    }
+  ],
+  "summary": {
+    "critical_issues": "One critical logical contradiction between stated parallelization and explicit sequential constraint between Stage 2 and 3. Document architecture is internally incoherent on this fundamental point.",
+    "high_priority": "Three specific quantitative claims (99.9% latency reduction, 3× benchmark speedup, 50,000 eps peak load) lack any traceability to source data or measurement. In a final architecture brief, these require supporting evidence.",
+    "medium_priority": "Dangling reference to non-existent Section 6, and unexplained design parameters (5-minute window, polling intervals) that warrant rationale.",
+    "recommendation": "Document requires rework: (1) resolve stage execution model, (2) either source benchmark claims or reframe quantitatively, (3) add missing Section 6 or remove reference, (4) add brief rationale for key parameters."
+  }
+}

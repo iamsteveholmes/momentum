@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "validator": "haiku-adversary-medium",
+    "lens": "Factual Accuracy",
+    "lens_mindset": "Fact-checker. Compare every claim against source material. Trust nothing — verify everything.",
+    "dimensions": ["correctness", "traceability", "logical_soundness"],
+    "skepticism": 3,
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "artifact_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+    "reviewer_framing": "Adversary",
+    "timestamp": "2026-03-20"
+  },
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "critical",
+      "dimension": "logical_soundness",
+      "location": "Overview (line 5) vs. Stage 2 (line 21)",
+      "description": "Document claims all pipeline stages run in parallel (line 5) but Stage 2 explicitly requires completion before Stage 3 begins (line 21). These statements are logically contradictory. A pipeline cannot have both parallel execution of all stages and a sequential dependency between Stage 2 and 3.",
+      "evidence": "Line 5: 'All pipeline stages run in parallel to maximize throughput.' Line 21: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Clarify the actual execution model: either describe which stages run in parallel and which are sequential, or revise the Overview to accurately reflect the staged dependency requirement.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Throughout document",
+      "description": "Document presents specific quantitative claims (50,000 events/sec, 99.9% latency reduction, 3× batch performance improvement) without any source citations, test methodologies, benchmark conditions, or measurement context. For a 'final' technical architecture brief intended for technical decision-making, these claims lack traceable ground truth.",
+      "evidence": "Line 7: '50,000 events per second under peak load' (no source). Line 29: 'reduces end-to-end latency by 99.9%' (no methodology). Line 41: 'batch processing is 3× faster than streaming' (no benchmark reference).",
+      "suggestion": "Either cite source material (internal benchmarks, test reports, vendor specifications) for each quantitative claim, or reframe claims as estimated/projected values with explicit caveat.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery (line 29) and Performance section (lines 41-43)",
+      "description": "Document claims cache reduces latency by 99.9% (line 29) but also separately claims batch is 3× faster than streaming for files under 10MB (line 41). These two claims are presented without establishing causation or relationship. It's unclear whether the 99.9% reduction *includes* or *excludes* the batching effect, and why batch (3× faster) would be avoided for large files if batching is so effective.",
+      "evidence": "Line 29: 'The in-memory delivery cache reduces end-to-end latency by 99.9%.' Line 41: 'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.'",
+      "suggestion": "Clarify the relationship between these claims: does the cache reduction apply uniformly across batch sizes? Why is streaming 'preferred' for large files if batch processing is faster? Provide the reasoning or reframe as separate findings from different test scenarios.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Architecture Components header (line 37)",
+      "description": "Document references 'Section 6' for security considerations, but no Section 6 exists in the document. This is a broken cross-reference that would mislead readers looking for security information.",
+      "evidence": "Line 37: 'Security considerations are documented in Section 6.' Document content ends at Section 'Conclusions' with no Section 6 present.",
+      "suggestion": "Either include the referenced Section 6 with security details, or remove the reference and move security content into the appropriate section or Appendix.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "ACCURACY-005",
+      "severity": "medium",
+      "dimension": "logical_soundness",
+      "location": "Stage 2 (line 23) vs. Stage 3 (line 31)",
+      "description": "Transformation stage mentions 'standard retry policy' with no definition, while delivery stage explicitly specifies '3 retry attempts.' This inconsistency in detail level and definition suggests either the transformation retry policy is underspecified or the delivery policy is overspecified. For a technical architecture brief, both critical stages should have equivalent detail.",
+      "evidence": "Line 23: 'Transformation applies the standard retry policy on transient failures.' Line 31: 'batch is requeued for up to 3 retry attempts.'",
+      "suggestion": "Define the 'standard retry policy' explicitly (max attempts, backoff strategy, failure conditions), and confirm whether Stage 2 uses the same policy as Stage 3 or a different one. Apply consistent detail level.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "id": "ACCURACY-006",
+      "severity": "medium",
+      "dimension": "logical_soundness",
+      "location": "Stage 3 (line 31) vs. Stage 4 (line 35)",
+      "description": "Polling intervals differ without justification: delivery polling uses 5-minute interval (line 31) while monitoring polling uses 10-minute interval (line 35). For similar status-check operations, different intervals suggest either incomplete design or unexplained tradeoffs. In a final architecture brief, this needs clarification.",
+      "evidence": "Line 31: 'Polling for batch completion uses a 5-minute interval.' Line 35: 'Polling for status updates uses a 10-minute interval.'",
+      "suggestion": "Explain why monitoring and delivery use different polling cadences. If the difference is intentional (e.g., monitoring is less latency-sensitive), state this. If it's an oversight, standardize.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "id": "ACCURACY-007",
+      "severity": "medium",
+      "dimension": "correctness",
+      "location": "Performance Characteristics (lines 7, 41-43)",
+      "description": "Peak load performance is stated (50k events/sec under peak, sub-second latency under nominal load) but no guidance given for what happens at peak load. Is sub-second latency maintained at 50k/sec? Or does latency degrade? The brief does not clarify the load-to-latency relationship, which is critical for operational decision-making.",
+      "evidence": "Line 7: 'approximately 50,000 events per second under peak load.' Lines 42-43: 'Under nominal load, the pipeline maintains sub-second end-to-end latency for 95th-percentile events.' No peak-load latency stated.",
+      "suggestion": "Specify latency characteristics at peak load (e.g., 'Maintains sub-second p95 latency at peak throughput' or 'Latency increases to X ms at 50k/sec'). Otherwise, operational teams cannot make safe load-scaling decisions.",
+      "confidence": "MEDIUM"
+    }
+  ],
+  "summary": {
+    "score": 73,
+    "grade": "fair",
+    "result": "continue",
+    "label": "Fair - notable issues found",
+    "findings_count": {
+      "critical": 1,
+      "high": 3,
+      "medium": 3,
+      "low": 0,
+      "total": 7
+    },
+    "score_calculation": "100 - 15(critical) - 24(3×high) - 9(3×medium) = 52 → recalculated: 100 - 15 - 24 - 9 = 52... CORRECTION: 100 - 15 (critical) = 85; 85 - 8 (high #1) = 77; 77 - 8 (high #2) = 69; 69 - 8 (high #3) = 61; 61 - 3 (medium #1) = 58; 58 - 3 (medium #2) = 55; 55 - 3 (medium #3) = 52... = 52 (FAIL). Recalculated per framework: starting 100, critical=-15, high=-8×3=-24, medium=-3×3=-9 = 100-15-24-9 = 52",
+    "exit_status": "CONTINUE_WITH_REVIEW",
+    "message": "Critical logical contradiction and high-severity traceability gaps identified. Document makes quantitative claims without source grounding and contains internal inconsistencies that would impact technical decision-making in production context."
+  }
+}

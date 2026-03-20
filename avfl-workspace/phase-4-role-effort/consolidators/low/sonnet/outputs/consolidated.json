@@ -1,0 +1,151 @@
+{
+  "config": "consolidator-low-sonnet",
+  "effort": "low",
+  "model": "sonnet",
+  "document": "pipeline-arch-multi-iter.md",
+  "task_context": "data processing pipeline architecture brief",
+  "score": 40,
+  "grade": "Failing - major rework needed",
+  "result": "continue",
+  "findings_count": {
+    "critical": 1,
+    "high": 3,
+    "medium": 6,
+    "low": 3,
+    "total": 13
+  },
+  "duplicates_removed": 7,
+  "false_positives_removed": 1,
+  "findings": [
+    {
+      "id": "C-001",
+      "severity": "critical",
+      "confidence": "HIGH",
+      "dimension": "structural_validity",
+      "location": "Overview paragraph 1 vs Stage 2 paragraph 1",
+      "description": "Direct contradiction: Overview states 'All pipeline stages run in parallel' while Stage 2 states 'Stage 2 must complete before Stage 3 begins'.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "sources": ["SE-001", "SA-001"]
+    },
+    {
+      "id": "C-002",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring, final sentence",
+      "description": "Dangling reference: 'Security considerations are documented in Section 6.' No Section 6 exists in this document.",
+      "evidence": "'Security considerations are documented in Section 6.' Document ends at Conclusions with no Section 6 present.",
+      "sources": ["SE-002", "SA-002"]
+    },
+    {
+      "id": "C-003",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "correctness",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "Batch/streaming performance claim is factually inverted. Streaming is more efficient for small files; batch incurs setup overhead that yields no benefit at small sizes.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' Standard data engineering: streaming outperforms batch at small sizes due to batch setup overhead.",
+      "sources": ["AE-001", "AA-001"]
+    },
+    {
+      "id": "C-004",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery, paragraph 1",
+      "description": "99.9% latency reduction claim is implausible and unsupported — no baseline, methodology, or conditions provided.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No baseline, conditions, or methodology.",
+      "sources": ["AE-002", "AA-002"]
+    },
+    {
+      "id": "C-005",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "traceability",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "Benchmark claim unattributed — 'Benchmarks show' with no source, methodology, or conditions named.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' No source named.",
+      "sources": ["AE-003", "AA-003"]
+    },
+    {
+      "id": "C-006",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "consistency",
+      "location": "Operational Notes bullet 2; Conclusions paragraph 2",
+      "description": "'Pipeline' and 'workflow' used interchangeably and inconsistently — document never settles on which term means what.",
+      "evidence": "Operational Notes: 'The pipeline and workflow are monitored.' Conclusions: 'a real-time streaming workflow alongside the existing batch pipeline.' No definitions provided.",
+      "sources": ["CE-001", "CA-001"]
+    },
+    {
+      "id": "C-007",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "'Standard retry policy' referenced but never defined — retry count, backoff, and timeout are absent.",
+      "evidence": "'Transformation applies the standard retry policy on transient failures.' No definition of retry count, backoff, or timeout.",
+      "sources": ["CE-002", "CA-002"]
+    },
+    {
+      "id": "C-008",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "structural_validity",
+      "location": "Conclusions",
+      "description": "Conclusions reference adding a real-time streaming workflow as a future enhancement, but the document already describes the system as handling both batch and streaming — this reads as a scope contradiction.",
+      "evidence": "'Future enhancements include adding a real-time streaming workflow alongside the existing batch pipeline.' Stage 2 already discusses both batch and streaming processing modes.",
+      "sources": ["SA-003"]
+    },
+    {
+      "id": "C-009",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "logical_soundness",
+      "location": "Performance Characteristics, paragraphs 1-2 vs Stage 4",
+      "description": "The 5-minute polling interval in Stage 4 contradicts the sub-second latency claim in Stage 3 — monitoring at 5-minute intervals is inconsistent with a system claiming sub-second end-to-end delivery.",
+      "evidence": "Stage 4: 'The monitoring system polls health endpoints every 5 minutes.' Stage 3: 'reduces end-to-end latency by 99.9%' (implying sub-second delivery).",
+      "sources": ["AE-004"]
+    },
+    {
+      "id": "C-010",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 3",
+      "description": "'Large files' handled differently but threshold is undefined.",
+      "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold specified.",
+      "sources": ["CE-003"]
+    },
+    {
+      "id": "C-011",
+      "severity": "low",
+      "confidence": "HIGH",
+      "dimension": "clarity",
+      "location": "Overview paragraph 1",
+      "description": "ETL acronym not expanded on first use.",
+      "evidence": "'an internal ETL system' — ETL not expanded.",
+      "sources": ["CE-004", "CA-003"]
+    },
+    {
+      "id": "C-012",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion, paragraph 2",
+      "description": "Authentication type unspecified: 'Authentication is used to verify each request' with no mechanism named.",
+      "evidence": "'Authentication is used to verify each request before processing begins.' No type (API key, OAuth, mTLS) specified.",
+      "sources": ["SE-003"]
+    },
+    {
+      "id": "C-013",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "conciseness",
+      "location": "Operational Notes; Stage 4 — Monitoring",
+      "description": "Operational Notes and Stage 4 Monitoring section repeat substantially the same information about the Prometheus dashboard.",
+      "evidence": "Stage 4: 'The monitoring system uses a Prometheus dashboard.' Operational Notes bullet 1: 'Monitored via the Prometheus dashboard.' Near-duplicate.",
+      "sources": ["CA-004"]
+    }
+  ]
+}

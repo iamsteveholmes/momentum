@@ -1,0 +1,76 @@
+{
+  "validator": "avfl-validator-enum-low",
+  "model": "claude-sonnet-4-6",
+  "role": "Enumerator",
+  "effort": "low",
+  "lens": "Structural Integrity",
+  "lens_id": "STRUCTURAL",
+  "dimensions": ["structural_validity", "completeness", "cross_reference_integrity"],
+  "skepticism": 3,
+  "stage": "final",
+  "domain_expert": "technical writer",
+  "task_context": "data processing pipeline architecture brief",
+  "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+  "score": 77,
+  "grade": "Fair - notable issues found",
+  "result": "continue",
+  "findings_count": {
+    "critical": 0,
+    "high": 2,
+    "medium": 2,
+    "low": 1,
+    "total": 5
+  },
+  "score_calculation": "100 - 8 (STRUCTURAL-001) - 8 (STRUCTURAL-002) - 3 (STRUCTURAL-003) - 3 (STRUCTURAL-004) - 1 (STRUCTURAL-005) = 77",
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring",
+      "description": "The document references 'Section 6' for security considerations, but no Section 6 exists anywhere in the document. The document ends at Conclusions (5 sections total). This is a dangling internal reference pointing to absent content.",
+      "evidence": "Stage 4 states: 'Security considerations are documented in Section 6.' The document contains only: Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions — no Section 6.",
+      "suggestion": "Either add a Section 6 — Security covering the security considerations referenced here, or remove the reference and incorporate security details inline in Stage 1 where authentication is first mentioned."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Overview vs. Stage 2 — Transformation",
+      "description": "The Overview states 'All pipeline stages run in parallel to maximize throughput,' but Stage 2 explicitly states 'Stage 2 must complete before Stage 3 begins.' These two claims directly contradict each other. For a final architecture document, this contradiction leaves the actual execution model undefined.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Correct the Overview's parallelism claim to accurately reflect the pipeline's actual execution model. If some stages are parallel and some sequential, describe the dependency graph explicitly."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation",
+      "description": "Stage 2 references 'the standard retry policy on transient failures' without defining it or pointing to an external definition. A final architecture brief must specify retry parameters (max attempts, backoff strategy, timeout thresholds) or cite the document where they are defined.",
+      "evidence": "Stage 2: 'Transformation applies the standard retry policy on transient failures.' No retry parameters are defined anywhere in the document.",
+      "suggestion": "Either define the retry policy inline (e.g., 'up to 3 attempts with exponential backoff starting at 1s') or add a reference to the document where the standard retry policy is specified."
+    },
+    {
+      "id": "STRUCTURAL-004",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion",
+      "description": "Authentication is mentioned as a required step but the mechanism is not specified. A final architecture document must identify the authentication scheme (e.g., API key, OAuth 2.0, HMAC signature) to be actionable for implementers.",
+      "evidence": "Stage 1: 'Authentication is used to verify each request before processing begins.' No mechanism, token type, or reference is provided.",
+      "suggestion": "Specify the authentication mechanism: what credential type is presented by the SDK, how it is validated (e.g., API key lookup in secrets store, JWT verification), and what happens on authentication failure (distinct from malformed event handling)."
+    },
+    {
+      "id": "STRUCTURAL-005",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion",
+      "description": "The dead-letter queue is introduced in Stage 1 but its operational handling is never described. For a final architecture document, the DLQ should have at minimum a brief note on who monitors it and what the remediation path is.",
+      "evidence": "Stage 1: 'malformed events are rejected with a 400 response and logged to the dead-letter queue.' No further mention of the DLQ in the document.",
+      "suggestion": "Add a brief note on DLQ handling — either in Stage 1 or Operational Notes — covering monitoring, alerting, and reprocessing or discard procedure."
+    }
+  ],
+  "false_positives_removed": 0,
+  "duplicates_removed": 0,
+  "reexamined": true,
+  "reexamine_note": "Skepticism 3 requires re-examination before reporting clean. Full second pass was performed; all five findings were confirmed with direct textual evidence. No findings were added or removed in the second pass."
+}

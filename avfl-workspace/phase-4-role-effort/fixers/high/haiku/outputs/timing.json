@@ -1,0 +1,1 @@
+{"total_tokens": 31717, "duration_ms": 81379, "total_duration_seconds": 81.4, "config": "fixer-high-haiku", "effort": "high", "model": "haiku", "score_before": 47, "score_after": 97, "findings_applied": 9, "findings_skipped": 0}

@@ -1,0 +1,66 @@
+{
+  "validator": "avfl-validator-adv-medium",
+  "lens": "Factual Accuracy",
+  "lens_id": "ACCURACY",
+  "lens_mindset": "Fact-checker. Compare every claim against source material. Trust nothing — verify everything.",
+  "dimensions": ["correctness", "traceability", "logical_soundness"],
+  "reviewer_framing": "Adversary",
+  "skepticism": 3,
+  "stage": "final",
+  "domain_expert": "technical writer",
+  "task_context": "data processing pipeline architecture brief",
+  "output_validated": "/Users/steve/projects/momentum/avfl-workspace/fixtures/pipeline-arch-multi-iter.md",
+  "source_material": null,
+  "score": 80,
+  "grade": "Good - minor issues remain",
+  "result": "continue",
+  "findings_count": {
+    "critical": 0,
+    "high": 2,
+    "medium": 1,
+    "low": 1,
+    "total": 4
+  },
+  "score_calculation": "100 − 8 (ACCURACY-001) − 8 (ACCURACY-002) − 3 (ACCURACY-003) − 1 (ACCURACY-004) = 80",
+  "findings": [
+    {
+      "id": "ACCURACY-001",
+      "severity": "high",
+      "dimension": "logical_soundness",
+      "location": "Overview vs. Stage 2 — Transformation",
+      "description": "The Overview asserts that all pipeline stages run in parallel, but Stage 2 explicitly states a sequential dependency that directly contradicts this. These two claims are logically irreconcilable: either stages run in parallel, or Stage 2 must complete before Stage 3 begins — not both.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Correct one of these statements to reflect the actual execution model. If Stage 2 → Stage 3 is sequential, remove or qualify the parallelism claim in the Overview. If some stages run in parallel but not all, specify which (e.g., 'Stage 1 and Stage 4 run concurrently with the main pipeline; Stage 2 and Stage 3 are sequential')."
+    },
+    {
+      "id": "ACCURACY-002",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Stage 3 — Delivery",
+      "description": "The claim that the in-memory delivery cache reduces end-to-end latency by 99.9% is a highly specific quantitative performance assertion with no source, benchmark reference, or derivation. No source material was provided and the document itself cites no supporting evidence. A 99.9% latency reduction is an extraordinary claim that requires substantiation.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.'",
+      "suggestion": "Either cite the benchmark or measurement methodology that produced this figure, or replace with a less specific claim if the precise number cannot be sourced (e.g., 'significantly reduces end-to-end latency')."
+    },
+    {
+      "id": "ACCURACY-003",
+      "severity": "medium",
+      "dimension": "correctness",
+      "location": "Stage 4 — Monitoring",
+      "description": "The document references 'Section 6' for security considerations, but Section 6 does not exist in this document. The document contains five sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, and Conclusions. The reference is a factual error — it points to a nonexistent section.",
+      "evidence": "'Security considerations are documented in Section 6.'",
+      "suggestion": "Either add a Section 6 covering security considerations, or update the reference to point to the correct section (or remove it if security is not covered in this document)."
+    },
+    {
+      "id": "ACCURACY-004",
+      "severity": "low",
+      "dimension": "traceability",
+      "location": "Performance Characteristics",
+      "description": "The performance section states benchmarks show batch processing is 3× faster than streaming for files under 10MB, but provides no source or methodology for this claim. The document is an architecture brief for an event-stream ETL system; the benchmark is presented as established fact without a trace to its origin.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.'",
+      "suggestion": "Cite the benchmark source (internal testing, specific date/version, or referenced study). If unpublished, at minimum note the testing conditions. If the figure is approximate, qualify it accordingly."
+    }
+  ],
+  "duplicates_removed": 0,
+  "false_positives_removed": 0,
+  "notes": "No source material was provided. The traceability dimension was evaluated against internal document consistency and whether claims are anchored to any stated evidence or methodology. All four findings are evidenced by direct quotes from the document. The Section 6 reference (ACCURACY-003) was initially noted as a cross-reference integrity issue but qualifies under correctness because it is a factually wrong statement about the document's own contents."
+}

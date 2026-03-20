@@ -1,0 +1,172 @@
+{
+  "config": "consolidator-low-opus",
+  "effort": "low",
+  "model": "opus",
+  "document": "pipeline-arch-multi-iter.md",
+  "task_context": "data processing pipeline architecture brief",
+  "score": 40,
+  "grade": "Failing - major rework needed",
+  "result": "continue",
+  "findings_count": {
+    "critical": 1,
+    "high": 3,
+    "medium": 6,
+    "low": 3,
+    "total": 13
+  },
+  "duplicates_removed": 8,
+  "false_positives_removed": 1,
+  "findings": [
+    {
+      "id": "C-001",
+      "severity": "critical",
+      "confidence": "HIGH",
+      "dimension": "structural_validity",
+      "location": "Overview paragraph 1 vs Stage 2 paragraph 1",
+      "description": "Direct contradiction on execution topology: Overview states all pipeline stages run in parallel, while Stage 2 states Stage 2 must complete before Stage 3 begins. These are mutually exclusive execution models.",
+      "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+      "suggestion": "Decide the actual execution model and make it consistent throughout. If partially parallel, describe the actual dependency graph explicitly.",
+      "sources": ["SE-001", "SA-001"]
+    },
+    {
+      "id": "C-002",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring, final sentence",
+      "description": "Dangling reference to non-existent Section 6 for security documentation. Document ends at Conclusions; no Section 6 exists.",
+      "evidence": "'Security considerations are documented in Section 6.' Document ends at Conclusions with no Section 6 present.",
+      "suggestion": "Either add a Section 6 covering security considerations, or remove/update the reference to point to where security is actually addressed.",
+      "sources": ["SE-002", "SA-002"]
+    },
+    {
+      "id": "C-005",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "correctness",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "Batch/streaming performance claim is factually inverted. Standard data engineering: streaming outperforms batch for small files because batch incurs setup and coordination overhead that only amortizes at large file sizes. The claim as written contradicts domain knowledge.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' Standard data engineering: streaming wins at small sizes due to batch setup overhead.",
+      "suggestion": "Correct the claim or verify the benchmark conditions — if this is a genuinely unusual result, explain why the system behaves differently from the norm.",
+      "sources": ["AE-001", "AA-001"]
+    },
+    {
+      "id": "C-006",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery, paragraph 1",
+      "description": "99.9% latency reduction is an extraordinary performance claim with no supporting methodology, baseline, conditions, or citation. Without these, the claim is unverifiable and undermines document credibility.",
+      "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No baseline, conditions, or methodology provided.",
+      "suggestion": "Either provide the baseline measurement, conditions, and methodology, or restate as a qualitative claim (e.g., 'significantly reduces latency').",
+      "sources": ["AE-002", "AA-002"]
+    },
+    {
+      "id": "C-007",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "traceability",
+      "location": "Performance Characteristics, paragraph 1",
+      "description": "Benchmark claim completely unattributed — 'Benchmarks show' with no source, methodology, test conditions, or data. Cannot be verified or reproduced.",
+      "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' No source named, no conditions, no methodology.",
+      "suggestion": "Attribute the benchmark to a source (internal test, published study, etc.) and provide test conditions (hardware, data types, configuration).",
+      "sources": ["AE-003", "AA-003"]
+    },
+    {
+      "id": "C-008",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "logical_soundness",
+      "location": "Performance Characteristics / Stage 3 and Stage 4",
+      "description": "Logical contradiction: 5-minute polling interval in Stage 4 is incompatible with the sub-second latency implied by the 99.9% reduction claim in Stage 3. A system cannot claim sub-second end-to-end delivery while health monitoring polls every 5 minutes.",
+      "evidence": "Stage 4: 'The monitoring system polls health endpoints every 5 minutes.' Stage 3: 'reduces end-to-end latency by 99.9%' (implying sub-second delivery).",
+      "suggestion": "Clarify the scope of each claim — if the 99.9% refers only to delivery latency and the 5-minute polling is health/observability only (not in the delivery path), state that explicitly.",
+      "sources": ["AE-004"]
+    },
+    {
+      "id": "C-004",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "consistency",
+      "location": "Conclusions paragraph 2",
+      "description": "Conclusions describe adding real-time streaming as a future enhancement, but Stage 2 already discusses both batch and streaming processing modes as current functionality. This creates a contradictory scope — is streaming current or future?",
+      "evidence": "Conclusions: 'Future enhancements include adding a real-time streaming workflow alongside the existing batch pipeline.' Stage 2 already discusses both batch and streaming processing modes.",
+      "suggestion": "Clarify whether streaming is current functionality or a future enhancement. If current, remove it from the future enhancements list. If future, remove streaming references from Stage 2.",
+      "sources": ["SA-003"]
+    },
+    {
+      "id": "C-009",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "consistency",
+      "location": "Operational Notes bullet 2; Conclusions paragraph 2; throughout",
+      "description": "'Pipeline' and 'workflow' are used interchangeably without definition, and in some places as if they are distinct entities. The document never establishes whether these terms are synonyms or refer to different architectural concepts.",
+      "evidence": "Operational Notes: 'The pipeline and workflow are monitored.' (treated as distinct). Conclusions: 'a real-time streaming workflow alongside the existing batch pipeline.' (distinct again, but in a different way). No definitions provided.",
+      "suggestion": "Define 'pipeline' and 'workflow' early in the document, or standardize on one term if they mean the same thing.",
+      "sources": ["CE-001", "CA-001"]
+    },
+    {
+      "id": "C-010",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 2",
+      "description": "'Standard retry policy' is referenced but never defined anywhere in the document. Readers cannot implement or configure the system without knowing retry count, backoff strategy, or timeout.",
+      "evidence": "'Transformation applies the standard retry policy on transient failures.' No definition of retry count, backoff, or timeout anywhere in the document.",
+      "suggestion": "Define the retry policy (e.g., 3 retries, exponential backoff starting at 1s, max 30s timeout) or reference where it is defined.",
+      "sources": ["CE-002", "CA-002"]
+    },
+    {
+      "id": "C-011",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation, paragraph 3",
+      "description": "'Large files' are routed to an overflow queue but the size threshold that triggers this path is never specified. Implementers cannot configure the system without this boundary.",
+      "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold specified.",
+      "suggestion": "Specify the large file threshold (e.g., '>500MB') or reference the configuration setting that controls it.",
+      "sources": ["CE-003"]
+    },
+    {
+      "id": "C-003",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion, paragraph 2",
+      "description": "Authentication mechanism unspecified. The document states authentication is used but does not name the type, leaving implementers without the information needed to configure access control.",
+      "evidence": "'Authentication is used to verify each request before processing begins.' No type (API key, OAuth, mTLS) specified.",
+      "suggestion": "Name the authentication mechanism (e.g., 'API key authentication' or 'mTLS') or note that it is configurable.",
+      "sources": ["SE-003"]
+    },
+    {
+      "id": "C-012",
+      "severity": "low",
+      "confidence": "HIGH",
+      "dimension": "clarity",
+      "location": "Overview paragraph 1",
+      "description": "ETL acronym used without expansion on first use.",
+      "evidence": "'an internal ETL system' — ETL not expanded.",
+      "suggestion": "Expand ETL on first use: 'Extract, Transform, Load (ETL)'.",
+      "sources": ["CE-004", "CA-003"]
+    },
+    {
+      "id": "C-013",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "conciseness",
+      "location": "Stage 4 — Monitoring; Operational Notes",
+      "description": "Stage 4 Monitoring and Operational Notes contain near-duplicate Prometheus dashboard references with no additional information in the second mention.",
+      "evidence": "Stage 4: 'The monitoring system uses a Prometheus dashboard.' Operational Notes bullet 1: 'Monitored via the Prometheus dashboard.' Near-duplicate with no added value.",
+      "suggestion": "Consolidate into one location, or have the Operational Notes reference Stage 4 rather than restate it.",
+      "sources": ["CA-004"]
+    }
+  ],
+  "score_breakdown": {
+    "starting": 100,
+    "critical_deductions": { "count": 1, "per_finding": -15, "total": -15 },
+    "high_deductions": { "count": 3, "per_finding": -8, "total": -24 },
+    "medium_deductions": { "count": 6, "per_finding": -3, "total": -18 },
+    "low_deductions": { "count": 3, "per_finding": -1, "total": -3 },
+    "final": 40
+  }
+}
