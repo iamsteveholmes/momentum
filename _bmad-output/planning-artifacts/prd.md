@@ -22,6 +22,10 @@ editHistory:
     changes: 'Removed plugin deployment model; replaced with skills-only architecture (npx skills add momentum/momentum -a claude-code + Impetus interactive setup). Updated FR2, NFR4, NFR7, NFR9, NFR10, NFR11, Journey 1 narrative, deployment table, repository structure, installation architecture, implementation considerations.'
   - date: '2026-03-20'
     changes: 'Disambiguated FR2 (solo first-install) and FR5 (team member joining); added FR2b (current version → orientation) and FR2c (version mismatch → upgrade); decomposed FR3 into FR3a/FR3b/FR3c (upgrade mechanism); corrected NFR1 to ≤150 characters; removed duplicate token constraint from NFR4; updated NFR7 Tier 3 validation method; marked J1 ✓ for global install detection in Journey Requirements Summary; corrected all npx skills add momentum occurrences to full org/package -a adapter form throughout.'
+  - date: '2026-03-20'
+    changes: 'Fixed repo tree in Installation Architecture — context:fork skills now shown as peer directories (momentum-code-reviewer/, momentum-architecture-guard/), not nested under skills/momentum/; replaced package.json with version.md; added .claude/settings.json entry. Added -g global install row to deployment table. Added installed.json commit policy to Implementation Considerations. Removed stale README update item from Post-PRD Actions.'
+  - date: '2026-03-20'
+    changes: 'Validation fix pass: C-02 renamed current_version → momentum_version in FR2 (full field description) and configured_for_version → momentum_version in FR2b/FR2c/FR3b/FR3c; C-03 replaced Documentation & Repository Structure repo tree with correct peer layout (version.md, all context:fork skills as peer dirs, .claude/rules/, .claude/skills/, _bmad-output/); C-04 fixed NFR7 Tier 3 validation method (was a Tier 1 test; now: README documents all three tiers and principles are actionable without tooling); C-04 appended README documentation note to Tier 1 test; C-07 clarified FR20 (tests conditional on PostToolUse Write/Edit event tracking, not just "code was modified"); C-08 clarified FR37 (Impetus reads config, looks up protocol binding, invokes implementation); C-09 added deployment constraint note to NFR4; C-11 added abbreviated tree note to Installation Architecture; C-12 added FR9 qualification (protocol mapping table gaps, MCP provider, ATDD tool binding); C-13 added BMAD v6 parenthetical to 68 BMAD skills (risk table + implementation considerations); C-14 covered by C-04 (README Tier 1 note); C-15 added FR3a post-condition (installed SKILL.md files and bundled references replaced).'
 classification:
   projectType: developer_tool
   domain: agentic-engineering
@@ -343,7 +347,7 @@ Each innovation area validates through dogfooding — Momentum is built using it
 | Risk | Severity | Mitigation |
 |---|---|---|
 | Agent Skills ecosystem is pre-1.0 — packaging may change | High | Impermanence Principle: thin packaging layer, practice portable even if packaging changes. Monthly ecosystem review. |
-| Context budget exhaustion — 68 BMAD + Momentum skills | Medium | Concise descriptions (≤150 characters each), monitor matching quality |
+| Context budget exhaustion — 68 BMAD (count as of BMAD v6; actual count varies by BMAD version) + Momentum skills | Medium | Concise descriptions (≤150 characters each), monitor matching quality |
 | BMAD coexistence friction — two systems in `.claude/skills/` | Medium | BMAD is an implementation detail. As BMAD migrates to skills, friction decreases. Momentum works with or without BMAD. |
 | Solo developer bottleneck — no peer review safety net | High | Momentum's own practice (code-reviewer, adversarial review) provides the safety net. Dogfooding is both the risk and the mitigation. |
 | Protocol abstraction over-engineering | Medium | Define with one implementation. Refine when second implementation reveals what the first got wrong. |
@@ -362,17 +366,21 @@ One developer, limited hours, concurrent with other projects. The MVP must be le
 **Single entry point via Agent Skills standard:**
 
 ```
-momentum/
+momentum/                        # repo root
 ├── skills/
-│   └── momentum/
-│       ├── SKILL.md                  # /momentum command (Impetus orchestrator)
-│       ├── references/               # Bundled configuration written by Impetus on first run
-│       │   ├── rules/                # Global rules → .claude/rules/
-│       │   ├── hooks/                # Hook definitions → .claude/settings.json
-│       │   └── mcp/                  # MCP server configs → .claude/claude_desktop_config.json
-│       └── skills/                   # context:fork subagent skills (code-reviewer, architecture-guard)
-└── package.json
+│   ├── momentum/                # Impetus — main entry point SKILL.md
+│   │   ├── SKILL.md
+│   │   └── references/          # bundled rules, hooks-config.json, mcp-config.json, momentum-versions.json
+│   ├── momentum-code-reviewer/  # context:fork skill — peer, not child
+│   │   └── SKILL.md
+│   └── momentum-architecture-guard/  # context:fork skill — peer, not child
+│       └── SKILL.md
+├── .claude/
+│   └── settings.json            # committed; always-on hooks written by Impetus
+└── version.md
 ```
+
+(Abbreviated — shows primary packaging structure. See Repository Structure section for complete directory layout.)
 
 - All Momentum capabilities deploy via `npx skills add momentum/momentum -a claude-code` (Agent Skills standard)
 - No plugin manifest, no plugin install — single distribution method
@@ -384,6 +392,7 @@ momentum/
 | Method | Target | What's Installed |
 |---|---|---|
 | `npx skills add momentum/momentum -a claude-code` | Claude Code | Full system: skills + Impetus-managed global configuration (rules, hooks, MCP) |
+| `npx skills add momentum/momentum -a claude-code -g` | Claude Code (global) | Skills available in all projects; Impetus-managed global configuration still required on first `/momentum` run per project |
 | `npx skills add momentum/momentum -a claude-code` | Cursor | Skills only (advisory enforcement) |
 | `git clone` (project repo) | Team members | Project-level config via `.claude/settings.json` |
 | Global setup (prompted by Impetus) | New team member's machine | `~/.claude/` rules, hooks, MCP — written by Impetus on first `/momentum` run |
@@ -443,17 +452,31 @@ momentum/
 ├── LICENSE
 ├── README.md
 ├── CONTRIBUTING.md
-├── skills/                  # Agent Skills package (deployed via npx skills add momentum/momentum -a claude-code)
-│   └── momentum/
-│       ├── SKILL.md         # /momentum command (Impetus orchestrator)
-│       ├── references/      # Rules, hooks, MCP config — written to target locations by Impetus
-│       └── skills/          # context:fork subagent skills
+├── version.md              ← single version source for all skills
+├── skills/
+│   ├── momentum/           ← Impetus — main entry point
+│   │   ├── SKILL.md
+│   │   └── references/    ← bundled rules, hooks-config.json, mcp-config.json, momentum-versions.json
+│   ├── momentum-vfl/
+│   │   └── SKILL.md
+│   ├── momentum-code-reviewer/    ← context:fork skill (peer, not nested)
+│   │   └── SKILL.md
+│   ├── momentum-architecture-guard/   ← context:fork skill (peer, not nested)
+│   │   └── SKILL.md
+│   ├── momentum-upstream-fix/
+│   │   └── SKILL.md
+│   ├── momentum-create-story/
+│   │   └── SKILL.md
+│   └── momentum-dev-story/
+│       └── SKILL.md
+├── rules/                  ← source for bundled rules (advisory)
+├── mcp/                    ← custom MCP server source
 ├── docs/
-│   ├── archive/             # Outdated docs, still referenced, not deleted
-│   ├── research/            # Active research documents
-│   ├── research-final/      # Consolidated, validated research
-│   └── specifications/      # Project specifications
-└── module/                  # Canonical practice files (rules, agents, templates)
+├── .claude/
+│   ├── rules/              ← authority hierarchy rules (auto-load)
+│   ├── skills/             ← installed skills
+│   └── settings.json       ← always-on hooks (committed)
+└── _bmad-output/           ← planning artifacts
 ```
 
 **Provenance for all documentation:**
@@ -474,8 +497,9 @@ momentum/
 
 ### Implementation Considerations
 
-- **Context budget management:** With 68 BMAD skills installed, keep Momentum skill descriptions ≤150 characters each. All Momentum skills are flat skills (no plugin namespacing). Monitor for skill matching degradation as total count grows.
+- **Context budget management:** With 68 BMAD skills installed (count as of BMAD v6; actual count varies by BMAD version), keep Momentum skill descriptions ≤150 characters each. All Momentum skills are flat skills (no plugin namespacing). Monitor for skill matching degradation as total count grows.
 - **Version management:** `momentum-versions.json` bundled in the package — machine-readable per-version action list (what files to write, where, for each version). `.claude/momentum/installed.json` written by Impetus at project level — records what version the project is currently configured for. Always bump version on changes.
+- **`installed.json` commit policy:** `.claude/momentum/installed.json` must be committed to the project repository. It records the Momentum version the project is configured for — without it, team members joining via `git clone` cannot receive correct incremental upgrade instructions and will be prompted for a full install instead. `.gitignore` must NOT exclude `.claude/momentum/installed.json`; it is intentionally tracked, unlike most `.claude/` contents which may be gitignored.
 - **Testing strategy:** promptfoo for skill output quality, `run_eval.py` for trigger precision, local `npx skills` development iteration.
 
 ## Functional Requirements
@@ -483,12 +507,12 @@ momentum/
 ### Installation & Deployment
 
 - **FR1:** Developer can install Momentum skills via `npx skills add` into any Agent Skills-adopting IDE
-- **FR2:** Developer (solo, first install) runs `npx skills add momentum/momentum -a claude-code` then `/momentum`; Impetus detects no `installed.json` exists, presents a pre-consent summary of what will be configured (global rules, hooks, MCP), and with explicit developer confirmation completes setup and writes `installed.json` with `current_version`
-- **FR2b:** When Impetus starts and `installed.json` exists with `configured_for_version` matching `momentum-versions.json` `current_version`, Impetus skips install and upgrade flows and proceeds directly to session orientation
-- **FR2c:** When Impetus starts and `installed.json` exists but `configured_for_version` does not match `current_version`, Impetus triggers the upgrade flow (FR3b)
-- **FR3a:** Developer can run `npx skills update` to pull the latest Momentum package to disk; the updated package contains a revised `momentum-versions.json` with per-version action lists
-- **FR3b:** When Impetus starts and detects `momentum-versions.json` `current_version` differs from `installed.json` `configured_for_version`, Impetus presents a structured upgrade summary — which files change, what each change does, which steps require restart — and requires explicit user confirmation before proceeding
-- **FR3c:** Impetus executes upgrade actions sequentially across all intermediate versions between `configured_for_version` and `current_version`, updating `installed.json` on successful completion; partial failures are reported with the step that failed and project state left unchanged from that step onward
+- **FR2:** Developer (solo, first install) runs `npx skills add momentum/momentum -a claude-code` then `/momentum`; Impetus detects no `installed.json` exists, presents a pre-consent summary of what will be configured (global rules, hooks, MCP), and with explicit developer confirmation completes setup and writes `installed.json` recording `momentum_version` (set to the value of `current_version` from `momentum-versions.json`), `installed_at`, and per-component hashes
+- **FR2b:** When Impetus starts and `installed.json` exists with `momentum_version` matching `momentum-versions.json` `current_version`, Impetus skips install and upgrade flows and proceeds directly to session orientation
+- **FR2c:** When Impetus starts and `installed.json` exists but `momentum_version` does not match `current_version`, Impetus triggers the upgrade flow (FR3b)
+- **FR3a:** Developer can run `npx skills update` to pull the latest Momentum package to disk; the updated package contains a revised `momentum-versions.json` with per-version action lists, such that the installed SKILL.md files and bundled references in `.claude/skills/momentum*/` are replaced with the new version's content
+- **FR3b:** When Impetus starts and detects `momentum-versions.json` `current_version` differs from `installed.json` `momentum_version`, Impetus presents a structured upgrade summary — which files change, what each change does, which steps require restart — and requires explicit user confirmation before proceeding
+- **FR3c:** Impetus executes upgrade actions sequentially across all intermediate versions between `momentum_version` and `current_version`, updating `installed.json` on successful completion; partial failures are reported with the step that failed and project state left unchanged from that step onward
 - **FR4:** Team member can receive project-level Momentum configuration via `git clone` without manual setup
 - **FR5:** Developer joining a project that has `.claude/momentum/installed.json` committed but lacks global Momentum components on their machine (rules, hooks) runs `/momentum`; Impetus detects missing global components and guides them through one-time global setup without re-running the full install sequence
 
@@ -497,7 +521,7 @@ momentum/
 - **FR6:** Developer can interact with an orchestrating agent that presents menu-driven access to all practice workflows
 - **FR7:** Orchestrating agent can show the developer's current position in any workflow via visual status graphics (ASCII)
 - **FR8:** Orchestrating agent can provide human-readable summaries of what was built during implementation, while review runs
-- **FR9:** Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally
+- **FR9:** Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally, including at minimum: gaps in the protocol mapping table (FR35), missing MCP provider configuration, and undefined ATDD tool binding
 - **FR10:** Orchestrating agent can contextualize specifications just-in-time — explaining relevant architectural decisions, acceptance criteria, and prior choices at the moment they're needed, rather than requiring document reading
 - **FR11:** Developer can ask follow-up questions during any workflow step, and the agent treats questions as discovery opportunities that may improve the specification
 
@@ -514,7 +538,7 @@ momentum/
 
 - **FR18:** System can auto-lint and auto-format code on every file edit (PostToolUse hook)
 - **FR19:** System can block modifications to acceptance test directories (PreToolUse hook)
-- **FR20:** System can run conditional quality gates before session end — tests only when code was modified, lint always (Stop hook)
+- **FR20:** System can run conditional quality gates before session end — tests only when any source file outside `tests/acceptance/` was written or edited during the current session (detectable via PostToolUse Write/Edit event tracking in session state), lint always (Stop hook)
 - **FR21:** System can protect specified files from modification (PreToolUse hook)
 - **FR22:** System can ensure authority hierarchy rules auto-load in every Claude Code session including subagents via `.claude/rules/` — no manual loading required
 - **FR23:** Developer can configure model routing defaults per skill and agent via `model:` and `effort:` frontmatter, with a documented default strategy: Sonnet 4.6 at medium effort for general tasks; upgrade to Opus for complex reasoning, orchestration, or outputs without automated validation (cognitive hazard rule: invisible errors from cheaper models cost more than the flagship premium); downgrade to Haiku for well-constrained tasks with downstream validation
@@ -540,7 +564,7 @@ momentum/
 - **FR34:** Developer can configure which agent, skill, tool, MCP provider, or document structure satisfies each protocol — at project level
 - **FR35:** Project configuration file maps protocols to implementations with provenance (who configured, when, why)
 - **FR36:** Orchestrating agent can read the project configuration, detect gaps in protocol mappings, and help fill them conversationally
-- **FR37:** System can resolve workflow step invocations through protocol interfaces — workflow definitions reference protocol types, not specific implementations; the runtime resolves the binding from project configuration
+- **FR37:** System can resolve workflow step invocations through protocol interfaces — workflow definitions reference protocol types, not specific implementations; Impetus reads the project configuration at invocation time, looks up which implementation satisfies the protocol type for the current step, and invokes that implementation
 - **FR38:** Developer can substitute any protocol implementation without modifying the workflows that depend on it
 
 ### Specification & Development Workflow
@@ -565,13 +589,13 @@ momentum/
 - **NFR1:** Each Momentum skill description must be ≤150 characters to minimize startup context budget impact
 - **NFR2:** Skill matching accuracy must remain >=95% (correct skill invoked on first attempt) when Momentum skills are added to an environment with 68+ existing BMAD skills, as measured by manual spot-checks during dogfooding
 - **NFR3:** Skill instructions should stay under 500 lines / 5000 tokens per the Agent Skills spec recommendation
-- **NFR4:** All Momentum skills are flat skills deployed via Agent Skills standard; no plugin namespacing is used or required.
+- **NFR4:** All Momentum skills are flat skills deployed via Agent Skills standard; no plugin namespacing is used or required. (Deployment architecture constraint — grouped here because flat skill deployment eliminates plugin overhead from the context budget.)
 
 ### Portability & Graceful Degradation
 
 - **NFR5:** All SKILL.md files must be valid Agent Skills standard — parseable by any of the 17+ adopting tools
 - **NFR6:** Claude Code-specific frontmatter (`context: fork`, `model`, `effort`) must be additive — skills must function correctly when these fields are ignored by non-Claude Code tools
-- **NFR7:** Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code — hooks fire via `.claude/settings.json` written by Impetus, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus), Tier 2 advisory (Cursor/other tools with skills only — skill instructions guide but don't enforce), Tier 3 philosophy only (no tooling — principles documented in README). Each tier must be explicitly tested: Tier 1 via `npx skills add momentum/momentum -a claude-code` + `/momentum` first-run setup, Tier 2 via `npx skills add` into a non-Claude Code tool, Tier 3 validated by: verifying rules are present in `~/.claude/rules/` after Impetus first-run; verifying rules content is loaded in agent session context during a test session with no other rules present.
+- **NFR7:** Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code — hooks fire via `.claude/settings.json` written by Impetus, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus), Tier 2 advisory (Cursor/other tools with skills only — skill instructions guide but don't enforce), Tier 3 philosophy only (no tooling — principles documented in README). Each tier must be explicitly tested: Tier 1 via `npx skills add momentum/momentum -a claude-code` + `/momentum` first-run setup; README explicitly documents this configuration as Tier 1. Tier 2 via `npx skills add` into a non-Claude Code tool. Tier 3 validated by: verifying the README documents all three enforcement tiers and their respective capabilities and limitations; confirming that the practice principles are documented in a form that is actionable without any tooling installation.
 - **NFR8:** No Momentum workflow definition may import or reference a Claude Code-specific API directly. Workflows depend on protocol interfaces; protocol implementations resolve to Claude Code features at runtime. Validated by: every workflow SKILL.md must parse and execute (at advisory level) in at least one non-Claude Code tool.
 
 ### Ecosystem Resilience
@@ -594,5 +618,4 @@ momentum/
 
 ## Post-PRD Actions
 
-- Update project README with the eight core principles (the original seven plus Protocol-Based Integration)
 - Commit LICENSE as the first artifact in the Momentum repository

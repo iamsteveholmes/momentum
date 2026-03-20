@@ -4,6 +4,7 @@ stepsCompleted:
   - step-02-design-epics
   - step-03-epic-1-stories
   - step-03-epic-2-stories-vfl-gate-applied
+  - step-03-epic-3-stories
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -14,6 +15,10 @@ editHistory:
     changes: 'Synced FR numbering with PRD edits: FR2 updated to solo first-install path; FR2b/FR2c added for Nth-run routing; FR3 decomposed to FR3a/FR3b/FR3c; FR5 updated to team member joining path; NFR1 corrected to ≤150 characters; NFR4 updated to remove plugin reference; Epic 1 FRs covered list updated; FR Coverage Map updated with new FR entries.'
   - date: '2026-03-20'
     changes: 'Validation fix pass: C-01 purged plugin model throughout (Deployment & Packaging block replaced, Spike Required block replaced with Architecture Decision Closed, Epic 1 Additional field updated, Epic 4 Additional field updated, NFR7 updated, NFR10 updated); C-02 renamed configured_for_version → momentum_version in FR2/FR2b/FR2c/FR3b/FR3c; C-05 fixed Story 1.2 AC ≤100 tokens → ≤150 characters; C-06 replaced all Tony references with Impetus throughout (UX-DR6/10/13/18, Epic 2 description, Story 2.1/2.4 ACs); C-16 updated NFR4 label in NFR mapping comment.'
+  - date: '2026-03-20'
+    changes: 'Propagation fix pass (6 findings): I2-01 FR20 requirements inventory updated with PostToolUse Write/Edit event tracking detail; I2-01 FR20 Coverage Map description updated to include source file change detection via PostToolUse; I2-02 FR37 requirements inventory appended with Impetus dispatch mechanism (reads config at invocation time, looks up protocol binding, invokes implementation); I2-03 NFR7 requirements inventory appended with Tier 3 validation method (README documents all three tiers; principles actionable without tooling); I2-04 FR9 requirements inventory appended with minimum example list (protocol mapping table gaps, missing MCP provider, undefined ATDD tool binding); I2-04 Story 2.5 AC examples updated to include third example (ATDD tool binding undefined) with FR9 pointer; I2-05 Story 1.3 showTurnDuration AC annotated with cost observability trace note; I2-06 Story 1.3 new AC added for installed.json git tracking and gitignore policy.'
+  - date: '2026-03-20'
+    changes: 'Story 3.3 AC clarification: added And line after conditional test execution AC specifying that the Stop hook detects code modification via session state from PostToolUse Write/Edit events — not git diff or any external check — aligning Story 3.3 with FR20 specified detection mechanism.'
 ---
 
 # Momentum - Epic Breakdown
@@ -41,7 +46,7 @@ FR5: Developer joining a project that has `.claude/momentum/installed.json` comm
 FR6: Developer can interact with an orchestrating agent that presents menu-driven access to all practice workflows
 FR7: Orchestrating agent can show the developer's current position in any workflow via visual status graphics (ASCII)
 FR8: Orchestrating agent can provide human-readable summaries of what was built during implementation, while review runs
-FR9: Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally
+FR9: Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally, including at minimum: gaps in the protocol mapping table (FR35), missing MCP provider configuration, and undefined ATDD tool binding
 FR10: Orchestrating agent can contextualize specifications just-in-time — explaining relevant architectural decisions, acceptance criteria, and prior choices at the moment they're needed
 FR11: Developer can ask follow-up questions during any workflow step, and the agent treats questions as discovery opportunities
 
@@ -56,7 +61,7 @@ FR17: System can distinguish human-authored from AI-generated content in provena
 **Enforcement & Quality Governance**
 FR18: System can auto-lint and auto-format code on every file edit (PostToolUse hook)
 FR19: System can block modifications to acceptance test directories (PreToolUse hook)
-FR20: System can run conditional quality gates before session end — tests only when code was modified, lint always (Stop hook)
+FR20: System can run conditional quality gates before session end — tests only when any source file outside `tests/acceptance/` was written or edited during the current session (detectable via PostToolUse Write/Edit event tracking in session state), lint always (Stop hook)
 FR21: System can protect specified files from modification (PreToolUse hook)
 FR22: System can ensure authority hierarchy rules auto-load in every Claude Code session including subagents via `.claude/rules/`
 FR23: Developer can configure model routing defaults per skill and agent via `model:` and `effort:` frontmatter, with documented default strategy (Sonnet 4.6 general, Opus for complex/cognitive-hazard, Haiku for constrained tasks with downstream validation)
@@ -79,7 +84,7 @@ FR33: System can track the ratio of upstream fixes to code-level fixes as a prac
 FR34: Developer can configure which agent, skill, tool, MCP provider, or document structure satisfies each protocol — at project level
 FR35: Project configuration file maps protocols to implementations with provenance (who configured, when, why)
 FR36: Orchestrating agent can read the project configuration, detect gaps in protocol mappings, and help fill them conversationally
-FR37: System can resolve workflow step invocations through protocol interfaces — workflow definitions reference protocol types, not specific implementations
+FR37: System can resolve workflow step invocations through protocol interfaces — workflow definitions reference protocol types, not specific implementations; Impetus reads the project configuration at invocation time, looks up which implementation satisfies the protocol type for the current step, and invokes that implementation
 FR38: Developer can substitute any protocol implementation without modifying the workflows that depend on it
 
 **Specification & Development Workflow**
@@ -106,7 +111,7 @@ NFR4: All Momentum skills are flat skills deployed via Agent Skills standard; no
 **Portability & Graceful Degradation**
 NFR5: All SKILL.md files must be valid Agent Skills standard — parseable by any of the 17+ adopting tools
 NFR6: Claude Code-specific frontmatter must be additive — skills must function correctly when ignored by non-Claude Code tools
-NFR7: Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code — hooks fire via `.claude/settings.json` written by Impetus, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus), Tier 2 advisory (Cursor/other tools with skills only), Tier 3 philosophy only (no tooling). Each tier explicitly tested.
+NFR7: Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code — hooks fire via `.claude/settings.json` written by Impetus, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus), Tier 2 advisory (Cursor/other tools with skills only), Tier 3 philosophy only (no tooling). Each tier explicitly tested. Tier 3 validated by: verifying the README documents all three enforcement tiers and their respective capabilities and limitations; confirming that the practice principles are documented in a form that is actionable without any tooling installation.
 NFR8: No Momentum workflow definition may import or reference a Claude Code-specific API directly — workflows depend on protocol interfaces
 
 **Ecosystem Resilience**
@@ -227,7 +232,7 @@ UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive,
 | FR17 | Epic 5 | Human vs AI-generated content distinction in provenance |
 | FR18 | Epic 3 | Auto-lint and auto-format on every file edit (PostToolUse hook) |
 | FR19 | Epic 3 | Block modifications to acceptance test directories (PreToolUse hook) |
-| FR20 | Epic 3 | Conditional quality gates before session end (Stop hook) |
+| FR20 | Epic 3 | Conditional quality gates before session end — source file change detection via PostToolUse event tracking (Stop hook) |
 | FR21 | Epic 3 | File protection via PreToolUse hook |
 | FR22 | Epic 3 | Authority hierarchy rules auto-load via .claude/rules/ |
 | FR23 | Epic 3 | Model routing via model: and effort: frontmatter |
@@ -413,7 +418,7 @@ So that I never have to run a separate setup command or manually edit config fil
 **Then** rules files are written to `~/.claude/rules/` from bundled `references/rules/`
 **And** hooks config is **merged** into `.claude/settings.json` — existing keys are preserved, only Momentum-specific hook entries are added, no existing hooks are overwritten or removed
 **And** `.mcp.json` is written from bundled `references/mcp-config.json`
-**And** `showTurnDuration: true` is set in `.claude/settings.json`
+**And** `showTurnDuration: true` is set in `.claude/settings.json` (cost observability — Epic 1 Additional requirement)
 **And** `.claude/momentum/installed.json` is written recording `momentum_version`, `installed_at`, and a hash for each written component
 **And** Impetus confirms to the developer exactly which files were written
 
@@ -436,6 +441,11 @@ So that I never have to run a separate setup command or manually edit config fil
 **And** detects that project-level config is already present
 **And** only runs global setup steps (rules to `~/.claude/rules/`) if those are missing from the new machine
 **And** does not re-write project-level config already committed to the repo
+
+**Given** setup has completed and `.claude/momentum/installed.json` has been written
+**When** the developer inspects the project's version control state
+**Then** `.claude/momentum/installed.json` is tracked in git (not gitignored)
+**And** `.gitignore` does not contain an entry excluding `.claude/momentum/installed.json`
 
 ---
 
@@ -704,9 +714,195 @@ So that I never need to manually hunt for specs or figure out how to fix missing
 **And** if the question reveals an ambiguity or gap in the current spec, Impetus flags it explicitly ("This question reveals an ambiguity in the acceptance criteria — worth clarifying before we continue")
 **And** after answering, re-presents the user control so the workflow continues
 
-**Given** the developer's project is missing required Momentum configuration (e.g. protocol mapping undefined, MCP provider unconfigured)
+**Given** the developer's project is missing required Momentum configuration (e.g. protocol mapping undefined, MCP provider unconfigured, ATDD tool binding undefined — full example list in FR9)
 **When** Impetus detects the gap at session start or when a workflow step encounters it (FR9)
 **Then** Impetus surfaces the gap with a clear description of what's missing and why it matters
 **And** guides the developer through resolution conversationally — never dumps a raw config file
 **And** does not block other workflows while resolution is pending unless the missing config would cause data loss or irreversible action in that workflow
 **And** blocking gaps are defined as: missing MCP server required for the next workflow step, missing write target that would silently skip a required output
+
+---
+
+## Epic 3: Automatic Quality Enforcement
+
+Quality gates fire without developer intervention. Lint and format run on save. Acceptance tests are protected from modification. Model routing is configured by frontmatter so every skill and agent uses the right model by default. Authority hierarchy rules auto-load every session.
+
+**FRs covered:** FR18, FR19, FR20, FR21, FR22, FR23
+**NFRs covered:** NFR7, NFR8
+**UX-DRs covered:** UX-DR3
+
+### Story 3.1: PostToolUse Lint and Format Hook Active
+
+As a developer,
+I want code to be automatically linted and formatted every time I edit a file,
+So that formatting violations never accumulate and I never have to run a separate format step.
+
+**Acceptance Criteria:**
+
+**Given** Momentum hooks are installed in `.claude/settings.json` (via Story 1.3)
+**When** a developer edits any code file using a Claude Code tool
+**Then** the PostToolUse hook fires automatically
+**And** it runs the project's configured lint/format command (e.g. `prettier --write`, `eslint --fix`, `black`)
+**And** the hook executes within the same tool response cycle — before the developer sees the final result
+
+**Given** the PostToolUse hook runs and finds no issues
+**When** the hook completes (UX-DR3)
+**Then** it outputs exactly one line: `[lint] ✓ checked [file path] — clean`
+**And** no additional output appears
+
+**Given** the PostToolUse hook runs and finds auto-fixable issues
+**When** the hook auto-fixes them (UX-DR3)
+**Then** it outputs exactly one line: `[lint] ✓ auto-fixed [N issue(s)] in [file path]`
+
+**Given** the PostToolUse hook runs and finds issues that cannot be auto-fixed
+**When** the hook completes (UX-DR3)
+**Then** it outputs: `[lint] ✗ [N issues] — [file:line of first] — [likely cause]`
+**And** the output is specific enough for the developer to act without opening a separate tool
+
+**Given** the project has no lint/format tool configured
+**When** the PostToolUse hook fires
+**Then** it skips silently — no output, no false failure
+
+---
+
+### Story 3.2: PreToolUse File Protection Hooks Active
+
+As a developer,
+I want Momentum to block writes to acceptance tests and protected configuration files,
+So that test integrity and critical config are preserved automatically — no accidental overwrites.
+
+**Acceptance Criteria:**
+
+**Given** Momentum hooks are installed
+**When** a Claude Code tool attempts to write to any path matching `tests/acceptance/`, `**/*.feature`, `.claude/rules/`, or `.claude/momentum/findings-ledger.json`
+**Then** the PreToolUse hook fires and blocks the write before it executes
+**And** returns an explanation of what was blocked and why
+
+**Given** a PreToolUse hook blocks a write (UX-DR3)
+**When** the hook fires
+**Then** it outputs: `[file-protection] ✗ blocked write to [path] — [policy]: [reason]`
+**And** the policy name and reason are specific (e.g. "acceptance-test-dir: no modification after ATDD phase begins")
+
+**Given** a PreToolUse hook allows a write (non-protected path)
+**When** the hook fires
+**Then** it adds no output — protection passes are silent (only failures announced)
+
+**Given** `.claude/momentum/installed.json` contains a project-customized protected path list
+**When** the PreToolUse hook evaluates a write
+**Then** it enforces the project-specific paths in addition to Momentum defaults
+**And** project overrides are additive — they cannot remove Momentum default protected paths
+
+**Given** a write to `_bmad-output/planning-artifacts/*.md` is attempted
+**When** the PreToolUse hook fires
+**Then** the write is blocked with: `[file-protection] ✗ blocked write to [path] — planning-artifacts: spec files are read-only during implementation`
+
+---
+
+### Story 3.3: Stop Gate Runs Conditional Quality Checks
+
+As a developer,
+I want quality gates to run automatically before my session ends,
+So that I never close a session with failing tests or unresolved lint errors.
+
+**Acceptance Criteria:**
+
+**Given** a developer ends a Claude Code session
+**When** the Stop hook fires (FR20)
+**Then** lint runs unconditionally — regardless of whether code was modified this session
+**And** tests run only if at least one code file was modified during the session
+**And** the Stop hook determines whether code was modified by reading session state accumulated by PostToolUse Write/Edit hook events — not by running git diff or any external check
+**And** if no code was modified, tests are skipped and the session ends cleanly
+
+**Given** the Stop hook runs lint and finds no issues (UX-DR3)
+**When** the hook completes
+**Then** it outputs: `[stop-gate] ✓ checked lint — clean`
+**And** the session proceeds to close
+
+**Given** the Stop hook runs and finds lint failures (UX-DR3)
+**When** the hook completes
+**Then** it outputs: `[stop-gate] ✗ lint: [N issues] — [file:line of first] — fix before closing`
+**And** the session is held open
+
+**Given** the Stop hook runs tests and they pass (UX-DR3)
+**When** the hook completes
+**Then** it outputs: `[stop-gate] ✓ checked tests — [N] passed`
+
+**Given** the Stop hook runs tests and they fail (UX-DR3)
+**When** the hook completes
+**Then** it outputs: `[stop-gate] ✗ tests: [N failed] — [failing test name] — [failure summary]`
+**And** the session is held open
+
+**Given** the Stop hook runs and the project has no test runner configured
+**When** the test step would run
+**Then** it outputs: `[stop-gate] ◦ tests — no test runner configured`
+**And** lint still runs regardless
+
+---
+
+### Story 3.4: Authority Hierarchy Rules Auto-Load Every Session
+
+As a developer,
+I want Momentum rules to auto-load in every Claude Code session without any manual step,
+So that practice standards are enforced consistently in primary sessions and all subagents.
+
+**Acceptance Criteria:**
+
+**Given** a developer starts any Claude Code session (primary or subagent)
+**When** the session initializes (FR22)
+**Then** all files in `~/.claude/rules/` auto-load as authority rules
+**And** Momentum rules written there by Story 1.3 are active from the first message
+
+**Given** Momentum rules are loaded in the primary session
+**When** a Claude Code subagent is spawned (context:fork)
+**Then** the subagent also loads rules from `~/.claude/rules/`
+**And** enforcement applies equally to primary sessions and all subagents (NFR7 Tier 1)
+
+**Given** a developer is using Cursor or another Agent Skills-compatible tool (Tier 2)
+**When** they invoke a Momentum skill (NFR7)
+**Then** the skill's advisory guidance is surfaced — hooks do not fire (no `.claude/settings.json` in Cursor)
+**And** the developer is not required to take any additional action for skills to function in advisory mode
+**And** the Momentum README documents Tier 1 vs. Tier 2 capabilities explicitly
+
+**Given** a developer has no tooling at all (Tier 3)
+**When** they read the Momentum README (NFR7)
+**Then** all three tiers are defined with explicit lists of what works and what does not at each tier
+**And** adoption instructions for each tier are present
+
+**Given** any Momentum workflow definition
+**When** reviewed for Claude Code API references (NFR8)
+**Then** no workflow definition imports or references any Claude Code-specific API directly
+**And** all workflow steps invoke protocol interfaces — not tool-specific implementations
+
+---
+
+### Story 3.5: Model Routing Configured by Frontmatter
+
+As a developer,
+I want every Momentum skill and agent to have its model and effort level set by frontmatter,
+So that the right model is used for every task automatically — no manual overrides needed.
+
+**Acceptance Criteria:**
+
+**Given** the model routing guide exists at `skills/momentum/references/model-routing-guide.md`
+**When** a contributor creates a new Momentum skill or agent (FR23)
+**Then** they set `model:` and `effort:` frontmatter according to the routing guide
+**And** the routing guide documents the default strategy: current Sonnet-tier at medium effort for general skills; Opus for complex reasoning or outputs without automated validation (cognitive-hazard tasks); Haiku for constrained tasks with downstream automated validation
+
+**Given** a Momentum skill's `model:` and `effort:` frontmatter is set
+**When** Claude Code invokes the skill
+**Then** the specified model tier is used for that skill's execution
+**And** no developer override is required to get correct model behavior
+
+**Given** the model routing guide is updated (e.g. a new model tier releases)
+**When** the guide is applied to existing skills
+**Then** all affected skills have their frontmatter updated to reflect the new guidance
+**And** the guide is the single source of truth — no model strings exist outside frontmatter and the guide itself
+
+**Given** a Momentum skill is deployed in a non-Claude Code tool (NFR6)
+**When** the tool parses `model:` and `effort:` frontmatter
+**Then** it either respects them (if supported) or silently ignores them
+**And** the skill functions correctly in both cases
+
+**Given** a model routing rule file is written to `~/.claude/rules/model-routing.md` by Impetus (Story 1.3)
+**When** a developer starts a Claude Code session
+**Then** the model routing rule auto-loads and is active for all unspecified routing decisions
