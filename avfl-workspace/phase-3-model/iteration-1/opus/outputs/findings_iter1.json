@@ -1,0 +1,92 @@
+[
+  {
+    "id": "F-001",
+    "severity": "critical",
+    "dimension": "consistency",
+    "location": "Overview paragraph 1 vs Stage 2 — Transformation paragraph 1",
+    "description": "Direct logical contradiction between the Overview's claim that all pipeline stages run in parallel and Stage 2's requirement that Stage 2 must complete before Stage 3 begins. These two statements are mutually exclusive.",
+    "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.'",
+    "suggestion": "Remove the blanket parallelism claim from the Overview. Replace with an accurate description of the execution model — stages operate concurrently across different event batches, but individual events follow sequential stage progression.",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-002",
+    "severity": "high",
+    "dimension": "cross_reference_integrity",
+    "location": "Stage 4 — Monitoring, final sentence",
+    "description": "The document references 'Section 6' for security considerations, but no Section 6 exists. The document contains five sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, and Conclusions.",
+    "evidence": "'Security considerations are documented in Section 6.' The document ends at Conclusions with no subsequent section.",
+    "suggestion": "Remove the dangling reference. Either add a Security Considerations section or note that security documentation is pending.",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-003",
+    "severity": "high",
+    "dimension": "correctness",
+    "location": "Performance Characteristics, paragraph 1",
+    "description": "The claim that batch processing is 3x faster than streaming for files under 10MB is factually backwards. For small files, streaming generally outperforms batch because batch incurs setup overhead (chunking, buffering, I/O initialization) that provides no benefit at small file sizes. The document's next sentence — 'For larger payloads, streaming is preferred' — further contradicts the expected performance curve.",
+    "evidence": "'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.' Standard data engineering benchmarks show the opposite relationship.",
+    "suggestion": "Correct to reflect that streaming is faster for small files and batch processing is more efficient for larger payloads.",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-004",
+    "severity": "high",
+    "dimension": "correctness",
+    "location": "Stage 3 — Delivery, paragraph 1",
+    "description": "The claim that the in-memory delivery cache reduces end-to-end latency by 99.9% is an extraordinary, unsupported assertion. A 99.9% reduction would mean reducing latency from e.g. 1000ms to 1ms. No methodology, baseline, or citation is provided.",
+    "evidence": "'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No supporting data, test conditions, or baseline measurement is provided.",
+    "suggestion": "Remove or qualify the claim. Use a credible description (e.g., 'significantly reduces write latency') or provide supporting benchmark data.",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-005",
+    "severity": "medium",
+    "dimension": "completeness",
+    "location": "Stage 2 — Transformation, paragraph 2",
+    "description": "'Standard retry policy' is referenced but never defined anywhere in the document. A reader cannot implement or configure the system based on this reference alone.",
+    "evidence": "'Transformation applies the standard retry policy on transient failures.' No retry policy details (number of retries, backoff strategy, timeout) are defined.",
+    "suggestion": "Define the retry policy inline, e.g., 'applies an exponential backoff retry policy: up to 3 attempts with 1s, 2s, 4s delays.'",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-006",
+    "severity": "medium",
+    "dimension": "completeness",
+    "location": "Stage 2 — Transformation, paragraph 3",
+    "description": "'Large files are handled separately' but 'large' is never defined. The threshold between normal and large files is not specified, making this operationally meaningless.",
+    "evidence": "'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold is given.",
+    "suggestion": "Define the threshold, e.g., 'Files exceeding 100MB are handled separately via an overflow queue.'",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-007",
+    "severity": "medium",
+    "dimension": "consistency",
+    "location": "Operational Notes bullet 2; Conclusions paragraph",
+    "description": "'Pipeline' and 'workflow' are used interchangeably without being defined as synonymous or distinct concepts, creating ambiguity.",
+    "evidence": "Operational Notes: 'The pipeline and workflow are monitored by the on-call team' — suggests they may be different things. Conclusions: 'real-time streaming workflow alongside the existing batch pipeline' — both terms used for apparently distinct things, but no definition distinguishes them.",
+    "suggestion": "Standardize on 'pipeline' throughout, or explicitly define both terms and their relationship.",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-008",
+    "severity": "low",
+    "dimension": "clarity",
+    "location": "Overview paragraph 1",
+    "description": "The acronym 'ETL' is used on first occurrence without expansion, reducing accessibility for non-specialist readers.",
+    "evidence": "'an internal ETL system that handles batch ingestion, transformation, and delivery' — ETL (Extract, Transform, Load) is not expanded.",
+    "suggestion": "Expand on first use: 'an internal ETL (Extract, Transform, Load) system'.",
+    "confidence": "HIGH"
+  },
+  {
+    "id": "F-009",
+    "severity": "low",
+    "dimension": "completeness",
+    "location": "Stage 1 — Ingestion, paragraph 2",
+    "description": "Authentication is mentioned but the mechanism type is not specified. In an architecture brief, the authentication mechanism is essential information.",
+    "evidence": "'Authentication is used to verify each request before processing begins.' No authentication type (API key, OAuth 2.0, mTLS, JWT, etc.) is specified.",
+    "suggestion": "Specify the authentication mechanism, e.g., 'API key authentication is used to verify each request.'",
+    "confidence": "HIGH"
+  }
+]

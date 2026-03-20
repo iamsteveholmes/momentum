@@ -1,0 +1,12 @@
+[
+  {
+    "id": "F2-001",
+    "severity": "medium",
+    "dimension": "completeness",
+    "location": "Security Considerations section",
+    "description": "Security Considerations section contains only placeholder text stating documentation is 'pending.' In a final-stage architecture brief, security architecture should be substantively addressed rather than deferred.",
+    "evidence": "'Security architecture for the Meridian pipeline is pending detailed documentation. Key areas to be addressed include: transport-layer encryption (TLS), API key management and rotation, data-at-rest encryption in the warehouse, and network segmentation between pipeline stages.' — lists topics but provides no actual security architecture content.",
+    "suggestion": "Either flesh out the security section with substantive architectural decisions (e.g., TLS 1.3 for transport, AES-256 for data at rest, VPC isolation between stages) or, if security architecture is genuinely undecided, change the section title to 'Security Considerations (Pending)' to make the incomplete status explicit in the heading.",
+    "confidence": "HIGH"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "STRUCT-001",
+    "severity": "critical",
+    "dimension": "completeness",
+    "location": "Stage 4 — Monitoring section, last sentence",
+    "description": "Document references Section 6 (Security considerations) which does not exist. Critical completeness gap for a final architecture brief.",
+    "evidence": "Stage 4 states: 'Security considerations are documented in Section 6.' No Section 6 exists in the document. This is a broken cross-reference in the original.",
+    "suggestion": "Add Section 6 with security architecture details (authentication methods, encryption, access control, audit logging, rate limiting)."
+  },
+  {
+    "id": "STRUCT-002",
+    "severity": "critical",
+    "dimension": "consistency",
+    "location": "Overview vs Stage 2 description",
+    "description": "Document contradicts itself on pipeline execution model. Overview states 'All pipeline stages run in parallel' but Stage 2 explicitly requires sequential execution: 'Stage 2 must complete before Stage 3 begins.'",
+    "evidence": "Overview: 'All pipeline stages run in parallel to maximize throughput.' Stage 2: 'Stage 2 must complete before Stage 3 begins.' These are mutually exclusive execution models.",
+    "suggestion": "Clarify the actual execution model: either all stages are truly parallel (stages can overlap), or stages are sequential (each waits for previous). Based on context (deduplication, transformation before delivery), the model is sequential, not parallel. Revise Overview and add explicit section dependencies."
+  },
+  {
+    "id": "ACCURACY-001",
+    "severity": "critical",
+    "dimension": "logical_soundness",
+    "location": "Stage 3 and Performance Characteristics sections",
+    "description": "Internal contradiction between latency claims and operational constraints. Document claims 'sub-second end-to-end latency' for 95th percentile but describes batch completion polling every 5 minutes. These are incompatible for a system requiring real-time latency.",
+    "evidence": "Performance section: 'Under nominal load, the pipeline maintains sub-second end-to-end latency for 95th-percentile events.' Stage 3: 'Polling for batch completion uses a 5-minute interval.' A system with sub-second response requirements cannot poll at 5-minute intervals.",
+    "suggestion": "Clarify latency scope: sub-second latency applies only to ingestion/queuing (Stages 1-2), not delivery. Delivery is batch-oriented with 5-minute polling. Separate the performance metrics by stage."
+  },
+  {
+    "id": "ACCURACY-002",
+    "severity": "high",
+    "dimension": "correctness",
+    "location": "Performance Characteristics section",
+    "description": "Performance claim appears reversed. States 'Batch processing is 3× faster than streaming for files under 10MB.' For a system processing 50k events/second, streaming is typically faster than micro-batching. This claim requires verification and likely needs reversal.",
+    "evidence": "Direct quote: 'Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.' For high-throughput pipelines, streaming typically outperforms batching due to lower latency and reduced buffering overhead.",
+    "suggestion": "Verify benchmark source and reverse claim if appropriate: 'Streaming is 3× faster than batch processing for continuous high-volume streams.' Or provide full benchmark context."
+  },
+  {
+    "id": "ACCURACY-003",
+    "severity": "high",
+    "dimension": "correctness",
+    "location": "Stage 3 — Delivery section",
+    "description": "Latency improvement claim lacks baseline context. States 'in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes' without specifying the baseline or time units. 99.9% is an extraordinary claim requiring substantiation.",
+    "evidence": "Quote: 'The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.' No baseline latency provided (milliseconds? seconds?), no measurement methodology described, no source cited.",
+    "suggestion": "Replace with measurable claim: 'The in-memory delivery cache reduces batch write latency by 50-70% (from ~100ms to ~25-50ms) compared to unbuffered individual record writes.' Or cite the specific benchmark."
+  },
+  {
+    "id": "ACCURACY-004",
+    "severity": "medium",
+    "dimension": "completeness",
+    "location": "Stage 2 — Transformation section",
+    "description": "Retry policy referenced but not defined. Stage 2 mentions 'standard retry policy' without specifying what it is. Readers cannot determine how failures are handled.",
+    "evidence": "Quote: 'Transformation applies the standard retry policy on transient failures.' No definition of what 'standard' means (exponential backoff? fixed intervals? max attempts?)",
+    "suggestion": "Define the policy explicitly: 'Applies exponential backoff retry: max 3 attempts, starting with 100ms base delay, doubling on each failure.'"
+  },
+  {
+    "id": "ACCURACY-005",
+    "severity": "medium",
+    "dimension": "completeness",
+    "location": "Stage 2 — Transformation section",
+    "description": "File size threshold undefined. Stage 2 mentions 'Large files are handled separately' but does not specify what constitutes 'large.' Implementation cannot proceed without this threshold.",
+    "evidence": "Quote: 'Large files are handled separately from the primary transformation path via an overflow queue.' No size threshold provided.",
+    "suggestion": "Specify the threshold: 'Payloads larger than 100MB are handled separately via an overflow queue to prevent memory exhaustion during concurrent processing.'"
+  },
+  {
+    "id": "COHERENCE-001",
+    "severity": "medium",
+    "dimension": "consistency",
+    "location": "Throughout document (Operational Notes, Stage 4)",
+    "description": "Terminology inconsistency between 'pipeline' and 'workflow'. Operational Notes mentions 'The pipeline and workflow are monitored' suggesting these are different entities, but the document never defines the distinction or explains how they relate.",
+    "evidence": "Operational Notes: 'The pipeline and workflow are monitored by the on-call team via the Prometheus dashboard.' The term 'workflow' is used only here; throughout the document it's called 'pipeline.'",
+    "suggestion": "Either clarify the pipeline/workflow distinction explicitly in the Architecture section, or replace 'and workflow' with just 'is' for consistency."
+  },
+  {
+    "id": "ACCURACY-006",
+    "severity": "low",
+    "dimension": "traceability",
+    "location": "Overview and throughout document",
+    "description": "ETL acronym used but never defined. The document title and overview reference ETL without expanding it. Readers unfamiliar with the term have no definition provided in the document.",
+    "evidence": "Overview: 'the Meridian Data Processing Pipeline, an internal ETL system' — ETL is not defined anywhere in the document.",
+    "suggestion": "Expand the acronym on first use: 'an internal ETL (Extract-Transform-Load) system that handles batch ingestion...'"
+  },
+  {
+    "id": "ACCURACY-007",
+    "severity": "low",
+    "dimension": "completeness",
+    "location": "Stage 1 — Ingestion section",
+    "description": "Authentication mechanism type not specified. Document states 'Authentication is used to verify each request' but does not specify whether this is token-based, API key-based, OAuth, or another method.",
+    "evidence": "Quote: 'Authentication is used to verify each request before processing begins.' No specification of authentication type (OAuth 2.0, API key, JWT, mTLS, etc.)",
+    "suggestion": "Specify the auth method: 'Authentication uses token-based verification (OAuth 2.0 or equivalent API token) to validate each request...'"
+  }
+]

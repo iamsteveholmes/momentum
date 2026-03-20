@@ -1,0 +1,89 @@
+{
+  "status": "CLEAN",
+  "final_score": 97,
+  "iterations": 2,
+  "scores_per_iteration": [50, 97],
+  "total_findings_fixed": 9,
+  "seeded_found": 9,
+  "additional_findings": 1,
+  "seeded_issue_map": {
+    "C1": {
+      "finding_id": "F-001",
+      "severity": "critical",
+      "description": "Parallelism contradiction: 'All pipeline stages run in parallel' vs 'Stage 2 must complete before Stage 3 begins'",
+      "found_iteration": 1
+    },
+    "C2": {
+      "finding_id": "F-002",
+      "severity": "high",
+      "description": "Dangling cross-reference: 'Security considerations are documented in Section 6' — no Section 6 exists",
+      "found_iteration": 1
+    },
+    "H1": {
+      "finding_id": "F-003",
+      "severity": "high",
+      "description": "Batch vs streaming performance claim factually inverted",
+      "found_iteration": 1
+    },
+    "H2": {
+      "finding_id": "F-004",
+      "severity": "high",
+      "description": "99.9% latency reduction claim — extraordinary and unsupported",
+      "found_iteration": 1
+    },
+    "M1": {
+      "finding_id": "F-005",
+      "severity": "medium",
+      "description": "'Standard retry policy' referenced but never defined",
+      "found_iteration": 1
+    },
+    "M2": {
+      "finding_id": "F-006",
+      "severity": "medium",
+      "description": "'Large files' threshold never defined",
+      "found_iteration": 1
+    },
+    "M3": {
+      "finding_id": "F-007",
+      "severity": "medium",
+      "description": "'Pipeline' and 'workflow' used interchangeably without definition",
+      "found_iteration": 1
+    },
+    "L1": {
+      "finding_id": "F-008",
+      "severity": "low",
+      "description": "ETL acronym not expanded on first use",
+      "found_iteration": 1
+    },
+    "L2": {
+      "finding_id": "F-009",
+      "severity": "low",
+      "description": "Authentication type unspecified",
+      "found_iteration": 1
+    }
+  },
+  "additional_findings_detail": [
+    {
+      "finding_id": "F2-001",
+      "iteration": 2,
+      "severity": "medium",
+      "description": "Security Considerations section introduced by F-002 fix contains only placeholder text — incomplete for a final-stage artifact"
+    }
+  ],
+  "iteration_detail": {
+    "iteration_1": {
+      "score": 50,
+      "grade": "Failing - major rework needed",
+      "findings": 9,
+      "breakdown": {"critical": 1, "high": 3, "medium": 3, "low": 2},
+      "action": "FIX — all 9 findings fixed"
+    },
+    "iteration_2": {
+      "score": 97,
+      "grade": "Clean - production ready",
+      "findings": 1,
+      "breakdown": {"critical": 0, "high": 0, "medium": 1, "low": 0},
+      "action": "CLEAN — score >= 95, pipeline exits"
+    }
+  }
+}
