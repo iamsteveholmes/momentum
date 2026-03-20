@@ -55,7 +55,7 @@ Controls how intensely reviewers search and their default assumption about the c
 
 Default: `3` (current behavior).
 
-**Consecutive-pass schedule:** For fix loops, consider declining skepticism across iterations — `3` on iteration 1 (cast wide net), `2` on iteration 2 (verify fixes, catch regressions), `1` on iteration 3+ (confirm only obvious issues). This converges the loop faster and avoids the re-validator generating new borderline findings in already-fixed content. Specify this as a workflow instruction when embedding AVFL in a skill.
+**Consecutive-pass schedule:** For fix loops, consider declining skepticism across iterations — `3` on iteration 1 (cast wide net), `2` on iteration 2+ (verify fixes, catch regressions). Floor is `2`, not `1` — benchmarking showed skepticism=1 makes Enumerator and Adversary framings produce identical output, eliminating dual-review value. Specify this as a workflow instruction when embedding AVFL in a skill, or use the `avfl-declining` variant which implements it automatically.
 
 ---
 

@@ -21,7 +21,7 @@ Read `references/framework.json` for dimension definitions, prompt templates, fi
 | `source_material` | No | null | Ground truth to check against |
 | `profile` | No | `full` | `gate`, `checkpoint`, or `full` |
 | `stage` | No | `final` | Artifact maturity: `draft`, `checkpoint`, or `final`. Controls what absence counts as a gap |
-| `skepticism` | No | `3` | Starting reviewer intensity. **Auto-declines each iteration: iter 1 = skepticism, iter 2 = max(skepticism−1, 1), iter 3+ = 1.** |
+| `skepticism` | No | `3` | Starting reviewer intensity. **Auto-declines each iteration: iter 1 = skepticism, iter 2 = max(skepticism−1, 2), iter 3+ = 2.** Floor is 2 — skepticism=1 eliminates framing differentiation entirely. |
 
 ---
 
@@ -63,12 +63,14 @@ At the start of execution, initialize:
 
 Before each Phase 1, compute the **effective skepticism** for this iteration:
 - Iteration 1: `effective_skepticism = initial_skepticism`
-- Iteration 2: `effective_skepticism = max(initial_skepticism - 1, 1)`
-- Iteration 3+: `effective_skepticism = 1`
+- Iteration 2: `effective_skepticism = max(initial_skepticism - 1, 2)`
+- Iteration 3+: `effective_skepticism = 2`
+
+Floor is **2**, not 1. Phase 2.6 benchmarking showed that skepticism=1 makes Enumerator and Adversary framings produce identical output — dual-review yields no cross-check value below skepticism=2.
 
 Look up the corresponding `approach_modifier` and `reexamine_rule` from `references/framework.json` → `skepticism_levels[effective_skepticism]`. Pass them to every validator for this iteration.
 
-**Rationale:** Iteration 1 casts a wide net to find all issues. Subsequent iterations verify that fixes landed correctly and catch genuine regressions — they should not pursue fresh hunches or borderline leads in content that has already been reviewed and fixed.
+**Rationale:** Iteration 1 casts a wide net to find all issues. Subsequent iterations verify fixes and catch regressions at balanced intensity — they should not pursue fresh hunches (that's iteration 1's job) but should still differentiate Enumerator from Adversary readings.
 
 ### Phase 1: VALIDATE
 
