@@ -8,6 +8,7 @@ stepsCompleted:
   - step-03-epic-4-stories-vfl-gate-applied
   - step-03-epic-5-stories-vfl-gate-applied
   - step-03-epic-6-stories-vfl-gate-applied
+  - step-03-epic-7-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -1483,3 +1484,153 @@ So that I know whether my practice is improving or just accumulating code debt.
 - Practice health: [upstream_fix_ratio]% upstream fixes ([N] of [total] resolved)
 - Top fixed patterns: [top 3 tags by fix count]
 **And** this summary is included in the developer's response at the retrospective step — it is not passed directly to a BMAD agent; Impetus presents it and the developer decides how to incorporate it
+
+---
+
+## Epic 7: Bring Your Own Tools
+
+A developer configures which agent, model, test framework, or MCP provider satisfies each protocol. Swapping any component doesn't touch workflow definitions. The practice layer is unchanged even when the tooling changes underneath it.
+
+**FRs covered:** FR34, FR35, FR36, FR37, FR38
+**NFRs covered:** NFR14, NFR15
+
+### Story 7.1: Project Configuration File Defines Protocol Bindings
+
+As a developer,
+I want a single project configuration file that maps each integration protocol to its implementation,
+So that Momentum knows which tools to use for this project and every workflow step uses the right one.
+
+**Acceptance Criteria:**
+
+**Given** Momentum is installed on a project (FR34)
+**When** the project configuration file is initialized
+**Then** `.claude/momentum/project-config.json` is created with a `protocol_bindings` object mapping protocol types to implementations
+**And** each binding entry includes: `implementation` (the tool, skill, or command that satisfies the protocol), `configured_by` (who created the entry — `"impetus"` for agent-configured, `"developer"` for manually set), `configured_at` (ISO 8601 timestamp), `configured_why` (one sentence: the reason this implementation was chosen)
+**And** the recognized protocol types at MVP are: `atdd-tool`, `test-runner`, `lint-tool`, `code-reviewer`, `vfl-validator`, `research-provider` — additional types may be added; unrecognized types are ignored without error
+**And** the protocol type registry and each type's interface contract are formally documented in `references/protocol-contracts.md` within the `momentum/` skill — this is the canonical authority for what each type means and what its implementation must produce
+**And** the config file also includes a `host_environment` field: `"claude-code"` | `"cursor"` | `"cline"` | `"other"` — set by the developer during setup; used by Impetus to determine which environment-specific behaviors apply (e.g. Cursor tool ceiling check in NFR14)
+
+**Given** a protocol binding is defined for `atdd-tool` (FR35)
+**When** a developer reviews the project config
+**Then** it contains: the test framework name, the command to run it, and a provenance record (configured_by, configured_at, configured_why) for the binding
+**And** the full config file is committed to the project repository — it is part of the project's practice infrastructure, not a developer-local setting
+
+**Given** a binding is updated (implementation changed or command modified)
+**When** the update is written
+**Then** the previous binding is replaced and the new configured_at and configured_why are set — the config does not maintain history (history is in git)
+**And** Impetus surfaces the change summary: "`atdd-tool` binding updated: [old] → [new] — reason: [why]"
+
+---
+
+### Story 7.2: Protocol Gap Resolution Creates Valid Config Entries
+
+As a developer,
+I want Impetus to guide me through configuring missing protocol bindings conversationally,
+So that when a tool is undefined I come out of the conversation with a working config entry, not just an error message.
+
+**Acceptance Criteria:**
+
+**Given** Impetus detects a gap in the protocol mapping (FR36)
+**When** it surfaces the gap (gap detected when: `project-config.json` is absent, a required `protocol_bindings` key is missing, or a workflow step invokes a protocol type with no binding)
+**Then** Impetus does not stop at "X is missing" — it enters a guided configuration conversation:
+  1. Names the protocol and explains what it does: "The `atdd-tool` protocol is the tool Momentum uses to generate acceptance tests. Which test framework does this project use?"
+  2. Accepts the developer's answer, asks for the run command: "What command runs your ATDD test generation? (e.g. `cucumber`, `behave`, `npx jest --testPathPattern=acceptance`)"
+  3. Asks for the reason: "One sentence: why this framework for this project?"
+  4. Shows the would-be config entry and asks for confirmation before writing
+**And** the conversation ends with a valid `project-config.json` entry written — not just guidance
+**And** if the gap is detected during an automated execution (no active user session — e.g. a hook fires and encounters a missing binding), Impetus logs the gap to the session ledger as an open thread and surfaces it at the next session start: "A protocol gap was detected during [workflow step] — want to configure it now?"
+
+**Given** the developer cannot answer a configuration question (e.g. "I don't know which test framework is configured")
+**When** Impetus receives "I don't know"
+**Then** Impetus offers to inspect the project: "Let me check your project files for clues" — reads `package.json`, `build.gradle`, `pyproject.toml`, or equivalent
+**And** when inferring the `atdd-tool` binding, Impetus looks for ATDD-specific frameworks (Cucumber, Behave, Gherkin processors, JBehave, SpecFlow) — not general test runners; if only a general test runner is found, Impetus says "I found [test-runner], but `atdd-tool` needs a Gherkin/ATDD framework — do you have one installed?"
+**And** proposes a candidate for the correct protocol type: "Looks like you're using [framework] — want me to configure `atdd-tool` to use it?"
+**And** still asks for confirmation before writing — inferred entries are never silently committed
+
+**Given** a configured implementation is later found to be wrong (wrong command, tool not installed)
+**When** a workflow step fails because the implementation is unavailable
+**Then** Impetus surfaces the failure with the protocol binding context: "`atdd-tool` is configured as [command] — this command returned an error. Want to update the binding?"
+**And** re-enters the configuration conversation to resolve it
+
+---
+
+### Story 7.3: Workflow Steps Resolve Through Protocol Interfaces at Invocation Time
+
+As a developer,
+I want workflow definitions to name what kind of tool they need — not which specific tool — so that the right tool for this project is always used automatically,
+So that a workflow written for Playwright still works when I switch to Cypress, without editing the workflow.
+
+**Acceptance Criteria:**
+
+**Given** a Momentum workflow SKILL.md references an integration point (FR37, NFR8)
+**When** the workflow is authored
+**Then** it references a protocol type (e.g. `atdd-tool:run`, `test-runner:run`, `vfl-validator:validate`), not a specific implementation name or command
+**And** no Momentum workflow SKILL.md hard-codes project-specific tool names (e.g. `playwright`, `jest`, `npm test`) in its integration-point instruction steps — this prohibition applies to integration-point invocations only; native Claude Code tool calls (Read, Edit, Bash, Agent) are permitted and are not "protocol implementations" under NFR8's definition
+**And** compliance is verified by workflow authoring review against `references/protocol-contracts.md` — the reviewer confirms that each integration-point step references a registered protocol type, not a named implementation
+
+**Given** Impetus executes a workflow step that invokes a protocol type
+**When** the step fires
+**Then** Impetus reads `project-config.json` at invocation time and looks up the implementation bound to that protocol type
+**And** it invokes the bound implementation — the workflow step has no direct knowledge of which tool runs
+**And** if the protocol type has no binding in the config (or project-config.json is absent entirely), Impetus triggers the gap resolution flow (Story 7.2) before continuing — it does not silently skip or substitute a default
+
+**Given** a project-config.json binding is changed from implementation A to implementation B
+**When** any workflow step next invokes that protocol type
+**Then** the new implementation B is used — no changes to any SKILL.md file are needed
+**And** this swap is the complete required change (FR38): one config file update, zero workflow file changes
+
+---
+
+### Story 7.4: Protocol Substitution Satisfies Interface Contract
+
+As a developer,
+I want Momentum to validate that a substitute implementation satisfies the protocol contract before accepting the binding,
+So that swapping a tool doesn't silently break every workflow that depends on it.
+
+**Acceptance Criteria:**
+
+**Given** a developer configures a new implementation for a protocol (FR38, NFR15)
+**When** the binding is proposed during the configuration conversation (Story 7.2)
+**Then** Impetus validates the interface contract: it checks that the proposed command exists and is executable in the project environment
+**And** if the implementation is a Momentum skill (e.g. substituting `momentum-code-reviewer` with a custom `my-code-reviewer` skill), Impetus checks two things: (1) the skill's SKILL.md frontmatter contract (context, allowed-tools) AND (2) the skill's expected output format (does it return structured JSON matching the subagent output contract `{status, result, question, confidence}`?)
+**And** if validation fails, the binding is not written and Impetus explains what the contract requires: "`vfl-validator` requires a skill with `context: fork`, `allowed-tools: Read`, and JSON output matching `{status, result: {findings: [...]}, question, confidence}` — the proposed skill does not match"
+
+**Given** a binding is validated and accepted
+**When** any consuming workflow invokes the protocol
+**Then** the consuming workflow receives the implementation's output in the format it expects — defined by the protocol's interface contract
+**And** the protocol's interface contract is documented in `references/protocol-contracts.md` within the `momentum/` skill — this file defines for each protocol type: the invocation contract (frontmatter requirements if a skill), the output contract (exit codes or structured JSON schema), and a human-readable description of what the protocol does
+
+**Given** a consuming workflow fails after a substitution
+**When** the failure is diagnosed
+**Then** Impetus identifies whether the failure is a contract violation (implementation output does not match expected schema) or a configuration error (wrong command, wrong path)
+**And** contract violation failures are surfaced with the protocol name and the expected vs. actual output format: "`atdd-tool` expected exit-code 0 for success and exit-code 1 for failure — received [exit code]"
+**And** Impetus offers to re-enter the binding configuration conversation to resolve the violation
+
+---
+
+### Story 7.5: MCP Provider Registration and Cursor Tool Ceiling Compliance
+
+As a developer,
+I want Momentum to track MCP providers and warn me when I'm approaching the Cursor tool limit,
+So that I don't accidentally make my Cursor environment non-functional by enabling too many tools.
+
+**Acceptance Criteria:**
+
+**Given** an MCP provider is added to the project's Momentum configuration (NFR14)
+**When** Impetus registers the provider
+**Then** it determines the host environment from `project-config.json`'s `host_environment` field — if `"cursor"`, the ceiling check applies; otherwise it is skipped
+**And** it counts active MCP tools using the tool-count registry in `references/mcp-tool-counts.md` (a curated lookup of known MCP servers → tool count); for MCP servers not in the registry, Impetus asks the developer: "How many tools does [provider] expose?" and adds the declared count
+**And** if total count ≥ 35 tools (approaching the ~40 ceiling), Impetus warns: `! Cursor tool ceiling — adding [provider] brings total to [N]/~40 tools; approaching Cursor limit. Proceed?`
+**And** if total count > 40, Impetus warns more urgently: `! Cursor tool ceiling — adding [provider] brings total to [N] tools — exceeds Cursor's ~40 limit. Proceed anyway?`
+**And** if the developer proceeds past 40, Impetus notes which providers may need to be selectively disabled
+
+**Given** Momentum's own MCP servers are configured (findings MCP, git MCP)
+**When** tool count is computed
+**Then** Momentum's own MCP servers count toward the ceiling — they are not exempt
+**And** the count includes both Momentum-registered providers and any pre-existing MCP servers in the project's `.mcp.json`
+
+**Given** a project's `host_environment` is not `"cursor"`
+**When** MCP provider configuration runs
+**Then** the tool ceiling check is skipped — no warning is shown
+**And** all MCP providers that were configured function identically regardless of the host tool (protocol-level behavior, not tool-specific behavior)
+
