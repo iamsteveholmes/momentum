@@ -6,6 +6,7 @@ stepsCompleted:
   - step-03-epic-2-stories-vfl-gate-applied
   - step-03-epic-3-stories-vfl-gate-applied
   - step-03-epic-4-stories-vfl-gate-applied
+  - step-03-epic-5-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -1094,3 +1095,193 @@ So that defects get fixed in specs and rules — not just patched in the code.
 **Then** the fix is appended to the findings ledger (`.claude/momentum/findings-ledger.json`) — not the session ledger
 **And** the ledger entry includes: `story_ref`, `phase`, `severity`, `description`, `upstream_fix_applied: true`, `upstream_fix_ref` (the file changed and nature of change)
 **And** Impetus records the upstream fix application in the session ledger with fix level and artifact modified
+
+---
+
+## Epic 5: Trust Artifact Provenance
+
+A developer can trace every artifact to its origins, detect stale references, and know the confidence level of every significant claim. The provenance graph is maintained in frontmatter — no external tooling required.
+
+**FRs covered:** FR12, FR13, FR14, FR15, FR16, FR17
+**UX-DRs covered:** UX-DR5 (scanner completion signal at session orientation)
+**Additional:** derives_from frontmatter format, content hash staleness (git hash-object), referenced_by auto-generation, provenance scanner (in Impetus references/)
+
+### Story 5.1: derives_from Frontmatter Establishes Traceability
+
+As a developer,
+I want every specification artifact to carry derives_from frontmatter linking it to its upstream sources,
+So that any artifact can be traced to the documents that produced it — without consulting anyone.
+
+**Acceptance Criteria:**
+
+**Given** a spec-generating artifact is created (PRD, architecture, epics, stories, UX design, research summary) (FR12)
+**When** the artifact is first authored
+**Then** its frontmatter includes a `derives_from` block with one entry per upstream source
+**And** each entry contains: `id` (SCREAMING-KEBAB-CASE, unique across project), `path` (repo-relative), `relationship` (`derives_from`, `depends_on`, or `satisfies`), `description` (one sentence: what the source contributed), and `hash` (empty string on initial authoring — set by the author or a provisioning workflow on first use; the provenance scanner reads this field but never writes it)
+
+**Given** a top-level specification document is authored (PRD, architecture, UX design, product brief, or any document that is a root of the specification tree) (FR15)
+**When** the document is created
+**Then** its frontmatter includes `is_specification: true`
+**And** this marker enables the provenance scanner to discover the root of the specification tree without traversal from every leaf
+
+**Given** any content block in a spec artifact was written or substantially revised (FR17)
+**When** the content is committed
+**Then** the document frontmatter includes `authored_by: human` for human-written content or `authored_by: ai` for AI-generated content
+**And** artifacts with mixed authorship carry `authored_by: mixed` at the document level
+**And** the `authored_by` field is document-level frontmatter (not inside the `derives_from` block) — it is set by the author and is never auto-inferred
+**And** AI agents setting `authored_by` are updating a document-level frontmatter field, which is permitted — Decision 2b's write restriction applies specifically to the `derives_from` block, not to all frontmatter
+
+**Given** an AI agent (Impetus, code-reviewer, or any Momentum subagent) modifies a spec artifact
+**When** the modification is applied (Architecture Decision 2b)
+**Then** the agent does not remove or modify the `derives_from` frontmatter block or any entry within it
+**And** the agent may add new `derives_from` entries if a new dependency is introduced — but never silently remove or alter existing ones
+**And** a single violation is reported to Impetus, which surfaces it at session end and records it in the findings ledger as a `missing-provenance` finding
+**And** if the same agent produces repeated violations across multiple sessions, Impetus proposes promoting the constraint to a PreToolUse hook rule — the hook-promotion path is the escalation for systemic failures
+
+---
+
+### Story 5.2: Provenance Scanner Builds referenced_by Graph
+
+As a developer,
+I want to know what depends on a document I'm about to change,
+So that I can anticipate downstream impact without manually tracking reverse references.
+
+**Acceptance Criteria:**
+
+**Given** the provenance scanner is implemented at `references/provenance-scan.md` within the `momentum/` skill (FR14)
+**When** the scanner runs
+**Then** it reads all `derives_from` entries across every file in the project
+**And** it constructs a reverse-reference index: for each source document, a list of all downstream documents that declare it in `derives_from`
+**And** this index is the `referenced_by` graph — no file in the project manually maintains `referenced_by` entries
+
+**Given** the provenance scanner runs as part of Impetus session orientation (Story 2.2 — "Session Orientation and Thread Management")
+**When** Impetus initializes a session
+**Then** the scanner executes before Impetus presents the session summary
+**And** the scanner is not a separate `context: fork` skill invocation — it runs as inline reference logic within the `momentum/` skill's session orientation step
+**And** the scanner's output follows the subagent output contract (Architecture Decision 3b): `{status, result: {suspect_list: [], referenced_by_graph: {}, ungrounded_count: N}, question, confidence}`
+**And** this output is available to Impetus for surfacing impact warnings and SUSPECT flags throughout the session
+
+**Given** a developer asks Impetus "what depends on [document]?"
+**When** the question is processed
+**Then** Impetus queries the referenced_by graph and reports all downstream dependents
+**And** if no dependents exist, Impetus says so — it never implies a document is depended on when it is not
+
+**Given** a new document is added to the project with `derives_from` entries
+**When** the scanner next runs
+**Then** the new document's upstream sources appear in their respective `referenced_by` sets automatically — no manual step required
+
+---
+
+### Story 5.3: Hash-Based Staleness Detection for Internal Documents
+
+As a developer,
+I want Impetus to flag documents that depend on source files I've changed,
+So that I know which downstream artifacts may need to be updated before I close a session.
+
+**Acceptance Criteria:**
+
+**Given** a `derives_from` entry has a non-empty `hash` field (FR13 — hash mode)
+**When** the provenance scanner runs
+**Then** it computes `git hash-object <path>` for each referenced internal document
+**And** it compares the computed hash against the stored `hash` value in the `derives_from` entry
+**And** if the hashes differ, the dependent document's provenance status for that entry is flagged as SUSPECT
+
+**Given** a `derives_from` entry has an empty `hash` field
+**When** the provenance scanner encounters it
+**Then** it skips hash comparison for that entry and includes it in the scanner output as `hash_unchecked: true`
+**And** the provenance scanner never writes to spec files — hash values are populated by the author or a provisioning step, not the scanner
+**And** Impetus surfaces unchecked entries at session start: `◦ [N] derives_from entries have no stored hash — run hash provisioning to enable staleness detection`
+
+**Given** the provenance scanner detects one or more SUSPECT downstream documents
+**When** Impetus presents the session summary
+**Then** Impetus surfaces the suspect list: `⚠ [N] dependent(s) may be stale — [downstream-doc] depends on [source-doc] which has changed / Action: review [downstream-doc] and confirm or update`
+**And** Impetus does not automatically update any downstream document — it surfaces and asks, never acts without consent
+
+**Given** a SUSPECT document is flagged
+**When** Impetus propagates the staleness signal (FR13 — one-hop only)
+**Then** only direct one-hop dependents are flagged — second-hop dependents are not automatically flagged
+**And** Impetus asks the developer for each flagged dependent: "Does [downstream-doc] still hold given the change to [source-doc]?" — the developer must explicitly confirm or indicate an update is needed (this is the human gate)
+**And** if the developer confirms the dependent is still valid, the SUSPECT flag is cleared for this session and Impetus does not propagate the signal further
+**And** if the developer updates the dependent document to reflect the source change, the author or provisioning step updates the `hash` field in that entry's `derives_from` block and the SUSPECT flag clears on the next scan
+
+---
+
+### Story 5.4: Time-Based Staleness for Edge Documents
+
+As a developer,
+I want external sources (research docs, web references) to carry freshness windows,
+So that Impetus warns me when an external source may have aged out before I rely on it.
+
+**Acceptance Criteria:**
+
+**Given** a `derives_from` entry references an external or edge document (FR13 — time-based mode)
+**When** the entry is authored
+**Then** it carries two additional fields that extend the canonical derives_from schema for edge references: `sourced_date` (ISO 8601 date: the date the content was retrieved or verified) and optionally `freshness_window` (integer days: overrides the document-level default for this entry)
+**And** the parent document's frontmatter may carry a `freshness_window` field (in days) as the domain-level default for all edge derives_from entries in that document
+**And** entry-level `freshness_window` takes precedence over document-level `freshness_window`
+
+**Given** the provenance scanner runs and encounters a time-based derives_from entry
+**When** it evaluates staleness
+**Then** it obtains `current_date` from the `currentDate` context variable injected at session start — if unavailable, it reports the entry as `freshness_unchecked: true` and does not attempt time-based comparison
+**And** it computes: `current_date - sourced_date > freshness_window`
+**And** if true, the entry is included in the scanner's SUSPECT output list — the scanner never writes SUSPECT status to spec file frontmatter (scanner is read-only)
+**And** if false, the entry remains in CITED status
+
+**Given** Impetus surfaces a time-based SUSPECT at session start
+**When** the developer sees the warning
+**Then** Impetus states: `⚠ [document] cites [source] — sourced [N] days ago, past the [domain] window of [W] days / Action: re-verify [source] or extend freshness_window if still current`
+**And** Impetus offers to help re-verify the source — but does not block work if the developer declines
+**And** one-hop propagation applies: only documents that directly cite the stale edge source are flagged — second-hop dependents are not automatically flagged (same gate as Story 5.3)
+
+**Given** a domain-specific freshness window is needed
+**When** the provenance guide (`references/provenance-scan.md`) documents default windows
+**Then** the defaults follow the authoritative domain taxonomy defined in FR47 (Epic 8) — Story 5.4 does not define competing defaults
+**And** document authors may override the default by setting `freshness_window` in the document's frontmatter or the entry — entry-level override takes precedence
+
+---
+
+### Story 5.5: Claim-Level Provenance Status and Integrity Enforcement
+
+As a developer,
+I want every significant claim in a spec to carry a provenance status,
+So that I know which claims are verified facts, which are inferences, and which have no grounding at all.
+
+**Acceptance Criteria:**
+
+**Given** a specification artifact contains claims (FR16)
+**When** claims are classified
+**Then** a "significant claim" is defined as: any assertion of fact, capability, constraint, or design decision — as opposed to meta-commentary, headings, or transitional language
+**And** each significant claim carries one of five provenance status values (FR16 — canonical epistemic status vocabulary):
+- `VERIFIED`: source exists and the claim is accurate against it — high trust, cite without caveat
+- `CITED`: source URL provided and accessible on the research date — moderate trust
+- `INFERRED`: derived through reasoning from verified sources — lower trust, note the inference
+- `UNGROUNDED`: no source; based on training knowledge — low trust, must verify before acting
+- `SUSPECT`: was VERIFIED or CITED but the upstream source has since changed — re-verify required
+**And** this five-value vocabulary (FR16) covers epistemic confidence in a claim — it is distinct from Architecture Decision 2b's content-origin classification (SOURCED / DERIVED / ADDED / UNGROUNDED), which categorizes how content was produced, not how trustworthy it is; both systems coexist and serve different purposes
+
+**Given** a Momentum agent (Impetus, code-reviewer, upstream-fix) produces a significant claim in a spec context
+**When** the claim is emitted
+**Then** the claim is accompanied by its provenance_status field value — never left implicit
+**And** UNGROUNDED claims are flagged explicitly: "This claim has no external source — treat as a starting point for verification, not a decision basis"
+
+**Given** a spec artifact contains UNGROUNDED claims
+**When** Impetus reviews the artifact at the start of a story cycle
+**Then** Impetus surfaces a count: `[N] ungrounded claims found in [document] — review before implementing`
+**And** Impetus does not block implementation — it surfaces and asks whether to address before proceeding
+
+**Given** an AI agent generates or modifies a spec artifact and sets provenance statuses
+**When** the statuses are evaluated (FR17 — human vs. AI attribution)
+**Then** the `authored_by` field on the document distinguishes whether the provenance classification was done by a human or AI
+**And** AI-classified provenance statuses are treated as provisional — a human reviewer must confirm VERIFIED status before it is treated as authoritative
+
+**Given** a provenance integrity violation occurs
+**When** the provenance scanner detects a structural violation (missing `derives_from` block in a spec that should have one; empty `id` or `path` fields in an entry)
+**Then** the scanner includes the violation in its session-start output — it does not write to any file
+**And** Impetus receives the scanner output and surfaces the violation: `⚠ provenance integrity — [document]: [violation description] / Action: add missing derives_from or correct the entry`
+**And** Impetus triggers the flywheel workflow to record a finding in the findings ledger (Decision 1c: only the flywheel workflow writes findings)
+**And** the finding includes the required schema fields: `id` (generated), `story_ref`, `phase: "session-orientation"`, `severity: "HIGH"`, `pattern_tags: ["missing-provenance"]`, `description`, `evidence` (file and field reference), `provenance_status: null`, `upstream_fix_applied: false`, `upstream_fix_ref: null`, `timestamp`
+
+**Given** a semantic violation is suspected (AI agent claims VERIFIED status without providing a source)
+**When** Impetus encounters this in an artifact review
+**Then** Impetus (not the scanner) evaluates the claim: if the claim has a provenance_status of VERIFIED but the derives_from block has no entry that could substantiate it, Impetus surfaces the discrepancy and asks the developer to confirm or reclassify
+**And** the scanner never evaluates claim semantics — it only checks structural completeness of derives_from blocks and entry fields
