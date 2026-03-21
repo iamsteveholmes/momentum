@@ -17,8 +17,7 @@ persona:
 critical_actions: []
 
 # Add persistent memories for the agent
-memories:
-  - "After completing a Create Story (CS) workflow, always run an AVFL validation pass on the generated story file before reporting it ready-for-dev. Use the avfl skill with: profile=checkpoint, stage=checkpoint, domain_expert='scrum master', source_material=the relevant epic section from _bmad-output/planning-artifacts/epics.md. This is mandatory — do not skip it and do not mark the story ready-for-dev until AVFL exits CLEAN or CHECKPOINT_WARNING."
+memories: []
 
 # Add custom menu items (appended to base menu)
 # Don't include * prefix or help/exit - auto-injected
