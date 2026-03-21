@@ -1,0 +1,47 @@
+{
+  "iteration": 1,
+  "lens": "structural",
+  "framing": "enumerator",
+  "model": "sonnet",
+  "skill": "avfl-validator-enum-medium",
+  "skepticism": 3,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "STRUCTURAL-001",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring",
+      "description": "The document states 'Security considerations are documented in Section 6' but there is no Section 6 in this document.",
+      "evidence": "\"Security considerations are documented in Section 6.\" — Section 6 does not exist in the document.",
+      "suggestion": "Either add a Section 6 covering security, or remove the dangling reference."
+    },
+    {
+      "id": "STRUCTURAL-002",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation",
+      "description": "The retry policy is referenced as 'the standard retry policy' but is never defined anywhere in the document.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" — no policy definition exists.",
+      "suggestion": "Define the retry policy (number of attempts, backoff strategy) or reference the document where it is defined."
+    },
+    {
+      "id": "STRUCTURAL-003",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 vs Stage 3",
+      "description": "Stage 2 defers to an undefined 'standard retry policy'; Stage 3 specifies '3 retry attempts'. The two retry behaviors are described inconsistently.",
+      "evidence": "Stage 2: \"applies the standard retry policy on transient failures\" vs Stage 3: \"requeued for up to 3 retry attempts.\"",
+      "suggestion": "Standardize retry policy documentation — define it globally and reference it, or specify it per-stage."
+    },
+    {
+      "id": "STRUCTURAL-004",
+      "severity": "high",
+      "dimension": "completeness",
+      "location": "Overall document",
+      "description": "A final-stage architecture brief for a production pipeline should include a Security section. None exists.",
+      "evidence": "Document sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions. No security section present despite being referenced as 'Section 6'.",
+      "suggestion": "Add a Section covering security — authentication details, authorization model, encryption in transit and at rest."
+    }
+  ]
+}

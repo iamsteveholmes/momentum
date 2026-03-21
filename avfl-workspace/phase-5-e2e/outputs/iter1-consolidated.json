@@ -1,0 +1,183 @@
+{
+  "iteration": 1,
+  "model": "haiku",
+  "skill": "avfl-consolidator-low",
+  "score": 39,
+  "grade": "Failing",
+  "findings_count": {
+    "critical": 1,
+    "high": 4,
+    "medium": 6,
+    "low": 3,
+    "total": 14
+  },
+  "duplicates_removed": 7,
+  "false_positives_removed": 0,
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "critical",
+      "dimension": "consistency",
+      "location": "Overview vs Stage 2 — Transformation",
+      "description": "The Overview states 'All pipeline stages run in parallel to maximize throughput' but Stage 2 explicitly states 'Stage 2 must complete before Stage 3 begins.' This directly contradicts the document's description of its fundamental execution model.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Correct the Overview to accurately describe the pipeline execution model — stages are not all parallel; Stage 2→3 is sequential.",
+      "confidence": "HIGH",
+      "sources": ["STRUCTURAL-ADV-001", "COHERENCE-001", "COHERENCE-ADV-001"]
+    },
+    {
+      "id": "F-002",
+      "severity": "high",
+      "dimension": "completeness / cross_reference_integrity",
+      "location": "Stage 4 — Monitoring / Overall document",
+      "description": "The document references 'Security considerations are documented in Section 6' but no Section 6 exists. The document has no security section whatsoever — a significant structural gap for a final-stage architecture brief on a production ETL system.",
+      "evidence": "\"Security considerations are documented in Section 6.\" Document ends at Conclusions. No Section 6 exists.",
+      "suggestion": "Add a Security section covering: authentication method, authorization model, encryption in transit and at rest. Remove or update the dangling reference.",
+      "confidence": "HIGH",
+      "sources": ["STRUCTURAL-001", "STRUCTURAL-004", "STRUCTURAL-ADV-002", "DOMAIN-001"]
+    },
+    {
+      "id": "F-003",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery",
+      "description": "The claim that the in-memory delivery cache reduces end-to-end latency by 99.9% is implausible. If the cached system achieves sub-second latency (per Performance section), then the uncached system would have ~1000-second latency — inconsistent with any functioning production pipeline.",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\" + \"the pipeline maintains sub-second end-to-end latency for 95th-percentile events.\"",
+      "suggestion": "Replace with a measured, defensible figure and cite the baseline. Typical caching improvements for this workload type are 50–95%.",
+      "confidence": "HIGH",
+      "sources": ["ACCURACY-001", "ACCURACY-ADV-001"]
+    },
+    {
+      "id": "F-004",
+      "severity": "high",
+      "dimension": "logical_soundness",
+      "location": "Stage 3 — Delivery vs Performance Characteristics",
+      "description": "The claim of sub-second end-to-end latency is directly contradicted by the 5-minute polling interval for batch completion in Stage 3. A 5-minute polling interval means batch completion latency is up to 5 minutes, not sub-second.",
+      "evidence": "\"Polling for batch completion uses a 5-minute interval.\" vs \"the pipeline maintains sub-second end-to-end latency for 95th-percentile events.\"",
+      "suggestion": "Reconcile: either reduce polling interval to seconds, or scope the latency claim to exclude batch completion acknowledgment latency.",
+      "confidence": "MEDIUM",
+      "sources": ["ACCURACY-ADV-002"]
+    },
+    {
+      "id": "F-005",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation",
+      "description": "'Transformation applies the standard retry policy on transient failures.' No retry policy is defined in this document or referenced. Engineers implementing or operating this stage cannot use this description.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" No definition of 'standard retry policy' exists anywhere in the document.",
+      "suggestion": "Define the retry policy inline (max attempts, backoff strategy, timeout) or reference the document that specifies it.",
+      "confidence": "HIGH",
+      "sources": ["STRUCTURAL-002", "STRUCTURAL-003", "DOMAIN-002"]
+    },
+    {
+      "id": "F-006",
+      "severity": "medium",
+      "dimension": "correctness",
+      "location": "Performance Characteristics",
+      "description": "Benchmark claim that 'batch processing is 3× faster than streaming for files under 10MB' is presented without methodology, environment, or baseline. The comparison direction is architecturally unusual and may be inverted.",
+      "evidence": "\"Benchmarks show that batch processing is 3× faster than streaming for files under 10MB. For larger payloads, streaming is preferred.\" No test conditions cited.",
+      "suggestion": "Verify and cite the benchmark methodology. Clarify whether the size threshold and comparison direction are correct.",
+      "confidence": "HIGH",
+      "sources": ["ACCURACY-002", "DOMAIN-003"]
+    },
+    {
+      "id": "F-007",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation",
+      "description": "The overflow queue for large files is introduced but its downstream handling is never described. Stage 3 delivery only describes the primary path — large files on the overflow queue have no documented destination.",
+      "evidence": "\"Large files are handled separately from the primary transformation path via an overflow queue.\" No further mention of overflow queue in Stage 3 or elsewhere.",
+      "suggestion": "Describe the overflow queue's downstream handling — does it feed into Stage 3 via a different path? Is there a separate delivery mechanism?",
+      "confidence": "MEDIUM",
+      "sources": ["STRUCTURAL-ADV-003"]
+    },
+    {
+      "id": "F-008",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Performance Characteristics vs Conclusions",
+      "description": "Performance section describes streaming in present tense as current behavior ('For larger payloads, streaming is preferred'), while Conclusions describes real-time streaming as 'Future work.' The document contradicts itself on whether streaming is supported today.",
+      "evidence": "\"For larger payloads, streaming is preferred.\" vs \"Future work includes adding a real-time streaming workflow alongside the existing batch pipeline.\"",
+      "suggestion": "Clarify: if streaming is already supported, remove it from Future work. If it is planned, use future tense in the Performance section.",
+      "confidence": "MEDIUM",
+      "sources": ["COHERENCE-ADV-002"]
+    },
+    {
+      "id": "F-009",
+      "severity": "medium",
+      "dimension": "clarity",
+      "location": "Stage 1 — Ingestion",
+      "description": "'Authentication is used to verify each request before processing begins.' No mechanism is named. An architecture brief should specify the authentication method.",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\" No mechanism specified.",
+      "suggestion": "Specify the authentication method (e.g., Bearer token/JWT, HMAC-signed requests, mTLS client certificates).",
+      "confidence": "MEDIUM",
+      "sources": ["COHERENCE-002"]
+    },
+    {
+      "id": "F-010",
+      "severity": "medium",
+      "dimension": "fitness_for_purpose",
+      "location": "Stage 4 — Monitoring",
+      "description": "Monitoring section describes only Prometheus metric exposure. A production pipeline architecture brief should also describe alerting thresholds, SLA targets, and escalation paths.",
+      "evidence": "\"The pipeline exposes a metrics endpoint at /metrics with standard Prometheus counters for throughput, error rate, and queue depth.\" No alerting, thresholds, SLAs, or runbook references present.",
+      "suggestion": "Add alerting rules or runbook reference; add SLA targets for throughput and error rate.",
+      "confidence": "MEDIUM",
+      "sources": ["DOMAIN-ADV-001"]
+    },
+    {
+      "id": "F-011",
+      "severity": "low",
+      "dimension": "tonal_consistency",
+      "location": "Overall document",
+      "description": "Document alternates between precise technical detail and vague placeholders ('Authentication is used', 'the standard retry policy'), signaling incomplete sections.",
+      "evidence": "Precise: \"deduplicates events within a 5-minute window using a Redis cache.\" Vague: \"Authentication is used to verify each request.\" and \"Transformation applies the standard retry policy.\"",
+      "suggestion": "Bring vague sections to the same level of technical specificity as detailed sections.",
+      "confidence": "MEDIUM",
+      "sources": ["COHERENCE-004"]
+    },
+    {
+      "id": "F-012",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion",
+      "description": "Dead-letter queue mentioned for rejected events but no operational handling described (review process, alerting, purge policy).",
+      "evidence": "\"malformed events are rejected with a 400 response and logged to the dead-letter queue.\" No further DLQ operational description anywhere.",
+      "suggestion": "Add a DLQ handling policy note.",
+      "confidence": "MEDIUM",
+      "sources": ["COHERENCE-ADV-003"]
+    },
+    {
+      "id": "F-013",
+      "severity": "low",
+      "dimension": "domain_rule_compliance",
+      "location": "Overall document",
+      "description": "No mention of data retention policy, PII handling, or compliance framework for a pipeline handling customer analytics events.",
+      "evidence": "No mention of data retention, PII, or compliance anywhere in the document.",
+      "suggestion": "Add a Data Governance or Compliance subsection, or explicitly state governance is out of scope.",
+      "confidence": "MEDIUM",
+      "sources": ["DOMAIN-ADV-002"]
+    },
+    {
+      "id": "F-014",
+      "severity": "low",
+      "dimension": "conciseness",
+      "location": "Operational Notes",
+      "description": "'The pipeline and workflow are monitored' — 'and workflow' is redundant.",
+      "evidence": "\"The pipeline and workflow are monitored by the on-call team via the Prometheus dashboard.\"",
+      "suggestion": "\"The pipeline is monitored by the on-call team via the Prometheus dashboard.\"",
+      "confidence": "MEDIUM",
+      "sources": ["COHERENCE-003"]
+    }
+  ],
+  "score_breakdown": {
+    "starting_score": 100,
+    "deductions": {
+      "critical": {"count": 1, "points_each": -15, "total": -15},
+      "high": {"count": 3, "points_each": -8, "total": -24},
+      "medium": {"count": 6, "points_each": -3, "total": -18},
+      "low": {"count": 4, "points_each": -1, "total": -4}
+    },
+    "total_deductions": -61,
+    "final_score": 39
+  }
+}

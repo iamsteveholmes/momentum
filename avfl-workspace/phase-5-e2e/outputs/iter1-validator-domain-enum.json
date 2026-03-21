@@ -1,0 +1,38 @@
+{
+  "iteration": 1,
+  "lens": "domain",
+  "framing": "enumerator",
+  "model": "sonnet",
+  "skill": "avfl-validator-enum-medium",
+  "skepticism": 3,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "DOMAIN-001",
+      "severity": "high",
+      "dimension": "domain_rule_compliance",
+      "location": "Overall document",
+      "description": "Architecture briefs for production data pipelines at final stage are expected to include a security section covering authentication, authorization, and encryption. None exists.",
+      "evidence": "Document sections: Overview, Architecture Components, Performance Characteristics, Operational Notes, Conclusions. No security section. Referenced as 'Section 6' which does not exist.",
+      "suggestion": "Add a Security section covering: authentication method, authorization model, encryption in transit, encryption at rest."
+    },
+    {
+      "id": "DOMAIN-002",
+      "severity": "medium",
+      "dimension": "fitness_for_purpose",
+      "location": "Stage 2 — Transformation",
+      "description": "'Standard retry policy' is not actionable for engineers implementing or troubleshooting this stage. The actual policy parameters are required.",
+      "evidence": "\"Transformation applies the standard retry policy on transient failures.\" — no policy defined anywhere.",
+      "suggestion": "Define inline: max attempts, backoff strategy (linear/exponential), timeout."
+    },
+    {
+      "id": "DOMAIN-003",
+      "severity": "medium",
+      "dimension": "convention_adherence",
+      "location": "Performance Characteristics",
+      "description": "Performance figures presented without benchmark methodology, environment, or date. Production architecture briefs should include benchmark context.",
+      "evidence": "\"Benchmarks show that batch processing is 3× faster than streaming for files under 10MB.\" — no test conditions cited.",
+      "suggestion": "Add benchmark context: test environment, payload characteristics, date."
+    }
+  ]
+}

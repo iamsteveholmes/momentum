@@ -1,0 +1,10 @@
+{
+  "iteration": 2,
+  "lens": "coherence",
+  "framing": "enumerator",
+  "model": "sonnet",
+  "skill": "avfl-validator-enum-medium",
+  "skepticism": 2,
+  "stage": "final",
+  "findings": []
+}

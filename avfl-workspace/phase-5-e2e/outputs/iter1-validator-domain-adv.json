@@ -1,0 +1,29 @@
+{
+  "iteration": 1,
+  "lens": "domain",
+  "framing": "adversary",
+  "model": "opus",
+  "skill": "avfl-validator-adv-high",
+  "skepticism": 3,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "DOMAIN-ADV-001",
+      "severity": "medium",
+      "dimension": "fitness_for_purpose",
+      "location": "Stage 4 — Monitoring",
+      "description": "Monitoring section describes only metrics exposure. A production-ready architecture brief should also describe alerting thresholds, on-call escalation paths, and SLAs.",
+      "evidence": "\"The pipeline exposes a metrics endpoint at /metrics with standard Prometheus counters for throughput, error rate, and queue depth.\" No alerting rules, thresholds, SLAs, or runbook references.",
+      "suggestion": "Add alerting rules or runbook reference; add SLA targets for throughput and error rate."
+    },
+    {
+      "id": "DOMAIN-ADV-002",
+      "severity": "low",
+      "dimension": "domain_rule_compliance",
+      "location": "Overall document",
+      "description": "No mention of data retention policy, PII handling, or compliance framework for a pipeline handling customer analytics events.",
+      "evidence": "No mention of data retention, PII, or compliance anywhere in the document.",
+      "suggestion": "Add a Data Governance or Compliance subsection, or explicitly state that governance is out of scope."
+    }
+  ]
+}

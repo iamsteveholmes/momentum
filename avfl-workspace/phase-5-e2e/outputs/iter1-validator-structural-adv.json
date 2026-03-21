@@ -1,0 +1,38 @@
+{
+  "iteration": 1,
+  "lens": "structural",
+  "framing": "adversary",
+  "model": "opus",
+  "skill": "avfl-validator-adv-high",
+  "skepticism": 3,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "STRUCTURAL-ADV-001",
+      "severity": "critical",
+      "dimension": "consistency",
+      "location": "Overview vs Stage 2",
+      "description": "The Overview states 'All pipeline stages run in parallel to maximize throughput' but Stage 2 explicitly states 'Stage 2 must complete before Stage 3 begins' — a direct sequential dependency contradicting the parallel claim.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Correct the Overview to accurately describe the pipeline execution model."
+    },
+    {
+      "id": "STRUCTURAL-ADV-002",
+      "severity": "high",
+      "dimension": "cross_reference_integrity",
+      "location": "Stage 4 — Monitoring",
+      "description": "Dangling reference: 'Security considerations are documented in Section 6' but no Section 6 exists.",
+      "evidence": "\"Security considerations are documented in Section 6.\" The document ends at Conclusions with no Section 6.",
+      "suggestion": "Add Security section or remove reference."
+    },
+    {
+      "id": "STRUCTURAL-ADV-003",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation",
+      "description": "The overflow queue for large files is introduced but the document never explains where overflow queue events go downstream.",
+      "evidence": "\"Large files are handled separately from the primary transformation path via an overflow queue.\" No further mention of overflow queue in Stage 3 or elsewhere.",
+      "suggestion": "Describe the overflow queue's downstream handling in Stage 3 or as a separate path."
+    }
+  ]
+}

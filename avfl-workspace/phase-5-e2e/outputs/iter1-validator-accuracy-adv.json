@@ -1,0 +1,29 @@
+{
+  "iteration": 1,
+  "lens": "accuracy",
+  "framing": "adversary",
+  "model": "opus",
+  "skill": "avfl-validator-adv-high",
+  "skepticism": 3,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "ACCURACY-ADV-001",
+      "severity": "high",
+      "dimension": "correctness",
+      "location": "Stage 3 — Delivery",
+      "description": "The 99.9% latency reduction claim is implausible and inconsistent with the sub-second latency claim in the Performance section.",
+      "evidence": "\"The in-memory delivery cache reduces end-to-end latency by 99.9% compared to unbuffered writes.\" If sub-second is the cached latency, uncached would be ~1000 seconds.",
+      "suggestion": "Replace with a measured, defensible figure."
+    },
+    {
+      "id": "ACCURACY-ADV-002",
+      "severity": "high",
+      "dimension": "logical_soundness",
+      "location": "Stage 3 — Delivery vs Performance Characteristics",
+      "description": "The sub-second end-to-end latency claim is directly contradicted by the 5-minute polling interval for batch completion in Stage 3.",
+      "evidence": "\"Polling for batch completion uses a 5-minute interval.\" vs \"the pipeline maintains sub-second end-to-end latency for 95th-percentile events.\" A 5-minute poll means batch completion latency is up to 5 minutes.",
+      "suggestion": "Reconcile: either reduce polling interval to seconds or scope the latency claim to exclude batch completion acknowledgment."
+    }
+  ]
+}

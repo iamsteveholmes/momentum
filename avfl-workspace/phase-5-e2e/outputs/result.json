@@ -1,0 +1,46 @@
+{
+  "status": "CLEAN",
+  "message": "Output passed validation with score 100/100 after 3 iterations.",
+  "final_score": 100,
+  "iteration_count": 3,
+  "scores_per_iteration": {
+    "iteration_1": {
+      "score": 39,
+      "grade": "Failing",
+      "findings_count": {"critical": 1, "high": 3, "medium": 6, "low": 4, "total": 14},
+      "action": "fix"
+    },
+    "iteration_2": {
+      "score": 94,
+      "grade": "Good",
+      "findings_count": {"critical": 0, "high": 0, "medium": 1, "low": 3, "total": 4},
+      "action": "fix"
+    },
+    "iteration_3": {
+      "score": 100,
+      "grade": "Clean - production ready",
+      "findings_count": {"critical": 0, "high": 0, "medium": 0, "low": 0, "total": 0},
+      "action": "exit_clean"
+    }
+  },
+  "total_findings_fixed": 18,
+  "findings_fixed_by_iteration": {
+    "iteration_1_fix": 14,
+    "iteration_2_fix": 4
+  },
+  "final_document": "fixed-document-final.md",
+  "pipeline_config": {
+    "profile": "full",
+    "stage": "final",
+    "domain_expert": "technical writer",
+    "task_context": "data processing pipeline architecture brief",
+    "source_material": null,
+    "skepticism_schedule": {"iteration_1": 3, "iteration_2_plus": 2},
+    "role_configuration": {
+      "enumerator_validators": {"model": "sonnet", "skill": "avfl-validator-enum-medium"},
+      "adversary_validators": {"model": "opus", "skill": "avfl-validator-adv-high"},
+      "consolidator": {"model": "haiku", "skill": "avfl-consolidator-low"},
+      "fixer": {"model": "sonnet", "skill": "avfl-fixer-medium"}
+    }
+  }
+}

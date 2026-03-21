@@ -1,0 +1,20 @@
+{
+  "iteration": 2,
+  "lens": "structural",
+  "framing": "enumerator",
+  "model": "sonnet",
+  "skill": "avfl-validator-enum-medium",
+  "skepticism": 2,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "STRUCTURAL2-001",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Stage 4 — Monitoring vs Performance Characteristics",
+      "description": "Stage 4 SLA states '99.5% of events delivered within 60 seconds' while Performance section states 'sub-60-second latency for 95th-percentile events.' Different percentiles for the same 60-second threshold — either intentional (requiring explanation) or a consistency error.",
+      "evidence": "Stage 4: \"99.5% of events delivered within 60 seconds of ingestion under nominal load.\" Performance: \"sub-60-second end-to-end latency for 95th-percentile events from ingestion acknowledgment to data warehouse availability.\"",
+      "suggestion": "Align percentiles or add a note distinguishing the measurement contexts."
+    }
+  ]
+}

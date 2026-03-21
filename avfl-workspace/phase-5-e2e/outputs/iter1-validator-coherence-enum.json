@@ -1,0 +1,47 @@
+{
+  "iteration": 1,
+  "lens": "coherence",
+  "framing": "enumerator",
+  "model": "sonnet",
+  "skill": "avfl-validator-enum-medium",
+  "skepticism": 3,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "COHERENCE-001",
+      "severity": "high",
+      "dimension": "consistency",
+      "location": "Overview vs Stage 2",
+      "description": "Direct contradiction: Overview says all stages run in parallel; Stage 2 says Stage 2 must complete before Stage 3 begins.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Fix Overview to accurately characterize the execution model."
+    },
+    {
+      "id": "COHERENCE-002",
+      "severity": "medium",
+      "dimension": "clarity",
+      "location": "Stage 1 — Ingestion",
+      "description": "Authentication mechanism is unspecified. 'Authentication is used to verify each request' provides no actionable information.",
+      "evidence": "\"Authentication is used to verify each request before processing begins.\" — no mechanism named.",
+      "suggestion": "Specify the authentication method (e.g., Bearer token/JWT, HMAC-signed requests, mTLS)."
+    },
+    {
+      "id": "COHERENCE-003",
+      "severity": "low",
+      "dimension": "conciseness",
+      "location": "Operational Notes",
+      "description": "'The pipeline and workflow are monitored' — 'and workflow' is redundant since the pipeline is the workflow being described.",
+      "evidence": "\"The pipeline and workflow are monitored by the on-call team via the Prometheus dashboard.\"",
+      "suggestion": "\"The pipeline is monitored by the on-call team via the Prometheus dashboard.\""
+    },
+    {
+      "id": "COHERENCE-004",
+      "severity": "medium",
+      "dimension": "tonal_consistency",
+      "location": "Overall document",
+      "description": "The document alternates between precise technical language and vague placeholders, signaling unfinished sections.",
+      "evidence": "Precise: \"deduplicates events within a 5-minute window using a Redis cache.\" Vague: \"Authentication is used to verify each request.\" and \"Transformation applies the standard retry policy.\"",
+      "suggestion": "Bring authentication and retry policy descriptions to the same level of specificity as other sections."
+    }
+  ]
+}

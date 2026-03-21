@@ -1,0 +1,20 @@
+{
+  "iteration": 2,
+  "lens": "domain",
+  "framing": "enumerator",
+  "model": "sonnet",
+  "skill": "avfl-validator-enum-medium",
+  "skepticism": 2,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "DOMAIN2-001",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 2 — Transformation (overflow queue)",
+      "description": "The 'dedicated overflow delivery channel' for large files is named but its properties are not described — retry behavior, throughput limits, SLAs relative to primary path.",
+      "evidence": "\"routed to the same Stage 3 delivery path via a dedicated overflow delivery channel.\" No further description of this channel.",
+      "suggestion": "Add a sentence noting whether the overflow channel shares retry policy and SLA with the primary path."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "iteration": 2,
+  "lens": "coherence",
+  "framing": "adversary",
+  "model": "opus",
+  "skill": "avfl-validator-adv-high",
+  "skepticism": 2,
+  "stage": "final",
+  "findings": []
+}

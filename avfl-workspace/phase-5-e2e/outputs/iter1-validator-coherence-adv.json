@@ -1,0 +1,38 @@
+{
+  "iteration": 1,
+  "lens": "coherence",
+  "framing": "adversary",
+  "model": "opus",
+  "skill": "avfl-validator-adv-high",
+  "skepticism": 3,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "COHERENCE-ADV-001",
+      "severity": "high",
+      "dimension": "consistency",
+      "location": "Overview vs Stage 2",
+      "description": "Parallel pipeline claim directly contradicted by Stage 2 sequential dependency. Confirmed finding.",
+      "evidence": "Overview: \"All pipeline stages run in parallel to maximize throughput.\" Stage 2: \"Stage 2 must complete before Stage 3 begins.\"",
+      "suggestion": "Fix Overview execution model description."
+    },
+    {
+      "id": "COHERENCE-ADV-002",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Performance Characteristics vs Conclusions",
+      "description": "Performance section describes streaming in present tense as current behavior; Conclusions frames real-time streaming as future work. The document cannot be both at once.",
+      "evidence": "\"For larger payloads, streaming is preferred.\" vs \"Future work includes adding a real-time streaming workflow alongside the existing batch pipeline.\"",
+      "suggestion": "Clarify: is streaming already supported or planned? Align both sections."
+    },
+    {
+      "id": "COHERENCE-ADV-003",
+      "severity": "low",
+      "dimension": "completeness",
+      "location": "Stage 1 — Ingestion",
+      "description": "The dead-letter queue is mentioned but no operational handling is described (how DLQ events are reviewed, retried, or purged).",
+      "evidence": "\"malformed events are rejected with a 400 response and logged to the dead-letter queue.\" — no further DLQ operational description.",
+      "suggestion": "Add DLQ handling policy note (manual review, alert trigger, automatic purge)."
+    }
+  ]
+}

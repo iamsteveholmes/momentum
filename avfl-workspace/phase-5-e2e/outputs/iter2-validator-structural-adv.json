@@ -1,0 +1,20 @@
+{
+  "iteration": 2,
+  "lens": "structural",
+  "framing": "adversary",
+  "model": "opus",
+  "skill": "avfl-validator-adv-high",
+  "skepticism": 2,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "STRUCTURAL2-ADV-001",
+      "severity": "low",
+      "dimension": "consistency",
+      "location": "Stage 4 — Monitoring / Overview",
+      "description": "Overview states monitoring runs continuously in parallel, but Stage 4 is numbered sequentially with Stages 1–3, implying a sequential position.",
+      "evidence": "Overview: \"Monitoring runs continuously in parallel with all stages.\" Architecture section: Stage 1, Stage 2, Stage 3, Stage 4 — sequential numbering.",
+      "suggestion": "Rename 'Stage 4 — Monitoring' to 'Continuous Monitoring' or add a parenthetical clarifying it runs continuously alongside other stages."
+    }
+  ]
+}

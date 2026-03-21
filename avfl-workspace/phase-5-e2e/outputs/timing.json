@@ -1,0 +1,1 @@
+{"total_tokens": 66816, "duration_ms": 568619, "total_duration_seconds": 568.6, "config": "phase-5-prescribed-stack", "profile": "full", "lenses": 4, "framings": "dual", "iterations": 3, "final_score": 100, "scores_per_iteration": [39, 94, 100], "findings_fixed": 18, "exit_status": "CLEAN"}

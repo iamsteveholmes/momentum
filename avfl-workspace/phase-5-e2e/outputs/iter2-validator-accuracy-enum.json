@@ -1,0 +1,20 @@
+{
+  "iteration": 2,
+  "lens": "accuracy",
+  "framing": "enumerator",
+  "model": "sonnet",
+  "skill": "avfl-validator-enum-medium",
+  "skepticism": 2,
+  "stage": "final",
+  "findings": [
+    {
+      "id": "ACCURACY2-001",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Stage 4 SLA vs Performance Characteristics",
+      "description": "SLA percentile (99.5th) and performance benchmark percentile (95th) differ for the same 60-second latency threshold. If intentional, it should be explained.",
+      "evidence": "Stage 4: \"99.5% of events delivered within 60 seconds.\" Performance: \"sub-60-second end-to-end latency for 95th-percentile events.\"",
+      "suggestion": "Use same percentile or explicitly note different measurement contexts."
+    }
+  ]
+}
