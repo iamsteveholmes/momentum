@@ -1,0 +1,29 @@
+[
+  {
+    "id": "COHERENCE-ADV-001",
+    "severity": "medium",
+    "dimension": "consistency",
+    "location": "Journey 3 narrative vs Product Scope MVP",
+    "description": "Journey 3 implies Momentum ships with a web-fullstack-optimized default validator, but no such validator appears in the Day 1, Day 2-3, or First Sprint MVP scope.",
+    "evidence": "Journey 3: 'The validation protocol calls Momentum's default validator, which uses lenses optimized for web fullstack.' MVP scope (Day 1 through First Sprint): no domain-specific validator listed.",
+    "suggestion": "Either add the default validator to the MVP scope, or revise the Journey 3 narrative to not imply a web-fullstack-specific validator exists in MVP."
+  },
+  {
+    "id": "COHERENCE-ADV-002",
+    "severity": "medium",
+    "dimension": "clarity",
+    "location": "Throughout document (flywheel concept at first use)",
+    "description": "The 'flywheel' concept is used as a core architectural term throughout the document but is never formally defined. The Executive Summary uses it before any description is given.",
+    "evidence": "Executive Summary: 'an evaluation flywheel that traces failures upstream via navigable derives_from chains' — no definition provided before this first use.",
+    "suggestion": "Add a one-sentence definition of 'evaluation flywheel' at first use in the Executive Summary, or add a Glossary section for key Momentum concepts."
+  },
+  {
+    "id": "COHERENCE-ADV-003",
+    "severity": "low",
+    "dimension": "consistency",
+    "location": "Post-PRD Actions",
+    "description": "The Post-PRD action implies the README currently has seven principles to update, but this PRD precedes implementation and the README may not yet exist in its described state.",
+    "evidence": "'Update project README with the eight core principles (the original seven plus Protocol-Based Integration)'",
+    "suggestion": "Rephrase as 'Create/update project README to document the eight core principles' without implying a pre-existing state of seven."
+  }
+]

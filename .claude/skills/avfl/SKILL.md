@@ -193,6 +193,8 @@ Model: `sonnet`. Skill: `avfl-fixer-medium`. Use the fixer prompt from `referenc
 
 After fixing, loop back to Phase 1 with the updated output. **Always carry the original `source_material` forward unchanged** — validators at every iteration check against original ground truth, never intermediate representations.
 
+**Critical:** Phase 1 in every iteration — including iteration 2+ — MUST spawn subagents. Do NOT validate the updated output inline, even if it is in context. Inline validation collapses the dual-reviewer cross-check that filters hallucinations. Spawn the same parallel subagent configuration as iteration 1 (with `low` skepticism for iterations 2+).
+
 ---
 
 ## Calibration Principles

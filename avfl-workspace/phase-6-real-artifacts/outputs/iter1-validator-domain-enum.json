@@ -1,0 +1,47 @@
+[
+  {
+    "id": "DOMAIN-ENUM-001",
+    "severity": "medium",
+    "dimension": "domain_rule_compliance",
+    "location": "Functional Requirements > Provenance & Traceability > FR13",
+    "description": "FR13 bundles multiple distinct behaviors into one requirement: (1) hash-based staleness detection for internal docs, (2) time-based staleness detection for edge docs, (3) SUSPECT flagging, (4) one-hop propagation constraint, (5) human/verifier-gated update rule. These are 4-5 separate testable behaviors.",
+    "evidence": "'System can detect staleness using two modes: hash-based for internal documents (compare `derives_from` content hash to current upstream hash) and time-based for edge documents (compare research date to domain-specific freshness windows). Stale downstream documents are flagged as SUSPECT, not auto-updated — one-hop propagation only, human/verifier-gated at each level.'",
+    "suggestion": "Split FR13 into: FR13a (hash-based staleness for internal docs), FR13b (time-based staleness for edge docs), FR13c (SUSPECT flagging on stale documents), FR13d (one-hop propagation, human-gated updates)."
+  },
+  {
+    "id": "DOMAIN-ENUM-002",
+    "severity": "medium",
+    "dimension": "domain_rule_compliance",
+    "location": "Functional Requirements > Enforcement & Quality Governance > FR23",
+    "description": "FR23 bundles model routing configuration, the cognitive hazard rule, and a three-tier model escalation strategy into a single requirement.",
+    "evidence": "'Developer can configure model routing defaults per skill and agent via `model:` and `effort:` frontmatter, with a documented default strategy: Sonnet 4.6 at medium effort for general tasks; upgrade to Opus for complex reasoning, orchestration, or outputs without automated validation (cognitive hazard rule: invisible errors from cheaper models cost more than the flagship premium); downgrade to Haiku for well-constrained tasks with downstream validation'",
+    "suggestion": "Split into FR23a (model/effort frontmatter configuration) and FR23b (documented default model routing strategy with cognitive hazard rule)."
+  },
+  {
+    "id": "DOMAIN-ENUM-003",
+    "severity": "medium",
+    "dimension": "convention_adherence",
+    "location": "Functional Requirements > Research & Knowledge Management > FR44",
+    "description": "FR44 describes multi-model MCP research capability, which is listed as a Growth Feature in the Product Scope section. FR44 is not phase-tagged, creating an ambiguous scope boundary.",
+    "evidence": "FR44: 'Developer can conduct multi-model research using MCP-integrated LLM providers (Gemini, GPT, and additional providers)'. Growth Features: '**Gemini MCP server** (PT-028) — automated multi-model research via `@rlabs-inc/gemini-mcp`'",
+    "suggestion": "Tag FR44 as [Growth] or add a phase column to the FR tables."
+  },
+  {
+    "id": "DOMAIN-ENUM-004",
+    "severity": "low",
+    "dimension": "domain_rule_compliance",
+    "location": "Functional Requirements > Evaluation Flywheel > FR29",
+    "description": "FR29 requires cross-story pattern detection but provides no threshold or trigger condition, making it not testable.",
+    "evidence": "'System can detect cross-story patterns in the findings ledger and surface systemic issues'",
+    "suggestion": "Add threshold: e.g., 'System can detect when the same finding category appears in 3 or more distinct stories and surface it as a systemic pattern.'"
+  },
+  {
+    "id": "DOMAIN-ENUM-005",
+    "severity": "low",
+    "dimension": "fitness_for_purpose",
+    "location": "Functional Requirements > Specification & Development Workflow > FR11",
+    "description": "FR11 uses 'may improve' which makes it untestable. A requirement describing a probabilistic outcome cannot be verified as pass/fail.",
+    "evidence": "'Developer can ask follow-up questions during any workflow step, and the agent treats questions as discovery opportunities that may improve the specification'",
+    "suggestion": "Rephrase: 'Developer can ask follow-up questions during any workflow step; the agent investigates whether the question reveals a specification ambiguity and, if so, proposes a spec update.'"
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "COHERENCE-ENUM-001",
+    "severity": "medium",
+    "dimension": "consistency",
+    "location": "Success Criteria > Measurable Outcomes table, 'Time spent on spec revision' row",
+    "description": "Signal column for 'Time spent on spec revision' row duplicates the Target column verbatim, making the Signal meaningless for this row.",
+    "evidence": "Target: 'Decreases >=20% per story cycle from baseline' | Signal: 'Decreases >=20% per story cycle from baseline' — identical text",
+    "suggestion": "Replace Signal with 'Specs are compounding, not fragmenting' — consistent with the surrounding narrative language."
+  },
+  {
+    "id": "COHERENCE-ENUM-002",
+    "severity": "medium",
+    "dimension": "clarity",
+    "location": "Business Success section",
+    "description": "The 'four debt types (verification, cognitive, pattern drift, technical)' are listed once as a parenthetical and never defined, explained, or referenced again in the document. A reader new to Momentum has no basis for understanding what these mean.",
+    "evidence": "'without accumulating the four debt types (verification, cognitive, pattern drift, technical)'",
+    "suggestion": "Add a brief definition of each debt type at first mention, or add a footnote/sidebar. At minimum, one-line descriptors for each type."
+  },
+  {
+    "id": "COHERENCE-ENUM-003",
+    "severity": "low",
+    "dimension": "consistency",
+    "location": "Journey Requirements Summary table vs Journey 2 narrative",
+    "description": "Journey 2's requirements paragraph mentions 'flywheel integration with retrospective' and 'measurable improvement across sprints' as requirements revealed, but neither appears as a row in the Journey Requirements Summary table.",
+    "evidence": "Journey 2 Requirements revealed: '...flywheel integration with retrospective, measurable improvement across sprints.' Journey Requirements Summary table has no 'retrospective integration' or 'measurable improvement' row.",
+    "suggestion": "Add 'Retrospective integration' as a row in the Journey Requirements Summary, marked J2. Or remove 'flywheel integration with retrospective' from the Journey 2 requirements revealed list if it is not a distinct capability."
+  }
+]

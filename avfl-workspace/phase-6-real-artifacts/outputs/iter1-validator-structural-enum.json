@@ -1,0 +1,29 @@
+[
+  {
+    "id": "STRUCTURAL-ENUM-001",
+    "severity": "medium",
+    "dimension": "cross_reference_integrity",
+    "location": "Frontmatter: derives_from vs inputDocuments",
+    "description": "docs/process/process-backlog.md appears in inputDocuments but has no corresponding entry in the derives_from list. The derives_from list has 6 entries while inputDocuments has 7 entries.",
+    "evidence": "inputDocuments includes 'docs/process/process-backlog.md' but derives_from contains only: BRIEF-MOMENTUM-001, PLAN-SOLO-DEV-001, HANDOFF-BRIEF-001, RESEARCH-BENCHMARK-HANDOFF-001, RESEARCH-SKILLS-PRELIM-001, RESEARCH-SKILLS-DEPLOY-001 — no entry for process-backlog.md",
+    "suggestion": "Add a derives_from entry for docs/process/process-backlog.md with an appropriate ID (e.g., BACKLOG-MOMENTUM-001) and relationship: derives_from, or remove it from inputDocuments if it was not actually used as source material."
+  },
+  {
+    "id": "STRUCTURAL-ENUM-002",
+    "severity": "medium",
+    "dimension": "structural_validity",
+    "location": "Success Criteria > Measurable Outcomes table, 'Time spent on spec revision' row",
+    "description": "The Signal column for the 'Time spent on spec revision' metric duplicates the Target column verbatim. The Signal column should describe what this metric signals about practice health, not repeat the target value.",
+    "evidence": "Target: 'Decreases >=20% per story cycle from baseline' | Signal: 'Decreases >=20% per story cycle from baseline' — identical text in both columns",
+    "suggestion": "Replace the Signal value with a meaningful health indicator, e.g., 'Specs are compounding, not fragmenting' (consistent with the surrounding narrative) or 'Practice reducing overhead, not adding it'."
+  },
+  {
+    "id": "STRUCTURAL-ENUM-003",
+    "severity": "low",
+    "dimension": "cross_reference_integrity",
+    "location": "Developer Tool Specific Requirements > Implementation Considerations",
+    "description": "Reference to 'deployment research F-06' has no resolvable location in the document. It refers to a finding in an external research document that is not included or linked.",
+    "evidence": "'Plugin-namespaced skills may not count against the flat budget (unverified — flagged in deployment research F-06)'",
+    "suggestion": "Either link to the specific research document path (already in inputDocuments as 'technical-agent-skills-deployment-research-2026-03-15.md') or remove the F-06 reference and describe the finding inline."
+  }
+]

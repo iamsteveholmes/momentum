@@ -1,0 +1,230 @@
+{
+  "score": 39,
+  "grade": "Failing — major rework needed",
+  "iteration": 1,
+  "findings_count": { "critical": 0, "high": 3, "medium": 10, "low": 7, "total": 20 },
+  "findings": [
+    {
+      "id": "CONSOLIDATED-001",
+      "confidence": "HIGH",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Executive Summary, paragraph 2",
+      "description": "Four high-precision statistics are presented as 'unambiguous industry data' with no source citations. The precision of these numbers (67.3%, 1.7x, 19%, 20%, 98%) indicates they come from specific studies, but no studies are named.",
+      "evidence": "'Industry data is unambiguous: AI code generation without governance fails. 67.3% of AI-generated PRs are rejected (vs 15.6% for human code). AI-generated code produces 1.7x more issues per PR. Experienced developers are 19% slower with AI tools while believing they're 20% faster. Organizations see PR volume increase 98% but delivery metrics stay flat.'",
+      "suggestion": "Add citations for each statistic. The research documents in inputDocuments (particularly multi-model-benchmarking-handoff-2026-03-14.md) likely contain these figures — cite them inline.",
+      "sources": ["ACCURACY-ENUM-001", "ACCURACY-ADV-001"]
+    },
+    {
+      "id": "CONSOLIDATED-002",
+      "confidence": "HIGH",
+      "severity": "high",
+      "dimension": "traceability",
+      "location": "Innovation & Novel Patterns > Detected Innovation Areas, item 2",
+      "description": "Specific quantitative claims in the Innovation section are unsourced: hallucination rates of '11-95%', cascading error probability of '79% over 6 hops', and the IBM DOORS attribution for 'suspect link pattern'.",
+      "evidence": "'applying the suspect link pattern (from IBM DOORS requirements engineering) to an LLM specification chain — where hallucination rates are 11-95% and cascading errors hit 79% probability over 6 hops'",
+      "suggestion": "Cite the source research documents for all three claims. Verify the IBM DOORS attribution specifically.",
+      "sources": ["ACCURACY-ENUM-002", "ACCURACY-ADV-002"]
+    },
+    {
+      "id": "CONSOLIDATED-003",
+      "confidence": "HIGH",
+      "severity": "high",
+      "dimension": "fitness_for_purpose",
+      "location": "Functional Requirements section (all FR groups)",
+      "description": "No FRs are tagged by phase (MVP vs Growth). An implementer reading the FR section cannot determine which requirements are in scope for MVP without cross-referencing the Product Scope section. FR44-FR47 (Research & Knowledge Management) are Growth features per the scope section but appear as untagged FRs alongside MVP requirements.",
+      "evidence": "FR44: 'Developer can conduct multi-model research using MCP-integrated LLM providers (Gemini, GPT, and additional providers)'. Product Scope Growth Features: 'Gemini MCP server (PT-028) — automated multi-model research'. No phase tags appear anywhere in the FR or NFR sections.",
+      "suggestion": "Add phase tags [MVP] / [Growth] to each FR and NFR, or add a phase column to the requirement tables, or add a section note listing which FR IDs are MVP-scoped.",
+      "sources": ["DOMAIN-ENUM-003", "DOMAIN-ADV-001"]
+    },
+    {
+      "id": "CONSOLIDATED-004",
+      "confidence": "HIGH",
+      "severity": "medium",
+      "dimension": "cross_reference_integrity",
+      "location": "Frontmatter: derives_from vs inputDocuments",
+      "description": "docs/process/process-backlog.md appears in inputDocuments (7 entries) but has no corresponding entry in derives_from (6 entries). The provenance chain is incomplete for one of the seven source documents.",
+      "evidence": "inputDocuments entry 7: 'docs/process/process-backlog.md'. No matching derives_from entry exists — derives_from contains only BRIEF-MOMENTUM-001, PLAN-SOLO-DEV-001, HANDOFF-BRIEF-001, RESEARCH-BENCHMARK-HANDOFF-001, RESEARCH-SKILLS-PRELIM-001, RESEARCH-SKILLS-DEPLOY-001.",
+      "suggestion": "Add a derives_from entry for docs/process/process-backlog.md (e.g., id: BACKLOG-MOMENTUM-001, relationship: derives_from), or remove it from inputDocuments if it was reference-only.",
+      "sources": ["STRUCTURAL-ENUM-001", "STRUCTURAL-ADV-001"]
+    },
+    {
+      "id": "CONSOLIDATED-005",
+      "confidence": "HIGH",
+      "severity": "medium",
+      "dimension": "structural_validity",
+      "location": "Success Criteria > Measurable Outcomes table, 'Time spent on spec revision' row",
+      "description": "The Signal column for 'Time spent on spec revision' duplicates the Target column verbatim. The Signal column should describe what this metric signals about practice health, not repeat the numeric target.",
+      "evidence": "Target cell: 'Decreases >=20% per story cycle from baseline' | Signal cell: 'Decreases >=20% per story cycle from baseline' — identical text.",
+      "suggestion": "Replace Signal with a meaningful health indicator: 'Specs are compounding, not fragmenting' — consistent with the surrounding narrative prose.",
+      "sources": ["STRUCTURAL-ENUM-002", "STRUCTURAL-ADV-002", "COHERENCE-ENUM-001"]
+    },
+    {
+      "id": "CONSOLIDATED-006",
+      "confidence": "HIGH",
+      "severity": "medium",
+      "dimension": "clarity",
+      "location": "Business Success section; throughout document",
+      "description": "The 'four debt types (verification, cognitive, pattern drift, technical)' are presented as the core problem Momentum prevents but are never defined, explained, or operationalized anywhere in the document. These are load-bearing concepts — the problem statement and success criteria depend on them.",
+      "evidence": "'Personal productivity: The solo developer ships higher-quality output with sustained or increased throughput, without accumulating the four debt types (verification, cognitive, pattern drift, technical)'",
+      "suggestion": "Define each debt type at first mention (1-2 sentences each) or add a Glossary section. Connect each debt type to specific FRs that address it.",
+      "sources": ["COHERENCE-ENUM-002", "DOMAIN-ADV-003"]
+    },
+    {
+      "id": "CONSOLIDATED-007",
+      "confidence": "MEDIUM",
+      "severity": "medium",
+      "dimension": "consistency",
+      "location": "Journey 3 narrative vs Product Scope MVP scope",
+      "description": "Journey 3 implies Momentum ships with a web-fullstack-optimized default validator ('lenses optimized for web fullstack'), but no such validator appears in the Day 1, Day 2-3, or First Sprint MVP scope sections.",
+      "evidence": "Journey 3: 'The validation protocol calls Momentum's default validator, which uses lenses optimized for web fullstack.' MVP scope (Day 1 through First Sprint): no domain-specific or web-fullstack validator listed.",
+      "suggestion": "Either add the default validator to the MVP scope, or revise the Journey 3 narrative to describe generic defaults rather than web-fullstack-specific ones.",
+      "sources": ["COHERENCE-ADV-001"]
+    },
+    {
+      "id": "CONSOLIDATED-008",
+      "confidence": "MEDIUM",
+      "severity": "medium",
+      "dimension": "clarity",
+      "location": "Executive Summary (first use of 'flywheel'); throughout document",
+      "description": "The 'flywheel' concept is used as a core architectural term throughout but is never formally defined. The first use appears in the Executive Summary before any description is provided.",
+      "evidence": "Executive Summary: 'an evaluation flywheel that traces failures upstream via navigable derives_from chains' — used without prior definition.",
+      "suggestion": "Add a one-sentence definition at first use: 'The evaluation flywheel is a feedback loop that traces quality failures upstream through the specification chain to the workflow or rule that produced them, fixes at that level, and measures whether the fix prevents recurrence.'",
+      "sources": ["COHERENCE-ADV-002"]
+    },
+    {
+      "id": "CONSOLIDATED-009",
+      "confidence": "MEDIUM",
+      "severity": "medium",
+      "dimension": "domain_rule_compliance",
+      "location": "Functional Requirements > Provenance & Traceability > FR13",
+      "description": "FR13 bundles 4-5 distinct testable behaviors into one requirement: hash-based staleness detection, time-based staleness detection, SUSPECT flagging, one-hop propagation constraint, and human-gated update rule.",
+      "evidence": "'System can detect staleness using two modes: hash-based for internal documents (compare `derives_from` content hash to current upstream hash) and time-based for edge documents (compare research date to domain-specific freshness windows). Stale downstream documents are flagged as SUSPECT, not auto-updated — one-hop propagation only, human/verifier-gated at each level.'",
+      "suggestion": "Split into FR13a (hash-based staleness detection), FR13b (time-based staleness detection), FR13c (SUSPECT flagging), FR13d (one-hop propagation with human-gated updates).",
+      "sources": ["DOMAIN-ENUM-001"]
+    },
+    {
+      "id": "CONSOLIDATED-010",
+      "confidence": "MEDIUM",
+      "severity": "medium",
+      "dimension": "domain_rule_compliance",
+      "location": "Functional Requirements > Enforcement & Quality Governance > FR23",
+      "description": "FR23 bundles model routing configuration (frontmatter), the cognitive hazard rule, and a three-tier escalation strategy into a single requirement.",
+      "evidence": "'Developer can configure model routing defaults per skill and agent via `model:` and `effort:` frontmatter, with a documented default strategy: Sonnet 4.6 at medium effort for general tasks; upgrade to Opus for complex reasoning, orchestration, or outputs without automated validation (cognitive hazard rule)...'",
+      "suggestion": "Split into FR23a (model/effort frontmatter configuration capability) and FR23b (documented default model routing strategy). The strategy description may be better placed in a documentation section than as a testable FR.",
+      "sources": ["DOMAIN-ENUM-002"]
+    },
+    {
+      "id": "CONSOLIDATED-011",
+      "confidence": "MEDIUM",
+      "severity": "medium",
+      "dimension": "fitness_for_purpose",
+      "location": "Success Criteria > Measurable Outcomes: Developer confidence metric",
+      "description": "The 'Developer confidence >=4/5' metric specifies '1-5 rating recorded at sprint retrospective' as the measurement method, but no FR exists for the sprint retrospective recording mechanism or confidence self-assessment collection.",
+      "evidence": "'Developer confidence | >=4/5 self-reported rating after each sprint | 1-5 rating recorded at sprint retrospective | Practice is earning trust'",
+      "suggestion": "Add an FR for confidence rating collection, or explicitly note this measurement is manual/external to system scope and remove the measurement method entry.",
+      "sources": ["DOMAIN-ADV-002"]
+    },
+    {
+      "id": "CONSOLIDATED-012",
+      "confidence": "MEDIUM",
+      "severity": "medium",
+      "dimension": "logical_soundness",
+      "location": "Non-Functional Requirements > Context Window & Token Economics > NFR4",
+      "description": "NFR4 declares a 'blocking architecture decision' without resolving it or generating a named deliverable. A PRD marking a decision as blocking should either resolve it or explicitly defer it to a named architecture artifact.",
+      "evidence": "'Architecture must determine whether plugin-namespaced skills count against the flat skill context budget and design the packaging strategy accordingly — this is a blocking architecture decision that gates plugin vs flat skill deployment choice'",
+      "suggestion": "Add to Post-PRD Actions: 'Architecture document must resolve the plugin-namespaced skills context budget question (NFR4) before implementation begins.'",
+      "sources": ["ACCURACY-ENUM-003"]
+    },
+    {
+      "id": "CONSOLIDATED-013",
+      "confidence": "MEDIUM",
+      "severity": "medium",
+      "dimension": "completeness",
+      "location": "Developer Tool Specific Requirements — Installation Architecture vs Documentation & Repository Structure",
+      "description": "The Installation Architecture diagram (skills/ + ide/ + package.json) and the Documentation section's repo structure (full tree with docs/ + module/) are two different representations with no clarifying note. A reader may be confused about the canonical layout.",
+      "evidence": "Installation Architecture: 'momentum/ ├── skills/ ├── ide/ └── package.json'. Documentation section: 'momentum/ ├── LICENSE ├── README.md ├── CONTRIBUTING.md ├── skills/ ├── ide/ ├── docs/ └── module/'",
+      "suggestion": "Label the Installation Architecture diagram as 'Source separation layout (distribution input only)' to distinguish it from the full repo structure.",
+      "sources": ["STRUCTURAL-ADV-003"]
+    },
+    {
+      "id": "CONSOLIDATED-014",
+      "confidence": "MEDIUM",
+      "severity": "low",
+      "dimension": "cross_reference_integrity",
+      "location": "Developer Tool Specific Requirements > Implementation Considerations",
+      "description": "Reference to 'deployment research F-06' is an opaque internal finding ID with no navigation path in the document.",
+      "evidence": "'Plugin-namespaced skills may not count against the flat budget (unverified — flagged in deployment research F-06)'",
+      "suggestion": "Replace with inline reference to the source document path or describe the finding inline.",
+      "sources": ["STRUCTURAL-ENUM-003"]
+    },
+    {
+      "id": "CONSOLIDATED-015",
+      "confidence": "MEDIUM",
+      "severity": "low",
+      "dimension": "logical_soundness",
+      "location": "Innovation & Novel Patterns > What Is NOT Innovative",
+      "description": "Attribution 'Spec-driven development (Kent Beck, StrongDM, others)' is unclear. Kent Beck is primarily associated with TDD/XP. StrongDM is a network access control company with no well-known spec-driven methodology.",
+      "evidence": "'Spec-driven development (Kent Beck, StrongDM, others)'",
+      "suggestion": "Correct or clarify the attribution. If citing BDD/XP influence on spec-driven approaches, name it directly. Remove or explain the StrongDM reference.",
+      "sources": ["ACCURACY-ADV-003"]
+    },
+    {
+      "id": "CONSOLIDATED-016",
+      "confidence": "MEDIUM",
+      "severity": "low",
+      "dimension": "consistency",
+      "location": "Journey Requirements Summary table vs Journey 2 narrative",
+      "description": "Journey 2 requirements revealed mentions 'flywheel integration with retrospective' and 'measurable improvement across sprints', but neither appears as a row in the Journey Requirements Summary table.",
+      "evidence": "Journey 2 Requirements revealed: '...flywheel integration with retrospective, measurable improvement across sprints.' Journey Requirements Summary: no corresponding rows.",
+      "suggestion": "Add 'Retrospective integration' as a row marked J2, or remove from Journey 2 requirements revealed.",
+      "sources": ["COHERENCE-ENUM-003"]
+    },
+    {
+      "id": "CONSOLIDATED-017",
+      "confidence": "MEDIUM",
+      "severity": "low",
+      "dimension": "consistency",
+      "location": "Post-PRD Actions",
+      "description": "The action implies the README currently lists seven principles ('the original seven plus Protocol-Based Integration'), but the README may not yet exist in that state.",
+      "evidence": "'Update project README with the eight core principles (the original seven plus Protocol-Based Integration)'",
+      "suggestion": "Rephrase: 'Create/update project README to document the eight core principles.'",
+      "sources": ["COHERENCE-ADV-003"]
+    },
+    {
+      "id": "CONSOLIDATED-018",
+      "confidence": "MEDIUM",
+      "severity": "low",
+      "dimension": "domain_rule_compliance",
+      "location": "Functional Requirements > Evaluation Flywheel > FR29",
+      "description": "FR29 requires cross-story pattern detection but provides no threshold or trigger condition, making it untestable.",
+      "evidence": "'System can detect cross-story patterns in the findings ledger and surface systemic issues'",
+      "suggestion": "Add threshold: 'System can detect when the same finding category appears in 3 or more distinct stories and surface it as a systemic pattern.'",
+      "sources": ["DOMAIN-ENUM-004"]
+    },
+    {
+      "id": "CONSOLIDATED-019",
+      "confidence": "MEDIUM",
+      "severity": "low",
+      "dimension": "fitness_for_purpose",
+      "location": "Functional Requirements > Specification & Development Workflow > FR11",
+      "description": "FR11 uses 'may improve' — probabilistic language that makes the requirement untestable.",
+      "evidence": "'the agent treats questions as discovery opportunities that may improve the specification'",
+      "suggestion": "Replace: 'the agent investigates whether the question reveals a specification ambiguity and, if so, proposes a spec update.'",
+      "sources": ["DOMAIN-ENUM-005"]
+    },
+    {
+      "id": "CONSOLIDATED-020",
+      "confidence": "MEDIUM",
+      "severity": "low",
+      "dimension": "convention_adherence",
+      "location": "Functional Requirements > Enforcement & Quality Governance (FR18, FR19, FR20, FR21, FR22)",
+      "description": "Multiple FRs embed implementation mechanism names in parentheticals. PRD requirements should specify WHAT not HOW.",
+      "evidence": "FR18: '(PostToolUse hook)'; FR19: '(PreToolUse hook)'; FR20: '(Stop hook)'; FR22: 'via `.claude/rules/`'",
+      "suggestion": "Move implementation mechanism names to a note or implementation guidance section.",
+      "sources": ["DOMAIN-ADV-004"]
+    }
+  ],
+  "duplicates_removed": 7,
+  "false_positives_removed": 0
+}

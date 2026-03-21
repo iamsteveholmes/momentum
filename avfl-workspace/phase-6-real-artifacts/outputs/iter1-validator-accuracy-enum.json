@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ACCURACY-ENUM-001",
+    "severity": "high",
+    "dimension": "traceability",
+    "location": "Executive Summary, paragraph 2",
+    "description": "Four high-precision statistics are presented as 'industry data' without citations: rejection rates (67.3%), issue rates (1.7x), developer speed (-19%/+20%), and PR volume (98%). These specific numbers cannot be verified and appear unsourced.",
+    "evidence": "'Industry data is unambiguous: AI code generation without governance fails. 67.3% of AI-generated PRs are rejected (vs 15.6% for human code). AI-generated code produces 1.7x more issues per PR. Experienced developers are 19% slower with AI tools while believing they're 20% faster. Organizations see PR volume increase 98% but delivery metrics stay flat.'",
+    "suggestion": "Add citations for each statistic (e.g., study name, year) or add a note referencing the research documents in inputDocuments that contain these figures. If these come from docs/research/multi-model-benchmarking-handoff-2026-03-14.md or similar, cite them inline."
+  },
+  {
+    "id": "ACCURACY-ENUM-002",
+    "severity": "medium",
+    "dimension": "traceability",
+    "location": "Innovation & Novel Patterns > Detected Innovation Areas, item 2",
+    "description": "Specific statistical claims about hallucination rates (11-95%) and cascading error probability (79% over 6 hops) are presented without citations.",
+    "evidence": "'applying the suspect link pattern (from IBM DOORS requirements engineering) to an LLM specification chain — where hallucination rates are 11-95% and cascading errors hit 79% probability over 6 hops'",
+    "suggestion": "Cite the source for the 11-95% hallucination rate range and the 79%/6-hops cascading error figure. These appear in the research documents listed in derives_from — add inline citations."
+  },
+  {
+    "id": "ACCURACY-ENUM-003",
+    "severity": "low",
+    "dimension": "logical_soundness",
+    "location": "Non-Functional Requirements > Context Window & Token Economics > NFR4",
+    "description": "NFR4 declares a 'blocking architecture decision' without resolving it or creating a named deliverable. A PRD marking a decision as blocking should resolve it or explicitly defer it to a named architecture artifact.",
+    "evidence": "'Architecture must determine whether plugin-namespaced skills count against the flat skill context budget and design the packaging strategy accordingly — this is a blocking architecture decision that gates plugin vs flat skill deployment choice'",
+    "suggestion": "Either resolve the decision or add an explicit Post-PRD action: 'Architecture document must resolve the plugin-namespaced skills context budget question before implementation begins.'"
+  }
+]

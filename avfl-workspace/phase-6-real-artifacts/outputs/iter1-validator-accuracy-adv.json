@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ACCURACY-ADV-001",
+    "severity": "high",
+    "dimension": "traceability",
+    "location": "Executive Summary, paragraph 2",
+    "description": "Four high-precision statistics are presented as 'unambiguous industry data' with no source citations. The precision of these numbers (67.3%, 1.7x, 19%, 20%, 98%) indicates they come from specific studies, but the studies are unnamed.",
+    "evidence": "'Industry data is unambiguous: AI code generation without governance fails. 67.3% of AI-generated PRs are rejected (vs 15.6% for human code). AI-generated code produces 1.7x more issues per PR. Experienced developers are 19% slower with AI tools while believing they're 20% faster. Organizations see PR volume increase 98% but delivery metrics stay flat.'",
+    "suggestion": "Add source citations. The research documents in inputDocuments likely contain these figures. Even a parenthetical reference would satisfy the traceability requirement."
+  },
+  {
+    "id": "ACCURACY-ADV-002",
+    "severity": "medium",
+    "dimension": "traceability",
+    "location": "Innovation & Novel Patterns, item 2",
+    "description": "The hallucination rate range (11-95%) and cascading error probability (79% over 6 hops) are specific quantitative claims with no source. The IBM DOORS attribution for 'suspect link pattern' is also unverified.",
+    "evidence": "'applying the suspect link pattern (from IBM DOORS requirements engineering) to an LLM specification chain — where hallucination rates are 11-95% and cascading errors hit 79% probability over 6 hops'",
+    "suggestion": "Cite sources for the hallucination rate range and cascading error probability. Verify or qualify the IBM DOORS attribution."
+  },
+  {
+    "id": "ACCURACY-ADV-003",
+    "severity": "low",
+    "dimension": "logical_soundness",
+    "location": "Innovation & Novel Patterns > What Is NOT Innovative",
+    "description": "The attribution 'Spec-driven development (Kent Beck, StrongDM, others)' is unclear. Kent Beck is primarily associated with TDD/XP, not spec-driven development. StrongDM is a network access control company with no well-known spec-driven development methodology.",
+    "evidence": "'Spec-driven development (Kent Beck, StrongDM, others)'",
+    "suggestion": "Clarify the attribution. If the intent is to cite BDD/TDD influence, name it directly. Remove or replace the StrongDM reference with a more recognizable attribution, or add a brief clarification of what StrongDM contribution is being referenced."
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "DOMAIN-ADV-001",
+    "severity": "high",
+    "dimension": "fitness_for_purpose",
+    "location": "Functional Requirements section (all FR groups)",
+    "description": "No FRs are tagged by phase (MVP vs Growth). An implementer reading the FR section cannot determine which requirements are in scope for MVP without cross-referencing the Product Scope section. FR44-FR47 are Growth features per the scope section but appear as untagged FRs alongside MVP requirements.",
+    "evidence": "FR44: 'Developer can conduct multi-model research using MCP-integrated LLM providers (Gemini, GPT, and additional providers)'. Product Scope Growth Features: 'Gemini MCP server (PT-028) — automated multi-model research'. No phase tags appear in the FR section.",
+    "suggestion": "Add phase tags [MVP] / [Growth] to each FR, or add a phase column to the FR tables, or add a note in the FR section specifying which FR IDs are MVP-scoped."
+  },
+  {
+    "id": "DOMAIN-ADV-002",
+    "severity": "medium",
+    "dimension": "fitness_for_purpose",
+    "location": "Success Criteria > Measurable Outcomes: Developer confidence metric",
+    "description": "The 'Developer confidence >=4/5' metric specifies a measurement method ('1-5 rating recorded at sprint retrospective') but no FR exists for sprint retrospective recording or the confidence self-assessment mechanism.",
+    "evidence": "'Developer confidence | >=4/5 self-reported rating after each sprint | 1-5 rating recorded at sprint retrospective | Practice is earning trust'",
+    "suggestion": "Add an FR for confidence rating collection, or note this is manual/external to the system scope."
+  },
+  {
+    "id": "DOMAIN-ADV-003",
+    "severity": "medium",
+    "dimension": "fitness_for_purpose",
+    "location": "Business Success section",
+    "description": "The 'four debt types (verification, cognitive, pattern drift, technical)' are presented as the core problem Momentum prevents but are never defined anywhere in the document.",
+    "evidence": "'Personal productivity: The solo developer ships higher-quality output with sustained or increased throughput, without accumulating the four debt types (verification, cognitive, pattern drift, technical)'",
+    "suggestion": "Define each debt type at first mention (1-2 sentences each) or add a Glossary."
+  },
+  {
+    "id": "DOMAIN-ADV-004",
+    "severity": "low",
+    "dimension": "convention_adherence",
+    "location": "Functional Requirements > Enforcement & Quality Governance (FR18, FR19, FR20, FR21, FR22)",
+    "description": "Multiple FRs specify implementation mechanisms in parenthetical annotations ('PostToolUse hook', 'PreToolUse hook', 'Stop hook', 'via .claude/rules/'). PRD requirements should specify WHAT not HOW.",
+    "evidence": "FR18: '(PostToolUse hook)'; FR19: '(PreToolUse hook)'; FR20: '(Stop hook)'; FR22: 'via `.claude/rules/`'",
+    "suggestion": "Move implementation mechanism names to a note or implementation guidance section. Keep FR statements as behavior requirements only."
+  }
+]

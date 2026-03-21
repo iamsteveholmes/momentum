@@ -1,0 +1,29 @@
+[
+  {
+    "id": "STRUCTURAL-ADV-001",
+    "severity": "medium",
+    "dimension": "cross_reference_integrity",
+    "location": "Frontmatter: derives_from vs inputDocuments",
+    "description": "The process-backlog.md is listed in inputDocuments (7 entries) but missing from derives_from (6 entries). This breaks the provenance chain — if the document derives from the backlog, that relationship is undeclared.",
+    "evidence": "inputDocuments entry 7: 'docs/process/process-backlog.md'. No matching derives_from entry exists.",
+    "suggestion": "Add derives_from entry for process-backlog.md or clarify it was reference-only (not a source) and move to a separate references field."
+  },
+  {
+    "id": "STRUCTURAL-ADV-002",
+    "severity": "medium",
+    "dimension": "structural_validity",
+    "location": "Measurable Outcomes table",
+    "description": "Signal column for 'Time spent on spec revision' is a copy-paste of the Target column, making the Signal column meaningless for this row.",
+    "evidence": "Signal cell reads: 'Decreases >=20% per story cycle from baseline' — identical to Target cell.",
+    "suggestion": "Replace Signal with 'Specs are compounding, not fragmenting' to match the narrative in the surrounding prose."
+  },
+  {
+    "id": "STRUCTURAL-ADV-003",
+    "severity": "low",
+    "dimension": "completeness",
+    "location": "Developer Tool Specific Requirements > Installation Architecture (repo structure diagram)",
+    "description": "The source layout diagram shows only skills/, ide/, and package.json. It omits docs/ and module/ directories that appear in the Documentation section's repo structure. A reader comparing these two diagrams may be confused about the canonical repo layout.",
+    "evidence": "Installation Architecture diagram: 'momentum/ ├── skills/ ├── ide/ └── package.json'. Documentation section: 'momentum/ ├── LICENSE ├── README.md ├── CONTRIBUTING.md ├── skills/ ├── ide/ ├── docs/ └── module/'",
+    "suggestion": "Add a clarifying note that the Installation Architecture diagram shows source separation only (the distribution/build input), while the Documentation section shows the full repo structure including docs and module."
+  }
+]
