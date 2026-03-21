@@ -1,0 +1,123 @@
+# generated: 2026-03-21
+# last_updated: 2026-03-21
+# project: momentum
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-21
+last_updated: 2026-03-21
+project: momentum
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Foundation & Bootstrap
+  epic-1: backlog
+  1-1-repository-structure-established: backlog
+  1-2-skills-installable-via-npx-skills-add: backlog
+  1-3-first-momentum-invocation-completes-setup: backlog
+  1-4-momentum-detects-and-applies-upgrades: backlog
+  1-5-enforcement-degrades-gracefully-across-tool-tiers: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Stay Oriented with Impetus
+  epic-2: backlog
+  2-1-impetus-skill-created-with-correct-persona-and-input-handling: backlog
+  2-2-session-orientation-and-thread-management: backlog
+  2-3-visual-progress-tracks-workflow-position: backlog
+  2-4-completion-signals-and-productive-waiting: backlog
+  2-5-spec-contextualization-and-configuration-gap-detection: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Automatic Quality Enforcement
+  epic-3: backlog
+  3-1-posttooluse-lint-and-format-hook-active: backlog
+  3-2-pretooluse-file-protection-hooks-active: backlog
+  3-3-stop-gate-runs-conditional-quality-checks: backlog
+  3-4-authority-hierarchy-rules-auto-load-every-session: backlog
+  3-5-model-routing-configured-by-frontmatter: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Complete Story Cycles
+  epic-4: backlog
+  4-1-code-reviewer-skill-performs-adversarial-review: backlog
+  4-2-gherkin-acs-and-atdd-workflow-active: backlog
+  4-3-full-story-cycle-guided-by-impetus: backlog
+  4-4-create-story-and-dev-story-skills-active: backlog
+  4-5-upstream-fix-skill-analyzes-quality-failures: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Trust Artifact Provenance
+  epic-5: backlog
+  5-1-derives-from-frontmatter-establishes-traceability: backlog
+  5-2-provenance-scanner-builds-referenced-by-graph: backlog
+  5-3-hash-based-staleness-detection-for-internal-documents: backlog
+  5-4-time-based-staleness-for-edge-documents: backlog
+  5-5-claim-level-provenance-status-and-integrity-enforcement: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: The Practice Compounds
+  epic-6: backlog
+  6-1-findings-ledger-accumulates-quality-findings-across-stories: backlog
+  6-2-cross-story-pattern-detection-surfaces-systemic-issues: backlog
+  6-3-flywheel-workflow-explains-issues-and-guides-upstream-trace: backlog
+  6-4-developer-consent-required-at-every-flywheel-step: backlog
+  6-5-practice-health-metric-and-fix-level-tracking: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Bring Your Own Tools
+  epic-7: backlog
+  7-1-project-configuration-file-defines-protocol-bindings: backlog
+  7-2-protocol-gap-resolution-creates-valid-config-entries: backlog
+  7-3-workflow-steps-resolve-through-protocol-interfaces-at-invocation-time: backlog
+  7-4-protocol-substitution-satisfies-interface-contract: backlog
+  7-5-mcp-provider-registration-and-cursor-tool-ceiling-compliance: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: Research & Knowledge Management
+  epic-8: backlog
+  8-1-multi-model-research-workflow-active: backlog
+  8-2-research-prompts-are-date-anchored-with-primary-source-directives: backlog
+  8-3-domain-specific-freshness-windows-define-document-currency: backlog
+  8-4-outdated-documents-archived-with-reference-chain-intact: backlog
+  epic-8-retrospective: optional
+
+  # Epic 9: Performance Validation
+  epic-9: backlog
+  9-1-promptfoo-configuration-benchmarks-skills-across-model-tiers: backlog
+  9-2-bash-benchmarking-script-captures-time-cost-and-tokens: backlog
+  9-3-golden-dataset-provides-canonical-benchmark-inputs-and-reference-outputs: backlog
+  9-4-pydantic-ai-harness-benchmarks-agent-workflows-with-agent-override: backlog
+  9-5-benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files: backlog
+  epic-9-retrospective: optional
