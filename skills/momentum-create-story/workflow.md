@@ -75,7 +75,37 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <output>Momentum Implementation Guide injected into {{story_file}}</output>
   </step>
 
-  <step n="5" goal="Run AVFL checkpoint on the story file">
+  <step n="5" goal="Write story spec to _bmad-output/stories/">
+    <action>Parse {{story_key}} to derive {{story_id}}: convert the story key to dot-notation (e.g., "1-2-repository-structure" → "1.2"; "4-4-create-story" → "4.4"). If the story key is already in dot-notation, use it directly.</action>
+    <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
+      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes → structured {{depends_on}} list (e.g., ["3.1", "2.4"]); if none found, use []
+      - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum-dev/", "_bmad-output/stories/"]); if none found, use []
+    </action>
+    <action>Ensure `_bmad-output/stories/` directory exists. If the directory does not exist, create it now (first-time setup — create an empty directory).</action>
+    <action>Write the story spec file to `_bmad-output/stories/{{story_id}}.md` with this content:
+
+```
+---
+story_id: "{{story_id}}"
+status: ready
+depends_on: {{depends_on}}
+touches: {{touches}}
+story_file: "{{story_file}}"
+---
+
+# Story {{story_id}} Spec
+
+Full story: {{story_file}}
+
+> This file is the sprint tracking record for Story {{story_id}}. It is read and written by
+> `momentum-dev` for story selection, status management, and worktree lifecycle.
+> Do not edit `status` manually — use `momentum-dev`.
+```
+    </action>
+    <output>Story spec written to _bmad-output/stories/{{story_id}}.md (status: ready, depends_on: {{depends_on}}, touches: {{touches}})</output>
+  </step>
+
+  <step n="6" goal="Run AVFL checkpoint on the story file">
     <action>Invoke the `avfl` skill with these parameters:
       - domain_expert: "story author"
       - task_context: "Momentum story — {{story_key}}"
@@ -109,10 +139,11 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     </check>
   </step>
 
-  <step n="6" goal="Completion signal">
+  <step n="8" goal="Completion signal">
     <output>Story {{story_key}} is yours to review.
 
 Produced: {{story_file}}
+Sprint spec: _bmad-output/stories/{{story_id}}.md (status: ready)
 Change types: {{change_types_summary}}
 AVFL checkpoint: {{avfl_result}}
 {{avfl_findings}}

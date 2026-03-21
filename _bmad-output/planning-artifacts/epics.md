@@ -1100,14 +1100,33 @@ So that Impetus can delegate each phase to a focused, context-rich agent.
 **When** Impetus delegates story creation
 **Then** `momentum-create-story/SKILL.md` exists and runs in the main context (not forked)
 **And** it produces a story file that contains: story title, user story statement, Gherkin ACs, architecture context relevant to the story, derives_from pointers to the spec documents it was created from
-**And** the story file is written to a path that Impetus tells the developer before writing (completion signal per UX-DR5)
+**And** the story file is written to `_bmad-output/stories/{story_id}.md` and Impetus tells the developer the path before writing (completion signal per UX-DR5)
+**And** the story file frontmatter also includes: `story_id` (dot-notation matching epics), `status: ready`, `depends_on` (structured list of story_ids extracted from the epics dependency notes for this story), `touches` (paths inferred from the story's implementation scope — skill dirs, shared config files)
 
 **Given** the dev-story skill is installed
-**When** Impetus delegates implementation to dev-story
-**Then** `momentum-dev-story/SKILL.md` exists and accepts a story file path as input
+**When** invoked without an explicit story path
+**Then** `momentum-dev` reads all story spec files from `_bmad-output/stories/`, selects the highest-priority story where `status == ready` and all `depends_on` story_ids have `status == complete`
+**And** priority order is: epic sprint assignment (Day 1 first, then Sprint 1, Sprint 2, Growth), then story order within that epic
+**And** if no story qualifies (all remaining are blocked or in_progress), `momentum-dev` surfaces "All remaining stories are blocked on: [list]" and halts
+
+**When** invoked with an explicit story file path
+**Then** `momentum-dev` uses that story directly, skipping selection
+
+**Given** `momentum-dev` has selected or been given a story to develop
+**When** the story session begins
+**Then** `momentum-dev` captures the current branch via `git branch --show-current` (Bash tool) and stores it as `target_branch`
+**And** checks for crash recovery: if branch `story/{story_id}` already exists AND worktree `.worktrees/story-{story_id}` exists, offers to resume or clean up; if branch exists but no worktree, deletes the stale branch and proceeds fresh
+**And** creates a git worktree: `git worktree add .worktrees/story-{story_id} -b story/{story_id}`
+**And** writes a lock file `.worktrees/story-{story_id}.lock`, then writes `status: in_progress` to the story spec frontmatter in the main working tree (not inside the worktree, so all concurrent sessions see the update immediately)
 **And** it reads the story file and implements to the Gherkin ACs — not to implementation details it infers independently
 **And** it does not modify acceptance test files in `tests/acceptance/` (enforced by Story 3.2 hooks)
-**And** it signals completion with a structured output matching the subagent output contract (Architecture Decision 3b): `{status, result: {files_modified: [], tests_run: bool, test_result: pass|fail|not_run}, question, confidence}`
+
+**Given** a dev-story run completes
+**When** the story implementation is done
+**Then** `momentum-dev` writes `status: complete` to the story spec frontmatter (in the main working tree) and removes the lock file
+**And** presents to the user: "Ready to merge story/{story_id} into {target_branch}. touches overlap: [list or none]. Run: git merge story/{story_id}" — and waits for explicit user confirmation before executing the merge
+**And** after confirmed merge: runs `git worktree remove .worktrees/story-{story_id}` and `git branch -d story/{story_id}`
+**And** signals completion with a structured output matching the subagent output contract (Architecture Decision 3b): `{status, result: {files_modified: [], tests_run: bool, test_result: pass|fail|not_run}, question, confidence}`
 
 **Given** a dev-story run completes
 **When** Impetus receives the structured output

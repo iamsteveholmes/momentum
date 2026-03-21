@@ -899,4 +899,88 @@ Adversarial validation conducted per the dual-reviewer pattern from VFL framewor
 
 **Complete.** All 10 subsystems covered, all 6 NFRs addressed, all 10 potential conflict points specified, all adversarial findings resolved. Plugin model eliminated; all deployment via standard Agent Skills only (revised 2026-03-18). Previously-noted plugin-agent invocation spike is resolved — `context: fork` is a SKILL.md feature requiring no plugin.
 
+---
+
+## Sprint Story Lifecycle
+
+> _Added 2026-03-21: Parallel story execution model — story state machine, session ledger extension, story frontmatter schema, worktree execution model._
+
+### Story State Machine
+
+Every story spec file tracks its position in the sprint cycle via a `status` field in its YAML frontmatter:
+
+```
+ready → in_progress → complete
+```
+
+- **`ready`** — story has been created, all `depends_on` stories are complete (or there are none), and no session is currently working on it
+- **`in_progress`** — a `momentum-dev` session has claimed this story and is executing in an isolated git worktree
+- **`complete`** — the story's worktree has been merged to the target branch and the worktree cleaned up
+
+This is the **sprint-level lifecycle** — distinct from the implementation phase lifecycle (Spec Review → ATDD → Implement → Code Review → Flywheel) tracked in the session ledger. The two are complementary:
+- Story file `status`: where the story is in the sprint cycle
+- Session ledger `active_stories` + `phase`: what is being actively worked on in each concurrent session
+
+### Story Spec File Location and Schema
+
+Story spec files live at `_bmad-output/stories/{story_id}.md`. The `story_id` uses dot-notation matching the epics (e.g., `3.1`, `4.4`).
+
+Required frontmatter fields:
+```yaml
+story_id: "3.1"            # dot-notation ID matching epics.md
+status: ready              # ready | in_progress | complete
+depends_on: []             # story_ids whose status must be complete before this starts
+touches: []                # paths likely to need merge conflict review — risk indicator, not blocker
+```
+
+`depends_on` is populated at story creation time from the dependency notes in the epics section for that story. `touches` is inferred from the story's implementation scope (e.g., skill dirs, shared config files).
+
+### Next-Story Selection Rule
+
+When `momentum-dev` is invoked without an explicit story path, it selects:
+> The highest-priority story where `status == ready` AND all stories in `depends_on` have `status == complete`
+
+Priority order: epic sprint assignment (Day 1 > Sprint 1 > Sprint 2 > Growth), then story order within that epic.
+
+If no story qualifies (all remaining stories are blocked), `momentum-dev` surfaces the blocked-on list and halts.
+
+### Session Ledger Extension: `active_stories`
+
+The session ledger `active_story` field (singular) extends to `active_stories` (array) to support concurrent sessions:
+
+```json
+{
+  "active_stories": [
+    {
+      "story_id": "3.1",
+      "worktree_path": ".worktrees/story-3.1",
+      "target_branch": "main",
+      "phase": "Implement"
+    },
+    {
+      "story_id": "3.2",
+      "worktree_path": ".worktrees/story-3.2",
+      "target_branch": "main",
+      "phase": "ATDD"
+    }
+  ]
+}
+```
+
+Impetus's session orientation must handle the multi-story case: when multiple stories are active, summarize all active sessions and their current phases.
+
+### Parallel Story Execution Model (Always-Worktree)
+
+Every `momentum-dev` session runs in its own git worktree from the start — even if it appears to be the only session. This eliminates the mid-session file-change race (if Story A ran in main and Story B merged first, A would find changed files under it).
+
+**Worktree naming convention:** `.worktrees/story-{story_id}` on branch `story/{story_id}`
+
+**Target branch:** Captured at invocation via `git branch --show-current` (Bash tool). The worktree merges back to this branch on completion — not hardcoded to `main`.
+
+**Worktree environment:** Git worktrees share the same `.git` directory — all project files, skills, config, and `.claude/` structure are available inside every worktree.
+
+**`.worktrees/` directory:** Must be in `.gitignore` — worktrees are local execution environments, not committed artifacts.
+
+**Concurrency limitation (single-developer):** Two sessions started within ~30 seconds of each other may both read the same story as `ready` before either writes `in_progress`. Mitigation: start sessions with a brief (~30s) offset. A lock file (`.worktrees/story-{story_id}.lock`) provides additional protection and should be checked before status write.
+
 **Ready for:** Epic and story creation.

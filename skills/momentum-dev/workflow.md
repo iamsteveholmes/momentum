@@ -1,8 +1,8 @@
 # momentum-dev Workflow
 
-**Goal:** Implement a Momentum story by delegating to bmad-dev-story, then applying AVFL quality gate and Momentum-specific DoD.
+**Goal:** Implement a Momentum story by selecting the next unblocked story (or using an explicit path), running in an isolated git worktree, delegating to bmad-dev-story, then applying AVFL quality gate and Momentum-specific DoD.
 
-**Role:** Thin orchestrator. The story's Momentum Implementation Guide (injected by momentum-create-story) already contains the developer's instructions. This skill reads the story, delegates implementation, then adds quality gates.
+**Role:** Thin orchestrator with sprint awareness. Manages story selection from frontmatter status, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum-create-story) contains the developer's implementation instructions.
 
 ---
 
@@ -12,28 +12,106 @@
   <critical>Do not re-implement bmad-dev-story logic. Delegate all implementation to that skill.</critical>
   <critical>AVFL runs on the PRIMARY ARTIFACT (the finished SKILL.md, rule file, or config) — not the story file itself.</critical>
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum-create-story. Offer to run the injection step manually before proceeding.</critical>
+  <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
+  <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>
+  <critical>Always write status changes (in_progress, complete) to the story spec in the MAIN working tree — not inside the worktree. This ensures all concurrent sessions see the update immediately.</critical>
 
-  <step n="1" goal="Invoke bmad-dev-story">
-    <action>Check: has the user provided a story file path?</action>
-    <check if="story path provided">
-      <action>Invoke the `bmad-dev-story` skill. Pass the story file path. bmad-dev-story will read the story's Dev Notes — including the Momentum Implementation Guide section — and implement accordingly.</action>
+  <step n="1" goal="Capture target branch">
+    <action>Run via Bash tool: `git branch --show-current`</action>
+    <action>Store {{target_branch}} = the output of that command (e.g., "main")</action>
+  </step>
+
+  <step n="2" goal="Resolve story to develop">
+    <action>Check: has the user provided an explicit story file path?</action>
+
+    <check if="explicit story path provided">
+      <action>Store {{story_file}} = the provided path</action>
+      <action>Read {{story_file}} frontmatter to extract {{story_id}} (from `story_id:` field)</action>
+      <action>If {{story_id}} is not present in the frontmatter, derive it from the file name (e.g., `_bmad-output/stories/3.1.md` → {{story_id}} = "3.1")</action>
     </check>
+
     <check if="no story path provided">
-      <action>Invoke the `bmad-dev-story` skill with no arguments. It will auto-discover the next ready-for-dev story from sprint-status.yaml.</action>
+      <action>Read all files in `_bmad-output/stories/` (glob: `_bmad-output/stories/*.md`)</action>
+      <action>For each file, read its frontmatter fields: `story_id`, `status`, `depends_on`, `touches`</action>
+      <action>Filter to candidate stories: `status == ready` AND every story_id in `depends_on` has `status == complete` in its own spec file</action>
+      <check if="no candidates found">
+        <action>Build a blocked-on summary: for each story with `status == ready` whose `depends_on` includes any story not yet `complete`, list: story_id → blocked on [list of incomplete depends_on ids]</action>
+        <output>No unblocked stories available.
+
+All remaining stories are blocked on:
+[blocked-on summary]
+
+Resolve blocking stories first, then re-invoke momentum-dev.</output>
+        <action>HALT</action>
+      </check>
+      <action>From the candidates, select the highest-priority story using this order:
+        1. Epic sprint assignment: Day 1 stories first, then Sprint 1, Sprint 2, Growth
+        2. Story order within that epic (lower story_id number = higher priority)
+      </action>
+      <action>Store {{story_id}} = selected story's story_id</action>
+      <action>Store {{story_file}} = `_bmad-output/stories/{{story_id}}.md` (read the `story_file:` frontmatter field if present for the full story path)</action>
+      <output>Selected story {{story_id}} (status: ready, depends_on satisfied). Proceeding to develop.</output>
     </check>
+  </step>
+
+  <step n="3" goal="Crash recovery check">
+    <action>Check if branch `story/{{story_id}}` already exists: run `git branch --list story/{{story_id}}`</action>
+    <action>Check if worktree `.worktrees/story-{{story_id}}` already exists (check filesystem)</action>
+
+    <check if="branch exists AND worktree directory exists">
+      <ask>A previous session for Story {{story_id}} appears to be in progress (branch story/{{story_id}} + worktree .worktrees/story-{{story_id}} both exist). Resume from where it left off, or clean up and start fresh?
+
+  R — Resume: continue in the existing worktree
+  C — Clean up: delete branch and worktree, start fresh</ask>
+      <check if="user chooses Resume">
+        <action>Skip worktree creation (Step 4) — worktree already exists. Continue from Step 5.</action>
+      </check>
+      <check if="user chooses Clean up">
+        <action>Run: `git worktree remove --force .worktrees/story-{{story_id}}`</action>
+        <action>Run: `git branch -d story/{{story_id}}`</action>
+        <action>Delete lock file `.worktrees/story-{{story_id}}.lock` if it exists</action>
+        <action>Proceed to Step 4 (worktree creation).</action>
+      </check>
+    </check>
+
+    <check if="branch exists but worktree directory does NOT exist">
+      <action>Stale branch detected — deleting: `git branch -d story/{{story_id}}`</action>
+      <action>Proceed to Step 4 (worktree creation).</action>
+    </check>
+
+    <check if="neither branch nor worktree exists">
+      <action>Proceed to Step 4 (worktree creation).</action>
+    </check>
+  </step>
+
+  <step n="4" goal="Create git worktree">
+    <action>Run: `git worktree add .worktrees/story-{{story_id}} -b story/{{story_id}}`</action>
+    <output>Worktree created at .worktrees/story-{{story_id}} on branch story/{{story_id}}</output>
+  </step>
+
+  <step n="5" goal="Mark story in-progress">
+    <action>Create lock file `.worktrees/story-{{story_id}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum-dev session started {{timestamp}}"</action>
+    <action>Read `_bmad-output/stories/{{story_id}}.md` from the main working tree</action>
+    <action>Update the `status:` frontmatter field from `ready` to `in_progress`</action>
+    <action>Write the updated file back to `_bmad-output/stories/{{story_id}}.md` in the main working tree</action>
+    <output>Story {{story_id}} marked in_progress. Lock file created.</output>
+  </step>
+
+  <step n="6" goal="Invoke bmad-dev-story">
+    <action>Invoke the `bmad-dev-story` skill inside the worktree `.worktrees/story-{{story_id}}`. Pass the story file path ({{story_file}}). bmad-dev-story will read the story's Dev Notes — including the Momentum Implementation Guide section — and implement accordingly.</action>
 
     <action>Wait for bmad-dev-story to complete fully (story status = "review")</action>
     <action>After bmad-dev-story completes, capture from its completion output:
-      - {{story_file}}: the story file path
       - {{story_key}}: the story key
       Then read {{story_file}} and extract:
       - {{file_list}}: from the story's File List section — files created/modified/deleted
     </action>
 
     <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
+    <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_id}}/`, isolated from other sessions.</note>
   </step>
 
-  <step n="2" goal="AVFL quality gate on primary artifact">
+  <step n="7" goal="AVFL quality gate on primary artifact">
     <action>Load ./references/avfl-invocation.md to determine AVFL parameters</action>
     <action>Read the story's File List to identify what was produced</action>
     <action>Identify the primary artifact type from {{file_list}}:
@@ -84,7 +162,7 @@
       <output>Script-code story — AVFL skipped. Tests provide correctness coverage for code.</output>
       <action>Set {{avfl_result}} = "skipped (script-code — tests are the quality gate)"</action>
       <action>Write the AVFL result to the Dev Agent Record in {{story_file}}: record avfl_result, profile used (N/A — skipped), and timestamp</action>
-      <action>GOTO step 3</action>
+      <action>GOTO step 8</action>
     </check>
 
     <check if="AVFL returns CLEAN">
@@ -104,11 +182,11 @@
       <action>Write the AVFL result to the Dev Agent Record in {{story_file}}: record avfl_result = GATE_FAILED, profile used, and timestamp</action>
       <action>Synthesize findings in plain language — severity indicators (! critical or high, · medium or low), brief descriptions per finding. Do NOT dump raw AVFL JSON.</action>
       <output>AVFL GATE FAILED — story cannot proceed. The artifact has defects that must be resolved before closing. Address all findings and re-run AVFL.</output>
-      <action>HALT — do not advance to Step 3 until GATE_FAILED findings are resolved and AVFL returns CLEAN or CHECKPOINT_WARNING</action>
+      <action>HALT — do not advance to Step 8 until GATE_FAILED findings are resolved and AVFL returns CLEAN or CHECKPOINT_WARNING</action>
     </check>
   </step>
 
-  <step n="3" goal="Momentum-specific DoD supplement">
+  <step n="8" goal="Momentum-specific DoD supplement">
     <action>Load ./references/dod-checklist.md</action>
     <action>Determine which DoD sections apply based on change types in {{file_list}}</action>
     <action>Verify each applicable item. Items that bmad-dev-story already checked (tests passing, all tasks [x], File List complete, Dev Agent Record updated, Change Log updated) do not need re-verification — focus on Momentum-specific additions.</action>
@@ -120,7 +198,7 @@
       - model: and effort: frontmatter are present in the produced SKILL.md
       - Size compliance (SKILL.md body is under 500 lines; overflow is in references/ with load instructions)
       - Skill name prefix (skill name starts with momentum-)
-      - AVFL result is documented (written to Dev Agent Record in Step 2)
+      - AVFL result is documented (written to Dev Agent Record in Step 7)
     </action>
 
     <action>For rule-hook stories, verify:
@@ -147,7 +225,55 @@
     <output>Momentum DoD — all items passed</output>
   </step>
 
-  <step n="4" goal="Code review decision and completion signal">
+  <step n="9" goal="Mark story complete and propose merge">
+    <action>Read `_bmad-output/stories/{{story_id}}.md` from the MAIN working tree (not the worktree)</action>
+    <action>Update the `status:` frontmatter field to `complete`</action>
+    <action>Write the updated file back to `_bmad-output/stories/{{story_id}}.md` in the main working tree</action>
+    <action>Delete the lock file `.worktrees/story-{{story_id}}.lock`</action>
+
+    <action>Read {{touches}} from the story spec frontmatter</action>
+    <action>Check for overlap: are any paths in {{touches}} also listed in other currently in_progress story specs' `touches` fields? If yes, note them as potential merge conflict paths. If no other in_progress stories, overlap = none.</action>
+
+    <output>Story {{story_id}} is complete and ready to merge.
+
+  Branch:   story/{{story_id}}
+  Target:   {{target_branch}}
+  Touches overlap: {{touches_overlap_summary}}
+
+To merge, run:
+  git merge story/{{story_id}}
+
+Confirm to proceed with merge, or review the diff first.</output>
+    <ask>Run the merge now?</ask>
+
+    <check if="user confirms merge">
+      <action>Run: `git merge story/{{story_id}}`</action>
+      <check if="merge succeeds cleanly">
+        <action>Run: `git worktree remove .worktrees/story-{{story_id}}`</action>
+        <action>Run: `git branch -d story/{{story_id}}`</action>
+        <output>Merged and cleaned up worktree for Story {{story_id}}.</output>
+      </check>
+      <check if="merge reports conflicts">
+        <output>⚠ Merge conflicts detected. Resolve conflicts in the affected files, then run:
+  git add [resolved files]
+  git merge --continue
+
+After merge is complete, clean up the worktree:
+  git worktree remove .worktrees/story-{{story_id}}
+  git branch -d story/{{story_id}}</output>
+        <action>HALT — do not auto-resolve conflicts. Wait for user to resolve and continue.</action>
+      </check>
+    </check>
+
+    <check if="user declines merge">
+      <output>Merge deferred. When ready:
+  git merge story/{{story_id}}
+  git worktree remove .worktrees/story-{{story_id}}
+  git branch -d story/{{story_id}}</output>
+    </check>
+  </step>
+
+  <step n="10" goal="Code review decision and final completion signal">
     <action>Check {{file_list}}: does it include any script files (.sh, .py, .ts, scripts/)?</action>
 
     <check if="script files present in file list">
@@ -157,16 +283,15 @@
       </check>
     </check>
 
-    <output>Story {{story_key}} is yours to review.
+    <output>Story {{story_key}} complete.
 
 Produced:
 {{file_list}}
 
 AVFL: {{avfl_result}}
 Momentum DoD: all passed
-Status: review
-
-Next: bmad-code-review (if scripts remain), or close the story.</output>
+Status: complete
+Worktree: cleaned up</output>
   </step>
 
 </workflow>

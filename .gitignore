@@ -16,3 +16,6 @@
 
 # BMAD session memory (local/ephemeral)
 _bmad/_memory/
+
+# Momentum story worktrees (local execution environments, not committed)
+.worktrees/

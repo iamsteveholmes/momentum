@@ -136,6 +136,33 @@ The user can say no or request changes. Wait for explicit approval.
 - `git stash` (preserves work, doesn't destroy it)
 - Any read-only git query
 
+## Worktree Conventions
+
+These conventions apply to `momentum-dev` story sessions, which always use git worktrees.
+
+**Naming:** `.worktrees/story-{story_id}` (directory) on branch `story/{story_id}`
+
+**Always-worktree rule:** Every `momentum-dev` story session creates a git worktree — even if it appears to be the only active session. This prevents mid-session file-change races when concurrent stories merge at different times.
+
+**Crash recovery:** Before running `git worktree add`, check whether branch `story/{story_id}` already exists. If branch + worktree both exist, offer to resume or clean up. If branch exists but no worktree, delete the stale branch before proceeding.
+
+**Status writes go to the main working tree:** Story spec status updates (`ready` → `in_progress`, `in_progress` → `complete`) are written to `_bmad-output/stories/{story_id}.md` in the main working tree, not inside the worktree. This ensures all concurrent sessions see status changes immediately.
+
+**Merge gate:** Always propose the merge command and wait for explicit user confirmation before running `git merge`. Never auto-execute a merge.
+
+**Merge order:** For stories with no dependency relationship, any merge order is valid. Merge dependency leaves first (a story whose dependents are waiting). Conflicts are expected when `touches` paths overlap — review diffs carefully.
+
+**Cleanup:** After a confirmed merge:
+```
+git worktree remove .worktrees/story-{story_id}
+git branch -d story/{story_id}
+```
+Run `git worktree prune` periodically to remove stale worktree metadata.
+
+**Concurrency limitation:** Start concurrent sessions with a ~30s offset to avoid same-story selection race (two sessions both reading the same story as `ready` before either writes `in_progress`). A lock file `.worktrees/story-{story_id}.lock` provides additional protection.
+
+**`.worktrees/` is gitignored:** Worktrees are local execution environments, not committed artifacts.
+
 ## Session End Protocol
 
 Before ending a session:
