@@ -1990,18 +1990,6 @@ So that routing decisions are grounded in measured evidence and documented with 
 
 ---
 
-## P1 — Process Sprint-1
+## P{n} — Process Sprint-{n} (placeholder)
 
-Process stories capture dev-environment and practice improvement work that doesn't belong in product epics. Process story IDs follow the format `p{sprint}.{n}`.
-
-**Priority:** Sprint 1
-
----
-
-### Story p1.1: momentum-plan-audit Skill — Spec Impact Gate Before Plan Mode Exit
-
-**Status:** complete
-
-A `PreToolUse` hook on `ExitPlanMode` blocks plan mode from exiting until the `## Spec Impact` section is present in the active plan file. The `momentum-plan-audit` skill classifies plans as trivial or substantive, creates a process story for substantive plans, runs a targeted upstream spec audit, runs a single combined AVFL checkpoint on both plan and story, and writes the `## Spec Impact` section.
-
-**Touches:** `skills/momentum-plan-audit/`, `.claude/settings.json`, `_bmad-output/stories/`
+Each sprint has a corresponding process epic `P{n} — Process Sprint-{n}`. Process stories capture dev-environment and practice improvement work (skills, rules, hooks, tooling) that doesn't belong in product epics. Story IDs follow the format `p{sprint}.{n}` (e.g., `p1.1`, `p2.3`). Process stories are tracked in `_bmad-output/stories/` — this epic is a convention anchor, not a story registry.
