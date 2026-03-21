@@ -2,7 +2,7 @@
 
 ## Detection Heuristics
 
-Read each task in the story's Tasks/Subtasks section. Apply the signals below to classify each task. A task may match multiple types — use the most specific match.
+Read each task in the story's Tasks/Subtasks section. Apply the signals below to classify each task. A task typically maps to one change type — use the most specific signal. Exception: when a task bundles multiple file types (e.g., creating a full skill package with both instruction files and scripts), classify each file group separately per the rules below.
 
 | Signal in task description or AC | Change Type |
 |---|---|
@@ -59,13 +59,13 @@ Include when any task involves SKILL.md, workflow.md, or other skill instruction
 2. Write/modify the SKILL.md, workflow.md, or reference files
 
 **Then verify:**
-3. Run evals: for each eval file, spawn a subagent with the eval's input context and the skill loaded; observe whether the behavior matches what the eval describes
+3. Run evals: for each eval file, use the Agent tool to spawn a subagent. Give it: (1) the eval's scenario as its task, and (2) load the skill by passing the SKILL.md and workflow.md contents as context (or invoke the skill via its Agent Skills name if installed). Observe whether the subagent's behavior matches the eval's expected outcome.
 4. If all evals match → task complete
 5. If any eval fails → diagnose the gap in the skill instructions, revise, re-run (max 3 cycles; surface to user if still failing)
 
 **NFR compliance — mandatory for every skill-instruction task:**
 - SKILL.md `description` field must be ≤150 characters (NFR1) — count precisely
-- `model:` and `effort:` frontmatter fields must be present (model routing per NFR3)
+- `model:` and `effort:` frontmatter fields must be present (model routing per FR23)
 - SKILL.md body must stay under 500 lines / 5000 tokens; overflow content goes in `references/` with clear load instructions (NFR3)
 - Skill names prefixed `momentum-` (NFR12 — no naming collision with BMAD skills)
 
@@ -74,7 +74,8 @@ Include when any task involves SKILL.md, workflow.md, or other skill instruction
 - [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
 - [ ] SKILL.md description ≤150 characters confirmed (count the actual characters)
 - [ ] `model:` and `effort:` frontmatter present and correct
-- [ ] AVFL checkpoint result documented (run automatically by momentum-dev after implementation)
+- [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed (overflow in `references/` if needed)
+- [ ] AVFL checkpoint on produced artifact documented (momentum-dev runs this automatically — validates the implemented SKILL.md against story ACs)
 ```
 
 ---
@@ -86,7 +87,7 @@ Include when any task involves bash, Python, TypeScript, or other executable scr
 ```markdown
 ### script-code Tasks: TDD via bmad-dev-story
 
-Script and code changes use standard TDD (red-green-refactor). bmad-dev-story's Step 5 handles this correctly — the implementation guidance below is the standard approach:
+Script and code changes use standard TDD (red-green-refactor). bmad-dev-story handles TDD natively — the implementation guidance below matches its standard approach:
 
 1. **Red:** Write failing tests for the task's functionality first. Confirm they fail before implementing.
 2. **Green:** Implement the minimum code to make tests pass. Run tests to confirm.
@@ -94,7 +95,7 @@ Script and code changes use standard TDD (red-green-refactor). bmad-dev-story's 
 
 **Note:** Scripts in Momentum live under `skills/momentum-[name]/scripts/`. Follow the pattern in existing Momentum scripts for language choice and structure.
 
-**DoD items for script-code tasks (standard — no additions needed):**
+**DoD items for script-code tasks (bmad-dev-story standard DoD applies — listed here for reference):**
 - Tests written and passing
 - No regressions in existing test suite
 - Code quality checks pass if configured
@@ -116,7 +117,7 @@ Rules and hook configurations are declarative — they don't have unit tests. Us
 3. **Verify functionally:**
    - For PreToolUse hooks: confirm the hook entry matches the required format and the blocked paths/tools are correct
    - For PostToolUse hooks: trigger a test edit and confirm the hook fires (if testable in current environment)
-   - For Stop hooks: verify the conditional logic matches the FR specification
+   - For Stop hooks: verify the conditional logic matches the functional requirements in the story's acceptance criteria
    - For rules files: confirm all required sections are present and the rule is internally consistent
 4. **Document** the verification result and expected behavior in the Dev Agent Record
 
@@ -144,13 +145,19 @@ Config and structure changes need no tests or evals. Implement directly and veri
 
 1. **Write the config or create the directory structure** per the story's acceptance criteria
 2. **Verify by inspection:**
-   - JSON files: must parse without error (mentally parse or use a tool)
+   - JSON files: must parse without error (validate with a JSON linter, `jq`, or IDE — do not rely on manual visual inspection)
    - Required fields: each required field must be present with the correct type
    - Paths: all referenced paths must exist after creation
    - Version consistency: any version fields must be consistent with related version references
 3. **Document** what was created in the Dev Agent Record
 
 **No tests required** for pure config/structure changes.
+
+**DoD items for config-structure tasks:**
+- [ ] All JSON files parse without error (validated with a tool)
+- [ ] All required fields present with correct types
+- [ ] All referenced paths exist after creation
+- [ ] Changes documented in Dev Agent Record
 ```
 
 ---

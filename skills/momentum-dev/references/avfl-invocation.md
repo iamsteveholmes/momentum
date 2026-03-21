@@ -6,11 +6,10 @@ Reference this file in Step 2 to determine the correct AVFL parameters for each 
 
 | Primary artifact type | Run AVFL? | Profile | Stage |
 |---|---|---|---|
-| skill-instruction (SKILL.md, workflow.md) | Yes | `checkpoint` | `final` |
+| skill-instruction (SKILL.md, workflow.md), including mixed skill+script stories | Yes | `checkpoint` | `final` |
 | rule-hook (.claude/rules/, hooks config) | Yes | `checkpoint` | `final` |
 | config-structure only (JSON, version files) | Yes | `gate` | `final` |
 | script-code only (.sh, .py, .ts) | **No** — tests are the quality gate | — | — |
-| mixed (skill + script) | Yes — validate the skill artifact only | `checkpoint` | `final` |
 
 ## Parameter Reference
 
@@ -19,17 +18,20 @@ Reference this file in Step 2 to determine the correct AVFL parameters for each 
 ```
 domain_expert: "skill author"
 task_context: "Momentum skill — [skill name, e.g., momentum-create-story]"
-output_to_validate: [full content of the primary SKILL.md file]
+output_to_validate: [combined content of the produced SKILL.md and workflow.md (SKILL.md provides frontmatter and metadata; workflow.md contains the implementation)]
 source_material: [the Acceptance Criteria section from the story file]
 profile: checkpoint
 stage: final
 ```
 
 **Why `checkpoint` not `full`?**
-The skill will be dogfooded on real stories (NFR16) — real use is the ultimate validation. `checkpoint` (2–3 lenses, one fix attempt) gives structural and coherence quality signal without the 8-agent cost of `full`. Use `full` only when a skill is a final production deliverable being published to a release.
+The skill will be dogfooded on real stories (NFR16) — real use is the ultimate validation. `checkpoint` (2–3 lenses, one fix attempt) gives structural and coherence quality signal without the 8-agent cost of `full`. Use `full` for final deliverables, high-stakes content, or anything consumed by humans or downstream systems without further review — including skills published to a release.
 
 **Why acceptance criteria as source_material?**
 AVFL's Factual Accuracy lens checks whether the produced artifact delivers what it was supposed to deliver. The ACs define what "supposed to deliver" means.
+
+**Why both SKILL.md and workflow.md?**
+Momentum skills follow a pattern where the SKILL.md body is a single delegation line ("Follow the instructions in ./workflow.md."), and the actual skill logic lives in workflow.md. Passing only SKILL.md gives AVFL very little to validate. Always include both files so AVFL can assess the complete skill.
 
 ### rule-hook primary artifact
 
@@ -74,11 +76,13 @@ Always synthesize AVFL output before presenting to the user. Never dump raw JSON
 
 **Format:**
 ```
-AVFL checkpoint — [CLEAN | CHECKPOINT_WARNING]
-[If CHECKPOINT_WARNING:]
+AVFL [checkpoint|gate] — [CLEAN | CHECKPOINT_WARNING | GATE_FAILED]
+[If CHECKPOINT_WARNING or GATE_FAILED:]
   ! [critical finding summary — one line]
   · [medium finding summary — one line]
   [etc.]
 ```
+
+Use `AVFL checkpoint —` for skill-instruction and rule-hook runs (checkpoint profile); use `AVFL gate —` for config-structure runs (gate profile).
 
 **Severity key:** `!` = critical or high, `·` = medium or low
