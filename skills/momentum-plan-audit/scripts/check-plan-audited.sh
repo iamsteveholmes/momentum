@@ -23,13 +23,13 @@ if grep -q "^## Spec Impact" "$PLAN_FILE"; then
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Plan audit required before exiting plan mode."
+echo "  Plan audit gate (safety net): Spec Impact missing."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "  Active plan: $PLAN_FILE"
 echo "  Missing:     '## Spec Impact' section"
 echo ""
-echo "  Run 'momentum-plan-audit' to classify this plan"
-echo "  and write the Spec Impact section."
+echo "  This should have run automatically via the plan-audit"
+echo "  rule. If it didn't, invoke momentum-plan-audit manually."
 echo ""
 exit 2
