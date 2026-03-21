@@ -15,7 +15,7 @@ Load `./references/spec-capture-guide.md` for classification signals, process st
 ## EXECUTION
 
 <workflow>
-  <critical>Trivial plans skip Steps 3, 4, and 5 entirely — no spec reads, no story creation, no AVFL.</critical>
+  <critical>Trivial plans and user-skipped plans skip Steps 3, 4, and 5 entirely — no spec reads, no story creation, no AVFL.</critical>
   <critical>Do not read full spec files. Read only the sections the plan actually touches.</critical>
   <critical>Write ## Spec Impact to the plan file before completing — this is what unblocks ExitPlanMode.</critical>
 
@@ -43,6 +43,22 @@ Load `./references/spec-capture-guide.md` for classification signals, process st
 
     <check if="{{classification}} == trivial">
       <action>Skip to Step 6.</action>
+    </check>
+
+    <check if="{{classification}} == substantive">
+      <action>Summarize what makes this plan substantive in one sentence. Identify the key signals: files created/modified, new capabilities introduced, behavior changes.</action>
+      <ask>This plan is substantive — {{classification_reason}}
+
+Proceeding will:
+  1. Create a process story capturing this plan's work
+  2. Audit relevant spec sections for consistency
+  3. Run an AVFL checkpoint on the plan and story
+
+Proceed with full audit, or skip? (Skip writes a minimal Spec Impact and unblocks ExitPlanMode.)</ask>
+      <check if="user chooses skip">
+        <action>Store {{classification}} = "skipped"</action>
+        <action>Skip to Step 6.</action>
+      </check>
     </check>
   </step>
 
@@ -113,6 +129,23 @@ Load `./references/spec-capture-guide.md` for classification signals, process st
   </step>
 
   <step n="6" goal="Write ## Spec Impact section to plan file">
+    <check if="{{classification}} == skipped">
+      <action>Append to {{plan_file}}:
+
+```markdown
+
+---
+
+## Spec Impact
+
+**Classification:** skipped
+**Reason:** User declined audit.
+
+**Go/No-Go:** Proceed (audit skipped).
+```
+      </action>
+    </check>
+
     <check if="{{classification}} == trivial">
       <action>Append to {{plan_file}}:
 
@@ -191,6 +224,10 @@ Classification: {{classification}}</output>
     <check if="{{classification}} == substantive">
       <output>Process story: {{process_story_file}}
 AVFL: {{avfl_result}}</output>
+    </check>
+
+    <check if="{{classification}} == skipped">
+      <output>Audit skipped by user. Spec Impact written with skipped marker.</output>
     </check>
 
     <output>
