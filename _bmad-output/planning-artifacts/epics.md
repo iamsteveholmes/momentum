@@ -1986,3 +1986,22 @@ So that routing decisions are grounded in measured evidence and documented with 
 **Then** the benchmark results file is committed under `docs/benchmarking/results/[date]-[skill].json` so the routing decision is auditable
 **And** both commits — the skill frontmatter update and the results file — are made together or in immediate succession so the audit trail is never split
 
+
+
+---
+
+## P1 — Process Sprint-1
+
+Process stories capture dev-environment and practice improvement work that doesn't belong in product epics. Process story IDs follow the format `p{sprint}.{n}`.
+
+**Priority:** Sprint 1
+
+---
+
+### Story p1.1: momentum-plan-audit Skill — Spec Impact Gate Before Plan Mode Exit
+
+**Status:** complete
+
+A `PreToolUse` hook on `ExitPlanMode` blocks plan mode from exiting until the `## Spec Impact` section is present in the active plan file. The `momentum-plan-audit` skill classifies plans as trivial or substantive, creates a process story for substantive plans, runs a targeted upstream spec audit, runs a single combined AVFL checkpoint on both plan and story, and writes the `## Spec Impact` section.
+
+**Touches:** `skills/momentum-plan-audit/`, `.claude/settings.json`, `_bmad-output/stories/`
