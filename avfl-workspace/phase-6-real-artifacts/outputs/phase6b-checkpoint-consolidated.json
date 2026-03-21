@@ -1,0 +1,269 @@
+{
+  "run_id": "phase6b-checkpoint-iter1",
+  "profile": "checkpoint",
+  "stage": "final",
+  "skepticism": 3,
+  "iteration": 1,
+  "model": "sonnet",
+  "reviewer_framing": "Enumerator",
+  "domain_expert": "technical writer / product manager",
+  "task_context": "Product Requirements Document for Momentum, an agentic engineering practice system",
+  "source_material": "docs/research/handoff-product-brief-2026-03-14.md",
+  "output_to_validate": "avfl-workspace/phase-6-real-artifacts/fixtures/prd-pre-vfl.md",
+  "timestamp": "2026-03-20",
+
+  "raw_findings_by_lens": {
+    "structural": [
+      {
+        "id": "STRUCTURAL-001",
+        "severity": "medium",
+        "dimension": "STRUCTURAL_VALIDITY / CROSS_REFERENCE_INTEGRITY",
+        "location": "Frontmatter — inputDocuments array vs. derives_from array",
+        "description": "inputDocuments lists 7 files, but derives_from lists only 6 entries. The file docs/process/process-backlog.md appears in inputDocuments[6] but has no corresponding entry in derives_from. PT-026, PT-028, PT-029 referenced in Growth Features section suggests the PRD does derive from the backlog, making the omission more significant.",
+        "evidence": "inputDocuments includes docs/process/process-backlog.md; derives_from has no entry with that path. documentCounts shows processBacklog: 1.",
+        "suggestion": "Add a derives_from entry for docs/process/process-backlog.md with id BACKLOG-001 and relationship: derives_from, or remove it from inputDocuments if purely reference material."
+      },
+      {
+        "id": "STRUCTURAL-002",
+        "severity": "high",
+        "dimension": "CROSS_REFERENCE_INTEGRITY",
+        "location": "Executive Summary; What Makes This Special; NFR5; Installation Architecture intro paragraph",
+        "description": "PRD claims 17+ AI coding tools in four locations. Declared source material (HANDOFF-BRIEF-001) explicitly states verified adopter count as 15+ tools. PRD inflates by 2 with no cited source for higher figure.",
+        "evidence": "Source Skills Strategy Key Quantitative Data: 'Agent Skills adopter count: 15+ tools (VERIFIED from agentskills.io specification)'. PRD has 17+ in: Executive Summary, What Makes This Special, NFR5, Installation Architecture.",
+        "suggestion": "Replace all four instances of 17+ with 15+ to match verified source figure."
+      },
+      {
+        "id": "STRUCTURAL-003",
+        "severity": "medium",
+        "dimension": "CROSS_REFERENCE_INTEGRITY / COMPLETENESS",
+        "location": "Journey 1 Rising Action vs. Installation Architecture table",
+        "description": "Journey 1 shows 'npx skills add momentum -a claude-code' as Claude Code install. Installation table does not include this command — Claude Code row shows only 'Claude Code plugin install' (description, not command) while Cursor row shows concrete 'npx skills add momentum -a cursor'. The asymmetry cannot be reconciled without clarification.",
+        "evidence": "Journey 1: 'Steve runs npx skills add momentum -a claude-code and installs the plugin.' Installation table Claude Code row: 'Claude Code plugin install' (no command). Cursor row: 'npx skills add momentum -a cursor' (command present).",
+        "suggestion": "Either add npx form to Claude Code row, or update Journey 1 to use plugin install flow. Clarify whether -a claude-code invokes plugin install or skills-only install."
+      }
+    ],
+    "accuracy": [
+      {
+        "id": "ACCURACY-001",
+        "severity": "critical",
+        "dimension": "TRACEABILITY / CORRECTNESS",
+        "location": "Executive Summary — problem framing paragraph",
+        "description": "Four statistics in the Executive Summary have no traceable origin in the source material (handoff-product-brief-2026-03-14.md). The handoff covers provenance, model routing, skills strategy, validation, and research process — it contains no AI PR rejection rates, productivity benchmarks, or delivery metric data.",
+        "evidence": "PRD states: '67.3% of AI-generated PRs are rejected (vs 15.6% for human code)', 'AI-generated code produces 1.7x more issues per PR', 'Experienced developers are 19% slower with AI tools while believing they're 20% faster', 'Organizations see PR volume increase 98% but delivery metrics stay flat'. None of these appear in handoff-product-brief-2026-03-14.md. No citation or footnote present for any figure.",
+        "suggestion": "Either (a) locate and cite the original research papers for each statistic, or (b) remove the statistics and replace with qualitative framing grounded in the handoff. A final PRD presenting uncited quantitative claims as business-case evidence is a credibility liability."
+      },
+      {
+        "id": "ACCURACY-002",
+        "severity": "high",
+        "dimension": "CORRECTNESS",
+        "location": "Executive Summary; What Makes This Special; Installation Architecture; NFR5",
+        "description": "PRD consistently states 17+ as Agent Skills adopter count across four locations. Source material explicitly states 15+ in Key Quantitative Data table. 17 != 15.",
+        "evidence": "Source: 'Agent Skills adopter count: 15+ tools' (VERIFIED). PRD has '17+ AI coding tools', '17+ tools', '17+ Agent Skills-adopting tools', '17+ adopting tools' across four locations.",
+        "suggestion": "Replace all four instances of 17+ with 15+."
+      },
+      {
+        "id": "ACCURACY-003",
+        "severity": "medium",
+        "dimension": "TRACEABILITY",
+        "location": "Journey 1 narrative; FR1",
+        "description": "Specific install command 'npx skills add momentum -a claude-code' is presented as canonical user-facing syntax. Source establishes Momentum delivered as Agent Skills via 'npx skills' (general) but does not confirm this exact command structure. FR1 encodes this unverified command as a functional requirement.",
+        "evidence": "Journey 1: 'Steve runs npx skills add momentum -a claude-code'. FR1: 'Developer can install Momentum skills via npx skills add'. Source does not specify this exact syntax — describes only the general 'npx skills' package management approach.",
+        "suggestion": "Confirm exact npx skills CLI syntax against agentskills.io specification and cite it, or use placeholder format acknowledging syntax is not yet finalized."
+      },
+      {
+        "id": "ACCURACY-004",
+        "severity": "low",
+        "dimension": "CORRECTNESS",
+        "location": "Innovation section",
+        "description": "VERIFIED CLEAN — included to confirm these were checked. The 11-95% hallucination range and 79% 6-hop error probability both confirmed by source.",
+        "evidence": "PRD: 'hallucination rates are 11-95% and cascading errors hit 79% probability over 6 hops'. Source: 'LLM citation hallucination rate range: 11-95% (CITED)' and '6-hop pipeline error accumulation: 79% error probability at 23% per hop (GPT-4o) (VERIFIED)'. Confirmed correct.",
+        "suggestion": "No action required."
+      }
+    ],
+    "coherence": [
+      {
+        "id": "COHERENCE-001",
+        "severity": "high",
+        "dimension": "CONSISTENCY",
+        "location": "Executive Summary (two occurrences); What Makes This Special",
+        "description": "PRD states 17+ tools three times across two sections. Source material establishes correct figure as 15+ tools. PRD contradicts authoritative source document.",
+        "evidence": "Executive Summary: 'installable via npx skills, portable across 17+ AI coding tools' (twice). What Makes This Special: '17+ tools'. Source: '15+ tools (not 17+)'.",
+        "suggestion": "Replace all three instances with 15+."
+      },
+      {
+        "id": "COHERENCE-002",
+        "severity": "medium",
+        "dimension": "CONSISTENCY",
+        "location": "User Journeys Journey 1 vs. Developer Tool Specific Requirements Installation Methods table",
+        "description": "Journey 1 shows 'npx skills add momentum -a claude-code' as Claude Code install. Installation Methods table lists Claude Code as 'Claude Code plugin install' with no npx command, while Cursor row shows 'npx skills add momentum -a cursor'. Asymmetry creates ambiguity for readers.",
+        "evidence": "Journey 1: 'Steve installs via npx skills add momentum -a claude-code'. Table Claude Code row: 'Claude Code plugin install'. Table Cursor row: 'npx skills add momentum -a cursor'.",
+        "suggestion": "Reconcile by either adding npx form to Claude Code row or updating Journey 1. Cursor precedent suggests npx should be listed if it exists."
+      },
+      {
+        "id": "COHERENCE-003",
+        "severity": "low",
+        "dimension": "CONSISTENCY",
+        "location": "Executive Summary vs. Success Criteria Team Adoption Success (Growth-Phase)",
+        "description": "Executive Summary frames primary user as 'a solo developer.' Success Criteria includes Team Adoption Success subsection. No bridging text establishes the solo-first, teams-later growth trajectory.",
+        "evidence": "Executive Summary: 'Designed for this person first, with team adaptation as a future consideration.' Success Criteria: 'Team Adoption Success (Growth-Phase)' with measurable outcomes, labeled 'Not an MVP gate.'",
+        "suggestion": "Add one-sentence bridge establishing solo-first design with growth to teams as deliberate trajectory."
+      }
+    ]
+  },
+
+  "consolidation": {
+    "method": "inline (checkpoint profile — no separate consolidator agent required)",
+    "deduplication_notes": [
+      "ACCURACY-002 + STRUCTURAL-002 + COHERENCE-001 all address 17+ vs 15+ discrepancy — merged into C-002 (highest severity from all: high; most complete description from STRUCTURAL-002)",
+      "ACCURACY-003 + STRUCTURAL-003 + COHERENCE-002 all address install command ambiguity — merged into C-003 (severity medium from all; most complete from STRUCTURAL-003)",
+      "ACCURACY-001 unique to Accuracy lens — kept as C-001",
+      "STRUCTURAL-001 unique to Structural lens — kept as C-004",
+      "COHERENCE-003 unique to Coherence lens — kept as C-005",
+      "ACCURACY-004 is a verification confirmation, not a finding — discarded from finding list"
+    ],
+    "confidence_notes": "Checkpoint profile uses single reviewer per lens — no dual-review cross-check. C-001 through C-003 appeared independently in multiple lenses, providing higher de facto confidence. C-004 and C-005 appeared in single lens."
+  },
+
+  "consolidated_findings": [
+    {
+      "id": "C-001",
+      "severity": "critical",
+      "dimension": "TRACEABILITY / CORRECTNESS",
+      "location": "Executive Summary — problem framing paragraph (4 statistics)",
+      "description": "Four statistics cited in the Executive Summary have no traceable origin in the source material (handoff-product-brief-2026-03-14.md). The handoff covers provenance research, model routing, skills strategy, validation framework, and research process — none of which contain AI PR rejection rates, developer productivity metrics, or delivery figures.",
+      "evidence": "PRD claims: '67.3% of AI-generated PRs are rejected (vs 15.6% for human code)'; 'AI-generated code produces 1.7x more issues per PR'; 'Experienced developers are 19% slower with AI tools while believing they're 20% faster'; 'Organizations see PR volume increase 98% but delivery metrics stay flat'. None of these appear in handoff-product-brief-2026-03-14.md. No citation, footnote, or source attribution present.",
+      "suggestion": "Either (a) locate and cite original research papers for each statistic, or (b) remove the statistics and replace with qualitative framing grounded in the handoff. Uncited quantitative claims in a final PRD are a credibility liability.",
+      "source_lenses": ["accuracy"],
+      "fix_applied": "Statistics paragraph replaced with qualitative framing. Note added marking these as UNSOURCED pending citation verification."
+    },
+    {
+      "id": "C-002",
+      "severity": "high",
+      "dimension": "CORRECTNESS / CROSS_REFERENCE_INTEGRITY / CONSISTENCY",
+      "location": "Executive Summary (2 occurrences); What Makes This Special; Installation Architecture; NFR5 — 4 total locations",
+      "description": "PRD consistently states '17+' as Agent Skills adopter count across four distinct locations. The declared source material (HANDOFF-BRIEF-001, handoff-product-brief-2026-03-14.md) explicitly states the verified count as '15+ tools' (VERIFIED from agentskills.io). No source for the 17+ figure exists in any declared input document.",
+      "evidence": "Source Skills Strategy Key Quantitative Data table: 'Agent Skills adopter count: 15+ tools (Status: VERIFIED, agentskills.io specification)'. PRD: '17+ AI coding tools' (Executive Summary para 2), '17+ tools' (What Makes This Special), '17+ Agent Skills-adopting tools' (Installation Architecture), '17+ adopting tools' (NFR5).",
+      "suggestion": "Replace all four instances of '17+' with '15+' to match the verified figure in the declared source.",
+      "source_lenses": ["accuracy", "structural", "coherence"],
+      "fix_applied": "All four instances of 17+ replaced with 15+."
+    },
+    {
+      "id": "C-003",
+      "severity": "medium",
+      "dimension": "TRACEABILITY / CONSISTENCY / COMPLETENESS",
+      "location": "Journey 1 Rising Action; Installation Architecture table (Claude Code row); FR1",
+      "description": "The specific install command 'npx skills add momentum -a claude-code' appears in Journey 1 as the canonical Claude Code installation syntax, but (a) is not confirmed in the source material, and (b) contradicts the Installation Architecture table which lists Claude Code's method as 'Claude Code plugin install' with no npx command, while the Cursor row has a concrete npx command. The asymmetry cannot be reconciled without clarification of whether -a claude-code is a skills-only install or triggers the full plugin.",
+      "evidence": "Journey 1: 'Steve runs npx skills add momentum -a claude-code and installs the plugin.' Installation table Claude Code row: 'Claude Code plugin install' (no command). Cursor row: 'npx skills add momentum -a cursor' (command present). Source: does not specify this exact syntax.",
+      "suggestion": "Clarify the Claude Code install path and make Journey 1 and the Installation table consistent. If 'npx skills add momentum -a claude-code' is valid, add it to the table. If not, update Journey 1 to use the plugin install flow.",
+      "source_lenses": ["accuracy", "structural", "coherence"],
+      "fix_applied": "Added note to Installation table Claude Code row clarifying the two install paths. Journey 1 narrative preserved as-is with clarifying note added to table. This is the best fix achievable without resolving the underlying architecture question — C-003 marked as REMAINING."
+    },
+    {
+      "id": "C-004",
+      "severity": "medium",
+      "dimension": "STRUCTURAL_VALIDITY / CROSS_REFERENCE_INTEGRITY",
+      "location": "Frontmatter — inputDocuments vs derives_from",
+      "description": "inputDocuments lists 7 files but derives_from lists only 6 entries. docs/process/process-backlog.md appears in inputDocuments but has no derives_from entry. PT-026, PT-028, PT-029 referenced in Growth Features section implies the backlog was used as a derivation source.",
+      "evidence": "inputDocuments[6] = docs/process/process-backlog.md. derives_from has 6 entries, none with path docs/process/process-backlog.md. documentCounts shows processBacklog: 1.",
+      "suggestion": "Add derives_from entry: id BACKLOG-001, path docs/process/process-backlog.md, relationship derives_from.",
+      "source_lenses": ["structural"],
+      "fix_applied": "derives_from entry added for process-backlog.md."
+    },
+    {
+      "id": "C-005",
+      "severity": "low",
+      "dimension": "CONSISTENCY",
+      "location": "Executive Summary vs. Success Criteria Team Adoption Success section",
+      "description": "Executive Summary establishes solo developer as primary user ('Designed for this person first, with team adaptation as a future consideration'). Success Criteria includes a Team Adoption section with measurable metrics but no bridging sentence explaining the solo-first, team-later trajectory. The transition appears abrupt.",
+      "evidence": "Executive Summary: 'Momentum is designed for this person first, with team adaptation as a future consideration.' Success Criteria: 'Team Adoption Success (Growth-Phase)' subsection labeled 'Not an MVP gate' but presenting measurable growth-phase outcomes without preamble.",
+      "suggestion": "Add one-sentence bridge in Success Criteria preamble or Team Adoption section header: 'Momentum is designed solo-first; team adoption is the intended growth trajectory, not an MVP gate.'",
+      "source_lenses": ["coherence"],
+      "fix_applied": "Bridge sentence added to Team Adoption section."
+    }
+  ],
+
+  "scoring": {
+    "starting_score": 100,
+    "deductions": [
+      {"finding_id": "C-001", "severity": "critical", "points": -15},
+      {"finding_id": "C-002", "severity": "high", "points": -8},
+      {"finding_id": "C-003", "severity": "medium", "points": -3},
+      {"finding_id": "C-004", "severity": "medium", "points": -3},
+      {"finding_id": "C-005", "severity": "low", "points": -1}
+    ],
+    "pre_fix_score": 70,
+    "pre_fix_grade": "Fair",
+    "pass_threshold": 95,
+    "passed": false
+  },
+
+  "fix_attempt": {
+    "performed": true,
+    "fix_log": [
+      {
+        "finding_id": "C-001",
+        "action": "Replaced uncited statistics paragraph with qualitative framing. Original 4 statistics (67.3%, 1.7x, 19%, 20%, 98%) removed. Replaced with qualitative industry problem framing grounded in the handoff document's established context. Added UNSOURCED marker note.",
+        "rationale": "Statistics are critical for business case credibility. Without source attribution, they are a provenance liability in a document that is itself about provenance. Qualitative framing from the handoff is safer than uncited quantitative claims."
+      },
+      {
+        "finding_id": "C-002",
+        "action": "Replaced all 4 instances of '17+' with '15+': Executive Summary para 2, What Makes This Special, Installation Architecture intro, NFR5.",
+        "rationale": "Source material is explicit and verified: 15+ tools from agentskills.io. No source exists for 17+."
+      },
+      {
+        "finding_id": "C-003",
+        "action": "Added clarifying note to Installation Architecture table Claude Code row: '(also: npx skills add momentum -a claude-code for skills-only install; plugin install includes full hooks/agents/rules)'. This surfaces both paths without resolving the underlying architecture question.",
+        "rationale": "Cannot resolve whether -a claude-code is the correct flag without verifying against agentskills.io spec. Best fix is to document both paths and flag for architecture verification. C-003 remains as REMAINING finding."
+      },
+      {
+        "finding_id": "C-004",
+        "action": "Added derives_from entry for docs/process/process-backlog.md with id BACKLOG-001, relationship derives_from.",
+        "rationale": "Process backlog is listed as inputDocument and its task IDs (PT-026, PT-028, PT-029) appear in Growth Features — it is clearly a derivation source."
+      },
+      {
+        "finding_id": "C-005",
+        "action": "Added bridge sentence to Team Adoption Success section: 'Momentum is designed solo-first; team adoption is the intended growth trajectory. These metrics apply when Momentum expands beyond the solo developer — they are not MVP gates.'",
+        "rationale": "Resolves apparent contradiction between solo-first framing in Executive Summary and team metrics in Success Criteria."
+      }
+    ]
+  },
+
+  "post_fix_score_estimate": {
+    "note": "Checkpoint profile — no re-validation agent. Score estimated by fixer.",
+    "remaining_findings": [
+      {
+        "id": "C-003",
+        "severity": "medium",
+        "status": "PARTIALLY_FIXED",
+        "remaining_issue": "The exact npx skills CLI flag (-a claude-code) for Claude Code plugin install is still unverified against agentskills.io spec. The fix adds both paths to the table but the architecture question (does -a claude-code invoke plugin vs skills-only?) is unresolved."
+      }
+    ],
+    "deductions_remaining": [
+      {"finding_id": "C-003", "severity": "medium", "points": -3}
+    ],
+    "estimated_post_fix_score": 97,
+    "estimated_grade": "Clean (borderline)"
+  },
+
+  "exit_status": "CHECKPOINT_WARNING",
+  "exit_message": "Checkpoint validation at 'final' stage did not achieve clean before fix. Pre-fix score: 70/100. Post-fix estimated score: 97/100 (1 medium finding partially addressed — C-003 install command architecture question unresolved). Continuing with known issue flagged.",
+
+  "key_question_answers": {
+    "install_command_discrepancy_caught": true,
+    "install_command_detail": "ACCURACY-003/STRUCTURAL-003/COHERENCE-002 all independently flagged the install command issue. Specifically: 'npx skills add momentum -a claude-code' appears in Journey 1 but is not confirmed in source material and is inconsistent with the Installation Architecture table which lacks a matching npx entry for the Claude Code row.",
+    "unsourced_statistics_caught": true,
+    "unsourced_statistics_detail": "ACCURACY-001 (critical) caught all 4 statistics: 67.3%, 1.7x, 19%/20%, 98%. Finding was clear: none of these appear anywhere in handoff-product-brief-2026-03-14.md. The source material covers provenance, model routing, skills strategy, and validation — not AI productivity benchmarks.",
+    "other_source_material_enabled_findings": [
+      {
+        "finding_id": "C-002",
+        "description": "15+ vs 17+ tool count — the source material's Key Quantitative Data table provided the specific verified figure (15+, VERIFIED from agentskills.io) that revealed the PRD's inflation to 17+. Without the source material, a reviewer would have no basis to challenge the 17+ figure.",
+        "source_enabled": true
+      },
+      {
+        "finding_id": "C-001_confirmation",
+        "description": "The source material also CONFIRMED several PRD claims as accurate: the 11-95% hallucination rate range and 79% 6-hop error probability both verified against source (ACCURACY-004). This is a source_material-enabled confirmation, not just a catch.",
+        "source_enabled": true
+      }
+    ]
+  }
+}
