@@ -13,6 +13,7 @@
 
 Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 - `planning_artifacts`
+- `implementation_artifacts`
 
 ---
 
@@ -29,7 +30,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       - {{story_key}}: the story key (e.g., "1-2-repository-structure")
     </action>
     <note>bmad-create-story handles: epic analysis, architecture extraction, web research, previous story intelligence, git analysis, Dev Notes population, sprint status update to "ready-for-dev". We own none of this.</note>
-    <note>{{story_file}} is parsed from bmad-create-story's completion message. If it cannot be parsed (e.g., non-standard output format), derive it as `{{planning_artifacts}}/{{story_key}}.md` and continue.</note>
+    <note>{{story_file}} is parsed from bmad-create-story's completion message. If it cannot be parsed (e.g., non-standard output format), derive it as `{{implementation_artifacts}}/{{story_key}}.md` and continue.</note>
   </step>
 
   <step n="2" goal="Verify story file was written">
@@ -76,11 +77,12 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   </step>
 
   <step n="5" goal="Write story spec to _bmad-output/stories/">
-    <action>Parse {{story_key}} to derive {{story_id}}: convert the story key to dot-notation (e.g., "1-2-repository-structure" → "1.2"; "4-4-create-story" → "4.4"). If the story key is already in dot-notation, use it directly.</action>
+    <action>Parse {{story_key}} to derive {{story_id}}: extract the leading numeric components separated by hyphens (up to and not including the first non-numeric component), and join them with dots. Examples: `1-2-repository-structure` → `1.2`; `4-4-create-story` → `4.4`; `4-1-1-subfeature` → `4.1.1`. The story_id consists only of the numeric prefix — the title portion after the last numeric component is discarded. If the story key is already in dot-notation, use it directly.</action>
     <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
-      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes → structured {{depends_on}} list (e.g., ["3.1", "2.4"]); if none found, use []
+      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes → structured {{depends_on}} YAML block list with quoted strings (e.g., `\n  - "3.1"\n  - "2.4"`); if none found, use []
       - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum-dev/", "_bmad-output/stories/"]); if none found, use []
     </action>
+    <action>Store {{depends_on_yaml}} = the depends_on list in YAML block form, each item on its own line with two-space indent and quoted: `  - "3.1"`. If empty, use `  []`. Store {{touches_yaml}} similarly.</action>
     <action>Ensure `_bmad-output/stories/` directory exists. If the directory does not exist, create it now (first-time setup — create an empty directory).</action>
     <action>Write the story spec file to `_bmad-output/stories/{{story_id}}.md` with this content:
 
@@ -88,8 +90,10 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 ---
 story_id: "{{story_id}}"
 status: ready
-depends_on: {{depends_on}}
-touches: {{touches}}
+depends_on:
+{{depends_on_yaml}}
+touches:
+{{touches_yaml}}
 story_file: "{{story_file}}"
 ---
 
@@ -102,7 +106,7 @@ Full story: {{story_file}}
 > Do not edit `status` manually — use `momentum-dev`.
 ```
     </action>
-    <output>Story spec written to _bmad-output/stories/{{story_id}}.md (status: ready, depends_on: {{depends_on}}, touches: {{touches}})</output>
+    <output>Story spec written to _bmad-output/stories/{{story_id}}.md (status: ready, depends_on: {{depends_on_yaml}}, touches: {{touches_yaml}})</output>
   </step>
 
   <step n="6" goal="Run AVFL checkpoint on the story file">
@@ -132,6 +136,21 @@ Full story: {{story_file}}
       </check>
     </check>
 
+    <check if="AVFL returns GATE_FAILED">
+      <action>Store {{avfl_result}} = "GATE_FAILED"</action>
+      <action>Store {{n}} = count of findings returned by AVFL</action>
+      <action>Synthesize findings in plain language — severity indicators (! for critical, · for minor), brief descriptions. Do NOT dump raw AVFL JSON.</action>
+      <action>Store {{avfl_findings}} = [the synthesized plain-language findings from the step above]</action>
+      <output>AVFL GATE FAILED on story {{story_key}} — {{n}} critical issues found. The story spec has defects that should be addressed before development begins:
+{{avfl_findings}}
+
+You may proceed to development with known issues, or halt to address them first.</output>
+      <ask>Proceed to development with known story spec issues, or halt to fix the story spec first?</ask>
+      <check if="user chooses halt">
+        <action>HALT — user will address story spec findings before proceeding to dev</action>
+      </check>
+    </check>
+
     <check if="AVFL returns unexpected status or errors">
       <action>Store {{avfl_result}} = "UNKNOWN — {{avfl_status}}"</action>
       <action>Store {{avfl_findings}} = ""</action>
@@ -139,7 +158,7 @@ Full story: {{story_file}}
     </check>
   </step>
 
-  <step n="8" goal="Completion signal">
+  <step n="7" goal="Completion signal">
     <output>Story {{story_key}} is yours to review.
 
 Produced: {{story_file}}

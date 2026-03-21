@@ -1,6 +1,6 @@
 # AVFL Invocation Guide for momentum-dev
 
-Reference this file in Step 2 to determine the correct AVFL parameters for each story's primary artifact.
+Reference this file in Step 7 to determine the correct AVFL parameters for each story's primary artifact.
 
 ## When to Run AVFL vs. Skip
 
