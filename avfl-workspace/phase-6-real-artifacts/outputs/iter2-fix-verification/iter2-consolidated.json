@@ -1,0 +1,99 @@
+{
+  "iteration": 2,
+  "skepticism": "low (2)",
+  "profile": "full",
+  "stage": "final",
+  "subagents_spawned": 8,
+  "subagent_roles": [
+    "structural-enumerator (sonnet/medium)",
+    "structural-adversary (opus/high)",
+    "accuracy-enumerator (sonnet/medium)",
+    "accuracy-adversary (opus/high)",
+    "coherence-enumerator (sonnet/medium)",
+    "coherence-adversary (opus/high)",
+    "domain-enumerator (sonnet/medium)",
+    "domain-adversary (opus/high)"
+  ],
+  "iter2_used_subagents": true,
+  "input_document": "iter1-fixed-document.md",
+  "score": 84,
+  "grade": "Fair",
+  "findings_count": {
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 2,
+    "total": 5
+  },
+  "duplicates_removed": 3,
+  "false_positives_removed": 0,
+  "findings": [
+    {
+      "id": "F2-001",
+      "severity": "high",
+      "confidence": "HIGH",
+      "dimension": "correctness",
+      "location": "Component Inventory table + Overview",
+      "description": "Redis cache sizing is mathematically insufficient for the stated deduplication window at peak load. At 50,000 events/second × 300 seconds (5-minute window) = 15,000,000 events during the dedup window. Component Inventory states Redis is 'sized for 10M keys.' At sustained peak, the Redis cache would exhaust at approximately 200 seconds (3.3 minutes), causing deduplication failures before the window expires.",
+      "evidence": "Overview: '50,000 events per second under peak load'; Component Inventory: 'Redis: sized for 10M keys (covers 5-minute dedup window at peak load)'. Arithmetic: 50,000 × 300 = 15,000,000 > 10,000,000.",
+      "suggestion": "Correct Redis sizing to at least 15M keys (50K events/sec × 300 seconds), or document the assumed deduplication hit rate that reduces effective unique key count to justify 10M. If not all events are unique (e.g., 65%+ dedup rate at peak), document that assumption explicitly."
+    },
+    {
+      "id": "F2-002",
+      "severity": "medium",
+      "confidence": "HIGH",
+      "dimension": "domain_rule_compliance",
+      "location": "Component Inventory / Stage 1 — Ingestion",
+      "description": "Message queue overflow behavior is not specified. The queue has ~20 seconds of burst capacity at peak load (1M events ÷ 50K/sec). If Stage 2 processing slows (e.g., reference database degradation), the queue can fill in under a minute. No documentation of queue-full behavior: back-pressure to Stage 1, event rejection, elastic expansion, or alternative.",
+      "evidence": "Component Inventory: 'Message queue: capacity 1M events (approximately 20 seconds of peak burst).' No queue-full or back-pressure specification in any section.",
+      "suggestion": "Specify queue-full behavior: (a) back-pressure — Stage 1 rejects new events with 429 and clients retry; (b) elastic — queue scales dynamically (specify mechanism); (c) overflow — events spill to overflow queue. Add this to Stage 1 or the Component Inventory."
+    },
+    {
+      "id": "F2-003",
+      "severity": "medium",
+      "confidence": "MEDIUM",
+      "dimension": "domain_rule_compliance",
+      "location": "Stage 2 — Transformation + Delivery Semantics",
+      "description": "The Delivery Semantics section claims 'effectively-once semantics for events arriving within 5 minutes' based on Redis deduplication. However, the overflow path (events >50MB) is routed separately from the primary transformation path, and the document does not confirm that overflow events pass through the same Redis deduplication cache. If they do not, the effectively-once guarantee may not hold for large-payload events.",
+      "evidence": "Stage 2: 'Large files are handled separately from the primary transformation path via an overflow queue.' Delivery Semantics: 'effectively-once semantics for events arriving within 5 minutes of each other.' No clarification of deduplication on overflow path.",
+      "suggestion": "Add one sentence clarifying whether the overflow path also uses Redis deduplication, or explicitly scope the effectively-once guarantee to primary-path events only."
+    },
+    {
+      "id": "F2-004",
+      "severity": "low",
+      "confidence": "HIGH",
+      "dimension": "conciseness",
+      "location": "Stage 2 — Transformation + Performance Characteristics",
+      "description": "The explanation for why streaming is preferred for large payloads appears in both Stage 2 and the Performance Characteristics section with slightly different wording, creating minor redundancy.",
+      "evidence": "Stage 2: 'memory pressure and parallelism decomposition characteristics favor streaming at that scale'; Performance: 'memory pressure and parallelism characteristics at that scale favor streaming over batch buffering.'",
+      "suggestion": "Remove the duplicate from the Performance section, or rephrase to reference Stage 2 for technical details."
+    },
+    {
+      "id": "F2-005",
+      "severity": "low",
+      "confidence": "MEDIUM",
+      "dimension": "completeness",
+      "location": "Stage 2, Stage 3",
+      "description": "Environment variable names (DEDUP_WINDOW_SECONDS, BATCH_SIZE) and the ops tooling command (pipeline-ops dlq retry) are referenced inline but no consolidated configuration parameters table exists in the document.",
+      "evidence": "Stage 2: 'configurable via the DEDUP_WINDOW_SECONDS environment variable'; Stage 3: 'configurable via BATCH_SIZE'; Stage 1 DLQ handling: 'pipeline-ops dlq retry'.",
+      "suggestion": "Add a Configuration Parameters section or table listing env vars, defaults, and valid ranges."
+    }
+  ],
+  "scoring_detail": {
+    "start": 100,
+    "critical_deductions": 0,
+    "high_deductions": -8,
+    "medium_deductions": -6,
+    "low_deductions": -2,
+    "total_deductions": -16,
+    "final_score": 84
+  },
+  "evaluate_decision": "CONTINUE — score 84 < threshold 95, iterations remaining: 2. Proceed to FIX.",
+  "regression_check": {
+    "iter1_critical_fixed": true,
+    "iter1_high_fixed": true,
+    "iter1_medium_mostly_fixed": true,
+    "new_issues_introduced": ["F2-001 — Redis sizing math error introduced by capacity fix"],
+    "note": "One regression: capacity sizing added in iter1 fix contained an arithmetic error (10M < 15M needed). All other iter1 findings confirmed resolved."
+  }
+}
