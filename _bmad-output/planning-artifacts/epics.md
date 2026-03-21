@@ -10,6 +10,7 @@ stepsCompleted:
   - step-03-epic-6-stories-vfl-gate-applied
   - step-03-epic-7-stories-vfl-gate-applied
   - step-03-epic-8-stories-vfl-gate-applied
+  - step-03-epic-9-stories-vfl-gate-applied
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
@@ -1777,4 +1778,143 @@ So that reference chains remain valid and I can trace what changed and why.
 **When** they request restoration
 **Then** Impetus moves the file back to its original path, removes the `archived_at`, `archived_by`, and `archived_reason` fields, and offers to restore the derives_from paths in referencing documents
 **And** the git history preserves the archive/restore cycle — no data is ever deleted, only moved
+
+---
+
+## Epic 9: Performance Validation
+
+A developer benchmarks BMAD skills and sub-agents across model tiers to validate that the default model/effort routing decisions (FR23) are grounded in measured performance, not assumption. Benchmarking results feed back into skill frontmatter updates.
+
+**FRs covered:** FR23
+**Scope:** PT-022 — promptfoo config, bash benchmarking script, golden dataset starter, Pydantic AI harness with `agent.override()`, updated `model:`/`effort:` frontmatter based on results
+**Priority:** Growth (requires Epics 2–4 to have real skills to benchmark)
+**UX-DRs covered:** UX-DR8 (benchmark warnings advisory), UX-DR16 (benchmark results surfaced in Impetus's voice before developer acts on them)
+
+### Story 9.1: Promptfoo Configuration Benchmarks Skills Across Model Tiers
+
+As a developer,
+I want a promptfoo configuration that runs BMAD skills across Opus, Sonnet, and Haiku,
+So that I have empirical quality, cost, and latency measurements to validate default model routing decisions.
+
+**Acceptance Criteria:**
+
+**Given** a `promptfooconfig.yaml` is present in `docs/benchmarking/` (PT-022) (FR23)
+**When** a developer runs `promptfoo eval`
+**Then** it tests at minimum two Momentum skills (one complex — e.g. `/validate` — and one constrained — e.g. `/distillator`) across at minimum three model variants: `claude-opus-4-6`, `claude-sonnet-4-6`, and `claude-haiku-4-5-20251001`
+**And** skill execution uses the Claude Agent SDK provider (`anthropic:claude-agent`) so that full skill workflows run rather than raw model completions
+**And** `temperature: 0` is set for all model variants to minimize variance between runs
+**And** cost and latency metrics are captured per run — `cost` and `latency` threshold assertions may optionally be added as budget gates but the metrics are recorded regardless
+
+**Given** the promptfoo eval runs
+**When** a skill execution produces output
+**Then** quality is evaluated using `llm-rubric` with `claude-opus-4-6` as the grader model, applying a multi-dimensional rubric: accuracy, completeness, coherence, domain fitness, and usability — each scored on a 3-point scale (0 = fail, 1 = partial, 2 = pass) to minimize middle-clustering bias
+**And** the rubric is defined in `docs/benchmarking/rubrics/general.yaml` and referenced by path in `promptfooconfig.yaml` — YAML anchors cannot be shared cross-file; the reference mechanism is a file path string, not a YAML alias
+
+**Given** the eval runs multiple iterations for statistical consistency
+**When** `evaluateOptions.repeat` is set
+**Then** it is set to at minimum 5 (quick-check minimum per benchmarking guide statistical rigor standard) — single-run scores are not sufficient to route model decisions
+**And** the eval output includes per-run scores, mean, and standard deviation so variance is visible alongside the mean
+
+---
+
+### Story 9.2: Bash Benchmarking Script Captures Time, Cost, and Tokens
+
+As a developer,
+I want a bash script that benchmarks `claude -p` invocations across models,
+So that I can measure wall time, API time, cost, and token counts without a full promptfoo setup.
+
+**Acceptance Criteria:**
+
+**Given** `docs/benchmarking/run_bench.sh` exists (PT-022)
+**When** a developer runs it for a given prompt and target skill
+**Then** it invokes `claude -p --model [model] --output-format json` for each model in the benchmark set (`claude-opus-4-6`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`) sequentially
+**And** it captures available timing and cost fields from the JSON output: wall time (derived from shell timing), cost (`cost_usd` field), total tokens, input tokens, output tokens — field names map to the actual `claude -p --output-format json` schema; if a field is absent, the column shows `N/A` rather than failing
+**And** it writes a comparison table to stdout formatted as: `model | wall_time | cost | input_tokens | output_tokens | total_tokens`
+
+**Given** the script runs all model variants
+**When** the run completes
+**Then** it optionally invokes an LLM judge using `claude-opus-4-6` as grader (`--judge` flag) to score the output of each variant using the rubric in `docs/benchmarking/rubrics/general.yaml`
+**And** the judge output appends a `quality_score` column to the comparison table — the score is the mean across rubric dimensions (0–2 scale per Story 9.1); judge invocation cost is captured separately and printed after the table as `judge_cost_usd: [X]`
+**And** if `--judge` is not passed, the table is printed without quality scores — the script is useful without judge invocation
+
+**Given** a model invocation fails (timeout, API error, rate limit)
+**When** the script encounters the error
+**Then** it logs the failure, marks that row in the table as `FAILED`, and continues with remaining models — a single failure does not abort the benchmark run
+
+---
+
+### Story 9.3: Golden Dataset Provides Canonical Benchmark Inputs and Reference Outputs
+
+As a developer,
+I want a starter golden dataset with reference inputs and Opus-reviewed outputs per skill type,
+So that quality regressions are detectable when model defaults are changed.
+
+**Acceptance Criteria:**
+
+**Given** `docs/benchmarking/golden/` exists (PT-022)
+**When** a developer inspects it
+**Then** it contains at minimum one golden case per benchmarked skill type (e.g. `validate.yaml`, `distillator.yaml`) — each golden case is structured as a promptfoo-native test fixture with `vars:` (the prompt/input), `assert:` (rubric assertions), and a `description:` label; a separate `_metadata.yaml` sidecar records human-review provenance: `reference_model`, `reference_effort`, `reviewed_by`, `reviewed_date`
+
+**Given** a golden case is created
+**When** a new reference output is generated
+**Then** it is generated by `claude-opus-4-6` at `high` effort and reviewed by a human before being committed as canonical — automated outputs alone are not sufficient for golden cases
+**And** the `_metadata.yaml` sidecar records `reference_model: claude-opus-4-6` and `reference_effort: high` — both are required so future re-benchmarks run under comparable conditions
+**And** "≥90% of the Opus reference" means a cheaper model's mean rubric dimension score is ≥90% of the Opus reference mean score (e.g., if Opus mean = 1.8/2.0, ≥90% threshold = 1.62/2.0) — this definition is canonical for Stories 9.3, 9.4, and 9.5
+
+**Given** a promptfoo eval or bash benchmark run uses the golden dataset
+**When** outputs are compared against reference
+**Then** promptfoo consumes the golden cases as test fixtures via `tests:` in `promptfooconfig.yaml` — the cases use promptfoo-native format (no transform step required)
+**And** any output scoring below 80% of the Opus reference mean score on any rubric dimension is flagged as a quality regression; scores in the 80–89% range are advisory ("below routing threshold but not a regression") — no action is required in this band, but it is surfaced for awareness
+
+---
+
+### Story 9.4: Pydantic AI Harness Benchmarks Agent Workflows with agent.override()
+
+As a developer,
+I want a Pydantic AI benchmarking harness that switches models via `agent.override()`,
+So that I can benchmark full agent workflows in Python with precise token and cost tracking.
+
+**Acceptance Criteria:**
+
+**Given** `docs/benchmarking/pydantic_bench.py` exists (PT-022)
+**When** a developer runs it with a target agent module path as argument (e.g. `python pydantic_bench.py agents.validate`)
+**Then** it imports the specified agent, runs it against a benchmark prompt using `with agent.override(model='anthropic:[model]'):` (context manager pattern) for each model in the benchmark set (`claude-opus-4-6`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`)
+**And** it captures `result.usage()` for each run and produces a comparison table: model, cost (USD), input tokens, output tokens, run time
+
+**Given** the Pydantic AI harness runs a benchmark
+**When** `result.usage()` is captured
+**Then** it records the available usage fields from the Pydantic AI usage object — field names should match the installed version's API; the script includes a comment noting the version it was validated against
+**And** cost is computed as `(input_tokens / 1M) * input_price + (output_tokens / 1M) * output_price` — the script includes a `PRICING` constants dict with a `last_updated` date; if `last_updated` is more than 90 days old, the script prints: `! pricing constants may be stale — update PRICING dict before trusting cost estimates`
+
+**Given** the harness runs the same agent across 3+ models
+**When** all runs complete
+**Then** the script prints: "Routing note: if Story 9.1 or 9.3 rubric scoring shows [model] ≥90% of opus-4-6 reference AND cost is lower, consider setting model: [model] in this agent's frontmatter."
+**And** this recommendation is advisory and references the rubric scoring threshold defined in Story 9.3 — the harness captures cost and tokens only; quality scoring requires a separate promptfoo eval run; the developer combines both before making routing decisions
+**And** the script never modifies skill or agent files
+
+---
+
+### Story 9.5: Benchmark Results Drive model:/effort: Frontmatter Updates in Skill Files
+
+As a developer,
+I want a workflow to update `model:` and `effort:` frontmatter in skill files based on benchmark findings,
+So that routing decisions are grounded in measured evidence and documented with the evidence that justified the change.
+
+**Acceptance Criteria:**
+
+**Given** a benchmark run (Story 9.1, 9.2, or 9.4) produces results showing a cheaper model achieves ≥90% of the Opus reference mean rubric score (per the threshold defined in Story 9.3) at lower cost (FR23)
+**When** a developer elects to update a skill's routing
+**Then** the skill's `model:` and `effort:` frontmatter is updated to the benchmarked model
+**And** a `benchmark_basis` frontmatter field is added as a human-readable string recording: date, score achieved vs. reference, and path to the benchmark results file — e.g. `benchmark_basis: "2026-03-20: sonnet-4-6 scored 92% of opus-4-6 reference (Story 9.3 threshold); see docs/benchmarking/results/2026-03-20-validate.json"` — this field is documentation; it is not machine-parsed by any workflow
+
+**Given** a skill uses the cognitive hazard rule (Opus required for outputs without automated downstream validation) (FR23)
+**When** a benchmark shows a cheaper model achieves high quality scores
+**Then** the cognitive hazard rule overrides the benchmark recommendation — the developer must not route to a cheaper model unless they have added automated validation that will catch invisible errors in that skill's output
+**And** the developer is responsible for checking this before committing the routing change — no automated enforcement is provided in this story; the rule is documented in FR23 and must be applied manually
+
+**Given** benchmark results are committed to the repository
+**When** the developer commits updated frontmatter
+**Then** skill SKILL.md files are code — the commit uses `refactor(skills)` for frontmatter-only routing changes (same behavior, different routing) or `fix(skills)` if correcting a routing error — `chore` is not used for skill file changes
+**And** the benchmark results file itself is committed under `docs/benchmarking/results/[date]-[skill].json` so the routing decision is auditable
+**And** both commits — the skill frontmatter update and the results file — are made together or in immediate succession so the audit trail is never split
 
