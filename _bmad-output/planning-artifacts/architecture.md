@@ -67,7 +67,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 7. **Orchestrating Agent — Impetus** — Session orientation (reads ledger, surfaces active threads), visual progress (✓ Built / → Now / ◦ Next), proactive gap detection, productive waiting during subagent execution, hub-and-spoke voice unification. Impetus is the force that maintains practice velocity — the system keeps compounding because Impetus carries knowledge and context forward across sessions and sprints without requiring repeated external input.
 
-8. **Findings Ledger + Evaluation Flywheel** — Structured findings with provenance_status field; cross-story pattern detection; flywheel workflow (Detection → Review → Upstream Trace → Solution → Verify) with visual status graphics; `/upstream-fix` skill; retrospective integration.
+8. **Findings Ledger + Evaluation Flywheel** — Structured findings with provenance_status field; cross-story pattern detection; flywheel workflow (Detection → Review → Upstream Trace → Solution → Verify → Log) with visual status graphics; `/upstream-fix` skill; retrospective integration.
 
 9. **Model Routing** — `model:` and `effort:` frontmatter required on every SKILL.md and agent definition. Cognitive hazard rule: flagship models for outputs without automated validation. Escalation semantics in VFL: mid-tier first, flagship if not converging within 3-4 iterations.
 
@@ -90,7 +90,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 - **Primary domain:** Developer tooling / practice framework
 - **Complexity:** Medium — no regulatory compliance; complexity from multi-tool portability, evolving ecosystem dependencies, and the meta-nature of a practice that governs practices using its own practice
-- **Estimated architectural components:** 13 major subsystems
+- **Estimated architectural components:** 10 subsystems + 3 cross-cutting concerns = 13 total components
 - **Dogfooding as validation:** Momentum is built using its own practice. The system's first test case is itself.
 
 ---
@@ -220,17 +220,18 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Auto-generated `.claude/momentum/ledger-view.md` for human readability
 - Tracks: active story, current phase, last completed action, open threads
 
+**Decision 1c — Findings Ledger: JSON**
+- Location: `.claude/momentum/findings-ledger.json`
+- Structured array of findings with fields: `id` (unique finding identifier), `story_ref`, `phase`, `severity`, `pattern_tags`, `description`, `evidence`, `provenance_status`, `upstream_fix_applied`, `upstream_fix_level`, `upstream_fix_ref` (reference to the fix artifact), `timestamp` (ISO 8601 when finding was recorded)
+- `upstream_fix_level` — null until a fix is applied; then one of: `spec-generating-workflow | specification | rules-or-CLAUDE.md | tooling | one-off-code-fix`
+- Queryable for cross-story pattern detection (same pattern across S-04, S-07, S-11)
+- Only flywheel workflow writes findings; read by Impetus at retrospective and upstream trace
+
 **Decision 1d — Installed State: JSON**
 - Location: `.claude/momentum/installed.json`
 - Written by Impetus on first install; updated on each upgrade
 - Tracks: `momentum_version` at last install/upgrade, per-component version + hash
 - Impetus reads this at session start to detect version drift (see Decision 5c for full schema)
-
-**Decision 1c — Findings Ledger: JSON**
-- Location: `.claude/momentum/findings-ledger.json`
-- Structured array of findings with fields: `story_ref`, `severity`, `pattern_tags`, `provenance_status`, `phase`, `description`, `evidence`, `upstream_fix_applied`
-- Queryable for cross-story pattern detection (same pattern across S-04, S-07, S-11)
-- Only flywheel workflow writes findings; read by Impetus at retrospective and upstream trace
 
 ---
 
@@ -249,6 +250,7 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Agents may not remove or modify `derives_from` frontmatter in spec files
 - Every significant claim classified as SOURCED / DERIVED / ADDED / UNGROUNDED
 - Violations tracked in findings ledger; repeated violations trigger hook promotion
+- **Note:** `UNGROUNDED` here refers to content origin (no source was provided). This is distinct from FR16's epistemic trust vocabulary, which also uses `UNGROUNDED` to mean "based on training data with no grounding in provided sources." In implementation, use `content_origin` for Decision 2b values and `provenance_status` for FR16 values to avoid field-name collision.
 
 ---
 
@@ -267,6 +269,7 @@ Architecture:
 - Context window consideration: all reviewer results return to main context; keep reviewer output structured and bounded
 - **Execution mode:** reviewer subagents run as **background agents** (non-blocking — main conversation continues); automated hook-triggered passes may use foreground (blocking) where dead air is acceptable. Background execution is what enables productive waiting (Decision 4c).
 - **Reviewer output bound:** Reviewers return structured JSON (not free-form prose). VFL framework (vfl-framework-v3.json) specifies per-reviewer output schema. Impetus enforces this to keep context accumulation bounded across all reviewer results.
+- **Implementation note:** Background agent execution model is validated in Story 2.Spike (Epic 2) before Stories 2.4 and 4.3 begin. Do not implement productive waiting or background VFL execution until spike result is documented. The execution mode is adopted as the architectural intent; the spike validates the specific implementation mechanism (inter-agent communication + checkpoint/resume). If the spike reveals the mechanism is unavailable, Decision 3a/4c will be revised before Stories 2.4 and 4.3 begin.
 
 **context:fork agent count — explicit model:**
 
@@ -339,6 +342,7 @@ While a context:fork subagent runs in background, Impetus maintains dialogue on 
 Background execution (confirmed: Claude Code subagents explicitly support foreground/background modes) means the main conversation is not blocked — Impetus can continue responding to the user while isolated agents run concurrently.
 Default: surface implementation summary ("here's what was built and how it maps to the ACs").
 Dead air is a failure mode, not an acceptable pause.
+**Implementation note:** Background agent execution model is validated in Story 2.Spike (Epic 2) before Stories 2.4 and 4.3 begin. Do not implement productive waiting or background VFL execution until spike result is documented. The execution mode is adopted as the architectural intent; the spike validates the specific implementation mechanism (inter-agent communication + checkpoint/resume). If the spike reveals the mechanism is unavailable, Decision 3a/4c will be revised before Stories 2.4 and 4.3 begin.
 
 ---
 
@@ -533,6 +537,7 @@ description: "[What this skill does and when Impetus invokes it — under 150 ch
 model: claude-opus-4-6          # verifiers get flagship — cognitive hazard rule
 context: fork                   # isolated subagent context — no conversation history
 allowed-tools: Read             # code-reviewer and architecture-guard: Read only — never Edit, Write, Bash
+disable-model-invocation: true  # prevents nested model calls from context:fork peer skills
 ---
 ```
 
@@ -586,7 +591,7 @@ On failure:
 ```
 [hook-name] ✗ [specific issue] — [exact file/line if applicable]
 ```
-Silent hooks build no trust. Verbose hooks create noise. One line, always.
+Silent hooks build no trust. Verbose hooks create noise. One line, always. (Exception: high-frequency guard hooks — e.g., PreToolUse file-protection — suppress pass-through output for non-blocked events. The 'never silent' principle applies to meaningful events such as blocks, not to routine allow decisions.)
 
 **Subagent structured output contract (all agents returning to Impetus):**
 ```json
@@ -611,6 +616,7 @@ Agents NEVER address the user directly. All output goes through Impetus.
   "evidence": "Exact quote or file:line reference",
   "provenance_status": "VERIFIED",
   "upstream_fix_applied": false,
+  "upstream_fix_level": null,     // null until fix applied; then: spec-generating-workflow | specification | rules-or-CLAUDE.md | tooling | one-off-code-fix
   "upstream_fix_ref": null,       // ID of the fix story/rule if applied
   "timestamp": "2026-03-17T00:00:00Z"
 }
@@ -664,7 +670,7 @@ Never interrupt mid-task. Surface gaps at natural handoffs.
 
 **Upstream fix process (always this order, never skip steps):**
 `Detection → Review → Upstream Trace → Solution → Verify → Log`
-Finding logged to findings ledger at Detection. Fix logged at Solution. Never patch code without tracing first.
+Finding logged to findings ledger at Detection. Fix logged at Log (sixth phase). Never patch code without tracing first.
 
 **SKILL.md description budget rule:**
 Descriptions are loaded at startup for ALL installed skills. Keep under 150 characters.
@@ -685,10 +691,10 @@ Good: `"Run validate-fix-loop validation on an artifact. Profiles: gate/checkpoi
 - Follow the commit trigger points — no end-of-session batching
 - Keep SKILL.md descriptions under 150 characters
 
-**Pattern enforcement tiers:**
-- Tier 1: SKILL.md frontmatter validated by pre-commit hook (Husky/pre-commit framework)
-- Tier 2: VFL Structural Integrity lens checks format compliance on generated artifacts
-- Tier 3: These patterns loaded as rules in every agent session via `.claude/rules/`
+**Pattern enforcement levels** (distinct from NFR7's portability Tier 1/2/3 taxonomy):
+- Enforcement Level A: SKILL.md frontmatter validated by pre-commit hook (Husky/pre-commit framework)
+- Enforcement Level B: VFL Structural Integrity lens checks format compliance on generated artifacts
+- Enforcement Level C: These patterns loaded as rules in every agent session via `.claude/rules/`
 
 ---
 
@@ -815,7 +821,8 @@ momentum/                                    ← Root
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
 | VFL | Any artifact being validated, source material | consolidated findings report |
-| Flywheel (upstream-fix) | findings-ledger.json, rules, specs | findings-ledger.json, rules/, specs |
+| Flywheel workflow (Epic 6) | findings-ledger.json, rules, specs | findings-ledger.json, rules/, specs |
+| Upstream-fix skill (Epic 4, standalone) | session ledger, specs, rules | session ledger only (not findings-ledger.json) |
 | Hooks | Filesystem (reads), git status | Terminal output only (never modifies files) |
 | ATDD workflow | Gherkin spec | `tests/acceptance/` only |
 | Coding agents (dev-story) | Specs, rules, existing code | Source code, unit tests |

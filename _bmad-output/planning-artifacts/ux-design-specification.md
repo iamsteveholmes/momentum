@@ -9,6 +9,28 @@ inputDocuments:
   - docs/research/anti-hallucination-source-provenance-2026-03-14.md
   - docs/research/validate-fix-loop-framework-v3.json
   - docs/research/bmad-v6-skills-architecture-coexistence-2026-03-16.md
+derives_from:
+  - id: BRIEF-MOMENTUM-001
+    path: _bmad-output/planning-artifacts/product-brief-momentum-2026-03-13.md
+    relationship: derives_from
+  - id: PRD-MOMENTUM-001
+    path: _bmad-output/planning-artifacts/prd.md
+    relationship: derives_from
+  - id: HANDOFF-BRIEF-001
+    path: docs/research/handoff-product-brief-2026-03-14.md
+    relationship: derives_from
+  - id: RESEARCH-RUFLO-001
+    path: docs/research/RuFlo Framework Research Analysis.md
+    relationship: derives_from
+  - id: RESEARCH-ANTI-HALLUCINATION-001
+    path: docs/research/anti-hallucination-source-provenance-2026-03-14.md
+    relationship: derives_from
+  - id: VFL-FRAMEWORK-001
+    path: docs/research/validate-fix-loop-framework-v3.json
+    relationship: derives_from
+  - id: RESEARCH-BMAD-COEXISTENCE-001
+    path: docs/research/bmad-v6-skills-architecture-coexistence-2026-03-16.md
+    relationship: derives_from
 ---
 
 # UX Design Specification: Momentum
@@ -348,7 +370,7 @@ Momentum must meet users in a fundamentally non-linear, multi-session, multi-tab
 
 **The Session Ledger**
 
-The orchestrating agent's first act in any session is to surface the user's current state across *all active threads* — not just the current tab. This requires a persistent ledger (e.g. `_bmad-output/session-ledger.yaml`) that every Impetus instance reads and writes.
+The orchestrating agent's first act in any session is to surface the user's current state across *all active threads* — not just the current tab. This requires a persistent ledger (`.claude/momentum/ledger.json`) that every Impetus instance reads and writes.
 
 Each entry contains: thread ID, workflow type, current step, last-active timestamp, and a one-sentence context summary sufficient to re-orient the user instantly.
 
@@ -498,6 +520,18 @@ Hooks fire independently of workflow state. Pass is minimal; failure is diagnost
 ---
 
 ## User Journey Flows
+
+### Journey Cross-Reference
+
+| UX Journey | PRD Source |
+|---|---|
+| Journey 0: First-Time Install | PRD Journey 1 (install flow) |
+| Journey 1: First-Time User | PRD Journey 1 (orientation) |
+| Journey 2: Story Cycle | PRD Journey 2 |
+| Journey 3: Session Resume | No direct PRD journey — addresses FR7/FR41/UX-DR11/UX-DR17 (session ledger persistence and context restore) |
+| Journey 4: Version Upgrade | PRD FR3b/FR3c |
+
+---
 
 ### Journey 0: First-Time Install
 
@@ -693,7 +727,7 @@ flowchart TD
 
 ### Design System Components
 
-Momentum has no UI framework. The "components" are **conversation primitives** — structural patterns agents compose to build every interaction. There are eight, derived from the user journeys.
+Momentum has no UI framework. The "components" are **conversation primitives** — structural patterns agents compose to build every interaction. There are nine, derived from the user journeys.
 
 ### Custom Components
 

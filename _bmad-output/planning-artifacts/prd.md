@@ -182,13 +182,13 @@ He starts a story. The orchestrating agent shows him where he is in the process 
 
 **Climax:** The flywheel explains the issue to Steve: "This is the third occurrence of direct database access bypassing the repository pattern. The findings ledger shows occurrences in stories S-04, S-07, and S-11. This looks systemic. I'd suggest we do a round of **upstream trace** to determine how far up the hierarchy this goes. Want to proceed?"
 
-Steve agrees. The status graphic updates to show the flywheel workflow: **[Detection] → Review → Upstream Trace → Solution → Verify**. The agent walks through each level: Is it a code-level fix? No — three occurrences rules that out. Is it a CLAUDE.md/rules gap? Yes — the architecture doc specifies repository pattern, but `.claude/rules/` doesn't mention it. In ad-hoc sessions and subagent contexts, the AI defaults to direct queries because its training data suggests that's fine. The graphic advances: **Detection → Review → [Upstream Trace] → Solution → Verify**.
+Steve agrees. The status graphic updates to show the flywheel workflow: **[Detection] → Review → Upstream Trace → Solution → Verify → Log**. The agent walks through each level: Is it a code-level fix? No — three occurrences rules that out. Is it a CLAUDE.md/rules gap? Yes — the architecture doc specifies repository pattern, but `.claude/rules/` doesn't mention it. In ad-hoc sessions and subagent contexts, the AI defaults to direct queries because its training data suggests that's fine. The graphic advances: **Detection → Review → [Upstream Trace] → Solution → Verify → Log**.
 
-The fix: add a rule to `.claude/rules/architecture.md` specifying repository pattern as mandatory for data access. One rule, added once, prevents an entire class of errors permanently. The graphic completes: **Detection → Review → Upstream Trace → [Solution] → Verify**. Steve sees the rule, approves it, and the agent confirms it's active.
+The fix: add a rule to `.claude/rules/architecture.md` specifying repository pattern as mandatory for data access. One rule, added once, prevents an entire class of errors permanently. The graphic completes: **Detection → Review → Upstream Trace → [Solution] → Verify → Log**. Steve sees the rule, approves it, and the agent confirms it's active.
 
 **Resolution:** The next two stories have zero data access violations. The time Steve would have spent catching and fixing these in code review is now zero. More importantly, he was *part of every step*. He wasn't wondering what the agent was doing — he saw the detection, understood the trace, approved the fix. The flywheel turned, and he turned it together with the system.
 
-**Requirements revealed:** Findings ledger with cross-story pattern detection, flywheel workflow with visual status (detection → review → upstream trace → solution → verify), agent explains issues and suggests next steps (never proceeds without Steve), `.claude/rules/` as always-loaded enforcement, flywheel integration with retrospective, measurable improvement across sprints.
+**Requirements revealed:** Findings ledger with cross-story pattern detection, flywheel workflow with visual status (detection → review → upstream trace → solution → verify → log), agent explains issues and suggests next steps (never proceeds without Steve), `.claude/rules/` as always-loaded enforcement, flywheel integration with retrospective, measurable improvement across sprints.
 
 ---
 
@@ -386,6 +386,7 @@ momentum/                        # repo root
 - No plugin manifest, no plugin install — single distribution method
 - Impetus writes rules, hooks, and MCP config to their target locations on first run (`momentum-versions.json` tracks what to write per version; `.claude/momentum/installed.json` records project configuration state)
 - `context:fork` skills (code-reviewer, architecture-guard) are SKILL.md files with `context:fork` frontmatter — not plugin agents
+- `showTurnDuration: true` is set in `.claude/settings.json` during installation as a cost observability default (implementation requirement, see Epic 1 Additional)
 
 **Installation methods:**
 
@@ -554,7 +555,7 @@ momentum/
 
 - **FR28:** Findings ledger can accumulate findings across stories with category, root cause classification, and upstream level
 - **FR29:** System can detect cross-story patterns in the findings ledger and surface systemic issues
-- **FR30:** Flywheel can explain detected issues to the developer and suggest upstream trace with visual workflow status (detection → review → upstream trace → solution → verify)
+- **FR30:** Flywheel can explain detected issues to the developer and suggest upstream trace with visual workflow status (detection → review → upstream trace → solution → verify → log)
 - **FR31:** Developer can approve or reject each flywheel suggestion — the agent never proceeds without explicit consent
 - **FR32:** Upstream fixes can be applied at any level: spec-generating workflow, specification, CLAUDE.md/rules, tooling, or one-off code fix
 - **FR33:** System can track the ratio of upstream fixes to code-level fixes as a practice health metric

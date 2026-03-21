@@ -15,6 +15,16 @@ inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/ux-design-specification.md
+derives_from:
+  - id: PRD-MOMENTUM-001
+    path: _bmad-output/planning-artifacts/prd.md
+    relationship: derives_from
+  - id: ARCH-MOMENTUM-001
+    path: _bmad-output/planning-artifacts/architecture.md
+    relationship: derives_from
+  - id: UX-MOMENTUM-001
+    path: _bmad-output/planning-artifacts/ux-design-specification.md
+    relationship: derives_from
 lastEdited: '2026-03-20'
 editHistory:
   - date: '2026-03-20'
@@ -81,7 +91,7 @@ FR27: Every finding requires evidence — validators cannot generate findings wi
 **Evaluation Flywheel**
 FR28: Findings ledger can accumulate findings across stories with category, root cause classification, and upstream level
 FR29: System can detect cross-story patterns in the findings ledger and surface systemic issues
-FR30: Flywheel can explain detected issues and suggest upstream trace with visual workflow status (detection → review → upstream trace → solution → verify)
+FR30: Flywheel can explain detected issues and suggest upstream trace with visual workflow status (detection → review → upstream trace → solution → verify → log)
 FR31: Developer can approve or reject each flywheel suggestion — the agent never proceeds without explicit consent
 FR32: Upstream fixes can be applied at any level: spec-generating workflow, specification, CLAUDE.md/rules, tooling, or one-off code fix
 FR33: System can track the ratio of upstream fixes to code-level fixes as a practice health metric
@@ -148,7 +158,7 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 
 **From Architecture — Storage & State**
 - Session ledger stored at `.claude/momentum/ledger.json`; auto-generated `.claude/momentum/ledger-view.md` for human readability
-- Findings ledger stored at `.claude/momentum/findings-ledger.json` with structured schema: id, story_ref, phase, severity, pattern_tags, description, evidence, provenance_status, upstream_fix_applied, upstream_fix_ref, timestamp
+- Findings ledger stored at `.claude/momentum/findings-ledger.json` with structured schema: id, story_ref, phase, severity, pattern_tags, description, evidence, provenance_status, upstream_fix_applied, upstream_fix_level, upstream_fix_ref, timestamp
 - Only the flywheel workflow writes to findings ledger; Impetus reads at retrospective and upstream trace
 
 **From Architecture — Security & File Protection**
@@ -274,7 +284,7 @@ UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive,
 ### Epic 1: Foundation & Bootstrap
 A developer installs Momentum from scratch — global practice files in place, project bootstrapped, all structure scaffolded by the module. Epic 2 onwards can start.
 **FRs covered:** FR1, FR2, FR2b, FR2c, FR3a, FR3b, FR3c, FR4, FR5
-**NFRs covered:** NFR1–13 (portability, resilience, compatibility, token budget architecture decision)
+**NFRs covered:** NFR1–15 (NFR14–15 co-covered with Epic 7) (portability, resilience, compatibility, token budget architecture decision)
 **Additional:** Repo structure, skills/rules layout, version.md, cost observability (showTurnDuration, ccusage recommendation)
 **Priority:** Day 1
 
@@ -284,7 +294,7 @@ A developer installs Momentum from scratch — global practice files in place, p
 A developer always knows where they are and what to do next. Session ledger tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
 **FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
 **NFRs covered:** NFR1, NFR2, NFR3
-**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
+**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6 (partial), UX-DR8 (partial), UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
 **Priority:** Day 1
 
 ---
@@ -303,7 +313,7 @@ Quality gates fire without developer intervention. Lint and format run on save. 
 A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
 **FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
 **UX-DRs covered:** UX-DR6, UX-DR8
-**Additional:** code-reviewer (`context:fork` skill, `allowed-tools: Read`), VFL flat skill (momentum-vfl), create-story skill, dev-story skill, ATDD workflow
+**Additional:** code-reviewer (`context:fork` skill, `allowed-tools: Read`), VFL flat skill (momentum-vfl), create-story skill, dev-story skill (includes ATDD workflow capability — ATDD is not a separate deployed skill)
 **Priority:** Sprint 1
 
 ---
@@ -425,6 +435,7 @@ So that I never have to run a separate setup command or manually edit config fil
 **And** hooks config is **merged** into `.claude/settings.json` — existing keys are preserved, only Momentum-specific hook entries are added, no existing hooks are overwritten or removed
 **And** `.mcp.json` is written from bundled `references/mcp-config.json`
 **And** `showTurnDuration: true` is set in `.claude/settings.json` (cost observability — Epic 1 Additional requirement)
+**Note:** This is an Epic 1 Additional Requirement — no PRD FR; implementation authority is Epic 1 Additional section.
 **And** `.claude/momentum/installed.json` is written recording `momentum_version`, `installed_at`, and a hash for each written component
 **And** Impetus confirms to the developer exactly which files were written
 
@@ -513,8 +524,30 @@ A developer always knows where they are and what to do next. Session ledger trac
 
 **FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
 **NFRs covered:** NFR1, NFR2, NFR3
-**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6, UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
+**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6, UX-DR8 (partial — proactive-offer pattern introduced; fully exercised in Epic 4), UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
 **Note:** UX-DR3 (Hook Announcement) → Epic 3. UX-DR7 (Flywheel Notice) → Epic 6. UX-DR8 (Proactive Orientation) — the proactive-offer-never-block pattern is established here in Stories 2.2/2.5 and fully exercised once story cycles (Epic 4) provide real workflow steps.
+
+### Story 2.Spike: Validate Background Agent Coordination Mechanism
+
+**Type:** Technical Spike
+**FR Trace:** Architecture prerequisite for Stories 2.4, 4.3
+**Description:** Validate that the SendMessage API reliably supports background agent checkpoint/resume for multi-step story cycles. Stories 2.4 (productive waiting) and 4.3 (full story cycle) depend on background agents that can be resumed mid-task via SendMessage. This spike must be documented before those stories are implemented.
+
+**Acceptance Criteria:**
+
+**Given** a background agent launched with `run_in_background: true`
+**When** the spike investigates what inter-agent communication mechanisms Claude Code supports (TaskOutput, SendMessage if it exists, structured return values, or other)
+**Then** the spike documents what API(s) support background agent coordination and whether checkpoint/resume is possible
+
+**And** the spike documents whether background agents simply run to completion and return structured output, or whether mid-task communication is possible
+
+**And** if no mid-task communication mechanism exists, the spike proposes an alternative to the productive waiting pattern before Stories 2.4 and 4.3 begin
+
+**And** the spike result is documented in `docs/research/` before Story 2.4 is implemented
+
+**And** if SendMessage + background does not support reliable checkpoint/resume, Architecture Decision 4c is updated and an alternative approach is proposed before Stories 2.4 and 4.3 begin implementation
+
+---
 
 ### Story 2.1: Impetus Skill Created with Correct Persona and Input Handling
 
@@ -529,6 +562,7 @@ So that I have a single, reliable orchestrating agent for every Momentum workflo
 **Then** `momentum/SKILL.md` exists with a description ≤150 characters (NFR1)
 **And** the skill name is `momentum` (entry-point, no prefix) — all other Momentum skills are prefixed `momentum-` to prevent naming collision with BMAD skills (NFR12)
 **And** the skill's `model:` is set to a current Sonnet-tier model and `effort:` is `high` per the model routing guide (FR23); the specific model string is read from `references/model-routing-guide.md`, not hard-coded
+**Note:** Impetus is classified as an orchestrator producing outputs without automated validation — per FR23/model routing guide, this qualifies for elevated effort. The routing guide (Story 3.5) will formally document this exception.
 **And** skill instructions stay under 500 lines / 5000 tokens; overflow content is in `references/` (NFR3)
 **And** when tested by invoking `/momentum` manually alongside 68+ BMAD skills, the correct Momentum skill matches on first attempt — spot-checked during dogfooding per NFR16 (NFR2)
 
@@ -727,6 +761,14 @@ So that I never need to manually hunt for specs or figure out how to fix missing
 **And** does not block other workflows while resolution is pending unless the missing config would cause data loss or irreversible action in that workflow
 **And** blocking gaps are defined as: missing MCP server required for the next workflow step, missing write target that would silently skip a required output
 
+**Given** Impetus detects an information gap or a step the developer is about to skip
+**When** the conversational floor is open (no subagent running, no pending decision) (UX-DR8)
+**Then** Impetus uses proactive-offer framing — offers options without blocking on a response; the developer retains the decision
+
+**Given** a developer has explicitly declined a proactive offer
+**When** the same or similar gap recurs (UX-DR8)
+**Then** Impetus does not re-surface the same offer unless context changes materially
+
 ---
 
 ## Epic 3: Automatic Quality Enforcement
@@ -790,10 +832,11 @@ So that test integrity and critical config are preserved automatically — no ac
 **Then** it outputs: `[file-protection] ✗ blocked write to [path] — [policy]: [reason]`
 **And** the policy name and reason are specific (e.g. "acceptance-test-dir: no modification after ATDD phase begins")
 
-**Given** a PreToolUse hook allows a write (non-protected path)
+**Given** a PreToolUse hook blocks a write (protected path)
 **When** the hook fires (UX-DR3)
-**Then** it outputs: `[file-protection] ✓ [path] — ok`
-**Note:** One compact line per write — UX-DR3 requires every hook fire to produce output; pass output must stay minimal to avoid noise on frequent writes
+**Then** it outputs: `[file-protection] ✗ blocked write to [path] — momentum-state: protected Momentum state file`
+**And** the developer receives a clear explanation of why the write was blocked and what they should do instead.
+**Note:** Pass output is suppressed for allowed writes — UX-DR3's "never silent" principle applies when the hook has something meaningful to report (a block). Routine pass-through on non-protected paths is silent.
 
 **Given** `.claude/momentum/installed.json` contains a project-customized protected path list
 **When** the PreToolUse hook evaluates a write
@@ -876,11 +919,13 @@ So that practice standards are enforced consistently in primary sessions and all
 **Then** all three tiers are defined with explicit lists of what works and what does not at each tier
 **And** adoption instructions for each tier are present
 
-**Given** any Momentum workflow definition
-**When** reviewed for Claude Code API references (NFR8)
-**Then** no workflow definition invokes a Claude Code tool by name (e.g. no `Bash(git ...)`, no `Edit`, no `Read` called from workflow step logic)
-**And** all workflow steps invoke protocol types by name (e.g. `code-reviewer:review`, `test-runner:run`) — the protocol implementation is resolved from the project config, not hard-coded
-**And** "Claude Code-specific API" is defined as: any tool from the Claude Code tool set invoked by name in workflow SKILL.md instructions rather than via a protocol interface lookup
+**Cross-cutting:** The following ACs verify NFR8 portability compliance — they appear here as an integration check for the workflows implemented across Epics 2–4, with this Epic 3 story as the enforcement point.
+
+**Given** any Momentum workflow SKILL.md file
+**When** any integration-point step invoking an external tool is inspected (NFR8)
+**Then** the step references a registered protocol type by name (e.g. `code-reviewer:review`, `test-runner:run`, `atdd-tool:run`) rather than a specific implementation or tool name (e.g. `playwright`, `jest`, `npm test`, `npx`)
+**And** no workflow definition invokes a Claude Code tool by name in workflow step logic
+**Note:** Formal protocol type registry (`references/protocol-contracts.md`) created in Story 7.1. At Story 3.4 implementation time, registered protocol type names are the names listed in the Protocol-Based Integration subsystem (subsystem 10) in the Architecture Requirements Overview and FR34–FR37 in the PRD. Native Claude Code tool calls (Read, Edit, Bash, Agent) are permitted — they are not protocol implementations.
 
 ---
 
@@ -892,7 +937,7 @@ So that the right model is used for every task automatically — no manual overr
 
 **Acceptance Criteria:**
 
-**Given** the model routing guide exists at `module/canonical/resources/model-routing-guide.md` (canonical source; also bundled into `skills/momentum/references/` for runtime access)
+**Given** the model routing guide exists at `skills/momentum/references/model-routing-guide.md`
 **When** a contributor creates a new Momentum skill or agent (FR23)
 **Then** they set `model:` and `effort:` frontmatter according to the routing guide
 **And** the routing guide documents the default strategy: Sonnet 4.6 at medium effort for general skills; Opus for complex reasoning or outputs without automated validation (cognitive-hazard tasks); Haiku for constrained tasks with downstream automated validation
@@ -981,9 +1026,10 @@ So that the test suite captures intent from the spec, not from the implementatio
 **And** each scenario is technology-agnostic — no specific library, framework, or tool name appears
 **And** each scenario is implementation-independent — passing or failing is determinable without reading the implementation
 
-**Given** the ATDD skill is installed
-**When** Claude Code parses `momentum-atdd/SKILL.md`
+**Given** the ATDD workflow capability is part of the dev-story skill
+**When** Claude Code parses `momentum-dev-story/SKILL.md`
 **Then** the skill file exists at that path and its description is ≤150 characters (NFR1)
+**Note:** ATDD is not a separate deployed skill — it is part of the `momentum-dev-story` workflow. There is no `momentum-atdd/SKILL.md`.
 
 **Given** the ATDD workflow is invoked with a story's Gherkin ACs (FR40)
 **When** the workflow runs
@@ -1068,6 +1114,10 @@ So that Impetus can delegate each phase to a focused, context-rich agent.
 **Then** Impetus synthesizes the completion signal per UX-DR5: files produced, test results, what's next
 **And** transitions the story cycle to the Code Review phase automatically (FR41 handoff)
 
+**And** if `test_result` is `not_run` (ATDD generated tests but no test runner protocol binding is configured)
+**Then** Impetus surfaces the gap: "Tests generated but no test runner is configured — Story 4.4 requires Story 7.2 (protocol gap resolution) or manual test runner setup before automated verification."
+**And** the story does not advance to Code Review automatically
+
 ---
 
 ### Story 4.5: Upstream Fix Skill Analyzes Quality Failures
@@ -1096,8 +1146,7 @@ So that defects get fixed in specs and rules — not just patched in the code.
 
 **Given** an upstream fix is approved and applied
 **When** Impetus records the fix
-**Then** the fix is appended to the findings ledger (`.claude/momentum/findings-ledger.json`) — not the session ledger
-**And** the ledger entry includes: `story_ref`, `phase`, `severity`, `description`, `upstream_fix_applied: true`, `upstream_fix_ref` (the file changed and nature of change)
+**Then** the upstream fix outcome is recorded in the session ledger by Impetus (field: `upstream_fix_applied`, `upstream_fix_level`) — the findings ledger (`.claude/momentum/findings-ledger.json`) is written only by the flywheel workflow (Epic 6)
 **And** Impetus records the upstream fix application in the session ledger with fix level and artifact modified
 
 ---
@@ -1162,7 +1211,7 @@ So that I can anticipate downstream impact without manually tracking reverse ref
 **When** Impetus initializes a session
 **Then** the scanner executes before Impetus presents the session summary
 **And** the scanner is not a separate `context: fork` skill invocation — it runs as inline reference logic within the `momentum/` skill's session orientation step
-**And** the scanner's output follows the subagent output contract (Architecture Decision 3b): `{status, result: {suspect_list: [], referenced_by_graph: {}, ungrounded_count: N}, question, confidence}`
+**And** the scanner produces a structured result using the same field names as the subagent output contract (`{status, result: {suspect_list: [], referenced_by_graph: {}, ungrounded_count: N}, question, confidence}`) for consistency, but it is not invoked via the Agent tool — it runs inline within the session orientation step
 **And** this output is available to Impetus for surfacing impact warnings and SUSPECT flags throughout the session
 
 **Given** a developer asks Impetus "what depends on [document]?"
@@ -1375,7 +1424,7 @@ So that I fix defects at the right level instead of patching symptoms.
 
 **Given** the flywheel is triggered for a finding or systemic pattern (FR30)
 **When** the workflow begins
-**Then** it executes the six phases in order: Detection → Review → Upstream Trace → Solution → Verify → Log (per the upstream fix process defined in architecture.md; the Log phase is the sixth phase not listed in the architecture summary but present in the process rules)
+**Then** it executes the six phases in order: Detection → Review → Upstream Trace → Solution → Verify → Log (per the upstream fix process defined in architecture.md; the Log phase is the sixth phase — confirmed in Architecture Process Patterns section)
 **And** at each phase transition, Impetus displays the Workflow Step component (UX-DR4): an orientation line (never "phase N/6"), substantive content for the current phase, a transition signal, and explicit user control (A/P/C or Approve/Reject as context requires)
 **And** no phase may be skipped — the Log phase is required even if the solution is a "no-fix" decision
 **And** the finding is written to the findings ledger during the Detection phase, not at the end of the workflow — the finding exists in the ledger before any trace or fix is applied
@@ -1391,6 +1440,7 @@ So that I fix defects at the right level instead of patching symptoms.
 **Then** it examines the finding in context: reads the artifact where the finding was detected, reads the relevant spec/rule that governs that area, and summarizes: "This finding is in [artifact], governed by [rule/spec], and appears to be caused by [preliminary hypothesis]"
 **And** Impetus asks the developer: "Does this match your understanding, or should I adjust the scope before tracing?" (explicit developer checkpoint before Upstream Trace proceeds)
 **And** the developer must confirm or redirect before the workflow advances to Upstream Trace
+**Note:** If the developer redirects (adjusts scope), Impetus re-analyzes with the revised scope and re-presents for confirmation. This loops within the Review phase until confirmed. Maximum 3 adjustment iterations before Impetus offers to defer the trace to a later session.
 
 **Given** the Upstream Trace phase runs
 **When** Impetus presents the trace result
@@ -1645,7 +1695,7 @@ A developer runs multi-model research with freshness guarantees. Research prompt
 **FRs covered:** FR44, FR45, FR46, FR47
 **Additional:** Gemini MCP + GPT MCP integration (growth), hybrid research workflow (PT-020), freshness windows per domain
 **Priority:** Growth
-**UX-DRs covered:** UX-DR5 (research findings surfaced in Impetus's voice), UX-DR8 (warnings are advisory — do not block flow), UX-DR15 (archive operations are reversible)
+**UX-DRs covered:** UX-DR5 (research findings surfaced in Impetus's voice), UX-DR8 (warnings are advisory — do not block flow), UX-DR15 (response follows orientation → substantive content → transition signal → user control)
 
 ### Story 8.1: Multi-Model Research Workflow Active
 
@@ -1800,7 +1850,7 @@ So that I have empirical quality, cost, and latency measurements to validate def
 
 **Given** a `promptfooconfig.yaml` is present in `docs/benchmarking/` (PT-022) (FR23)
 **When** a developer runs `promptfoo eval`
-**Then** it tests at minimum two Momentum skills (one complex — e.g. `/validate` — and one constrained — e.g. `/distillator`) across at minimum three model variants: `claude-opus-4-6`, `claude-sonnet-4-6`, and `claude-haiku-4-5-20251001`
+**Then** it tests at minimum two Momentum skills (one complex — e.g. `/momentum-vfl` — and one constrained — e.g. `/momentum-create-story`) across at minimum three model variants: `claude-opus-4-6`, `claude-sonnet-4-6`, and `claude-haiku-4-5-20251001`
 **And** skill execution uses the Claude Agent SDK provider (`anthropic:claude-agent`) so that full skill workflows run rather than raw model completions
 **And** `temperature: 0` is set for all model variants to minimize variance between runs
 **And** cost and latency metrics are captured per run — `cost` and `latency` threshold assertions may optionally be added as budget gates but the metrics are recorded regardless
@@ -1853,7 +1903,7 @@ So that quality regressions are detectable when model defaults are changed.
 
 **Given** `docs/benchmarking/golden/` exists (PT-022)
 **When** a developer inspects it
-**Then** it contains at minimum one golden case per benchmarked skill type (e.g. `validate.yaml`, `distillator.yaml`) — each golden case is structured as a promptfoo-native test fixture with `vars:` (the prompt/input), `assert:` (rubric assertions), and a `description:` label; a separate `_metadata.yaml` sidecar records human-review provenance: `reference_model`, `reference_effort`, `reviewed_by`, `reviewed_date`
+**Then** it contains at minimum one golden case per benchmarked skill type (e.g. `momentum-vfl.yaml`, `momentum-create-story.yaml`) — each golden case is structured as a promptfoo-native test fixture with `vars:` (the prompt/input), `assert:` (rubric assertions), and a `description:` label; a separate `_metadata.yaml` sidecar records human-review provenance: `reference_model`, `reference_effort`, `reviewed_by`, `reviewed_date`
 
 **Given** a golden case is created
 **When** a new reference output is generated
@@ -1914,7 +1964,6 @@ So that routing decisions are grounded in measured evidence and documented with 
 
 **Given** benchmark results are committed to the repository
 **When** the developer commits updated frontmatter
-**Then** skill SKILL.md files are code — the commit uses `refactor(skills)` for frontmatter-only routing changes (same behavior, different routing) or `fix(skills)` if correcting a routing error — `chore` is not used for skill file changes
-**And** the benchmark results file itself is committed under `docs/benchmarking/results/[date]-[skill].json` so the routing decision is auditable
+**Then** the benchmark results file is committed under `docs/benchmarking/results/[date]-[skill].json` so the routing decision is auditable
 **And** both commits — the skill frontmatter update and the results file — are made together or in immediate succession so the audit trail is never split
 
