@@ -195,9 +195,10 @@
 
     <!-- Resolve upgrade chain via 'from' field links -->
     <action>Build upgrade chain: starting at {{installed_version}}, find the version entry with `from == {{installed_version}}`; repeat until reaching {{target_version}}. Store as ordered list {{upgrade_chain}}.</action>
+    <action>Set {{prev_version}} = {{installed_version}}</action>
     <check if="chain cannot be resolved (no entry has 'from' matching current step)">
       <output>  !  Cannot resolve upgrade path from {{installed_version}} to {{target_version}}.
-  The version manifest may be incomplete. Run `npx skills update` and try again.</output>
+  The version manifest may be incomplete. Reinstall or update the Momentum skill and try again.</output>
       <action>HALT</action>
     </check>
 
@@ -210,9 +211,10 @@
 
   Here's what changed and what I need to do:
 
-    · {{action.source}} — {{action.description}}
-      → {{action_target_display}}
+    · {{action.source}} → {{action.target}}
     [... one line per action in version_entry.actions ...]
+
+  {{version_entry.description}}
 
   {{restart_notice_or_no_restart}}
 
@@ -224,10 +226,11 @@ Where: `{{action_target_display}}` = expand `~` in action.target; restart_notice
     <ask>[U] or [S]?</ask>
 
     <check if="developer chooses [S]">
-      <output>  Continuing with {{installed_version}} for this session.
+      <output>  Skipping upgrade to {{version_entry.version}} for this session.
   Upgrade will be offered again next time.</output>
-      <action>Do NOT update installed.json</action>
+      <action>Do NOT update installed.json for this or any remaining versions in the chain</action>
       <action>GOTO step 7 (session orientation)</action>
+      <note>[S] exits the entire upgrade chain — remaining versions are also skipped. This is intentional: partial upgrades (applying 1.1.0 but skipping 1.2.0) would leave installed.json at an intermediate version, which is valid but may confuse users. A full skip is cleaner.</note>
     </check>
 
     <check if="developer chooses [U]">
@@ -277,19 +280,24 @@ Where: `{{action_target_display}}` = expand `~` in action.target; restart_notice
 
       <!-- Store prev_version for next iteration display -->
       <action>Set {{prev_version}} = {{version_entry.version}}</action>
-      <!-- Continue to next version in chain -->
+      <!-- End of [U] branch — loop continues to next {{version_entry}} in {{upgrade_chain}} -->
     </check>
+    <!-- === End of per-version iteration. If more versions remain in {{upgrade_chain}}, loop back to the display/consent block above. === -->
 
     <!-- Chain complete -->
     <action>GOTO step 7 (session orientation)</action>
   </step>
 
   <!-- Hash drift check (AC2) — runs on version-match path, before session orientation -->
+  <!-- Note: Hash drift currently tracks only authority-hierarchy.md (the primary rules file).
+       anti-patterns.md and model-routing.md are not hash-tracked. This matches the installed.json
+       schema which stores a single hash for the rules-global component. Expanding to composite
+       hash tracking across all rule files is a future enhancement. -->
   <step n="10" goal="Hash drift detection — check for manually modified rules">
-    <action>Compute current hash: run `git hash-object ~/.claude/rules/authority-hierarchy.md` via Bash tool</action>
+    <action>Compute current hash: run `git hash-object ~/.claude/rules/authority-hierarchy.md` via Bash tool. If the command fails (file not found, not a git repo), treat computed hash as empty string.</action>
     <action>Read stored hash from `installed.json.components.rules-global.hash`</action>
 
-    <check if="computed hash == stored hash OR stored hash is empty string">
+    <check if="computed hash == stored hash OR stored hash is empty string OR computed hash is empty string">
       <action>No drift detected — GOTO step 7 (session orientation)</action>
     </check>
 
@@ -304,8 +312,8 @@ Where: `{{action_target_display}}` = expand `~` in action.target; restart_notice
       <ask>[R] or [K]?</ask>
 
       <check if="developer chooses [R]">
-        <action>Re-execute the `write_file` actions for rules from the current version's action list. For each: resolve source from `${CLAUDE_SKILL_DIR}/references/{{action.source}}`, write to resolved target path.</action>
-        <output>  ✓  ~/.claude/rules/authority-hierarchy.md</output>
+        <action>Re-execute the `write_file` actions from the current version's action list where `action.target` starts with `~/.claude/rules/`. For each: resolve source from `${CLAUDE_SKILL_DIR}/references/{{action.source}}`, write to resolved target path.</action>
+        <output>  ✓  {{action.target}}</output><!-- one line per re-applied rules file -->
         <action>Recompute hash: run `git hash-object ~/.claude/rules/authority-hierarchy.md`</action>
         <action>Update `installed.json.components.rules-global.hash` with new hash. Write updated installed.json.</action>
         <action>GOTO step 7 (session orientation)</action>
