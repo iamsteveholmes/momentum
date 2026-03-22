@@ -48,7 +48,7 @@ development_status:
   1-2-skills-installable-via-npx-skills-add: review
   1-3-first-momentum-invocation-completes-setup: ready-for-dev
   1-4-momentum-detects-and-applies-upgrades: ready-for-dev
-  1-5-enforcement-degrades-gracefully-across-tool-tiers: backlog
+  1-5-enforcement-degrades-gracefully-across-tool-tiers: ready-for-dev
   epic-1-retrospective: optional
 
   # Epic 2: Stay Oriented with Impetus
@@ -155,3 +155,8 @@ momentum_metadata:
     touches:
       - "skills/momentum/"
     story_file: "_bmad-output/implementation-artifacts/1-4-momentum-detects-and-applies-upgrades.md"
+  1-5-enforcement-degrades-gracefully-across-tool-tiers:
+    depends_on: []
+    touches:
+      - "README.md"
+    story_file: "_bmad-output/implementation-artifacts/1-5-enforcement-degrades-gracefully-across-tool-tiers.md"
