@@ -160,3 +160,8 @@ momentum_metadata:
     touches:
       - "README.md"
     story_file: "_bmad-output/implementation-artifacts/1-5-enforcement-degrades-gracefully-across-tool-tiers.md"
+  2-1-impetus-skill-created-with-correct-persona-and-input-handling:
+    depends_on: []
+    touches:
+      - "skills/momentum/"
+    story_file: "_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md"
