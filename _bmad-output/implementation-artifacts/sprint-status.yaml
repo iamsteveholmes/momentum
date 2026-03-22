@@ -124,7 +124,7 @@ development_status:
 
   # Process Stories — Sprint 1
   p1-1-remove-git-mcp-server-dependency: done
-  p1-3-findings-ledger-architecture-revision: review
+  p1-3-findings-ledger-architecture-revision: done
   p1-4-lightweight-story-status-update-tool: review
 
 # Momentum parallel execution metadata — invisible to BMAD skills
