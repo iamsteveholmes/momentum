@@ -196,7 +196,7 @@ momentum_metadata:
     story_file: "_bmad-output/implementation-artifacts/p1-1-remove-git-mcp-server-dependency.md"
   p1-3-findings-ledger-architecture-revision:
     depends_on:
-      - p1-1-remove-git-mcp-server-dependency
+      - p1.1
     touches:
       - ".mcp.json"
       - ".claude/settings.local.json"
@@ -209,7 +209,7 @@ momentum_metadata:
     story_file: "_bmad-output/implementation-artifacts/p1-3-findings-ledger-architecture-revision.md"
   p1-4-lightweight-story-status-update-tool:
     depends_on:
-      - p1-1-remove-git-mcp-server-dependency
+      - p1.1
     touches:
       - "skills/momentum/scripts/"
       - "skills/momentum-plan-audit/workflow.md"
