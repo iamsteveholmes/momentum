@@ -28,6 +28,8 @@ derives_from:
 lastEdited: '2026-03-22'
 editHistory:
   - date: '2026-03-22'
+    changes: 'Added Epic 1b — Foundation Fixes (Stories 1.6–1.9) between Epic 1 and Epic 2. Retro-driven mini-epic addressing action items #1, #2, #3, #5, #7 and team agreements 1–3 from the Epic 1 retrospective. Must complete before Epic 2 development begins.'
+  - date: '2026-03-22'
     changes: 'Added terminal-multiplexer protocol type to Story 7.1 recognized types; added AC for terminal-multiplexer protocol contract with detect-and-adapt pattern; forward-referenced CMUX anti-patterns for Story 3.4. Derives from CMUX research document.'
   - date: '2026-03-22'
     changes: 'Added mise as standard tool/runtime manager in Additional Requirements (From PRD — Tool/Runtime Management section); updated Story 7.2 project inspection file list to include mise.toml alongside package.json, build.gradle, pyproject.toml.'
@@ -305,6 +307,14 @@ A developer installs Momentum from scratch — global practice files in place, p
 
 ---
 
+### Epic 1b: Foundation Fixes
+Retro-driven fix epic. The Epic 1 retrospective surfaced gaps in the install experience, acceptance testing process, orchestrator purity, and storage format. These must be resolved before Epic 2 development begins — they affect architecture decisions, story structure, and process constraints that Epic 2 stories depend on.
+**Retro source:** `_bmad-output/implementation-artifacts/epic-1-retro-2026-03-22.md` — Action Items #1, #2, #3, #5, #7; Team Agreements 1, 2, 3
+**Touches:** epics.md, architecture.md, acceptance-testing-standard.md (new), Epic 2 story files, README
+**Priority:** Day 1 (must complete before Epic 2 development)
+
+---
+
 ### Epic 2: Stay Oriented with Impetus
 A developer always knows where they are and what to do next. Session journal tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
 **FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
@@ -530,6 +540,153 @@ So that teams using any tool can adopt Momentum at the level their environment s
 **Then** all three enforcement tiers are defined: Tier 1 (Claude Code — full deterministic), Tier 2 (Cursor/other tools with skills — advisory), Tier 3 (no tooling — philosophy/documentation only)
 **And** each tier lists what works and what does not
 **And** instructions for adopting at each tier are present
+
+---
+
+## Epic 1b: Foundation Fixes
+
+The Epic 1 retrospective surfaced four categories of gap that must be closed before Epic 2 development begins: a broken install experience (90 skills shown instead of 8), no acceptance testing process or standards, no architectural enforcement of orchestrator purity, and a concurrency-unsafe storage format decision. This mini-epic resolves each gap as a proper story with acceptance criteria, ensuring Epic 2 stories start on solid ground.
+
+**Retro source:** `_bmad-output/implementation-artifacts/epic-1-retro-2026-03-22.md`
+**Action Items addressed:** #1 (install fix), #2 (acceptance test role separation), #3 (acceptance test standard by story type), #5 (JSONL migration evaluation), #7 (orchestrator purity principle)
+**Team Agreements addressed:** 1 (E2E deployment testing mandatory), 2 (acceptance testing role separation starts now), 3 (stories include Acceptance Test Plan section)
+**Sequencing:** Story 1.7 has no dependencies and unblocks Story 1.6. Stories 1.8 and 1.9 are independent. All four must complete before Epic 2 stories begin.
+
+### Story 1.6: Fix `npx skills add` Experience
+
+As a developer,
+I want `npx skills add` from the Momentum repo URL to show only the 8 Momentum skills,
+So that the install experience matches what the README promises and I don't have to manually filter 90 skills.
+
+**Retro Action Item:** #1
+**Depends on:** Story 1.7 (needs acceptance test standard defined for Acceptance Test Plan section)
+**Touches:** `package.json`, README, potentially `.skillsignore` or repo structure
+
+**Acceptance Criteria:**
+
+**Given** a developer runs `npx skills add https://github.com/iamsteveholmes/momentum -a claude-code`
+**When** the CLI scans the repository for available skills
+**Then** exactly 8 Momentum skills are listed for installation
+**And** no BMAD, AVFL, or other non-Momentum skills from the repository appear in the list
+
+**Given** the Momentum README
+**When** a developer reads the install instructions
+**Then** the install command uses the correct CLI syntax (`npx skills add`, not `npx @anthropic-ai/claude-code skills add`)
+**And** the repository URL matches the actual published location (`https://github.com/iamsteveholmes/momentum`)
+**And** no shorthand aliases are used that assume a specific GitHub organization name
+
+**Given** the install experience has been fixed
+**When** a developer follows the README install instructions end-to-end on a clean environment
+**Then** the installation completes without manual intervention or workarounds
+**And** all 8 installed skills are functional when invoked via `/momentum`
+
+---
+
+### Story 1.7: Acceptance Testing Process and Standards
+
+As a team,
+I want a documented acceptance testing process with role separation and story-type classification,
+So that verification is structurally independent from implementation and every story type has appropriate test coverage.
+
+**Retro Action Items:** #2, #3
+**Team Agreements:** 1, 2, 3
+**Depends on:** None
+**Touches:** `docs/process/acceptance-testing-standard.md` (new), `_bmad-output/planning-artifacts/epics.md`, Epic 2 story files
+
+**Acceptance Criteria:**
+
+**Given** the acceptance testing standard document
+**When** a team member reads it
+**Then** it defines a story type classification table that maps each story type to its required verification method
+**And** the classification includes at minimum: skill-instruction stories (EDD with adversarial eval authoring), config-structure stories (execution test), install/deploy stories (end-to-end test), and rule/hook stories (behavioral trigger test)
+
+**Given** the acceptance testing standard document
+**When** a team member reads the role separation section
+**Then** the acceptance tester role is defined as structurally separate from the developer role
+**And** the developer does not author, read, or execute acceptance tests or EDD evals for their own work
+**And** enforcement mechanism is specified so the dev agent cannot load verification artifacts during implementation
+
+**Given** the acceptance testing standard document
+**When** a team member reads the team agreements section
+**Then** the three Epic 1 retro team agreements are codified as process constraints:
+**And** end-to-end deployment testing is mandatory for any story with an install or deploy path
+**And** acceptance testing role separation is active immediately, not deferred to Epic 4 tooling
+**And** every story file includes an explicit Acceptance Test Plan section
+
+**Given** all Epic 2 stories currently in ready-for-dev status
+**When** the acceptance test audit is complete
+**Then** each Epic 2 story file contains an Acceptance Test Plan section
+**And** each plan identifies the story type and corresponding verification method from the classification table
+
+---
+
+### Story 1.8: Orchestrator Purity Principle
+
+As an architect,
+I want a formal architecture decision establishing that Impetus is a pure orchestrator,
+So that the development, evaluation, testing, and validation roles remain structurally separated from orchestration.
+
+**Retro Action Item:** #7
+**Depends on:** None
+**Touches:** `_bmad-output/planning-artifacts/architecture.md`, Story 2.1 file, `_bmad-output/planning-artifacts/epics.md`
+
+**Acceptance Criteria:**
+
+**Given** the architecture document
+**When** an architect or developer reads the decisions section
+**Then** a formal Architecture Decision exists stating that Impetus is a pure orchestrator
+**And** the decision explicitly prohibits Impetus from performing development, evaluation, testing, or validation
+**And** the decision specifies that all non-orchestration work must be delegated to purpose-specific subagents
+
+**Given** the orchestrator purity decision
+**When** a developer reviews the `context:fork` evaluation
+**Then** the decision documents whether `bmad-dev-story` invocation should use `context:fork` isolation
+**And** the rationale for the chosen approach is recorded
+
+**Given** the orchestrator purity decision
+**When** a developer reviews Story 2.1 acceptance criteria
+**Then** Story 2.1 contains constraint ACs that enforce the orchestrator purity principle
+**And** the constraints are traceable to the architecture decision
+
+**Given** acceptance test and eval files exist for a story
+**When** the dev agent is working on implementation
+**Then** the file storage convention or flagging mechanism ensures the dev agent can explicitly exclude verification artifacts from its context
+
+---
+
+### Story 1.9: journal.json JSONL Migration Evaluation
+
+As an architect,
+I want a documented evaluation of whether the session journal should use JSONL instead of JSON,
+So that the concurrency and data integrity implications are understood before Story 2.2 implements the journal.
+
+**Retro Action Item:** #5
+**Depends on:** None
+**Touches:** `_bmad-output/planning-artifacts/architecture.md`, Story 2.2 file (conditional on decision outcome)
+**Decision gate:** Steve approves the recommendation before any Story 2.2 updates are applied
+
+**Acceptance Criteria:**
+
+**Given** the session journal is specified as `.claude/momentum/journal.json` using read-modify-write JSON
+**When** an architect evaluates the concurrency implications
+**Then** the evaluation documents the failure modes of concurrent multi-tab access to a read-modify-write JSON file
+**And** the evaluation compares JSON (read-modify-write) with JSONL (append-only) for the session journal use case
+**And** the evaluation references the existing architecture decision (Decision 1c) that chose JSONL for the findings ledger for the same concurrency reason
+
+**Given** the evaluation is complete
+**When** an architect reviews the recommendation
+**Then** a clear recommendation is documented: migrate to JSONL, keep JSON, or alternative approach
+**And** the rationale addresses concurrency safety, query patterns, human readability, and implementation complexity
+
+**Given** Steve has approved the recommendation
+**When** the decision is JSONL migration
+**Then** the architecture document is updated to reflect the new storage format for the session journal
+**And** Story 2.2 acceptance criteria are updated to use JSONL semantics instead of JSON read-modify-write
+
+**Given** Steve has approved the recommendation
+**When** the decision is to keep JSON
+**Then** the architecture document records the decision with rationale
+**And** Story 2.2 remains unchanged
 
 ---
 
