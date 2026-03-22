@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_WORKING_DIRECTORY/skills/momentum-plan-audit/scripts/check-plan-audited.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/skills/momentum-plan-audit/scripts/check-plan-audited.sh"
           }
         ]
       },
