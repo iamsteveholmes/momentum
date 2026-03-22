@@ -44,9 +44,9 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   # Epic 1: Foundation & Bootstrap
   epic-1: in-progress
-  1-1-repository-structure-established: ready-for-dev
-  1-2-skills-installable-via-npx-skills-add: ready-for-dev
-  1-3-first-momentum-invocation-completes-setup: backlog
+  1-1-repository-structure-established: done
+  1-2-skills-installable-via-npx-skills-add: review
+  1-3-first-momentum-invocation-completes-setup: ready-for-dev
   1-4-momentum-detects-and-applies-upgrades: backlog
   1-5-enforcement-degrades-gracefully-across-tool-tiers: backlog
   epic-1-retrospective: optional
@@ -144,3 +144,9 @@ momentum_metadata:
       - "skills/momentum-architecture-guard/"
       - "skills/momentum-upstream-fix/"
     story_file: "_bmad-output/implementation-artifacts/1-2-skills-installable-via-npx-skills-add.md"
+  1-3-first-momentum-invocation-completes-setup:
+    depends_on: []
+    touches:
+      - "skills/momentum/"
+      - ".claude/momentum/"
+    story_file: "_bmad-output/implementation-artifacts/1-3-first-momentum-invocation-completes-setup.md"
