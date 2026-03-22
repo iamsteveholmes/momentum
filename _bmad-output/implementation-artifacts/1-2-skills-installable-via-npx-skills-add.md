@@ -302,7 +302,7 @@ None.
 - Task 2 (EDD cycle): Wrote 2 behavioral evals for `momentum-vfl` (most complex stub) and 1 eval each for the other 3 stubs asserting stub-acknowledgement behavior. Created all 4 stub SKILL.md files with correct frontmatter. Ran EDD cycle — stub body text confirms stub behavior matches evals. All descriptions verified ≤150 chars: momentum-vfl 135, momentum-code-reviewer 126, momentum-architecture-guard 118, momentum-upstream-fix 106.
 - Task 3: Audited all 7 auditable SKILL.md files. All pass: name and description present, descriptions ≤150 chars (range: 106–147), model and effort present, file sizes 8–9 lines (<<500), context:fork + allowed-tools:Read on code-reviewer and architecture-guard. `skills/momentum/SKILL.md` (Story 1.1 responsibility) not in this worktree — audited when Story 1.1 merges.
 - Task 4: All skills follow `momentum-[concept]` naming. No collision with `bmad-*` namespace.
-- AVFL checkpoint: to be run by momentum-dev orchestrator.
+- AVFL checkpoint (2026-03-21): CLEAN, 96/100, profile=checkpoint, stage=final, 2 lenses (structural + domain). Primary artifact: skills/momentum-vfl/SKILL.md. 2 findings — both codebase-level consistency observations (model field format, effort vocabulary), not defects in this file.
 
 ### File List
 
@@ -312,7 +312,10 @@ None.
 - skills/momentum-vfl/evals/eval-orchestration-not-attempted.md
 - skills/momentum-code-reviewer/SKILL.md
 - skills/momentum-code-reviewer/evals/eval-stub-invocation-response.md
+- skills/momentum-code-reviewer/evals/eval-no-review-output-produced.md
 - skills/momentum-architecture-guard/SKILL.md
 - skills/momentum-architecture-guard/evals/eval-stub-invocation-response.md
+- skills/momentum-architecture-guard/evals/eval-no-drift-detection-attempted.md
 - skills/momentum-upstream-fix/SKILL.md
 - skills/momentum-upstream-fix/evals/eval-stub-invocation-response.md
+- skills/momentum-upstream-fix/evals/eval-no-analysis-produced.md
