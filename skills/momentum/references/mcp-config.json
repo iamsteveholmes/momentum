@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."]
+    },
+    "momentum-findings": {
+      "command": "node",
+      "args": ["mcp/findings-server/index.js"],
+      "description": "Momentum findings ledger MCP server — read/write findings-ledger.json as a structured resource (placeholder — server implemented in Epic 6)"
+    }
+  }
+}
