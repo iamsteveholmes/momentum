@@ -8,6 +8,105 @@ Momentum is currently implemented using [BMAD Method](https://github.com/bmadcod
 
 ---
 
+## Quick Start
+
+**Claude Code (Tier 1 — full enforcement):**
+
+```bash
+npx @anthropic-ai/claude-code skills add momentum/momentum -a claude-code
+```
+
+Then in Claude Code:
+
+```
+/momentum
+```
+
+Impetus (the Momentum orchestrator) runs first-time setup: installs global rules, configures hooks, sets up MCP integrations, and orients you to available workflows.
+
+**Cursor or other tools (Tier 2 — advisory):**
+
+```bash
+npx @anthropic-ai/claude-code skills add momentum/momentum -a cursor
+```
+
+Skills install and are invocable immediately. No additional setup required.
+
+**No tooling (Tier 3 — philosophy only):**
+
+Read the [Principles](#the-principles) section below and the [Philosophy](#philosophy) section for the full framework. No installation needed.
+
+---
+
+## Enforcement Tiers
+
+Momentum operates at three tiers depending on your tool environment. The same skill files install at every tier — what changes is the enforcement level.
+
+### Tier 1: Full Deterministic — Claude Code
+
+Claude Code provides the complete enforcement stack:
+
+- **Hooks** fire automatically on file changes — linting, formatting, and file protection run without developer action
+- **Rules** auto-load into every session from `~/.claude/rules/` — authority hierarchy, anti-pattern rules, and coding standards are always in context
+- **Subagent isolation** via `context: fork` — verification agents run in separate contexts with restricted tool access, enforcing producer-verifier separation
+- **Model routing** — skills specify `model:` and `effort:` frontmatter; Claude Code routes to the appropriate model tier
+- **Impetus orchestration** — `/momentum` provides session orientation, sprint awareness, install/upgrade management, and workflow access
+
+**What "full deterministic" means:** Quality standards at the deterministic enforcement tier (hooks, test gates, file protection) execute automatically. They cannot be skipped, deprioritized, or forgotten. Structured enforcement (workflow steps, review checklists) executes as part of skill workflows. Advisory enforcement (rules in context) is always loaded.
+
+**Install:** `npx @anthropic-ai/claude-code skills add momentum/momentum -a claude-code`, then `/momentum`
+
+### Tier 2: Advisory — Cursor and Other Tools
+
+Tools that support the [Agent Skills](https://github.com/anthropic-ai/skills) standard can install Momentum skills:
+
+- **Skill instructions execute** — all SKILL.md files are available and functional
+- **Guidance is advisory** — the tool provides instructions to the agent, but enforcement depends on the agent following them
+- **Extra frontmatter is silently ignored** — `context: fork`, `model:`, `effort:`, and `allowed-tools` fields are Claude Code-specific; other tools skip them without error
+
+**What is NOT available at Tier 2:**
+
+- Hooks (no automatic linting, formatting, or file protection)
+- Global rules (no `~/.claude/rules/` auto-loading)
+- Subagent isolation (no `context: fork` — all work happens in a single context)
+- Model routing (no `model:` frontmatter enforcement)
+- Impetus orchestration (no `/momentum` session management)
+
+Skills still provide significant value at Tier 2 — workflow structure, acceptance criteria enforcement, review checklists, and quality guidance all function as advisory instructions.
+
+**Install:** `npx @anthropic-ai/claude-code skills add momentum/momentum -a cursor`
+
+### Tier 3: Philosophy Only — No Tooling
+
+Momentum's principles are designed to be valuable without any tooling. A developer or team can adopt the practice by reading the documentation:
+
+1. **Read the principles** — The [Principles](#the-principles) section summarizes the core ideas. The [Philosophy](#philosophy) section provides full explanations with diagrams.
+2. **Apply spec-driven development** — Write acceptance criteria before generating code. Review specifications, not just code.
+3. **Enforce the authority hierarchy** — Specifications govern tests, tests govern code. Never modify specs to match generated output.
+4. **Separate production from verification** — Don't review your own AI-generated code in the same context that produced it. Use a fresh session or a different tool.
+5. **Trace failures upstream** — When output is wrong, ask whether the spec, the workflow, or the rule was the root cause. Fix the source, not the symptom.
+
+No installation, no tooling dependency. The principles apply to any AI-assisted development workflow.
+
+---
+
+## The Principles
+
+Momentum is built on these core principles. Each is explained in detail in the [Philosophy](#philosophy) section.
+
+1. **Spec-Driven Development** — Specifications are the primary artifact. Code is generated, verified output.
+2. **Authority Hierarchy** — Specifications > Tests > Code. Never modify upstream artifacts to accommodate downstream failures.
+3. **Producer-Verifier Separation** — The agent that writes code never reviews it. Verification happens in a separate context.
+4. **Evaluation Flywheel** — Trace quality failures upstream. Fix the workflow, spec, or rule — not just the code.
+5. **Three Tiers of Enforcement** — Deterministic (automated gates), Structured (workflow steps), Advisory (context rules). Promote standards to higher tiers when possible.
+6. **Cost as a Managed Dimension** — Model selection and effort levels are engineering decisions. Use flagship models for unvalidated outputs.
+7. **Provenance as Infrastructure** — Every claim traces to a source. `derives_from` chains are navigable infrastructure, not documentation.
+8. **Protocol-Based Integration** — Every integration point is a configurable protocol. Implementations are substitutable without modifying workflows.
+9. **Impermanence Principle** — Processes that grow and improve beat those that stay unchanged. The anti-pattern is unmanaged change.
+10. **Attention as a Finite Resource** — Review quality degrades under load. Design checkpoints for sustainability, not completeness.
+
+---
+
 ## Philosophy
 
 ### Spec-Driven Development
