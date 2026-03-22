@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-21
+# last_updated: 2026-03-22
 # project: momentum
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-21
+last_updated: 2026-03-22
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -124,7 +124,8 @@ development_status:
 
   # Process Stories — Sprint 1
   p1-1-remove-git-mcp-server-dependency: ready-for-dev
-  p1-3-findings-ledger-architecture-revision: ready-for-dev
+  p1-3-findings-ledger-architecture-revision: in-progress
+  p1-4-lightweight-story-status-update-tool: ready-for-dev
 
 # Momentum parallel execution metadata — invisible to BMAD skills
 # Each entry adds dependency and scope tracking for parallel story execution.
@@ -200,3 +201,13 @@ momentum_metadata:
       - "_bmad-output/planning-artifacts/architecture.md"
       - "_bmad-output/planning-artifacts/epics.md"
     story_file: "_bmad-output/implementation-artifacts/p1-3-findings-ledger-architecture-revision.md"
+  p1-4-lightweight-story-status-update-tool:
+    depends_on:
+      - p1-1-remove-git-mcp-server-dependency
+    touches:
+      - "skills/momentum/scripts/"
+      - "skills/momentum-plan-audit/workflow.md"
+      - "skills/momentum-dev/workflow.md"
+      - ".claude/skills/bmad-dev-story/workflow.md"
+      - "skills/momentum-create-story/workflow.md"
+    story_file: "_bmad-output/implementation-artifacts/p1-4-lightweight-story-status-update-tool.md"

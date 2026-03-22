@@ -24,12 +24,6 @@
           "source": "hooks-config.json",
           "target": ".claude/settings.json",
           "requires_restart": true
-        },
-        {
-          "action": "write_config",
-          "source": "mcp-config.json",
-          "target": ".mcp.json",
-          "requires_restart": false
         }
       ]
     }

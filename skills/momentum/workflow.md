@@ -59,10 +59,9 @@ Upgrade support is coming in a future release. For now, re-run setup manually if
     · {{rules_count}} global rules → ~/.claude/rules/
       (authority hierarchy, anti-patterns, model routing)
     · Enforcement hooks → .claude/settings.json
-    · MCP servers → .mcp.json
 
   After setup, you'll need to restart Claude Code once for the
-  enforcement hooks to activate. Rules and MCP are available immediately.
+  enforcement hooks to activate. Rules are available immediately.
 
   Set up now?
   [Y] Yes · [S] I'll handle it manually
@@ -108,25 +107,12 @@ Upgrade support is coming in a future release. For now, re-run setup manually if
       <output>  ✓  .claude/settings.json — enforcement hooks configured</output>
     </check>
 
-    <!-- write_config for .mcp.json: merge mcpServers -->
-    <check if="action.action == 'write_config' AND action.target == '.mcp.json'">
-      <action>Read existing `.mcp.json` (start with `{"mcpServers": {}}` if absent)</action>
-      <action>Read `${CLAUDE_SKILL_DIR}/references/{{action.source}}`</action>
-      <action>For each server key in source `mcpServers`:
-        - If key absent in existing .mcp.json → add it
-        - If key exists → skip (preserve existing config)
-      </action>
-      <action>Write merged result to `.mcp.json`</action>
-      <action>If `action.requires_restart == true`: set restart_required = true</action>
-      <output>  ✓  .mcp.json — Findings MCP configured</output>
-    </check>
-
     <!-- After all actions complete: emit restart notice if any action required it -->
     <note>The following check runs ONCE after the full action loop completes — not inside the per-action iteration.</note>
     <check if="restart_required == true">
       <output>
   !  Restart Claude Code when ready — hooks activate on restart.
-     Rules and MCP are working now.
+     Rules are working now.
       </output>
     </check>
 
@@ -143,8 +129,7 @@ Upgrade support is coming in a future release. For now, re-run setup manually if
   "installed_at": "{{ISO_8601_timestamp}}",
   "components": {
     "rules-global": { "version": "{{current_version}}", "hash": "{{rules_hash}}" },
-    "hooks":        { "version": "{{current_version}}" },
-    "mcp":          { "version": "{{current_version}}" }
+    "hooks":        { "version": "{{current_version}}" }
   }
 }
 ```
@@ -192,7 +177,7 @@ Upgrade support is coming in a future release. For now, re-run setup manually if
 
     · 3 global rules → ~/.claude/rules/
 
-  Project config (hooks, MCP) is already committed to the repo.
+  Project config (hooks) is already committed to the repo.
   Set up global rules now? [Y] Yes · [S] Skip
       </output>
       <ask>[Y] or [S]?</ask>
