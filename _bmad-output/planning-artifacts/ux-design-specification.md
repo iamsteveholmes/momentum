@@ -70,6 +70,8 @@ The UX is explicitly focused on addressing the **knowledge gap problem** — the
 
 5. **Trust in AI-Generated Quality** — The value proposition requires verification to feel natural, not burdensome — and the flywheel must be *visible* so users see improvement accumulating.
 
+6. **Spec Fatigue Under Review Load** — The practice generates review demands (story approvals, architecture decisions, acceptance criteria validation) faster than humans can sustain quality attention. Review quality degrades predictably with time and volume — vigilance decrement onset at 10-15 minutes, decision fatigue across sequential approvals. The practice that produces the specs must also ensure they remain reviewable.
+
 ### Design Opportunities
 
 1. **The Orchestrating Agent as Primary UX** — The agent is not a wrapper around docs; it *replaces* docs as the interface. Conversation constitutes learning.
@@ -81,6 +83,8 @@ The UX is explicitly focused on addressing the **knowledge gap problem** — the
 4. **Proactive Orientation Without Interruption** — Surface context when an information gap is detected and the conversational floor is open. "I notice you're about to implement without a spec — want me to walk you through quick-spec?" Applied from Nornspun's inner thoughts pattern.
 
 5. **Unified Voice Across Complex Backstage** — Multiple agents (code reviewer, architecture guard, verifier) presenting as one coherent voice. Users work with Momentum, not a team of agents they have to manage.
+
+6. **Attention-Aware Review Design** — Spec fatigue research provides empirically-grounded patterns for sustainable review: tiered checkpoints, motivated disclosure, confidence-directed attention, and expertise-adaptive guidance fading. These transform review from endurance test into directed, purposeful scrutiny.
 
 ---
 
@@ -140,6 +144,8 @@ These must require zero deliberate effort — they should simply happen:
 
 5. **Surface the unknown unknowns proactively** — The agent detects information gaps and surfaces context before the user makes a mistake, but only when the conversational floor is open. Orient, don't interrupt.
 
+6. **Respect the reviewer's attention budget** — Spec fatigue degrades review quality predictably. Workflows must lead with summaries, offer tiered review depth (quick scan / full review / trust & continue), and never dump full artifacts unprompted. Direct scrutiny where confidence is lowest, not where volume is highest.
+
 ---
 
 ## Desired Emotional Response
@@ -185,6 +191,52 @@ These must require zero deliberate effort — they should simply happen:
 3. **Return ownership explicitly** — every completion ends with agency returned to the user; the agent is the guide, not the author
 4. **Make improvement visible** — the flywheel's work must be surfaced; compounding improvement that the user can't see doesn't create investment
 5. **Never manufacture confidence falsely** — bounded acknowledgment of uncertainty builds more trust than false reassurance; the agent admits limits and challenges gaps
+6. **Prevent fatigue before the user feels it** — The 39-point perception gap means users cannot self-assess review degradation. Present information in motivated chunks (why this matters, not just what it says), fade guidance as expertise grows (the same orientation every time harms experienced users), and flag confidence levels so reviewers can allocate attention where it matters most.
+
+---
+
+## Spec Fatigue Mitigation Patterns
+
+The following patterns are **authoring guidelines** for skill, agent, and workflow writers. They are grounded in the [spec fatigue research](../../docs/research/spec-fatigue-research-2026-03-21.md) and can be applied immediately without infrastructure changes. Pattern 3 from the research (Multi-Session Dashboard) is parked as a future Impetus product feature requiring UI and orchestration infrastructure; the underlying philosophy is captured in the "Attention as a Finite Resource" principle.
+
+### Attention-Aware Checkpoints
+
+Every workflow checkpoint that pauses for human review should:
+
+- **Lead with a micro-summary** of what was generated and the key decisions made
+- **Offer tiered review depth:** quick scan / full review / trust & continue
+- **Never dump a full artifact unprompted** — present the summary, let the human pull detail
+
+The goal is not to prevent review but to make review *sustainable*. A reviewer who skims a summary and asks to drill into one section has exercised more genuine scrutiny than one who scrolled past a wall of text and said "looks good."
+
+### Expertise-Adaptive Orientation
+
+Agents and workflows should not deliver the same orientation every time:
+
+- **First encounter:** Full walkthrough with context and worked examples
+- **Subsequent encounters:** Abbreviated — decision points and what's changed since last time
+- **Expert mode:** Minimal cue, skip directly to the work
+
+The expertise reversal effect (Kalyuga et al., 2003) establishes that instructional techniques effective for novices become actively harmful for experts — experts must reconcile external guidance with their own internal models, increasing cognitive load. Even crude detection is effective: "Full walkthrough or just the decision points?" at workflow start.
+
+### Motivated Disclosure
+
+Every drill-down, detail expansion, or "see more" must be framed with **why it matters**, not just what it contains:
+
+- Not: "Review the architecture document"
+- But: "The architecture introduces event sourcing here — different from the CRUD pattern in Stories 1-3. This affects how you'll handle data migration in Story 4.3."
+
+This transforms review from passive chore into motivated retrieval. The coherence cascade principle (Thomas, 2026): progressive disclosure only works when each layer is framed with goal-aligned context that explains why the hidden information is valuable. This is the highest-ROI pattern — zero infrastructure, immediate improvement to every human interaction point.
+
+### Confidence-Directed Review
+
+When generating or presenting specifications, flag sections by confidence level to direct review effort:
+
+- **High confidence** (derived directly from upstream spec): "These 3 acceptance criteria come directly from the epic"
+- **Medium confidence** (inferred from patterns or architecture): "Inferred from the architecture — verify it"
+- **Low confidence** (no source data): "Needs your input — no source data for this"
+
+This directs scarce review attention where it matters most. Medium verbalized uncertainty consistently produces higher trust, satisfaction, and task performance than either high or low confidence expression (IJHCS, 2025). Aligns naturally with Momentum's provenance infrastructure — `derives_from` chain strength is a natural proxy for confidence level.
 
 ---
 

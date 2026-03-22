@@ -12,7 +12,7 @@ Momentum is currently implemented using [BMAD Method](https://github.com/bmadcod
 
 ### Spec-Driven Development
 
-Specifications are the primary engineering artifact. Human-written acceptance criteria define correctness. Code is a generated, verified output — disposable and replaceable. The spec is what matters.
+Specifications are the primary engineering artifact. Human-written acceptance criteria define correctness. Code is a generated, verified output — disposable and replaceable. The spec is what matters. The practice is responsible for keeping specifications reviewable — a spec nobody can sustain attention through is no better than no spec at all.
 
 ### Authority Hierarchy
 
@@ -162,22 +162,37 @@ Every integration point in the practice is a configurable protocol. The project 
 
 Processes and tooling that grow and improve are better than those that stay unchanged. Research has a short half-life in fast-moving domains. Decisions must be revisited, tools must be re-evaluated, and the practice itself must evolve. The anti-pattern is not change — it's unmanaged change.
 
+### Attention as a Finite Resource
+
+The spec-driven methodology only works if humans review specifications with care. Attention is finite, degrades predictably under load, and cannot be replenished by willpower. Cognitive science establishes that vigilance decrement — the decline in detection accuracy during sustained monitoring — begins within 10-15 minutes under high-demand conditions. Spec fatigue, the progressive loss of review quality over time, is a natural consequence of generating more specification material than humans can sustainably review.
+
+Every workflow, checkpoint, and review gate must be designed with the assumption that the reviewer's attention is a depletable resource, not an infinite constant. The 39-point perception gap between actual and perceived performance (METR, 2025) means developers cannot self-assess their own review degradation. The practice must enforce sustainability rather than relying on self-regulation.
+
+Three design principles follow: (1) minimize what requires human review — automate verification where possible, (2) direct review effort where uncertainty is highest — not where volume is highest, and (3) respect cognitive recovery time between review demands — sequential approvals degrade in quality independent of content.
+
 ---
 
 ## Quality Model
 
-### Four AI-Induced Debt Types
+### Five AI-Induced Debt Types
 
-Momentum's quality rules are organized around four categories of debt that AI code generation amplifies:
+Momentum's quality rules are organized around five categories of debt that AI-augmented development amplifies:
 
 - **Verification Debt** — Unreviewed or inadequately tested AI-generated output accumulates faster than human-written code because generation is cheap. Layered verification (acceptance tests, unit tests, adversarial review, human review) counteracts this.
 - **Cognitive Debt** — Code the developer cannot explain is a liability. If generated code can't be clearly explained, it gets rewritten. Understanding is not optional.
 - **Pattern Drift** — AI amplifies whatever patterns it sees. If the codebase has anti-patterns, the AI will replicate them at scale. Architectural standards and explicit rules counteract this.
 - **Technical Debt** — Compounds exponentially with AI-generated code because the volume is higher and the feedback loop is weaker. Adversarial review and refactoring discipline counteract this.
+- **Review Debt** — Specifications approved without genuine scrutiny. Spec-driven development amplifies this: the methodology generates review demands faster than humans can sustain quality attention. Unlike Cognitive Debt (can you explain it?), Review Debt is a stamina failure (did you actually check it?). Automation monitoring research shows a 55% omission rate, and the expertise reversal effect means experienced users are *more* susceptible, not less. Review Debt is invisible and self-reinforcing. Mitigations: attention-aware checkpoints, confidence-directed review that focuses scrutiny where uncertainty is highest, and expertise-adaptive guidance that fades as competence grows.
+
+Left unaddressed, these debts interact and compound: verification debt feeds cognitive debt (unreviewed code you don't understand), cognitive debt enables pattern drift (you can't spot what you don't comprehend), pattern drift accelerates technical debt (bad patterns replicate at AI speed), and review debt feeds all of them — specifications approved without scrutiny become the authoritative source for downstream code generation, verification, and architectural decisions.
 
 ### Anti-Pattern Awareness
 
-Momentum includes corrective rules targeting seven known AI code generation anti-patterns (based on [Ox Security research](https://www.ox.security/the-7-deadly-sins-of-ai-generated-code/)): excessive comments, textbook fixation, refactoring avoidance, over-specification, code duplication, monolithic tendencies, and dependency ignorance. Each rule prescribes the correct behavior rather than describing the problem.
+**Code Generation Anti-Patterns:** Momentum includes corrective rules targeting seven known AI code generation anti-patterns (based on [Ox Security research](https://www.ox.security/the-7-deadly-sins-of-ai-generated-code/)): excessive comments, textbook fixation, refactoring avoidance, over-specification, code duplication, monolithic tendencies, and dependency ignorance. Each rule prescribes the correct behavior rather than describing the problem.
+
+**Practice Anti-Patterns:** Spec-driven development introduces its own failure modes — not in what AI generates, but in what the practice demands of humans:
+
+- **Spec Fatigue** — The progressive degradation of review quality under sustained specification review load. Distinguished from Knowledge Gap (a navigation problem — "I don't know what to do") by being a stamina problem ("I can't make myself care about reviewing this anymore"). Naive attempts to solve Knowledge Gap with more information make Spec Fatigue worse for experienced users through the expertise reversal effect — instructional techniques effective for novices become actively harmful for experts. The corrective: design review checkpoints for sustainability, not completeness.
 
 ---
 
@@ -261,6 +276,7 @@ The research that informed the practice design:
 - [Consolidated Agentic Engineering Research](docs/research/AI-Solo-Dev-Consolidated-Research-2026-03-07-final.md) — the primary research synthesis that grounds the practice plan
 - [Solo Dev Workflow Optimization](docs/research/AI%20Solo%20Dev%20Workflow%20Optimization%20Report.md) — patterns for effective solo AI-assisted development
 - [AI Engineering Maturity and Adoption](docs/research/AI%20Engineering%20Maturity%20and%20Adoption.md) — industry maturity models and adoption patterns
+- [Spec Fatigue Research](docs/research/spec-fatigue-research-2026-03-21.md) — empirical evidence for specification review fatigue as a named anti-pattern, with design implications
 
 **Technical Architecture**
 - [Agentic Architecture: BMAD vs Claude Code Native](docs/research/technical-agentic-architecture-bmad-vs-claude-code-2026-03-07.md) — tradeoffs between framework-managed and native agent patterns
