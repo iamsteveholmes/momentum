@@ -325,7 +325,7 @@ Quality gates fire without developer intervention. Lint and format run on save. 
 ### Epic 4: Complete Story Cycles
 A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
 **FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
-**UX-DRs covered:** UX-DR6, UX-DR8
+**UX-DRs covered:** UX-DR6, UX-DR8, UX-DR19 (Story 4.1), UX-DR20 (Story 4.3), UX-DR22 (Story 4.1)
 **Additional:** code-reviewer (`context:fork` skill, `allowed-tools: Read`), VFL flat skill (momentum-vfl), create-story skill, dev-story skill (includes ATDD workflow capability — ATDD is not a separate deployed skill)
 **Priority:** Sprint 1
 
@@ -342,7 +342,7 @@ A developer can trace every artifact to its origins, detect stale references, an
 ### Epic 6: The Practice Compounds
 Findings accumulate across stories. Systemic patterns surface. Upstream fixes are applied at the right level — spec, rule, workflow, or one-off patch. Each sprint the practice gets measurably smarter. The flywheel makes invisible improvement visible.
 **FRs covered:** FR28, FR29, FR30, FR31, FR32, FR33
-**UX-DRs covered:** UX-DR7
+**UX-DRs covered:** UX-DR7, UX-DR19 (Story 6.3), UX-DR22 (Story 6.3)
 **Additional:** findings-ledger.jsonl (global, with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server (optional query layer)
 **Priority:** Sprint 2
 
@@ -537,8 +537,8 @@ A developer always knows where they are and what to do next. Session journal tra
 
 **FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
 **NFRs covered:** NFR1, NFR2, NFR3
-**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6, UX-DR8 (partial — proactive-offer pattern introduced; fully exercised in Epic 4), UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
-**Note:** UX-DR3 (Hook Announcement) → Epic 3. UX-DR7 (Flywheel Notice) → Epic 6. UX-DR8 (Proactive Orientation) — the proactive-offer-never-block pattern is established here in Stories 2.2/2.5 and fully exercised once story cycles (Epic 4) provide real workflow steps.
+**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6, UX-DR8 (partial — proactive-offer pattern introduced; fully exercised in Epic 4), UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18, UX-DR19 (Story 2.4), UX-DR20 (Story 2.5), UX-DR21 (Story 2.5), UX-DR22 (Story 2.4)
+**Note:** UX-DR3 (Hook Announcement) → Epic 3. UX-DR7 (Flywheel Notice) → Epic 6. UX-DR8 (Proactive Orientation) — the proactive-offer-never-block pattern is established here in Stories 2.2/2.5 and fully exercised once story cycles (Epic 4) provide real workflow steps. UX-DR19–22 (Spec Fatigue Mitigation) — introduced in Stories 2.4/2.5 and fully exercised once code review (Epic 4) and flywheel (Epic 6) provide real review content.
 
 ### Story 2.Spike: Validate Background Agent Coordination Mechanism
 
@@ -745,6 +745,16 @@ So that I always know when something is mine to act on and I'm never left in sil
 **Then** Impetus provides a human-readable summary of what was built or produced during the implementation phase
 **And** this summary is delivered at the moment review is dispatched — the developer reads it while review runs, not after
 
+**Given** a subagent returns findings or a workflow step completes and presents results for review
+**When** Impetus synthesizes the result (UX-DR19)
+**Then** the synthesis leads with a micro-summary of key decisions and outcomes
+**And** offers tiered review depth: quick scan (summary only), full review (expand all findings), or trust & continue
+**And** never dumps the full artifact unprompted
+
+**Given** a review finding references a specification section
+**When** Impetus presents the finding (UX-DR22)
+**Then** Impetus indicates the confidence level of the referenced content (high = derived from upstream spec, medium = inferred, low = needs developer input)
+
 ---
 
 ### Story 2.5: Spec Contextualization and Configuration Gap Detection
@@ -781,6 +791,15 @@ So that I never need to manually hunt for specs or figure out how to fix missing
 **Given** a developer has explicitly declined a proactive offer
 **When** the same or similar gap recurs (UX-DR8)
 **Then** Impetus does not re-surface the same offer unless context changes materially
+
+**Given** a developer encounters a workflow step for the second or subsequent time
+**When** Impetus delivers orientation (UX-DR20)
+**Then** guidance depth adapts: first encounter = full walkthrough with context, subsequent = abbreviated decision points, expert mode = minimal cue
+**And** Impetus may ask at workflow start: "Full walkthrough or just the decision points?"
+
+**Given** Impetus surfaces spec context inline
+**When** delivering contextualization (UX-DR21)
+**Then** every drill-down is framed with why it matters to the current step, not just what the spec says
 
 ---
 
@@ -982,7 +1001,7 @@ So that the right model is used for every task automatically — no manual overr
 A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
 
 **FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
-**UX-DRs covered:** UX-DR6, UX-DR8
+**UX-DRs covered:** UX-DR6, UX-DR8, UX-DR19 (Story 4.1), UX-DR20 (Story 4.3), UX-DR22 (Story 4.1)
 
 ### Story 4.1: Code-Reviewer Skill Performs Adversarial Review
 
@@ -1021,6 +1040,11 @@ So that every implementation is checked by an independent context before it is c
 **And** raw JSON is never shown to the developer
 **And** the `! critical` and `· minor` severity indicators are used in the synthesis
 **And** any critical finding triggers an explicit flywheel offer
+
+**Given** the code-reviewer returns findings and Impetus synthesizes them
+**When** presenting findings to the developer (UX-DR19, UX-DR22)
+**Then** Impetus leads with a micro-summary of the review outcome and offers tiered review depth (quick scan / full review / trust & continue)
+**And** each finding indicates confidence level (high/medium/low) so the developer allocates review attention where it matters most
 
 ---
 
@@ -1098,6 +1122,10 @@ So that I always know the next step and every handoff happens without me having 
 **Then** Impetus presents the findings summary and asks whether to trigger the flywheel
 **And** the flywheel offer is explicit — the developer must approve before it runs
 **And** if the developer declines, Impetus notes the open findings and closes the cycle
+
+**Given** a developer has completed multiple story cycles
+**When** Impetus presents workflow steps (UX-DR20)
+**Then** step verbosity adapts to demonstrated expertise — novice developers receive full orientation at each step, experienced developers receive abbreviated decision-point summaries
 
 ---
 
@@ -1378,7 +1406,7 @@ So that I know which claims are verified facts, which are inferences, and which 
 Findings accumulate across stories. Systemic patterns surface. Upstream fixes are applied at the right level — spec, rule, workflow, or one-off patch. Each sprint the practice gets measurably smarter. The flywheel makes invisible improvement visible.
 
 **FRs covered:** FR28, FR29, FR30, FR31, FR32, FR33
-**UX-DRs covered:** UX-DR7
+**UX-DRs covered:** UX-DR7, UX-DR19 (Story 6.3), UX-DR22 (Story 6.3)
 **Additional:** findings-ledger.jsonl (global, with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server (optional query layer)
 
 ### Story 6.1: Findings Ledger Accumulates Quality Findings Across Stories
@@ -1495,6 +1523,12 @@ So that I fix defects at the right level instead of patching symptoms.
 - `Fix applied:` [what changed and where]
 - `What it prevents:` [the class of future defects this fix eliminates]
 **And** this notice makes the improvement visible — the developer can see that practice quality increased, not just that a bug was fixed
+
+**Given** the flywheel presents findings across multiple phases
+**When** the developer is reviewing findings in sequence (UX-DR19)
+**Then** each finding leads with a micro-summary
+**And** the developer can choose to drill into detail or trust & continue
+**And** findings are presented in confidence-priority order: low-confidence findings (needing developer scrutiny) first, high-confidence findings (derived from clear upstream sources) last (UX-DR22)
 
 ---
 

@@ -524,10 +524,10 @@ momentum/
 
 - **FR6:** Developer can interact with an orchestrating agent that presents menu-driven access to all practice workflows
 - **FR7:** Orchestrating agent can show the developer's current position in any workflow via visual status graphics (ASCII)
-- **FR8:** Orchestrating agent can provide human-readable summaries of what was built during implementation, while review runs
+- **FR8:** Orchestrating agent can provide human-readable summaries of what was built during implementation, while review runs. Summaries follow attention-aware checkpoint patterns (UX-DR19) — lead with micro-summary, offer tiered review depth — and indicate confidence levels on presented content (UX-DR22)
 - **FR9:** Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally, including at minimum: gaps in the protocol mapping table (FR35), missing MCP provider configuration, and undefined ATDD tool binding
-- **FR10:** Orchestrating agent can contextualize specifications just-in-time — explaining relevant architectural decisions, acceptance criteria, and prior choices at the moment they're needed, rather than requiring document reading
-- **FR11:** Developer can ask follow-up questions during any workflow step, and the agent treats questions as discovery opportunities that may improve the specification
+- **FR10:** Orchestrating agent can contextualize specifications just-in-time — explaining relevant architectural decisions, acceptance criteria, and prior choices at the moment they're needed, rather than requiring document reading. Guidance depth adapts to expertise level (UX-DR20); every drill-down is framed with why it matters (UX-DR21)
+- **FR11:** Developer can ask follow-up questions during any workflow step, and the agent treats questions as discovery opportunities that may improve the specification. Answers are framed with motivated context — why the information matters to the current task (UX-DR21)
 
 ### Provenance & Traceability
 
@@ -619,6 +619,10 @@ momentum/
 
 - **NFR16:** Every Momentum feature must be validated by real use on at least one active project before being considered stable. Synthetic unit tests are supplementary, not primary validation. Validated by: each feature's release notes reference the project(s) and story cycle(s) where it was dogfooded.
 - **NFR17:** The meta-risk (system amplifying its own blind spots via dogfooding) must be mitigated by external validation: adversarial review by separate context, multi-model research cross-checking, and explicit human checkpoints at critical decisions
+
+### Review Sustainability
+
+- **NFR18:** All Momentum workflow checkpoints that pause for human review must implement spec fatigue mitigation patterns (UX-DR19 through UX-DR22): lead with micro-summary and tiered review depth (UX-DR19), adapt guidance to expertise level (UX-DR20), frame drill-downs with motivated context (UX-DR21), and indicate confidence levels on generated content (UX-DR22). Validated by: behavioral evals confirm each checkpoint offers tiered review depth (not full-artifact dump) and flags confidence levels on generated content.
 
 ## Post-PRD Actions
 
