@@ -126,7 +126,7 @@ development_status:
   p1-1-remove-git-mcp-server-dependency: done
   p1-3-findings-ledger-architecture-revision: done
   p1-4-lightweight-story-status-update-tool: done
-  p1-5-cascade-spec-fatigue-patterns-into-prd-epics-and-stories: in-progress
+  p1-5-cascade-spec-fatigue-patterns-into-prd-epics-and-stories: done
 
 # Momentum parallel execution metadata — invisible to BMAD skills
 # Each entry adds dependency and scope tracking for parallel story execution.

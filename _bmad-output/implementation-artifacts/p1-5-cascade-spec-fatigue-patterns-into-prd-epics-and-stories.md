@@ -1,6 +1,6 @@
 ---
 story_id: p1.5
-status: in-progress
+status: done
 type: process
 epic: P1 — Process Sprint-1
 title: Cascade Spec Fatigue Patterns into PRD, Epics, and Stories

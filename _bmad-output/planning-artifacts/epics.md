@@ -28,6 +28,8 @@ derives_from:
 lastEdited: '2026-03-22'
 editHistory:
   - date: '2026-03-22'
+    changes: 'Added terminal-multiplexer protocol type to Story 7.1 recognized types; added AC for terminal-multiplexer protocol contract with detect-and-adapt pattern; forward-referenced CMUX anti-patterns for Story 3.4. Derives from CMUX research document.'
+  - date: '2026-03-22'
     changes: 'Added mise as standard tool/runtime manager in Additional Requirements (From PRD — Tool/Runtime Management section); updated Story 7.2 project inspection file list to include mise.toml alongside package.json, build.gradle, pyproject.toml.'
   - date: '2026-03-20'
     changes: 'Synced FR numbering with PRD edits: FR2 updated to solo first-install path; FR2b/FR2c added for Nth-run routing; FR3 decomposed to FR3a/FR3b/FR3c; FR5 updated to team member joining path; NFR1 corrected to ≤150 characters; NFR4 updated to remove plugin reference; Epic 1 FRs covered list updated; FR Coverage Map updated with new FR entries.'
@@ -349,7 +351,7 @@ Findings accumulate across stories. Systemic patterns surface. Upstream fixes ar
 ---
 
 ### Epic 7: Bring Your Own Tools
-A developer configures which agent, model, test framework, or MCP provider satisfies each protocol. Swapping any component doesn't touch workflow definitions. The practice layer is unchanged even when the tooling changes underneath it.
+A developer configures which agent, model, test framework, terminal multiplexer, or MCP provider satisfies each protocol. Swapping any component doesn't touch workflow definitions. The practice layer is unchanged even when the tooling changes underneath it.
 **FRs covered:** FR34, FR35, FR36, FR37, FR38
 **NFRs covered:** NFR14, NFR15
 **Priority:** Sprint 2
@@ -1625,7 +1627,7 @@ So that Momentum knows which tools to use for this project and every workflow st
 **When** the project configuration file is initialized
 **Then** `.claude/momentum/project-config.json` is created with a `protocol_bindings` object mapping protocol types to implementations
 **And** each binding entry includes: `implementation` (the tool, skill, or command that satisfies the protocol), `configured_by` (who created the entry — `"impetus"` for agent-configured, `"developer"` for manually set), `configured_at` (ISO 8601 timestamp), `configured_why` (one sentence: the reason this implementation was chosen)
-**And** the recognized protocol types at MVP are: `atdd-tool`, `test-runner`, `lint-tool`, `code-reviewer`, `vfl-validator`, `research-provider` — additional types may be added; unrecognized types are ignored without error
+**And** the recognized protocol types at MVP are: `atdd-tool`, `test-runner`, `lint-tool`, `code-reviewer`, `vfl-validator`, `research-provider`, `terminal-multiplexer` — additional types may be added; unrecognized types are ignored without error
 **And** the protocol type registry and each type's interface contract are formally documented in `references/protocol-contracts.md` within the `momentum/` skill — this is the canonical authority for what each type means and what its implementation must produce
 **And** the config file also includes a `host_environment` field: `"claude-code"` | `"cursor"` | `"cline"` | `"other"` — set by the developer during setup; used by Impetus to determine which environment-specific behaviors apply (e.g. Cursor tool ceiling check in NFR14)
 
@@ -1638,6 +1640,15 @@ So that Momentum knows which tools to use for this project and every workflow st
 **When** the update is written
 **Then** the previous binding is replaced and the new configured_at and configured_why are set — the config does not maintain history (history is in git)
 **And** Impetus surfaces the change summary: "`atdd-tool` binding updated: [old] → [new] — reason: [why]"
+
+**Given** a protocol binding is defined for `terminal-multiplexer` (FR35)
+**When** a developer reviews the project config
+**Then** it contains: the multiplexer implementation name (e.g. `cmux`, `tmux`, `null`), the environment detection method, and a provenance record (configured_by, configured_at, configured_why) for the binding
+**And** the `terminal-multiplexer` protocol contract in `references/protocol-contracts.md` defines at minimum these operations: `create-pane`, `send-to-pane`, `read-from-pane`, `detect-environment`, `notify`, `cleanup`
+**And** three reference bindings are documented: CMUX (macOS native, via cmux CLI or cmuxlayer MCP), tmux (cross-platform, via tmux commands), null (default no-op — returns success without action)
+**And** skills consuming `terminal-multiplexer` use the detect-and-adapt pattern: call `detect-environment` first and adapt behavior when a multiplexer is present; all skills must function correctly when `detect-environment` returns `multiplexer_active: false` (null binding)
+
+**Note:** Three anti-patterns identified in CMUX research (cross-session orchestration instead of subagents, multiplexer as primary orchestrator, over-coupling to multiplexer environment) are queued for anti-patterns rules content in Story 3.4. See `_bmad-output/planning-artifacts/research/technical-cmux-claude-code-integration-research-2026-03-22.md` section 3.4.
 
 ---
 
