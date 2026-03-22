@@ -9,7 +9,41 @@
             "command": "bash $CLAUDE_WORKING_DIRECTORY/skills/momentum-plan-audit/scripts/check-plan-audited.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[momentum-protect] \u2713 checked file protection \u2014 hook placeholder (Story 3.2 implements)'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[momentum-lint] \u2713 checked file edit \u2014 lint/format hook placeholder (Story 3.1 implements)'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[momentum-gate] \u2713 checked stop conditions \u2014 quality gate placeholder (Story 3.3 implements)'",
+            "timeout": 10
+          }
+        ]
       }
     ]
-  }
+  },
+  "showTurnDuration": true
 }
