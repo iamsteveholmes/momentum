@@ -19,6 +19,8 @@ stepsCompleted:
 lastEdited: '2026-03-22'
 editHistory:
   - date: '2026-03-22'
+    changes: 'Added terminal-multiplexer row to Protocol-Based Integration Architecture table; added terminal multiplexer integration note with detect-and-adapt pattern and anti-pattern forward reference for Story 3.4. Derives from CMUX research document.'
+  - date: '2026-03-22'
     changes: 'Added mise as standard tool/runtime manager in Implementation Considerations — Momentum skills and workflows must prefer mise over legacy version managers (nvm, pyenv, rbenv, asdf, volta, fnm) when referencing tool installation.'
   - date: '2026-03-20'
     changes: 'Removed plugin deployment model; replaced with skills-only architecture (npx skills add momentum/momentum -a claude-code + Impetus interactive setup). Updated FR2, NFR4, NFR7, NFR9, NFR10, NFR11, Journey 1 narrative, deployment table, repository structure, installation architecture, implementation considerations.'
@@ -413,8 +415,11 @@ Every integration point in Momentum is a configurable protocol. The project conf
 | **Tool protocols** | Which tool executes a function | Playwright ↔ Kotest ↔ custom test runner |
 | **MCP provider protocols** | Which LLM/service provides capability | Gemini ↔ GPT ↔ add 3rd/4th provider |
 | **Document specification protocols** | What constitutes the spec tree | Story ↔ Task ↔ Spec ↔ custom top-level doc |
+| **Terminal multiplexer protocols** | Which terminal manager provides pane/session management | CMUX (macOS) ↔ tmux (cross-platform) ↔ null (no multiplexer) |
 
 **Configuration level:** Project-level. Each project can override default protocol implementations without affecting the practice layer.
+
+**Terminal multiplexer integration:** Optional and protocol-bound (Epic 7). Skills must use the detect-and-adapt pattern — check for environment indicators and adapt behavior when present; never require a specific multiplexer. Three anti-patterns (cross-session orchestration instead of subagents, multiplexer as primary orchestrator, over-coupling to multiplexer environment) are documented in CMUX research and queued for anti-patterns rules (Story 3.4).
 
 **Document specification protocol:** The specification tree varies team to team. Momentum does not prescribe a shape (Brief → PRD → Architecture → Epic → Story). Instead:
 - Top-level specification documents self-identify (frontmatter marker)
