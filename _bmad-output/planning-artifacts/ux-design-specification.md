@@ -31,6 +31,10 @@ derives_from:
   - id: RESEARCH-BMAD-COEXISTENCE-001
     path: docs/research/bmad-v6-skills-architecture-coexistence-2026-03-16.md
     relationship: derives_from
+lastEdited: '2026-03-22'
+editHistory:
+  - date: '2026-03-22'
+    changes: 'Added Terminal Multiplexer Visibility subsection under Multi-Tab Awareness — optional enhancement via Epic 7 terminal-multiplexer protocol binding. Derives from CMUX research document.'
 ---
 
 # UX Design Specification: Momentum
@@ -441,6 +445,10 @@ The user says "continue the story" and Impetus re-orients immediately. Or "I wan
 **Multi-Tab Awareness**
 
 Each Claude Code tab is an independent Impetus instance sharing the same journal. Impetus in tab A sees that tab B has an active story thread. Recently-timestamped entries signal intentional concurrent work and are left undisturbed. Conflicting thread starts (two tabs trying to open the same story) are flagged.
+
+**Terminal Multiplexer Visibility (Optional)**
+
+Terminal multiplexers (CMUX, tmux) provide an additional layer of multi-session visibility beyond the session journal — sidebar status, notification rings, and branch display per workspace. This is an optional enhancement through Epic 7's `terminal-multiplexer` protocol binding that complements journal-based session awareness. Skills use the detect-and-adapt pattern and function identically without a multiplexer.
 
 **Thread Hygiene**
 
