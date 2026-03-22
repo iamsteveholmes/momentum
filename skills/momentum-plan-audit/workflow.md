@@ -197,7 +197,7 @@ No spec updates required. Plan involves read-only operations only.
 
 ### Spec Capture
 
-Process story `{{process_story_id}}` created: `{{process_story_file}}`
+Process story `{{process_story_key}}` created: `{{process_story_file}}`
 
 ### Upstream Spec Updates Recommended
 
@@ -215,6 +215,14 @@ Process story `{{process_story_id}}` created: `{{process_story_file}}`
 ### Go/No-Go
 
 {{go_no_go}}
+
+### Story Status Lifecycle
+
+This plan's process story (`{{process_story_key}}`) requires these status transitions during execution:
+
+1. **Before first implementation step:** `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{process_story_key}} in-progress`
+2. **After implementation complete, before AVFL:** `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{process_story_key}} review`
+3. **After AVFL passes:** `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{process_story_key}} done`
 ```
       </action>
     </check>

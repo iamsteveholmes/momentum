@@ -922,9 +922,19 @@ This is the **sprint-level lifecycle** — distinct from the implementation phas
 - `development_status` in sprint-status.yaml: where the story is in the sprint cycle
 - Session ledger `active_stories` + `phase`: what is being actively worked on in each concurrent session
 
+Status updates are **dual-write**: both `sprint-status.yaml` `development_status` and the story file's YAML frontmatter `status` field are updated together via `update-story-status.sh`. The two fields stay in sync at all times.
+
 ### Unified Sprint Tracking in sprint-status.yaml
 
 All story tracking lives in `sprint-status.yaml`. Momentum adds a `momentum_metadata` section alongside BMAD's `development_status` — additive, not breaking. BMAD skills only read `development_status` and ignore unknown sections.
+
+**Canonical status update mechanism:** `skills/momentum/scripts/update-story-status.sh` is the centralized script for advancing story status. `momentum-dev` calls it directly for `in-progress`, `review`, and `done` transitions; `momentum-plan-audit` injects the call commands into the plan's `## Spec Impact` section for the implementing agent to execute during process story lifecycle. Note: `bmad-dev-story` (a BMAD-managed file that gets overwritten on install) is NOT modified — `momentum-dev` wraps it and handles the script calls. Interface:
+
+```
+update-story-status.sh <story-key> <status>
+```
+
+Where `<status>` is one of: `ready-for-dev`, `in-progress`, `review`, `done`. The script atomically updates both `sprint-status.yaml` `development_status[story-key]` and the `status` field in the story file's YAML frontmatter. Callers do not write to either location directly.
 
 ```yaml
 development_status:

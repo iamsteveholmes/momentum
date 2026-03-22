@@ -46,7 +46,7 @@ P{sprint_num} — Process Sprint-{sprint_num}
 ```yaml
 ---
 story_id: p{sprint}.{n}
-status: ready
+status: ready-for-dev
 type: process
 epic: P{sprint} — Process Sprint-{sprint}
 title: {plan title from first H1}
