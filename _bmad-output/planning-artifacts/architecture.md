@@ -39,6 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
+lastEdited: '2026-03-22'
+editHistory:
+  - date: '2026-03-22'
+    changes: 'Added terminal-multiplexer to subsystem 10 Protocol-Based Integration; added Terminal Multiplexer ↔ Workflows integration point with detect-and-adapt pattern. Derives from CMUX research document.'
 ---
 
 # Architecture Decision Document: Momentum
@@ -71,7 +75,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 9. **Model Routing** — `model:` and `effort:` frontmatter required on every SKILL.md and agent definition. Cognitive hazard rule: flagship models for outputs without automated validation. Escalation semantics in VFL: mid-tier first, flagship if not converging within 3-4 iterations.
 
-10. **Protocol-Based Integration** — Every integration point (validation, research, review, tools, documents) defines an interface before implementation is wired. Implementations are substitutable: swap the ATDD framework, the research model, the validation profile — the practice layer is unchanged.
+10. **Protocol-Based Integration** — Every integration point (validation, research, review, tools, documents, terminal multiplexers) defines an interface before implementation is wired. Implementations are substitutable: swap the ATDD framework, the research model, the terminal multiplexer, the validation profile — the practice layer is unchanged.
 
 ---
 
@@ -870,6 +874,8 @@ momentum/                                    ← Root
 **MCP Servers ↔ Agents:** Findings MCP (Epic 6, optional) provides structured query over `~/.claude/momentum/findings-ledger.jsonl`. Primary write path is direct JSONL append by the flywheel — MCP is a read-only query layer, not the write mechanism. Git file history, blame, and diff for provenance are accessed via the git CLI (Bash tool) — no dedicated MCP server required (see Decision 3c).
 
 **Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start. Placement: implemented as `references/provenance-scan.md` within `momentum/` — runs as part of session orientation, not a separate skill.
+
+**Terminal Multiplexer ↔ Workflows:** Optional protocol binding for terminal pane management (create, read, send, notify, cleanup). Uses the detect-and-adapt pattern: skills check for environment indicators (`CMUX_WORKSPACE_ID`, `CMUX_SURFACE_ID`, `CMUX_SOCKET_PATH` for CMUX; `TMUX` env var for tmux) and adapt behavior when present. Null binding is the default — workflows function identically without a multiplexer. Primary use cases: worktree-to-tab automation (link story sessions to terminal tabs), external process monitoring (simulators, dev servers), and multi-session visual awareness. Reference implementations: CMUX (macOS), tmux (cross-platform). See Epic 7, Story 7.1.
 
 ---
 
