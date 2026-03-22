@@ -1,6 +1,6 @@
 ---
 story_id: p1.3
-status: in-progress
+status: review
 type: process
 epic: P1 — Process Sprint-1
 title: Findings Ledger Architecture Revision
