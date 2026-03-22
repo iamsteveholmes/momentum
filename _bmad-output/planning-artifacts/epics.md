@@ -160,19 +160,19 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 
 **From Architecture — Storage & State**
 - Session ledger stored at `.claude/momentum/ledger.json`; auto-generated `.claude/momentum/ledger-view.md` for human readability
-- Findings ledger stored at `.claude/momentum/findings-ledger.json` with structured schema: id, story_ref, phase, severity, pattern_tags, description, evidence, provenance_status, upstream_fix_applied, upstream_fix_level, upstream_fix_ref, timestamp
+- Findings ledger stored at `~/.claude/momentum/findings-ledger.jsonl` (global, JSONL append-only) with structured schema: id, project, story_ref, phase, severity, pattern_tags, description, evidence, provenance_status, upstream_fix_applied, upstream_fix_level, upstream_fix_ref, timestamp
 - Only the flywheel workflow writes to findings ledger; Impetus reads at retrospective and upstream trace
 
 **From PRD — Tool/Runtime Management**
 - mise is the standard polyglot tool/runtime manager for developer environments using Momentum. When Momentum skills, workflows, or rules reference installing runtimes (node, python, ruby, go, java) or CLI tools, they must prefer `mise use` over legacy single-purpose managers (nvm, pyenv, rbenv, asdf, volta, fnm) or global package installs (`npm install -g`, `pip install --user`). Enforced by global Claude Code rules (`~/.claude/rules/mise.md`) and the anti-patterns rule. Momentum does not bundle or install mise itself — it is a prerequisite of the developer environment.
 
 **From Architecture — Security & File Protection**
-- PreToolUse hook must block writes to: `tests/acceptance/` and `**/*.feature`, `_bmad-output/planning-artifacts/*.md`, `.claude/rules/`, `.claude/momentum/findings-ledger.json`
+- PreToolUse hook must block writes to: `tests/acceptance/` and `**/*.feature`, `_bmad-output/planning-artifacts/*.md`, `.claude/rules/`. Findings ledger (`~/.claude/momentum/findings-ledger.jsonl`) is authority-enforced (global path, outside PreToolUse scope).
 - Agents may not remove or modify `derives_from` frontmatter in spec files
 - Every significant claim classified as SOURCED / DERIVED / ADDED / UNGROUNDED
 
 **From Architecture — MCP Servers**
-- MVP: Momentum findings MCP (custom, lightweight — read/write findings-ledger.json). ~~`@modelcontextprotocol/server-git`~~ removed (p1.1) — git CLI provides file history, blame, and diff via Bash tool
+- Deferred (Epic 6): Momentum findings MCP (custom, lightweight — optional read-only query layer over `~/.claude/momentum/findings-ledger.jsonl`). ~~`@modelcontextprotocol/server-git`~~ removed (p1.1) — git CLI provides file history, blame, and diff via Bash tool
 - Growth: `@rlabs-inc/gemini-mcp` and GPT deep research MCP for multi-model research
 
 **From Architecture — VFL Skill**
@@ -335,7 +335,7 @@ A developer can trace every artifact to its origins, detect stale references, an
 Findings accumulate across stories. Systemic patterns surface. Upstream fixes are applied at the right level — spec, rule, workflow, or one-off patch. Each sprint the practice gets measurably smarter. The flywheel makes invisible improvement visible.
 **FRs covered:** FR28, FR29, FR30, FR31, FR32, FR33
 **UX-DRs covered:** UX-DR7
-**Additional:** findings-ledger.json (with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server
+**Additional:** findings-ledger.jsonl (global, with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server (optional query layer)
 **Priority:** Sprint 2
 
 ---
@@ -828,7 +828,7 @@ So that test integrity and critical config are preserved automatically — no ac
 **Acceptance Criteria:**
 
 **Given** Momentum hooks are installed
-**When** a Claude Code tool attempts to write to any path matching `tests/acceptance/`, `**/*.feature`, `.claude/rules/`, or `.claude/momentum/findings-ledger.json`
+**When** a Claude Code tool attempts to write to any path matching `tests/acceptance/`, `**/*.feature`, or `.claude/rules/`
 **Then** the PreToolUse hook fires and blocks the write before it executes
 **And** returns an explanation of what was blocked and why
 
@@ -1170,7 +1170,7 @@ So that defects get fixed in specs and rules — not just patched in the code.
 
 **Given** an upstream fix is approved and applied
 **When** Impetus records the fix
-**Then** the upstream fix outcome is recorded in the session ledger by Impetus (field: `upstream_fix_applied`, `upstream_fix_level`) — the findings ledger (`.claude/momentum/findings-ledger.json`) is written only by the flywheel workflow (Epic 6)
+**Then** the upstream fix outcome is recorded in the session ledger by Impetus (field: `upstream_fix_applied`, `upstream_fix_level`) — the findings ledger (`~/.claude/momentum/findings-ledger.jsonl`) is written only by the flywheel workflow (Epic 6)
 **And** Impetus records the upstream fix application in the session ledger with fix level and artifact modified
 
 ---
@@ -1371,7 +1371,7 @@ Findings accumulate across stories. Systemic patterns surface. Upstream fixes ar
 
 **FRs covered:** FR28, FR29, FR30, FR31, FR32, FR33
 **UX-DRs covered:** UX-DR7
-**Additional:** findings-ledger.json (with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server
+**Additional:** findings-ledger.jsonl (global, with full schema), upstream-fix skill (momentum-upstream-fix), flywheel workflow, Momentum findings MCP server (optional query layer)
 
 ### Story 6.1: Findings Ledger Accumulates Quality Findings Across Stories
 
@@ -1382,22 +1382,22 @@ So that nothing is lost between sessions and every defect has a traceable record
 **Acceptance Criteria:**
 
 **Given** the findings ledger is initialized (FR28)
-**When** Momentum is first installed
-**Then** `.claude/momentum/findings-ledger.json` is created as an empty array `[]`
+**When** Momentum is first installed on a workstation
+**Then** `~/.claude/momentum/findings-ledger.jsonl` is created as an empty file (directory created if absent)
 **And** only the flywheel workflow (momentum-upstream-fix) is authorized to write to this file — all other agents submit findings via structured output to Impetus, which triggers the flywheel to write (Architecture Decision 1c / Decision 2a)
-**And** when the Momentum findings MCP server is available (`mcp/findings-server/` — installed as part of Momentum, configured by Impetus in Story 1.3), the flywheel uses it as the write mechanism; if the MCP server is unavailable, direct JSON append is the fallback — the flywheel's write authority does not depend on the MCP server
+**And** the flywheel writes findings by appending a single JSON line to `~/.claude/momentum/findings-ledger.jsonl` — this is the primary write mechanism; no MCP server is required for writes
 
 **Given** a quality finding is produced (from code-reviewer, VFL, or architecture-guard)
 **When** the flywheel records the finding
-**Then** the ledger entry contains all required schema fields: `id` (`F-[story-ref]-[seq]`, e.g. `F-S04-003`), `story_ref`, `phase` (one of: `spec` | `atdd` | `implement` | `code-review` | `flywheel`), `severity` (`critical` | `high` | `medium` | `low`), `pattern_tags` (kebab-case noun phrases), `description` (one sentence), `evidence` (exact quote or `file:line` reference), `provenance_status` (one of the five FR16 values, or `null` if not applicable), `upstream_fix_applied` (boolean, initially `false`), `upstream_fix_ref` (`null` until a fix is applied), `upstream_fix_level` (`null` until a fix is applied; then one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`), `timestamp` (ISO 8601)
+**Then** the ledger entry contains all required schema fields: `id` (`F-{unix_ms}-{random_4hex}`, e.g. `F-1711929600000-a3f2`), `project` (string, project identifier), `story_ref`, `phase` (one of: `spec` | `atdd` | `implement` | `code-review` | `flywheel`), `severity` (`critical` | `high` | `medium` | `low`), `pattern_tags` (kebab-case noun phrases), `description` (one sentence), `evidence` (exact quote or `file:line` reference), `provenance_status` (one of the five FR16 values, or `null` if not applicable), `upstream_fix_applied` (boolean, initially `false`), `upstream_fix_ref` (`null` until a fix is applied), `upstream_fix_level` (`null` until a fix is applied; then one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`), `timestamp` (ISO 8601)
 **And** subagent findings submitted to Impetus must use the structured output contract (Architecture Decision 3b): `{status, result: {findings: [...]}, question, confidence}` — Impetus extracts finding objects and passes them to the flywheel for ledger ingestion
 **And** an entry with any missing required field is rejected — the flywheel does not write partial entries
 
-**Given** the Momentum findings MCP server is installed (`mcp/findings-server/` — part of Momentum distribution, configured by Story 1.3)
+**Given** the Momentum findings MCP server is installed (`mcp/findings-server/` — Epic 6 scope)
 **When** Impetus or the flywheel queries the ledger
-**Then** the MCP server provides structured read/write access to findings-ledger.json as a resource
+**Then** the MCP server provides structured read-only query access over `~/.claude/momentum/findings-ledger.jsonl` (filter by project, pattern_tag, severity, date range)
 **And** Impetus reads the ledger at retrospective and upstream trace phases to build pattern context
-**And** when the MCP server is available it is the preferred programmatic access path; direct JSON file access is the fallback when it is not available — developer can always inspect the file directly
+**And** when the MCP server is unavailable, direct JSONL file reading is the fallback — developer can always inspect the file directly
 
 **Given** the ledger has grown across multiple sprints
 **When** Impetus generates a session summary
@@ -1414,11 +1414,11 @@ So that I know when a problem is systemic and needs a root-level fix rather than
 
 **Acceptance Criteria:**
 
-**Given** the findings ledger contains entries from two or more stories (FR29)
+**Given** the findings ledger contains entries from two or more stories or projects (FR29)
 **When** Impetus runs pattern detection (at session start, retrospective, or explicit query)
-**Then** it groups findings by `pattern_tags` across all stories
-**And** a pattern is considered systemic when the same `pattern_tag` appears in findings from 2 or more distinct `story_ref` values
-**And** Impetus surfaces each systemic pattern: `⚠ systemic pattern: [tag] — appeared in [N] stories ([story-refs]) / Action: run flywheel to trace root cause`
+**Then** it groups findings by `pattern_tags` across all stories and projects
+**And** a pattern is considered systemic when the same `pattern_tag` appears in findings from 2 or more distinct `story_ref` values OR 2 or more distinct `project` values
+**And** Impetus surfaces each systemic pattern: `⚠ systemic pattern: [tag] — appeared in [N] stories across [P] projects ([story-refs]) / Action: run flywheel to trace root cause`
 
 **Given** a systemic pattern is detected
 **When** Impetus presents the pattern to the developer
@@ -1429,7 +1429,7 @@ So that I know when a problem is systemic and needs a root-level fix rather than
 **Given** a pattern was surfaced and the developer declined to act on it
 **When** the pattern appears in a subsequent session
 **Then** Impetus surfaces it again with an updated count — it does not remember that the developer declined unless the developer explicitly says "suppress this pattern"
-**And** if the developer suppresses a pattern, Impetus records the suppression in the findings ledger as a special entry: `{id, story_ref: null, phase: "pattern-suppression", pattern_tags: [tag], description: "Developer suppressed pattern", upstream_fix_applied: false, upstream_fix_level: null, timestamp}` — this persists the suppression across sessions
+**And** if the developer suppresses a pattern, Impetus records the suppression in the findings ledger as a special entry: `{id, project, story_ref: null, phase: "pattern-suppression", pattern_tags: [tag], description: "Developer suppressed pattern", upstream_fix_applied: false, upstream_fix_level: null, timestamp}` — this persists the suppression across sessions
 **And** Impetus does not surface the same tag again until the findings-ledger entry count for that tag increases beyond the count at suppression time
 
 **Given** no systemic patterns exist in the ledger
@@ -1451,13 +1451,13 @@ So that I fix defects at the right level instead of patching symptoms.
 **Then** it executes the six phases in order: Detection → Review → Upstream Trace → Solution → Verify → Log (per the upstream fix process defined in architecture.md; the Log phase is the sixth phase — confirmed in Architecture Process Patterns section)
 **And** at each phase transition, Impetus displays the Workflow Step component (UX-DR4): an orientation line (never "phase N/6"), substantive content for the current phase, a transition signal, and explicit user control (A/P/C or Approve/Reject as context requires)
 **And** no phase may be skipped — the Log phase is required even if the solution is a "no-fix" decision
-**And** the finding is written to the findings ledger during the Detection phase, not at the end of the workflow — the finding exists in the ledger before any trace or fix is applied
+**And** the finding is appended to `~/.claude/momentum/findings-ledger.jsonl` during the Detection phase, not at the end of the workflow — the finding exists in the ledger before any trace or fix is applied
 
 **Given** the Detection phase runs
 **When** Impetus presents the detected finding
 **Then** it displays: finding id, description, evidence, severity, and whether a prior upstream fix was applied to this pattern
 **And** if this is a systemic pattern, it shows the full list of affected stories
-**And** the finding is written to the findings ledger at this phase (if not already present from the originating review)
+**And** the finding is appended to the findings ledger at this phase (if not already present from the originating review)
 
 **Given** the Review phase runs (second phase — examination before root-cause tracing)
 **When** Impetus presents the review
@@ -1476,7 +1476,7 @@ So that I fix defects at the right level instead of patching symptoms.
 **Given** the Log phase runs (final phase)
 **When** all prior phases are complete
 **Then** Impetus records the complete flywheel run: finding id, phases completed, fix level applied (or "no-fix"), fix ref, outcome (resolved | unresolved | deferred), and timestamp
-**And** the findings ledger entry is updated with `upstream_fix_applied`, `upstream_fix_level`, and `upstream_fix_ref` values
+**And** the findings ledger entry is updated by appending a new JSONL line with the same `id` and updated `upstream_fix_applied`, `upstream_fix_level`, and `upstream_fix_ref` values (JSONL is append-only; the latest line with a given `id` supersedes prior entries)
 **And** if the developer rejected the fix, the outcome is recorded as "deferred" — not "resolved"
 
 **Given** the Solution phase completes and a fix is applied
@@ -1535,11 +1535,12 @@ So that I know whether my practice is improving or just accumulating code debt.
 
 **Given** findings have been resolved over time (FR33)
 **When** Impetus computes the practice health metric
-**Then** it calculates: `upstream_fix_ratio = upstream_fixes / total_fixes` where `upstream_fixes` = entries where `upstream_fix_applied: true` AND `upstream_fix_level != "one-off-code-fix"`, and `total_fixes` = all entries where `upstream_fix_applied: true`
+**Then** it calculates: `upstream_fix_ratio = upstream_fixes / total_fixes` where `upstream_fixes` = entries where `upstream_fix_applied: true` AND `upstream_fix_level != "one-off-code-fix"`, and `total_fixes` = all entries where `upstream_fix_applied: true` — computed across ALL projects in the global ledger
 **And** this ratio represents: of all fixes applied so far, what fraction reached a root level (spec, rule, tooling, or workflow) vs. staying in code — a value of 0% means every fix was a patch; 100% means every fix reached root cause
 **And** a ratio ≥ 0.5 is reported as healthy: `✓ practice health: [N]% upstream fixes — the practice is compounding`
 **And** a ratio < 0.5 is reported as degraded: `! practice health: [N]% upstream fixes — most fixes are patches, not root fixes`
 **And** if fewer than 5 fixes exist, the metric is reported as `◦ practice health: insufficient data ([N] fixes recorded)`
+**And** per-project breakdown is available on request: Impetus can compute and display the metric grouped by `project` field
 
 **Given** the practice health metric is degraded
 **When** Impetus surfaces it at session start or retrospective
