@@ -65,7 +65,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 6. **Validate-Fix Loop (VFL) Skill** — Three profiles: Gate (1 agent, pass/fail), Checkpoint (2-4 agents, 1 fix attempt), Full (dual-reviewer per lens, up to 4 fix iterations). Four lenses: Structural Integrity, Factual Accuracy, Coherence & Craft, Domain Fitness. Consolidation handles deduplication, cross-check confidence tagging, and scoring. Invocable standalone, inline from workflows, or declared as a rule.
 
-7. **Orchestrating Agent — Impetus** — Session orientation (reads ledger, surfaces active threads), visual progress (✓ Built / → Now / ◦ Next), proactive gap detection, productive waiting during subagent execution, hub-and-spoke voice unification. Impetus is the force that maintains practice velocity — the system keeps compounding because Impetus carries knowledge and context forward across sessions and sprints without requiring repeated external input.
+7. **Orchestrating Agent — Impetus** — Session orientation (reads journal, surfaces active threads), visual progress (✓ Built / → Now / ◦ Next), proactive gap detection, productive waiting during subagent execution, hub-and-spoke voice unification. Impetus is the force that maintains practice velocity — the system keeps compounding because Impetus carries knowledge and context forward across sessions and sprints without requiring repeated external input.
 
 8. **Findings Ledger + Evaluation Flywheel** — Structured findings with provenance_status field; cross-story pattern detection; flywheel workflow (Detection → Review → Upstream Trace → Solution → Verify → Log) with visual status graphics; `/upstream-fix` skill; retrospective integration.
 
@@ -214,10 +214,10 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Staleness detection: compare stored hash in `derives_from` against current `git hash-object`
 - One-hop propagation only; human/Impetus-gated at each level
 
-**Decision 1b — Session Ledger: JSON with Markdown View**
-- Location: `.claude/momentum/ledger.json`
+**Decision 1b — Session Journal: JSON with Markdown View**
+- Location: `.claude/momentum/journal.json`
 - Impetus reads/writes JSON for reliable structured updates
-- Auto-generated `.claude/momentum/ledger-view.md` for human readability
+- Auto-generated `.claude/momentum/journal-view.md` for human readability
 - Tracks: active story, current phase, last completed action, open threads
 
 **Decision 1c — Findings Ledger: JSONL (Global)**
@@ -336,7 +336,7 @@ Confidence weighting: low-confidence results surface as questions to the user ra
 Never `Step N/M`. Always narrative. Every phase transition in every Impetus-orchestrated workflow.
 
 **Decision 4b — Session Orientation Contract**
-At every session start, Impetus reads the session ledger and within two exchanges surfaces:
+At every session start, Impetus reads the session journal and within two exchanges surfaces:
 active story/task, current phase, last completed action, suggested next action.
 User never hunts for context.
 
@@ -802,8 +802,8 @@ momentum/                                    ← Root
     │   └── momentum-dev-story/
     ├── settings.json                        ← Always-on hooks (written by Impetus on first run)
     └── momentum/                            ← Per-project Momentum state
-        ├── ledger.json                      ← Session ledger (Impetus reads/writes)
-        ├── ledger-view.md                   ← Human-readable view (auto-generated)
+        ├── journal.json                      ← Session journal (Impetus reads/writes)
+        ├── journal-view.md                   ← Human-readable view (auto-generated)
         └── installed.json                   ← Install/upgrade state (version + per-component hashes)
 ```
 
@@ -815,12 +815,12 @@ momentum/                                    ← Root
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | ledger.json, specs (read-only), findings-ledger.jsonl | ledger.json, ledger-view.md |
+| Impetus | journal.json, specs (read-only), findings-ledger.jsonl | journal.json, journal-view.md |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
 | VFL | Any artifact being validated, source material | consolidated findings report |
 | Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
-| Upstream-fix skill (Epic 4, standalone) | session ledger, specs, rules | session ledger only (not findings-ledger.jsonl) |
+| Upstream-fix skill (Epic 4, standalone) | session journal, specs, rules | session journal only (not findings-ledger.jsonl) |
 | Hooks | Filesystem (reads), git status | Terminal output only (never modifies files) |
 | ATDD workflow | Gherkin spec | `tests/acceptance/` only |
 | Coding agents (dev-story) | Specs, rules, existing code | Source code, unit tests |
@@ -829,7 +829,7 @@ momentum/                                    ← Root
 - `tests/acceptance/` — acceptance test immutability
 - `_bmad-output/planning-artifacts/` — spec authority
 - `.claude/rules/` — enforcement rule integrity
-- `~/.claude/momentum/findings-ledger.jsonl` — ledger integrity (authority-enforced; global path is outside project PreToolUse scope)
+- `~/.claude/momentum/findings-ledger.jsonl` — Ledger integrity (authority-enforced; global path is outside project PreToolUse scope)
 
 ---
 
@@ -851,7 +851,7 @@ momentum/                                    ← Root
 | Global rules | `skills/momentum/references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `skills/momentum/references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
-| Session ledger | (runtime) | `.claude/momentum/ledger.json` |
+| Session journal | (runtime) | `.claude/momentum/journal.json` |
 | Findings ledger | (runtime) | `~/.claude/momentum/findings-ledger.jsonl` (global) |
 | Install state | (runtime) | `.claude/momentum/installed.json` |
 
@@ -918,9 +918,9 @@ backlog → ready-for-dev → in-progress → review → done
 - **`review`** — implementation complete, ready for code review (set by `bmad-dev-story` inside the worktree)
 - **`done`** — story's worktree has been merged to the target branch and cleaned up
 
-This is the **sprint-level lifecycle** — distinct from the implementation phase lifecycle (Spec Review → ATDD → Implement → Code Review → Flywheel) tracked in the session ledger. The two are complementary:
+This is the **sprint-level lifecycle** — distinct from the implementation phase lifecycle (Spec Review → ATDD → Implement → Code Review → Flywheel) tracked in the session journal. The two are complementary:
 - `development_status` in sprint-status.yaml: where the story is in the sprint cycle
-- Session ledger `active_stories` + `phase`: what is being actively worked on in each concurrent session
+- Session journal `active_stories` + `phase`: what is being actively worked on in each concurrent session
 
 Status updates are **dual-write**: both `sprint-status.yaml` `development_status` and the story file's YAML frontmatter `status` field are updated together via `update-story-status.sh`. The two fields stay in sync at all times.
 
@@ -972,9 +972,9 @@ Priority order: epic sprint assignment (Day 1 > Sprint 1 > Sprint 2 > Growth), t
 
 If no story qualifies (all remaining stories are blocked), `momentum-dev` surfaces the blocked-on list and halts.
 
-### Session Ledger Extension: `active_stories`
+### Session Journal Extension: `active_stories`
 
-The session ledger `active_story` field (singular) extends to `active_stories` (array) to support concurrent sessions:
+The session journal `active_story` field (singular) extends to `active_stories` (array) to support concurrent sessions:
 
 ```json
 {

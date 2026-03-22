@@ -104,7 +104,7 @@ Read: ${CLAUDE_SKILL_DIR}/references/momentum-versions.json
 Check: .claude/momentum/installed.json exists?
   No → First install (Step 2 — Journey 0)
   Yes → Compare installed.momentum_version vs current_version
-    Match → Skip to session orientation (Step 7 / session ledger display)
+    Match → Skip to session orientation (Step 7 / session journal display)
     Mismatch → Version upgrade (Story 1.4 scope — HALT here with message)
 ```
 

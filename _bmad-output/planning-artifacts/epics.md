@@ -159,7 +159,7 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 - Impetus must surface a version-drift warning at session start when installed global rules hash differs from current version's rules hash
 
 **From Architecture — Storage & State**
-- Session ledger stored at `.claude/momentum/ledger.json`; auto-generated `.claude/momentum/ledger-view.md` for human readability
+- Session journal stored at `.claude/momentum/journal.json`; auto-generated `.claude/momentum/journal-view.md` for human readability
 - Findings ledger stored at `~/.claude/momentum/findings-ledger.jsonl` (global, JSONL append-only) with structured schema: id, project, story_ref, phase, severity, pattern_tags, description, evidence, provenance_status, upstream_fix_applied, upstream_fix_level, upstream_fix_ref, timestamp
 - Only the flywheel workflow writes to findings ledger; Impetus reads at retrospective and upstream trace
 
@@ -190,7 +190,7 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 
 ### UX Design Requirements
 
-UX-DR1: Implement Session Ledger Display component — numbered list of open threads with workflow phase + elapsed time; appears at every session start with open threads; absent on first-time user (no ledger exists). States: single thread, multiple threads, empty (first time).
+UX-DR1: Implement Session Journal Display component — numbered list of open threads with workflow phase + elapsed time; appears at every session start with open threads; absent on first-time user (no journal exists). States: single thread, multiple threads, empty (first time).
 
 UX-DR2: Implement Progress Indicator component — always exactly 3 lines using ✓/→/◦ symbol vocabulary; completed steps collapse to single ✓ line with value summary; current step stands alone with one-phrase description; upcoming steps collapse to single ◦ line. Appears at workflow entry and every phase transition.
 
@@ -210,19 +210,19 @@ UX-DR9: Implement consistent Symbol Vocabulary across all agents and hooks: ✓ 
 
 UX-DR10: Implement Hub-and-Spoke Voice Contract — Impetus is the sole user-facing voice; all subagents return structured JSON `{status, result, question, confidence}`; subagent identity never surfaces to user; Impetus synthesizes before presenting.
 
-UX-DR11: Implement Session Orientation Contract — at every session start, Impetus reads ledger and within two exchanges surfaces: active story/task, current phase, last completed action, suggested next action. Agent speaks first; user never hunts for context.
+UX-DR11: Implement Session Orientation Contract — at every session start, Impetus reads journal and within two exchanges surfaces: active story/task, current phase, last completed action, suggested next action. Agent speaks first; user never hunts for context.
 
 UX-DR12: Implement Productive Waiting pattern — while a background subagent runs, Impetus maintains dialogue on the same topic (never context-switches). Dead air is a failure mode. Brief acknowledged pauses acceptable for very short tasks only.
 
-UX-DR13: Implement Multi-Thread Ledger Awareness — each Impetus instance (per Claude Code tab) reads/writes the shared ledger; recently-timestamped entries signal intentional concurrent work; conflicting thread starts flagged with user decision required.
+UX-DR13: Implement Multi-Thread Journal Awareness — each Impetus instance (per Claude Code tab) reads/writes the shared journal; recently-timestamped entries signal intentional concurrent work; conflicting thread starts flagged with user decision required.
 
-UX-DR14: Implement Thread Hygiene — surface dormant threads beyond a threshold; low-friction closure (one confirmation); contextually triggered when dependent work completes or ledger grows unwieldy.
+UX-DR14: Implement Thread Hygiene — surface dormant threads beyond a threshold; low-friction closure (one confirmation); contextually triggered when dependent work completes or journal grows unwieldy.
 
 UX-DR15: Implement Response Architecture Pattern — every agent response follows: orientation line → substantive content → transition signal → user control. Orientation line is narrative (never "step N/M"); user control always last and always visible.
 
-UX-DR16: Implement Input Interpretation patterns — number selects ledger item; letter command is case-insensitive; fuzzy match (continue/yes/go ahead = C); natural language extracts intent and confirms; ambiguous input triggers one clarifying question (never two).
+UX-DR16: Implement Input Interpretation patterns — number selects journal item; letter command is case-insensitive; fuzzy match (continue/yes/go ahead = C); natural language extracts intent and confirms; ambiguous input triggers one clarifying question (never two).
 
-UX-DR17: Implement Workflow Resumability — every workflow must be resumable from any step; sufficient context saved in ledger entry to re-orient a fresh agent session without user re-explanation. Step re-entry after interruption always confirms ("continue from here, or restart this step?").
+UX-DR17: Implement Workflow Resumability — every workflow must be resumable from any step; sufficient context saved in journal entry to re-orient a fresh agent session without user re-explanation. Step re-entry after interruption always confirms ("continue from here, or restart this step?").
 
 UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive, forward-moving. Synthesizes before delivering. Returns agency explicitly at completion. Acknowledges uncertainty honestly. Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent machinery. Surface name and implementation name: Impetus.
 
@@ -296,7 +296,7 @@ A developer installs Momentum from scratch — global practice files in place, p
 ---
 
 ### Epic 2: Stay Oriented with Impetus
-A developer always knows where they are and what to do next. Session ledger tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
+A developer always knows where they are and what to do next. Session journal tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
 **FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
 **NFRs covered:** NFR1, NFR2, NFR3
 **UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6 (partial), UX-DR8 (partial), UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
@@ -525,7 +525,7 @@ So that teams using any tool can adopt Momentum at the level their environment s
 
 ## Epic 2: Stay Oriented with Impetus
 
-A developer always knows where they are and what to do next. Session ledger tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
+A developer always knows where they are and what to do next. Session journal tracks open threads across tabs and sessions. Visual progress answers "what have we built, what are we doing, what's next" at every transition. Impetus's unified voice keeps backstage invisible.
 
 **FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11
 **NFRs covered:** NFR1, NFR2, NFR3
@@ -589,7 +589,7 @@ So that I have a single, reliable orchestrating agent for every Momentum workflo
 
 **Given** a developer enters a number, letter, or natural language phrase
 **When** Impetus interprets input (UX-DR16)
-**Then** a number selects the corresponding ledger item or menu item
+**Then** a number selects the corresponding journal item or menu item
 **And** a letter command is case-insensitive
 **And** "continue" / "yes" / "go ahead" / "proceed" all map to C
 **And** natural language intent is extracted and confirmed before acting ("Starting the story cycle for Story 4.2 — correct?")
@@ -610,43 +610,43 @@ So that I can pick up any thread without hunting for context.
 **Then** within two exchanges, Impetus surfaces: active story/task, current phase, last completed action, and suggested next action
 **And** Impetus speaks first — the developer is never required to ask "where were we?"
 
-**Given** the ledger at `.claude/momentum/ledger.json` contains one or more open thread entries
+**Given** the journal at `.claude/momentum/journal.json` contains one or more open thread entries
 **When** Impetus starts (UX-DR1)
-**Then** Impetus displays the Session Ledger: numbered list of open threads, each showing workflow phase and elapsed time
+**Then** Impetus displays the Session Journal: numbered list of open threads, each showing workflow phase and elapsed time
 **And** threads are ordered by most-recently-active
 **And** each thread is directly selectable by its number
 
-**Given** no ledger exists or the ledger is empty (user has never started a workflow — `installed.json` exists but no ledger entries)
+**Given** no journal exists or the journal is empty (user has never started a workflow — `installed.json` exists but no journal entries)
 **When** Impetus starts
-**Then** the Session Ledger display is absent
+**Then** the Session Journal display is absent
 **And** Impetus transitions directly to new-session orientation
 **Note:** If `installed.json` does not exist, Story 1.3 (FR2) governs — this AC applies only to post-install sessions with no prior workflow activity.
 
 **Given** a developer is running a workflow in Tab A
 **When** they open Tab B and invoke `/momentum` (UX-DR13)
-**Then** Impetus in Tab B reads the shared ledger and surfaces Tab A's active thread
+**Then** Impetus in Tab B reads the shared journal and surfaces Tab A's active thread
 **And** if the entry was timestamped within the last 30 minutes, Impetus flags it as likely intentional concurrent work
 **And** asks the developer to confirm before starting a competing thread on the same story
 
-**Given** a ledger entry has had no activity beyond the configured dormancy threshold (default: 3 days)
+**Given** a journal entry has had no activity beyond the configured dormancy threshold (default: 3 days)
 **When** Impetus starts (UX-DR14 — time-based trigger)
 **Then** Impetus surfaces the dormant thread with brief context and offers one-action closure ("is this thread complete?")
 **And** closure requires exactly one developer confirmation
-**And** if the developer confirms, the thread is marked closed in the ledger
+**And** if the developer confirms, the thread is marked closed in the journal
 
-**Given** a story or workflow that another ledger thread depended on has just completed
+**Given** a story or workflow that another journal thread depended on has just completed
 **When** Impetus detects the dependency is satisfied (UX-DR14 — contextual trigger)
 **Then** Impetus surfaces the waiting thread at session start: "The work this thread was waiting on is complete — ready to continue?"
 **And** the developer decides whether to activate the waiting thread
 
-**Given** the session ledger has grown to more than 5 open threads
-**When** Impetus starts (UX-DR14 — unwieldy-ledger trigger)
-**Then** Impetus flags the ledger size and offers a triage pass before starting new work
+**Given** the session journal has grown to more than 5 open threads
+**When** Impetus starts (UX-DR14 — unwieldy-journal trigger)
+**Then** Impetus flags the journal size and offers a triage pass before starting new work
 **And** triage surfaces each thread's status and age with a single-action close option
 
 **Given** the developer starts Impetus in a fresh context after an interruption
-**When** Impetus reads the ledger entry for the interrupted workflow (UX-DR17)
-**Then** Impetus re-orients using saved ledger context — no developer re-explanation required
+**When** Impetus reads the journal entry for the interrupted workflow (UX-DR17)
+**Then** Impetus re-orients using saved journal context — no developer re-explanation required
 **And** offers: "continue from here, or restart this step?" before proceeding
 
 ---
@@ -689,10 +689,10 @@ So that I'm never lost and always know what's completed and what's next.
 
 **Given** a workflow is interrupted mid-step
 **When** the developer re-invokes `/momentum` in a new session (UX-DR17)
-**Then** Impetus identifies the interrupted workflow from the ledger
+**Then** Impetus identifies the interrupted workflow from the journal
 **And** presents the Progress Indicator showing which steps are complete
 **And** asks: "continue from here, or restart this step?"
-**And** sufficient context is in the ledger entry to re-orient without developer re-explanation
+**And** sufficient context is in the journal entry to re-orient without developer re-explanation
 
 **Given** a developer asks for their current position in any workflow (FR7)
 **When** Impetus responds
@@ -1170,8 +1170,8 @@ So that defects get fixed in specs and rules — not just patched in the code.
 
 **Given** an upstream fix is approved and applied
 **When** Impetus records the fix
-**Then** the upstream fix outcome is recorded in the session ledger by Impetus (field: `upstream_fix_applied`, `upstream_fix_level`) — the findings ledger (`~/.claude/momentum/findings-ledger.jsonl`) is written only by the flywheel workflow (Epic 6)
-**And** Impetus records the upstream fix application in the session ledger with fix level and artifact modified
+**Then** the upstream fix outcome is recorded in the session journal by Impetus (field: `upstream_fix_applied`, `upstream_fix_level`) — the findings ledger (`~/.claude/momentum/findings-ledger.jsonl`) is written only by the flywheel workflow (Epic 6)
+**And** Impetus records the upstream fix application in the session journal with fix level and artifact modified
 
 ---
 
@@ -1389,17 +1389,17 @@ So that nothing is lost between sessions and every defect has a traceable record
 
 **Given** a quality finding is produced (from code-reviewer, VFL, or architecture-guard)
 **When** the flywheel records the finding
-**Then** the ledger entry contains all required schema fields: `id` (`F-{unix_ms}-{random_4hex}`, e.g. `F-1711929600000-a3f2`), `project` (string, project identifier), `story_ref`, `phase` (one of: `spec` | `atdd` | `implement` | `code-review` | `flywheel`), `severity` (`critical` | `high` | `medium` | `low`), `pattern_tags` (kebab-case noun phrases), `description` (one sentence), `evidence` (exact quote or `file:line` reference), `provenance_status` (one of the five FR16 values, or `null` if not applicable), `upstream_fix_applied` (boolean, initially `false`), `upstream_fix_ref` (`null` until a fix is applied), `upstream_fix_level` (`null` until a fix is applied; then one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`), `timestamp` (ISO 8601)
+**Then** the journal entry contains all required schema fields: `id` (`F-{unix_ms}-{random_4hex}`, e.g. `F-1711929600000-a3f2`), `project` (string, project identifier), `story_ref`, `phase` (one of: `spec` | `atdd` | `implement` | `code-review` | `flywheel`), `severity` (`critical` | `high` | `medium` | `low`), `pattern_tags` (kebab-case noun phrases), `description` (one sentence), `evidence` (exact quote or `file:line` reference), `provenance_status` (one of the five FR16 values, or `null` if not applicable), `upstream_fix_applied` (boolean, initially `false`), `upstream_fix_ref` (`null` until a fix is applied), `upstream_fix_level` (`null` until a fix is applied; then one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`), `timestamp` (ISO 8601)
 **And** subagent findings submitted to Impetus must use the structured output contract (Architecture Decision 3b): `{status, result: {findings: [...]}, question, confidence}` — Impetus extracts finding objects and passes them to the flywheel for ledger ingestion
 **And** an entry with any missing required field is rejected — the flywheel does not write partial entries
 
 **Given** the Momentum findings MCP server is installed (`mcp/findings-server/` — Epic 6 scope)
-**When** Impetus or the flywheel queries the ledger
+**When** Impetus or the flywheel queries the journal
 **Then** the MCP server provides structured read-only query access over `~/.claude/momentum/findings-ledger.jsonl` (filter by project, pattern_tag, severity, date range)
-**And** Impetus reads the ledger at retrospective and upstream trace phases to build pattern context
+**And** Impetus reads the journal at retrospective and upstream trace phases to build pattern context
 **And** when the MCP server is unavailable, direct JSONL file reading is the fallback — developer can always inspect the file directly
 
-**Given** the ledger has grown across multiple sprints
+**Given** the journal has grown across multiple sprints
 **When** Impetus generates a session summary
 **Then** it includes a one-line ledger summary: `[N] findings across [S] stories — [C] critical open, [H] high open` (where "open" means `upstream_fix_applied: false` for that severity level)
 **And** if no findings exist, the summary is omitted — no placeholder text
@@ -1430,9 +1430,9 @@ So that I know when a problem is systemic and needs a root-level fix rather than
 **When** the pattern appears in a subsequent session
 **Then** Impetus surfaces it again with an updated count — it does not remember that the developer declined unless the developer explicitly says "suppress this pattern"
 **And** if the developer suppresses a pattern, Impetus records the suppression in the findings ledger as a special entry: `{id, project, story_ref: null, phase: "pattern-suppression", pattern_tags: [tag], description: "Developer suppressed pattern", upstream_fix_applied: false, upstream_fix_level: null, timestamp}` — this persists the suppression across sessions
-**And** Impetus does not surface the same tag again until the findings-ledger entry count for that tag increases beyond the count at suppression time
+**And** Impetus does not surface the same tag again until the findings-journal entry count for that tag increases beyond the count at suppression time
 
-**Given** no systemic patterns exist in the ledger
+**Given** no systemic patterns exist in the journal
 **When** pattern detection runs
 **Then** the result is omitted from the session summary — no "no patterns found" message is shown
 
@@ -1451,7 +1451,7 @@ So that I fix defects at the right level instead of patching symptoms.
 **Then** it executes the six phases in order: Detection → Review → Upstream Trace → Solution → Verify → Log (per the upstream fix process defined in architecture.md; the Log phase is the sixth phase — confirmed in Architecture Process Patterns section)
 **And** at each phase transition, Impetus displays the Workflow Step component (UX-DR4): an orientation line (never "phase N/6"), substantive content for the current phase, a transition signal, and explicit user control (A/P/C or Approve/Reject as context requires)
 **And** no phase may be skipped — the Log phase is required even if the solution is a "no-fix" decision
-**And** the finding is appended to `~/.claude/momentum/findings-ledger.jsonl` during the Detection phase, not at the end of the workflow — the finding exists in the ledger before any trace or fix is applied
+**And** the finding is appended to `~/.claude/momentum/findings-ledger.jsonl` during the Detection phase, not at the end of the workflow — the finding exists in the journal before any trace or fix is applied
 
 **Given** the Detection phase runs
 **When** Impetus presents the detected finding
@@ -1476,7 +1476,7 @@ So that I fix defects at the right level instead of patching symptoms.
 **Given** the Log phase runs (final phase)
 **When** all prior phases are complete
 **Then** Impetus records the complete flywheel run: finding id, phases completed, fix level applied (or "no-fix"), fix ref, outcome (resolved | unresolved | deferred), and timestamp
-**And** the findings ledger entry is updated by appending a new JSONL line with the same `id` and updated `upstream_fix_applied`, `upstream_fix_level`, and `upstream_fix_ref` values (JSONL is append-only; the latest line with a given `id` supersedes prior entries)
+**And** the findings journal entry is updated by appending a new JSONL line with the same `id` and updated `upstream_fix_applied`, `upstream_fix_level`, and `upstream_fix_ref` values (JSONL is append-only; the latest line with a given `id` supersedes prior entries)
 **And** if the developer rejected the fix, the outcome is recorded as "deferred" — not "resolved"
 
 **Given** the Solution phase completes and a fix is applied
@@ -1512,9 +1512,9 @@ So that the system never applies a fix I haven't reviewed.
 
 **Given** the flywheel reaches a consent gate (after Review, after Upstream Trace, or at Solution)
 **When** Impetus is about to ask for developer approval
-**Then** the flywheel writes the pending consent state to the session ledger immediately before presenting the consent prompt: `{flywheel_ref, finding_id, phase: "[current-phase]", status: "awaiting_consent", timestamp}`
+**Then** the flywheel writes the pending consent state to the session journal immediately before presenting the consent prompt: `{flywheel_ref, finding_id, phase: "[current-phase]", status: "awaiting_consent", timestamp}`
 **And** the phase value is the actual current phase name — not hardcoded to "solution"
-**And** at the next session start, Impetus reads the session ledger, detects any `status: "awaiting_consent"` entries, and surfaces them: "A flywheel trace is awaiting your decision — [finding description] at [phase]. Want to resume?"
+**And** at the next session start, Impetus reads the session journal, detects any `status: "awaiting_consent"` entries, and surfaces them: "A flywheel trace is awaiting your decision — [finding description] at [phase]. Want to resume?"
 
 **Given** the flywheel's Verify phase runs after a fix is applied
 **When** verification executes
@@ -1549,8 +1549,8 @@ So that I know whether my practice is improving or just accumulating code debt.
 
 **Given** an upstream fix is applied (FR32)
 **When** the flywheel records the fix in the Log phase
-**Then** the findings ledger entry is updated: `upstream_fix_applied: true`, `upstream_fix_ref` set to the id of the fix artifact (rule file modified, spec corrected, workflow updated)
-**And** the `upstream_fix_level` field in the ledger entry is set to one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`
+**Then** the findings journal entry is updated: `upstream_fix_applied: true`, `upstream_fix_ref` set to the id of the fix artifact (rule file modified, spec corrected, workflow updated)
+**And** the `upstream_fix_level` field in the journal entry is set to one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`
 **And** all five fix levels are valid — the flywheel accepts `one-off-code-fix` as a legitimate choice when the root cause is genuinely isolated to a single code location
 
 **Given** a retrospective runs (via BMAD retrospective or explicit request)
@@ -1615,7 +1615,7 @@ So that when a tool is undefined I come out of the conversation with a working c
   3. Asks for the reason: "One sentence: why this framework for this project?"
   4. Shows the would-be config entry and asks for confirmation before writing
 **And** the conversation ends with a valid `project-config.json` entry written — not just guidance
-**And** if the gap is detected during an automated execution (no active user session — e.g. a hook fires and encounters a missing binding), Impetus logs the gap to the session ledger as an open thread and surfaces it at the next session start: "A protocol gap was detected during [workflow step] — want to configure it now?"
+**And** if the gap is detected during an automated execution (no active user session — e.g. a hook fires and encounters a missing binding), Impetus logs the gap to the session journal as an open thread and surfaces it at the next session start: "A protocol gap was detected during [workflow step] — want to configure it now?"
 
 **Given** the developer cannot answer a configuration question (e.g. "I don't know which test framework is configured")
 **When** Impetus receives "I don't know"
@@ -1834,7 +1834,7 @@ So that reference chains remain valid and I can trace what changed and why.
 **When** Impetus archives the document
 **Then** it moves the file to `docs/archive/[original-relative-path]` (preserving directory structure within the archive)
 **And** the document's frontmatter is updated with: `archived_at` (ISO 8601 timestamp), `archived_by` (`"impetus"` or `"developer"`), `archived_reason` (one sentence)
-**And** if the archive was triggered by a confirmed-SUSPECT finding, `archived_reason` includes the findings-ledger entry ID: `"confirmed-suspect: [finding-id]"` — linking the archive decision to its audit trail
+**And** if the archive was triggered by a confirmed-SUSPECT finding, `archived_reason` includes the findings-journal entry ID: `"confirmed-suspect: [finding-id]"` — linking the archive decision to its audit trail
 **And** the document retains its full `derives_from` block — the reference chain is preserved in the archive
 
 **Given** the archive target path matches the protected spec pattern (`_bmad-output/planning-artifacts/*.md`)

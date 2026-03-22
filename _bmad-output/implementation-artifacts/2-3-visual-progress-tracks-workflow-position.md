@@ -44,10 +44,10 @@ so that I'm never lost and always know what's completed and what's next.
 **AC6 — Interrupted workflow resumption:**
 **Given** a workflow is interrupted mid-step
 **When** the developer re-invokes `/momentum` in a new session (UX-DR17)
-**Then** Impetus identifies the interrupted workflow from the ledger
+**Then** Impetus identifies the interrupted workflow from the journal
 **And** presents the Progress Indicator showing which steps are complete
 **And** asks: "continue from here, or restart this step?"
-**And** sufficient context is in the ledger entry to re-orient without developer re-explanation
+**And** sufficient context is in the journal entry to re-orient without developer re-explanation
 
 **AC7 — On-demand position query:**
 **Given** a developer asks for their current position in any workflow (FR7)
@@ -73,10 +73,10 @@ so that I'm never lost and always know what's completed and what's next.
   - [ ] 3.2 Specify that orientation lines are always narrative ("We've established the project structure, now building interaction patterns") — never "Step 3/8"
   - [ ] 3.3 Specify that user control is always the final visible element (A/P/C or contextual equivalent)
 
-- [ ] Task 4: Define ledger integration for workflow resumption (AC: 6)
-  - [ ] 4.1 Specify what fields the progress indicator reads from `ledger.json` thread entries to reconstruct state: `current_step`, `phase`, workflow step list
-  - [ ] 4.2 Specify the resume behavior: read ledger → build indicator showing completed/current/upcoming → present with "continue from here, or restart this step?"
-  - [ ] 4.3 Specify the sufficiency criteria for `context_summary` in ledger entries — must include enough detail for indicator reconstruction without re-reading the workflow definition. Note: Story 2.2 owns ledger writes; this task only specifies format and sufficiency requirements that 2.2's phase-transition logic must satisfy. Output: `skills/momentum/references/progress-indicator.md` (context_summary requirements section)
+- [ ] Task 4: Define journal integration for workflow resumption (AC: 6)
+  - [ ] 4.1 Specify what fields the progress indicator reads from `journal.json` thread entries to reconstruct state: `current_step`, `phase`, workflow step list
+  - [ ] 4.2 Specify the resume behavior: read journal → build indicator showing completed/current/upcoming → present with "continue from here, or restart this step?"
+  - [ ] 4.3 Specify the sufficiency criteria for `context_summary` in journal entries — must include enough detail for indicator reconstruction without re-reading the workflow definition. Note: Story 2.2 owns journal writes; this task only specifies format and sufficiency requirements that 2.2's phase-transition logic must satisfy. Output: `skills/momentum/references/progress-indicator.md` (context_summary requirements section)
 
 - [ ] Task 5: Create behavioral evals (EDD) (AC: 1–7)
   - [ ] 5.1 `eval-progress-mid-workflow.md` — Verify 3-line indicator at a middle step shows ✓/→/◦ with narrative content
@@ -141,13 +141,13 @@ This vocabulary is used by Impetus, all hooks, and all subagent output synthesis
 
 This story builds on:
 - **Story 2.1** (Impetus skill creation): Establishes the menu, voice rules, input interpretation, Response Architecture Pattern (UX-DR15). The progress indicator is rendered *within* this pattern.
-- **Story 2.2** (Session orientation / thread management): Establishes the session ledger (`ledger.json`), thread lifecycle, and resume behavior. The progress indicator *reads* ledger state to reconstruct workflow position after interruption.
+- **Story 2.2** (Session orientation / thread management): Establishes the session journal (`journal.json`), thread lifecycle, and resume behavior. The progress indicator *reads* journal state to reconstruct workflow position after interruption.
 
 **Dependency note:** Stories 2.1 and 2.2 are both `ready-for-dev` — they may or may not be implemented before this story. The progress indicator logic should be self-contained in `references/` so it works regardless of implementation order.
 
 ### Cross-Story Coordination
 
-**Story 2.2 dependency (Task 4.3):** Task 4.3 defines the sufficiency criteria for `context_summary` in ledger entries. Story 2.2 owns all ledger write operations. Before closing this story, confirm with Story 2.2's implementation that the `context_summary` field in every phase-transition write satisfies the criteria specified in `skills/momentum/references/progress-indicator.md`. If Story 2.2 is already implemented, the dev agent must review its `context_summary` write logic against this story's criteria and file a finding if the format is insufficient.
+**Story 2.2 dependency (Task 4.3):** Task 4.3 defines the sufficiency criteria for `context_summary` in journal entries. Story 2.2 owns all ledger write operations. Before closing this story, confirm with Story 2.2's implementation that the `context_summary` field in every phase-transition write satisfies the criteria specified in `skills/momentum/references/progress-indicator.md`. If Story 2.2 is already implemented, the dev agent must review its `context_summary` write logic against this story's criteria and file a finding if the format is insufficient.
 
 ### Key Design Constraints
 
@@ -191,19 +191,19 @@ Each eval simulates a scenario and verifies Impetus renders the correct indicato
 - **UX-DR4**: Response Architecture Pattern followed (orientation → content → transition → control)
 - **UX-DR9**: Symbols paired with text for accessibility
 - **UX-DR15**: Response Architecture Pattern structure enforced
-- **UX-DR17**: Workflow resumability with indicator reconstruction from ledger
+- **UX-DR17**: Workflow resumability with indicator reconstruction from journal
 
 ### Project Structure Notes
 
 - All files under `skills/momentum/` per the canonical repository structure [Source: architecture.md, Repository Structure section]
 - Evals directory at `skills/momentum/evals/` per pattern established in Story 2.1
 - Reference documents at `skills/momentum/references/` per the micro-file architecture pattern
-- `.claude/momentum/ledger.json` read (not written) by this story for indicator reconstruction
+- `.claude/momentum/journal.json` read (not written) by this story for indicator reconstruction
 
 ### References
 
 - [Source: _bmad-output/planning-artifacts/architecture.md — Decision 4a: Visual Progress Format]
-- [Source: _bmad-output/planning-artifacts/architecture.md — Decision 1b: Session Ledger JSON]
+- [Source: _bmad-output/planning-artifacts/architecture.md — Decision 1b: Session Journal JSON]
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md — Symbol Vocabulary]
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md — Progress Indicator Standard]
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md — Response Architecture Pattern]
@@ -212,7 +212,7 @@ Each eval simulates a scenario and verifies Impetus renders the correct indicato
 - [Source: _bmad-output/planning-artifacts/prd.md — FR42: Visual progress through story cycle]
 - [Source: _bmad-output/planning-artifacts/epics.md — Epic 2, Story 2.3 acceptance criteria]
 - [Source: _bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md — EDD eval pattern, voice rules]
-- [Source: _bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md — Ledger schema, resume behavior]
+- [Source: _bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md — Journal schema, resume behavior]
 
 ## Momentum Implementation Guide
 
@@ -230,7 +230,7 @@ Each eval simulates a scenario and verifies Impetus renders the correct indicato
 - `eval-progress-mid-workflow.md` — Given Impetus is at a middle workflow step with 3 completed phases and 3 upcoming, it should display all 3 indicator lines (✓/→/◦) with narrative content; no "Step N/M"; each symbol has adjacent text
 - `eval-progress-first-step.md` — Given Impetus is at the first step of a workflow (no completed phases), it should display 2 lines only (→/◦); the ✓ line must be absent
 - `eval-progress-last-step.md` — Given Impetus is at the last step of a workflow (no upcoming phases), it should display 2 lines only (✓/→); the ◦ line must be absent
-- `eval-progress-resume-from-ledger.md` — Given a ledger entry with `current_step` and `context_summary` for an interrupted workflow, Impetus should reconstruct and display the correct indicator state and offer "continue from here, or restart this step?"
+- `eval-progress-resume-from-ledger.md` — Given a journal entry with `current_step` and `context_summary` for an interrupted workflow, Impetus should reconstruct and display the correct indicator state and offer "continue from here, or restart this step?"
 - `eval-symbol-text-pairing.md` — Given any Impetus response containing ✓/→/◦/!/✗/? symbols, every symbol must have adjacent text conveying the same meaning; verify no symbol appears without paired text
 - `eval-response-architecture-pattern.md` — Given Impetus renders a workflow step, the response must contain all four elements in order: narrative orientation line (with progress indicator), substantive content, transition signal, explicit user control; orientation line must never contain "Step N/M"
 - `eval-on-demand-position-query.md` — Given a developer types "where am I?" or "what's my current position?", Impetus should respond with the correct progress indicator (3-line or 2-line at boundary) using only terminal-safe characters, with all symbols text-paired

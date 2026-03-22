@@ -411,7 +411,7 @@ The defining interaction is novel: proactive orientation is not how IDE tools cu
 
 | Phase | What happens |
 |-------|-------------|
-| **Initiation** | User opens session. Agent fires immediately — reads ledger, surfaces active threads, asks one targeted question to confirm intent |
+| **Initiation** | User opens session. Agent fires immediately — reads journal, surfaces active threads, asks one targeted question to confirm intent |
 | **Interaction** | Conversational back-and-forth through workflow steps. Agent synthesizes, user confirms or redirects. Progress narrative visible at each transition |
 | **Feedback** | ✓ Built / → Now / ◦ Next at every phase boundary. Hooks announce results. Subagents surface through Impetus's voice |
 | **Completion** | Agent explicitly hands ownership back: "That's done — here's what was produced. What's next?" Never just stops |
@@ -420,9 +420,9 @@ The defining interaction is novel: proactive orientation is not how IDE tools cu
 
 Momentum must meet users in a fundamentally non-linear, multi-session, multi-tab reality. A user may simultaneously have a story implementation in one Claude Code tab, a UX design workflow in another, research in a third, brainstorming in a fourth. Each tab is an independent agent session. Users stop and start. They context-switch. They return to threads cold after days away.
 
-**The Session Ledger**
+**The Session Journal**
 
-The orchestrating agent's first act in any session is to surface the user's current state across *all active threads* — not just the current tab. This requires a persistent ledger (`.claude/momentum/ledger.json`) that every Impetus instance reads and writes.
+The orchestrating agent's first act in any session is to surface the user's current state across *all active threads* — not just the current tab. This requires a persistent journal (`.claude/momentum/journal.json`) that every Impetus instance reads and writes.
 
 Each entry contains: thread ID, workflow type, current step, last-active timestamp, and a one-sentence context summary sufficient to re-orient the user instantly.
 
@@ -436,24 +436,24 @@ You have 3 open threads:
 Continue one of these, or start something new?
 ```
 
-The user says "continue the story" and Impetus re-orients immediately. Or "I want to do X" — Impetus opens a new ledger entry and starts fresh, concurrent with the others.
+The user says "continue the story" and Impetus re-orients immediately. Or "I want to do X" — Impetus opens a new journal entry and starts fresh, concurrent with the others.
 
 **Multi-Tab Awareness**
 
-Each Claude Code tab is an independent Impetus instance sharing the same ledger. Impetus in tab A sees that tab B has an active story thread. Recently-timestamped entries signal intentional concurrent work and are left undisturbed. Conflicting thread starts (two tabs trying to open the same story) are flagged.
+Each Claude Code tab is an independent Impetus instance sharing the same journal. Impetus in tab A sees that tab B has an active story thread. Recently-timestamped entries signal intentional concurrent work and are left undisturbed. Conflicting thread starts (two tabs trying to open the same story) are flagged.
 
 **Thread Hygiene**
 
-Stale threads are cognitive clutter. The orchestrator surfaces dormant threads beyond a threshold and asks about intent — not to delete work, but to keep the ledger honest:
+Stale threads are cognitive clutter. The orchestrator surfaces dormant threads beyond a threshold and asks about intent — not to delete work, but to keep the journal honest:
 
 ```
 "Architecture Research" has been open 3 weeks without activity.
 Still relevant, or ready to close it?
 ```
 
-Hygiene can also be triggered contextually — when dependent work completes, or when the ledger grows unwieldy.
+Hygiene can also be triggered contextually — when dependent work completes, or when the journal grows unwieldy.
 
-**Design constraint for all workflows:** Every workflow must be resumable from any step, with enough context saved in the ledger entry to re-orient a fresh agent session without the user re-explaining. The ledger entry is the memory that bridges sessions and tabs.
+**Design constraint for all workflows:** Every workflow must be resumable from any step, with enough context saved in the journal entry to re-orient a fresh agent session without the user re-explaining. The journal entry is the memory that bridges sessions and tabs.
 
 ---
 
@@ -495,12 +495,12 @@ Since color and size are unavailable, hierarchy is expressed through:
 - **Bold** — the key signal in any line; user reads bold first, context second
 - Markdown headers — section landmarks (`##`, `###`) for document structure
 - Code blocks — templates, examples, structured output; visually distinct from prose
-- Tables — comparative or multi-attribute data (ledger entries, progress states)
+- Tables — comparative or multi-attribute data (journal entries, progress states)
 - Blank lines — intentional breathing room; dense responses feel overwhelming
 
 **Information density principle:** Each response has one dominant purpose visible at a glance. The orientation line comes first, the user control comes last, always visible.
 
-### Ledger Display Format
+### Journal Display Format
 
 Thread state rendered for quick scanning:
 
@@ -520,11 +520,11 @@ Terminal constraints mean color contrast and screen reader support are handled b
 
 ### Key Interaction Moments
 
-**The ledger and the progress indicator are separate instruments for separate moments.** This distinction is foundational to all interaction design in Momentum.
+**The journal and the progress indicator are separate instruments for separate moments.** This distinction is foundational to all interaction design in Momentum.
 
-### Moment 1: Session Start — Ledger View (no active workflow)
+### Moment 1: Session Start — Journal View (no active workflow)
 
-At session start, no workflow is active. The progress indicator does not appear — it has no context to show. The ledger surfaces what's waiting, nothing more.
+At session start, no workflow is active. The progress indicator does not appear — it has no context to show. The journal surfaces what's waiting, nothing more.
 
 ```
 3 threads in progress:
@@ -536,7 +536,7 @@ At session start, no workflow is active. The progress indicator does not appear 
 Continue (1/2/3) or tell me what you need?
 ```
 
-Numbers label entries and serve as instant selection shortcuts. Symbols are absent — every item in the ledger is the same state (incomplete), so no distinction is needed. Status text ("mid-review", "awaiting your input") carries all meaningful context.
+Numbers label entries and serve as instant selection shortcuts. Symbols are absent — every item in the journal is the same state (incomplete), so no distinction is needed. Status text ("mid-review", "awaiting your input") carries all meaningful context.
 
 ### Moment 2: Workflow Resumed — Progress Indicator Appears
 
@@ -559,13 +559,13 @@ Hooks fire independently of workflow state. Pass is minimal; failure is diagnost
   !  post-save: lint failed
 
      src/ledger.ts:42  'threadId' does not exist on type 'Entry'
-     → Entry type likely needs updating after ledger schema change
+     → Entry type likely needs updating after journal schema change
 ```
 
 ### Design Rationale
 
-- **Symbols carry meaning only where they distinguish states** — ✓/→/◦ inside workflows; absent in the ledger where all items share the same state
-- **Numbers in the ledger serve dual purpose** — labeling and selection shorthand
+- **Symbols carry meaning only where they distinguish states** — ✓/→/◦ inside workflows; absent in the journal where all items share the same state
+- **Numbers in the journal serve dual purpose** — labeling and selection shorthand
 - **Diagnostic context on hook failure** — saves a round-trip; the agent surfaces the likely cause, not just the error
 - **Progress indicator activates on workflow entry** — never before, always after
 
@@ -580,7 +580,7 @@ Hooks fire independently of workflow state. Pass is minimal; failure is diagnost
 | Journey 0: First-Time Install | PRD Journey 1 (install flow) |
 | Journey 1: First-Time User | PRD Journey 1 (orientation) |
 | Journey 2: Story Cycle | PRD Journey 2 |
-| Journey 3: Session Resume | No direct PRD journey — addresses FR7/FR41/UX-DR11/UX-DR17 (session ledger persistence and context restore) |
+| Journey 3: Session Resume | No direct PRD journey — addresses FR7/FR41/UX-DR11/UX-DR17 (session journal persistence and context restore) |
 | Journey 4: Version Upgrade | PRD FR3b/FR3c |
 
 ---
@@ -668,7 +668,7 @@ After **[U]**:
   Project is now on Momentum 1.1.0.
 ```
 
-Then immediately transitions to session orientation (ledger display). No lingering on upgrade state.
+Then immediately transitions to session orientation (journal display). No lingering on upgrade state.
 
 When hooks config changes (requires restart):
 
@@ -695,7 +695,7 @@ When hooks config changes (requires restart):
 |-------|------------------|
 | No `installed.json` | Journey 0 — first-time install |
 | `installed.json` version < manifest version | Journey 4 — version upgrade |
-| Versions match | Normal session start — ledger display |
+| Versions match | Normal session start — journal display |
 
 The user never decides which of these applies. Impetus determines context and acts accordingly.
 
@@ -707,13 +707,13 @@ The knowledge gap persona's first session after install is complete. Agent speak
 
 ```mermaid
 flowchart TD
-    A[User opens Claude Code\nwith Momentum installed] --> B[Agent fires immediately\nNo ledger exists]
+    A[User opens Claude Code\nwith Momentum installed] --> B[Agent fires immediately\nNo journal exists]
     B --> C[Agent: Welcome — here's what\nMomentum does in one sentence.\nWhat are you working on?]
     C --> D{User response}
     D -->|Has a specific task| E[Agent: Great — let's start\nwith a quick spec.\nTell me about it.]
     D -->|Doesn't know where to start| F[Agent: No problem — let me\norient you to the practice first.\nWhat's your role on the team?]
     D -->|Just exploring| F
-    E --> G[Quick-spec workflow opens\nLedger entry created]
+    E --> G[Quick-spec workflow opens\nJournal entry created]
     F --> H[Agent gives 60-second\npractice orientation]
     H --> E
     G --> I[First story cycle begins]
@@ -736,25 +736,25 @@ flowchart TD
     H --> I{Critical findings?}
     I -->|Yes| J[Flywheel: trace upstream\nWhat rule/spec/workflow caused this?]
     J --> K[Upstream fix applied\nRule · spec · or workflow updated]
-    K --> L[Ledger entry marked complete\nImprovement noted]
+    K --> L[Journal entry marked complete\nImprovement noted]
     I -->|No| L
     L --> M[Agent: Done — here's what\nyou produced. What's next?]
 ```
 
 ### Journey 3: Session Resume (Returning User)
 
-The ledger in action. Zero re-explanation required.
+The journal in action. Zero re-explanation required.
 
 ```mermaid
 flowchart TD
-    A[User opens new session] --> B[Agent reads ledger\nFinds open threads]
+    A[User opens new session] --> B[Agent reads journal\nFinds open threads]
     B --> C[Agent presents numbered list\nwith status + time]
     C --> D{User choice}
     D -->|Picks a number| E[Agent loads thread context\nShows progress indicator]
     E --> F[Agent: Here's where we were —\none sentence summary.\nReady to continue?]
     F --> G[Workflow resumes at exact step]
-    D -->|Starts something new| H[New workflow opens\nNew ledger entry created]
-    D -->|Wants to close a stale thread| I[Agent confirms closure\nLedger entry archived]
+    D -->|Starts something new| H[New workflow opens\nNew journal entry created]
+    D -->|Wants to close a stale thread| I[Agent confirms closure\nJournal entry archived]
     G --> J[Normal workflow continues]
     H --> J
 ```
@@ -764,7 +764,7 @@ flowchart TD
 - **Agent always speaks first** — no journey starts with the user needing to know a command
 - **One question at a time** — the agent never presents more than one decision at a step
 - **Explicit completion signal** — every journey has a clear "done" moment with ownership returned to the user
-- **Graceful re-entry** — any journey can be paused and resumed with full context restored from the ledger
+- **Graceful re-entry** — any journey can be paused and resumed with full context restored from the journal
 
 ### Flow Optimization Principles
 
@@ -783,7 +783,7 @@ Momentum has no UI framework. The "components" are **conversation primitives** �
 
 ### Custom Components
 
-**1. Session Ledger Display**
+**1. Session Journal Display**
 *Appears at:* every session start with open threads
 
 ```
@@ -837,7 +837,7 @@ Fail:
   !  post-save: lint failed
 
      src/ledger.ts:42  'threadId' does not exist on type 'Entry'
-     → Entry type likely needs updating after ledger schema change
+     → Entry type likely needs updating after journal schema change
 ```
 States: pass (minimal), fail (with diagnostic context)
 
@@ -864,7 +864,7 @@ States: clean pass, minor only, critical findings, flywheel trigger
 *Appears at:* end of every story cycle, end of every workflow
 
 ```
-  ✓  Story 4.2 complete — session ledger implementation done
+  ✓  Story 4.2 complete — session journal implementation done
 
   What was produced:
     · src/ledger.ts — LedgerEntry type + CRUD operations
@@ -946,7 +946,7 @@ Components are implemented as agent instruction patterns — structured prose in
 
 | Phase | Components | Rationale |
 |-------|-----------|-----------|
-| Day 1 | Install/Upgrade Status, Progress Indicator, Hook Announcement, Session Ledger | Setup must work before anything else; orientation and enforcement follow |
+| Day 1 | Install/Upgrade Status, Progress Indicator, Hook Announcement, Session Journal | Setup must work before anything else; orientation and enforcement follow |
 | Sprint 1 | Workflow Step, Completion Signal | Story cycle can't run without them |
 | Sprint 2 | Subagent Return, Flywheel Notice, Proactive Orientation | Quality layer and compounding improvement |
 
@@ -962,7 +962,7 @@ Users express intent in multiple ways — the agent handles all gracefully:
 
 | Input type | Example | Agent behaviour |
 |-----------|---------|----------------|
-| Number | `2` | Select ledger item 2, no confirmation needed |
+| Number | `2` | Select journal item 2, no confirmation needed |
 | Letter command | `C` or `c` | Continue — case-insensitive, always works |
 | Fuzzy match | `continue`, `yes`, `go ahead` | Treated as C |
 | Natural language | `let's do the story` | Extract intent, confirm: "Starting Story 4.2 — correct?" |
@@ -1007,11 +1007,11 @@ Engagement continuity — topic stays relevant, no context switch:
 
 ### Graceful Pause / Exit
 
-Ledger entry updated immediately — no data loss on any exit:
+Journal entry updated immediately — no data loss on any exit:
 
 ```
   Pausing UX Design at Visual Foundation.
-  Saved to ledger — pick up any time.
+  Saved to journal — pick up any time.
 ```
 
 ### Conflicting Thread Warning
@@ -1028,7 +1028,7 @@ Warns, never blocks — user decides:
 Never fabricates — surfaces the gap explicitly:
 
 ```
-  ?  I don't have enough context about the ledger schema here.
+  ?  I don't have enough context about the journal schema here.
 
   1. Make a reasonable assumption and flag it
   2. Ask you a couple of questions first
@@ -1053,7 +1053,7 @@ Never fabricates — surfaces the gap explicitly:
 
 ### Terminal Width Variation
 
-Claude Code renders in panes of varying width. Every component must be readable without horizontal scrolling at ~80 characters. The Progress Indicator and Ledger Display are designed for inline format; this is the clean fallback at narrow widths:
+Claude Code renders in panes of varying width. Every component must be readable without horizontal scrolling at ~80 characters. The Progress Indicator and Journal Display are designed for inline format; this is the clean fallback at narrow widths:
 
 ```
   ✓  Brief · Research · PRD

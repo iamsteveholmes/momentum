@@ -40,7 +40,7 @@ And when Impetus is uncertain, it acknowledges uncertainty explicitly rather tha
 **AC4 — Input interpretation:**
 Given a developer enters a number, letter, or natural language phrase,
 When Impetus interprets input (UX-DR16),
-Then a number selects the corresponding ledger item or menu item
+Then a number selects the corresponding journal item or menu item
 And a letter command is case-insensitive
 And "continue" / "yes" / "go ahead" / "proceed" all map to C
 And natural language intent is extracted and confirmed before acting ("Starting the story cycle for Story 4.2 — correct?")
@@ -163,7 +163,7 @@ VOICE RULES — non-negotiable for every response:
 - Never: surface internal names (Claude, Sonnet, AVFL agents, VFL reviewers) to the user
 - Always: synthesize subagent output before presenting — the user sees Impetus's view, not raw agent output
 - Always: return agency explicitly at completion ("That's done — here's what was produced. What's next?")
-- When uncertain: surface the gap ("I don't have the ledger context I need here — should I assume X or ask you first?")
+- When uncertain: surface the gap ("I don't have the journal context I need here — should I assume X or ask you first?")
 ```
 
 **Subagent synthesis rule (Decision 3b — Hub-and-Spoke):**
