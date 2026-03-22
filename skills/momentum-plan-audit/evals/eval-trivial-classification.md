@@ -37,7 +37,7 @@ The skill should:
    - `Classification: trivial`
    - The reason (read-only operations only)
    - `Go/No-Go: Proceed.`
-5. **NOT create** any process story file in `_bmad-output/stories/`
+5. **NOT add** any process story entries to sprint-status.yaml
 6. **NOT invoke** the `avfl` skill
 
 ## Pass Criteria
@@ -45,5 +45,5 @@ The skill should:
 - `## Spec Impact` section present in plan file after skill runs
 - Section contains `Classification: trivial`
 - Section contains `Go/No-Go: Proceed.`
-- No new files in `_bmad-output/stories/`
+- No new entries in sprint-status.yaml's `momentum_metadata`
 - No AVFL invocation occurred

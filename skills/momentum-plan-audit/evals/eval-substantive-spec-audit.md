@@ -45,7 +45,7 @@ Step 4 — Present findings with severity classification
 
 **And** the current sprint is Sprint 1 (from epics.md).
 
-**And** no `p1.N` process stories exist yet in `_bmad-output/stories/`.
+**And** no `p1-N-*` process story entries exist yet in sprint-status.yaml's `momentum_metadata`.
 
 ## Expected Behavior
 
@@ -53,8 +53,10 @@ The skill should:
 
 1. **Load the plan** — read the most recently modified `.md` in `~/.claude/plans/`
 2. **Classify as substantive** — plan creates new skill files and modifies `.claude/settings.json`
-3. **Create process story `p1.1`** at `_bmad-output/stories/p1.1.md` with:
-   - Frontmatter: `story_id: p1.1`, `status: ready`, `type: process`, `epic: P1 — Process Sprint-1`, `sprint: 1`
+3. **Create process story** with key `p1-1-add-momentum-code-review-skill`:
+   - Write story content to `_bmad-output/implementation-artifacts/p1-1-add-momentum-code-review-skill.md` with frontmatter: `type: process`, `epic: P1 — Process Sprint-1`, `sprint: 1`
+   - Add `development_status` entry: `p1-1-add-momentum-code-review-skill: ready-for-dev`
+   - Add `momentum_metadata` entry with `depends_on: []`, `touches`, and `story_file`
    - Story body derived from plan Context
    - Acceptance criteria derived from plan Verification section
 4. **Identify relevant spec sections** — read only the Hook Infrastructure section from architecture.md (plan touches `.claude/settings.json` hook config)
@@ -69,7 +71,8 @@ The skill should:
 
 - `## Spec Impact` section present in plan file
 - `Classification: substantive`
-- Process story `_bmad-output/stories/p1.1.md` exists with correct frontmatter (`type: process`, `epic: P1 — Process Sprint-1`)
+- Process story content file exists at `_bmad-output/implementation-artifacts/p1-1-add-momentum-code-review-skill.md` with correct frontmatter (`type: process`, `epic: P1 — Process Sprint-1`)
+- sprint-status.yaml has `p1-1-add-momentum-code-review-skill: ready-for-dev` in `development_status` and a matching `momentum_metadata` entry
 - Story ACs are derived from plan's Verification section
 - AVFL was invoked exactly once (single combined pass)
 - AVFL `output_to_validate` contained both plan and story with `=== PLAN ===` and `=== PROCESS STORY ===` labels

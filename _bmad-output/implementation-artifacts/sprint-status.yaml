@@ -121,3 +121,17 @@ development_status:
   9-4-pydantic-ai-harness-benchmarks-agent-workflows-with-agent-override: backlog
   9-5-benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files: backlog
   epic-9-retrospective: optional
+
+# Momentum parallel execution metadata — invisible to BMAD skills
+# Each entry adds dependency and scope tracking for parallel story execution.
+# depends_on: story_keys that must be "done" before this story can start
+# touches: paths this story modifies (merge conflict risk indicator)
+# story_file: path to the full implementation story file
+momentum_metadata:
+  1-1-repository-structure-established:
+    depends_on: []
+    touches:
+      - "skills/momentum/"
+      - "version.md"
+      - "mcp/findings-server/"
+    story_file: "_bmad-output/implementation-artifacts/1-1-repository-structure-established.md"

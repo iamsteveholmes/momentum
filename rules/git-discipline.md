@@ -146,7 +146,7 @@ These conventions apply to `momentum-dev` story sessions, which always use git w
 
 **Crash recovery:** Before running `git worktree add`, check whether branch `story/{story_id}` already exists. If branch + worktree both exist, offer to resume or clean up. If branch exists but no worktree, delete the stale branch before proceeding.
 
-**Status writes go to the main working tree:** Story spec status updates (`ready` → `in_progress`, `in_progress` → `complete`) are written to `_bmad-output/stories/{story_id}.md` in the main working tree, not inside the worktree. This ensures all concurrent sessions see status changes immediately.
+**Status writes go to the main working tree:** Story status updates (`ready-for-dev` → `in-progress`, `in-progress` → `done`) are written to `sprint-status.yaml` in the main working tree, not inside the worktree. This ensures all concurrent sessions see status changes immediately.
 
 **Merge gate:** Always propose the merge command and wait for explicit user confirmation before running `git merge`. Never auto-execute a merge.
 

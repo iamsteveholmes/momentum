@@ -64,23 +64,34 @@ Proceed with full audit, or skip? (Skip writes a minimal Spec Impact and unblock
 
   <step n="3" goal="Create process story (substantive only)">
     <action>Determine {{sprint_num}} using spec-capture-guide.md Section 4 (Sprint Number Resolution).</action>
-    <action>Scan `_bmad-output/stories/` for existing files matching `p{{sprint_num}}.*.md`. Find the highest sequence number N. Set {{process_story_id}} = `p{{sprint_num}}.{N+1}`. If no matches, use `p{{sprint_num}}.1`.</action>
-    <action>Store {{process_story_file}} = `_bmad-output/stories/{{process_story_id}}.md`.</action>
+    <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml`. Scan `momentum_metadata` keys for entries starting with `p{{sprint_num}}-`. Find the highest sequence number N (parse the second number from key pattern `p{{sprint_num}}-N-...`). Set {{process_story_seq}} = N+1. If no matches, use 1.</action>
+    <action>Derive {{process_story_key}} = `p{{sprint_num}}-{{process_story_seq}}-{{plan_title_kebab}}` where {{plan_title_kebab}} is the plan title converted to kebab-case.</action>
+    <action>Store {{process_story_file}} = `{implementation_artifacts}/{{process_story_key}}.md`.</action>
     <action>Extract {{touches}} from the plan's Files to Create/Modify table — collect unique directory/file paths (normalize to directory paths where possible).</action>
-    <action>Compose the process story using spec-capture-guide.md Section 5:
-      - Frontmatter with explicit field names: `story_id: {{process_story_id}}`, `status: ready`, `type: process`, `epic: P{{sprint_num}} — Process Sprint-{{sprint_num}}`, `title: {{plan_title}}`, `sprint: {{sprint_num}}`, `touches:`, `depends_on: []`
+    <action>Compose the process story content using spec-capture-guide.md Section 5:
+      - Frontmatter with explicit field names: `type: process`, `epic: P{{sprint_num}} — Process Sprint-{{sprint_num}}`, `title: {{plan_title}}`, `sprint: {{sprint_num}}`
       - User Story derived from plan Context
       - Background from plan Context
       - Acceptance Criteria from plan's Verification section (or derived from execution steps if no Verification section)
       - Definition of Done from plan's Files to Create/Modify table
       - Dev Notes with change type classification
     </action>
-    <action>Ensure `_bmad-output/stories/` directory exists. Create if absent.</action>
-    <action>Write story to {{process_story_file}}.</action>
+    <action>Write story content to {{process_story_file}}.</action>
     <action>Read {{process_story_file}} to confirm it was written correctly.</action>
+    <action>Add entry to sprint-status.yaml `development_status`: `{{process_story_key}}: ready-for-dev`</action>
+    <action>If no `momentum_metadata` section exists, create it. Add entry under `momentum_metadata`:
+```yaml
+  {{process_story_key}}:
+    depends_on: []
+    touches:
+      {{touches_yaml}}
+    story_file: "{{process_story_file}}"
+```
+    </action>
+    <action>Save sprint-status.yaml, preserving ALL existing content, comments, and structure.</action>
     <action>Identify any upstream spec files that need updating per spec-capture-guide.md Section 7. Store {{upstream_updates}} = list of recommended changes (file + section + reason), or "None identified." if none.</action>
 
-    <output>Process story created: {{process_story_file}}</output>
+    <output>Process story created: {{process_story_file}} (sprint-status.yaml updated: development_status + momentum_metadata)</output>
   </step>
 
   <step n="4" goal="Targeted upstream spec audit (substantive only)">

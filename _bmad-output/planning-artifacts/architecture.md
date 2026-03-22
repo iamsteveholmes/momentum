@@ -904,44 +904,63 @@ Adversarial validation conducted per the dual-reviewer pattern from VFL framewor
 
 ## Sprint Story Lifecycle
 
-> _Added 2026-03-21: Parallel story execution model — story state machine, session ledger extension, story frontmatter schema, worktree execution model._
+> _Added 2026-03-21: Parallel story execution model. Revised 2026-03-21: Unified tracking — Momentum metadata lives in sprint-status.yaml alongside BMAD's development_status. No separate story spec files._
 
 ### Story State Machine
 
-Every story spec file tracks its position in the sprint cycle via a `status` field in its YAML frontmatter:
+Momentum uses BMAD's state machine directly — no parallel states, no translation layer:
 
 ```
-ready → in_progress → complete
+backlog → ready-for-dev → in-progress → review → done
 ```
 
-- **`ready`** — story has been created, all `depends_on` stories are complete (or there are none), and no session is currently working on it
-- **`in_progress`** — a `momentum-dev` session has claimed this story and is executing in an isolated git worktree
-- **`complete`** — the story's worktree has been merged to the target branch and the worktree cleaned up
+- **`backlog`** — story exists in epics.md but no implementation story file has been created yet
+- **`ready-for-dev`** — story file created by `momentum-create-story`, metadata written to `momentum_metadata` section, all `depends_on` stories are `done` (or there are none)
+- **`in-progress`** — a `momentum-dev` session has claimed this story and is executing in an isolated git worktree
+- **`review`** — implementation complete, ready for code review (set by `bmad-dev-story` inside the worktree)
+- **`done`** — story's worktree has been merged to the target branch and cleaned up
 
 This is the **sprint-level lifecycle** — distinct from the implementation phase lifecycle (Spec Review → ATDD → Implement → Code Review → Flywheel) tracked in the session ledger. The two are complementary:
-- Story file `status`: where the story is in the sprint cycle
+- `development_status` in sprint-status.yaml: where the story is in the sprint cycle
 - Session ledger `active_stories` + `phase`: what is being actively worked on in each concurrent session
 
-### Story Spec File Location and Schema
+### Unified Sprint Tracking in sprint-status.yaml
 
-Story spec files live at `_bmad-output/stories/{story_id}.md`. The `story_id` uses dot-notation matching the epics (e.g., `3.1`, `4.4`).
+All story tracking lives in `sprint-status.yaml`. Momentum adds a `momentum_metadata` section alongside BMAD's `development_status` — additive, not breaking. BMAD skills only read `development_status` and ignore unknown sections.
 
-Required frontmatter fields:
 ```yaml
-story_id: "3.1"            # dot-notation ID matching epics.md
-status: ready              # ready | in_progress | complete
-depends_on: []             # story_ids whose status must be complete before this starts
-touches: []                # paths likely to need merge conflict review — risk indicator, not blocker
+development_status:
+  epic-1: in-progress
+  1-1-repository-structure-established: ready-for-dev
+  1-2-skills-installable-via-npx-skills-add: backlog
+  # ... (BMAD reads only this section)
+
+# Momentum parallel execution metadata — invisible to BMAD skills
+momentum_metadata:
+  1-1-repository-structure-established:
+    depends_on: []                    # story_keys whose development_status must be "done"
+    touches:                          # paths likely to need merge conflict review
+      - "skills/momentum/"
+      - "version.md"
+    story_file: "_bmad-output/implementation-artifacts/1-1-repository-structure-established.md"
 ```
 
-`depends_on` is populated at story creation time from the dependency notes in the epics section for that story. `touches` is inferred from the story's implementation scope (e.g., skill dirs, shared config files).
+**Schema for each `momentum_metadata` entry:**
+
+| Field | Type | Description |
+|---|---|---|
+| `depends_on` | list of strings | Story keys (matching `development_status` keys) that must have status `done` before this story can be selected. Empty list `[]` if no dependencies. |
+| `touches` | list of strings | Paths this story will create or modify. Used for merge conflict risk assessment — not a blocker. |
+| `story_file` | string or null | Path to the full implementation story file (in `_bmad-output/implementation-artifacts/`). Null for process stories that are self-contained. |
+
+`depends_on` is populated at story creation time from the dependency notes in the epics section. `touches` is inferred from the story's implementation scope (skill dirs, shared config files, paths mentioned in tasks).
 
 ### Next-Story Selection Rule
 
-When `momentum-dev` is invoked without an explicit story path, it selects:
-> The highest-priority story where `status == ready` AND all stories in `depends_on` have `status == complete`
+When `momentum-dev` is invoked without an explicit story path, it reads `sprint-status.yaml` and selects:
+> The highest-priority story where `development_status[key] == "ready-for-dev"` AND all keys in `momentum_metadata[key].depends_on` have `development_status == "done"`
 
-Priority order: epic sprint assignment (Day 1 > Sprint 1 > Sprint 2 > Growth), then story order within that epic.
+Priority order: epic sprint assignment (Day 1 > Sprint 1 > Sprint 2 > Growth), then story order within that epic (parsed from the key: `1-2-...` → epic 1, story 2).
 
 If no story qualifies (all remaining stories are blocked), `momentum-dev` surfaces the blocked-on list and halts.
 

@@ -2,7 +2,7 @@
 
 **Goal:** Implement a Momentum story by selecting the next unblocked story (or using an explicit path), running in an isolated git worktree, delegating to bmad-dev-story, then applying AVFL quality gate and Momentum-specific DoD.
 
-**Role:** Thin orchestrator with sprint awareness. Manages story selection from frontmatter status, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum-create-story) contains the developer's implementation instructions.
+**Role:** Thin orchestrator with sprint awareness. Manages story selection from sprint-status.yaml, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum-create-story) contains the developer's implementation instructions.
 
 ---
 
@@ -14,7 +14,7 @@
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum-create-story. Offer to run the injection step manually before proceeding.</critical>
   <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
   <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>
-  <critical>Always write status changes (in_progress, complete) to the story spec in the MAIN working tree — not inside the worktree. This ensures all concurrent sessions see the update immediately.</critical>
+  <critical>Always write status changes to sprint-status.yaml in the MAIN working tree — not inside the worktree. This ensures all concurrent sessions see the update immediately.</critical>
 
   <step n="1" goal="Capture target branch">
     <action>Run via Bash tool: `git branch --show-current`</action>
@@ -22,20 +22,22 @@
   </step>
 
   <step n="2" goal="Resolve story to develop">
-    <action>Check: has the user provided an explicit story file path?</action>
+    <action>Check: has the user provided an explicit story file path or story key?</action>
 
-    <check if="explicit story path provided">
-      <action>Store {{story_file}} = the provided path</action>
-      <action>Read {{story_file}} frontmatter to extract {{story_id}} (from `story_id:` field)</action>
-      <action>If {{story_id}} is not present in the frontmatter, derive it from the file name (e.g., `_bmad-output/stories/3.1.md` → {{story_id}} = "3.1")</action>
+    <check if="explicit story path or key provided">
+      <action>If a file path is provided, store {{story_file}} = the provided path</action>
+      <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml`</action>
+      <action>If a story key is provided, look up {{story_key}} in `momentum_metadata` to get `story_file`. If a file path was provided, find the matching story key by scanning `momentum_metadata` entries for a matching `story_file` value.</action>
+      <action>Store {{story_key}} and {{story_file}}</action>
     </check>
 
-    <check if="no story path provided">
-      <action>Read all files in `_bmad-output/stories/` (glob: `_bmad-output/stories/*.md`)</action>
-      <action>For each file, read its frontmatter fields: `story_id`, `status`, `depends_on`, `touches`</action>
-      <action>Filter to candidate stories: `status == ready` AND every story_id in `depends_on` has `status == complete` in its own spec file</action>
+    <check if="no story path or key provided">
+      <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml`</action>
+      <action>Parse `development_status`: collect all story keys (exclude epic keys like `epic-N`, retrospective keys like `epic-N-retrospective`) and their statuses</action>
+      <action>Parse `momentum_metadata`: for each story key, read `depends_on`, `touches`, `story_file`</action>
+      <action>Filter to candidate stories: `development_status[key] == "ready-for-dev"` AND every key in `momentum_metadata[key].depends_on` has `development_status == "done"`</action>
       <check if="no candidates found">
-        <action>Build a status summary: (1) for each story with `status == in_progress`, list it as 'in progress in another session'; (2) for each story with `status == ready` whose `depends_on` includes any story not yet `complete`, list: story_id → blocked on [list of incomplete depends_on ids]. If a story_id in depends_on is itself `in_progress`, note it as `in_progress (will unblock when complete)`.</action>
+        <action>Build a status summary: (1) for each story with status `in-progress`, list it as 'in progress in another session'; (2) for each story with status `ready-for-dev` whose `depends_on` includes any key not yet `done`, list: key → blocked on [list of incomplete depends_on keys]. If a depends_on key is `in-progress`, note it as `in-progress (will unblock when done)`.</action>
         <output>No unblocked stories are available. Current story status:
 [status summary]
 
@@ -44,21 +46,20 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
       </check>
       <action>From the candidates, select the highest-priority story using this order:
         1. Epic sprint assignment: Day 1 stories first, then Sprint 1, Sprint 2, Growth
-        2. Story order within that epic (lower story_id number = higher priority)
+        2. Story order within that epic (parse from key: `1-2-...` → epic 1, story 2)
       </action>
-      <action>Store {{story_id}} = selected story's story_id</action>
-      <action>Read the story spec file at `_bmad-output/stories/{{story_id}}.md`</action>
-      <action>Store {{story_file}} = the value of the `story_file:` frontmatter field from the spec file. This is the path to the full implementation story file created by momentum-create-story. If the `story_file:` field is absent, fall back to `{{planning_artifacts}}/{{story_id}}.md`.</action>
-      <output>Selected story {{story_id}} (status: ready, depends_on satisfied). Proceeding to develop.</output>
+      <action>Store {{story_key}} = selected story key</action>
+      <action>Store {{story_file}} = `momentum_metadata[{{story_key}}].story_file`. If absent or null, fall back to `{implementation_artifacts}/{{story_key}}.md`.</action>
+      <output>Selected story {{story_key}} (status: ready-for-dev, depends_on satisfied). Proceeding to develop.</output>
     </check>
   </step>
 
   <step n="3" goal="Crash recovery check">
-    <action>Check if branch `story/{{story_id}}` already exists: run `git branch --list story/{{story_id}}`</action>
-    <action>Check if worktree `.worktrees/story-{{story_id}}` already exists (check filesystem)</action>
+    <action>Check if branch `story/{{story_key}}` already exists: run `git branch --list story/{{story_key}}`</action>
+    <action>Check if worktree `.worktrees/story-{{story_key}}` already exists (check filesystem)</action>
 
     <check if="branch exists AND worktree directory exists">
-      <ask>A previous session for Story {{story_id}} appears to be in progress (branch story/{{story_id}} + worktree .worktrees/story-{{story_id}} both exist). Resume from where it left off, or clean up and start fresh?
+      <ask>A previous session for Story {{story_key}} appears to be in progress (branch story/{{story_key}} + worktree .worktrees/story-{{story_key}} both exist). Resume from where it left off, or clean up and start fresh?
 
   R — Resume: continue in the existing worktree
   C — Clean up: delete branch and worktree, start fresh</ask>
@@ -66,16 +67,16 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
         <action>Skip worktree creation (Step 4) — worktree already exists. Continue from Step 5.</action>
       </check>
       <check if="user chooses Clean up">
-        <action>Run: `git worktree remove --force .worktrees/story-{{story_id}}`</action>
-        <action>Run: `git branch -d story/{{story_id}}`</action>
-        <action>Delete lock file `.worktrees/story-{{story_id}}.lock` if it exists</action>
+        <action>Run: `git worktree remove --force .worktrees/story-{{story_key}}`</action>
+        <action>Run: `git branch -d story/{{story_key}}`</action>
+        <action>Delete lock file `.worktrees/story-{{story_key}}.lock` if it exists</action>
         <action>Proceed to Step 4 (worktree creation).</action>
       </check>
     </check>
 
     <check if="branch exists but worktree directory does NOT exist">
-      <action>Inform the user: "Stale branch story/{{story_id}} found without a worktree. This branch may have uncommitted development work. Force-deleting it."</action>
-      <action>Run: `git branch -D story/{{story_id}}`</action>
+      <action>Inform the user: "Stale branch story/{{story_key}} found without a worktree. This branch may have uncommitted development work. Force-deleting it."</action>
+      <action>Run: `git branch -D story/{{story_key}}`</action>
       <action>Proceed to Step 4 (worktree creation).</action>
     </check>
 
@@ -85,22 +86,23 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
   </step>
 
   <step n="4" goal="Create git worktree">
-    <action>Run: `git worktree add .worktrees/story-{{story_id}} -b story/{{story_id}}`</action>
-    <output>Worktree created at .worktrees/story-{{story_id}} on branch story/{{story_id}}</output>
+    <action>Run: `git worktree add .worktrees/story-{{story_key}} -b story/{{story_key}}`</action>
+    <output>Worktree created at .worktrees/story-{{story_key}} on branch story/{{story_key}}</output>
   </step>
 
   <step n="5" goal="Mark story in-progress">
-    <action>Write (or overwrite) the lock file `.worktrees/story-{{story_id}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum-dev session started {{timestamp}}". Overwriting is safe — the new timestamp reflects the current session.</action>
-    <action>Read `_bmad-output/stories/{{story_id}}.md` from the main working tree</action>
-    <action>Ensure the `status:` frontmatter field is `in_progress` (set it to `in_progress` regardless of current value — idempotent write)</action>
-    <action>Write the updated file back to `_bmad-output/stories/{{story_id}}.md` in the main working tree</action>
-    <output>Story {{story_id}} marked in_progress. Lock file created.</output>
+    <action>Write (or overwrite) the lock file `.worktrees/story-{{story_key}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum-dev session started {{timestamp}}". Overwriting is safe — the new timestamp reflects the current session.</action>
+    <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml` in the main working tree</action>
+    <action>Update `development_status[{{story_key}}]` to `in-progress` (idempotent — set regardless of current value)</action>
+    <action>Update `last_updated` field to current date</action>
+    <action>Save sprint-status.yaml, preserving ALL comments and structure</action>
+    <output>Story {{story_key}} marked in-progress in sprint-status.yaml. Lock file created.</output>
   </step>
 
   <step n="6" goal="Invoke bmad-dev-story">
-    <action>Enter the worktree context: use the EnterWorktree tool with path `.worktrees/story-{{story_id}}`. This sets the working directory to the worktree for all subsequent file operations until ExitWorktree is called. All bmad-dev-story file writes will land in the worktree, not the main tree.</action>
+    <action>Enter the worktree context: use the EnterWorktree tool with path `.worktrees/story-{{story_key}}`. This sets the working directory to the worktree for all subsequent file operations until ExitWorktree is called. All bmad-dev-story file writes will land in the worktree, not the main tree.</action>
 
-    <action>Invoke the `bmad-dev-story` skill inside the worktree `.worktrees/story-{{story_id}}`. Pass the story file path ({{story_file}}). bmad-dev-story will read the story's Dev Notes — including the Momentum Implementation Guide section — and implement accordingly.</action>
+    <action>Invoke the `bmad-dev-story` skill inside the worktree `.worktrees/story-{{story_key}}`. Pass the story file path ({{story_file}}). bmad-dev-story will read the story's Dev Notes — including the Momentum Implementation Guide section — and implement accordingly.</action>
 
     <action>Wait for bmad-dev-story to complete fully (story status = "review")</action>
     <action>After bmad-dev-story completes, capture from its completion output:
@@ -112,7 +114,7 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
     <action>Exit the worktree context: use the ExitWorktree tool. This restores the working directory to the main repo root. All subsequent steps operate on the main tree.</action>
 
     <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
-    <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_id}}/`, isolated from other sessions.</note>
+    <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_key}}/`, isolated from other sessions.</note>
   </step>
 
   <step n="7" goal="AVFL quality gate on primary artifact">
@@ -230,54 +232,55 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
     <output>Momentum DoD — all items passed</output>
   </step>
 
-  <step n="9" goal="Mark story complete and propose merge">
-    <note>At this point the working directory is the main repo root (ExitWorktree was called at the end of Step 6). The merge runs on the main tree, merging story/{{story_id}} into {{target_branch}}.</note>
-    <action>Read `_bmad-output/stories/{{story_id}}.md` from the MAIN working tree (not the worktree)</action>
-    <action>Update the `status:` frontmatter field to `complete`</action>
-    <action>Write the updated file back to `_bmad-output/stories/{{story_id}}.md` in the main working tree</action>
-    <action>Delete the lock file `.worktrees/story-{{story_id}}.lock`</action>
+  <step n="9" goal="Mark story done and propose merge">
+    <note>At this point the working directory is the main repo root (ExitWorktree was called at the end of Step 6). The merge runs on the main tree, merging story/{{story_key}} into {{target_branch}}.</note>
+    <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml` in the MAIN working tree</action>
+    <action>Update `development_status[{{story_key}}]` to `done`</action>
+    <action>Update `last_updated` field to current date</action>
+    <action>Save sprint-status.yaml, preserving ALL comments and structure</action>
+    <action>Delete the lock file `.worktrees/story-{{story_key}}.lock`</action>
 
-    <action>Read {{touches}} from the story spec frontmatter</action>
-    <action>Check for overlap: are any paths in {{touches}} also listed in other currently in_progress story specs' `touches` fields? If yes, note them as potential merge conflict paths. If no other in_progress stories, overlap = none.</action>
-    <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in_progress stories or no overlap, use "none".</action>
+    <action>Read `momentum_metadata[{{story_key}}].touches` from sprint-status.yaml</action>
+    <action>Check for overlap: are any paths in {{touches}} also listed in `momentum_metadata` entries for other stories whose `development_status` is `in-progress`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
+    <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in-progress stories or no overlap, use "none".</action>
 
-    <output>Story {{story_id}} is complete and ready to merge.
+    <output>Story {{story_key}} is done and ready to merge.
 
-  Branch:   story/{{story_id}}
+  Branch:   story/{{story_key}}
   Target:   {{target_branch}}
   Touches overlap: {{touches_overlap_summary}}
 
 To merge, run:
-  git merge story/{{story_id}}
+  git merge story/{{story_key}}
 
 Confirm to proceed with merge, or review the diff first.</output>
     <ask>Run the merge now?</ask>
 
     <check if="user confirms merge">
-      <action>Run: `git merge story/{{story_id}}`</action>
+      <action>Run: `git merge story/{{story_key}}`</action>
       <check if="merge succeeds cleanly">
-        <action>Run: `git worktree remove --force .worktrees/story-{{story_id}}`
+        <action>Run: `git worktree remove --force .worktrees/story-{{story_key}}`
 Note: Using --force because the merge has already succeeded — all work is safely on {{target_branch}}. Any uncommitted files in the worktree are discarded.</action>
-        <action>Run: `git branch -d story/{{story_id}}`</action>
-        <output>Merged and cleaned up worktree for Story {{story_id}}.</output>
+        <action>Run: `git branch -d story/{{story_key}}`</action>
+        <output>Merged and cleaned up worktree for Story {{story_key}}.</output>
       </check>
       <check if="merge reports conflicts">
-        <output>⚠ Merge conflicts detected. Resolve conflicts in the affected files, then run:
+        <output>Merge conflicts detected. Resolve conflicts in the affected files, then run:
   git add [resolved files]
   git merge --continue
 
 After merge is complete, clean up the worktree:
-  git worktree remove .worktrees/story-{{story_id}}
-  git branch -d story/{{story_id}}</output>
+  git worktree remove .worktrees/story-{{story_key}}
+  git branch -d story/{{story_key}}</output>
         <action>HALT — do not auto-resolve conflicts. Wait for user to resolve and continue.</action>
       </check>
     </check>
 
     <check if="user declines merge">
       <output>Merge deferred. When ready:
-  git merge story/{{story_id}}
-  git worktree remove .worktrees/story-{{story_id}}
-  git branch -d story/{{story_id}}</output>
+  git merge story/{{story_key}}
+  git worktree remove .worktrees/story-{{story_key}}
+  git branch -d story/{{story_key}}</output>
     </check>
   </step>
 

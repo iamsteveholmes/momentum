@@ -76,37 +76,26 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <output>Momentum Implementation Guide injected into {{story_file}}</output>
   </step>
 
-  <step n="5" goal="Write story spec to _bmad-output/stories/">
-    <action>Parse {{story_key}} to derive {{story_id}}: extract the leading numeric components separated by hyphens (up to and not including the first non-numeric component), and join them with dots. Examples: `1-2-repository-structure` → `1.2`; `4-4-create-story` → `4.4`; `4-1-1-subfeature` → `4.1.1`. The story_id consists only of the numeric prefix — the title portion after the last numeric component is discarded. If the story key is already in dot-notation, use it directly.</action>
+  <step n="5" goal="Write momentum_metadata to sprint-status.yaml">
     <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
-      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes → structured {{depends_on}} YAML block list with quoted strings (e.g., `\n  - "3.1"\n  - "2.4"`); if none found, use []
-      - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum-dev/", "_bmad-output/stories/"]); if none found, use []
+      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. For each, find the matching story key in sprint-status.yaml's `development_status` section (e.g., Story 3.1 → `3-1-...`). Store as {{depends_on}} list of story keys. If none found, use [].
+      - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum-dev/", ".claude/settings.json"]); if none found, use []
     </action>
-    <action>Store {{depends_on_yaml}} = the depends_on list in YAML block form, each item on its own line with two-space indent and quoted: `  - "3.1"`. If empty, use `  []`. Store {{touches_yaml}} similarly.</action>
-    <action>Ensure `_bmad-output/stories/` directory exists. If the directory does not exist, create it now (first-time setup — create an empty directory).</action>
-    <action>Write the story spec file to `_bmad-output/stories/{{story_id}}.md` with this content:
-
+    <action>Read `{{implementation_artifacts}}/sprint-status.yaml`</action>
+    <action>If no `momentum_metadata` section exists, create it as an empty map after the `development_status` section, preceded by a comment: `# Momentum parallel execution metadata — invisible to BMAD skills`</action>
+    <action>Add an entry under `momentum_metadata` keyed by {{story_key}}:
+```yaml
+  {{story_key}}:
+    depends_on:
+      {{depends_on_yaml}}
+    touches:
+      {{touches_yaml}}
+    story_file: "{{story_file}}"
 ```
----
-story_id: "{{story_id}}"
-status: ready
-depends_on:
-{{depends_on_yaml}}
-touches:
-{{touches_yaml}}
-story_file: "{{story_file}}"
----
-
-# Story {{story_id}} Spec
-
-Full story: {{story_file}}
-
-> This file is the sprint tracking record for Story {{story_id}}. It is read and written by
-> `momentum-dev` for story selection, status management, and worktree lifecycle.
-> Do not edit `status` manually — use `momentum-dev`.
-```
+    If depends_on is empty, write `depends_on: []`. If touches is empty, write `touches: []`.
     </action>
-    <output>Story spec written to _bmad-output/stories/{{story_id}}.md (status: ready, depends_on: {{depends_on_yaml}}, touches: {{touches_yaml}})</output>
+    <action>Save sprint-status.yaml, preserving ALL existing content, comments, and structure</action>
+    <output>Sprint metadata written to sprint-status.yaml (momentum_metadata section: depends_on: {{depends_on_yaml}}, touches: {{touches_yaml}})</output>
   </step>
 
   <step n="6" goal="Run AVFL checkpoint on the story file">
@@ -162,7 +151,7 @@ You may proceed to development with known issues, or halt to address them first.
     <output>Story {{story_key}} is yours to review.
 
 Produced: {{story_file}}
-Sprint spec: _bmad-output/stories/{{story_id}}.md (status: ready)
+Sprint tracking: sprint-status.yaml (development_status: ready-for-dev, momentum_metadata: written)
 Change types: {{change_types_summary}}
 AVFL checkpoint: {{avfl_result}}
 {{avfl_findings}}

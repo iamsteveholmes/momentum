@@ -1100,12 +1100,12 @@ So that Impetus can delegate each phase to a focused, context-rich agent.
 **When** Impetus delegates story creation
 **Then** `momentum-create-story/SKILL.md` exists and runs in the main context (not forked)
 **And** it produces a story file that contains: story title, user story statement, Gherkin ACs, architecture context relevant to the story, derives_from pointers to the spec documents it was created from
-**And** the story file is written to `_bmad-output/stories/{story_id}.md` and Impetus tells the developer the path before writing (completion signal per UX-DR5)
-**And** the story file frontmatter also includes: `story_id` (dot-notation matching epics), `status: ready`, `depends_on` (structured list of story_ids extracted from the epics dependency notes for this story), `touches` (paths inferred from the story's implementation scope — skill dirs, shared config files)
+**And** sprint metadata is written to `sprint-status.yaml` in the `momentum_metadata` section (keyed by story_key, with `depends_on`, `touches`, `story_file`) and Impetus tells the developer the path before writing (completion signal per UX-DR5)
+**And** `depends_on` is a list of story_keys extracted from the epics dependency notes for this story, `touches` is a list of paths inferred from the story's implementation scope (skill dirs, shared config files)
 
 **Given** the dev-story skill is installed
 **When** invoked without an explicit story path
-**Then** `momentum-dev` reads all story spec files from `_bmad-output/stories/`, selects the highest-priority story where `status == ready` and all `depends_on` story_ids have `status == complete`
+**Then** `momentum-dev` reads `sprint-status.yaml`, selects the highest-priority story where `development_status == "ready-for-dev"` and all `depends_on` story_keys have `development_status == "done"`
 **And** priority order is: epic sprint assignment (Day 1 first, then Sprint 1, Sprint 2, Growth), then story order within that epic
 **And** if no story qualifies (all remaining are blocked or in_progress), `momentum-dev` surfaces "All remaining stories are blocked on: [list]" and halts
 
@@ -1992,4 +1992,4 @@ So that routing decisions are grounded in measured evidence and documented with 
 
 ## P{n} — Process Sprint-{n} (placeholder)
 
-Each sprint has a corresponding process epic `P{n} — Process Sprint-{n}`. Process stories capture dev-environment and practice improvement work (skills, rules, hooks, tooling) that doesn't belong in product epics. Story IDs follow the format `p{sprint}.{n}` (e.g., `p1.1`, `p2.3`). Process stories are tracked in `_bmad-output/stories/` — this epic is a convention anchor, not a story registry.
+Each sprint has a corresponding process epic `P{n} — Process Sprint-{n}`. Process stories capture dev-environment and practice improvement work (skills, rules, hooks, tooling) that doesn't belong in product epics. Process story keys follow the format `p{sprint}-{n}-{title}` (e.g., `p1-1-momentum-plan-audit-skill`). Process stories are tracked in `sprint-status.yaml` (`development_status` + `momentum_metadata`) — this epic is a convention anchor, not a story registry.
