@@ -1,6 +1,6 @@
 ---
 story_id: p1.1
-status: ready
+status: done
 type: process
 epic: P1 — Process Sprint-1
 title: Remove Git MCP Server Dependency
