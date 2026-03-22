@@ -124,6 +124,7 @@ development_status:
 
   # Process Stories — Sprint 1
   p1-1-remove-git-mcp-server-dependency: ready-for-dev
+  p1-3-findings-ledger-architecture-revision: ready-for-dev
 
 # Momentum parallel execution metadata — invisible to BMAD skills
 # Each entry adds dependency and scope tracking for parallel story execution.
@@ -186,3 +187,16 @@ momentum_metadata:
       - "_bmad-output/implementation-artifacts/1-1-repository-structure-established.md"
       - "_bmad-output/implementation-artifacts/1-3-first-momentum-invocation-completes-setup.md"
     story_file: "_bmad-output/implementation-artifacts/p1-1-remove-git-mcp-server-dependency.md"
+  p1-3-findings-ledger-architecture-revision:
+    depends_on:
+      - p1.1
+    touches:
+      - ".mcp.json"
+      - ".claude/settings.local.json"
+      - "skills/momentum/references/mcp-config.json"
+      - "skills/momentum/references/momentum-versions.json"
+      - "skills/momentum/workflow.md"
+      - "mcp/findings-server/README.md"
+      - "_bmad-output/planning-artifacts/architecture.md"
+      - "_bmad-output/planning-artifacts/epics.md"
+    story_file: "_bmad-output/implementation-artifacts/p1-3-findings-ledger-architecture-revision.md"
