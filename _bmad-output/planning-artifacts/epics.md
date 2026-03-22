@@ -25,8 +25,10 @@ derives_from:
   - id: UX-MOMENTUM-001
     path: _bmad-output/planning-artifacts/ux-design-specification.md
     relationship: derives_from
-lastEdited: '2026-03-20'
+lastEdited: '2026-03-22'
 editHistory:
+  - date: '2026-03-22'
+    changes: 'Added mise as standard tool/runtime manager in Additional Requirements (From PRD — Tool/Runtime Management section); updated Story 7.2 project inspection file list to include mise.toml alongside package.json, build.gradle, pyproject.toml.'
   - date: '2026-03-20'
     changes: 'Synced FR numbering with PRD edits: FR2 updated to solo first-install path; FR2b/FR2c added for Nth-run routing; FR3 decomposed to FR3a/FR3b/FR3c; FR5 updated to team member joining path; NFR1 corrected to ≤150 characters; NFR4 updated to remove plugin reference; Epic 1 FRs covered list updated; FR Coverage Map updated with new FR entries.'
   - date: '2026-03-20'
@@ -160,6 +162,9 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 - Session ledger stored at `.claude/momentum/ledger.json`; auto-generated `.claude/momentum/ledger-view.md` for human readability
 - Findings ledger stored at `.claude/momentum/findings-ledger.json` with structured schema: id, story_ref, phase, severity, pattern_tags, description, evidence, provenance_status, upstream_fix_applied, upstream_fix_level, upstream_fix_ref, timestamp
 - Only the flywheel workflow writes to findings ledger; Impetus reads at retrospective and upstream trace
+
+**From PRD — Tool/Runtime Management**
+- mise is the standard polyglot tool/runtime manager for developer environments using Momentum. When Momentum skills, workflows, or rules reference installing runtimes (node, python, ruby, go, java) or CLI tools, they must prefer `mise use` over legacy single-purpose managers (nvm, pyenv, rbenv, asdf, volta, fnm) or global package installs (`npm install -g`, `pip install --user`). Enforced by global Claude Code rules (`~/.claude/rules/mise.md`) and the anti-patterns rule. Momentum does not bundle or install mise itself — it is a prerequisite of the developer environment.
 
 **From Architecture — Security & File Protection**
 - PreToolUse hook must block writes to: `tests/acceptance/` and `**/*.feature`, `_bmad-output/planning-artifacts/*.md`, `.claude/rules/`, `.claude/momentum/findings-ledger.json`
@@ -1613,7 +1618,7 @@ So that when a tool is undefined I come out of the conversation with a working c
 
 **Given** the developer cannot answer a configuration question (e.g. "I don't know which test framework is configured")
 **When** Impetus receives "I don't know"
-**Then** Impetus offers to inspect the project: "Let me check your project files for clues" — reads `package.json`, `build.gradle`, `pyproject.toml`, or equivalent
+**Then** Impetus offers to inspect the project: "Let me check your project files for clues" — reads `mise.toml`, `package.json`, `build.gradle`, `pyproject.toml`, or equivalent
 **And** when inferring the `atdd-tool` binding, Impetus looks for ATDD-specific frameworks (Cucumber, Behave, Gherkin processors, JBehave, SpecFlow) — not general test runners; if only a general test runner is found, Impetus says "I found [test-runner], but `atdd-tool` needs a Gherkin/ATDD framework — do you have one installed?"
 **And** proposes a candidate for the correct protocol type: "Looks like you're using [framework] — want me to configure `atdd-tool` to use it?"
 **And** still asks for confirmation before writing — inferred entries are never silently committed

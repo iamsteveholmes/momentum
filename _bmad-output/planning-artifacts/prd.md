@@ -16,8 +16,10 @@ stepsCompleted:
   - step-e-01-discovery
   - step-e-02-review
   - step-e-03-edit
-lastEdited: '2026-03-20'
+lastEdited: '2026-03-22'
 editHistory:
+  - date: '2026-03-22'
+    changes: 'Added mise as standard tool/runtime manager in Implementation Considerations — Momentum skills and workflows must prefer mise over legacy version managers (nvm, pyenv, rbenv, asdf, volta, fnm) when referencing tool installation.'
   - date: '2026-03-20'
     changes: 'Removed plugin deployment model; replaced with skills-only architecture (npx skills add momentum/momentum -a claude-code + Impetus interactive setup). Updated FR2, NFR4, NFR7, NFR9, NFR10, NFR11, Journey 1 narrative, deployment table, repository structure, installation architecture, implementation considerations.'
   - date: '2026-03-20'
@@ -502,6 +504,7 @@ momentum/
 - **Version management:** `momentum-versions.json` bundled in the package — machine-readable per-version action list (what files to write, where, for each version). `.claude/momentum/installed.json` written by Impetus at project level — records what version the project is currently configured for. Always bump version on changes.
 - **`installed.json` commit policy:** `.claude/momentum/installed.json` must be committed to the project repository. It records the Momentum version the project is configured for — without it, team members joining via `git clone` cannot receive correct incremental upgrade instructions and will be prompted for a full install instead. `.gitignore` must NOT exclude `.claude/momentum/installed.json`; it is intentionally tracked, unlike most `.claude/` contents which may be gitignored.
 - **Testing strategy:** promptfoo for skill output quality, `run_eval.py` for trigger precision, local `npx skills` development iteration.
+- **Tool/runtime management:** mise is the standard polyglot tool manager for developer environments using Momentum. When Momentum skills, workflows, or rules reference installing runtimes (node, python, ruby, go, java) or CLI tools, they must prefer `mise use` over legacy single-purpose managers (nvm, pyenv, rbenv, asdf, volta, fnm) or global package installs (`npm install -g`, `pip install --user`). This is enforced by global Claude Code rules (`~/.claude/rules/mise.md`) and the anti-patterns rule. Momentum does not bundle or install mise itself — it is a prerequisite of the developer environment.
 
 ## Functional Requirements
 
