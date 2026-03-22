@@ -1,6 +1,6 @@
 # Story 1.1: Repository Structure Established
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -25,34 +25,34 @@ so that all components can be developed, tested, and packaged from the right loc
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `version.md` at repo root (AC: 1)
-  - [ ] 1.1: Write `version.md` with initial version string `1.0.0` and brief description of its role as single version source
-  - [ ] 1.2: Verify no `plugin/` directory exists (it doesn't; no action needed — just confirm)
+- [x] Task 1: Create `version.md` at repo root (AC: 1)
+  - [x] 1.1: Write `version.md` with initial version string `1.0.0` and brief description of its role as single version source
+  - [x] 1.2: Verify no `plugin/` directory exists (it doesn't; no action needed — just confirm)
 
-- [ ] Task 2: Scaffold `skills/momentum/` — the Impetus entry-point skill directory (AC: 1)
-  - [ ] 2.1: Create `skills/momentum/SKILL.md` as a minimal valid stub (full Impetus implementation is Story 2.1)
-  - [ ] 2.2: Create `skills/momentum/references/` directory
+- [x] Task 2: Scaffold `skills/momentum/` — the Impetus entry-point skill directory (AC: 1)
+  - [x] 2.1: Create `skills/momentum/SKILL.md` as a minimal valid stub (full Impetus implementation is Story 2.1)
+  - [x] 2.2: Create `skills/momentum/references/` directory
 
-- [ ] Task 3: Create `skills/momentum/references/momentum-versions.json` (AC: 1)
-  - [ ] 3.1: Write JSON with `current_version: "1.0.0"` and `versions` object containing a `"1.0.0"` entry with non-empty `actions` array
-  - [ ] 3.2: Each action must have `action`, `source`, `target` string fields
-  - [ ] 3.3: Validate JSON parses without error
+- [x] Task 3: Create `skills/momentum/references/momentum-versions.json` (AC: 1)
+  - [x] 3.1: Write JSON with `current_version: "1.0.0"` and `versions` object containing a `"1.0.0"` entry with non-empty `actions` array
+  - [x] 3.2: Each action must have `action`, `source`, `target` string fields
+  - [x] 3.3: Validate JSON parses without error
 
-- [ ] Task 4: Create `skills/momentum/references/hooks-config.json` (AC: 1)
-  - [ ] 4.1: Write JSON with at least one hook entry (use the always-on hook pattern from architecture: PostToolUse lint, PreToolUse file protection, Stop gate)
-  - [ ] 4.2: Validate JSON parses without error
+- [x] Task 4: Create `skills/momentum/references/hooks-config.json` (AC: 1)
+  - [x] 4.1: Write JSON with at least one hook entry (use the always-on hook pattern from architecture: PostToolUse lint, PreToolUse file protection, Stop gate)
+  - [x] 4.2: Validate JSON parses without error
 
-- [ ] Task 5: Create `skills/momentum/references/mcp-config.json` (AC: 1)
-  - [ ] 5.1: Write JSON with MVP MCP servers: `@modelcontextprotocol/server-git` and a Momentum findings MCP placeholder
-  - [ ] 5.2: Validate JSON parses without error
+- [x] Task 5: Create `skills/momentum/references/mcp-config.json` (AC: 1)
+  - [x] 5.1: Write JSON with MVP MCP servers: `@modelcontextprotocol/server-git` and a Momentum findings MCP placeholder
+  - [x] 5.2: Validate JSON parses without error
 
-- [ ] Task 6: Scaffold remaining required reference stubs under `skills/momentum/references/` (AC: 1)
-  - [ ] 6.1: Create `skills/momentum/references/rules/` directory (bundled advisory rules — written by Impetus on first `/momentum` run; content comes from Epic 3 stories, but the directory must exist now)
-  - [ ] 6.2: Create `mcp/findings-server/` directory with a placeholder README so git tracks it
+- [x] Task 6: Scaffold remaining required reference stubs under `skills/momentum/references/` (AC: 1)
+  - [x] 6.1: Create `skills/momentum/references/rules/` directory (bundled advisory rules — written by Impetus on first `/momentum` run; content comes from Epic 3 stories, but the directory must exist now)
+  - [x] 6.2: Create `mcp/findings-server/` directory with a placeholder README so git tracks it
 
-- [ ] Task 7: Verify naming convention compliance for existing skills (AC: 2)
-  - [ ] 7.1: Confirm `momentum-create-story/`, `momentum-dev/`, `momentum-plan-audit/` all follow `momentum-[concept]/SKILL.md` pattern ✓ (already correct — no action needed beyond confirmation)
-  - [ ] 7.2: Confirm each existing skill's overflow content is in `references/` subdir ✓
+- [x] Task 7: Verify naming convention compliance for existing skills (AC: 2)
+  - [x] 7.1: Confirm `momentum-create-story/`, `momentum-dev/`, `momentum-plan-audit/` all follow `momentum-[concept]/SKILL.md` pattern ✓ (already correct — no action needed beyond confirmation)
+  - [x] 7.2: Confirm each existing skill's overflow content is in `references/` subdir ✓
 
 ## Dev Notes
 
@@ -379,6 +379,26 @@ claude-sonnet-4-6[1m]
 
 ### Debug Log References
 
+None — clean implementation, no issues encountered.
+
 ### Completion Notes List
 
+- All 7 tasks complete. Structure matches architecture spec exactly.
+- Task 2 (SKILL.md stub): EDD cycle ran — 3 behavioral evals written and all 3 passed. Description is 109 chars (≤150 ✓). `model: claude-opus-4-6`, `effort: normal` present ✓.
+- Tasks 1, 3–6: config-structure — all JSON files validated with python3 json.tool, exit 0 ✓.
+- Task 7: naming convention verification — all three existing skills follow `momentum-[concept]/SKILL.md` with `references/` subdirs ✓.
+- No `plugin/` directory exists ✓.
+- AVFL checkpoint (2026-03-21): CLEAN — score 99/100, 1 iteration. 4 findings fixed (1 high, 1 medium, 2 low). One deferred low finding: `effort: normal` — story Dev Notes specified this value but all other Momentum skills use `effort: medium`; surface to author to verify `normal` is a valid Agent Skills effort value.
+
 ### File List
+
+- `version.md` (created)
+- `skills/momentum/SKILL.md` (created)
+- `skills/momentum/references/momentum-versions.json` (created)
+- `skills/momentum/references/hooks-config.json` (created)
+- `skills/momentum/references/mcp-config.json` (created)
+- `skills/momentum/references/rules/.gitkeep` (created)
+- `skills/momentum/evals/eval-stub-accepts-momentum-invocation.md` (created)
+- `skills/momentum/evals/eval-stub-frontmatter-valid.md` (created)
+- `skills/momentum/evals/eval-stub-does-not-implement-impetus.md` (created)
+- `mcp/findings-server/README.md` (created)
