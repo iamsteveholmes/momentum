@@ -199,7 +199,7 @@ These must require zero deliberate effort — they should simply happen:
 
 The following patterns are **authoring guidelines** for skill, agent, and workflow writers. They are grounded in the [spec fatigue research](../../docs/research/spec-fatigue-research-2026-03-21.md) and can be applied immediately without infrastructure changes. Pattern 3 from the research (Multi-Session Dashboard) is parked as a future Impetus product feature requiring UI and orchestration infrastructure; the underlying philosophy is captured in the "Attention as a Finite Resource" principle.
 
-### Attention-Aware Checkpoints
+### Attention-Aware Checkpoints (UX-DR19)
 
 Every workflow checkpoint that pauses for human review should:
 
@@ -209,7 +209,7 @@ Every workflow checkpoint that pauses for human review should:
 
 The goal is not to prevent review but to make review *sustainable*. A reviewer who skims a summary and asks to drill into one section has exercised more genuine scrutiny than one who scrolled past a wall of text and said "looks good."
 
-### Expertise-Adaptive Orientation
+### Expertise-Adaptive Orientation (UX-DR20)
 
 Agents and workflows should not deliver the same orientation every time:
 
@@ -219,7 +219,7 @@ Agents and workflows should not deliver the same orientation every time:
 
 The expertise reversal effect (Kalyuga et al., 2003) establishes that instructional techniques effective for novices become actively harmful for experts — experts must reconcile external guidance with their own internal models, increasing cognitive load. Even crude detection is effective: "Full walkthrough or just the decision points?" at workflow start.
 
-### Motivated Disclosure
+### Motivated Disclosure (UX-DR21)
 
 Every drill-down, detail expansion, or "see more" must be framed with **why it matters**, not just what it contains:
 
@@ -228,7 +228,7 @@ Every drill-down, detail expansion, or "see more" must be framed with **why it m
 
 This transforms review from passive chore into motivated retrieval. The coherence cascade principle (Thomas, 2026): progressive disclosure only works when each layer is framed with goal-aligned context that explains why the hidden information is valuable. This is the highest-ROI pattern — zero infrastructure, immediate improvement to every human interaction point.
 
-### Confidence-Directed Review
+### Confidence-Directed Review (UX-DR22)
 
 When generating or presenting specifications, flag sections by confidence level to direct review effort:
 

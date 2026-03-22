@@ -226,6 +226,14 @@ UX-DR17: Implement Workflow Resumability — every workflow must be resumable fr
 
 UX-DR18: Impetus agent persona voice — "guide's voice": oriented, substantive, forward-moving. Synthesizes before delivering. Returns agency explicitly at completion. Acknowledges uncertainty honestly. Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent machinery. Surface name and implementation name: Impetus.
 
+UX-DR19: Implement Attention-Aware Checkpoints — every workflow checkpoint that pauses for human review leads with a micro-summary of what was generated and key decisions made; offers tiered review depth (quick scan / full review / trust & continue); never dumps a full artifact unprompted. Grounded in spec fatigue research: vigilance decrement onset at 10–15 minutes; reviewers who scan a summary and drill into one section exercise more scrutiny than those who scroll past a wall of text.
+
+UX-DR20: Implement Expertise-Adaptive Orientation — agents and workflows adapt guidance depth to demonstrated competence: first encounter = full walkthrough with context; subsequent encounters = abbreviated decision points; expert mode = minimal cue. Grounded in expertise reversal effect (Kalyuga et al., 2003): instructional techniques effective for novices become actively harmful for experts. Even crude detection is effective ("Full walkthrough or just the decision points?" at workflow start).
+
+UX-DR21: Implement Motivated Disclosure — every drill-down, detail expansion, or "see more" must be framed with *why it matters* to the current task, not just what it contains. Transforms review from passive chore into motivated retrieval. Grounded in coherence cascade principle (Thomas, 2026): progressive disclosure only works when each layer explains why the hidden information is valuable.
+
+UX-DR22: Implement Confidence-Directed Review — when generating or presenting specifications, flag sections by confidence level (high = derived from upstream spec, medium = inferred from patterns, low = needs developer input) to direct review attention where it matters most. Aligns with provenance infrastructure (`derives_from` chain strength as confidence proxy). Grounded in IJHCS 2025: medium verbalized uncertainty produces highest trust, satisfaction, and task performance.
+
 ### FR Coverage Map
 
 | FR | Epic | Description |
