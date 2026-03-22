@@ -198,6 +198,10 @@ The developer never needs to re-explain what they were doing. Impetus has all co
 
 Per architecture Decision 1b: "Auto-generated `.claude/momentum/journal-view.md` for human readability." After every journal.json write, regenerate this file. It's a read-only markdown view — developers can inspect it but Impetus only reads/writes the JSON.
 
+### Spec Fatigue Patterns
+
+Session orientation is a brief, single-exchange interaction — not a review checkpoint where spec fatigue patterns (UX-DR19–22) primarily apply. The ledger display (AC2) and thread triage (AC7) already implement attention-management principles by design: the ledger is a compact summary, and triage surfaces only actionable threads. The full spec fatigue patterns (tiered review depth, expertise-adaptive orientation, motivated disclosure, confidence-directed review) are exercised downstream in Stories 2.4, 2.5, and Epic 4 where developers review substantive generated content.
+
 ### References
 
 - [Source: epics.md#Story 2.2 — All Acceptance Criteria]

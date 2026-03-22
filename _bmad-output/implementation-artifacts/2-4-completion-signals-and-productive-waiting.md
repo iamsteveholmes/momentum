@@ -43,6 +43,18 @@ When the review runs,
 Then Impetus provides a human-readable summary of what was built or produced during the implementation phase
 And this summary is delivered at the moment review is dispatched — the developer reads it while review runs, not after
 
+**AC6 — Attention-aware checkpoint on findings presentation:**
+Given a subagent returns findings or a workflow step completes and presents results for review,
+When Impetus synthesizes the result (UX-DR19),
+Then the synthesis leads with a micro-summary of key decisions and outcomes
+And offers tiered review depth: quick scan (summary only), full review (expand all findings), or trust & continue
+And never dumps the full artifact unprompted
+
+**AC7 — Confidence-directed review on findings:**
+Given a review finding references a specification section,
+When Impetus presents the finding (UX-DR22),
+Then Impetus indicates the confidence level of the referenced content (high = derived from upstream spec, medium = inferred, low = needs developer input)
+
 ## Tasks / Subtasks
 
 - [ ] Task 1: Define the Completion Signal template in `skills/momentum/references/` (AC: 1)
@@ -74,6 +86,8 @@ And this summary is delivered at the moment review is dispatched — the develop
   - [ ] 3.4: Define confidence-directed synthesis: high → synthesize directly; medium → flag explicitly ("inferred — verify"); low → surface as question to user
   - [ ] 3.5: Define flywheel integration: if `momentum-upstream-fix` skill exists, offer flywheel trace for critical findings; if not installed, log finding with note "flywheel processing deferred — Epic 6"
   - [ ] 3.6: Enforce hub-and-spoke: never mention subagent name, tool name, or "the code reviewer said" — always "the review found" or "I found"
+  - [ ] 3.7: Define tiered review depth in synthesis instructions (AC: 6) — after micro-summary, offer: quick scan (summary only) / full review (expand all findings) / trust & continue. Never present full finding list as default.
+  - [ ] 3.8: Define confidence-level indicators on findings (AC: 7) — each finding references content with a confidence tag: high (derived from upstream spec), medium (inferred from patterns), low (needs developer input). Use natural language: "This comes directly from the architecture" vs. "Inferred — worth verifying"
 
 - [ ] Task 4: Define implementation summary at review dispatch (AC: 5)
   - [ ] 4.1: Add review-dispatch summary pattern to `skills/momentum/references/completion-signals.md`
@@ -85,12 +99,14 @@ And this summary is delivered at the moment review is dispatched — the develop
   - [ ] 5.2: Add workflow step for "review dispatch" that provides implementation summary then dispatches review
   - [ ] 5.3: Ensure the progress indicator from Story 2.3 transitions correctly at completion: `✓ Built: [all steps]` + `→ Now: review` or final completion with no `◦ Next:` line
 
-- [ ] Task 6: Create behavioral evals (AC: 1, 2, 3, 4, 5)
+- [ ] Task 6: Create behavioral evals (AC: 1, 2, 3, 4, 5, 6, 7)
   - [ ] 6.1: `eval-completion-signal-format.md` — verify ownership return, file list, "what's next?" present
   - [ ] 6.2: `eval-productive-waiting.md` — verify dialogue maintained after background dispatch, no dead air
   - [ ] 6.3: `eval-subagent-synthesis.md` — verify raw JSON never shown, severity indicators used, hub-and-spoke contract maintained
   - [ ] 6.4: `eval-review-dispatch-summary.md` — verify implementation summary delivered at dispatch time
   - [ ] 6.5: `eval-flywheel-offer.md` — verify critical findings trigger flywheel offer (or deferred note if Epic 6 unavailable)
+  - [ ] 6.6: `eval-tiered-review-depth.md` — verify findings presentation offers tiered depth (quick scan / full review / trust & continue), not full dump (AC: 6)
+  - [ ] 6.7: `eval-confidence-directed-findings.md` — verify confidence levels indicated on findings (high/medium/low); natural language, not raw labels (AC: 7)
 
 ## Dev Notes
 
@@ -133,6 +149,8 @@ The architecture already confirms: "Background execution (confirmed: Claude Code
 - `skills/momentum/evals/eval-subagent-synthesis.md`
 - `skills/momentum/evals/eval-review-dispatch-summary.md`
 - `skills/momentum/evals/eval-flywheel-offer.md`
+- `skills/momentum/evals/eval-tiered-review-depth.md`
+- `skills/momentum/evals/eval-confidence-directed-findings.md`
 
 ### Previous Story Intelligence (Story 2.3)
 
@@ -160,7 +178,9 @@ Story 2.3 established:
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Completion Signal Component]
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Productive Waiting / Long-Running Tasks]
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Subagent Return Pattern]
-- [Source: _bmad-output/planning-artifacts/prd.md#FR7, FR8]
+- [Source: _bmad-output/planning-artifacts/prd.md#FR7, FR8, NFR18]
+- [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Attention-Aware Checkpoints (UX-DR19)]
+- [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Confidence-Directed Review (UX-DR22)]
 - [Source: _bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md]
 
 ## Dev Agent Record

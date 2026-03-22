@@ -223,6 +223,10 @@ skills/momentum/
     └── model-routing-guide.md  ← NEW: stub (Story 3.5 fills out)
 ```
 
+### Spec Fatigue Patterns
+
+Spec fatigue mitigation patterns (UX-DR19–22) apply to all Impetus responses but are primarily exercised in Stories 2.4 (attention-aware checkpoints, confidence-directed review), 2.5 (expertise-adaptive orientation, motivated disclosure), and Epic 4 (code review findings presentation). Story 2.1 establishes the voice foundation — Impetus's narrative, synthesis-first communication style is the vehicle through which these patterns are delivered downstream. No additional ACs or tasks required here.
+
 ### References
 
 - [Source: epics.md#Story 2.1 — Acceptance Criteria]
