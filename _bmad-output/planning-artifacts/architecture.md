@@ -152,7 +152,7 @@ The defining question for each component: *does this need main-context persona p
 | Always-on hooks | `.claude/settings.json` | Template bundled in `skills/momentum/references/hooks-config.json`; Impetus writes on first `/momentum` run |
 | Global rules | `~/.claude/rules/` | Bundled in `skills/momentum/references/rules/`; Impetus writes on first `/momentum` run |
 | Project rules | `.claude/rules/` | Bundled in `skills/momentum/references/rules/`; Impetus writes on first `/momentum` run |
-| MCP config | `.mcp.json` | Template bundled in `skills/momentum/references/mcp-config.json`; Impetus writes on first `/momentum` run |
+| MCP config | `.mcp.json` | Deferred to Epic 6 — no MCP servers configured at 1.0.0. When available, Impetus writes on `/momentum` run. |
 
 ### Repository Structure (preview — full structure in Project Structure section)
 
@@ -220,12 +220,15 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Auto-generated `.claude/momentum/ledger-view.md` for human readability
 - Tracks: active story, current phase, last completed action, open threads
 
-**Decision 1c — Findings Ledger: JSON**
-- Location: `.claude/momentum/findings-ledger.json`
-- Structured array of findings with fields: `id` (unique finding identifier), `story_ref`, `phase`, `severity`, `pattern_tags`, `description`, `evidence`, `provenance_status`, `upstream_fix_applied`, `upstream_fix_level`, `upstream_fix_ref` (reference to the fix artifact), `timestamp` (ISO 8601 when finding was recorded)
+**Decision 1c — Findings Ledger: JSONL (Global)**
+- Location: `~/.claude/momentum/findings-ledger.jsonl` (global, not per-project)
+- Format: JSONL — one JSON object per line, append-only. No wrapping array.
+- Structured findings with fields: `id` (globally unique, format `F-{unix_ms}-{random_4hex}`), `project` (string, project identifier), `story_ref`, `phase`, `severity`, `pattern_tags`, `description`, `evidence`, `provenance_status`, `upstream_fix_applied`, `upstream_fix_level`, `upstream_fix_ref` (reference to the fix artifact), `timestamp` (ISO 8601 when finding was recorded)
 - `upstream_fix_level` — null until a fix is applied; then one of: `spec-generating-workflow | specification | rules-or-CLAUDE.md | tooling | one-off-code-fix`
-- Queryable for cross-story pattern detection (same pattern across S-04, S-07, S-11)
+- Queryable for cross-project and cross-story pattern detection
+- JSONL enables concurrent append from multiple Claude Code sessions without file locking (POSIX atomic append for lines under pipe buffer size)
 - Only flywheel workflow writes findings; read by Impetus at retrospective and upstream trace
+- Rationale: Global scope enables cross-project pattern detection — the same anti-pattern appearing in projects A and B becomes visible. Per-project scope would miss these systemic patterns.
 
 **Decision 1d — Installed State: JSON**
 - Location: `.claude/momentum/installed.json`
@@ -244,7 +247,7 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 | `tests/acceptance/` and `**/*.feature` | Acceptance tests are immutable — agents never modify to make code pass |
 | `_bmad-output/planning-artifacts/*.md` | Spec authority — coding agents read, never write |
 | `.claude/rules/` | Global enforcement rules — protected from coding agent modification |
-| `.claude/momentum/findings-ledger.json` | Ledger integrity — only flywheel workflow writes |
+| `~/.claude/momentum/findings-ledger.jsonl` | Ledger integrity — only flywheel workflow writes. Note: global path is outside project PreToolUse scope; protection enforced by authority rule. |
 
 **Decision 2b — Provenance Integrity Rules (Tier 3, promotable to Tier 1)**
 - Agents may not remove or modify `derives_from` frontmatter in spec files
@@ -316,7 +319,7 @@ Confidence weighting: low-confidence results surface as questions to the user ra
 | Server | Phase | Purpose |
 |---|---|---|
 | ~~`@modelcontextprotocol/server-git`~~ | ~~MVP~~ | ~~File history, blame, diff for provenance tracking~~ — **Removed (p1.1):** Zero value over git CLI; provenance design (Decision 1a) already uses `git hash-object` via Bash with "zero extra tooling." Consumed a tool-ceiling slot and added an npx dependency for no functional benefit. |
-| Momentum findings MCP (lightweight, custom) | MVP | Read/write findings-ledger.json as a structured resource |
+| Momentum findings MCP (lightweight, custom) | Deferred (Epic 6) | Optional query/filter interface over `~/.claude/momentum/findings-ledger.jsonl`. Not a concurrency solution — MCP is per-session (each Claude Code instance launches its own), so multiple instances cannot serialize writes. Primary write path is direct JSONL append by the flywheel. MCP provides structured query (filter by project, pattern_tag, severity, date range) for pattern detection. |
 | `@rlabs-inc/gemini-mcp` | Growth | Multi-model deep research |
 | GPT deep research MCP | Growth | Cross-model verification |
 
@@ -401,22 +404,16 @@ Two files govern Momentum's install and upgrade lifecycle:
         { "action": "write_file", "source": "rules/model-routing.md",
           "target": "~/.claude/rules/model-routing.md" },
         { "action": "write_config", "source": "hooks-config.json",
-          "target": ".claude/settings.json", "requires_restart": true },
-        { "action": "write_config", "source": "mcp-config.json",
-          "target": ".mcp.json", "requires_restart": false }
+          "target": ".claude/settings.json", "requires_restart": true }
       ]
     },
     "1.1.0": {
-      "description": "Revised authority hierarchy; Findings MCP v2",
+      "description": "Revised authority hierarchy",
       "from": "1.0.0",
       "actions": [
         { "action": "update_file", "source": "rules/authority-hierarchy.md",
           "target": "~/.claude/rules/authority-hierarchy.md",
-          "description": "Revised authority precedence rules" },
-        { "action": "update_config", "source": "mcp-config.json",
-          "target": ".mcp.json",
-          "description": "Findings MCP updated to v2",
-          "requires_restart": false }
+          "description": "Revised authority precedence rules" }
       ]
     }
   }
@@ -431,8 +428,7 @@ Two files govern Momentum's install and upgrade lifecycle:
   "installed_at": "2026-03-18T00:00:00Z",
   "components": {
     "rules-global":  { "version": "1.0.0", "hash": "<git-blob-sha>" },
-    "hooks":         { "version": "1.0.0" },
-    "mcp":           { "version": "1.0.0" }
+    "hooks":         { "version": "1.0.0" }
   }
 }
 ```
@@ -604,10 +600,11 @@ Silent hooks build no trust. Verbose hooks create noise. One line, always. (Exce
 ```
 Agents NEVER address the user directly. All output goes through Impetus.
 
-**Findings schema (findings-ledger.json entries):**
+**Findings schema (findings-ledger.jsonl entries — one per line):**
 ```json
 {
-  "id": "F-[story]-[seq]",        // e.g. F-S04-003
+  "id": "F-1711929600000-a3f2",   // F-{unix_ms}-{random_4hex}
+  "project": "momentum",          // project identifier
   "story_ref": "S-04",
   "phase": "code-review",         // spec | atdd | implement | code-review | flywheel
   "severity": "critical",         // critical | high | medium | low
@@ -725,7 +722,7 @@ momentum/                                    ← Root
 │   │       │   ├── anti-patterns.md
 │   │       │   └── model-routing.md
 │   │       ├── hooks-config.json            ← Hook config template (written to .claude/settings.json)
-│   │       └── mcp-config.json             ← MCP config template (written to .mcp.json)
+│   │       └── mcp-config.json             ← MCP config template (empty — Epic 6 populates)
 │   ├── momentum-vfl/
 │   │   ├── SKILL.md                         ← Validate-fix-loop orchestrator (flat skill)
 │   │   └── references/
@@ -788,6 +785,8 @@ momentum/                                    ← Root
 │   ├── authority-hierarchy.md               ← Written by Impetus on first run (from bundled references/)
 │   ├── anti-patterns.md
 │   └── model-routing.md
+├── momentum/
+│   └── findings-ledger.jsonl               ← Quality findings (global, flywheel writes, JSONL append-only)
 └── skills/
     └── (optional: if installed with -g flag)
 
@@ -805,7 +804,6 @@ momentum/                                    ← Root
     └── momentum/                            ← Per-project Momentum state
         ├── ledger.json                      ← Session ledger (Impetus reads/writes)
         ├── ledger-view.md                   ← Human-readable view (auto-generated)
-        ├── findings-ledger.json             ← Quality findings (flywheel writes)
         └── installed.json                   ← Install/upgrade state (version + per-component hashes)
 ```
 
@@ -817,12 +815,12 @@ momentum/                                    ← Root
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | ledger.json, specs (read-only), findings-ledger.json | ledger.json, ledger-view.md |
+| Impetus | ledger.json, specs (read-only), findings-ledger.jsonl | ledger.json, ledger-view.md |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
 | VFL | Any artifact being validated, source material | consolidated findings report |
-| Flywheel workflow (Epic 6) | findings-ledger.json, rules, specs | findings-ledger.json, rules/, specs |
-| Upstream-fix skill (Epic 4, standalone) | session ledger, specs, rules | session ledger only (not findings-ledger.json) |
+| Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
+| Upstream-fix skill (Epic 4, standalone) | session ledger, specs, rules | session ledger only (not findings-ledger.jsonl) |
 | Hooks | Filesystem (reads), git status | Terminal output only (never modifies files) |
 | ATDD workflow | Gherkin spec | `tests/acceptance/` only |
 | Coding agents (dev-story) | Specs, rules, existing code | Source code, unit tests |
@@ -831,7 +829,7 @@ momentum/                                    ← Root
 - `tests/acceptance/` — acceptance test immutability
 - `_bmad-output/planning-artifacts/` — spec authority
 - `.claude/rules/` — enforcement rule integrity
-- `.claude/momentum/findings-ledger.json` — ledger integrity
+- `~/.claude/momentum/findings-ledger.jsonl` — ledger integrity (authority-enforced; global path is outside project PreToolUse scope)
 
 ---
 
@@ -852,9 +850,9 @@ momentum/                                    ← Root
 | Plan audit gate hook (dev env) | `skills/momentum-plan-audit/scripts/check-plan-audited.sh` | `.claude/settings.json` PreToolUse on ExitPlanMode (project-scoped; deploy story installs globally) |
 | Global rules | `skills/momentum/references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `skills/momentum/references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
-| MCP servers | `skills/momentum/references/mcp-config.json` + `mcp/` source | `.mcp.json` (written by Impetus on first run) |
+| MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
 | Session ledger | (runtime) | `.claude/momentum/ledger.json` |
-| Findings ledger | (runtime) | `.claude/momentum/findings-ledger.json` |
+| Findings ledger | (runtime) | `~/.claude/momentum/findings-ledger.jsonl` (global) |
 | Install state | (runtime) | `.claude/momentum/installed.json` |
 
 ---
@@ -869,7 +867,7 @@ momentum/                                    ← Root
 
 **Hooks ↔ Claude Code:** Defined in `.claude/settings.json` (committed to repo); merge with any existing project hook config automatically on session start
 
-**MCP Servers ↔ Agents:** Findings MCP provides structured read/write of findings-ledger.json. Git file history, blame, and diff for provenance are accessed via the git CLI (Bash tool) — no dedicated MCP server required (see Decision 3c removal note)
+**MCP Servers ↔ Agents:** Findings MCP (Epic 6, optional) provides structured query over `~/.claude/momentum/findings-ledger.jsonl`. Primary write path is direct JSONL append by the flywheel — MCP is a read-only query layer, not the write mechanism. Git file history, blame, and diff for provenance are accessed via the git CLI (Bash tool) — no dedicated MCP server required (see Decision 3c).
 
 **Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start. Placement: implemented as `references/provenance-scan.md` within `momentum/` — runs as part of session orientation, not a separate skill.
 
