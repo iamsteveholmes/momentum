@@ -315,7 +315,7 @@ Confidence weighting: low-confidence results surface as questions to the user ra
 
 | Server | Phase | Purpose |
 |---|---|---|
-| `@modelcontextprotocol/server-git` | MVP | File history, blame, diff for provenance tracking |
+| ~~`@modelcontextprotocol/server-git`~~ | ~~MVP~~ | ~~File history, blame, diff for provenance tracking~~ — **Removed (p1.1):** Zero value over git CLI; provenance design (Decision 1a) already uses `git hash-object` via Bash with "zero extra tooling." Consumed a tool-ceiling slot and added an npx dependency for no functional benefit. |
 | Momentum findings MCP (lightweight, custom) | MVP | Read/write findings-ledger.json as a structured resource |
 | `@rlabs-inc/gemini-mcp` | Growth | Multi-model deep research |
 | GPT deep research MCP | Growth | Cross-model verification |
@@ -869,7 +869,7 @@ momentum/                                    ← Root
 
 **Hooks ↔ Claude Code:** Defined in `.claude/settings.json` (committed to repo); merge with any existing project hook config automatically on session start
 
-**MCP Servers ↔ Agents:** Git MCP provides file history and blame for provenance; Findings MCP provides structured read/write of findings-ledger.json
+**MCP Servers ↔ Agents:** Findings MCP provides structured read/write of findings-ledger.json. Git file history, blame, and diff for provenance are accessed via the git CLI (Bash tool) — no dedicated MCP server required (see Decision 3c removal note)
 
 **Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start. Placement: implemented as `references/provenance-scan.md` within `momentum/` — runs as part of session orientation, not a separate skill.
 

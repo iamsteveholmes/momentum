@@ -118,7 +118,7 @@ Upgrade support is coming in a future release. For now, re-run setup manually if
       </action>
       <action>Write merged result to `.mcp.json`</action>
       <action>If `action.requires_restart == true`: set restart_required = true</action>
-      <output>  ✓  .mcp.json — Git MCP + Findings MCP configured</output>
+      <output>  ✓  .mcp.json — Findings MCP configured</output>
     </check>
 
     <!-- After all actions complete: emit restart notice if any action required it -->

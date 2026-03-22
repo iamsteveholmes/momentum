@@ -167,7 +167,7 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 - Every significant claim classified as SOURCED / DERIVED / ADDED / UNGROUNDED
 
 **From Architecture — MCP Servers**
-- MVP: `@modelcontextprotocol/server-git` (file history, blame, diff for provenance) + Momentum findings MCP (custom, lightweight — read/write findings-ledger.json)
+- MVP: Momentum findings MCP (custom, lightweight — read/write findings-ledger.json). ~~`@modelcontextprotocol/server-git`~~ removed (p1.1) — git CLI provides file history, blame, and diff via Bash tool
 - Growth: `@rlabs-inc/gemini-mcp` and GPT deep research MCP for multi-model research
 
 **From Architecture — VFL Skill**
@@ -1695,7 +1695,7 @@ So that I don't accidentally make my Cursor environment non-functional by enabli
 **And** if total count > 40, Impetus warns more urgently: `! Cursor tool ceiling — adding [provider] brings total to [N] tools — exceeds Cursor's ~40 limit. Proceed anyway?`
 **And** if the developer proceeds past 40, Impetus notes which providers may need to be selectively disabled
 
-**Given** Momentum's own MCP servers are configured (findings MCP, git MCP)
+**Given** Momentum's own MCP servers are configured (findings MCP)
 **When** tool count is computed
 **Then** Momentum's own MCP servers count toward the ceiling — they are not exempt
 **And** the count includes both Momentum-registered providers and any pre-existing MCP servers in the project's `.mcp.json`

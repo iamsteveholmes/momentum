@@ -228,10 +228,6 @@ MVP MCP servers per architecture Decision 3c. Format must match `.mcp.json` stru
 ```json
 {
   "mcpServers": {
-    "git": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."]
-    },
     "momentum-findings": {
       "command": "node",
       "args": ["mcp/findings-server/index.js"],
@@ -240,6 +236,8 @@ MVP MCP servers per architecture Decision 3c. Format must match `.mcp.json` stru
   }
 }
 ```
+
+> Note: `@modelcontextprotocol/server-git` was originally included but removed (p1.1) — git CLI provides equivalent capabilities via Bash tool with zero extra tooling.
 
 Note: `momentum-findings` server source lives at `mcp/findings-server/` (Epic 6 scope). The config placeholder establishes the structure; actual server implementation is later.
 

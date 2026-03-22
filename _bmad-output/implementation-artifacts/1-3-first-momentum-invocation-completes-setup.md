@@ -266,7 +266,7 @@ From architecture.md and UX spec:
   ✓  ~/.claude/rules/anti-patterns.md
   ✓  ~/.claude/rules/model-routing.md
   ✓  .claude/settings.json — enforcement hooks configured
-  ✓  .mcp.json — Git MCP + Findings MCP configured
+  ✓  .mcp.json — Findings MCP configured
 
   !  Restart Claude Code when ready — hooks activate on restart.
      Rules and MCP are working now.

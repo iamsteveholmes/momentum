@@ -122,6 +122,9 @@ development_status:
   9-5-benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files: backlog
   epic-9-retrospective: optional
 
+  # Process Stories — Sprint 1
+  p1-1-remove-git-mcp-server-dependency: ready-for-dev
+
 # Momentum parallel execution metadata — invisible to BMAD skills
 # Each entry adds dependency and scope tracking for parallel story execution.
 # depends_on: story_keys that must be "done" before this story can start
@@ -171,3 +174,15 @@ momentum_metadata:
       - "skills/momentum/"
       - ".claude/momentum/"
     story_file: "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
+  p1-1-remove-git-mcp-server-dependency:
+    depends_on: []
+    touches:
+      - ".mcp.json"
+      - "skills/momentum/references/mcp-config.json"
+      - "skills/momentum/workflow.md"
+      - "_bmad-output/planning-artifacts/architecture.md"
+      - "_bmad-output/planning-artifacts/epics.md"
+      - "_bmad-output/planning-artifacts/ux-design-specification.md"
+      - "_bmad-output/implementation-artifacts/1-1-repository-structure-established.md"
+      - "_bmad-output/implementation-artifacts/1-3-first-momentum-invocation-completes-setup.md"
+    story_file: "_bmad-output/implementation-artifacts/p1-1-remove-git-mcp-server-dependency.md"

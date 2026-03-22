@@ -1,14 +1,5 @@
 {
   "mcpServers": {
-    "git": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-git",
-        "--repository",
-        "."
-      ]
-    },
     "momentum-findings": {
       "command": "node",
       "args": [
