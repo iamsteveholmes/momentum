@@ -57,7 +57,7 @@ Scenario: Version manifest has no MCP action
 
 Scenario: Workflow has no MCP references in install flow
   Given the Impetus workflow at skills/momentum/workflow.md
-  When I inspect the install consent, action execution, and post-install messages
+  When I inspect the install flow
   Then no output mentions MCP servers or .mcp.json
 
 Scenario: Architecture Decision 1c specifies global JSONL
@@ -86,6 +86,11 @@ Scenario: Epic 6 stories reflect global JSONL architecture
 Scenario: No stale references to per-project findings-ledger.json
   When I run grep -rP "findings-ledger\.json[^l]" _bmad-output/ skills/ mcp/
   Then zero matches are found (all changed to .jsonl or removed)
+
+Scenario: All findings-ledger references use global path
+  When I run grep -r "\.claude/momentum/findings-ledger" _bmad-output/ skills/ mcp/
+  Then all matches use the ~/.claude/ global prefix
+  And no matches use a project-relative .claude/ path
 ```
 
 ## Definition of Done
