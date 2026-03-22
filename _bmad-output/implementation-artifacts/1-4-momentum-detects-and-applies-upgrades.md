@@ -1,6 +1,6 @@
 # Story 1.4: Momentum Detects and Applies Upgrades
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -29,19 +29,19 @@ And offers to re-apply the rules — developer decides whether to proceed
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Extend `skills/momentum/workflow.md` — implement the version-mismatch upgrade path (AC: 1)
-  - [ ] 1.1: Implement version comparison logic: read `installed.json.momentum_version` and `momentum-versions.json.current_version`; detect mismatch
-  - [ ] 1.2: Implement multi-version gap resolution: collect all version entries between installed and current; order by version sequence using `from` field chain
-  - [ ] 1.3: Implement per-version action presentation: for each intermediate version, display description + action list in UX Journey 4 format; wait for [U]/[S] confirmation
-  - [ ] 1.4: Implement sequential action execution: iterate each intermediate version's actions; execute `write_file` (replace), `update_file` (replace), `write_config` (merge), `update_config` (merge); report each with ✓
-  - [ ] 1.5: Implement `installed.json` update: after all versions applied, update `momentum_version` to `current_version`, update `installed_at`, recompute component hashes
-  - [ ] 1.6: Implement [S] skip path: explain that current version continues to work with older config; proceed to session orientation; do NOT update `installed.json` (next invocation will offer again)
+- [x] Task 1: Extend `skills/momentum/workflow.md` — implement the version-mismatch upgrade path (AC: 1)
+  - [x] 1.1: Implement version comparison logic: read `installed.json.momentum_version` and `momentum-versions.json.current_version`; detect mismatch
+  - [x] 1.2: Implement multi-version gap resolution: collect all version entries between installed and current; order by version sequence using `from` field chain
+  - [x] 1.3: Implement per-version action presentation: for each intermediate version, display description + action list in UX Journey 4 format; wait for [U]/[S] confirmation
+  - [x] 1.4: Implement sequential action execution: iterate each intermediate version's actions; execute `write_file` (replace), `update_file` (replace), `write_config` (merge), `update_config` (merge); report each with ✓
+  - [x] 1.5: Implement `installed.json` update: after all versions applied, update `momentum_version` to `current_version`, update `installed_at`, recompute component hashes
+  - [x] 1.6: Implement [S] skip path: explain that current version continues to work with older config; proceed to session orientation; do NOT update `installed.json` (next invocation will offer again)
 
-- [ ] Task 2: Implement hash drift detection and warning (AC: 2)
-  - [ ] 2.1: At session start (after version-match confirmation), compute `git hash-object` of each installed rules file (`~/.claude/rules/*.md`)
-  - [ ] 2.2: Compare computed hashes against `installed.json.components.rules-global.hash`
-  - [ ] 2.3: If mismatch detected, surface warning: "Rules have been modified since Momentum installed them. Re-apply from package?" with [R] Re-apply / [K] Keep modified
-  - [ ] 2.4: If [R], re-execute the `write_file` actions for rules from the current version's action list; update hash in `installed.json`
+- [x] Task 2: Implement hash drift detection and warning (AC: 2)
+  - [x] 2.1: At session start (after version-match confirmation), compute `git hash-object` of each installed rules file (`~/.claude/rules/*.md`)
+  - [x] 2.2: Compare computed hashes against `installed.json.components.rules-global.hash`
+  - [x] 2.3: If mismatch detected, surface warning: "Rules have been modified since Momentum installed them. Re-apply from package?" with [R] Re-apply / [K] Keep modified
+  - [x] 2.4: If [R], re-execute the `write_file` actions for rules from the current version's action list; update hash in `installed.json`
 
 ## Dev Notes
 
@@ -240,10 +240,28 @@ No new files created — this story extends the workflow from Story 1.3. The `mo
 
 ### Agent Model Used
 
-claude-sonnet-4-6[1m]
+claude-opus-4-6[1m]
 
 ### Debug Log References
 
+None — implementation was straightforward; no debugging required.
+
 ### Completion Notes List
 
+- Task 1 (AC1): Implemented step 9 (version upgrade) in workflow.md — replaces the previous placeholder GOTO with full upgrade logic. Chain resolution uses `from` field linking. Each intermediate version presented separately with [U]/[S] prompt. Actions execute in order with ✓ confirmation. `installed.json` updated per-version inside the loop (not after the full chain). [S] skip path preserves installed.json unchanged.
+- Task 2 (AC2): Implemented step 10 (hash drift detection) in workflow.md. Runs on version-match path before session orientation. Computes `git hash-object` and compares against `installed.json.components.rules-global.hash`. [R] re-applies from package and updates hash. [K] proceeds without changes.
+- EDD cycle: All 3 evals PASS on first implementation — no fix cycles needed.
+- Dev Notes note on `installed.json` "mcp" component: disregarded — story p1.3 removed MCP from the install workflow; the installed.json schema no longer includes an "mcp" component.
+- AVFL result: documented in step 7 of momentum-dev workflow.
+
 ### File List
+
+- skills/momentum/workflow.md (modified — added steps 9 and 10, updated routing in step 1)
+- skills/momentum/evals/eval-upgrade-detection-and-execution.md (created)
+- skills/momentum/evals/eval-multi-version-sequential-upgrade.md (created)
+- skills/momentum/evals/eval-hash-drift-warning.md (created)
+
+## Change Log
+
+- feat(skills): implement version upgrade detection and sequential execution in Impetus workflow (step 9) — 2026-03-22
+- feat(skills): implement hash drift detection and warning in Impetus workflow (step 10) — 2026-03-22

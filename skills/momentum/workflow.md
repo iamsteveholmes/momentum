@@ -31,17 +31,12 @@
           <action>GOTO step 8 (team member joining — global-only setup)</action>
         </check>
         <check if="~/.claude/rules/authority-hierarchy.md exists">
-          <action>GOTO step 7 (session orientation — setup current, skip install)</action>
+          <action>GOTO step 10 (hash drift check)</action>
         </check>
       </check>
 
       <check if="installed.momentum_version != current_version">
-        <!-- Note: Dev Notes say "HALT here with message" for mismatch (Story 1.4 scope).
-             Deliberate deviation: proceeding to session orientation after notice is better UX
-             than a hard halt. Story 1.4 will implement full upgrade flow. -->
-        <output>Momentum {{current_version}} is available — you're running {{installed.momentum_version}}.
-Upgrade support is coming in a future release. For now, re-run setup manually if needed.</output>
-        <action>GOTO step 7 (session orientation — degraded upgrade state)</action>
+        <action>GOTO step 9 (version upgrade)</action>
       </check>
     </check>
   </step>
@@ -188,6 +183,138 @@ Upgrade support is coming in a future release. For now, re-run setup manually if
       </check>
       <check if="[S]">
         <action>GOTO step 7 (orientation without global rules)</action>
+      </check>
+    </check>
+  </step>
+
+  <!-- Version upgrade path (AC1) -->
+  <step n="9" goal="Version upgrade — sequential multi-version">
+    <action>Read `${CLAUDE_SKILL_DIR}/references/momentum-versions.json`</action>
+    <action>Store {{installed_version}} = `installed.json.momentum_version`</action>
+    <action>Store {{target_version}} = `current_version` from manifest</action>
+
+    <!-- Resolve upgrade chain via 'from' field links -->
+    <action>Build upgrade chain: starting at {{installed_version}}, find the version entry with `from == {{installed_version}}`; repeat until reaching {{target_version}}. Store as ordered list {{upgrade_chain}}.</action>
+    <check if="chain cannot be resolved (no entry has 'from' matching current step)">
+      <output>  !  Cannot resolve upgrade path from {{installed_version}} to {{target_version}}.
+  The version manifest may be incomplete. Run `npx skills update` and try again.</output>
+      <action>HALT</action>
+    </check>
+
+    <!-- Present and execute each intermediate version as a group -->
+    <action>For each {{version_entry}} in {{upgrade_chain}}, in order:</action>
+
+    <action>Display upgrade summary for this version:
+```
+  Momentum has been updated to {{version_entry.version}} — your project is configured for {{prev_version}}.
+
+  Here's what changed and what I need to do:
+
+    · {{action.source}} — {{action.description}}
+      → {{action_target_display}}
+    [... one line per action in version_entry.actions ...]
+
+  {{restart_notice_or_no_restart}}
+
+  Update now, or continue with {{prev_version}} for this session?
+  [U] Update · [S] Skip for now
+```
+Where: `{{action_target_display}}` = expand `~` in action.target; restart_notice = "! Restart Claude Code after applying." if any action has `requires_restart: true`, else "No restart needed for these changes — they take effect immediately."
+    </action>
+    <ask>[U] or [S]?</ask>
+
+    <check if="developer chooses [S]">
+      <output>  Continuing with {{installed_version}} for this session.
+  Upgrade will be offered again next time.</output>
+      <action>Do NOT update installed.json</action>
+      <action>GOTO step 7 (session orientation)</action>
+    </check>
+
+    <check if="developer chooses [U]">
+      <output>  Updating to Momentum {{version_entry.version}}...</output>
+      <action>Set restart_required = false</action>
+
+      <!-- Execute each action in this version entry -->
+      <action>For each action in {{version_entry.actions}}, in order:</action>
+
+      <check if="action.action == 'write_file' OR action.action == 'update_file'">
+        <action>Resolve source path: `${CLAUDE_SKILL_DIR}/references/{{action.source}}`</action>
+        <action>Resolve target path: expand `~` to `$HOME` in `{{action.target}}`</action>
+        <action>Create parent directories if they don't exist</action>
+        <action>Read source file content and write to resolved target path (replace entirely)</action>
+        <action>If `action.requires_restart == true`: set restart_required = true</action>
+        <output>  ✓  {{action.target}}</output>
+      </check>
+
+      <check if="action.action == 'write_config' OR action.action == 'update_config'">
+        <action>Read existing target file (start with `{}` if absent)</action>
+        <action>Read `${CLAUDE_SKILL_DIR}/references/{{action.source}}`</action>
+        <check if="action.target == '.claude/settings.json'">
+          <action>For each hook event key in source hooks: if absent in existing → add; if exists → append Momentum entries not already present (match by `command`). Never remove existing keys.</action>
+        </check>
+        <check if="action.target != '.claude/settings.json'">
+          <action>Merge: for each key in source, add to existing if absent; skip if already present</action>
+        </check>
+        <action>Write merged result to target — preserve ALL existing keys</action>
+        <action>If `action.requires_restart == true`: set restart_required = true</action>
+        <output>  ✓  {{action.target}}</output>
+      </check>
+
+      <!-- After all actions for this version complete -->
+      <action>Update `installed.json`:
+        - Set `momentum_version` = {{version_entry.version}}
+        - Set `installed_at` = current ISO 8601 timestamp
+        - For each component touched by this version's actions, update its `version` field to {{version_entry.version}}
+        - Recompute hash for `rules-global` if any `write_file` action targets `~/.claude/rules/`: run `git hash-object ~/.claude/rules/authority-hierarchy.md`; update `components.rules-global.hash`
+        - Write updated `installed.json`
+      </action>
+
+      <output>  Project is now on Momentum {{version_entry.version}}.</output>
+
+      <check if="restart_required == true">
+        <output>  !  Restart Claude Code for updated enforcement hooks to activate.</output>
+      </check>
+
+      <!-- Store prev_version for next iteration display -->
+      <action>Set {{prev_version}} = {{version_entry.version}}</action>
+      <!-- Continue to next version in chain -->
+    </check>
+
+    <!-- Chain complete -->
+    <action>GOTO step 7 (session orientation)</action>
+  </step>
+
+  <!-- Hash drift check (AC2) — runs on version-match path, before session orientation -->
+  <step n="10" goal="Hash drift detection — check for manually modified rules">
+    <action>Compute current hash: run `git hash-object ~/.claude/rules/authority-hierarchy.md` via Bash tool</action>
+    <action>Read stored hash from `installed.json.components.rules-global.hash`</action>
+
+    <check if="computed hash == stored hash OR stored hash is empty string">
+      <action>No drift detected — GOTO step 7 (session orientation)</action>
+    </check>
+
+    <check if="computed hash != stored hash">
+      <output>
+  ! Rules modified since Momentum installed them.
+    authority-hierarchy.md has been changed (hash mismatch).
+
+  Re-apply from the Momentum package, or keep your edits?
+  [R] Re-apply · [K] Keep modified
+      </output>
+      <ask>[R] or [K]?</ask>
+
+      <check if="developer chooses [R]">
+        <action>Re-execute the `write_file` actions for rules from the current version's action list. For each: resolve source from `${CLAUDE_SKILL_DIR}/references/{{action.source}}`, write to resolved target path.</action>
+        <output>  ✓  ~/.claude/rules/authority-hierarchy.md</output>
+        <action>Recompute hash: run `git hash-object ~/.claude/rules/authority-hierarchy.md`</action>
+        <action>Update `installed.json.components.rules-global.hash` with new hash. Write updated installed.json.</action>
+        <action>GOTO step 7 (session orientation)</action>
+      </check>
+
+      <check if="developer chooses [K]">
+        <action>Do NOT modify the rule file or the stored hash</action>
+        <note>Warning will recur next session since hash remains mismatched</note>
+        <action>GOTO step 7 (session orientation)</action>
       </check>
     </check>
   </step>
