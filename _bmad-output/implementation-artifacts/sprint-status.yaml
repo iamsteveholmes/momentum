@@ -47,7 +47,7 @@ development_status:
   1-1-repository-structure-established: done
   1-2-skills-installable-via-npx-skills-add: done
   1-3-first-momentum-invocation-completes-setup: done
-  1-4-momentum-detects-and-applies-upgrades: ready-for-dev
+  1-4-momentum-detects-and-applies-upgrades: done
   1-5-enforcement-degrades-gracefully-across-tool-tiers: done
   epic-1-retrospective: optional
 
@@ -55,7 +55,7 @@ development_status:
   epic-2: in-progress
   2-1-impetus-skill-created-with-correct-persona-and-input-handling: ready-for-dev
   2-2-session-orientation-and-thread-management: ready-for-dev
-  2-3-visual-progress-tracks-workflow-position: backlog
+  2-3-visual-progress-tracks-workflow-position: ready-for-dev
   2-4-completion-signals-and-productive-waiting: backlog
   2-5-spec-contextualization-and-configuration-gap-detection: backlog
   epic-2-retrospective: optional
@@ -176,6 +176,11 @@ momentum_metadata:
       - "skills/momentum/"
       - ".claude/momentum/"
     story_file: "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
+  2-3-visual-progress-tracks-workflow-position:
+    depends_on: []
+    touches:
+      - "skills/momentum/"
+    story_file: "_bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md"
   p1-1-remove-git-mcp-server-dependency:
     depends_on: []
     touches:

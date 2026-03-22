@@ -1,6 +1,6 @@
 # Story 1.4: Momentum Detects and Applies Upgrades
 
-Status: review
+Status: done
 
 ## Story
 
