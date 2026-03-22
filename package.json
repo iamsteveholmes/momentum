@@ -1,0 +1,7 @@
+{
+  "name": "momentum",
+  "version": "1.0.0",
+  "description": "Momentum — practice system for agentic engineering",
+  "skills": "./skills",
+  "keywords": ["agent-skills", "momentum", "agentic-engineering"]
+}
