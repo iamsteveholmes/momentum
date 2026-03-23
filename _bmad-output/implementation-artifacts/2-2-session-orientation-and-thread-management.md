@@ -198,7 +198,7 @@ Session orientation is a brief, single-exchange interaction — not a review che
 ### References
 
 - [Source: epics.md#Story 2.2 — All Acceptance Criteria]
-- [Source: architecture.md#Decision 1b — Session Journal JSON with Markdown View]
+- [Source: architecture.md#Decision 1b — Session Journal: JSONL with Markdown View]
 - [Source: architecture.md#Decision 4b — Session Orientation Contract]
 - [Source: ux-design-specification.md#Component 1 Session Journal Display]
 - [Source: ux-design-specification.md UX-DR1 — Session Journal Display]
@@ -237,7 +237,7 @@ Session orientation is a brief, single-exchange interaction — not a review che
 - [ ] EDD cycle ran — all 4 eval behaviors confirmed
 - [ ] `references/journal-schema.md` created with full JSONL schema
 - [ ] Journal read/write described in workflow.md
-- [ ] Ledger-view.md auto-generation described
+- [ ] journal-view.md auto-generation described
 - [ ] AVFL checkpoint documented
 
 ---

@@ -1,6 +1,6 @@
 # Story 1.9: journal.json JSONL Migration Evaluation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -132,9 +132,19 @@ N/A — documentation/evaluation story, no code or debug output
 - Story 2.2 updated: all `journal.json` references → `journal.jsonl`, schema description updated to JSONL semantics (append-only writes, last-entry-per-thread reads), multi-tab section updated to reflect JSONL concurrency safety
 - All four architecture references updated in architecture.md: Decision 1b text, File Tree, Read/Write Authority table, Component Mapping table
 
+### AVFL Result
+
+- Profile: checkpoint (3 lenses: structural, accuracy, coherence)
+- Pre-fix score: 77/100 (Fair)
+- Findings fixed: COHER-001 (stale reference anchor in Story 2.2), STRUCT-003 (Decision 1b rationale expanded to cover all four AC2 dimensions), COHER-002 (Ledger-view.md → journal-view.md pre-existing typo)
+- Remaining: COHER-003 (Task 8 AC mapping — pre-existing, not introduced by 1.9), COHER-004 (low — process provenance note)
+- Result: CHECKPOINT_WARNING
+- Timestamp: 2026-03-22
+
 ### Change Log
 
 - 2026-03-22: Evaluation complete, JSONL migration approved, architecture.md and Story 2.2 updated
+- 2026-03-22: AVFL checkpoint fixes — expanded Decision 1b rationale, fixed stale reference anchor, fixed Ledger-view.md typo
 
 ### File List
 

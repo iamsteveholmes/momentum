@@ -224,7 +224,11 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Current state of a thread = last entry in the file with that `thread_id`
 - Auto-generated `.claude/momentum/journal-view.md` for human readability (regenerated after every append)
 - Tracks: active story, current phase, last completed action, open threads
-- Rationale: same concurrency argument as Decision 1c — multiple Claude Code sessions can safely append concurrently without file locking. POSIX atomic append for lines under pipe buffer size. JSON read-modify-write is racy under multi-tab access (lost writes, corruption on crash, torn reads). Evaluated in Story 1.9.
+- Rationale (concurrency safety): same argument as Decision 1c — multiple Claude Code sessions can safely append concurrently without file locking. POSIX atomic append for lines under pipe buffer size. JSON read-modify-write is racy under multi-tab access (lost writes, corruption on crash, torn reads).
+- Rationale (query patterns): current-state reconstruction (read all lines, group by `thread_id`, take last entry) is a one-time cost at session start — not a hot path. `journal-view.md` provides the pre-built snapshot for human consumption.
+- Rationale (implementation complexity): append-only is simpler than read-parse-modify-serialize-write. No file locking logic required in instruction-based workflows.
+- Rationale (human readability): raw JSONL is less readable than JSON, but `journal-view.md` auto-generation already provides the human-readable layer.
+- Evaluated in Story 1.9.
 
 **Decision 1c — Findings Ledger: JSONL (Global)**
 - Location: `~/.claude/momentum/findings-ledger.jsonl` (global, not per-project)
