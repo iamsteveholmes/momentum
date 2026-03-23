@@ -1,6 +1,6 @@
 # Story 1.9: journal.json JSONL Migration Evaluation
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -33,28 +33,28 @@ so that the concurrency and data integrity implications are understood before St
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Document concurrency failure modes for read-modify-write JSON (AC: #1)
-  - [ ] 1.1 Enumerate failure scenarios: concurrent read-modify-write from multiple Claude Code tabs (lost writes, partial overwrites, corrupted JSON)
-  - [ ] 1.2 Reference POSIX file semantics — JSON read-modify-write requires file locking or is fundamentally racy
-  - [ ] 1.3 Reference architecture Decision 1c (findings ledger chose JSONL for this exact reason)
+- [x] Task 1: Document concurrency failure modes for read-modify-write JSON (AC: #1)
+  - [x] 1.1 Enumerate failure scenarios: concurrent read-modify-write from multiple Claude Code tabs (lost writes, partial overwrites, corrupted JSON)
+  - [x] 1.2 Reference POSIX file semantics — JSON read-modify-write requires file locking or is fundamentally racy
+  - [x] 1.3 Reference architecture Decision 1c (findings ledger chose JSONL for this exact reason)
 
-- [ ] Task 2: Compare JSON vs JSONL for session journal use case (AC: #1, #2)
-  - [ ] 2.1 Document JSONL advantages: atomic append (POSIX guarantee for lines under pipe buffer), no file locking needed, concurrent-safe
-  - [ ] 2.2 Document JSONL disadvantages: no random-access update, requires reconstruction for current-state queries, slightly larger file over time
-  - [ ] 2.3 Document JSON advantages: random-access read/update, single-file state snapshot, human-readable as-is
-  - [ ] 2.4 Document JSON disadvantages: read-modify-write race, requires file locking for safety, corrupt-on-crash risk
-  - [ ] 2.5 Analyze session journal query patterns (Impetus reads active story, current phase, open threads) — evaluate which format serves these better
+- [x] Task 2: Compare JSON vs JSONL for session journal use case (AC: #1, #2)
+  - [x] 2.1 Document JSONL advantages: atomic append (POSIX guarantee for lines under pipe buffer), no file locking needed, concurrent-safe
+  - [x] 2.2 Document JSONL disadvantages: no random-access update, requires reconstruction for current-state queries, slightly larger file over time
+  - [x] 2.3 Document JSON advantages: random-access read/update, single-file state snapshot, human-readable as-is
+  - [x] 2.4 Document JSON disadvantages: read-modify-write race, requires file locking for safety, corrupt-on-crash risk
+  - [x] 2.5 Analyze session journal query patterns (Impetus reads active story, current phase, open threads) — evaluate which format serves these better
 
-- [ ] Task 3: Write recommendation with rationale (AC: #2)
-  - [ ] 3.1 State clear recommendation: JSONL, JSON, or alternative
-  - [ ] 3.2 Address all four evaluation dimensions: concurrency safety, query patterns, human readability, implementation complexity
-  - [ ] 3.3 Document the evaluation as an architecture decision record in `_bmad-output/planning-artifacts/architecture.md`
+- [x] Task 3: Write recommendation with rationale (AC: #2)
+  - [x] 3.1 State clear recommendation: JSONL, JSON, or alternative
+  - [x] 3.2 Address all four evaluation dimensions: concurrency safety, query patterns, human readability, implementation complexity
+  - [x] 3.3 Document the evaluation as an architecture decision record in `_bmad-output/planning-artifacts/architecture.md`
 
-- [ ] Task 4: Apply decision outcome (AC: #3 or #4, conditional on Steve's approval)
-  - [ ] 4.1 If JSONL: update architecture Decision 1b to reflect new format
-  - [ ] 4.2 If JSONL: update Story 2.2 acceptance criteria to use JSONL semantics
-  - [ ] 4.3 If JSON: record the keep-JSON rationale in architecture as a formal decision
-  - [ ] 4.4 If JSON: confirm Story 2.2 requires no changes
+- [x] Task 4: Apply decision outcome (AC: #3 — JSONL migration approved by Steve)
+  - [x] 4.1 JSONL: updated architecture Decision 1b to reflect new format
+  - [x] 4.2 JSONL: updated Story 2.2 acceptance criteria to use JSONL semantics
+  - N/A 4.3 If JSON: record the keep-JSON rationale in architecture as a formal decision
+  - N/A 4.4 If JSON: confirm Story 2.2 requires no changes
 
 ## Dev Notes
 
@@ -117,8 +117,27 @@ All tasks in this story are documentation and architectural evaluation tasks. No
 
 ### Agent Model Used
 
+claude-sonnet-4-6[1m]
+
 ### Debug Log References
+
+N/A — documentation/evaluation story, no code or debug output
 
 ### Completion Notes List
 
+- Evaluation completed: JSON read-modify-write has three failure modes under multi-tab concurrency (lost writes, corrupted JSON, torn reads)
+- Recommendation: migrate to JSONL — same rationale as Decision 1c (findings ledger)
+- Decision approved by Steve on 2026-03-22
+- Architecture Decision 1b updated: `journal.json` → `journal.jsonl`, JSONL append-only format, with full rationale
+- Story 2.2 updated: all `journal.json` references → `journal.jsonl`, schema description updated to JSONL semantics (append-only writes, last-entry-per-thread reads), multi-tab section updated to reflect JSONL concurrency safety
+- All four architecture references updated in architecture.md: Decision 1b text, File Tree, Read/Write Authority table, Component Mapping table
+
+### Change Log
+
+- 2026-03-22: Evaluation complete, JSONL migration approved, architecture.md and Story 2.2 updated
+
 ### File List
+
+- `_bmad-output/planning-artifacts/architecture.md` — Decision 1b rewritten (JSON → JSONL), File Tree updated, Read/Write Authority updated, Component Mapping updated
+- `_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md` — All journal.json refs → journal.jsonl, schema description updated to JSONL semantics, multi-tab detection section updated, task descriptions updated for JSONL read/write patterns
+- `_bmad-output/implementation-artifacts/1-9-journal-json-jsonl-migration-evaluation.md` — Story file: tasks completed, Dev Agent Record populated

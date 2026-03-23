@@ -17,7 +17,7 @@ Then within two exchanges, Impetus surfaces: active story/task, current phase, l
 And Impetus speaks first — the developer is never required to ask "where were we?"
 
 **AC2 — Journal display (threads exist):**
-Given the journal at `.claude/momentum/journal.json` contains one or more open thread entries,
+Given the journal at `.claude/momentum/journal.jsonl` contains one or more open thread entries,
 When Impetus starts (UX-DR1),
 Then Impetus displays the Session Journal: numbered list of open threads, each showing workflow phase and elapsed time
 And threads are ordered by most-recently-active
@@ -63,12 +63,12 @@ And offers: "continue from here, or restart this step?" before proceeding
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define and implement journal.json schema (AC: 1–8)
-  - [ ] 1.1: Create `skills/momentum/references/journal-schema.md` documenting the JSON schema for `.claude/momentum/journal.json` — fields: thread_id, workflow_type, story_ref, current_step, phase, last_action, context_summary, last_active (ISO 8601), status (open|closed), depends_on_thread
-  - [ ] 1.2: Implement journal read/write helpers in workflow.md — read journal, parse entries, write updated entries, create new entries
+- [ ] Task 1: Define and implement journal.jsonl schema (AC: 1–8)
+  - [ ] 1.1: Create `skills/momentum/references/journal-schema.md` documenting the JSONL schema for `.claude/momentum/journal.jsonl` — each line is one JSON object with fields: thread_id, workflow_type, story_ref, current_step, phase, last_action, context_summary, last_active (ISO 8601), status (open|closed), depends_on_thread. Current state of a thread = last entry with that thread_id.
+  - [ ] 1.2: Implement journal read/write helpers in workflow.md — read all lines, reconstruct current state per thread_id (last entry wins), append new entries (never overwrite)
 
 - [ ] Task 2: Implement session orientation logic in workflow.md (AC: 1, 3)
-  - [ ] 2.1: At startup (after install/upgrade routing from Stories 1.3/1.4), read journal.json
+  - [ ] 2.1: At startup (after install/upgrade routing from Stories 1.3/1.4), read journal.jsonl
   - [ ] 2.2: If journal is empty or absent → skip display, go to menu (Story 2.1 normal session)
   - [ ] 2.3: If threads exist → display Session Journal (Task 3), then orient with active story, phase, last action, suggested next
 
@@ -98,7 +98,7 @@ And offers: "continue from here, or restart this step?" before proceeding
   - [ ] 7.3: On continue → resume at `current_step`; on restart → reset `current_step` to start of that phase
 
 - [ ] Task 8: Implement auto-generated journal-view.md (AC: 1)
-  - [ ] 8.1: After any journal.json write, regenerate `.claude/momentum/journal-view.md` as a human-readable markdown view of all entries (open and recently closed)
+  - [ ] 8.1: After any journal.jsonl write, regenerate `.claude/momentum/journal-view.md` as a human-readable markdown view of all entries (open and recently closed)
 
 ## Dev Notes
 
@@ -117,22 +117,15 @@ This story extends the Impetus workflow.md created in Stories 1.3/1.4 and the me
 
 ### Journal Schema
 
-Per architecture Decision 1b, the journal lives at `.claude/momentum/journal.json`. Each entry:
+Per architecture Decision 1b (updated by Story 1.9), the journal lives at `.claude/momentum/journal.jsonl` using JSONL append-only format. Each line is one JSON object:
 
-```json
-{
-  "thread_id": "T-001",
-  "workflow_type": "story-cycle",
-  "story_ref": "4.2",
-  "current_step": "code-review",
-  "phase": "mid-review",
-  "last_action": "Code reviewer dispatched",
-  "context_summary": "Story 4.2 implementation — reviewer is analyzing the null-check pattern",
-  "last_active": "2026-03-21T14:30:00Z",
-  "status": "open",
-  "depends_on_thread": null
-}
+```jsonl
+{"thread_id":"T-001","workflow_type":"story-cycle","story_ref":"4.2","current_step":"code-review","phase":"mid-review","last_action":"Code reviewer dispatched","context_summary":"Story 4.2 implementation — reviewer is analyzing the null-check pattern","last_active":"2026-03-21T14:30:00Z","status":"open","depends_on_thread":null}
 ```
+
+**Write semantics:** Every state change (thread created, step advanced, thread closed) appends a new line. Never overwrite or modify existing lines.
+
+**Read semantics:** Read all lines, group by `thread_id`, take the last entry per thread. This gives current state. Filter by `status: open` for active threads.
 
 **Thread ID format:** `T-NNN` (auto-incrementing). New thread created when a workflow starts; closed when the workflow completes or developer explicitly closes.
 
@@ -158,7 +151,7 @@ The `5d ago` entry would trigger dormant thread hygiene (3-day threshold). Impet
 
 ### Multi-Tab Detection (UX-DR13)
 
-The journal is a shared JSON file — all Claude Code tabs (each an independent Impetus instance) read and write it. There's no process lock; the 30-minute timestamp check is a heuristic, not a mutex.
+The journal is a shared JSONL file — all Claude Code tabs (each an independent Impetus instance) append to it. JSONL append is concurrency-safe (POSIX atomic append for lines under pipe buffer size), so no file locking is needed for writes. The 30-minute timestamp check is a heuristic for detecting *intentional* concurrent work, not a concurrency control mechanism.
 
 **Warning format:**
 ```
@@ -196,7 +189,7 @@ The developer never needs to re-explain what they were doing. Impetus has all co
 
 ### Journal-View.md Auto-Generation
 
-Per architecture Decision 1b: "Auto-generated `.claude/momentum/journal-view.md` for human readability." After every journal.json write, regenerate this file. It's a read-only markdown view — developers can inspect it but Impetus only reads/writes the JSON.
+Per architecture Decision 1b: "Auto-generated `.claude/momentum/journal-view.md` for human readability." After every journal.jsonl append, regenerate this file. It's a read-only markdown view — developers can inspect it but Impetus only reads/writes the JSONL.
 
 ### Spec Fatigue Patterns
 
@@ -228,8 +221,8 @@ Session orientation is a brief, single-exchange interaction — not a review che
 ### skill-instruction Tasks: Eval-Driven Development (EDD)
 
 **Write evals first** in `skills/momentum/evals/`:
-- `eval-session-orientation-with-threads.md` — Given 2 open threads in journal.json, Impetus should display numbered list ordered by most-recent, with phase and elapsed time, then orient to the most recent thread's active story/phase/last action
-- `eval-empty-journal-skip.md` — Given no journal.json exists, Impetus should skip journal display entirely and show the menu (Story 2.1 normal session path)
+- `eval-session-orientation-with-threads.md` — Given 2 open threads in journal.jsonl, Impetus should display numbered list ordered by most-recent, with phase and elapsed time, then orient to the most recent thread's active story/phase/last action
+- `eval-empty-journal-skip.md` — Given no journal.jsonl exists, Impetus should skip journal display entirely and show the menu (Story 2.1 normal session path)
 - `eval-dormant-thread-closure.md` — Given a journal entry with last_active > 3 days ago, Impetus should surface it with context and offer one-action closure; after developer confirms, entry status changes to "closed"
 - `eval-concurrent-tab-warning.md` — Given a journal entry with last_active 5 minutes ago, Impetus should warn about concurrent work and ask to confirm before starting a competing thread
 
@@ -242,7 +235,7 @@ Session orientation is a brief, single-exchange interaction — not a review che
 **Additional DoD items:**
 - [ ] 4 behavioral evals written in `skills/momentum/evals/`
 - [ ] EDD cycle ran — all 4 eval behaviors confirmed
-- [ ] `references/journal-schema.md` created with full JSON schema
+- [ ] `references/journal-schema.md` created with full JSONL schema
 - [ ] Journal read/write described in workflow.md
 - [ ] Ledger-view.md auto-generation described
 - [ ] AVFL checkpoint documented
