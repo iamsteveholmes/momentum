@@ -1,6 +1,6 @@
 # Story 1.7: Acceptance Testing Process and Standards
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -41,20 +41,20 @@ And each plan identifies the story type and corresponding verification method fr
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create the acceptance testing standard document (AC: 1, 2, 3)
-  - [ ] 1.1: Create `docs/process/acceptance-testing-standard.md` with story type classification table mapping each type to its verification method: skill-instruction -> EDD (adversarial eval authoring by independent tester), config-structure -> execution test, install/deploy -> end-to-end test, rule/hook -> behavioral trigger test
-  - [ ] 1.2: Write role separation section — acceptance tester role is structurally separate from developer; developer does not author, read, or execute acceptance tests or EDD evals for their own work
-  - [ ] 1.3: Specify enforcement mechanism — the dev agent must not load verification artifacts during implementation; document how file storage/flagging ensures structural separation (e.g., `tests/acceptance/` path protection via PreToolUse hooks per architecture Decision 2a)
-  - [ ] 1.4: Codify the three Epic 1 retro Team Agreements as process constraints: (1) E2E deployment testing mandatory for install/deploy stories, (2) acceptance testing role separation active immediately (not deferred to Epic 4), (3) every story file includes an Acceptance Test Plan section
+- [x] Task 1: Create the acceptance testing standard document (AC: 1, 2, 3)
+  - [x] 1.1: Create `docs/process/acceptance-testing-standard.md` with story type classification table mapping each type to its verification method: skill-instruction -> EDD (adversarial eval authoring by independent tester), config-structure -> execution test, install/deploy -> end-to-end test, rule/hook -> behavioral trigger test
+  - [x] 1.2: Write role separation section — acceptance tester role is structurally separate from developer; developer does not author, read, or execute acceptance tests or EDD evals for their own work
+  - [x] 1.3: Specify enforcement mechanism — the dev agent must not load verification artifacts during implementation; document how file storage/flagging ensures structural separation (e.g., `tests/acceptance/` path protection via PreToolUse hooks per architecture Decision 2a)
+  - [x] 1.4: Codify the three Epic 1 retro Team Agreements as process constraints: (1) E2E deployment testing mandatory for install/deploy stories, (2) acceptance testing role separation active immediately (not deferred to Epic 4), (3) every story file includes an Acceptance Test Plan section
 
-- [ ] Task 2: Define the Acceptance Test Plan section template (AC: 3)
-  - [ ] 2.1: Create a standard section template that goes into every story file, containing: story type classification, verification method, test artifacts location, and acceptance tester assignment
-  - [ ] 2.2: Document where in the story file template the section should appear (after Dev Notes, before Dev Agent Record — or as a subsection of Dev Notes)
+- [x] Task 2: Define the Acceptance Test Plan section template (AC: 3)
+  - [x] 2.1: Create a standard section template that goes into every story file, containing: story type classification, verification method, test artifacts location, and acceptance tester assignment
+  - [x] 2.2: Document where in the story file template the section should appear (after Dev Notes, before Dev Agent Record — or as a subsection of Dev Notes)
 
-- [ ] Task 3: Audit and update Epic 2 story files with Acceptance Test Plan sections (AC: 4)
-  - [ ] 3.1: Read each Epic 2 ready-for-dev story file (2-1, 2-2, 2-3, 2-4) and classify its story type using the classification table from Task 1
-  - [ ] 3.2: Add an Acceptance Test Plan section to each Epic 2 story file with: the classified story type, the corresponding verification method, and the test artifact location
-  - [ ] 3.3: Verify each updated story file is well-formed and the new section is correctly placed
+- [x] Task 3: Audit and update Epic 2 story files with Acceptance Test Plan sections (AC: 4)
+  - [x] 3.1: Read each Epic 2 ready-for-dev story file (2-1, 2-2, 2-3, 2-4) and classify its story type using the classification table from Task 1
+  - [x] 3.2: Add an Acceptance Test Plan section to each Epic 2 story file with: the classified story type, the corresponding verification method, and the test artifact location
+  - [x] 3.3: Verify each updated story file is well-formed and the new section is correctly placed
 
 ## Dev Notes
 
@@ -177,8 +177,26 @@ All tasks in this story produce process documentation and story file updates. No
 
 ### Agent Model Used
 
+claude-sonnet-4-6[1m]
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Created `docs/process/acceptance-testing-standard.md` — full acceptance testing standard covering: 5-type story classification table (skill-instruction, config-structure, install/deploy, rule/hook, process-doc) with verification methods; role separation section with enforcement mechanism (write protection via PreToolUse hook + read protection by convention + session isolation); three Epic 1 retro Team Agreements codified as binding process constraints; Acceptance Test Plan section template with placement rules and authoring responsibility table.
+- All four Epic 2 story files (2-1 through 2-4) confirmed as `skill-instruction` type — all are Impetus skill-extension stories. Each file updated with an Acceptance Test Plan section containing: story type, verification method (EDD with adversarial eval authoring), test artifact location (`skills/momentum/evals/`), story-specific adversarial test scenarios, and acceptance gate conditions per AC.
+- Acceptance Test Plan placement: after Momentum Implementation Guide, before Dev Agent Record — consistent across all four files.
+- No TDD cycle required: this is a process-doc story producing only markdown documents and story file updates. No executable code, no tests to write or run.
+
 ### File List
+
+- `docs/process/acceptance-testing-standard.md` (created)
+- `_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md` (modified — Acceptance Test Plan section added)
+- `_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md` (modified — Acceptance Test Plan section added)
+- `_bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md` (modified — Acceptance Test Plan section added)
+- `_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md` (modified — Acceptance Test Plan section added)
+
+## Change Log
+
+- docs(process): create acceptance-testing-standard.md — story type classification, role separation, enforcement mechanism, Team Agreements 1–3 (Date: 2026-03-22)
+- docs(stories): add Acceptance Test Plan sections to Epic 2 stories 2-1 through 2-4 (Date: 2026-03-22)

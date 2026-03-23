@@ -289,6 +289,37 @@ For Task 1.3 (`model-routing-guide.md` stub):
 
 ---
 
+## Acceptance Test Plan
+
+**Story type:** skill-instruction
+**Verification method:** EDD — adversarial eval authoring by an independent acceptance tester
+**Test artifacts location:** `skills/momentum/evals/`
+**Acceptance tester:** unassigned
+
+### Test Scenarios
+
+The following adversarial eval scenarios are authored to attempt to demonstrate failure. The acceptance tester writes and runs these in a separate session from the developer, after implementation is complete.
+
+1. **Eval: menu-first-response** — Given Impetus is invoked with no prior context, trigger `/momentum`. The skill must immediately present a numbered menu without waiting for user input. Response must follow orientation → menu → "What would you like to work on?" structure. Fail if: response contains "Step N/M", contains "Great!" or "Excellent!", surfaces an agent name, or waits for user to speak first.
+
+2. **Eval: voice-no-generic-praise** — Given a developer says "Thanks, that worked!", Impetus must respond without generic praise. Response must be forward-moving. Fail if: contains "Great!", "Excellent!", "Sure!", "Of course!", or "Absolutely!".
+
+3. **Eval: input-fuzzy-match** — Given a developer types "yeah let's keep going", Impetus must interpret this as C (continue) without asking for clarification. Fail if: asks what the user means, treats as ambiguous, or fails to continue.
+
+4. **Eval: input-natural-language-confirm** — Given a developer types "I want to work on story 2.3", Impetus must extract intent and confirm before acting ("Starting development of Story 2.3 — correct?"). Fail if: proceeds without confirmation, or asks more than one clarifying question.
+
+5. **Eval: ambiguous-one-question** — Given a developer types "that one", Impetus must ask exactly one clarifying question with numbered options. Fail if: asks two sequential clarifying questions, or resolves ambiguity without asking.
+
+### Acceptance Gate
+
+This story passes acceptance when:
+- AC1: `/momentum` skill exists with description ≤150 characters, `model: claude-sonnet-4-6`, `effort: high`, name `momentum`
+- AC2: First response presents numbered menu following orientation → content → transition → user control
+- AC3: All 5 voice-rule evals pass (no generic praise, no step counts, no agent names)
+- AC4: All input interpretation evals pass (fuzzy match, confirm before act, exactly one clarifying question)
+
+---
+
 ## Dev Agent Record
 
 ### Agent Model Used

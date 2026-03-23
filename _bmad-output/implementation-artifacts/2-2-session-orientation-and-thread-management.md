@@ -258,6 +258,35 @@ For `journal-schema.md` and journal-view.md generation logic:
 
 ---
 
+## Acceptance Test Plan
+
+**Story type:** skill-instruction
+**Verification method:** EDD — adversarial eval authoring by an independent acceptance tester
+**Test artifacts location:** `skills/momentum/evals/`
+**Acceptance tester:** unassigned
+
+### Test Scenarios
+
+1. **Eval: session-orientation-with-threads** — Given a journal.json with 2 open threads (one active 2 hours ago, one active yesterday), invoke `/momentum`. Impetus must display a numbered list ordered by most-recently-active, with workflow phase and elapsed time for each. Within two exchanges, Impetus must surface active story, current phase, last completed action, and suggested next action. Fail if: threads appear out of order, elapsed time is missing, or developer must ask "where were we?"
+
+2. **Eval: empty-journal-skip** — Given no journal.json exists at `.claude/momentum/journal.json`, invoke `/momentum`. Impetus must skip the journal display entirely and transition directly to the menu (Story 2.1 normal session). Fail if: journal section appears, error message appears, or user is asked to create a journal.
+
+3. **Eval: dormant-thread-closure** — Given a journal entry with `last_active` timestamp >3 days ago, invoke `/momentum`. Impetus must surface the dormant thread with brief context and offer one-action closure. After developer confirms with a single response, the thread status must change to "closed". Fail if: requires more than one confirmation, thread not marked closed after confirmation, or dormant thread is not surfaced.
+
+4. **Eval: concurrent-tab-warning** — Given a journal entry with `last_active` timestamp 5 minutes ago (simulating an active tab), invoke `/momentum`. Impetus must flag the entry as likely concurrent work and ask to confirm before starting a competing thread on the same story. Fail if: no warning shown, or warning is blocking (must warn, not block).
+
+### Acceptance Gate
+
+This story passes acceptance when:
+- AC1: Within two exchanges, Impetus surfaces active story, phase, last completed action, and next action — without developer prompting
+- AC2: Journal with threads displays ordered numbered list with phase and elapsed time
+- AC3: Empty journal skips directly to menu with no display artifact
+- AC4: Entry active within 30 minutes triggers concurrent work warning (non-blocking)
+- AC5: Entry >3 days old triggers one-action closure offer; confirmation closes thread
+- AC8: Selecting a thread re-orients using journal context with "continue from here, or restart this step?"
+
+---
+
 ## Dev Agent Record
 
 ### Agent Model Used
