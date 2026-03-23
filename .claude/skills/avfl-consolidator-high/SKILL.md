@@ -2,6 +2,7 @@
 name: avfl-consolidator-high
 description: AVFL consolidator at high effort. Merges, cross-checks, deduplicates, and scores validator findings for benchmarking effort × role interactions.
 effort: high
+internal: true
 ---
 
 # AVFL Consolidator / High Effort

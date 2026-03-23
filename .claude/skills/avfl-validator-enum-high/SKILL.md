@@ -2,6 +2,7 @@
 name: avfl-validator-enum-high
 description: AVFL Enumerator validator at high effort. Systematic, section-by-section quality validation for benchmarking effort × role interactions.
 effort: high
+internal: true
 ---
 
 # AVFL Validator — Enumerator / High Effort

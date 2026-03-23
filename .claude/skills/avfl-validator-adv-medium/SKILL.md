@@ -2,6 +2,7 @@
 name: avfl-validator-adv-medium
 description: AVFL Adversary validator at medium effort. Intuitive, holistic, pattern-aware quality validation for benchmarking effort × role interactions.
 effort: medium
+internal: true
 ---
 
 # AVFL Validator — Adversary / Medium Effort

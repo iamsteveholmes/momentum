@@ -2,6 +2,7 @@
 name: avfl-consolidator-low
 description: AVFL consolidator at low effort. Merges, cross-checks, deduplicates, and scores validator findings for benchmarking effort × role interactions.
 effort: low
+internal: true
 ---
 
 # AVFL Consolidator / Low Effort

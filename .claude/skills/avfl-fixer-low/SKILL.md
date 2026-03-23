@@ -2,6 +2,7 @@
 name: avfl-fixer-low
 description: AVFL fixer at low effort. Applies validated findings as corrections and produces a complete fixed artifact. Use for benchmarking effort × role interactions.
 effort: low
+internal: true
 ---
 
 # AVFL Fixer / Low Effort

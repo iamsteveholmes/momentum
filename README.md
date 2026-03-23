@@ -13,7 +13,7 @@ Momentum is currently implemented using [BMAD Method](https://github.com/bmadcod
 **Claude Code (Tier 1 — full enforcement):**
 
 ```bash
-npx @anthropic-ai/claude-code skills add momentum/momentum -a claude-code
+npx skills add https://github.com/iamsteveholmes/momentum -a claude-code
 ```
 
 Then in Claude Code:
@@ -27,7 +27,7 @@ Impetus (the Momentum orchestrator) runs first-time setup: installs global rules
 **Cursor or other tools (Tier 2 — advisory):**
 
 ```bash
-npx @anthropic-ai/claude-code skills add momentum/momentum -a cursor
+npx skills add https://github.com/iamsteveholmes/momentum -a cursor
 ```
 
 Skills install and are invocable immediately. No additional setup required.
@@ -54,7 +54,7 @@ Claude Code provides the complete enforcement stack:
 
 **What "full deterministic" means:** Quality standards at the deterministic enforcement tier (hooks, test gates, file protection) execute automatically. They cannot be skipped, deprioritized, or forgotten. Structured enforcement (workflow steps, review checklists) executes as part of skill workflows. Advisory enforcement (rules in context) is always loaded.
 
-**Install:** `npx @anthropic-ai/claude-code skills add momentum/momentum -a claude-code`, then `/momentum`
+**Install:** `npx skills add https://github.com/iamsteveholmes/momentum -a claude-code`, then `/momentum`
 
 ### Tier 2: Advisory — Cursor and Other Tools
 
@@ -74,7 +74,7 @@ Tools that support the [Agent Skills](https://github.com/anthropic-ai/skills) st
 
 Skills still provide significant value at Tier 2 — workflow structure, acceptance criteria enforcement, review checklists, and quality guidance all function as advisory instructions.
 
-**Install:** `npx @anthropic-ai/claude-code skills add momentum/momentum -a cursor`
+**Install:** `npx skills add https://github.com/iamsteveholmes/momentum -a cursor`
 
 ### Tier 3: Philosophy Only — No Tooling
 

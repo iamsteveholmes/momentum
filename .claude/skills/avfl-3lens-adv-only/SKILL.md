@@ -1,6 +1,7 @@
 ---
 name: avfl-3lens-adv-only
 description: BENCHMARK VARIANT — 3-lens AVFL, Adversary reviewers only. Runs Structural Integrity, Factual Accuracy, and Coherence & Craft lenses with 1 Adversary per lens (3 agents total). No dual-review, no cross-check confidence tagging. Use this variant when benchmarking AVFL reviewer composition configurations.
+internal: true
 ---
 
 # AVFL — 3-Lens, Adversary-Only
