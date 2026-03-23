@@ -54,7 +54,7 @@ development_status:
   # Epic 1b: Foundation Fixes
   epic-1b: in-progress
   1-6-fix-npx-skills-add-experience: ready-for-dev
-  1-7-acceptance-testing-process-and-standards: ready-for-dev
+  1-7-acceptance-testing-process-and-standards: done
   1-8-orchestrator-purity-principle: ready-for-dev
   1-9-journal-json-jsonl-migration-evaluation: ready-for-dev
   epic-1b-retrospective: optional

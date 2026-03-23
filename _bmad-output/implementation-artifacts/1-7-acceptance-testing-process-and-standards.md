@@ -1,6 +1,6 @@
 # Story 1.7: Acceptance Testing Process and Standards
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -214,6 +214,7 @@ claude-sonnet-4-6[1m]
 - All four Epic 2 story files (2-1 through 2-4) confirmed as `skill-instruction` type — all are Impetus skill-extension stories. Each file updated with an Acceptance Test Plan section containing: story type, verification method (EDD with adversarial eval authoring), test artifact location (`skills/momentum/evals/`), story-specific adversarial test scenarios, and acceptance gate conditions per AC.
 - Acceptance Test Plan placement: after Momentum Implementation Guide, before Dev Agent Record — consistent across all four files.
 - No TDD cycle required: this is a process-doc story producing only markdown documents and story file updates. No executable code, no tests to write or run.
+- AVFL checkpoint (3-lens: structural, accuracy, coherence) — CHECKPOINT_WARNING. Score ~90/100 after fix pass. Two HIGH findings fixed: (1) "Example-Driven Development" corrected to "Eval-Driven Development" (F-01), (2) write protection relabeled from "existing" to "planned — Epic 3, Story 3.2" (F-02). One MEDIUM fixed: Story 1.7 ATP section added (SI-003). Six LOW findings remain documented (inline citation, reference list, contamination tension — not blocking). Profile: checkpoint, stage: final. Timestamp: 2026-03-22.
 
 ### File List
 
