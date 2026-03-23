@@ -1,6 +1,6 @@
 # Story 1.6: Fix `npx skills add` Experience
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
