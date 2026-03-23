@@ -2,6 +2,7 @@
 name: avfl-fixer-high
 description: AVFL fixer at high effort. Applies validated findings as corrections and produces a complete fixed artifact. Use for benchmarking effort × role interactions.
 effort: high
+internal: true
 ---
 
 # AVFL Fixer / High Effort

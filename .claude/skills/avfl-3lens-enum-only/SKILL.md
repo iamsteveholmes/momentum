@@ -1,6 +1,7 @@
 ---
 name: avfl-3lens-enum-only
 description: BENCHMARK VARIANT — 3-lens AVFL, Enumerator reviewers only. Runs Structural Integrity, Factual Accuracy, and Coherence & Craft lenses with 1 Enumerator per lens (3 agents total). No dual-review, no cross-check confidence tagging. Use this variant when benchmarking AVFL reviewer composition configurations.
+internal: true
 ---
 
 # AVFL — 3-Lens, Enumerator-Only

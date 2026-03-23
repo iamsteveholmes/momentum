@@ -1,6 +1,7 @@
 ---
 name: avfl-3lens
 description: BENCHMARK VARIANT — 3-lens Adversarial Validate-Fix Loop. Runs Structural Integrity, Factual Accuracy, and Coherence & Craft lenses (6 agents: 1 Enumerator + 1 Adversary per lens). Use this variant when benchmarking AVFL lens count configurations.
+internal: true
 ---
 
 # AVFL — 3-Lens Configuration (Structural + Accuracy + Coherence)

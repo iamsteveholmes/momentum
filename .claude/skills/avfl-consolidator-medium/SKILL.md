@@ -2,6 +2,7 @@
 name: avfl-consolidator-medium
 description: AVFL consolidator at medium effort. Merges, cross-checks, deduplicates, and scores validator findings for benchmarking effort × role interactions.
 effort: medium
+internal: true
 ---
 
 # AVFL Consolidator / Medium Effort

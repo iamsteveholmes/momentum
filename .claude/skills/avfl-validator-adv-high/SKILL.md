@@ -2,6 +2,7 @@
 name: avfl-validator-adv-high
 description: AVFL Adversary validator at high effort. Intuitive, holistic, pattern-aware quality validation for benchmarking effort × role interactions.
 effort: high
+internal: true
 ---
 
 # AVFL Validator — Adversary / High Effort

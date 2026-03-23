@@ -1,6 +1,7 @@
 ---
 name: avfl
 description: Adversarial Validate-Fix Loop (AVFL) — a research-backed multi-agent validation pipeline that catches errors, hallucinations, and quality issues in any AI-generated artifact. Use this skill whenever a user asks to "validate", "verify and fix", "run a quality pass", "check this output", or "review for quality" on a document, report, spec, code, or data artifact. Also use proactively at the end of any workflow that produces a critical deliverable — if the output matters, it should go through AVFL before being handed off. The skill runs parallel validation lenses (structural integrity, factual accuracy, coherence & craft, domain fitness), cross-checks findings between two independently-framed reviewers to filter hallucinations, scores issues by severity, and iteratively fixes until the output reaches a clean score (≥95/100) or exhausts iterations.
+internal: true
 ---
 
 # AVFL — Adversarial Validate-Fix Loop

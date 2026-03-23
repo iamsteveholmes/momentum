@@ -1,6 +1,7 @@
 ---
 name: avfl-declining
 description: BENCHMARK VARIANT — 3-lens AVFL with auto-declining skepticism. Identical to avfl-3lens (mixed composition, Structural + Accuracy + Coherence) except skepticism automatically steps down each fix iteration: starts at the `skepticism` parameter, decrements by 1 (min 1) each subsequent iteration. Use this variant when benchmarking declining vs flat skepticism behavior across the fix loop.
+internal: true
 ---
 
 # AVFL — Declining Skepticism Configuration

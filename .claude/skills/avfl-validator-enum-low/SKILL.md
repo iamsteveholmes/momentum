@@ -2,6 +2,7 @@
 name: avfl-validator-enum-low
 description: AVFL Enumerator validator at low effort. Systematic, section-by-section quality validation for benchmarking effort × role interactions.
 effort: low
+internal: true
 ---
 
 # AVFL Validator — Enumerator / Low Effort

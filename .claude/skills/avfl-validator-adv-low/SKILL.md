@@ -2,6 +2,7 @@
 name: avfl-validator-adv-low
 description: AVFL Adversary validator at low effort. Intuitive, holistic, pattern-aware quality validation for benchmarking effort × role interactions.
 effort: low
+internal: true
 ---
 
 # AVFL Validator — Adversary / Low Effort

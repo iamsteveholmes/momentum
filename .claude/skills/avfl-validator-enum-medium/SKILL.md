@@ -2,6 +2,7 @@
 name: avfl-validator-enum-medium
 description: AVFL Enumerator validator at medium effort. Systematic, section-by-section quality validation for benchmarking effort × role interactions.
 effort: medium
+internal: true
 ---
 
 # AVFL Validator — Enumerator / Medium Effort

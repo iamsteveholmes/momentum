@@ -2,6 +2,7 @@
 name: avfl-fixer-medium
 description: AVFL fixer at medium effort. Applies validated findings as corrections and produces a complete fixed artifact. Use for benchmarking effort × role interactions.
 effort: medium
+internal: true
 ---
 
 # AVFL Fixer / Medium Effort

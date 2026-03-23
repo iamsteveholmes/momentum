@@ -2,6 +2,7 @@
 name: bmad-workflow-builder
 description: Builds workflows and skills through conversational discovery and validates existing ones. Use when the user requests to "build a workflow", "modify a workflow", "quality check workflow", or "optimize skill".
 argument-hint: "--headless or -H to not prompt user, initial input for create, path to existing skill with keywords optimize, edit, validate"
+internal: true
 ---
 
 # Workflow & Skill Builder
