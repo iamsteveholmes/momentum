@@ -1,7 +1,0 @@
----
-name: bmad-cis-storytelling
-description: 'Craft compelling narratives using story frameworks. Use when the user says "help me with storytelling" or "I want to create a narrative through storytelling"'
-internal: true
----
-
-Follow the instructions in [workflow.md](workflow.md).

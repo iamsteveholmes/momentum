@@ -14,7 +14,14 @@
 .claude/*.jsonl
 .claude/settings.local.json
 
+# BMAD and AVFL — local dev tooling, installed per-machine via npx bmad-method install
+# Not checked in so npx skills add only discovers the 8 Momentum skills in skills/
+_bmad/
+.claude/skills/bmad-*/
+.claude/skills/avfl*/
+
 # BMAD session memory (local/ephemeral)
+# (kept for clarity even though _bmad/ is now fully ignored)
 _bmad/_memory/
 
 # Momentum story worktrees (local execution environments, not committed)
