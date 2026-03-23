@@ -183,6 +183,42 @@ Story 2.3 established:
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Confidence-Directed Review (UX-DR22)]
 - [Source: _bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md]
 
+## Acceptance Test Plan
+
+**Story type:** skill-instruction
+**Verification method:** EDD — adversarial eval authoring by an independent acceptance tester
+**Test artifacts location:** `skills/momentum/evals/`
+**Acceptance tester:** unassigned
+
+### Test Scenarios
+
+1. **Eval: completion-signal-format** — Given a story cycle or workflow step completes, Impetus must deliver a completion signal containing: explicit ownership return ("this is yours to review and adjust"), a file list with paths, and a "what's next?" question. Fail if: any of the three components is absent, or the developer is left uncertain whether Impetus is still working.
+
+2. **Eval: productive-waiting** — Given Impetus has dispatched a background subagent, Impetus must maintain dialogue on the topic of the work just completed — not go silent, not switch to unrelated subjects. Fail if: Impetus produces no response after dispatching, or response changes subject.
+
+3. **Eval: subagent-synthesis** — Given a subagent returns a structured JSON result with findings, Impetus must synthesize the findings in its own voice. Fail if: raw JSON appears in the response, a subagent name is mentioned ("the code reviewer said"), or findings appear without `!`/`·` severity indicators.
+
+4. **Eval: review-dispatch-summary** — Given implementation completes and a review subagent is dispatched, Impetus must provide a human-readable summary of what was built at the moment of dispatch — not after the review completes. Fail if: summary is absent at dispatch time, or summary is delivered only after review results arrive.
+
+5. **Eval: flywheel-offer** — Given a subagent returns a critical finding, Impetus must offer flywheel processing when `momentum-upstream-fix` is available. If not available, Impetus must note the finding and log it with "flywheel processing deferred — Epic 6". Fail if: critical finding is surfaced with no flywheel offer or deferral note.
+
+6. **Eval: tiered-review-depth** — Given subagent findings arrive, Impetus must lead with a micro-summary and offer tiered depth: quick scan / full review / trust & continue. Fail if: full finding list is presented as default without offering tiers.
+
+7. **Eval: confidence-directed-findings** — Given a finding references a specification section, Impetus must indicate confidence level in natural language: high ("This comes directly from the architecture"), medium ("Inferred — worth verifying"), low (surfaces as question). Fail if: confidence level is absent, or expressed as raw labels ("high/medium/low") rather than natural language.
+
+### Acceptance Gate
+
+This story passes acceptance when:
+- AC1: Completion signal contains ownership return, file list with paths, and "what's next?" question
+- AC2: After background dispatch, Impetus maintains on-topic dialogue — no dead air
+- AC3: Subagent results synthesized in Impetus voice with severity indicators; no raw JSON or agent names
+- AC4: Hub-and-spoke maintained — developer never sees subagent identity
+- AC5: Implementation summary delivered at review dispatch time, not after
+- AC6: Findings presentation leads with micro-summary and offers tiered review depth
+- AC7: Confidence level indicated on findings in natural language
+
+---
+
 ## Dev Agent Record
 
 ### Agent Model Used

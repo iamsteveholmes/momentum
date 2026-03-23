@@ -263,6 +263,42 @@ For `references/progress-indicator.md`:
 
 ---
 
+## Acceptance Test Plan
+
+**Story type:** skill-instruction
+**Verification method:** EDD — adversarial eval authoring by an independent acceptance tester
+**Test artifacts location:** `skills/momentum/evals/`
+**Acceptance tester:** unassigned
+
+### Test Scenarios
+
+1. **Eval: progress-mid-workflow** — Given Impetus is at a middle workflow step (3 completed phases, 1 current, 3 upcoming), trigger a phase transition. All 3 indicator lines must appear (✓/→/◦) with narrative content. Fail if: "Step N/M" appears anywhere, a symbol appears without adjacent text, or line count is not exactly 3.
+
+2. **Eval: progress-first-step** — Given Impetus is at the very first step of a workflow (no completed phases), display the indicator. Only 2 lines must appear (→ current, ◦ upcoming). Fail if: ✓ completed line appears, or 3 lines shown.
+
+3. **Eval: progress-last-step** — Given Impetus is at the very last step (no upcoming phases), display the indicator. Only 2 lines must appear (✓ completed, → current). Fail if: ◦ upcoming line appears, or 3 lines shown.
+
+4. **Eval: progress-resume-from-journal** — Given a journal entry with `current_step` and `context_summary` for an interrupted workflow, invoke `/momentum` in a fresh session. Impetus must reconstruct and display the correct indicator state and offer "continue from here, or restart this step?" — without the developer re-explaining context. Fail if: developer must re-explain their state, or indicator shows wrong position.
+
+5. **Eval: symbol-text-pairing** — Given any Impetus response containing ✓/→/◦/!/✗/? symbols, every symbol must have adjacent text conveying the same meaning. Fail if: any symbol appears in isolation without accompanying text.
+
+6. **Eval: response-architecture-pattern** — Given Impetus renders a workflow step, the response must contain all four elements in order: narrative orientation line (with progress indicator), substantive content, transition signal, explicit user control. Fail if: orientation line contains "Step N/M", user control is not the final element, or any element is absent.
+
+7. **Eval: on-demand-position-query** — Given a developer types "where am I?", Impetus must respond with the correct progress indicator (3-line or 2-line at boundary) using only terminal-safe characters, with all symbols text-paired. Fail if: response requires color rendering, contains numeric step count, or symbols lack text pairing.
+
+### Acceptance Gate
+
+This story passes acceptance when:
+- AC1: Phase transition displays 3-line ✓/→/◦ indicator with narrative content, no "Step N/M"
+- AC2: First step displays 2 lines (→/◦ only, ✓ absent)
+- AC3: Last step displays 2 lines (✓/→ only, ◦ absent)
+- AC4: Every symbol in every response has adjacent text pairing
+- AC5: Every rendered workflow step contains all four Response Architecture Pattern elements
+- AC6: Interrupted workflow resumes with correct indicator state using journal context
+- AC7: On-demand query returns correct indicator with terminal-safe characters
+
+---
+
 ## Dev Agent Record
 
 ### Agent Model Used
