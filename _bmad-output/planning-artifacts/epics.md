@@ -28,6 +28,8 @@ derives_from:
 lastEdited: '2026-03-22'
 editHistory:
   - date: '2026-03-22'
+    changes: 'Retro Action Item #4 resolution: FR39 (Gherkin format convention) split between Story 1.7 (process/convention) and Story 4.2 (automated enforcement). Story 4.2 first AC block (FR39 format requirements) removed — now covered by Story 1.7. Story 4.2 narrowed to FR40 only, depends_on updated. FR Coverage Map updated to show FR39 split across Epic 1b and Epic 4.'
+  - date: '2026-03-22'
     changes: 'Added Epic 1b — Foundation Fixes (Stories 1.6–1.9) between Epic 1 and Epic 2. Retro-driven mini-epic addressing action items #1, #2, #3, #5, #7 and team agreements 1–3 from the Epic 1 retrospective. Must complete before Epic 2 development begins.'
   - date: '2026-03-22'
     changes: 'Added terminal-multiplexer protocol type to Story 7.1 recognized types; added AC for terminal-multiplexer protocol contract with detect-and-adapt pattern; forward-referenced CMUX anti-patterns for Story 3.4. Derives from CMUX research document.'
@@ -284,7 +286,7 @@ UX-DR22: Implement Confidence-Directed Review — when generating or presenting 
 | FR36 | Epic 7 | Impetus reads config, detects gaps, helps fill them conversationally |
 | FR37 | Epic 7 | Workflow steps resolve through protocol interfaces, not specific implementations |
 | FR38 | Epic 7 | Substitute any protocol implementation without modifying consuming workflows |
-| FR39 | Epic 4 | Gherkin acceptance criteria — behavioral, technology-agnostic |
+| FR39 | Epic 1b (convention, Story 1.7) + Epic 4 (automated enforcement, Story 4.2) | Gherkin acceptance criteria — behavioral, technology-agnostic |
 | FR40 | Epic 4 | ATDD workflow generates failing acceptance tests from Gherkin |
 | FR41 | Epic 4 | Full story cycle guided by orchestrating agent |
 | FR42 | Epic 4 | Visual progress through story cycle (current phase + next phase) |
@@ -336,7 +338,7 @@ Quality gates fire without developer intervention. Lint and format run on save. 
 
 ### Epic 4: Complete Story Cycles
 A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
-**FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
+**FRs covered:** FR24, FR25, FR26, FR27, FR39 (automated enforcement — convention in Epic 1b), FR40, FR41, FR42, FR43
 **UX-DRs covered:** UX-DR6, UX-DR8, UX-DR19 (Story 4.1), UX-DR20 (Story 4.3), UX-DR22 (Story 4.1)
 **Additional:** code-reviewer (`context:fork` skill, `allowed-tools: Read`), VFL flat skill (momentum-vfl), create-story skill, dev-story skill (includes ATDD workflow capability — ATDD is not a separate deployed skill)
 **Priority:** Sprint 1
@@ -1159,7 +1161,7 @@ So that the right model is used for every task automatically — no manual overr
 
 A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
 
-**FRs covered:** FR24, FR25, FR26, FR27, FR39, FR40, FR41, FR42, FR43
+**FRs covered:** FR24, FR25, FR26, FR27, FR39 (automated enforcement — convention in Epic 1b Story 1.7), FR40, FR41, FR42, FR43
 **UX-DRs covered:** UX-DR6, UX-DR8, UX-DR19 (Story 4.1), UX-DR20 (Story 4.3), UX-DR22 (Story 4.1)
 
 ### Story 4.1: Code-Reviewer Skill Performs Adversarial Review
@@ -1207,20 +1209,17 @@ So that every implementation is checked by an independent context before it is c
 
 ---
 
-### Story 4.2: Gherkin ACs and ATDD Workflow Active
+### Story 4.2: ATDD Workflow Generates Failing Tests
 
 As a developer,
-I want to define acceptance criteria in Gherkin that generates failing tests before I write code,
+I want the ATDD workflow to automatically generate failing tests from my story's Gherkin acceptance criteria before I write code,
 So that the test suite captures intent from the spec, not from the implementation.
 
-**Acceptance Criteria:**
+**Depends on:** Story 1.7 (Gherkin AC format convention), Story 3.2 (file protection for tests/acceptance/), Story 4.4 (momentum-dev-story skill)
+**Touches:** `skills/momentum-dev-story/SKILL.md`, `tests/acceptance/`
+**Note:** FR39 (Gherkin format convention — behavioral, technology-agnostic, implementation-independent) is established by Story 1.7 in Epic 1b. This story covers FR40 — the automated workflow that consumes those Gherkin ACs to generate failing tests.
 
-**Given** a developer writes acceptance criteria for a story (FR39)
-**When** the criteria are reviewed
-**Then** each AC is expressed as a Given/When/Then scenario
-**And** each scenario is behavioral — it describes what the system does, not how
-**And** each scenario is technology-agnostic — no specific library, framework, or tool name appears
-**And** each scenario is implementation-independent — passing or failing is determinable without reading the implementation
+**Acceptance Criteria:**
 
 **Given** the ATDD workflow capability is part of the dev-story skill
 **When** Claude Code parses `momentum-dev-story/SKILL.md`
