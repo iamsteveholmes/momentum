@@ -230,17 +230,6 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
     <action>Check for overlap: are any paths in {{touches}} also listed in `momentum_metadata` entries for other stories whose `development_status` is `in-progress`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
     <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in-progress stories or no overlap, use "none".</action>
 
-    <action>Rebase the story branch onto the latest target branch to surface any conflicts before merging:
-      Run: `git rebase {{target_branch}} story/{{story_key}}`
-      Story branches are local-only (never pushed), so rebase is safe — no history-rewriting risk. This ensures the story branch includes all recent main changes (e.g., status updates from other merged stories) and conflicts are resolved before the merge rather than during it.</action>
-    <check if="rebase reports conflicts">
-      <output>Rebase conflicts detected on story/{{story_key}}. Resolve conflicts in the affected files, then run:
-  git rebase --continue
-
-After rebase completes, the merge will proceed.</output>
-      <action>HALT — wait for user to resolve rebase conflicts before continuing to merge</action>
-    </check>
-
     <output>Story {{story_key}} is done and ready to merge.
 
   Branch:   story/{{story_key}}
@@ -248,12 +237,22 @@ After rebase completes, the merge will proceed.</output>
   Touches overlap: {{touches_overlap_summary}}
 
 To merge, run:
-  git merge story/{{story_key}}
+  git rebase {{target_branch}} story/{{story_key}} && git merge story/{{story_key}}
 
-Confirm to proceed with merge, or review the diff first.</output>
-    <ask>Run the merge now?</ask>
+Confirm to proceed with rebase and merge, or review the diff first.</output>
+    <ask>Run the rebase and merge now?</ask>
 
     <check if="user confirms merge">
+      <action>Rebase the story branch onto the latest target branch, then merge:
+        Run: `git rebase {{target_branch}} story/{{story_key}}`
+        Story branches are local-only (never pushed), so rebase is safe — no history-rewriting risk. This ensures the story branch includes all recent main changes (e.g., status updates from other merged stories) and conflicts are resolved before the merge.</action>
+      <check if="rebase reports conflicts">
+        <output>Rebase conflicts detected on story/{{story_key}}. Resolve conflicts in the affected files, then run:
+  git rebase --continue
+
+After rebase completes, the merge will proceed.</output>
+        <action>HALT — wait for user to resolve rebase conflicts before continuing to merge</action>
+      </check>
       <action>Run: `git merge story/{{story_key}}`</action>
       <check if="merge succeeds cleanly">
         <action>Run: `git worktree remove --force .worktrees/story-{{story_key}}`
