@@ -1,74 +1,71 @@
 # AVFL Invocation Guide for momentum-dev
 
-Reference this file in Step 7 to determine the correct AVFL parameters for each story's primary artifact.
+Reference this file in Step 7 to determine how to run AVFL on the story's complete changeset.
 
-## When to Run AVFL vs. Skip
+## What AVFL Validates
 
-| Primary artifact type | Run AVFL? | Profile | Stage |
-|---|---|---|---|
-| skill-instruction (SKILL.md, workflow.md), including mixed skill+script stories | Yes | `checkpoint` | `final` |
-| rule-hook (.claude/rules/, hooks config) | Yes | `checkpoint` | `final` |
-| config-structure only (JSON, version files) | Yes | `gate` | `final` |
-| script-code only (.sh, .py, .ts) | **No** — tests are the quality gate | — | — |
+AVFL validates the **entire story changeset** — not a single "primary artifact." Every file added, modified, or deleted by the story is part of the validation input. This holistic approach catches problems that per-file validation misses:
 
-## Parameter Reference
+- Extraneous files that shouldn't have been changed
+- Files that should have been deleted or modified but weren't
+- Cross-file inconsistencies (e.g., code that doesn't match the spec it implements)
+- Changes that are unnecessary for fulfilling the acceptance criteria
+- Incomplete implementations where some ACs are only partially addressed
 
-### skill-instruction primary artifact
+The story file itself is included in the diff (status updates, Dev Agent Record, File List, Change Log), so AVFL can cross-reference the story's own records against the actual changes.
+
+## Capturing the Changeset
+
+Every momentum-dev story runs in an isolated git worktree on branch `story/{{story_key}}`, branched from `{{target_branch}}`. After bmad-dev-story completes and the workflow exits the worktree, capture the complete changeset:
 
 ```
-domain_expert: "skill author"
-task_context: "Momentum skill — [skill name, e.g., momentum-create-story]"
-output_to_validate: [combined content of the produced SKILL.md and workflow.md (SKILL.md provides frontmatter and metadata; workflow.md contains the implementation)]
-source_material: [the Acceptance Criteria section from the story file]
-profile: checkpoint
+git diff {{target_branch}}...story/{{story_key}}
+```
+
+This shows all additions, modifications, and deletions across every commit on the story branch — regardless of how many intermediate commits bmad-dev-story made.
+
+## Profile Selection
+
+| Story characteristics | Profile | Rationale |
+|---|---|---|
+| Most stories (code, specs, mixed, skills, rules, docs) | `checkpoint` | 2–3 lenses, one fix attempt — good quality signal without 8-agent cost |
+| Config/structure-only stories (only JSON, YAML, directory changes) | `gate` | Structural pass/fail — fields present, types correct |
+
+**How to determine config-only:** If every file path in the diff is a `.json`, `.yaml`, `.yml`, `.toml`, or version file, and no substantive prose or code was added, use `gate`. If any code, skill instructions, rules, or documentation appear in the diff, use `checkpoint`.
+
+**Why `checkpoint` not `full`?** Skills get dogfooded on real stories; code gets tested; specs get reviewed. `checkpoint` gives structural and coherence quality signal without the 8-agent cost of `full`. Reserve `full` for final deliverables, high-stakes content, or anything published without further review.
+
+## Domain Expert Selection
+
+Infer `domain_expert` from the story's context and the dominant type of change:
+
+| Dominant change type | domain_expert |
+|---|---|
+| Skill instructions (SKILL.md, workflow.md, agent definitions) | `"skill author"` |
+| Code and scripts (.sh, .py, .ts, .js, .go, etc.) | `"software engineer"` |
+| Specifications and documentation (PRD, architecture, stories, README) | `"technical writer"` |
+| Rules and hooks (.claude/rules/, hook configs) | `"practice engineer"` |
+| Configuration (JSON, YAML, version files) | `"project engineer"` |
+| Mixed — no clear dominant type | `"software engineer"` |
+
+When in doubt, use `"software engineer"` — it is the broadest applicable role.
+
+## Parameter Template
+
+One unified template for all stories:
+
+```
+domain_expert: [inferred from story context — see table above]
+task_context: "Story {{story_key}} — [brief description from story title]"
+output_to_validate: [full git diff output from: git diff {{target_branch}}...story/{{story_key}}]
+source_material: [the Acceptance Criteria section from {{story_file}}]
+profile: [checkpoint or gate — see Profile Selection above]
 stage: final
 ```
 
-**Why `checkpoint` not `full`?**
-The skill will be dogfooded on real stories (NFR16) — real use is the ultimate validation. `checkpoint` (2–3 lenses, one fix attempt) gives structural and coherence quality signal without the 8-agent cost of `full`. Use `full` for final deliverables, high-stakes content, or anything consumed by humans or downstream systems without further review — including skills published to a release.
+**Why acceptance criteria as source_material?** AVFL's Factual Accuracy lens checks whether the produced changes deliver what they were supposed to deliver. The ACs define "supposed to deliver."
 
-**Why acceptance criteria as source_material?**
-AVFL's Factual Accuracy lens checks whether the produced artifact delivers what it was supposed to deliver. The ACs define what "supposed to deliver" means.
-
-**Why both SKILL.md and workflow.md?**
-Momentum skills follow a pattern where the SKILL.md body is a single delegation line ("Follow the instructions in ./workflow.md."), and the actual skill logic lives in workflow.md. Passing only SKILL.md gives AVFL very little to validate. Always include both files so AVFL can assess the complete skill.
-
-### rule-hook primary artifact
-
-```
-domain_expert: "practice engineer"
-task_context: "Momentum rule — [rule/hook name, e.g., model-routing.md]"
-output_to_validate: [full content of the produced rule file or hook config section]
-source_material: [the Acceptance Criteria section from the story file]
-profile: checkpoint
-stage: final
-```
-
-### config-structure primary artifact
-
-```
-domain_expert: "project engineer"
-task_context: "Momentum config — [what was created, e.g., momentum-versions.json]"
-output_to_validate: [full content of the produced config file(s)]
-source_material: [the Acceptance Criteria section from the story file]
-profile: gate
-stage: final
-```
-
-**Why `gate` not `checkpoint`?**
-Config files are structural — they either have the required fields or they don't. A gate (single pass, no fix loop) is the right check. If the gate fails, the config has a structural defect that needs manual attention.
-
-## Identifying the Primary Artifact
-
-From the story's File List section, identify the primary artifact as follows:
-
-1. If the list contains any `SKILL.md` files → the primary artifact is the SKILL.md for the new/modified skill. If multiple SKILL.md files were modified, validate the one most central to the story's acceptance criteria.
-
-2. If the list contains `.claude/rules/` files and no SKILL.md → the primary artifact is the rule file.
-
-3. If the list contains only JSON configs and directories → the primary artifact is the most important config file (usually `momentum-versions.json` or the entry-point config).
-
-4. If the list contains only script files → skip AVFL (tests are the gate).
+**Why the full diff as output_to_validate?** The diff captures everything — additions, deletions, modifications across all file types. AVFL can assess completeness (did the changes fulfill all ACs?), correctness (are the changes right?), and scope (are there extraneous changes?).
 
 ## Presenting AVFL Findings
 
@@ -82,7 +79,5 @@ AVFL [checkpoint|gate] — [CLEAN | CHECKPOINT_WARNING | GATE_FAILED]
   · [medium finding summary — one line]
   [etc.]
 ```
-
-Use `AVFL checkpoint —` for skill-instruction and rule-hook runs (checkpoint profile); use `AVFL gate —` for config-structure runs (gate profile).
 
 **Severity key:** `!` = critical or high, `·` = medium or low

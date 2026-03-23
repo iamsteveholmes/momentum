@@ -4,6 +4,24 @@ This checklist supplements the standard `bmad-dev-story` DoD. Items in the stand
 
 Check ONLY the items that apply to the story's change types. Skip sections for types not present.
 
+**Note:** AVFL always runs on the full story changeset regardless of story type. The AVFL result documentation item appears in every section below because every story type goes through AVFL.
+
+---
+
+## code Stories
+
+- [ ] **AVFL result noted:** AVFL checkpoint result (CLEAN or CHECKPOINT_WARNING with summary) is recorded in Dev Agent Record
+
+*(Tests, regressions, and code quality are already covered by the standard bmad-dev-story DoD.)*
+
+---
+
+## specification Stories
+
+- [ ] **Cross-references valid:** Any references to other documents, files, or sections resolve correctly
+- [ ] **Format compliance:** Document follows the project's established template or format conventions if one exists
+- [ ] **AVFL result noted:** AVFL checkpoint result (CLEAN or CHECKPOINT_WARNING with summary) is recorded in Dev Agent Record
+
 ---
 
 ## skill-instruction Stories

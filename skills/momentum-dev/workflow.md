@@ -10,7 +10,7 @@
 
 <workflow>
   <critical>Do not re-implement bmad-dev-story logic. Delegate all implementation to that skill.</critical>
-  <critical>AVFL runs on the PRIMARY ARTIFACT (the finished SKILL.md, rule file, or config) — not the story file itself.</critical>
+  <critical>AVFL runs on the COMPLETE STORY CHANGESET (git diff of all changes on the story branch) — not a single file. The diff includes the story file itself alongside all code, specs, and config changes.</critical>
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum-create-story. Offer to run the injection step manually before proceeding.</critical>
   <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
   <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>
@@ -119,60 +119,36 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
     bmad-dev-story already set sprint-status.yaml to "review". This syncs the story file frontmatter to match. The script is idempotent — safe if bmad-dev-story already updated both.</action>
   </step>
 
-  <step n="7" goal="AVFL quality gate on primary artifact">
-    <action>Load ./references/avfl-invocation.md to determine AVFL parameters</action>
-    <action>Read the story's File List to identify what was produced</action>
-    <action>Identify the primary artifact type from {{file_list}}:
-      - If any SKILL.md or workflow.md files → skill-instruction artifact (including mixed skill+script stories)
-      - If any .claude/rules/ files → rule-hook artifact
-      - If only JSON configs, version files, directory structure → config-structure artifact
-      - If only script files (.sh, .py, .ts) → script-code (skip AVFL)
+  <step n="7" goal="AVFL quality gate on complete changeset">
+    <action>Load ./references/avfl-invocation.md for AVFL parameter guidance</action>
+
+    <action>Capture the complete story changeset:
+      Run `git diff {{target_branch}}...story/{{story_key}}`
+      Store the output as {{changeset_diff}}. This includes every file added, modified, or deleted by the story — including the story file itself.</action>
+
+    <action>Read the Acceptance Criteria section from {{story_file}} and store as {{acceptance_criteria}}</action>
+
+    <action>Determine {{avfl_profile}}:
+      - Inspect the file paths in {{changeset_diff}}
+      - If every changed file is a config/structure file (.json, .yaml, .yml, .toml, version file) with no substantive prose or code → profile = `gate`
+      - Otherwise → profile = `checkpoint`</action>
+
+    <action>Determine {{domain_expert}} from the story context and dominant change type:
+      - Skill instructions (SKILL.md, workflow.md, agents) → "skill author"
+      - Code and scripts (.sh, .py, .ts, .js, .go, etc.) → "software engineer"
+      - Specifications and documentation (PRD, architecture, stories, README) → "technical writer"
+      - Rules and hooks (.claude/rules/, hook configs) → "practice engineer"
+      - Configuration only → "project engineer"
+      - Mixed with no clear dominant type → "software engineer"</action>
+
+    <action>Invoke the `avfl` skill with:
+      - domain_expert: {{domain_expert}}
+      - task_context: "Story {{story_key}} — [brief description from story title]"
+      - output_to_validate: {{changeset_diff}}
+      - source_material: {{acceptance_criteria}}
+      - profile: {{avfl_profile}}
+      - stage: final
     </action>
-
-    <check if="primary artifact is skill-instruction">
-      <action>Identify the main SKILL.md file from {{file_list}} as the artifact to validate</action>
-      <action>Derive {{skill_name}} from the SKILL.md path in {{file_list}} — extract the directory name containing the SKILL.md (e.g., path `skills/momentum-create-story/SKILL.md` → {{skill_name}} = `momentum-create-story`)</action>
-      <action>Invoke the `avfl` skill with:
-        - domain_expert: "skill author"
-        - task_context: "Momentum skill — {{skill_name}}"
-        - output_to_validate: combined content of the produced SKILL.md and workflow.md (SKILL.md provides frontmatter and metadata; workflow.md contains the implementation)
-        - source_material: the acceptance criteria section from {{story_file}}
-        - profile: checkpoint
-        - stage: final
-      </action>
-    </check>
-
-    <check if="primary artifact is rule-hook">
-      <action>Identify the primary rule or hook config file from {{file_list}}</action>
-      <action>Derive {{rule_name}} from the rule file path in {{file_list}} — extract the filename (e.g., path `.claude/rules/model-routing.md` → {{rule_name}} = `model-routing.md`)</action>
-      <action>Invoke the `avfl` skill with:
-        - domain_expert: "practice engineer"
-        - task_context: "Momentum rule — {{rule_name}}"
-        - output_to_validate: full content of the produced file
-        - source_material: acceptance criteria from {{story_file}}
-        - profile: checkpoint
-        - stage: final
-      </action>
-    </check>
-
-    <check if="primary artifact is config-structure only">
-      <action>Store {{primary_config_file}} = the most significant config file from {{file_list}} (e.g., the JSON file with the most fields, or the entry-point config)</action>
-      <action>Invoke the `avfl` skill with:
-        - domain_expert: "project engineer"
-        - task_context: "Momentum config — {{primary_config_file}}"
-        - output_to_validate: full content of the produced config file(s)
-        - source_material: acceptance criteria from {{story_file}}
-        - profile: gate
-        - stage: final
-      </action>
-    </check>
-
-    <check if="primary artifact is script-code only">
-      <output>Script-code story — AVFL skipped. Tests provide correctness coverage for code.</output>
-      <action>Set {{avfl_result}} = "skipped (script-code — tests are the quality gate)"</action>
-      <action>Write the AVFL result to the Dev Agent Record in {{story_file}}: record avfl_result, profile used (N/A — skipped), and timestamp</action>
-      <action>GOTO step 8</action>
-    </check>
 
     <check if="AVFL returns CLEAN">
       <action>Store {{avfl_result}} = "CLEAN"</action>
@@ -183,24 +159,34 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
       <action>Store {{avfl_result}} = "CHECKPOINT_WARNING"</action>
       <action>Write the AVFL result to the Dev Agent Record in {{story_file}}: record avfl_result = CHECKPOINT_WARNING, profile used, and timestamp</action>
       <action>Synthesize findings in plain language — severity indicators (! critical or high, · medium or low), brief descriptions per finding. Do NOT dump raw AVFL JSON.</action>
-      <ask>AVFL found issues in the produced artifact. Address them now before closing, or proceed with known issues documented?</ask>
+      <ask>AVFL found issues in the changeset. Address them now before closing, or proceed with known issues documented?</ask>
     </check>
 
     <check if="AVFL returns GATE_FAILED">
       <action>Store {{avfl_result}} = "GATE_FAILED"</action>
       <action>Write the AVFL result to the Dev Agent Record in {{story_file}}: record avfl_result = GATE_FAILED, profile used, and timestamp</action>
       <action>Synthesize findings in plain language — severity indicators (! critical or high, · medium or low), brief descriptions per finding. Do NOT dump raw AVFL JSON.</action>
-      <output>AVFL GATE FAILED — story cannot proceed. The artifact has defects that must be resolved before closing. Address all findings and re-run AVFL.</output>
+      <output>AVFL GATE FAILED — story cannot proceed. The changeset has defects that must be resolved before closing. Address all findings and re-run AVFL.</output>
       <action>HALT — do not advance to Step 8 until GATE_FAILED findings are resolved and AVFL returns CLEAN or CHECKPOINT_WARNING</action>
     </check>
   </step>
 
   <step n="8" goal="Momentum-specific DoD supplement">
     <action>Load ./references/dod-checklist.md</action>
-    <action>Determine which DoD sections apply based on change types in {{file_list}}</action>
+    <action>Determine which DoD sections apply based on change types in {{file_list}}. A story may match multiple sections — check all that apply.</action>
     <action>Verify each applicable item. Items that bmad-dev-story already checked (tests passing, all tasks [x], File List complete, Dev Agent Record updated, Change Log updated) do not need re-verification — focus on Momentum-specific additions.</action>
 
-    <action>For skill-instruction stories, verify:
+    <action>For code stories (any .sh, .py, .ts, .js, .go, or other executable source in {{file_list}}), verify:
+      - AVFL result is documented (written to Dev Agent Record in Step 7)
+    </action>
+
+    <action>For specification stories (any PRD, architecture doc, story, UX design, research doc, or README in {{file_list}}), verify:
+      - Cross-references to other documents, files, or sections resolve correctly
+      - Document follows the project's established template or format conventions if one exists
+      - AVFL result is documented (written to Dev Agent Record in Step 7)
+    </action>
+
+    <action>For skill-instruction stories (any SKILL.md, workflow.md, or agent definition in {{file_list}}), verify:
       - Evals exist at skills/[name]/evals/ (check if directory has 2+ .md eval files)
       - EDD cycle completed (Dev Agent Record documents that evals were run and results recorded)
       - SKILL.md description is ≤150 characters (count the description field value)
@@ -210,14 +196,14 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
       - AVFL result is documented (written to Dev Agent Record in Step 7)
     </action>
 
-    <action>For rule-hook stories, verify:
+    <action>For rule-hook stories (any .claude/rules/ files or hook config in {{file_list}}), verify:
       - Expected behavior was stated (a Given/result statement is present in the Dev Agent Record)
       - Verification was performed (Dev Agent Record documents how verification was conducted)
       - No duplicate hooks (if modifying settings.json, existing hooks were preserved and new entries merged not appended)
       - Format compliance (rule files follow .claude/rules/ markdown format; hook entries follow Agent Skills hooks schema)
     </action>
 
-    <action>For config-structure stories, verify:
+    <action>For config-structure stories (any JSON, YAML, TOML configs, or version files in {{file_list}}), verify:
       - Any JSON files parse correctly (check that bmad-dev-story's verification noted this)
       - Required fields present (each required field documented in ACs is present with correct type)
       - Path existence (any referenced paths exist after the changes)
