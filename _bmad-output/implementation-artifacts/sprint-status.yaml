@@ -51,6 +51,14 @@ development_status:
   1-5-enforcement-degrades-gracefully-across-tool-tiers: done
   epic-1-retrospective: done
 
+  # Epic 1b: Foundation Fixes
+  epic-1b: in-progress
+  1-6-fix-npx-skills-add-experience: ready-for-dev
+  1-7-acceptance-testing-process-and-standards: ready-for-dev
+  1-8-orchestrator-purity-principle: ready-for-dev
+  1-9-journal-json-jsonl-migration-evaluation: ready-for-dev
+  epic-1b-retrospective: optional
+
   # Epic 2: Stay Oriented with Impetus
   epic-2: in-progress
   2-1-impetus-skill-created-with-correct-persona-and-input-handling: ready-for-dev
@@ -228,3 +236,32 @@ momentum_metadata:
       - "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
       - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
     story_file: "_bmad-output/implementation-artifacts/p1-5-cascade-spec-fatigue-patterns-into-prd-epics-and-stories.md"
+  1-6-fix-npx-skills-add-experience:
+    depends_on:
+      - 1-7-acceptance-testing-process-and-standards
+    touches:
+      - "package.json"
+      - "README.md"
+    story_file: "_bmad-output/implementation-artifacts/1-6-fix-npx-skills-add-experience.md"
+  1-8-orchestrator-purity-principle:
+    depends_on: []
+    touches:
+      - "_bmad-output/planning-artifacts/architecture.md"
+      - "_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md"
+      - "_bmad-output/planning-artifacts/epics.md"
+    story_file: "_bmad-output/implementation-artifacts/1-8-orchestrator-purity-principle.md"
+  1-9-journal-json-jsonl-migration-evaluation:
+    depends_on: []
+    touches:
+      - "_bmad-output/planning-artifacts/architecture.md"
+      - "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
+    story_file: "_bmad-output/implementation-artifacts/1-9-journal-json-jsonl-migration-evaluation.md"
+  1-7-acceptance-testing-process-and-standards:
+    depends_on: []
+    touches:
+      - "docs/process/acceptance-testing-standard.md"
+      - "_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md"
+      - "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
+      - "_bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md"
+      - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
+    story_file: "_bmad-output/implementation-artifacts/1-7-acceptance-testing-process-and-standards.md"
