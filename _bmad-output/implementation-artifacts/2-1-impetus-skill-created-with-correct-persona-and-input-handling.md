@@ -37,6 +37,13 @@ And no agent machinery is visible — no internal names, no model references
 And subagent findings are synthesized by Impetus before presenting (never raw output)
 And when Impetus is uncertain, it acknowledges uncertainty explicitly rather than fabricating confidence
 
+**AC5 — Orchestrator purity constraint:**
+Given the Impetus skill implementation in `skills/momentum/workflow.md`,
+When an architect or developer inspects the workflow,
+Then `workflow.md` contains no code writing, test execution, eval running, code review, or findings generation logic
+And all implementation work is dispatched to purpose-specific subagents (bmad-dev-story for implementation, AVFL for validation, momentum-code-reviewer for review)
+And this constraint is traceable to Architecture Decision 3d (Orchestrator Purity Principle)
+
 **AC4 — Input interpretation:**
 Given a developer enters a number, letter, or natural language phrase,
 When Impetus interprets input (UX-DR16),
