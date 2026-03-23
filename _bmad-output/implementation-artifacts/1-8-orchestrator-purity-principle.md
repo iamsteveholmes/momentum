@@ -1,6 +1,6 @@
 # Story 1.8: Orchestrator Purity Principle
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -36,30 +36,30 @@ Then the file storage convention or flagging mechanism ensures the dev agent can
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add formal Architecture Decision to architecture.md (AC: 1)
-  - [ ] 1.1: Draft Architecture Decision (new Decision number in sequence) titled "Orchestrator Purity Principle"
-  - [ ] 1.2: State the decision: Impetus is a pure orchestrator — it MUST NOT perform development, evaluation, testing, or validation
-  - [ ] 1.3: Enumerate the prohibited roles explicitly: code writing, test execution, eval running, code review, findings generation
-  - [ ] 1.4: State the delegation rule: all non-orchestration work is dispatched to purpose-specific subagents (code-reviewer, dev-story agent, VFL, architecture-guard)
-  - [ ] 1.5: Reference the existing hub-and-spoke voice contract (Decision 3b) as the communication pattern that enforces purity — subagents return structured output; Impetus synthesizes
+- [x] Task 1: Add formal Architecture Decision to architecture.md (AC: 1)
+  - [x] 1.1: Draft Architecture Decision (new Decision number in sequence) titled "Orchestrator Purity Principle"
+  - [x] 1.2: State the decision: Impetus is a pure orchestrator — it MUST NOT perform development, evaluation, testing, or validation
+  - [x] 1.3: Enumerate the prohibited roles explicitly: code writing, test execution, eval running, code review, findings generation
+  - [x] 1.4: State the delegation rule: all non-orchestration work is dispatched to purpose-specific subagents (code-reviewer, dev-story agent, VFL, architecture-guard)
+  - [x] 1.5: Reference the existing hub-and-spoke voice contract (Decision 3b) as the communication pattern that enforces purity — subagents return structured output; Impetus synthesizes
 
-- [ ] Task 2: Evaluate and document context:fork for bmad-dev-story invocation (AC: 2)
-  - [ ] 2.1: Analyze whether `bmad-dev-story` invocation from Impetus should use `context:fork` isolation
-  - [ ] 2.2: Document the tradeoffs: fork provides isolation (dev agent can't pollute orchestrator context) but loses shared state; flat skill in main context allows Impetus to observe progress but risks context contamination
-  - [ ] 2.3: Record the recommendation and rationale within the Architecture Decision from Task 1
-  - [ ] 2.4: If recommending fork, document how Impetus communicates story context to the forked dev agent (file-based handoff vs. parameter passing)
+- [x] Task 2: Evaluate and document context:fork for bmad-dev-story invocation (AC: 2)
+  - [x] 2.1: Analyze whether `bmad-dev-story` invocation from Impetus should use `context:fork` isolation
+  - [x] 2.2: Document the tradeoffs: fork provides isolation (dev agent can't pollute orchestrator context) but loses shared state; flat skill in main context allows Impetus to observe progress but risks context contamination
+  - [x] 2.3: Record the recommendation and rationale within the Architecture Decision from Task 1
+  - [x] 2.4: If recommending fork, document how Impetus communicates story context to the forked dev agent (file-based handoff vs. parameter passing)
 
-- [ ] Task 3: Add orchestrator purity constraint ACs to Story 2.1 (AC: 3)
-  - [ ] 3.1: Read the current Story 2.1 file (`_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md`)
-  - [ ] 3.2: Add a new AC (AC5 or next available number) that enforces orchestrator purity: Impetus must not contain any development, evaluation, testing, or validation logic
-  - [ ] 3.3: Add traceability reference back to the Architecture Decision created in Task 1
-  - [ ] 3.4: Ensure the constraint AC is testable — it should be verifiable by inspecting `skills/momentum/workflow.md` for absence of prohibited behaviors
+- [x] Task 3: Add orchestrator purity constraint ACs to Story 2.1 (AC: 3)
+  - [x] 3.1: Read the current Story 2.1 file (`_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md`)
+  - [x] 3.2: Add a new AC (AC5 or next available number) that enforces orchestrator purity: Impetus must not contain any development, evaluation, testing, or validation logic
+  - [x] 3.3: Add traceability reference back to the Architecture Decision created in Task 1
+  - [x] 3.4: Ensure the constraint AC is testable — it should be verifiable by inspecting `skills/momentum/workflow.md` for absence of prohibited behaviors
 
-- [ ] Task 4: Define verification artifact exclusion convention (AC: 4)
-  - [ ] 4.1: Define the file storage convention for acceptance tests and evals (e.g., `evals/` directories within skill packages, `tests/acceptance/` at project level)
-  - [ ] 4.2: Document how the dev agent should exclude these paths — either via `.claude/rules/` exclusion rule, `allowed-tools` path restriction, or explicit instruction in the dev-story workflow
-  - [ ] 4.3: Add the convention to the Architecture Decision from Task 1
-  - [ ] 4.4: Ensure the convention is consistent with the existing PreToolUse file protection pattern (FR19, FR21) that blocks modifications to acceptance test directories
+- [x] Task 4: Define verification artifact exclusion convention (AC: 4)
+  - [x] 4.1: Define the file storage convention for acceptance tests and evals (e.g., `evals/` directories within skill packages, `tests/acceptance/` at project level)
+  - [x] 4.2: Document how the dev agent should exclude these paths — either via `.claude/rules/` exclusion rule, `allowed-tools` path restriction, or explicit instruction in the dev-story workflow
+  - [x] 4.3: Add the convention to the Architecture Decision from Task 1
+  - [x] 4.4: Ensure the convention is consistent with the existing PreToolUse file protection pattern (FR19, FR21) that blocks modifications to acceptance test directories
 
 ## Dev Notes
 
@@ -143,8 +143,23 @@ All tasks in this story produce specification and architecture artifacts (markdo
 
 ### Agent Model Used
 
+claude-sonnet-4-6[1m]
+
 ### Debug Log References
+
+N/A — docs story, no test execution
 
 ### Completion Notes List
 
+- Added **Decision 3d — Orchestrator Purity Principle** to `_bmad-output/planning-artifacts/architecture.md` within the "Agent Communication & Orchestration" section, after Decision 3c. Decision numbered 3d to extend the communication/orchestration group (3a=VFL execution, 3b=hub-and-spoke voice, 3c=MCP servers, 3d=purity constraint).
+- Decision 3d covers: prohibited roles for Impetus, delegation rule (dispatch to purpose-specific subagents), rationale (producer-verifier trust), traceability to Decisions 3a/3b/Subsystem 5.
+- Decision 3d includes **context:fork evaluation** for `bmad-dev-story`: recommendation is flat skill invocation (no fork). Context:fork and productive waiting are orthogonal (per A-1 resolution), but the checkpoint/resume mechanism for mid-story progress updates is unvalidated in forked context. Purity achieved via behavioral discipline (dispatch only), not structural isolation.
+- Decision 3d includes **verification artifact exclusion convention**: `skills/[name]/evals/` for skill evals, `tests/acceptance/` for project-level acceptance tests; exclusion enforced by workflow directive in `bmad-dev-story` now, hooks provide deterministic enforcement once Story 3.2 is implemented.
+- Added **AC5 — Orchestrator purity constraint** to Story 2.1 with traceability reference to Decision 3d. AC is testable by inspecting `skills/momentum/workflow.md` for absence of prohibited behaviors.
+- Verification: all four ACs satisfied by inspection (docs story — no executable code produced).
+- **AVFL checkpoint** (2026-03-22): 3-lens Enumerator validation (structural, accuracy, coherence). Pre-fix score: 83/100. 7 findings (1 high, 3 medium, 3 low). All fixed in 1 iteration. Post-fix estimated score: 96/100. Key fixes: corrected "5b/Principle 5" → "Subsystem 5" cross-references, reframed context:fork/productive waiting argument per A-1 resolution, standardized AVFL naming, added Story 4.3 to spike revision condition.
+
 ### File List
+
+_bmad-output/planning-artifacts/architecture.md
+_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md

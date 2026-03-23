@@ -327,6 +327,68 @@ Confidence weighting: low-confidence results surface as questions to the user ra
 | `@rlabs-inc/gemini-mcp` | Growth | Multi-model deep research |
 | GPT deep research MCP | Growth | Cross-model verification |
 
+**Decision 3d — Orchestrator Purity Principle**
+
+> _[Added 2026-03-22: Formalizes what Decisions 3a, 3b, and Subsystem 5 (Subagent Composition) imply but never explicitly constrain.]_
+
+Impetus is a **pure orchestrator**. It MUST NOT perform development, evaluation, testing, or validation itself.
+
+**Prohibited roles for Impetus — explicitly:**
+- Code writing (any file creation or modification that constitutes implementation)
+- Test execution (running test suites, evaluating test outcomes)
+- Eval running (executing or judging evals for any skill)
+- Code review (adversarial inspection of implementation artifacts)
+- Findings generation (producing quality findings about implementation output)
+
+**Delegation rule:**
+All non-orchestration work is dispatched to purpose-specific subagents:
+- Implementation → `bmad-dev-story` (dispatched per story, returns structured completion signal)
+- Quality validation → AVFL skill (dispatched with artifact + source material, returns pass/fail signal)
+- Code review → `momentum-code-reviewer` (context:fork subagent, returns findings JSON)
+- Architecture drift → `momentum-architecture-guard` (context:fork subagent, returns drift report JSON)
+
+Impetus's role is to **dispatch, synthesize, and advance** — never to produce.
+
+**Rationale:** Purity is what makes the orchestrator trustworthy as a synthesis layer. If Impetus both produces and synthesizes output, the producer-verifier isolation (established in subagent composition) breaks down. Impetus must remain a clean conduit: it routes work to producers, receives structured results, and presents synthesized output in its own voice (Decision 3b).
+
+**Traceability:** Formalization of the producer-verifier separation implicit in Decision 3a (VFL orchestration), Decision 3b (hub-and-spoke voice contract), and Subsystem 5 (Subagent Composition). Triggered by Epic 1 retrospective Action Item #7 (`_bmad-output/implementation-artifacts/epic-1-retro-2026-03-22.md`).
+
+---
+
+**context:fork evaluation for `bmad-dev-story` invocation:**
+
+_The question:_ Should Impetus invoke `bmad-dev-story` using `context:fork` isolation?
+
+**Arguments for context:fork:**
+- Isolation prevents dev agent's implementation details from accumulating in orchestrator context
+- Consistent with code-reviewer / architecture-guard pattern (both use context:fork for producer-verifier separation)
+- Long dev-story sessions produce many file changes — isolation limits context contamination risk
+
+**Arguments against context:fork:**
+- While context:fork and productive waiting are orthogonal (resolved in A-1), the specific checkpoint/resume communication mechanism needed for mid-story progress updates during long dev sessions has not been confirmed as available in a forked context — the productive waiting spike (Decision 3a implementation note) must validate this before relying on it
+- Context handoff requires file-based parameter passing (story file path) — already the convention, so no additional overhead
+- Orchestrator purity does not require context isolation — it requires role separation. Impetus maintaining purity while in the same context is a behavioral commitment, not a structural one; Impetus achieves purity by dispatching and doing nothing else during the dev session
+
+**Recommendation: flat skill invocation (no context:fork) for `bmad-dev-story`**
+
+Rationale: productive waiting (Decision 4c) is a first-class UX requirement that depends on Impetus maintaining an active dialogue channel. Context:fork would make Impetus go silent during the longest and most attention-demanding phase of the practice cycle. The orchestrator purity constraint is satisfied behaviorally: Impetus dispatches the story file path, receives the structured completion signal, and takes no other action — it does not write code, run tests, or generate findings during the session. Purity via behavioral discipline, not structural isolation.
+
+If the productive waiting spike (Decision 3a implementation note) reveals that background agent communication requires context:fork, this recommendation will be revised before Stories 2.4 and 4.3 begin.
+
+---
+
+**Verification artifact exclusion convention:**
+
+Acceptance test and eval files must be excluded from the dev agent's implementation context. The convention:
+
+- **Storage locations:**
+  - Skill evals: `skills/[skill-name]/evals/` (each skill carries its own eval suite)
+  - Project-level acceptance tests: `tests/acceptance/` (top-level, cross-skill behavioral tests)
+
+- **Exclusion mechanism:** Explicit instruction in the `bmad-dev-story` workflow — the dev agent MUST NOT read or modify files in `evals/` directories or `tests/acceptance/` during implementation. This is a workflow directive, not a file protection hook (file protection hooks are Story 3.2, FR19/FR21). The workflow directive establishes the convention now; hooks will provide deterministic enforcement once Story 3.2 is implemented.
+
+- **Consistency with existing pattern:** PreToolUse file protection (Decision 2a, FR19/FR21) will block dev agent writes to acceptance test directories once Story 3.2 is implemented. This convention predates that enforcement and establishes the same boundary as intent.
+
 ---
 
 ### Workflow & UX Architecture
