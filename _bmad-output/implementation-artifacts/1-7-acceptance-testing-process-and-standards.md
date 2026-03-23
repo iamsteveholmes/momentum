@@ -173,6 +173,33 @@ All tasks in this story produce process documentation and story file updates. No
 
 ---
 
+## Acceptance Test Plan
+
+**Story type:** process-doc
+**Verification method:** Document review — confirm document satisfies all ACs by inspection and cross-reference
+**Test artifacts location:** N/A (document review, no test artifacts)
+**Acceptance tester:** unassigned
+
+### Test Scenarios
+
+1. **AC1 verification:** Read Section 2 of `docs/process/acceptance-testing-standard.md`. Confirm it contains a story type classification table mapping at minimum: skill-instruction → EDD, config-structure → execution test, install/deploy → end-to-end test, rule/hook → behavioral trigger test. Fail if any of the four required mappings is absent or incorrect.
+
+2. **AC2 verification:** Read Section 3. Confirm acceptance tester role is defined as structurally separate from developer. Confirm the three developer prohibitions (author, read, execute). Confirm enforcement mechanism is specified (write protection + read protection + session isolation). Fail if role separation is advisory rather than structural.
+
+3. **AC3 verification:** Read Section 4. Confirm three Team Agreements are codified as process constraints: (1) E2E mandatory for install/deploy, (2) role separation active immediately, (3) every story includes ATP section. Fail if any agreement is missing or described as a guideline rather than a constraint.
+
+4. **AC4 verification:** Open each Epic 2 story file (2-1 through 2-4). Confirm each contains an Acceptance Test Plan section. Confirm each identifies story type and verification method from the classification table. Fail if any file is missing the section or has incorrect classification.
+
+### Acceptance Gate
+
+This story passes acceptance when:
+- AC1: Classification table present with all four required type-to-method mappings
+- AC2: Role separation defined as structural with three developer prohibitions and enforcement mechanism
+- AC3: All three Team Agreements codified as binding constraints
+- AC4: All four Epic 2 story files contain Acceptance Test Plan sections with correct type and method
+
+---
+
 ## Dev Agent Record
 
 ### Agent Model Used

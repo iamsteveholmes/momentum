@@ -33,7 +33,7 @@ Every story is classified by its change type. The classification determines the 
 
 ### Verification Method Definitions
 
-**EDD (Example-Driven Development) — adversarial eval authoring:**
+**EDD (Eval-Driven Development) — adversarial eval authoring:**
 The acceptance tester authors eval scenarios that attempt to demonstrate failure in the skill. Evals are written before the acceptance tester reviews the implementation. The skill passes acceptance when it handles adversarial inputs correctly.
 
 **Execution test:**
@@ -79,8 +79,8 @@ This is not a theoretical risk. The Epic 1 retrospective identified developer-au
 
 Enforcement is structural, not conventional.
 
-**Write protection (existing):**
-The PreToolUse hook blocks writes to `tests/acceptance/` and `**/*.feature`. The dev agent cannot create or modify acceptance tests during implementation. This boundary is enforced by the hook, not by developer discipline.
+**Write protection (planned — Epic 3, Story 3.2):**
+Architecture Decision 2a designates `tests/acceptance/` and `**/*.feature` as immutable — agents must not modify them to make code pass. The PreToolUse hook that enforces this boundary ships in Story 3.2. Until then, write protection is convention-based: the dev agent must not create or modify acceptance test files during implementation.
 
 **Read protection (process layer):**
 EDD evals live under `skills/[name]/evals/`. The dev agent must not load files from `evals/` or `tests/acceptance/` during implementation. This is enforced by convention at MVP (the story file explicitly lists what the dev agent reads in Dev Notes), with a path to PreToolUse read-blocking when hook infrastructure supports it (Epic 3).
@@ -173,7 +173,7 @@ This placement ensures:
 | When | Who authors |
 |---|---|
 | Story created via `momentum-create-story` | Story creator (draft) |
-| Epic 2 audit (this story) | Developer authoring this story (draft) |
+| Retroactive audit of existing stories | Developer performing the audit (draft) |
 | Before acceptance testing begins | Acceptance tester reviews and may revise |
 | After revision | Acceptance tester owns the plan |
 
