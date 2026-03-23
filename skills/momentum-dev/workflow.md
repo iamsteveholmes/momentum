@@ -245,6 +245,8 @@ Confirm to proceed with merge, or review the diff first.</output>
     <check if="user confirms merge">
       <action>Run: `git merge story/{{story_key}}`</action>
       <check if="merge succeeds cleanly">
+        <action>Run: `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{story_key}} done`
+        Post-merge reconciliation: the merge may have brought in stale sprint-status.yaml values from the story branch. Re-running the status update ensures the story's done status survives the merge.</action>
         <action>Run: `git worktree remove --force .worktrees/story-{{story_key}}`
 Note: Using --force because the merge has already succeeded — all work is safely on {{target_branch}}. Any uncommitted files in the worktree are discarded.</action>
         <action>Run: `git branch -d story/{{story_key}}`</action>

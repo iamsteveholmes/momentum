@@ -52,11 +52,11 @@ development_status:
   epic-1-retrospective: done
 
   # Epic 1b: Foundation Fixes
-  epic-1b: in-progress
+  epic-1b: done
   1-6-fix-npx-skills-add-experience: done
   1-7-acceptance-testing-process-and-standards: done
-  1-8-orchestrator-purity-principle: ready-for-dev
-  1-9-journal-json-jsonl-migration-evaluation: ready-for-dev
+  1-8-orchestrator-purity-principle: done
+  1-9-journal-json-jsonl-migration-evaluation: done
   epic-1b-retrospective: optional
 
   # Epic 2: Stay Oriented with Impetus
