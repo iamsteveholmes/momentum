@@ -10,11 +10,14 @@ Read each task in the story's Tasks/Subtasks section. Apply the signals below to
 | `.sh`, `.py`, `.ts`, `.js`, `scripts/`, `bin/`, executable, Python, bash, TypeScript | `script-code` |
 | `.claude/rules/`, `settings.json`, `hooks`, hook configuration, frontmatter config | `rule-hook` |
 | JSON config, directory structure, `momentum-versions.json`, `installed.json`, `mcp-config.json`, `hooks-config.json`, `version.md` | `config-structure` |
+| `docs/`, `_bmad-output/`, PRD, architecture, epics, stories, UX design, research, README, `*.md` in planning/output directories | `specification` |
 
 When a task mentions creating a new skill package (e.g., "Create `skills/momentum-foo/`"), classify all of the following within that task:
 - The SKILL.md and workflow.md files → `skill-instruction`
 - Any scripts/ subdir → `script-code`
 - Any references/ or assets/ content → `skill-instruction`
+
+**Disambiguation — `.md` files:** Files inside `skills/*/` (SKILL.md, workflow.md, references/) are `skill-instruction`. Files inside `.claude/rules/` are `rule-hook`. Files in `docs/`, `_bmad-output/`, or the project root (README, architecture docs, PRDs) are `specification`.
 
 ---
 
@@ -158,6 +161,30 @@ Config and structure changes need no tests or evals. Implement directly and veri
 - [ ] All required fields present with correct types
 - [ ] All referenced paths exist after creation
 - [ ] Changes documented in Dev Agent Record
+```
+
+---
+
+### specification Template
+
+Include when any task involves writing or updating documentation, planning artifacts, or specification files.
+
+```markdown
+### specification Tasks: Direct Authoring with Cross-Reference Verification
+
+Specification and documentation changes are validated by AVFL against their upstream source (epic, PRD, or parent spec) — not by tests or evals. Write directly and verify by inspection:
+
+1. **Write or update the spec** per the story's acceptance criteria
+2. **Verify cross-references:** All references to other documents, files, sections, or identifiers must resolve correctly. Check links, path references, and section names.
+3. **Verify format compliance:** If the project has an established template or convention for this document type (e.g., ADR format, story frontmatter schema), confirm the output follows it.
+4. **Document** what was written or updated in the Dev Agent Record
+
+**No tests or evals required** for specification changes. AVFL checkpoint (run by momentum-dev) validates the spec against acceptance criteria.
+
+**Additional DoD items for specification tasks:**
+- [ ] All cross-references to other documents, files, or sections resolve correctly
+- [ ] Document follows project template/format conventions if one exists
+- [ ] AVFL checkpoint result documented (momentum-dev runs this automatically)
 ```
 
 ---

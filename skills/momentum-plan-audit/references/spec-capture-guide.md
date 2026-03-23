@@ -115,6 +115,7 @@ Use the plan's Files to Create/Modify table as DoD items:
 - `.sh`, `.py`, `.ts`, `scripts/`, executables → `script-code`
 - `.claude/rules/`, `settings.json`, hooks config → `rule-hook`
 - JSON config, version files, directory structure → `config-structure`
+- `docs/`, `_bmad-output/`, PRD, architecture, research, README → `specification`
 }
 
 ---

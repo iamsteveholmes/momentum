@@ -45,7 +45,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   <step n="3" goal="Classify change types from story tasks">
     <action>Read the Tasks/Subtasks section of {{story_file}}</action>
     <action>Load ./references/change-types.md (used for both detection heuristics here and injection templates in Step 4)</action>
-    <action>For each task, classify it as one of: `skill-instruction`, `script-code`, `rule-hook`, or `config-structure` — per the signals in change-types.md. If a task matches none of the four detection signals, tag it as `unclassified` and note "No Momentum-specific guidance for this task — standard bmad-dev-story DoD applies."</action>
+    <action>For each task, classify it as one of: `skill-instruction`, `script-code`, `rule-hook`, `config-structure`, or `specification` — per the signals in change-types.md. If a task matches none of the five detection signals, tag it as `unclassified` and note "No Momentum-specific guidance for this task — standard bmad-dev-story DoD applies."</action>
     <action>Produce a classification list: each task tagged with its change type (or `unclassified`). A story may contain multiple types.</action>
     <action>Store {{classification_list}}: the classification list produced above, with each task number/name and its assigned change type</action>
     <action>Store {{change_types_summary}}: e.g., "3 skill-instruction tasks, 1 config-structure task"</action>
@@ -67,7 +67,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 
     <critical>The injected section MUST include:
       - Change type classification per task (exact task numbers and names)
-      - Implementation approach per type (EDD steps for skill-instruction; TDD delegation for script-code; functional verification for rule-hook; direct+inspect for config-structure)
+      - Implementation approach per type (EDD steps for skill-instruction; TDD delegation for script-code; functional verification for rule-hook; direct+inspect for config-structure; direct authoring with cross-reference verification for specification)
       - NFR compliance requirements for any skill-instruction tasks
       - DoD additions specific to this story's change types
     </critical>
