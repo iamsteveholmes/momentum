@@ -218,11 +218,17 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Staleness detection: compare stored hash in `derives_from` against current `git hash-object`
 - One-hop propagation only; human/Impetus-gated at each level
 
-**Decision 1b — Session Journal: JSON with Markdown View**
-- Location: `.claude/momentum/journal.json`
-- Impetus reads/writes JSON for reliable structured updates
-- Auto-generated `.claude/momentum/journal-view.md` for human readability
+**Decision 1b — Session Journal: JSONL with Markdown View**
+- Location: `.claude/momentum/journal.jsonl`
+- Format: JSONL — one JSON object per line, append-only. Each write appends a new state entry for a thread.
+- Current state of a thread = last entry in the file with that `thread_id`
+- Auto-generated `.claude/momentum/journal-view.md` for human readability (regenerated after every append)
 - Tracks: active story, current phase, last completed action, open threads
+- Rationale (concurrency safety): same argument as Decision 1c — multiple Claude Code sessions can safely append concurrently without file locking. POSIX atomic append for lines under pipe buffer size. JSON read-modify-write is racy under multi-tab access (lost writes, corruption on crash, torn reads).
+- Rationale (query patterns): current-state reconstruction (read all lines, group by `thread_id`, take last entry) is a one-time cost at session start — not a hot path. `journal-view.md` provides the pre-built snapshot for human consumption.
+- Rationale (implementation complexity): append-only is simpler than read-parse-modify-serialize-write. No file locking logic required in instruction-based workflows.
+- Rationale (human readability): raw JSONL is less readable than JSON, but `journal-view.md` auto-generation already provides the human-readable layer.
+- Evaluated in Story 1.9.
 
 **Decision 1c — Findings Ledger: JSONL (Global)**
 - Location: `~/.claude/momentum/findings-ledger.jsonl` (global, not per-project)
@@ -868,7 +874,7 @@ momentum/                                    ← Root
     │   └── momentum-dev-story/
     ├── settings.json                        ← Always-on hooks (written by Impetus on first run)
     └── momentum/                            ← Per-project Momentum state
-        ├── journal.json                      ← Session journal (Impetus reads/writes)
+        ├── journal.jsonl                     ← Session journal (JSONL append-only, Impetus reads/writes)
         ├── journal-view.md                   ← Human-readable view (auto-generated)
         └── installed.json                   ← Install/upgrade state (version + per-component hashes)
 ```
@@ -881,7 +887,7 @@ momentum/                                    ← Root
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | journal.json, specs (read-only), findings-ledger.jsonl | journal.json, journal-view.md |
+| Impetus | journal.jsonl, specs (read-only), findings-ledger.jsonl | journal.jsonl, journal-view.md |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
 | VFL | Any artifact being validated, source material | consolidated findings report |
@@ -917,7 +923,7 @@ momentum/                                    ← Root
 | Global rules | `skills/momentum/references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `skills/momentum/references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
-| Session journal | (runtime) | `.claude/momentum/journal.json` |
+| Session journal | (runtime) | `.claude/momentum/journal.jsonl` |
 | Findings ledger | (runtime) | `~/.claude/momentum/findings-ledger.jsonl` (global) |
 | Install state | (runtime) | `.claude/momentum/installed.json` |
 
