@@ -131,6 +131,8 @@ The user can say no or request changes. Wait for explicit approval.
 - `git stash drop`
 - Any command that discards uncommitted work or rewrites published history
 
+**Exception:** Workflow-directed rebases on local-only branches (e.g., momentum-dev Step 9 rebasing a story branch before merge) are authorized by the workflow itself. These branches are never pushed, so rebase carries no history-rewriting risk.
+
 **Free to run without asking:**
 - `git status`, `git log`, `git diff`, `git branch`, `git show`
 - `git stash` (preserves work, doesn't destroy it)
