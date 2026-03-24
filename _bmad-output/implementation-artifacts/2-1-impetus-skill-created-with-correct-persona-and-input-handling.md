@@ -1,6 +1,6 @@
 # Story 2.1: Impetus Skill Created with Correct Persona and Input Handling
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -55,29 +55,29 @@ And ambiguous input triggers exactly one clarifying question (never two)
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Update `skills/momentum/SKILL.md` — correct frontmatter for persona and model routing (AC: 1)
-  - [ ] 1.1: Update `model:` to `claude-sonnet-4-6` (Sonnet-tier, per model routing guide direction)
-  - [ ] 1.2: Update `effort:` to `high` (Impetus = orchestrator producing outputs without automated validation — elevated effort per FR23)
-  - [ ] 1.3: Create `skills/momentum/references/model-routing-guide.md` as a stub (Story 3.5 fills it out; this stub documents the current decision: Sonnet + high for Impetus)
-  - [ ] 1.4: Verify description is ≤150 characters — count precisely
+- [x] Task 1: Update `skills/momentum/SKILL.md` — correct frontmatter for persona and model routing (AC: 1)
+  - [x] 1.1: Update `model:` to `claude-sonnet-4-6` (Sonnet-tier, per model routing guide direction)
+  - [x] 1.2: Update `effort:` to `high` (Impetus = orchestrator producing outputs without automated validation — elevated effort per FR23)
+  - [x] 1.3: Create `skills/momentum/references/model-routing-guide.md` as a stub (Story 3.5 fills it out; this stub documents the current decision: Sonnet + high for Impetus)
+  - [x] 1.4: Verify description is ≤150 characters — count precisely
 
-- [ ] Task 2: Implement the Impetus menu in `skills/momentum/workflow.md` — normal session path (AC: 2)
-  - [ ] 2.1: Add the normal-session step (after install/upgrade routing passes): display numbered menu of all practice workflows
-  - [ ] 2.2: Apply Response Architecture Pattern: orientation line → menu (substantive content) → transition signal → user control
-  - [ ] 2.3: Menu items must cover all currently available workflows: install setup, story creation, story development, plan audit, VFL validation (stubs for later epics get placeholder entries)
-  - [ ] 2.4: Ensure first response is immediate — Impetus speaks first, never waits for the user to ask
+- [x] Task 2: Implement the Impetus menu in `skills/momentum/workflow.md` — normal session path (AC: 2)
+  - [x] 2.1: Add the normal-session step (after install/upgrade routing passes): display numbered menu of all practice workflows
+  - [x] 2.2: Apply Response Architecture Pattern: orientation line → menu (substantive content) → transition signal → user control
+  - [x] 2.3: Menu items must cover all currently available workflows: install setup, story creation, story development, plan audit, VFL validation (stubs for later epics get placeholder entries)
+  - [x] 2.4: Ensure first response is immediate — Impetus speaks first, never waits for the user to ask
 
-- [ ] Task 3: Implement Impetus voice rules in `skills/momentum/workflow.md` (AC: 3)
-  - [ ] 3.1: Add explicit instructions banning: "Great!", "Excellent!", "Sure!", "Step N/M", raw subagent output, model/agent names
-  - [ ] 3.2: Add instruction: when uncertain, surface the gap explicitly — never fabricate confidence
-  - [ ] 3.3: Add instruction: synthesize subagent output into Impetus's voice before presenting (hub-and-spoke contract)
+- [x] Task 3: Implement Impetus voice rules in `skills/momentum/workflow.md` (AC: 3)
+  - [x] 3.1: Add explicit instructions banning: "Great!", "Excellent!", "Sure!", "Step N/M", raw subagent output, model/agent names
+  - [x] 3.2: Add instruction: when uncertain, surface the gap explicitly — never fabricate confidence
+  - [x] 3.3: Add instruction: synthesize subagent output into Impetus's voice before presenting (hub-and-spoke contract)
 
-- [ ] Task 4: Implement input interpretation in `skills/momentum/workflow.md` (AC: 5)
-  - [ ] 4.1: Implement number → select item (no confirmation needed)
-  - [ ] 4.2: Implement letter command case-insensitivity
-  - [ ] 4.3: Implement fuzzy match: "continue" / "yes" / "go ahead" / "proceed" → C
-  - [ ] 4.4: Implement natural language: extract intent, confirm before acting ("Starting X — correct?")
-  - [ ] 4.5: Implement ambiguous input: exactly one clarifying question (never two), presented as numbered options
+- [x] Task 4: Implement input interpretation in `skills/momentum/workflow.md` (AC: 5)
+  - [x] 4.1: Implement number → select item (no confirmation needed)
+  - [x] 4.2: Implement letter command case-insensitivity
+  - [x] 4.3: Implement fuzzy match: "continue" / "yes" / "go ahead" / "proceed" → C
+  - [x] 4.4: Implement natural language: extract intent, confirm before acting ("Starting X — correct?")
+  - [x] 4.5: Implement ambiguous input: exactly one clarifying question (never two), presented as numbered options
 
 ## Dev Notes
 
@@ -331,10 +331,29 @@ This story passes acceptance when:
 
 ### Agent Model Used
 
-claude-sonnet-4-6[1m]
+claude-opus-4-6[1m]
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Task 1: Updated SKILL.md frontmatter — model changed from claude-opus-4-6 to claude-sonnet-4-6, effort from medium to high. Description verified at 129 characters (under 150 limit). Created model-routing-guide.md stub with current assignments table.
+- Task 2: Replaced placeholder Step 7 in workflow.md with full normal-session menu following Response Architecture Pattern (orientation → substantive → transition → user control). Menu covers 6 workflows: story creation, story development, plan review, quality validation, spec provenance audit, session threads. Impetus speaks first.
+- Task 3: Added voice rules as `<rules scope="voice">` block in workflow.md. Bans generic praise, step counts, agent/model names. Requires subagent output synthesis, explicit agency return, and honest uncertainty surfacing. Symbol vocabulary defined.
+- Task 4: Added input interpretation rules as `<rules scope="input-interpretation">` block in workflow.md. Covers: number selection (no confirm), case-insensitive letters, fuzzy continue matching, natural language intent extraction with confirmation, exactly-one-question ambiguity handling.
+- EDD: 5 behavioral evals written in skills/momentum/evals/ before implementation. All eval behaviors confirmed by inspection of implemented rules.
+
 ### File List
+
+- skills/momentum/SKILL.md — MODIFIED (model + effort frontmatter)
+- skills/momentum/workflow.md — MODIFIED (normal session menu, voice rules, input interpretation)
+- skills/momentum/references/model-routing-guide.md — NEW (model routing stub)
+- skills/momentum/evals/eval-menu-first-response.md — NEW (EDD eval)
+- skills/momentum/evals/eval-voice-no-generic-praise.md — NEW (EDD eval)
+- skills/momentum/evals/eval-input-fuzzy-match.md — NEW (EDD eval)
+- skills/momentum/evals/eval-input-natural-language-confirm.md — NEW (EDD eval)
+- skills/momentum/evals/eval-ambiguous-one-question.md — NEW (EDD eval)
+
+### Change Log
+
+- 2026-03-23: Implemented Story 2.1 — Impetus skill persona, menu, voice rules, and input interpretation
