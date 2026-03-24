@@ -201,11 +201,15 @@
     <action>GOTO step 7 (session orientation — degraded)</action>
   </step>
 
-  <step n="7" goal="Normal session — menu and orientation">
+  <step n="7" goal="Session orientation — read journal and dispatch">
     <action>Load `${CLAUDE_SKILL_DIR}/references/practice-overview.md` for context</action>
+    <action>Read `.claude/momentum/journal.jsonl` (if it exists). Parse per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`: read all lines, group by thread_id, take last entry per thread_id to get current state. Filter for `status: "open"`.</action>
 
-    <!-- Response Architecture Pattern (UX-DR15): orientation → substantive → transition → user control -->
-    <output>
+    <check if="journal.jsonl does not exist OR has zero open threads">
+      <action>Skip journal display entirely — no mention of threads or journal</action>
+      <!-- AC3: transition directly to Story 2.1 menu (orientation → numbered menu → user control) -->
+      <!-- Install/upgrade is NOT in the menu — handled by startup routing (Steps 1, 2, 9) -->
+      <output>
 You're set up and ready.
 
 Here's what I can help with:
@@ -218,11 +222,112 @@ Here's what I can help with:
   6. Show session threads
 
 What would you like to work on?
+      </output>
+    </check>
+
+    <check if="one or more open threads exist">
+      <action>GOTO step 11 (Session Journal Display)</action>
+    </check>
+  </step>
+
+  <!-- Session Journal Display and Thread Management (Story 2.2) -->
+
+  <step n="11" goal="Session Journal Display — show open threads">
+    <action>Sort open threads by `last_active` descending (most recent first)</action>
+    <action>For each thread, compute elapsed time since `last_active` (e.g., "2h ago", "yesterday", "5d ago")</action>
+    <output>
+  {{thread_count}} threads in progress:
+
+    1.  {{thread_1.context_summary_short}}   {{thread_1.phase}}   {{thread_1.elapsed}}
+    2.  {{thread_2.context_summary_short}}   {{thread_2.phase}}   {{thread_2.elapsed}}
+    [... one line per open thread ...]
+
+  Continue (1/2/...) or tell me what you need?
     </output>
 
-    <!-- Impetus speaks first — developer should never need to prompt for the menu -->
-    <!-- Install/upgrade is NOT in the menu — it is handled automatically by startup routing (Steps 1, 2, 9). If versions are behind, the developer never reaches this step; they get the upgrade prompt first. -->
-    <note>This step is the "normal session" destination: versions match, setup complete, no upgrade needed. Full session orientation (journal threads, sprint status) is Story 2.2 scope — when available, session orientation runs before this menu.</note>
+    <action>GOTO step 12 (thread hygiene checks)</action>
+  </step>
+
+  <step n="12" goal="Thread hygiene — concurrent, dormant, unwieldy, dependencies">
+    <!-- Multi-tab concurrent work detection (AC4) -->
+    <action>For each open thread: if `last_active` is within the last 30 minutes, flag it</action>
+    <check if="any thread was active within 30 minutes">
+      <output>
+  !  Thread "{{thread.context_summary_short}}" appears active in another tab ({{minutes}} minutes ago).
+     Opening here may cause conflicts. Proceed anyway?
+      </output>
+      <note>Warn, never block — developer decides. If developer proceeds on same story, confirm before starting a competing thread.</note>
+    </check>
+
+    <!-- Dormant thread hygiene (AC5) -->
+    <action>For each open thread: if `last_active` is more than 3 days ago, surface it</action>
+    <check if="any thread is dormant (>3 days inactive)">
+      <output>
+  {{thread.context_summary}} — {{days}} days inactive.
+  Close this thread? [Y] Yes · [N] Keep open
+      </output>
+      <note>One confirmation per dormant thread. If developer confirms: append a new entry to journal.jsonl with same thread_id and `status: "closed"`. Then regenerate journal-view.md.</note>
+    </check>
+
+    <!-- Dependency-satisfied notification (AC6) -->
+    <action>For each open thread with `depends_on_thread` set: check if the depended-on thread has `status: "closed"`</action>
+    <check if="any dependency is now satisfied">
+      <output>
+  The work "{{depended_thread.context_summary_short}}" that thread "{{waiting_thread.context_summary_short}}" was waiting on is complete — ready to continue?
+      </output>
+      <note>Developer decides whether to activate the waiting thread.</note>
+    </check>
+
+    <!-- Unwieldy journal triage (AC7) -->
+    <check if="more than 5 open threads">
+      <output>
+  !  {{open_count}} open threads — consider a quick triage before starting new work.
+  I'll surface each with status and age. Close any that are stale?
+      </output>
+      <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then append closed entry to journal.jsonl.</note>
+    </check>
+
+    <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
+
+    <check if="developer selects a thread by number or says 'continue'">
+      <action>GOTO step 13 (workflow resumability)</action>
+    </check>
+    <check if="developer requests new work or something not in the journal">
+      <note>Proceed to normal session flow — developer has oriented and chosen to start fresh work.</note>
+    </check>
+  </step>
+
+  <step n="13" goal="Workflow resumability — re-orient and resume selected thread">
+    <action>Read selected thread's `current_step`, `last_action`, `context_summary`, and `phase`</action>
+    <output>
+  {{thread.context_summary}}.
+
+  Continue from here, or restart this step?
+    </output>
+    <ask>Continue or restart?</ask>
+
+    <check if="developer chooses continue">
+      <action>Resume workflow at `current_step` — proceed with the next action in that workflow phase</action>
+      <action>Update the thread's `last_active` timestamp by appending a new journal entry</action>
+      <action>Regenerate `.claude/momentum/journal-view.md`</action>
+    </check>
+    <check if="developer chooses restart">
+      <action>Reset to the beginning of the current phase — append a new journal entry with `current_step` set to the phase start</action>
+      <action>Update `last_active` timestamp</action>
+      <action>Regenerate `.claude/momentum/journal-view.md`</action>
+      <action>Begin the phase from its first step</action>
+    </check>
+  </step>
+
+  <step n="14" goal="Journal write and view regeneration">
+    <note>This step describes the journal write protocol invoked whenever any workflow step needs to update journal state. It is not reached by linear flow — it is a shared procedure.</note>
+    <action>Append a new JSON line to `.claude/momentum/journal.jsonl` with all required fields per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`</action>
+    <action>After append, regenerate `.claude/momentum/journal-view.md`:
+      - Read all journal entries
+      - Reconstruct current state per thread_id (last entry wins)
+      - Render a markdown table with columns: Thread ID, Story, Phase, Last Action, Last Active, Status
+      - Include all open threads and threads closed within the last 7 days
+      - Write to `.claude/momentum/journal-view.md` (overwrite)</action>
   </step>
 
   <!-- ================================================================== -->
