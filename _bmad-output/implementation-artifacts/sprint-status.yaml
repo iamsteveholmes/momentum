@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-24 (Epic 2 Refinement story 2-6 created)
+# last_updated: 2026-03-24 (Epic 2 Refinement story 2-9 created)
 # project: momentum
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-24
+last_updated: 2026-03-24 (Story 2-9 created)
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -71,10 +71,10 @@ development_status:
   # Epic 2 Refinement: Harden Epic 2 Foundation
   epic-2-refinement: in-progress
   2-6-session-thread-display-fires-hygiene-checks: ready-for-dev
-  2-7-natural-language-input-confirmed-before-dispatch: backlog
-  2-8-impetus-first-impression-has-personality-and-identity: backlog
-  2-9-behavioral-persistence-across-sessions: backlog
-  2-10-background-agent-coordination-validated: backlog
+  2-7-natural-language-input-confirmed-before-dispatch: ready-for-dev
+  2-8-impetus-first-impression-has-personality-and-identity: ready-for-dev
+  2-9-behavioral-persistence-across-sessions: ready-for-dev
+  2-10-background-agent-coordination-validated: ready-for-dev
   epic-2-refinement-retrospective: optional
 
   # Epic 3: Automatic Quality Enforcement
@@ -311,3 +311,27 @@ momentum_metadata:
     touches:
       - "skills/momentum/workflow.md"
     story_file: "_bmad-output/implementation-artifacts/2-6-session-thread-display-fires-hygiene-checks.md"
+  2-7-natural-language-input-confirmed-before-dispatch:
+    depends_on: []
+    touches:
+      - "skills/momentum/workflow.md"
+    story_file: "_bmad-output/implementation-artifacts/2-7-natural-language-input-confirmed-before-dispatch.md"
+  2-8-impetus-first-impression-has-personality-and-identity:
+    depends_on: []
+    touches:
+      - "skills/momentum/workflow.md"
+    story_file: "_bmad-output/implementation-artifacts/2-8-impetus-first-impression-has-personality-and-identity.md"
+  2-9-behavioral-persistence-across-sessions:
+    depends_on:
+      - 2-6-session-thread-display-fires-hygiene-checks
+    touches:
+      - "skills/momentum/references/journal-schema.md"
+      - "skills/momentum/workflow.md"
+    story_file: "_bmad-output/implementation-artifacts/2-9-behavioral-persistence-across-sessions.md"
+  2-10-background-agent-coordination-validated:
+    depends_on: []
+    touches:
+      - "docs/research/background-agent-coordination.md"
+      - "_bmad-output/planning-artifacts/architecture.md"
+      - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
+    story_file: "_bmad-output/implementation-artifacts/2-10-background-agent-coordination-validated.md"
