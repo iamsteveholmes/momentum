@@ -26,3 +26,4 @@ _bmad/_memory/
 
 # Momentum story worktrees (local execution environments, not committed)
 .worktrees/
+.claude/worktrees/
