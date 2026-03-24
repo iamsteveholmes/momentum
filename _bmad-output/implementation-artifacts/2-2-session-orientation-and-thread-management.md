@@ -1,6 +1,6 @@
 # Story 2.2: Session Orientation and Thread Management
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -63,42 +63,42 @@ And offers: "continue from here, or restart this step?" before proceeding
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define and implement journal.jsonl schema (AC: 1–8)
-  - [ ] 1.1: Create `skills/momentum/references/journal-schema.md` documenting the JSONL schema for `.claude/momentum/journal.jsonl` — each line is one JSON object with fields: thread_id, workflow_type, story_ref, current_step, phase, last_action, context_summary, last_active (ISO 8601), status (open|closed), depends_on_thread. Current state of a thread = last entry with that thread_id.
-  - [ ] 1.2: Implement journal read/write helpers in workflow.md — read all lines, reconstruct current state per thread_id (last entry wins), append new entries (never overwrite)
+- [x] Task 1: Define and implement journal.jsonl schema (AC: 1–8)
+  - [x] 1.1: Create `skills/momentum/references/journal-schema.md` documenting the JSONL schema for `.claude/momentum/journal.jsonl` — each line is one JSON object with fields: thread_id, workflow_type, story_ref, current_step, phase, last_action, context_summary, last_active (ISO 8601), status (open|closed), depends_on_thread. Current state of a thread = last entry with that thread_id.
+  - [x] 1.2: Implement journal read/write helpers in workflow.md — read all lines, reconstruct current state per thread_id (last entry wins), append new entries (never overwrite)
 
-- [ ] Task 2: Implement session orientation logic in workflow.md (AC: 1, 3)
-  - [ ] 2.1: At startup (after install/upgrade routing from Stories 1.3/1.4), read journal.jsonl
-  - [ ] 2.2: If journal is empty or absent → skip display, go to menu (Story 2.1 normal session)
-  - [ ] 2.3: If threads exist → display Session Journal (Task 3), then orient with active story, phase, last action, suggested next
+- [x] Task 2: Implement session orientation logic in workflow.md (AC: 1, 3)
+  - [x] 2.1: At startup (after install/upgrade routing from Stories 1.3/1.4), read journal.jsonl
+  - [x] 2.2: If journal is empty or absent → skip display, go to menu (Story 2.1 normal session)
+  - [x] 2.3: If threads exist → display Session Journal (Task 3), then orient with active story, phase, last action, suggested next
 
-- [ ] Task 3: Implement Session Journal Display component (AC: 2)
-  - [ ] 3.1: Format: numbered list of open threads, each showing workflow phase + elapsed time since last activity
-  - [ ] 3.2: Order by most-recently-active first
-  - [ ] 3.3: Each thread selectable by number (integrates with input interpretation from Story 2.1)
-  - [ ] 3.4: End with "Continue (1/2/3) or tell me what you need?"
+- [x] Task 3: Implement Session Journal Display component (AC: 2)
+  - [x] 3.1: Format: numbered list of open threads, each showing workflow phase + elapsed time since last activity
+  - [x] 3.2: Order by most-recently-active first
+  - [x] 3.3: Each thread selectable by number (integrates with input interpretation from Story 2.1)
+  - [x] 3.4: End with "Continue (1/2/3) or tell me what you need?"
 
-- [ ] Task 4: Implement multi-tab concurrent work detection (AC: 4)
-  - [ ] 4.1: When reading journal, check each open entry's `last_active` timestamp
-  - [ ] 4.2: If any entry was active within 30 minutes → flag as concurrent: "This thread appears active in another tab (N minutes ago)."
-  - [ ] 4.3: Ask developer to confirm before starting a competing thread on the same story
+- [x] Task 4: Implement multi-tab concurrent work detection (AC: 4)
+  - [x] 4.1: When reading journal, check each open entry's `last_active` timestamp
+  - [x] 4.2: If any entry was active within 30 minutes → flag as concurrent: "This thread appears active in another tab (N minutes ago)."
+  - [x] 4.3: Ask developer to confirm before starting a competing thread on the same story
 
-- [ ] Task 5: Implement dormant thread hygiene (AC: 5, 7)
-  - [ ] 5.1: At session start, scan for entries with `last_active` > 3 days ago → surface each with context and one-action close offer
-  - [ ] 5.2: If >5 open threads, offer triage pass with per-thread status + age + close option
-  - [ ] 5.3: Closure = set status to "closed" in journal, one confirmation required
+- [x] Task 5: Implement dormant thread hygiene (AC: 5, 7)
+  - [x] 5.1: At session start, scan for entries with `last_active` > 3 days ago → surface each with context and one-action close offer
+  - [x] 5.2: If >5 open threads, offer triage pass with per-thread status + age + close option
+  - [x] 5.3: Closure = set status to "closed" in journal, one confirmation required
 
-- [ ] Task 6: Implement dependency-satisfied notification (AC: 6)
-  - [ ] 6.1: When reading journal, check `depends_on_thread` field for each entry
-  - [ ] 6.2: If the depended-on thread is now "closed" → surface: "The work this thread was waiting on is complete — ready to continue?"
+- [x] Task 6: Implement dependency-satisfied notification (AC: 6)
+  - [x] 6.1: When reading journal, check `depends_on_thread` field for each entry
+  - [x] 6.2: If the depended-on thread is now "closed" → surface: "The work this thread was waiting on is complete — ready to continue?"
 
-- [ ] Task 7: Implement workflow resumability (AC: 8)
-  - [ ] 7.1: When a thread is selected (by number or "continue"), read its `current_step`, `last_action`, and `context_summary`
-  - [ ] 7.2: Display re-orientation: "[context_summary]. Continue from here, or restart this step?"
-  - [ ] 7.3: On continue → resume at `current_step`; on restart → reset `current_step` to start of that phase
+- [x] Task 7: Implement workflow resumability (AC: 8)
+  - [x] 7.1: When a thread is selected (by number or "continue"), read its `current_step`, `last_action`, and `context_summary`
+  - [x] 7.2: Display re-orientation: "[context_summary]. Continue from here, or restart this step?"
+  - [x] 7.3: On continue → resume at `current_step`; on restart → reset `current_step` to start of that phase
 
-- [ ] Task 8: Implement auto-generated journal-view.md (AC: 1)
-  - [ ] 8.1: After any journal.jsonl write, regenerate `.claude/momentum/journal-view.md` as a human-readable markdown view of all entries (open and recently closed)
+- [x] Task 8: Implement auto-generated journal-view.md (AC: 1)
+  - [x] 8.1: After any journal.jsonl write, regenerate `.claude/momentum/journal-view.md` as a human-readable markdown view of all entries (open and recently closed)
 
 ## Dev Notes
 
@@ -233,12 +233,12 @@ Session orientation is a brief, single-exchange interaction — not a review che
 - Journal operations (read/write/parse) are behavioral instructions, not executable code — describe WHAT Impetus should do, not HOW in a programming sense
 
 **Additional DoD items:**
-- [ ] 4 behavioral evals written in `skills/momentum/evals/`
-- [ ] EDD cycle ran — all 4 eval behaviors confirmed
-- [ ] `references/journal-schema.md` created with full JSONL schema
-- [ ] Journal read/write described in workflow.md
-- [ ] journal-view.md auto-generation described
-- [ ] AVFL checkpoint documented
+- [x] 4 behavioral evals written in `skills/momentum/evals/`
+- [x] EDD cycle ran — all 4 eval behaviors confirmed
+- [x] `references/journal-schema.md` created with full JSONL schema
+- [x] Journal read/write described in workflow.md
+- [x] journal-view.md auto-generation described
+- [x] AVFL checkpoint documented — AVFL to be run by orchestrator post-review
 
 ---
 
@@ -284,10 +284,36 @@ This story passes acceptance when:
 
 ### Agent Model Used
 
-claude-sonnet-4-6[1m]
+claude-opus-4-6[1m]
 
 ### Debug Log References
 
+N/A
+
 ### Completion Notes List
 
+- Journal schema reference created at `skills/momentum/references/journal-schema.md` with full JSONL field documentation, write/read semantics, thread ID assignment, context summary guidelines, and concurrency notes
+- Session orientation logic added to workflow.md steps 7, 11-14: journal read/dispatch (step 7), Session Journal Display (step 11), thread hygiene including concurrent tab warning, dormant closure, dependency notification, unwieldy triage (step 12), workflow resumability with continue/restart (step 13), journal write protocol with journal-view.md regeneration (step 14)
+- 4 behavioral evals written: session-orientation-with-threads, empty-journal-skip, dormant-thread-closure, concurrent-tab-warning
+- workflow.md at 439 lines (within 500-line NFR budget); journal schema details offloaded to references/journal-schema.md
+- EDD cycle complete: all 4 eval behaviors confirmed against implementation
+
+### Change Log
+
+| File | Action | Description |
+|---|---|---|
+| `skills/momentum/workflow.md` | Modified | Replaced step 7 placeholder with journal-based session orientation; added steps 11-14 for journal display, thread hygiene, resumability, and write protocol |
+| `skills/momentum/references/journal-schema.md` | Created | Full JSONL schema reference for `.claude/momentum/journal.jsonl` |
+| `skills/momentum/evals/eval-session-orientation-with-threads.md` | Created | Eval: 2 open threads display ordered numbered list with phase and elapsed time |
+| `skills/momentum/evals/eval-empty-journal-skip.md` | Created | Eval: absent/empty journal skips directly to menu |
+| `skills/momentum/evals/eval-dormant-thread-closure.md` | Created | Eval: >3 day inactive thread surfaced with one-action closure |
+| `skills/momentum/evals/eval-concurrent-tab-warning.md` | Created | Eval: <30 min active thread triggers non-blocking concurrent work warning |
+
 ### File List
+
+- `skills/momentum/workflow.md`
+- `skills/momentum/references/journal-schema.md`
+- `skills/momentum/evals/eval-session-orientation-with-threads.md`
+- `skills/momentum/evals/eval-empty-journal-skip.md`
+- `skills/momentum/evals/eval-dormant-thread-closure.md`
+- `skills/momentum/evals/eval-concurrent-tab-warning.md`
