@@ -167,6 +167,35 @@ Adversarial subagent verification via cmux (Workspace A — isolated from other 
 
 ### Agent Model Used
 
+claude-opus-4-6[1m]
+
+### AVFL Result
+
+- Profile: checkpoint / stage: final
+- Initial score: 81/100 (CHECKPOINT_WARNING)
+- Fix pass: non-blocking hygiene notes (DOM-001), journal-view Thread ID column (ACC-001), eval format (DOM-002/DOM-003)
+- Timestamp: 2026-03-24
+
+### cmux Verification (Workspace A — ~/projects/nornspun)
+
+- **AC1 (single response):** PASS — thread list + dormant hygiene + selection prompt all in one response, no pause
+- **AC2 (concurrent warning):** PARTIAL — 15-min-ago thread not flagged (threshold edge case or LLM judgment)
+- **AC3 (dormant closure):** PASS — "WebSocket research — 5 days inactive. Close this thread?" appeared inline before selection prompt
+- **AC4 (no thread_id):** PASS — all threads shown by context_summary_short, no T-NNN visible
+- **Critical fix verified:** Old failure mode (Step 11 pausing before hygiene) is gone
+
 ### Completion Notes List
 
+- Merged old Steps 11+12 into single step — thread display, hygiene checks, selection prompt in one LLM response turn
+- Added voice rule note prohibiting thread_id in user-facing output
+- Renumbered Steps 13→12, 14→13, updated GOTO chain
+- Fixed journal-view.md column from "Thread ID" to "Thread (context_summary_short)"
+- Added non-blocking notes after response-eliciting hygiene outputs
+- Updated eval-dormant-thread-closure.md "separately" → "inline" to match merged behavior
+
 ### File List
+
+- `skills/momentum/workflow.md` — merged Steps 11+12, renumbered, GOTO chain, voice rule, non-blocking notes, journal-view column
+- `skills/momentum/evals/eval-hygiene-fires-before-selection.md` — new eval
+- `skills/momentum/evals/eval-no-thread-id-in-output.md` — new eval
+- `skills/momentum/evals/eval-dormant-thread-closure.md` — updated "separately" → "inline"
