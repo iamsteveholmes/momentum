@@ -71,6 +71,42 @@ Date: 2026-03-23
 
 ---
 
+## Finding 6: Thread ID machinery surfaced in responses
+
+**Observed:** Impetus says "T-002 is 4 days dormant" and the progress indicator shows "T-002 WebSocket research." The T-NNN thread ID is internal journal machinery.
+
+**Expected:** Voice rules say no visible machinery — no internal names, no agent names, no tool names. Thread IDs are internal identifiers for the journal system, not user-facing labels.
+
+**Root cause:** The session orientation and progress indicator steps reference thread_id from journal entries without translating to user-friendly labels. The journal schema uses T-NNN IDs for internal tracking, but Impetus should present threads by their context_summary or story_ref, not their ID.
+
+**Severity:** Medium — voice rule violation, consistent across thread display and progress indicator
+
+---
+
+## Finding 7: Dormant thread hygiene didn't fire proactively
+
+**Observed:** T-002 (WebSocket research) is 4 days dormant (>3 day threshold). Step 12 (thread hygiene) should have surfaced it with a one-action closure offer *before* waiting for thread selection. Instead, dormancy was only noted after the developer explicitly selected the thread.
+
+**Expected:** AC5 (Story 2.2): "Impetus surfaces the dormant thread with brief context and offers one-action closure" at session start, before the developer makes a selection.
+
+**Root cause:** The LLM appears to have gone from Step 11 (display threads) directly to waiting for input, skipping Step 12 (hygiene checks). The workflow says "GOTO step 12" after Step 11 but the LLM may have treated the thread display + prompt as a natural stopping point.
+
+**Severity:** High — AC5 behavior not triggered, dormant threads accumulate silently
+
+---
+
+## Finding 8: Multi-tab concurrent detection not tested but T-001 was recent
+
+**Observed:** T-001 was timestamped ~5 minutes ago (within the 30-minute window for AC4 concurrent detection). Impetus did not flag it as potentially active in another tab.
+
+**Expected:** AC4 (Story 2.2): "if the entry was timestamped within the last 30 minutes, Impetus flags it as likely intentional concurrent work."
+
+**Root cause:** Same as Finding 7 — Step 12 hygiene checks appear to have been skipped entirely. The concurrent detection, dormant hygiene, and dependency notification all live in Step 12.
+
+**Severity:** High — AC4 behavior not triggered
+
+---
+
 ## Findings from successful validation
 
 The following Epic 2 behaviors were confirmed working:
@@ -81,3 +117,10 @@ The following Epic 2 behaviors were confirmed working:
 - **Story 2.5 AC6:** Expertise-adaptive — detected first encounter, delivered full walkthrough
 - **Story 2.1 AC1:** Impetus speaks first — menu presented without developer prompting
 - **First-install flow:** Complete execution — rules written, hooks configured, state files created, hash computed
+- **Story 2.2 AC2:** Journal display — numbered thread list with phase and elapsed time, ordered by most-recently-active
+- **Story 2.2 AC8:** Workflow resumability — re-oriented from journal context, offered "continue or restart?"
+- **Story 2.3 AC1:** Progress indicator — 3-line format with ✓/→/◦, collapsed correctly
+- **Story 2.3 AC4:** Symbol vocabulary — symbols paired with text
+- **Story 2.3 AC7:** On-demand "where am I?" — returned visual progress indicator
+- **Story 2.1 AC5 (partial):** Number input selects item without confirmation (worked for thread selection)
+- **Hash drift check:** Computed hash matched stored hash, no false alarm
