@@ -1,6 +1,6 @@
 # Story 2.1: Impetus Skill Created with Correct Persona and Input Handling
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 

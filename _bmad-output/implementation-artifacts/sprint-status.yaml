@@ -61,7 +61,7 @@ development_status:
 
   # Epic 2: Stay Oriented with Impetus
   epic-2: in-progress
-  2-1-impetus-skill-created-with-correct-persona-and-input-handling: ready-for-dev
+  2-1-impetus-skill-created-with-correct-persona-and-input-handling: done
   2-2-session-orientation-and-thread-management: ready-for-dev
   2-3-visual-progress-tracks-workflow-position: ready-for-dev
   2-4-completion-signals-and-productive-waiting: ready-for-dev
