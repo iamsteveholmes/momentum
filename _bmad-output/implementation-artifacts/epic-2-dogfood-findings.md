@@ -107,6 +107,20 @@ Date: 2026-03-23
 
 ---
 
+## Finding 9: Step 11/12 split causes hygiene checks to be skipped entirely
+
+**Observed:** Step 12 (thread hygiene — concurrent detection, dormant closure, dependency notification, unwieldy triage) never fires. The LLM renders Step 11's thread list with the question "Continue (1/2/...) or tell me what you need?" and stops to wait for the developer's response. The developer answers before the LLM reaches Step 12.
+
+**Root cause:** Step 11 contains an `<output>` with an interactive question, then says `GOTO step 12`. But the LLM treats the question as a natural interaction point and waits for input. Step 12 never executes because the developer responds to Step 11's question first.
+
+**Fix:** Merge Steps 11 and 12 so that thread display → hygiene warnings → selection prompt all render in a single Impetus response. The developer should see: threads, then any hygiene alerts (dormant, concurrent, dependency, unwieldy), THEN the selection question. This is the only way to guarantee hygiene checks fire before the developer makes a selection.
+
+**Impact:** This is the root cause of Findings 7 and 8. Fixing this one issue resolves AC4 (concurrent), AC5 (dormant), AC6 (dependency notification), and AC7 (unwieldy triage) simultaneously.
+
+**Severity:** Critical — blocks 4 ACs (AC4, AC5, AC6, AC7)
+
+---
+
 ## Findings from successful validation
 
 The following Epic 2 behaviors were confirmed working:
