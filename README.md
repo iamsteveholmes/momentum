@@ -13,7 +13,7 @@ Momentum is currently implemented using [BMAD Method](https://github.com/bmadcod
 **Claude Code (Tier 1 — full enforcement):**
 
 ```bash
-npx skills add https://github.com/iamsteveholmes/momentum -a claude-code
+npx skills add https://github.com/iamsteveholmes/momentum --all
 ```
 
 Then in Claude Code:
@@ -54,7 +54,7 @@ Claude Code provides the complete enforcement stack:
 
 **What "full deterministic" means:** Quality standards at the deterministic enforcement tier (hooks, test gates, file protection) execute automatically. They cannot be skipped, deprioritized, or forgotten. Structured enforcement (workflow steps, review checklists) executes as part of skill workflows. Advisory enforcement (rules in context) is always loaded.
 
-**Install:** `npx skills add https://github.com/iamsteveholmes/momentum -a claude-code`, then `/momentum`
+**Install:** `npx skills add https://github.com/iamsteveholmes/momentum --all`, then `/momentum`
 
 ### Tier 2: Advisory — Cursor and Other Tools
 
