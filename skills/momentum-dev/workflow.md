@@ -141,7 +141,7 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
       - Configuration only → "project engineer"
       - Mixed with no clear dominant type → "software engineer"</action>
 
-    <action>Invoke the `avfl` skill with:
+    <action>Invoke the `momentum-avfl` skill with:
       - domain_expert: {{domain_expert}}
       - task_context: "Story {{story_key}} — [brief description from story title]"
       - output_to_validate: {{changeset_diff}}

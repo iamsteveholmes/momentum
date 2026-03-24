@@ -18,6 +18,8 @@ stepsCompleted:
   - step-e-03-edit
 lastEdited: '2026-03-22'
 editHistory:
+  - date: '2026-03-23'
+    changes: 'AVFL integration: renamed momentum-avfl to momentum-avfl throughout; moved AVFL validation from Growth to First Sprint scope (gate/checkpoint profiles in story cycles); added FR48 for AVFL skill deployment; kept standalone /validate command as Growth; updated repo structure tree with framework.json and sub-skills.'
   - date: '2026-03-22'
     changes: 'Added terminal-multiplexer row to Protocol-Based Integration Architecture table; added terminal multiplexer integration note with detect-and-adapt pattern and anti-pattern forward reference for Story 3.4. Derives from CMUX research document.'
   - date: '2026-03-22'
@@ -317,11 +319,12 @@ Each innovation area validates through dogfooding — Momentum is built using it
 - Model routing defaults with `model:` and `effort:` frontmatter
 - Findings ledger scaffolded (with `provenance_status` field)
 - Calibration principle operationalized: every finding requires evidence; false positives waste more time than missed issues
+- AVFL validation (gate/checkpoint profiles) integrated into story cycles via momentum-dev — multi-lens validation pipeline with parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; benchmarked model routing per role (Enumerator=sonnet, Adversary=opus, Consolidator=haiku, Fixer=sonnet)
 
 ### Growth Features (Post-MVP)
 
 - **Orchestrating agent evolves toward pipeline automation** — menu items gain workflow chaining (spec → ATDD → implement → review → flywheel), human touchpoints only at gates and critical findings
-- `/validate` skill — full VFL validate-fix-loop engine (gate/checkpoint/full profiles), implemented behind the validation protocol interface. Includes: `source_material` required at checkpoint/full profiles, claim classification (SOURCED/DERIVED/ADDED/UNSOURCED), and model/effort routing per VFL profile and role (enumerator/adversary/fixer) with escalation semantics — mid-tier first, flagship if not converging within 3-4 iterations
+- Standalone `/validate` command — user-invocable AVFL validation outside story cycles (full profile with iterative fix loop, up to 8 parallel reviewers); extends the story-cycle-integrated AVFL to ad-hoc artifact validation
 - **Findings template** — standard + open sections format for validation reports, consumed by findings ledger and Evaluation Flywheel
 - **Citations API + CoE integration** (PT-026) — wire Anthropic Citations API into spec generation workflows for mechanically grounded provenance; add Chain of Evidences prompting pattern
 - BMAD Code Review enforcement of pure verifier role
@@ -465,8 +468,11 @@ momentum/
 │   ├── momentum/           ← Impetus — main entry point
 │   │   ├── SKILL.md
 │   │   └── references/    ← bundled rules, hooks-config.json, mcp-config.json, momentum-versions.json
-│   ├── momentum-vfl/
-│   │   └── SKILL.md
+│   ├── momentum-avfl/
+│   │   ├── SKILL.md
+│   │   ├── references/
+│   │   │   └── framework.json
+│   │   └── sub-skills/          ← nested internal sub-skills (deploy with parent)
 │   ├── momentum-code-reviewer/    ← context:fork skill (peer, not nested)
 │   │   └── SKILL.md
 │   ├── momentum-architecture-guard/   ← context:fork skill (peer, not nested)
@@ -558,6 +564,7 @@ momentum/
 - **FR25:** Code-reviewer can be prompted or triggered automatically at implementation completion, not requiring manual invocation
 - **FR26:** Findings reports can include provenance status for traceability-dimension findings
 - **FR27:** Every finding requires evidence — validators cannot generate findings without supporting evidence from the reviewed artifact (calibration principle)
+- **FR48:** AVFL skill deployed as flat skill at `momentum-avfl/` supporting gate/checkpoint/full profiles; spawns parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; cross-checks findings between independently-framed reviewers; returns consolidated scored findings with evidence; sub-skills nested inside the skill directory deploy automatically with the parent skill
 
 ### Evaluation Flywheel
 

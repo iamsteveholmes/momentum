@@ -25,8 +25,10 @@ derives_from:
   - id: UX-MOMENTUM-001
     path: _bmad-output/planning-artifacts/ux-design-specification.md
     relationship: derives_from
-lastEdited: '2026-03-22'
+lastEdited: '2026-03-23'
 editHistory:
+  - date: '2026-03-23'
+    changes: 'AVFL integration: renamed momentum-vfl to momentum-avfl throughout; renamed vfl-validator protocol type to avfl-validator; added FR48 for AVFL skill to Requirements Inventory and FR Coverage Map; added Story 4.6 (AVFL Skill Orchestrates Multi-Lens Validation) to Epic 4; updated Story 4.3 ACs with AVFL phase in story cycle (Code Review → AVFL → Flywheel); updated Epic 4 description and Additional fields.'
   - date: '2026-03-22'
     changes: 'Retro Action Item #4 resolution: FR39 (Gherkin format convention) split between Story 1.7 (process/convention) and Story 4.2 (automated enforcement). Story 4.2 first AC block (FR39 format requirements) removed — now covered by Story 1.7. Story 4.2 narrowed to FR40 only, depends_on updated. FR Coverage Map updated to show FR39 split across Epic 1b and Epic 4.'
   - date: '2026-03-22'
@@ -95,6 +97,7 @@ FR24: Code-reviewer subagent can perform adversarial review with read-only tools
 FR25: Code-reviewer can be prompted or triggered automatically at implementation completion, not requiring manual invocation
 FR26: Findings reports can include provenance status for traceability-dimension findings
 FR27: Every finding requires evidence — validators cannot generate findings without supporting evidence from the reviewed artifact
+FR48: AVFL skill deployed as flat skill at `momentum-avfl/` supporting gate/checkpoint/full profiles; spawns parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; cross-checks findings between independently-framed reviewers; returns consolidated scored findings with evidence
 
 **Evaluation Flywheel**
 FR28: Findings ledger can accumulate findings across stories with category, root cause classification, and upstream level
@@ -181,11 +184,11 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 - Deferred (Epic 6): Momentum findings MCP (custom, lightweight — optional read-only query layer over `~/.claude/momentum/findings-ledger.jsonl`). ~~`@modelcontextprotocol/server-git`~~ removed (p1.1) — git CLI provides file history, blame, and diff via Bash tool
 - Growth: `@rlabs-inc/gemini-mcp` and GPT deep research MCP for multi-model research
 
-**From Architecture — VFL Skill**
-- VFL deployed as flat skill (`momentum-vfl/SKILL.md`) alongside Impetus
-- VFL orchestrates parallel reviewer spawning from main context (confirmed pattern per Claude Code docs)
+**From Architecture — AVFL Skill**
+- AVFL deployed as flat skill (`momentum-avfl/SKILL.md`) alongside Impetus
+- AVFL orchestrates parallel reviewer spawning from main context (confirmed pattern per Claude Code docs)
 - Reviewers are context:fork agents; return structured JSON (not free-form prose) per vfl-framework-v3.json output schema
-- VFL consolidates findings in main context; context accumulation bounded by structured output contract
+- AVFL consolidates findings in main context; context accumulation bounded by structured output contract
 - Execution mode: background (non-blocking) during interactive workflows; foreground acceptable for hook-triggered passes
 
 **From Architecture — Architecture Decision Closed**
@@ -295,6 +298,7 @@ UX-DR22: Implement Confidence-Directed Review — when generating or presenting 
 | FR45 | Epic 8 | Enforce date-anchoring and primary-source directives in research prompts |
 | FR46 | Epic 8 | Archive outdated documents while preserving reference chain |
 | FR47 | Epic 8 | Track document freshness using domain-specific freshness windows |
+| FR48 | Epic 4 | AVFL skill deployed with multi-lens validation pipeline |
 
 **NFR mapping:** NFR1–3 (context/token budget) → Epic 1 & 2. NFR4 (flat skills deployment — no plugin namespacing required) → Epic 1. NFR5–8 (portability/degradation) → Epic 1. NFR9–11 (ecosystem resilience) → Epic 1. NFR12–15 (integration compatibility) → Epic 1. NFR16–17 (dogfooding integrity) → cross-cutting, applied across all epics.
 
@@ -337,10 +341,10 @@ Quality gates fire without developer intervention. Lint and format run on save. 
 ---
 
 ### Epic 4: Complete Story Cycles
-A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
-**FRs covered:** FR24, FR25, FR26, FR27, FR39 (automated enforcement — convention in Epic 1b), FR40, FR41, FR42, FR43
+A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → AVFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
+**FRs covered:** FR24, FR25, FR26, FR27, FR39 (automated enforcement — convention in Epic 1b), FR40, FR41, FR42, FR43, FR48
 **UX-DRs covered:** UX-DR6, UX-DR8, UX-DR19 (Story 4.1), UX-DR20 (Story 4.3), UX-DR22 (Story 4.1)
-**Additional:** code-reviewer (`context:fork` skill, `allowed-tools: Read`), VFL flat skill (momentum-vfl), create-story skill, dev-story skill (includes ATDD workflow capability — ATDD is not a separate deployed skill)
+**Additional:** code-reviewer (`context:fork` skill, `allowed-tools: Read`), AVFL flat skill (momentum-avfl, Story 4.6), create-story skill, dev-story skill (includes ATDD workflow capability — ATDD is not a separate deployed skill)
 **Priority:** Sprint 1
 
 ---
@@ -883,7 +887,7 @@ So that I always know when something is mine to act on and I'm never left in sil
 **Then** the signal contains: explicit ownership return ("this is yours to review and adjust"), a file list of what was produced with paths, and a "what's next?" question
 **And** the developer is never left unsure whether Impetus is still working
 
-**Given** Impetus dispatches a background subagent (e.g. code-reviewer, VFL)
+**Given** Impetus dispatches a background subagent (e.g. code-reviewer, AVFL)
 **When** the subagent is running (UX-DR12)
 **Then** Impetus maintains dialogue on the same topic — does not context-switch to unrelated subjects
 **And** for tasks taking more than a few seconds, Impetus offers substantive discussion or an acknowledged pause
@@ -1159,9 +1163,9 @@ So that the right model is used for every task automatically — no manual overr
 
 ## Epic 4: Complete Story Cycles
 
-A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → VFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
+A developer completes a full story cycle guided by Impetus — spec → ATDD → implement → code review → AVFL validation — with every handoff driven by the agent. The developer never needs to know the next command; the agent tells them.
 
-**FRs covered:** FR24, FR25, FR26, FR27, FR39 (automated enforcement — convention in Epic 1b Story 1.7), FR40, FR41, FR42, FR43
+**FRs covered:** FR24, FR25, FR26, FR27, FR39 (automated enforcement — convention in Epic 1b Story 1.7), FR40, FR41, FR42, FR43, FR48
 **UX-DRs covered:** UX-DR6, UX-DR8, UX-DR19 (Story 4.1), UX-DR20 (Story 4.3), UX-DR22 (Story 4.1)
 
 ### Story 4.1: Code-Reviewer Skill Performs Adversarial Review
@@ -1255,7 +1259,7 @@ So that I always know the next step and every handoff happens without me having 
 
 **Given** a developer begins a story cycle with Impetus (FR41)
 **When** the cycle starts
-**Then** Impetus presents the five phases in order: Spec Review → ATDD → Implement → Code Review → Flywheel
+**Then** Impetus presents the six phases in order: Spec Review → ATDD → Implement → Code Review → AVFL → Flywheel
 **And** Impetus drives each phase transition automatically when the prior phase completes — the developer is prompted to confirm before proceeding to the next phase (FR25: transitions are automatic when unambiguous, or prompted when the developer's intent is needed)
 **And** the developer may also invoke any phase explicitly at any time — Impetus never blocks manual phase invocation (UX-DR15: user control always last)
 
@@ -1280,6 +1284,14 @@ So that I always know the next step and every handoff happens without me having 
 **Then** Impetus presents the findings summary and asks whether to trigger the flywheel
 **And** the flywheel offer is explicit — the developer must approve before it runs
 **And** if the developer declines, Impetus notes the open findings and closes the cycle
+
+**Given** the Code Review phase completes
+**When** Impetus transitions to the AVFL validation phase
+**Then** Impetus invokes `momentum-avfl` with the story changeset (per `avfl-invocation.md` parameter guidance)
+**And** the AVFL result (CLEAN, CHECKPOINT_WARNING, or GATE_FAILED) is recorded in the story's Dev Agent Record
+**And** if GATE_FAILED, the story cycle halts until findings are resolved — Impetus does not advance to Flywheel
+**And** if CHECKPOINT_WARNING, Impetus presents findings and asks whether to proceed to Flywheel or address findings first
+**And** if CLEAN, Impetus advances to Flywheel automatically
 
 **Given** a developer has completed multiple story cycles
 **When** Impetus presents workflow steps (UX-DR20)
@@ -1347,7 +1359,7 @@ So that defects get fixed in specs and rules — not just patched in the code.
 **Acceptance Criteria:**
 
 **Given** the upstream-fix skill is installed
-**When** invoked with a quality failure (a findings report, a test failure, a VFL finding) (FR43)
+**When** invoked with a quality failure (a findings report, a test failure, an AVFL finding) (FR43)
 **Then** `momentum-upstream-fix/SKILL.md` exists and reads the failure description plus the relevant artifacts
 **And** it proposes the fix level: spec-generating workflow, specification (story/epic/PRD), CLAUDE.md/rules, tooling, or one-off code fix
 **And** it outputs a structured proposal matching the subagent output contract (Architecture Decision 3b): `{status, result: {failure_summary, root_cause, proposed_fix_level, proposed_fix_description}, question, confidence}`
@@ -1366,6 +1378,65 @@ So that defects get fixed in specs and rules — not just patched in the code.
 **When** Impetus records the fix
 **Then** the upstream fix outcome is recorded in the session journal by Impetus (field: `upstream_fix_applied`, `upstream_fix_level`) — the findings ledger (`~/.claude/momentum/findings-ledger.jsonl`) is written only by the flywheel workflow (Epic 6)
 **And** Impetus records the upstream fix application in the session journal with fix level and artifact modified
+
+---
+
+### Story 4.6: AVFL Skill Orchestrates Multi-Lens Validation
+
+As a developer,
+I want a multi-lens validation skill that catches errors, hallucinations, and quality issues in any artifact,
+So that every story changeset and critical deliverable is validated before handoff.
+
+**FR Trace:** FR48
+**Depends on:** None (AVFL orchestrator is self-contained; code-reviewer Story 4.1 is a separate skill)
+**Touches:** `skills/momentum-avfl/`, `skills/momentum-dev/workflow.md`
+
+**Acceptance Criteria:**
+
+**Given** the momentum-avfl skill is installed
+**When** Claude Code parses `momentum-avfl/SKILL.md`
+**Then** the skill description is ≤150 characters (NFR1)
+**And** the skill has `model: opus` and `effort: high` frontmatter
+**And** `references/framework.json` exists containing the 15-dimension taxonomy across 4 tiers, validator/consolidator/fixer prompt templates, finding schema, and scoring weights
+
+**Given** 4 sub-skills exist at `momentum-avfl/sub-skills/`
+**When** the parent skill is installed via `npx skills add`
+**Then** `sub-skills/validator-enum/SKILL.md` exists with `model: sonnet`, `effort: medium`, `internal: true`
+**And** `sub-skills/validator-adv/SKILL.md` exists with `model: opus`, `effort: high`, `internal: true`
+**And** `sub-skills/consolidator/SKILL.md` exists with `model: haiku`, `effort: low`, `internal: true`
+**And** `sub-skills/fixer/SKILL.md` exists with `model: sonnet`, `effort: medium`, `internal: true`
+**And** sub-skills are not visible in the `npx skills add` interactive listing (internal: true filtered from discovery UI)
+**And** sub-skills deploy automatically as cargo inside the parent skill directory
+
+**Given** the AVFL skill is invoked with `profile: gate`
+**When** validation runs
+**Then** 1 Enumerator reviewer is spawned on the structural lens only (model: sonnet)
+**And** score ≥ 95 returns CLEAN; score < 95 returns GATE_FAILED
+**And** no fix loop runs
+
+**Given** the AVFL skill is invoked with `profile: checkpoint`
+**When** validation runs
+**Then** 1 Enumerator reviewer per active lens is spawned (2–3 lenses, model: sonnet)
+**And** if score < 95, one fix attempt runs (model: sonnet), then returns CHECKPOINT_WARNING regardless
+**And** if score ≥ 95, returns CLEAN
+
+**Given** the AVFL skill is invoked with `profile: full`
+**When** validation runs
+**Then** 8 reviewers are spawned in parallel: 1 Enumerator (sonnet) + 1 Adversary (opus) per lens × 4 lenses
+**And** findings are consolidated (model: haiku) with cross-check confidence tagging (HIGH = both reviewers found it, MEDIUM = only one)
+**And** iterative fix loop runs up to 4 iterations until score ≥ 95 or MAX_ITERATIONS_REACHED
+**And** each iteration re-spawns parallel reviewers (never validates inline)
+
+**Given** any validation profile completes
+**When** findings are produced
+**Then** every finding includes mandatory `evidence` field quoting specific artifact content
+**And** findings without evidence are discarded (not emitted)
+**And** the exit report includes: status, final score, iteration count, and findings list
+
+**Given** the `momentum-dev` workflow Step 7 invokes AVFL
+**When** it passes a story changeset (git diff) as `output_to_validate` and acceptance criteria as `source_material`
+**Then** the AVFL skill validates the complete changeset holistically (not per-file)
+**And** returns one of: CLEAN, CHECKPOINT_WARNING, or GATE_FAILED
 
 ---
 
@@ -1570,7 +1641,7 @@ Findings accumulate across stories. Systemic patterns surface. Upstream fixes ar
 ### Story 6.1: Findings Ledger Accumulates Quality Findings Across Stories
 
 As a developer,
-I want all quality findings — from code reviews, VFL runs, and flywheel traces — to accumulate in a structured ledger,
+I want all quality findings — from code reviews, AVFL runs, and flywheel traces — to accumulate in a structured ledger,
 So that nothing is lost between sessions and every defect has a traceable record.
 
 **Acceptance Criteria:**
@@ -1581,7 +1652,7 @@ So that nothing is lost between sessions and every defect has a traceable record
 **And** only the flywheel workflow (momentum-upstream-fix) is authorized to write to this file — all other agents submit findings via structured output to Impetus, which triggers the flywheel to write (Architecture Decision 1c / Decision 2a)
 **And** the flywheel writes findings by appending a single JSON line to `~/.claude/momentum/findings-ledger.jsonl` — this is the primary write mechanism; no MCP server is required for writes
 
-**Given** a quality finding is produced (from code-reviewer, VFL, or architecture-guard)
+**Given** a quality finding is produced (from code-reviewer, AVFL, or architecture-guard)
 **When** the flywheel records the finding
 **Then** the journal entry contains all required schema fields: `id` (`F-{unix_ms}-{random_4hex}`, e.g. `F-1711929600000-a3f2`), `project` (string, project identifier), `story_ref`, `phase` (one of: `spec` | `atdd` | `implement` | `code-review` | `flywheel`), `severity` (`critical` | `high` | `medium` | `low`), `pattern_tags` (kebab-case noun phrases), `description` (one sentence), `evidence` (exact quote or `file:line` reference), `provenance_status` (one of the five FR16 values, or `null` if not applicable), `upstream_fix_applied` (boolean, initially `false`), `upstream_fix_ref` (`null` until a fix is applied), `upstream_fix_level` (`null` until a fix is applied; then one of: `spec-generating-workflow` | `specification` | `rules-or-CLAUDE.md` | `tooling` | `one-off-code-fix`), `timestamp` (ISO 8601)
 **And** subagent findings submitted to Impetus must use the structured output contract (Architecture Decision 3b): `{status, result: {findings: [...]}, question, confidence}` — Impetus extracts finding objects and passes them to the flywheel for ledger ingestion
@@ -1783,7 +1854,7 @@ So that Momentum knows which tools to use for this project and every workflow st
 **When** the project configuration file is initialized
 **Then** `.claude/momentum/project-config.json` is created with a `protocol_bindings` object mapping protocol types to implementations
 **And** each binding entry includes: `implementation` (the tool, skill, or command that satisfies the protocol), `configured_by` (who created the entry — `"impetus"` for agent-configured, `"developer"` for manually set), `configured_at` (ISO 8601 timestamp), `configured_why` (one sentence: the reason this implementation was chosen)
-**And** the recognized protocol types at MVP are: `atdd-tool`, `test-runner`, `lint-tool`, `code-reviewer`, `vfl-validator`, `research-provider`, `terminal-multiplexer` — additional types may be added; unrecognized types are ignored without error
+**And** the recognized protocol types at MVP are: `atdd-tool`, `test-runner`, `lint-tool`, `code-reviewer`, `avfl-validator`, `research-provider`, `terminal-multiplexer` — additional types may be added; unrecognized types are ignored without error
 **And** the protocol type registry and each type's interface contract are formally documented in `references/protocol-contracts.md` within the `momentum/` skill — this is the canonical authority for what each type means and what its implementation must produce
 **And** the config file also includes a `host_environment` field: `"claude-code"` | `"cursor"` | `"cline"` | `"other"` — set by the developer during setup; used by Impetus to determine which environment-specific behaviors apply (e.g. Cursor tool ceiling check in NFR14)
 
@@ -1850,7 +1921,7 @@ So that a workflow written for Playwright still works when I switch to Cypress, 
 
 **Given** a Momentum workflow SKILL.md references an integration point (FR37, NFR8)
 **When** the workflow is authored
-**Then** it references a protocol type (e.g. `atdd-tool:run`, `test-runner:run`, `vfl-validator:validate`), not a specific implementation name or command
+**Then** it references a protocol type (e.g. `atdd-tool:run`, `test-runner:run`, `avfl-validator:validate`), not a specific implementation name or command
 **And** no Momentum workflow SKILL.md hard-codes project-specific tool names (e.g. `playwright`, `jest`, `npm test`) in its integration-point instruction steps — this prohibition applies to integration-point invocations only; native Claude Code tool calls (Read, Edit, Bash, Agent) are permitted and are not "protocol implementations" under NFR8's definition
 **And** compliance is verified by workflow authoring review against `references/protocol-contracts.md` — the reviewer confirms that each integration-point step references a registered protocol type, not a named implementation
 
@@ -1879,7 +1950,7 @@ So that swapping a tool doesn't silently break every workflow that depends on it
 **When** the binding is proposed during the configuration conversation (Story 7.2)
 **Then** Impetus validates the interface contract: it checks that the proposed command exists and is executable in the project environment
 **And** if the implementation is a Momentum skill (e.g. substituting `momentum-code-reviewer` with a custom `my-code-reviewer` skill), Impetus checks two things: (1) the skill's SKILL.md frontmatter contract (context, allowed-tools) AND (2) the skill's expected output format (does it return structured JSON matching the subagent output contract `{status, result, question, confidence}`?)
-**And** if validation fails, the binding is not written and Impetus explains what the contract requires: "`vfl-validator` requires a skill with `context: fork`, `allowed-tools: Read`, and JSON output matching `{status, result: {findings: [...]}, question, confidence}` — the proposed skill does not match"
+**And** if validation fails, the binding is not written and Impetus explains what the contract requires: "`avfl-validator` requires a skill with `context: fork`, `allowed-tools: Read`, and JSON output matching `{status, result: {findings: [...]}, question, confidence}` — the proposed skill does not match"
 
 **Given** a binding is validated and accepted
 **When** any consuming workflow invokes the protocol
@@ -2084,7 +2155,7 @@ So that I have empirical quality, cost, and latency measurements to validate def
 
 **Given** a `promptfooconfig.yaml` is present in `docs/benchmarking/` (PT-022) (FR23)
 **When** a developer runs `promptfoo eval`
-**Then** it tests at minimum two Momentum skills (one complex — e.g. `/momentum-vfl` — and one constrained — e.g. `/momentum-create-story`) across at minimum three model variants: `claude-opus-4-6`, `claude-sonnet-4-6`, and `claude-haiku-4-5-20251001`
+**Then** it tests at minimum two Momentum skills (one complex — e.g. `/momentum-avfl` — and one constrained — e.g. `/momentum-create-story`) across at minimum three model variants: `claude-opus-4-6`, `claude-sonnet-4-6`, and `claude-haiku-4-5-20251001`
 **And** skill execution uses the Claude Agent SDK provider (`anthropic:claude-agent`) so that full skill workflows run rather than raw model completions
 **And** `temperature: 0` is set for all model variants to minimize variance between runs
 **And** cost and latency metrics are captured per run — `cost` and `latency` threshold assertions may optionally be added as budget gates but the metrics are recorded regardless
@@ -2137,7 +2208,7 @@ So that quality regressions are detectable when model defaults are changed.
 
 **Given** `docs/benchmarking/golden/` exists (PT-022)
 **When** a developer inspects it
-**Then** it contains at minimum one golden case per benchmarked skill type (e.g. `momentum-vfl.yaml`, `momentum-create-story.yaml`) — each golden case is structured as a promptfoo-native test fixture with `vars:` (the prompt/input), `assert:` (rubric assertions), and a `description:` label; a separate `_metadata.yaml` sidecar records human-review provenance: `reference_model`, `reference_effort`, `reviewed_by`, `reviewed_date`
+**Then** it contains at minimum one golden case per benchmarked skill type (e.g. `momentum-avfl.yaml`, `momentum-create-story.yaml`) — each golden case is structured as a promptfoo-native test fixture with `vars:` (the prompt/input), `assert:` (rubric assertions), and a `description:` label; a separate `_metadata.yaml` sidecar records human-review provenance: `reference_model`, `reference_effort`, `reviewed_by`, `reviewed_date`
 
 **Given** a golden case is created
 **When** a new reference output is generated

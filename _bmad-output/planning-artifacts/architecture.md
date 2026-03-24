@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-03-22'
+lastEdited: '2026-03-23'
 editHistory:
+  - date: '2026-03-23'
+    changes: 'AVFL integration: renamed momentum-vfl to momentum-avfl throughout; renamed vfl-validator protocol type to avfl-validator; reconciled sub-skill model (AVFL uses own nested sub-skills, not momentum-code-reviewer); updated repo structure with framework.json and sub-skills directory; added AVFL deployment note distinguishing production skill from research benchmarking variants.'
   - date: '2026-03-22'
     changes: 'Added terminal-multiplexer to subsystem 10 Protocol-Based Integration; added Terminal Multiplexer ↔ Workflows integration point with detect-and-adapt pattern. Derives from CMUX research document.'
 ---
@@ -164,7 +166,7 @@ The defining question for each component: *does this need main-context persona p
 momentum/
 ├── skills/                          ← All skills: flat + context:fork
 │   ├── momentum/SKILL.md
-│   ├── momentum-vfl/SKILL.md
+│   ├── momentum-avfl/SKILL.md               ← + sub-skills/ and references/
 │   ├── momentum-code-reviewer/SKILL.md    ← context: fork, allowed-tools: Read
 │   ├── momentum-architecture-guard/SKILL.md ← context: fork, allowed-tools: Read
 │   ├── momentum-upstream-fix/SKILL.md
@@ -274,46 +276,61 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 The main conversation CAN spawn multiple subagents simultaneously (confirmed: official Claude Code docs explicitly document parallel subagent spawning as a supported pattern). The constraint is only that subagents cannot spawn further subagents.
 
 Architecture:
-- **VFL runs as a flat skill** (main context, not context:fork) — orchestration needs main context to spawn agents
-- **Impetus invokes VFL** from main conversation
-- **VFL spawns all reviewers in parallel** — up to 8 simultaneous subagents for Full profile (2 per lens × 4 lenses)
-- **Reviewers are context:fork skills** defined in `skills/momentum-code-reviewer/` — isolated via `context: fork`, read-only via `allowed-tools: Read` in their SKILL.md frontmatter
-- **VFL consolidates results** in main context after all reviewers complete
-- Context window consideration: all reviewer results return to main context; keep reviewer output structured and bounded
-- **Execution mode:** reviewer subagents run as **background agents** (non-blocking — main conversation continues); automated hook-triggered passes may use foreground (blocking) where dead air is acceptable. Background execution is what enables productive waiting (Decision 4c).
-- **Reviewer output bound:** Reviewers return structured JSON (not free-form prose). VFL framework (vfl-framework-v3.json) specifies per-reviewer output schema. Impetus enforces this to keep context accumulation bounded across all reviewer results.
-- **Implementation note:** Background agent execution model is validated in Story 2.Spike (Epic 2) before Stories 2.4 and 4.3 begin. Do not implement productive waiting or background VFL execution until spike result is documented. The execution mode is adopted as the architectural intent; the spike validates the specific implementation mechanism (inter-agent communication + checkpoint/resume). If the spike reveals the mechanism is unavailable, Decision 3a/4c will be revised before Stories 2.4 and 4.3 begin.
+- **AVFL runs as a flat skill** (main context, not context:fork) — orchestration needs main context to spawn agents
+- **Impetus invokes AVFL** from main conversation
+- **AVFL uses its own nested sub-skills** for multi-lens artifact validation — these are DISTINCT from `momentum-code-reviewer`. Sub-skills are nested inside `momentum-avfl/sub-skills/` and deploy automatically with the parent skill. The sub-skill pipeline was developed through 6-phase research (36 runs across 3 models x 3 effort levels) with benchmarked optimal model/effort configurations per role:
+  - **validator-enum** (Enumerator) — sonnet/medium: systematic dimension-by-dimension enumeration
+  - **validator-adv** (Adversary) — opus/high: failure-focused adversarial validation
+  - **consolidator** — haiku/low: deduplication, cross-check confidence tagging, scoring (fully invariant across models — cheapest sufficient)
+  - **fixer** — sonnet/medium: targeted artifact repair based on consolidated findings
+- **Consolidation and fixing run as sub-skill agents** (not in AVFL main context) because they need specific model routing: haiku for consolidator, sonnet for fixer
+- **`momentum-code-reviewer`** (Epic 4 Story 4.1) is a separate skill for adversarial code review of implementation artifacts — it is NOT used by AVFL. AVFL sub-skills are for multi-lens artifact validation with specific model routing per role.
+- **AVFL spawns validators in parallel** — up to 8 simultaneous subagents for Full profile (2 per lens x 4 lenses)
+- **AVFL consolidates results** via the consolidator sub-skill after all validators complete
+- Context window consideration: all validator results return to main context; keep validator output structured and bounded
+- **Execution mode:** validator subagents run as **background agents** (non-blocking — main conversation continues); automated hook-triggered passes may use foreground (blocking) where dead air is acceptable. Background execution is what enables productive waiting (Decision 4c).
+- **Validator output bound:** Validators return structured JSON (not free-form prose). AVFL framework (framework.json) specifies per-validator output schema. Impetus enforces this to keep context accumulation bounded across all validator results.
+- **Implementation note:** Background agent execution model is validated in Story 2.Spike (Epic 2) before Stories 2.4 and 4.3 begin. Do not implement productive waiting or background AVFL execution until spike result is documented. The execution mode is adopted as the architectural intent; the spike validates the specific implementation mechanism (inter-agent communication + checkpoint/resume). If the spike reveals the mechanism is unavailable, Decision 3a/4c will be revised before Stories 2.4 and 4.3 begin.
 
 **context:fork agent count — explicit model:**
 
 > _[Added 2026-03-18: Clarifying how multiple agents are actually created. `context: fork` = one agent per invocation.]_
 
-`context: fork` creates **exactly one** isolated subagent per invocation. Multiple parallel agents = multiple Agent tool calls. VFL's parallel execution works as follows:
+`context: fork` creates **exactly one** isolated subagent per invocation. Multiple parallel agents = multiple Agent tool calls. AVFL's parallel execution works as follows:
 
-- VFL (flat skill, main context) issues **N separate Agent tool calls**, each with `run_in_background: true`
-- Each call spawns one isolated subagent running momentum-code-reviewer with different lens criteria passed via `$ARGUMENTS`
-- The same skill is invoked N times with different parameters — NOT N different skill types
-- **Full profile agent count:** 8 Agent tool calls = 8 concurrent reviewer agents (2 per lens × 4 lenses: Structural Integrity, Factual Accuracy, Coherence & Craft, Domain Fitness)
-- **Checkpoint profile:** 2–4 Agent tool calls (1–2 lenses, 1 reviewer each)
+- AVFL (flat skill, main context) issues **N separate Agent tool calls**, each with `run_in_background: true`
+- Each call spawns one isolated subagent running an AVFL sub-skill (validator-enum or validator-adv) with lens criteria passed via `$ARGUMENTS`
+- **Full profile agent count:** 8 Agent tool calls = 8 concurrent validator agents (2 per lens x 4 lenses: Structural Integrity, Factual Accuracy, Coherence & Craft, Domain Fitness) — one enumerator + one adversary per lens
+- **Checkpoint profile:** 2–4 Agent tool calls (1–2 lenses, 1 validator each)
 - **Gate profile:** 1 Agent tool call
+- After validators complete: 1 consolidator sub-skill call (haiku/low), then 0–4 fixer sub-skill calls (sonnet/medium) depending on findings
 
-architecture-guard is a **separate** skill, invoked independently by Impetus (not inside VFL). It is one additional Agent tool call when pattern drift checking is needed — not part of the VFL reviewer count.
+architecture-guard is a **separate** skill, invoked independently by Impetus (not inside AVFL). It is one additional Agent tool call when pattern drift checking is needed — not part of the AVFL validator count.
 
-Invocation flow for Full VFL:
+momentum-code-reviewer is also a **separate** skill (Epic 4 Story 4.1), invoked independently for adversarial code review of implementation artifacts — not part of the AVFL pipeline.
+
+Invocation flow for Full AVFL:
 ```
-VFL (flat, main context)
-├── Agent tool call 1 → momentum-code-reviewer [structural, reviewer-A] (background)
-├── Agent tool call 2 → momentum-code-reviewer [structural, reviewer-B] (background)
-├── Agent tool call 3 → momentum-code-reviewer [factual, reviewer-A] (background)
-├── Agent tool call 4 → momentum-code-reviewer [factual, reviewer-B] (background)
-├── Agent tool call 5 → momentum-code-reviewer [coherence, reviewer-A] (background)
-├── Agent tool call 6 → momentum-code-reviewer [coherence, reviewer-B] (background)
-├── Agent tool call 7 → momentum-code-reviewer [domain, reviewer-A] (background)
-└── Agent tool call 8 → momentum-code-reviewer [domain, reviewer-B] (background)
+AVFL (flat, main context)
+├── Agent tool call 1 → validator-enum [structural] (background)
+├── Agent tool call 2 → validator-adv [structural] (background)
+├── Agent tool call 3 → validator-enum [factual] (background)
+├── Agent tool call 4 → validator-adv [factual] (background)
+├── Agent tool call 5 → validator-enum [coherence] (background)
+├── Agent tool call 6 → validator-adv [coherence] (background)
+├── Agent tool call 7 → validator-enum [domain] (background)
+└── Agent tool call 8 → validator-adv [domain] (background)
      ↓ (all complete)
-VFL consolidates 8 structured JSON results → sends to Impetus
+├── Agent tool call 9 → consolidator (deduplicate, cross-check, score)
+     ↓ (consolidated findings)
+└── Agent tool call 10..N → fixer (targeted repairs, up to 4 iterations)
+     ↓ (all complete)
+AVFL returns validated artifact + findings report → Impetus
 ```
 
+**AVFL Deployment Note:**
+
+The benchmarked AVFL pipeline (developed via 6-phase research in `avfl-workspace/`) is deployed as `momentum-avfl` with 4 production sub-skills at their benchmarked optimal model/effort configurations. The `avfl-*` skills that remain in `.claude/skills/` are research/benchmarking tools (gitignored, not deployed with Momentum). The 13 benchmark variants (2lens, 3lens, declining, composition variants, effort variants) are not deployed — only the 4 production sub-skills: validator-enum (sonnet/medium), validator-adv (opus/high), consolidator (haiku/low), and fixer (sonnet/medium).
 
 **Decision 3b — Hub-and-Spoke Voice Contract**
 Impetus is the only agent that speaks to the user. All subagents return:
@@ -540,7 +557,7 @@ The UX interaction for install and upgrade — when to prompt, how to present ea
 **Skills (flat):**
 ```
 momentum                    ← Entry point only (exception: bare name for /momentum UX)
-momentum-[concept]          e.g. momentum-vfl, momentum-upstream-fix
+momentum-[concept]          e.g. momentum-avfl, momentum-upstream-fix
 momentum-[verb]-[noun]      e.g. momentum-create-story, momentum-dev-story
 ```
 Lowercase, hyphen-separated, `momentum-` prefix for all skills except the entry point (`momentum`).
@@ -795,10 +812,15 @@ momentum/                                    ← Root
 │   │       │   └── model-routing.md
 │   │       ├── hooks-config.json            ← Hook config template (written to .claude/settings.json)
 │   │       └── mcp-config.json             ← MCP config template (empty — Epic 6 populates)
-│   ├── momentum-vfl/
+│   ├── momentum-avfl/
 │   │   ├── SKILL.md                         ← Validate-fix-loop orchestrator (flat skill)
-│   │   └── references/
-│   │       └── vfl-framework-v3.json        ← Dimension taxonomy + profiles
+│   │   ├── references/
+│   │   │   └── framework.json               ← 15-dimension taxonomy, prompt templates, scoring
+│   │   └── sub-skills/                      ← Nested internal sub-skills (deploy with parent)
+│   │       ├── validator-enum/SKILL.md      ← Enumerator (sonnet/medium)
+│   │       ├── validator-adv/SKILL.md       ← Adversary (opus/high)
+│   │       ├── consolidator/SKILL.md        ← Consolidator (haiku/low)
+│   │       └── fixer/SKILL.md               ← Fixer (sonnet/medium)
 │   ├── momentum-code-reviewer/
 │   │   └── SKILL.md                         ← context:fork, allowed-tools: Read — pure verifier
 │   ├── momentum-architecture-guard/
@@ -866,7 +888,7 @@ momentum/                                    ← Root
 └── .claude/
     ├── skills/
     │   ├── momentum/                ← Installed via npx skills add
-    │   ├── momentum-vfl/
+    │   ├── momentum-avfl/
     │   ├── momentum-code-reviewer/          ← context:fork skill (pure verifier)
     │   ├── momentum-architecture-guard/     ← context:fork skill (pattern drift)
     │   ├── momentum-upstream-fix/
@@ -914,7 +936,7 @@ momentum/                                    ← Root
 | Subsystem | Source File(s) | Installed Location |
 |---|---|---|
 | Impetus | `skills/momentum/` | `.claude/skills/momentum/` |
-| VFL | `skills/momentum-vfl/` | `.claude/skills/momentum-vfl/` |
+| VFL | `skills/momentum-avfl/` | `.claude/skills/momentum-avfl/` |
 | Upstream Fix / Flywheel | `skills/momentum-upstream-fix/` | `.claude/skills/momentum-upstream-fix/` |
 | code-reviewer | `skills/momentum-code-reviewer/SKILL.md` | `.claude/skills/momentum-code-reviewer/` |
 | architecture-guard | `skills/momentum-architecture-guard/SKILL.md` | `.claude/skills/momentum-architecture-guard/` |
