@@ -4,6 +4,22 @@ Observed during live testing of `/momentum` in ~/projects/nornspun after Epic 2 
 
 Date: 2026-03-23
 
+## Action Items
+
+| # | Finding | Severity | Status | Fix |
+|---|---------|----------|--------|-----|
+| F1 | First-install greeting has no personality | High | Open | Add ASCII art/nerdfont identity, self-introduction to Steps 2, 7, 9 |
+| F2 | "Momentum 1.0.0" surfaces version machinery | Medium | Open | Replace `Momentum {{current_version}}` header with Impetus voice |
+| F4 | Natural language input skips confirmation | High | Open | Strengthen confirmation rule or add structural gate before dispatch |
+| F5 | Ambiguous input clarification lacks numbered options | Medium | Open | Eval showed correct behavior (one question) but wrong format |
+| F6 | Thread ID machinery (T-NNN) surfaced | Medium | Open | Steps 11-13 should use context_summary/story_ref, not thread_id |
+| F7 | Dormant thread hygiene didn't fire | High | Open | Root cause: F9 |
+| F8 | Multi-tab concurrent detection didn't fire | High | Open | Root cause: F9 |
+| F9 | Step 11/12 split causes hygiene to be skipped | Critical | Open | Merge Steps 11+12: threads → hygiene → selection in one response |
+
+**Not actionable:**
+| F3 | Pre-push install served stale skills | Low | Closed | Operator error — always push before reinstall |
+
 ---
 
 ## Finding 1: First-install greeting has no personality
