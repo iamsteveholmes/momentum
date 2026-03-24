@@ -53,16 +53,17 @@ When Impetus detects a gap, a skip, or a missing prerequisite:
 ### No-Re-Offer After Decline
 
 When a developer explicitly declines a proactive offer ("No", "Skip", "Continue as planned"):
-1. Record the declination in journal thread state: what was offered, that it was declined, the context at time of decline
-2. Do not re-surface the same offer unless context has materially changed (spec updated, story changed, new workflow aspect)
+1. Record the declination in journal thread state: append a new journal entry for the affected thread. Copy all current thread state fields. Add or extend the `declined_offers` array with a new offer object per the journal schema (`offer_type`, `description`, `declined_at`, `context_hash`). Previous `declined_offers` from the thread's last entry carry forward (append-only accumulation).
+2. Do not re-surface the same offer unless context has materially changed. At hygiene check time, before surfacing any proactive offer, check the thread's `declined_offers` array. If an entry matches the current offer's `offer_type` and `context_hash`, suppress the offer.
 3. "Ignore" is not "decline" — only explicit decline triggers the no-re-offer rule
+4. When context has materially changed (`context_hash` differs from the declined entry), the declination no longer applies. Re-offer is permitted. See journal schema for material change heuristic.
 
 ### Expertise-Adaptive Orientation (UX-DR20)
 
 When delivering orientation for any workflow:
-1. Check journal thread history for prior completions of this workflow type by this developer
-2. **First encounter** (zero prior completions): full walkthrough with context — explain what the workflow does, what each phase covers
-3. **Repeat encounter** (one or more prior completions): abbreviated — present current state and decision points directly, skip explanatory context already seen. Optionally ask once at workflow start: "Full walkthrough or just the decision points?"
+1. Read `session_stats.momentum_completions` from `.claude/momentum/installed.json` (already loaded at Step 1). If `session_stats` is absent or `momentum_completions` is absent, treat as `0` (first encounter).
+2. **First encounter** (`momentum_completions == 0`): full walkthrough with context — explain what the workflow does, what each phase covers
+3. **Repeat encounter** (`momentum_completions >= 1`): abbreviated — present current state and decision points directly, skip explanatory context already seen. Optionally ask once at workflow start: "Full walkthrough or just the decision points?"
 4. All modes use narrative progress format — never "Step N/M"
 
 ### Voice Rules
@@ -336,15 +337,18 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     <action>Load `${CLAUDE_SKILL_DIR}/references/practice-overview.md` for context</action>
     <action>Read `.claude/momentum/journal.jsonl` (if it exists). Parse per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`: read all lines, group by thread_id, take last entry per thread_id to get current state. Filter for `status: "open"`.</action>
 
-    <!-- Expertise-adaptive orientation (UX-DR20, Story 2.5) -->
-    <action>Check journal thread history for prior completions of /momentum by this developer</action>
-    <check if="first encounter (zero prior completions)">
+    <!-- Expertise-adaptive orientation (UX-DR20, Story 2.5, Story 2.9) -->
+    <action>Read session_stats.momentum_completions from installed.json (already loaded in Step 1). If absent, treat as 0.</action>
+    <check if="session_stats.momentum_completions == 0">
       <action>Deliver full orientation walkthrough with context</action>
     </check>
-    <check if="repeat encounter (one or more prior completions)">
+    <check if="session_stats.momentum_completions >= 1">
       <action>Deliver abbreviated orientation — current state and decision points only</action>
       <action>Optionally ask once: "Full walkthrough or just the decision points?"</action>
     </check>
+
+    <!-- Increment session_stats counter (Story 2.9) -->
+    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
 
     <!-- Configuration gap detection at session start (Story 2.5) -->
     <action>Load `${CLAUDE_SKILL_DIR}/references/configuration-gap-detection.md`</action>
@@ -415,11 +419,19 @@ What would you like to work on?
     <!-- Dormant thread hygiene (AC5) -->
     <action>For each open thread: if `last_active` is more than 3 days ago, surface it</action>
     <check if="any thread is dormant (>3 days inactive)">
-      <output>
+      <!-- No-Re-Offer guard: before surfacing, check declined_offers for this thread -->
+      <action>For this dormant thread, compute current context_hash: thread_id|story_ref|phase|git_hash (per journal schema)</action>
+      <check if="no declined_offers entry matches offer_type 'dormant-closure' + current context_hash for this thread">
+        <output>
   {{thread.context_summary}} — {{days}} days inactive.
   Close this thread? [Y] Yes · [N] Keep open
-      </output>
-      <note>One confirmation per dormant thread. If developer confirms: append a new entry to journal.jsonl with same thread_id and `status: "closed"`. Then regenerate journal-view.md.</note>
+        </output>
+        <note>One confirmation per dormant thread. If developer confirms: append a new entry to journal.jsonl with same thread_id and `status: "closed"`. Then regenerate journal-view.md.</note>
+        <note>If developer declines [N]: record the declination per No-Re-Offer pattern — append journal entry with declined_offers.</note>
+      </check>
+      <check if="declined_offers entry matches offer_type 'dormant-closure' + current context_hash">
+        <note>Offer was previously declined and context has not changed. Suppress — do not surface.</note>
+      </check>
       <note>Do not pause here for a response. Emit inline and continue — the developer's answer will arrive with their thread selection at the Wait action below.</note>
     </check>
 
@@ -434,11 +446,19 @@ What would you like to work on?
 
     <!-- Unwieldy journal triage (AC7) -->
     <check if="more than 5 open threads">
-      <output>
+      <!-- No-Re-Offer guard: check if unwieldy-triage was previously declined -->
+      <action>Compute context_hash for unwieldy-triage: use the thread with the most recent last_active as the reference thread, format: thread_id|story_ref|phase|git_hash</action>
+      <check if="no declined_offers entry matches offer_type 'unwieldy-triage' + current context_hash">
+        <output>
   !  {{open_count}} open threads — consider a quick triage before starting new work.
   I'll surface each with status and age. Close any that are stale?
-      </output>
-      <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then append closed entry to journal.jsonl.</note>
+        </output>
+        <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then append closed entry to journal.jsonl.</note>
+        <note>If developer declines: record the declination per No-Re-Offer pattern — append journal entry with declined_offers on the reference thread.</note>
+      </check>
+      <check if="declined_offers entry matches offer_type 'unwieldy-triage' + current context_hash">
+        <note>Triage offer was previously declined and context has not changed. Suppress.</note>
+      </check>
     </check>
 
     <!-- Selection prompt — always the final element of this step -->
