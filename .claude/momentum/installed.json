@@ -1,9 +1,6 @@
 {
-  "momentum_version": "1.0.0",
   "installed_at": "2026-03-22T07:03:27Z",
   "components": {
-    "rules-global": { "version": "1.0.0", "hash": "c077dd92fc3442f87eb277c4eed5001b05bc66cc" },
-    "hooks":        { "version": "1.0.0" },
-    "mcp":          { "version": "1.0.0" }
+    "hooks": { "version": "1.0.0" }
   }
 }

@@ -10,22 +10,32 @@ so that I always have the latest rules, hooks, and config without manual interve
 
 ## Acceptance Criteria
 
+> _[Revised 2026-03-23: Per-component-group upgrade detection using two state files. Action types replaced with `add`/`replace`/`delete`/`migration`. Hash drift reads from global state file. Partial upgrades supported on developer request.]_
+
 **AC1 — Upgrade detection and execution:**
 Given a developer runs `npx skills update` and the package `current_version` in `momentum-versions.json` advances,
 When they next invoke `/momentum`,
-Then Impetus compares `installed.json` `momentum_version` against `momentum-versions.json` `current_version`
-And detects a version mismatch
-And presents a summary of what changed in each intermediate version before applying anything
-And on approval, applies version actions sequentially through each intermediate version (e.g. 1.0.0 → 1.1.0 → 1.2.0 — not a direct diff from installed to current)
+Then Impetus checks per-component-group versions in both `~/.claude/momentum/global-installed.json` and `.claude/momentum/installed.json` against `current_version`
+And detects which component groups are behind
+And presents a summary of what changed in each intermediate version before applying anything, organized by component group
+And on approval, applies version actions sequentially through each intermediate version (e.g. 1.0.0 → 1.1.0 → 1.2.0)
 And each intermediate version's actions are presented and confirmed as a group
-And hook updates are merged into `.claude/settings.json` — existing non-Momentum hooks are never removed
-And updates `installed.json` with the new version and updated component hashes
+And actions use the `add`/`replace`/`delete`/`migration` types — migration actions follow bundled instruction files
+And updates both state files with per-component-group versions and hashes
+
+**AC1a — Partial upgrade on developer request:**
+Given an upgrade is available across multiple component groups,
+When the developer asks in natural language to upgrade only specific groups (e.g., "update rules but not hooks"),
+Then Impetus applies only the requested groups' actions
+And records per-group versions accordingly — non-upgraded groups retain their current version
+And the skipped groups' upgrade will be offered again next session
 
 **AC2 — Hash drift detection:**
-Given the hash of installed rules in `installed.json` differs from the hash of the bundled rules,
-When `/momentum` is invoked,
+Given the hash of installed rules in `~/.claude/momentum/global-installed.json` differs from the computed hash of the actual rule files on disk,
+When `/momentum` is invoked and all groups are at current version,
 Then Impetus surfaces a version-drift warning at session start
 And offers to re-apply the rules — developer decides whether to proceed
+And the [R] re-apply path updates `global-installed.json` (not per-project installed.json)
 
 ## Tasks / Subtasks
 

@@ -10,27 +10,28 @@ so that I never have to run a separate setup command or manually edit config fil
 
 ## Acceptance Criteria
 
+> _[Revised 2026-03-23: Split version tracking into global (per-machine) and project (per-repo) state files. Replaced action types with `add`/`replace`/`delete`/`migration`. Per-component-group versioning. [S] replaced with [N].]_
+
 **AC1 — First install detection and consent:**
-Given a developer has run `npx skills add` but `.claude/momentum/installed.json` does not exist in the project,
-When they invoke `/momentum` for the first time,
+Given a developer has run `npx skills add` but neither `~/.claude/momentum/global-installed.json` nor `.claude/momentum/installed.json` records the current version for all component groups,
+When they invoke `/momentum`,
 Then Impetus reads `momentum-versions.json` from its own bundled `references/` directory
-And detects the absence of `installed.json` — identifies this as a first install
-And presents the developer with a summary of all files that will be written before taking any action
+And checks both `~/.claude/momentum/global-installed.json` (per-machine) and `.claude/momentum/installed.json` (per-project) to determine which component groups need installation
+And presents the developer with a summary of ONLY the files that actually need to be written — groups already at current version are omitted
 And waits for explicit developer approval before proceeding
-And if the developer declines [S], Impetus explains that setup is required for full functionality, offers to run it again later, and proceeds to session orientation in a degraded state
+And if the developer declines [N], Impetus explains that setup is required for full functionality, offers to run it again later, and proceeds to session orientation in a degraded state
 
 **AC2 — First install execution:**
 Given the developer approves the setup summary,
-When Impetus executes the first-install actions,
-Then rules files are written to `~/.claude/rules/` from bundled `references/rules/`
-And hooks config is **merged** into `.claude/settings.json` — existing keys are preserved, only Momentum-specific hook entries are added, no existing hooks are overwritten or removed
-And `.mcp.json` is written from bundled `references/mcp-config.json`
-And `showTurnDuration: true` is set in `.claude/settings.json`
-And `.claude/momentum/installed.json` is written recording `momentum_version`, `installed_at`, and a hash for each written component (see Dev Notes Task 5 for precise schema — only `rules-global` carries a hash; `hooks` and `mcp` carry version only)
+When Impetus executes the needed install actions,
+Then for `add` actions: new files are written to their target paths (rules to `~/.claude/rules/`, etc.)
+And for `migration` actions: Impetus reads the bundled migration instruction file and follows its natural language instructions (e.g., merging hooks into `.claude/settings.json`)
+And `~/.claude/momentum/global-installed.json` is written recording per-component-group versions and hashes for global-scoped groups
+And `.claude/momentum/installed.json` is written recording per-component-group versions for project-scoped groups
 And Impetus confirms to the developer exactly which files were written
 
 **AC3 — Idempotence:**
-Given setup is run again (e.g. developer deleted `installed.json` to force re-setup),
+Given setup is run again (e.g. developer deleted state files to force re-setup),
 When Impetus executes the first-install actions a second time,
 Then the result is identical to the first run — no duplicate hook entries, no file corruption
 
@@ -41,23 +42,30 @@ Then rules in `~/.claude/rules/` auto-load in every session including subagents
 And always-on hooks (PostToolUse lint, PreToolUse file protection, Stop gate) are active in `.claude/settings.json`
 
 **AC5 — Version-match skip:**
-Given `.claude/momentum/installed.json` already exists and its version matches `current_version` in `momentum-versions.json`,
+Given all component groups in both state files match `current_version` in `momentum-versions.json`,
 When `/momentum` is invoked,
-Then Impetus skips setup entirely and proceeds directly to session orientation
+Then Impetus skips setup entirely and proceeds to hash drift check, then session orientation
 
-**AC6 — Team member joining:**
+**AC6 — New project on existing machine:**
+Given a developer has already set up Momentum on another project (global-installed.json exists with current versions),
+When they run `npx skills add` on a new project and invoke `/momentum`,
+Then Impetus detects that global components are already current via `~/.claude/momentum/global-installed.json`
+And only runs project-scoped actions (e.g., hooks migration)
+And the consent summary reflects only what's actually needed ("Global rules are already installed. I just need project config.")
+
+**AC7 — Team member joining:**
 Given a second team member clones a project where Impetus has already run setup,
 When they run `npx skills add` and invoke `/momentum`,
-Then Impetus reads the existing `installed.json` committed to the repo
-And detects that project-level config is already present
-And only runs global setup steps (rules to `~/.claude/rules/`) if those are missing from the new machine
+Then Impetus reads the existing per-project `installed.json` committed to the repo and detects project-level config is present
+And checks `~/.claude/momentum/global-installed.json` on their machine — if absent or behind, offers global-only setup
 And does not re-write project-level config already committed to the repo
 
-**AC7 — installed.json git tracking:**
+**AC8 — installed.json git tracking:**
 Given setup has completed and `.claude/momentum/installed.json` has been written,
 When the developer inspects the project's version control state,
 Then `.claude/momentum/installed.json` is tracked in git (not gitignored)
 And `.gitignore` does not contain an entry excluding `.claude/momentum/installed.json`
+And `~/.claude/momentum/global-installed.json` is NOT committed to any project (it is machine-local)
 
 ## Tasks / Subtasks
 
@@ -130,7 +138,7 @@ The exact display format from UX spec (Journey 0):
   enforcement hooks to activate. Rules and MCP are available immediately.
 
   Set up now?
-  [Y] Yes · [S] I'll handle it manually
+  [Y] Yes · [N] No
 ```
 
 **Design principles (from UX spec):**

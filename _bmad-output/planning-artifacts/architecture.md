@@ -474,60 +474,99 @@ enforcement, flywheel, and versioning without workflow authors needing to explic
 **Decision 5c — Installation & Upgrade Manifest**
 
 > _[Added 2026-03-18: Defines the data structures that drive install, upgrade, and version drift detection. The UX interaction for these operations (when to prompt, how to present, what to show) is defined in the UX specification — not here.]_
+>
+> _[Revised 2026-03-23: Split version tracking into global (per-machine) and project (per-repo) state files. Replaced monolithic action types with `add`/`replace`/`delete`/`migration`. Added per-component-group versioning to support partial upgrades.]_
 
-Two files govern Momentum's install and upgrade lifecycle:
+Three files govern Momentum's install and upgrade lifecycle:
 
-**`skills/momentum/references/momentum-versions.json`** — bundled with the skills package; the authoritative per-version action list. Each version entry contains machine-readable instructions that tell Impetus exactly what to do — not a summary, but executable steps:
+**File 1: `skills/momentum/references/momentum-versions.json`** — bundled with the skills package; the authoritative per-version action list. Each version entry contains instructions that tell Impetus exactly what to do. Each action declares a `group` (component group name) and `scope` (`global` or `project`):
 
 ```json
 {
-  "current_version": "1.1.0",
+  "current_version": "1.0.0",
   "versions": {
     "1.0.0": {
-      "description": "Initial release",
+      "description": "Initial release — repository structure established",
       "actions": [
-        { "action": "write_file", "source": "rules/authority-hierarchy.md",
+        { "action": "add", "group": "rules", "scope": "global",
+          "source": "rules/authority-hierarchy.md",
           "target": "~/.claude/rules/authority-hierarchy.md" },
-        { "action": "write_file", "source": "rules/anti-patterns.md",
+        { "action": "add", "group": "rules", "scope": "global",
+          "source": "rules/anti-patterns.md",
           "target": "~/.claude/rules/anti-patterns.md" },
-        { "action": "write_file", "source": "rules/model-routing.md",
+        { "action": "add", "group": "rules", "scope": "global",
+          "source": "rules/model-routing.md",
           "target": "~/.claude/rules/model-routing.md" },
-        { "action": "write_config", "source": "hooks-config.json",
-          "target": ".claude/settings.json", "requires_restart": true }
+        { "action": "migration", "group": "hooks", "scope": "project",
+          "source": "migrations/1.0.0-hooks-install.md",
+          "description": "Merge enforcement hooks into .claude/settings.json",
+          "requires_restart": true }
       ]
     },
     "1.1.0": {
-      "description": "Revised authority hierarchy",
+      "description": "Revised authority rules, new git-discipline rule",
       "from": "1.0.0",
       "actions": [
-        { "action": "update_file", "source": "rules/authority-hierarchy.md",
-          "target": "~/.claude/rules/authority-hierarchy.md",
-          "description": "Revised authority precedence rules" }
+        { "action": "replace", "group": "rules", "scope": "global",
+          "source": "rules/authority-hierarchy.md",
+          "target": "~/.claude/rules/authority-hierarchy.md" },
+        { "action": "add", "group": "rules", "scope": "global",
+          "source": "rules/git-discipline.md",
+          "target": "~/.claude/rules/git-discipline.md" },
+        { "action": "migration", "group": "hooks", "scope": "project",
+          "source": "migrations/1.1.0-hooks-update.md",
+          "description": "Add new PostToolUse hook",
+          "requires_restart": true }
       ]
     }
   }
 }
 ```
 
-**`.claude/momentum/installed.json`** — written to the target project on install; records what version was last applied to THIS project. `npx skills update` updates the package on disk; `installed.json` records what the project has actually been configured for:
+**Action types:**
+
+| Type | Behavior | Use when |
+|---|---|---|
+| `add` | Write source file to target path. Create parent dirs if needed. Warn if target exists. | New file — a new rule, config, template |
+| `replace` | Overwrite target path with source file content. | Updated content for an existing file |
+| `delete` | Remove file at target path. | Deprecated file — consolidated rule, removed config |
+| `migration` | Read the instruction file at `source` (relative to `${CLAUDE_SKILL_DIR}/references/`), follow its natural language instructions. May reference bundled data files. | Config merging, multi-file restructuring, template migrations — anything beyond single-file ops |
+
+Migration instruction files live in `skills/momentum/references/migrations/` and contain natural language instructions Impetus follows. They can express arbitrarily complex operations while keeping the manifest itself simple.
+
+**File 2: `~/.claude/momentum/global-installed.json`** — per-machine state file; tracks what version of global-scoped components (e.g., rules in `~/.claude/rules/`) have been applied on this machine. Never shipped in the package, never committed to any project. Created silently on first install; updated when user consents to upgrade:
 
 ```json
 {
-  "momentum_version": "1.0.0",
-  "installed_at": "2026-03-18T00:00:00Z",
+  "installed_at": "2026-03-22T14:30:00Z",
   "components": {
-    "rules-global":  { "version": "1.0.0", "hash": "<git-blob-sha>" },
-    "hooks":         { "version": "1.0.0" }
+    "rules": { "version": "1.0.0", "hash": "<git-blob-sha>" }
   }
 }
 ```
 
+**File 3: `.claude/momentum/installed.json`** — per-project state file; tracks what version of project-scoped components (e.g., hooks in `.claude/settings.json`) have been applied to THIS project. Committed to git so team members can detect that project-level setup is done:
+
+```json
+{
+  "installed_at": "2026-03-22T14:30:00Z",
+  "components": {
+    "hooks": { "version": "1.0.0" }
+  }
+}
+```
+
+Both state files use per-component-group versioning — no top-level `momentum_version`. Each group tracks its own version independently, enabling partial upgrades when a developer requests them.
+
 **Mechanisms:**
-- **First install** — no `installed.json` exists; Impetus reads `versions["1.0.0"].actions`, executes each, writes `installed.json`
-- **Session-start check** — Impetus reads `current_version` from `momentum-versions.json`; compares against `installed.json.momentum_version`; if they differ, the project needs upgrading
-- **Upgrade** — Impetus reads the action list for each version between installed and current; presents to user with description + action per step; executes on confirmation; updates `installed.json`
+- **First install** — neither state file exists; Impetus reads `versions["1.0.0"].actions`, executes all, writes both state files
+- **New project on existing machine** — `global-installed.json` exists and is current; project `installed.json` absent. Impetus skips global actions, runs only project-scoped actions, writes project state file
+- **Session-start check** — Impetus reads `current_version` from `momentum-versions.json`; for each component group, compares group's installed version (from the appropriate state file) against `current_version`; only stale groups are offered for upgrade
+- **Upgrade** — Impetus reads the action list for each version between installed and current; presents to user with description + action per step; executes on confirmation; updates the appropriate state file per group
+- **Partial upgrade** — If the developer requests specific groups only (via natural language), Impetus applies only those groups and records per-group versions accordingly. The default UX offers all-or-nothing; partial is developer-initiated.
 - **Multi-version gaps** — actions applied sequentially (1.0.0 → 1.1.0 → 1.2.0); each version's changes presented and confirmed as a group
-- **Hash comparison** — per-component git blob SHA detects manual drift (user edited an installed file); surfaced as a warning, not a blocker
+- **Hash comparison** — per-component git blob SHA in `global-installed.json` detects manual drift (user edited an installed file); surfaced as a warning, not a blocker
+- **Team member joining** — `global-installed.json` absent on new machine but project `installed.json` committed in repo → Impetus runs only global setup
 
 The UX interaction for install and upgrade — when to prompt, how to present each action, how to handle restarts and partial failures — is defined in the UX specification (Journeys 0 and 4).
 

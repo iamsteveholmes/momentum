@@ -2,37 +2,36 @@
 
 ## Scenario
 
-Given a developer's project has `.claude/momentum/installed.json` with `momentum_version: "1.0.0"` and the skill's `momentum-versions.json` has `current_version: "1.1.0"`, when they invoke `/momentum`, the skill should:
+Given a developer's state files show all component groups at version `"1.0.0"` and the skill's `momentum-versions.json` has `current_version: "1.1.0"`, when they invoke `/momentum`, the skill should:
 
 1. Read `momentum-versions.json` and detect `current_version = "1.1.0"`
-2. Read `installed.json` and detect `momentum_version = "1.0.0"`
-3. Detect a version mismatch (1.0.0 ≠ 1.1.0)
+2. Read both state files and detect component groups are at `"1.0.0"`
+3. Detect version mismatch (groups behind current)
 4. Collect the 1.1.0 version entry (the one with `"from": "1.0.0"`)
-5. Display the upgrade summary in "what changed / what I need to do" format:
+5. Display the upgrade summary organized by component group:
    ```
-   Momentum has been updated to 1.1.0 — your project is configured for 1.0.0.
+   Momentum 1.1.0 is available.
 
-   Here's what changed and what I need to do:
+     rules (global)     1.0.0 → 1.1.0
+       · authority-hierarchy.md — revised precedence rules
+     hooks (project)    1.0.0 → 1.1.0
+       · new PostToolUse hook
 
-     · authority-hierarchy.md — revised authority precedence rules
-       → update ~/.claude/rules/authority-hierarchy.md
-
-   No restart needed for these changes — they take effect immediately.
-
-   Update now, or continue with 1.0.0 for this session?
+   Update now?
    [U] Update · [S] Skip for now
    ```
-6. On [U]: execute each action from the 1.1.0 entry, reporting each with ✓
-7. Update `installed.json` with `momentum_version: "1.1.0"`, new `installed_at`, and updated component hashes
+6. On [U]: execute each action (`replace` for rules, `migration` for hooks), reporting each with ✓
+7. Update both state files with per-component-group versions set to `"1.1.0"`
 8. Confirm upgrade complete
 
 ## Expected Behavior
 
-Version mismatch is detected immediately. The upgrade summary shows what changed and what will be done (paired). Developer must approve before any files are written. After [U], each action executes with ✓ confirmation. `installed.json` is updated to reflect the new version.
+Version mismatch is detected immediately. The upgrade summary shows what changed, organized by component group with scope labels. Developer must approve before any files are written. After [U], each action executes with ✓ confirmation. Both state files are updated to reflect new per-group versions.
 
 ## NOT Expected
 
 - Silently skipping the version mismatch
 - Writing files before [U] approval
-- Jumping directly to session orientation after detecting mismatch (old placeholder behavior)
-- Updating `installed.json` when [S] is chosen
+- Jumping directly to session orientation after detecting mismatch
+- Updating state files when [S] is chosen
+- Showing a monolithic "momentum_version" instead of per-group versions

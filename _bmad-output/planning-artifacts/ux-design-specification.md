@@ -611,7 +611,7 @@ The very first `/momentum` invocation in a new project. No `installed.json` exis
   enforcement hooks to activate. Rules and MCP are available immediately.
 
   Set up now?
-  [Y] Yes · [S] I'll handle it manually
+  [Y] Yes · [N] No
 ```
 
 After **[Y]** — Impetus executes each action and reports each one:

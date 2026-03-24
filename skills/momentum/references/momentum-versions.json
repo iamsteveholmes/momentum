@@ -5,24 +5,32 @@
       "description": "Initial release — repository structure established",
       "actions": [
         {
-          "action": "write_file",
+          "action": "add",
+          "group": "rules",
+          "scope": "global",
           "source": "rules/authority-hierarchy.md",
           "target": "~/.claude/rules/authority-hierarchy.md"
         },
         {
-          "action": "write_file",
+          "action": "add",
+          "group": "rules",
+          "scope": "global",
           "source": "rules/anti-patterns.md",
           "target": "~/.claude/rules/anti-patterns.md"
         },
         {
-          "action": "write_file",
+          "action": "add",
+          "group": "rules",
+          "scope": "global",
           "source": "rules/model-routing.md",
           "target": "~/.claude/rules/model-routing.md"
         },
         {
-          "action": "write_config",
-          "source": "hooks-config.json",
-          "target": ".claude/settings.json",
+          "action": "migration",
+          "group": "hooks",
+          "scope": "project",
+          "source": "migrations/1.0.0-hooks-install.md",
+          "description": "Merge enforcement hooks into .claude/settings.json",
           "requires_restart": true
         }
       ]
