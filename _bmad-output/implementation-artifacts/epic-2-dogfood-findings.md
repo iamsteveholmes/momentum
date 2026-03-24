@@ -20,6 +20,20 @@ Date: 2026-03-23
 | F11 | Expertise-adaptive not differentiated on repeat | Medium | Open | Track /momentum invocation count for expertise signal |
 | F12 | Natural language confirmation consistently skipped | High | Open | Strengthen confirmation rule or add structural gate |
 
+**Deferred validation — requires Epic 3/4 workflows to exercise:**
+
+| # | Behavior | Story | Trigger |
+|---|----------|-------|---------|
+| V1 | Completion signal format (ownership return, file list, "what's next?") | 2.4 AC1 | Workflow completes |
+| V2 | Productive waiting during background tasks | 2.4 AC2 | Background subagent dispatch |
+| V3 | Subagent result synthesis (no raw JSON, severity indicators) | 2.4 AC3 | Subagent returns results |
+| V4 | Hub-and-spoke contract (subagent identity hidden) | 2.4 AC4 | Subagent orchestration |
+| V5 | Implementation summary at review dispatch | 2.4 AC5 | Review dispatched |
+| V6 | Tiered review depth (micro-summary, quick scan, full review) | 2.4 AC6 | Review findings presented |
+| V7 | Confidence-directed review | 2.4 AC7 | Review findings with spec references |
+| V8 | Config gap detection | 2.5 AC3 | Missing config scenario |
+| V9 | Multi-tab concurrent detection | 2.2 AC4 | Two simultaneous sessions |
+
 **Not actionable:**
 | F3 | Pre-push install served stale skills | Low | Closed | Operator error — always push before reinstall |
 
