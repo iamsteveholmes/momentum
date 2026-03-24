@@ -16,6 +16,9 @@ Date: 2026-03-23
 | F7 | Dormant thread hygiene didn't fire | High | Open | Root cause: F9 |
 | F8 | Multi-tab concurrent detection didn't fire | High | Open | Root cause: F9 |
 | F9 | Step 11/12 split causes hygiene to be skipped | Critical | Open | Merge Steps 11+12: threads → hygiene → selection in one response |
+| F10 | No-re-offer after decline not persisted | Medium | Open | Extend journal schema with offer/declination tracking |
+| F11 | Expertise-adaptive not differentiated on repeat | Medium | Open | Track /momentum invocation count for expertise signal |
+| F12 | Natural language confirmation consistently skipped | High | Open | Strengthen confirmation rule or add structural gate |
 
 **Not actionable:**
 | F3 | Pre-push install served stale skills | Low | Closed | Operator error — always push before reinstall |
@@ -137,6 +140,46 @@ Date: 2026-03-23
 
 ---
 
+## Finding 10: No-re-offer after decline not persisted across sessions
+
+**Observed:** Declined dormant thread closure in session 2. Re-invoked `/momentum` in session 3. Dormant thread closure was re-offered.
+
+**Expected:** AC5 (Story 2.5): "Record declination in journal thread state... do not re-surface the same offer unless context has materially changed."
+
+**Root cause:** The decline was ephemeral — only in conversation context. The no-re-offer rule requires writing the declination to journal.jsonl, but the workflow didn't write a declination entry. The journal only tracks thread state (open/closed), not offer history.
+
+**Fix:** Either extend the journal schema with an `offers` field to track declined proactive offers per thread, or add a separate declination log that the hygiene step checks.
+
+**Severity:** Medium — AC5 behavior not persistent
+
+---
+
+## Finding 11: Expertise-adaptive abbreviation not clearly differentiated
+
+**Observed:** Second invocation of `/momentum` didn't visibly differ from the first in orientation style. No "Full walkthrough or just the decision points?" offer was made.
+
+**Expected:** AC6 (Story 2.5): "Repeat encounter = abbreviated — present current state and decision points directly. May ask 'Full walkthrough or just the decision points?'"
+
+**Root cause:** The LLM may not have access to cross-session history to know this is a repeat encounter. The journal tracks workflow threads, not `/momentum` invocation history. Without a record of prior completions, the expertise-adaptive check has no signal.
+
+**Fix:** Track `/momentum` invocation count in installed.json or a separate counter, so the expertise-adaptive check has a concrete signal.
+
+**Severity:** Medium — AC6 behavior not differentiated
+
+---
+
+## Finding 12: Natural language confirmation consistently skipped
+
+**Observed:** Second test — "yeah let's pick up the test infra work" went directly to thread 1 resumption without confirming "Resuming d1-1b test infrastructure — correct?" Same behavior as Finding 4.
+
+**Expected:** AC5 (Story 2.1): Natural language intent extracted and confirmed before acting.
+
+**Root cause:** The LLM treats unambiguous intent as not needing confirmation. The input interpretation rule says to confirm, but when intent is clear, the LLM optimizes by skipping. This is a consistent behavioral compliance issue — the rule needs to be stronger or structurally enforced.
+
+**Severity:** High — consistent AC5 violation across multiple tests
+
+---
+
 ## Findings from successful validation
 
 The following Epic 2 behaviors were confirmed working:
@@ -154,3 +197,28 @@ The following Epic 2 behaviors were confirmed working:
 - **Story 2.3 AC7:** On-demand "where am I?" — returned visual progress indicator
 - **Story 2.1 AC5 (partial):** Number input selects item without confirmation (worked for thread selection)
 - **Hash drift check:** Computed hash matched stored hash, no false alarm
+- **Story 2.2 AC5 (partial):** Dormant hygiene fired on second run — offered closure for 4-day dormant thread
+- **Story 2.2 AC6:** Dependency notification — surfaced "Thread 2 waiting on Thread 1"
+- **Story 2.2 Steps 11+12:** Combined display — threads, hygiene, selection all in one response (second run)
+- **Story 2.2 Step 14:** Journal write protocol — append-only closure entry, journal-view.md regenerated
+- **Story 2.5 AC1:** JIT spec contextualization — surfaced architecture decision inline with source reference
+- **Story 2.5 AC2:** Follow-up as discovery — read 26 tool uses exploring architecture before answering
+- **Story 2.5 AC7:** Motivated disclosure — framed why the spec decision matters to the current thread
+- **Story 2.5 AC4:** Proactive offer — used ? symbol to offer thread closure based on spec discovery
+- **Story 2.1 fuzzy continue:** "yeah let's pick up the test infra work" correctly mapped to thread 1
+
+## Untested behaviors
+
+These require deeper workflow execution (subagent dispatch, background tasks, review cycles) that a dogfood session through `/momentum` orientation alone cannot exercise:
+
+- **Story 2.4 AC1:** Completion signal format (ownership return, file list, "what's next?")
+- **Story 2.4 AC2:** Productive waiting during background tasks
+- **Story 2.4 AC3:** Subagent result synthesis (no raw JSON, severity indicators)
+- **Story 2.4 AC4:** Hub-and-spoke contract (subagent identity hidden)
+- **Story 2.4 AC5:** Implementation summary at review dispatch
+- **Story 2.4 AC6:** Tiered review depth (micro-summary, quick scan, full review)
+- **Story 2.4 AC7:** Confidence-directed review
+- **Story 2.5 AC3:** Config gap detection (need missing config scenario)
+- **Story 2.2 AC4:** Multi-tab concurrent detection (need two simultaneous sessions)
+
+These will be naturally exercised when Epic 3/4 workflows (story cycles, code review) run through Impetus.
