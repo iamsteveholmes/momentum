@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-24 (Story 2-9 created)
+last_updated: 2026-03-24
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -70,7 +70,7 @@ development_status:
 
   # Epic 2 Refinement: Harden Epic 2 Foundation
   epic-2-refinement: in-progress
-  2-6-session-thread-display-fires-hygiene-checks: ready-for-dev
+  2-6-session-thread-display-fires-hygiene-checks: done
   2-7-natural-language-input-confirmed-before-dispatch: ready-for-dev
   2-8-impetus-first-impression-has-personality-and-identity: ready-for-dev
   2-9-behavioral-persistence-across-sessions: ready-for-dev

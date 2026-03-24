@@ -1,6 +1,6 @@
 # Story 2.6: Session Thread Display Fires Hygiene Checks Before Developer Input
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
