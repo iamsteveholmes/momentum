@@ -168,7 +168,7 @@ NFR17: Meta-risk (system amplifying its own blind spots via dogfooding) must be 
 - Impetus must surface a version-drift warning at session start when installed global rules hash differs from current version's rules hash
 
 **From Architecture — Storage & State**
-- Session journal stored at `.claude/momentum/journal.json`; auto-generated `.claude/momentum/journal-view.md` for human readability
+- Session journal stored at `.claude/momentum/journal.jsonl`; auto-generated `.claude/momentum/journal-view.md` for human readability
 - Findings ledger stored at `~/.claude/momentum/findings-ledger.jsonl` (global, JSONL append-only) with structured schema: id, project, story_ref, phase, severity, pattern_tags, description, evidence, provenance_status, upstream_fix_applied, upstream_fix_level, upstream_fix_ref, timestamp
 - Only the flywheel workflow writes to findings ledger; Impetus reads at retrospective and upstream trace
 
@@ -783,7 +783,7 @@ So that I can pick up any thread without hunting for context.
 **Then** within two exchanges, Impetus surfaces: active story/task, current phase, last completed action, and suggested next action
 **And** Impetus speaks first — the developer is never required to ask "where were we?"
 
-**Given** the journal at `.claude/momentum/journal.json` contains one or more open thread entries
+**Given** the journal at `.claude/momentum/journal.jsonl` contains one or more open thread entries
 **When** Impetus starts (UX-DR1)
 **Then** Impetus displays the Session Journal: numbered list of open threads, each showing workflow phase and elapsed time
 **And** threads are ordered by most-recently-active
