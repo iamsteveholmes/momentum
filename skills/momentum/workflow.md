@@ -158,8 +158,21 @@
 
     <check if="journal.jsonl does not exist OR has zero open threads">
       <action>Skip journal display entirely — no mention of threads or journal</action>
-      <output>What are you working on?</output>
-      <note>Empty journal path — go directly to normal session (Story 2.1 menu)</note>
+      <!-- AC3: transition directly to Story 2.1 menu (orientation → numbered menu → user control) -->
+      <output>
+You're set up and ready.
+
+Here's what I can help with:
+
+  1. Create a story
+  2. Develop a story
+  3. Review a plan
+  4. Run quality validation
+  5. Audit spec provenance
+  6. Show session threads
+
+What would you like to work on?
+      </output>
     </check>
 
     <check if="one or more open threads exist">
