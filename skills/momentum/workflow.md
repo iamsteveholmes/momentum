@@ -82,8 +82,9 @@ Standing behavioral directive for all interactions:
 - **Number:** selects corresponding item from current list — no confirmation needed
 - **Letter commands:** case-insensitive ("C" and "c" are equivalent)
 - **Fuzzy continue:** "continue", "yes", "go ahead", "proceed", "yeah let's keep going", "yep", "ok", "sure" → all map to C (continue). No clarification needed.
-- **Natural language intent:** extract intent and confirm before acting. Example: "I want to work on story 2.3" → "Starting development of Story 2.3 — correct?"
-- **Ambiguous input:** exactly ONE clarifying question with numbered options. Never two. If the response is also ambiguous, assume and flag.
+- **Natural language intent:** MUST extract intent and confirm before acting — no exceptions. Before executing any GOTO or workflow dispatch triggered by natural language input, MUST first present a one-line confirmation and wait for yes/no. Example: "I want to work on story 2.3" → "Starting development of Story 2.3 — correct?" Never skip the confirmation because the intent seems obvious or unambiguous.
+- **Structural gate — natural language dispatch:** When a developer's input is natural language (not a number, letter command, or fuzzy continue), the following sequence is mandatory: (1) Extract the most likely intent, (2) Present confirmation: "[extracted intent] — correct?", (3) Wait for yes/no, (4) Only on "yes" execute the GOTO. If "no", ask what they meant with numbered options (same as ambiguous input handling). This gate applies at every prompt where input leads to a workflow dispatch: Step 7 menu, Step 11 thread selection, and any future interactive prompt. The confirmation is exactly one exchange. Do NOT ask follow-up questions after "yes" — dispatch immediately. Do NOT ask "are you sure?" — one confirmation is enough. When "yes"/"go ahead"/"proceed" is a response to a natural language confirmation prompt, it confirms the action — it does not re-trigger the gate.
+- **Ambiguous input:** MUST present exactly ONE clarifying question with numbered options (e.g., "1. Create a story, 2. Develop a story, 3. Something else"). Never open-ended phrasing. Never two questions. If the response is also ambiguous, assume and flag.
 - **Follow-up questions:** answer, then return to active step. Do not lose context.
 
 ---
@@ -375,6 +376,8 @@ What would you like to work on?
       </output>
     </check>
 
+    <note>Natural language gate: If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious.</note>
+
     <check if="one or more open threads exist">
       <action>GOTO step 11 (Session Journal Display)</action>
     </check>
@@ -444,6 +447,8 @@ What would you like to work on?
     </output>
 
     <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
+
+    <note>Natural language gate: If developer input is natural language (not a thread number, "continue", or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching. Do not skip confirmation even if the intent seems obvious.</note>
 
     <check if="developer selects a thread by number or says 'continue'">
       <action>GOTO step 12 (workflow resumability)</action>
