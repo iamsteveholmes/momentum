@@ -430,11 +430,11 @@ active story/task, current phase, last completed action, suggested next action.
 User never hunts for context.
 
 **Decision 4c — Productive Waiting**
-While a context:fork subagent runs in background, Impetus maintains dialogue on the same topic.
-Background execution (confirmed: Claude Code subagents explicitly support foreground/background modes) means the main conversation is not blocked — Impetus can continue responding to the user while isolated agents run concurrently.
+While a context:fork subagent runs, Impetus maintains engagement through pre-launch briefing and post-completion synthesis.
+`context:fork` subagents run to completion in a foreground operation — the main conversation is blocked during execution. Background execution via `run_in_background: true` on the Bash tool is available for mechanical tasks (test runs, builds) but not for agent reasoning.
 Default: surface implementation summary ("here's what was built and how it maps to the ACs").
 Dead air is a failure mode, not an acceptable pause.
-**Implementation note:** Background agent execution model is validated in Story 2.Spike (Epic 2) before Stories 2.4 and 4.3 begin. Do not implement productive waiting or background VFL execution until spike result is documented. The execution mode is adopted as the architectural intent; the spike validates the specific implementation mechanism (inter-agent communication + checkpoint/resume). If the spike reveals the mechanism is unavailable, Decision 3a/4c will be revised before Stories 2.4 and 4.3 begin.
+**Implementation note (updated 2026-03-24, Story 2.10 spike result):** The spike is complete. Results documented in `docs/research/background-agent-coordination.md`. Key findings: (1) No `SendMessage` or inter-agent messaging API exists in Claude Code — checkpoint/resume mid-task is not possible. (2) No `Agent` tool exists as a general-purpose callable tool — subagent execution is declared via `context:fork` in SKILL.md, not dispatched dynamically. (3) `run_in_background: true` on the Bash tool runs shell commands (not agents) in the background — fire-and-forget only. (4) Productive waiting is behavioral, not mechanical: Impetus briefs the user before subagent launch and synthesizes results after completion. Story 4.3 should decompose work into discrete `context:fork` invocations (each runs to completion) and use background Bash for test/build tasks only.
 
 ---
 

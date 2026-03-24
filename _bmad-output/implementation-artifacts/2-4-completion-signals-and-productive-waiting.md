@@ -116,7 +116,7 @@ This is a **skill-instruction (EDD) + reference-document** story — same patter
 
 ### Critical Dependency: Story 2.Spike (Background Agent Coordination)
 
-The epics define Story 2.Spike as a prerequisite: "Validate that the SendMessage API reliably supports background agent checkpoint/resume." **The spike has not been completed and no research document exists in `docs/research/`.**
+The epics define Story 2.Spike as a prerequisite: "Validate that the SendMessage API reliably supports background agent checkpoint/resume." **Spike completed as Story 2.10 (2026-03-24). Research document: `docs/research/background-agent-coordination.md`.** Key outcome: SendMessage does not exist; checkpoint/resume is not possible; productive waiting is behavioral (pre-launch briefing + post-completion synthesis), not mechanical. See the research document for full findings and Story 4.3 recommendations.
 
 However, the core ACs for this story do NOT require checkpoint/resume. They require:
 - **AC2:** Maintain dialogue while background agent runs — achievable by having Impetus talk to the user after calling `Agent` with `run_in_background: true`
