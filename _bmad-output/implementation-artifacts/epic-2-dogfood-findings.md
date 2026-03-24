@@ -44,3 +44,40 @@ Date: 2026-03-23
 **Lesson:** Always push before reinstalling global skills. Consider adding a version check to the install process.
 
 **Severity:** Low — operator sequencing, not a code defect
+
+---
+
+## Finding 4: Natural language input skips confirmation step
+
+**Observed:** Developer typed "I want to create a story" at the menu. Impetus immediately invoked bmad-create-story without confirming intent first.
+
+**Expected:** AC5 (Story 2.1) requires: "natural language intent extracted and confirmed before acting ('Starting story creation — correct?')". Impetus should have confirmed before dispatching.
+
+**Root cause:** The input interpretation rules are behavioral instructions that the LLM may not follow consistently when the intent seems unambiguous. The rule is present in workflow.md but the LLM judged the intent clear enough to skip confirmation.
+
+**Severity:** High — violates AC5, could dispatch wrong workflow
+
+---
+
+## Finding 5: Ambiguous input clarification lacks numbered options
+
+**Observed:** Developer typed "that one" after an interrupt. Impetus asked one clarifying question (correct per AC5) but phrased it as "is that the one, or did you have a different story in mind?" instead of presenting numbered options.
+
+**Expected:** AC5 says "ambiguous input triggers exactly one clarifying question" and the input interpretation rule says "presented as numbered options." Should have been: "Which one — 1. Create a story, 2. Develop a story, 3. ..."
+
+**Root cause:** The behavioral instruction says "numbered options" but the LLM inferred story context from the previous action rather than falling back to the menu items.
+
+**Severity:** Medium — correct behavior (one question) but wrong format (no numbered options)
+
+---
+
+## Findings from successful validation
+
+The following Epic 2 behaviors were confirmed working:
+
+- **Story 2.1 AC2:** Menu displays with Response Architecture Pattern (orientation → menu → user control)
+- **Story 2.1 AC3:** Voice rules followed — no generic praise, no step counts, narrative orientation
+- **Story 2.2 AC3:** Empty journal path — skipped thread display, transitioned to menu
+- **Story 2.5 AC6:** Expertise-adaptive — detected first encounter, delivered full walkthrough
+- **Story 2.1 AC1:** Impetus speaks first — menu presented without developer prompting
+- **First-install flow:** Complete execution — rules written, hooks configured, state files created, hash computed
