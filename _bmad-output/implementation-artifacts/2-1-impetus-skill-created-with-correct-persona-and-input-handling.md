@@ -342,6 +342,7 @@ claude-opus-4-6[1m]
 - Task 3: Added voice rules as `<rules scope="voice">` block in workflow.md. Bans generic praise, step counts, agent/model names. Requires subagent output synthesis, explicit agency return, and honest uncertainty surfacing. Symbol vocabulary defined.
 - Task 4: Added input interpretation rules as `<rules scope="input-interpretation">` block in workflow.md. Covers: number selection (no confirm), case-insensitive letters, fuzzy continue matching, natural language intent extraction with confirmation, exactly-one-question ambiguity handling.
 - EDD: 5 behavioral evals written in skills/momentum/evals/ before implementation. All eval behaviors confirmed by inspection of implemented rules.
+- AVFL: checkpoint profile, 3 lenses (structural, accuracy, domain), stage final. Result: CHECKPOINT_WARNING. Fixed 4 of 7 findings (governance comment on model field, install/upgrade routing documentation, Sure!/sure context distinction, expanded fuzzy-match eval). Remaining 3 findings (low): non-standard `<rules>` tag (deliberate design), step 8 numbering gap (pre-existing), em dash in description (acceptable).
 
 ### File List
 
@@ -357,3 +358,4 @@ claude-opus-4-6[1m]
 ### Change Log
 
 - 2026-03-23: Implemented Story 2.1 — Impetus skill persona, menu, voice rules, and input interpretation
+- 2026-03-23: AVFL checkpoint pass — fixed 4 findings, 3 low-severity remaining (accepted)
