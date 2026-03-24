@@ -72,8 +72,8 @@ development_status:
   epic-2-refinement: in-progress
   2-6-session-thread-display-fires-hygiene-checks: done
   2-7-natural-language-input-confirmed-before-dispatch: done
-  2-8-impetus-first-impression-has-personality-and-identity: ready-for-dev
-  2-9-behavioral-persistence-across-sessions: ready-for-dev
+  2-8-impetus-first-impression-has-personality-and-identity: done
+  2-9-behavioral-persistence-across-sessions: done
   2-10-background-agent-coordination-validated: done
   epic-2-refinement-retrospective: optional
 

@@ -1,6 +1,6 @@
 # Story 2.9: Behavioral Persistence Across Sessions for Offers and Expertise
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 

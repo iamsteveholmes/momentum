@@ -1,6 +1,6 @@
 # Story 2.8: Impetus First Impression Has Personality and Identity
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -17,29 +17,22 @@ so that my first encounter feels like meeting a practice partner — not reading
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Replace Step 2 first-install consent template with voice-compliant greeting (AC: #1, #2)
-  - [ ] 1.1: Remove ALL `{{current_version}}` interpolation from Step 2 output templates. Three instances exist:
-    - Line 188: `Momentum {{current_version}} — first time here`
-    - Line 197: `Momentum {{current_version}} — setting up this project`
-    - Line 204: `Momentum {{current_version}} — setting up global rules`
-  - [ ] 1.2: Add a visual identity element (ASCII art logo, nerdfont icon block, or equivalent) at the top of the first-install greeting (the `both global and project actions needed` branch, line 188). This is Impetus's entrance — the developer's first encounter with the practice.
-  - [ ] 1.3: Add a brief self-introduction line after the identity element. Impetus names itself and establishes its role as a practice partner. One to two sentences maximum — not a feature list, not a sales pitch.
-  - [ ] 1.4: Rewrite the consent body for all three conditional branches to use Impetus's guide voice. The factual content (what will be installed, where) stays the same — the framing changes from mechanical listing to oriented partner communication. Keep the `[Y] Yes · [N] No` prompt and `Set up now?` question.
-  - [ ] 1.5: Remove `{{current_version}}` from Step 3 progress output (line 233: `Setting up Momentum {{current_version}}...`). Replace with Impetus-voice equivalent that doesn't surface version machinery.
+- [x] Task 1: Replace Step 2 first-install consent template with voice-compliant greeting (AC: #1, #2)
+  - [x] 1.1: Remove ALL `{{current_version}}` interpolation from Step 2 output templates. Three instances removed.
+  - [x] 1.2: Add ASCII art MOMENTUM logo at top of first-install greeting (both branch).
+  - [x] 1.3: Add self-introduction: "I'm Impetus — your practice partner. I handle the engineering discipline so you can focus on building."
+  - [x] 1.4: Rewrite consent body for all three conditional branches in Impetus guide voice. Factual content preserved, `[Y] Yes · [N] No` and `Set up now?` preserved.
+  - [x] 1.5: Replace `Setting up Momentum {{current_version}}...` with `Setting things up...` in Step 3.
 
-- [ ] Task 2: Replace Step 7 zero-thread session menu opening with voice-compliant greeting (AC: #3)
-  - [ ] 2.1: Replace the flat opening line at line 363 (`You're set up and ready.`) with an Impetus-voice greeting that has personality consistent with the first-encounter tone. Not a visual identity repeat (that's first-encounter only) — but warm, oriented, forward-moving.
-  - [ ] 2.2: The numbered menu items (lines 367-372) and closing question (`What would you like to work on?`) are fine as-is — leave them. The fix is the opening line only.
+- [x] Task 2: Replace Step 7 zero-thread session menu opening with voice-compliant greeting (AC: #3)
+  - [x] 2.1: Replace "You're set up and ready." with "Everything's in place — let's build something."
+  - [x] 2.2: Menu items and closing question left unchanged.
 
-- [ ] Task 3: Replace Step 9 upgrade templates with voice-compliant presentation (AC: #2, #4)
-  - [ ] 3.1: Remove `{{current_version}}` / `{{version_entry.version}}` from user-facing output headers in Step 9. Four instances:
-    - Line 504: `Momentum {{version_entry.version}} is available.`
-    - Line 522: `Skipping upgrade to {{version_entry.version}} for this session.`
-    - Line 536: `Updating to Momentum {{version_entry.version}}...`
-    - Line 547: `Momentum is now at {{version_entry.version}}.`
-  - [ ] 3.2: Rewrite the upgrade summary display template (lines 503-516) to use Impetus voice. The factual content (what changed, what groups, what scope) remains — the framing shifts from mechanical version-diff to Impetus explaining what evolved and why it matters. Version numbers may appear in the per-group detail lines (e.g., `1.0.0 → 1.1.0`) as factual context — the prohibition is on version strings as headers or identity labels.
-  - [ ] 3.3: Rewrite the upgrade progress and completion outputs (lines 536, 547) to match Impetus voice. No `Momentum X.Y.Z` as a header.
-  - [ ] 3.4: Review the error output at line 493 (`Cannot resolve upgrade path from {{installed_version}} to {{target_version}}`). Version numbers are appropriate in error diagnostics — but the framing should still use Impetus voice, not a raw error template.
+- [x] Task 3: Replace Step 9 upgrade templates with voice-compliant presentation (AC: #2, #4)
+  - [x] 3.1: Removed all 4 `{{version_entry.version}}` from user-facing headers.
+  - [x] 3.2: Replaced "Momentum {{version_entry.version}} is available." with "Some things have evolved since your last session." Version numbers preserved in per-group detail lines.
+  - [x] 3.3: Replaced progress/completion with "Applying updates..." and "All caught up — latest practice updates are in place."
+  - [x] 3.4: Rewritten error output in Impetus voice while preserving version numbers for diagnostics.
 
 ## Dev Notes
 
@@ -287,6 +280,20 @@ Adversarial subagent verification via cmux (Workspace C — isolated from other 
 
 ### Agent Model Used
 
+claude-opus-4-6
+
 ### Completion Notes List
 
+- All 3 `{{current_version}}` removed from Step 2 output, replaced with ASCII art identity + self-introduction (both branch) and Impetus voice (project-only and global-only branches)
+- Step 3 progress output stripped of version machinery
+- Step 7 zero-thread opening line replaced with forward-moving Impetus voice
+- All 4 `{{version_entry.version}}` headers removed from Step 9 user-facing output; version numbers preserved only in per-group detail lines
+- Error diagnostic at Step 9 rewritten in Impetus voice while retaining version numbers for troubleshooting
+- 2 EDD evals written before implementation: first-install personality/identity and session-menu/upgrade voice
+- EDD verification: all eval behaviors confirmed by inspection of produced output templates
+
 ### File List
+
+- `skills/momentum/workflow.md` — Steps 2, 3, 7, 9 output templates rewritten
+- `skills/momentum/evals/eval-first-install-personality-and-identity.md` — EDD eval (new)
+- `skills/momentum/evals/eval-session-menu-voice-and-upgrade-voice.md` — EDD eval (new)
