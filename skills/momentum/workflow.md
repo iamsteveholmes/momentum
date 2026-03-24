@@ -406,6 +406,7 @@ What would you like to work on?
      Opening here may cause conflicts. Proceed anyway?
       </output>
       <note>Warn, never block — developer decides. If developer proceeds on same story, confirm before starting a competing thread.</note>
+      <note>Do not pause here for a response. Emit inline and continue — the developer's answer will arrive with their thread selection at the Wait action below.</note>
     </check>
 
     <!-- Dormant thread hygiene (AC5) -->
@@ -416,6 +417,7 @@ What would you like to work on?
   Close this thread? [Y] Yes · [N] Keep open
       </output>
       <note>One confirmation per dormant thread. If developer confirms: append a new entry to journal.jsonl with same thread_id and `status: "closed"`. Then regenerate journal-view.md.</note>
+      <note>Do not pause here for a response. Emit inline and continue — the developer's answer will arrive with their thread selection at the Wait action below.</note>
     </check>
 
     <!-- Dependency-satisfied notification (AC6) -->
@@ -479,7 +481,7 @@ What would you like to work on?
     <action>After append, regenerate `.claude/momentum/journal-view.md`:
       - Read all journal entries
       - Reconstruct current state per thread_id (last entry wins)
-      - Render a markdown table with columns: Thread ID, Story, Phase, Last Action, Last Active, Status
+      - Render a markdown table with columns: Thread (context_summary_short), Story, Phase, Last Action, Last Active, Status (never use thread_id / T-NNN as a column value)
       - Include all open threads and threads closed within the last 7 days
       - Write to `.claude/momentum/journal-view.md` (overwrite)</action>
   </step>

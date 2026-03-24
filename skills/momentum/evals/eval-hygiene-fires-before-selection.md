@@ -15,8 +15,9 @@ Then Impetus should:
 3. Emit the dormant closure offer for Thread 2 (N days inactive. Close this thread?) BEFORE any selection prompt
 4. End the response with the selection prompt "Continue (1/2/...) or tell me what you need?"
 5. All of this happens in ONE response turn — no user input is requested between the thread list display and the hygiene warnings
+6. Thread 3 (2 hours ago — below all hygiene thresholds) triggers no hygiene warning
 
-## What Would Fail This Eval
+## NOT Expected
 
 - Hygiene warnings appear in a separate response turn (after the user has already been prompted for input)
 - The selection prompt appears before any hygiene warning

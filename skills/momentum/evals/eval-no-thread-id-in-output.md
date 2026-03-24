@@ -14,7 +14,7 @@ Then Impetus should:
 3. In the workflow resumability step (after thread selection), display the thread using `context_summary` — never `thread_id`
 4. No internal identifier in T-NNN format appears anywhere in the response
 
-## What Would Fail This Eval
+## NOT Expected
 
 - Any output containing "T-001", "T-002", or any T-NNN pattern
 - Hygiene warnings that say e.g. "! Thread T-001 appears active in another tab"

@@ -13,7 +13,7 @@ When the developer invokes `/momentum` and startup routing reaches session orien
 ## Expected Behavior
 
 1. Impetus reads the journal and detects this thread has been inactive for >3 days
-2. After displaying the Session Journal (if applicable), Impetus surfaces the dormant thread separately:
+2. Within the same response as the Session Journal display (inline, before the selection prompt), Impetus surfaces the dormant thread:
    - Shows brief context from `context_summary`
    - States it has been dormant (e.g., "4 days inactive")
    - Offers one-action closure (e.g., "Close this thread? [Y/N]")
