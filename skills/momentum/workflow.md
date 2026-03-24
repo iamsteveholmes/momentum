@@ -6,6 +6,54 @@
 
 ---
 
+## PROGRESS INDICATOR
+
+<reference load="on-demand">`${CLAUDE_SKILL_DIR}/references/progress-indicator.md`</reference>
+
+### Rendering Rules
+
+Display the progress indicator at every phase transition and on-demand position query. Format:
+
+```
+  ✓  [completed · phases]     [value summary phrase]
+  →  [current phase]          [why this step matters]
+  ◦  [upcoming · phases]      [what remains]
+```
+
+- **3 lines** at mid-workflow (completed, current, upcoming all present)
+- **2 lines** at workflow start: omit ✓ line (nothing completed)
+- **2 lines** at workflow end: omit ◦ line (nothing upcoming)
+- **Never** display an empty or placeholder line for a missing category
+- Completed phases collapse to ONE ✓ line with a value summary — never one line per phase
+- Upcoming phases collapse to ONE ◦ line — never one line per phase
+- Every symbol has adjacent text (see `references/progress-indicator.md` for full vocabulary)
+- 80-char terminal width — no horizontal scrolling
+- No "Step N/M" — all orientation is narrative
+
+### Response Architecture Pattern
+
+Every rendered workflow step follows this structure in order:
+
+1. **Narrative orientation** — progress indicator + narrative context (what has been done, what matters now)
+2. **Substantive content** — the work: questions, decisions, artifacts
+3. **Transition signal** — forward-looking: what this step unlocks
+4. **User control** — always last: A/P/C or contextual equivalent
+
+### On-Demand Position Query
+
+When the developer asks "where am I?", "what's my current position?", "show progress", or equivalent: display the progress indicator for the current workflow state. Answer directly — do not re-explain the workflow.
+
+### Interrupted Workflow Resumption
+
+When a session starts and `.claude/momentum/journal.json` contains a thread with `phase: "active"` or `phase: "interrupted"`:
+
+1. Read `completed_steps`, `current_step`, and `context_summary` from the journal entry
+2. Reconstruct the progress indicator from journal state
+3. Display the indicator and ask: "continue from here, or restart this step?"
+4. Do NOT require the developer to re-explain context — the journal provides orientation
+
+---
+
 ## EXECUTION
 
 <workflow>
@@ -154,8 +202,29 @@
 
   <step n="7" goal="Session orientation">
     <action>Load `${CLAUDE_SKILL_DIR}/references/practice-overview.md` for context</action>
-    <output>What are you working on?</output>
-    <note>Full session orientation (sprint status, thread management, active story detection) is Story 2.1 scope. For now: open the floor to the developer.</note>
+
+    <!-- Interrupted workflow detection (Story 2.3: progress indicator resumption) -->
+    <action>Check if `.claude/momentum/journal.json` exists and contains a thread with `phase: "active"` or `phase: "interrupted"`</action>
+    <check if="interrupted thread found in journal">
+      <action>Read `completed_steps`, `current_step`, `context_summary`, and `workflow` from the journal entry</action>
+      <action>Load `${CLAUDE_SKILL_DIR}/references/progress-indicator.md` for rendering rules</action>
+      <action>Reconstruct progress indicator: completed_steps → ✓ line, current_step → → line, remaining phases → ◦ line. Apply boundary rules (omit ✓ at start, omit ◦ at end).</action>
+      <output>
+  [progress indicator — 2 or 3 lines per rendering rules]
+
+  [narrative context from context_summary — not a raw dump, synthesized orientation]
+
+  Continue from here, or restart this step?
+  [C] Continue · [R] Restart step
+      </output>
+      <ask>[C] or [R]?</ask>
+      <note>On [C]: resume current_step. On [R]: re-enter current_step from the beginning.</note>
+    </check>
+
+    <check if="no interrupted thread found">
+      <output>What are you working on?</output>
+    </check>
+    <note>Full session orientation (sprint status, thread management, active story detection) is Story 2.1 scope. For now: open the floor to the developer, or resume an interrupted workflow.</note>
   </step>
 
   <!-- Team member joining path (AC6) -->

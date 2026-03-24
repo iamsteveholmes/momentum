@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-22
+last_updated: 2026-03-23
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -63,7 +63,7 @@ development_status:
   epic-2: in-progress
   2-1-impetus-skill-created-with-correct-persona-and-input-handling: ready-for-dev
   2-2-session-orientation-and-thread-management: ready-for-dev
-  2-3-visual-progress-tracks-workflow-position: ready-for-dev
+  2-3-visual-progress-tracks-workflow-position: review
   2-4-completion-signals-and-productive-waiting: ready-for-dev
   2-5-spec-contextualization-and-configuration-gap-detection: backlog
   epic-2-retrospective: optional

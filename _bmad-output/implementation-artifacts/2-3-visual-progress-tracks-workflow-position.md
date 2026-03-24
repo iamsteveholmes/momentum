@@ -1,6 +1,6 @@
 # Story 2.3: Visual Progress Tracks Workflow Position
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -57,35 +57,35 @@ so that I'm never lost and always know what's completed and what's next.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define progress indicator rendering logic in workflow.md (AC: 1, 2, 3, 7)
-  - [ ] 1.1 Define the canonical 3-line format as a reusable instruction block in `skills/momentum/references/`
-  - [ ] 1.2 Specify collapse rules: all completed → single ✓ line with value summary; all upcoming → single ◦ line
-  - [ ] 1.3 Specify boundary rules: 2 lines at workflow start (no ✓), 2 lines at workflow end (no ◦)
-  - [ ] 1.4 Specify the "on-demand position query" behavior — developer asks "where am I?" and gets the same indicator
+- [x] Task 1: Define progress indicator rendering logic in workflow.md (AC: 1, 2, 3, 7)
+  - [x] 1.1 Define the canonical 3-line format as a reusable instruction block in `skills/momentum/references/`
+  - [x] 1.2 Specify collapse rules: all completed → single ✓ line with value summary; all upcoming → single ◦ line
+  - [x] 1.3 Specify boundary rules: 2 lines at workflow start (no ✓), 2 lines at workflow end (no ◦)
+  - [x] 1.4 Specify the "on-demand position query" behavior — developer asks "where am I?" and gets the same indicator
 
-- [ ] Task 2: Define symbol vocabulary and accessibility rules (AC: 4)
-  - [ ] 2.1 Document the symbol vocabulary table in `skills/momentum/references/` as a single source of truth
-  - [ ] 2.2 Specify the text-pairing rule: every symbol must have adjacent text conveying the same meaning
-  - [ ] 2.3 Define the 80-char terminal width constraint — progress indicator must render cleanly without horizontal scrolling
+- [x] Task 2: Define symbol vocabulary and accessibility rules (AC: 4)
+  - [x] 2.1 Document the symbol vocabulary table in `skills/momentum/references/` as a single source of truth
+  - [x] 2.2 Specify the text-pairing rule: every symbol must have adjacent text conveying the same meaning
+  - [x] 2.3 Define the 80-char terminal width constraint — progress indicator must render cleanly without horizontal scrolling
 
-- [ ] Task 3: Define the Response Architecture Pattern integration (AC: 5)
-  - [ ] 3.1 Specify how the progress indicator fits within the Response Architecture Pattern: orientation line (which includes indicator) → substantive content → transition signal → user control
-  - [ ] 3.2 Specify that orientation lines are always narrative ("We've established the project structure, now building interaction patterns") — never "Step 3/8"
-  - [ ] 3.3 Specify that user control is always the final visible element (A/P/C or contextual equivalent)
+- [x] Task 3: Define the Response Architecture Pattern integration (AC: 5)
+  - [x] 3.1 Specify how the progress indicator fits within the Response Architecture Pattern: orientation line (which includes indicator) → substantive content → transition signal → user control
+  - [x] 3.2 Specify that orientation lines are always narrative ("We've established the project structure, now building interaction patterns") — never "Step 3/8"
+  - [x] 3.3 Specify that user control is always the final visible element (A/P/C or contextual equivalent)
 
-- [ ] Task 4: Define journal integration for workflow resumption (AC: 6)
-  - [ ] 4.1 Specify what fields the progress indicator reads from `journal.json` thread entries to reconstruct state: `current_step`, `phase`, workflow step list
-  - [ ] 4.2 Specify the resume behavior: read journal → build indicator showing completed/current/upcoming → present with "continue from here, or restart this step?"
-  - [ ] 4.3 Specify the sufficiency criteria for `context_summary` in journal entries — must include enough detail for indicator reconstruction without re-reading the workflow definition. Note: Story 2.2 owns journal writes; this task only specifies format and sufficiency requirements that 2.2's phase-transition logic must satisfy. Output: `skills/momentum/references/progress-indicator.md` (context_summary requirements section)
+- [x] Task 4: Define journal integration for workflow resumption (AC: 6)
+  - [x] 4.1 Specify what fields the progress indicator reads from `journal.json` thread entries to reconstruct state: `current_step`, `phase`, workflow step list
+  - [x] 4.2 Specify the resume behavior: read journal → build indicator showing completed/current/upcoming → present with "continue from here, or restart this step?"
+  - [x] 4.3 Specify the sufficiency criteria for `context_summary` in journal entries — must include enough detail for indicator reconstruction without re-reading the workflow definition. Note: Story 2.2 owns journal writes; this task only specifies format and sufficiency requirements that 2.2's phase-transition logic must satisfy. Output: `skills/momentum/references/progress-indicator.md` (context_summary requirements section)
 
-- [ ] Task 5: Create behavioral evals (EDD) (AC: 1–7)
-  - [ ] 5.1 `eval-progress-mid-workflow.md` — Verify 3-line indicator at a middle step shows ✓/→/◦ with narrative content
-  - [ ] 5.2 `eval-progress-first-step.md` — Verify 2-line indicator at first step (→/◦ only, no ✓)
-  - [ ] 5.3 `eval-progress-last-step.md` — Verify 2-line indicator at last step (✓/→ only, no ◦)
-  - [ ] 5.4 `eval-progress-resume-from-ledger.md` — Verify interrupted workflow resumes with correct indicator state and offers continue/restart
-  - [ ] 5.5 `eval-symbol-text-pairing.md` — Verify every symbol in a response has adjacent text carrying the same meaning
-  - [ ] 5.6 `eval-response-architecture-pattern.md` — Verify a rendered workflow step contains all four elements: narrative orientation line, substantive content, transition signal, explicit user control; verify orientation line is never "Step N/M"
-  - [ ] 5.7 `eval-on-demand-position-query.md` — Verify that when a developer asks "where am I?", Impetus responds with the correct 3-line (or 2-line at boundary) indicator using terminal-safe characters with text pairing
+- [x] Task 5: Create behavioral evals (EDD) (AC: 1–7)
+  - [x] 5.1 `eval-progress-mid-workflow.md` — Verify 3-line indicator at a middle step shows ✓/→/◦ with narrative content
+  - [x] 5.2 `eval-progress-first-step.md` — Verify 2-line indicator at first step (→/◦ only, no ✓)
+  - [x] 5.3 `eval-progress-last-step.md` — Verify 2-line indicator at last step (✓/→ only, no ◦)
+  - [x] 5.4 `eval-progress-resume-from-ledger.md` — Verify interrupted workflow resumes with correct indicator state and offers continue/restart
+  - [x] 5.5 `eval-symbol-text-pairing.md` — Verify every symbol in a response has adjacent text carrying the same meaning
+  - [x] 5.6 `eval-response-architecture-pattern.md` — Verify a rendered workflow step contains all four elements: narrative orientation line, substantive content, transition signal, explicit user control; verify orientation line is never "Step N/M"
+  - [x] 5.7 `eval-on-demand-position-query.md` — Verify that when a developer asks "where am I?", Impetus responds with the correct 3-line (or 2-line at boundary) indicator using terminal-safe characters with text pairing
 
 ## Dev Notes
 
@@ -303,10 +303,37 @@ This story passes acceptance when:
 
 ### Agent Model Used
 
-claude-sonnet-4-6[1m]
+claude-opus-4-6[1m]
 
 ### Debug Log References
 
+N/A — skill-instruction story, no executable debug logs.
+
 ### Completion Notes List
 
+- All 7 behavioral evals written in `skills/momentum/evals/` following established eval pattern
+- `references/progress-indicator.md` created with canonical format, collapse rules, boundary rules, symbol vocabulary, terminal constraints, Response Architecture Pattern integration, on-demand query behavior, journal integration, and context_summary sufficiency criteria
+- `workflow.md` extended with PROGRESS INDICATOR section (rendering rules, Response Architecture Pattern, on-demand query, interrupted workflow resumption) and step 7 updated with journal-based resume detection
+- workflow.md at 399 lines (under 500-line limit)
+- Cross-story coordination: context_summary sufficiency criteria documented for Story 2.2's journal write operations; Story 2.2 not yet implemented so criteria are specified as requirements in progress-indicator.md
+- EDD cycle: evals written first, implementation verified against all 7 eval scenarios
+
 ### File List
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `skills/momentum/workflow.md` | Modified | Added PROGRESS INDICATOR section with rendering rules, Response Architecture Pattern, on-demand query, resume logic; updated step 7 with journal-based resume detection |
+| `skills/momentum/references/progress-indicator.md` | Created | Canonical format, collapse rules, boundary rules, symbol vocabulary, terminal constraints, Response Architecture Pattern, journal integration, context_summary sufficiency criteria |
+| `skills/momentum/evals/eval-progress-mid-workflow.md` | Created | Eval: 3-line indicator at mid-workflow |
+| `skills/momentum/evals/eval-progress-first-step.md` | Created | Eval: 2-line indicator at first step |
+| `skills/momentum/evals/eval-progress-last-step.md` | Created | Eval: 2-line indicator at last step |
+| `skills/momentum/evals/eval-progress-resume-from-ledger.md` | Created | Eval: resume interrupted workflow with indicator |
+| `skills/momentum/evals/eval-symbol-text-pairing.md` | Created | Eval: symbol accessibility |
+| `skills/momentum/evals/eval-response-architecture-pattern.md` | Created | Eval: Response Architecture Pattern structure |
+| `skills/momentum/evals/eval-on-demand-position-query.md` | Created | Eval: on-demand position query |
+
+### Change Log
+
+- feat(skills): add progress indicator rendering rules and resume logic to workflow.md
+- feat(skills): create progress-indicator.md reference with canonical format and journal integration
+- test(skills): create 7 behavioral evals for progress indicator (EDD)
