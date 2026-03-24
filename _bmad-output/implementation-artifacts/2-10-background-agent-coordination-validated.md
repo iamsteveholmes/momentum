@@ -1,6 +1,6 @@
 # Story 2.10: Background Agent Coordination Mechanism Validated and Documented
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -27,15 +27,15 @@ Then the dev notes reference the research document
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Execute the spike — test SendMessage API for checkpoint/resume (AC: 1)
-  - [ ] 1.1: Investigate what inter-agent communication mechanisms Claude Code supports: TaskOutput, SendMessage (if it exists), structured return values, or other
-  - [ ] 1.2: Test whether a background agent launched with `run_in_background: true` can receive mid-task communication (checkpoint/resume)
-  - [ ] 1.3: Test whether background agents simply run to completion and return structured output, or whether mid-task communication is possible
-  - [ ] 1.4: Document reliability, latency, and context constraints for whichever mechanism(s) exist
-  - [ ] 1.5: If no mid-task communication mechanism exists, propose an alternative to the checkpoint/resume pattern for Stories 2.4 and 4.3
+- [x] Task 1: Execute the spike — test SendMessage API for checkpoint/resume (AC: 1)
+  - [x] 1.1: Investigate what inter-agent communication mechanisms Claude Code supports: TaskOutput, SendMessage (if it exists), structured return values, or other
+  - [x] 1.2: Test whether a background agent launched with `run_in_background: true` can receive mid-task communication (checkpoint/resume)
+  - [x] 1.3: Test whether background agents simply run to completion and return structured output, or whether mid-task communication is possible
+  - [x] 1.4: Document reliability, latency, and context constraints for whichever mechanism(s) exist
+  - [x] 1.5: If no mid-task communication mechanism exists, propose an alternative to the checkpoint/resume pattern for Stories 2.4 and 4.3
 
-- [ ] Task 2: Document results as research artifact (AC: 1)
-  - [ ] 2.1: Create `docs/research/background-agent-coordination.md` using this required structure:
+- [x] Task 2: Document results as research artifact (AC: 1)
+  - [x] 2.1: Create `docs/research/background-agent-coordination.md` using this required structure:
     ```
     ## Mechanism Investigated
     ## Test Methodology
@@ -43,17 +43,17 @@ Then the dev notes reference the research document
     ## Constraints and Failure Modes
     ## Recommendation for Story 4.3
     ```
-  - [ ] 2.2: Each section must contain concrete findings — not vague summaries. Include specific API calls tested, exact behavior observed, error messages if any, latency measurements if relevant.
-  - [ ] 2.3: The Recommendation section must be actionable — enough detail that a developer could implement background agent coordination for Story 4.3 without additional research
+  - [x] 2.2: Each section must contain concrete findings — not vague summaries. Include specific API calls tested, exact behavior observed, error messages if any, latency measurements if relevant.
+  - [x] 2.3: The Recommendation section must be actionable — enough detail that a developer could implement background agent coordination for Story 4.3 without additional research
 
-- [ ] Task 3: Update Architecture Decision 4c (AC: 2)
-  - [ ] 3.1: Read current Decision 4c text in `_bmad-output/planning-artifacts/architecture.md` (line 432)
-  - [ ] 3.2: Update the implementation note with spike outcome — replace "Do not implement productive waiting or background VFL execution until spike result is documented" with actual findings and revised guidance
-  - [ ] 3.3: If mechanism is unavailable, revise Decision 4c approach and flag impact on Story 4.3
+- [x] Task 3: Update Architecture Decision 4c (AC: 2)
+  - [x] 3.1: Read current Decision 4c text in `_bmad-output/planning-artifacts/architecture.md` (line 432)
+  - [x] 3.2: Update the implementation note with spike outcome — replace "Do not implement productive waiting or background VFL execution until spike result is documented" with actual findings and revised guidance
+  - [x] 3.3: If mechanism is unavailable, revise Decision 4c approach and flag impact on Story 4.3
 
-- [ ] Task 4: Cross-reference from Story 2.4 dev notes (AC: 3)
-  - [ ] 4.1: Read Story 2.4 dev notes section "Critical Dependency: Story 2.Spike" (line 117 of `_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md`)
-  - [ ] 4.2: Add a cross-reference note indicating the spike has been completed and pointing to `docs/research/background-agent-coordination.md`
+- [x] Task 4: Cross-reference from Story 2.4 dev notes (AC: 3)
+  - [x] 4.1: Read Story 2.4 dev notes section "Critical Dependency: Story 2.Spike" (line 117 of `_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md`)
+  - [x] 4.2: Add a cross-reference note indicating the spike has been completed and pointing to `docs/research/background-agent-coordination.md`
 
 ## Dev Notes
 
@@ -166,8 +166,24 @@ Adversarial subagent verification — manual review (cmux not applicable for res
 
 ### Agent Model Used
 
+claude-opus-4-6 (1M context)
+
 ### Debug Log References
+
+N/A — research/specification story, no debug logs
 
 ### Completion Notes List
 
+- SendMessage does not exist in Claude Code — the original spike premise is invalidated
+- No Agent tool exists as a callable tool — subagents are declared via context:fork in SKILL.md, not dispatched dynamically
+- run_in_background on Bash is fire-and-forget for shell commands only (not agent reasoning)
+- Checkpoint/resume mid-task is not possible with any current mechanism
+- Productive waiting must be behavioral (pre-launch briefing + post-completion synthesis), not mechanical
+- Decision 4c updated with validated findings; Story 4.3 guidance revised accordingly
+- Story 2.4 dev notes cross-referenced with research document
+
 ### File List
+
+- `docs/research/background-agent-coordination.md` (created) — research findings document
+- `_bmad-output/planning-artifacts/architecture.md` (modified) — Decision 4c implementation note updated
+- `_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md` (modified) — cross-reference added
