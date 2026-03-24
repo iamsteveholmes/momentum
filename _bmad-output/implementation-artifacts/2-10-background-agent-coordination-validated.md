@@ -13,7 +13,7 @@ so that Architecture Decision 4c's gate is satisfied and Epic 4 Story 4.3 can pr
 **AC1 — Research document exists with actionable findings:**
 Given the need for background agent communication in Story 4.3,
 When this story completes,
-Then a research document exists at `docs/research/background-agent-coordination.md` documenting: (1) whether SendMessage supports checkpoint/resume, (2) reliability/latency/context constraints if yes, (3) alternative pattern if no
+Then a research document exists at `docs/research/background-agent-coordination.md` documenting: (1) what inter-agent communication mechanisms exist (SendMessage, TaskOutput, structured return values, or other) and whether any support checkpoint/resume, (2) reliability/latency/context constraints if yes, (3) alternative pattern if no
 
 **AC2 — Architecture Decision 4c updated:**
 Given Architecture Decision 4c's implementation note ("do not implement productive waiting or background VFL execution until spike result is documented"),
@@ -35,9 +35,16 @@ Then the dev notes reference the research document
   - [ ] 1.5: If no mid-task communication mechanism exists, propose an alternative to the checkpoint/resume pattern for Stories 2.4 and 4.3
 
 - [ ] Task 2: Document results as research artifact (AC: 1)
-  - [ ] 2.1: Create `docs/research/background-agent-coordination.md` with structured findings
-  - [ ] 2.2: Include: mechanism tested, test methodology, results, constraints, failure modes
-  - [ ] 2.3: Include actionable recommendation for Story 4.3 — enough detail that a developer could implement background agent coordination without additional research
+  - [ ] 2.1: Create `docs/research/background-agent-coordination.md` using this required structure:
+    ```
+    ## Mechanism Investigated
+    ## Test Methodology
+    ## Results
+    ## Constraints and Failure Modes
+    ## Recommendation for Story 4.3
+    ```
+  - [ ] 2.2: Each section must contain concrete findings — not vague summaries. Include specific API calls tested, exact behavior observed, error messages if any, latency measurements if relevant.
+  - [ ] 2.3: The Recommendation section must be actionable — enough detail that a developer could implement background agent coordination for Story 4.3 without additional research
 
 - [ ] Task 3: Update Architecture Decision 4c (AC: 2)
   - [ ] 3.1: Read current Decision 4c text in `_bmad-output/planning-artifacts/architecture.md` (line 432)

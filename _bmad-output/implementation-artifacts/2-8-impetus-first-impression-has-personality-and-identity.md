@@ -21,7 +21,7 @@ so that my first encounter feels like meeting a practice partner — not reading
   - [ ] 1.1: Remove ALL `{{current_version}}` interpolation from Step 2 output templates. Three instances exist:
     - Line 188: `Momentum {{current_version}} — first time here`
     - Line 197: `Momentum {{current_version}} — setting up this project`
-    - Line 203: `Momentum {{current_version}} — setting up global rules`
+    - Line 204: `Momentum {{current_version}} — setting up global rules`
   - [ ] 1.2: Add a visual identity element (ASCII art logo, nerdfont icon block, or equivalent) at the top of the first-install greeting (the `both global and project actions needed` branch, line 188). This is Impetus's entrance — the developer's first encounter with the practice.
   - [ ] 1.3: Add a brief self-introduction line after the identity element. Impetus names itself and establishes its role as a practice partner. One to two sentences maximum — not a feature list, not a sales pitch.
   - [ ] 1.4: Rewrite the consent body for all three conditional branches to use Impetus's guide voice. The factual content (what will be installed, where) stays the same — the framing changes from mechanical listing to oriented partner communication. Keep the `[Y] Yes · [N] No` prompt and `Set up now?` question.
@@ -32,8 +32,9 @@ so that my first encounter feels like meeting a practice partner — not reading
   - [ ] 2.2: The numbered menu items (lines 367-372) and closing question (`What would you like to work on?`) are fine as-is — leave them. The fix is the opening line only.
 
 - [ ] Task 3: Replace Step 9 upgrade templates with voice-compliant presentation (AC: #2, #4)
-  - [ ] 3.1: Remove `{{current_version}}` / `{{version_entry.version}}` from user-facing output headers in Step 9. Three instances:
+  - [ ] 3.1: Remove `{{current_version}}` / `{{version_entry.version}}` from user-facing output headers in Step 9. Four instances:
     - Line 504: `Momentum {{version_entry.version}} is available.`
+    - Line 522: `Skipping upgrade to {{version_entry.version}} for this session.`
     - Line 536: `Updating to Momentum {{version_entry.version}}...`
     - Line 547: `Momentum is now at {{version_entry.version}}.`
   - [ ] 3.2: Rewrite the upgrade summary display template (lines 503-516) to use Impetus voice. The factual content (what changed, what groups, what scope) remains — the framing shifts from mechanical version-diff to Impetus explaining what evolved and why it matters. Version numbers may appear in the per-group detail lines (e.g., `1.0.0 → 1.1.0`) as factual context — the prohibition is on version strings as headers or identity labels.
@@ -56,7 +57,7 @@ Voice rules (workflow.md lines 68-77) explicitly prohibit visible machinery and 
 
 **Voice Rules (workflow.md, lines 68-77):**
 - Never surface internal names: model names, agent names, tool names, or backstage machinery
-- Symbol vocabulary: checkmark completed, arrow current, circle upcoming, bang warning, x failed, question proactive offer, dot list item — always paired with text
+- Symbol vocabulary: ✓ completed, → current, ◦ upcoming, ! warning, ✗ failed, ? question — always paired with text
 
 **Agent Voice Register (UX spec, lines 364-367):**
 - Orchestrating agent (Impetus): guide's voice — oriented, substantive, forward-moving
@@ -111,6 +112,7 @@ Recent commits show dogfood validation work (ee40034 through 241354c) documentin
 - [Source: skills/momentum/workflow.md#Step 7, lines 358-381] — Session orientation with flat "You're set up and ready"
 - [Source: skills/momentum/workflow.md#Step 9, lines 484-553] — Upgrade templates with `{{version_entry.version}}` headers
 - [Source: skills/momentum/workflow.md#Voice Rules, lines 68-77] — No visible machinery, guide's register
+- [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Response Architecture Pattern UX-DR15, lines 341-346] — Orientation → Substantive → Transition → User control
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Agent Voice Register, lines 364-367] — Impetus: oriented, substantive, forward-moving
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Journey 0, lines 596-641] — First-install UX design with consent principles
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Journey 4, lines 645-695] — Upgrade journey UX design

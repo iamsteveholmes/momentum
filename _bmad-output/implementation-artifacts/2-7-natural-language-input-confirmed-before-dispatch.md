@@ -23,7 +23,7 @@ so that I am never sent into the wrong workflow because the LLM inferred an inte
   - [ ] 1.3: Strengthen the ambiguous input rule (line 86) to include MUST language and explicit numbered-options format requirement: "MUST present exactly ONE clarifying question with numbered options (e.g., '1. Create a story, 2. Develop a story, 3. Something else'). Never open-ended phrasing."
 - [ ] Task 2: Add structural gate enforcement at dispatch points in workflow steps (AC: #1, #2)
   - [ ] 2.1: In Step 7 (line 358-381), after the menu `<output>` block and before/around the checks that handle developer input, add a `<note>` reinforcing the natural language gate: "If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow."
-  - [ ] 2.2: In Step 12 (line 440-447), in the input handling section after `Wait for developer input`, add a `<note>` reinforcing the gate: "If developer input is natural language (not a thread number, 'continue', or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching."
+  - [ ] 2.2: In Step 12 (Thread hygiene step, input handling at lines 440-448), after `Wait for developer input`, add a `<note>` reinforcing the gate: "If developer input is natural language (not a thread number, 'continue', or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching."
   - [ ] 2.3: Verify the gate pattern covers the "no" path — when the developer says "no" to the confirmation, Impetus must ask what they meant with numbered options (same as ambiguous input handling). This should be specified in the structural gate rule added in Task 1.2.
 - [ ] Task 3: Ensure the confirmation is exactly one exchange (AC: #2)
   - [ ] 3.1: In the structural gate rule (Task 1.2), add explicit anti-pattern: "The confirmation is exactly one exchange. Do NOT ask follow-up questions after 'yes' — dispatch immediately. Do NOT ask 'are you sure?' — one confirmation is enough."
@@ -36,8 +36,10 @@ so that I am never sent into the wrong workflow because the LLM inferred an inte
 The defect is in the Input Interpretation behavioral pattern at workflow.md line 85:
 
 ```
-- **Natural language intent:** extract intent and confirm before acting.
+- **Natural language intent:** extract intent and confirm before acting. Example: "I want to work on story 2.3" → "Starting development of Story 2.3 — correct?"
 ```
+
+(Note: the full line includes the example shown above — Task 1.1 requires preserving this example during the rewrite.)
 
 This is a behavioral instruction — it tells the LLM what to do but provides no structural enforcement. When the developer types something like "I want to create a story" or "yeah let's pick up the test infra work", the LLM judges the intent as unambiguous and optimizes away the confirmation step. This was observed consistently across multiple dogfood tests (F4 and F12).
 
@@ -99,7 +101,7 @@ Recent commits show dogfood validation work (241354c and earlier) documenting th
 
 - [Source: skills/momentum/workflow.md#Input Interpretation, lines 79-88] — Current behavioral pattern with weak enforcement
 - [Source: skills/momentum/workflow.md#Step 7, lines 334-381] — Session orientation menu dispatch point
-- [Source: skills/momentum/workflow.md#Step 12, lines 440-447] — Thread selection input handling dispatch point
+- [Source: skills/momentum/workflow.md#Step 12 input handling, lines 440-448] — Thread selection input handling at end of hygiene step
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Input Interpretation, lines 967-978] — UX design specification for input handling
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md#Uncertainty Recovery, lines 980-992] — Numbered options format for ambiguous input
 - [Source: _bmad-output/implementation-artifacts/epic-2-dogfood-findings.md#F4, lines 83-92] — Natural language input skips confirmation

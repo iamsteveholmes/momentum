@@ -23,7 +23,7 @@ so that Impetus does not re-surface offers I already declined and delivers appro
   - `offer_type` (string, required) — category of proactive offer (e.g., `dormant-closure`, `dependency-resolution`, `config-gap`, `unwieldy-triage`)
   - `description` (string, required) — what was offered, in natural language (e.g., "Close dormant thread: Story 4.2 implementation")
   - `declined_at` (string, required) — ISO 8601 timestamp of declination
-  - `context_hash` (string, required) — a lightweight context fingerprint that enables "material change" detection. Compose from: `thread_id` + `story_ref` + `phase` + date of last spec modification for the referenced story (if available). Format: concatenated string, not a cryptographic hash — just enough to compare equality across sessions.
+  - `context_hash` (string, required) — a lightweight context fingerprint that enables "material change" detection. Compose from: `thread_id` + `story_ref` + `phase` + `git hash-object` output of the referenced story spec file (if available, empty string otherwise). Format: concatenated string, not a cryptographic hash — just enough to compare equality across sessions.
 - [ ] 1.2: Add a "Declined Offers" section to the journal schema reference documenting write semantics: when a developer explicitly declines a proactive offer, append a new journal entry for the affected thread with the existing thread state fields plus the `declined_offers` array containing the new declination. Previous `declined_offers` from the thread's last entry carry forward (append-only accumulation).
 - [ ] 1.3: Add read semantics for declined offers: at hygiene check time, read the current thread state (last entry per `thread_id`), check `declined_offers` array. For each pending hygiene offer, compare `offer_type` + `context_hash` against declined entries. If a match exists, suppress the offer. If `context_hash` differs (context has materially changed), the offer is eligible to resurface.
 - [ ] 1.4: Document the "material change" heuristic in the schema reference: context is considered materially changed when any of these differ from the declined entry's `context_hash`: `story_ref` changed, `phase` advanced, or the story spec file's `git hash-object` differs from time of decline. The context_hash comparison is the mechanism — the heuristic defines what goes into the hash.
@@ -38,7 +38,7 @@ so that Impetus does not re-surface offers I already declined and delivers appro
   - `momentum_completions` (integer) — count of `/momentum` sessions that reached the session menu (Step 7). Incremented by Impetus at session start, not session end, since the completion signal matters for expertise detection, not farewell.
   - `first_invocation` (string) — ISO 8601 timestamp of the very first `/momentum` invocation in this project
   - `last_invocation` (string) — ISO 8601 timestamp of the most recent `/momentum` invocation
-- [ ] 2.2: Document the write semantics in the schema reference: Impetus reads `installed.json` at session start (already happens in Step 1). After routing completes and Step 7 is reached, Impetus increments `momentum_completions`, updates `last_invocation`, and writes `installed.json`. If `session_stats` is absent, initialize with `momentum_completions: 1`, `first_invocation: <now>`, `last_invocation: <now>`.
+- [ ] 2.2: Document the write semantics in the schema reference: Impetus reads `installed.json` at session start (already happens in Step 1). After the expertise-adaptive check in Step 7 completes (and before the menu/journal display), Impetus increments `momentum_completions`, updates `last_invocation`, and writes `installed.json`. If `session_stats` is absent, initialize with `momentum_completions: 1`, `first_invocation: <now>`, `last_invocation: <now>`.
 - [ ] 2.3: Add the `session_stats` example to the journal schema reference:
   ```json
   {
@@ -70,7 +70,7 @@ so that Impetus does not re-surface offers I already declined and delivers appro
   - Replace bullet 1: "Read `session_stats.momentum_completions` from `.claude/momentum/installed.json`. If absent or zero, treat as first encounter."
   - Bullet 2 (first encounter) remains: `momentum_completions == 0` → full walkthrough
   - Bullet 3 (repeat encounter) becomes: `momentum_completions >= 1` → abbreviated orientation
-- [ ] 4.2: Update Step 7 (session orientation, workflow.md line 338) to use the concrete counter:
+- [ ] 4.2: Update Step 7 (session orientation, workflow.md line 339) to use the concrete counter:
   - Replace `<action>Check journal thread history for prior completions of /momentum by this developer</action>` with `<action>Read session_stats.momentum_completions from installed.json (already loaded in Step 1). If absent, treat as 0.</action>`
   - Replace `<check if="first encounter (zero prior completions)">` with `<check if="session_stats.momentum_completions == 0">`
   - Replace `<check if="repeat encounter (one or more prior completions)">` with `<check if="session_stats.momentum_completions >= 1">`
@@ -88,6 +88,8 @@ Two separate persistence gaps:
 **F11 (Expertise-Adaptive):** The "Expertise-Adaptive Orientation (UX-DR20)" pattern (workflow.md lines 60-66) says "Check journal thread history for prior completions of this workflow type" but the journal tracks thread state, not invocation counts. A completed thread closure is not the same as a `/momentum` session completion. The LLM has no reliable cross-session signal to distinguish first-time from repeat users. The instruction gives the LLM a behavior to exhibit but no concrete data to drive it.
 
 Both findings share the same root pattern: behavioral instructions that reference data that does not exist in the schema.
+
+**Design note — field naming:** The refinement proposal names the new field `offers`. This story uses `declined_offers` instead — the more precise name reflects that we only persist declinations (not all offers), which is the actionable state for the no-re-offer rule. Accepted offers need no tracking.
 
 ### Architecture Compliance
 
