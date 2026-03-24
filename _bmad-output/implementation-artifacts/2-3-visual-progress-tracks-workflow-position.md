@@ -74,7 +74,7 @@ so that I'm never lost and always know what's completed and what's next.
   - [ ] 3.3 Specify that user control is always the final visible element (A/P/C or contextual equivalent)
 
 - [ ] Task 4: Define journal integration for workflow resumption (AC: 6)
-  - [ ] 4.1 Specify what fields the progress indicator reads from `journal.json` thread entries to reconstruct state: `current_step`, `phase`, workflow step list
+  - [ ] 4.1 Specify what fields the progress indicator reads from `journal.jsonl` thread entries to reconstruct state: `current_step`, `phase`, workflow step list
   - [ ] 4.2 Specify the resume behavior: read journal → build indicator showing completed/current/upcoming → present with "continue from here, or restart this step?"
   - [ ] 4.3 Specify the sufficiency criteria for `context_summary` in journal entries — must include enough detail for indicator reconstruction without re-reading the workflow definition. Note: Story 2.2 owns journal writes; this task only specifies format and sufficiency requirements that 2.2's phase-transition logic must satisfy. Output: `skills/momentum/references/progress-indicator.md` (context_summary requirements section)
 
@@ -134,6 +134,7 @@ The workflow phases are (in order): Brief, Research, PRD, UX, Architecture, Epic
 | ! | warning / attention needed | "! This thread appears active in another tab" |
 | ✗ | failed / blocked | "✗ lint check failed — missing semicolon at auth.ts:42" |
 | ? | question / decision required | "? Which authentication provider should we use?" |
+| · | item / detail / minor finding | "· src/ledger.ts — LedgerEntry type + CRUD operations" |
 
 This vocabulary is used by Impetus, all hooks, and all subagent output synthesis. Consistency is mandatory.
 
@@ -198,7 +199,7 @@ Each eval simulates a scenario and verifies Impetus renders the correct indicato
 - All files under `skills/momentum/` per the canonical repository structure [Source: architecture.md, Repository Structure section]
 - Evals directory at `skills/momentum/evals/` per pattern established in Story 2.1
 - Reference documents at `skills/momentum/references/` per the micro-file architecture pattern
-- `.claude/momentum/journal.json` read (not written) by this story for indicator reconstruction
+- `.claude/momentum/journal.jsonl` read (not written) by this story for indicator reconstruction
 
 ### References
 

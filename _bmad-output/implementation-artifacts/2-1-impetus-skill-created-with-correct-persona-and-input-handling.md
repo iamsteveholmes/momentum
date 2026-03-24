@@ -37,14 +37,14 @@ And no agent machinery is visible — no internal names, no model references
 And subagent findings are synthesized by Impetus before presenting (never raw output)
 And when Impetus is uncertain, it acknowledges uncertainty explicitly rather than fabricating confidence
 
-**AC5 — Orchestrator purity constraint:**
+**AC4 — Orchestrator purity constraint:**
 Given the Impetus skill implementation in `skills/momentum/workflow.md`,
 When an architect or developer inspects the workflow,
 Then `workflow.md` contains no code writing, test execution, eval running, code review, or findings generation logic
 And all implementation work is dispatched to purpose-specific subagents (bmad-dev-story for implementation, AVFL for validation, momentum-code-reviewer for review)
 And this constraint is traceable to Architecture Decision 3d (Orchestrator Purity Principle)
 
-**AC4 — Input interpretation:**
+**AC5 — Input interpretation:**
 Given a developer enters a number, letter, or natural language phrase,
 When Impetus interprets input (UX-DR16),
 Then a number selects the corresponding journal item or menu item
@@ -72,7 +72,7 @@ And ambiguous input triggers exactly one clarifying question (never two)
   - [ ] 3.2: Add instruction: when uncertain, surface the gap explicitly — never fabricate confidence
   - [ ] 3.3: Add instruction: synthesize subagent output into Impetus's voice before presenting (hub-and-spoke contract)
 
-- [ ] Task 4: Implement input interpretation in `skills/momentum/workflow.md` (AC: 4)
+- [ ] Task 4: Implement input interpretation in `skills/momentum/workflow.md` (AC: 5)
   - [ ] 4.1: Implement number → select item (no confirmation needed)
   - [ ] 4.2: Implement letter command case-insensitivity
   - [ ] 4.3: Implement fuzzy match: "continue" / "yes" / "go ahead" / "proceed" → C
@@ -193,7 +193,7 @@ These rules apply throughout all Impetus interactions (not just the menu step). 
 
 **Critical rule:** Ambiguous input → exactly **one** clarifying question. Never two sequential clarifying questions. If the first clarifying question is itself ambiguous, make a reasonable assumption and flag it.
 
-[Source: ux-design-specification.md#Input Interpretation; epics.md Story 2.1 AC4; ux-design-specification.md UX-DR16]
+[Source: ux-design-specification.md#Input Interpretation; epics.md Story 2.1 AC5; ux-design-specification.md UX-DR16]
 
 ### Symbol Vocabulary (UX-DR9)
 
@@ -323,7 +323,7 @@ This story passes acceptance when:
 - AC1: `/momentum` skill exists with description ≤150 characters, `model: claude-sonnet-4-6`, `effort: high`, name `momentum`
 - AC2: First response presents numbered menu following orientation → content → transition → user control
 - AC3: All 5 voice-rule evals pass (no generic praise, no step counts, no agent names)
-- AC4: All input interpretation evals pass (fuzzy match, confirm before act, exactly one clarifying question)
+- AC5: All input interpretation evals pass (fuzzy match, confirm before act, exactly one clarifying question)
 
 ---
 

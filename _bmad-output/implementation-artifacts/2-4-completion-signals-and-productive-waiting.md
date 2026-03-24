@@ -126,6 +126,8 @@ The architecture already confirms: "Background execution (confirmed: Claude Code
 
 **Recommendation:** This story can proceed without the spike. The spike's concern (checkpoint/resume mid-task) is relevant to Story 4.3 (full story cycle), not to the completion signal and synthesis patterns defined here. Flag this for the developer: implement using `run_in_background: true` + foreground dialogue, not checkpoint/resume.
 
+**Architecture gate reconciliation:** Decision 4c's implementation note says "Do not implement productive waiting or background VFL execution until spike result is documented." This gate applies to the runtime mechanism (inter-agent communication + checkpoint/resume), not to authoring the behavioral skill instructions that define what Impetus should say and when. This story authors the instructions; their operational behavior when background agents are involved depends on the spike outcome. If the spike reveals the mechanism is unavailable, the instructions defined here remain valid — only the dispatch mechanism changes.
+
 ### Architecture Compliance
 
 | Requirement | Source | How This Story Complies |
@@ -158,7 +160,7 @@ Story 2.3 established:
 - **Progress indicator format:** `✓ Built` / `→ Now` / `◦ Next` — this story must use the same format at completion boundaries
 - **Symbol vocabulary:** ✓ → ◦ ! ✗ ? — this story adds `·` for minor findings (consistent with UX spec)
 - **Response Architecture Pattern:** orientation → substantive → transition → user control — completion signals follow this same pattern
-- **Journal integration:** workflow state stored in `journal.json` — completion signals should update journal thread status to closed
+- **Journal integration:** workflow state stored in `journal.jsonl` — completion signals should update journal thread status to closed
 - **Evals pattern:** 5 behavioral evals in `skills/momentum/evals/` — this story follows the same pattern
 
 ### Anti-Patterns to Prevent

@@ -193,7 +193,7 @@ Per architecture Decision 1b: "Auto-generated `.claude/momentum/journal-view.md`
 
 ### Spec Fatigue Patterns
 
-Session orientation is a brief, single-exchange interaction — not a review checkpoint where spec fatigue patterns (UX-DR19–22) primarily apply. The ledger display (AC2) and thread triage (AC7) already implement attention-management principles by design: the ledger is a compact summary, and triage surfaces only actionable threads. The full spec fatigue patterns (tiered review depth, expertise-adaptive orientation, motivated disclosure, confidence-directed review) are exercised downstream in Stories 2.4, 2.5, and Epic 4 where developers review substantive generated content.
+Session orientation is a brief, single-exchange interaction — not a review checkpoint where spec fatigue patterns (UX-DR19–22) primarily apply. The journal display (AC2) and thread triage (AC7) already implement attention-management principles by design: the ledger is a compact summary, and triage surfaces only actionable threads. The full spec fatigue patterns (tiered review depth, expertise-adaptive orientation, motivated disclosure, confidence-directed review) are exercised downstream in Stories 2.4, 2.5, and Epic 4 where developers review substantive generated content.
 
 ### References
 
@@ -260,9 +260,9 @@ For `journal-schema.md` and journal-view.md generation logic:
 
 ### Test Scenarios
 
-1. **Eval: session-orientation-with-threads** — Given a journal.json with 2 open threads (one active 2 hours ago, one active yesterday), invoke `/momentum`. Impetus must display a numbered list ordered by most-recently-active, with workflow phase and elapsed time for each. Within two exchanges, Impetus must surface active story, current phase, last completed action, and suggested next action. Fail if: threads appear out of order, elapsed time is missing, or developer must ask "where were we?"
+1. **Eval: session-orientation-with-threads** — Given a journal.jsonl with 2 open threads (one active 2 hours ago, one active yesterday), invoke `/momentum`. Impetus must display a numbered list ordered by most-recently-active, with workflow phase and elapsed time for each. Within two exchanges, Impetus must surface active story, current phase, last completed action, and suggested next action. Fail if: threads appear out of order, elapsed time is missing, or developer must ask "where were we?"
 
-2. **Eval: empty-journal-skip** — Given no journal.json exists at `.claude/momentum/journal.json`, invoke `/momentum`. Impetus must skip the journal display entirely and transition directly to the menu (Story 2.1 normal session). Fail if: journal section appears, error message appears, or user is asked to create a journal.
+2. **Eval: empty-journal-skip** — Given no journal.jsonl exists at `.claude/momentum/journal.jsonl`, invoke `/momentum`. Impetus must skip the journal display entirely and transition directly to the menu (Story 2.1 normal session). Fail if: journal section appears, error message appears, or user is asked to create a journal.
 
 3. **Eval: dormant-thread-closure** — Given a journal entry with `last_active` timestamp >3 days ago, invoke `/momentum`. Impetus must surface the dormant thread with brief context and offer one-action closure. After developer confirms with a single response, the thread status must change to "closed". Fail if: requires more than one confirmation, thread not marked closed after confirmation, or dormant thread is not surfaced.
 
