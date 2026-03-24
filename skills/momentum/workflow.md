@@ -186,25 +186,28 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     <!-- Compose consent summary showing only what's actually needed -->
     <output>
     <check if="both global and project actions needed">
-  Momentum {{current_version}} — first time here
+  ```
+    ╔╦╗╔═╗╔╦╗╔═╗╔╗╔╔╦╗╦ ╦╔╦╗
+    ║║║║ ║║║║║╣ ║║║ ║ ║ ║║║║
+    ╩ ╩╚═╝╩ ╩╚═╝╝╚╝ ╩ ╚═╝╩ ╩
+  ```
 
-  Before we get started, I need to configure a few things:
+  I'm Impetus — your practice partner. I handle the engineering
+  discipline so you can focus on building.
+
+  To get started, I need to set up a few things on your machine:
 
     · {{global_rules_count}} global rules → ~/.claude/rules/
       ({{list rule names}})
     · Enforcement hooks → .claude/settings.json
     </check>
     <check if="only project actions needed (globals already current)">
-  Momentum {{current_version}} — setting up this project
-
-  Global rules are already installed. I just need project config:
+  I see global rules are already in place — just need to wire up this project:
 
     · Enforcement hooks → .claude/settings.json
     </check>
     <check if="only global actions needed (project already current)">
-  Momentum {{current_version}} — setting up global rules
-
-  Project config is already in place. I just need global rules on this machine:
+  Project config looks good — I just need to install the global rules on this machine:
 
     · {{global_rules_count}} global rules → ~/.claude/rules/
       ({{list rule names}})
@@ -231,7 +234,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
   </step>
 
   <step n="3" goal="Execute install actions">
-    <output>  Setting up Momentum {{current_version}}...</output>
+    <output>  Setting things up...</output>
     <action>Set restart_required = false</action>
     <action>Filter `versions["{{current_version}}"].actions` to only groups in {{needs_work}}</action>
     <action>Iterate filtered actions in order. For each action:</action>
@@ -361,7 +364,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
       <!-- AC3: transition directly to Story 2.1 menu (orientation → numbered menu → user control) -->
       <!-- Install/upgrade is NOT in the menu — handled by startup routing (Steps 1, 2, 9) -->
       <output>
-You're set up and ready.
+Everything's in place — let's build something.
 
 Here's what I can help with:
 
@@ -501,8 +504,8 @@ What would you like to work on?
     <action>Build upgrade chain: starting at {{installed_version}}, find the version entry with `from == {{installed_version}}`; repeat until reaching {{target_version}}. Store as ordered list {{upgrade_chain}}.</action>
     <action>Set {{prev_version}} = {{installed_version}}</action>
     <check if="chain cannot be resolved (no entry has 'from' matching current step)">
-      <output>  !  Cannot resolve upgrade path from {{installed_version}} to {{target_version}}.
-  The version manifest may be incomplete. Reinstall or update the Momentum skill and try again.</output>
+      <output>  !  I can't find an upgrade path from {{installed_version}} to {{target_version}}.
+  The version manifest may be incomplete — try reinstalling or updating the skill.</output>
       <action>HALT</action>
     </check>
 
@@ -512,7 +515,7 @@ What would you like to work on?
     <action>Filter version_entry.actions to only groups that need upgrading (version behind this entry's version)</action>
     <action>Display upgrade summary for this version, organized by group:
 ```
-  Momentum {{version_entry.version}} is available.
+  Some things have evolved since your last session.
 
     {{group}} ({{scope}})     {{installed_group_version}} → {{version_entry.version}}
       · {{action description or target}}
@@ -522,7 +525,7 @@ What would you like to work on?
 
   {{restart_notice_or_no_restart}}
 
-  Update now?
+  Apply these updates?
   [U] Update · [S] Skip for now
 ```
 Where: restart_notice = "! Restart Claude Code after applying." if any action has `requires_restart: true`, else omit.
@@ -530,8 +533,8 @@ Where: restart_notice = "! Restart Claude Code after applying." if any action ha
     <ask>[U] or [S]?</ask>
 
     <check if="developer chooses [S]">
-      <output>  Skipping upgrade to {{version_entry.version}} for this session.
-  Upgrade will be offered again next time.</output>
+      <output>  No problem — skipping these updates for now.
+  I'll offer them again next session.</output>
       <action>Do NOT update state files for this or any remaining versions in the chain</action>
       <action>GOTO step 7 (session orientation)</action>
     </check>
@@ -544,7 +547,7 @@ Where: restart_notice = "! Restart Claude Code after applying." if any action ha
     </check>
 
     <check if="developer chooses [U]">
-      <output>  Updating to Momentum {{version_entry.version}}...</output>
+      <output>  Applying updates...</output>
       <action>Execute all filtered actions using step 3's action execution logic (add/replace/delete/migration)</action>
 
       <!-- After all actions for this version complete -->
@@ -555,7 +558,7 @@ Where: restart_notice = "! Restart Claude Code after applying." if any action ha
         - Write both state files
       </action>
 
-      <output>  Momentum is now at {{version_entry.version}}.</output>
+      <output>  All caught up — latest practice updates are in place.</output>
 
       <check if="restart_required == true">
         <output>  !  Restart Claude Code for updated enforcement hooks to activate.</output>
