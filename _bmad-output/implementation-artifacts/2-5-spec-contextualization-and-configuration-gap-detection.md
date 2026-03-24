@@ -1,6 +1,6 @@
 # Story 2.5: Spec Contextualization and Configuration Gap Detection
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -55,49 +55,49 @@ Then every drill-down is framed with why it matters to the current step, not jus
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define spec contextualization instructions in `skills/momentum/references/` (AC: 1, 7)
-  - [ ] 1.1: Create `skills/momentum/references/spec-contextualization.md` with the canonical JIT spec surfacing pattern
-  - [ ] 1.2: Define the file-reference-and-key-decision format: `[Source: path/to/file.md#Section] — key decision in one sentence`
-  - [ ] 1.3: Define what counts as "surfacing context inline" vs. "dumping the document": cite the decision, not the document; quote the one sentence that matters; offer a drill-down if the developer wants more
-  - [ ] 1.4: Define Motivated Disclosure framing rule (UX-DR21): every context reference must be preceded by "why it matters to this step" — not just the spec content
-  - [ ] 1.5: Define the drill-down pattern: when developer wants more context, Impetus expands with why-it-matters framing before presenting detail (not: "Here's the full architecture section"; but: "Event sourcing here differs from CRUD — affects migration in Story 4.3")
+- [x] Task 1: Define spec contextualization instructions in `skills/momentum/references/` (AC: 1, 7)
+  - [x] 1.1: Create `skills/momentum/references/spec-contextualization.md` with the canonical JIT spec surfacing pattern
+  - [x] 1.2: Define the file-reference-and-key-decision format: `[Source: path/to/file.md#Section] — key decision in one sentence`
+  - [x] 1.3: Define what counts as "surfacing context inline" vs. "dumping the document": cite the decision, not the document; quote the one sentence that matters; offer a drill-down if the developer wants more
+  - [x] 1.4: Define Motivated Disclosure framing rule (UX-DR21): every context reference must be preceded by "why it matters to this step" — not just the spec content
+  - [x] 1.5: Define the drill-down pattern: when developer wants more context, Impetus expands with why-it-matters framing before presenting detail (not: "Here's the full architecture section"; but: "Event sourcing here differs from CRUD — affects migration in Story 4.3")
 
-- [ ] Task 2: Define follow-up question handling in `skills/momentum/workflow.md` (AC: 2)
-  - [ ] 2.1: Add follow-up question handling pattern: when a question arrives mid-step, Impetus reads relevant artifact before answering (not from memory)
-  - [ ] 2.2: Define ambiguity detection trigger: if the question reveals a gap or contradiction in the spec, Impetus flags it explicitly with: "This question reveals an ambiguity in [acceptance criteria / architecture decision] — worth clarifying before we continue"
-  - [ ] 2.3: Define re-continuation pattern: after answering a follow-up question, Impetus re-presents the user control [A/P/C or equivalent] so the workflow step does not stall
-  - [ ] 2.4: Define discovery opportunity framing: answer with artifact-grounded content; no generic responses ("Generally speaking..."); if no artifact is available, say so explicitly
+- [x] Task 2: Define follow-up question handling in `skills/momentum/workflow.md` (AC: 2)
+  - [x] 2.1: Add follow-up question handling pattern: when a question arrives mid-step, Impetus reads relevant artifact before answering (not from memory)
+  - [x] 2.2: Define ambiguity detection trigger: if the question reveals a gap or contradiction in the spec, Impetus flags it explicitly with: "This question reveals an ambiguity in [acceptance criteria / architecture decision] — worth clarifying before we continue"
+  - [x] 2.3: Define re-continuation pattern: after answering a follow-up question, Impetus re-presents the user control [A/P/C or equivalent] so the workflow step does not stall
+  - [x] 2.4: Define discovery opportunity framing: answer with artifact-grounded content; no generic responses ("Generally speaking..."); if no artifact is available, say so explicitly
 
-- [ ] Task 3: Define configuration gap detection in `skills/momentum/references/` (AC: 3, 4, 5)
-  - [ ] 3.1: Create `skills/momentum/references/configuration-gap-detection.md` with the canonical gap detection pattern
-  - [ ] 3.2: Define the gap inventory: protocol mapping table (FR35), MCP provider config, ATDD tool binding — these are the minimum detectable gaps; extend as FR9 is exercised
-  - [ ] 3.3: Define gap surfacing format: description of what's missing + why it matters + conversational resolution offer (never raw config dump)
-  - [ ] 3.4: Define blocking vs. non-blocking gap classification:
+- [x] Task 3: Define configuration gap detection in `skills/momentum/references/` (AC: 3, 4, 5)
+  - [x] 3.1: Create `skills/momentum/references/configuration-gap-detection.md` with the canonical gap detection pattern
+  - [x] 3.2: Define the gap inventory: protocol mapping table (FR35), MCP provider config, ATDD tool binding — these are the minimum detectable gaps; extend as FR9 is exercised
+  - [x] 3.3: Define gap surfacing format: description of what's missing + why it matters + conversational resolution offer (never raw config dump)
+  - [x] 3.4: Define blocking vs. non-blocking gap classification:
     - Blocking: missing MCP server required for next workflow step; missing write target that would silently skip a required output
     - Non-blocking: everything else — workflow continues while gap is pending resolution
-  - [ ] 3.5: Define resolution conversation pattern: Impetus asks targeted questions to fill the gap (e.g. "What ATDD tool is configured for this project?" → records answer → writes config entry); developer is guided step by step, never handed a config blob
-  - [ ] 3.6: Define when gap detection fires: at session start (scan installed.json and protocol mapping); at workflow step entry (detect if required config for this specific step is present)
+  - [x] 3.5: Define resolution conversation pattern: Impetus asks targeted questions to fill the gap (e.g. "What ATDD tool is configured for this project?" → records answer → writes config entry); developer is guided step by step, never handed a config blob
+  - [x] 3.6: Define when gap detection fires: at session start (scan installed.json and protocol mapping); at workflow step entry (detect if required config for this specific step is present)
 
-- [ ] Task 4: Define proactive-offer and expertise-adaptive patterns in `skills/momentum/workflow.md` (AC: 4, 5, 6)
-  - [ ] 4.1: Add proactive-offer pattern to workflow instructions: "when the conversational floor is open (no subagent running, no pending decision), if a gap is detected, offer — never block"
-  - [ ] 4.2: Define proactive-offer format: use `?` symbol + offer framing ("I notice you're about to implement without an accepted spec. Want me to walk you through quick-spec first? Or continue as planned?")
-  - [ ] 4.3: Define no-re-offer rule: if developer declines, Impetus records the declination in journal thread state; does not re-surface the same offer unless `context_changed: true` (e.g. spec was updated, story changed)
-  - [ ] 4.4: Define expertise-adaptive orientation: at workflow start, Impetus detects whether this developer+workflow combination is a first encounter (full walkthrough) or repeat (abbreviated). Detection via journal thread history.
-  - [ ] 4.5: Define the explicit ask: at repeat-encounter workflow start, Impetus may ask "Full walkthrough or just the decision points?" — one question, one time, not repeated within the session
+- [x] Task 4: Define proactive-offer and expertise-adaptive patterns in `skills/momentum/workflow.md` (AC: 4, 5, 6)
+  - [x] 4.1: Add proactive-offer pattern to workflow instructions: "when the conversational floor is open (no subagent running, no pending decision), if a gap is detected, offer — never block"
+  - [x] 4.2: Define proactive-offer format: use `?` symbol + offer framing ("I notice you're about to implement without an accepted spec. Want me to walk you through quick-spec first? Or continue as planned?")
+  - [x] 4.3: Define no-re-offer rule: if developer declines, Impetus records the declination in journal thread state; does not re-surface the same offer unless `context_changed: true` (e.g. spec was updated, story changed)
+  - [x] 4.4: Define expertise-adaptive orientation: at workflow start, Impetus detects whether this developer+workflow combination is a first encounter (full walkthrough) or repeat (abbreviated). Detection via journal thread history.
+  - [x] 4.5: Define the explicit ask: at repeat-encounter workflow start, Impetus may ask "Full walkthrough or just the decision points?" — one question, one time, not repeated within the session
 
-- [ ] Task 5: Integrate contextualization and gap detection into Impetus workflow.md (AC: 1, 2, 3, 4, 5, 6, 7)
-  - [ ] 5.1: Add `load spec-contextualization.md` reference to relevant workflow steps (step entry, step presentation)
-  - [ ] 5.2: Add `load configuration-gap-detection.md` reference at session start and workflow step entry
-  - [ ] 5.3: Add follow-up question handling as a top-level workflow pattern (not buried in a specific step — applies across all steps)
-  - [ ] 5.4: Ensure gap detection at session start integrates with Story 2.2 journal read — both happen in the same orientation phase without duplication
+- [x] Task 5: Integrate contextualization and gap detection into Impetus workflow.md (AC: 1, 2, 3, 4, 5, 6, 7)
+  - [x] 5.1: Add `load spec-contextualization.md` reference to relevant workflow steps (step entry, step presentation)
+  - [x] 5.2: Add `load configuration-gap-detection.md` reference at session start and workflow step entry
+  - [x] 5.3: Add follow-up question handling as a top-level workflow pattern (not buried in a specific step — applies across all steps)
+  - [x] 5.4: Ensure gap detection at session start integrates with Story 2.2 journal read — both happen in the same orientation phase without duplication
 
-- [ ] Task 6: Create behavioral evals (AC: 1, 2, 3, 4, 5, 6, 7)
-  - [ ] 6.1: `eval-jit-spec-contextualization.md` — verify spec context surfaced inline (file ref + key decision), motivated disclosure framing present, developer can act without opening another file
-  - [ ] 6.2: `eval-followup-question-as-discovery.md` — verify Impetus reads artifact before answering, ambiguity explicitly flagged when detected, workflow re-presented after answer
-  - [ ] 6.3: `eval-config-gap-detection.md` — verify gap surfaced with description + why-it-matters, never raw config dump, blocking vs. non-blocking correctly classified
-  - [ ] 6.4: `eval-proactive-offer-never-block.md` — verify offer framing used (not blocking question), developer retains decision, workflow can continue without resolution
-  - [ ] 6.5: `eval-no-re-offer-after-decline.md` — verify same offer not re-surfaced after explicit developer decline
-  - [ ] 6.6: `eval-expertise-adaptive-orientation.md` — verify first-encounter gets full walkthrough, repeat-encounter gets abbreviated or asks preference, no "Step N/M" framing in any mode
+- [x] Task 6: Create behavioral evals (AC: 1, 2, 3, 4, 5, 6, 7)
+  - [x] 6.1: `eval-jit-spec-contextualization.md` — verify spec context surfaced inline (file ref + key decision), motivated disclosure framing present, developer can act without opening another file
+  - [x] 6.2: `eval-followup-question-as-discovery.md` — verify Impetus reads artifact before answering, ambiguity explicitly flagged when detected, workflow re-presented after answer
+  - [x] 6.3: `eval-config-gap-detection.md` — verify gap surfaced with description + why-it-matters, never raw config dump, blocking vs. non-blocking correctly classified
+  - [x] 6.4: `eval-proactive-offer-never-block.md` — verify offer framing used (not blocking question), developer retains decision, workflow can continue without resolution
+  - [x] 6.5: `eval-no-re-offer-after-decline.md` — verify same offer not re-surfaced after explicit developer decline
+  - [x] 6.6: `eval-expertise-adaptive-orientation.md` — verify first-encounter gets full walkthrough, repeat-encounter gets abbreviated or asks preference, no "Step N/M" framing in any mode
 
 ## Dev Notes
 
@@ -223,8 +223,46 @@ This story passes acceptance when:
 
 ### Agent Model Used
 
+Claude Opus 4.6 (1M context)
+
 ### Debug Log References
+
+N/A — skill-instruction story, no compiled code or runtime debugging
 
 ### Completion Notes List
 
+- Created `spec-contextualization.md` reference with JIT surfacing pattern, motivated disclosure (UX-DR21), and drill-down pattern
+- Created `configuration-gap-detection.md` reference with gap inventory (protocol mapping, MCP provider, ATDD tool binding), blocking/non-blocking classification, detection timing, resolution conversation pattern
+- Extended `workflow.md` with 6 behavioral patterns section: spec contextualization, follow-up question handling, gap detection, proactive-offer, no-re-offer, expertise-adaptive orientation
+- Integrated gap detection into step 7 (session orientation) alongside journal read — no duplication
+- Integrated expertise-adaptive orientation into step 7 with first/repeat encounter detection
+- Created 6 behavioral evals covering all 7 acceptance criteria
+- workflow.md at 412 lines (under 500-line budget)
+
+### Change Log
+
+| Change | Type | File |
+|---|---|---|
+| Add behavioral patterns section and step 7 integration | Modified | `skills/momentum/workflow.md` |
+| JIT spec surfacing, motivated disclosure, drill-down | Created | `skills/momentum/references/spec-contextualization.md` |
+| Gap inventory, classification, resolution patterns | Created | `skills/momentum/references/configuration-gap-detection.md` |
+| Inline spec context eval | Created | `skills/momentum/evals/eval-jit-spec-contextualization.md` |
+| Follow-up question handling eval | Created | `skills/momentum/evals/eval-followup-question-as-discovery.md` |
+| Config gap detection eval | Created | `skills/momentum/evals/eval-config-gap-detection.md` |
+| Proactive offer eval | Created | `skills/momentum/evals/eval-proactive-offer-never-block.md` |
+| No-re-offer after decline eval | Created | `skills/momentum/evals/eval-no-re-offer-after-decline.md` |
+| Expertise-adaptive orientation eval | Created | `skills/momentum/evals/eval-expertise-adaptive-orientation.md` |
+
 ### File List
+
+- `skills/momentum/workflow.md` — extended with behavioral patterns and step 7 integration
+- `skills/momentum/references/spec-contextualization.md` — new reference document
+- `skills/momentum/references/configuration-gap-detection.md` — new reference document
+- `skills/momentum/evals/eval-jit-spec-contextualization.md` — new eval
+- `skills/momentum/evals/eval-followup-question-as-discovery.md` — new eval
+- `skills/momentum/evals/eval-config-gap-detection.md` — new eval
+- `skills/momentum/evals/eval-proactive-offer-never-block.md` — new eval
+- `skills/momentum/evals/eval-no-re-offer-after-decline.md` — new eval
+- `skills/momentum/evals/eval-expertise-adaptive-orientation.md` — new eval
+- `_bmad-output/implementation-artifacts/2-5-spec-contextualization-and-configuration-gap-detection.md` — story file updated
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — status updated
