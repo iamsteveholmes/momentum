@@ -382,7 +382,10 @@ What would you like to work on?
 
   <!-- Session Journal Display and Thread Management (Story 2.2) -->
 
-  <step n="11" goal="Session Journal Display — show open threads">
+  <step n="11" goal="Session Journal Display — show open threads, run hygiene checks, prompt for selection">
+    <note>Voice rule (non-negotiable): When referencing any thread in output, use the thread's `context_summary` or `context_summary_short` — never the `thread_id` field or its T-NNN value. Internal identifiers do not appear in any user-facing output.</note>
+
+    <!-- Display threads -->
     <action>Sort open threads by `last_active` descending (most recent first)</action>
     <action>For each thread, compute elapsed time since `last_active` (e.g., "2h ago", "yesterday", "5d ago")</action>
     <output>
@@ -391,14 +394,10 @@ What would you like to work on?
     1.  {{thread_1.context_summary_short}}   {{thread_1.phase}}   {{thread_1.elapsed}}
     2.  {{thread_2.context_summary_short}}   {{thread_2.phase}}   {{thread_2.elapsed}}
     [... one line per open thread ...]
-
-  Continue (1/2/...) or tell me what you need?
     </output>
 
-    <action>GOTO step 12 (thread hygiene checks)</action>
-  </step>
+    <!-- Thread hygiene checks — run inline before selection prompt (Story 2.2 AC4-AC7) -->
 
-  <step n="12" goal="Thread hygiene — concurrent, dormant, unwieldy, dependencies">
     <!-- Multi-tab concurrent work detection (AC4) -->
     <action>For each open thread: if `last_active` is within the last 30 minutes, flag it</action>
     <check if="any thread was active within 30 minutes">
@@ -437,17 +436,22 @@ What would you like to work on?
       <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then append closed entry to journal.jsonl.</note>
     </check>
 
+    <!-- Selection prompt — always the final element of this step -->
+    <output>
+  Continue (1/2/...) or tell me what you need?
+    </output>
+
     <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
 
     <check if="developer selects a thread by number or says 'continue'">
-      <action>GOTO step 13 (workflow resumability)</action>
+      <action>GOTO step 12 (workflow resumability)</action>
     </check>
     <check if="developer requests new work or something not in the journal">
       <note>Proceed to normal session flow — developer has oriented and chosen to start fresh work.</note>
     </check>
   </step>
 
-  <step n="13" goal="Workflow resumability — re-orient and resume selected thread">
+  <step n="12" goal="Workflow resumability — re-orient and resume selected thread">
     <action>Read selected thread's `current_step`, `last_action`, `context_summary`, and `phase`</action>
     <output>
   {{thread.context_summary}}.
@@ -469,7 +473,7 @@ What would you like to work on?
     </check>
   </step>
 
-  <step n="14" goal="Journal write and view regeneration">
+  <step n="13" goal="Journal write and view regeneration">
     <note>This step describes the journal write protocol invoked whenever any workflow step needs to update journal state. It is not reached by linear flow — it is a shared procedure.</note>
     <action>Append a new JSON line to `.claude/momentum/journal.jsonl` with all required fields per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`</action>
     <action>After append, regenerate `.claude/momentum/journal-view.md`:
