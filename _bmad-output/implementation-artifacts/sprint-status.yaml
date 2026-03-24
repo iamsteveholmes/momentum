@@ -63,7 +63,7 @@ development_status:
   epic-2: in-progress
   2-1-impetus-skill-created-with-correct-persona-and-input-handling: done
   2-2-session-orientation-and-thread-management: review
-  2-3-visual-progress-tracks-workflow-position: ready-for-dev
+  2-3-visual-progress-tracks-workflow-position: review
   2-4-completion-signals-and-productive-waiting: ready-for-dev
   2-5-spec-contextualization-and-configuration-gap-detection: ready-for-dev
   epic-2-retrospective: optional

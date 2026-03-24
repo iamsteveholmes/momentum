@@ -28,6 +28,8 @@ derives_from:
 lastEdited: '2026-03-23'
 editHistory:
   - date: '2026-03-23'
+    changes: 'AVFL Epic 3 validation: Dropped Story 3.4 (duplicates Stories 1.3/1.5, NFR8 unverifiable at Epic 3). Reassigned NFR8 compliance audit to Story 7.3, CMUX anti-patterns to Story 7.1. Added session state contract between Stories 3.1/3.3 (session-modified-files.txt). Fixed Story 3.2 path scope ambiguity and installed.json schema gap. Fixed Story 3.3 missing no-lint-tool AC. Fixed Story 3.5 effort vocabulary and orchestration omission. Updated Epic 3 FR/NFR coverage.'
+  - date: '2026-03-23'
     changes: 'AVFL integration: renamed momentum-vfl to momentum-avfl throughout; renamed vfl-validator protocol type to avfl-validator; added FR48 for AVFL skill to Requirements Inventory and FR Coverage Map; added Story 4.6 (AVFL Skill Orchestrates Multi-Lens Validation) to Epic 4; updated Story 4.3 ACs with AVFL phase in story cycle (Code Review → AVFL → Flywheel); updated Epic 4 description and Additional fields.'
   - date: '2026-03-22'
     changes: 'Retro Action Item #4 resolution: FR39 (Gherkin format convention) split between Story 1.7 (process/convention) and Story 4.2 (automated enforcement). Story 4.2 first AC block (FR39 format requirements) removed — now covered by Story 1.7. Story 4.2 narrowed to FR40 only, depends_on updated. FR Coverage Map updated to show FR39 split across Epic 1b and Epic 4.'
@@ -331,11 +333,11 @@ A developer always knows where they are and what to do next. Session journal tra
 ---
 
 ### Epic 3: Automatic Quality Enforcement
-Quality gates fire without developer intervention. Lint and format run on save. Acceptance tests are protected from modification. Model routing is configured by frontmatter so every skill and agent uses the right model by default. Authority hierarchy rules auto-load every session.
-**FRs covered:** FR18, FR19, FR20, FR21, FR22, FR23
-**NFRs covered:** NFR7, NFR8
+Quality gates fire without developer intervention. Lint and format run on save. Acceptance tests are protected from modification. Model routing is configured by frontmatter so every skill and agent uses the right model by default.
+**FRs covered:** FR18, FR19, FR20, FR21, FR23 (FR22 delivered by Story 1.3)
+**NFRs covered:** NFR7 (NFR8 verified in Story 7.3)
 **UX-DRs covered:** UX-DR3
-**Additional:** Model routing strategy (PT-016): model-routing-guide.md, model/effort frontmatter on all skills/agents, model-routing.md rule
+**Additional:** Model routing strategy (PT-016): model-routing-guide.md, model/effort frontmatter on all skills/agents, model-routing.md rule. Story 3.4 dropped — see Epic 3 body.
 **Priority:** Sprint 1
 
 ---
@@ -970,11 +972,12 @@ So that I never need to manually hunt for specs or figure out how to fix missing
 
 ## Epic 3: Automatic Quality Enforcement
 
-Quality gates fire without developer intervention. Lint and format run on save. Acceptance tests are protected from modification. Model routing is configured by frontmatter so every skill and agent uses the right model by default. Authority hierarchy rules auto-load every session.
+Quality gates fire without developer intervention. Lint and format run on save. Acceptance tests are protected from modification. Model routing is configured by frontmatter so every skill and agent uses the right model by default.
 
-**FRs covered:** FR18, FR19, FR20, FR21, FR22, FR23
-**NFRs covered:** NFR7, NFR8
+**FRs covered:** FR18, FR19, FR20, FR21, FR23
+**NFRs covered:** NFR7
 **UX-DRs covered:** UX-DR3
+**Note:** FR22 (rules auto-load) delivered by Story 1.3 (native Claude Code behavior). NFR8 (protocol portability) verified in Story 7.3 where the protocol registry exists.
 
 ### Story 3.1: PostToolUse Lint and Format Hook Active
 
@@ -1009,6 +1012,16 @@ So that formatting violations never accumulate and I never have to run a separat
 **Then** it outputs: `[lint] ◦ skipped — no lint tool configured`
 **And** exits successfully — no false failure
 
+**Given** the PostToolUse hook auto-fixes a file
+**When** the auto-fixed write completes
+**Then** the PostToolUse hook does not re-fire for the lint-initiated write — hook re-entrancy is suppressed (e.g. via environment variable guard or lint tool's own exit-on-fix flag)
+
+**Given** the PostToolUse hook fires after a Write or Edit tool use
+**When** it completes (whether lint ran or was skipped)
+**Then** it appends the modified file path to the session state file at `.claude/momentum/session-modified-files.txt`
+**And** duplicate paths are acceptable — the Stop hook (Story 3.3) reads this file to determine whether any code was modified during the session
+**Note:** This session state file is the contract between the PostToolUse lint hook (Story 3.1) and the Stop gate (Story 3.3). The Stop hook reads it; the PostToolUse hook writes it. The Stop hook deletes it after reading.
+
 ---
 
 ### Story 3.2: PreToolUse File Protection Hooks Active
@@ -1020,29 +1033,22 @@ So that test integrity and critical config are preserved automatically — no ac
 **Acceptance Criteria:**
 
 **Given** Momentum hooks are installed
-**When** a Claude Code tool attempts to write to any path matching `tests/acceptance/`, `**/*.feature`, or `.claude/rules/`
+**When** a Claude Code tool attempts to write to any path matching `tests/acceptance/`, `**/*.feature`, `.claude/rules/`, or `_bmad-output/planning-artifacts/*.md`
 **Then** the PreToolUse hook fires and blocks the write before it executes
 **And** returns an explanation of what was blocked and why
+**Note:** `.claude/rules/` here is the project-scoped path. Global `~/.claude/rules/` is outside project PreToolUse scope — protected by authority rule, same as `~/.claude/momentum/findings-ledger.jsonl` (Decision 2a). Impetus's own writes to `.claude/rules/` during install/upgrade are permitted — the hook includes an allowlist for the Momentum install workflow.
 
 **Given** a PreToolUse hook blocks a write (UX-DR3)
 **When** the hook fires
 **Then** it outputs: `[file-protection] ✗ blocked write to [path] — [policy]: [reason]`
-**And** the policy name and reason are specific (e.g. "acceptance-test-dir: no modification after ATDD phase begins")
-
-**Given** a PreToolUse hook blocks a write (protected path)
-**When** the hook fires (UX-DR3)
-**Then** it outputs: `[file-protection] ✗ blocked write to [path] — momentum-state: protected Momentum state file`
-**And** the developer receives a clear explanation of why the write was blocked and what they should do instead.
+**And** the policy name and reason are specific (e.g. "acceptance-test-dir: no modification after ATDD phase begins", "planning-artifacts: spec files are read-only during implementation")
 **Note:** Pass output is suppressed for allowed writes — UX-DR3's "never silent" principle applies when the hook has something meaningful to report (a block). Routine pass-through on non-protected paths is silent.
 
-**Given** `.claude/momentum/installed.json` contains a project-customized protected path list
+**Given** a project defines additional protected paths in `.claude/momentum/project-config.json` under a `protected_paths` array
 **When** the PreToolUse hook evaluates a write
 **Then** it enforces the project-specific paths in addition to Momentum defaults
 **And** project overrides are additive — they cannot remove Momentum default protected paths
-
-**Given** a write to `_bmad-output/planning-artifacts/*.md` is attempted
-**When** the PreToolUse hook fires
-**Then** the write is blocked with: `[file-protection] ✗ blocked write to [path] — planning-artifacts: spec files are read-only during implementation`
+**Note:** Custom protected paths use `project-config.json` (created in Story 7.1), not `installed.json` (which tracks version/component state only per Decision 5c).
 
 ---
 
@@ -1058,8 +1064,10 @@ So that I never close a session with failing tests or unresolved lint errors.
 **When** the Stop hook fires (FR20)
 **Then** lint runs unconditionally — regardless of whether code was modified this session
 **And** tests run only if at least one code file was modified during the session
-**And** the Stop hook determines whether code was modified by reading session state accumulated by PostToolUse Write/Edit hook events — not by running git diff or any external check
-**And** if no code was modified, tests are skipped and the session ends cleanly
+**And** the Stop hook determines whether code was modified by reading `.claude/momentum/session-modified-files.txt` (written by the PostToolUse hook per Story 3.1) — not by running git diff or any external check
+**And** if no code was modified (session state file absent or empty), tests are skipped and the session ends cleanly
+**And** the Stop hook deletes the session state file after reading it
+**Note:** Unconditional lint at session end catches files modified outside Claude Code (e.g. by the developer's editor or IDE) that the PostToolUse hook never saw. Per-edit lint (Story 3.1) catches in-session edits; Stop lint is the safety net for external changes.
 
 **Given** the Stop hook runs lint and finds no issues (UX-DR3)
 **When** the hook completes
@@ -1085,44 +1093,22 @@ So that I never close a session with failing tests or unresolved lint errors.
 **Then** it outputs: `[stop-gate] ◦ tests — no test runner configured`
 **And** lint still runs regardless
 
+**Given** the Stop hook runs and the project has no lint tool configured
+**When** the lint step would run
+**Then** it outputs: `[stop-gate] ◦ lint — no lint tool configured`
+**And** tests still run if code was modified (per the session state file)
+
 ---
 
-### Story 3.4: Authority Hierarchy Rules Auto-Load Every Session
+### Story 3.4: Authority Hierarchy Rules Auto-Load Every Session — DROPPED
 
-As a developer,
-I want Momentum rules to auto-load in every Claude Code session without any manual step,
-So that practice standards are enforced consistently in primary sessions and all subagents.
+**Status:** Dropped per AVFL validation (2026-03-23). Findings: 4 of 5 AC blocks duplicate completed work (Story 1.3 rules deployment, Story 1.5 tier documentation). Core FR22 capability is native Claude Code behavior requiring no implementation.
 
-**Acceptance Criteria:**
-
-**Given** a developer starts any Claude Code session (primary or subagent)
-**When** the session initializes (FR22)
-**Then** all files in `~/.claude/rules/` auto-load as authority rules
-**And** Momentum rules written there by Story 1.3 are active from the first message
-
-**Given** Momentum rules are loaded in the primary session
-**When** a Claude Code subagent is spawned (context:fork)
-**Then** the subagent also loads rules from `~/.claude/rules/`
-**And** enforcement applies equally to primary sessions and all subagents (NFR7 Tier 1)
-
-**Given** a developer is using Cursor or another Agent Skills-compatible tool (Tier 2)
-**When** they invoke a Momentum skill (NFR7)
-**Then** the skill's advisory guidance is surfaced — hooks do not fire (no `.claude/settings.json` in Cursor)
-**And** the developer is not required to take any additional action for skills to function in advisory mode
-**And** the Momentum README documents Tier 1 vs. Tier 2 capabilities explicitly
-
-**Given** a developer has no tooling at all (Tier 3)
-**When** they read the Momentum README (NFR7)
-**Then** all three tiers are defined with explicit lists of what works and what does not at each tier
-**And** adoption instructions for each tier are present
-
-**Cross-cutting:** The following ACs verify NFR8 portability compliance — they appear here as an integration check for the workflows implemented across Epics 2–4, with this Epic 3 story as the enforcement point.
-
-**Given** any Momentum workflow SKILL.md file
-**When** any integration-point step invoking an external tool is inspected (NFR8)
-**Then** the step references a registered protocol type by name (e.g. `code-reviewer:review`, `test-runner:run`, `atdd-tool:run`) rather than a specific implementation or tool name (e.g. `playwright`, `jest`, `npm test`, `npx`)
-**And** no workflow definition invokes a Claude Code tool by name in workflow step logic
-**Note:** Formal protocol type registry (`references/protocol-contracts.md`) created in Story 7.1. At Story 3.4 implementation time, registered protocol type names are the names listed in the Protocol-Based Integration subsystem (subsystem 10) in the Architecture Requirements Overview and FR34–FR37 in the PRD. Native Claude Code tool calls (Read, Edit, Bash, Agent) are permitted — they are not protocol implementations.
+**Reassignments:**
+- FR22 (rules auto-load): Already delivered by Story 1.3 — native Claude Code behavior once files exist in `~/.claude/rules/`.
+- NFR7 Tier 2/3 documentation: Already delivered by Story 1.5.
+- NFR8 protocol compliance audit: Moved to Story 7.3 where the protocol registry (`references/protocol-contracts.md`) exists as a testable artifact.
+- CMUX anti-patterns rules content (forward-referenced from Story 7.1 Note): Moved to Story 7.1 as an additional AC.
 
 ---
 
@@ -1137,7 +1123,8 @@ So that the right model is used for every task automatically — no manual overr
 **Given** the model routing guide exists at `skills/momentum/references/model-routing-guide.md`
 **When** a contributor creates a new Momentum skill or agent (FR23)
 **Then** they set `model:` and `effort:` frontmatter according to the routing guide
-**And** the routing guide documents the default strategy: Sonnet 4.6 at medium effort for general skills; Opus for complex reasoning or outputs without automated validation (cognitive-hazard tasks); Haiku for constrained tasks with downstream automated validation
+**And** the routing guide documents the default strategy: Sonnet 4.6 at normal effort for general skills; Opus for complex reasoning, orchestration, or outputs without automated validation (cognitive-hazard tasks); Haiku for constrained tasks with downstream automated validation; exceptions (e.g. Impetus at high effort) documented per-skill with rationale
+**Note:** Story 2.1 created the model-routing-guide.md stub with current skill assignments. Story 3.5 elaborates it into the full decision framework. The effort vocabulary is `normal|high|low` per architecture structural patterns — not "medium".
 
 **Given** a Momentum skill's `model:` and `effort:` frontmatter is set
 **When** Claude Code invokes the skill
@@ -1155,9 +1142,10 @@ So that the right model is used for every task automatically — no manual overr
 **Then** it either respects them (if supported) or silently ignores them
 **And** the skill functions correctly in both cases
 
-**Given** a model routing rule file is written to `~/.claude/rules/model-routing.md` by Impetus (Story 1.3)
-**When** a developer starts a Claude Code session
-**Then** the model routing rule auto-loads and is active for all unspecified routing decisions
+**Given** Story 1.3 wrote a model routing rule placeholder to `~/.claude/rules/model-routing.md`
+**When** Story 3.5 is implemented
+**Then** the placeholder content is replaced with the full model routing rule derived from the routing guide
+**And** the rule auto-loads in every Claude Code session and is active for all unspecified routing decisions
 
 ---
 
@@ -1875,7 +1863,11 @@ So that Momentum knows which tools to use for this project and every workflow st
 **And** three reference bindings are documented: CMUX (macOS native, via cmux CLI or cmuxlayer MCP), tmux (cross-platform, via tmux commands), null (default no-op — returns success without action)
 **And** skills consuming `terminal-multiplexer` use the detect-and-adapt pattern: call `detect-environment` first and adapt behavior when a multiplexer is present; all skills must function correctly when `detect-environment` returns `multiplexer_active: false` (null binding)
 
-**Note:** Three anti-patterns identified in CMUX research (cross-session orchestration instead of subagents, multiplexer as primary orchestrator, over-coupling to multiplexer environment) are queued for anti-patterns rules content in Story 3.4. See `_bmad-output/planning-artifacts/research/technical-cmux-claude-code-integration-research-2026-03-22.md` section 3.4.
+**Given** three anti-patterns identified in CMUX research (cross-session orchestration instead of subagents, multiplexer as primary orchestrator, over-coupling to multiplexer environment)
+**When** Story 7.1 is implemented
+**Then** the anti-patterns are added to `~/.claude/rules/anti-patterns.md` (replacing placeholder content from Story 1.3)
+**And** the rule content references the research source: `_bmad-output/planning-artifacts/research/technical-cmux-claude-code-integration-research-2026-03-22.md` section 3.4
+**Note:** Originally queued for Story 3.4 (dropped per AVFL validation 2026-03-23). Reassigned here because Story 7.1 defines the terminal-multiplexer protocol where these anti-patterns originate.
 
 ---
 
