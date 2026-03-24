@@ -1,6 +1,6 @@
 # Story 2.7: Natural Language Input Confirmed Before Workflow Dispatch
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -17,17 +17,17 @@ so that I am never sent into the wrong workflow because the LLM inferred an inte
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Strengthen the Input Interpretation behavioral pattern with MUST language and a structural gate (AC: #1, #4)
-  - [ ] 1.1: In the BEHAVIORAL PATTERNS section (workflow.md line 79-88), replace the current line 85 (`- **Natural language intent:** extract intent and confirm before acting.`) with MUST-level enforcement language. New text must include: (a) the word "MUST", (b) an explicit structural gate pattern — "Before executing any GOTO or workflow dispatch triggered by natural language input, MUST first present a one-line confirmation and wait for yes/no", (c) the existing example preserved ("Starting development of Story 2.3 — correct?")
-  - [ ] 1.2: Add a new rule immediately after the natural language intent rule: "**Structural gate — natural language dispatch:** When a developer's input is natural language (not a number, letter command, or fuzzy continue), the following sequence is mandatory: (1) Extract the most likely intent, (2) Present confirmation: '[extracted intent] — correct?', (3) Wait for yes/no, (4) Only on 'yes' execute the GOTO. If 'no', ask what they meant with numbered options. This gate applies at every prompt where input leads to a workflow dispatch: Step 7 menu, Step 12 thread selection, and any future interactive prompt."
-  - [ ] 1.3: Strengthen the ambiguous input rule (line 86) to include MUST language and explicit numbered-options format requirement: "MUST present exactly ONE clarifying question with numbered options (e.g., '1. Create a story, 2. Develop a story, 3. Something else'). Never open-ended phrasing."
-- [ ] Task 2: Add structural gate enforcement at dispatch points in workflow steps (AC: #1, #2)
-  - [ ] 2.1: In Step 7 (line 358-381), after the menu `<output>` block and before/around the checks that handle developer input, add a `<note>` reinforcing the natural language gate: "If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow."
-  - [ ] 2.2: In Step 12 (Thread hygiene step, input handling at lines 440-448), after `Wait for developer input`, add a `<note>` reinforcing the gate: "If developer input is natural language (not a thread number, 'continue', or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching."
-  - [ ] 2.3: Verify the gate pattern covers the "no" path — when the developer says "no" to the confirmation, Impetus must ask what they meant with numbered options (same as ambiguous input handling). This should be specified in the structural gate rule added in Task 1.2.
-- [ ] Task 3: Ensure the confirmation is exactly one exchange (AC: #2)
-  - [ ] 3.1: In the structural gate rule (Task 1.2), add explicit anti-pattern: "The confirmation is exactly one exchange. Do NOT ask follow-up questions after 'yes' — dispatch immediately. Do NOT ask 'are you sure?' — one confirmation is enough."
-  - [ ] 3.2: Verify the existing fuzzy continue rule (line 84) is NOT affected — "yes", "go ahead", "proceed" in response to a confirmation MUST still work as confirmation (not re-trigger the gate). Add a note: "When 'yes'/'go ahead'/'proceed' is a response to a natural language confirmation prompt, it confirms the action — it does not re-trigger the gate."
+- [x] Task 1: Strengthen the Input Interpretation behavioral pattern with MUST language and a structural gate (AC: #1, #4)
+  - [x] 1.1: In the BEHAVIORAL PATTERNS section (workflow.md line 79-88), replace the current line 85 (`- **Natural language intent:** extract intent and confirm before acting.`) with MUST-level enforcement language. New text must include: (a) the word "MUST", (b) an explicit structural gate pattern — "Before executing any GOTO or workflow dispatch triggered by natural language input, MUST first present a one-line confirmation and wait for yes/no", (c) the existing example preserved ("Starting development of Story 2.3 — correct?")
+  - [x] 1.2: Add a new rule immediately after the natural language intent rule: "**Structural gate — natural language dispatch:** When a developer's input is natural language (not a number, letter command, or fuzzy continue), the following sequence is mandatory: (1) Extract the most likely intent, (2) Present confirmation: '[extracted intent] — correct?', (3) Wait for yes/no, (4) Only on 'yes' execute the GOTO. If 'no', ask what they meant with numbered options. This gate applies at every prompt where input leads to a workflow dispatch: Step 7 menu, Step 12 thread selection, and any future interactive prompt."
+  - [x] 1.3: Strengthen the ambiguous input rule (line 86) to include MUST language and explicit numbered-options format requirement: "MUST present exactly ONE clarifying question with numbered options (e.g., '1. Create a story, 2. Develop a story, 3. Something else'). Never open-ended phrasing."
+- [x] Task 2: Add structural gate enforcement at dispatch points in workflow steps (AC: #1, #2)
+  - [x] 2.1: In Step 7 (line 358-381), after the menu `<output>` block and before/around the checks that handle developer input, add a `<note>` reinforcing the natural language gate: "If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow."
+  - [x] 2.2: In Step 11 (Thread selection, input handling at lines 446-453), after `Wait for developer input`, add a `<note>` reinforcing the gate: "If developer input is natural language (not a thread number, 'continue', or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching."
+  - [x] 2.3: Verify the gate pattern covers the "no" path — when the developer says "no" to the confirmation, Impetus must ask what they meant with numbered options (same as ambiguous input handling). This should be specified in the structural gate rule added in Task 1.2.
+- [x] Task 3: Ensure the confirmation is exactly one exchange (AC: #2)
+  - [x] 3.1: In the structural gate rule (Task 1.2), add explicit anti-pattern: "The confirmation is exactly one exchange. Do NOT ask follow-up questions after 'yes' — dispatch immediately. Do NOT ask 'are you sure?' — one confirmation is enough."
+  - [x] 3.2: Verify the existing fuzzy continue rule (line 84) is NOT affected — "yes", "go ahead", "proceed" in response to a confirmation MUST still work as confirmation (not re-trigger the gate). Add a note: "When 'yes'/'go ahead'/'proceed' is a response to a natural language confirmation prompt, it confirms the action — it does not re-trigger the gate."
 
 ## Dev Notes
 
@@ -137,8 +137,8 @@ Recent commits show dogfood validation work (241354c and earlier) documenting th
 **NFR compliance note:** This story modifies only `workflow.md`, not SKILL.md. The standard SKILL.md NFR checks (description <= 150 chars, model/effort frontmatter, body <= 500 lines) do not apply. Verify the existing SKILL.md remains compliant after workflow changes if the overall line count of the skill package shifts.
 
 **Additional DoD items for this story (added to standard bmad-dev-story DoD):**
-- [ ] 2+ behavioral evals written in `skills/momentum/evals/`
-- [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
+- [x] 2+ behavioral evals written in `skills/momentum/evals/`
+- [x] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
 - [ ] AVFL checkpoint on produced artifact documented (momentum-dev runs this automatically)
 
 ---
@@ -166,6 +166,16 @@ Adversarial subagent verification via cmux (Workspace B — isolated from other 
 
 ### Agent Model Used
 
+claude-opus-4-6
+
 ### Completion Notes List
 
+- Task 2.2 targeted Step 11 (thread selection prompt), not Step 12 (workflow resumability). The story referenced "Step 12" based on pre-2.6 numbering; after Story 2.6's step merge, the thread selection input handling is in Step 11 (lines 449-457).
+- The structural gate rule in Task 1.2 consolidates Task 2.3 ("no" path) and Task 3 (one-exchange, fuzzy-continue protection) into a single comprehensive rule rather than separate additions, keeping the behavioral pattern section cohesive.
+- EDD evals all pass against the implemented instructions. The existing eval-input-natural-language-confirm.md covers the basic confirmation scenario; two new evals cover the "no" path and the "yes dispatches immediately" scenarios.
+
 ### File List
+
+- skills/momentum/workflow.md (modified: Input Interpretation section lines 85-87, Step 7 gate note line 379, Step 11 gate note line 451)
+- skills/momentum/evals/eval-nl-gate-no-path-numbered-options.md (new)
+- skills/momentum/evals/eval-nl-gate-yes-dispatches-immediately.md (new)

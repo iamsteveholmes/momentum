@@ -71,10 +71,10 @@ development_status:
   # Epic 2 Refinement: Harden Epic 2 Foundation
   epic-2-refinement: in-progress
   2-6-session-thread-display-fires-hygiene-checks: done
-  2-7-natural-language-input-confirmed-before-dispatch: review
+  2-7-natural-language-input-confirmed-before-dispatch: done
   2-8-impetus-first-impression-has-personality-and-identity: ready-for-dev
   2-9-behavioral-persistence-across-sessions: ready-for-dev
-  2-10-background-agent-coordination-validated: review
+  2-10-background-agent-coordination-validated: done
   epic-2-refinement-retrospective: optional
 
   # Epic 3: Automatic Quality Enforcement
