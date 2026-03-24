@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-23 (story 2-5 created)
+# last_updated: 2026-03-24 (story 3-1 created)
 # project: momentum
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-23
+last_updated: 2026-03-24
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -69,12 +69,12 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Automatic Quality Enforcement
-  epic-3: backlog
-  3-1-posttooluse-lint-and-format-hook-active: backlog
-  3-2-pretooluse-file-protection-hooks-active: backlog
-  3-3-stop-gate-runs-conditional-quality-checks: backlog
+  epic-3: in-progress
+  3-1-posttooluse-lint-and-format-hook-active: ready-for-dev
+  3-2-pretooluse-file-protection-hooks-active: ready-for-dev
+  3-3-stop-gate-runs-conditional-quality-checks: ready-for-dev
   3-4-authority-hierarchy-rules-auto-load-every-session: dropped  # AVFL 2026-03-23: duplicates Stories 1.3/1.5; reassigned to 7.1/7.3
-  3-5-model-routing-configured-by-frontmatter: backlog
+  3-5-model-routing-configured-by-frontmatter: ready-for-dev
   epic-3-retrospective: optional
 
   # Epic 4: Complete Story Cycles
@@ -265,3 +265,35 @@ momentum_metadata:
       - "_bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md"
       - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
     story_file: "_bmad-output/implementation-artifacts/1-7-acceptance-testing-process-and-standards.md"
+  3-1-posttooluse-lint-and-format-hook-active:
+    depends_on: []
+    touches:
+      - "skills/momentum/references/hooks/"
+      - "skills/momentum/references/hooks-config.json"
+      - ".claude/momentum/session-modified-files.txt"
+    story_file: "_bmad-output/implementation-artifacts/3-1-posttooluse-lint-and-format-hook-active.md"
+  3-2-pretooluse-file-protection-hooks-active:
+    depends_on: []
+    touches:
+      - "skills/momentum/references/hooks/"
+      - "skills/momentum/references/hooks-config.json"
+    story_file: "_bmad-output/implementation-artifacts/3-2-pretooluse-file-protection-hooks-active.md"
+  3-3-stop-gate-runs-conditional-quality-checks:
+    depends_on:
+      - 3-1-posttooluse-lint-and-format-hook-active
+    touches:
+      - "skills/momentum/references/hooks/"
+      - "skills/momentum/references/hooks-config.json"
+      - ".claude/momentum/session-modified-files.txt"
+    story_file: "_bmad-output/implementation-artifacts/3-3-stop-gate-runs-conditional-quality-checks.md"
+  3-5-model-routing-configured-by-frontmatter:
+    depends_on: []
+    touches:
+      - "skills/momentum/references/model-routing-guide.md"
+      - "skills/momentum/references/rules/model-routing.md"
+      - "skills/momentum/references/momentum-versions.json"
+      - "skills/momentum-create-story/"
+      - "skills/momentum-dev/"
+      - "skills/momentum-plan-audit/"
+      - "skills/momentum-avfl/"
+    story_file: "_bmad-output/implementation-artifacts/3-5-model-routing-configured-by-frontmatter.md"
