@@ -1,6 +1,6 @@
 # Story 2.4: Completion Signals and Productive Waiting
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -57,11 +57,11 @@ Then Impetus indicates the confidence level of the referenced content (high = de
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define the Completion Signal template in `skills/momentum/references/` (AC: 1)
-  - [ ] 1.1: Create `skills/momentum/references/completion-signals.md` with the canonical completion signal format
-  - [ ] 1.2: Define the required components: ownership return phrase, artifact file list with paths, "what's next?" prompt
-  - [ ] 1.3: Define edge cases: workflow with no file output (e.g. configuration changes), partial completion (interrupted before finish), multi-artifact completion
-  - [ ] 1.4: Include the canonical example from UX spec:
+- [x] Task 1: Define the Completion Signal template in `skills/momentum/references/` (AC: 1)
+  - [x] 1.1: Create `skills/momentum/references/completion-signals.md` with the canonical completion signal format
+  - [x] 1.2: Define the required components: ownership return phrase, artifact file list with paths, "what's next?" prompt
+  - [x] 1.3: Define edge cases: workflow with no file output (e.g. configuration changes), partial completion (interrupted before finish), multi-artifact completion
+  - [x] 1.4: Include the canonical example from UX spec:
     ```
     ✓  Story 4.2 complete — session journal implementation done
 
@@ -73,40 +73,40 @@ Then Impetus indicates the confidence level of the referenced content (high = de
     This is yours to review and adjust. What's next?
     ```
 
-- [ ] Task 2: Define the Productive Waiting pattern in `skills/momentum/references/` (AC: 2)
-  - [ ] 2.1: Add productive waiting instructions to `skills/momentum/references/completion-signals.md` (or a separate `productive-waiting.md` if it exceeds reasonable section length)
-  - [ ] 2.2: Define the dialogue-maintenance pattern: after dispatching a background agent (`run_in_background: true`), Impetus surfaces implementation summary or offers same-topic discussion
-  - [ ] 2.3: Define the acknowledged-pause pattern: when no substantive discussion is available, Impetus explicitly acknowledges the wait ("The review is running — I'll have results shortly") rather than going silent
-  - [ ] 2.4: Specify what "same topic" means: discussion about the work just completed, ACs being verified, architectural context, or what comes next — never unrelated subjects
+- [x] Task 2: Define the Productive Waiting pattern in `skills/momentum/references/` (AC: 2)
+  - [x] 2.1: Add productive waiting instructions to `skills/momentum/references/completion-signals.md` (or a separate `productive-waiting.md` if it exceeds reasonable section length)
+  - [x] 2.2: Define the dialogue-maintenance pattern: after dispatching a background agent (`run_in_background: true`), Impetus surfaces implementation summary or offers same-topic discussion
+  - [x] 2.3: Define the acknowledged-pause pattern: when no substantive discussion is available, Impetus explicitly acknowledges the wait ("The review is running — I'll have results shortly") rather than going silent
+  - [x] 2.4: Specify what "same topic" means: discussion about the work just completed, ACs being verified, architectural context, or what comes next — never unrelated subjects
 
-- [ ] Task 3: Define subagent result synthesis rules in Impetus workflow (AC: 3, 4)
-  - [ ] 3.1: Add synthesis instructions to `skills/momentum/workflow.md` — when subagent results arrive, Impetus reads structured JSON and synthesizes into its own voice
-  - [ ] 3.2: Define the subagent return contract: `{status: "complete|needs_input|blocked", result: {}, question: null|string, confidence: "high|medium|low"}`
-  - [ ] 3.3: Define severity indicator rendering: `!` prefix for critical/blocking findings, `·` prefix for minor/informational findings
-  - [ ] 3.4: Define confidence-directed synthesis: high → synthesize directly; medium → flag explicitly ("inferred — verify"); low → surface as question to user
-  - [ ] 3.5: Define flywheel integration: if `momentum-upstream-fix` skill exists, offer flywheel trace for critical findings; if not installed, log finding with note "flywheel processing deferred — Epic 6"
-  - [ ] 3.6: Enforce hub-and-spoke: never mention subagent name, tool name, or "the code reviewer said" — always "the review found" or "I found"
-  - [ ] 3.7: Define tiered review depth in synthesis instructions (AC: 6) — after micro-summary, offer: quick scan (summary only) / full review (expand all findings) / trust & continue. Never present full finding list as default.
-  - [ ] 3.8: Define confidence-level indicators on findings (AC: 7) — each finding references content with a confidence tag: high (derived from upstream spec), medium (inferred from patterns), low (needs developer input). Use natural language: "This comes directly from the architecture" vs. "Inferred — worth verifying"
+- [x] Task 3: Define subagent result synthesis rules in Impetus workflow (AC: 3, 4)
+  - [x] 3.1: Add synthesis instructions to `skills/momentum/workflow.md` — when subagent results arrive, Impetus reads structured JSON and synthesizes into its own voice
+  - [x] 3.2: Define the subagent return contract: `{status: "complete|needs_input|blocked", result: {}, question: null|string, confidence: "high|medium|low"}`
+  - [x] 3.3: Define severity indicator rendering: `!` prefix for critical/blocking findings, `·` prefix for minor/informational findings
+  - [x] 3.4: Define confidence-directed synthesis: high → synthesize directly; medium → flag explicitly ("inferred — verify"); low → surface as question to user
+  - [x] 3.5: Define flywheel integration: if `momentum-upstream-fix` skill exists, offer flywheel trace for critical findings; if not installed, log finding with note "flywheel processing deferred — Epic 6"
+  - [x] 3.6: Enforce hub-and-spoke: never mention subagent name, tool name, or "the code reviewer said" — always "the review found" or "I found"
+  - [x] 3.7: Define tiered review depth in synthesis instructions (AC: 6) — after micro-summary, offer: quick scan (summary only) / full review (expand all findings) / trust & continue. Never present full finding list as default.
+  - [x] 3.8: Define confidence-level indicators on findings (AC: 7) — each finding references content with a confidence tag: high (derived from upstream spec), medium (inferred from patterns), low (needs developer input). Use natural language: "This comes directly from the architecture" vs. "Inferred — worth verifying"
 
-- [ ] Task 4: Define implementation summary at review dispatch (AC: 5)
-  - [ ] 4.1: Add review-dispatch summary pattern to `skills/momentum/references/completion-signals.md`
-  - [ ] 4.2: Define what the summary contains: files created/modified, key decisions made, how work maps to acceptance criteria, any deviations or open questions
-  - [ ] 4.3: Specify timing: summary is delivered at the moment the review subagent is dispatched, not after review completes — the developer reads it during the wait
+- [x] Task 4: Define implementation summary at review dispatch (AC: 5)
+  - [x] 4.1: Add review-dispatch summary pattern to `skills/momentum/references/completion-signals.md`
+  - [x] 4.2: Define what the summary contains: files created/modified, key decisions made, how work maps to acceptance criteria, any deviations or open questions
+  - [x] 4.3: Specify timing: summary is delivered at the moment the review subagent is dispatched, not after review completes — the developer reads it during the wait
 
-- [ ] Task 5: Integrate completion signals into Impetus workflow.md (AC: 1, 2, 5)
-  - [ ] 5.1: Add workflow step for "workflow completion" that invokes the completion signal template
-  - [ ] 5.2: Add workflow step for "review dispatch" that provides implementation summary then dispatches review
-  - [ ] 5.3: Ensure the progress indicator from Story 2.3 transitions correctly at completion: `✓ Built: [all steps]` + `→ Now: review` or final completion with no `◦ Next:` line
+- [x] Task 5: Integrate completion signals into Impetus workflow.md (AC: 1, 2, 5)
+  - [x] 5.1: Add workflow step for "workflow completion" that invokes the completion signal template
+  - [x] 5.2: Add workflow step for "review dispatch" that provides implementation summary then dispatches review
+  - [x] 5.3: Ensure the progress indicator from Story 2.3 transitions correctly at completion: `✓ Built: [all steps]` + `→ Now: review` or final completion with no `◦ Next:` line
 
-- [ ] Task 6: Create behavioral evals (AC: 1, 2, 3, 4, 5, 6, 7)
-  - [ ] 6.1: `eval-completion-signal-format.md` — verify ownership return, file list, "what's next?" present
-  - [ ] 6.2: `eval-productive-waiting.md` — verify dialogue maintained after background dispatch, no dead air
-  - [ ] 6.3: `eval-subagent-synthesis.md` — verify raw JSON never shown, severity indicators used, hub-and-spoke contract maintained
-  - [ ] 6.4: `eval-review-dispatch-summary.md` — verify implementation summary delivered at dispatch time
-  - [ ] 6.5: `eval-flywheel-offer.md` — verify critical findings trigger flywheel offer (or deferred note if Epic 6 unavailable)
-  - [ ] 6.6: `eval-tiered-review-depth.md` — verify findings presentation offers tiered depth (quick scan / full review / trust & continue), not full dump (AC: 6)
-  - [ ] 6.7: `eval-confidence-directed-findings.md` — verify confidence levels indicated on findings (high/medium/low); natural language, not raw labels (AC: 7)
+- [x] Task 6: Create behavioral evals (AC: 1, 2, 3, 4, 5, 6, 7)
+  - [x] 6.1: `eval-completion-signal-format.md` — verify ownership return, file list, "what's next?" present
+  - [x] 6.2: `eval-productive-waiting.md` — verify dialogue maintained after background dispatch, no dead air
+  - [x] 6.3: `eval-subagent-synthesis.md` — verify raw JSON never shown, severity indicators used, hub-and-spoke contract maintained
+  - [x] 6.4: `eval-review-dispatch-summary.md` — verify implementation summary delivered at dispatch time
+  - [x] 6.5: `eval-flywheel-offer.md` — verify critical findings trigger flywheel offer (or deferred note if Epic 6 unavailable)
+  - [x] 6.6: `eval-tiered-review-depth.md` — verify findings presentation offers tiered depth (quick scan / full review / trust & continue), not full dump (AC: 6)
+  - [x] 6.7: `eval-confidence-directed-findings.md` — verify confidence levels indicated on findings (high/medium/low); natural language, not raw labels (AC: 7)
 
 ## Dev Notes
 
@@ -224,9 +224,37 @@ This story passes acceptance when:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6 (1M context)
 
 ### Debug Log References
+N/A
 
 ### Completion Notes List
+- Followed EDD cycle: 7 behavioral evals written first, then reference doc and workflow extensions
+- All productive waiting content consolidated in completion-signals.md (single reference doc, not split) — content fits within reasonable section length
+- Workflow.md extended with steps 11-14 (completion signal, review dispatch, productive waiting, subagent synthesis) as non-linear invoke-able steps, not part of startup flow
+- Workflow.md at 461 lines — within 500-line NFR3 budget
+- Subagent return contract defined: `{status, result, question, confidence}` with three status values and three confidence levels
+- Flywheel integration handles both available and unavailable states gracefully
+- Hub-and-spoke contract enforced in both reference doc and workflow step notes
+- Tiered review depth: micro-summary default, three tiers offered as natural language (not coded menu)
+- Confidence-directed findings: natural language expressions, varied phrasing to avoid robotic repetition
+- Story 2.Spike dependency noted but not blocking — story proceeds with `run_in_background: true` mechanism per dev notes recommendation
 
 ### File List
+- `skills/momentum/references/completion-signals.md` — canonical reference for completion signals, productive waiting, subagent synthesis, review dispatch summaries, tiered review depth (NEW)
+- `skills/momentum/workflow.md` — extended with steps 11-14: completion signal, review dispatch, productive waiting, subagent result synthesis (MODIFIED)
+- `skills/momentum/evals/eval-completion-signal-format.md` — AC1 eval (NEW)
+- `skills/momentum/evals/eval-productive-waiting.md` — AC2 eval (NEW)
+- `skills/momentum/evals/eval-subagent-synthesis.md` — AC3/AC4 eval (NEW)
+- `skills/momentum/evals/eval-review-dispatch-summary.md` — AC5 eval (NEW)
+- `skills/momentum/evals/eval-flywheel-offer.md` — AC3 flywheel eval (NEW)
+- `skills/momentum/evals/eval-tiered-review-depth.md` — AC6 eval (NEW)
+- `skills/momentum/evals/eval-confidence-directed-findings.md` — AC7 eval (NEW)
+- `_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md` — story file updated (MODIFIED)
+
+### Change Log
+- Created `skills/momentum/references/completion-signals.md` with 5 sections: completion signal format, productive waiting, subagent result synthesis, review dispatch summary, tiered review depth
+- Extended `skills/momentum/workflow.md` with steps 11-14 covering completion signals, review dispatch, productive waiting, and subagent result synthesis
+- Created 7 behavioral evals covering all 7 ACs
+- Marked all tasks complete and set story status to review
