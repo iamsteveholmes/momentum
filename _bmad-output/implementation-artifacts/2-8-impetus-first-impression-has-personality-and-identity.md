@@ -267,12 +267,21 @@ What would you like to work on?
 
 ### Verification (post-AVFL)
 
-Adversarial subagent verification via cmux. Subagent deletes `installed.json`, invokes `/momentum` fresh through cmux, and adversarially checks:
-1. Visual identity element present in first-install greeting
-2. Self-introduction has personality (not a config script)
-3. No `{{current_version}}`, version strings, or template interpolation artifacts visible in any path (first-install, session menu, upgrade)
-4. Zero-thread menu has voice — opening line is not "You're set up and ready" or equivalent flat text
-5. Subagent specifically looks for any remaining mechanical/lifeless language patterns across Steps 2, 3, 7, 9
+Adversarial subagent verification via cmux (Workspace C — isolated from other story verifications).
+
+**Setup:**
+1. `cmux new-workspace` → create isolated verification workspace
+2. `cmux send --surface <X> "cd ~/projects/nornspun && npx skills update"` → pull latest momentum
+3. Delete `installed.json` in nornspun to trigger first-install path
+4. `cmux send --surface <X> "claude"` → launch Claude Code
+
+**Test sequence:**
+1. `cmux send` → `/momentum`
+2. `cmux read-screen --lines 60` → **Assert:** visual identity element (ASCII art / nerdfont) present, self-introduction has personality, NO `{{current_version}}` or version strings
+3. `cmux send` → "Y" (accept setup)
+4. Wait for setup completion, `cmux read-screen` → **Assert:** Step 3 progress output has no version strings
+5. Reach session menu, `cmux read-screen` → **Assert:** opening line has voice and personality, not flat "You're set up and ready"
+6. **Adversarial:** Search all captured output for any remaining mechanical/lifeless language patterns, template interpolation artifacts (`{{`), or version machinery across Steps 2, 3, 7, 9
 
 ## Dev Agent Record
 

@@ -226,12 +226,27 @@ Story 2.6 (`2-6-session-thread-display-fires-hygiene-checks.md`) is `ready-for-d
 
 ### Verification (post-AVFL)
 
-Adversarial subagent verification via cmux. Subagent runs a multi-session test through cmux:
-1. Invokes `/momentum`, declines a proactive offer (dormant thread closure), ends session
-2. Invokes `/momentum` again, verifies declined offer is NOT re-surfaced
-3. Verifies orientation is abbreviated on repeat invocation (no full walkthrough, decision points only)
-4. Adversarially tests edge cases: does the offer reappear if context changes (phase advanced)? Does the counter persist across sessions? Does `installed.json` contain `session_stats` after first invocation?
-5. Subagent tries to trigger re-offer (same context) and non-adaptive behavior (repeat session with full walkthrough) — both should fail
+Adversarial subagent verification via cmux (Workspace D — isolated from other story verifications).
+
+**Setup:**
+1. `cmux new-workspace` → create isolated verification workspace
+2. `cmux send --surface <X> "cd ~/projects/nornspun && npx skills update"` → pull latest momentum
+3. Set up journal.jsonl with a dormant thread (>3d) to trigger a proactive offer
+4. `cmux send --surface <X> "claude"` → launch Claude Code
+
+**Test sequence (multi-session):**
+1. Session 1: `cmux send` → `/momentum`
+2. `cmux read-screen` → confirm proactive offer appears (dormant thread closure)
+3. `cmux send` → decline the offer ("N")
+4. `cmux send` → exit Claude Code (`/exit` or Ctrl+C)
+5. Verify: `cat ~/projects/nornspun/.claude/momentum/journal.jsonl` — **Assert:** `declined_offers` entry present
+6. Verify: `cat ~/projects/nornspun/.claude/momentum/installed.json` — **Assert:** `session_stats.momentum_completions` ≥ 1
+7. Session 2: `cmux send --surface <X> "claude"` → relaunch Claude Code
+8. `cmux send` → `/momentum`
+9. `cmux read-screen` → **Assert:** declined offer NOT re-surfaced (same context)
+10. `cmux read-screen` → **Assert:** orientation is abbreviated (repeat user — decision points, not full walkthrough)
+11. **Edge case:** Advance story phase in journal, re-run `/momentum`, verify offer CAN re-surface (context changed)
+12. **Adversarial:** Try to trigger re-offer with same context, try to get full walkthrough on repeat session — both should fail
 
 ## Dev Agent Record
 

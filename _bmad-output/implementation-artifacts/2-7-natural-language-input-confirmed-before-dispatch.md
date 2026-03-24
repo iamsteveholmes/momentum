@@ -145,12 +145,22 @@ Recent commits show dogfood validation work (241354c and earlier) documenting th
 
 ### Verification (post-AVFL)
 
-Adversarial subagent verification via cmux. Subagent invokes `/momentum` through cmux and tests input handling adversarially:
-1. Types natural language intent ("yeah let's pick up the test infra work") — must get confirmation before dispatch
-2. Types ambiguous input ("that one") — must get numbered options
-3. Types a number ("2") — must select directly without confirmation
-4. Tries edge cases: very confident NL ("start story 2.6 now"), fuzzy continue phrases ("sure", "go ahead"), mixed input ("do number 3")
-5. Subagent actively tries to bypass the confirmation gate — phrasing intent as a command, using imperative voice, embedding numbers in NL
+Adversarial subagent verification via cmux (Workspace B — isolated from other story verifications).
+
+**Setup:**
+1. `cmux new-workspace` → create isolated verification workspace
+2. `cmux send --surface <X> "cd ~/projects/nornspun && npx skills update"` → pull latest momentum
+3. `cmux send --surface <X> "claude"` → launch Claude Code
+
+**Test sequence:**
+1. `cmux send` → `/momentum`, wait for menu to render (`cmux read-screen`)
+2. `cmux send` → "yeah let's pick up the test infra work"
+3. `cmux read-screen` → **Assert:** confirmation prompt appears ("... — correct?"), NOT direct dispatch
+4. `cmux send` → "2" (a number at the menu)
+5. `cmux read-screen` → **Assert:** direct selection, no confirmation needed
+6. `cmux send` → ambiguous input ("do something with stories")
+7. `cmux read-screen` → **Assert:** exactly ONE clarifying question with numbered options
+8. **Adversarial edge cases:** very confident NL ("start story 2.6 now"), fuzzy continue phrases ("sure", "go ahead"), imperative voice ("create a story"), numbers embedded in NL ("do number 3") — subagent actively tries to bypass the confirmation gate
 
 ## Dev Agent Record
 

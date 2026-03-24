@@ -145,11 +145,23 @@ Recent commits show dogfood validation work (ee40034 through 8b9dc49) documentin
 
 ### Verification (post-AVFL)
 
-Adversarial subagent verification via cmux. Subagent sets up journal.jsonl with ≥2 open threads (one dormant >3d, one active <30min), invokes `/momentum` through cmux, and adversarially validates:
-1. All hygiene warnings render in a single response before input prompt
-2. No T-NNN identifiers visible anywhere in output
-3. Selection prompt appears after warnings not before
-4. Subagent attempts to trigger the original failure mode (Step 11 stopping before hygiene)
+Adversarial subagent verification via cmux (Workspace A — isolated from other story verifications).
+
+**Setup:**
+1. `cmux new-workspace` → create isolated verification workspace
+2. Write test journal.jsonl in `~/projects/nornspun/.claude/momentum/` with:
+   - Thread 1: `last_active` = 30 seconds ago (triggers concurrent detection)
+   - Thread 2: `last_active` = 5 days ago (triggers dormant closure)
+   - Thread 3: normal active thread
+3. `cmux send --surface <X> "cd ~/projects/nornspun && npx skills update"` → pull latest momentum
+4. `cmux send --surface <X> "claude"` → launch Claude Code
+
+**Test sequence:**
+1. `cmux send` → `/momentum`
+2. `cmux read-screen --lines 80` → capture session journal display
+3. **Assert:** All hygiene warnings (concurrent, dormant) appear BEFORE "Continue (1/2/...) or tell me what you need?"
+4. **Assert:** No T-NNN identifiers visible — threads shown by `context_summary`
+5. **Adversarial:** Verify the old failure mode (Step 11 pause before hygiene) is gone — all warnings render without user input needed
 
 ## Dev Agent Record
 
