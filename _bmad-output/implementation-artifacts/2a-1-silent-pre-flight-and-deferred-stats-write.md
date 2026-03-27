@@ -71,10 +71,10 @@ Two behavioral problems introduced or exposed by prior Epic 2 work:
 
 ### Architecture Compliance
 
-**Session orientation (Architecture Decision 1c, workflow.md Step 7):**
-- Step 7 is the primary session-start dispatcher. All changes in this story are within Step 7 or the Voice Rules section.
+**Session orientation (Architecture Decision 1d, workflow.md Step 7):**
+- Step 7 is the primary session-start dispatcher. All changes in this story are within Step 7, Step 11, or the Voice Rules section.
 - The `installed.json` is read in Step 1 (already loaded in memory). Moving the write later in Step 7 does not require re-reading the file — the in-memory object is modified and written after the menu display.
-- [Source: _bmad-output/planning-artifacts/architecture.md#Decision 1c (installed state)]
+- [Source: _bmad-output/planning-artifacts/architecture.md#Decision 1d (installed state)]
 
 **installed.json schema (Architecture Decision 5c, File 3):**
 - `session_stats` was added in Story 2.9. No schema changes in this story.
@@ -160,8 +160,8 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
-- Task 1: Added "speak only at phase boundaries" voice rule bullet to Voice Rules section in workflow.md (line 79, after existing non-negotiable bullets). Verified Step 1 has zero output elements. Confirmed all steps emit output only at defined phase boundaries: Steps 2, 3, 6, 7, 9, 10. Steps 1, 4, and all GOTO transitions produce zero output. Step 5's single output is inside the `.gitignore excludes installed.json` conditional check — an actionable warning exception, not routing narration.
-- Task 2: Moved session_stats write to after menu display in Step 7. Removed original placement between expertise-adaptive check and gap detection. Added deferred write immediately after the `<check if="journal.jsonl does not exist OR has zero open threads">` output block. Added `<!-- Deferred stats write (Story 2a.1): ... -->` comment. Added clarifying comment `<!-- Read momentum_completions BEFORE incrementing — determines this session's orientation mode -->` to document the intentional read-before-write ordering.
+- Task 1: Added "speak only at phase boundaries" voice rule bullet to Voice Rules section in workflow.md (line 79, after existing non-negotiable bullets). The phase boundary list was expanded beyond Task 1.1's original four items (consent prompt, hash drift warning, upgrade offer, session menu) to include install action confirmations (✓ target) and decline message — these are legitimate phase boundaries at Steps 3 and 6 that were omitted from the task spec. Verified Step 1 has zero output elements. Confirmed all steps emit output only at defined phase boundaries: Steps 2, 3, 6, 7, 9, 10. Steps 1, 4, and all GOTO transitions produce zero output. Step 5's single output is inside the `.gitignore excludes installed.json` conditional check — an actionable warning exception, not routing narration.
+- Task 2: Moved session_stats write to after menu display in Step 7. Removed original placement between expertise-adaptive check and gap detection. Added deferred write immediately after the `<check if="journal.jsonl does not exist OR has zero open threads">` output block. Also added deferred stats write to Step 11 (thread-exist path) immediately before the Wait action, after the selection prompt — ensures both session paths write stats after all displayed content. Added `<!-- Deferred stats write (Story 2a.1): ... -->` comments to both locations. Added clarifying comment `<!-- Read momentum_completions BEFORE incrementing — determines this session's orientation mode -->` to document the intentional read-before-write ordering.
 - Task 3: Verified Step 4 has zero output elements (silent state file writes). Verified Step 5's sole output is inside the `.gitignore` warning conditional — acceptable actionable exception.
 - Task 4: Verified Step 10 is the only step with hash-related output. Step 1's GOTO to Step 10 is expressed as `<action>GOTO step 10</action>` with no surrounding `<output>` — fully silent routing. Message text left unchanged (Story 2a.4 will redesign it).
 - Evals written: eval-silent-pre-flight.md, eval-deferred-stats-write.md, eval-no-routing-narration.md in skills/momentum/evals/. All three evals pass against the updated workflow.md.

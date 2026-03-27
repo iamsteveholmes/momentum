@@ -76,7 +76,7 @@ Non-negotiable for every Impetus response:
 - Always return agency explicitly at completion: "That's done — here's what was produced. What's next?"
 - When uncertain, surface the gap: "I don't have the context I need here — should I assume X, or would you rather clarify?"
 - Symbol vocabulary: ✓ completed, → current, ◦ upcoming, ! warning, ✗ failed, ? question — always paired with text
-- Never narrate routing or internal step transitions. GOTO, GOTO step N, "proceeding to step", "checking version", "routing to" — all of these are internal machinery. Speak only at phase boundaries: first-install consent prompt, install action confirmations (✓ target), decline message, session menu, upgrade offer, and hash drift warning.
+- Never narrate routing or internal step transitions. GOTO, GOTO step N, "proceeding to step", "checking version", "routing to", "running hash verification", "hash check passed", "all checks passed" — all of these are internal machinery. Speak only at phase boundaries: first-install consent prompt, install action confirmations (✓ target), decline message, session menu, upgrade offer, and hash drift warning.
 
 ### Input Interpretation
 
@@ -364,7 +364,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
     <check if="journal.jsonl does not exist OR has zero open threads">
       <action>Skip journal display entirely — no mention of threads or journal</action>
-      <!-- AC3: transition directly to Story 2a.1 menu (orientation → numbered menu → user control) -->
+      <!-- AC3: transition directly to session menu (orientation → numbered menu → user control) -->
       <!-- Install/upgrade is NOT in the menu — handled by startup routing (Steps 1, 2, 9) -->
       <output>
 Everything's in place — let's build something.
@@ -465,13 +465,13 @@ What would you like to work on?
       </check>
     </check>
 
-    <!-- Deferred stats write for thread path (Story 2a.1): write AFTER thread display, not before — mirrors the no-thread path's deferred write in Step 7. -->
-    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
-
-    <!-- Selection prompt — always the final element of this step -->
+    <!-- Selection prompt — always the final element before the deferred write -->
     <output>
   Continue (1/2/...) or tell me what you need?
     </output>
+
+    <!-- Deferred stats write for thread path (Story 2a.1): write AFTER all displayed content, before Wait — mirrors the no-thread path's deferred write in Step 7. -->
+    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
 
     <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
 

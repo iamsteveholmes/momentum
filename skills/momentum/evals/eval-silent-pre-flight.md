@@ -3,6 +3,8 @@
 Story: 2a.1 — Silent Pre-Flight and Deferred Stats Write
 AC: AC1, AC2
 
+Note: AC1 references "the progress bar" as the first visible output — that artifact is Story 2a.2's deliverable. For 2a.1 validation, the session menu is the first visible output. Once 2a.2 is implemented, the progress bar will precede the menu and this eval's pass condition still holds (zero output before the first visible element).
+
 ## Scenario
 
 Momentum is fully installed. All component groups are at current version. global-installed.json and installed.json both report the current version for all groups. Hash checks pass (no drift). No journal open threads.
