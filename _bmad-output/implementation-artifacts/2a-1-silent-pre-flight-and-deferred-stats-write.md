@@ -1,6 +1,6 @@
 # Story 2a.1: Silent Pre-Flight and Deferred Stats Write
 
-Status: review
+Status: done
 
 ## Story
 
@@ -157,6 +157,14 @@ This is a skill-instruction story: all tasks modify or verify instructions in `w
 ### Agent Model Used
 
 claude-sonnet-4-6
+
+### AVFL Result
+
+- Profile: checkpoint
+- Result: CLEAN (99/100) — 2 iterations
+- Timestamp: 2026-03-27
+- Iteration 1: 75/100 — 1 high, 4 medium, 5 low
+- Iteration 2 (post-fix): 99/100 — 9 of 10 findings fixed; 1 low accepted (implicit Wait semantics)
 
 ### Completion Notes List
 
