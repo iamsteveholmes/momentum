@@ -364,7 +364,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
     <check if="journal.jsonl does not exist OR has zero open threads">
       <action>Skip journal display entirely — no mention of threads or journal</action>
-      <!-- AC3: transition directly to Story 2.1 menu (orientation → numbered menu → user control) -->
+      <!-- AC3: transition directly to Story 2a.1 menu (orientation → numbered menu → user control) -->
       <!-- Install/upgrade is NOT in the menu — handled by startup routing (Steps 1, 2, 9) -->
       <output>
 Everything's in place — let's build something.

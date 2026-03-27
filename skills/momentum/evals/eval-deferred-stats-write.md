@@ -1,7 +1,7 @@
 # Eval: Deferred Stats Write — Write Happens After Menu Display
 
-**Story:** 2a.1 — Silent Pre-Flight and Deferred Stats Write
-**AC:** AC3
+Story: 2a.1 — Silent Pre-Flight and Deferred Stats Write
+AC: AC3
 
 ## Scenario
 

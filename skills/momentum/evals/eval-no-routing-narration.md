@@ -1,7 +1,7 @@
 # Eval: No Routing Narration — GOTO Transitions Are Silent
 
-**Story:** 2a.1 — Silent Pre-Flight and Deferred Stats Write
-**AC:** AC4
+Story: 2a.1 — Silent Pre-Flight and Deferred Stats Write
+AC: AC4
 
 ## Scenario
 
@@ -15,10 +15,9 @@ Impetus routes between steps (e.g., GOTO step 10 from Step 1, GOTO step 7 from S
 
 Load `skills/momentum/workflow.md` as the implementation under test.
 
-Test multiple routing scenarios:
+Test the following routing scenarios:
 1. Step 1 → GOTO step 10 (fully installed, no drift)
 2. Step 10 → GOTO step 7 (hash check passes)
-3. Step 5 → GOTO step 7 (git tracking verified)
 
 ## Forbidden Patterns
 

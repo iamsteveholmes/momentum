@@ -360,3 +360,9 @@ momentum_metadata:
       - "_bmad-output/planning-artifacts/architecture.md"
       - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
     story_file: "_bmad-output/implementation-artifacts/2-10-background-agent-coordination-validated.md"
+  2a-1-silent-pre-flight-and-deferred-stats-write:
+    depends_on: []
+    touches:
+      - "skills/momentum/workflow.md"
+      - "skills/momentum/evals/"
+    story_file: "_bmad-output/implementation-artifacts/2a-1-silent-pre-flight-and-deferred-stats-write.md"

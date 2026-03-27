@@ -1,7 +1,7 @@
 # Eval: Silent Pre-Flight — Zero Output Before Menu
 
-**Story:** 2a.1 — Silent Pre-Flight and Deferred Stats Write
-**AC:** AC1, AC2
+Story: 2a.1 — Silent Pre-Flight and Deferred Stats Write
+AC: AC1, AC2
 
 ## Scenario
 
@@ -9,7 +9,7 @@ Momentum is fully installed. All component groups are at current version. global
 
 **Given** all components are current and no actionable condition exists
 **When** Impetus runs (developer invokes `/momentum`)
-**Then** zero lines of output appear before the progress bar / session menu
+**Then** zero lines of output appear before the session menu
 
 ## Context to Load
 
@@ -17,7 +17,7 @@ Load `skills/momentum/workflow.md` as the implementation under test.
 
 Simulate the following state:
 - `installed.json` has all component versions == current_version
-- `global-installed.json` has all component hashes matching stored hashes
+- `global-installed.json` exists and all stored hashes match the current hashes of all tracked files (no drift — Step 10 takes the silent GOTO step 7 path, not the drift warning path)
 - `journal.jsonl` does not exist
 
 ## Expected Behavior

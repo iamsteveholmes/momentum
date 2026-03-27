@@ -79,7 +79,7 @@ Two behavioral problems introduced or exposed by prior Epic 2 work:
 **installed.json schema (Architecture Decision 5c, File 3):**
 - `session_stats` was added in Story 2.9. No schema changes in this story.
 - The write semantics change: write happens later in the step sequence (after menu output), not at a different step.
-- [Source: _bmad-output/planning-artifacts/architecture.md, line 554–563]
+- [Source: _bmad-output/implementation-artifacts/2-9-behavioral-persistence-across-sessions.md] — session_stats schema (not present in architecture.md)
 
 **Voice rules (workflow.md BEHAVIORAL PATTERNS):**
 - The Voice Rules section (workflow.md lines 69–79) is where the "speak only at phase boundaries" rule belongs. It is additive — no existing rules are removed.
@@ -148,7 +148,7 @@ This is a skill-instruction story: all tasks modify or verify instructions in `w
 - [Source: skills/momentum/workflow.md#Step 1, lines 145–179] — Startup routing (must be silent)
 - [Source: skills/momentum/workflow.md#Step 7, lines 339–391] — Session orientation with stats write at line 354
 - [Source: skills/momentum/workflow.md#Step 10, lines 598–631] — Hash drift check (source of the hash-drift message Story 2a.4 will rewrite)
-- [Source: _bmad-output/planning-artifacts/architecture.md, lines 554–563] — installed.json schema (session_stats added by Story 2.9)
+- [Source: _bmad-output/implementation-artifacts/2-9-behavioral-persistence-across-sessions.md] — installed.json schema with session_stats (session_stats not present in architecture.md)
 - [Source: _bmad-output/implementation-artifacts/2-9-behavioral-persistence-across-sessions.md#Task 4.3] — Original placement of session_stats write (Story 2.9)
 - [Source: _bmad-output/implementation-artifacts/2-8-impetus-first-impression-has-personality-and-identity.md] — Greeting template (must not be removed by this story)
 
