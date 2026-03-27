@@ -16,8 +16,10 @@ stepsCompleted:
   - step-e-01-discovery
   - step-e-02-review
   - step-e-03-edit
-lastEdited: '2026-03-22'
+lastEdited: '2026-03-26'
 editHistory:
+  - date: '2026-03-26'
+    changes: 'Epic orchestrator model: added FR49 (triage workflow), FR50 (/create-epic command), FR51 (/develop-epic command), FR52 (epic lifecycle), FR53 (momentum-dev-auto), FR54 (session-open epic progress bar); updated FR6 (Impetus as pure orchestrator, epic-level dispatch), FR41 (epic as primary unit of work, stories created in bulk); added sprint-status.yaml status definitions section with done-incomplete and closed-incomplete; added Epic Orchestrator Model section clarifying epic-first workflow model.'
   - date: '2026-03-23'
     changes: 'AVFL integration: renamed momentum-avfl to momentum-avfl throughout; moved AVFL validation from Growth to First Sprint scope (gate/checkpoint profiles in story cycles); added FR48 for AVFL skill deployment; kept standalone /validate command as Growth; updated repo structure tree with framework.json and sub-skills.'
   - date: '2026-03-22'
@@ -323,7 +325,7 @@ Each innovation area validates through dogfooding — Momentum is built using it
 
 ### Growth Features (Post-MVP)
 
-- **Orchestrating agent evolves toward pipeline automation** — menu items gain workflow chaining (spec → ATDD → implement → review → flywheel), human touchpoints only at gates and critical findings
+- **Impetus as Epic Orchestrator** — Impetus evolves from story-level guidance to epic-level orchestration: `triage` workflow for backlog shaping, `/create-epic` for bulk parallel story creation with AVFL validation, `/develop-epic` for tier-sequential DAG execution across all stories in the epic. The epic becomes the primary unit of planned work; Impetus dispatches agents, never implements. Human touchpoints at merge gates and critical AVFL findings only (see FR49–FR54)
 - Standalone `/validate` command — user-invocable AVFL validation outside story cycles (full profile with iterative fix loop, up to 8 parallel reviewers); extends the story-cycle-integrated AVFL to ad-hoc artifact validation
 - **Findings template** — standard + open sections format for validation reports, consumed by findings ledger and Evaluation Flywheel
 - **Citations API + CoE integration** (PT-026) — wire Anthropic Citations API into spec generation workflows for mechanically grounded provenance; add Chain of Evidences prompting pattern
@@ -533,7 +535,7 @@ momentum/
 
 ### Orchestrating Agent
 
-- **FR6:** Developer can interact with an orchestrating agent that presents menu-driven access to all practice workflows
+- **FR6:** Developer can interact with an orchestrating agent (Impetus) that presents menu-driven access to all practice workflows. Impetus is a pure orchestrator — it dispatches workflows and agents, never implements. At the epic orchestration level, the primary menu items are `/create-epic` and `/develop-epic`; Impetus dispatches story creation agents and DAG execution agents from parent context rather than performing implementation work itself
 - **FR7:** Orchestrating agent can show the developer's current position in any workflow via visual status graphics (ASCII)
 - **FR8:** Orchestrating agent can provide human-readable summaries of what was built during implementation, while review runs. Summaries follow attention-aware checkpoint patterns (UX-DR19) — lead with micro-summary, offer tiered review depth — and indicate confidence levels on presented content (UX-DR22)
 - **FR9:** Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally, including at minimum: gaps in the protocol mapping table (FR35), missing MCP provider configuration, and undefined ATDD tool binding
@@ -566,6 +568,17 @@ momentum/
 - **FR27:** Every finding requires evidence — validators cannot generate findings without supporting evidence from the reviewed artifact (calibration principle)
 - **FR48:** AVFL skill deployed as flat skill at `momentum-avfl/` supporting gate/checkpoint/full profiles; spawns parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; cross-checks findings between independently-framed reviewers; returns consolidated scored findings with evidence; sub-skills nested inside the skill directory deploy automatically with the parent skill
 
+### Epic Orchestration
+
+*These requirements belong to Epic Y (Impetus as Epic Orchestrator).*
+
+- **FR49:** `triage` workflow accepts raw input — conversational or file-based (`triage-inbox.md`) — and produces mutations to `epics.md`: story titles, one-line scope, epic assignments, priority ordering. Only unlocked epics (those without story files already created) are mutable. Cross-epic dependency violations are surfaced before committing changes. Triage is repeatable — it may be run any number of times before `/create-epic` is called on an epic. **Priority: High**
+- **FR50:** `/create-epic` command locks the target epic at invocation time, dispatches parallel story creation agents (one per story, batch of 4–8), runs an AVFL pass on all created stories from the parent context, and marks the epic locked on all-CLEAN result. Lock point is when `/create-epic` is called — not after AVFL, not after developer approval. Epic is immutable after this point. **Priority: High**
+- **FR51:** `/develop-epic` command executes a tier-sequential DAG across the epic's stories. Pre-flight validation includes: topological sort, cycle detection, key normalization, dangling reference check, and intra-tier file-overlap warning. Stories with satisfied dependencies execute in parallel within each tier (wave); AVFL validation is included per story wave. Orchestrator handles merge gate — never background agents. Agent concurrency cap is configurable (default 12). Integration with a dag-executor skill (e.g., by Erich Owens) is supported as a swappable wave scheduler via the skill protocol. **Priority: High**
+- **FR52:** Epic lifecycle is the primary unit of planned work, progressing through five phases: (1) **Triage** — mutable, repeatable, any number of times before `/create-epic`; (2) **Create-epic** — locks epic, creates story files in parallel, AVFL validates; (3) **Develop-epic** — DAG execution, tier-sequential, merge at each tier; (4) **Retro** — structured retrospective, writes `triage-inbox.md` entries for next cycle; (5) **Triage** — next cycle begins. Epic is immutable after create-epic. If a blocker or scope change occurs mid-epic, the epic is closed with status `done-incomplete` and incomplete stories are re-triaged into the next cycle. **Priority: High**
+- **FR53:** `momentum-dev-auto` is a stripped-down variant of `momentum-dev` with all interactive ask gates removed and merge deferred to the orchestrator. AVFL GATE_FAILED produces a clean structured failure output (never silent drift). `momentum-dev-auto` is a prerequisite for `/develop-epic` background agent execution. **Priority: High**
+- **FR54:** At session open, Impetus reads `sprint-status.yaml` and renders a 3-line epic progress bar as the first visible output — before any menu or preamble. Format: done epic(s), current in-progress epic(s) with story counts, next backlog epic. A two-sentence synthesis follows. For experienced users (`momentum_completions >= 3`), the progress bar is compressed to a single line. No preamble text precedes the progress bar. **Priority: High** *(Epic X — Impetus UX Redesign)*
+
 ### Evaluation Flywheel
 
 - **FR28:** Findings ledger can accumulate findings across stories with category, root cause classification, and upstream level
@@ -587,7 +600,7 @@ momentum/
 
 - **FR39:** Developer can define acceptance criteria in Gherkin format that is behavioral, technology-agnostic, and implementation-independent
 - **FR40:** ATDD workflow can generate failing acceptance tests from Gherkin criteria before implementation begins
-- **FR41:** Developer can complete a full story cycle guided by the orchestrating agent: spec review → ATDD → implement → review → flywheel
+- **FR41:** Developer can complete a full story cycle guided by the orchestrating agent: spec review → ATDD → implement → review → flywheel. The epic is the primary unit of planned work — stories are created in bulk by `/create-epic` (not individually) and executed as a DAG by `/develop-epic`. Individual story cycles are invoked by Impetus as part of epic-level orchestration; the developer interacts at epic granularity during normal workflow
 - **FR42:** System can track visual progress through the story cycle, always showing current phase and next phase
 - **FR43:** Developer can invoke the upstream fix skill to analyze a quality failure and propose corrections at the appropriate upstream level
 
@@ -635,6 +648,29 @@ momentum/
 ### Review Sustainability
 
 - **NFR18:** All Momentum workflow checkpoints that pause for human review must implement spec fatigue mitigation patterns (UX-DR19 through UX-DR22): lead with micro-summary and tiered review depth (UX-DR19), adapt guidance to expertise level (UX-DR20), frame drill-downs with motivated context (UX-DR21), and indicate confidence levels on generated content (UX-DR22). Validated by: behavioral evals confirm each checkpoint offers tiered review depth (not full-artifact dump) and flags confidence levels on generated content.
+
+## Sprint Status Definitions
+
+`sprint-status.yaml` is the authoritative state file for epic and story lifecycle tracking. The following status values are defined:
+
+### Epic Statuses
+
+| Status | Meaning |
+|---|---|
+| `backlog` | Epic defined in `epics.md`; not yet locked. Triage may mutate it freely. |
+| `in-progress` | `/create-epic` has been called; epic is locked and story files exist. `/develop-epic` is running or paused. |
+| `done` | All stories completed successfully. Epic closed. |
+| `done-incomplete` | Epic force-closed mid-execution. Some stories completed; others were incomplete or dropped. Used when the developer closes an epic due to a blocker or scope change. Incomplete stories are re-triaged into the next cycle. |
+
+### Story Statuses
+
+| Status | Meaning |
+|---|---|
+| `ready-for-dev` | Story file exists and has passed AVFL; ready for `momentum-dev-auto` execution. |
+| `in-progress` | Story is currently being executed by a `momentum-dev-auto` agent. |
+| `done` | Story implementation complete and merged. |
+| `dropped` | Story cancelled before development began (pre-development cancellation). No worktree was created. |
+| `closed-incomplete` | Story abandoned mid-execution; worktree preserved in git. Distinct from `dropped` — work was started. Used when a story is stopped after `momentum-dev-auto` has begun but before merge. |
 
 ## Post-PRD Actions
 

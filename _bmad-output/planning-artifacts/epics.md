@@ -25,8 +25,10 @@ derives_from:
   - id: UX-MOMENTUM-001
     path: _bmad-output/planning-artifacts/ux-design-specification.md
     relationship: derives_from
-lastEdited: '2026-03-23'
+lastEdited: '2026-03-26'
 editHistory:
+  - date: '2026-03-26'
+    changes: 'Added Epic 2a (Impetus UX Redesign — 4 stories) and Epic 2b (Impetus as Epic Orchestrator — 6 stories) with high priority before Epic 3. Added FR49–FR54 to FR Coverage Map. Inserted epic list entries and full epic body sections. Epic 2a covers silent pre-flight, progress bar, menu redesign, hash-drift plain language. Epic 2b covers triage skill, /create-epic, momentum-dev-auto, /develop-epic (tier-sequential DAG), retro handoff, epic close-out model.'
   - date: '2026-03-23'
     changes: 'AVFL Epic 3 validation: Dropped Story 3.4 (duplicates Stories 1.3/1.5, NFR8 unverifiable at Epic 3). Reassigned NFR8 compliance audit to Story 7.3, CMUX anti-patterns to Story 7.1. Added session state contract between Stories 3.1/3.3 (session-modified-files.txt). Fixed Story 3.2 path scope ambiguity and installed.json schema gap. Fixed Story 3.3 missing no-lint-tool AC. Fixed Story 3.5 effort vocabulary and orchestration omission. Updated Epic 3 FR/NFR coverage.'
   - date: '2026-03-23'
@@ -301,6 +303,12 @@ UX-DR22: Implement Confidence-Directed Review — when generating or presenting 
 | FR46 | Epic 8 | Archive outdated documents while preserving reference chain |
 | FR47 | Epic 8 | Track document freshness using domain-specific freshness windows |
 | FR48 | Epic 4 | AVFL skill deployed with multi-lens validation pipeline |
+| FR49 | Epic 2b | triage workflow — raw input → epics.md mutations; only unlocked epics mutable |
+| FR50 | Epic 2b | /create-epic — lock epic, parallel story creation (batch 4-8), AVFL per story, epic locked on all-CLEAN |
+| FR51 | Epic 2b | /develop-epic — tier-sequential DAG execution with pre-flight validation and agent pool cap (default 12) |
+| FR52 | Epic 2b | Epic lifecycle: triage → create-epic (lock) → develop-epic → retro → triage; epic immutable after lock |
+| FR53 | Epic 2b | momentum-dev-auto — background-safe story implementation: no ask gates, merge deferred, AVFL GATE_FAILED = clean structured fail |
+| FR54 | Epic 2a | Session-open epic progress bar: read sprint-status.yaml, render done/current/next bar, 2-item primary menu |
 
 **NFR mapping:** NFR1–3 (context/token budget) → Epic 1 & 2. NFR4 (flat skills deployment — no plugin namespacing required) → Epic 1. NFR5–8 (portability/degradation) → Epic 1. NFR9–11 (ecosystem resilience) → Epic 1. NFR12–15 (integration compatibility) → Epic 1. NFR16–17 (dogfooding integrity) → cross-cutting, applied across all epics.
 
@@ -332,13 +340,30 @@ A developer always knows where they are and what to do next. Session journal tra
 
 ---
 
+### Epic 2a: Impetus UX Redesign
+The session-open experience communicates what Impetus is and shows real project state. Startup is silent on happy path. Menu is minimal and outcome-focused. Epic progress bar replaces the static 6-item menu as the primary orientation surface.
+**FRs covered:** FR54
+**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR6 (extended)
+**Additional:** Replaces 6-item menu with 2-item primary menu (/create, /develop); adds epic progress bar from sprint-status.yaml; silent pre-flight voice rules; hash-drift plain language.
+**Priority:** High (before Epic 3)
+
+---
+
+### Epic 2b: Impetus as Epic Orchestrator
+Impetus orchestrates work at the epic level. The developer uses triage to plan, /create-epic to lock and generate stories in parallel, /develop-epic to run the DAG, and retro to feed the next cycle. The epic is the primary, immutable unit of planned work.
+**FRs covered:** FR49, FR50, FR51, FR52, FR53
+**Additional:** triage skill (epics.md mutations), /create-epic (parallel story creation + AVFL), momentum-dev-auto (background-safe, no ask gates), /develop-epic (tier-sequential DAG, agent pool cap 12), retro handoff (triage-inbox.md), epic close-out (done-incomplete/closed-incomplete statuses), dag-executor integration (optional swappable wave scheduler).
+**Priority:** High (before Epic 3)
+
+---
+
 ### Epic 3: Automatic Quality Enforcement
 Quality gates fire without developer intervention. Lint and format run on save. Acceptance tests are protected from modification. Model routing is configured by frontmatter so every skill and agent uses the right model by default.
 **FRs covered:** FR18, FR19, FR20, FR21, FR23 (FR22 delivered by Story 1.3)
 **NFRs covered:** NFR7 (NFR8 verified in Story 7.3)
 **UX-DRs covered:** UX-DR3
 **Additional:** Model routing strategy (PT-016): model-routing-guide.md, model/effort frontmatter on all skills/agents, model-routing.md rule. Story 3.4 dropped — see Epic 3 body.
-**Priority:** Sprint 1
+**Priority:** Sprint 1 (deferred; Epic 2a and 2b take priority)
 
 ---
 
@@ -967,6 +992,295 @@ So that I never need to manually hunt for specs or figure out how to fix missing
 **Given** Impetus surfaces spec context inline
 **When** delivering contextualization (UX-DR21)
 **Then** every drill-down is framed with why it matters to the current step, not just what the spec says
+
+---
+
+## Epic 2a: Impetus UX Redesign
+
+The session-open experience communicates what Impetus is and shows real project state. Startup is silent on happy path. Menu is minimal and outcome-focused.
+
+**FRs covered:** FR54
+**UX-DRs covered:** UX-DR1, UX-DR2, UX-DR6 (extended)
+
+### Story 2a.1: Silent Pre-Flight and Deferred Stats Write
+
+As a developer,
+I want Impetus to start without narrating its own startup process,
+So that I see only what matters and am never made to watch a loading screen.
+
+**Acceptance Criteria:**
+
+**Given** Momentum is fully installed and all components are at current version
+**When** I run `/momentum`
+**Then** zero lines of output appear before the progress bar
+**And** no narration of intent, routing, or step numbers appears at any point
+
+**Given** Impetus runs its session startup sequence (version check, hash check, journal read)
+**When** all checks pass with no actionable condition found
+**Then** each check produces zero output (silent pre-flight rule)
+
+**Given** Impetus increments the session_stats counter in installed.json
+**When** the startup sequence runs
+**Then** the write to installed.json happens after the menu is displayed, not before
+**And** the session_stats write does not delay the menu appearing
+
+**Given** a new voice rule: "speak only at phase boundaries"
+**When** Impetus routes between startup steps
+**Then** no narration of routing decisions appears ("proceeding to step 10", "GOTO step 7", etc.)
+
+---
+
+### Story 2a.2: Epic Progress Bar at Session Open
+
+As a developer,
+I want to see my sprint state at a glance when I open a session,
+So that I always know where I am and what's worth doing next without having to ask.
+
+**Acceptance Criteria:**
+
+**Given** sprint-status.yaml exists and has epic entries
+**When** `/momentum` runs
+**Then** Impetus reads sprint-status.yaml at session start
+**And** renders a progress bar showing: last done epic(s) with ✓ prefix, current in-progress epic(s) with → prefix and story count, next backlog epic with ◦ prefix
+**And** the bar appears as the first visible output
+
+**Given** multiple in-progress epics exist simultaneously
+**When** the bar renders
+**Then** each in-progress epic gets its own → line
+
+**Given** the developer has `momentum_completions >= 3`
+**When** the bar renders
+**Then** it compresses to a single line (done collapsed, current summary, next collapsed)
+**And** no logo or preamble text appears
+
+**Given** sprint-status.yaml does not exist or is unreadable
+**When** the bar would render
+**Then** it is silently omitted (graceful degradation)
+
+---
+
+### Story 2a.3: Session-Open Menu Redesign
+
+As a developer,
+I want the session menu to show only the actions I'd actually initiate,
+So that I'm not presented with diagnostic tools or auto-triggered workflows as if they were my choices.
+
+**Acceptance Criteria:**
+
+**Given** a returning user (`momentum_completions >= 1`) with no open threads
+**When** the session menu renders
+**Then** it contains exactly 2 items: `/create` (write a story) and `/develop` (build the next story)
+**And** validate, plan review, spec provenance, and session threads do not appear as primary menu items
+
+**Given** the primary menu
+**When** I type `/create` or `1`
+**Then** Impetus dispatches to the create-story workflow
+**When** I type `/develop` or `2`
+**Then** Impetus dispatches to the develop-story workflow
+**And** both slash command and number inputs work equivalently
+
+**Given** open journal threads exist
+**When** the session opens
+**Then** journal threads are displayed before the menu (existing Story 2.2 behavior)
+**And** they are not duplicated as a menu item
+
+---
+
+### Story 2a.4: Hash Drift Plain-Language Message
+
+As a developer,
+I want the hash drift warning to tell me what actually happened in plain English,
+So that I don't need to know what "hash drift" or "component groups" mean.
+
+**Acceptance Criteria:**
+
+**Given** a hash mismatch is detected for installed quality rules
+**When** Impetus surfaces the condition
+**Then** the message is: `! Your quality rules were edited after Momentum set them up.`
+**And** the options are: `[R] Restore the originals · [K] Keep your edits`
+**And** no reference to "hash drift", "component group", "stored hash", or step numbers appears
+
+---
+
+## Epic 2b: Impetus as Epic Orchestrator
+
+Impetus orchestrates work at the epic level. The developer uses triage to plan, /create-epic to lock and generate stories in parallel, /develop-epic to run the DAG, and retro to feed the next cycle. The epic is the primary, immutable unit of planned work.
+
+**FRs covered:** FR49, FR50, FR51, FR52, FR53
+
+### Story 2b.1: /triage Skill
+
+As a developer,
+I want a structured triage session that turns raw observations into organized backlog entries,
+So that I never have to manually fight epics.md or lose track of discovered issues.
+
+**Acceptance Criteria:**
+
+**Given** I invoke `/triage` with raw input (conversational description, file reference, or retro action items)
+**When** triage runs
+**Then** Impetus groups input into themes and presents a classified triage table: each item with type (new-story/update-existing/cancel/defer), target epic, and one-line scope
+
+**Given** I approve the triage classification
+**When** triage commits
+**Then** epics.md is updated with new story titles, scope notes, and dependency assignments for affected epics
+**And** only unlocked epics (no story files generated yet) are mutated
+**And** cross-epic dependency violations are surfaced before committing
+
+**Given** an epic has had /create-epic run (story files exist)
+**When** triage attempts to mutate it
+**Then** triage refuses and surfaces: "Epic N is locked — story files exist. Close the epic and re-triage to modify its scope."
+
+**Given** triage receives retro action items from triage-inbox.md
+**When** triage processes them
+**Then** each item is classified and the inbox entry is marked consumed
+
+---
+
+### Story 2b.2: /create-epic Command
+
+As a developer,
+I want to generate all stories for an epic in parallel with a single command,
+So that I don't spend a session creating stories one at a time.
+
+**Acceptance Criteria:**
+
+**Given** an epic in epics.md with story titles and scope entries
+**When** I run `/create-epic [epic-id]`
+**Then** Impetus dispatches parallel story creation agents (one per story, batch size 4-8)
+**And** each agent creates one complete story file following the bmad-create-story workflow
+**And** stories are written to `_bmad-output/implementation-artifacts/`
+**And** sprint-status.yaml is updated to `ready-for-dev` for each created story
+
+**Given** all story files are created
+**When** AVFL runs
+**Then** Impetus runs AVFL on each story (small batches, parent context) and reports results
+**And** on all-CLEAN result, the epic is marked locked (no further triage mutations allowed)
+**And** on any GATE_FAILED, the failing story is flagged for developer review before locking proceeds
+
+**Given** a story file already exists for a story in the epic
+**When** /create-epic runs
+**Then** it skips that story (idempotent) and reports the skip
+
+---
+
+### Story 2b.3: momentum-dev-auto Variant
+
+As an orchestrator,
+I need a version of momentum-dev that runs autonomously without ask gates,
+So that /develop-epic can dispatch story development as background agents.
+
+**Acceptance Criteria:**
+
+**Given** momentum-dev-auto is dispatched as a background agent for a story
+**When** it encounters a decision point that momentum-dev would pause and ask about
+**Then** it applies the deterministic rule (crash recovery: auto-resume; merge: defer to orchestrator; CHECKPOINT_WARNING: record and continue)
+**And** it never pauses waiting for developer input
+
+**Given** AVFL returns GATE_FAILED during momentum-dev-auto execution
+**When** the story cannot proceed
+**Then** momentum-dev-auto emits a clean structured failure: `{status: "failed", story_key: X, reason: "avfl-gate-failed", findings: [...]}`
+**And** does not attempt to fix the story autonomously
+**And** does not silently continue with known failures
+
+**Given** momentum-dev-auto completes successfully
+**When** it returns its completion signal
+**Then** the signal includes: story_key, status ("ready-to-merge"), files produced, AVFL result summary
+**And** the merge command is NOT executed — it is returned in the signal for the orchestrator to execute
+
+---
+
+### Story 2b.4: /develop-epic Command
+
+As a developer,
+I want to run all the stories in an epic with a single command,
+So that Impetus handles the dependency ordering, parallelism, and merge gate while I focus on reviewing results.
+
+**Acceptance Criteria:**
+
+**Given** an epic with locked story files and depends_on metadata in sprint-status.yaml
+**When** I run `/develop-epic [epic-id]`
+**Then** Impetus runs pre-flight validation: topological sort, cycle detection, key normalization, dangling reference check, intra-tier file-overlap warning, story file existence
+**And** presents the computed tiers and the initial parallel wave for developer confirmation before dispatching
+
+**Given** developer confirms the pre-flight
+**When** /develop-epic dispatches tier-0 stories
+**Then** all tier-0 stories (deps satisfied) run in parallel as background agents using momentum-dev-auto
+**And** agent count does not exceed the configured pool cap (default 12)
+**And** AVFL runs within each story agent's context before the story signals completion
+
+**Given** all tier-N stories complete
+**When** the orchestrator processes completions
+**Then** it executes the merge gate for each story (in safe order, no intra-tier conflicts)
+**And** presents a tier summary before advancing to tier N+1
+**And** stories in tier N+1 are dispatched only after all tier-N merges complete
+
+**Given** a story fails AVFL (GATE_FAILED) mid-DAG
+**When** the failure is reported
+**Then** Impetus surfaces which downstream stories are blocked
+**And** holds those downstream stories without dispatching them
+**And** continues unrelated parallel stories that do not depend on the failed story
+
+**Given** developer says "close this epic" at any tier boundary
+**When** the close is confirmed
+**Then** epic status transitions to done-incomplete
+**And** in-progress worktrees are preserved (git branches not deleted)
+**And** incomplete stories are flagged for triage-inbox
+
+---
+
+### Story 2b.5: Retro → Triage Handoff
+
+As a developer,
+I want the epic retrospective to automatically populate my triage inbox,
+So that action items from retros are never lost in conversation history.
+
+**Acceptance Criteria:**
+
+**Given** an epic completes (all stories done or epic closed)
+**When** the retro runs
+**Then** Impetus writes structured entries to `.claude/momentum/triage-inbox.md` for each action item
+**And** each entry contains: source, type, priority, description, story reference, proposed resolution
+**And** entries are append-only (existing inbox entries are not modified)
+
+**Given** triage-inbox.md has entries
+**When** I run `/triage`
+**Then** Impetus reads the inbox as first-class input (alongside any conversational input)
+**And** presents each inbox item for classification before proceeding
+
+**Given** an inbox item is classified and dispositioned
+**When** triage commits
+**Then** the item is marked `consumed: true` in triage-inbox.md
+
+---
+
+### Story 2b.6: Epic Close-Out and Status Model
+
+As a developer,
+I want a clean way to close an epic that didn't complete,
+So that incomplete work is preserved and re-triageable without losing context.
+
+**Acceptance Criteria:**
+
+**Given** I close an epic mid-execution (blocker, scope change, or design pivot)
+**When** the close is confirmed
+**Then** sprint-status.yaml updates the epic to `done-incomplete` status
+**And** a closing artifact is written: `_bmad-output/implementation-artifacts/epic-N-close.md` with close reason, story completion summary, and partial-work references
+
+**Given** a story was in-progress when the epic was closed
+**When** close-out runs
+**Then** the story's status in sprint-status.yaml is set to `closed-incomplete`
+**And** its worktree branch is committed (not deleted) — partial work is preserved in git
+**And** the closing artifact records the worktree path and last completed ACs
+
+**Given** a story was ready-for-dev (no work started) when the epic was closed
+**When** close-out runs
+**Then** the story's status reverts to `backlog` (no worktree to clean up)
+**And** it is listed in the closing artifact as available for re-triage
+
+**Given** triage reads the closing artifact for a done-incomplete epic
+**When** processing incomplete stories
+**Then** each closed-incomplete story is presented with its partial-work context
+**And** the developer can classify it as: restart (new story file), continue (resume partial work), or abandon
 
 ---
 

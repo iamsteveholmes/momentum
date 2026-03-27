@@ -1,5 +1,5 @@
 # generated: 2026-03-21
-# last_updated: 2026-03-24 (Epic 2 Refinement story 2-9 created)
+# last_updated: 2026-03-26 (Added Epic 2a and 2b — UX Redesign and Epic Orchestrator)
 # project: momentum
 # project_key: NOKEY
 # tracking_system: file-system
@@ -11,17 +11,24 @@
 #   - backlog: Epic not yet started
 #   - in-progress: Epic actively being worked on
 #   - done: All stories in epic completed
+#   - done-incomplete: Epic force-closed mid-execution (blocker/scope change); some stories
+#                      completed and merged, others were incomplete or dropped. The epic counts
+#                      as done in accounting. Closing artifact records incomplete work.
 #
 # Epic Status Transitions:
-#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - backlog → in-progress: Automatically when first story is created (via /create-epic)
 #   - in-progress → done: Manually when all stories reach 'done' status
+#   - in-progress → done-incomplete: When developer closes epic before all stories complete
 #
 # Story Status:
-#   - backlog: Story only exists in epic file
-#   - ready-for-dev: Story file created in stories folder
+#   - backlog: Story only exists in epic file (no story file generated yet)
+#   - ready-for-dev: Story file created; awaiting development
 #   - in-progress: Developer actively working on implementation
 #   - review: Ready for code review (via Dev's code-review workflow)
-#   - done: Story completed
+#   - done: Story completed and merged
+#   - dropped: Story cancelled before development began (no implementation work)
+#   - closed-incomplete: Story abandoned mid-execution. Worktree preserved in git (not deleted).
+#                        Partial branch remains for reference when re-triaging.
 #
 # Retrospective Status:
 #   - optional: Can be completed but not required
@@ -76,6 +83,24 @@ development_status:
   2-9-behavioral-persistence-across-sessions: done
   2-10-background-agent-coordination-validated: done
   epic-2-refinement-retrospective: optional
+
+  # Epic 2a: Impetus UX Redesign
+  epic-2a: backlog
+  2a-1-silent-pre-flight-and-deferred-stats-write: backlog
+  2a-2-epic-progress-bar-at-session-open: backlog
+  2a-3-session-open-menu-redesign: backlog
+  2a-4-hash-drift-plain-language-message: backlog
+  epic-2a-retrospective: optional
+
+  # Epic 2b: Impetus as Epic Orchestrator
+  epic-2b: backlog
+  2b-1-triage-skill: backlog
+  2b-2-create-epic-command: backlog
+  2b-3-momentum-dev-auto-variant: backlog
+  2b-4-develop-epic-command: backlog
+  2b-5-retro-triage-handoff: backlog
+  2b-6-epic-closeout-and-status-model: backlog
+  epic-2b-retrospective: optional
 
   # Epic 3: Automatic Quality Enforcement
   epic-3: in-progress

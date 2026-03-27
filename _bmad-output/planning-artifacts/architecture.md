@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-03-23'
+lastEdited: '2026-03-26'
 editHistory:
+  - date: '2026-03-26'
+    changes: 'Epic orchestration model: added Epic Orchestration Architecture section (lifecycle, immutability rule, DAG topology, tier-sequential execution); added Agent Pool Governance section (pool cap, AVFL embedding, merge gate, pre-flight checks); added momentum-dev-auto Design section (background-safe variant, behavioral constraints, autonomous-or-fail principle); added dag-executor Integration section (optional sub-skill, tradeoffs, decision criteria); added Retro → Triage Handoff Format section (triage-inbox.md, entry format); added done-incomplete and closed-incomplete statuses to Story State Machine; updated Decision 4c with rolling pool feasibility note (Agent tool available in skill execution context); updated Impetus session open per session-stats deferral and epic progress bar.'
   - date: '2026-03-23'
     changes: 'AVFL integration: renamed momentum-vfl to momentum-avfl throughout; renamed vfl-validator protocol type to avfl-validator; reconciled sub-skill model (AVFL uses own nested sub-skills, not momentum-code-reviewer); updated repo structure with framework.json and sub-skills directory; added AVFL deployment note distinguishing production skill from research benchmarking variants.'
   - date: '2026-03-22'
@@ -429,12 +431,16 @@ At every session start, Impetus reads the session journal and within two exchang
 active story/task, current phase, last completed action, suggested next action.
 User never hunts for context.
 
+**Session open sequence (updated 2026-03-26):** At session start, Impetus reads `sprint-status.yaml` and renders an epic progress bar (done/current/next) before presenting the primary menu. The primary menu is reduced to 2 items: `/create` (story/epic) and `/develop` (story/epic). Session-stats write is deferred until after the menu is displayed — startup rendering does not block on writes.
+
 **Decision 4c — Productive Waiting**
 While a context:fork subagent runs, Impetus maintains engagement through pre-launch briefing and post-completion synthesis.
 `context:fork` subagents run to completion in a foreground operation — the main conversation is blocked during execution. Background execution via `run_in_background: true` on the Bash tool is available for mechanical tasks (test runs, builds) but not for agent reasoning.
 Default: surface implementation summary ("here's what was built and how it maps to the ACs").
 Dead air is a failure mode, not an acceptable pause.
 **Implementation note (updated 2026-03-24, Story 2.10 spike result):** The spike is complete. Results documented in `docs/research/background-agent-coordination.md`. Key findings: (1) No `SendMessage` or inter-agent messaging API exists in Claude Code — checkpoint/resume mid-task is not possible. (2) No `Agent` tool exists as a general-purpose callable tool — subagent execution is declared via `context:fork` in SKILL.md, not dispatched dynamically. (3) `run_in_background: true` on the Bash tool runs shell commands (not agents) in the background — fire-and-forget only. (4) Productive waiting is behavioral, not mechanical: Impetus briefs the user before subagent launch and synthesizes results after completion. Story 4.3 should decompose work into discrete `context:fork` invocations (each runs to completion) and use background Bash for test/build tasks only.
+
+**Rolling pool feasibility note (2026-03-26):** Story 2.10's spike was conducted in a bare Claude Code CLI session where the Agent tool was not available. In a skill execution context (where /develop-epic runs), the Agent tool with `run_in_background: true` and the notification model are available. Rolling pool dispatch (dispatch when a slot frees, not wait-for-all) is therefore architecturally feasible. Tier-sequential batching is the MVP implementation choice for simplicity and correctness — not an architectural constraint. Rolling dispatch is a valid follow-on enhancement.
 
 ---
 
@@ -1053,6 +1059,11 @@ backlog → ready-for-dev → in-progress → review → done
 - **`review`** — implementation complete, ready for code review (set by `bmad-dev-story` inside the worktree)
 - **`done`** — story's worktree has been merged to the target branch and cleaned up
 
+**Additional statuses for epic orchestration:**
+
+- **`done-incomplete`** (epic-level) — Epic closed mid-execution. Some stories completed and merged; others were incomplete or dropped. The epic counts as "done" in accounting but its closing artifact records the incomplete work. Recovery path: close epic, re-triage incomplete stories into triage-inbox.md.
+- **`closed-incomplete`** (story-level) — Story abandoned mid-execution. Worktree is preserved in git (not cleaned up). The partial branch remains for reference when re-triaging the story. Distinct from `dropped` (pre-development cancellation with no implementation work).
+
 This is the **sprint-level lifecycle** — distinct from the implementation phase lifecycle (Spec Review → ATDD → Implement → Code Review → Flywheel) tracked in the session journal. The two are complementary:
 - `development_status` in sprint-status.yaml: where the story is in the sprint cycle
 - Session journal `active_stories` + `phase`: what is being actively worked on in each concurrent session
@@ -1147,3 +1158,122 @@ Every `momentum-dev` session runs in its own git worktree from the start — eve
 **Concurrency limitation (single-developer):** Two sessions started within ~30 seconds of each other may both read the same story as `ready` before either writes `in_progress`. Mitigation: start sessions with a brief (~30s) offset. A lock file (`.worktrees/story-{story_id}.lock`) provides additional protection and should be checked before status write.
 
 **Ready for:** Epic and story creation.
+
+---
+
+## Epic Orchestration Architecture
+
+> _Added 2026-03-26: Epic orchestration model — lifecycle, DAG execution, agent pool governance, momentum-dev-auto, dag-executor integration option, and retro→triage handoff._
+
+The epic is the primary unit of planned work. The lifecycle is:
+
+```
+triage (mutable) → /create-epic (lock + parallel story creation + AVFL)
+  → /develop-epic (tier-sequential DAG execution)
+  → retro (structured handoff)
+  → triage (next cycle)
+```
+
+**Epic immutability rule:** Once `/create-epic` is called, the epic is locked. No patching in-place. Recovery path: close epic (set status `done-incomplete`), re-triage incomplete stories via triage-inbox.md.
+
+### DAG Topology
+
+The DAG topology is derived from the `depends_on` fields in `momentum_metadata` in `sprint-status.yaml`. A topological sort gives execution tiers. All stories with satisfied dependencies run in parallel within a tier.
+
+**Tier-sequential execution (MVP model):**
+1. Dispatch tier-0 wave — all stories with no unsatisfied dependencies
+2. Wait for all stories + AVFL to complete
+3. Orchestrator handles merge gate (never background agents)
+4. Advance to tier-1 with updated dependency state
+
+Rolling pool dispatch (advance individual stories as their specific deps complete) is architecturally feasible via background Agent + notification model but is deferred as a follow-on enhancement. See the rolling pool feasibility note in Decision 4c.
+
+---
+
+### Agent Pool Governance
+
+**Pool cap:** Configurable, default 12 concurrent agents. Applied at tier dispatch time — not as a rolling window.
+
+**AVFL embedding:** Within a tier, each story's AVFL runs within that story's agent execution context before the story emits its completion signal. AVFL is not a separate phase — it is embedded in the story agent.
+
+**Merge gate:** Always handled by the orchestrator after a tier completes. Background story agents never execute `git merge`.
+
+**Pre-flight checks before `/develop-epic`:**
+1. Topological sort validity
+2. Cycle detection
+3. Key normalization — handle dot vs. dash notation in `depends_on` fields
+4. Dangling reference detection — every `depends_on` key must exist in `development_status`
+5. Intra-tier file-overlap warning — check `touches` fields for stories in the same tier; warn on overlap (not a blocker)
+6. Story file existence — `momentum_metadata[key].story_file` must exist on disk
+7. Correct story status — all stories in the first tier must be `ready-for-dev`
+
+---
+
+### momentum-dev-auto — Background-Safe Story Implementation
+
+`momentum-dev-auto` is a stripped-down variant of `momentum-dev` with all ask gates removed. It is a prerequisite for `/develop-epic` background agent execution.
+
+**Behavioral constraints:**
+
+1. **No ask gates** — all decisions are either deterministic or produce structured failure output. The skill never pauses to ask for human input.
+2. **Merge deferred to orchestrator** — the agent never executes `git merge`. It signals "ready to merge" in its completion output.
+3. **AVFL GATE_FAILED = clean structured failure:**
+   ```json
+   { "status": "failed", "story_key": "<key>", "findings": [...] }
+   ```
+   Never silent drift.
+4. **AVFL CHECKPOINT_WARNING** — record in completion output and continue. Does not halt execution.
+5. **Crash recovery:** Automatic — no ask.
+
+**Autonomous or fail principle:** `momentum-dev-auto` must never make assumptions when it lacks information. If it cannot proceed deterministically, it emits a structured failure. A clean failure is better than incorrect autonomous behavior.
+
+**Skill naming:** `momentum-dev-auto` — follows the `momentum-[verb]-[noun]` convention. Deployed as a flat skill (main context, not context:fork) to allow Agent tool usage for AVFL sub-skills.
+
+---
+
+### dag-executor Integration (Optional)
+
+`dag-executor` (by Erich Owens / someclaudeskills.com) is a Claude Code skill that handles wave planning, parallel dispatch, and file-lock coordination. It is a candidate sub-skill for the wave execution layer within `/develop-epic`.
+
+**Integration model:** `/develop-epic` reads `sprint-status.yaml` and builds the resolved task list per tier, then passes it to `dag-executor` for execution within that tier. Momentum retains lifecycle management (merge gate, status updates, AVFL, journal). `dag-executor` is a swappable component — not a deep dependency.
+
+**Tradeoffs:**
+
+| | Assessment |
+|---|---|
+| Pro | Wave scheduling and file-lock coordination are built-in; avoids reimplementing the scheduler |
+| Pro | Tested external component with its own release cadence |
+| Con | Adds to character budget |
+| Con | Third-party release coupling |
+| Con | Requires a translation layer between `sprint-status.yaml` schema and `dag-executor`'s task format |
+
+**Decision criteria:** Adopt if character budget allows and integration is shallow (1 translation layer). Build native if budget is tight or integration complexity grows. This is an implementation-time decision — the architecture does not mandate either path.
+
+---
+
+### Retro → Triage Handoff Format
+
+After each epic, the retro skill writes structured entries to `triage-inbox.md`. The developer reviews before triage runs — retro does not auto-launch triage.
+
+**triage-inbox.md location:** `_bmad-output/implementation-artifacts/triage-inbox.md` (per-project, not global)
+
+**triage-inbox.md is append-only per epic.** Triage reads the full inbox and classifies each item before marking it consumed.
+
+**Entry format per action item:**
+```yaml
+- source: "epic-N-retro"
+  type: "action-item"        # action-item | incomplete-story | blocker-resolution
+  priority: "high"           # high | medium | low
+  description: "..."
+  references:
+    - story_key: "..."
+    - file: "..."
+  proposed_resolution: "..."
+```
+
+**Type vocabulary:**
+- `action-item` — a practice improvement, process fix, or architectural change surfaced by the retro
+- `incomplete-story` — a story that was `closed-incomplete` during the epic; needs re-triage before it can re-enter the backlog
+- `blocker-resolution` — a dependency or external blocker that was worked around; resolution should be tracked
+
+**Triage consumption:** After triage processes an item, it appends a `consumed_at` timestamp and `triage_outcome` field to the entry. The inbox is never truncated — full history is preserved.
