@@ -42,7 +42,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-26
+last_updated: 2026-03-27
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -86,7 +86,7 @@ development_status:
 
   # Epic 2a: Impetus UX Redesign
   epic-2a: in-progress
-  2a-1-silent-pre-flight-and-deferred-stats-write: review
+  2a-1-silent-pre-flight-and-deferred-stats-write: done
   2a-2-epic-progress-bar-at-session-open: ready-for-dev
   2a-3-session-open-menu-redesign: ready-for-dev
   2a-4-hash-drift-plain-language-message: ready-for-dev
@@ -360,3 +360,10 @@ momentum_metadata:
       - "_bmad-output/planning-artifacts/architecture.md"
       - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
     story_file: "_bmad-output/implementation-artifacts/2-10-background-agent-coordination-validated.md"
+  2a-1-silent-pre-flight-and-deferred-stats-write:
+    depends_on:
+      - 2-9-behavioral-persistence-across-sessions
+    touches:
+      - "skills/momentum/workflow.md"
+      - "skills/momentum/evals/"
+    story_file: "_bmad-output/implementation-artifacts/2a-1-silent-pre-flight-and-deferred-stats-write.md"

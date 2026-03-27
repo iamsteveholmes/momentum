@@ -76,6 +76,7 @@ Non-negotiable for every Impetus response:
 - Always return agency explicitly at completion: "That's done — here's what was produced. What's next?"
 - When uncertain, surface the gap: "I don't have the context I need here — should I assume X, or would you rather clarify?"
 - Symbol vocabulary: ✓ completed, → current, ◦ upcoming, ! warning, ✗ failed, ? question — always paired with text
+- Never narrate routing or internal step transitions. GOTO, GOTO step N, "proceeding to step", "checking version", "routing to", "running hash verification", "hash check passed", "all checks passed" — all of these are internal machinery. Speak only at phase boundaries: first-install consent prompt, install action confirmations (✓ target), decline message, session menu, upgrade offer, and hash drift warning.
 
 ### Input Interpretation
 
@@ -341,6 +342,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     <action>Read `.claude/momentum/journal.jsonl` (if it exists). Parse per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`: read all lines, group by thread_id, take last entry per thread_id to get current state. Filter for `status: "open"`.</action>
 
     <!-- Expertise-adaptive orientation (UX-DR20, Story 2.5, Story 2.9) -->
+    <!-- Read momentum_completions BEFORE incrementing — determines this session's orientation mode -->
     <action>Read session_stats.momentum_completions from installed.json (already loaded in Step 1). If absent, treat as 0.</action>
     <check if="session_stats.momentum_completions == 0">
       <action>Deliver full orientation walkthrough with context</action>
@@ -349,9 +351,6 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
       <action>Deliver abbreviated orientation — current state and decision points only</action>
       <action>Optionally ask once: "Full walkthrough or just the decision points?"</action>
     </check>
-
-    <!-- Increment session_stats counter (Story 2.9) -->
-    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
 
     <!-- Configuration gap detection at session start (Story 2.5) -->
     <action>Load `${CLAUDE_SKILL_DIR}/references/configuration-gap-detection.md`</action>
@@ -365,7 +364,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
     <check if="journal.jsonl does not exist OR has zero open threads">
       <action>Skip journal display entirely — no mention of threads or journal</action>
-      <!-- AC3: transition directly to Story 2.1 menu (orientation → numbered menu → user control) -->
+      <!-- AC3: transition directly to session menu (orientation → numbered menu → user control) -->
       <!-- Install/upgrade is NOT in the menu — handled by startup routing (Steps 1, 2, 9) -->
       <output>
 Everything's in place — let's build something.
@@ -381,12 +380,14 @@ Here's what I can help with:
 
 What would you like to work on?
       </output>
+      <!-- Deferred stats write (Story 2a.1): write AFTER menu is displayed, not before — the menu must appear with zero I/O latency from the stats write. -->
+      <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
     </check>
 
     <note>Natural language gate: If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious.</note>
 
     <check if="one or more open threads exist">
-      <action>GOTO step 11 (Session Journal Display)</action>
+      <action>GOTO step 11 (Session Journal Display — deferred stats write runs there after thread display)</action>
     </check>
   </step>
 
@@ -464,10 +465,13 @@ What would you like to work on?
       </check>
     </check>
 
-    <!-- Selection prompt — always the final element of this step -->
+    <!-- Selection prompt — always the final element before the deferred write -->
     <output>
   Continue (1/2/...) or tell me what you need?
     </output>
+
+    <!-- Deferred stats write for thread path (Story 2a.1): write AFTER all displayed content, before Wait — mirrors the no-thread path's deferred write in Step 7. -->
+    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
 
     <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
 
