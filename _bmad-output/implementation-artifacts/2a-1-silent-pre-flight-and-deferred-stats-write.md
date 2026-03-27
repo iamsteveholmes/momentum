@@ -93,7 +93,7 @@ Two behavioral problems introduced or exposed by prior Epic 2 work:
 - Task 2: Step 7 (~line 339) — move session_stats write action
 - Tasks 3, 4: Read-only verification (no changes unless violations found)
 
-No new files created. No schema files modified.
+Three new eval files created: `skills/momentum/evals/eval-silent-pre-flight.md`, `eval-deferred-stats-write.md`, `eval-no-routing-narration.md`. No schema files modified.
 
 ### Testing Requirements
 

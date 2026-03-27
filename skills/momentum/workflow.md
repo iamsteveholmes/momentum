@@ -76,7 +76,7 @@ Non-negotiable for every Impetus response:
 - Always return agency explicitly at completion: "That's done — here's what was produced. What's next?"
 - When uncertain, surface the gap: "I don't have the context I need here — should I assume X, or would you rather clarify?"
 - Symbol vocabulary: ✓ completed, → current, ◦ upcoming, ! warning, ✗ failed, ? question — always paired with text
-- Never narrate routing or internal step transitions. GOTO, GOTO step N, "proceeding to step", "checking version", "routing to" — all of these are internal machinery. Speak only at phase boundaries: first-install consent prompt, hash drift warning, upgrade offer, and session menu.
+- Never narrate routing or internal step transitions. GOTO, GOTO step N, "proceeding to step", "checking version", "routing to" — all of these are internal machinery. Speak only at phase boundaries: first-install consent prompt, install action confirmations (✓ target), decline message, session menu, upgrade offer, and hash drift warning.
 
 ### Input Interpretation
 
@@ -380,15 +380,14 @@ Here's what I can help with:
 
 What would you like to work on?
       </output>
+      <!-- Deferred stats write (Story 2a.1): write AFTER menu is displayed, not before — the menu must appear with zero I/O latency from the stats write. -->
+      <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
     </check>
-
-    <!-- Deferred stats write (Story 2a.1): write AFTER menu is displayed, not before — the menu must appear with zero I/O latency from the stats write. -->
-    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
 
     <note>Natural language gate: If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious.</note>
 
     <check if="one or more open threads exist">
-      <action>GOTO step 11 (Session Journal Display)</action>
+      <action>GOTO step 11 (Session Journal Display — deferred stats write runs there after thread display)</action>
     </check>
   </step>
 
@@ -465,6 +464,9 @@ What would you like to work on?
         <note>Triage offer was previously declined and context has not changed. Suppress.</note>
       </check>
     </check>
+
+    <!-- Deferred stats write for thread path (Story 2a.1): write AFTER thread display, not before — mirrors the no-thread path's deferred write in Step 7. -->
+    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
 
     <!-- Selection prompt — always the final element of this step -->
     <output>
