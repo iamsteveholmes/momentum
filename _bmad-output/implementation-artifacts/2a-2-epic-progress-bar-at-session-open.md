@@ -1,6 +1,7 @@
 # Story 2a.2: Epic Progress Bar at Session Open
 
-Status: in-progress
+Status: review
+
 
 ## Story
 
@@ -22,30 +23,30 @@ so that I always know where I am and what's worth doing next without having to a
 
 ### Task 1: Add epic progress bar rendering logic to Step 7 (AC: #1, #2, #4) — skill-instruction
 
-- [ ] 1.1: In `skills/momentum/workflow.md` Step 7, before the expertise-adaptive orientation check, add a new action block: "Read `_bmad-output/implementation-artifacts/sprint-status.yaml` (project-relative path). If the file does not exist or cannot be read, skip all rendering — silent degradation, no output."
-- [ ] 1.2: Add parsing logic: from the `development_status` section, extract all epic entries (keys matching `epic-*` or `epic-N*` pattern). For each epic entry, capture: epic key, status (`done` / `in-progress` / `backlog`). Also for in-progress epics, count how many story entries (keys matching `N-N-*` pattern for that epic number) have status `in-progress` or `ready-for-dev`.
-- [ ] 1.3: Add rendering logic for the verbose bar (used when `momentum_completions < 3`):
+- [x] 1.1: In `skills/momentum/workflow.md` Step 7, before the expertise-adaptive orientation check, add a new action block: "Read `_bmad-output/implementation-artifacts/sprint-status.yaml` (project-relative path). If the file does not exist or cannot be read, skip all rendering — silent degradation, no output."
+- [x] 1.2: Add parsing logic: from the `development_status` section, extract all epic entries (keys matching `epic-*` or `epic-N*` pattern). For each epic entry, capture: epic key, status (`done` / `in-progress` / `backlog`). Also for in-progress epics, count how many story entries (keys matching `N-N-*` pattern for that epic number) have status `in-progress` or `ready-for-dev`.
+- [x] 1.3: Add rendering logic for the verbose bar (used when `momentum_completions < 3`):
   - For each `done` epic (most recent first): `  ✓  {{epic-label}}`
   - For each `in-progress` epic: `  →  {{epic-label}}   {{N}} stories active`
   - For the first `backlog` epic: `  ◦  {{epic-label}}`
   - Epic label = epic key with dashes replaced by spaces, title-cased (e.g., `epic-2a` → `Epic 2a`)
   - Render all done epics, all in-progress epics, and one backlog epic. No ellipsis or counts.
-- [ ] 1.4: Add a blank line after the bar, before the rest of Step 7 output (journal display or menu).
-- [ ] 1.5: Verify no narration precedes the bar — it must be the first visible output. No "Reading sprint status…" or "Here's your progress:" preamble.
+- [x] 1.4: Add a blank line after the bar, before the rest of Step 7 output (journal display or menu).
+- [x] 1.5: Verify no narration precedes the bar — it must be the first visible output. No "Reading sprint status…" or "Here's your progress:" preamble.
 
 ### Task 2: Add compressed bar variant for experienced users (AC: #3) — skill-instruction
 
-- [ ] 2.1: Add a `<check if="session_stats.momentum_completions >= 3">` block wrapping the bar rendering. When true, render the compressed single-line variant:
+- [x] 2.1: Add a `<check if="session_stats.momentum_completions >= 3">` block wrapping the bar rendering. When true, render the compressed single-line variant:
   - `  ✓ {{done_count}} done  ·  → {{in-progress_epic_labels}}  ·  ◦ next: {{first_backlog_epic_label}}`
   - Example: `  ✓ 2 done  ·  → Epic 2a, Epic 3  ·  ◦ next: Epic 4`
   - No logo, no preamble, no blank line before it
-- [ ] 2.2: When false (first-time / early user, `momentum_completions < 3`), use the verbose multi-line bar from Task 1.
-- [ ] 2.3: In both cases, after the bar, continue to the existing Step 7 logic (expertise-adaptive orientation, journal read, menu display). The bar is purely additive — it does not replace existing Step 7 logic.
+- [x] 2.2: When false (first-time / early user, `momentum_completions < 3`), use the verbose multi-line bar from Task 1.
+- [x] 2.3: In both cases, after the bar, continue to the existing Step 7 logic (expertise-adaptive orientation, journal read, menu display). The bar is purely additive — it does not replace existing Step 7 logic.
 
 ### Task 3: Handle `done-incomplete` epics in bar rendering (AC: #1) — skill-instruction
 
-- [ ] 3.1: Epic status `done-incomplete` (force-closed epics) should render the same as `done` in the bar — `✓` prefix. These epics are complete from an accounting perspective even if not all stories finished.
-- [ ] 3.2: Epic status entries that are not one of `done`, `done-incomplete`, `in-progress`, or `backlog` should be treated as `backlog` for rendering purposes (forward-compatible default).
+- [x] 3.1: Epic status `done-incomplete` (force-closed epics) should render the same as `done` in the bar — `✓` prefix. These epics are complete from an accounting perspective even if not all stories finished.
+- [x] 3.2: Epic status entries that are not one of `done`, `done-incomplete`, `in-progress`, or `backlog` should be treated as `backlog` for rendering purposes (forward-compatible default).
 
 ## Dev Notes
 
@@ -230,9 +231,28 @@ Before implementing, read the actual current state of workflow.md Step 7 (line 3
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
 
 ### Debug Log References
+None — implementation was straightforward. Insertion point confirmed at line 343 (before expertise-adaptive orientation comment).
 
 ### Completion Notes List
+- Inserted epic progress bar block in Step 7 immediately before the expertise-adaptive orientation comment (line 344 post-insertion)
+- Verbose multi-line bar (momentum_completions < 3): ✓ done epics, → in-progress epics with story count, ◦ first backlog epic
+- Compressed single-line bar (momentum_completions >= 3): `✓ N done · → labels · ◦ next: label`
+- done-incomplete treated same as done (✓ prefix)
+- Unknown statuses treated as backlog (forward-compatible)
+- Graceful degradation: sprint-status.yaml read failure → zero output, no error
+- No narration precedes bar — bar is first visible output
+- After bar, Step 7 continues unchanged: orientation, gap detection, journal/menu dispatch
+- 3 evals written and all passed (EDD cycle complete)
+- workflow.md final line count: 791 (within budget, no extraction needed)
+- SKILL.md description: 131 characters (≤150 ✓), model: and effort: present ✓
+- avfl_result: pending (momentum-dev runs AVFL after bmad-dev-story)
 
 ### File List
+- skills/momentum/workflow.md (modified — Step 7 progress bar block added)
+- skills/momentum/evals/eval-progress-bar-basic.md (created)
+- skills/momentum/evals/eval-progress-bar-compressed.md (created)
+- skills/momentum/evals/eval-progress-bar-graceful-degradation.md (created)
+- _bmad-output/implementation-artifacts/2a-2-epic-progress-bar-at-session-open.md (updated — tasks, dev record, status)
