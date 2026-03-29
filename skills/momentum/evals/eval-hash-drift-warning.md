@@ -9,18 +9,16 @@ Given all component groups are at `current_version` in both state files, but `~/
 3. Compare computed hash against `global-installed.json.components.rules.hash`
 4. Detect mismatch — surface warning:
    ```
-   ! Rules modified since Momentum installed them.
-     rules files have been changed (hash mismatch).
+   ! Your quality rules were edited after Momentum set them up.
 
-   Re-apply from the Momentum package, or keep your edits?
-   [R] Re-apply · [K] Keep modified
+   [R] Restore the originals · [K] Keep your edits
    ```
 5. On [R]: re-execute the `add`/`replace` actions for the rules group, recompute hash, update `global-installed.json`
 6. On [K]: proceed to session orientation without modifying the rule file or the stored hash
 
 ## Expected Behavior
 
-Hash drift is detected BEFORE session orientation. The warning clearly identifies which component group changed. The developer chooses to keep or re-apply. On [R], the file is overwritten with the bundled version and `global-installed.json` hash is updated. On [K], nothing is changed and the warning will appear again next session.
+Hash drift is detected BEFORE session orientation. The warning uses plain language — no internal terms like "hash drift", "component group", "hash mismatch", or variable names. The developer chooses to restore originals or keep edits. On [R], the file is overwritten with the bundled version and `global-installed.json` hash is updated. On [K], nothing is changed and the warning will appear again next session.
 
 ## NOT Expected
 
