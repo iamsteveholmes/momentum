@@ -353,19 +353,21 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
       </check>
       <check if="session_stats.momentum_completions < 3">
         <!-- Verbose multi-line bar for first-time / early users (AC #1, #2) -->
-        <action>For each done/done-incomplete epic (most recent first): output `  ✓  {{epic-label}}`</action>
-        <action>For each in-progress epic: output `  →  {{epic-label}}   {{N}} stories active`</action>
-        <action>For the first backlog epic only: output `  ◦  {{epic-label}}`</action>
-        <action>Epic label = epic key with dashes replaced by spaces, title-cased (e.g., `epic-2a` → `Epic 2a`, `epic-1` → `Epic 1`)</action>
+        <action>Compute epic label for each epic: epic key with dashes replaced by spaces, title-cased (e.g., `epic-2a` → `Epic 2a`, `epic-1` → `Epic 1`). Build {{done_lines}}, {{in_progress_lines}}, {{first_backlog_line}} from the parsed epic entries:
+          - For each done/done-incomplete epic (most recent first): `  ✓  {{epic-label}}`
+          - For each in-progress epic: `  →  {{epic-label}}   {{N}} stories active`
+          - For the first backlog epic only: `  ◦  {{epic-label}}`</action>
         <output>
-[epic progress bar lines as computed above]
+{{done_lines}}
+{{in_progress_lines}}
+{{first_backlog_line}}
 
         </output>
       </check>
     </check>
 
     <!-- Expertise-adaptive orientation (UX-DR20, Story 2.5, Story 2.9) -->
-    <!-- Read momentum_completions BEFORE incrementing — determines this session's orientation mode -->
+    <!-- momentum_completions already available from Step 1; read BEFORE incrementing — determines bar variant and orientation mode -->
     <action>Read session_stats.momentum_completions from installed.json (already loaded in Step 1). If absent, treat as 0.</action>
     <check if="session_stats.momentum_completions == 0">
       <action>Deliver full orientation walkthrough with context</action>
@@ -387,7 +389,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
     <check if="journal.jsonl does not exist OR has zero open threads">
       <action>Skip journal display entirely — no mention of threads or journal</action>
-      <!-- AC3: transition directly to session menu (orientation → numbered menu → user control) -->
+      <!-- AC3: transition directly to session menu (orientation → slash-command menu → user control) -->
       <!-- Install/upgrade is NOT in the menu — handled by startup routing (Steps 1, 2, 9) -->
       <output>
 Everything's in place — let's build something.
@@ -400,15 +402,16 @@ What would you like to work on?
       <note>Number aliases: 1 = /create, 2 = /develop. Both forms dispatch identically.</note>
       <!-- Deferred stats write (Story 2a.1): write AFTER menu is displayed, not before — the menu must appear with zero I/O latency from the stats write. -->
       <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
-    </check>
+      <action>Wait for developer input.</action>
 
-    <note>Natural language gate: If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious.</note>
+      <note>Natural language gate: If developer input is natural language (not a menu number or slash command), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious.</note>
 
-    <check if="developer selects /create or 1">
-      <action>Dispatch to momentum-create-story workflow</action>
-    </check>
-    <check if="developer selects /develop or 2">
-      <action>Dispatch to momentum-dev workflow</action>
+      <check if="developer selects /create or 1">
+        <action>Dispatch to momentum-create-story workflow</action>
+      </check>
+      <check if="developer selects /develop or 2">
+        <action>Dispatch to momentum-dev workflow</action>
+      </check>
     </check>
 
     <check if="one or more open threads exist">

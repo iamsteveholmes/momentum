@@ -18,7 +18,7 @@ so that I'm not presented with diagnostic tools or auto-triggered workflows as i
 
 ### Task 1: Replace 6-item menu with 2-item menu in Step 7 (AC: #1, #2, #3) — skill-instruction
 
-- [ ] 1.1: In `skills/momentum/workflow.md`, locate the Step 7 `<check if="journal.jsonl does not exist OR has zero open threads">` block (currently lines 366–384). Replace the 6-item `<output>` block with the 2-item menu:
+- [x] 1.1: In `skills/momentum/workflow.md`, locate the Step 7 `<check if="journal.jsonl does not exist OR has zero open threads">` block (currently lines 366–384). Replace the 6-item `<output>` block with the 2-item menu:
   ```
   Everything's in place — let's build something.
 
@@ -29,15 +29,15 @@ so that I'm not presented with diagnostic tools or auto-triggered workflows as i
   ```
   The new `<output>` block must render the menu with `/create` and `/develop` as the primary affordances. Number aliases (`1` for `/create`, `2` for `/develop`) must work equivalently — add a `<note>` immediately after the output: "Number aliases: 1 = /create, 2 = /develop. Both forms dispatch identically."
 
-- [ ] 1.2: Remove the existing items 3–6 (Review a plan, Run quality validation, Audit spec provenance, Show session threads) entirely from the Step 7 menu block. These workflows are not removed from the system — they remain accessible via natural language input, which the Input Interpretation gate handles. The primary menu no longer advertises them.
+- [x] 1.2: Remove the existing items 3–6 (Review a plan, Run quality validation, Audit spec provenance, Show session threads) entirely from the Step 7 menu block. These workflows are not removed from the system — they remain accessible via natural language input, which the Input Interpretation gate handles. The primary menu no longer advertises them.
 
-- [ ] 1.3: Verify the `<note>` for the natural language gate (currently line 386) remains intact and unchanged after the output block: "Natural language gate: If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious." This gate is the fallback for items 3–6 and any other requests.
+- [x] 1.3: Verify the `<note>` for the natural language gate (currently line 386) remains intact and unchanged after the output block: "Natural language gate: If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious." This gate is the fallback for items 3–6 and any other requests.
 
-- [ ] 1.4: Verify the `<check if="one or more open threads exist">` block (currently line 388–390) remains intact immediately after the natural language gate note. Thread display (GOTO step 11) is unchanged.
+- [x] 1.4: Verify the `<check if="one or more open threads exist">` block (currently line 388–390) remains intact immediately after the natural language gate note. Thread display (GOTO step 11) is unchanged.
 
 ### Task 2: Add dispatch actions for `/create` and `/develop` in Step 7 (AC: #2) — skill-instruction
 
-- [ ] 2.1: After the 2-item menu `<output>` block in Step 7 (after the natural language gate note and before the thread check), add two `<check>` blocks for explicit dispatch:
+- [x] 2.1: After the 2-item menu `<output>` block in Step 7 (after the natural language gate note and before the thread check), add two `<check>` blocks for explicit dispatch:
   ```xml
   <check if="developer selects /create or 1">
     <action>Dispatch to momentum-create-story workflow</action>
@@ -48,7 +48,7 @@ so that I'm not presented with diagnostic tools or auto-triggered workflows as i
   ```
   These dispatch checks mirror the pattern used in Step 11 thread selection (lines 477+). The natural language gate note must appear before these checks (it already does from Task 1.3).
 
-- [ ] 2.2: Confirm that the existing dispatch pattern for thread selection in Step 11 is unchanged — the new menu dispatch checks in Step 7 are additive and do not touch Step 11 logic.
+- [x] 2.2: Confirm that the existing dispatch pattern for thread selection in Step 11 is unchanged — the new menu dispatch checks in Step 7 are additive and do not touch Step 11 logic.
 
 ## Dev Notes
 
