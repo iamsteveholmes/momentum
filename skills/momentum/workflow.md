@@ -636,11 +636,9 @@ Where: restart_notice = "! Restart Claude Code after applying." if any action ha
 
     <check if="computed hash != stored hash">
       <output>
-  ! Rules modified since Momentum installed them.
-    {{group}} files have been changed (hash mismatch).
+  ! Your quality rules were edited after Momentum set them up.
 
-  Re-apply from the Momentum package, or keep your edits?
-  [R] Re-apply · [K] Keep modified
+  [R] Restore the originals · [K] Keep your edits
       </output>
       <ask>[R] or [K]?</ask>
 
