@@ -1,6 +1,7 @@
 # Story 2a.4: Hash Drift Plain-Language Message
 
-Status: in-progress
+Status: review
+
 
 ## Story
 
@@ -101,8 +102,26 @@ Per `docs/process/acceptance-testing-standard.md`: verify AC via manual inspecti
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — single targeted change, no debug issues.
 
 ### Completion Notes List
 
+- Replaced the user-facing `<output>` block in Step 10 of `skills/momentum/workflow.md` with the AC-mandated plain-language message.
+- Verified forbidden terms (`hash drift`, `component group`, `stored hash`, `hash mismatch`, `{{group}}`, `Re-apply`, `Keep modified`, `Rules modified`) do not appear in any user-facing `<output>` block.
+- `<ask>` prompt and all `<check>` response-handling logic preserved unchanged.
+- Updated `skills/momentum/evals/eval-hash-drift-warning.md` to reflect the new message text and plain-language expected behavior.
+- Verification method: manual inspection of the modified `<output>` block against AC criteria (per acceptance-testing-standard.md).
+  - ✓ `! Your quality rules were edited after Momentum set them up.` appears verbatim
+  - ✓ `[R] Restore the originals · [K] Keep your edits` appears verbatim
+  - ✓ No forbidden terms in the output block
+- AVFL: DEFERRED — runs after all three parallel stories (2a-2, 2a-3, 2a-4) are merged.
+
 ### File List
+
+- `skills/momentum/workflow.md` — modified Step 10 `<output>` block with plain-language message
+- `skills/momentum/evals/eval-hash-drift-warning.md` — updated expected message text to match new AC-mandated copy
+- `_bmad-output/implementation-artifacts/2a-4-hash-drift-plain-language-message.md` — story file (this file)
