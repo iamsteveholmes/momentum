@@ -1,0 +1,1 @@
+/Users/steve/projects/game-prep/_bmad/nornspun/docs/research/technical-narrator-character-framing-consolidated-2026-03-28.md
