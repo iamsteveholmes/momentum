@@ -1,6 +1,6 @@
 # Story 2a.4: Hash Drift Plain-Language Message
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 
@@ -18,11 +18,11 @@ so that I don't need to know what "hash drift" or "component groups" mean.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Replace the hash drift warning message in `skills/momentum/workflow.md` Step 10 (AC: 1)
-  - [ ] 1.1: Locate Step 10 in workflow.md — the `<step n="10" goal="Hash drift detection...">` block
-  - [ ] 1.2: Replace the current `<output>` block with the exact AC-mandated message: `! Your quality rules were edited after Momentum set them up.` followed by `[R] Restore the originals · [K] Keep your edits`
-  - [ ] 1.3: Remove all references to internal terms: "hash mismatch", "{{group}} files", "component group", step numbers from the user-facing output
-  - [ ] 1.4: Preserve the existing `<ask>` and response handling logic — only the output text changes
+- [x] Task 1: Replace the hash drift warning message in `skills/momentum/workflow.md` Step 10 (AC: 1)
+  - [x] 1.1: Locate Step 10 in workflow.md — the `<step n="10" goal="Hash drift detection...">` block
+  - [x] 1.2: Replace the current `<output>` block with the exact AC-mandated message: `! Your quality rules were edited after Momentum set them up.` followed by `[R] Restore the originals · [K] Keep your edits`
+  - [x] 1.3: Remove all references to internal terms: "hash mismatch", "{{group}} files", "component group", step numbers from the user-facing output
+  - [x] 1.4: Preserve the existing `<ask>` and response handling logic — only the output text changes
 
 ## Dev Notes
 

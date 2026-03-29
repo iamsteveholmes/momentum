@@ -1,6 +1,6 @@
 # Story 2a.3: Session-Open Menu Redesign
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 

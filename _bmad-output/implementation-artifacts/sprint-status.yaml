@@ -42,7 +42,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-27
+last_updated: 2026-03-29
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -87,9 +87,9 @@ development_status:
   # Epic 2a: Impetus UX Redesign
   epic-2a: in-progress
   2a-1-silent-pre-flight-and-deferred-stats-write: done
-  2a-2-epic-progress-bar-at-session-open: ready-for-dev
-  2a-3-session-open-menu-redesign: ready-for-dev
-  2a-4-hash-drift-plain-language-message: ready-for-dev
+  2a-2-epic-progress-bar-at-session-open: review
+  2a-3-session-open-menu-redesign: in-progress
+  2a-4-hash-drift-plain-language-message: in-progress
   epic-2a-retrospective: optional
 
   # Epic 2b: Impetus as Epic Orchestrator
