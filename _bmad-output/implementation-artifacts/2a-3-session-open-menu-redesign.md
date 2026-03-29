@@ -1,6 +1,6 @@
 # Story 2a.3: Session-Open Menu Redesign
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -198,6 +198,25 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None — clean implementation with no errors.
+
 ### Completion Notes List
 
+- EDD applied: 4 evals written before implementation (eval-2item-menu-returning-user-no-threads.md, eval-2item-menu-returning-user-open-threads.md, eval-2item-menu-first-time-user-orientation-unaffected.md, eval-2item-menu-natural-language-fallback.md)
+- Baseline confirmed failing: current 6-item menu fails the 2-item menu eval
+- Implementation: replaced `<output>` block lines 369-382 in skills/momentum/workflow.md Step 7 with 2-item /create /develop menu
+- Added `<note>` for number aliases (1=/create, 2=/develop) immediately after output block
+- Natural language gate note (line 382) verified intact and unchanged
+- Thread GOTO check (`<check if="one or more open threads exist">`) verified intact and unchanged
+- Added two explicit dispatch `<check>` blocks for `/create or 1` and `/develop or 2` after the NL gate note
+- Step 11 thread selection dispatch (line 482) verified unchanged
+- All 4 evals pass post-implementation
+- AVFL: DEFERRED — parallel session orchestrator will run AVFL after all Epic 2a stories merge
+
 ### File List
+
+- `skills/momentum/workflow.md` — Modified: Step 7 menu output block replaced (6-item → 2-item), dispatch checks added
+- `skills/momentum/evals/eval-2item-menu-returning-user-no-threads.md` — Created: EDD eval 1
+- `skills/momentum/evals/eval-2item-menu-returning-user-open-threads.md` — Created: EDD eval 2
+- `skills/momentum/evals/eval-2item-menu-first-time-user-orientation-unaffected.md` — Created: EDD eval 3
+- `skills/momentum/evals/eval-2item-menu-natural-language-fallback.md` — Created: EDD eval 4

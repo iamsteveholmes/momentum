@@ -88,8 +88,8 @@ development_status:
   epic-2a: in-progress
   2a-1-silent-pre-flight-and-deferred-stats-write: done
   2a-2-epic-progress-bar-at-session-open: review
-  2a-3-session-open-menu-redesign: in-progress
-  2a-4-hash-drift-plain-language-message: in-progress
+  2a-3-session-open-menu-redesign: done
+  2a-4-hash-drift-plain-language-message: done
   epic-2a-retrospective: optional
 
   # Epic 2b: Impetus as Epic Orchestrator
