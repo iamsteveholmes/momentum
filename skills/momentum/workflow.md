@@ -392,22 +392,24 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
       <output>
 Everything's in place — let's build something.
 
-Here's what I can help with:
-
-  1. Create a story
-  2. Develop a story
-  3. Review a plan
-  4. Run quality validation
-  5. Audit spec provenance
-  6. Show session threads
+  /create   Write a story
+  /develop  Build the next story
 
 What would you like to work on?
       </output>
+      <note>Number aliases: 1 = /create, 2 = /develop. Both forms dispatch identically.</note>
       <!-- Deferred stats write (Story 2a.1): write AFTER menu is displayed, not before — the menu must appear with zero I/O latency from the stats write. -->
       <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
     </check>
 
     <note>Natural language gate: If developer input is natural language (not a menu number), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious.</note>
+
+    <check if="developer selects /create or 1">
+      <action>Dispatch to momentum-create-story workflow</action>
+    </check>
+    <check if="developer selects /develop or 2">
+      <action>Dispatch to momentum-dev workflow</action>
+    </check>
 
     <check if="one or more open threads exist">
       <action>GOTO step 11 (Session Journal Display — deferred stats write runs there after thread display)</action>
