@@ -1,6 +1,6 @@
 # Story 2a.2: Epic Progress Bar at Session Open
 
-Status: review
+Status: done
 
 
 ## Story

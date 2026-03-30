@@ -1,6 +1,8 @@
 {
   "installed_at": "2026-03-22T07:03:27Z",
   "components": {
-    "hooks": { "version": "1.0.0" }
+    "hooks": {
+      "version": "1.0.0"
+    }
   }
 }

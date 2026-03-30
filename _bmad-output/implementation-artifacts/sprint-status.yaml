@@ -85,9 +85,9 @@ development_status:
   epic-2-refinement-retrospective: optional
 
   # Epic 2a: Impetus UX Redesign
-  epic-2a: in-progress
+  epic-2a: done
   2a-1-silent-pre-flight-and-deferred-stats-write: done
-  2a-2-epic-progress-bar-at-session-open: review
+  2a-2-epic-progress-bar-at-session-open: done
   2a-3-session-open-menu-redesign: done
   2a-4-hash-drift-plain-language-message: done
   epic-2a-retrospective: optional
