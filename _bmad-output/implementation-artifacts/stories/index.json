@@ -31,7 +31,7 @@
     ]
   },
   "sprint-manager-skill": {
-    "status": "ready-for-dev",
+    "status": "dropped",
     "title": "Sprint Manager Skill",
     "epic_slug": "redesign-foundation",
     "story_file": true,
@@ -46,6 +46,45 @@
       ".claude/skills/bmad-create-story/workflow.md",
       ".claude/skills/bmad-sprint-planning/workflow.md",
       ".claude/skills/bmad-dev-story/workflow.md"
+    ]
+  },
+  "momentum-tooling": {
+    "status": "ready-for-dev",
+    "title": "Momentum Tooling — Python CLI for Deterministic Operations",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [
+      "sprint-status-schema-redesign"
+    ],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "skills/momentum/scripts/update-story-status.sh",
+      "skills/momentum-sprint-manager/",
+      "skills/momentum-dev/workflow.md",
+      "skills/momentum-create-story/workflow.md"
+    ]
+  },
+  "impetus-identity-redesign": {
+    "status": "ready-for-dev",
+    "title": "Impetus Identity Redesign — BMAD-Informed Character",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/workflow.md"
+    ]
+  },
+  "session-open-sprint-view": {
+    "status": "ready-for-dev",
+    "title": "Session-Open Sprint View — Mode Detection and Fill Bars",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [
+      "momentum-tooling"
+    ],
+    "touches": [
+      "skills/momentum/workflow.md"
     ]
   },
   "repository-structure-established": {
