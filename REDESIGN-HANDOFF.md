@@ -46,6 +46,8 @@ skills/momentum-sprint-manager/
 - **Sub-commands are workflow modules** Impetus loads — not separate agents. `/momentum:sprint-dev` and `/momentum` both result in Impetus orchestrating.
 - **Executor subagents** spawned by Impetus from within workflows. Each has exclusive write authority over designated files. All first-level — no nesting.
 - **Reads are free; writes are exclusive.** Subagents write output to files (durable, auditable).
+- **Tools over agents for deterministic ops.** State machine validation, JSON mutations, JSONL appends, hash checks → Python CLI tool. LLM reasoning → agent.
+- **Task tracking for structural state.** All multi-step workflows use TaskCreate/TaskUpdate/TaskList as the primary position/progress mechanism. Task state survives context compression — prevents drift in long sessions. Tasks = "where am I"; journal = "what happened and why."
 - **`allowed-tools` restriction** on Impetus activated in Phase 4 (after all sub-commands exist).
 
 ## What's Next (Phase 2 — Impetus Core)
