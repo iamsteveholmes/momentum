@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# DEPRECATED: Use momentum-sprint-manager skill instead. This script will be removed in a future version.
+# All story status transitions should go through the momentum-sprint-manager executor subagent
+# via Agent tool dispatch with Action: status_transition.
+#
 # update-story-status.sh — Centralized dual-file story status updater
 # Updates both sprint-status.yaml (development_status) and story file status field.
 # Handles both YAML frontmatter (process stories: `status: <value>`) and
