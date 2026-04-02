@@ -1,6 +1,6 @@
 # Story 0.2: Sprint-Status Decomposition
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 

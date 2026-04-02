@@ -341,11 +341,11 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     <action>Load `${CLAUDE_SKILL_DIR}/references/practice-overview.md` for context</action>
     <action>Read `.claude/momentum/journal.jsonl` (if it exists). Parse per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`: read all lines, group by thread_id, take last entry per thread_id to get current state. Filter for `status: "open"`.</action>
 
-    <!-- Epic progress bar (Story 2a.2): render sprint state before all other Step 7 output -->
-    <action>Attempt to read `_bmad-output/implementation-artifacts/sprint-status.yaml` (project-relative path, not CLAUDE_SKILL_DIR-relative). If the file does not exist or cannot be read, skip all bar rendering — silent degradation, zero output, no error surfaced.</action>
-    <check if="sprint-status.yaml was read successfully">
-      <action>Parse the `development_status` section. Extract all epic entries: keys matching `epic-*` pattern (e.g., `epic-1`, `epic-2a`, `epic-3`). For each, capture its status. Statuses `done` and `done-incomplete` both render as done. Any status not in `done`, `done-incomplete`, `in-progress`, `backlog` is treated as `backlog`.</action>
-      <action>For each in-progress epic, count story entries in `development_status` that belong to that epic (keys matching the epic's number/label prefix pattern, excluding the epic key itself and retrospective keys) with status `in-progress` or `ready-for-dev`. This is the active story count.</action>
+    <!-- Epic progress bar (Story 2a.2): render sprint state from stories/index.json -->
+    <action>Attempt to read `_bmad-output/implementation-artifacts/stories/index.json` (project-relative path, not CLAUDE_SKILL_DIR-relative). If the file does not exist or cannot be read, fall back to `_bmad-output/implementation-artifacts/sprint-status.yaml`. If neither exists, skip all bar rendering — silent degradation, zero output, no error surfaced.</action>
+    <check if="stories/index.json was read successfully">
+      <action>Parse all story entries. Group stories by `epic_slug`. For each unique epic_slug, determine epic status: if all stories in the epic are `done` → epic is done; if any story is `in-progress`, `review`, or `ready-for-dev` → epic is in-progress; otherwise → epic is backlog. Statuses `done` and `done-incomplete` both render as done.</action>
+      <action>For each in-progress epic, count stories with status `in-progress` or `ready-for-dev`. This is the active story count.</action>
       <check if="session_stats.momentum_completions >= 3">
         <!-- Compressed single-line bar for experienced users (AC #3) -->
         <action>Count all done/done-incomplete epics as {{done_count}}. List in-progress epic labels (epic key with dashes→spaces, title-cased; e.g., `epic-2a` → `Epic 2a`) as {{in_progress_labels}}. Take the first backlog epic label as {{first_backlog_label}}.</action>

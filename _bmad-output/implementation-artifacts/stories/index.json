@@ -1,0 +1,690 @@
+{
+  "story-id-migration": {
+    "status": "done",
+    "title": "Story Id Migration",
+    "epic_slug": "redesign-foundation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "_bmad-output/implementation-artifacts/sprint-status.yaml",
+      "_bmad-output/implementation-artifacts/*.md"
+    ]
+  },
+  "sprint-status-schema-redesign": {
+    "status": "ready-for-dev",
+    "title": "Sprint Status Schema Redesign",
+    "epic_slug": "redesign-foundation",
+    "story_file": true,
+    "depends_on": [
+      "story-id-migration"
+    ],
+    "touches": [
+      "_bmad-output/implementation-artifacts/sprint-status.yaml",
+      "skills/momentum/references/sprint-status-schema.md",
+      "skills/momentum-create-story/workflow.md",
+      "skills/momentum/workflow.md",
+      "skills/momentum-dev/workflow.md",
+      "skills/momentum-plan-audit/workflow.md",
+      ".claude/skills/bmad-create-story/workflow.md",
+      ".claude/skills/bmad-sprint-status/workflow.md",
+      ".claude/skills/bmad-sprint-planning/workflow.md"
+    ]
+  },
+  "sprint-manager-skill": {
+    "status": "ready-for-dev",
+    "title": "Sprint Manager Skill",
+    "epic_slug": "redesign-foundation",
+    "story_file": true,
+    "depends_on": [
+      "sprint-status-schema-redesign"
+    ],
+    "touches": [
+      "skills/momentum-sprint-manager/",
+      "skills/momentum-create-story/workflow.md",
+      "skills/momentum-dev/workflow.md",
+      "skills/momentum/scripts/update-story-status.sh",
+      ".claude/skills/bmad-create-story/workflow.md",
+      ".claude/skills/bmad-sprint-planning/workflow.md",
+      ".claude/skills/bmad-dev-story/workflow.md"
+    ]
+  },
+  "repository-structure-established": {
+    "status": "done",
+    "title": "Repository Structure Established",
+    "epic_slug": "foundation-bootstrap",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/",
+      "version.md",
+      "mcp/findings-server/"
+    ]
+  },
+  "skills-installable-via-npx-skills-add": {
+    "status": "done",
+    "title": "Skills Installable via Npx Skills Add",
+    "epic_slug": "foundation-bootstrap",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "package.json",
+      "skills/momentum-avfl/",
+      "skills/momentum-code-reviewer/",
+      "skills/momentum-architecture-guard/",
+      "skills/momentum-upstream-fix/"
+    ]
+  },
+  "first-momentum-invocation-completes-setup": {
+    "status": "done",
+    "title": "First Momentum Invocation Completes Setup",
+    "epic_slug": "foundation-bootstrap",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/",
+      ".claude/momentum/"
+    ]
+  },
+  "momentum-detects-and-applies-upgrades": {
+    "status": "done",
+    "title": "Momentum Detects and Applies Upgrades",
+    "epic_slug": "foundation-bootstrap",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/"
+    ]
+  },
+  "enforcement-degrades-gracefully-across-tool-tiers": {
+    "status": "done",
+    "title": "Enforcement Degrades Gracefully Across Tool Tiers",
+    "epic_slug": "foundation-bootstrap",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "README.md"
+    ]
+  },
+  "fix-npx-skills-add-experience": {
+    "status": "done",
+    "title": "Fix Npx Skills Add Experience",
+    "epic_slug": "foundation-fixes",
+    "story_file": true,
+    "depends_on": [
+      "acceptance-testing-process-and-standards"
+    ],
+    "touches": [
+      "package.json",
+      "README.md"
+    ]
+  },
+  "acceptance-testing-process-and-standards": {
+    "status": "done",
+    "title": "Acceptance Testing Process and Standards",
+    "epic_slug": "foundation-fixes",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "docs/process/acceptance-testing-standard.md",
+      "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md",
+      "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md",
+      "_bmad-output/implementation-artifacts/visual-progress-tracks-workflow-position.md",
+      "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
+    ]
+  },
+  "orchestrator-purity-principle": {
+    "status": "done",
+    "title": "Orchestrator Purity Principle",
+    "epic_slug": "foundation-fixes",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "_bmad-output/planning-artifacts/architecture.md",
+      "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md",
+      "_bmad-output/planning-artifacts/epics.md"
+    ]
+  },
+  "journal-json-jsonl-migration-evaluation": {
+    "status": "done",
+    "title": "Journal Json Jsonl Migration Evaluation",
+    "epic_slug": "foundation-fixes",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "_bmad-output/planning-artifacts/architecture.md",
+      "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md"
+    ]
+  },
+  "impetus-skill-created-with-correct-persona-and-input-handling": {
+    "status": "done",
+    "title": "Impetus Skill Created with Correct Persona and Input Handling",
+    "epic_slug": "stay-oriented-impetus",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/"
+    ]
+  },
+  "session-orientation-and-thread-management": {
+    "status": "review",
+    "title": "Session Orientation and Thread Management",
+    "epic_slug": "stay-oriented-impetus",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/",
+      ".claude/momentum/"
+    ]
+  },
+  "visual-progress-tracks-workflow-position": {
+    "status": "review",
+    "title": "Visual Progress Tracks Workflow Position",
+    "epic_slug": "stay-oriented-impetus",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/"
+    ]
+  },
+  "completion-signals-and-productive-waiting": {
+    "status": "review",
+    "title": "Completion Signals and Productive Waiting",
+    "epic_slug": "stay-oriented-impetus",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "spec-contextualization-and-configuration-gap-detection": {
+    "status": "review",
+    "title": "Spec Contextualization and Configuration Gap Detection",
+    "epic_slug": "stay-oriented-impetus",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "session-thread-display-fires-hygiene-checks": {
+    "status": "done",
+    "title": "Session Thread Display Fires Hygiene Checks",
+    "epic_slug": "harden-epic-2-foundation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/workflow.md"
+    ]
+  },
+  "natural-language-input-confirmed-before-dispatch": {
+    "status": "done",
+    "title": "Natural Language Input Confirmed Before Dispatch",
+    "epic_slug": "harden-epic-2-foundation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/workflow.md"
+    ]
+  },
+  "impetus-first-impression-has-personality-and-identity": {
+    "status": "done",
+    "title": "Impetus First Impression Has Personality and Identity",
+    "epic_slug": "harden-epic-2-foundation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/workflow.md"
+    ]
+  },
+  "behavioral-persistence-across-sessions": {
+    "status": "done",
+    "title": "Behavioral Persistence Across Sessions",
+    "epic_slug": "harden-epic-2-foundation",
+    "story_file": true,
+    "depends_on": [
+      "session-thread-display-fires-hygiene-checks"
+    ],
+    "touches": [
+      "skills/momentum/references/journal-schema.md",
+      "skills/momentum/workflow.md"
+    ]
+  },
+  "background-agent-coordination-validated": {
+    "status": "done",
+    "title": "Background Agent Coordination Validated",
+    "epic_slug": "harden-epic-2-foundation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "docs/research/background-agent-coordination.md",
+      "_bmad-output/planning-artifacts/architecture.md",
+      "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
+    ]
+  },
+  "silent-pre-flight-and-deferred-stats-write": {
+    "status": "done",
+    "title": "Silent Pre Flight and Deferred Stats Write",
+    "epic_slug": "impetus-ux-redesign",
+    "story_file": true,
+    "depends_on": [
+      "behavioral-persistence-across-sessions"
+    ],
+    "touches": [
+      "skills/momentum/workflow.md",
+      "skills/momentum/evals/"
+    ]
+  },
+  "session-open-menu-redesign": {
+    "status": "done",
+    "title": "Session Open Menu Redesign",
+    "epic_slug": "impetus-ux-redesign",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "hash-drift-plain-language-message": {
+    "status": "done",
+    "title": "Hash Drift Plain Language Message",
+    "epic_slug": "impetus-ux-redesign",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "triage-skill": {
+    "status": "backlog",
+    "title": "Triage Skill",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "create-epic-command": {
+    "status": "backlog",
+    "title": "Create Epic Command",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "momentum-dev-auto-variant": {
+    "status": "backlog",
+    "title": "Momentum Dev Auto Variant",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "develop-epic-command": {
+    "status": "backlog",
+    "title": "Develop Epic Command",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "retro-triage-handoff": {
+    "status": "backlog",
+    "title": "Retro Triage Handoff",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "posttooluse-lint-and-format-hook-active": {
+    "status": "ready-for-dev",
+    "title": "Posttooluse Lint and Format Hook Active",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/references/hooks/",
+      "skills/momentum/references/hooks-config.json",
+      ".claude/momentum/session-modified-files.txt"
+    ]
+  },
+  "pretooluse-file-protection-hooks-active": {
+    "status": "ready-for-dev",
+    "title": "Pretooluse File Protection Hooks Active",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/references/hooks/",
+      "skills/momentum/references/hooks-config.json"
+    ]
+  },
+  "stop-gate-runs-conditional-quality-checks": {
+    "status": "ready-for-dev",
+    "title": "Stop Gate Runs Conditional Quality Checks",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [
+      "posttooluse-lint-and-format-hook-active"
+    ],
+    "touches": [
+      "skills/momentum/references/hooks/",
+      "skills/momentum/references/hooks-config.json",
+      ".claude/momentum/session-modified-files.txt"
+    ]
+  },
+  "authority-hierarchy-rules-auto-load-every-session": {
+    "status": "dropped",
+    "title": "Authority Hierarchy Rules Auto Load Every Session",
+    "epic_slug": "quality-enforcement",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "model-routing-configured-by-frontmatter": {
+    "status": "ready-for-dev",
+    "title": "Model Routing Configured by Frontmatter",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/references/model-routing-guide.md",
+      "skills/momentum/references/rules/model-routing.md",
+      "skills/momentum/references/momentum-versions.json",
+      "skills/momentum-create-story/",
+      "skills/momentum-dev/",
+      "skills/momentum-plan-audit/",
+      "skills/momentum-avfl/"
+    ]
+  },
+  "code-reviewer-skill-performs-adversarial-review": {
+    "status": "backlog",
+    "title": "Code Reviewer Skill Performs Adversarial Review",
+    "epic_slug": "story-cycles",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "gherkin-acs-and-atdd-workflow-active": {
+    "status": "backlog",
+    "title": "Gherkin Acs and Atdd Workflow Active",
+    "epic_slug": "story-cycles",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "full-story-cycle-guided-by-impetus": {
+    "status": "backlog",
+    "title": "Full Story Cycle Guided by Impetus",
+    "epic_slug": "story-cycles",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "create-story-and-dev-story-skills-active": {
+    "status": "backlog",
+    "title": "Create Story and Dev Story Skills Active",
+    "epic_slug": "story-cycles",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "upstream-fix-skill-analyzes-quality-failures": {
+    "status": "backlog",
+    "title": "Upstream Fix Skill Analyzes Quality Failures",
+    "epic_slug": "story-cycles",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "derives-from-frontmatter-establishes-traceability": {
+    "status": "backlog",
+    "title": "Derives From Frontmatter Establishes Traceability",
+    "epic_slug": "artifact-provenance",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "provenance-scanner-builds-referenced-by-graph": {
+    "status": "backlog",
+    "title": "Provenance Scanner Builds Referenced by Graph",
+    "epic_slug": "artifact-provenance",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "hash-based-staleness-detection-for-internal-documents": {
+    "status": "backlog",
+    "title": "Hash Based Staleness Detection for Internal Documents",
+    "epic_slug": "artifact-provenance",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "time-based-staleness-for-edge-documents": {
+    "status": "backlog",
+    "title": "Time Based Staleness for Edge Documents",
+    "epic_slug": "artifact-provenance",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "claim-level-provenance-status-and-integrity-enforcement": {
+    "status": "backlog",
+    "title": "Claim Level Provenance Status and Integrity Enforcement",
+    "epic_slug": "artifact-provenance",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "findings-ledger-accumulates-quality-findings-across-stories": {
+    "status": "backlog",
+    "title": "Findings Ledger Accumulates Quality Findings Across Stories",
+    "epic_slug": "practice-compounds",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "cross-story-pattern-detection-surfaces-systemic-issues": {
+    "status": "backlog",
+    "title": "Cross Story Pattern Detection Surfaces Systemic Issues",
+    "epic_slug": "practice-compounds",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "flywheel-workflow-explains-issues-and-guides-upstream-trace": {
+    "status": "backlog",
+    "title": "Flywheel Workflow Explains Issues and Guides Upstream Trace",
+    "epic_slug": "practice-compounds",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "developer-consent-required-at-every-flywheel-step": {
+    "status": "backlog",
+    "title": "Developer Consent Required at Every Flywheel Step",
+    "epic_slug": "practice-compounds",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "practice-health-metric-and-fix-level-tracking": {
+    "status": "backlog",
+    "title": "Practice Health Metric and Fix Level Tracking",
+    "epic_slug": "practice-compounds",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "project-configuration-file-defines-protocol-bindings": {
+    "status": "backlog",
+    "title": "Project Configuration File Defines Protocol Bindings",
+    "epic_slug": "bring-your-own-tools",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "protocol-gap-resolution-creates-valid-config-entries": {
+    "status": "backlog",
+    "title": "Protocol Gap Resolution Creates Valid Config Entries",
+    "epic_slug": "bring-your-own-tools",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "workflow-steps-resolve-through-protocol-interfaces-at-invocation-time": {
+    "status": "backlog",
+    "title": "Workflow Steps Resolve Through Protocol Interfaces at Invocation Time",
+    "epic_slug": "bring-your-own-tools",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "protocol-substitution-satisfies-interface-contract": {
+    "status": "backlog",
+    "title": "Protocol Substitution Satisfies Interface Contract",
+    "epic_slug": "bring-your-own-tools",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "mcp-provider-registration-and-cursor-tool-ceiling-compliance": {
+    "status": "backlog",
+    "title": "Mcp Provider Registration and Cursor Tool Ceiling Compliance",
+    "epic_slug": "bring-your-own-tools",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "multi-model-research-workflow-active": {
+    "status": "backlog",
+    "title": "Multi Model Research Workflow Active",
+    "epic_slug": "research-knowledge",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "research-prompts-are-date-anchored-with-primary-source-directives": {
+    "status": "backlog",
+    "title": "Research Prompts Are Date Anchored with Primary Source Directives",
+    "epic_slug": "research-knowledge",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "domain-specific-freshness-windows-define-document-currency": {
+    "status": "backlog",
+    "title": "Domain Specific Freshness Windows Define Document Currency",
+    "epic_slug": "research-knowledge",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "outdated-documents-archived-with-reference-chain-intact": {
+    "status": "backlog",
+    "title": "Outdated Documents Archived with Reference Chain Intact",
+    "epic_slug": "research-knowledge",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "promptfoo-configuration-benchmarks-skills-across-model-tiers": {
+    "status": "backlog",
+    "title": "Promptfoo Configuration Benchmarks Skills Across Model Tiers",
+    "epic_slug": "performance-validation",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "bash-benchmarking-script-captures-time-cost-and-tokens": {
+    "status": "backlog",
+    "title": "Bash Benchmarking Script Captures Time Cost and Tokens",
+    "epic_slug": "performance-validation",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "golden-dataset-provides-canonical-benchmark-inputs-and-reference-outputs": {
+    "status": "backlog",
+    "title": "Golden Dataset Provides Canonical Benchmark Inputs and Reference Outputs",
+    "epic_slug": "performance-validation",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "pydantic-ai-harness-benchmarks-agent-workflows-with-agent-override": {
+    "status": "backlog",
+    "title": "Pydantic Ai Harness Benchmarks Agent Workflows with Agent Override",
+    "epic_slug": "performance-validation",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files": {
+    "status": "backlog",
+    "title": "Benchmark Results Drive Model Effort Frontmatter Updates in Skill Files",
+    "epic_slug": "performance-validation",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  },
+  "remove-git-mcp-server-dependency": {
+    "status": "done",
+    "title": "Remove Git Mcp Server Dependency",
+    "epic_slug": "process-stories",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      ".mcp.json",
+      "skills/momentum/references/mcp-config.json",
+      "skills/momentum/workflow.md",
+      "_bmad-output/planning-artifacts/architecture.md",
+      "_bmad-output/planning-artifacts/epics.md",
+      "_bmad-output/planning-artifacts/ux-design-specification.md",
+      "_bmad-output/implementation-artifacts/repository-structure-established.md",
+      "_bmad-output/implementation-artifacts/first-momentum-invocation-completes-setup.md"
+    ]
+  },
+  "findings-ledger-architecture-revision": {
+    "status": "done",
+    "title": "Findings Ledger Architecture Revision",
+    "epic_slug": "process-stories",
+    "story_file": true,
+    "depends_on": [
+      "remove-git-mcp-server-dependency"
+    ],
+    "touches": [
+      ".mcp.json",
+      ".claude/settings.local.json",
+      "skills/momentum/references/mcp-config.json",
+      "skills/momentum/references/momentum-versions.json",
+      "skills/momentum/workflow.md",
+      "mcp/findings-server/README.md",
+      "_bmad-output/planning-artifacts/architecture.md",
+      "_bmad-output/planning-artifacts/epics.md"
+    ]
+  },
+  "lightweight-story-status-update-tool": {
+    "status": "done",
+    "title": "Lightweight Story Status Update Tool",
+    "epic_slug": "process-stories",
+    "story_file": true,
+    "depends_on": [
+      "remove-git-mcp-server-dependency"
+    ],
+    "touches": [
+      "skills/momentum/scripts/",
+      "skills/momentum-plan-audit/workflow.md",
+      "skills/momentum-dev/workflow.md",
+      ".claude/skills/bmad-dev-story/workflow.md",
+      "skills/momentum-create-story/workflow.md",
+      "_bmad-output/planning-artifacts/architecture.md"
+    ]
+  },
+  "cascade-spec-fatigue-patterns-into-prd-epics-and-stories": {
+    "status": "done",
+    "title": "Cascade Spec Fatigue Patterns Into Prd Epics and Stories",
+    "epic_slug": "process-stories",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "_bmad-output/planning-artifacts/ux-design-specification.md",
+      "_bmad-output/planning-artifacts/prd.md",
+      "_bmad-output/planning-artifacts/epics.md",
+      "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md",
+      "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md",
+      "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
+    ]
+  }
+}

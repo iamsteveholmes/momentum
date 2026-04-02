@@ -2,7 +2,7 @@
 
 **Goal:** Implement a Momentum story by selecting the next unblocked story (or using an explicit path), running in an isolated git worktree, delegating to bmad-dev-story, then applying AVFL quality gate and Momentum-specific DoD.
 
-**Role:** Thin orchestrator with sprint awareness. Manages story selection from sprint-status.yaml, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum-create-story) contains the developer's implementation instructions.
+**Role:** Thin orchestrator with sprint awareness. Manages story selection from stories/index.json, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum-create-story) contains the developer's implementation instructions.
 
 ---
 
@@ -14,7 +14,7 @@
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum-create-story. Offer to run the injection step manually before proceeding.</critical>
   <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
   <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>
-  <critical>Always write status changes to sprint-status.yaml in the MAIN working tree — not inside the worktree. This ensures all concurrent sessions see the update immediately.</critical>
+  <critical>Always write status changes to stories/index.json in the MAIN working tree — not inside the worktree. This ensures all concurrent sessions see the update immediately.</critical>
 
   <step n="1" goal="Capture target branch">
     <action>Run via Bash tool: `git branch --show-current`</action>
@@ -26,16 +26,15 @@
 
     <check if="explicit story path or key provided">
       <action>If a file path is provided, store {{story_file}} = the provided path</action>
-      <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml`</action>
-      <action>If a story key is provided, look up {{story_key}} in `momentum_metadata` to get `story_file`. If a file path was provided, find the matching story key by scanning `momentum_metadata` entries for a matching `story_file` value.</action>
+      <action>Read `{implementation_artifacts}/stories/index.json`</action>
+      <action>If a story key is provided, look up {{story_key}} in stories/index.json. The story implementation file is at `{implementation_artifacts}/{{story_key}}.md`. If a file path was provided, derive the story key from the filename.</action>
       <action>Store {{story_key}} and {{story_file}}</action>
     </check>
 
     <check if="no story path or key provided">
-      <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml`</action>
-      <action>Parse `development_status`: collect all story keys (exclude epic keys like `epic-N`, retrospective keys like `epic-N-retrospective`) and their statuses</action>
-      <action>Parse `momentum_metadata`: for each story key, read `depends_on`, `touches`, `story_file`</action>
-      <action>Filter to candidate stories: `development_status[key] == "ready-for-dev"` AND every key in `momentum_metadata[key].depends_on` has `development_status == "done"`</action>
+      <action>Read `{implementation_artifacts}/stories/index.json`</action>
+      <action>Parse all story entries: each entry has slug (the key), status, depends_on, touches</action>
+      <action>Filter to candidate stories: `status == "ready-for-dev"` AND every slug in `depends_on` has `status == "done"` in the same index</action>
       <check if="no candidates found">
         <action>Build a status summary: (1) for each story with status `in-progress`, list it as 'in progress in another session'; (2) for each story with status `ready-for-dev` whose `depends_on` includes any key not yet `done`, list: key → blocked on [list of incomplete depends_on keys]. If a depends_on key is `in-progress`, note it as `in-progress (will unblock when done)`.</action>
         <output>No unblocked stories are available. Current story status:
@@ -49,7 +48,7 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
         2. Story order within that epic (parse from key: `1-2-...` → epic 1, story 2)
       </action>
       <action>Store {{story_key}} = selected story key</action>
-      <action>Store {{story_file}} = `momentum_metadata[{{story_key}}].story_file`. If absent or null, fall back to `{implementation_artifacts}/{{story_key}}.md`.</action>
+      <action>Store {{story_file}} = `{implementation_artifacts}/{{story_key}}.md`.</action>
       <output>Selected story {{story_key}} (status: ready-for-dev, depends_on satisfied). Proceeding to develop.</output>
     </check>
   </step>
@@ -226,8 +225,8 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
     This updates both sprint-status.yaml development_status and the story file YAML frontmatter status field.</action>
     <action>Delete the lock file `.worktrees/story-{{story_key}}.lock`</action>
 
-    <action>Read `momentum_metadata[{{story_key}}].touches` from sprint-status.yaml</action>
-    <action>Check for overlap: are any paths in {{touches}} also listed in `momentum_metadata` entries for other stories whose `development_status` is `in-progress`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
+    <action>Read `stories/index.json` and look up {{story_key}}.touches</action>
+    <action>Check for overlap: are any paths in {{touches}} also listed in other stories whose `status` is `in-progress` in stories/index.json? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
     <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in-progress stories or no overlap, use "none".</action>
 
     <output>Story {{story_key}} is done and ready to merge.

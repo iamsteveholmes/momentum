@@ -64,8 +64,8 @@ Proceed with full audit, or skip? (Skip writes a minimal Spec Impact and unblock
 
   <step n="3" goal="Create process story (substantive only)">
     <action>Determine {{sprint_num}} using spec-capture-guide.md Section 4 (Sprint Number Resolution).</action>
-    <action>Read sprint-status.yaml from `{implementation_artifacts}/sprint-status.yaml`. Scan `momentum_metadata` keys for entries starting with `p{{sprint_num}}-`. Find the highest sequence number N (parse the second number from key pattern `p{{sprint_num}}-N-...`). Set {{process_story_seq}} = N+1. If no matches, use 1.</action>
-    <action>Derive {{process_story_key}} = `p{{sprint_num}}-{{process_story_seq}}-{{plan_title_kebab}}` where {{plan_title_kebab}} is the plan title converted to kebab-case.</action>
+    <action>Read `{implementation_artifacts}/stories/index.json`. Scan story slugs for entries with `epic_slug == "process-stories"`. Count existing process stories to determine the next sequence number. Set {{process_story_seq}} = count+1. If no matches, use 1.</action>
+    <action>Derive {{process_story_key}} = `{{plan_title_kebab}}` where {{plan_title_kebab}} is the plan title converted to kebab-case.</action>
     <action>Store {{process_story_file}} = `{implementation_artifacts}/{{process_story_key}}.md`.</action>
     <action>Extract {{touches}} from the plan's Files to Create/Modify table — collect unique directory/file paths (normalize to directory paths where possible).</action>
     <action>Compose the process story content using spec-capture-guide.md Section 5:
@@ -78,17 +78,15 @@ Proceed with full audit, or skip? (Skip writes a minimal Spec Impact and unblock
     </action>
     <action>Write story content to {{process_story_file}}.</action>
     <action>Read {{process_story_file}} to confirm it was written correctly.</action>
-    <action>Add entry to sprint-status.yaml `development_status`: `{{process_story_key}}: ready-for-dev`</action>
-    <action>If no `momentum_metadata` section exists, create it. Add entry under `momentum_metadata`:
-```yaml
-  {{process_story_key}}:
-    depends_on: []
-    touches:
-      {{touches_yaml}}
-    story_file: "{{process_story_file}}"
-```
+    <action>Read `{implementation_artifacts}/stories/index.json`. Add entry keyed by {{process_story_key}} with:
+      - status: "ready-for-dev"
+      - title: {{plan_title}}
+      - epic_slug: "process-stories"
+      - story_file: true
+      - depends_on: []
+      - touches: {{touches}}
     </action>
-    <action>Save sprint-status.yaml, preserving ALL existing content, comments, and structure.</action>
+    <action>Save stories/index.json, preserving ALL existing entries.</action>
     <action>Identify any upstream spec files that need updating per spec-capture-guide.md Section 7. Store {{upstream_updates}} = list of recommended changes (file + section + reason), or "None identified." if none.</action>
 
     <output>Process story created: {{process_story_file}} (sprint-status.yaml updated: development_status + momentum_metadata)</output>

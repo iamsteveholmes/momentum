@@ -76,26 +76,22 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <output>Momentum Implementation Guide injected into {{story_file}}</output>
   </step>
 
-  <step n="5" goal="Write momentum_metadata to sprint-status.yaml">
+  <step n="5" goal="Write story metadata to stories/index.json">
     <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
-      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. For each, find the matching story key in sprint-status.yaml's `development_status` section (e.g., Story 3.1 → `3-1-...`). Store as {{depends_on}} list of story keys. If none found, use [].
+      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. Find the matching story slug in `stories/index.json`. Store as {{depends_on}} list of story slugs. If none found, use [].
       - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum-dev/", ".claude/settings.json"]); if none found, use []
     </action>
-    <action>Read `{{implementation_artifacts}}/sprint-status.yaml`</action>
-    <action>If no `momentum_metadata` section exists, create it as an empty map after the `development_status` section, preceded by a comment: `# Momentum parallel execution metadata — invisible to BMAD skills`</action>
-    <action>Add an entry under `momentum_metadata` keyed by {{story_key}}:
-```yaml
-  {{story_key}}:
-    depends_on:
-      {{depends_on_yaml}}
-    touches:
-      {{touches_yaml}}
-    story_file: "{{story_file}}"
-```
-    If depends_on is empty, write `depends_on: []`. If touches is empty, write `touches: []`.
+    <action>Read `{{implementation_artifacts}}/stories/index.json`</action>
+    <action>Add or update the entry keyed by {{story_key}} with:
+      - status: "ready-for-dev"
+      - title: human-readable title derived from story key
+      - epic_slug: derived from the epic this story belongs to
+      - story_file: true
+      - depends_on: {{depends_on}}
+      - touches: {{touches}}
     </action>
-    <action>Save sprint-status.yaml, preserving ALL existing content, comments, and structure</action>
-    <output>Sprint metadata written to sprint-status.yaml (momentum_metadata section: depends_on: {{depends_on_yaml}}, touches: {{touches_yaml}})</output>
+    <action>Save stories/index.json, preserving ALL existing entries</action>
+    <output>Story metadata written to stories/index.json (depends_on: {{depends_on}}, touches: {{touches}})</output>
   </step>
 
   <step n="6" goal="Run AVFL checkpoint on the story file">
@@ -151,7 +147,7 @@ You may proceed to development with known issues, or halt to address them first.
     <output>Story {{story_key}} is yours to review.
 
 Produced: {{story_file}}
-Sprint tracking: sprint-status.yaml (development_status: ready-for-dev, momentum_metadata: written)
+Sprint tracking: stories/index.json (status: ready-for-dev, metadata: written)
 Change types: {{change_types_summary}}
 AVFL checkpoint: {{avfl_result}}
 {{avfl_findings}}
