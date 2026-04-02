@@ -42,13 +42,19 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-29
+last_updated: 2026-03-31
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
 development_status:
+  # Epic 0: Redesign Foundation
+  epic-0: in-progress
+  0-1-story-id-migration: ready-for-dev
+  0-2-sprint-status-schema-redesign: ready-for-dev
+  0-3-sprint-manager-skill: ready-for-dev
+
   # Epic 1: Foundation & Bootstrap
   epic-1: done
   1-1-repository-structure-established: done
@@ -367,3 +373,35 @@ momentum_metadata:
       - "skills/momentum/workflow.md"
       - "skills/momentum/evals/"
     story_file: "_bmad-output/implementation-artifacts/2a-1-silent-pre-flight-and-deferred-stats-write.md"
+  0-1-story-id-migration:
+    depends_on: []
+    touches:
+      - "_bmad-output/implementation-artifacts/sprint-status.yaml"
+      - "_bmad-output/implementation-artifacts/*.md"
+    story_file: "_bmad-output/implementation-artifacts/0-1-story-id-migration.md"
+  0-2-sprint-status-schema-redesign:
+    depends_on:
+      - 0-1-story-id-migration
+    touches:
+      - "_bmad-output/implementation-artifacts/sprint-status.yaml"
+      - "skills/momentum/references/sprint-status-schema.md"
+      - "skills/momentum-create-story/workflow.md"
+      - "skills/momentum/workflow.md"
+      - "skills/momentum-dev/workflow.md"
+      - "skills/momentum-plan-audit/workflow.md"
+      - ".claude/skills/bmad-create-story/workflow.md"
+      - ".claude/skills/bmad-sprint-status/workflow.md"
+      - ".claude/skills/bmad-sprint-planning/workflow.md"
+    story_file: "_bmad-output/implementation-artifacts/0-2-sprint-status-schema-redesign.md"
+  0-3-sprint-manager-skill:
+    depends_on:
+      - 0-2-sprint-status-schema-redesign
+    touches:
+      - "skills/momentum-sprint-manager/"
+      - "skills/momentum-create-story/workflow.md"
+      - "skills/momentum-dev/workflow.md"
+      - "skills/momentum/scripts/update-story-status.sh"
+      - ".claude/skills/bmad-create-story/workflow.md"
+      - ".claude/skills/bmad-sprint-planning/workflow.md"
+      - ".claude/skills/bmad-dev-story/workflow.md"
+    story_file: "_bmad-output/implementation-artifacts/0-3-sprint-manager-skill.md"
