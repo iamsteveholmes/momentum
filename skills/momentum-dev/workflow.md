@@ -91,9 +91,8 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
 
   <step n="5" goal="Mark story in-progress">
     <action>Write (or overwrite) the lock file `.worktrees/story-{{story_key}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum-dev session started {{timestamp}}". Overwriting is safe — the new timestamp reflects the current session.</action>
-    <action>Run: `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{story_key}} in-progress`
-    This updates both sprint-status.yaml development_status and the story file YAML frontmatter status field.</action>
-    <output>Story {{story_key}} marked in-progress in sprint-status.yaml and story file. Lock file created.</output>
+    <action>Run: `python3 $CLAUDE_PROJECT_DIR/skills/momentum/scripts/momentum-tools.py sprint status-transition --story {{story_key}} --target in-progress`</action>
+    <output>Story {{story_key}} marked in-progress. Lock file created.</output>
   </step>
 
   <step n="6" goal="Invoke bmad-dev-story">
@@ -114,8 +113,7 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
     <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_key}}/`, isolated from other sessions.</note>
 
     <!-- Sync story file frontmatter after bmad-dev-story sets review in sprint-status.yaml -->
-    <action>Run: `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{story_key}} review`
-    bmad-dev-story already set sprint-status.yaml to "review". This syncs the story file frontmatter to match. The script is idempotent — safe if bmad-dev-story already updated both.</action>
+    <action>Run: `python3 $CLAUDE_PROJECT_DIR/skills/momentum/scripts/momentum-tools.py sprint status-transition --story {{story_key}} --target review`</action>
   </step>
 
   <step n="7" goal="AVFL quality gate on complete changeset">
@@ -221,8 +219,7 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
 
   <step n="9" goal="Mark story done and propose merge">
     <note>At this point the working directory is the main repo root (ExitWorktree was called at the end of Step 6). The merge runs on the main tree, merging story/{{story_key}} into {{target_branch}}.</note>
-    <action>Run: `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{story_key}} done`
-    This updates both sprint-status.yaml development_status and the story file YAML frontmatter status field.</action>
+    <action>Run: `python3 $CLAUDE_PROJECT_DIR/skills/momentum/scripts/momentum-tools.py sprint status-transition --story {{story_key}} --target done`</action>
     <action>Delete the lock file `.worktrees/story-{{story_key}}.lock`</action>
 
     <action>Read `stories/index.json` and look up {{story_key}}.touches</action>

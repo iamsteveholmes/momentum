@@ -218,9 +218,9 @@ Process story `{{process_story_key}}` created: `{{process_story_file}}`
 
 This plan's process story (`{{process_story_key}}`) requires these status transitions during execution:
 
-1. **Before first implementation step:** `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{process_story_key}} in-progress`
-2. **After implementation complete, before AVFL:** `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{process_story_key}} review`
-3. **After AVFL passes:** `bash $CLAUDE_PROJECT_DIR/skills/momentum/scripts/update-story-status.sh {{process_story_key}} done`
+1. **Before first implementation step:** `python3 $CLAUDE_PROJECT_DIR/skills/momentum/scripts/momentum-tools.py sprint status-transition --story {{process_story_key}} --target in-progress`
+2. **After implementation complete, before AVFL:** `python3 $CLAUDE_PROJECT_DIR/skills/momentum/scripts/momentum-tools.py sprint status-transition --story {{process_story_key}} --target review`
+3. **After AVFL passes:** `python3 $CLAUDE_PROJECT_DIR/skills/momentum/scripts/momentum-tools.py sprint status-transition --story {{process_story_key}} --target done`
 ```
       </action>
     </check>
