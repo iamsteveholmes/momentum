@@ -954,10 +954,13 @@ momentum/                                    ← Root
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | journal.jsonl, specs (read-only), findings-ledger.jsonl | journal.jsonl, journal-view.md |
+| Impetus | sprint-status.yaml, journal.jsonl, specs, findings-ledger.jsonl | journal.jsonl, journal-view.md (NEVER writes sprint-status.yaml) |
+| momentum-sprint-manager | sprint-status.yaml | sprint-status.yaml (sole writer) |
+| momentum-dev | Specs, story files, code | Code in worktree only |
+| momentum-create-story | sprint-status.yaml, epics.md | Story files in _bmad-output/implementation-artifacts/ |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
-| VFL | Any artifact being validated, source material | consolidated findings report |
+| VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report |
 | Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
 | Upstream-fix skill (Epic 4, standalone) | session journal, specs, rules | session journal only (not findings-ledger.jsonl) |
 | Hooks | Filesystem (reads), git status | Terminal output only (never modifies files) |
@@ -1047,67 +1050,122 @@ Adversarial validation conducted per the dual-reviewer pattern from VFL framewor
 
 ### Story State Machine
 
-Momentum uses BMAD's state machine directly — no parallel states, no translation layer:
+> _Revised 2026-04-01: New story stages (verify, closed-incomplete). Story IDs changed to kebab-case slugs. All sprint-status.yaml writes go through momentum-sprint-manager._
 
 ```
-backlog → ready-for-dev → in-progress → review → done
+backlog → ready-for-dev → in-progress → review → verify → done
 ```
 
-- **`backlog`** — story exists in epics.md but no implementation story file has been created yet
-- **`ready-for-dev`** — story file created by `momentum-create-story`, metadata written to `momentum_metadata` section, all `depends_on` stories are `done` (or there are none)
-- **`in-progress`** — a `momentum-dev` session has claimed this story and is executing in an isolated git worktree
-- **`review`** — implementation complete, ready for code review (set by `bmad-dev-story` inside the worktree)
-- **`done`** — story's worktree has been merged to the target branch and cleaned up
+- **`backlog`** — story exists in epics.md/sprint-status.yaml, no story file yet
+- **`ready-for-dev`** — story file created, waiting to be picked into a sprint
+- **`in-progress`** — sprint-dev agent actively working it (worktree active)
+- **`review`** — worktree merged to main, awaiting wave AVFL (automated batch after all wave merges)
+- **`verify`** — AVFL passed, behavioral verification running (automated via momentum-verify)
+- **`done`** — verified, complete
+- **`dropped`** — removed, obsolete or duplicate (pre-development cancellation)
+- **`closed-incomplete`** — story was in a sprint that was force-closed before completion; migrated to next sprint or dropped. Worktree preserved for reference.
 
-**Additional statuses for epic orchestration:**
+**Epic-level statuses:**
 
-- **`done-incomplete`** (epic-level) — Epic closed mid-execution. Some stories completed and merged; others were incomplete or dropped. The epic counts as "done" in accounting but its closing artifact records the incomplete work. Recovery path: close epic, re-triage incomplete stories into triage-inbox.md.
-- **`closed-incomplete`** (story-level) — Story abandoned mid-execution. Worktree is preserved in git (not cleaned up). The partial branch remains for reference when re-triaging the story. Distinct from `dropped` (pre-development cancellation with no implementation work).
+- **`done-incomplete`** — Epic closed mid-execution. Some stories completed; others incomplete or dropped. Counts as "done" in accounting.
 
-This is the **sprint-level lifecycle** — distinct from the implementation phase lifecycle (Spec Review → ATDD → Implement → Code Review → Flywheel) tracked in the session journal. The two are complementary:
-- `development_status` in sprint-status.yaml: where the story is in the sprint cycle
-- Session journal `active_stories` + `phase`: what is being actively worked on in each concurrent session
-
-Status updates are **dual-write**: both `sprint-status.yaml` `development_status` and the story file's YAML frontmatter `status` field are updated together via `update-story-status.sh`. The two fields stay in sync at all times.
-
-### Unified Sprint Tracking in sprint-status.yaml
-
-All story tracking lives in `sprint-status.yaml`. Momentum adds a `momentum_metadata` section alongside BMAD's `development_status` — additive, not breaking. BMAD skills only read `development_status` and ignore unknown sections.
-
-**Canonical status update mechanism:** `skills/momentum/scripts/update-story-status.sh` is the centralized script for advancing story status. `momentum-dev` calls it directly for `in-progress`, `review`, and `done` transitions; `momentum-plan-audit` injects the call commands into the plan's `## Spec Impact` section for the implementing agent to execute during process story lifecycle. Note: `bmad-dev-story` (a BMAD-managed file that gets overwritten on install) is NOT modified — `momentum-dev` wraps it and handles the script calls. Interface:
+**Story ID format:** Globally unique kebab-case slugs. No epic encoding.
 
 ```
-update-story-status.sh <story-key> <status>
+Good:  posttooluse-lint-hook
+Good:  impetus-identity-redesign
+Bad:   3-1-posttooluse-lint-hook   ← encodes epic, breaks on re-categorization
 ```
 
-Where `<status>` is one of: `ready-for-dev`, `in-progress`, `review`, `done`. The script atomically updates both `sprint-status.yaml` `development_status[story-key]` and the `status` field in the story file's YAML frontmatter. Callers do not write to either location directly.
+Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-refresh-ui`).
+
+**Status update authority:** All writes to sprint-status.yaml go through `momentum-sprint-manager` — an executor subagent with exclusive write authority over this file. No other agent or script writes to sprint-status.yaml directly. Story file frontmatter `status` is updated by the agent that modifies the story file (momentum-create-story or momentum-dev).
+
+### Sprint Tracking Schema — sprint-status.yaml
+
+> _Revised 2026-04-01: Full schema redesign. Three top-level sections replace flat development_status + momentum_metadata. All writes via momentum-sprint-manager._
+
+sprint-status.yaml has three top-level sections:
 
 ```yaml
-development_status:
-  epic-1: in-progress
-  1-1-repository-structure-established: ready-for-dev
-  1-2-skills-installable-via-npx-skills-add: backlog
-  # ... (BMAD reads only this section)
+# 1. stories — flat registry of all stories (the source of truth for status)
+stories:
+  posttooluse-lint-hook:
+    status: in-progress
+    title: PostToolUse lint and format hook
+    story_file: true
+    depends_on: []
+    touches:
+      - "skills/momentum/references/hooks/"
+  impetus-identity-redesign:
+    status: ready-for-dev
+    title: Impetus Identity & Persona Section
+    story_file: true
+    depends_on: []
+    touches:
+      - "skills/momentum/workflow.md"
+  model-routing-frontmatter:
+    status: backlog
+    title: Model routing configured by frontmatter
+    story_file: false
 
-# Momentum parallel execution metadata — invisible to BMAD skills
-momentum_metadata:
-  1-1-repository-structure-established:
-    depends_on: []                    # story_keys whose development_status must be "done"
-    touches:                          # paths likely to need merge conflict review
-      - "skills/momentum/"
-      - "version.md"
-    story_file: "_bmad-output/implementation-artifacts/1-1-repository-structure-established.md"
+# 2. epics — named categories with story membership (stories can move between epics)
+epics:
+  quality-enforcement:
+    title: "Automatic Quality Enforcement"
+    stories:
+      - posttooluse-lint-hook
+      - pretooluse-file-protection
+      - stop-gate-quality-checks
+      - model-routing-frontmatter
+  impetus-ux:
+    title: "Impetus UX & Orchestration"
+    stories:
+      - impetus-identity-redesign
+      - session-open-sprint-view
+
+# 3. sprints — active + planning sprints with wave plans
+sprints:
+  active:
+    name: "Quality Hooks Sprint"
+    slug: quality-hooks-sprint
+    stories:
+      - posttooluse-lint-hook
+      - pretooluse-file-protection
+      - stop-gate-quality-checks
+    locked: true
+    started: 2026-03-30
+    waves:
+      - wave: 1
+        stories:
+          - posttooluse-lint-hook
+          - pretooluse-file-protection
+      - wave: 2
+        stories:
+          - stop-gate-quality-checks
+
+  planning:
+    name: "Impetus UX Sprint"
+    slug: impetus-ux-sprint
+    stories:
+      - impetus-identity-redesign
+      - session-open-sprint-view
+    locked: false
 ```
 
-**Schema for each `momentum_metadata` entry:**
+**Schema for each `stories` entry:**
 
 | Field | Type | Description |
 |---|---|---|
-| `depends_on` | list of strings | Story keys (matching `development_status` keys) that must have status `done` before this story can be selected. Empty list `[]` if no dependencies. |
-| `touches` | list of strings | Paths this story will create or modify. Used for merge conflict risk assessment — not a blocker. |
-| `story_file` | string or null | Path to the full implementation story file (in `_bmad-output/implementation-artifacts/`). Null for process stories that are self-contained. |
+| `status` | string | Story stage: backlog, ready-for-dev, in-progress, review, verify, done, dropped, closed-incomplete |
+| `title` | string | Display title for the story |
+| `story_file` | boolean | Whether a story implementation file exists in `_bmad-output/implementation-artifacts/` |
+| `depends_on` | list of strings | Story slugs that must be `done` before this story can be selected. Empty list if no dependencies. |
+| `touches` | list of strings | Paths this story will create or modify. Used for merge conflict risk assessment. |
 
-`depends_on` is populated at story creation time from the dependency notes in the epics section. `touches` is inferred from the story's implementation scope (skill dirs, shared config files, paths mentioned in tasks).
+**Write authority:** `momentum-sprint-manager` is the sole writer of sprint-status.yaml. This is an executor subagent spawned by Impetus. No other agent or script writes to this file directly. The legacy `update-story-status.sh` script is deprecated and will be removed during migration.
+
+**Migration from old schema:** The `story-id-migration` and `sprint-status-schema-redesign` stories handle the transition from the old `development_status` + `momentum_metadata` flat-key format to this three-section schema. All existing story keys (`N-N-slug` format) will be renamed to plain kebab-case slugs.
 
 ### Next-Story Selection Rule
 

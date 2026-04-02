@@ -651,26 +651,39 @@ momentum/
 
 ## Sprint Status Definitions
 
-`sprint-status.yaml` is the authoritative state file for epic and story lifecycle tracking. The following status values are defined:
+> _Revised 2026-04-01: New schema (stories/epics/sprints sections), new story stages (verify, closed-incomplete), sprint-manager as sole writer._
 
-### Epic Statuses
-
-| Status | Meaning |
-|---|---|
-| `backlog` | Epic defined in `epics.md`; not yet locked. Triage may mutate it freely. |
-| `in-progress` | `/create-epic` has been called; epic is locked and story files exist. `/develop-epic` is running or paused. |
-| `done` | All stories completed successfully. Epic closed. |
-| `done-incomplete` | Epic force-closed mid-execution. Some stories completed; others were incomplete or dropped. Used when the developer closes an epic due to a blocker or scope change. Incomplete stories are re-triaged into the next cycle. |
+`sprint-status.yaml` is the authoritative state file for story, epic, and sprint tracking. All writes go through `momentum-sprint-manager` (exclusive write authority). The file has three top-level sections: `stories` (flat registry), `epics` (category membership), `sprints` (active + planning). See architecture doc for full schema.
 
 ### Story Statuses
 
 | Status | Meaning |
 |---|---|
-| `ready-for-dev` | Story file exists and has passed AVFL; ready for `momentum-dev-auto` execution. |
-| `in-progress` | Story is currently being executed by a `momentum-dev-auto` agent. |
-| `done` | Story implementation complete and merged. |
-| `dropped` | Story cancelled before development began (pre-development cancellation). No worktree was created. |
-| `closed-incomplete` | Story abandoned mid-execution; worktree preserved in git. Distinct from `dropped` — work was started. Used when a story is stopped after `momentum-dev-auto` has begun but before merge. |
+| `backlog` | Story exists in epics.md/sprint-status.yaml; no story file yet. |
+| `ready-for-dev` | Story file created; waiting to be picked into a sprint. |
+| `in-progress` | Sprint-dev agent actively working it (worktree active). |
+| `review` | Worktree merged to main; awaiting wave AVFL. |
+| `verify` | AVFL passed; behavioral verification running (momentum-verify). |
+| `done` | Verified, complete. |
+| `dropped` | Removed — obsolete or duplicate (pre-development cancellation). |
+| `closed-incomplete` | Story in a force-closed sprint; migrated to next sprint or dropped. Worktree preserved. |
+
+### Epic Statuses
+
+| Status | Meaning |
+|---|---|
+| `backlog` | Epic defined in `epics.md`; stories may be added/removed freely. |
+| `in-progress` | At least one story in this epic is in-progress or later. |
+| `done` | All stories completed successfully. |
+| `done-incomplete` | Epic force-closed mid-execution. Some stories completed; others incomplete or dropped. |
+
+### Story ID Format
+
+Story IDs are globally unique kebab-case slugs with no epic encoding. This allows stories to be re-categorized across epics without renaming. Examples: `posttooluse-lint-hook`, `impetus-identity-redesign`. Collisions resolved by adding a qualifier suffix.
+
+### FR55: Sprint-Manager Exclusive Write Authority
+
+- **FR55:** All writes to sprint-status.yaml go through `momentum-sprint-manager`, an executor subagent spawned by Impetus. No other agent, skill, or script writes to sprint-status.yaml directly. This ensures atomic status transitions and prevents concurrent write conflicts. **Priority: High** *(Redesign Foundation)*
 
 ## Post-PRD Actions
 

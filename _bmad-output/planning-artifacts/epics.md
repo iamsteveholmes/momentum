@@ -25,8 +25,10 @@ derives_from:
   - id: UX-MOMENTUM-001
     path: _bmad-output/planning-artifacts/ux-design-specification.md
     relationship: derives_from
-lastEdited: '2026-03-26'
+lastEdited: '2026-04-01'
 editHistory:
+  - date: '2026-04-01'
+    changes: 'Added Epic 0 (Redesign Foundation — 3 stories): story-id-migration, sprint-status-schema-redesign, momentum-sprint-manager-skill. Added Epic 0 to epic list. These are the foundation for the full Momentum orchestration redesign.'
   - date: '2026-03-26'
     changes: 'Added Epic 2a (Impetus UX Redesign — 4 stories) and Epic 2b (Impetus as Epic Orchestrator — 6 stories) with high priority before Epic 3. Added FR49–FR54 to FR Coverage Map. Inserted epic list entries and full epic body sections. Epic 2a covers silent pre-flight, progress bar, menu redesign, hash-drift plain language. Epic 2b covers triage skill, /create-epic, momentum-dev-auto, /develop-epic (tier-sequential DAG), retro handoff, epic close-out model.'
   - date: '2026-03-23'
@@ -337,6 +339,13 @@ A developer always knows where they are and what to do next. Session journal tra
 **NFRs covered:** NFR1, NFR2, NFR3
 **UX-DRs covered:** UX-DR1, UX-DR2, UX-DR4, UX-DR5, UX-DR6 (partial), UX-DR8 (partial), UX-DR9, UX-DR10, UX-DR11, UX-DR12, UX-DR13, UX-DR14, UX-DR15, UX-DR16, UX-DR17, UX-DR18
 **Priority:** Day 1
+
+---
+
+### Epic 0: Redesign Foundation
+Migrate sprint-status.yaml to the new 3-section schema (stories/epics/sprints), rename all story keys from `N-N-slug` to plain kebab-case slugs, and introduce momentum-sprint-manager as the sole writer of sprint-status.yaml. Everything in the Momentum redesign depends on this.
+**FRs covered:** FR55
+**Priority:** Immediate (blocks all redesign work)
 
 ---
 
@@ -992,6 +1001,91 @@ So that I never need to manually hunt for specs or figure out how to fix missing
 **Given** Impetus surfaces spec context inline
 **When** delivering contextualization (UX-DR21)
 **Then** every drill-down is framed with why it matters to the current step, not just what the spec says
+
+---
+
+## Epic 0: Redesign Foundation
+
+The Momentum orchestration redesign requires a new sprint-status.yaml schema, a new story ID format, and a dedicated sprint-manager subagent. This epic provides the foundation that all other redesign work depends on. It migrates existing data to the new format while preserving all current tracking information.
+
+**FRs covered:** FR55 (sprint-manager exclusive write authority)
+**Sequencing:** All three stories must complete before any other redesign stories begin. `story-id-migration` is independent. `sprint-status-schema-redesign` depends on `story-id-migration`. `momentum-sprint-manager-skill` depends on `sprint-status-schema-redesign`.
+
+### Story 0.1: Story ID Migration
+
+As a developer,
+I want all story keys renamed from `N-N-slug` format to plain kebab-case slugs,
+So that stories can be re-categorized across epics without renaming and the ID format is globally unique.
+
+**Depends on:** None
+**Touches:** `sprint-status.yaml`, `_bmad-output/implementation-artifacts/*.md` (file renames), `epics.md` (story references)
+
+**Acceptance Criteria:**
+
+**Given** the existing `sprint-status.yaml` with story keys in `N-N-slug` format
+**When** the migration runs
+**Then** all story keys are renamed to plain kebab-case slugs (e.g., `1-1-repository-structure-established` → `repository-structure-established`)
+**And** all references to the old keys in `sprint-status.yaml` are updated (development_status, momentum_metadata)
+**And** story implementation files in `_bmad-output/implementation-artifacts/` are renamed to match the new slug format
+**And** no data is lost — all status values, dependencies, touches, and story_file paths are preserved
+
+**Given** two stories that would produce the same slug after removing the epic prefix
+**When** a collision is detected
+**Then** a qualifier suffix is added to disambiguate (e.g., append `-epic1` or a domain qualifier)
+
+---
+
+### Story 0.2: Sprint-Status Schema Redesign
+
+As a developer,
+I want sprint-status.yaml restructured into three sections (stories, epics, sprints),
+So that story tracking, epic membership, and sprint planning are cleanly separated and the schema supports wave-based execution.
+
+**Depends on:** Story 0.1 (story keys must be in slug format first)
+**Touches:** `sprint-status.yaml`, all skills that read sprint-status.yaml, architecture.md (schema reference)
+
+**Acceptance Criteria:**
+
+**Given** the existing `sprint-status.yaml` with `development_status` and `momentum_metadata` sections
+**When** the schema migration runs
+**Then** the file is restructured into three top-level sections: `stories` (flat registry), `epics` (category membership), `sprints` (active + planning)
+**And** each story entry in `stories` has: status, title, story_file (boolean), depends_on, touches
+**And** each epic entry in `epics` has: title, stories (list of story slugs)
+**And** the `sprints` section has: `active` (with locked, started, waves) and `planning` (with locked: false)
+**And** all existing story data is migrated without loss
+**And** a schema reference document is created in `skills/momentum/references/` for all skills to use
+
+**Given** skills that currently read `development_status` from sprint-status.yaml
+**When** the schema changes
+**Then** those skills are updated to read from `stories[slug].status` instead
+
+---
+
+### Story 0.3: Sprint-Manager Skill
+
+As a developer,
+I want a dedicated `momentum-sprint-manager` executor subagent that is the sole writer of sprint-status.yaml,
+So that all status transitions are atomic, auditable, and free from concurrent write conflicts.
+
+**Depends on:** Story 0.2 (schema must be in new format)
+**Touches:** `skills/momentum-sprint-manager/` (new skill), all skills that currently write to sprint-status.yaml
+
+**Acceptance Criteria:**
+
+**Given** the `momentum-sprint-manager` skill is installed
+**When** any workflow needs to update sprint-status.yaml (story status transition, sprint activation, epic membership change)
+**Then** the update is performed by spawning `momentum-sprint-manager` via Agent dispatch
+**And** no other agent or script writes to sprint-status.yaml directly
+
+**Given** the legacy `update-story-status.sh` script exists
+**When** the sprint-manager skill is active
+**Then** all callers of `update-story-status.sh` are updated to use sprint-manager instead
+**And** the script is deprecated (marked for removal)
+
+**Given** the sprint-manager receives a status transition request
+**When** it updates sprint-status.yaml
+**Then** the story's status field is updated atomically
+**And** the sprint-manager returns structured confirmation to Impetus
 
 ---
 
