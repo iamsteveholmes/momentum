@@ -16,6 +16,7 @@ so that stories can be re-categorized across epics without renaming and the ID f
    **And** all references to the old keys in `sprint-status.yaml` are updated (`development_status`, `momentum_metadata`)
    **And** story implementation files in `_bmad-output/implementation-artifacts/` are renamed to match the new slug format
    **And** no data is lost -- all status values, dependencies, touches, and story_file paths are preserved
+   **And** the output is still `sprint-status.yaml` with renamed keys -- decomposition into `stories/` and `sprints/` folders is Story 0.2's responsibility
 
 2. **Given** two stories that would produce the same slug after removing the epic prefix
    **When** a collision is detected
@@ -108,9 +109,9 @@ This is a data migration story -- no new features, no new skills, no new code ar
 
 2. **Atomic operation:** All five tasks must complete together. A partial migration (keys renamed but files not, or `development_status` renamed but `momentum_metadata` not) leaves the system inconsistent.
 
-3. **No schema change:** This story only renames keys. It does NOT restructure `sprint-status.yaml` into the three-section schema (that is Story 0.2). After this story, the file still has `development_status` and `momentum_metadata` sections -- just with new key names.
+3. **No schema change:** This story only renames keys. It does NOT decompose `sprint-status.yaml` into the `stories/` and `sprints/` folder structure -- that is Story 0.2. After this story, the file still has `development_status` and `momentum_metadata` sections -- just with new key names.
 
-4. **`epics.md` story references:** The epic descriptions in `epics.md` reference stories by their `N.N` identifiers (e.g., "Story 0.1", "Story 3.1") and by their old keys. These are NOT updated in this story -- they are specification documents, and their key references will become historical. The new `epics` section in sprint-status.yaml (Story 0.2) will use the new slugs.
+4. **`epics.md` story references:** The epic descriptions in `epics.md` reference stories by their `N.N` identifiers (e.g., "Story 0.1", "Story 3.1") and by their old keys. These are NOT updated in this story -- they are specification documents, and their key references will become historical. The new `stories/index.json` and `sprints/` structure (Story 0.2) will use the new slugs.
 
 ### Project Structure Notes
 

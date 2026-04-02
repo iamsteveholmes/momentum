@@ -5,19 +5,19 @@ Status: ready-for-dev
 ## Story
 
 As a developer,
-I want a dedicated `momentum-sprint-manager` executor subagent that is the sole writer of sprint-status.yaml,
+I want a dedicated `momentum-sprint-manager` executor subagent that is the sole writer of `stories/index.json` and `sprints/index.json`,
 so that all status transitions are atomic, auditable, and free from concurrent write conflicts.
 
 ## Acceptance Criteria
 
 1. **Given** the `momentum-sprint-manager` skill is installed at `skills/momentum-sprint-manager/`
-   **When** any workflow needs to update sprint-status.yaml (story status transition, sprint activation, epic membership change)
+   **When** any workflow needs to update story status, sprint data, or story-to-epic assignments
    **Then** the update is performed by spawning `momentum-sprint-manager` via Agent tool dispatch
-   **And** no other agent or script writes to sprint-status.yaml directly
+   **And** no other agent or script writes to `stories/index.json` or `sprints/index.json` directly
 
 2. **Given** the sprint-manager receives a story status transition request
-   **When** it updates sprint-status.yaml
-   **Then** the story's `status` field in the `stories` section is updated
+   **When** it updates `stories/index.json`
+   **Then** the story's `status` field is updated
    **And** the sprint-manager validates the transition is legal (per the story state machine: backlog -> ready-for-dev -> in-progress -> review -> verify -> done)
    **And** `dropped` is accepted as a terminal state reachable from any non-terminal state
    **And** `closed-incomplete` is accepted as a terminal state reachable from any non-terminal state
@@ -25,30 +25,30 @@ so that all status transitions are atomic, auditable, and free from concurrent w
    **And** the sprint-manager returns structured JSON confirmation: `{ "action": "status_transition", "story": "<slug>", "from": "<old>", "to": "<new>", "success": true }`
 
 3. **Given** the sprint-manager receives a sprint activation request
-   **When** it updates sprint-status.yaml
-   **Then** the `sprints.active` section is populated with the sprint data (name, slug, stories, locked, started, waves)
-   **And** the previous `sprints.planning` entry is moved to `sprints.active`
+   **When** it updates `sprints/index.json`
+   **Then** the `active` entry is populated with the sprint data (name, slug, stories, locked, started, waves)
+   **And** the previous `planning` entry is moved to `active`
    **And** `locked` is set to `true` and `started` is set to the current date
 
 4. **Given** the sprint-manager receives an epic membership change request
-   **When** it updates sprint-status.yaml
-   **Then** the story is added to or removed from the specified epic's `stories` list in the `epics` section
+   **When** it updates `stories/index.json`
+   **Then** the story's `epic_slug` field is updated to the specified epic
+   **And** story content (ACs, dev notes) in `stories/{slug}.md` is not modified -- sprint-manager does not write story content files
 
 5. **Given** the legacy `update-story-status.sh` script exists at `skills/momentum/scripts/update-story-status.sh`
    **When** the sprint-manager skill is active
    **Then** all callers of `update-story-status.sh` are updated to invoke sprint-manager instead
    **And** the script file is marked deprecated with a comment header explaining the replacement
 
-6. **Given** skills that currently write to sprint-status.yaml directly
+6. **Given** skills that currently write to `stories/index.json` or `sprints/index.json` directly
    **When** the sprint-manager is deployed
-   **Then** those skills are updated to delegate all sprint-status.yaml writes to sprint-manager via Agent tool dispatch
-   **And** no skill retains direct write logic for sprint-status.yaml
+   **Then** those skills are updated to delegate all writes to sprint-manager via Agent tool dispatch
+   **And** no skill retains direct write logic for `stories/index.json` or `sprints/index.json`
 
-7. **Given** the sprint-manager writes to sprint-status.yaml
+7. **Given** the sprint-manager writes to `stories/index.json` or `sprints/index.json`
    **When** the write completes
-   **Then** the output YAML is valid (parseable without error)
+   **Then** the output JSON is valid (parseable without error)
    **And** all existing data not related to the requested change is preserved
-   **And** comment blocks and section headers are preserved
 
 8. **Given** the SKILL.md for momentum-sprint-manager
    **When** validated against Momentum NFRs
@@ -69,11 +69,11 @@ so that all status transitions are atomic, auditable, and free from concurrent w
 
 - [ ] Task 2: Create `skills/momentum-sprint-manager/workflow.md` (AC: #2, #3, #4, #7)
   - [ ] 2.1: Define the workflow entry point: parse the incoming command to determine action type.
-  - [ ] 2.2: Implement `status_transition` action: read sprint-status.yaml, find the story in `stories` section, validate the transition against the state machine, update the status field, write the file, return structured confirmation.
-  - [ ] 2.3: Implement `sprint_activate` action: read sprint-status.yaml, move `sprints.planning` to `sprints.active`, set `locked: true`, set `started` to current date, write the file, return confirmation.
-  - [ ] 2.4: Implement `epic_membership` action: read sprint-status.yaml, add/remove story from epic's stories list, write the file, return confirmation.
-  - [ ] 2.5: Implement `sprint_plan` action: read sprint-status.yaml, create or update `sprints.planning` with provided stories and wave assignments, set `locked: false`, write the file, return confirmation.
-  - [ ] 2.6: All actions must: validate YAML output parsability, preserve all data not related to the change, and preserve comment structure.
+  - [ ] 2.2: Implement `status_transition` action: read `stories/index.json`, find the story entry, validate the transition against the state machine, update the status field, write the file, return structured confirmation.
+  - [ ] 2.3: Implement `sprint_activate` action: read `sprints/index.json`, move `planning` to `active`, set `locked: true`, set `started` to current date, write the file, return confirmation.
+  - [ ] 2.4: Implement `epic_membership` action: read `stories/index.json`, update the story's `epic_slug` field, write the file, return confirmation.
+  - [ ] 2.5: Implement `sprint_plan` action: read `sprints/index.json`, create or update `planning` with provided stories and wave assignments, set `locked: false`, write the file, return confirmation.
+  - [ ] 2.6: All actions must: validate JSON output parsability, preserve all data not related to the change.
 
 - [ ] Task 3: Create behavioral evals (AC: #2, #3, #7)
   - [ ] 3.1: Create `skills/momentum-sprint-manager/evals/eval-status-transition-valid.md` -- Given a story in `in-progress` status, when requesting transition to `review`, the skill should update the status and return success confirmation.
@@ -86,16 +86,16 @@ so that all status transitions are atomic, auditable, and free from concurrent w
   - [ ] 4.3: Add deprecation header to `skills/momentum/scripts/update-story-status.sh`: `# DEPRECATED: Use momentum-sprint-manager skill instead. This script will be removed in a future version.`
 
 - [ ] Task 5: Update skills that write sprint-status.yaml directly (AC: #6)
-  - [ ] 5.1: Update `skills/momentum-create-story/workflow.md` -- replace direct sprint-status.yaml writes (status updates to `ready-for-dev`) with Agent dispatch to sprint-manager.
-  - [ ] 5.2: Update `skills/momentum-dev/workflow.md` -- replace direct status writes (transitions during story development) with Agent dispatch to sprint-manager.
-  - [ ] 5.3: Update `.claude/skills/bmad-create-story/workflow.md` -- replace direct sprint-status.yaml writes with Agent dispatch to sprint-manager.
-  - [ ] 5.4: Update `.claude/skills/bmad-sprint-planning/workflow.md` -- replace direct sprint-status.yaml writes with Agent dispatch to sprint-manager.
-  - [ ] 5.5: Update `.claude/skills/bmad-dev-story/workflow.md` -- replace direct sprint-status.yaml writes with Agent dispatch to sprint-manager.
-  - [ ] 5.6: Update `skills/momentum-plan-audit/workflow.md` -- if it writes to sprint-status.yaml, replace with Agent dispatch. If read-only, no change needed.
-  - [ ] 5.7: Review `.claude/skills/bmad-sprint-status/workflow.md` and `.claude/skills/bmad-retrospective/workflow.md` -- if they write to sprint-status.yaml, update; if read-only, no change needed.
+  - [ ] 5.1: Update `skills/momentum-create-story/workflow.md` -- replace direct writes to `stories/index.json` (status updates to `ready-for-dev`) with Agent dispatch to sprint-manager.
+  - [ ] 5.2: Update `skills/momentum-dev/workflow.md` -- replace direct writes to `stories/index.json` (status transitions during development) with Agent dispatch to sprint-manager.
+  - [ ] 5.3: Update `.claude/skills/bmad-create-story/workflow.md` -- replace direct writes to `stories/index.json` with Agent dispatch to sprint-manager.
+  - [ ] 5.4: Update `.claude/skills/bmad-sprint-planning/workflow.md` -- replace direct writes to `sprints/index.json` and `stories/index.json` with Agent dispatch to sprint-manager.
+  - [ ] 5.5: Update `.claude/skills/bmad-dev-story/workflow.md` -- replace direct writes to `stories/index.json` with Agent dispatch to sprint-manager.
+  - [ ] 5.6: Update `skills/momentum-plan-audit/workflow.md` -- if it writes to `stories/index.json` or `sprints/index.json`, replace with Agent dispatch. If read-only, no change needed.
+  - [ ] 5.7: Review `.claude/skills/bmad-sprint-status/workflow.md` and `.claude/skills/bmad-retrospective/workflow.md` -- if they write to `stories/index.json` or `sprints/index.json`, update; if read-only, no change needed.
 
 - [ ] Task 6: Validate integration (AC: #1, #6)
-  - [ ] 6.1: Verify no skill outside `momentum-sprint-manager` contains direct write logic for sprint-status.yaml (grep for Write/Edit tool calls targeting sprint-status).
+  - [ ] 6.1: Verify no skill outside `momentum-sprint-manager` contains direct write logic for `stories/index.json` or `sprints/index.json` (grep for Write/Edit tool calls targeting these files).
   - [ ] 6.2: Verify all updated skills correctly construct the Agent dispatch command with the appropriate action type and parameters.
   - [ ] 6.3: Run the behavioral evals from Task 3 to confirm the skill functions correctly.
 
@@ -103,19 +103,22 @@ so that all status transitions are atomic, auditable, and free from concurrent w
 
 ### Scope and Approach
 
-This story creates a new executor subagent skill (`momentum-sprint-manager`) and migrates all sprint-status.yaml write operations across the codebase to delegate to it. The sprint-manager becomes the single point of control for all sprint-status.yaml mutations.
+This story creates a new executor subagent skill (`momentum-sprint-manager`) and migrates all `stories/index.json` and `sprints/index.json` write operations across the codebase to delegate to it. The sprint-manager becomes the single point of control for all mutations to these files.
+
+**Scope boundary:** Sprint-manager is the sole writer of `stories/index.json` (status, epic_slug, depends_on, touches fields) and all of `sprints/index.json`. Story content files (`stories/{slug}.md`) are written by `momentum-create-story`, not sprint-manager.
 
 **Key design decision:** The sprint-manager is NOT a `context: fork` skill. Context-fork is for read-only verifiers (code-reviewer, architecture-guard) that need tool isolation. The sprint-manager needs full write access to `sprint-status.yaml` -- it is an executor subagent invoked via the Agent tool by the calling workflow.
 
 ### Architecture Compliance
 
 **Write authority (Architecture, Architectural Boundaries section):**
-> momentum-sprint-manager | sprint-status.yaml | sprint-status.yaml (sole writer)
-> Impetus | sprint-status.yaml, journal.jsonl, specs, findings-ledger.jsonl | journal.jsonl, journal-view.md (NEVER writes sprint-status.yaml)
+> momentum-sprint-manager | stories/index.json, sprints/index.json (sole writer of these files)
+> momentum-create-story | writes stories/{slug}.md content files
+> Impetus | journal.jsonl, journal-view.md (NEVER writes stories/index.json or sprints/index.json directly)
 [Source: _bmad-output/planning-artifacts/architecture.md#Architectural Boundaries]
 
 **Status update authority (Architecture, Sprint Tracking Schema section):**
-> All writes to sprint-status.yaml go through `momentum-sprint-manager` -- an executor subagent with exclusive write authority over this file. No other agent or script writes to sprint-status.yaml directly. The legacy `update-story-status.sh` script is deprecated and will be removed during migration.
+> All writes to `stories/index.json` and `sprints/index.json` go through `momentum-sprint-manager` -- an executor subagent with exclusive write authority over these files. No other agent or script writes to them directly. The legacy `update-story-status.sh` script is deprecated and will be removed during migration.
 [Source: _bmad-output/planning-artifacts/architecture.md#Sprint Tracking Schema]
 
 **Story State Machine (Architecture):**
@@ -134,30 +137,30 @@ Terminal states: `dropped`, `closed-incomplete` (reachable from any non-terminal
 The sprint-manager is invoked via the Agent tool. The calling skill constructs a prompt like:
 
 ```
-Update sprint-status.yaml:
+Update stories/index.json:
 Action: status_transition
 Story: posttooluse-lint-hook
 From: in-progress
 To: review
 ```
 
-The sprint-manager reads sprint-status.yaml, validates the transition, performs the update, and returns:
+The sprint-manager reads `stories/index.json`, validates the transition, performs the update, and returns:
 
 ```json
 { "action": "status_transition", "story": "posttooluse-lint-hook", "from": "in-progress", "to": "review", "success": true }
 ```
 
-### Skills That Currently Write sprint-status.yaml
+### Skills That Currently Write stories/index.json or sprints/index.json
 
 These need to be updated to delegate writes to sprint-manager:
 
 **Direct writers (confirmed):**
-- `skills/momentum-create-story/workflow.md` -- writes `ready-for-dev` status
-- `skills/momentum-dev/workflow.md` -- writes status transitions during development
+- `skills/momentum-create-story/workflow.md` -- writes `ready-for-dev` status to stories/index.json
+- `skills/momentum-dev/workflow.md` -- writes status transitions to stories/index.json
 - `skills/momentum/scripts/update-story-status.sh` -- shell script, deprecated
 - `.claude/skills/bmad-create-story/workflow.md` -- writes `ready-for-dev` status
-- `.claude/skills/bmad-sprint-planning/workflow.md` -- writes initial sprint structure
-- `.claude/skills/bmad-dev-story/workflow.md` -- writes status transitions
+- `.claude/skills/bmad-sprint-planning/workflow.md` -- writes sprint structure to sprints/index.json
+- `.claude/skills/bmad-dev-story/workflow.md` -- writes status transitions to stories/index.json
 
 **Possibly write (needs verification):**
 - `skills/momentum-plan-audit/workflow.md`
@@ -172,15 +175,18 @@ These need to be updated to delegate writes to sprint-manager:
 
 3. **State machine enforcement:** The sprint-manager must validate transitions. An illegal transition (e.g., `backlog -> done`) must be rejected, not silently applied.
 
-4. **Data preservation:** Every write must preserve all data not related to the requested change. A status transition on one story must not alter any other story, epic, or sprint data.
+4. **Data preservation:** Every write must preserve all data not related to the requested change. A status transition on one story must not alter any other story or sprint data.
 
-5. **YAML validity:** Every write must produce valid YAML. The sprint-manager should validate its output before writing.
+5. **JSON validity:** Every write must produce valid JSON. The sprint-manager should validate its output before writing.
+
+6. **Write scope boundary:** Sprint-manager writes to `stories/index.json` (index fields: status, epic_slug, depends_on, touches) and `sprints/index.json`. It does NOT write to `stories/{slug}.md` content files -- those are owned by `momentum-create-story`.
 
 ### Project Structure Notes
 
 - **New skill directory:** `skills/momentum-sprint-manager/` (SKILL.md, workflow.md, evals/)
-- **sprint-status.yaml location:** `_bmad-output/implementation-artifacts/sprint-status.yaml` (post-Story-0.2 schema)
-- **Skills to update:** 6-9 workflow files that currently write sprint-status.yaml
+- **stories/index.json location:** `stories/index.json` (created by Story 0.2)
+- **sprints/index.json location:** `sprints/index.json` (created by Story 0.2)
+- **Skills to update:** 6-9 workflow files that currently write to stories/index.json or sprints/index.json
 - **Script to deprecate:** `skills/momentum/scripts/update-story-status.sh`
 
 ### References

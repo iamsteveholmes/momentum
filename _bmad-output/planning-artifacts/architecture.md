@@ -1081,91 +1081,75 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 **Status update authority:** All writes to sprint-status.yaml go through `momentum-sprint-manager` — an executor subagent with exclusive write authority over this file. No other agent or script writes to sprint-status.yaml directly. Story file frontmatter `status` is updated by the agent that modifies the story file (momentum-create-story or momentum-dev).
 
-### Sprint Tracking Schema — sprint-status.yaml
+### Sprint Tracking Schema — Folder-Based Model
 
-> _Revised 2026-04-01: Full schema redesign. Three top-level sections replace flat development_status + momentum_metadata. All writes via momentum-sprint-manager._
+> _Revised 2026-04-01: sprint-status.yaml is deprecated. Story and sprint state is now decomposed into a `stories/` folder and a `sprints/` folder. All status writes via momentum-sprint-manager._
 
-sprint-status.yaml has three top-level sections:
+**`stories/` folder** — one file per story (`stories/{slug}.md`). Created early at backlog stage as a stub (slug, title, epic, status). Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum-create-story`. Story file content (ACs, dev notes) is written by `momentum-create-story`.
 
-```yaml
-# 1. stories — flat registry of all stories (the source of truth for status)
-stories:
-  posttooluse-lint-hook:
-    status: in-progress
-    title: PostToolUse lint and format hook
-    story_file: true
-    depends_on: []
-    touches:
-      - "skills/momentum/references/hooks/"
-  impetus-identity-redesign:
-    status: ready-for-dev
-    title: Impetus Identity & Persona Section
-    story_file: true
-    depends_on: []
-    touches:
-      - "skills/momentum/workflow.md"
-  model-routing-frontmatter:
-    status: backlog
-    title: Model routing configured by frontmatter
-    story_file: false
+**`stories/index.json`** — lightweight lookup index. Each entry: slug, status, title, epic slug, story_file (boolean — whether fleshed out), depends_on, touches. Epic membership lives here, not in epics.md.
 
-# 2. epics — named categories with story membership (stories can move between epics)
-epics:
-  quality-enforcement:
-    title: "Automatic Quality Enforcement"
-    stories:
-      - posttooluse-lint-hook
-      - pretooluse-file-protection
-      - stop-gate-quality-checks
-      - model-routing-frontmatter
-  impetus-ux:
-    title: "Impetus UX & Orchestration"
-    stories:
-      - impetus-identity-redesign
-      - session-open-sprint-view
-
-# 3. sprints — active + planning sprints with wave plans
-sprints:
-  active:
-    name: "Quality Hooks Sprint"
-    slug: quality-hooks-sprint
-    stories:
-      - posttooluse-lint-hook
-      - pretooluse-file-protection
-      - stop-gate-quality-checks
-    locked: true
-    started: 2026-03-30
-    waves:
-      - wave: 1
-        stories:
-          - posttooluse-lint-hook
-          - pretooluse-file-protection
-      - wave: 2
-        stories:
-          - stop-gate-quality-checks
-
-  planning:
-    name: "Impetus UX Sprint"
-    slug: impetus-ux-sprint
-    stories:
-      - impetus-identity-redesign
-      - session-open-sprint-view
-    locked: false
+```json
+{
+  "posttooluse-lint-hook": {
+    "status": "in-progress",
+    "title": "PostToolUse lint and format hook",
+    "epic": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": ["skills/momentum/references/hooks/"]
+  },
+  "impetus-identity-redesign": {
+    "status": "ready-for-dev",
+    "title": "Impetus Identity & Persona Section",
+    "epic": "impetus-ux",
+    "story_file": true,
+    "depends_on": [],
+    "touches": ["skills/momentum/workflow.md"]
+  },
+  "model-routing-frontmatter": {
+    "status": "backlog",
+    "title": "Model routing configured by frontmatter",
+    "epic": "quality-enforcement",
+    "story_file": false,
+    "depends_on": [],
+    "touches": []
+  }
+}
 ```
 
-**Schema for each `stories` entry:**
+**`sprints/` folder** — one file per sprint (`sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, wave plan.
 
-| Field | Type | Description |
-|---|---|---|
-| `status` | string | Story stage: backlog, ready-for-dev, in-progress, review, verify, done, dropped, closed-incomplete |
-| `title` | string | Display title for the story |
-| `story_file` | boolean | Whether a story implementation file exists in `_bmad-output/implementation-artifacts/` |
-| `depends_on` | list of strings | Story slugs that must be `done` before this story can be selected. Empty list if no dependencies. |
-| `touches` | list of strings | Paths this story will create or modify. Used for merge conflict risk assessment. |
+**`sprints/index.json`** — which sprint is active, which is planning, list of completed sprint slugs.
 
-**Write authority:** `momentum-sprint-manager` is the sole writer of sprint-status.yaml. This is an executor subagent spawned by Impetus. No other agent or script writes to this file directly. The legacy `update-story-status.sh` script is deprecated and will be removed during migration.
+```json
+// sprints/index.json
+{
+  "active": "quality-hooks-sprint",
+  "planning": "impetus-ux-sprint",
+  "completed": []
+}
 
-**Migration from old schema:** The `story-id-migration` and `sprint-status-schema-redesign` stories handle the transition from the old `development_status` + `momentum_metadata` flat-key format to this three-section schema. All existing story keys (`N-N-slug` format) will be renamed to plain kebab-case slugs.
+// sprints/quality-hooks-sprint.json
+{
+  "name": "Quality Hooks Sprint",
+  "slug": "quality-hooks-sprint",
+  "stories": ["posttooluse-lint-hook", "pretooluse-file-protection", "stop-gate-quality-checks"],
+  "locked": true,
+  "started": "2026-03-30",
+  "completed": null,
+  "waves": [
+    { "wave": 1, "stories": ["posttooluse-lint-hook", "pretooluse-file-protection"] },
+    { "wave": 2, "stories": ["stop-gate-quality-checks"] }
+  ]
+}
+```
+
+**`epics.md`** — names, slugs, and descriptions only. No story lists. Pure documentation. Epic membership is tracked in `stories/index.json`.
+
+**`sprint-status.yaml` is deprecated** — replaced by the folder-based model above. The `sprint-status-schema-decomposition` migration story handles the transition from sprint-status.yaml to the new structure.
+
+**Write authority:** `momentum-sprint-manager` is the sole writer of the `sprints/` folder and the `status` fields in `stories/index.json`. Story file content (ACs, dev notes, tasks) is written by `momentum-create-story`. No other agent or script writes to these files directly.
 
 ### Next-Story Selection Rule
 
