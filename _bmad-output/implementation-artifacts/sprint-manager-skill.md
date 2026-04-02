@@ -1,6 +1,6 @@
 # Story 0.3: Sprint-Manager Skill
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 

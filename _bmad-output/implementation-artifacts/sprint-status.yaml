@@ -51,130 +51,130 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   # Epic 0: Redesign Foundation
   epic-0: in-progress
-  0-1-story-id-migration: ready-for-dev
-  0-2-sprint-status-schema-redesign: ready-for-dev
-  0-3-sprint-manager-skill: ready-for-dev
+  story-id-migration: done
+  sprint-status-schema-redesign: ready-for-dev
+  sprint-manager-skill: ready-for-dev
 
   # Epic 1: Foundation & Bootstrap
   epic-1: done
-  1-1-repository-structure-established: done
-  1-2-skills-installable-via-npx-skills-add: done
-  1-3-first-momentum-invocation-completes-setup: done
-  1-4-momentum-detects-and-applies-upgrades: done
-  1-5-enforcement-degrades-gracefully-across-tool-tiers: done
+  repository-structure-established: done
+  skills-installable-via-npx-skills-add: done
+  first-momentum-invocation-completes-setup: done
+  momentum-detects-and-applies-upgrades: done
+  enforcement-degrades-gracefully-across-tool-tiers: done
   epic-1-retrospective: done
 
   # Epic 1b: Foundation Fixes
   epic-1b: done
-  1-6-fix-npx-skills-add-experience: done
-  1-7-acceptance-testing-process-and-standards: done
-  1-8-orchestrator-purity-principle: done
-  1-9-journal-json-jsonl-migration-evaluation: done
+  fix-npx-skills-add-experience: done
+  acceptance-testing-process-and-standards: done
+  orchestrator-purity-principle: done
+  journal-json-jsonl-migration-evaluation: done
   epic-1b-retrospective: optional
 
   # Epic 2: Stay Oriented with Impetus
   epic-2: in-progress
-  2-1-impetus-skill-created-with-correct-persona-and-input-handling: done
-  2-2-session-orientation-and-thread-management: review
-  2-3-visual-progress-tracks-workflow-position: review
-  2-4-completion-signals-and-productive-waiting: review
-  2-5-spec-contextualization-and-configuration-gap-detection: review
+  impetus-skill-created-with-correct-persona-and-input-handling: done
+  session-orientation-and-thread-management: review
+  visual-progress-tracks-workflow-position: review
+  completion-signals-and-productive-waiting: review
+  spec-contextualization-and-configuration-gap-detection: review
   epic-2-retrospective: optional
 
   # Epic 2 Refinement: Harden Epic 2 Foundation
   epic-2-refinement: in-progress
-  2-6-session-thread-display-fires-hygiene-checks: done
-  2-7-natural-language-input-confirmed-before-dispatch: done
-  2-8-impetus-first-impression-has-personality-and-identity: done
-  2-9-behavioral-persistence-across-sessions: done
-  2-10-background-agent-coordination-validated: done
+  session-thread-display-fires-hygiene-checks: done
+  natural-language-input-confirmed-before-dispatch: done
+  impetus-first-impression-has-personality-and-identity: done
+  behavioral-persistence-across-sessions: done
+  background-agent-coordination-validated: done
   epic-2-refinement-retrospective: optional
 
   # Epic 2a: Impetus UX Redesign
   epic-2a: done
-  2a-1-silent-pre-flight-and-deferred-stats-write: done
-  2a-2-epic-progress-bar-at-session-open: done
-  2a-3-session-open-menu-redesign: done
-  2a-4-hash-drift-plain-language-message: done
+  silent-pre-flight-and-deferred-stats-write: done
+  epic-progress-bar-at-session-open: done
+  session-open-menu-redesign: done
+  hash-drift-plain-language-message: done
   epic-2a-retrospective: optional
 
   # Epic 2b: Impetus as Epic Orchestrator
   epic-2b: backlog
-  2b-1-triage-skill: backlog
-  2b-2-create-epic-command: backlog
-  2b-3-momentum-dev-auto-variant: backlog
-  2b-4-develop-epic-command: backlog
-  2b-5-retro-triage-handoff: backlog
-  2b-6-epic-closeout-and-status-model: backlog
+  triage-skill: backlog
+  create-epic-command: backlog
+  momentum-dev-auto-variant: backlog
+  develop-epic-command: backlog
+  retro-triage-handoff: backlog
+  epic-closeout-and-status-model: backlog
   epic-2b-retrospective: optional
 
   # Epic 3: Automatic Quality Enforcement
   epic-3: in-progress
-  3-1-posttooluse-lint-and-format-hook-active: ready-for-dev
-  3-2-pretooluse-file-protection-hooks-active: ready-for-dev
-  3-3-stop-gate-runs-conditional-quality-checks: ready-for-dev
-  3-4-authority-hierarchy-rules-auto-load-every-session: dropped  # AVFL 2026-03-23: duplicates Stories 1.3/1.5; reassigned to 7.1/7.3
-  3-5-model-routing-configured-by-frontmatter: ready-for-dev
+  posttooluse-lint-and-format-hook-active: ready-for-dev
+  pretooluse-file-protection-hooks-active: ready-for-dev
+  stop-gate-runs-conditional-quality-checks: ready-for-dev
+  authority-hierarchy-rules-auto-load-every-session: dropped  # AVFL 2026-03-23: duplicates Stories 1.3/1.5; reassigned to 7.1/7.3
+  model-routing-configured-by-frontmatter: ready-for-dev
   epic-3-retrospective: optional
 
   # Epic 4: Complete Story Cycles
   epic-4: backlog
-  4-1-code-reviewer-skill-performs-adversarial-review: backlog
-  4-2-gherkin-acs-and-atdd-workflow-active: backlog
-  4-3-full-story-cycle-guided-by-impetus: backlog
-  4-4-create-story-and-dev-story-skills-active: backlog
-  4-5-upstream-fix-skill-analyzes-quality-failures: backlog
+  code-reviewer-skill-performs-adversarial-review: backlog
+  gherkin-acs-and-atdd-workflow-active: backlog
+  full-story-cycle-guided-by-impetus: backlog
+  create-story-and-dev-story-skills-active: backlog
+  upstream-fix-skill-analyzes-quality-failures: backlog
   epic-4-retrospective: optional
 
   # Epic 5: Trust Artifact Provenance
   epic-5: backlog
-  5-1-derives-from-frontmatter-establishes-traceability: backlog
-  5-2-provenance-scanner-builds-referenced-by-graph: backlog
-  5-3-hash-based-staleness-detection-for-internal-documents: backlog
-  5-4-time-based-staleness-for-edge-documents: backlog
-  5-5-claim-level-provenance-status-and-integrity-enforcement: backlog
+  derives-from-frontmatter-establishes-traceability: backlog
+  provenance-scanner-builds-referenced-by-graph: backlog
+  hash-based-staleness-detection-for-internal-documents: backlog
+  time-based-staleness-for-edge-documents: backlog
+  claim-level-provenance-status-and-integrity-enforcement: backlog
   epic-5-retrospective: optional
 
   # Epic 6: The Practice Compounds
   epic-6: backlog
-  6-1-findings-ledger-accumulates-quality-findings-across-stories: backlog
-  6-2-cross-story-pattern-detection-surfaces-systemic-issues: backlog
-  6-3-flywheel-workflow-explains-issues-and-guides-upstream-trace: backlog
-  6-4-developer-consent-required-at-every-flywheel-step: backlog
-  6-5-practice-health-metric-and-fix-level-tracking: backlog
+  findings-ledger-accumulates-quality-findings-across-stories: backlog
+  cross-story-pattern-detection-surfaces-systemic-issues: backlog
+  flywheel-workflow-explains-issues-and-guides-upstream-trace: backlog
+  developer-consent-required-at-every-flywheel-step: backlog
+  practice-health-metric-and-fix-level-tracking: backlog
   epic-6-retrospective: optional
 
   # Epic 7: Bring Your Own Tools
   epic-7: backlog
-  7-1-project-configuration-file-defines-protocol-bindings: backlog
-  7-2-protocol-gap-resolution-creates-valid-config-entries: backlog
-  7-3-workflow-steps-resolve-through-protocol-interfaces-at-invocation-time: backlog
-  7-4-protocol-substitution-satisfies-interface-contract: backlog
-  7-5-mcp-provider-registration-and-cursor-tool-ceiling-compliance: backlog
+  project-configuration-file-defines-protocol-bindings: backlog
+  protocol-gap-resolution-creates-valid-config-entries: backlog
+  workflow-steps-resolve-through-protocol-interfaces-at-invocation-time: backlog
+  protocol-substitution-satisfies-interface-contract: backlog
+  mcp-provider-registration-and-cursor-tool-ceiling-compliance: backlog
   epic-7-retrospective: optional
 
   # Epic 8: Research & Knowledge Management
   epic-8: backlog
-  8-1-multi-model-research-workflow-active: backlog
-  8-2-research-prompts-are-date-anchored-with-primary-source-directives: backlog
-  8-3-domain-specific-freshness-windows-define-document-currency: backlog
-  8-4-outdated-documents-archived-with-reference-chain-intact: backlog
+  multi-model-research-workflow-active: backlog
+  research-prompts-are-date-anchored-with-primary-source-directives: backlog
+  domain-specific-freshness-windows-define-document-currency: backlog
+  outdated-documents-archived-with-reference-chain-intact: backlog
   epic-8-retrospective: optional
 
   # Epic 9: Performance Validation
   epic-9: backlog
-  9-1-promptfoo-configuration-benchmarks-skills-across-model-tiers: backlog
-  9-2-bash-benchmarking-script-captures-time-cost-and-tokens: backlog
-  9-3-golden-dataset-provides-canonical-benchmark-inputs-and-reference-outputs: backlog
-  9-4-pydantic-ai-harness-benchmarks-agent-workflows-with-agent-override: backlog
-  9-5-benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files: backlog
+  promptfoo-configuration-benchmarks-skills-across-model-tiers: backlog
+  bash-benchmarking-script-captures-time-cost-and-tokens: backlog
+  golden-dataset-provides-canonical-benchmark-inputs-and-reference-outputs: backlog
+  pydantic-ai-harness-benchmarks-agent-workflows-with-agent-override: backlog
+  benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files: backlog
   epic-9-retrospective: optional
 
   # Process Stories — Sprint 1
-  p1-1-remove-git-mcp-server-dependency: done
-  p1-3-findings-ledger-architecture-revision: done
-  p1-4-lightweight-story-status-update-tool: done
-  p1-5-cascade-spec-fatigue-patterns-into-prd-epics-and-stories: done
+  remove-git-mcp-server-dependency: done
+  findings-ledger-architecture-revision: done
+  lightweight-story-status-update-tool: done
+  cascade-spec-fatigue-patterns-into-prd-epics-and-stories: done
 
 # Momentum parallel execution metadata — invisible to BMAD skills
 # Each entry adds dependency and scope tracking for parallel story execution.
@@ -182,14 +182,14 @@ development_status:
 # touches: paths this story modifies (merge conflict risk indicator)
 # story_file: path to the full implementation story file
 momentum_metadata:
-  1-1-repository-structure-established:
+  repository-structure-established:
     depends_on: []
     touches:
       - "skills/momentum/"
       - "version.md"
       - "mcp/findings-server/"
-    story_file: "_bmad-output/implementation-artifacts/1-1-repository-structure-established.md"
-  1-2-skills-installable-via-npx-skills-add:
+    story_file: "_bmad-output/implementation-artifacts/repository-structure-established.md"
+  skills-installable-via-npx-skills-add:
     depends_on: []
     touches:
       - "package.json"
@@ -197,40 +197,40 @@ momentum_metadata:
       - "skills/momentum-code-reviewer/"
       - "skills/momentum-architecture-guard/"
       - "skills/momentum-upstream-fix/"
-    story_file: "_bmad-output/implementation-artifacts/1-2-skills-installable-via-npx-skills-add.md"
-  1-3-first-momentum-invocation-completes-setup:
+    story_file: "_bmad-output/implementation-artifacts/skills-installable-via-npx-skills-add.md"
+  first-momentum-invocation-completes-setup:
     depends_on: []
     touches:
       - "skills/momentum/"
       - ".claude/momentum/"
-    story_file: "_bmad-output/implementation-artifacts/1-3-first-momentum-invocation-completes-setup.md"
-  1-4-momentum-detects-and-applies-upgrades:
+    story_file: "_bmad-output/implementation-artifacts/first-momentum-invocation-completes-setup.md"
+  momentum-detects-and-applies-upgrades:
     depends_on: []
     touches:
       - "skills/momentum/"
-    story_file: "_bmad-output/implementation-artifacts/1-4-momentum-detects-and-applies-upgrades.md"
-  1-5-enforcement-degrades-gracefully-across-tool-tiers:
+    story_file: "_bmad-output/implementation-artifacts/momentum-detects-and-applies-upgrades.md"
+  enforcement-degrades-gracefully-across-tool-tiers:
     depends_on: []
     touches:
       - "README.md"
-    story_file: "_bmad-output/implementation-artifacts/1-5-enforcement-degrades-gracefully-across-tool-tiers.md"
-  2-1-impetus-skill-created-with-correct-persona-and-input-handling:
+    story_file: "_bmad-output/implementation-artifacts/enforcement-degrades-gracefully-across-tool-tiers.md"
+  impetus-skill-created-with-correct-persona-and-input-handling:
     depends_on: []
     touches:
       - "skills/momentum/"
-    story_file: "_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md"
-  2-2-session-orientation-and-thread-management:
+    story_file: "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md"
+  session-orientation-and-thread-management:
     depends_on: []
     touches:
       - "skills/momentum/"
       - ".claude/momentum/"
-    story_file: "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
-  2-3-visual-progress-tracks-workflow-position:
+    story_file: "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md"
+  visual-progress-tracks-workflow-position:
     depends_on: []
     touches:
       - "skills/momentum/"
-    story_file: "_bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md"
-  p1-1-remove-git-mcp-server-dependency:
+    story_file: "_bmad-output/implementation-artifacts/visual-progress-tracks-workflow-position.md"
+  remove-git-mcp-server-dependency:
     depends_on: []
     touches:
       - ".mcp.json"
@@ -239,12 +239,12 @@ momentum_metadata:
       - "_bmad-output/planning-artifacts/architecture.md"
       - "_bmad-output/planning-artifacts/epics.md"
       - "_bmad-output/planning-artifacts/ux-design-specification.md"
-      - "_bmad-output/implementation-artifacts/1-1-repository-structure-established.md"
-      - "_bmad-output/implementation-artifacts/1-3-first-momentum-invocation-completes-setup.md"
-    story_file: "_bmad-output/implementation-artifacts/p1-1-remove-git-mcp-server-dependency.md"
-  p1-3-findings-ledger-architecture-revision:
+      - "_bmad-output/implementation-artifacts/repository-structure-established.md"
+      - "_bmad-output/implementation-artifacts/first-momentum-invocation-completes-setup.md"
+    story_file: "_bmad-output/implementation-artifacts/remove-git-mcp-server-dependency.md"
+  findings-ledger-architecture-revision:
     depends_on:
-      - p1.1
+      - remove-git-mcp-server-dependency
     touches:
       - ".mcp.json"
       - ".claude/settings.local.json"
@@ -254,10 +254,10 @@ momentum_metadata:
       - "mcp/findings-server/README.md"
       - "_bmad-output/planning-artifacts/architecture.md"
       - "_bmad-output/planning-artifacts/epics.md"
-    story_file: "_bmad-output/implementation-artifacts/p1-3-findings-ledger-architecture-revision.md"
-  p1-4-lightweight-story-status-update-tool:
+    story_file: "_bmad-output/implementation-artifacts/findings-ledger-architecture-revision.md"
+  lightweight-story-status-update-tool:
     depends_on:
-      - p1.1
+      - remove-git-mcp-server-dependency
     touches:
       - "skills/momentum/scripts/"
       - "skills/momentum-plan-audit/workflow.md"
@@ -265,68 +265,68 @@ momentum_metadata:
       - ".claude/skills/bmad-dev-story/workflow.md"
       - "skills/momentum-create-story/workflow.md"
       - "_bmad-output/planning-artifacts/architecture.md"
-    story_file: "_bmad-output/implementation-artifacts/p1-4-lightweight-story-status-update-tool.md"
-  p1-5-cascade-spec-fatigue-patterns-into-prd-epics-and-stories:
+    story_file: "_bmad-output/implementation-artifacts/lightweight-story-status-update-tool.md"
+  cascade-spec-fatigue-patterns-into-prd-epics-and-stories:
     depends_on: []
     touches:
       - "_bmad-output/planning-artifacts/ux-design-specification.md"
       - "_bmad-output/planning-artifacts/prd.md"
       - "_bmad-output/planning-artifacts/epics.md"
-      - "_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md"
-      - "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
-      - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
-    story_file: "_bmad-output/implementation-artifacts/p1-5-cascade-spec-fatigue-patterns-into-prd-epics-and-stories.md"
-  1-6-fix-npx-skills-add-experience:
+      - "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md"
+      - "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md"
+      - "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
+    story_file: "_bmad-output/implementation-artifacts/cascade-spec-fatigue-patterns-into-prd-epics-and-stories.md"
+  fix-npx-skills-add-experience:
     depends_on:
-      - 1-7-acceptance-testing-process-and-standards
+      - acceptance-testing-process-and-standards
     touches:
       - "package.json"
       - "README.md"
-    story_file: "_bmad-output/implementation-artifacts/1-6-fix-npx-skills-add-experience.md"
-  1-8-orchestrator-purity-principle:
+    story_file: "_bmad-output/implementation-artifacts/fix-npx-skills-add-experience.md"
+  orchestrator-purity-principle:
     depends_on: []
     touches:
       - "_bmad-output/planning-artifacts/architecture.md"
-      - "_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md"
+      - "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md"
       - "_bmad-output/planning-artifacts/epics.md"
-    story_file: "_bmad-output/implementation-artifacts/1-8-orchestrator-purity-principle.md"
-  1-9-journal-json-jsonl-migration-evaluation:
+    story_file: "_bmad-output/implementation-artifacts/orchestrator-purity-principle.md"
+  journal-json-jsonl-migration-evaluation:
     depends_on: []
     touches:
       - "_bmad-output/planning-artifacts/architecture.md"
-      - "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
-    story_file: "_bmad-output/implementation-artifacts/1-9-journal-json-jsonl-migration-evaluation.md"
-  1-7-acceptance-testing-process-and-standards:
+      - "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md"
+    story_file: "_bmad-output/implementation-artifacts/journal-json-jsonl-migration-evaluation.md"
+  acceptance-testing-process-and-standards:
     depends_on: []
     touches:
       - "docs/process/acceptance-testing-standard.md"
-      - "_bmad-output/implementation-artifacts/2-1-impetus-skill-created-with-correct-persona-and-input-handling.md"
-      - "_bmad-output/implementation-artifacts/2-2-session-orientation-and-thread-management.md"
-      - "_bmad-output/implementation-artifacts/2-3-visual-progress-tracks-workflow-position.md"
-      - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
-    story_file: "_bmad-output/implementation-artifacts/1-7-acceptance-testing-process-and-standards.md"
-  3-1-posttooluse-lint-and-format-hook-active:
+      - "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md"
+      - "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md"
+      - "_bmad-output/implementation-artifacts/visual-progress-tracks-workflow-position.md"
+      - "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
+    story_file: "_bmad-output/implementation-artifacts/acceptance-testing-process-and-standards.md"
+  posttooluse-lint-and-format-hook-active:
     depends_on: []
     touches:
       - "skills/momentum/references/hooks/"
       - "skills/momentum/references/hooks-config.json"
       - ".claude/momentum/session-modified-files.txt"
-    story_file: "_bmad-output/implementation-artifacts/3-1-posttooluse-lint-and-format-hook-active.md"
-  3-2-pretooluse-file-protection-hooks-active:
+    story_file: "_bmad-output/implementation-artifacts/posttooluse-lint-and-format-hook-active.md"
+  pretooluse-file-protection-hooks-active:
     depends_on: []
     touches:
       - "skills/momentum/references/hooks/"
       - "skills/momentum/references/hooks-config.json"
-    story_file: "_bmad-output/implementation-artifacts/3-2-pretooluse-file-protection-hooks-active.md"
-  3-3-stop-gate-runs-conditional-quality-checks:
+    story_file: "_bmad-output/implementation-artifacts/pretooluse-file-protection-hooks-active.md"
+  stop-gate-runs-conditional-quality-checks:
     depends_on:
-      - 3-1-posttooluse-lint-and-format-hook-active
+      - posttooluse-lint-and-format-hook-active
     touches:
       - "skills/momentum/references/hooks/"
       - "skills/momentum/references/hooks-config.json"
       - ".claude/momentum/session-modified-files.txt"
-    story_file: "_bmad-output/implementation-artifacts/3-3-stop-gate-runs-conditional-quality-checks.md"
-  3-5-model-routing-configured-by-frontmatter:
+    story_file: "_bmad-output/implementation-artifacts/stop-gate-runs-conditional-quality-checks.md"
+  model-routing-configured-by-frontmatter:
     depends_on: []
     touches:
       - "skills/momentum/references/model-routing-guide.md"
@@ -336,52 +336,52 @@ momentum_metadata:
       - "skills/momentum-dev/"
       - "skills/momentum-plan-audit/"
       - "skills/momentum-avfl/"
-    story_file: "_bmad-output/implementation-artifacts/3-5-model-routing-configured-by-frontmatter.md"
-  2-6-session-thread-display-fires-hygiene-checks:
+    story_file: "_bmad-output/implementation-artifacts/model-routing-configured-by-frontmatter.md"
+  session-thread-display-fires-hygiene-checks:
     depends_on: []
     touches:
       - "skills/momentum/workflow.md"
-    story_file: "_bmad-output/implementation-artifacts/2-6-session-thread-display-fires-hygiene-checks.md"
-  2-7-natural-language-input-confirmed-before-dispatch:
+    story_file: "_bmad-output/implementation-artifacts/session-thread-display-fires-hygiene-checks.md"
+  natural-language-input-confirmed-before-dispatch:
     depends_on: []
     touches:
       - "skills/momentum/workflow.md"
-    story_file: "_bmad-output/implementation-artifacts/2-7-natural-language-input-confirmed-before-dispatch.md"
-  2-8-impetus-first-impression-has-personality-and-identity:
+    story_file: "_bmad-output/implementation-artifacts/natural-language-input-confirmed-before-dispatch.md"
+  impetus-first-impression-has-personality-and-identity:
     depends_on: []
     touches:
       - "skills/momentum/workflow.md"
-    story_file: "_bmad-output/implementation-artifacts/2-8-impetus-first-impression-has-personality-and-identity.md"
-  2-9-behavioral-persistence-across-sessions:
+    story_file: "_bmad-output/implementation-artifacts/impetus-first-impression-has-personality-and-identity.md"
+  behavioral-persistence-across-sessions:
     depends_on:
-      - 2-6-session-thread-display-fires-hygiene-checks
+      - session-thread-display-fires-hygiene-checks
     touches:
       - "skills/momentum/references/journal-schema.md"
       - "skills/momentum/workflow.md"
-    story_file: "_bmad-output/implementation-artifacts/2-9-behavioral-persistence-across-sessions.md"
-  2-10-background-agent-coordination-validated:
+    story_file: "_bmad-output/implementation-artifacts/behavioral-persistence-across-sessions.md"
+  background-agent-coordination-validated:
     depends_on: []
     touches:
       - "docs/research/background-agent-coordination.md"
       - "_bmad-output/planning-artifacts/architecture.md"
-      - "_bmad-output/implementation-artifacts/2-4-completion-signals-and-productive-waiting.md"
-    story_file: "_bmad-output/implementation-artifacts/2-10-background-agent-coordination-validated.md"
-  2a-1-silent-pre-flight-and-deferred-stats-write:
+      - "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
+    story_file: "_bmad-output/implementation-artifacts/background-agent-coordination-validated.md"
+  silent-pre-flight-and-deferred-stats-write:
     depends_on:
-      - 2-9-behavioral-persistence-across-sessions
+      - behavioral-persistence-across-sessions
     touches:
       - "skills/momentum/workflow.md"
       - "skills/momentum/evals/"
-    story_file: "_bmad-output/implementation-artifacts/2a-1-silent-pre-flight-and-deferred-stats-write.md"
-  0-1-story-id-migration:
+    story_file: "_bmad-output/implementation-artifacts/silent-pre-flight-and-deferred-stats-write.md"
+  story-id-migration:
     depends_on: []
     touches:
       - "_bmad-output/implementation-artifacts/sprint-status.yaml"
       - "_bmad-output/implementation-artifacts/*.md"
-    story_file: "_bmad-output/implementation-artifacts/0-1-story-id-migration.md"
-  0-2-sprint-status-schema-redesign:
+    story_file: "_bmad-output/implementation-artifacts/story-id-migration.md"
+  sprint-status-schema-redesign:
     depends_on:
-      - 0-1-story-id-migration
+      - story-id-migration
     touches:
       - "_bmad-output/implementation-artifacts/sprint-status.yaml"
       - "skills/momentum/references/sprint-status-schema.md"
@@ -392,10 +392,10 @@ momentum_metadata:
       - ".claude/skills/bmad-create-story/workflow.md"
       - ".claude/skills/bmad-sprint-status/workflow.md"
       - ".claude/skills/bmad-sprint-planning/workflow.md"
-    story_file: "_bmad-output/implementation-artifacts/0-2-sprint-status-schema-redesign.md"
-  0-3-sprint-manager-skill:
+    story_file: "_bmad-output/implementation-artifacts/sprint-status-schema-redesign.md"
+  sprint-manager-skill:
     depends_on:
-      - 0-2-sprint-status-schema-redesign
+      - sprint-status-schema-redesign
     touches:
       - "skills/momentum-sprint-manager/"
       - "skills/momentum-create-story/workflow.md"
@@ -404,4 +404,4 @@ momentum_metadata:
       - ".claude/skills/bmad-create-story/workflow.md"
       - ".claude/skills/bmad-sprint-planning/workflow.md"
       - ".claude/skills/bmad-dev-story/workflow.md"
-    story_file: "_bmad-output/implementation-artifacts/0-3-sprint-manager-skill.md"
+    story_file: "_bmad-output/implementation-artifacts/sprint-manager-skill.md"
