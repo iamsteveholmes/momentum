@@ -69,7 +69,7 @@
     "status": "ready-for-dev",
     "title": "Impetus Identity Redesign — BMAD-Informed Character",
     "epic_slug": "impetus-core",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "skills/momentum/workflow.md"
@@ -79,7 +79,7 @@
     "status": "ready-for-dev",
     "title": "Session-Open Sprint View — Mode Detection and Fill Bars",
     "epic_slug": "impetus-core",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "momentum-tooling"
     ],
