@@ -63,4 +63,23 @@ deterministic logic → tool/script; requires judgment → agent.
 | `impetus-identity-redesign` | BMAD-informed Identity section, KITT-like servant character, first-install greeting with personality. Outcome-driven authoring. |
 | `session-open-sprint-view` | Sprint-mode detection (3 modes), per-story 16-block fill bars, context menus, reads JSON directly. |
 
-After Phase 2: Phase 3 (sub-command workflow modules + remaining executor subagents + triage tool), then Phase 4 (activate allowed-tools restriction).
+## What's Next (Phase 3 — Sprint Execution Core)
+
+Four stories focused on the critical path to plan and execute sprints with teams:
+
+| Story | What |
+|-------|------|
+| `agent-logging-tool` | Add `log` subcommand to momentum-tools.py. Every agent logs decisions, errors, retries, assumptions. JSONL append to `.claude/momentum/sprint-logs/`. Foundation for retros. |
+| `momentum-dev` | Simplify existing executor: strip AVFL + sprint-status writes. Pure worktree + bmad-dev-story + logging. |
+| `momentum-sprint-planning` | Story selection (3-8), create-story on stubs, team composition (which roles + project guidelines), dependency graph, execution plan. |
+| `momentum-sprint-dev` | Spawn team of agents per sprint plan. Dependency-driven concurrency (not waves). Track via tasks, handle merges, AVFL, verify, status transitions. |
+
+**Key architecture decisions:**
+- **Agent logging** — every agent writes JSONL logs. Primary input for retros.
+- **Teams over waves** — dependency-driven concurrency replaces rigid sequential tiers.
+- **Two-layer agents** — Momentum provides generic roles; projects provide stack-specific guidelines.
+- **Two-output retro** — analyzes logs, produces Momentum triage (practice issues) + Project triage (project issues).
+- **Triage vs refinement** — triage = intake (new ideas in); refinement = organization (backlog health).
+
+Deferred to Phase 5: triage, refinement, retro workflows + triage-writer tool + verify agent.
+Phase 4: activate allowed-tools restriction on Impetus.
