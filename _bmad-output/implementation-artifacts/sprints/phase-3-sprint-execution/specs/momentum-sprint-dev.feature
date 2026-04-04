@@ -174,11 +174,18 @@ Feature: Sprint Dev — Dependency-Driven Execution Loop
     And each item corresponds to a Gherkin scenario name and expected behavior
     And the developer confirms or flags each item
 
+  Scenario: Verification start transitions stories to verify
+    Given AVFL has passed
+    When the verification phase begins
+    Then all sprint stories are transitioned to verify
+    And each transition uses momentum-tools sprint status-transition --target verify
+
   Scenario: All scenarios confirmed transitions stories to done
     Given the developer confirms all verification checklist items
+    And all sprint stories have status verify
     When verification completes
-    Then all sprint stories are transitioned to done
-    And each transition uses momentum-tools sprint status-transition
+    Then all sprint stories are transitioned from verify to done
+    And each transition uses momentum-tools sprint status-transition --target done
 
   Scenario: Unconfirmed verification item logged as finding
     Given the developer flags a verification item as unconfirmed

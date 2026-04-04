@@ -713,7 +713,7 @@ Story IDs are globally unique kebab-case slugs with no epic encoding. This allow
 
 ### Sprint Retrospective
 
-- **FR66:** The retrospective workflow analyzes all agent logs from the sprint and produces two triage outputs: (1) Momentum triage — practice-level issues feeding back into Momentum's own refinement cycle, (2) Project triage — project-level issues feeding back into the project's refinement cycle. Both outputs derive from the same evidence base (agent JSONL logs stored in `.claude/momentum/sprint-logs/{sprint-slug}/`). **Priority: High** *(Phase 3)*
+- **FR66:** The retrospective workflow analyzes all agent logs from the sprint and produces two triage outputs: (1) Momentum triage — practice-level issues feeding back into Momentum's own refinement cycle, (2) Project triage — project-level issues feeding back into the project's refinement cycle. Both outputs derive from the same evidence base (agent JSONL logs stored in `.claude/momentum/sprint-logs/{sprint-slug}/`). **Priority: High** *(Phase 5)*
 
 ### Sprint Lifecycle
 

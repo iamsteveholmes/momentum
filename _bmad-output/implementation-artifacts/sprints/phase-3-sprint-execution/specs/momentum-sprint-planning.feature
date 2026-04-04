@@ -1,7 +1,7 @@
 Feature: Sprint Planning Workflow
-  As a developer using Momentum
-  I want a guided sprint planning workflow
-  So that I can select stories, generate specs, compose a team, and activate a sprint
+  The sprint-planning workflow module guides Impetus through story selection,
+  story creation, Gherkin spec generation, team composition, AVFL validation,
+  and sprint activation. Produces a complete execution plan for sprint-dev.
 
   Background:
     Given the Momentum practice module is installed

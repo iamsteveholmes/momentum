@@ -1472,6 +1472,9 @@ Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard). Proje
 **Decision 27 — Two-Output Retro**
 Retro produces two triage outputs from agent logs: Momentum triage (practice improvements) and Project triage (project-specific findings). Agent logs (Decision 24) are designed to support this dual-output pattern. Full retro implementation is deferred to Phase 5.
 
+**Decision 28 — Triage vs Refinement Distinction**
+Triage is intake-focused: analyze documents/ideas, create story stubs, initial prioritization, assign to an epic. Refinement is organization-focused: classify, prioritize, gap-analyze the whole backlog. Different purposes, complementary workflows. Both deferred to Phase 5.
+
 **Decision 29 — Sprint Planning Builds the Team**
 Sprint planning encompasses story selection, create-story invocation, team composition, dependency graph construction, and execution plan generation. The sprint record stores team + dependencies (not just story lists and wave assignments). See Sprint Planning Workflow section.
 

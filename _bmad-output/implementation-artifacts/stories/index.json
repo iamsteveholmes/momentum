@@ -725,5 +725,55 @@
       "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md",
       "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
     ]
+  },
+  "agent-logging-tool": {
+    "status": "ready-for-dev",
+    "title": "Agent Logging Tool — momentum-tools log subcommand",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py"
+    ]
+  },
+  "momentum-dev-simplify": {
+    "status": "ready-for-dev",
+    "title": "Momentum Dev Simplify — Pure Executor",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [
+      "agent-logging-tool"
+    ],
+    "touches": [
+      "skills/momentum-dev/workflow.md"
+    ]
+  },
+  "momentum-sprint-planning": {
+    "status": "ready-for-dev",
+    "title": "Sprint Planning Workflow Module",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [
+      "agent-logging-tool"
+    ],
+    "touches": [
+      "skills/momentum/workflows/sprint-planning.md",
+      "skills/momentum/workflow.md"
+    ]
+  },
+  "momentum-sprint-dev": {
+    "status": "ready-for-dev",
+    "title": "Sprint Dev Workflow Module",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [
+      "momentum-dev-simplify",
+      "momentum-sprint-planning"
+    ],
+    "touches": [
+      "skills/momentum/workflows/sprint-dev.md",
+      "skills/momentum/workflow.md"
+    ]
   }
 }

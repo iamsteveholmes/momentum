@@ -10,17 +10,17 @@ Feature: Agent Logging Tool
   # --- Happy Path ---
 
   Scenario: First log entry creates directory structure and file
-    When I run momentum-tools log --agent "momentum-dev" --sprint "phase-3" --event "decision" --detail "Starting implementation"
+    When I run momentum-tools log --agent "dev" --sprint "phase-3" --event "decision" --detail "Starting implementation"
     Then the exit code is 0
     And the directory ".claude/momentum/sprint-logs/phase-3/" exists
-    And the file ".claude/momentum/sprint-logs/phase-3/momentum-dev.jsonl" exists
+    And the file ".claude/momentum/sprint-logs/phase-3/dev.jsonl" exists
     And stdout contains valid JSON with "success": true
 
   Scenario: Log entry with story creates story-scoped file
-    When I run momentum-tools log --agent "momentum-dev" --story "agent-logging-tool" --sprint "phase-3" --event "finding" --detail "Tests pass"
+    When I run momentum-tools log --agent "dev" --story "agent-logging-tool" --sprint "phase-3" --event "finding" --detail "Tests pass"
     Then the exit code is 0
-    And the file ".claude/momentum/sprint-logs/phase-3/momentum-dev-agent-logging-tool.jsonl" exists
-    And the file ".claude/momentum/sprint-logs/phase-3/momentum-dev.jsonl" does not exist
+    And the file ".claude/momentum/sprint-logs/phase-3/dev-agent-logging-tool.jsonl" exists
+    And the file ".claude/momentum/sprint-logs/phase-3/dev.jsonl" does not exist
 
   Scenario: Log entry without story creates agent-only file
     When I run momentum-tools log --agent "impetus" --sprint "phase-3" --event "decision" --detail "Spawning dev agent"
@@ -28,16 +28,16 @@ Feature: Agent Logging Tool
     And the file ".claude/momentum/sprint-logs/phase-3/impetus.jsonl" exists
 
   Scenario: Log entry contains all required fields with correct types
-    When I run momentum-tools log --agent "momentum-dev" --sprint "phase-3" --event "decision" --detail "Chose approach A"
+    When I run momentum-tools log --agent "dev" --sprint "phase-3" --event "decision" --detail "Chose approach A"
     Then the exit code is 0
-    And the JSONL line in "momentum-dev.jsonl" contains key "timestamp" with an ISO 8601 value
-    And the JSONL line contains key "agent" with value "momentum-dev"
+    And the JSONL line in "dev.jsonl" contains key "timestamp" with an ISO 8601 value
+    And the JSONL line contains key "agent" with value "dev"
     And the JSONL line contains key "story" with value null
     And the JSONL line contains key "event" with value "decision"
     And the JSONL line contains key "detail" with value "Chose approach A"
 
   Scenario: Log entry with story populates story field
-    When I run momentum-tools log --agent "momentum-dev" --story "my-story" --sprint "phase-3" --event "assumption" --detail "API returns JSON"
+    When I run momentum-tools log --agent "dev" --story "my-story" --sprint "phase-3" --event "assumption" --detail "API returns JSON"
     Then the JSONL line contains key "story" with value "my-story"
 
   Scenario: Multiple appends accumulate in the same file
@@ -91,10 +91,11 @@ Feature: Agent Logging Tool
     Then the exit code is not 0
     And stderr contains an error about the missing required argument
 
-  Scenario: Missing --sprint argument is rejected
+  Scenario: Missing --sprint argument falls back to _unsorted directory
     When I run momentum-tools log --agent "dev" --event "decision" --detail "test"
-    Then the exit code is not 0
-    And stderr contains an error about the missing required argument
+    Then the exit code is 0
+    And the file ".claude/momentum/sprint-logs/_unsorted/dev.jsonl" exists
+    And the log entry has "sprint" field set to null
 
   # --- Append-Only Guarantee ---
 

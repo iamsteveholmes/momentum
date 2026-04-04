@@ -26,7 +26,9 @@ acceptance criteria (so dev agents see intent), while detailed Gherkin specs go 
 sprint-scoped specs directory that only verifiers access. Developers never see the
 Gherkin during implementation — this is black-box validation by design.
 
-## Acceptance Criteria
+## Acceptance Criteria (Plain English)
+
+> Detailed Gherkin specs: `sprints/phase-3-sprint-execution/specs/momentum-sprint-planning.feature`
 
 - Impetus displays the prioritized backlog from stories/index.json, grouped by epic,
   showing each story's title, status, dependencies, and epic membership
@@ -185,5 +187,5 @@ agent logging tool. The log subcommand must exist before this workflow can execu
 - Architecture: Repository Structure, workflows/ directory — creates `skills/momentum/workflows/sprint-planning.md`
 - FR61: Two-Layer Agent Model — this story wires Momentum generic roles with project-specific guidelines during planning
 - FR64: Sprint-Level AVFL — this story runs AVFL on the complete sprint plan as a single validation pass
-- FR68: Sprint Record Schema — this story writes team composition and dependency graph to `sprints/index.json`
+- FR68: Sprint Record Schema — this story writes team composition and dependency graph to `sprints/{sprint-slug}.json` (per-sprint record file; `sprints/index.json` holds slug references only)
 - FR69: Sprint Slug Convention — this story implements the `sprint-YYYY-MM-DD` naming convention

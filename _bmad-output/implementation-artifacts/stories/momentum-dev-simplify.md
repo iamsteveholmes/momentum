@@ -19,7 +19,9 @@ Wire in agent logging at key decision points so retrospectives have evidence. Th
 momentum-dev does worktree setup, runs bmad-dev-story inline, logs its work, and returns
 merge-ready output. Nothing more.
 
-## Acceptance Criteria
+## Acceptance Criteria (Plain English)
+
+> Detailed Gherkin specs: `sprints/phase-3-sprint-execution/specs/momentum-dev-simplify.feature`
 
 - momentum-dev no longer invokes momentum-avfl at any point during execution. AVFL runs
   at sprint level after all stories merge, not per-story.

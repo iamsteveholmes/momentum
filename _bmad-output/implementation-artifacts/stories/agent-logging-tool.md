@@ -20,10 +20,13 @@ files during execution. This creates the observability foundation that all Phase
 workflows depend on — sprint-dev, momentum-dev, and verifiers all log through this
 single deterministic interface.
 
-## Acceptance Criteria
+## Acceptance Criteria (Plain English)
+
+> Detailed Gherkin specs: `sprints/phase-3-sprint-execution/specs/agent-logging-tool.feature`
 
 - The `log` subcommand accepts `--agent`, `--event`, `--detail`, and optionally `--story`
-  and `--sprint` arguments
+  and `--sprint` arguments. `--agent`, `--event`, and `--detail` are required; `--story`
+  and `--sprint` are optional
 - When `--story` is provided, log entries are written to `{agent-role}-{story-slug}.jsonl`;
   when omitted, entries go to `{agent-role}.jsonl` (for Impetus's own orchestration log)
 - Log files are stored under `.claude/momentum/sprint-logs/{sprint-slug}/`
@@ -36,8 +39,8 @@ single deterministic interface.
 - Exit code 0 on success with JSON confirmation on stdout; exit code 1 on failure
   (invalid event type, missing required args)
 - Missing `--agent`, `--event`, or `--detail` arguments are rejected with a clear error
-- Missing `--sprint` argument is rejected with a clear error (sprint context is always
-  known during execution)
+- When `--sprint` is omitted, logs go to `.claude/momentum/sprint-logs/_unsorted/` as a
+  fallback directory (graceful degradation for standalone invocations)
 
 ## Dev Notes
 
@@ -82,7 +85,7 @@ momentum-tools log --agent <role> --story <slug> --sprint <slug> --event <type> 
 
 ### JSONL entry format
 ```json
-{"timestamp": "2026-04-02T14:30:00.123456", "agent": "momentum-dev", "story": "agent-logging-tool", "event": "decision", "detail": "Chose worktree-based isolation for concurrent story execution"}
+{"timestamp": "2026-04-02T14:30:00.123456", "agent": "dev", "story": "agent-logging-tool", "event": "decision", "detail": "Chose worktree-based isolation for concurrent story execution"}
 ```
 
 ### Event type semantics

@@ -8,7 +8,6 @@ depends_on:
 touches:
   - skills/momentum/workflows/sprint-dev.md
   - skills/momentum/workflow.md
-  - skills/momentum/scripts/momentum-tools.py
 change_type: skill-instruction
 ---
 
@@ -24,7 +23,9 @@ black-box verification against Gherkin specs, and surfaces a sprint summary when
 
 This is the workflow that turns a sprint plan into committed, verified code.
 
-## Acceptance Criteria
+## Acceptance Criteria (Plain English)
+
+> Detailed Gherkin specs: `sprints/phase-3-sprint-execution/specs/momentum-sprint-dev.feature`
 
 - Impetus loads `skills/momentum/workflows/sprint-dev.md` when the developer selects
   "Continue sprint" from the Mode 1 session menu
@@ -65,10 +66,12 @@ This is the workflow that turns a sprint plan into committed, verified code.
   `sprint complete` subcommands
 - `momentum-tools.py` will have a `log` subcommand by the time this story starts (depends
   on agent-logging-tool, which is a dependency of momentum-dev-simplify)
-- momentum-dev (post-simplify) is a pure executor: worktree setup + bmad-dev-story + return
-  merge-ready output — no AVFL, no status writes
-- Sprint records in `sprints/index.json` will contain team composition and dependency graph
-  (written by momentum-sprint-planning)
+- **Depends on `momentum-dev-simplify`:** momentum-dev (post-simplify) is a pure executor:
+  worktree setup + bmad-dev-story + return merge-ready output — no AVFL, no status writes.
+  Sprint-dev relies on this simplified interface contract.
+- **Depends on `momentum-sprint-planning`:** Sprint records in `sprints/{sprint-slug}.json`
+  contain team composition and dependency graph. Sprint-dev reads this data — it never
+  invents its own team plan.
 - Gherkin specs live at `sprints/{sprint-slug}/specs/{story-slug}.feature` (written during
   sprint planning, never seen by dev agents)
 
@@ -119,8 +122,9 @@ The workflow must define these phases:
    - Each Gherkin scenario becomes a checkbox item
    - Developer confirms each behavior is present and correct
    - Any unconfirmed items become findings to address
-4. Log verification results
-5. On full confirmation: transition all stories to `done` via status-transition
+4. Transition all stories to `verify` via `momentum-tools sprint status-transition --target verify`
+5. Log verification results
+6. On full confirmation: transition all stories from `verify` to `done` via status-transition
 
 **Phase 6: Sprint completion**
 1. Run `momentum-tools sprint complete` to archive the sprint
@@ -130,7 +134,7 @@ The workflow must define these phases:
    - AVFL findings: count found, count resolved
    - Verification: scenarios confirmed vs. total
    - Agent log location for retro
-3. Suggest: "Sprint complete. Ready for retro? That's where the real learning happens."
+3. Suggest running a retrospective. Propose the command or ask if the developer wants to proceed.
 
 ### What to change in existing files
 - Update `skills/momentum/workflow.md` Mode 1 dispatch: replace the placeholder
@@ -164,7 +168,7 @@ The workflow must define these phases:
   implementation details. The specs were written during planning before any code existed.
 
 ### Sprint record structure (expected from sprint-planning)
-The active sprint record in `sprints/index.json` is expected to contain:
+The active sprint slug is read from `sprints/index.json`. The full sprint record lives in `sprints/{sprint-slug}.json` and is expected to contain:
 ```json
 {
   "active": {
@@ -207,7 +211,7 @@ The active sprint record in `sprints/index.json` is expected to contain:
 - FR64: Sprint-Level AVFL — this story runs a single AVFL pass after all stories merge
 - FR65: Developer-Confirmation Checklist — this story implements Phase 3 verification as a Gherkin-derived checklist
 - FR67: Task-Based Progress Tracking — this story creates tasks per story and tracks progress through the execution loop
-- FR68: Sprint Record Schema — this story reads team composition and dependency graph from `sprints/index.json`
+- FR68: Sprint Record Schema — this story reads team composition and dependency graph from `sprints/{sprint-slug}.json` (per-sprint record; index.json holds slug reference only)
 - FR70: Error Handling — this story implements graceful error handling for all sprint execution failure modes
 - Architecture: Sprint Execution Flow (sprint-dev workflow) — implements all 6 phases (Initialization, Team Spawn, Progress Tracking Loop, Post-Merge Quality Gate, Verification, Sprint Completion)
 - Architecture: Dependency-Driven Execution (Decision 25) — implements the teams-over-waves model where stories spawn based on dependency resolution, not wave numbers
