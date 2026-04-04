@@ -10,13 +10,7 @@
     {
       "name": "momentum",
       "description": "Agentic engineering practice — rules, agents, quality gates, and workflow automation across projects",
-      "source": {
-        "source": "git-subdir",
-        "url": "iamsteveholmes/momentum",
-        "path": "skills/momentum",
-        "ref": "main",
-        "sha": "c566f5a07cb0f4257e46c5a1e0aefdce63173dee"
-      },
+      "source": "./skills/momentum",
       "category": "development",
       "homepage": "https://github.com/iamsteveholmes/momentum"
     }
