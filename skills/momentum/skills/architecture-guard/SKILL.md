@@ -1,5 +1,5 @@
 ---
-name: momentum-architecture-guard
+name: architecture-guard
 description: "Detects pattern drift against architecture decisions. Read-only enforcer. Invoked by Impetus — do not invoke directly."
 model: claude-opus-4-6
 context: fork
