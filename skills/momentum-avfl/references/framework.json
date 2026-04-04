@@ -42,7 +42,7 @@
       "default": null
     },
     "profile": {
-      "description": "Which validation profile to use: gate, checkpoint, or full. See validation_profiles section.",
+      "description": "Which validation profile to use: gate, checkpoint, full, or scan. See validation_profiles section.",
       "required": false,
       "default": "full"
     },
@@ -337,7 +337,7 @@
     }
   },
   "validation_profiles": {
-    "description": "Three intensity levels for applying validation at different stages of a workflow. Not every validation point needs the full treatment. Use gate for quick checks, checkpoint for important intermediate steps, and full for final deliverables.",
+    "description": "Four intensity levels for applying validation at different stages of a workflow. Not every validation point needs the full treatment. Use gate for quick checks, checkpoint for important intermediate steps, full for final deliverables, and scan for discovery-only validation with structured handoff.",
     "gate": {
       "description": "Lightweight pass/fail check. Fast and cheap. No fix loop \u2014 either passes or halts.",
       "agents": 1,
@@ -385,6 +385,19 @@
         "Final output of a workflow \u2014 the deliverable",
         "Any artifact that will be consumed by humans or downstream systems without further review",
         "High-stakes content where errors have significant consequences"
+      ]
+    },
+    "scan": {
+      "description": "Maximum-intensity discovery with zero fix iterations. Dual reviewers on all lenses at maximum skepticism. Output is a structured, prioritized findings list for handoff to a resolution team — no corrected document is produced.",
+      "agents": "2 per active lens (up to 8 parallel)",
+      "dual_review": true,
+      "lenses_active": "All 4 lenses",
+      "fix_loop": false,
+      "on_fail": "return_findings",
+      "output_format": "structured_handoff",
+      "when_to_use": [
+        "Post-sprint-merge quality gate — full codebase scan before handing to resolution team",
+        "Any context where discovery quality matters more than resolution throughput"
       ]
     }
   },

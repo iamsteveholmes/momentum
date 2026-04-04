@@ -25,7 +25,7 @@ Collect these before starting. If any are missing, ask before proceeding.
 | `task_context` | Yes | — | Brief description of what was produced (e.g., "market research report", "PRD section", "JSON config") |
 | `output_to_validate` | Yes | — | Single document mode: content or file path. Corpus mode (`corpus: true`): array of file paths |
 | `source_material` | No | null | Ground truth to check against. Pass original source through the entire pipeline — never let intermediate steps compress it |
-| `profile` | No | `full` | `gate`, `checkpoint`, or `full` |
+| `profile` | No | `full` | `gate`, `checkpoint`, `full`, or `scan` |
 | `stage` | No | `final` | Artifact maturity: `draft`, `checkpoint`, or `final`. Controls what absence counts as a gap — see Stage section below |
 | `corpus` | No | `false` | When `true`, validates multiple documents together. `output_to_validate` becomes an array of file paths. Activates cross-document dimensions and corpus prompt templates. All validators receive all files. |
 | `authority_hierarchy` | No | `null` | Ordered array of file paths (index 0 = highest authority). Only used when `corpus: true`. Fixer uses this to resolve cross-document contradictions — modifies lower-authority files to match higher-authority files, annotating fixes with `resolved_by: authority_hierarchy`. When absent, contradictions are flagged as `unresolved_contradiction`. |
@@ -46,7 +46,7 @@ When `corpus: true` is set, AVFL validates a set of related documents together r
 - Fixer uses `prompts.fixer_corpus` — produces per-file output blocks, one per file in the corpus
 
 **What does NOT change:**
-- Profiles (gate/checkpoint/full) work identically
+- Profiles (gate/checkpoint/full/scan) work identically
 - Scoring weights and thresholds are unchanged
 - All existing single-document dimensions still apply within each file
 - The dual-reviewer architecture is unchanged (full profile: Enumerator + Adversary per lens)
@@ -108,6 +108,13 @@ Floor is `2`. Benchmarking showed skepticism=1 collapses Enumerator and Adversar
 **When to use:** Final deliverables, high-stakes content, anything consumed by humans or downstream systems without further review.
 
 **How it runs:** 2 agents per lens × 4 lenses = up to 8 parallel reviewers. Iterative fix loop (max 4 iterations, pass threshold 95/100).
+
+### scan
+**When to use:** Post-sprint-merge quality gate, or any context where discovery quality matters more than resolution throughput. The output is a structured findings list for handoff to a resolution team.
+
+**How it runs:** 2 agents per lens × 4 lenses = up to 8 parallel reviewers (identical to full). Single pass at maximum skepticism (level 3). No fix loop — Phase 3 (EVALUATE) exits before reaching Phase 4 (FIX). The consolidated findings list is the final output. Output format is `structured_handoff`: findings ordered by severity then confidence with all required fields for team consumption.
+
+**Composes with corpus mode:** `profile: scan, corpus: true` runs maximum-intensity corpus validation with no fix loop — the two features are orthogonal and compose at call time.
 
 ---
 
@@ -181,6 +188,7 @@ Spawn validator subagents **in parallel** based on the profile. Set `model` and 
 - **gate:** 1 subagent — Enumerator framing, structural lens only. Model: `sonnet`.
 - **checkpoint:** 1 subagent per active lens (2–3 lenses relevant to the step). Enumerator framing. Model: `sonnet`.
 - **full:** 8 subagents total — 1 Enumerator + 1 Adversary per lens × 4 lenses, all in one turn. Enumerator: `sonnet`/medium. Adversary: `opus`/high.
+- **scan:** Identical to full — 8 subagents total, same model/effort configuration. The difference is downstream: scan never enters Phase 4.
 
 Pass the current skepticism value explicitly in each subagent prompt: `high` (3) on iteration 1, `low` (2) on all subsequent iterations.
 
@@ -216,7 +224,11 @@ Check exit conditions based on the profile:
 
 **full:** Score ≥ 95 → exit CLEAN. Score < 95 and iterations remaining → proceed to fix. Score < 95 and iteration = 4 → exit MAX_ITERATIONS_REACHED.
 
+**scan:** Exit immediately after consolidation regardless of score. Return the consolidated findings list as the final output (format: `structured_handoff`). The fixer is never reached. Exit status: SCAN_COMPLETE with score and findings count.
+
 ### Phase 4: FIX
+
+**Note:** When `fix_loop: false` (gate and scan profiles), the pipeline never reaches this phase. Gate halts on failure; scan returns the consolidated findings list directly from Phase 3.
 
 Model: `sonnet`. Sub-skill: `sub-skills/fixer`. Run as the `domain_expert` role.
 
@@ -266,6 +278,37 @@ Report: status, score, findings, pipeline stage name. Cannot continue until reso
 
 **CHECKPOINT_WARNING** — Checkpoint didn't achieve clean after fix attempt.
 Report: status, score, remaining findings, fix log. Continue with known issues flagged.
+
+**SCAN_COMPLETE** — Scan profile finished discovery pass.
+Report: status, score, findings count by severity tier, full structured findings list (see Scan Profile Handoff Format below). Informational score — scan does not pass/fail.
+
+---
+
+## Scan Profile Handoff Format
+
+When `profile: scan`, the final output uses `structured_handoff` format — a prioritized findings list designed for direct consumption by a resolution team.
+
+**Sort order:** severity (critical → high → medium → low), then confidence (HIGH → MEDIUM) within each severity tier.
+
+**Required fields per finding:**
+
+| Field | Description |
+|---|---|
+| `id` | Unique finding identifier (e.g., `F-001`) |
+| `severity` | critical, high, medium, or low |
+| `confidence` | HIGH (both reviewers found it) or MEDIUM (one reviewer, evidence-confirmed) |
+| `lens` | Which lens surfaced it: structural, accuracy, coherence, or domain |
+| `dimension` | Specific dimension (e.g., structural_validity, correctness, consistency) |
+| `location` | Where in the document — section/line, or `{filename}:{section}` in corpus mode |
+| `description` | What is wrong |
+| `evidence` | Quoted text or specific reference proving the issue |
+| `suggestion` | Actionable recommendation for resolution |
+
+**Exit report for scan:**
+- Status: `SCAN_COMPLETE`
+- Score: consolidated score (informational — scan does not pass/fail)
+- Findings count by severity tier
+- Full structured findings list
 
 ---
 
