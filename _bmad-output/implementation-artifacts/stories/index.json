@@ -738,7 +738,7 @@
     ]
   },
   "momentum-dev-simplify": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Momentum Dev Simplify — Pure Executor",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -750,7 +750,7 @@
     ]
   },
   "momentum-sprint-planning": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Sprint Planning Workflow Module",
     "epic_slug": "impetus-core",
     "story_file": true,
