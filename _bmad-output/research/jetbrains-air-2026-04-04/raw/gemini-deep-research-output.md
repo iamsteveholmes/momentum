@@ -209,3 +209,38 @@ The analysis concludes that Air is not a replacement for Claude Code, but its es
 For organizations navigating this transition, the strategy is clear: standardize on the Agent Client Protocol to preserve model flexibility, adopt a "Spec-First" Momentum workflow to ensure intent, and utilize the Agentic Development Environment to move from experimental code generation to industrialized software production. The era of "vibe coding" is over; the era of the agentic system has begun.   
 
 
+
+
+## Follow-Up: PSI (Program Structure Interface) Deep Dive
+
+**Question:** You mentioned the PSI (Program Structure Interface) that Air exposes to agents. Can you go deeper? (1) What exact APIs or tools does PSI expose — MCP, ACP, or direct API? (2) Can Claude Code access PSI remotely? (3) How does PSI compare to the IntelliJ MCP Server?
+
+**Response:**
+
+The Program Structure Interface (PSI) is the semantic core of JetBrains IDEs, and its exposure to agents marks the transition from text-based "grep" workflows to true code intelligence.
+
+### 1. APIs and Delivery Mechanisms
+
+PSI capabilities are exposed to agents primarily through **MCP (Model Context Protocol)** tools rather than direct ACP methods.
+
+- **Integrated MCP Server:** Starting with version 2025.2, JetBrains IDEs include a built-in MCP server. This server acts as a gateway that translates PSI-level data into tools the agent can call.
+- **Agent Client Protocol (ACP):** While ACP is the standard communication layer JetBrains Air uses to manage the agent's lifecycle (session initialization, file writing, terminal access), it does not carry semantic code data itself. Instead, Air allows you to "pass" the IDE's MCP tools to the agent during a session.
+- **Specialized Plugins:** Extensions like the PSI MCP Server and IDE Index MCP Server provide more granular access to the PSI, offering tools for inheritance hierarchy analysis, data flow tracing, and structural search.
+
+### 2. Remote Access for CLI Tools (Claude Code)
+
+CLI-based tools like Claude Code can access the PSI remotely as long as a JetBrains IDE is running on the host machine.
+
+- **Connection Pattern:** Add the JetBrains IDE as an MCP server within Claude Code's configuration (typically by running `claude mcp add jetbrains`).
+- **MCP Bridge:** The CLI tool communicates with the IDE's integrated MCP server over a local or networked HTTP/SSE connection (default port is often 63342).
+- **IDE Plugin for Claude:** Anthropic provides a dedicated JetBrains plugin for Claude Code that enables "auto-edit" permissions and shares live diagnostic data (lint/syntax errors) directly with the terminal session.
+
+### 3. PSI vs. Standard IntelliJ MCP Tools
+
+The distinction between "standard" MCP tools and "PSI-level" tools is a matter of semantic depth:
+
+- **Standard MCP Tools:** Basic integrations provide `read_file` or `grep_search`. These treat code as flat text, making them prone to errors when dealing with overloaded methods or symbols with identical names across different packages.
+- **PSI-Level Tools:** Tools like `resolve_symbol`, `ide_find_references`, and `ide_refactor_rename` use the IDE's Abstract Syntax Tree (AST) and project index.
+  - **Accuracy:** A PSI-aware tool knows exactly which `User` class is being referenced based on imports and scoping, whereas a standard tool might return every instance of "User" in the project.
+  - **Safety:** PSI-level refactoring tools (like Safe Delete) automatically update all references across the project and can undo changes if a conflict is detected.
+  - **Advanced Analysis:** PSI access allows agents to use Data Flow Analysis (DFA) to trace how values (like nulls) propagate through a system, enabling more accurate debugging.
