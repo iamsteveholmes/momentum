@@ -42,6 +42,8 @@ date: '2026-03-17'
 lastEdited: '2026-04-04'
 editHistory:
   - date: '2026-04-04'
+    changes: 'Decision 35 — Agent Definition Files vs SKILL.md Boundary: formalized decision framework for when to use SKILL.md (orchestrator/workflow, standalone verifier with context:fork) vs agent definition file (pure spawned worker). Added agents/ directory to plugin structure for QA reviewer and E2E validator. Applied framework to Team Review phase roles (Decision 34). Code-reviewer and architecture-guard confirmed as SKILL.md context:fork (standalone utility). AVFL sub-skills confirmed as nested SKILL.md (internal pipeline).'
+  - date: '2026-04-04'
     changes: 'AVFL scan profile and hybrid resolution team: Phase 4 updated to run AVFL in scan profile (all 4 lenses, dual reviewers, max skepticism, zero fix iterations — scored findings list output only). Phase 5 updated to hybrid Agent Team model (Dev fixes AVFL findings, QA validates ACs, E2E Validator tests live behavior with external tools against Gherkin specs, Architect Guard checks pattern drift — all concurrent on main branch, fix loop within team). Decision 31 updated with forward reference to Decision 34. Added Decision 34 — AVFL Scan Profile and Hybrid Resolution Team.'
   - date: '2026-04-03'
     changes: 'Plugin model adoption: Momentum becomes a Claude Code plugin with .claude-plugin/plugin.json. Replaced skills-only flat deployment (npx skills add) with plugin packaging. Namespaced skills under momentum: prefix (momentum-avfl → momentum:avfl, momentum-dev → momentum:dev, etc.). Workflow modules (sprint-planning.md, sprint-dev.md) converted to proper skills invoked as /momentum:sprint-planning and /momentum:sprint-dev. Always-on hooks delivered via plugin hooks/hooks.json (not Impetus-written to settings.json). Rules bundled in plugin references/rules/ (Impetus still writes to ~/.claude/rules/ and .claude/rules/ on first run). Repository structure replaced with plugin root layout. Agent Teams for sprint execution: teammates load skills from project/user settings, sequential execution with commit-as-sync-point. Updated Decisions 5a, 5c, 25, 26, 29 and all deployment, naming, structural, and integration sections.'
@@ -163,8 +165,10 @@ The defining question for each component: *does this need main-context persona p
 | Sprint dev | Flat skill (`/momentum:sprint-dev`) | Dependency-driven execution needing main context; invoked by Impetus or directly |
 | AVFL | Flat skill (`/momentum:avfl`) | Must orchestrate parallel spawning from main context |
 | upstream-fix, create-story, dev, status, retro, plan-audit | Flat skills | Stateful workflows needing main context |
-| code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only |
-| architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only |
+| code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
+| architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
+| QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure spawned worker — reviews code against story ACs during Team Review (Decision 34). Never user-invoked (Decision 35). |
+| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure spawned worker — tests running behavior against Gherkin specs during Team Review (Decision 34). Never user-invoked (Decision 35). |
 | Always-on hooks | `hooks/hooks.json` (plugin root) | Delivered by plugin install; fire every session regardless of active skill |
 | Global rules | `~/.claude/rules/` | Bundled in `references/rules/` at plugin root; Impetus writes on first run |
 | Project rules | `.claude/rules/` | Bundled in `references/rules/` at plugin root; Impetus writes on first run |
@@ -182,13 +186,16 @@ momentum/                              ← Plugin root
 │   ├── sprint-dev/SKILL.md          ← /momentum:sprint-dev
 │   ├── dev/SKILL.md                 ← /momentum:dev
 │   ├── avfl/SKILL.md               ← + sub-skills/ and references/
-│   ├── code-reviewer/SKILL.md      ← context: fork, allowed-tools: Read
-│   ├── architecture-guard/SKILL.md  ← context: fork, allowed-tools: Read
+│   ├── code-reviewer/SKILL.md      ← context: fork, allowed-tools: Read (Decision 35)
+│   ├── architecture-guard/SKILL.md  ← context: fork, allowed-tools: Read (Decision 35)
 │   ├── upstream-fix/SKILL.md
 │   ├── create-story/SKILL.md
 │   ├── plan-audit/SKILL.md
 │   ├── status/SKILL.md
 │   └── retro/SKILL.md
+├── agents/                           ← Agent definition files (Decision 35)
+│   ├── qa-reviewer.md               ← Pure worker: story AC review (Team Review)
+│   └── e2e-validator.md             ← Pure worker: behavioral validation (Team Review)
 ├── hooks/
 │   └── hooks.json                    ← Always-on hooks (Tier 1 enforcement)
 ├── scripts/
@@ -1605,3 +1612,57 @@ Hybrid model: AVFL scan → findings handed to concurrent Agent Team (Dev, QA, E
 
 **AVFL Corpus Mode — Multi-Document Cross-Validation (2026-04-03, commit 924d4ef)**
 AVFL can validate a corpus of related documents together rather than validating artifacts individually. Corpus mode feeds multiple documents to validators simultaneously, enabling cross-document consistency checks: cross-reference errors between specs, contradictions between planning artifacts, and coverage gaps where one document promises something another omits. Validators receive the full corpus as input and apply their lens (Structural, Factual, Coherence, Domain) across document boundaries. Corpus mode uses the same validator pipeline (Enumerator + Adversary per lens, consolidator, fixer) — the difference is input scope, not execution architecture.
+
+**Decision 35 — Agent Definition Files vs SKILL.md Boundary (2026-04-04)**
+
+Momentum uses two Claude Code mechanisms for isolated execution: **SKILL.md files** (with optional `context: fork`) and **agent definition files** (`.md` files in the plugin's `agents/` directory, spawned via the Agent tool). This decision formalizes when to use each.
+
+**Decision framework — three categories:**
+
+| Category | Mechanism | When to use |
+|---|---|---|
+| Orchestrator / workflow skill | SKILL.md (flat, main context) | User-invokable, multi-step workflow, spawns subagents, interactive. Examples: Impetus, sprint-dev, avfl, dev, create-story. |
+| Standalone verifier skill | SKILL.md with `context: fork` | Spawned by orchestrators AND useful standalone. Rich instruction body (multi-section workflow). Tool restrictions via `allowed-tools:`. Examples: code-reviewer, architecture-guard. |
+| Pure spawned worker | Agent definition file (`agents/*.md`) | Only spawned during specific phases — never user-invoked. Task-in, structured-findings-out. No multi-step workflow. Tool restrictions via `tools:` allowlist. Examples: QA reviewer, E2E validator. |
+
+**Key distinctions:**
+
+- **SKILL.md** files are registered in the plugin's `skills/` directory, invoked via the Skill tool or `/momentum:<name>` slash command, and can contain full workflow instructions in their markdown body. With `context: fork`, they run in isolated subagent context with tool restrictions — functionally equivalent to agent files for isolation, but richer.
+- **Agent definition files** live in the plugin's `agents/` directory, are spawned via `Agent(subagent_type="<name>")`, always run in isolated context, and use `tools:` / `disallowedTools:` for enforcement. Their markdown body is a system prompt, not a workflow. They cannot spawn further subagents. Designed for parallel execution.
+- **The test:** If a role is only ever spawned by an orchestrator during a specific phase, has no standalone use case, and produces a structured report from a fixed prompt — it's an agent definition file. If it has a multi-step workflow, user-invokability, or needs to orchestrate others — it's a SKILL.md.
+
+**Application to Team Review phase (Decision 34):**
+
+The hybrid Agent Team in Phase 5 spawns four concurrent roles. Their deployment:
+
+| Role | Deployment | Rationale |
+|---|---|---|
+| Dev (fix agent) | General-purpose agent via Agent tool | No custom definition needed — receives AVFL findings list and fix instructions in spawn prompt. Uses project's dev guidelines from sprint record. |
+| QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure worker: reviews code against story ACs, produces per-story findings. Read-only tools. Never user-invoked. |
+| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure worker: tests running behavior against Gherkin specs with external tools. Needs Bash for test execution. Never user-invoked. |
+| Architect Guard | SKILL.md with `context: fork` (existing) | Already implemented as standalone verifier skill. Also useful outside Team Review (ad-hoc drift checks). Retains SKILL.md deployment. |
+
+**Plugin structure addition:**
+
+The plugin root gains an `agents/` directory alongside `skills/`:
+
+```
+skills/momentum/                     ← Plugin root
+├── .claude-plugin/plugin.json
+├── skills/                          ← SKILL.md files (user-facing + context:fork)
+├── agents/                          ← Agent definition files (pure spawned workers)
+│   ├── qa-reviewer.md
+│   └── e2e-validator.md
+├── hooks/
+├── scripts/
+└── references/
+```
+
+Agent definition files are discovered by Claude Code from the plugin's `agents/` directory (resolution priority 4: plugin agents). The `name` field in YAML frontmatter determines the `subagent_type` used in Agent tool calls.
+
+**What does NOT change type:**
+
+- code-reviewer stays SKILL.md `context: fork` — it has a rich review workflow (7-step process) and standalone utility
+- architecture-guard stays SKILL.md `context: fork` — same reasoning, useful for ad-hoc drift checks
+- All orchestrator/workflow skills stay SKILL.md — they need main context for spawning and interaction
+- AVFL sub-skills (validator-enum, validator-adv, consolidator, fixer) stay as nested SKILL.md sub-skills — they're part of AVFL's internal pipeline with their own orchestration needs
