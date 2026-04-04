@@ -69,7 +69,7 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 - **Total failure:** After exhausting retries, falls back to `gemini -p` basic mode with a warning message to the user
 - **cmux-browser unavailable:** If `cmux` command is not found, skip Deep Research entirely and fall back to `gemini -p` (or skip Gemini if `gemini` is also unavailable)
 
-### AC6: Follow-Up Questions Cycle (stretch)
+### AC6: Follow-Up Questions Cycle
 
 - After extracting the Deep Research report, the workflow optionally sends follow-up questions in the same Gemini conversation to probe gaps or deepen specific areas
 - The orchestrator generates 2-3 targeted follow-up questions based on the sub-questions from scope.md that the initial report covered thinly
@@ -115,6 +115,7 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 - **Report extraction:** Filter `.markdown.markdown-main-panel` elements by `textContent.length > 10000` to find the report (the plan text element is smaller). This is the authoritative selector — validated in prototyping.
 - **Auth state persistence:** Saved to `~/.claude/browser-state/google-auth.json`. Includes cookies, localStorage, sessionStorage. Google OAuth sessions last weeks/months.
 - **"Something went wrong" toasts:** These appear occasionally but don't necessarily block the research. The first attempt in prototyping hung on "Generating research plan" — a page reload and retry succeeded immediately.
+- **Follow-up questions:** After Deep Research completes, the chat input is available on the left side (report on right) when the surface is wide enough. Follow-up responses appear as new `.markdown.markdown-main-panel` elements (index increases — use the last non-report-sized element). Responses take 15-45 seconds. Check length stabilization (two reads 5s apart) to confirm completion. The follow-up response does NOT trigger another Deep Research — it's a regular Gemini response with the research context.
 
 **Existing skill location:** The momentum-research skill files are at `skills/momentum/skills/research/` (migrated from the top-level `skills/momentum-research/` as part of the plugin structure refactor).
 
