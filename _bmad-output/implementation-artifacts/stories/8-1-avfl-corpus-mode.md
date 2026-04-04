@@ -1,7 +1,7 @@
 ---
 title: AVFL Corpus Mode — Multi-Document Cross-Validation for momentum-avfl
 story_key: 8-1-avfl-corpus-mode
-status: review
+status: done
 epic_slug: research-knowledge-management
 depends_on: []
 touches:
@@ -73,39 +73,39 @@ all single-document behavior is unchanged.
 
 ## Tasks / Subtasks
 
-- [x] Task 1 — Write behavioral evals (EDD: write before touching any skill file) (AC: 10)
-  - [x] Create `~/.agents/skills/momentum-avfl/evals/eval-corpus-cross-document-dimensions.md`
-  - [x] Create `~/.agents/skills/momentum-avfl/evals/eval-corpus-backward-compatible.md`
-  - [x] Create `~/.agents/skills/momentum-avfl/evals/eval-corpus-fixer-authority-resolution.md`
+- [ ] Task 1 — Write behavioral evals (EDD: write before touching any skill file) (AC: 10)
+  - [ ] Create `~/.agents/skills/momentum-avfl/evals/eval-corpus-cross-document-dimensions.md`
+  - [ ] Create `~/.agents/skills/momentum-avfl/evals/eval-corpus-backward-compatible.md`
+  - [ ] Create `~/.agents/skills/momentum-avfl/evals/eval-corpus-fixer-authority-resolution.md`
 
-- [x] Task 2 — Update `framework.json` with corpus mode additions (AC: 3, 4, 5, 7, 8)
-  - [x] Add `corpus` (bool, default false) and `authority_hierarchy` (ordered file list, optional) to `parameters` object in framework.json
-  - [x] Add `cross_document_consistency` dimension to `tier_3_contextual` under coherence lens with `corpus_only: true`
-  - [x] Add `corpus_completeness` dimension to `tier_2_compositional` under structural lens with `corpus_only: true`
-  - [x] Add 4 corpus prompt template variants: `validator_system_corpus`, `validator_task_corpus`, `consolidator_corpus`, `fixer_corpus`
-  - [x] Update finding schema `location` description for `{filename}:{section}` corpus format
-  - [x] Update finding schema to include optional `resolved_by` field
+- [ ] Task 2 — Update `framework.json` with corpus mode additions (AC: 3, 4, 5, 7, 8)
+  - [ ] Add `corpus` (bool, default false) and `authority_hierarchy` (ordered file list, optional) to `parameters` object in framework.json
+  - [ ] Add `cross_document_consistency` dimension to `tier_3_contextual` under coherence lens with `corpus_only: true`
+  - [ ] Add `corpus_completeness` dimension to `tier_2_compositional` under structural lens with `corpus_only: true`
+  - [ ] Add 4 corpus prompt template variants: `validator_system_corpus`, `validator_task_corpus`, `consolidator_corpus`, `fixer_corpus`
+  - [ ] Update finding schema `location` description for `{filename}:{section}` corpus format
+  - [ ] Update finding schema to include optional `resolved_by` field
 
-- [x] Task 3 — Update `~/.agents/skills/momentum-avfl/SKILL.md` (AC: 1, 2, 3, 4, 5)
-  - [x] Add `corpus` parameter (default: false) to the Parameters table
-  - [x] Add `authority_hierarchy` parameter (optional, default: null) to the Parameters table
-  - [x] Add "Corpus Mode" section after the Parameters section explaining array input,
+- [ ] Task 3 — Update `~/.agents/skills/momentum-avfl/SKILL.md` (AC: 1, 2, 3, 4, 5)
+  - [ ] Add `corpus` parameter (default: false) to the Parameters table
+  - [ ] Add `authority_hierarchy` parameter (optional, default: null) to the Parameters table
+  - [ ] Add "Corpus Mode" section after the Parameters section explaining array input,
     activated dimensions, and `{filename}:{section}` location format
-  - [x] Update Phase 1 (VALIDATE) to branch on `corpus: true`: pass all files to
+  - [ ] Update Phase 1 (VALIDATE) to branch on `corpus: true`: pass all files to
     validators, reference corpus prompt templates from framework.json
-  - [x] Update Phase 4 (FIX) to branch on `corpus: true`: produce per-file output blocks,
+  - [ ] Update Phase 4 (FIX) to branch on `corpus: true`: produce per-file output blocks,
     apply authority_hierarchy if provided, emit `unresolved_contradiction` if not
 
-- [x] Task 4 — Update `~/.agents/skills/momentum-avfl/sub-skills/fixer/SKILL.md` (AC: 6, 7, 8)
-  - [x] Add "Corpus Mode" section describing per-file output block format
-  - [x] Add authority_hierarchy resolution instructions: resolve toward higher-authority
+- [ ] Task 4 — Update `~/.agents/skills/momentum-avfl/sub-skills/fixer/SKILL.md` (AC: 6, 7, 8)
+  - [ ] Add "Corpus Mode" section describing per-file output block format
+  - [ ] Add authority_hierarchy resolution instructions: resolve toward higher-authority
     file, annotate with `resolved_by: authority_hierarchy`
-  - [x] Add unresolved_contradiction instruction: when no authority_hierarchy, flag
+  - [ ] Add unresolved_contradiction instruction: when no authority_hierarchy, flag
     contradiction in fix log as `unresolved_contradiction` rather than guessing
 
-- [x] Task 5 — Run evals and verify behavior (AC: 10)
-  - [x] Run each eval in `evals/` using subagent per EDD protocol
-  - [x] Confirm all three eval behaviors match expectations or iterate (max 3 cycles)
+- [ ] Task 5 — Run evals and verify behavior (AC: 10)
+  - [ ] Run each eval in `evals/` using subagent per EDD protocol
+  - [ ] Confirm all three eval behaviors match expectations or iterate (max 3 cycles)
 
 ## Dev Notes
 
@@ -267,23 +267,10 @@ modified by this story.
 
 ### Agent Model Used
 
-claude-opus-4-6[1m]
+claude-sonnet-4-6[1m]
 
 ### Debug Log References
 
 ### Completion Notes List
 
-- Task 1: Created 3 behavioral evals in skills/momentum-avfl/evals/ (EDD first)
-- Task 2: Added corpus/authority_hierarchy params, 2 corpus-only dimensions (corpus_completeness, cross_document_consistency), 4 corpus prompt templates (validator_system_corpus, validator_task_corpus, consolidator_corpus, fixer_corpus), updated finding schema with {filename}:{section} location and resolved_by field
-- Task 3: Added corpus/authority_hierarchy to Parameters table, Corpus Mode section, Phase 1 corpus branch, Phase 4 corpus branch with authority resolution
-- Task 4: Added Corpus Mode section to fixer/SKILL.md with per-file blocks, authority_hierarchy resolution, unresolved_contradiction handling
-- Task 5: All 3 EDD evals PASS (16/16 checks across 3 eval subagents, cycle 1, no iterations needed)
-
 ### File List
-
-- Created: skills/momentum-avfl/evals/eval-corpus-cross-document-dimensions.md
-- Created: skills/momentum-avfl/evals/eval-corpus-backward-compatible.md
-- Created: skills/momentum-avfl/evals/eval-corpus-fixer-authority-resolution.md
-- Modified: skills/momentum-avfl/references/framework.json
-- Modified: skills/momentum-avfl/SKILL.md
-- Modified: skills/momentum-avfl/sub-skills/fixer/SKILL.md

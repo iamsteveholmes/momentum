@@ -23,10 +23,39 @@ Collect these before starting. If any are missing, ask before proceeding.
 |---|---|---|---|
 | `domain_expert` | Yes | — | The agent role that produced the output and will fix it (e.g., "technical writer", "software engineer", "analyst") |
 | `task_context` | Yes | — | Brief description of what was produced (e.g., "market research report", "PRD section", "JSON config") |
-| `output_to_validate` | Yes | — | The content or file path to validate |
+| `output_to_validate` | Yes | — | Single document mode: content or file path. Corpus mode (`corpus: true`): array of file paths |
 | `source_material` | No | null | Ground truth to check against. Pass original source through the entire pipeline — never let intermediate steps compress it |
 | `profile` | No | `full` | `gate`, `checkpoint`, or `full` |
 | `stage` | No | `final` | Artifact maturity: `draft`, `checkpoint`, or `final`. Controls what absence counts as a gap — see Stage section below |
+| `corpus` | No | `false` | When `true`, validates multiple documents together. `output_to_validate` becomes an array of file paths. Activates cross-document dimensions and corpus prompt templates. All validators receive all files. |
+| `authority_hierarchy` | No | `null` | Ordered array of file paths (index 0 = highest authority). Only used when `corpus: true`. Fixer uses this to resolve cross-document contradictions — modifies lower-authority files to match higher-authority files, annotating fixes with `resolved_by: authority_hierarchy`. When absent, contradictions are flagged as `unresolved_contradiction`. |
+
+---
+
+## Corpus Mode
+
+When `corpus: true` is set, AVFL validates a set of related documents together rather than a single artifact.
+
+**What changes in corpus mode:**
+- `output_to_validate` accepts an array of file paths (e.g., `[doc-a.md, doc-b.md, doc-c.md]`)
+- All validators receive ALL corpus files in their prompts — no distribution across validators
+- Two additional corpus-only dimensions activate: `cross_document_consistency` (coherence lens) and `corpus_completeness` (structural lens)
+- Finding `location` uses `{filename}:{section}` format (e.g., `architecture.md:Data Model`)
+- Validators use the corpus prompt templates from `references/framework.json` → `prompts.validator_system_corpus` and `prompts.validator_task_corpus`
+- Consolidator uses `prompts.consolidator_corpus` (deduplication treats multi-file contradictions as one finding)
+- Fixer uses `prompts.fixer_corpus` — produces per-file output blocks, one per file in the corpus
+
+**What does NOT change:**
+- Profiles (gate/checkpoint/full) work identically
+- Scoring weights and thresholds are unchanged
+- All existing single-document dimensions still apply within each file
+- The dual-reviewer architecture is unchanged (full profile: Enumerator + Adversary per lens)
+
+**Per-file output block format** (corpus fixer output):
+```
+### File: {filepath}
+{complete corrected content for this file}
+```
 
 ---
 
@@ -155,13 +184,18 @@ Spawn validator subagents **in parallel** based on the profile. Set `model` and 
 
 Pass the current skepticism value explicitly in each subagent prompt: `high` (3) on iteration 1, `low` (2) on all subsequent iterations.
 
-Each validator receives: lens definition, reviewer framing, skepticism level, and all parameters (`domain_expert`, `task_context`, `output_to_validate`, `source_material`). They produce findings in the finding schema — id, severity, dimension, location, description, evidence (mandatory), suggestion. Findings without evidence are hallucinations and get discarded.
+**Single-document mode (`corpus: false` or omitted):** Each validator receives: lens definition, reviewer framing, skepticism level, and all parameters. Use `prompts.validator_system` and `prompts.validator_task` from `references/framework.json`. Finding locations use standard section/line format.
+
+**Corpus mode (`corpus: true`):** Each validator receives ALL corpus files (pass the complete array from `output_to_validate`). Use `prompts.validator_system_corpus` and `prompts.validator_task_corpus` from `references/framework.json`. Also activate the lens's `dimensions_corpus_only` entries (structural lens adds `corpus_completeness`; coherence lens adds `cross_document_consistency`). Finding locations must use `{filename}:{section}` format.
+
+All findings: id, severity, dimension, location, description, evidence (mandatory), suggestion. Findings without evidence are hallucinations and get discarded.
 
 ### Phase 2: CONSOLIDATE
 
 Run sequentially after all validators complete. Model: `haiku`. Sub-skill: `sub-skills/consolidator`.
 
-Use the consolidator prompt from `references/framework.json` → `prompts.consolidator`.
+**Single-document mode:** Use `prompts.consolidator` from `references/framework.json`.
+**Corpus mode (`corpus: true`):** Use `prompts.consolidator_corpus` — includes cross-document deduplication rules (same contradiction across N file pairs = one finding, not N).
 
 1. Tag each finding with confidence (HIGH / MEDIUM) — full profile only
 2. Merge all findings from all lenses into one list
@@ -184,14 +218,21 @@ Check exit conditions based on the profile:
 
 ### Phase 4: FIX
 
-Model: `sonnet`. Sub-skill: `sub-skills/fixer`. Use the fixer prompt from `references/framework.json` → `prompts.fixer`. Run as the `domain_expert` role.
+Model: `sonnet`. Sub-skill: `sub-skills/fixer`. Run as the `domain_expert` role.
 
+**Single-document mode (`corpus: false`):** Use `prompts.fixer` from `references/framework.json`. Produce the complete corrected output as a single document.
+
+**Corpus mode (`corpus: true`):** Use `prompts.fixer_corpus` from `references/framework.json`. The fixer receives all corpus files and produces per-file output blocks:
+- One block per file: `### File: {filepath}` followed by the complete corrected content
+- Cross-document contradictions: if `authority_hierarchy` is provided, modify the lower-authority file to match the higher-authority file; annotate the fix log entry with `resolved_by: authority_hierarchy`
+- Cross-document contradictions without `authority_hierarchy`: do NOT guess a resolution; annotate the fix log entry as `unresolved_contradiction` and leave both conflicting files unchanged for that issue
+
+Standard fix rules (both modes):
 - Fix in severity order: critical → high → medium → low
 - Log each fix: finding ID → what was changed and why
 - Do not introduce new problems while fixing
 - When fixes conflict, resolve in favor of the higher-severity finding
 - When ambiguous, stay closest to original source material
-- Produce the complete corrected output, not just the changed sections
 
 After fixing, loop back to Phase 1 with the updated output. **Always carry the original `source_material` forward unchanged** — validators at every iteration check against original ground truth, never intermediate representations.
 

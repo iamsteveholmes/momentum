@@ -55,6 +55,16 @@
       "description": "Reviewer intensity: 1 (conservative \u2014 report only what evidence clearly shows wrong), 2 (balanced \u2014 follow promising leads, benefit of the doubt), 3 (aggressive \u2014 look for what feels off, follow hunches, re-examine before reporting clean). Applies equally to both reviewer framings.",
       "required": false,
       "default": 3
+    },
+    "corpus": {
+      "description": "When true, output_to_validate accepts an array of file paths. Enables cross-document validation: all validators receive all corpus files, cross_document_consistency and corpus_completeness dimensions activate, finding locations use {filename}:{section} format, and the fixer produces per-file output blocks.",
+      "required": false,
+      "default": false
+    },
+    "authority_hierarchy": {
+      "description": "Ordered array of file paths from most to least authoritative (index 0 = highest authority). When provided with corpus: true, the fixer uses this to resolve cross-document contradictions deterministically, modifying lower-authority files to align with higher-authority ones and annotating fixes with resolved_by: authority_hierarchy. When absent, contradictions are flagged as unresolved_contradiction in the fix log.",
+      "required": false,
+      "default": null
     }
   },
   "config": {
@@ -192,6 +202,14 @@
           "description": "Content is understandable by its target audience. No jargon misuse, ambiguous phrasing, or unnecessarily complex structure.",
           "common_failures": "Unclear antecedents. Jargon without context. Overcomplicated sentences. Ambiguous instructions.",
           "varies_by_domain": "Who the audience is and what they already know (GM vs. developer vs. stakeholder)"
+        },
+        "corpus_completeness": {
+          "question": "Does the corpus collectively address all required topics?",
+          "description": "Across all documents in the corpus, no critical concern is absent. There are no required topics where every file is silent, and no implied contracts or dependencies that no file documents.",
+          "common_failures": "A research corpus covers 5 of 6 required sub-questions. Multiple documents reference a topic that no document actually covers. An obvious gap in collective coverage.",
+          "varies_by_domain": "What constitutes expected coverage (research sub-questions vs. documentation chapters vs. spec sections)",
+          "corpus_only": true,
+          "note": "This dimension is ONLY active when corpus: true is set. Do not apply in single-document validation mode."
         }
       }
     },
@@ -221,6 +239,14 @@
           "description": "Follows project-level conventions beyond format spec: naming patterns, terminology choices, file organization, established patterns.",
           "common_failures": "Using different terms than the project standard. Ignoring naming conventions. Breaking established patterns.",
           "varies_by_domain": "What the project conventions are (BMAD patterns vs. team coding standards vs. campaign style guide)"
+        },
+        "cross_document_consistency": {
+          "question": "Do all documents in the corpus agree on shared claims?",
+          "description": "When multiple documents make claims about the same topic, those claims agree. Numbers, names, version references, dates, and conclusions are consistent across files. Terminology for the same concept is stable across documents.",
+          "common_failures": "Document A says the threshold is 150K tokens, Document B says 83.5% of the window. One doc recommends approach X, another contradicts it without acknowledgment. Different version numbers for the same dependency across files.",
+          "varies_by_domain": "What counts as a shared claim (research findings vs. spec requirements vs. API contracts)",
+          "corpus_only": true,
+          "note": "This dimension is ONLY active when corpus: true is set. Do not apply in single-document validation mode. Distinct from 'consistency' (which checks within-document contradiction) — this checks across-document contradiction."
         }
       }
     },
@@ -260,7 +286,11 @@
         "completeness",
         "cross_reference_integrity"
       ],
-      "approach": "Enumerate all structural requirements for this content type, then verify each one. This is the most automatable lens - be thorough and literal."
+      "dimensions_corpus_only": [
+        "corpus_completeness"
+      ],
+      "approach": "Enumerate all structural requirements for this content type, then verify each one. This is the most automatable lens - be thorough and literal. When corpus: true, also apply corpus_completeness to check for topics absent from all files collectively.",
+      "approach_corpus": "In addition to standard structural checks: verify that the corpus collectively covers all required topics. Apply corpus_completeness dimension — are there required topics that no file in the corpus addresses?"
     },
     "lens_2_factual_accuracy": {
       "id": "accuracy",
@@ -287,7 +317,11 @@
         "tonal_consistency",
         "temporal_coherence"
       ],
-      "approach": "Read the full output end-to-end. Note contradictions, scope drift, unnecessary padding, unclear passages, and tonal shifts. Judge quality as a human reader would, not as a checklist."
+      "dimensions_corpus_only": [
+        "cross_document_consistency"
+      ],
+      "approach": "Read the full output end-to-end. Note contradictions, scope drift, unnecessary padding, unclear passages, and tonal shifts. Judge quality as a human reader would, not as a checklist. When corpus: true, also apply cross_document_consistency across all files.",
+      "approach_corpus": "In addition to standard coherence checks: read all corpus files and apply cross_document_consistency — do the documents agree on shared claims? Do they use consistent terminology for the same concepts? Are there contradictions between files on the same topic?"
     },
     "lens_4_domain_fitness": {
       "id": "domain",
@@ -494,11 +528,12 @@
       "id": "Unique finding identifier: LENS_ID-NNN (e.g., STRUCTURAL-001, ACCURACY-003)",
       "severity": "critical | high | medium | low",
       "dimension": "Which dimension from the taxonomy this finding falls under",
-      "location": "Specific section, field, line, or element where the issue exists",
+      "location": "Specific section, field, line, or element where the issue exists. In single-document mode: section or line reference (e.g., 'Section 3', 'line 47'). In corpus mode (corpus: true): use {filename}:{section} format (e.g., 'architecture.md:Data Model', 'file-a.md:Section 2') to identify both the source file and the specific location within it.",
       "description": "What is wrong - specific and concrete",
       "evidence": "Quote or reference proving this is a real issue. MANDATORY - findings without evidence are discarded.",
       "suggestion": "How to fix it - actionable and concrete",
-      "confidence": "HIGH (both reviewers found it) | MEDIUM (one reviewer found it) \u2014 only present when dual_review is enabled"
+      "confidence": "HIGH (both reviewers found it) | MEDIUM (one reviewer found it) \u2014 only present when dual_review is enabled",
+      "resolved_by": "Only present in fix log entries when the fixer resolves a cross-document contradiction using authority_hierarchy. Value: 'authority_hierarchy'. Include a note identifying which file was trusted and which was modified. Only applicable when corpus: true and authority_hierarchy is provided."
     }
   },
   "phases": {
@@ -717,7 +752,11 @@
     "validator_system": "You are a {domain_expert} performing quality validation on a {task_context}.\n\nYour validation lens: {lens_name}\nYour mindset: {lens_mindset}\nYour approach: {lens_approach}\n{reviewer_framing}\n\nSkepticism level {skepticism}: {skepticism_approach_modifier}\n{skepticism_reexamine_rule}\n\nArtifact stage ({stage}): {stage_completeness_instruction}\n\nYour dimensions (derive specific checks from these based on the domain):\n{lens_dimensions_with_descriptions}\n\nCALIBRATION RULES:\n- Every finding MUST include concrete evidence. Quote the specific text, value, or section that is wrong. A finding without evidence is a hallucination and will be discarded.\n- Be systematic, not hostile. Enumerate and verify - don't assume everything is wrong.\n- No finding quotas. If the output is clean in your area, report clean. Apply the re-examine rule from your skepticism instruction.\n- Do not manufacture findings. A false positive wastes more time than a missed issue.\n- Stay within your lens. Note issues outside your scope briefly but don't deep-dive.\n- When uncertain: if you can find evidence it's wrong, flag it. If you can't find evidence either way, don't flag it.\n- Severity is about impact, not about hitting a target score.",
     "validator_task": "Validate the following {task_context} output through your lens: {lens_name}.\n\n{validation_focus_if_set}\n\nFor each dimension in your lens, determine what specific checks are appropriate for this domain and content type, then evaluate systematically.\n\nSOURCE MATERIAL (ground truth - if provided):\n{source_material}\n\nOUTPUT TO VALIDATE:\n{output_to_validate}\n\nReport each finding as:\n- id: {LENS_ID}-NNN\n- severity: critical|high|medium|low\n- dimension: [which dimension from your lens]\n- location: [specific section/field/line]\n- description: [what is wrong]\n- evidence: [quote or reference proving this is real - MANDATORY]\n- suggestion: [how to fix]\n\nIf you find no issues in your dimensions, report: NO FINDINGS. Do not manufacture issues.",
     "consolidator": "You received findings from {reviewer_count} reviewers across {lens_count} validation lenses reviewing a {task_context}.\n\nConsolidate:\n1. Cross-check: Tag findings as HIGH confidence (both reviewers in a lens found it) or MEDIUM confidence (only one reviewer found it)\n2. Merge all findings into one list\n3. Deduplicate: same underlying issue \u2192 keep most specific description, highest severity, note sources\n4. Investigate MEDIUM-confidence findings against source material \u2014 keep if evidence supports, discard if reviewer hallucination\n5. Remove findings that lack evidence\n6. Calculate score: Start at {starting_score}, apply weights: critical={critical_weight}, high={high_weight}, medium={medium_weight}, low={low_weight}\n7. Sort by severity (critical first), then by location\n\nReport: consolidated findings with confidence tags, score, grade, counts, duplicates removed, false positives removed.",
-    "fixer": "You are a {domain_expert} tasked with fixing {finding_count} validated issues in a {task_context}.\n\nFINDINGS TO FIX (priority order):\n{consolidated_findings}\n\nCURRENT OUTPUT:\n{current_output}\n\nSOURCE MATERIAL (original ground truth - NOT intermediate representations):\n{source_material}\n\nINSTRUCTIONS:\n1. Fix each issue in order listed (critical first)\n2. For each fix, note: finding ID, what you changed, why\n3. Do NOT introduce new problems while fixing\n4. If fixes conflict, resolve in favor of higher-severity finding\n5. When ambiguous, stay closest to source material\n6. Produce the complete corrected output\n7. After the output, provide a fix log: finding ID \u2192 what was done"
+    "fixer": "You are a {domain_expert} tasked with fixing {finding_count} validated issues in a {task_context}.\n\nFINDINGS TO FIX (priority order):\n{consolidated_findings}\n\nCURRENT OUTPUT:\n{current_output}\n\nSOURCE MATERIAL (original ground truth - NOT intermediate representations):\n{source_material}\n\nINSTRUCTIONS:\n1. Fix each issue in order listed (critical first)\n2. For each fix, note: finding ID, what you changed, why\n3. Do NOT introduce new problems while fixing\n4. If fixes conflict, resolve in favor of higher-severity finding\n5. When ambiguous, stay closest to source material\n6. Produce the complete corrected output\n7. After the output, provide a fix log: finding ID \u2192 what was done",
+    "validator_system_corpus": "You are a {domain_expert} performing quality validation on a {task_context} consisting of {corpus_file_count} related documents (corpus mode).\n\nYour validation lens: {lens_name}\nYour mindset: {lens_mindset}\nYour approach: {lens_approach_corpus}\n{reviewer_framing}\n\nSkepticism level {skepticism}: {skepticism_approach_modifier}\n{skepticism_reexamine_rule}\n\nArtifact stage ({stage}): {stage_completeness_instruction}\n\nYour dimensions (standard dimensions plus corpus-only dimensions for your lens):\n{lens_dimensions_with_descriptions}\n\nCorpus-only dimensions active in this run:\n{lens_corpus_dimensions_with_descriptions}\n\nCALIBRATION RULES:\n- Every finding MUST include concrete evidence. Quote the specific text, value, or section that is wrong.\n- Use {filename}:{section} format for all finding locations (e.g., 'doc-a.md:Section 2', 'spec.md:Parameters').\n- For cross_document_consistency findings: cite evidence from BOTH conflicting files.\n- For corpus_completeness findings: name the absent topic and explain why it is required.\n- Be systematic, not hostile. No finding quotas.\n- Stay within your lens dimensions.",
+    "validator_task_corpus": "Validate the following corpus of {corpus_file_count} documents through your lens: {lens_name}.\n\nThis is corpus mode validation. Read ALL files listed below. Check both within-document quality (standard dimensions) and cross-document quality (corpus-only dimensions for your lens).\n\n{validation_focus_if_set}\n\nSOURCE MATERIAL (ground truth - if provided):\n{source_material}\n\nCORPUS FILES TO VALIDATE:\n{corpus_file_list_with_contents}\n\nReport each finding as:\n- id: {LENS_ID}-NNN\n- severity: critical|high|medium|low\n- dimension: [which dimension — may be a corpus-only dimension]\n- location: {filename}:{section} (e.g., 'doc-a.md:Section 3' or 'spec.md:Parameters table')\n- description: [what is wrong]\n- evidence: [quote or reference — for cross-document findings, quote from BOTH files]\n- suggestion: [how to fix]\n\nIf you find no issues, report: NO FINDINGS.",
+    "consolidator_corpus": "You received findings from {reviewer_count} reviewers across {lens_count} validation lenses reviewing a corpus of {corpus_file_count} documents ({task_context}).\n\nConsolidate:\n1. Cross-check: Tag findings as HIGH confidence (both reviewers in a lens found it) or MEDIUM confidence (only one found it)\n2. Merge all findings into one list\n3. Deduplicate: same underlying issue across multiple file pairs = ONE finding, not N. Keep most specific description, highest severity.\n4. Investigate MEDIUM-confidence findings against source material \u2014 keep if evidence supports, discard if reviewer hallucination\n5. Remove findings that lack evidence\n6. Calculate score: Start at {starting_score}, apply weights: critical={critical_weight}, high={high_weight}, medium={medium_weight}, low={low_weight}\n7. Sort by severity (critical first), then by location\n\nNote: A cross_document_consistency finding that affects N file pairs is still ONE finding. Do not multiply it by the number of affected pairs.",
+    "fixer_corpus": "You are a {domain_expert} tasked with fixing {finding_count} validated issues across a corpus of {corpus_file_count} documents ({task_context}).\n\nFINDINGS TO FIX (priority order):\n{consolidated_findings}\n\nCORPUS FILES (all files in the corpus — read all before fixing):\n{corpus_file_list_with_contents}\n\nAUTHORITY HIERARCHY (if provided — index 0 = highest authority):\n{authority_hierarchy}\n\nSOURCE MATERIAL (original ground truth):\n{source_material}\n\nINSTRUCTIONS:\n1. Fix each issue in order listed (critical first)\n2. Produce a SEPARATE output block for each file using this format:\n   ### File: {filepath}\n   {complete corrected content for this file}\n3. For each fix, note: finding ID, which file was modified, what was changed, why\n4. Cross-document contradictions:\n   - If authority_hierarchy is provided: modify the lower-authority file to match the higher-authority file. Annotate the fix log entry with 'resolved_by: authority_hierarchy' and name both files.\n   - If no authority_hierarchy: DO NOT guess a resolution. Mark the fix log entry as 'unresolved_contradiction', name both conflicting claims and files, and leave both files unchanged for this issue.\n5. Do NOT introduce new problems while fixing\n6. If fixes conflict, resolve in favor of higher-severity finding\n7. After all file blocks, provide a fix log: finding ID \u2192 file modified \u2192 what was done (or unresolved_contradiction note)"
   },
   "usage": {
     "invocation": {
