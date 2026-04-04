@@ -15,11 +15,12 @@
   <critical>All planning decisions must be logged via `momentum-tools log` throughout the workflow.</critical>
 
   <step n="0" goal="Initialize task tracking">
-    <action>Create tasks for the 8 workflow steps:
+    <action>Create tasks for the 9 workflow steps:
       1. Show prioritized backlog
       2. Story selection
       3. Flesh out stories
       4. Generate Gherkin specs
+      4.5. Spec impact analysis — update architecture and PRD
       5. Build team composition
       6. Run AVFL
       7. Developer review
@@ -175,7 +176,77 @@ Approve, or request revisions?</output>
 
 Specs written to sprints/{{sprint_slug}}/specs/. These are for verifier agents only — dev agents will not see them.
 
+Proceeding to spec impact analysis.</output>
+  </step>
+
+  <step n="4.5" goal="Spec impact analysis — update architecture and PRD">
+    <action>Spawn two parallel discovery subagents:
+
+    **Architecture discovery agent:**
+      Read `{planning_artifacts}/architecture.md` and all approved story files.
+      For each story, identify:
+        · New architecture decisions introduced (patterns, protocols, storage, deployment)
+        · Changes to existing decisions (modified constraints, new options)
+        · New components, data flows, or integration points
+      Return a structured list: [{story_slug, decision_type, summary, section_affected}]
+
+    **PRD discovery agent:**
+      Read `{planning_artifacts}/prd.md` and all approved story files.
+      For each story, identify:
+        · New functional requirements (capabilities not covered by existing FRs)
+        · Modifications to existing FRs (changed behavior, new constraints)
+        · New non-functional requirements
+      Return a structured list: [{story_slug, fr_type, summary, section_affected}]
+    </action>
+
+    <action>Consolidate discovery results:
+      · Merge both lists into a single spec impact report
+      · Classify each item as NEW (not in specs) or MODIFIED (exists but needs update)
+      · Filter out items that are already covered by existing spec content
+    </action>
+
+    <check if="no spec impact found">
+      <output>✓ No spec impact detected — architecture and PRD already cover this sprint's scope.</output>
+      <action>Proceed to Step 5</action>
+    </check>
+
+    <check if="spec impact found">
+      <output>Spec impact detected — {{count}} items need documentation:
+
+  Architecture:
+    {{for each arch item: · [NEW|MODIFIED] decision_type — summary (story_slug)}}
+
+  PRD:
+    {{for each prd item: · [NEW|MODIFIED] fr_type — summary (story_slug)}}
+
+Updating specs now.</output>
+
+      <action>Spawn two parallel update subagents:
+
+      **Architecture update agent:**
+        Read `{planning_artifacts}/architecture.md`.
+        Apply each architecture impact item:
+          · NEW decisions: add to the appropriate section following existing format
+          · MODIFIED decisions: update the existing section in place
+        Write the updated file. Follow existing document style and conventions.
+
+      **PRD update agent:**
+        Read `{planning_artifacts}/prd.md`.
+        Apply each PRD impact item:
+          · NEW FRs: assign next available FR number, add to appropriate section
+          · MODIFIED FRs: update existing FR text in place
+        Write the updated file. Follow existing document style and conventions.
+      </action>
+
+      <action>Log spec updates:
+        `momentum-tools log --agent impetus --event decision --detail "Spec impact: {{count}} items updated ({{arch_count}} arch, {{prd_count}} PRD)" --sprint {{sprint_slug}}`</action>
+
+      <output>✓ Specs updated:
+  · Architecture: {{arch_count}} items
+  · PRD: {{prd_count}} items
+
 Proceeding to team composition.</output>
+    </check>
   </step>
 
   <step n="5" goal="Build team composition and execution plan">
