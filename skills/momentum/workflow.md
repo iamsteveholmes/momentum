@@ -569,8 +569,7 @@ What would you like to work on?
 
       <!-- MODE 3 dispatch -->
       <check if="{{sprint_mode}} == 3 AND developer selects 1 (Plan a sprint)">
-        <output>  This workflow (momentum:sprint-plan) is coming in the next phase. You can create a sprint manually by adding entries to `sprints/index.json`.</output>
-        <action>Return to menu — re-display the Mode 3 menu and wait for input.</action>
+        <action>Load and follow `${CLAUDE_SKILL_DIR}/workflows/sprint-planning.md` — the sprint planning workflow module. Execute it step-by-step, returning control to Impetus when the workflow completes.</action>
       </check>
       <check if="{{sprint_mode}} == 3 AND developer selects 2 (Refine backlog)">
         <action>Dispatch to momentum-create-story workflow</action>
