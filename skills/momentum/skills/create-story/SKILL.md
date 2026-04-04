@@ -1,5 +1,5 @@
 ---
-name: momentum-create-story
+name: create-story
 description: Creates a Momentum story with change-type classification, injected EDD/TDD guidance, and AVFL validation. Use when creating a Momentum story.
 model: sonnet
 effort: medium
