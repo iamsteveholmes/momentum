@@ -42,9 +42,36 @@ agent-guidelines-skill  ──(independent)──>  Wave 1
 
 ## Team Composition
 
-| Role | Agent Type | Stories | Guidelines |
-|------|-----------|---------|------------|
-| Dev | momentum-dev (EDD variant) | All 3 | All stories are `skill-instruction` — EDD approach: write behavioral evals first, then implement skill files, then verify against evals |
+### Generic Momentum Roles (Architecture Decision 26 — Two-Layer Model)
+
+| Role | Skill / Agent | Purpose | Assigned When |
+|------|--------------|---------|---------------|
+| **Dev** | `momentum-dev` | Implements stories in worktrees, logs decisions via `momentum-tools log` | Every story |
+| **QA** | Code reviewer | Reviews code against acceptance criteria | Stories with `script-code` change type |
+| **E2E Validator** | Verifier agent | Validates behavior against Gherkin specs (black-box — never sees implementation) | All stories with Gherkin specs |
+| **Architect Guard** | `momentum-architecture-guard` | Checks pattern drift against architecture decisions | Stories touching architecture-sensitive paths |
+
+### Role Assignment per Story
+
+| Story | Dev | QA | E2E Validator | Architect Guard |
+|-------|:---:|:--:|:-------------:|:---------------:|
+| agent-guidelines-skill | Yes | — | Yes (12 scenarios) | — |
+| 8-1-avfl-corpus-mode | Yes | — | Yes (12 scenarios) | Yes |
+| 8-2-momentum-research-skill | Yes | — | Yes (20 scenarios) | — |
+
+**Why no QA:** All stories are `skill-instruction` (markdown skill files, not compiled code). No `script-code` tasks exist in this sprint.
+
+**Why Architect Guard on 8-1:** Story 8-1 modifies `framework.json` — the core AVFL dimension taxonomy and prompt templates that all validation lenses depend on. The `corpus_only: true` flag and new dimensions must not break existing single-document validation contracts.
+
+### Project-Specific Guidelines (Layer 2)
+
+Momentum is a practice module (markdown + bash, no compiled code). Stack-specific guidelines per role:
+
+| Role | Project Guidelines |
+|------|-------------------|
+| **Dev** | EDD approach: write behavioral evals BEFORE any skill files. NFR compliance: SKILL.md description ≤150 chars, `model:` and `effort:` frontmatter required, body ≤500 lines (overflow → `references/`). Provenance: all new files include `derives_from` and `content_origin` where applicable. |
+| **E2E Validator** | Phase 3 verification is a **developer-confirmation checklist** derived from Gherkin scenarios — full automated verification is deferred (per sprint-dev story AC). Verifier reads specs from `sprints/phase-3-sprint-execution/specs/`, checks each scenario against the merged codebase, and reports pass/fail per scenario. |
+| **Architect Guard** | Run `momentum-architecture-guard` on 8-1 changeset. Verify: (1) existing lens dimension assignments unchanged, (2) `corpus_only: true` flag prevents new dimensions from activating in single-doc mode, (3) prompt template variants extend (not replace) existing templates. |
 
 ### Test Approach per Story
 
@@ -52,7 +79,24 @@ agent-guidelines-skill  ──(independent)──>  Wave 1
 |-------|----------|-------|
 | agent-guidelines-skill | EDD | Verify discovery accuracy, rule structure, prohibition format, version pinning, AVFL invocation |
 | 8-1-avfl-corpus-mode | EDD (3 evals) | `eval-corpus-cross-document-dimensions.md`, `eval-corpus-backward-compatible.md`, `eval-corpus-fixer-authority-resolution.md` |
-| 8-2-momentum-research-skill | EDD (3 evals) | `eval-light-profile.md`, `eval-medium-profile.md` (Phase 3 portion deferred), `eval-resume-support.md` |
+| 8-2-momentum-research-skill | EDD (3 evals) | `eval-light-profile.md`, `eval-medium-profile.md` (Phase 3 portion deferred until 8-1 lands), `eval-resume-support.md` |
+
+### Execution Sequence
+
+```
+Wave 1 (all concurrent):
+  ├── agent-guidelines-skill  ──> Dev ──> E2E Validator
+  ├── 8-1-avfl-corpus-mode    ──> Dev ──> Architect Guard ──> E2E Validator
+  └── 8-2-momentum-research   ──> Dev (Phases 1,2,4,5,6) ──> E2E Validator (light scenarios)
+
+After 8-1 merges:
+  └── 8-2-momentum-research   ──> Dev (Phase 3 integration) ──> E2E Validator (medium scenarios)
+
+Post-merge (all stories done):
+  └── Sprint-level AVFL pass on full codebase
+  └── E2E Verification pass: all 44 Gherkin scenarios
+  └── Sprint summary + retro suggestion
+```
 
 ---
 

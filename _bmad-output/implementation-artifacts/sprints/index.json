@@ -10,29 +10,39 @@
     ],
     "team_composition": {
       "agent-guidelines-skill": {
-        "roles": ["dev"],
+        "roles": ["dev", "e2e-validator"],
         "change_type": "skill-instruction",
-        "guidelines": null,
+        "guidelines": {
+          "dev": "EDD — write behavioral evals before skill files. NFR: description ≤150 chars, model/effort frontmatter, body ≤500 lines.",
+          "e2e-validator": "Developer-confirmation checklist from 12 Gherkin scenarios in sprints/phase-3-sprint-execution/specs/agent-guidelines-skill.feature"
+        },
         "test_approach": "EDD — behavioral evals verify discovery accuracy, rule structure, prohibition format, version pinning, AVFL invocation",
         "wave": 1,
         "dependencies": []
       },
       "8-1-avfl-corpus-mode": {
-        "roles": ["dev"],
+        "roles": ["dev", "e2e-validator", "architect-guard"],
         "change_type": "skill-instruction",
-        "guidelines": null,
-        "test_approach": "EDD — 3 behavioral evals verify corpus dimension activation, backward compatibility, and fixer authority resolution",
+        "guidelines": {
+          "dev": "EDD — 3 evals before touching skill files. NFR: SKILL.md ≤500 lines, framework.json changes must include corpus_only: true flag.",
+          "e2e-validator": "Developer-confirmation checklist from 12 Gherkin scenarios in sprints/phase-3-sprint-execution/specs/8-1-avfl-corpus-mode.feature",
+          "architect-guard": "Verify existing lens assignments unchanged. corpus_only: true prevents new dimensions in single-doc mode. Corpus prompt templates extend, not replace, existing templates."
+        },
+        "test_approach": "EDD — 3 evals: corpus dimension activation, backward compatibility, fixer authority resolution",
         "wave": 1,
         "dependencies": []
       },
       "8-2-momentum-research-skill": {
-        "roles": ["dev"],
+        "roles": ["dev", "e2e-validator"],
         "change_type": "skill-instruction",
-        "guidelines": null,
-        "test_approach": "EDD — 3 behavioral evals verify light profile end-to-end, medium profile with AVFL, and resume support",
+        "guidelines": {
+          "dev": "EDD — 3 evals before skill files. Phases 1,2,4,5,6 first; Phase 3 placeholder until 8-1 lands. Provenance: derives_from + content_origin in all output files.",
+          "e2e-validator": "Developer-confirmation checklist from 20 Gherkin scenarios in sprints/phase-3-sprint-execution/specs/8-2-momentum-research-skill.feature. Phase 3 scenarios deferred until 8-1 lands."
+        },
+        "test_approach": "EDD — 3 evals: light profile end-to-end, medium profile with AVFL (deferred), resume support",
         "wave": 1,
         "dependencies": [],
-        "notes": "Phase 3 (VERIFY) soft-depends on 8-1-avfl-corpus-mode; Phases 1,2,4,5,6 are independent and can be built in parallel"
+        "notes": "Phase 3 (VERIFY) soft-depends on 8-1-avfl-corpus-mode; Phases 1,2,4,5,6 are independent"
       }
     }
   },
