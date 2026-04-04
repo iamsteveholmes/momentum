@@ -4,7 +4,9 @@
     "locked": false,
     "slug": "sprint-2026-04-03",
     "stories": [
-      "agent-guidelines-skill"
+      "agent-guidelines-skill",
+      "8-1-avfl-corpus-mode",
+      "8-2-momentum-research-skill"
     ],
     "team_composition": {
       "agent-guidelines-skill": {
@@ -14,6 +16,23 @@
         "test_approach": "EDD — behavioral evals verify discovery accuracy, rule structure, prohibition format, version pinning, AVFL invocation",
         "wave": 1,
         "dependencies": []
+      },
+      "8-1-avfl-corpus-mode": {
+        "roles": ["dev"],
+        "change_type": "skill-instruction",
+        "guidelines": null,
+        "test_approach": "EDD — 3 behavioral evals verify corpus dimension activation, backward compatibility, and fixer authority resolution",
+        "wave": 1,
+        "dependencies": []
+      },
+      "8-2-momentum-research-skill": {
+        "roles": ["dev"],
+        "change_type": "skill-instruction",
+        "guidelines": null,
+        "test_approach": "EDD — 3 behavioral evals verify light profile end-to-end, medium profile with AVFL, and resume support",
+        "wave": 1,
+        "dependencies": [],
+        "notes": "Phase 3 (VERIFY) soft-depends on 8-1-avfl-corpus-mode; Phases 1,2,4,5,6 are independent and can be built in parallel"
       }
     }
   },
