@@ -814,6 +814,19 @@
       "skills/momentum-research/evals/"
     ]
   },
+  "8-3-gemini-deep-research-automation": {
+    "status": "ready-for-dev",
+    "title": "Gemini Deep Research Automation \u2014 cmux-browser Integration for momentum-research",
+    "epic_slug": "research-knowledge-management",
+    "story_file": true,
+    "depends_on": [
+      "8-2-momentum-research-skill"
+    ],
+    "touches": [
+      "skills/momentum-research/workflow.md",
+      "skills/momentum-research/references/gemini-prompt-template.md"
+    ]
+  },
   "avfl-scan-profile": {
     "status": "done",
     "title": "AVFL Scan Profile \u2014 Discovery-Only Validation for Team Handoff",
