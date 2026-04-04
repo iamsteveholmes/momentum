@@ -262,9 +262,40 @@ AVFL corpus mode for multi-document cross-validation. Committed as `924d4ef`.
 
 Option C adopted: 7-phase execution model with Team Review phase between AVFL and Verification. QA, E2E Validator, and Architect Guard run in parallel on integrated codebase post-merge. Committed as `45dc0a0`.
 
+### Sprint sprint-2026-04-04-2 — Plugin Migration (Complete, 2026-04-04)
+
+6 stories across 4 dependency waves. 141 files changed. Full plugin structure established.
+
+| Story | Wave | What | QA/Validator |
+|-------|------|------|--------------|
+| `plugin-skeleton` | 1 | Created `.claude-plugin/plugin.json` manifest, moved Impetus to `skills/impetus/` with 59 evals | 8/8 ACs |
+| `sprint-planning-skill` | 1 | SKILL.md wrapper for sprint-planning workflow, 2 EDD evals | 7/7 ACs |
+| `sprint-dev-skill` | 1 | SKILL.md wrapper for sprint-dev workflow, 2 EDD evals | 7/7 ACs |
+| `plugin-migrate-skills` | 2 | Moved 10 satellite skills via `git mv`, updated name fields | 6/6 ACs |
+| `plugin-scripts-hooks-refs` | 3 | Created `hooks/hooks.json`, verified scripts/references placement | 6/6 ACs |
+| `plugin-cross-references` | 4 | Updated 46 files — spawn names to `momentum:X`, paths to plugin layout | 9/9 ACs |
+
+**Post-merge quality:**
+- AVFL scan: 84/100 initial → fixed model field inconsistency (10 files), sub-skill naming (8 files), plugin description
+- Team Review: QA 38/40, E2E Validator 29/30, Architect Guard 9/13
+- Fixed 1 dead reference (Impetus sprint-dev dispatch)
+- Pre-existing issues deferred: sprint-manager supersession, missing status/retro skills, upstream-fix steps/
+- Automated verification: 30/30 Gherkin scenarios pass
+
 ### Gherkin Specs
 
-Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-execution/specs/`
+**Sprint sprint-2026-04-04-2:** `_bmad-output/implementation-artifacts/sprints/sprint-2026-04-04-2/specs/`
+
+| Spec | Scenarios |
+|------|-----------|
+| `plugin-skeleton.feature` | 6 |
+| `plugin-migrate-skills.feature` | 6 |
+| `plugin-scripts-hooks-refs.feature` | 6 |
+| `plugin-cross-references.feature` | 7 |
+| `sprint-planning-skill.feature` | 5 |
+| `sprint-dev-skill.feature` | 5 (total: 35 including background) |
+
+**Phase 3:** `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-execution/specs/`
 
 | Spec | Scenarios |
 |------|-----------|
@@ -279,22 +310,8 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 
 ### Immediate
 
-1. **Phase 3 Round 3:** `momentum-sprint-dev` implementation (in progress in separate session)
-2. **Plugin Migration:** Restructure `skills/` directory to match plugin model
-
-### Plugin Migration Plan (6 phases)
-
-1. Create plugin skeleton (`.claude-plugin/plugin.json`) + relocate Impetus content into `skills/impetus/`
-2. Move 9 satellite skills into plugin (strip `momentum-` prefix from directory names)
-3. Consolidate scripts and hooks at plugin root
-4. Update all cross-references (SKILL.md name fields, workflow paths, convention docs)
-5. Clean up symlinks and plugin registration
-6. Update eval references
-
-### After Plugin Migration
-
-- **Phase 3 Round 4:** Post-merge AVFL, transition all Phase 3 stories to done
-- **Phase 4:** `allowed-tools` restriction on Impetus (`Read, Glob, Grep, Agent, Bash`)
+1. **Phase 3 Round 4:** Post-merge AVFL on Phase 3 stories, transition all to `done`
+2. **Phase 4:** `allowed-tools` restriction on Impetus (`Read, Glob, Grep, Agent, Bash`)
 
 ### Deferred to Phase 5
 
