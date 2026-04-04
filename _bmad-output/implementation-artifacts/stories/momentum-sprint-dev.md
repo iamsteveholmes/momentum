@@ -45,12 +45,18 @@ This is the workflow that turns a sprint plan into committed, verified code.
   ordering is strict
 - After all sprint stories have merged, a single AVFL pass runs against the full
   codebase — not per-story
-- After AVFL, verification runs: verifier agents read Gherkin specs from
-  `sprints/{sprint-slug}/specs/` and validate behavior against the merged codebase
-- Dev agents never access the `sprints/{sprint-slug}/specs/` directory — verification
-  is black-box
-- In Phase 3, verification takes the form of a developer-confirmation checklist
-  derived from Gherkin scenarios — full automated verification is deferred
+- After AVFL, a Team Review phase spawns QA, E2E Validator, and Architect Guard
+  agents in parallel on the integrated codebase (main branch, no worktrees)
+- QA reviews merged code against all sprint story ACs and produces findings per story
+- E2E Validator validates behavior against Gherkin specs from
+  `sprints/{sprint-slug}/specs/` — black-box, no knowledge of implementation
+- Architect Guard checks for pattern drift against architecture decisions
+- Team Review findings are consolidated into a fix queue presented to the developer
+- Targeted dev fix agents (no worktrees — small changes on main) address findings
+- Fix loop: re-run affected reviewers after fixes until clean or developer accepts
+- Unresolved findings become follow-up stories or backlog items
+- After Team Review, a developer-confirmation checklist derived from Gherkin
+  scenarios provides final verification — full automated verification is deferred
 - On successful verification, all sprint stories are transitioned to `done` via
   `momentum-tools sprint status-transition`
 - The workflow surfaces a sprint summary showing story count, merge order, AVFL
@@ -115,7 +121,18 @@ The workflow must define these phases:
 2. If AVFL produces findings: present to developer, iterate fixes
 3. Log AVFL results
 
-**Phase 5: Verification**
+**Phase 5: Team Review (Option C)**
+1. Spawn QA, E2E Validator, and Architect Guard agents in parallel on main branch
+2. QA reviews against all sprint story ACs — produces findings per story
+3. E2E Validator validates behavior against Gherkin specs (black-box)
+4. Architect Guard checks pattern drift against architecture decisions
+5. Consolidate findings into a fix queue, present to developer
+6. Spawn targeted dev fix agents (no worktrees — small changes on main) for accepted findings
+7. Re-run affected reviewers after fixes; loop until clean or developer accepts remaining
+8. Unresolved findings become follow-up stories or backlog items
+9. Log team review results
+
+**Phase 6: Verification**
 1. Read all `.feature` files from `sprints/{sprint-slug}/specs/`
 2. For each feature file: extract scenario names and expected behaviors
 3. Present developer-confirmation checklist:
@@ -126,7 +143,7 @@ The workflow must define these phases:
 5. Log verification results
 6. On full confirmation: transition all stories from `verify` to `done` via status-transition
 
-**Phase 6: Sprint completion**
+**Phase 7: Sprint completion**
 1. Run `momentum-tools sprint complete` to archive the sprint
 2. Surface sprint summary:
    - Stories completed: count and list

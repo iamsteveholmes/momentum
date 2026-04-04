@@ -1401,14 +1401,25 @@ sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked 
 - If findings: present to developer, iterate fixes
 - This catches cross-story integration issues that per-story AVFL would miss
 
-**Phase 5: Verification (Decision 30: Black-Box)**
-- Read Gherkin specs from `sprints/{sprint-slug}/specs/`
-- Dev agents never access this directory — verification is black-box
-- Phase 3 implementation: developer-confirmation checklist derived from Gherkin scenarios
-- Future: automated verification via momentum-verify skill
-- On full confirmation: transition all stories to `done`
+**Phase 5: Team Review (Option C: Two-Phase Sprint Execution)**
+- After all devs have merged and AVFL passes, sprint-dev spawns QA, E2E Validator, and Architect Guard agents working on the integrated codebase (main branch, no worktrees)
+- **QA Agent** — reviews merged code against all sprint story ACs. Produces findings per story.
+- **E2E Validator** — validates behavior against Gherkin specs in `sprints/{sprint-slug}/specs/`. Black-box: reads specs and verifies behavior without knowledge of implementation approach.
+- **Architect Guard** — checks for pattern drift against architecture decisions. Flags deviations from Decision 26 team model, coding conventions, and project guidelines.
+- All three run in parallel on the full integrated codebase
+- Findings are consolidated and presented to the developer as a fix queue
+- Sprint-dev spawns targeted dev fix agents (no worktrees — small changes on main) to address findings
+- Fix loop: re-run affected reviewers after fixes until clean or developer accepts remaining items
+- Unresolved findings become follow-up stories or backlog items
 
-**Phase 6: Sprint Completion**
+**Phase 6: Verification (Decision 30: Black-Box)**
+- Developer-confirmation checklist derived from Gherkin scenarios (Phase 3 implementation)
+- Each Gherkin scenario becomes a checkbox item the developer confirms
+- Unconfirmed items become findings to address or follow-up stories
+- On full confirmation: transition all stories to `done`
+- Future: automated verification via momentum-verify skill replaces manual checklist
+
+**Phase 7: Sprint Completion**
 - Run `momentum-tools sprint complete` to archive the sprint
 - Surface summary: stories completed, merge order, AVFL findings, verification results
 - Suggest retrospective as next step
