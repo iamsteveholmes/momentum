@@ -166,13 +166,12 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
       <ask>Merge story/{slug} now?</ask>
 
       <check if="developer confirms merge">
-        <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
-        <action>Run: `git rebase sprint/{{sprint_slug}} story/{slug}` (rebases story branch onto latest sprint branch)</action>
+        <action>Run: `git rebase sprint/{{sprint_slug}} story/{slug}` (rebases story branch onto latest sprint branch — leaves HEAD on story/{slug})</action>
         <check if="rebase conflicts">
           <output>Rebase conflicts on story/{slug}. Resolve and run `git rebase --continue`.</output>
           <action>HALT — wait for developer to resolve</action>
         </check>
-        <action>Run: `git checkout sprint/{{sprint_slug}}` (ensure on sprint branch)</action>
+        <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
         <action>Run: `git merge story/{slug}`</action>
         <action>Run: `git worktree remove --force .worktrees/story-{slug}`</action>
         <action>Run: `git branch -d story/{slug}`</action>
@@ -180,7 +179,7 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
         <action>Update task {{task_map}}[slug] to completed</action>
 
         <action>Log merge (best-effort):
-          `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event decision --detail "Merged story/{slug} to main"`</action>
+          `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event decision --detail "Merged story/{slug} to sprint/{{sprint_slug}}"`</action>
 
         <output>Merged story/{slug}. Checking for newly unblocked stories...</output>
 
@@ -228,7 +227,7 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
         `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "AVFL critical findings: {{count}}"`</action>
       <output>AVFL found **critical** issues. These must be resolved before proceeding.
 {{findings_summary}}</output>
-      <action>Spawn targeted fix agents on main (no worktrees) for critical findings. Re-run AVFL after fixes.</action>
+      <action>Spawn targeted fix agents on the sprint branch (no worktrees) for critical findings. Re-run AVFL after fixes.</action>
       <action>Do NOT proceed to Phase 5 until all critical findings are resolved.</action>
     </check>
 
@@ -237,7 +236,7 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
 {{findings_summary}}</output>
       <ask>Address before Team Review, or proceed with known issues documented?</ask>
       <check if="developer wants to fix">
-        <action>Spawn targeted fix agents on main (no worktrees). Re-run AVFL after fixes.</action>
+        <action>Spawn targeted fix agents on the sprint branch (no worktrees). Re-run AVFL after fixes.</action>
       </check>
     </check>
   </step>
@@ -247,7 +246,7 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="5" goal="Parallel team review of integrated codebase">
-    <output>Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated main...</output>
+    <output>Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated sprint/{{sprint_slug}}...</output>
 
     <action>Spawn three agents in parallel (single message, all in one Agent tool call):
 
@@ -297,7 +296,7 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
       <ask>Address these findings now, defer to follow-up stories, or accept as-is?</ask>
 
       <check if="developer wants to fix">
-        <action>For each accepted finding, spawn a targeted dev fix agent (no worktree — direct on main).</action>
+        <action>For each accepted finding, spawn a targeted dev fix agent (no worktree — direct on sprint branch).</action>
         <action>After fixes, re-run only the reviewer(s) that produced the fixed findings:
           - If QA findings were fixed: re-spawn QA Agent only
           - If Validator findings were fixed: re-spawn E2E Validator only
@@ -379,8 +378,11 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
     </action>
 
     <action>Show push summary: `git log @{u}..HEAD --oneline`
-      Present the full list of commits that will be pushed (all sprint planning + dev work).
-      Wait for explicit developer approval before pushing.</action>
+      Present the full list of commits that will be pushed (all sprint planning + dev work).</action>
+    <ask>Push to origin/main?</ask>
+    <check if="developer confirms push">
+      <action>Run: `git push`</action>
+    </check>
 
     <output>## Sprint {{sprint_slug}} — Complete
 

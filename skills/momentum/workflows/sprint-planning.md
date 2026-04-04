@@ -90,14 +90,15 @@ These stories may be blocked during execution. Proceed anyway, or adjust selecti
 
     <action>Generate sprint slug: `sprint-YYYY-MM-DD` using today's date. If a sprint with that slug already exists in sprints/index.json completed list, append sequence number: `sprint-YYYY-MM-DD-2`</action>
 
-    <action>Register selected stories in the planning sprint:
-      `momentum-tools sprint plan --operation add --stories {{comma-separated-slugs}}`</action>
-
     <action>Store {{sprint_slug}} and {{selected_stories}} for subsequent steps</action>
 
-    <action>Create sprint branch: `git checkout -b sprint/{{sprint_slug}}`
+    <action>Create sprint branch from main:
+      `git checkout main && git checkout -b sprint/{{sprint_slug}}`
       All planning artifacts (stories, specs, team composition) will be committed to this branch.
       The branch merges to main only when the sprint is complete and verified.</action>
+
+    <action>Register selected stories in the planning sprint:
+      `momentum-tools sprint plan --operation add --stories {{comma-separated-slugs}}`</action>
 
     <action>Log selection:
       `momentum-tools log --agent impetus --event decision --detail "Sprint {{sprint_slug}} — selected {{count}} stories: {{slugs}}" --sprint {{sprint_slug}}`</action>
