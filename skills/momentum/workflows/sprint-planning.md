@@ -94,6 +94,10 @@ These stories may be blocked during execution. Proceed anyway, or adjust selecti
 
     <action>Store {{sprint_slug}} and {{selected_stories}} for subsequent steps</action>
 
+    <action>Create sprint branch: `git checkout -b sprint/{{sprint_slug}}`
+      All planning artifacts (stories, specs, team composition) will be committed to this branch.
+      The branch merges to main only when the sprint is complete and verified.</action>
+
     <action>Log selection:
       `momentum-tools log --agent impetus --event decision --detail "Sprint {{sprint_slug}} — selected {{count}} stories: {{slugs}}" --sprint {{sprint_slug}}`</action>
 

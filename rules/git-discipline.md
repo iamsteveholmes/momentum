@@ -87,14 +87,17 @@ For non-Momentum projects, use domain-appropriate scopes (e.g., `api`, `ui`, `db
 
 ## Push Policy
 
-Push after:
-- Completing a story or equivalent body of work
-- End of a session
-- Before switching branches
+Pushed commits are harder to roll back than local ones. Hold local until the work is verified, then push as a batch.
 
-Do NOT push after every commit — batch commits and push at logical milestones.
+### Sprint Work (sprint-plan, sprint-dev, momentum-dev)
 
-### Before Every Push: Show What Will Be Pushed
+Do NOT push until the sprint is complete and verified. All story commits, merges, and AVFL fixes stay local until the sprint reaches its done state. This keeps the full commit history rewritable/rollback-friendly throughout the sprint.
+
+### Non-Sprint Work
+
+For large bodies of work outside a sprint (e.g., rule changes, module updates, ad-hoc tasks), push at logical milestones — after completing a coherent unit of work. Do NOT push after every commit.
+
+### Push Always Requires Approval
 
 Before running `git push`, always run `git log @{u}..HEAD --oneline` and show the output to the user. This lets the user see exactly which commits will be pushed before the Claude Code confirmation dialog appears.
 
@@ -112,16 +115,23 @@ Push?
 
 Wait for the user to confirm before attempting `git push`.
 
-## Permission Gates — CRITICAL
+## Permission Gates
 
-**ALWAYS ask the user before:**
-- `git add` (show what will be staged)
-- `git commit` (show the full commit message)
-- `git push` (show what will be pushed and to where)
+### Commits Are Autonomous
 
-The user can say no or request changes. Wait for explicit approval.
+`git add` and `git commit` do NOT require user approval. Agents — including subagents and worktree sessions — should commit early and often without asking. This is the default, not an exception. Autonomous commits give agents rollback capability and queryable history, which are more valuable than approval friction.
 
-**NEVER run these without explicit user request:**
+When committing autonomously:
+- Follow conventional commit format (no shortcuts)
+- Stage only files relevant to the completed task (no `git add -A`)
+- Commit at every logical unit of work, not in batches
+
+### Push Always Requires Approval
+
+`git push` always requires explicit user confirmation. See Push Policy above.
+
+### Destructive Operations — NEVER Without Explicit Request
+
 - `git reset --hard`
 - `git checkout -- .`
 - `git clean -f`
@@ -138,6 +148,21 @@ The user can say no or request changes. Wait for explicit approval.
 - `git stash` (preserves work, doesn't destroy it)
 - Any read-only git query
 
+## Sprint Branch Convention
+
+All sprint work — planning and dev — happens on a dedicated `sprint/{sprint_slug}` branch. This branch is created during sprint planning and merges to main only when the sprint is complete and verified.
+
+**Branch lifecycle:**
+1. Sprint planning creates `sprint/{sprint_slug}` from main
+2. Planning artifacts (stories, specs, team composition) are committed to the sprint branch
+3. Story worktrees branch off the sprint branch, merge back to the sprint branch
+4. AVFL, team review, and verification all happen on the sprint branch
+5. On sprint completion: merge sprint branch to main, delete the sprint branch, push (with approval)
+
+**Why:** Local commits are easy to roll back; pushed commits are not. Keeping the entire sprint local until verified means the team can rewrite, squash, or discard freely. The sprint branch also cleanly separates concurrent sprint-plan and sprint-dev work, since each sprint gets its own branch.
+
+**Concurrent sprints:** If sprint-dev is running on `sprint/sprint-2026-04-01` while sprint-planning creates `sprint/sprint-2026-04-08`, each has an isolated branch. No intermixed commits on main.
+
 ## Worktree Conventions
 
 These conventions apply to `momentum-dev` story sessions, which always use git worktrees.
@@ -149,6 +174,8 @@ These conventions apply to `momentum-dev` story sessions, which always use git w
 **Crash recovery:** Before running `git worktree add`, check whether branch `story/{story_id}` already exists. If branch + worktree both exist, offer to resume or clean up. If branch exists but no worktree, delete the stale branch before proceeding.
 
 **Status writes go to the main working tree:** Story status updates (`ready-for-dev` → `in-progress`, `in-progress` → `done`) are written to `sprint-status.yaml` in the main working tree, not inside the worktree. This ensures all concurrent sessions see status changes immediately.
+
+**Merge target:** Story branches merge to the sprint branch (`sprint/{sprint_slug}`), not main. Main only receives the final sprint merge at completion.
 
 **Merge gate:** Always propose the merge command and wait for explicit user confirmation before running `git merge`. Never auto-execute a merge.
 
@@ -169,6 +196,7 @@ Run `git worktree prune` periodically to remove stale worktree metadata.
 
 Before ending a session:
 1. Check for uncommitted changes (`git status`)
-2. If changes exist, propose a commit with conventional message
-3. If commits exist that haven't been pushed, ask if the user wants to push
-4. Never end a session with uncommitted work without explicitly flagging it
+2. If changes exist, commit them (autonomous — no approval needed)
+3. If unpushed commits exist AND work is not part of an active sprint, ask if the user wants to push
+4. If work is part of an active sprint, note the unpushed commits but do not propose a push — sprint work stays local until sprint completion
+5. Never end a session with uncommitted work without explicitly flagging it

@@ -30,6 +30,9 @@
       <action>HALT — return to Impetus session menu.</action>
     </check>
 
+    <action>Ensure we are on the sprint branch: `git checkout sprint/{{sprint_slug}}`
+      If the branch does not exist, HALT — sprint planning should have created it.</action>
+
     <action>Read the per-sprint record: `sprints/{{sprint_slug}}.json`</action>
     <action>Store {{sprint_locked}} = the value of `locked` field</action>
 
@@ -157,19 +160,19 @@ Options:
       <output>Story **{slug}** is ready to merge.
 
 Branch:  story/{slug}
-Target:  main
+Target:  sprint/{{sprint_slug}}
 
-To merge: checkout main, rebase story branch, then merge.</output>
+To merge: checkout sprint branch, rebase story branch, then merge.</output>
       <ask>Merge story/{slug} now?</ask>
 
       <check if="developer confirms merge">
-        <action>Run: `git checkout main`</action>
-        <action>Run: `git rebase main story/{slug}` (rebases story branch onto latest main)</action>
+        <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
+        <action>Run: `git rebase sprint/{{sprint_slug}} story/{slug}` (rebases story branch onto latest sprint branch)</action>
         <check if="rebase conflicts">
           <output>Rebase conflicts on story/{slug}. Resolve and run `git rebase --continue`.</output>
           <action>HALT — wait for developer to resolve</action>
         </check>
-        <action>Run: `git checkout main` (ensure on main)</action>
+        <action>Run: `git checkout sprint/{{sprint_slug}}` (ensure on sprint branch)</action>
         <action>Run: `git merge story/{slug}`</action>
         <action>Run: `git worktree remove --force .worktrees/story-{slug}`</action>
         <action>Run: `git branch -d story/{slug}`</action>
@@ -362,11 +365,22 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
   <!-- PHASE 7: SPRINT COMPLETION                              -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="7" goal="Archive sprint and surface summary">
+  <step n="7" goal="Archive sprint, merge to main, and surface summary">
     <action>Run: `momentum-tools sprint complete`</action>
 
     <action>Log sprint completion (best-effort):
       `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Sprint complete"`</action>
+
+    <action>Merge sprint branch to main:
+      1. `git checkout main`
+      2. `git merge sprint/{{sprint_slug}}`
+      3. If conflicts: HALT for developer resolution
+      4. After successful merge: `git branch -d sprint/{{sprint_slug}}`
+    </action>
+
+    <action>Show push summary: `git log @{u}..HEAD --oneline`
+      Present the full list of commits that will be pushed (all sprint planning + dev work).
+      Wait for explicit developer approval before pushing.</action>
 
     <output>## Sprint {{sprint_slug}} — Complete
 
@@ -380,6 +394,8 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
 **Follow-up items:** {{followup_count}} stories added to backlog
 
 **Agent logs:** `.claude/momentum/sprint-logs/{{sprint_slug}}/`
+
+Sprint branch `sprint/{{sprint_slug}}` merged to main. Push when ready.
 
 ---
 Run **retrospective** to analyze agent logs and surface practice improvements?</output>
