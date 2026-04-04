@@ -727,7 +727,7 @@
     ]
   },
   "agent-logging-tool": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Agent Logging Tool — momentum-tools log subcommand",
     "epic_slug": "impetus-core",
     "story_file": true,
