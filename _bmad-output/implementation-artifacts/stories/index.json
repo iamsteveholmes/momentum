@@ -49,7 +49,7 @@
     ]
   },
   "momentum-tooling": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Momentum Tooling — Python CLI for Deterministic Operations",
     "epic_slug": "impetus-core",
     "story_file": false,
@@ -66,7 +66,7 @@
     ]
   },
   "impetus-identity-redesign": {
-    "status": "review",
+    "status": "done",
     "title": "Impetus Identity Redesign — BMAD-Informed Character",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -76,7 +76,7 @@
     ]
   },
   "session-open-sprint-view": {
-    "status": "review",
+    "status": "done",
     "title": "Session-Open Sprint View — Mode Detection and Fill Bars",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -205,7 +205,7 @@
     ]
   },
   "session-orientation-and-thread-management": {
-    "status": "review",
+    "status": "done",
     "title": "Session Orientation and Thread Management",
     "epic_slug": "stay-oriented-impetus",
     "story_file": true,
@@ -216,7 +216,7 @@
     ]
   },
   "visual-progress-tracks-workflow-position": {
-    "status": "review",
+    "status": "done",
     "title": "Visual Progress Tracks Workflow Position",
     "epic_slug": "stay-oriented-impetus",
     "story_file": true,
@@ -411,7 +411,7 @@
     "touches": []
   },
   "model-routing-configured-by-frontmatter": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Model Routing Configured by Frontmatter",
     "epic_slug": "quality-enforcement",
     "story_file": true,
@@ -727,7 +727,7 @@
     ]
   },
   "agent-logging-tool": {
-    "status": "review",
+    "status": "done",
     "title": "Agent Logging Tool — momentum-tools log subcommand",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -738,7 +738,7 @@
     ]
   },
   "momentum-dev-simplify": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum Dev Simplify — Pure Executor",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -750,7 +750,7 @@
     ]
   },
   "momentum-sprint-planning": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint Planning Workflow Module",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -790,7 +790,7 @@
     ]
   },
   "8-1-avfl-corpus-mode": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "AVFL Corpus Mode — Multi-Document Cross-Validation for momentum-avfl",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
