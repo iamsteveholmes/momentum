@@ -186,8 +186,8 @@ All workflows with 3+ steps MUST create tasks at entry. Claude Code's TaskCreate
 ```
 backlog (mutable)
   -> /momentum:sprint-planning (story selection + team composition + Gherkin specs + AVFL)
-  -> /momentum:sprint-dev (dependency-driven execution + post-merge AVFL + team review + verification)
-  -> /momentum:retro (structured handoff from agent logs)
+  -> /momentum:sprint-dev (dependency-driven execution + post-merge AVFL + team review + verification + merge to main)
+  -> /momentum:retro (cross-log discovery, story verification, triage outputs, sprint closure, artifact archival)
   -> backlog (next cycle)
 ```
 
@@ -296,7 +296,7 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 |------|------|
 | `momentum:triage` | Intake workflow (manual until then) |
 | `momentum:refine` | Backlog grooming with PM + Architect (manual until then) |
-| `momentum:retro` | Sprint retrospective (manual until then) |
+| `momentum:retro` | Sprint retrospective — holistic cross-log discovery, story verification, two-output triage (Decision 27), story stub creation, sprint closure, artifact archival (Decision 34) |
 | `momentum-triage-writer-tool` | Triage subcommands for momentum-tools.py |
 | `momentum-create-story-update` | Remove AVFL checkpoint, add Gherkin generation |
 | `momentum-verify-skill` | Automated behavioral verification (Phase 3 uses developer-confirmation) |
@@ -371,6 +371,8 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 | 31 | AVFL at sprint level | Phase 3 | Single AVFL pass after ALL stories merge. Per-story AVFL removed from create-story and dev. Catches cross-story integration issues. |
 | 32 | Plugin model | 2026-04-03 | Momentum is a Claude Code plugin with `momentum:` namespace. `.claude-plugin/plugin.json` manifest. All skills, hooks, scripts delivered by plugin install. |
 | 33 | Agent Teams for sprint execution | 2026-04-03 | Shared working directory. Commit-as-sync-point. No worktree within team. Parallel execution requires separate terminal sessions. |
+| 34 | Retro owns sprint closure | 2026-04-04 | Sprint-dev hands off after merge+push. Retro runs holistic cross-log discovery, verifies story closure, produces two triage outputs (Decision 27), creates story stubs, calls `sprint complete`, archives sprint artifacts out of active scan paths. |
+| 35 | Sprint branch convention | 2026-04-04 | All sprint work (planning + dev) on `sprint/{sprint_slug}` branch. Merges to main only at sprint completion. Isolates concurrent sprints. Local until verified — pushed only after Phase 7. |
 
 ---
 
@@ -387,7 +389,7 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 7. **Developer review** -- present full plan for approval
 8. **Sprint activation** -- `momentum-tools sprint activate`
 
-### Sprint Execution (7 phases)
+### Sprint Execution (8 phases)
 
 **Phase 1: Initialization**
 - Read active sprint from `sprints/index.json`; validate locked state
@@ -414,7 +416,7 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 - QA Agent -- reviews merged code against all sprint story ACs
 - E2E Validator -- validates behavior against Gherkin specs (black-box)
 - Architect Guard -- checks pattern drift against architecture decisions
-- All three run in parallel on integrated codebase (main branch, no worktrees)
+- All three run in parallel on integrated codebase (sprint branch, no worktrees)
 - Findings consolidated as fix queue; targeted dev fix agents address issues
 - Fix loop: re-run affected reviewers after fixes until clean or developer accepts
 
@@ -423,10 +425,22 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 - Future: automated verification via momentum-verify skill
 - On full confirmation: transition all stories to `done`
 
-**Phase 7: Sprint Completion**
-- `momentum-tools sprint complete` to archive sprint
+**Phase 7: Merge and Handoff**
+- Merge sprint branch (`sprint/{sprint_slug}`) to main
+- Push with developer approval (show commit list first)
 - Surface summary: stories completed, merge order, AVFL findings, verification results
-- Suggest retrospective
+- Hand off to Phase 8 (Retrospective) — sprint-dev does NOT call `sprint complete`
+
+**Phase 8: Retrospective (Decision 34)**
+- Holistic cross-log discovery across all agent JSONL logs in `.claude/momentum/sprint-logs/{sprint_slug}/`
+- Correlate events across agent logs — agents react to each other's outputs, so individual log analysis is insufficient
+- Verify all stories reached `done` — flag any that didn't as `closed-incomplete`
+- Produce two outputs per Decision 27:
+  - **Momentum triage** — practice improvements (how the process can improve)
+  - **Project triage** — project-specific findings (what the code/specs need)
+- Create story stubs from findings and add to backlog
+- Call `momentum-tools sprint complete` to set terminal sprint state
+- Archive sprint artifacts (stories, specs, logs, sprint record) — move to archive directory out of active scan paths. Not deleted, just relocated so they don't pollute active file searches
 
 ### Pre-Flight Checks
 
