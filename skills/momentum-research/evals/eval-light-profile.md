@@ -11,7 +11,7 @@ Given: User invokes momentum-research and provides:
 
 ### Phase 1 (SCOPE)
 1. Skill elicits topic and goals interactively
-2. Proposes 3-4 sub-questions covering the topic (e.g., developer experience comparison,
+2. Proposes exactly 3 sub-questions covering the topic (light profile cap) (e.g., developer experience comparison,
    bundle size benchmarks, job market availability)
 3. User selects "light" profile
 4. Creates project directory `{output_folder}/research/react-vs-svelte-{YYYY-MM-DD}/`

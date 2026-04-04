@@ -67,9 +67,10 @@ goals: "{{goals}}"
 profile: {{profile}}
 date: {{date}}
 sub_questions:
-{{#each sub_questions}}
-  - "{{this}}"
-{{/each}}
+  - "First sub-question text"
+  - "Second sub-question text"
+  - "Third sub-question text"
+  # ... one entry per sub-question from step 1.2
 ---
 
 # Research Scope: {{topic}}
@@ -80,8 +81,13 @@ sub_questions:
 
 ## Sub-Questions
 
-{{numbered list of sub_questions}}
+1. First sub-question
+2. Second sub-question
+3. Third sub-question
+(expand inline — one numbered entry per sub-question)
 ```
+
+**Important:** Write the sub-questions inline as literal YAML strings and numbered list items. Do not use template loop syntax — expand each sub-question directly.
 
     <output>Research project created at {{project_dir}}. Profile: {{profile}}. {{count}} sub-questions defined.</output>
   </step>
@@ -89,6 +95,10 @@ sub_questions:
   <step n="1.4" goal="Optional Gemini triangulation setup">
     <action>Check if gemini CLI is available: run `which gemini` via Bash</action>
     <check if="gemini is available">
+      <check if="{{project_dir}}/raw/gemini-output.md already exists">
+        <output>Gemini output already exists at raw/gemini-output.md — skipping Gemini step.</output>
+        <action>Continue to Phase 2</action>
+      </check>
       <ask>Gemini CLI detected. Would you like to generate a Gemini Deep Research prompt for external triangulation? (The prompt will be written to raw/gemini-prompt.md and you can choose to run it.)</ask>
       <check if="user says yes">
         <action>Load ./references/gemini-prompt-template.md</action>
@@ -128,7 +138,8 @@ topic: "{{topic}}"
 
   <step n="2.1" goal="Resume detection — check for existing raw files">
     <action>List all files matching {{project_dir}}/raw/research-*.md</action>
-    <action>For each sub-question in {{sub_questions}}, generate the expected filename: research-{{subtopic_slug}}.md</action>
+    <action>For each sub-question, derive {{subtopic_slug}}: take the first 3-5 significant words, lowercase, hyphens between words, max 30 chars. Example: "How does context compaction work?" → "context-compaction". This MUST match the slug used in step 2.2 for resume to work correctly.</action>
+    <action>Generate the expected filename: research-{{subtopic_slug}}.md</action>
     <action>Compare: which expected files exist, which are missing</action>
 
     <check if="ALL expected files exist">
@@ -255,17 +266,12 @@ topic: "{{topic}}"
       - raw/practitioner-notes.md (if present) → relationship: informed_by
     </action>
 
-    <action>Spawn a SINGLE Opus subagent in the FOREGROUND (not background). Give it:</action>
+    <action>Load ./references/synthesis-briefing-template.md</action>
+    <action>Generate the synthesis briefing by substituting: {{topic}}, {{goals}}, {{profile}}, {{date}}, {{project_dir}}, {{topic_slug}}, the list of raw file paths, and {{human_verified}}</action>
+
+    <action>Spawn a SINGLE Opus subagent in the FOREGROUND (not background). Pass the generated synthesis briefing as the agent prompt.</action>
 
     <critical>The synthesis agent must read ALL input files from disk — it receives file paths, not inline content. This gives it a clean 200K context window for synthesis, not polluted by the orchestrator's conversation history.</critical>
-
-    Synthesis agent prompt:
-    - Read all files listed above
-    - Use the output structure template as a starting point, adapting sections to match the sub-questions from scope.md
-    - Apply the evidence notation mapping (OFFICIAL→VERIFIED, PRAC→CITED, etc.)
-    - Write the final document to: {{project_dir}}/final/{{topic_slug}}-final-{{date}}.md
-    - Include the provenance frontmatter (content_origin, human_verified, derives_from chain)
-    - Return a brief completion summary inline
 
     <action>Confirm the final document was written</action>
     <output>Final research document at final/{{topic_slug}}-final-{{date}}.md</output>

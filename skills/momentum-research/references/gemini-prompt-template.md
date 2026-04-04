@@ -15,9 +15,10 @@ Research Goals: {{goals}}
 
 Key questions to investigate:
 
-{{#each sub_questions}}
-{{@index_plus_1}}. {{this}}
-{{/each}}
+1. [First sub-question from scope.md]
+2. [Second sub-question from scope.md]
+3. [Third sub-question from scope.md]
+(expand inline — one numbered entry per sub-question from scope.md)
 
 Desired output: A structured report with findings organized by question, including:
 - Specific actionable recommendations where available

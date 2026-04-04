@@ -13,11 +13,11 @@ Given: User invokes momentum-research and provides:
 1. Decomposes into 5-6 sub-questions
 2. Creates project directory with `raw/`, `validation/`, `final/`
 3. Writes `scope.md` with profile=medium
+4. Optionally offers Gemini CLI if available (generates prompt, asks to confirm before running)
 
 ### Phase 2 (EXECUTE)
-4. Spawns 5-6 parallel background subagents
-5. Each writes to `raw/research-{subtopic}.md` with frontmatter
-6. Optionally offers Gemini CLI if available
+5. Spawns 5-6 parallel background subagents
+6. Each writes to `raw/research-{subtopic}.md` with frontmatter
 
 ### Phase 3 (VERIFY)
 7. Invokes `momentum-avfl` with:
@@ -27,10 +27,6 @@ Given: User invokes momentum-research and provides:
    - `domain_expert: "research analyst"`
    - `task_context`: describing the multi-document research corpus
 8. AVFL report written to `validation/avfl-report.md`
-
-> **Phase 3 dependency note:** This phase requires Story 8-1 (avfl-corpus-mode)
-> to be implemented. Until then, Phase 3 should be a placeholder that logs
-> "AVFL corpus mode not yet available — skipping verification" and continues.
 
 ### Phase 4 (Q&A)
 9. Reads AVFL report to extract uncertainties and gaps
