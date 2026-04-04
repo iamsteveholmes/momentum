@@ -194,7 +194,8 @@ All findings: id, severity, dimension, location, description, evidence (mandator
 
 Run sequentially after all validators complete. Model: `haiku`. Sub-skill: `sub-skills/consolidator`.
 
-Use the consolidator prompt from `references/framework.json` → `prompts.consolidator`.
+**Single-document mode:** Use `prompts.consolidator` from `references/framework.json`.
+**Corpus mode (`corpus: true`):** Use `prompts.consolidator_corpus` — includes cross-document deduplication rules (same contradiction across N file pairs = one finding, not N).
 
 1. Tag each finding with confidence (HIGH / MEDIUM) — full profile only
 2. Merge all findings from all lenses into one list
