@@ -12,7 +12,7 @@ Read each task in the story's Tasks/Subtasks section. Apply the signals below to
 | JSON config, directory structure, `momentum-versions.json`, `installed.json`, `mcp-config.json`, `hooks-config.json`, `version.md` | `config-structure` |
 | `docs/`, `_bmad-output/`, PRD, architecture, epics, stories, UX design, research, README, `*.md` in planning/output directories | `specification` |
 
-When a task mentions creating a new skill package (e.g., "Create `skills/momentum-foo/`"), classify all of the following within that task:
+When a task mentions creating a new skill package (e.g., "Create `skills/momentum/skills/foo/`"), classify all of the following within that task:
 - The SKILL.md and workflow.md files → `skill-instruction`
 - Any scripts/ subdir → `script-code`
 - Any references/ or assets/ content → `skill-instruction`
@@ -70,7 +70,7 @@ Include when any task involves SKILL.md, workflow.md, or other skill instruction
 - SKILL.md `description` field must be ≤150 characters (NFR1) — count precisely
 - `model:` and `effort:` frontmatter fields must be present (model routing per FR23)
 - SKILL.md body must stay under 500 lines / 5000 tokens; overflow content goes in `references/` with clear load instructions (NFR3)
-- Skill names prefixed `momentum-` (NFR12 — no naming collision with BMAD skills)
+- Skill names use `momentum:` namespace prefix (NFR12 — no naming collision with BMAD skills)
 
 **Additional DoD items for skill-instruction tasks (added to standard bmad-dev-story DoD):**
 - [ ] 2+ behavioral evals written in `skills/{{SKILL_DIR}}/evals/`
@@ -78,7 +78,7 @@ Include when any task involves SKILL.md, workflow.md, or other skill instruction
 - [ ] SKILL.md description ≤150 characters confirmed (count the actual characters)
 - [ ] `model:` and `effort:` frontmatter present and correct
 - [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed (overflow in `references/` if needed)
-- [ ] AVFL checkpoint on produced artifact documented (momentum-dev runs this automatically — validates the implemented SKILL.md against story ACs)
+- [ ] AVFL checkpoint on produced artifact documented (momentum:dev runs this automatically — validates the implemented SKILL.md against story ACs)
 ```
 
 ---
@@ -96,7 +96,7 @@ Script and code changes use standard TDD (red-green-refactor). bmad-dev-story ha
 2. **Green:** Implement the minimum code to make tests pass. Run tests to confirm.
 3. **Refactor:** Improve code structure while keeping tests green.
 
-**Note:** Scripts in Momentum live under `skills/momentum-[name]/scripts/`. Follow the pattern in existing Momentum scripts for language choice and structure.
+**Note:** Scripts in Momentum live under `skills/momentum/skills/[name]/scripts/` or `skills/momentum/scripts/`. Follow the pattern in existing Momentum scripts for language choice and structure.
 
 **DoD items for script-code tasks (bmad-dev-story standard DoD applies — listed here for reference):**
 - Tests written and passing
@@ -179,12 +179,12 @@ Specification and documentation changes are validated by AVFL against their upst
 3. **Verify format compliance:** If the project has an established template or convention for this document type (e.g., ADR format, story frontmatter schema), confirm the output follows it.
 4. **Document** what was written or updated in the Dev Agent Record
 
-**No tests or evals required** for specification changes. AVFL checkpoint (run by momentum-dev) validates the spec against acceptance criteria.
+**No tests or evals required** for specification changes. AVFL checkpoint (run by momentum:dev) validates the spec against acceptance criteria.
 
 **Additional DoD items for specification tasks:**
 - [ ] All cross-references to other documents, files, or sections resolve correctly
 - [ ] Document follows project template/format conventions if one exists
-- [ ] AVFL checkpoint result documented (momentum-dev runs this automatically)
+- [ ] AVFL checkpoint result documented (momentum:dev runs this automatically)
 ```
 
 ---
@@ -192,9 +192,9 @@ Specification and documentation changes are validated by AVFL against their upst
 ## Complete Example (mixed story)
 
 For a story with Tasks:
-- Task 1: Create `skills/momentum-create-story/SKILL.md` → skill-instruction
-- Task 2: Create `skills/momentum-create-story/scripts/validate.py` → script-code
-- Task 3: Create `skills/momentum-create-story/references/` → skill-instruction
+- Task 1: Create `skills/momentum/skills/create-story/SKILL.md` → skill-instruction
+- Task 2: Create `skills/momentum/skills/create-story/scripts/validate.py` → script-code
+- Task 3: Create `skills/momentum/skills/create-story/references/` → skill-instruction
 
 Injected header would be:
 ```

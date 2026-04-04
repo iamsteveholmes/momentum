@@ -12,7 +12,7 @@ The skill SHOULD:
 
 - Acknowledge the invocation
 - Clearly indicate it is a stub pending Story 2.1 implementation
-- Suggest the user can still run individual skills directly (e.g., `/momentum-create-story`, `/momentum-dev`)
+- Suggest the user can still run individual skills directly (e.g., `/momentum:create-story`, `/momentum:dev`)
 
 ## Expected Behavior
 

@@ -18,7 +18,7 @@ Three foundation stories implemented:
    - Schema reference at `skills/momentum/references/sprint-tracking-schema.md`
    - 4 skill workflows updated to read from new locations
 
-3. **Story 0.3: Sprint-Manager Skill** — `skills/momentum-sprint-manager/` created. Sole writer of stories/index.json and sprints/index.json. 5 actions (status_transition, sprint_activate, sprint_complete, epic_membership, sprint_plan). State machine reference + 3 evals. Legacy `update-story-status.sh` deprecated.
+3. **Story 0.3: Sprint-Manager Skill** — `skills/momentum/skills/sprint-manager/` created. Sole writer of stories/index.json and sprints/index.json. 5 actions (status_transition, sprint_activate, sprint_complete, epic_membership, sprint_plan). State machine reference + 3 evals. Legacy `update-story-status.sh` deprecated.
 
 ## Current File Structure
 
@@ -36,7 +36,7 @@ _bmad-output/planning-artifacts/
   architecture.md       ← updated with new schema + write authority
   prd.md                ← updated with new story stages + FR55
 
-skills/momentum-sprint-manager/
+skills/momentum/skills/sprint-manager/
   SKILL.md + workflow.md + references/ + evals/
 ```
 
@@ -70,8 +70,8 @@ Four stories focused on the critical path to plan and execute sprints with teams
 | Story | What |
 |-------|------|
 | `agent-logging-tool` | Add `log` subcommand to momentum-tools.py. Every agent logs decisions, errors, retries, assumptions. JSONL append to `.claude/momentum/sprint-logs/`. Foundation for retros. |
-| `momentum-dev` | Simplify existing executor: strip AVFL + sprint-status writes. Pure worktree + bmad-dev-story + logging. |
-| `momentum-sprint-planning` | Story selection (3-8), create-story on stubs, team composition (which roles + project guidelines), dependency graph, execution plan. |
+| `momentum:dev` | Simplify existing executor: strip AVFL + sprint-status writes. Pure worktree + bmad-dev-story + logging. |
+| `momentum:sprint-planning` | Story selection (3-8), create-story on stubs, team composition (which roles + project guidelines), dependency graph, execution plan. |
 | `momentum-sprint-dev` | Spawn team of agents per sprint plan. Dependency-driven concurrency (not waves). Track via tasks, handle merges, AVFL, verify, status transitions. |
 
 **Key architecture decisions:**

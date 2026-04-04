@@ -1,4 +1,4 @@
-# momentum-research Workflow
+# momentum:research Workflow
 
 **Goal:** Conduct structured deep research through a 6-phase pipeline producing validated, provenance-tracked research documents.
 
@@ -182,7 +182,7 @@ topic: "{{topic}}"
     <action>Collect all file paths from {{project_dir}}/raw/*.md into {{corpus_files}} array</action>
 
     <check if="{{profile}} == medium">
-      <action>Invoke momentum-avfl skill with:
+      <action>Invoke momentum:avfl skill with:
         - corpus: true
         - profile: checkpoint
         - output_to_validate: {{corpus_files}}
@@ -194,7 +194,7 @@ topic: "{{topic}}"
     </check>
 
     <check if="{{profile}} == heavy">
-      <action>Invoke momentum-avfl skill with:
+      <action>Invoke momentum:avfl skill with:
         - corpus: true
         - profile: full
         - output_to_validate: {{corpus_files}}

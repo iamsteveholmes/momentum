@@ -5,7 +5,7 @@ model: opus
 effort: high
 ---
 
-# momentum-research
+# momentum:research
 
 6-phase deep research skill: SCOPE, EXECUTE, VERIFY, Q&A, SYNTHESIZE, COMMIT.
 

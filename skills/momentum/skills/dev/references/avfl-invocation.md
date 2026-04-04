@@ -1,4 +1,4 @@
-# AVFL Invocation Guide for momentum-dev
+# AVFL Invocation Guide for momentum:dev
 
 Reference this file in Step 7 to determine how to run AVFL on the story's complete changeset.
 
@@ -16,7 +16,7 @@ The story file itself is included in the diff (status updates, Dev Agent Record,
 
 ## Capturing the Changeset
 
-Every momentum-dev story runs in an isolated git worktree on branch `story/{{story_key}}`, branched from `{{target_branch}}`. After bmad-dev-story completes and the workflow exits the worktree, capture the complete changeset:
+Every momentum:dev story runs in an isolated git worktree on branch `story/{{story_key}}`, branched from `{{target_branch}}`. After bmad-dev-story completes and the workflow exits the worktree, capture the complete changeset:
 
 ```
 git diff {{target_branch}}...story/{{story_key}}

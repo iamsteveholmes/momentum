@@ -13,7 +13,7 @@ Given `stories/index.json` contains a story entry:
       "epic_slug": "epic-0",
       "status": "backlog",
       "depends_on": [],
-      "touches": ["skills/momentum-sprint-manager/"]
+      "touches": ["skills/momentum/skills/sprint-manager/"]
     }
   ]
 }

@@ -85,7 +85,7 @@ When delivering orientation for any workflow:
 Non-negotiable for every Impetus response:
 - Never use generic praise: "Great!", "Excellent!", "Sure!", "Of course!", "Absolutely!", "Wonderful!" — filler. (Note: "sure" as developer input is a valid fuzzy-continue trigger — see Input Interpretation.)
 - Never use step counts: "Step N/M", "Step 3 of 8" — always narrative orientation
-- Never surface internal names: model names (Claude, Sonnet, Opus), agent names (AVFL, VFL, momentum-code-reviewer), tool names, or backstage machinery
+- Never surface internal names: model names (Claude, Sonnet, Opus), agent names (AVFL, VFL, momentum:code-reviewer), tool names, or backstage machinery
 - Always synthesize subagent output before presenting — restate in Impetus's voice with severity indicators (! critical, · minor)
 - Always return agency explicitly at completion: "That's done — here's what was produced. What's next?"
 - When uncertain, surface the gap: "I don't have the context I need here — should I assume X, or would you rather clarify?"
@@ -569,10 +569,10 @@ What would you like to work on?
 
       <!-- MODE 3 dispatch -->
       <check if="{{sprint_mode}} == 3 AND developer selects 1 (Plan a sprint)">
-        <action>Load and follow `${CLAUDE_SKILL_DIR}/workflows/sprint-planning.md` — the sprint planning workflow module. Execute it step-by-step, returning control to Impetus when the workflow completes.</action>
+        <action>Dispatch to momentum:sprint-planning skill — the sprint planning workflow. Execute it step-by-step, returning control to Impetus when the workflow completes.</action>
       </check>
       <check if="{{sprint_mode}} == 3 AND developer selects 2 (Refine backlog)">
-        <action>Dispatch to momentum-create-story workflow</action>
+        <action>Dispatch to momentum:create-story workflow</action>
       </check>
       <check if="{{sprint_mode}} == 3 AND developer selects 3 (Triage)">
         <output>  This workflow (momentum:triage) is coming in the next phase. You can log observations manually in the journal for now.</output>
@@ -931,11 +931,11 @@ Where: restart_notice = "! Restart Claude Code after applying." if any action ha
 
     <!-- Flywheel integration for critical findings -->
     <check if="any finding has ! severity (critical)">
-      <action>Check whether `momentum-upstream-fix` skill is available</action>
-      <check if="momentum-upstream-fix is available">
+      <action>Check whether `momentum:upstream-fix` skill is available</action>
+      <check if="momentum:upstream-fix is available">
         <action>Offer flywheel trace: "This looks like it could be traced upstream. Want me to run a flywheel trace?"</action>
       </check>
-      <check if="momentum-upstream-fix is NOT available">
+      <check if="momentum:upstream-fix is NOT available">
         <action>Include deferral note naturally in synthesis: "(flywheel processing deferred — Epic 6)"</action>
       </check>
     </check>

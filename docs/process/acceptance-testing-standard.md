@@ -172,7 +172,7 @@ This placement ensures:
 
 | When | Who authors |
 |---|---|
-| Story created via `momentum-create-story` | Story creator (draft) |
+| Story created via `momentum:create-story` | Story creator (draft) |
 | Retroactive audit of existing stories | Developer performing the audit (draft) |
 | Before acceptance testing begins | Acceptance tester reviews and may revise |
 | After revision | Acceptance tester owns the plan |

@@ -3,7 +3,7 @@
 ## Scenario
 
 Given a Momentum story file that has been produced by bmad-create-story, classified as having 2 tasks:
-- Task 1: Create `skills/momentum-validate/SKILL.md` → `skill-instruction`
+- Task 1: Create `skills/momentum/skills/validate/SKILL.md` → `skill-instruction`
 - Task 2: Update `.claude/settings.json` hooks → `rule-hook`
 
 The story file has a `## Dev Notes` section followed by `## Dev Agent Record`. The skill is now in Step 4.
@@ -13,7 +13,7 @@ The story file has a `## Dev Notes` section followed by `## Dev Agent Record`. T
 The skill should:
 1. Compose a `## Momentum Implementation Guide` section containing:
    - A header with `**Change Types in This Story:**` listing Task 1 → skill-instruction (EDD) and Task 2 → rule-hook (functional verification)
-   - A `### skill-instruction Tasks: Eval-Driven Development (EDD)` section with EDD steps 1-5, NFR compliance requirements (NFR1, FR23, NFR3, NFR12), and DoD checklist items with {{SKILL_DIR}} substituted as `momentum-validate`
+   - A `### skill-instruction Tasks: Eval-Driven Development (EDD)` section with EDD steps 1-5, NFR compliance requirements (NFR1, FR23, NFR3, NFR12), and DoD checklist items with {{SKILL_DIR}} substituted as `validate`
    - A `### rule-hook Tasks: Functional Verification` section with functional verification steps and DoD checklist items
    - NO `### script-code Tasks` section (not present in this story)
    - NO `### config-structure Tasks` section (not present in this story)

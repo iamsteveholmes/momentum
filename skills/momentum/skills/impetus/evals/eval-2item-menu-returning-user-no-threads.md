@@ -16,10 +16,10 @@
    - `/create` — Write a story
    - `/develop` — Build the next story
 2. Items 3–6 from the old menu (Review a plan, Run quality validation, Audit spec provenance, Show session threads) do NOT appear
-3. Number alias `1` dispatches identically to `/create` → momentum-create-story workflow
-4. Number alias `2` dispatches identically to `/develop` → momentum-dev workflow
-5. Slash command `/create` dispatches to momentum-create-story workflow
-6. Slash command `/develop` dispatches to momentum-dev workflow
+3. Number alias `1` dispatches identically to `/create` → momentum:create-story workflow
+4. Number alias `2` dispatches identically to `/develop` → momentum:dev workflow
+5. Slash command `/create` dispatches to momentum:create-story workflow
+6. Slash command `/develop` dispatches to momentum:dev workflow
 
 ## Fail Conditions
 

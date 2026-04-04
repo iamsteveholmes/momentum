@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Given: User invokes momentum-research and provides:
+Given: User invokes momentum:research and provides:
 - Topic: "comparison of React vs Svelte for small teams"
 - Goals: "evaluate DX, bundle size, and hiring availability"
 - Profile selection: light

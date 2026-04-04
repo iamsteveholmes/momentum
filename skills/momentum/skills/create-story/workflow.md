@@ -1,4 +1,4 @@
-# momentum-create-story Workflow
+# momentum:create-story Workflow
 
 **Goal:** Create a Momentum story with change-type classification, injected implementation guidance, and AVFL validation.
 
@@ -60,7 +60,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <action>Locate the Dev Notes section (or Developer Context section — may vary by bmad-create-story template version)</action>
     <action>Using {{classification_list}} from Step 3, determine which change types are present and select only the corresponding templates from ./references/change-types.md.</action>
     <check if="skill-instruction tasks are present in {{classification_list}}">
-      <action>Identify `{{SKILL_DIR}}` from the story's skill-instruction tasks — this is the directory name of the skill being created (e.g., if creating `skills/momentum-foo/`, then `{{SKILL_DIR}}` = `momentum-foo`). Substitute this value in the skill-instruction template before injecting.</action>
+      <action>Identify `{{SKILL_DIR}}` from the story's skill-instruction tasks — this is the directory name of the skill being created (e.g., if creating `skills/momentum/skills/foo/`, then `{{SKILL_DIR}}` = `foo`). Substitute this value in the skill-instruction template before injecting.</action>
     </check>
     <action>Compose the Momentum Implementation Guide section using the templates for all detected types in this story (from ./references/change-types.md)</action>
     <action>Inject the section at the END of the Dev Notes / Developer Context section, immediately before the Dev Agent Record section. If no Dev Agent Record section exists, inject at the end of the Dev Notes / Developer Context section.</action>
@@ -79,7 +79,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   <step n="5" goal="Write story metadata to stories/index.json">
     <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
       - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. Find the matching story slug in `stories/index.json`. Store as {{depends_on}} list of story slugs. If none found, use [].
-      - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum-dev/", ".claude/settings.json"]); if none found, use []
+      - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum/skills/dev/", ".claude/settings.json"]); if none found, use []
     </action>
     <action>Read `{{implementation_artifacts}}/stories/index.json`</action>
     <action>Add or update the entry keyed by {{story_key}} with:
@@ -152,7 +152,7 @@ Change types: {{change_types_summary}}
 AVFL checkpoint: {{avfl_result}}
 {{avfl_findings}}
 
-This story is yours to review and adjust. When ready: invoke `momentum-dev` to implement.</output>
+This story is yours to review and adjust. When ready: invoke `momentum:dev` to implement.</output>
   </step>
 
 </workflow>

@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Given a developer enters a workflow for the second or subsequent time — e.g., they ran `/momentum-dev` yesterday and are running it again today — when Impetus delivers orientation:
+Given a developer enters a workflow for the second or subsequent time — e.g., they ran `/momentum:dev` yesterday and are running it again today — when Impetus delivers orientation:
 
 The skill should:
 1. Detect whether this is a first encounter or repeat encounter for this developer+workflow combination (via journal thread history)

@@ -304,8 +304,8 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 | `momentum:refine` | Backlog grooming with PM + Architect (manual until then) |
 | `momentum:retro` | Sprint retrospective — holistic cross-log discovery, story verification, two-output triage (Decision 27), story stub creation, sprint closure, artifact archival (Decision 34) |
 | `momentum-triage-writer-tool` | Triage subcommands for momentum-tools.py |
-| `momentum-create-story-update` | Remove AVFL checkpoint, add Gherkin generation |
-| `momentum-verify-skill` | Automated behavioral verification (Phase 3 uses developer-confirmation) |
+| `momentum:create-story-update` | Remove AVFL checkpoint, add Gherkin generation |
+| `momentum:verify-skill` | Automated behavioral verification (Phase 3 uses developer-confirmation) |
 
 ### Future Epics
 
@@ -315,8 +315,8 @@ Location: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-executio
 | Epic 4 | Complete story cycles -- code review, architecture guard, full verify |
 | Epic 6 | Findings MCP -- structured query over findings-ledger.jsonl |
 | Epic 7 | Bring your own tools -- extensible tool integration |
-| Epic 8 | AVFL corpus mode + momentum-research skill |
-| Epic 9 | momentum-research skill |
+| Epic 8 | AVFL corpus mode + momentum:research skill |
+| Epic 9 | momentum:research skill |
 
 ---
 

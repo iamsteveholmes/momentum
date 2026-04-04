@@ -239,7 +239,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="5" goal="Validate generated artifacts via AVFL checkpoint">
-    <action>Invoke the `momentum-avfl` skill with:
+    <action>Invoke the `momentum:avfl` skill with:
       - profile: checkpoint
       - stage: final
       - domain_expert: "technology guidelines author"

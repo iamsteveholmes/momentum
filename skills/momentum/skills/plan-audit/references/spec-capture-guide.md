@@ -1,4 +1,4 @@
-# Spec Capture Guide for momentum-plan-audit
+# Spec Capture Guide for momentum:plan-audit
 
 Reference loaded in Steps 2–3 of the workflow to guide classification, story creation, and spec audit.
 
@@ -110,7 +110,7 @@ Use the plan's Files to Create/Modify table as DoD items:
 
 ### Dev Notes
 
-**Change type:** {classify each file group using these signals (from `skills/momentum-create-story/references/change-types.md`):
+**Change type:** {classify each file group using these signals (from `skills/momentum/skills/create-story/references/change-types.md`):
 - `SKILL.md`, `workflow.md`, `references/`, instruction files → `skill-instruction`
 - `.sh`, `.py`, `.ts`, `scripts/`, executables → `script-code`
 - `.claude/rules/`, `settings.json`, hooks config → `rule-hook`
