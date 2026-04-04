@@ -542,7 +542,7 @@ What would you like to work on?
 
       <!-- MODE 1 dispatch -->
       <check if="{{sprint_mode}} == 1 AND developer selects 1 (Continue sprint)">
-        <action>Load and follow `${CLAUDE_SKILL_DIR}/workflows/sprint-dev.md`</action>
+        <action>Dispatch to momentum:sprint-dev skill — the sprint execution workflow. Execute it step-by-step, returning control to Impetus when the workflow completes.</action>
       </check>
       <check if="{{sprint_mode}} == 1 AND developer selects 2 (Sprint status)">
         <output>  This workflow (momentum:sprint-status) is coming in the next phase. For now, review sprint state in `_bmad-output/implementation-artifacts/sprints/` directly.</output>
