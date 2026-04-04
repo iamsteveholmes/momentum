@@ -74,7 +74,7 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 - After extracting the Deep Research report, the workflow optionally sends follow-up questions in the same Gemini conversation to probe gaps or deepen specific areas
 - The orchestrator generates 2-3 targeted follow-up questions based on the sub-questions from scope.md that the initial report covered thinly
 - Each follow-up response is appended to the same output file (`raw/gemini-deep-research-output.md`) under a `## Follow-Up` section
-- **Known challenge:** The Deep Research report renders as a modal overlay that traps the UI. Returning to the chat input requires dismissing this overlay. Prototyping showed that `browser back`, `Escape`, coordinate clicks, and direct URL navigation all fail to exit the report view. The dev agent must investigate: the `<` back arrow may be in a shadow DOM, iframe, or require a specific SPA route change. If no reliable dismissal is found, the follow-up cycle should be deferred to a future story.
+- **UI width requirement:** At narrow widths, the Deep Research report renders as a full-screen overlay that hides the chat input. At wider widths, the report displays alongside the chat input in a side-by-side layout. The workflow must ensure the cmux browser surface is wide enough (or maximized) before starting Deep Research. If the chat input is not visible after research completes, resize the surface wider before attempting follow-ups.
 
 ### AC7: Workflow Step Structure
 
