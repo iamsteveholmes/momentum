@@ -408,6 +408,9 @@ Confidence weighting: low-confidence results surface as questions to the user ra
 
 Impetus (`/momentum:impetus`) is a **pure orchestrator** and the recommended entry point for all Momentum operations. Users can invoke other namespaced skills directly (e.g., `/momentum:sprint-planning`, `/momentum:avfl`) but skip session orientation when doing so. Impetus MUST NOT perform development, evaluation, testing, or validation itself.
 
+**Impetus Identity (Phase 2: impetus-identity-redesign)**
+Impetus has a KITT-like servant-partner personality — competent, dry-witted, efficient. Not a generic assistant or chatbot. The identity model is that of a capable partner who anticipates needs, communicates with precision and occasional dry humor, and maintains continuity across sessions. This personality pervades session greetings, progress updates, menu presentation, and synthesis of subagent results.
+
 **Prohibited roles for Impetus — explicitly:**
 - Code writing (any file creation or modification that constitutes implementation)
 - Test execution (running test suites, evaluating test outcomes)
@@ -482,6 +485,25 @@ active story/task, current phase, last completed action, suggested next action.
 User never hunts for context. Direct skill invocation (e.g., `/momentum:sprint-planning`) skips session orientation — the user's choice.
 
 **Session open sequence (updated 2026-04-03):** At session start, Impetus reads `stories/index.json` and `sprints/index.json` and renders sprint progress (done/current/next) before presenting the primary menu. The primary menu offers sprint-oriented actions: "Plan a sprint" (invokes `/momentum:sprint-planning`), "Continue sprint" (invokes `/momentum:sprint-dev`), and standalone story operations. Session-stats write is deferred until after the menu is displayed — startup rendering does not block on writes.
+
+**Session-Open Sprint View — 3-Mode Visual Spec (Phase 2: session-open-sprint-view)**
+The session-open view renders one of three modes based on sprint state:
+
+- **Mode 1: Active sprint with in-progress stories** — Shows 16-block fill bar per story with status. Context menu: `[1] Continue sprint  [2] Sprint status  [3] Plan next sprint`
+- **Mode 2: Active sprint complete** — All stories done. Surfaces planning sprint or retro option. Context menu: `[1] Run retrospective  [2] Plan next sprint  [3] Review findings`
+- **Mode 3: No active sprint** — Shows epic count, offers plan/refine/triage. Context menu: `[1] Plan a sprint  [2] Refine backlog  [3] Triage intake`
+
+The 16-block fill bar maps story status to visual progress:
+```
+backlog       ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  (hatched)
+ready-for-dev ░░░░░░░░░░░░░░░░  (empty)
+in-progress   ████████░░░░░░░░
+review        ████████████░░░░
+verify        ██████████████░░
+done          ████████████████
+```
+
+Each story line renders as: `[story-id] ████████████░░░░ review` — the bar plus status label. Terminal-native, no external rendering dependencies.
 
 **Decision 4c — Productive Waiting**
 While a context:fork subagent runs, Impetus maintains engagement through pre-launch briefing and post-completion synthesis.
@@ -1580,3 +1602,6 @@ AVFL and resolution teams serve distinct purposes. AVFL excels at adversarial mu
 Scan profile: all 4 lenses, dual reviewers (Enumerator + Adversary), maximum skepticism (level 3), consolidation with cross-check confidence. Zero fix iterations — output is scored findings list only.
 
 Hybrid model: AVFL scan → findings handed to concurrent Agent Team (Dev, QA, E2E Validator, Architect Guard). Team works concurrently on main branch. E2E Validator tests running behavior with external tools — fundamentally different from AVFL's file-content validation.
+
+**AVFL Corpus Mode — Multi-Document Cross-Validation (2026-04-03, commit 924d4ef)**
+AVFL can validate a corpus of related documents together rather than validating artifacts individually. Corpus mode feeds multiple documents to validators simultaneously, enabling cross-document consistency checks: cross-reference errors between specs, contradictions between planning artifacts, and coverage gaps where one document promises something another omits. Validators receive the full corpus as input and apply their lens (Structural, Factual, Coherence, Domain) across document boundaries. Corpus mode uses the same validator pipeline (Enumerator + Adversary per lens, consolidator, fixer) — the difference is input scope, not execution architecture.
