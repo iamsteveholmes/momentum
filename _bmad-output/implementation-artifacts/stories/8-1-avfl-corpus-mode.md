@@ -1,7 +1,7 @@
 ---
 title: AVFL Corpus Mode — Multi-Document Cross-Validation for momentum-avfl
 story_key: 8-1-avfl-corpus-mode
-status: ready-for-dev
+status: done
 epic_slug: research-knowledge-management
 depends_on: []
 touches:

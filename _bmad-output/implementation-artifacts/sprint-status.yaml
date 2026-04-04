@@ -45,7 +45,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-21
-last_updated: 2026-03-31
+last_updated: 2026-04-04
 project: momentum
 project_key: NOKEY
 tracking_system: file-system
@@ -158,7 +158,7 @@ development_status:
 
   # Epic 8: Research & Knowledge Management
   epic-8: in-progress
-  8-1-avfl-corpus-mode: ready-for-dev
+  8-1-avfl-corpus-mode: done
   8-2-momentum-research-skill: ready-for-dev
   multi-model-research-workflow-active: backlog
   research-prompts-are-date-anchored-with-primary-source-directives: backlog
