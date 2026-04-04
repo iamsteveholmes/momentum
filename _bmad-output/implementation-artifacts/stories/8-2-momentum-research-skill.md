@@ -1,6 +1,6 @@
 ---
 title: momentum-research Skill — 6-Phase Deep Research Pipeline with Provenance
-status: ready-for-dev
+status: done
 epic_slug: research-knowledge-management
 story_key: 8-2-momentum-research-skill
 depends_on: []  # Phases 1,2,4,5,6 are independent. Only Phase 3 (VERIFY) requires 8-1-avfl-corpus-mode — see Dev Notes for sequencing.
