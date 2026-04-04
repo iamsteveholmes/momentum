@@ -332,7 +332,7 @@ Option C adopted: 7-phase execution model with Team Review phase between AVFL an
 | Epic 4 | Complete story cycles -- code review, architecture guard, full verify |
 | Epic 6 | Findings MCP -- structured query over findings-ledger.jsonl |
 | Epic 7 | Bring your own tools -- extensible tool integration |
-| Epic 8 | AVFL corpus mode + momentum:research skill |
+| Epic 8 | AVFL corpus mode + momentum:research skill + Gemini Deep Research automation (cmux-browser) |
 | Epic 9 | momentum:research skill |
 
 ---
