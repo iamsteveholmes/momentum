@@ -813,5 +813,16 @@
       "skills/momentum-research/references/",
       "skills/momentum-research/evals/"
     ]
+  },
+  "avfl-scan-profile": {
+    "status": "backlog",
+    "title": "AVFL Scan Profile — Discovery-Only Validation for Team Handoff",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum-avfl/SKILL.md",
+      "skills/momentum-avfl/references/framework.json"
+    ]
   }
 }

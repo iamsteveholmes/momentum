@@ -5,6 +5,7 @@ epic_slug: impetus-core
 depends_on:
   - momentum-dev-simplify
   - momentum-sprint-planning
+  - avfl-scan-profile
 touches:
   - skills/momentum/workflows/sprint-dev.md
   - skills/momentum/workflow.md
@@ -43,17 +44,23 @@ This is the workflow that turns a sprint plan into committed, verified code.
   blocked stories are now unblocked and spawns agents for those
 - Stories are never spawned before all their dependencies have merged — dependency
   ordering is strict
-- After all sprint stories have merged, a single AVFL pass runs against the full
-  codebase — not per-story
-- After AVFL, a Team Review phase spawns QA, E2E Validator, and Architect Guard
-  agents in parallel on the integrated codebase (main branch, no worktrees)
-- QA reviews merged code against all sprint story ACs and produces findings per story
-- E2E Validator validates behavior against Gherkin specs from
-  `sprints/{sprint-slug}/specs/` — black-box, no knowledge of implementation
-- Architect Guard checks for pattern drift against architecture decisions
+- After all sprint stories have merged, a single AVFL **scan** runs against the full
+  codebase — not per-story; scan mode uses all 4 lenses, dual reviewers, maximum
+  skepticism, and zero fix iterations (findings collection only, no remediation loop)
+- The AVFL scan produces a scored, consolidated findings list that is handed directly
+  to the concurrent Agent Team — the scan and the team are not sequential independent
+  passes; the scan feeds the team
+- A concurrent Agent Team then runs on main branch (no worktrees), receiving the AVFL
+  scan findings as input:
+  - **Dev** receives the AVFL findings list and fixes them concurrently with the other agents
+  - **QA** validates Dev fixes and reviews all sprint story ACs, producing findings per story
+  - **E2E Validator** tests running behavior against Gherkin specs from
+    `sprints/{sprint-slug}/specs/` using external tools — black-box behavioral testing
+    only; E2E does NOT review file content (that is AVFL's responsibility)
+  - **Architect Guard** checks for pattern drift against architecture decisions
 - Team Review findings are consolidated into a fix queue presented to the developer
-- Targeted dev fix agents (no worktrees — small changes on main) address findings
-- Fix loop: re-run affected reviewers after fixes until clean or developer accepts
+- Fix loop within team: re-run affected reviewers after fixes until clean or developer
+  accepts remaining findings
 - Unresolved findings become follow-up stories or backlog items
 - After Team Review, a developer-confirmation checklist derived from Gherkin
   scenarios provides final verification — full automated verification is deferred
@@ -116,21 +123,27 @@ The workflow must define these phases:
    f. Log the completion and any new spawns
 3. Repeat until all stories have merged
 
-**Phase 4: Post-merge quality gate**
-1. Run single AVFL pass on the full codebase (all sprint changes together)
-2. If AVFL produces findings: present to developer, iterate fixes
-3. Log AVFL results
+**Phase 4: Post-merge quality gate — hybrid AVFL scan + concurrent team** *(Architecture Decision 34)*
+1. Run AVFL in **scan** mode on the full codebase (all sprint changes together):
+   - All 4 lenses, dual reviewers, maximum skepticism
+   - Zero fix iterations — scan produces a scored, consolidated findings list only
+   - Log AVFL scan results via `momentum-tools log`
+2. Hand the findings list to the concurrent Agent Team (Phase 5 below)
+   - The scan and the team are NOT sequential independent passes — the scan feeds the team
+   - The scan profile is defined in `framework.json` (added by the `avfl-scan-profile`
+     story, which depends on sprint-dev)
 
-**Phase 5: Team Review (Option C)**
-1. Spawn QA, E2E Validator, and Architect Guard agents in parallel on main branch
-2. QA reviews against all sprint story ACs — produces findings per story
-3. E2E Validator validates behavior against Gherkin specs (black-box)
-4. Architect Guard checks pattern drift against architecture decisions
-5. Consolidate findings into a fix queue, present to developer
-6. Spawn targeted dev fix agents (no worktrees — small changes on main) for accepted findings
-7. Re-run affected reviewers after fixes; loop until clean or developer accepts remaining
-8. Unresolved findings become follow-up stories or backlog items
-9. Log team review results
+**Phase 5: Concurrent Agent Team** *(runs immediately after scan; no worktrees — main branch)*
+1. Spawn all four team agents in parallel, providing each the AVFL scan findings:
+   - **Dev**: receives the AVFL findings list and begins fixing concurrently with others
+   - **QA**: validates Dev fixes as they land + reviews all sprint story ACs, producing findings per story
+   - **E2E Validator**: tests running behavior against Gherkin specs using external tools (black-box behavioral testing ONLY — not file content review)
+   - **Architect Guard**: checks pattern drift against architecture decisions
+2. Consolidate all team findings into a fix queue, present to developer
+3. Spawn targeted dev fix agents (no worktrees — small changes on main) for accepted findings
+4. Re-run affected reviewers after fixes; loop until clean or developer accepts remaining
+5. Unresolved findings become follow-up stories or backlog items
+6. Log team review results
 
 **Phase 6: Verification**
 1. Read all `.feature` files from `sprints/{sprint-slug}/specs/`
@@ -179,8 +192,12 @@ The workflow must define these phases:
   mutations.
 - **Merge gate:** Every merge requires explicit developer confirmation. Sprint-dev
   proposes the merge and waits — never auto-executes.
-- **AVFL runs once:** After ALL stories merge, not after each. This catches cross-story
-  integration issues that per-story AVFL would miss.
+- **AVFL runs once in scan mode:** After ALL stories merge, not after each. Scan mode
+  (all 4 lenses, dual reviewers, max skepticism, zero fix iterations) catches cross-story
+  integration issues and produces a findings list that feeds directly into the concurrent
+  Agent Team. The scan and team are not two independent passes — they are one hybrid gate
+  (Architecture Decision 34). The scan profile is defined in `framework.json` (added by
+  the `avfl-scan-profile` story, which depends on sprint-dev).
 - **Black-box verification:** Dev agents never see Gherkin specs. Verifiers never see
   implementation details. The specs were written during planning before any code existed.
 
@@ -232,7 +249,8 @@ The active sprint slug is read from `sprints/index.json`. The full sprint record
 - FR70: Error Handling — this story implements graceful error handling for all sprint execution failure modes
 - Architecture: Sprint Execution Flow (sprint-dev workflow) — implements all 6 phases (Initialization, Team Spawn, Progress Tracking Loop, Post-Merge Quality Gate, Verification, Sprint Completion)
 - Architecture: Dependency-Driven Execution (Decision 25) — implements the teams-over-waves model where stories spawn based on dependency resolution, not wave numbers
-- Architecture: Agent Pool Governance, AVFL at sprint level (Decision 31) — implements single AVFL pass after ALL stories merge
+- Architecture: Agent Pool Governance, AVFL at sprint level (Decision 31) — implements single AVFL scan after ALL stories merge (scan mode: all 4 lenses, dual reviewers, max skepticism, zero fix iterations)
+- Architecture: Hybrid AVFL scan + concurrent team post-merge gate (Decision 34) — scan findings feed directly to concurrent Agent Team (Dev + QA + E2E Validator + Architect Guard); scan profile defined in `framework.json`
 - Architecture: Gherkin Specification Separation (Decision 30), verification — implements black-box verification via developer-confirmation checklist derived from Gherkin specs
 - Architecture: Story Assignment Model — implements the pattern where sprint-dev assigns stories to momentum-dev agents (momentum-dev does not select autonomously)
 - Architecture: Read/Write Authority table, sprint-dev workflow row — implements task state management, status transitions, and sprint completion via momentum-tools
