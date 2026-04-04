@@ -1,7 +1,21 @@
 {
   "active": null,
   "planning": {
-    "locked": false
+    "locked": false,
+    "slug": "sprint-2026-04-03",
+    "stories": [
+      "agent-guidelines-skill"
+    ],
+    "team_composition": {
+      "agent-guidelines-skill": {
+        "roles": ["dev"],
+        "change_type": "skill-instruction",
+        "guidelines": null,
+        "test_approach": "EDD — behavioral evals verify discovery accuracy, rule structure, prohibition format, version pinning, AVFL invocation",
+        "wave": 1,
+        "dependencies": []
+      }
+    }
   },
   "completed": []
 }

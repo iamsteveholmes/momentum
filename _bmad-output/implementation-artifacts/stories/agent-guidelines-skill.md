@@ -29,6 +29,8 @@ Implements FR61a. Grounded in the Agent Guidelines Authoring research report
 
 ## Acceptance Criteria (Plain English)
 
+> Detailed Gherkin specs: `_bmad-output/implementation-artifacts/sprints/phase-3-sprint-execution/specs/agent-guidelines-skill.feature`
+
 ### Discovery Phase
 - The skill spawns parallel subagents to scan the project for technology stack signals
 - Build files are detected: `build.gradle.kts`, `package.json`, `Cargo.toml`,
