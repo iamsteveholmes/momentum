@@ -9,7 +9,7 @@ effort: high
 
 A multi-phase validation pipeline with parallel reviewers, cross-checked findings, and an iterative fix loop.
 
-The framework is grounded in research: dual reviewers with different framings improve accuracy ~12% absolute over single-agent validation (Meta-Judge 2025). Staged validation is 8%+ more accurate and 1.5–5× more compute-efficient than outcome-only evaluation. Late-stage errors are 3.5× more damaging than early ones — which is why profile selection matters.
+The framework is grounded in research: dual reviewers with different framings improve accuracy ~8 percentage points absolute over single-agent validation (Meta-Judge 2025). Staged validation is 8%+ more accurate and 1.5–5× more compute-efficient than outcome-only evaluation. Late-stage errors are 3.5× more damaging than early ones (ASCoT 2025) — which is why profile selection matters.
 
 **This SKILL.md is the orchestration layer.** Before spawning your first subagents, read `references/framework.json` — it contains the complete dimension taxonomy, validator/consolidator/fixer prompt templates, finding schema, scoring weights, and usage examples. Use those prompts verbatim when instructing subagents.
 
@@ -228,7 +228,7 @@ Check exit conditions based on the profile:
 
 ### Phase 4: FIX
 
-**Note:** When `fix_loop: false` (gate and scan profiles), the pipeline never reaches this phase. Gate halts on failure; scan returns the consolidated findings list directly from Phase 3.
+**Note:** Gate (`fix_loop: false`): pipeline halts with GATE_FAILED — Phase 4 is never entered. Scan (`fix_loop: false`): pipeline exits from Phase 3 with SCAN_COMPLETE — Phase 4 is never entered.
 
 Model: `sonnet`. Sub-skill: `sub-skills/fixer`. Run as the `domain_expert` role.
 
@@ -294,7 +294,7 @@ When `profile: scan`, the final output uses `structured_handoff` format — a pr
 
 | Field | Description |
 |---|---|
-| `id` | Unique finding identifier (e.g., `F-001`) |
+| `id` | Unique finding identifier: `LENS_ID-NNN` (e.g., `STRUCTURAL-001`, `ACCURACY-003`) |
 | `severity` | critical, high, medium, or low |
 | `confidence` | HIGH (both reviewers found it) or MEDIUM (one reviewer, evidence-confirmed) |
 | `lens` | Which lens surfaced it: structural, accuracy, coherence, or domain |

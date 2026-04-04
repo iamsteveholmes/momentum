@@ -19,7 +19,7 @@ Given AVFL is invoked with `profile: gate` (or `checkpoint`, or `full`) after th
 
 ## Expected Behavior
 
-1. **gate** behaves identically to before scan was added: 1 agent, structural lens only, no fix loop, pass/fail with halt_and_report on failure
+1. **gate** behaves identically to before scan was added: 1 agent, structural lens only, no fix loop, pass/fail with GATE_FAILED on failure
 2. **checkpoint** behaves identically: 1 agent per active lens (2-3 lenses), 1 fix attempt on failure, continue_with_warning regardless of result
 3. **full** behaves identically: 2 agents per lens (dual review), up to 4 fix iterations, pass threshold 95, iterative fix loop with skepticism stepping down to level 2 on iteration 2+
 4. No existing profile gains the `output_format` field — `structured_handoff` is scan-only

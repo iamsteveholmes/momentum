@@ -52,7 +52,7 @@
       "default": "final"
     },
     "skepticism": {
-      "description": "Reviewer intensity: 1 (conservative \u2014 report only what evidence clearly shows wrong), 2 (balanced \u2014 follow promising leads, benefit of the doubt), 3 (aggressive \u2014 look for what feels off, follow hunches, re-examine before reporting clean). Applies equally to both reviewer framings.",
+      "description": "Reviewer intensity: 1 (conservative \u2014 report only what evidence clearly shows wrong), 2 (balanced \u2014 follow promising leads, benefit of the doubt), 3 (aggressive \u2014 look for what feels off, follow hunches, re-examine before reporting clean). Applies equally to both reviewer framings. Pipeline-controlled: listed here for documentation. Callers should not override \u2014 see SKILL.md Skepticism section.",
       "required": false,
       "default": 3
     },
@@ -388,14 +388,13 @@
       ]
     },
     "scan": {
-      "description": "Maximum-intensity discovery with zero fix iterations. Dual reviewers on all lenses at maximum skepticism. Output is a structured, prioritized findings list for handoff to a resolution team — no corrected document is produced.",
+      "description": "Maximum-intensity discovery with zero fix iterations. Dual reviewers on all lenses at maximum skepticism. Output is a structured, prioritized findings list for handoff to a resolution team — no corrected document is produced. output_format: structured_handoff signals the consolidator to emit a prioritized findings list ordered by severity then confidence, with all required handoff fields. Not present in gate/checkpoint/full.",
       "agents": "2 per active lens (up to 8 parallel)",
       "dual_review": true,
       "lenses_active": "All 4 lenses",
       "fix_loop": false,
       "on_fail": "return_findings",
       "output_format": "structured_handoff",
-      "_output_format_note": "New field added by avfl-scan-profile (2026-04-04). Not present in gate/checkpoint/full. Signals the consolidator to emit a prioritized findings list ordered by severity then confidence, with all required handoff fields.",
       "when_to_use": [
         "Post-sprint-merge quality gate — full codebase scan before handing to resolution team",
         "Any context where discovery quality matters more than resolution throughput"
@@ -403,9 +402,9 @@
     }
   },
   "dual_review": {
-    "description": "When dual_review is enabled (full profile), each lens runs TWO independent reviewers with different evaluation framings. Cross-checking their findings dramatically improves accuracy and filters hallucinated findings.",
+    "description": "When dual_review is enabled (full and scan profiles), each lens runs TWO independent reviewers with different evaluation framings. Cross-checking their findings dramatically improves accuracy and filters hallucinated findings.",
     "rationale": {
-      "accuracy_gain": "2 agents + cross-check: 77.26% accuracy vs 68.89% single-agent (Meta-Judge 2025). ~12% absolute improvement.",
+      "accuracy_gain": "2 agents + cross-check: 77.26% accuracy vs 68.89% single-agent (Meta-Judge 2025). ~8.4 percentage-point absolute improvement.",
       "hallucination_filtering": "Findings confirmed by both reviewers are almost certainly real. Findings from only one reviewer are flagged for consolidator scrutiny. This is the primary mechanism for preventing validator hallucinations.",
       "diminishing_returns": "Adding a 3rd reviewer decreased performance in Meta-Judge study. 2 is the sweet spot.",
       "diversity_required": "Same-prompt reviewers capture far less benefit. The two reviewers MUST use different evaluation approaches."
@@ -557,7 +556,8 @@
       "profile_variations": {
         "gate": "1 agent, structural lens only",
         "checkpoint": "1 agent per active lens (2-3 lenses based on step type)",
-        "full": "2 agents per lens (8 total) \u2014 Enumerator and Adversary framings"
+        "full": "2 agents per lens (8 total) \u2014 Enumerator and Adversary framings",
+        "scan": "2 per active lens (up to 8 parallel) \u2014 Enumerator and Adversary framings, identical to full. Single pass only \u2014 no fix loop."
       },
       "process": [
         "Validator receives their lens definition (mindset, dimensions, approach) and reviewer framing (if dual_review)",
@@ -579,7 +579,7 @@
         "Remove findings that lack evidence or where evidence doesn't support the claim",
         "Calculate score: starting_score + sum(severity_weights for each remaining finding)",
         "Assign grade based on score thresholds",
-        "Sort findings by severity (critical first) then by location"
+        "Sort findings by severity (critical first), then by location. When output_format is structured_handoff (scan profile), sort by severity then by confidence (HIGH before MEDIUM) within each severity tier instead of location."
       ],
       "output": {
         "score": "Calculated quality score (0-100)",
@@ -595,7 +595,8 @@
       "profile_variations": {
         "gate": "Pass (score >= 95) \u2192 continue workflow. Fail \u2192 halt and report to user.",
         "checkpoint": "Pass \u2192 continue. Fail \u2192 one fix attempt, then continue with warning regardless.",
-        "full": "Pass \u2192 exit clean. Fail with iterations remaining \u2192 fix and re-validate. Fail at max iterations \u2192 report to user."
+        "full": "Pass \u2192 exit clean. Fail with iterations remaining \u2192 fix and re-validate. Fail at max iterations \u2192 report to user.",
+        "scan": "Exit immediately after consolidation regardless of score. Return consolidated findings as structured_handoff. Score is informational only. Fixer is never reached. Exit status: SCAN_COMPLETE."
       },
       "conditions": {
         "pass": {
@@ -708,6 +709,23 @@
           "on_fail": "halt_and_report"
         }
       ]
+    },
+    "scan_profile": {
+      "sequence": [
+        {
+          "phase": "validate",
+          "next": "consolidate"
+        },
+        {
+          "phase": "consolidate",
+          "next": "evaluate"
+        },
+        {
+          "phase": "evaluate",
+          "on_complete": "exit_scan_complete",
+          "note": "Exits with SCAN_COMPLETE regardless of score. No fix phase."
+        }
+      ]
     }
   },
   "exit_conditions": {
@@ -758,6 +776,19 @@
           "findings",
           "stage_name",
           "fix_log"
+        ]
+      }
+    },
+    "scan_complete": {
+      "trigger": "scan profile completes consolidation",
+      "report": {
+        "status": "SCAN_COMPLETE",
+        "message": "Scan complete. Score: {score}/100 (informational). {findings_count} findings across {severity_breakdown}.",
+        "include": [
+          "status",
+          "score",
+          "findings_count_by_severity",
+          "structured_findings_list"
         ]
       }
     }
