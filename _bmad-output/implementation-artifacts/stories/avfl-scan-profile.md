@@ -7,6 +7,7 @@ depends_on: []
 touches:
   - skills/momentum-avfl/SKILL.md
   - skills/momentum-avfl/references/framework.json
+  - skills/momentum/workflows/sprint-dev.md
 change_type: skill-instruction + config-structure
 ---
 
@@ -63,8 +64,16 @@ two features compose independently.
 - `checkpoint` — single agent per lens, one fix attempt on fail
 - `full` — dual reviewers (Enumerator + Adversary) per lens, up to 4 fix iterations
 
-The `validation_profiles` section of `framework.json` uses fields: `agents`,
-`dual_review`, `lenses_active`, `fix_loop`, `max_fix_attempts`, `on_fail`.
+The `validation_profiles` section of `framework.json` uses a heterogeneous schema —
+not all fields appear in all profiles:
+
+- **Common to all profiles:** `agents`, `dual_review`, `lenses_active`, `fix_loop`
+- **gate only:** `dimensions_focus`, `on_fail`
+- **checkpoint only:** `max_fix_attempts`, `on_fail_after_fix`
+- **full only:** `max_iterations`, `pass_threshold`
+
+Note: `max_fix_attempts` is a checkpoint-only field; it does not appear in the gate or
+full profiles. Each profile uses only the fields relevant to its behavior.
 
 `framework.json` already contains a `parameters` section (extended by 8-1 with `corpus`,
 `authority_hierarchy`), `validation_profiles`, `prompts` (including corpus prompt
@@ -74,9 +83,11 @@ adds a new entry to `validation_profiles` alongside the existing three — it do
 modify any section added by 8-1.
 
 `SKILL.md` references the active profile to configure Phase 1 (VALIDATE), Phase 2
-(CONSOLIDATE), and Phase 4 (FIX). It branches on `fix_loop: false` to skip the fixer.
-SKILL.md also has a "Corpus Mode" section added by 8-1 describing array input, activated
-dimensions, and `{filename}:{section}` location format.
+(CONSOLIDATE), Phase 3 (EVALUATE), and Phase 4 (FIX). When `fix_loop: false`, Phase 3
+(EVALUATE) exits the pipeline before reaching Phase 4, returning the consolidated
+findings list directly — the fixer is never reached. SKILL.md also has a "Corpus Mode"
+section added by 8-1 describing array input, activated dimensions, and
+`{filename}:{section}` location format.
 
 **momentum-research (8-2):** The research skill uses corpus-mode AVFL in its VERIFY
 phase. This is an existing consumer of AVFL — the scan profile does not affect it
@@ -97,21 +108,26 @@ Insert into the existing `validation_profiles` section alongside gate/checkpoint
 
 ```json
 "scan": {
-  "agents": "dual",
+  "agents": "2 per active lens (up to 8 parallel)",
   "dual_review": true,
-  "lenses_active": "all",
-  "skepticism_level": 3,
+  "lenses_active": "All 4 lenses",
   "fix_loop": false,
-  "max_fix_attempts": 0,
   "on_fail": "return_findings",
   "output_format": "structured_handoff"
 }
 ```
 
-The `output_format: structured_handoff` field signals the consolidator to emit a
-prioritized findings list ordered by severity (critical → high → medium → low) then
-confidence (high → medium → low). Each finding entry must include: `id`, `severity`,
-`confidence`, `lens`, `dimension`, `location`, `description`, `evidence`, `suggestion`.
+Notes on this schema:
+- `agents` matches the full profile's format: "2 per active lens (up to 8 parallel)".
+- `skepticism_level` is NOT a profile field. The AVFL pipeline controls skepticism at
+  the pipeline level: iteration 1 runs at level 3, iterations 2+ run at level 2. Scan
+  runs a single pass only (no fix loop), so it inherently always runs at maximum
+  skepticism (level 3) per the existing pipeline logic — no field needed.
+- `output_format: structured_handoff` is a **NEW field** being added to the profile
+  schema by this story (not an existing field). It signals the consolidator to emit a
+  prioritized findings list ordered by severity (critical → high → medium → low) then
+  confidence (high → medium → low). Each finding entry must include: `id`, `severity`,
+  `confidence`, `lens`, `dimension`, `location`, `description`, `evidence`, `suggestion`.
 
 Note: `corpus` and `authority_hierarchy` are caller-supplied parameters (from 8-1), not
 profile fields. A caller can invoke `profile: scan, corpus: true` to get maximum-intensity
@@ -177,18 +193,23 @@ catches behavioral failures that only appear when the system runs.
 
 | Profile | Agents | Skepticism | Fix Iterations | Purpose |
 |---|---|---|---|---|
-| gate | 1 per lens | 1 | 0 (pass/fail) | Lightweight CI gate |
-| checkpoint | 1 per lens | 2 | 1 | Mid-story quality check |
-| full | 2 per lens (dual) | 2 | up to 4 | End-of-story deep validation |
+| gate | 1 per lens | 3 | 0 (pass/fail) | Lightweight CI gate |
+| checkpoint | 1 per lens | 3 (iter 1) / 2 (iter 2+) | 1 | Mid-story quality check |
+| full | 2 per lens (dual) | 3 (iter 1) / 2 (iter 2+) | up to 4 | End-of-story deep validation |
 | scan | 2 per lens (dual) | 3 | 0 | Discovery-only; findings for team handoff |
+
+Note: The pipeline runs iteration 1 at skepticism level 3 for all profiles. Profiles with
+a fix loop (checkpoint, full) run subsequent iterations at level 2. Gate and scan each
+run a single pass only, so they always operate at level 3.
 
 ### What NOT to change
 
 - Do not add a fix loop to scan — zero iterations is the defining characteristic
 - Do not modify the gate, checkpoint, or full profiles — scan is purely additive
 - Do not change the AVFL sub-skills (validator-enum, validator-adv, consolidator) — scan
-  uses them as-is; the difference is `dual_review: true`, `skepticism_level: 3`, and
-  skipping the fixer
+  uses them as-is; the difference is `dual_review: true`, `lenses_active: all`, and
+  skipping the fixer (scan's single pass inherently runs at maximum skepticism level 3
+  per the existing pipeline logic — no sub-skill changes needed)
 - Do not modify 8-1 corpus mode additions (corpus parameters, corpus prompt templates,
   corpus-only dimensions in framework.json, Corpus Mode section in SKILL.md) — scan is
   orthogonal to corpus and must not alter corpus behavior
@@ -207,7 +228,8 @@ catches behavioral failures that only appear when the system runs.
 ### Requirements Coverage
 
 - FR48: AVFL — extends the validate-fix loop skill with a fourth profile (scan)
-- FR62: Sprint Execution Workflow — updates the execution loop with the hybrid model
+- FR73: AVFL Scan Profile — defines the scan profile configuration and structured handoff output format
+- FR74: Hybrid Resolution Team — sprint-dev spawns fixer agents + E2E Validator + Architect Guard concurrently with AVFL findings as context
 - FR64: Sprint-Level AVFL — scan profile replaces the unqualified AVFL invocation in
   Phase 4, making the quality gate maximally adversarial
 - Architecture: AVFL Profiles (gate/checkpoint/full) — adds scan as a fourth profile
@@ -228,9 +250,9 @@ catches behavioral failures that only appear when the system runs.
     — verifies gate/checkpoint/full behave identically when scan is not selected
 
 - [ ] Task 2 — Update `framework.json` with scan profile (AC: 1–7)
-  - [ ] Add `scan` profile entry with `dual_review: true`, `skepticism_level: 3`,
-    `fix_loop: false`, `max_fix_attempts: 0`, `on_fail: return_findings`,
-    `output_format: structured_handoff`
+  - [ ] Add `scan` profile entry with `agents: "2 per active lens (up to 8 parallel)"`,
+    `dual_review: true`, `lenses_active: "All 4 lenses"`, `fix_loop: false`,
+    `on_fail: return_findings`, `output_format: structured_handoff` (new field)
   - [ ] Add `output_format` field to profile schema documentation comment
   - [ ] Add `structured_handoff` output format description: findings ordered by severity
     then confidence, all required fields present

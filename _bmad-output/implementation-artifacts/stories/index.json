@@ -822,7 +822,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum-avfl/SKILL.md",
-      "skills/momentum-avfl/references/framework.json"
+      "skills/momentum-avfl/references/framework.json",
+      "skills/momentum/workflows/sprint-dev.md"
     ]
   }
 }
