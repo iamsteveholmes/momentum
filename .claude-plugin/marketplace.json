@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "momentum",
+  "description": "Momentum — agentic engineering practice module for Claude Code. Sprint orchestration, quality gates, AVFL validation, and workflow automation.",
+  "owner": {
+    "name": "Steve Holmes",
+    "email": "steve@iamsteveholmes.com"
+  },
+  "plugins": [
+    {
+      "name": "momentum",
+      "description": "Agentic engineering practice — rules, agents, quality gates, and workflow automation across projects",
+      "source": "./skills/momentum",
+      "category": "development",
+      "homepage": "https://github.com/iamsteveholmes/momentum"
+    }
+  ]
+}
