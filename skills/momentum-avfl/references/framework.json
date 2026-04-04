@@ -395,6 +395,7 @@
       "fix_loop": false,
       "on_fail": "return_findings",
       "output_format": "structured_handoff",
+      "_output_format_note": "New field added by avfl-scan-profile (2026-04-04). Not present in gate/checkpoint/full. Signals the consolidator to emit a prioritized findings list ordered by severity then confidence, with all required handoff fields.",
       "when_to_use": [
         "Post-sprint-merge quality gate — full codebase scan before handing to resolution team",
         "Any context where discovery quality matters more than resolution throughput"

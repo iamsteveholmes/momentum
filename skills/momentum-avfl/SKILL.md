@@ -142,7 +142,7 @@ For full dimension definitions, questions, common failure modes, and examples, s
 
 ---
 
-## Dual-Reviewer Framings (full profile only)
+## Dual-Reviewer Framings (full and scan profiles)
 
 Each lens gets two reviewers with deliberately different reading styles. The diversity of approach is the mechanism — same-prompt reviewers capture far less benefit.
 
@@ -205,7 +205,7 @@ Run sequentially after all validators complete. Model: `haiku`. Sub-skill: `sub-
 **Single-document mode:** Use `prompts.consolidator` from `references/framework.json`.
 **Corpus mode (`corpus: true`):** Use `prompts.consolidator_corpus` — includes cross-document deduplication rules (same contradiction across N file pairs = one finding, not N).
 
-1. Tag each finding with confidence (HIGH / MEDIUM) — full profile only
+1. Tag each finding with confidence (HIGH / MEDIUM) — full and scan profiles (dual-review enabled)
 2. Merge all findings from all lenses into one list
 3. Deduplicate: same issue from multiple sources → keep most specific description and highest severity
 4. Investigate MEDIUM-confidence findings against source material — keep if evidence supports, discard if reviewer hallucination
