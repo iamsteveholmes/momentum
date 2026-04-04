@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[momentum-lint] ✓ checked file edit — lint/format hook placeholder (Story 3.1 implements)'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[momentum-protect] ✓ checked file protection — hook placeholder (Story 3.2 implements)'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[momentum-gate] ✓ checked stop conditions — quality gate placeholder (Story 3.3 implements)'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
