@@ -815,7 +815,7 @@
     ]
   },
   "avfl-scan-profile": {
-    "status": "backlog",
+    "status": "done",
     "title": "AVFL Scan Profile — Discovery-Only Validation for Team Handoff",
     "epic_slug": "impetus-core",
     "story_file": true,

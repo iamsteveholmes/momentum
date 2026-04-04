@@ -1,31 +1,39 @@
 {
-  "active": {
-    "locked": true,
-    "slug": "sprint-2026-04-04",
-    "stories": [
-      "avfl-scan-profile"
-    ],
-    "started": "2026-04-04",
-    "team_composition": {
-      "avfl-scan-profile": {
-        "roles": ["dev", "qa"],
-        "change_type": "skill-instruction + config-structure",
-        "guidelines": {
-          "dev": "EDD — write 3 behavioral evals before touching skill files. NFR: SKILL.md description ≤150 chars, model/effort frontmatter, body ≤500 lines. Scan profile adds to framework.json validation_profiles — do not modify existing profiles.",
-          "qa": "Validate against 11 ACs. Verify framework.json schema consistency with existing profiles. Verify scan composes with corpus mode. Verify backward compatibility of gate/checkpoint/full."
-        },
-        "test_approach": "EDD — 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
-        "wave": 1,
-        "dependencies": []
-      }
-    },
-    "waves": [
-      {
-        "wave": 1,
-        "stories": ["avfl-scan-profile"]
-      }
-    ]
-  },
+  "active": null,
   "planning": null,
-  "completed": []
+  "completed": [
+    {
+      "locked": true,
+      "slug": "sprint-2026-04-04",
+      "stories": [
+        "avfl-scan-profile"
+      ],
+      "started": "2026-04-04",
+      "team_composition": {
+        "avfl-scan-profile": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "skill-instruction + config-structure",
+          "guidelines": {
+            "dev": "EDD — write 3 behavioral evals before touching skill files. NFR: SKILL.md description ≤150 chars, model/effort frontmatter, body ≤500 lines. Scan profile adds to framework.json validation_profiles — do not modify existing profiles.",
+            "qa": "Validate against 11 ACs. Verify framework.json schema consistency with existing profiles. Verify scan composes with corpus mode. Verify backward compatibility of gate/checkpoint/full."
+          },
+          "test_approach": "EDD — 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
+          "wave": 1,
+          "dependencies": []
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "avfl-scan-profile"
+          ]
+        }
+      ],
+      "completed": "2026-04-04"
+    }
+  ]
 }
