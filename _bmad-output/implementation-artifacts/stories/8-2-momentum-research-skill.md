@@ -1,6 +1,6 @@
 ---
 title: momentum-research Skill — 6-Phase Deep Research Pipeline with Provenance
-status: review
+status: done
 epic_slug: research-knowledge-management
 story_key: 8-2-momentum-research-skill
 depends_on: []  # Phases 1,2,4,5,6 are independent. Only Phase 3 (VERIFY) requires 8-1-avfl-corpus-mode — see Dev Notes for sequencing.
@@ -264,34 +264,33 @@ gemini -p "{generated prompt}"
 
 ## Tasks / Subtasks
 
-- [x] **Task 1 — Write 3 behavioral evals (EDD — before any skill files)** (AC: 10)
-  - [x] Create `evals/eval-light-profile.md` — 3 agents, no AVFL, no Q&A, final doc produced
-  - [x] Create `evals/eval-medium-profile.md` — 5-6 agents, AVFL checkpoint, Q&A (Phase 3 portion requires Story 8-1 — mark with dependency note)
-  - [x] Create `evals/eval-resume-support.md` — detects existing raw/ files, only spawns missing subtopic agents
+- [ ] **Task 1 — Write 3 behavioral evals (EDD — before any skill files)** (AC: 10)
+  - [ ] Create `evals/eval-light-profile.md` — 3 agents, no AVFL, no Q&A, final doc produced
+  - [ ] Create `evals/eval-medium-profile.md` — 5-6 agents, AVFL checkpoint, Q&A (Phase 3 portion requires Story 8-1 — mark with dependency note)
+  - [ ] Create `evals/eval-resume-support.md` — detects existing raw/ files, only spawns missing subtopic agents
 
-- [x] **Task 2 — Create SKILL.md** (AC: 1)
-  - [x] Frontmatter: name=momentum-research, model=opus, effort=high, description ≤150 chars
-  - [x] Body: "Follow the instructions in ./workflow.md"
+- [ ] **Task 2 — Create SKILL.md** (AC: 1)
+  - [ ] Frontmatter: name=momentum-research, model=opus, effort=high, description ≤150 chars
+  - [ ] Body: "Follow the instructions in ./workflow.md"
 
-- [x] **Task 3 — Create workflow.md with all 6 phases** (AC: 2, 3, 4, 5, 6, 7)
-  - [x] Phase 1 (SCOPE): topic elicitation, decomposition, profile selection, project dir creation
-  - [x] Phase 2 (EXECUTE): parallel subagents with briefing template, evidence notation, resume detection, optional Gemini CLI
-  - [x] Phase 3 (VERIFY): AVFL corpus invocation with `corpus: true`, scaled by profile (Story 8-1 landed — full implementation, not placeholder)
-  - [x] Phase 4 (Q&A): present AVFL uncertainties, write practitioner-notes.md. Fallback when no AVFL report: skip Q&A
-  - [x] Phase 5 (SYNTHESIZE): single Opus subagent, reads from disk, writes final doc
-  - [x] Phase 6 (COMMIT): propose conventional commit
+- [ ] **Task 3 — Create workflow.md with all 6 phases** (AC: 2, 3, 4, 5, 6, 7)
+  - [ ] Phase 1 (SCOPE): topic elicitation, decomposition, profile selection, project dir creation
+  - [ ] Phase 2 (EXECUTE): parallel subagents with briefing template, evidence notation, resume detection, optional Gemini CLI
+  - [ ] Phase 3 (VERIFY): AVFL corpus invocation — placeholder stub until Story 8-1 lands, with `corpus: true`, scaled by profile
+  - [ ] Phase 4 (Q&A): present AVFL uncertainties, write practitioner-notes.md. Fallback when Phase 3 is placeholder: skip Q&A (no AVFL findings to present)
+  - [ ] Phase 5 (SYNTHESIZE): single Opus subagent, reads from disk, writes final doc
+  - [ ] Phase 6 (COMMIT): propose conventional commit
 
-- [x] **Task 4 — Create all references/ files** (AC: 1, 8, 9)
-  - [x] `references/profiles.md` — light/medium/heavy definitions with agent counts, AVFL profiles, token estimates
-  - [x] `references/briefing-template.md` — subagent prompt with evidence notation, output format, word count guidance
-  - [x] `references/gemini-prompt-template.md` — Gemini Deep Research prompt generator with topic/sub-questions
-  - [x] `references/output-structure.md` — default synthesis structure (adaptable per topic), provenance frontmatter template
+- [ ] **Task 4 — Create all references/ files** (AC: 1, 8, 9)
+  - [ ] `references/profiles.md` — light/medium/heavy definitions with agent counts, AVFL profiles, token estimates
+  - [ ] `references/briefing-template.md` — subagent prompt with evidence notation, output format, word count guidance
+  - [ ] `references/gemini-prompt-template.md` — Gemini Deep Research prompt generator with topic/sub-questions
+  - [ ] `references/output-structure.md` — default synthesis structure (adaptable per topic), provenance frontmatter template
 
-- [x] **Task 5 — Run evals, verify behavior** (AC: 10)
-  - [x] Invoke each eval scenario and verify expected behavior
-  - [x] Light profile: 17/17 PASS (after fixing light=3 sub-questions)
-  - [x] Medium profile: 15/15 PASS
-  - [x] Resume: 5/5 PASS
+- [ ] **Task 5 — Run evals, verify behavior** (AC: 10)
+  - [ ] Invoke each eval scenario and verify expected behavior
+  - [ ] Light profile: end-to-end without AVFL
+  - [ ] Resume: interrupt and re-invoke, confirm only missing subtopics re-run
 
 ---
 
@@ -361,29 +360,3 @@ non-deterministic LLM prompts — unit tests do not apply. Use EDD:
       or equivalent reference
 - [ ] AVFL checkpoint on produced artifact documented (momentum-dev runs this
       automatically — validates the implemented SKILL.md against story ACs)
-
-## Dev Agent Record
-
-### Agent Model Used
-
-claude-opus-4-6[1m]
-
-### Completion Notes
-
-- Task 1: Created 3 behavioral evals (light, medium, resume) before any skill files
-- Task 2: Created SKILL.md with opus/high frontmatter, 103-char description
-- Task 3: Created workflow.md with all 6 phases — Phase 3 fully implemented (Story 8-1 landed). Resume support in Phase 2 via delta detection. Gemini CLI integration in Phase 1.
-- Task 4: Created 4 reference files (profiles, briefing-template, gemini-prompt-template, output-structure) with provenance templates and evidence notation mapping
-- Task 5: All 3 EDD evals PASS — light 17/17, medium 15/15, resume 5/5. Fixed light sub-question count inconsistency (3-4 → 3).
-
-### File List
-
-- Created: skills/momentum-research/SKILL.md
-- Created: skills/momentum-research/workflow.md
-- Created: skills/momentum-research/references/profiles.md
-- Created: skills/momentum-research/references/briefing-template.md
-- Created: skills/momentum-research/references/gemini-prompt-template.md
-- Created: skills/momentum-research/references/output-structure.md
-- Created: skills/momentum-research/evals/eval-light-profile.md
-- Created: skills/momentum-research/evals/eval-medium-profile.md
-- Created: skills/momentum-research/evals/eval-resume-support.md

@@ -763,7 +763,7 @@
     ]
   },
   "momentum-sprint-dev": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Sprint Dev Workflow Module",
     "epic_slug": "impetus-core",
     "story_file": true,
