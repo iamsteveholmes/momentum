@@ -6,8 +6,8 @@ story_key: 8-3-gemini-deep-research-automation
 depends_on:
   - 8-2-momentum-research-skill
 touches:
-  - skills/momentum-research/workflow.md
-  - skills/momentum-research/references/gemini-prompt-template.md
+  - skills/momentum/skills/research/workflow.md
+  - skills/momentum/skills/research/references/gemini-prompt-template.md
 change_type: skill-instruction
 derives_from:
   - path: _bmad-output/planning-artifacts/epics.md
@@ -18,7 +18,7 @@ derives_from:
     section: "Prototype validation session"
 ---
 
-# Story 8.3: Gemini Deep Research Automation
+# Story 8-3: Gemini Deep Research Automation
 
 Status: ready-for-dev
 
@@ -39,10 +39,10 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 ### AC2: Authentication State Management
 
 - On first run, the workflow checks for saved auth state at `~/.claude/browser-state/google-auth.json`
-- If auth state exists, it is loaded via `cmux browser state load`
+- If auth state exists, it is loaded via `cmux browser <surface> state load ~/.claude/browser-state/google-auth.json`
 - After loading, the workflow verifies authentication by checking for the absence of a "Sign in" button/link
 - If not authenticated (no saved state or stale state), the workflow prompts the user to log in manually in the cmux browser pane
-- After successful login, the workflow saves auth state via `cmux browser state save`
+- After successful login, the workflow saves auth state via `cmux browser <surface> state save ~/.claude/browser-state/google-auth.json`
 - Auth verification uses DOM inspection (check for user avatar, PRO badge, or absence of sign-in link), not URL-based detection
 
 ### AC3: Deep Research Execution Pipeline
@@ -97,7 +97,7 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 
 ### Key Implementation Context
 
-**Prototype validation:** A full prototype was validated in the session that created this story. The working sequence is documented in `_bmad-output/research/jetbrains-air-2026-04-04/` — the Gemini Deep Research output there was produced by this exact automation approach.
+**Prototype validation:** A full prototype was validated in the session prior to this story being created. The working sequence is documented in `_bmad-output/research/jetbrains-air-2026-04-04/` — the Gemini Deep Research output there was produced by this exact automation approach.
 
 **Critical cmux-browser patterns discovered during prototyping:**
 
@@ -105,11 +105,11 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 - **Input fill:** Use `cmux browser fill "[contenteditable], textarea, [role=textbox]"` — Gemini's input is a rich text editor, not a plain textarea.
 - **Model selector button:** The "Thinking" dropdown is `.input-area-switch` class, but the model selector is separate from the Tools menu.
 - **Start research button:** Appears after plan generation. Use `eval` with `querySelectorAll("button").find(b => b.textContent.includes("Start research")).click()` — direct CSS/text selectors throw JS errors on Gemini's SPA.
-- **Report extraction:** The completed report lives in the second `.markdown.markdown-main-panel` element (first is the plan text). Filter by `textContent.length > 10000` to find the report.
+- **Report extraction:** Filter `.markdown.markdown-main-panel` elements by `textContent.length > 10000` to find the report (the plan text element is smaller). This is the authoritative selector — validated in prototyping.
 - **Auth state persistence:** Saved to `~/.claude/browser-state/google-auth.json`. Includes cookies, localStorage, sessionStorage. Google OAuth sessions last weeks/months.
 - **"Something went wrong" toasts:** These appear occasionally but don't necessarily block the research. The first attempt in prototyping hung on "Generating research plan" — a page reload and retry succeeded immediately.
 
-**Existing skill location:** The momentum-research skill files are currently in an unmerged worktree at `.claude/worktrees/agent-aa09ea3b/skills/momentum-research/`. The dev agent should work with files at that path (or wherever the skill exists at implementation time — check `skills/momentum-research/` first, fall back to the worktree path).
+**Existing skill location:** The momentum-research skill files are at `skills/momentum/skills/research/` (migrated from the top-level `skills/momentum-research/` as part of the plugin structure refactor).
 
 ### Architecture Constraints
 
@@ -120,12 +120,12 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 
 ### Project Structure Notes
 
-- `skills/momentum-research/workflow.md` — primary file being modified
-- `skills/momentum-research/references/gemini-prompt-template.md` — minor usage note update
+- `skills/momentum/skills/research/workflow.md` — primary file being modified
+- `skills/momentum/skills/research/references/gemini-prompt-template.md` — minor usage note update
 - `~/.claude/browser-state/` — auth state storage directory (created if needed)
 - No new skill files are created — this is a modification to an existing skill's workflow
 
-### Momentum Implementation Guide
+## Momentum Implementation Guide
 
 **Change Types in This Story:**
 - Tasks 1, 2 → skill-instruction (EDD)
@@ -137,7 +137,7 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 **Do NOT use TDD for workflow.md or reference files.** Skill instructions are non-deterministic LLM prompts — unit tests do not apply. Use EDD:
 
 **Before writing a single line of the skill:**
-1. Write 2–3 behavioral evals in `skills/momentum-research/evals/` (evals/ already exists):
+1. Write 2–3 behavioral evals in `skills/momentum/skills/research/evals/` (evals/ already exists):
    - One `.md` file per eval, named descriptively (e.g., `eval-deep-research-automation.md`, `eval-deep-research-fallback.md`)
    - Format each eval as: "Given [describe the input and context], the skill should [observable behavior — what Claude does or produces]"
    - Test behaviors and decisions, not exact output text
@@ -160,7 +160,7 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 - Skill names prefixed `momentum-` (NFR12 — no naming collision with BMAD skills)
 
 **Additional DoD items for this story:**
-- [ ] 2+ behavioral evals written in `skills/momentum-research/evals/`
+- [ ] 2+ behavioral evals written in `skills/momentum/skills/research/evals/`
 - [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
 - [ ] SKILL.md description ≤150 characters confirmed
 - [ ] `model:` and `effort:` frontmatter present and correct
