@@ -50,7 +50,7 @@
   },
   "momentum-tooling": {
     "status": "done",
-    "title": "Momentum Tooling — Python CLI for Deterministic Operations",
+    "title": "Momentum Tooling \u2014 Python CLI for Deterministic Operations",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [
@@ -67,7 +67,7 @@
   },
   "impetus-identity-redesign": {
     "status": "done",
-    "title": "Impetus Identity Redesign — BMAD-Informed Character",
+    "title": "Impetus Identity Redesign \u2014 BMAD-Informed Character",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -77,7 +77,7 @@
   },
   "session-open-sprint-view": {
     "status": "done",
-    "title": "Session-Open Sprint View — Mode Detection and Fill Bars",
+    "title": "Session-Open Sprint View \u2014 Mode Detection and Fill Bars",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -728,7 +728,7 @@
   },
   "agent-logging-tool": {
     "status": "done",
-    "title": "Agent Logging Tool — momentum-tools log subcommand",
+    "title": "Agent Logging Tool \u2014 momentum-tools log subcommand",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -739,7 +739,7 @@
   },
   "momentum-dev-simplify": {
     "status": "done",
-    "title": "Momentum Dev Simplify — Pure Executor",
+    "title": "Momentum Dev Simplify \u2014 Pure Executor",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -778,7 +778,7 @@
   },
   "agent-guidelines-skill": {
     "status": "done",
-    "title": "Agent Guidelines Skill — Guided Technology Guidelines Generation for Projects",
+    "title": "Agent Guidelines Skill \u2014 Guided Technology Guidelines Generation for Projects",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -791,7 +791,7 @@
   },
   "8-1-avfl-corpus-mode": {
     "status": "done",
-    "title": "AVFL Corpus Mode — Multi-Document Cross-Validation for momentum-avfl",
+    "title": "AVFL Corpus Mode \u2014 Multi-Document Cross-Validation for momentum-avfl",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [],
@@ -803,7 +803,7 @@
   },
   "8-2-momentum-research-skill": {
     "status": "ready-for-dev",
-    "title": "momentum-research Skill — 6-Phase Deep Research Pipeline with Provenance",
+    "title": "momentum-research Skill \u2014 6-Phase Deep Research Pipeline with Provenance",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [],
@@ -816,7 +816,7 @@
   },
   "avfl-scan-profile": {
     "status": "done",
-    "title": "AVFL Scan Profile — Discovery-Only Validation for Team Handoff",
+    "title": "AVFL Scan Profile \u2014 Discovery-Only Validation for Team Handoff",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -824,6 +824,76 @@
       "skills/momentum-avfl/SKILL.md",
       "skills/momentum-avfl/references/framework.json",
       "skills/momentum/workflows/sprint-dev.md"
+    ]
+  },
+  "plugin-skeleton": {
+    "status": "ready-for-dev",
+    "title": "Plugin Skeleton \u2014 Create Plugin Root and Manifest",
+    "epic_slug": "plugin-migration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/.claude-plugin/plugin.json",
+      "skills/momentum/skills/impetus/SKILL.md"
+    ]
+  },
+  "plugin-migrate-skills": {
+    "status": "ready-for-dev",
+    "title": "Plugin Migrate Skills \u2014 Move Satellite Skills into Plugin Structure",
+    "epic_slug": "plugin-migration",
+    "story_file": true,
+    "depends_on": [
+      "plugin-skeleton"
+    ],
+    "touches": [
+      "skills/momentum/skills/"
+    ]
+  },
+  "plugin-scripts-hooks-refs": {
+    "status": "ready-for-dev",
+    "title": "Plugin Scripts, Hooks, and References \u2014 Consolidate at Plugin Root",
+    "epic_slug": "plugin-migration",
+    "story_file": true,
+    "depends_on": [
+      "plugin-migrate-skills"
+    ],
+    "touches": [
+      "skills/momentum/hooks/",
+      "skills/momentum/scripts/",
+      "skills/momentum/references/"
+    ]
+  },
+  "plugin-cross-references": {
+    "status": "ready-for-dev",
+    "title": "Plugin Cross-References \u2014 Update All Internal References",
+    "epic_slug": "plugin-migration",
+    "story_file": true,
+    "depends_on": [
+      "plugin-scripts-hooks-refs"
+    ],
+    "touches": [
+      "skills/momentum/skills/*/SKILL.md",
+      "skills/momentum/skills/impetus/workflow.md"
+    ]
+  },
+  "sprint-planning-skill": {
+    "status": "ready-for-dev",
+    "title": "Sprint Planning Skill \u2014 Create SKILL.md for Sprint Planning Workflow",
+    "epic_slug": "plugin-migration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/SKILL.md"
+    ]
+  },
+  "sprint-dev-skill": {
+    "status": "ready-for-dev",
+    "title": "Sprint Dev Skill \u2014 Create SKILL.md for Sprint Execution Workflow",
+    "epic_slug": "plugin-migration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-dev/SKILL.md"
     ]
   }
 }
