@@ -157,7 +157,9 @@ development_status:
   epic-7-retrospective: optional
 
   # Epic 8: Research & Knowledge Management
-  epic-8: backlog
+  epic-8: in-progress
+  8-1-avfl-corpus-mode: ready-for-dev
+  8-2-momentum-research-skill: ready-for-dev
   multi-model-research-workflow-active: backlog
   research-prompts-are-date-anchored-with-primary-source-directives: backlog
   domain-specific-freshness-windows-define-document-currency: backlog
@@ -408,3 +410,18 @@ momentum_metadata:
       - ".claude/skills/bmad-sprint-planning/workflow.md"
       - ".claude/skills/bmad-dev-story/workflow.md"
     story_file: "_bmad-output/implementation-artifacts/sprint-manager-skill.md"
+  8-1-avfl-corpus-mode:
+    depends_on: []
+    touches:
+      - "skills/momentum-avfl/SKILL.md"
+      - "skills/momentum-avfl/references/framework.json"
+      - "skills/momentum-avfl/sub-skills/fixer/SKILL.md"
+    story_file: "_bmad-output/implementation-artifacts/stories/8-1-avfl-corpus-mode.md"
+  8-2-momentum-research-skill:
+    depends_on: []  # Phase 3 soft-depends on 8-1-avfl-corpus-mode; Phases 1,2,4,5,6 are independent
+    touches:
+      - "skills/momentum-research/SKILL.md"
+      - "skills/momentum-research/workflow.md"
+      - "skills/momentum-research/references/"
+      - "skills/momentum-research/evals/"
+    story_file: "_bmad-output/implementation-artifacts/stories/8-2-momentum-research-skill.md"

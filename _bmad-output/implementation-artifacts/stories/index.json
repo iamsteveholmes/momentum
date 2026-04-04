@@ -788,5 +788,30 @@
       "skills/momentum-agent-guidelines/references/",
       "skills/momentum-agent-guidelines/sub-skills/"
     ]
+  },
+  "8-1-avfl-corpus-mode": {
+    "status": "ready-for-dev",
+    "title": "AVFL Corpus Mode \u2014 Multi-Document Cross-Validation for momentum-avfl",
+    "epic_slug": "research-knowledge-management",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum-avfl/SKILL.md",
+      "skills/momentum-avfl/references/framework.json",
+      "skills/momentum-avfl/sub-skills/fixer/SKILL.md"
+    ]
+  },
+  "8-2-momentum-research-skill": {
+    "status": "ready-for-dev",
+    "title": "momentum-research Skill \u2014 6-Phase Deep Research Pipeline with Provenance",
+    "epic_slug": "research-knowledge-management",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum-research/SKILL.md",
+      "skills/momentum-research/workflow.md",
+      "skills/momentum-research/references/",
+      "skills/momentum-research/evals/"
+    ]
   }
 }
