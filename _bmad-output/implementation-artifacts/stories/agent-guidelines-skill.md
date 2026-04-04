@@ -1,6 +1,6 @@
 ---
 title: Agent Guidelines Skill — Guided Technology Guidelines Generation for Projects
-status: ready-for-dev
+status: done
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -111,3 +111,19 @@ skills/momentum-agent-guidelines/
 3. Light research by default (web searches), with escalation to full research skill
 4. Consultation before generation — don't waste compute on unwanted artifacts
 5. Path-scoped rules compose automatically with generic agents via the file system
+
+## File List
+
+- `skills/momentum-agent-guidelines/SKILL.md` — new (orchestrator, opus/high)
+- `skills/momentum-agent-guidelines/workflow.md` — new (5-phase workflow)
+- `skills/momentum-agent-guidelines/references/detection-heuristics.md` — new (build file → tech mapping, staleness risk)
+- `skills/momentum-agent-guidelines/references/rule-template.md` — new (generation template for path-scoped rules)
+- `skills/momentum-agent-guidelines/references/reference-doc-template.md` — new (generation template for reference docs)
+- `skills/momentum-agent-guidelines/sub-skills/build-scanner/SKILL.md` — new (sonnet/medium)
+- `skills/momentum-agent-guidelines/sub-skills/rules-auditor/SKILL.md` — new (sonnet/medium)
+- `skills/momentum-agent-guidelines/sub-skills/test-config-scanner/SKILL.md` — new (sonnet/medium)
+- `skills/momentum-agent-guidelines/sub-skills/source-pattern-scanner/SKILL.md` — new (sonnet/medium)
+
+## Change Log
+
+- 2026-04-03: Initial implementation — all 9 skill files created. QA passed all ACs, Validator passed 15/17 scenarios (2 edge-case branches added post-review). AVFL checkpoint on sprint plan scored 97/100 post-fix.
