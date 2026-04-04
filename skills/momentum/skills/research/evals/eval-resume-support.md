@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Given: A momentum-research project directory already exists at
+Given: A momentum:research project directory already exists at
 `{output_folder}/research/k8s-vs-ecs-2026-04-04/` with:
 
 ```
@@ -15,7 +15,7 @@ raw/
   research-ecosystem-maturity.md    # complete — written by previous session
 ```
 
-User re-invokes momentum-research on the same project directory.
+User re-invokes momentum:research on the same project directory.
 
 ## Expected Behavior
 

@@ -24,7 +24,7 @@ I want to understand how the AVFL benchmark results compare across models.
 - No files created or modified
 ```
 
-**And** the skill is invoked via `momentum-plan-audit`.
+**And** the skill is invoked via `momentum:plan-audit`.
 
 ## Expected Behavior
 

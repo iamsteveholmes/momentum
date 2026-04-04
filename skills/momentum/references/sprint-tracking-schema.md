@@ -103,11 +103,11 @@ When an active sprint exists, its detail lives in a separate file.
 
 ## Write Authority
 
-`momentum-sprint-manager` is the sole writer of:
+`momentum:sprint-manager` is the sole writer of:
 - `sprints/index.json` and all files in `sprints/`
 - `status` fields in `stories/index.json`
 
-`momentum-create-story` writes:
+`momentum:create-story` writes:
 - Story stub files in `stories/`
 - New entries to `stories/index.json` (status, title, epic_slug, depends_on, touches)
 
@@ -124,7 +124,7 @@ Status: {status}
 Epic: {epic_slug}
 ```
 
-Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum-create-story`.
+Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum:create-story`.
 
 ## Epic Membership
 

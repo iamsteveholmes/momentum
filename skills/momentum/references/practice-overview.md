@@ -17,11 +17,11 @@ Momentum is an agentic engineering practice layer — global rules, hooks, and w
 
 **New to Momentum?** The setup just completed. Your next invocation of `/momentum` goes straight to session orientation.
 
-**Starting a story?** Run `/momentum-dev` — it selects the next unblocked story, creates an isolated worktree, implements via bmad-dev-story, runs AVFL, and proposes the merge.
+**Starting a story?** Run `/momentum:dev` — it selects the next unblocked story, creates an isolated worktree, implements via bmad-dev-story, runs AVFL, and proposes the merge.
 
-**Need a new story created?** Run `/momentum-create-story` — it reads your sprint status and builds a comprehensive story file from your epics.
+**Need a new story created?** Run `/momentum:create-story` — it reads your sprint status and builds a comprehensive story file from your epics.
 
 **Key skills available:**
-- `/momentum-dev` — implement the next story
-- `/momentum-create-story` — create the next story
-- `/momentum-plan-audit` — audit a plan before exiting plan mode
+- `/momentum:dev` — implement the next story
+- `/momentum:create-story` — create the next story
+- `/momentum:plan-audit` — audit a plan before exiting plan mode

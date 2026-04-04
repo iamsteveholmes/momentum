@@ -15,14 +15,14 @@ We need a code review skill that runs adversarial review on git diffs before mer
 
 | Action | Path |
 |---|---|
-| Create | skills/momentum-code-review/SKILL.md |
-| Create | skills/momentum-code-review/workflow.md |
+| Create | skills/momentum/skills/code-reviewer/SKILL.md |
+| Create | skills/momentum/skills/code-reviewer/workflow.md |
 | Modify | .claude/settings.json (add PostToolUse hook for auto-review trigger) |
 
 ## Skill Design
 
 ### SKILL.md
-name: momentum-code-review
+name: momentum:code-reviewer
 description: Runs adversarial code review on staged changes before merge.
 model: opus
 effort: high
@@ -41,7 +41,7 @@ Step 4 — Present findings with severity classification
 - Hook triggers on Write tool calls to .js and .ts files
 ```
 
-**And** the skill is invoked via `momentum-plan-audit`.
+**And** the skill is invoked via `momentum:plan-audit`.
 
 **And** the current sprint is Sprint 1 (from epics.md).
 

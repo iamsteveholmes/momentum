@@ -48,7 +48,7 @@ editHistory:
   - date: '2026-04-03'
     changes: 'Plugin model adoption: Momentum becomes a Claude Code plugin with .claude-plugin/plugin.json. Replaced skills-only flat deployment (npx skills add) with plugin packaging. Namespaced skills under momentum: prefix (momentum-avfl → momentum:avfl, momentum-dev → momentum:dev, etc.). Workflow modules (sprint-planning.md, sprint-dev.md) converted to proper skills invoked as /momentum:sprint-planning and /momentum:sprint-dev. Always-on hooks delivered via plugin hooks/hooks.json (not Impetus-written to settings.json). Rules bundled in plugin references/rules/ (Impetus still writes to ~/.claude/rules/ and .claude/rules/ on first run). Repository structure replaced with plugin root layout. Agent Teams for sprint execution: teammates load skills from project/user settings, sequential execution with commit-as-sync-point. Updated Decisions 5a, 5c, 25, 26, 29 and all deployment, naming, structural, and integration sections.'
   - date: '2026-04-02'
-    changes: 'Phase 3 sprint execution architecture: replaced Epic Orchestration Architecture with Sprint Orchestration Architecture (dependency-driven teams over waves, Decision 25); added Sprint Planning Workflow (Decision 29), Sprint Execution Flow (6 phases), Two-Layer Agent Model (Decision 26); replaced momentum-sprint-manager subagent with momentum-tools.py sprint CLI throughout; added Agent Logging Infrastructure section (Decision 24); added Gherkin Specification Separation section (Decision 30); added Phase 3 Architecture Decisions (24-31); replaced Next-Story Selection Rule with Story Assignment Model; updated Read/Write Authority table (new rows for momentum-tools log, sprint-planning, sprint-dev; updated Impetus, momentum-dev, momentum-create-story rows); added sprint-logs to installed structure; added workflows/ directory to repository structure; added specs protection boundary; moved AVFL from per-story to per-sprint (Decision 31); simplified momentum-dev to pure executor (subsuming momentum-dev-auto); removed dag-executor integration section; updated session open sequence and subsystem descriptions.'
+    changes: 'Phase 3 sprint execution architecture: replaced Epic Orchestration Architecture with Sprint Orchestration Architecture (dependency-driven teams over waves, Decision 25); added Sprint Planning Workflow (Decision 29), Sprint Execution Flow (6 phases), Two-Layer Agent Model (Decision 26); replaced momentum:sprint-manager subagent with momentum-tools.py sprint CLI throughout; added Agent Logging Infrastructure section (Decision 24); added Gherkin Specification Separation section (Decision 30); added Phase 3 Architecture Decisions (24-31); replaced Next-Story Selection Rule with Story Assignment Model; updated Read/Write Authority table (new rows for momentum-tools log, sprint-planning, sprint-dev; updated Impetus, momentum-dev, momentum-create-story rows); added sprint-logs to installed structure; added workflows/ directory to repository structure; added specs protection boundary; moved AVFL from per-story to per-sprint (Decision 31); simplified momentum-dev to pure executor (subsuming momentum-dev-auto); removed dag-executor integration section; updated session open sequence and subsystem descriptions.'
   - date: '2026-03-26'
     changes: 'Epic orchestration model: added Epic Orchestration Architecture section (lifecycle, immutability rule, DAG topology, tier-sequential execution); added Agent Pool Governance section (pool cap, AVFL embedding, merge gate, pre-flight checks); added momentum-dev-auto Design section (background-safe variant, behavioral constraints, autonomous-or-fail principle); added dag-executor Integration section (optional sub-skill, tradeoffs, decision criteria); added Retro → Triage Handoff Format section (triage-inbox.md, entry format); added done-incomplete and closed-incomplete statuses to Story State Machine; updated Decision 4c with rolling pool feasibility note (Agent tool available in skill execution context); updated Impetus session open per session-stats deferral and epic progress bar.'
   - date: '2026-03-23'
@@ -77,7 +77,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `references/rules/` at the plugin root. The plugin install mechanism does not write to `~/.claude/rules/` or `.claude/rules/` directly — Impetus writes rules to both targets on first `/momentum:impetus` invocation using the Write tool. No separate setup step.
 
-5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection), momentum-dev (story executor, spawned by sprint-dev skill). code-reviewer and architecture-guard use `context: fork` for producer-verifier isolation. momentum-dev runs as a flat subagent (main context) for story execution. Two-layer agent model (Decision 26): Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard); projects provide role-specific stack guidelines wired together during sprint planning. Agent Teams share a working directory with commit-as-sync-point. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
+5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection), momentum:dev (story executor, spawned by sprint-dev skill). code-reviewer and architecture-guard use `context: fork` for producer-verifier isolation. momentum:dev runs as a flat subagent (main context) for story execution. Two-layer agent model (Decision 26): Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard); projects provide role-specific stack guidelines wired together during sprint planning. Agent Teams share a working directory with commit-as-sync-point. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
 
 6. **Validate-Fix Loop (VFL) Skill** — Three profiles: Gate (1 agent, pass/fail), Checkpoint (2-4 agents, 1 fix attempt), Full (dual-reviewer per lens, up to 4 fix iterations). Four lenses: Structural Integrity, Factual Accuracy, Coherence & Craft, Domain Fitness. Consolidation handles deduplication, cross-check confidence tagging, and scoring. Invocable standalone, inline from workflows, or declared as a rule.
 
@@ -928,7 +928,7 @@ momentum/                                    ← Plugin root
 │   │   └── workflow.md                      ← Session workflow (menu, dispatch)
 │   ├── sprint-planning/                     ← /momentum:sprint-planning (was workflows/sprint-planning.md)
 │   │   └── SKILL.md                         ← Inline skill (no context:fork), creates team
-│   ├── dev/                                 ← /momentum:dev (was skills/momentum-dev/)
+│   ├── dev/                                 ← /momentum:dev
 │   │   └── SKILL.md                         ← Referenced in team spawn prompts
 │   ├── sprint-dev/                          ← /momentum:sprint-dev (was workflows/sprint-dev.md)
 │   │   └── SKILL.md
@@ -1044,7 +1044,7 @@ momentum/                                    ← Plugin root
 
 **Read/Write Authority:**
 
-<!-- REVISED Phase 3: Updated Impetus, momentum-dev, momentum-create-story rows; replaced momentum-sprint-manager subagent with momentum-tools CLI; added momentum-tools log, sprint-planning workflow, sprint-dev workflow rows. sprint-status.yaml references replaced with stories/index.json and sprints/index.json. -->
+<!-- REVISED Phase 3: Updated Impetus, momentum:dev, momentum:create-story rows; replaced momentum:sprint-manager subagent with momentum-tools CLI; added momentum-tools log, sprint-planning workflow, sprint-dev workflow rows. sprint-status.yaml references replaced with stories/index.json and sprints/index.json. -->
 
 | Component | Reads | Writes |
 |---|---|---|
@@ -1150,8 +1150,8 @@ Adversarial validation conducted per the dual-reviewer pattern from VFL framewor
 
 ### Story State Machine
 
-> _Revised 2026-04-01: New story stages (verify, closed-incomplete). Story IDs changed to kebab-case slugs. All status writes go through momentum-sprint-manager._
-> _Revised 2026-04-02: momentum-sprint-manager subagent replaced by momentum-tools.py sprint CLI. AVFL per-story replaced by AVFL per-sprint (Decision 31). verify stage updated for Phase 3 developer-confirmation model._
+> _Revised 2026-04-01: New story stages (verify, closed-incomplete). Story IDs changed to kebab-case slugs. All status writes go through momentum:sprint-manager._
+> _Revised 2026-04-02: momentum:sprint-manager subagent replaced by momentum-tools.py sprint CLI. AVFL per-story replaced by AVFL per-sprint (Decision 31). verify stage updated for Phase 3 developer-confirmation model._
 
 ```
 backlog → ready-for-dev → in-progress → review → verify → done
@@ -1184,7 +1184,7 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 ### Sprint Tracking Schema — Folder-Based Model
 
-> _Revised 2026-04-01: sprint-status.yaml is deprecated. Story and sprint state is now decomposed into a `stories/` folder and a `sprints/` folder. All status writes via momentum-tools.py sprint CLI (formerly momentum-sprint-manager subagent)._
+> _Revised 2026-04-01: sprint-status.yaml is deprecated. Story and sprint state is now decomposed into a `stories/` folder and a `sprints/` folder. All status writes via momentum-tools.py sprint CLI (formerly momentum:sprint-manager subagent)._
 
 **`stories/` folder** — one file per story (`stories/{slug}.md`). Created early at backlog stage as a stub (slug, title, epic, status). Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum:create-story`. Story file content (ACs, dev notes) is written by `momentum:create-story`.
 
@@ -1272,17 +1272,17 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 ### Story Assignment Model
 
-<!-- REVISED Phase 3: Replaced Next-Story Selection Rule. momentum-dev no longer selects stories autonomously. Story assignment is managed by the sprint-dev workflow (Impetus). -->
+<!-- REVISED Phase 3: Replaced Next-Story Selection Rule. momentum:dev no longer selects stories autonomously. Story assignment is managed by the sprint-dev workflow (Impetus). -->
 
-momentum-dev does NOT select its own stories. Story assignment is managed by the sprint-dev skill (`/momentum:sprint-dev`):
+momentum:dev does NOT select its own stories. Story assignment is managed by the sprint-dev skill (`/momentum:sprint-dev`):
 
 1. sprint-dev reads the active sprint record from `sprints/index.json`
 2. sprint-dev resolves the dependency graph from story `depends_on` fields
 3. sprint-dev identifies unblocked stories (all dependencies merged)
-4. sprint-dev spawns one momentum-dev agent per unblocked story, passing the story file path and role-specific guidelines
+4. sprint-dev spawns one momentum:dev agent per unblocked story, passing the story file path and role-specific guidelines
 5. When a story completes and merges, sprint-dev re-evaluates the dependency graph and spawns agents for newly unblocked stories
 
-momentum-dev receives its story assignment as input — it never reads `stories/index.json` to choose what to work on. If momentum-dev is invoked standalone (outside a sprint context), the developer provides the story path directly.
+momentum:dev receives its story assignment as input — it never reads `stories/index.json` to choose what to work on. If momentum:dev is invoked standalone (outside a sprint context), the developer provides the story path directly.
 
 ### Session Journal Extension: `active_stories`
 
@@ -1311,7 +1311,7 @@ Impetus's session orientation must handle the multi-story case: when multiple st
 
 ### Parallel Story Execution Model (Always-Worktree)
 
-Every `momentum-dev` session runs in its own git worktree from the start — even if it appears to be the only session. This eliminates the mid-session file-change race (if Story A ran in main and Story B merged first, A would find changed files under it).
+Every `momentum:dev` session runs in its own git worktree from the start — even if it appears to be the only session. This eliminates the mid-session file-change race (if Story A ran in main and Story B merged first, A would find changed files under it).
 
 **Worktree naming convention:** `.worktrees/story-{story_id}` on branch `story/{story_id}`
 
@@ -1329,7 +1329,7 @@ Every `momentum-dev` session runs in its own git worktree from the start — eve
 
 ## Sprint Orchestration Architecture
 
-<!-- REVISED Phase 3: Replaced Epic Orchestration Architecture with Sprint Orchestration Architecture. Waves replaced by dependency-driven team concurrency (Decision 25). AVFL moved from per-story to per-sprint (Decision 31). Epic commands replaced by sprint workflow modules. momentum-dev-auto section removed — momentum-dev simplified to pure executor, subsuming momentum-dev-auto's scope. dag-executor section removed — dependency-driven model replaces wave-based scheduler. -->
+<!-- REVISED Phase 3: Replaced Epic Orchestration Architecture with Sprint Orchestration Architecture. Waves replaced by dependency-driven team concurrency (Decision 25). AVFL moved from per-story to per-sprint (Decision 31). Epic commands replaced by sprint workflow modules. momentum-dev-auto section removed — momentum:dev simplified to pure executor, subsuming momentum-dev-auto's scope. dag-executor section removed — dependency-driven model replaces wave-based scheduler. -->
 
 > _Added 2026-03-26: Epic orchestration model. Revised 2026-04-02: Replaced with sprint-centric, dependency-driven model per Phase 3 Decisions 24-31._
 
@@ -1362,7 +1362,7 @@ Sprint planning is a dedicated skill (`/momentum:sprint-planning`) with 8 steps.
 The DAG topology is derived from `depends_on` fields in `stories/index.json`. Execution is dependency-driven, not wave-sequential:
 
 1. Identify unblocked stories (no dependencies, or all dependencies already `done`)
-2. Spawn one momentum-dev agent per unblocked story (each in its own worktree)
+2. Spawn one momentum:dev agent per unblocked story (each in its own worktree)
 3. When a story completes and merges, re-evaluate the dependency graph
 4. Spawn agents for newly unblocked stories
 5. Repeat until all sprint stories have merged
@@ -1460,9 +1460,9 @@ sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked 
 
 **Pool cap:** Configurable, default 12 concurrent agents. Applied at spawn time.
 
-**AVFL at sprint level (Decision 31):** AVFL does NOT run per-story. momentum-dev has no AVFL. A single AVFL pass runs after ALL sprint stories merge (Phase 4 of sprint-dev). This is a deliberate architectural change from the pre-Phase-3 model where AVFL was embedded in each story agent.
+**AVFL at sprint level (Decision 31):** AVFL does NOT run per-story. momentum:dev has no AVFL. A single AVFL pass runs after ALL sprint stories merge (Phase 4 of sprint-dev). This is a deliberate architectural change from the pre-Phase-3 model where AVFL was embedded in each story agent.
 
-**Merge gate:** Every merge requires explicit developer confirmation. sprint-dev proposes the merge and waits — never auto-executes. momentum-dev signals "ready to merge" in its structured completion output.
+**Merge gate:** Every merge requires explicit developer confirmation. sprint-dev proposes the merge and waits — never auto-executes. momentum:dev signals "ready to merge" in its structured completion output.
 
 **Pre-flight checks before sprint execution:**
 1. Active sprint exists and is locked
@@ -1471,19 +1471,19 @@ sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked 
 4. Story file existence for all sprint stories
 5. Correct story status — unblocked stories must be `ready-for-dev`
 
-### momentum-dev — Simplified Pure Executor
+### momentum:dev — Simplified Pure Executor
 
-<!-- REVISED Phase 3: momentum-dev simplified to pure executor. momentum-dev-auto is subsumed — the simplified momentum-dev has no AVFL, no status writes, no DoD supplement, no code review offer, making it functionally equivalent to what momentum-dev-auto was designed to be. -->
+<!-- REVISED Phase 3: momentum:dev simplified to pure executor. momentum-dev-auto is subsumed — the simplified momentum:dev has no AVFL, no status writes, no DoD supplement, no code review offer, making it functionally equivalent to what momentum-dev-auto was designed to be. -->
 
-momentum-dev is a pure executor: worktree setup, bmad-dev-story invocation, agent logging, and structured completion output. It does NOT:
+momentum:dev is a pure executor: worktree setup, bmad-dev-story invocation, agent logging, and structured completion output. It does NOT:
 - Run AVFL (moved to sprint-dev Phase 4)
 - Write status transitions (handled by sprint-dev after merge)
 - Apply DoD supplement (moved to sprint-level verification)
 - Offer code review (orthogonal concern managed by caller)
 
-momentum-dev emits structured JSON completion output that sprint-dev parses: status, files modified, test results. All decisions are logged via `momentum-tools log` with best-effort execution (logging failures do not block development).
+momentum:dev emits structured JSON completion output that sprint-dev parses: status, files modified, test results. All decisions are logged via `momentum-tools log` with best-effort execution (logging failures do not block development).
 
-**Note:** The pre-Phase-3 `momentum-dev-auto` variant (background-safe, no ask gates) is subsumed by this simplified momentum-dev. With AVFL, status transitions, DoD, and code review removed, momentum-dev itself is now a pure executor suitable for both interactive and background execution.
+**Note:** The pre-Phase-3 `momentum-dev-auto` variant (background-safe, no ask gates) is subsumed by this simplified momentum:dev. With AVFL, status transitions, DoD, and code review removed, momentum:dev itself is now a pure executor suitable for both interactive and background execution.
 
 ---
 
@@ -1530,7 +1530,7 @@ Every agent in the system records structured JSONL logs via the `momentum-tools 
 
 **JSONL entry schema:**
 ```json
-{"timestamp": "2026-04-02T14:30:00.123456", "agent": "momentum-dev", "story": "agent-logging-tool", "event": "decision", "detail": "Chose worktree-based isolation for concurrent story execution"}
+{"timestamp": "2026-04-02T14:30:00.123456", "agent": "momentum:dev", "story": "agent-logging-tool", "event": "decision", "detail": "Chose worktree-based isolation for concurrent story execution"}
 ```
 
 **Event type vocabulary (6 types, no others):**
@@ -1554,7 +1554,7 @@ momentum-tools log --agent <role> --story <slug> --sprint <slug> --event <type> 
 **Runtime characteristics:**
 - Sprint-logs are runtime artifacts, not committed to version control (gitignored)
 - Directory structure is created automatically on first write
-- Log calls are best-effort from momentum-dev — logging failures do not block development
+- Log calls are best-effort from momentum:dev — logging failures do not block development
 - Sprint-logs are the primary input for the retro workflow (Decision 27: two-output retro)
 
 ### Gherkin Specification Separation (Decision 30)

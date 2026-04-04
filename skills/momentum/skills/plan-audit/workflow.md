@@ -1,4 +1,4 @@
-# momentum-plan-audit Workflow
+# momentum:plan-audit Workflow
 
 **Goal:** Audit the active plan for spec impact, classify it as trivial or substantive, create a process story for substantive plans, run a targeted spec audit and AVFL checkpoint, then write the `## Spec Impact` section to unblock `ExitPlanMode`.
 
@@ -233,7 +233,7 @@ This plan's process story (`{{process_story_key}}`) requires these status transi
       <ask>AVFL found critical issues in the plan or process story. Review above findings. Proceed to implementation, or address findings first?</ask>
     </check>
 
-    <output>momentum-plan-audit complete.
+    <output>momentum:plan-audit complete.
 
 Plan: {{plan_file}}
 Classification: {{classification}}</output>

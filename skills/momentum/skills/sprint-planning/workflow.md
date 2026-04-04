@@ -121,13 +121,13 @@ Proceeding to flesh out story stubs.</output>
 Approve this story as-is, or request revisions?</output>
       <ask>Approve, or revise?</ask>
       <check if="developer requests revisions">
-        <action>Note the revision request and spawn `momentum-create-story` with the developer's feedback</action>
+        <action>Note the revision request and spawn `momentum:create-story` with the developer's feedback</action>
         <action>Present the revised story for approval</action>
       </check>
     </check>
 
     <check if="story_file is false OR story content is a stub">
-      <action>Spawn `momentum-create-story` to flesh out the story stub into a full story with:
+      <action>Spawn `momentum:create-story` to flesh out the story stub into a full story with:
         · Acceptance criteria (plain English only — no Gherkin)
         · Dev notes
         · Tasks breakdown
@@ -140,7 +140,7 @@ Approve this story as-is, or request revisions?</output>
 Approve, or request revisions?</output>
       <ask>Approve this story, or revise?</ask>
       <check if="developer rejects and requests revisions">
-        <action>Re-spawn `momentum-create-story` with the developer's feedback</action>
+        <action>Re-spawn `momentum:create-story` with the developer's feedback</action>
         <action>Present the revised story for approval again</action>
       </check>
     </check>
@@ -307,7 +307,7 @@ Proceeding to AVFL validation.</output>
       · Dependency graph and execution waves
     </action>
 
-    <action>Invoke the `momentum-avfl` skill with:
+    <action>Invoke the `momentum:avfl` skill with:
       · domain_expert: "sprint planner"
       · task_context: "Sprint {{sprint_slug}} — {{count}} stories, {{wave_count}} execution waves"
       · output_to_validate: concatenated sprint plan (all story ACs + team composition + wave assignments)

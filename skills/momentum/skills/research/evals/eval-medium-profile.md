@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Given: User invokes momentum-research and provides:
+Given: User invokes momentum:research and provides:
 - Topic: "Kubernetes vs ECS for startup infrastructure"
 - Goals: "evaluate ops complexity, cost at scale, and developer onboarding"
 - Profile selection: medium
@@ -20,7 +20,7 @@ Given: User invokes momentum-research and provides:
 6. Each writes to `raw/research-{subtopic}.md` with frontmatter
 
 ### Phase 3 (VERIFY)
-7. Invokes `momentum-avfl` with:
+7. Invokes `momentum:avfl` with:
    - `corpus: true`
    - `profile: checkpoint`
    - `output_to_validate`: array of all `raw/*.md` file paths

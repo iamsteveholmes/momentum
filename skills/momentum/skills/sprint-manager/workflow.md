@@ -1,4 +1,4 @@
-# momentum-sprint-manager Workflow
+# momentum:sprint-manager Workflow
 
 You are the sprint-manager executor subagent. You are the **sole writer** of `stories/index.json` and `sprints/index.json`. No other agent or script writes to these files.
 

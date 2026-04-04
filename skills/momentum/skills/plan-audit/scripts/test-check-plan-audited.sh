@@ -2,7 +2,7 @@
 # Unit tests for check-plan-audited.sh
 # Tests three cases: empty dir, plan without Spec Impact, plan with Spec Impact.
 #
-# Usage: bash skills/momentum-plan-audit/scripts/test-check-plan-audited.sh
+# Usage: bash skills/momentum/skills/plan-audit/scripts/test-check-plan-audited.sh
 # Run from project root.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

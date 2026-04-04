@@ -1,8 +1,8 @@
-# momentum-dev Workflow
+# momentum:dev Workflow
 
 **Goal:** Implement a Momentum story by selecting the next unblocked story (or using an explicit path), running in an isolated git worktree, delegating to bmad-dev-story, then returning merge-ready output.
 
-**Role:** Pure executor with agent logging. Manages story selection from stories/index.json, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum-create-story) contains the developer's implementation instructions.
+**Role:** Pure executor with agent logging. Manages story selection from stories/index.json, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum:create-story) contains the developer's implementation instructions.
 
 ---
 
@@ -10,7 +10,7 @@
 
 <workflow>
   <critical>Do not re-implement bmad-dev-story logic. Delegate all implementation to that skill.</critical>
-  <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum-create-story. Offer to run the injection step manually before proceeding.</critical>
+  <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum:create-story. Offer to run the injection step manually before proceeding.</critical>
   <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
   <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>
   <critical>Always write status changes to stories/index.json in the MAIN working tree — not inside the worktree. This ensures all concurrent sessions see the update immediately.</critical>
@@ -40,7 +40,7 @@
         <output>No unblocked stories are available. Current story status:
 [status summary]
 
-Resolve blocking stories first, then re-invoke momentum-dev.</output>
+Resolve blocking stories first, then re-invoke momentum:dev.</output>
         <action>HALT</action>
       </check>
       <action>From the candidates, select the highest-priority story using this order:
@@ -99,7 +99,7 @@ Resolve blocking stories first, then re-invoke momentum-dev.</output>
   </step>
 
   <step n="5" goal="Mark story in-progress">
-    <action>Write (or overwrite) the lock file `.worktrees/story-{{story_key}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum-dev session started {{timestamp}}". Overwriting is safe — the new timestamp reflects the current session.</action>
+    <action>Write (or overwrite) the lock file `.worktrees/story-{{story_key}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum:dev session started {{timestamp}}". Overwriting is safe — the new timestamp reflects the current session.</action>
     <output>Story {{story_key}} marked in-progress. Lock file created.</output>
   </step>
 

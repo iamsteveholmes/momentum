@@ -183,7 +183,7 @@ Impetus synthesizes from this contract. Free-form prose from subagents is not pr
 **Never say:**
 - "The code reviewer said..."
 - "The VFL agent found..."
-- "momentum-avfl reported..."
+- "momentum:avfl reported..."
 - Any subagent name, tool name, or agent identity
 
 ### Confidence-Directed Synthesis
@@ -203,9 +203,9 @@ Vary the natural language across findings — avoid robotic repetition of the sa
 
 When a finding has `!` severity (critical):
 
-1. **If `momentum-upstream-fix` skill is available:** offer flywheel trace
+1. **If `momentum:upstream-fix` skill is available:** offer flywheel trace
    - "This looks like it could be traced upstream. Want me to run a flywheel trace?"
-2. **If `momentum-upstream-fix` is NOT available:** include deferral note
+2. **If `momentum:upstream-fix` is NOT available:** include deferral note
    - Weave naturally: "...noted for flywheel processing when Epic 6 ships"
    - Or as a parenthetical: "(flywheel processing deferred — Epic 6)"
 
