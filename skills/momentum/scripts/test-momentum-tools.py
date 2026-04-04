@@ -333,6 +333,123 @@ def test_sprint_plan_no_duplicates():
     assert_eq("s2 added", "s2" in result["planning"]["stories"], True)
 
 
+# --- Log Tests ---
+
+def test_log_with_sprint_and_story():
+    """Log with sprint+story creates correct directory and file."""
+    print("\n[log] Sprint + story creates correct path")
+    proj = setup_project()
+    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "decision",
+                         "--detail", "chose approach A", "--sprint", "phase-3", "--story", "my-story")
+    assert_eq("exit code 0", code, 0)
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "phase-3" / "dev-my-story.jsonl"
+    assert_eq("log file created", log_file.exists(), True)
+
+
+def test_log_without_story():
+    """Log without story creates agent-only filename."""
+    print("\n[log] Without story uses agent-only filename")
+    proj = setup_project()
+    code, out = run_tool(proj, "log", "--agent", "impetus", "--event", "finding",
+                         "--detail", "all stories complete", "--sprint", "phase-3")
+    assert_eq("exit code 0", code, 0)
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "phase-3" / "impetus.jsonl"
+    assert_eq("agent-only file created", log_file.exists(), True)
+    story_file = proj / ".claude" / "momentum" / "sprint-logs" / "phase-3" / "impetus-None.jsonl"
+    assert_eq("no None in filename", story_file.exists(), False)
+
+
+def test_log_without_sprint():
+    """Log without sprint falls back to _unsorted."""
+    print("\n[log] Without sprint falls back to _unsorted")
+    proj = setup_project()
+    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "assumption",
+                         "--detail", "assuming default config")
+    assert_eq("exit code 0", code, 0)
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "_unsorted" / "dev.jsonl"
+    assert_eq("_unsorted file created", log_file.exists(), True)
+
+
+def test_log_entry_valid_jsonl():
+    """Log entry is valid JSONL with correct fields."""
+    print("\n[log] Entry is valid JSONL with correct fields")
+    proj = setup_project()
+    run_tool(proj, "log", "--agent", "architect", "--event", "decision",
+             "--detail", "chose microservices", "--sprint", "s1", "--story", "arch-design")
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "s1" / "architect-arch-design.jsonl"
+    line = log_file.read_text().strip()
+    entry = json.loads(line)
+    assert_eq("has timestamp", "timestamp" in entry, True)
+    assert_eq("agent correct", entry["agent"], "architect")
+    assert_eq("story correct", entry["story"], "arch-design")
+    assert_eq("sprint correct", entry["sprint"], "s1")
+    assert_eq("event correct", entry["event"], "decision")
+    assert_eq("detail correct", entry["detail"], "chose microservices")
+
+
+def test_log_multiple_appends():
+    """Multiple appends accumulate in the same file."""
+    print("\n[log] Multiple appends accumulate")
+    proj = setup_project()
+    for i in range(3):
+        run_tool(proj, "log", "--agent", "dev", "--event", "finding",
+                 "--detail", f"finding {i}", "--sprint", "s1", "--story", "acc")
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "s1" / "dev-acc.jsonl"
+    lines = [l for l in log_file.read_text().strip().split("\n") if l]
+    assert_eq("3 lines accumulated", len(lines), 3)
+    for i, line in enumerate(lines):
+        entry = json.loads(line)
+        assert_eq(f"  line {i} detail", entry["detail"], f"finding {i}")
+
+
+def test_log_invalid_event_type():
+    """Invalid event type rejected with exit 1."""
+    print("\n[log] Invalid event type rejected")
+    proj = setup_project()
+    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "bogus",
+                         "--detail", "should fail")
+    assert_eq("exit code 1", code, 1)
+    assert_eq("reports failure", out.get("success"), False)
+
+
+def test_log_missing_required_args():
+    """Missing --agent, --event, --detail rejected."""
+    print("\n[log] Missing required args rejected")
+    proj = setup_project()
+    # missing --detail
+    code1, _ = run_tool(proj, "log", "--agent", "dev", "--event", "decision")
+    assert_eq("missing --detail rejected", code1, 2)
+    # missing --event
+    code2, _ = run_tool(proj, "log", "--agent", "dev", "--detail", "something")
+    assert_eq("missing --event rejected", code2, 2)
+    # missing --agent
+    code3, _ = run_tool(proj, "log", "--event", "decision", "--detail", "something")
+    assert_eq("missing --agent rejected", code3, 2)
+
+
+def test_log_all_event_types():
+    """All 6 valid event types accepted."""
+    print("\n[log] All 6 event types accepted")
+    proj = setup_project()
+    for event_type in ["decision", "error", "retry", "assumption", "finding", "ambiguity"]:
+        code, out = run_tool(proj, "log", "--agent", "dev", "--event", event_type,
+                             "--detail", f"test {event_type}", "--sprint", "s1")
+        assert_eq(f"{event_type} accepted", code, 0)
+
+
+def test_log_special_characters():
+    """Special characters in detail preserved."""
+    print("\n[log] Special characters in detail preserved")
+    proj = setup_project()
+    special_detail = 'quotes "here" and {braces} and <angles> & ampersand'
+    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "finding",
+                         "--detail", special_detail, "--sprint", "s1")
+    assert_eq("exit code 0", code, 0)
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "s1" / "dev.jsonl"
+    entry = json.loads(log_file.read_text().strip())
+    assert_eq("special chars preserved", entry["detail"], special_detail)
+
+
 # --- Runner ---
 
 def main():
@@ -361,6 +478,15 @@ def main():
     test_sprint_plan_remove()
     test_sprint_plan_locked()
     test_sprint_plan_no_duplicates()
+    test_log_with_sprint_and_story()
+    test_log_without_story()
+    test_log_without_sprint()
+    test_log_entry_valid_jsonl()
+    test_log_multiple_appends()
+    test_log_invalid_event_type()
+    test_log_missing_required_args()
+    test_log_all_event_types()
+    test_log_special_characters()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")

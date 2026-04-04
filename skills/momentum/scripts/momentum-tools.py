@@ -20,7 +20,7 @@ Usage:
 import argparse
 import json
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 # --- State Machine ---
@@ -226,6 +226,44 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
     result("sprint_plan", success=True, operation=args.operation, stories=story_slugs)
 
 
+# --- Log Command ---
+
+VALID_EVENT_TYPES = {"decision", "error", "retry", "assumption", "finding", "ambiguity"}
+
+
+def cmd_log(args: argparse.Namespace) -> None:
+    event = args.event
+    if event not in VALID_EVENT_TYPES:
+        error_result("log", f"Invalid event type: '{event}'. Must be one of: {', '.join(sorted(VALID_EVENT_TYPES))}")
+
+    project_dir = resolve_project_dir()
+
+    sprint_slug = args.sprint if args.sprint else "_unsorted"
+    log_dir = project_dir / ".claude" / "momentum" / "sprint-logs" / sprint_slug
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.story:
+        filename = f"{args.agent}-{args.story}.jsonl"
+    else:
+        filename = f"{args.agent}.jsonl"
+
+    log_file = log_dir / filename
+
+    entry = {
+        "timestamp": datetime.now().isoformat(),
+        "agent": args.agent,
+        "story": args.story if args.story else None,
+        "sprint": args.sprint if args.sprint else None,
+        "event": event,
+        "detail": args.detail,
+    }
+
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+    result("log", success=True, file=str(log_file), entry=entry)
+
+
 # --- Version Command ---
 
 def cmd_version_check(args: argparse.Namespace) -> None:
@@ -294,6 +332,15 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--stories", required=True, help="Comma-separated story slugs")
     sp.add_argument("--wave", type=int, default=None, help="Wave number (for add)")
     sp.set_defaults(func=cmd_sprint_plan)
+
+    # log command group
+    log = subparsers.add_parser("log", help="Append structured event to agent log")
+    log.add_argument("--agent", required=True, help="Agent role (e.g. dev, pm, architect)")
+    log.add_argument("--event", required=True, help="Event type: decision, error, retry, assumption, finding, ambiguity")
+    log.add_argument("--detail", required=True, help="Human-readable detail text")
+    log.add_argument("--story", default=None, help="Story slug (optional)")
+    log.add_argument("--sprint", default=None, help="Sprint slug (optional, defaults to _unsorted)")
+    log.set_defaults(func=cmd_log)
 
     # version command group
     version = subparsers.add_parser("version", help="Version management")
