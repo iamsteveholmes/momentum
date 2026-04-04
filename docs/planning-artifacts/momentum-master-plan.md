@@ -72,9 +72,12 @@ skills/momentum/                     <- Plugin root
 │   ├── plan-audit/SKILL.md
 │   ├── sprint-manager/SKILL.md
 │   ├── agent-guidelines/SKILL.md
-│   ├── code-reviewer/SKILL.md      <- context: fork, allowed-tools: Read
-│   ├── architecture-guard/SKILL.md  <- context: fork, allowed-tools: Read
+│   ├── code-reviewer/SKILL.md      <- context: fork, allowed-tools: Read (Decision 35: standalone verifier)
+│   ├── architecture-guard/SKILL.md  <- context: fork, allowed-tools: Read (Decision 35: standalone verifier)
 │   └── upstream-fix/SKILL.md
+├── agents/                          <- Agent definition files (Decision 35: pure spawned workers)
+│   ├── qa-reviewer.md              <- Reviews code against story ACs (Team Review)
+│   └── e2e-validator.md            <- Black-box behavioral validation (Team Review)
 ├── hooks/
 │   └── hooks.json                   <- Always-on hooks (active on install)
 ├── scripts/
@@ -112,10 +115,11 @@ All skills are invocable directly or through Impetus menu routing. Direct invoca
 
 Impetus is the sole orchestrator. His role: **Communicate, Orchestrate, Delegate.** Hub-and-spoke voice model -- Impetus is the only agent that speaks to the user. Subagents return structured JSON; Impetus synthesizes into his own voice.
 
-**Two kinds of things in the architecture:**
+**Three kinds of things in the architecture (Decision 35):**
 
-1. **Skills** -- proper SKILL.md files that Impetus invokes or the user invokes directly. Multi-step workflows with their own state management.
-2. **Executor subagents** -- spawned by skills via Agent tool. Each has exclusive write authority over designated files. Always first-level -- no nesting.
+1. **Skills** -- SKILL.md files that Impetus invokes or the user invokes directly. Multi-step workflows with their own state management. Deployed in `skills/` directory.
+2. **Standalone verifier skills** -- SKILL.md files with `context: fork` and `allowed-tools` restrictions. Spawned by orchestrators but also useful standalone. Rich instruction bodies. Deployed in `skills/` directory.
+3. **Agent definition files** -- pure spawned workers in `agents/` directory. Task-in, structured-findings-out. Spawned via Agent tool with `subagent_type`. Never user-invoked. Always first-level -- no nesting.
 
 **Write authority model:**
 - Impetus reads but NEVER writes files (Phase 4: `allowed-tools: Read, Glob, Grep, Agent, Bash`)
@@ -124,14 +128,16 @@ Impetus is the sole orchestrator. His role: **Communicate, Orchestrate, Delegate
 
 **Executor subagent roster:**
 
-| Subagent | Writes | Responsibility |
-|----------|--------|---------------|
-| `momentum:dev` | Code in working directory | Story implementation via bmad-dev-story + logging |
-| `momentum:sprint-manager` | `stories/index.json`, `sprints/index.json` | Status transitions, sprint lifecycle (via momentum-tools CLI) |
-| `momentum:create-story` | Story files in `_bmad-output/` | Creates story files from backlog entries |
-| `momentum:avfl` | Validation reports | Sprint-level AVFL on merged codebase |
-| `momentum:code-reviewer` | Findings report | Adversarial code review (context:fork, read-only) |
-| `momentum:architecture-guard` | Drift report | Pattern drift detection (context:fork, read-only) |
+| Subagent | Type | Writes | Responsibility |
+|----------|------|--------|---------------|
+| `momentum:dev` | Skill | Code in working directory | Story implementation via bmad-dev-story + logging |
+| `momentum:sprint-manager` | Skill | `stories/index.json`, `sprints/index.json` | Status transitions, sprint lifecycle (via momentum-tools CLI) |
+| `momentum:create-story` | Skill | Story files in `_bmad-output/` | Creates story files from backlog entries |
+| `momentum:avfl` | Skill | Validation reports | Sprint-level AVFL on merged codebase |
+| `momentum:code-reviewer` | Skill (`context: fork`) | Findings report | Adversarial code review (read-only) |
+| `momentum:architecture-guard` | Skill (`context: fork`) | Drift report | Pattern drift detection (read-only) |
+| `qa-reviewer` | Agent file | Findings report | Story AC verification during Team Review (Decision 34) |
+| `e2e-validator` | Agent file | Validation report | Black-box behavioral validation during Team Review (Decision 34) |
 
 ### Agent Teams Model (adopted 2026-04-03)
 
