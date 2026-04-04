@@ -1,5 +1,139 @@
 {
-  "active": null,
+  "active": {
+    "locked": true,
+    "stories": [
+      "plugin-skeleton",
+      "sprint-planning-skill",
+      "sprint-dev-skill",
+      "plugin-migrate-skills",
+      "plugin-scripts-hooks-refs",
+      "plugin-cross-references"
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "plugin-skeleton",
+          "sprint-planning-skill",
+          "sprint-dev-skill"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "plugin-migrate-skills"
+        ]
+      },
+      {
+        "wave": 3,
+        "stories": [
+          "plugin-scripts-hooks-refs"
+        ]
+      },
+      {
+        "wave": 4,
+        "stories": [
+          "plugin-cross-references"
+        ]
+      }
+    ],
+    "slug": "sprint-2026-04-04-2",
+    "started": "2026-04-04",
+    "team_composition": {
+      "plugin-skeleton": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "config-structure",
+        "guidelines": {
+          "dev": "Direct implementation — create plugin.json manifest, move Impetus to nested skills/impetus/. Verify with jq. No tests needed.",
+          "qa": "Validate 8 ACs. Verify plugin.json schema, Impetus SKILL.md name field, old files removed, non-Impetus files untouched."
+        },
+        "test_approach": "Inspection — JSON validation, path existence checks",
+        "wave": 1,
+        "dependencies": []
+      },
+      "sprint-planning-skill": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "skill-instruction",
+        "guidelines": {
+          "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
+          "qa": "Validate 7 ACs. Verify independent invocability, all 9 steps reachable, workflow moved from old location."
+        },
+        "test_approach": "EDD — 2 evals: invocability, step coverage",
+        "wave": 1,
+        "dependencies": []
+      },
+      "sprint-dev-skill": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "skill-instruction",
+        "guidelines": {
+          "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
+          "qa": "Validate 7 ACs. Verify independent invocability, all 7 phases reachable, workflow moved from old location."
+        },
+        "test_approach": "EDD — 2 evals: invocability, phase coverage",
+        "wave": 1,
+        "dependencies": []
+      },
+      "plugin-migrate-skills": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "config-structure",
+        "guidelines": {
+          "dev": "Use git mv for history preservation. Update name field only. Verify subdirectories intact after each move.",
+          "qa": "Validate 6 ACs. Verify all 10 skills moved, name fields updated, old dirs removed, plugin discovers 11 skills."
+        },
+        "test_approach": "Inspection — path checks, glob verification",
+        "wave": 2,
+        "dependencies": [
+          "plugin-skeleton"
+        ]
+      },
+      "plugin-scripts-hooks-refs": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "config-structure + rule-hook",
+        "guidelines": {
+          "dev": "Verify existing placements, create hooks.json with always-on hooks, resolve workflows/ directory placement.",
+          "qa": "Validate 6 ACs. Verify hooks.json schema, skill-specific refs stayed in skill dirs, workflows resolved."
+        },
+        "test_approach": "Inspection + functional verification of hooks.json",
+        "wave": 3,
+        "dependencies": [
+          "plugin-migrate-skills"
+        ]
+      },
+      "plugin-cross-references": {
+        "roles": [
+          "dev",
+          "qa",
+          "architect-guard"
+        ],
+        "change_type": "skill-instruction + specification",
+        "guidelines": {
+          "dev": "EDD — write 2 evals for spawn names and dead references. Grep-driven audit then targeted updates.",
+          "qa": "Validate 9 ACs. Zero dead references, correct spawn names, spec docs consistent.",
+          "architect-guard": "Verify plugin model section in architecture.md matches actual directory structure. Check Decision 32 consistency."
+        },
+        "test_approach": "EDD + grep verification for zero dead refs",
+        "wave": 4,
+        "dependencies": [
+          "plugin-scripts-hooks-refs"
+        ]
+      }
+    }
+  },
   "planning": null,
   "completed": [
     {
