@@ -1,5 +1,5 @@
 ---
-name: momentum-avfl-validator-enum
+name: validator-enum
 description: AVFL Enumerator validator. Systematic, section-by-section quality validation.
 model: claude-sonnet-4-6
 effort: medium

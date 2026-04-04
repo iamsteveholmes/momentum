@@ -1,7 +1,7 @@
 ---
-name: momentum-agent-guidelines-rules-auditor
+name: rules-auditor
 description: Audits existing .claude/rules/ and CLAUDE.md for current technology guideline coverage.
-model: sonnet
+model: claude-sonnet-4-6
 effort: medium
 internal: true
 ---

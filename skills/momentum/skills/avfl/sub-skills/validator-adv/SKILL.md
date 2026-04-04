@@ -1,5 +1,5 @@
 ---
-name: momentum-avfl-validator-adv
+name: validator-adv
 description: AVFL Adversary validator. Intuitive, holistic, pattern-aware quality validation.
 model: claude-opus-4-6
 effort: high

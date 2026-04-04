@@ -1,5 +1,5 @@
 ---
-name: momentum-avfl-fixer
+name: fixer
 description: AVFL fixer. Applies validated findings as corrections and produces a complete fixed artifact.
 model: claude-sonnet-4-6
 effort: medium

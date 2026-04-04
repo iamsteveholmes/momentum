@@ -1,7 +1,7 @@
 ---
 name: research
 description: "Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking."
-model: opus
+model: claude-opus-4-6
 effort: high
 ---
 

@@ -1,6 +1,6 @@
 {
   "name": "momentum",
   "version": "0.1.0",
-  "description": "Agentic engineering practice — sprint orchestration, quality gates, and workflow automation",
+  "description": "Agentic engineering practice — rules, agents, quality gates, and workflow automation across projects",
   "skills": ["skills/*/SKILL.md"]
 }

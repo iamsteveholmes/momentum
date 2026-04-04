@@ -1,7 +1,7 @@
 ---
-name: momentum-agent-guidelines-source-pattern-scanner
+name: source-pattern-scanner
 description: Analyzes source code patterns to identify languages, frameworks, and conventions.
-model: sonnet
+model: claude-sonnet-4-6
 effort: medium
 internal: true
 ---

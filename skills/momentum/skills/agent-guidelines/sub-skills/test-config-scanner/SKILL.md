@@ -1,7 +1,7 @@
 ---
-name: momentum-agent-guidelines-test-config-scanner
+name: test-config-scanner
 description: Detects testing frameworks, configuration, and test patterns in the project.
-model: sonnet
+model: claude-sonnet-4-6
 effort: medium
 internal: true
 ---

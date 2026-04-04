@@ -1,7 +1,7 @@
 ---
-name: momentum-agent-guidelines-build-scanner
+name: build-scanner
 description: Scans project build files to detect technology stack, versions, and dependencies.
-model: sonnet
+model: claude-sonnet-4-6
 effort: medium
 internal: true
 ---
