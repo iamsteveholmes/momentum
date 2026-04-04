@@ -16,8 +16,10 @@ stepsCompleted:
   - step-e-01-discovery
   - step-e-02-review
   - step-e-03-edit
-lastEdited: '2026-03-26'
+lastEdited: '2026-04-02'
 editHistory:
+  - date: '2026-04-02'
+    changes: 'Phase 3 sprint model integration: added FR56-FR70 (agent logging, Gherkin separation, sprint planning/execution/retro, two-layer agent model, dependency-driven concurrency, task tracking, sprint record schema, error handling, sprint slug convention); added Sprint Lifecycle and Sprint Planning & Execution sections; updated FR6 (sprint-level menu items), FR39 (plain English ACs, Gherkin separation), FR41 (dual orchestration models), FR48 (sprint-level AVFL scope), FR51 (dependency-driven concurrency replaces waves), FR53 (momentum-dev as pure executor subsumes momentum-dev-auto), FR54 (index.json replaces sprint-status.yaml), FR55 (momentum-tools CLI replaces subagent, index.json replaces sprint-status.yaml); updated Sprint Status Definitions data source references; updated review status definition (sprint AVFL replaces wave AVFL); added sprint capabilities to Journey Requirements Summary; added epic-sprint coexistence reconciliation.'
   - date: '2026-03-26'
     changes: 'Epic orchestrator model: added FR49 (triage workflow), FR50 (/create-epic command), FR51 (/develop-epic command), FR52 (epic lifecycle), FR53 (momentum-dev-auto), FR54 (session-open epic progress bar); updated FR6 (Impetus as pure orchestrator, epic-level dispatch), FR41 (epic as primary unit of work, stories created in bulk); added sprint-status.yaml status definitions section with done-incomplete and closed-incomplete; added Epic Orchestrator Model section clarifying epic-first workflow model.'
   - date: '2026-03-23'
@@ -258,6 +260,11 @@ More than that: during the process, they asked two questions that revealed an am
 | Just-in-time context delivery | | | | ✓ |
 | Developer questions as discovery | | | | ✓ |
 | Bidirectional improvement | | | | ✓ |
+| Agent logging / observability | ✓ | | | |
+| Sprint planning workflow (selection, Gherkin, team) | ✓ | | | |
+| Sprint execution workflow (dependency concurrency, AVFL) | ✓ | | | |
+| Two-output retrospective (Momentum + project) | | ✓ | | |
+| Black-box verification (Gherkin separation) | ✓ | | | |
 
 ## Innovation & Novel Patterns
 
@@ -325,7 +332,7 @@ Each innovation area validates through dogfooding — Momentum is built using it
 
 ### Growth Features (Post-MVP)
 
-- **Impetus as Epic Orchestrator** — Impetus evolves from story-level guidance to epic-level orchestration: `triage` workflow for backlog shaping, `/create-epic` for bulk parallel story creation with AVFL validation, `/develop-epic` for tier-sequential DAG execution across all stories in the epic. The epic becomes the primary unit of planned work; Impetus dispatches agents, never implements. Human touchpoints at merge gates and critical AVFL findings only (see FR49–FR54)
+- **Impetus as Epic Orchestrator** — Impetus evolves from story-level guidance to epic-level and sprint-level orchestration: `triage` workflow for backlog shaping, `/create-epic` for bulk parallel story creation with AVFL validation, `/develop-epic` for dependency-driven DAG execution within a single epic, sprint planning for cross-epic story selection and team composition, sprint-dev for dependency-driven execution of sprint stories. The epic remains the primary unit for grouping and scoping work; the sprint is the primary unit for execution. Impetus dispatches agents, never implements. Human touchpoints at merge gates and critical AVFL findings only (see FR49–FR54, FR59–FR70)
 - Standalone `/validate` command — user-invocable AVFL validation outside story cycles (full profile with iterative fix loop, up to 8 parallel reviewers); extends the story-cycle-integrated AVFL to ad-hoc artifact validation
 - **Findings template** — standard + open sections format for validation reports, consumed by findings ledger and Evaluation Flywheel
 - **Citations API + CoE integration** (PT-026) — wire Anthropic Citations API into spec generation workflows for mechanically grounded provenance; add Chain of Evidences prompting pattern
@@ -535,7 +542,7 @@ momentum/
 
 ### Orchestrating Agent
 
-- **FR6:** Developer can interact with an orchestrating agent (Impetus) that presents menu-driven access to all practice workflows. Impetus is a pure orchestrator — it dispatches workflows and agents, never implements. At the epic orchestration level, the primary menu items are `/create-epic` and `/develop-epic`; Impetus dispatches story creation agents and DAG execution agents from parent context rather than performing implementation work itself
+- **FR6:** Developer can interact with an orchestrating agent (Impetus) that presents menu-driven access to all practice workflows. Impetus is a pure orchestrator — it dispatches workflows and agents, never implements. At the epic orchestration level, the primary menu items are `/create-epic` and `/develop-epic`. At the sprint orchestration level, menu items include "Plan a sprint" and "Continue sprint". Impetus dispatches story creation agents, DAG execution agents, and sprint workflow modules from parent context rather than performing implementation work itself
 - **FR7:** Orchestrating agent can show the developer's current position in any workflow via visual status graphics (ASCII)
 - **FR8:** Orchestrating agent can provide human-readable summaries of what was built during implementation, while review runs. Summaries follow attention-aware checkpoint patterns (UX-DR19) — lead with micro-summary, offer tiered review depth — and indicate confidence levels on presented content (UX-DR22)
 - **FR9:** Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally, including at minimum: gaps in the protocol mapping table (FR35), missing MCP provider configuration, and undefined ATDD tool binding
@@ -566,7 +573,7 @@ momentum/
 - **FR25:** Code-reviewer can be prompted or triggered automatically at implementation completion, not requiring manual invocation
 - **FR26:** Findings reports can include provenance status for traceability-dimension findings
 - **FR27:** Every finding requires evidence — validators cannot generate findings without supporting evidence from the reviewed artifact (calibration principle)
-- **FR48:** AVFL skill deployed as flat skill at `momentum-avfl/` supporting gate/checkpoint/full profiles; spawns parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; cross-checks findings between independently-framed reviewers; returns consolidated scored findings with evidence; sub-skills nested inside the skill directory deploy automatically with the parent skill
+- **FR48:** AVFL skill deployed as flat skill at `momentum-avfl/` supporting gate/checkpoint/full profiles; spawns parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; cross-checks findings between independently-framed reviewers; returns consolidated scored findings with evidence; sub-skills nested inside the skill directory deploy automatically with the parent skill. AVFL runs at sprint level: during planning it validates the complete sprint plan (all stories together as one pass), and during execution a single AVFL pass runs after all sprint stories have merged — not per-story, not per-wave. The profiles (gate/checkpoint/full) remain valid within the sprint-level invocation context
 
 ### Epic Orchestration
 
@@ -574,10 +581,10 @@ momentum/
 
 - **FR49:** `triage` workflow accepts raw input — conversational or file-based (`triage-inbox.md`) — and produces mutations to `epics.md`: story titles, one-line scope, epic assignments, priority ordering. Only unlocked epics (those without story files already created) are mutable. Cross-epic dependency violations are surfaced before committing changes. Triage is repeatable — it may be run any number of times before `/create-epic` is called on an epic. **Priority: High**
 - **FR50:** `/create-epic` command locks the target epic at invocation time, dispatches parallel story creation agents (one per story, batch of 4–8), runs an AVFL pass on all created stories from the parent context, and marks the epic locked on all-CLEAN result. Lock point is when `/create-epic` is called — not after AVFL, not after developer approval. Epic is immutable after this point. **Priority: High**
-- **FR51:** `/develop-epic` command executes a tier-sequential DAG across the epic's stories. Pre-flight validation includes: topological sort, cycle detection, key normalization, dangling reference check, and intra-tier file-overlap warning. Stories with satisfied dependencies execute in parallel within each tier (wave); AVFL validation is included per story wave. Orchestrator handles merge gate — never background agents. Agent concurrency cap is configurable (default 12). Integration with a dag-executor skill (e.g., by Erich Owens) is supported as a swappable wave scheduler via the skill protocol. **Priority: High**
+- **FR51:** `/develop-epic` command executes a dependency-driven DAG across the epic's stories. Pre-flight validation includes: topological sort, cycle detection, key normalization, dangling reference check, and file-overlap warning between concurrently runnable stories. Stories with satisfied dependencies execute in parallel (dependency-driven concurrency — not rigid wave tiers); when a story completes and merges, previously blocked stories are checked and spawned if unblocked. AVFL validation runs once after all stories have merged — not per-story, not per-wave. Orchestrator handles merge gate — never background agents. Agent concurrency cap is configurable (default 12). Integration with a dag-executor skill (e.g., by Erich Owens) is supported as a swappable scheduler via the skill protocol. **Priority: High**
 - **FR52:** Epic lifecycle is the primary unit of planned work, progressing through five phases: (1) **Triage** — mutable, repeatable, any number of times before `/create-epic`; (2) **Create-epic** — locks epic, creates story files in parallel, AVFL validates; (3) **Develop-epic** — DAG execution, tier-sequential, merge at each tier; (4) **Retro** — structured retrospective, writes `triage-inbox.md` entries for next cycle; (5) **Triage** — next cycle begins. Epic is immutable after create-epic. If a blocker or scope change occurs mid-epic, the epic is closed with status `done-incomplete` and incomplete stories are re-triaged into the next cycle. **Priority: High**
-- **FR53:** `momentum-dev-auto` is a stripped-down variant of `momentum-dev` with all interactive ask gates removed and merge deferred to the orchestrator. AVFL GATE_FAILED produces a clean structured failure output (never silent drift). `momentum-dev-auto` is a prerequisite for `/develop-epic` background agent execution. **Priority: High**
-- **FR54:** At session open, Impetus reads `sprint-status.yaml` and renders a 3-line epic progress bar as the first visible output — before any menu or preamble. Format: done epic(s), current in-progress epic(s) with story counts, next backlog epic. A two-sentence synthesis follows. For experienced users (`momentum_completions >= 3`), the progress bar is compressed to a single line. No preamble text precedes the progress bar. **Priority: High** *(Epic X — Impetus UX Redesign)*
+- **FR53:** `momentum-dev` is a pure executor: worktree setup, bmad-dev-story invocation, agent logging, and structured completion signal — no AVFL invocation, no status transitions, no DoD supplement, no code review offer. AVFL and status transitions are handled by the orchestration layer (Impetus / sprint-dev). The completion output emits a structured JSON signal (status, files modified, test results) that the caller can parse. momentum-dev can still be invoked standalone; logging calls degrade gracefully when no sprint context exists. The merge gate still requires developer confirmation. This subsumes the original `momentum-dev-auto` intent — the base momentum-dev is itself the stripped-down executor. **Priority: High**
+- **FR54:** At session open, Impetus reads `stories/index.json` and `sprints/index.json` and renders a 3-line epic progress bar as the first visible output — before any menu or preamble. Format: done epic(s), current in-progress epic(s) with story counts, next backlog epic. A two-sentence synthesis follows. For experienced users (`momentum_completions >= 3`), the progress bar is compressed to a single line. No preamble text precedes the progress bar. **Priority: High** *(Epic X — Impetus UX Redesign)*
 
 ### Evaluation Flywheel
 
@@ -598,9 +605,9 @@ momentum/
 
 ### Specification & Development Workflow
 
-- **FR39:** Developer can define acceptance criteria in Gherkin format that is behavioral, technology-agnostic, and implementation-independent
+- **FR39:** Developer can define acceptance criteria in plain English in story markdown files. Acceptance criteria are behavioral, technology-agnostic, and implementation-independent. Story files never contain Gherkin — detailed Gherkin specs are generated separately during sprint planning and stored in the sprint-scoped specs directory
 - **FR40:** ATDD workflow can generate failing acceptance tests from Gherkin criteria before implementation begins
-- **FR41:** Developer can complete a full story cycle guided by the orchestrating agent: spec review → ATDD → implement → review → flywheel. The epic is the primary unit of planned work — stories are created in bulk by `/create-epic` (not individually) and executed as a DAG by `/develop-epic`. Individual story cycles are invoked by Impetus as part of epic-level orchestration; the developer interacts at epic granularity during normal workflow
+- **FR41:** Developer can complete a full story cycle guided by the orchestrating agent: spec review → ATDD → implement → review → flywheel. Two orchestration models coexist: (1) Epic orchestration — stories created in bulk by `/create-epic` and executed as a DAG by `/develop-epic`; (2) Sprint orchestration — stories pulled from across epics during sprint planning, executed via dependency-driven concurrency by sprint-dev. In both models, individual story cycles are invoked by Impetus; the developer interacts at the orchestration unit's granularity (epic or sprint)
 - **FR42:** System can track visual progress through the story cycle, always showing current phase and next phase
 - **FR43:** Developer can invoke the upstream fix skill to analyze a quality failure and propose corrections at the appropriate upstream level
 
@@ -651,9 +658,9 @@ momentum/
 
 ## Sprint Status Definitions
 
-> _Revised 2026-04-01: New schema (stories/epics/sprints sections), new story stages (verify, closed-incomplete), sprint-manager as sole writer._
+> _Revised 2026-04-02: Data model decomposed to `stories/index.json` and `sprints/index.json`; `momentum-tools.py` CLI replaces sprint-manager subagent as sole writer; sprint AVFL replaces wave AVFL; sprint lifecycle definition added._
 
-`sprint-status.yaml` is the authoritative state file for story, epic, and sprint tracking. All writes go through `momentum-sprint-manager` (exclusive write authority). The file has three top-level sections: `stories` (flat registry), `epics` (category membership), `sprints` (active + planning). See architecture doc for full schema.
+`stories/index.json` and `sprints/index.json` are the authoritative state files for story and sprint tracking. All writes go through `momentum-tools.py` (exclusive write authority via CLI tool, not subagent). `stories/index.json` contains the flat story registry with status, epic membership, and dependencies. `sprints/index.json` contains active, planning, and completed sprint records including team composition and dependency graphs. See architecture doc for full schema.
 
 ### Story Statuses
 
@@ -662,7 +669,7 @@ momentum/
 | `backlog` | Story exists in epics.md/sprint-status.yaml; no story file yet. |
 | `ready-for-dev` | Story file created; waiting to be picked into a sprint. |
 | `in-progress` | Sprint-dev agent actively working it (worktree active). |
-| `review` | Worktree merged to main; awaiting wave AVFL. |
+| `review` | Worktree merged to main; awaiting post-merge sprint AVFL. |
 | `verify` | AVFL passed; behavioral verification running (momentum-verify). |
 | `done` | Verified, complete. |
 | `dropped` | Removed — obsolete or duplicate (pre-development cancellation). |
@@ -683,7 +690,49 @@ Story IDs are globally unique kebab-case slugs with no epic encoding. This allow
 
 ### FR55: Sprint-Manager Exclusive Write Authority
 
-- **FR55:** All writes to sprint-status.yaml go through `momentum-sprint-manager`, an executor subagent spawned by Impetus. No other agent, skill, or script writes to sprint-status.yaml directly. This ensures atomic status transitions and prevents concurrent write conflicts. **Priority: High** *(Redesign Foundation)*
+- **FR55:** All writes to `stories/index.json` and `sprints/index.json` go through `momentum-tools.py`, a Python CLI tool invoked via Bash. No other agent, skill, or script writes to these files directly. This ensures atomic status transitions and prevents concurrent write conflicts. **Priority: High** *(Redesign Foundation)*
+
+### Agent Observability
+
+- **FR56:** Every agent (Impetus, dev, QA, E2E Validator, verifiers) must write structured JSONL logs via `momentum-tools log` throughout execution. The tool accepts `--agent`, `--event`, `--detail`, `--story` (optional), and `--sprint` (required) arguments. Valid event types: `decision`, `error`, `retry`, `assumption`, `finding`, `ambiguity`. Logs are append-only, stored at `.claude/momentum/sprint-logs/{sprint-slug}/`. Per-agent exclusive write authority on log files. Log entries contain ISO 8601 timestamp, agent, story (or null), event type, and detail text. **Priority: High** *(Phase 3)*
+- **FR57:** Agent logging must be non-blocking and fault-tolerant — log calls degrade gracefully when no sprint context exists, when the sprint-logs directory has not been created, or when momentum-tools is not available. Logging failures never block agent execution. **Priority: High** *(Phase 3)*
+
+### Gherkin Separation
+
+- **FR58:** Story markdown files contain plain English acceptance criteria only. Detailed Gherkin `.feature` specs are generated during sprint planning and written to `sprints/{sprint-slug}/specs/{story-slug}.feature`. Dev agents never access the specs directory. Verifier agents read Gherkin specs exclusively from this path. This enforces black-box behavioral validation — developers implement against intent (plain English ACs), while verifiers validate against precise behavioral specifications (Gherkin). **Priority: High** *(Phase 3)*
+
+### Sprint Planning & Execution
+
+- **FR59:** Sprint planning workflow includes: backlog presentation (grouped by epic, excluding terminal states), story selection (3-8 stories with dependency warnings), story fleshing-out (spawn momentum-create-story for stubs), Gherkin spec generation, team composition, AVFL validation of the complete plan, developer review, and sprint activation. Planning decisions are logged throughout via the agent logging tool. **Priority: High** *(Phase 3)*
+- **FR60:** Sprint planning determines team composition: which agent roles the sprint needs (based on story `change_type` and `touches`), what project-specific guidelines each role receives, and which stories can run concurrently based on the dependency graph. Team composition is stored in the sprint record and read by sprint-dev for execution. **Priority: High** *(Phase 3)*
+- **FR61:** Agent guidance uses a two-layer model. Momentum provides generic agent roles (Dev, QA, E2E Validator, Architect Guard) with orchestration patterns, logging requirements, and quality gates. Projects provide role-specific guidelines per role (e.g., stack conventions, TDD requirements). Sprint planning wires the two layers together for each story based on `change_type` and `touches`. **Priority: High** *(Phase 3)*
+- **FR62:** Sprint execution reads the activated sprint record, creates a task list for progress tracking, spawns momentum-dev agents for unblocked stories (each in its own worktree), tracks completion via tasks, handles dependency-driven sequencing, runs post-merge AVFL, executes black-box verification against Gherkin specs, and surfaces a sprint summary. Every merge requires explicit developer confirmation. **Priority: High** *(Phase 3)*
+- **FR63:** Sprint execution spawns one agent per unblocked story (stories with no unmet dependencies). When a story completes and merges, sprint-dev checks whether previously blocked stories are now unblocked and spawns agents for those. Dependency ordering is strict — stories never start before all blockers have merged. This replaces rigid wave-tier scheduling with dependency-driven concurrency. **Priority: High** *(Phase 3)*
+- **FR64:** AVFL validates the complete sprint plan during sprint planning (all stories together as one validation pass). During sprint execution, a single AVFL pass runs after all stories have merged — not per-story, not per-wave. This catches cross-story integration issues. **Priority: High** *(Phase 3)*
+- **FR65:** In Phase 3, verification takes the form of a developer-confirmation checklist derived from Gherkin scenarios — each scenario becomes a checkbox item the developer confirms. Full automated verification is deferred. Unconfirmed items become findings to address or follow-up stories. **Priority: High** *(Phase 3)*
+
+### Sprint Retrospective
+
+- **FR66:** The retrospective workflow analyzes all agent logs from the sprint and produces two triage outputs: (1) Momentum triage — practice-level issues feeding back into Momentum's own refinement cycle, (2) Project triage — project-level issues feeding back into the project's refinement cycle. Both outputs derive from the same evidence base (agent JSONL logs stored in `.claude/momentum/sprint-logs/{sprint-slug}/`). **Priority: High** *(Phase 3)*
+
+### Sprint Lifecycle
+
+The sprint is the primary execution unit for Phase 3 and beyond. Stories are pulled from across epics during sprint planning (not bound to a single epic). The sprint lifecycle progresses through five phases:
+
+1. **Plan** — story selection from backlog (cross-epic), story fleshing-out, Gherkin spec generation, team composition, AVFL validation of complete plan, developer approval, sprint activation
+2. **Execute** — dependency-driven agent spawning (one momentum-dev per unblocked story), implementation in worktrees, progress tracking via tasks, merge gates with developer confirmation
+3. **Verify** — post-merge AVFL (single pass on full codebase), black-box verification against Gherkin specs (Phase 3: developer-confirmation checklist)
+4. **Complete** — sprint archival via `momentum-tools sprint complete`, sprint summary (stories completed, merge order, AVFL findings, verification results)
+5. **Retro** — agent log analysis, two-output triage (Momentum practice issues + project issues), findings feed back into respective refinement cycles
+
+The sprint model coexists with the epic orchestration model (FR49-FR53). Epics remain the primary unit for grouping related stories and managing scope. Sprints are the primary unit for execution — stories selected into a sprint may come from multiple epics. `/create-epic` produces stories; sprint planning selects stories for execution. `/develop-epic` remains valid for executing all stories within a single epic as a batch; sprint-dev provides the cross-epic execution model.
+
+### Operational Requirements
+
+- **FR67:** Multi-step workflows use task-based tracking for position and progress that survives context compression. Sprint-dev creates a task per story with dependency metadata, updating task status as stories progress through the execution loop. **Priority: High** *(Phase 3)*
+- **FR68:** The sprint record in `sprints/index.json` stores team composition (roles, guidelines, story assignments) and the dependency graph. Sprint planning writes this record; sprint-dev reads it. The schema is defined by the architecture document. **Priority: High** *(Phase 3)*
+- **FR69:** Sprint slugs follow the convention `sprint-YYYY-MM-DD` (date of planning). Same-day multiples append a sequence suffix: `sprint-2026-04-03-2`. **Priority: Medium** *(Phase 3)*
+- **FR70:** Sprint execution handles errors gracefully: no active sprint surfaces an error and returns to session menu; unlocked sprint surfaces an activation error; agent failure offers retry or skip (no auto-retry); merge conflicts surface with diff context for developer resolution; AVFL critical issues block verification until resolved; declined verification items log as findings with option to create follow-up stories. **Priority: High** *(Phase 3)*
 
 ## Post-PRD Actions
 

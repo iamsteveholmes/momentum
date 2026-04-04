@@ -116,3 +116,12 @@ After removals, the workflow collapses from 10 steps to ~7:
 - Per orchestration model: Impetus spawns momentum-dev, then calls sprint-manager for
   status transitions after merge confirmation
 - momentum-dev is always spawned as a subagent — it should never manage its own status
+
+### Requirements Coverage
+- FR53: Pure Executor momentum-dev — this story strips momentum-dev to a pure executor (no AVFL, no status transitions, no DoD supplement, no code review offer) with structured JSON completion signal
+- FR56: Agent Observability — this story wires `momentum-tools log` calls into momentum-dev at key decision points (story selection, worktree creation, implementation start/complete, merge proposal)
+- FR57: Graceful Log Failures — this story implements best-effort log wrapping so logging failures never block execution
+- Architecture: momentum-dev — Simplified Pure Executor section — implements the pure executor model (no AVFL, no status writes, no DoD, no code review) with structured JSON completion output
+- Architecture: Read/Write Authority table, momentum-dev row — implements the updated write scope (code in worktree, sprint-logs via best-effort momentum-tools log)
+- Architecture: Agent Pool Governance, AVFL at sprint level (Decision 31) — removes per-story AVFL from momentum-dev, enabling the sprint-level AVFL model
+- Architecture: Story Assignment Model — implements the pattern where momentum-dev receives its story assignment as input rather than selecting autonomously

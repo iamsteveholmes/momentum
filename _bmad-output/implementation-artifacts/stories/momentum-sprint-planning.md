@@ -171,3 +171,19 @@ same day, append sequence: `sprint-2026-04-03-2`.
 ### Dependency on agent-logging-tool
 All planning decisions, story approvals, and AVFL results must be logged via the
 agent logging tool. The log subcommand must exist before this workflow can execute.
+
+### Requirements Coverage
+- FR6: Orchestrating Agent — this story implements the "Plan a sprint" menu dispatch in Impetus
+- FR58: Gherkin Separation — this story generates Gherkin specs to `sprints/{sprint-slug}/specs/` while keeping story files plain English only
+- FR59: Sprint Planning Workflow — this story implements the complete planning workflow (backlog presentation, story selection, fleshing-out, Gherkin generation, team composition, AVFL validation, developer review, activation)
+- FR60: Team Composition — this story builds team composition (roles, guidelines, story assignments) and stores it in the sprint record
+- Architecture: Sprint Planning Workflow (Decision 29) — implements the 8-step planning workflow as an Impetus workflow module at `skills/momentum/workflows/sprint-planning.md`
+- Architecture: Two-Layer Agent Model (Decision 26) — implements role determination based on `change_type` and `touches`, wiring generic Momentum roles to project-specific guidelines
+- Architecture: Gherkin Specification Separation (Decision 30) — implements the spec separation pattern: plain English ACs in story files, Gherkin in `sprints/{sprint-slug}/specs/`
+- Architecture: Sprint Tracking Schema, team and dependencies — writes team composition and dependency graph to the sprint record
+- Architecture: Phase 3 Architecture Decisions, Decision 31 — runs AVFL once on the complete sprint plan (all stories together, not per-story)
+- Architecture: Repository Structure, workflows/ directory — creates `skills/momentum/workflows/sprint-planning.md`
+- FR61: Two-Layer Agent Model — this story wires Momentum generic roles with project-specific guidelines during planning
+- FR64: Sprint-Level AVFL — this story runs AVFL on the complete sprint plan as a single validation pass
+- FR68: Sprint Record Schema — this story writes team composition and dependency graph to `sprints/index.json`
+- FR69: Sprint Slug Convention — this story implements the `sprint-YYYY-MM-DD` naming convention

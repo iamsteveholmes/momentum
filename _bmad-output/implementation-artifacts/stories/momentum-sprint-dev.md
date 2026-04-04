@@ -199,3 +199,20 @@ The active sprint record in `sprints/index.json` is expected to contain:
 - If AVFL finds critical issues: block verification until resolved
 - If developer declines a verification item: log as finding, offer to create a follow-up
   story
+
+### Requirements Coverage
+- FR6: Orchestrating Agent — this story implements the "Continue sprint" menu dispatch in Impetus
+- FR62: Sprint Execution Workflow — this story implements the complete execution loop (sprint record read, task creation, agent spawning, progress tracking, AVFL, verification, summary)
+- FR63: Dependency-Driven Concurrency — this story implements dependency-driven agent spawning (unblocked stories first, spawn newly unblocked on completion)
+- FR64: Sprint-Level AVFL — this story runs a single AVFL pass after all stories merge
+- FR65: Developer-Confirmation Checklist — this story implements Phase 3 verification as a Gherkin-derived checklist
+- FR67: Task-Based Progress Tracking — this story creates tasks per story and tracks progress through the execution loop
+- FR68: Sprint Record Schema — this story reads team composition and dependency graph from `sprints/index.json`
+- FR70: Error Handling — this story implements graceful error handling for all sprint execution failure modes
+- Architecture: Sprint Execution Flow (sprint-dev workflow) — implements all 6 phases (Initialization, Team Spawn, Progress Tracking Loop, Post-Merge Quality Gate, Verification, Sprint Completion)
+- Architecture: Dependency-Driven Execution (Decision 25) — implements the teams-over-waves model where stories spawn based on dependency resolution, not wave numbers
+- Architecture: Agent Pool Governance, AVFL at sprint level (Decision 31) — implements single AVFL pass after ALL stories merge
+- Architecture: Gherkin Specification Separation (Decision 30), verification — implements black-box verification via developer-confirmation checklist derived from Gherkin specs
+- Architecture: Story Assignment Model — implements the pattern where sprint-dev assigns stories to momentum-dev agents (momentum-dev does not select autonomously)
+- Architecture: Read/Write Authority table, sprint-dev workflow row — implements task state management, status transitions, and sprint completion via momentum-tools
+- Architecture: Repository Structure, workflows/ directory — creates `skills/momentum/workflows/sprint-dev.md`

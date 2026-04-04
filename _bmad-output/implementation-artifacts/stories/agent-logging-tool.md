@@ -94,3 +94,10 @@ momentum-tools log --agent <role> --story <slug> --sprint <slug> --event <type> 
 | `assumption` | Agent assumed something not explicitly stated — record what |
 | `finding` | Agent discovered something noteworthy — record observation |
 | `ambiguity` | Agent encountered unclear input — record what was unclear |
+
+### Requirements Coverage
+- FR56: Agent Observability — this story implements the structured JSONL logging tool (`momentum-tools log`) with all required arguments, event types, append-only storage, and per-agent file isolation
+- FR57: Graceful Log Failures — exit code behavior and error handling for missing/invalid arguments (graceful degradation in callers is validated by momentum-dev-simplify)
+- Architecture: Agent Logging Infrastructure (Decision 24) — implements the `momentum-tools log` CLI, JSONL entry schema, file naming convention, event type vocabulary, and directory auto-creation
+- Architecture: Read/Write Authority table, momentum-tools log row — establishes the write-only append authority model for agent log files
+- Architecture: Installed Structure, sprint-logs/ directory — creates the runtime directory structure under `.claude/momentum/sprint-logs/{sprint-slug}/`
