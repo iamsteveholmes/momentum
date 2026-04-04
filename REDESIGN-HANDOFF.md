@@ -80,6 +80,8 @@ Four stories focused on the critical path to plan and execute sprints with teams
 - **Two-layer agents** — Momentum provides generic roles; projects provide stack-specific guidelines.
 - **Two-output retro** — analyzes logs, produces Momentum triage (practice issues) + Project triage (project issues).
 - **Triage vs refinement** — triage = intake (new ideas in); refinement = organization (backlog health).
+- **Gherkin separation** — story files have plain English ACs for devs. Detailed `.feature` specs at `sprints/{sprint-slug}/specs/` for verifiers only. Dev agents never see test criteria.
+- **AVFL at sprint level** — validates complete sprint plan during planning, not per-story during create-story.
 
 Deferred to Phase 5: triage, refinement, retro workflows + triage-writer tool + verify agent.
 Phase 4: activate allowed-tools restriction on Impetus.
