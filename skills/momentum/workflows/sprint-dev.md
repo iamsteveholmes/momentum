@@ -18,6 +18,23 @@
   <critical>Log all sprint events via `momentum-tools log --agent impetus --sprint {slug}` at each phase transition.</critical>
 
   <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 0: TASK TRACKING SETUP                              -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Initialize phase-level task tracking">
+    <action>Create tasks for the 7 execution phases:
+      1. Initialization — read sprint record, build dependency graph
+      2. Dev Wave — spawn agents for unblocked stories
+      3. Progress Tracking — monitor completion, propose merges, unblock next wave
+      4. Post-Merge AVFL — sprint-level quality scan
+      5. Team Review — QA + E2E Validator + Architect Guard
+      6. Verification — developer-confirmation checklist
+      7. Sprint Completion — archive sprint, summary, suggest retro
+    </action>
+    <note>Story-level tasks are created separately in Phase 1 (step 1) after reading the sprint record.</note>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
   <!-- PHASE 1: INITIALIZATION                                 -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
