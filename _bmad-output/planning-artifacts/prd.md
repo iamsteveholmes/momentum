@@ -236,7 +236,7 @@ At each step, the developer sees the visual status. They understand where they a
 
 More than that: during the process, they asked two questions that revealed an ambiguity in the acceptance criteria. The agent flagged it, the spec was clarified, and every future developer working on related stories benefits. The new developer didn't just consume the system — they made it better. Every moment of the process that they work through improves the system for everyone.
 
-**Requirements revealed:** Global install detection and guided setup from project-level agent, zero-config onboarding after initial setup, orchestrating agent as conversational guide that contextualizes rather than lectures, cognitive debt reduction through just-in-time context delivery, developer questions treated as discovery opportunities not obstacles, visual status throughout, full workflow cycle accessible to newcomers, bidirectional value — the developer learns from the system AND the system learns from the developer.
+**Requirements revealed:** Plugin install detection and guided setup from project-level agent, zero-config onboarding after initial setup, orchestrating agent as conversational guide that contextualizes rather than lectures, cognitive debt reduction through just-in-time context delivery, developer questions treated as discovery opportunities not obstacles, visual status throughout, full workflow cycle accessible to newcomers, bidirectional value — the developer learns from the system AND the system learns from the developer.
 
 ---
 
@@ -244,8 +244,8 @@ More than that: during the process, they asked two questions that revealed an am
 
 | Capability | J1 | J2 | J3 | J4 |
 |---|---|---|---|---|
-| Skill installation (npx skills add momentum/momentum -a claude-code) | ✓ | | | |
-| Global install detection + guided setup | ✓ | | | ✓ |
+| Plugin installation (Claude Code plugin install) | ✓ | | | |
+| Plugin install detection + guided setup | ✓ | | | ✓ |
 | Orchestrating agent with menu | ✓ | | | ✓ |
 | Visual status graphics (phase + next) | ✓ | ✓ | | ✓ |
 | Hook infrastructure | ✓ | | ✓ | ✓ |
@@ -278,13 +278,13 @@ More than that: during the process, they asked two questions that revealed an am
 
 **3. Protocol-based integration for practice systems.** Dependency inversion is established in software architecture. Applying it to the *practice layer* — where validation, research, and review are swappable protocols rather than hardcoded tools — is new. This is what makes Momentum a composable system rather than a collection of skills.
 
-**4. Three-tier enforcement mapped to portability layers.** The insight that deterministic (hooks) = Claude Code only, structured (workflows) = partially portable, advisory (rules) = fully portable — and designing the product so enforcement *degrades gracefully* across that spectrum — is a novel packaging strategy for developer tools in the multi-IDE era.
+**4. Full enforcement via Claude Code plugin model.** The insight that deterministic hooks, structured workflows, and advisory rules form a composable enforcement stack — and packaging them as a native Claude Code plugin with namespaced skills — provides a coherent governance model for agentic engineering.
 
 ### What Is NOT Innovative (And Should Not Be Claimed)
 
 - Spec-driven development (Kent Beck, StrongDM, others)
 - Producer-verifier separation (established pattern)
-- Agent Skills packaging (following the standard, not inventing it)
+- Plugin packaging (following the Claude Code plugin model, not inventing it)
 - TDD/ATDD (decades of established practice)
 - Code review (standard software engineering)
 
@@ -296,7 +296,7 @@ Each innovation area validates through dogfooding — Momentum is built using it
 - **Upstream fix discipline:** Validated when the flywheel catches systemic issues across sprints and the fix prevents recurrence (Journey 2)
 - **Provenance infrastructure:** Validated when stale sources are caught that would otherwise propagate (Journey 1 — expected immediately)
 - **Protocol-based integration:** Validated when Momentum deploys on a different stack without breaking the practice layer (Journey 3)
-- **Three-tier enforcement:** Validated when the same skills work in Claude Code (full enforcement) and other tools (advisory only)
+- **Plugin enforcement model:** Validated when the full enforcement stack (hooks, subagents, rules, namespaced skills) operates correctly within the Claude Code plugin model
 
 ## Product Scope & Phased Development
 
@@ -307,9 +307,9 @@ Each innovation area validates through dogfooding — Momentum is built using it
 ### Day 1 (Proves the Pipeline)
 
 1. LICENSE committed (open source, first task, non-negotiable)
-2. Skill package installs via `npx skills add momentum/momentum -a claude-code`
+2. Plugin installs via Claude Code plugin mechanism
 3. At least one hook fires (auto-lint on edit — simplest to verify)
-4. Orchestrating agent loads and shows a menu
+4. Orchestrating agent loads via `/momentum:impetus` and shows a menu
 5. The install is repeatable
 
 ### Day 2-3 (Before First Sprint)
@@ -326,16 +326,16 @@ Each innovation area validates through dogfooding — Momentum is built using it
 - Git integration as workflow infrastructure (frequent commits, reviewable history)
 - Gherkin-based ATDD specification format (behavioral, technology-agnostic)
 - Quality rules file for review workflows
-- Upstream fix discipline (`/upstream-fix` skill)
+- Upstream fix discipline (`/momentum:upstream-fix` skill)
 - Model routing defaults with `model:` and `effort:` frontmatter
 - Findings ledger scaffolded (with `provenance_status` field)
 - Calibration principle operationalized: every finding requires evidence; false positives waste more time than missed issues
-- AVFL validation (gate/checkpoint profiles) integrated into story cycles via momentum-dev — multi-lens validation pipeline with parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; benchmarked model routing per role (Enumerator=sonnet, Adversary=opus, Consolidator=haiku, Fixer=sonnet)
+- AVFL validation (gate/checkpoint profiles) integrated into story cycles via `momentum:dev` — multi-lens validation pipeline with parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; benchmarked model routing per role (Enumerator=sonnet, Adversary=opus, Consolidator=haiku, Fixer=sonnet)
 
 ### Growth Features (Post-MVP)
 
-- **Impetus as Epic Orchestrator** — Impetus evolves from story-level guidance to epic-level and sprint-level orchestration: `triage` workflow for backlog shaping, `/create-epic` for bulk parallel story creation with AVFL validation, `/develop-epic` for dependency-driven DAG execution within a single epic, sprint planning for cross-epic story selection and team composition, sprint-dev for dependency-driven execution of sprint stories. The epic remains the primary unit for grouping and scoping work; the sprint is the primary unit for execution. Impetus dispatches agents, never implements. Human touchpoints at merge gates and critical AVFL findings only (see FR49–FR54, FR59–FR70)
-- Standalone `/validate` command — user-invocable AVFL validation outside story cycles (full profile with iterative fix loop, up to 8 parallel reviewers); extends the story-cycle-integrated AVFL to ad-hoc artifact validation
+- **Impetus as Epic Orchestrator** — Impetus evolves from story-level guidance to epic-level and sprint-level orchestration: `triage` workflow for backlog shaping, `/momentum:create-epic` for bulk parallel story creation with AVFL validation, `/momentum:develop-epic` for dependency-driven DAG execution within a single epic, `/momentum:sprint-planning` for cross-epic story selection and team composition, `/momentum:sprint-dev` for dependency-driven execution of sprint stories. The epic remains the primary unit for grouping and scoping work; the sprint is the primary unit for execution. Impetus dispatches agents, never implements. Human touchpoints at merge gates and critical AVFL findings only (see FR49–FR54, FR59–FR70)
+- Standalone `/momentum:validate` command — user-invocable AVFL validation outside story cycles (full profile with iterative fix loop, up to 8 parallel reviewers); extends the story-cycle-integrated AVFL to ad-hoc artifact validation
 - **Findings template** — standard + open sections format for validation reports, consumed by findings ledger and Evaluation Flywheel
 - **Citations API + CoE integration** (PT-026) — wire Anthropic Citations API into spec generation workflows for mechanically grounded provenance; add Chain of Evidences prompting pattern
 - BMAD Code Review enforcement of pure verifier role
@@ -355,7 +355,7 @@ Each innovation area validates through dogfooding — Momentum is built using it
 - Near-autonomous spec-to-code pipeline with human only at gates
 - Property-based testing and mutation testing
 - Architectural fitness tests
-- Cursor adaptation and cross-IDE deployment
+- Cross-IDE adaptation (if plugin model emerges for other tools)
 - Team scaling, role distribution, multi-developer workflow
 - Full protocol ecosystem — teams and organizations plug in their own implementations for each integration point
 - Open-source packaging for external adopters
@@ -364,13 +364,13 @@ Each innovation area validates through dogfooding — Momentum is built using it
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| Agent Skills ecosystem is pre-1.0 — packaging may change | High | Impermanence Principle: thin packaging layer, practice portable even if packaging changes. Monthly ecosystem review. |
-| Context budget exhaustion — 68 BMAD (count as of BMAD v6; actual count varies by BMAD version) + Momentum skills | Medium | Concise descriptions (≤150 characters each), monitor matching quality |
-| BMAD coexistence friction — two systems in `.claude/skills/` | Medium | BMAD is an implementation detail. As BMAD migrates to skills, friction decreases. Momentum works with or without BMAD. |
+| Claude Code plugin model is evolving — packaging may change | High | Impermanence Principle: thin packaging layer (plugin.json + hooks.json), practice portable even if packaging changes. Monthly ecosystem review. |
+| Context budget exhaustion — 68 BMAD (count as of BMAD v6; actual count varies by BMAD version) + Momentum skills | Medium | Concise descriptions (≤150 characters each), plugin namespacing reduces matching pressure, monitor matching quality |
+| BMAD coexistence friction — two systems in `.claude/skills/` | Low | Plugin namespacing (`momentum:`) eliminates conflicts by design. BMAD is an implementation detail. Momentum works with or without BMAD. |
 | Solo developer bottleneck — no peer review safety net | High | Momentum's own practice (code-reviewer, adversarial review) provides the safety net. Dogfooding is both the risk and the mitigation. |
 | Protocol abstraction over-engineering | Medium | Define with one implementation. Refine when second implementation reveals what the first got wrong. |
 | Provenance authoring friction — `derives_from` gets skipped | Medium | Downstream-only authoring, auto-generated backward references, agent assists with discovery |
-| Ecosystem volatility invalidates packaging decisions | Medium | Accepted per Impermanence Principle. Practice is portable even if packaging changes. |
+| Ecosystem volatility invalidates packaging decisions | Medium | Accepted per Impermanence Principle. Practice content is portable even if the plugin packaging model changes. |
 | Upstream fix too expensive for small projects | Low | Upstream fixes *reduce* total effort over time. Cost is front-loaded; savings compound. |
 
 ### Resource Reality
@@ -381,28 +381,31 @@ One developer, limited hours, concurrent with other projects. The MVP must be le
 
 ### Installation Architecture
 
-**Single entry point via Agent Skills standard:**
+**Single entry point via Claude Code plugin:**
 
 ```
 momentum/                        # repo root
+├── .claude-plugin/
+│   └── plugin.json              # plugin manifest — name: "momentum" (components discovered from directory structure)
 ├── skills/
-│   ├── momentum/                # Impetus — main entry point SKILL.md
+│   ├── impetus/                 # Impetus — main entry point SKILL.md (/momentum:impetus)
 │   │   ├── SKILL.md
 │   │   └── references/          # bundled rules, hooks-config.json, mcp-config.json, momentum-versions.json
-│   ├── momentum-code-reviewer/  # context:fork skill — peer, not child
+│   ├── code-reviewer/           # context:fork skill — peer, not child
 │   │   └── SKILL.md
-│   └── momentum-architecture-guard/  # context:fork skill — peer, not child
+│   └── architecture-guard/      # context:fork skill — peer, not child
 │       └── SKILL.md
-├── .claude/
-│   └── settings.json            # committed; always-on hooks written by Impetus
+├── hooks/
+│   └── hooks.json               # committed; always-on hooks delivered by plugin
 └── version.md
 ```
 
 (Abbreviated — shows primary packaging structure. See Repository Structure section for complete directory layout.)
 
-- All Momentum capabilities deploy via `npx skills add momentum/momentum -a claude-code` (Agent Skills standard)
-- No plugin manifest, no plugin install — single distribution method
-- Impetus writes rules, hooks, and MCP config to their target locations on first run (`momentum-versions.json` tracks what to write per version; `.claude/momentum/installed.json` records project configuration state)
+- All Momentum capabilities deploy via the Claude Code plugin install mechanism
+- Plugin manifest (`plugin.json`) contains `name: "momentum"`; bundled skills, hooks, agents, and scripts are discovered from the directory structure
+- All skills are addressable as `/momentum:<skill-name>` (e.g., `/momentum:impetus`, `/momentum:sprint-planning`, `/momentum:dev`, `/momentum:avfl`)
+- Impetus writes global rules and MCP config to their target locations on first run (`momentum-versions.json` tracks what to write per version; `.claude/momentum/installed.json` records project configuration state). The plugin install delivers skills; Impetus handles global rules writing because the plugin mechanism cannot write to `~/.claude/rules/`
 - `context:fork` skills (code-reviewer, architecture-guard) are SKILL.md files with `context:fork` frontmatter — not plugin agents
 - `showTurnDuration: true` is set in `.claude/settings.json` during installation as a cost observability default (implementation requirement, see Epic 1 Additional)
 
@@ -410,11 +413,9 @@ momentum/                        # repo root
 
 | Method | Target | What's Installed |
 |---|---|---|
-| `npx skills add momentum/momentum -a claude-code` | Claude Code | Full system: skills + Impetus-managed global configuration (rules, hooks, MCP) |
-| `npx skills add momentum/momentum -a claude-code -g` | Claude Code (global) | Skills available in all projects; Impetus-managed global configuration still required on first `/momentum` run per project |
-| `npx skills add momentum/momentum -a claude-code` | Cursor | Skills only (advisory enforcement) |
-| `git clone` (project repo) | Team members | Project-level config via `.claude/settings.json` |
-| Global setup (prompted by Impetus) | New team member's machine | `~/.claude/` rules, hooks, MCP — written by Impetus on first `/momentum` run |
+| Claude Code plugin install | Claude Code | Full system: namespaced skills + Impetus-managed global configuration (rules, hooks, MCP) |
+| `git clone` (project repo) | Team members | Project-level config via `.claude/settings.json`; Impetus prompts plugin install if not present |
+| Global setup (prompted by Impetus) | New team member's machine | `~/.claude/` rules, hooks, MCP — written by Impetus on first `/momentum:impetus` run |
 
 ### Protocol-Based Integration Architecture
 
@@ -425,7 +426,7 @@ Every integration point in Momentum is a configurable protocol. The project conf
 | Protocol Type | What It Governs | Example Substitutions |
 |---|---|---|
 | **Agent protocols** | Which agent performs a role | BMAD Dev ↔ Workflow Builder ↔ custom agent |
-| **Skill protocols** | Which skill implements a capability | Momentum /validate ↔ team's existing review process |
+| **Skill protocols** | Which skill implements a capability | Momentum `/momentum:validate` ↔ team's existing review process |
 | **Tool protocols** | Which tool executes a function | Playwright ↔ Kotest ↔ custom test runner |
 | **MCP provider protocols** | Which LLM/service provides capability | Gemini ↔ GPT ↔ add 3rd/4th provider |
 | **Document specification protocols** | What constitutes the spec tree | Story ↔ Task ↔ Spec ↔ custom top-level doc |
@@ -475,32 +476,44 @@ momentum/
 ├── README.md
 ├── CONTRIBUTING.md
 ├── version.md              ← single version source for all skills
+├── .claude-plugin/
+│   └── plugin.json         ← plugin manifest (name: "momentum"; components discovered from directory structure)
 ├── skills/
-│   ├── momentum/           ← Impetus — main entry point
+│   ├── impetus/            ← Impetus — main entry point (/momentum:impetus)
 │   │   ├── SKILL.md
 │   │   └── references/    ← bundled rules, hooks-config.json, mcp-config.json, momentum-versions.json
-│   ├── momentum-avfl/
+│   ├── avfl/               ← /momentum:avfl
 │   │   ├── SKILL.md
 │   │   ├── references/
 │   │   │   └── framework.json
 │   │   └── sub-skills/          ← nested internal sub-skills (deploy with parent)
-│   ├── momentum-code-reviewer/    ← context:fork skill (peer, not nested)
+│   ├── code-reviewer/      ← context:fork skill (peer, not nested)
 │   │   └── SKILL.md
-│   ├── momentum-architecture-guard/   ← context:fork skill (peer, not nested)
+│   ├── architecture-guard/ ← context:fork skill (peer, not nested)
 │   │   └── SKILL.md
-│   ├── momentum-upstream-fix/
+│   ├── upstream-fix/       ← /momentum:upstream-fix
 │   │   └── SKILL.md
-│   ├── momentum-create-story/
+│   ├── create-story/       ← /momentum:create-story
 │   │   └── SKILL.md
-│   └── momentum-dev-story/
+│   ├── dev/                ← /momentum:dev
+│   │   └── SKILL.md
+│   ├── sprint-planning/    ← /momentum:sprint-planning
+│   │   └── SKILL.md
+│   ├── sprint-dev/         ← /momentum:sprint-dev
+│   │   └── SKILL.md
+│   ├── status/             ← /momentum:status
+│   │   └── SKILL.md
+│   ├── retro/              ← /momentum:retro
+│   │   └── SKILL.md
+│   └── plan-audit/         ← /momentum:plan-audit
 │       └── SKILL.md
-├── rules/                  ← source for bundled rules (advisory)
+├── hooks/
+│   └── hooks.json          ← always-on hooks delivered by plugin
 ├── mcp/                    ← custom MCP server source
 ├── docs/
 ├── .claude/
 │   ├── rules/              ← authority hierarchy rules (auto-load)
-│   ├── skills/             ← installed skills
-│   └── settings.json       ← always-on hooks (committed)
+│   └── skills/             ← installed skills
 └── _bmad-output/           ← planning artifacts
 ```
 
@@ -512,39 +525,39 @@ momentum/
 
 ### Adoption Path
 
-**Solo developer (MVP):** Install via `npx skills add momentum/momentum -a claude-code`, then run `/momentum`. Impetus handles global configuration interactively on first run. Ships with documented default protocol implementations (built-in validator, Gherkin ATDD, standard code-reviewer). The orchestrating agent detects missing configuration and helps fill gaps conversationally.
+**Solo developer (MVP):** Install the Momentum plugin, then run `/momentum:impetus`. Impetus handles global configuration interactively on first run. Ships with documented default protocol implementations (built-in validator, Gherkin ATDD, standard code-reviewer). The orchestrating agent detects missing configuration and helps fill gaps conversationally.
 
-**Team member:** `git clone` delivers project-level config. Orchestrating agent detects missing global components and prompts one-time setup. After initial global install, no further configuration is needed — project-level settings propagate via the repo.
+**Team member:** `git clone` delivers project-level config. Orchestrating agent detects missing plugin and global components and guides plugin install plus one-time global setup. After initial setup, no further configuration is needed — project-level settings propagate via the repo.
 
-**Existing BMAD users:** Momentum skills coexist with BMAD skills in `.claude/skills/`. BMAD is used to build Momentum but is an implementation detail, not a dependency for users.
+**Existing BMAD users:** Momentum skills are namespaced under `momentum:` and coexist cleanly with BMAD skills. BMAD is used to build Momentum but is an implementation detail, not a dependency for users.
 
 **Future (Growth):** Project configuration discovery — Momentum detects existing tools and spec structure, auto-configures protocol implementations.
 
 ### Implementation Considerations
 
-- **Context budget management:** With 68 BMAD skills installed (count as of BMAD v6; actual count varies by BMAD version), keep Momentum skill descriptions ≤150 characters each. All Momentum skills are flat skills (no plugin namespacing). Monitor for skill matching degradation as total count grows.
-- **Version management:** `momentum-versions.json` bundled in the package — machine-readable per-version action list (what files to write, where, for each version). `.claude/momentum/installed.json` written by Impetus at project level — records what version the project is currently configured for. Always bump version on changes.
+- **Context budget management:** With 68 BMAD skills installed (count as of BMAD v6; actual count varies by BMAD version), keep Momentum skill descriptions ≤150 characters each. Plugin namespacing (`momentum:`) reduces matching pressure but concise descriptions remain good practice. Monitor for skill matching degradation as total count grows.
+- **Version management:** `momentum-versions.json` bundled in the plugin — machine-readable per-version action list (what files to write, where, for each version). `.claude/momentum/installed.json` written by Impetus at project level — records what version the project is currently configured for (used for Momentum-specific runtime state, not plugin install state). Always bump version on changes.
 - **`installed.json` commit policy:** `.claude/momentum/installed.json` must be committed to the project repository. It records the Momentum version the project is configured for — without it, team members joining via `git clone` cannot receive correct incremental upgrade instructions and will be prompted for a full install instead. `.gitignore` must NOT exclude `.claude/momentum/installed.json`; it is intentionally tracked, unlike most `.claude/` contents which may be gitignored.
-- **Testing strategy:** promptfoo for skill output quality, `run_eval.py` for trigger precision, local `npx skills` development iteration.
+- **Testing strategy:** promptfoo for skill output quality, `run_eval.py` for trigger precision, local plugin development iteration.
 - **Tool/runtime management:** mise is the standard polyglot tool manager for developer environments using Momentum. When Momentum skills, workflows, or rules reference installing runtimes (node, python, ruby, go, java) or CLI tools, they must prefer `mise use` over legacy single-purpose managers (nvm, pyenv, rbenv, asdf, volta, fnm) or global package installs (`npm install -g`, `pip install --user`). This is enforced by global Claude Code rules (`~/.claude/rules/mise.md`) and the anti-patterns rule. Momentum does not bundle or install mise itself — it is a prerequisite of the developer environment.
 
 ## Functional Requirements
 
 ### Installation & Deployment
 
-- **FR1:** Developer can install Momentum skills via `npx skills add` into any Agent Skills-adopting IDE
-- **FR2:** Developer (solo, first install) runs `npx skills add momentum/momentum -a claude-code` then `/momentum`; Impetus detects no `installed.json` exists, presents a pre-consent summary of what will be configured (global rules, hooks, MCP), and with explicit developer confirmation completes setup and writes `installed.json` recording `momentum_version` (set to the value of `current_version` from `momentum-versions.json`), `installed_at`, and per-component hashes
+- **FR1:** Developer can install Momentum as a Claude Code plugin via the Claude Code plugin install mechanism. The plugin manifest (`plugin.json`) contains `name: "momentum"`; bundled skills, hooks, agents, and scripts are discovered from the directory structure
+- **FR2:** Developer (solo, first install) installs the Momentum plugin then runs `/momentum:impetus`; Impetus detects no `installed.json` exists, presents a pre-consent summary of what will be configured (global rules, hooks, MCP), and with explicit developer confirmation completes setup and writes `installed.json` recording `momentum_version` (set to the value of `current_version` from `momentum-versions.json`), `installed_at`, and per-component hashes. `installed.json` is used for Momentum-specific runtime state (not plugin install state)
 - **FR2b:** When Impetus starts and `installed.json` exists with `momentum_version` matching `momentum-versions.json` `current_version`, Impetus skips install and upgrade flows and proceeds directly to session orientation
 - **FR2c:** When Impetus starts and `installed.json` exists but `momentum_version` does not match `current_version`, Impetus triggers the upgrade flow (FR3b)
-- **FR3a:** Developer can run `npx skills update` to pull the latest Momentum package to disk; the updated package contains a revised `momentum-versions.json` with per-version action lists, such that the installed SKILL.md files and bundled references in `.claude/skills/momentum*/` are replaced with the new version's content
+- **FR3a:** Developer can update the Momentum plugin via the Claude Code plugin update mechanism; the updated plugin contains a revised `momentum-versions.json` with per-version action lists for Momentum-specific migrations (global rules updates, config schema changes)
 - **FR3b:** When Impetus starts and detects `momentum-versions.json` `current_version` differs from `installed.json` `momentum_version`, Impetus presents a structured upgrade summary — which files change, what each change does, which steps require restart — and requires explicit user confirmation before proceeding
 - **FR3c:** Impetus executes upgrade actions sequentially across all intermediate versions between `momentum_version` and `current_version`, updating `installed.json` on successful completion; partial failures are reported with the step that failed and project state left unchanged from that step onward
-- **FR4:** Team member can receive project-level Momentum configuration via `git clone` without manual setup
-- **FR5:** Developer joining a project that has `.claude/momentum/installed.json` committed but lacks global Momentum components on their machine (rules, hooks) runs `/momentum`; Impetus detects missing global components and guides them through one-time global setup without re-running the full install sequence
+- **FR4:** Team member can receive project-level Momentum configuration via `git clone` without manual setup. Plugin install is machine-level — the team member installs the Momentum plugin on their machine; project configuration comes via the cloned repo
+- **FR5:** Developer joining a project that has `.claude/momentum/installed.json` committed but lacks global Momentum components on their machine (rules, hooks) runs `/momentum:impetus`; Impetus detects missing global components and guides them through one-time global setup without re-running the full install sequence. The plugin install delivers the skill bundle; Impetus handles global rules writing on first run because the plugin mechanism cannot write to `~/.claude/rules/`
 
 ### Orchestrating Agent
 
-- **FR6:** Developer can interact with an orchestrating agent (Impetus) that presents menu-driven access to all practice workflows. Impetus is a pure orchestrator — it dispatches workflows and agents, never implements. At the epic orchestration level, the primary menu items are `/create-epic` and `/develop-epic`. At the sprint orchestration level, menu items include "Plan a sprint" and "Continue sprint". Impetus dispatches story creation agents, DAG execution agents, and sprint workflow modules from parent context rather than performing implementation work itself
+- **FR6:** Developer can interact with an orchestrating agent (Impetus, invoked as `/momentum:impetus`) that presents menu-driven access to all practice workflows. Impetus is a pure orchestrator — it dispatches workflows and agents, never implements. At the epic orchestration level, the primary menu items are `/momentum:create-epic` and `/momentum:develop-epic`. At the sprint orchestration level, menu items include `/momentum:sprint-planning` and `/momentum:sprint-dev`. Impetus dispatches story creation agents, DAG execution agents, and sprint workflow modules from parent context rather than performing implementation work itself. All dispatched skills use namespaced invocations (`/momentum:<skill-name>`)
 - **FR7:** Orchestrating agent can show the developer's current position in any workflow via visual status graphics (ASCII)
 - **FR8:** Orchestrating agent can provide human-readable summaries of what was built during implementation, while review runs. Summaries follow attention-aware checkpoint patterns (UX-DR19) — lead with micro-summary, offer tiered review depth — and indicate confidence levels on presented content (UX-DR22)
 - **FR9:** Orchestrating agent can detect ambiguous or missing project configuration and guide the developer through resolution conversationally, including at minimum: gaps in the protocol mapping table (FR35), missing MCP provider configuration, and undefined ATDD tool binding
@@ -575,17 +588,17 @@ momentum/
 - **FR25:** Code-reviewer can be prompted or triggered automatically at implementation completion, not requiring manual invocation
 - **FR26:** Findings reports can include provenance status for traceability-dimension findings
 - **FR27:** Every finding requires evidence — validators cannot generate findings without supporting evidence from the reviewed artifact (calibration principle)
-- **FR48:** AVFL skill deployed as flat skill at `momentum-avfl/` supporting gate/checkpoint/full profiles; spawns parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; cross-checks findings between independently-framed reviewers; returns consolidated scored findings with evidence; sub-skills nested inside the skill directory deploy automatically with the parent skill. AVFL runs at sprint level: during planning it validates the complete sprint plan (all stories together as one pass), and during execution a single AVFL pass runs after all sprint stories have merged — not per-story, not per-wave. The profiles (gate/checkpoint/full) remain valid within the sprint-level invocation context
+- **FR48:** AVFL skill deployed as `momentum:avfl` plugin skill supporting gate/checkpoint/full profiles; spawns parallel reviewers across structural integrity, factual accuracy, coherence & craft, and domain fitness lenses; cross-checks findings between independently-framed reviewers; returns consolidated scored findings with evidence; sub-skills nested inside the skill directory deploy automatically with the parent skill. AVFL runs at sprint level: during planning it validates the complete sprint plan (all stories together as one pass), and during execution a single AVFL pass runs after all sprint stories have merged — not per-story, not per-wave. The profiles (gate/checkpoint/full) remain valid within the sprint-level invocation context
 
 ### Epic Orchestration
 
 *These requirements belong to Epic Y (Impetus as Epic Orchestrator).*
 
-- **FR49:** `triage` workflow accepts raw input — conversational or file-based (`triage-inbox.md`) — and produces mutations to `epics.md`: story titles, one-line scope, epic assignments, priority ordering. Only unlocked epics (those without story files already created) are mutable. Cross-epic dependency violations are surfaced before committing changes. Triage is repeatable — it may be run any number of times before `/create-epic` is called on an epic. **Priority: High**
-- **FR50:** `/create-epic` command locks the target epic at invocation time, dispatches parallel story creation agents (one per story, batch of 4–8), runs an AVFL pass on all created stories from the parent context, and marks the epic locked on all-CLEAN result. Lock point is when `/create-epic` is called — not after AVFL, not after developer approval. Epic is immutable after this point. **Priority: High**
-- **FR51:** `/develop-epic` command executes a dependency-driven DAG across the epic's stories. Pre-flight validation includes: topological sort, cycle detection, key normalization, dangling reference check, and file-overlap warning between concurrently runnable stories. Stories with satisfied dependencies execute in parallel (dependency-driven concurrency — not rigid wave tiers); when a story completes and merges, previously blocked stories are checked and spawned if unblocked. AVFL validation runs once after all stories have merged — not per-story, not per-wave. Orchestrator handles merge gate — never background agents. Agent concurrency cap is configurable (default 12). Integration with a dag-executor skill (e.g., by Erich Owens) is supported as a swappable scheduler via the skill protocol. **Priority: High**
-- **FR52:** Epic lifecycle is the primary unit of planned work, progressing through five phases: (1) **Triage** — mutable, repeatable, any number of times before `/create-epic`; (2) **Create-epic** — locks epic, creates story files in parallel, AVFL validates; (3) **Develop-epic** — DAG execution, tier-sequential, merge at each tier; (4) **Retro** — structured retrospective, writes `triage-inbox.md` entries for next cycle; (5) **Triage** — next cycle begins. Epic is immutable after create-epic. If a blocker or scope change occurs mid-epic, the epic is closed with status `done-incomplete` and incomplete stories are re-triaged into the next cycle. **Priority: High**
-- **FR53:** `momentum-dev` is a pure executor: worktree setup, bmad-dev-story invocation, agent logging, and structured completion signal — no AVFL invocation, no status transitions, no DoD supplement, no code review offer. AVFL and status transitions are handled by the orchestration layer (Impetus / sprint-dev). The completion output emits a structured JSON signal (status, files modified, test results) that the caller can parse. momentum-dev can still be invoked standalone; logging calls degrade gracefully when no sprint context exists. The merge gate still requires developer confirmation. This subsumes the original `momentum-dev-auto` intent — the base momentum-dev is itself the stripped-down executor. **Priority: High**
+- **FR49:** `triage` workflow accepts raw input — conversational or file-based (`triage-inbox.md`) — and produces mutations to `epics.md`: story titles, one-line scope, epic assignments, priority ordering. Only unlocked epics (those without story files already created) are mutable. Cross-epic dependency violations are surfaced before committing changes. Triage is repeatable — it may be run any number of times before `/momentum:create-epic` is called on an epic. **Priority: High**
+- **FR50:** `/momentum:create-epic` command locks the target epic at invocation time, dispatches parallel story creation agents (one per story, batch of 4–8), runs an AVFL pass on all created stories from the parent context, and marks the epic locked on all-CLEAN result. Lock point is when `/momentum:create-epic` is called — not after AVFL, not after developer approval. Epic is immutable after this point. **Priority: High**
+- **FR51:** `/momentum:develop-epic` command executes a dependency-driven DAG across the epic's stories. Pre-flight validation includes: topological sort, cycle detection, key normalization, dangling reference check, and file-overlap warning between concurrently runnable stories. Stories with satisfied dependencies execute in parallel (dependency-driven concurrency — not rigid wave tiers); when a story completes and merges, previously blocked stories are checked and spawned if unblocked. AVFL validation runs once after all stories have merged — not per-story, not per-wave. Orchestrator handles merge gate — never background agents. Agent concurrency cap is configurable (default 12). Integration with a dag-executor skill (e.g., by Erich Owens) is supported as a swappable scheduler via the skill protocol. **Priority: High**
+- **FR52:** Epic lifecycle is the primary unit of planned work, progressing through five phases: (1) **Triage** — mutable, repeatable, any number of times before `/momentum:create-epic`; (2) **Create-epic** — locks epic, creates story files in parallel, AVFL validates; (3) **Develop-epic** — DAG execution, tier-sequential, merge at each tier; (4) **Retro** — structured retrospective, writes `triage-inbox.md` entries for next cycle; (5) **Triage** — next cycle begins. Epic is immutable after create-epic. If a blocker or scope change occurs mid-epic, the epic is closed with status `done-incomplete` and incomplete stories are re-triaged into the next cycle. **Priority: High**
+- **FR53:** `momentum:dev` is a pure executor: worktree setup, bmad-dev-story invocation, agent logging, and structured completion signal — no AVFL invocation, no status transitions, no DoD supplement, no code review offer. AVFL and status transitions are handled by the orchestration layer (Impetus / `momentum:sprint-dev`). The completion output emits a structured JSON signal (status, files modified, test results) that the caller can parse. `momentum:dev` can still be invoked standalone; logging calls degrade gracefully when no sprint context exists. The merge gate still requires developer confirmation. This subsumes the original `momentum-dev-auto` intent — the base `momentum:dev` is itself the stripped-down executor. **Priority: High**
 - **FR54:** At session open, Impetus reads `stories/index.json` and `sprints/index.json` and renders a 3-line epic progress bar as the first visible output — before any menu or preamble. Format: done epic(s), current in-progress epic(s) with story counts, next backlog epic. A two-sentence synthesis follows. For experienced users (`momentum_completions >= 3`), the progress bar is compressed to a single line. No preamble text precedes the progress bar. **Priority: High** *(Epic X — Impetus UX Redesign)*
 
 ### Evaluation Flywheel
@@ -602,14 +615,14 @@ momentum/
 - **FR34:** Developer can configure which agent, skill, tool, MCP provider, or document structure satisfies each protocol — at project level
 - **FR35:** Project configuration file maps protocols to implementations with provenance (who configured, when, why)
 - **FR36:** Orchestrating agent can read the project configuration, detect gaps in protocol mappings, and help fill them conversationally
-- **FR37:** System can resolve workflow step invocations through protocol interfaces — workflow definitions reference protocol types, not specific implementations; Impetus reads the project configuration at invocation time, looks up which implementation satisfies the protocol type for the current step, and invokes that implementation
+- **FR37:** System can resolve workflow step invocations through protocol interfaces — workflow definitions reference protocol types, not specific implementations; Impetus reads the project configuration at invocation time, looks up which implementation satisfies the protocol type for the current step, and invokes that implementation using namespaced skill invocations (`momentum:<skill-name>`)
 - **FR38:** Developer can substitute any protocol implementation without modifying the workflows that depend on it
 
 ### Specification & Development Workflow
 
 - **FR39:** Developer can define acceptance criteria in plain English in story markdown files. Acceptance criteria are behavioral, technology-agnostic, and implementation-independent. Story files never contain Gherkin — detailed Gherkin specs are generated separately during sprint planning and stored in the sprint-scoped specs directory
 - **FR40:** ATDD workflow can generate failing acceptance tests from Gherkin criteria before implementation begins
-- **FR41:** Developer can complete a full story cycle guided by the orchestrating agent: spec review → ATDD → implement → review → flywheel. Two orchestration models coexist: (1) Epic orchestration — stories created in bulk by `/create-epic` and executed as a DAG by `/develop-epic`; (2) Sprint orchestration — stories pulled from across epics during sprint planning, executed via dependency-driven concurrency by sprint-dev. In both models, individual story cycles are invoked by Impetus; the developer interacts at the orchestration unit's granularity (epic or sprint)
+- **FR41:** Developer can complete a full story cycle guided by the orchestrating agent: spec review → ATDD → implement → review → flywheel. Two orchestration models coexist: (1) Epic orchestration — stories created in bulk by `/momentum:create-epic` and executed as a DAG by `/momentum:develop-epic`; (2) Sprint orchestration — stories pulled from across epics during sprint planning, executed via dependency-driven concurrency by `momentum:sprint-dev`. In both models, individual story cycles are invoked by Impetus; the developer interacts at the orchestration unit's granularity (epic or sprint)
 - **FR42:** System can track visual progress through the story cycle, always showing current phase and next phase
 - **FR43:** Developer can invoke the upstream fix skill to analyze a quality failure and propose corrections at the appropriate upstream level
 
@@ -624,29 +637,29 @@ momentum/
 
 ### Context Window & Token Economics
 
-- **NFR1:** Each Momentum skill description must be ≤150 characters to minimize startup context budget impact
-- **NFR2:** Skill matching accuracy must remain >=95% (correct skill invoked on first attempt) when Momentum skills are added to an environment with 68+ existing BMAD skills, as measured by manual spot-checks during dogfooding
-- **NFR3:** Skill instructions should stay under 500 lines / 5000 tokens per the Agent Skills spec recommendation
-- **NFR4:** All Momentum skills are flat skills deployed via Agent Skills standard; no plugin namespacing is used or required. (Deployment architecture constraint — grouped here because flat skill deployment eliminates plugin overhead from the context budget.)
+- **NFR1:** Each Momentum skill description must be ≤150 characters to minimize startup context budget impact. Plugin namespacing reduces matching pressure but concise descriptions remain good practice for readability and context efficiency
+- **NFR2:** Skill matching accuracy must remain >=95% (correct skill invoked on first attempt) when Momentum skills are added to an environment with 68+ existing BMAD skills, as measured by manual spot-checks during dogfooding. For explicit `/momentum:<skill>` invocations, namespacing makes this constraint largely moot; the accuracy target applies primarily to model-invoked skills
+- **NFR3:** Skill instructions should stay under 500 lines / 5000 tokens for context efficiency
+- **NFR4:** All Momentum skills use the `momentum:` namespace via the Claude Code plugin model. Skills are addressable as `/momentum:<skill-name>` and the namespace is declared in `plugin.json`.
 
 ### Portability & Graceful Degradation
 
-- **NFR5:** All SKILL.md files must be valid Agent Skills standard — parseable by any of the 17+ adopting tools
-- **NFR6:** Claude Code-specific frontmatter (`context: fork`, `model`, `effort`) must be additive — skills must function correctly when these fields are ignored by non-Claude Code tools
-- **NFR7:** Enforcement must degrade across three defined tiers: Tier 1 full deterministic (Claude Code — hooks fire via `.claude/settings.json` written by Impetus, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus), Tier 2 advisory (Cursor/other tools with skills only — skill instructions guide but don't enforce), Tier 3 philosophy only (no tooling — principles documented in README). Each tier must be explicitly tested: Tier 1 via `npx skills add momentum/momentum -a claude-code` + `/momentum` first-run setup; README explicitly documents this configuration as Tier 1. Tier 2 via `npx skills add` into a non-Claude Code tool. Tier 3 validated by: verifying the README documents all three enforcement tiers and their respective capabilities and limitations; confirming that the practice principles are documented in a form that is actionable without any tooling installation.
-- **NFR8:** No Momentum workflow definition may import or reference a Claude Code-specific API directly. Workflows depend on protocol interfaces; protocol implementations resolve to Claude Code features at runtime. Validated by: every workflow SKILL.md must parse and execute (at advisory level) in at least one non-Claude Code tool.
+- **NFR5:** All SKILL.md files are valid skill definitions within the Claude Code plugin bundle. Cross-tool parseability is not a requirement
+- **NFR6:** _Removed._ Momentum is Claude Code-native. Frontmatter fields (`context: fork`, `model`, `effort`) are standard plugin skill fields with no graceful degradation requirement
+- **NFR7:** Momentum provides full deterministic enforcement via Claude Code: hooks fire via `hooks/hooks.json` delivered by the plugin, subagents enforce via `context:fork` skills, rules auto-load via `.claude/rules/` written by Impetus. Validated by: plugin install + `/momentum:impetus` first-run setup. The practice principles are documented in README for anyone who wants to extract them, but Momentum does not design for or test non-Claude-Code environments.
+- **NFR8:** Momentum workflow definitions should depend on protocol interfaces rather than directly referencing Claude Code APIs where practical. Protocol abstraction remains good design for substitutability and testability. The cross-tool validation criterion (parsing in non-Claude Code tools) is dropped — Momentum is Claude Code-native.
 
 ### Ecosystem Resilience
 
-- **NFR9:** A breaking change in any single ecosystem dependency (BMAD major version, Agent Skills spec) must be absorbable by modifying only the packaging/distribution layer (install scripts, frontmatter, momentum-versions.json), not the practice content (skill instructions, rules, agent definitions). Validated by: practice content files have zero imports of ecosystem-specific APIs.
-- **NFR10:** All ecosystem dependencies (BMAD version, Agent Skills spec version) must be tracked and reviewed at minimum monthly
-- **NFR11:** The packaging/distribution layer must comprise <=5% of total Momentum files (by count). Replacing the entire packaging mechanism must not require changes to any skill instruction, rule, or agent definition file.
+- **NFR9:** A breaking change in any single ecosystem dependency (BMAD major version, Claude Code plugin spec) must be absorbable by modifying only the packaging/distribution layer (plugin.json, hooks.json, momentum-versions.json), not the practice content (skill instructions, rules, agent definitions). Validated by: practice content files have zero imports of ecosystem-specific APIs.
+- **NFR10:** All ecosystem dependencies (BMAD version, Claude Code plugin spec version) must be tracked and reviewed at minimum monthly
+- **NFR11:** The packaging/distribution layer (plugin.json, hooks.json, momentum-versions.json) must comprise <=5% of total Momentum files (by count). Replacing the entire packaging mechanism must not require changes to any skill instruction, rule, or agent definition file.
 
 ### Integration Compatibility
 
-- **NFR12:** Momentum skills must coexist with BMAD skills in `.claude/skills/` without namespace conflicts or matching interference
+- **NFR12:** Momentum skills coexist with BMAD skills without namespace conflicts or matching interference. Plugin namespacing (`momentum:`) eliminates conflicts by design
 - **NFR13:** Momentum hooks must merge cleanly with existing project hooks and BMAD hooks — no silent override
-- **NFR14:** MCP provider integrations must respect Cursor's ~40 active tool ceiling when Momentum is used in Cursor environments
+- **NFR14:** _Removed._ Momentum is Claude Code-native; Cursor tool ceiling constraint no longer applies
 - **NFR15:** Protocol implementations must satisfy documented interface contracts. Validated by: substituting any protocol implementation with a different one that satisfies the same contract must not cause any consuming workflow to fail or produce different structural output.
 
 ### Dogfooding Integrity
@@ -668,11 +681,11 @@ momentum/
 
 | Status | Meaning |
 |---|---|
-| `backlog` | Story exists in epics.md/sprint-status.yaml; no story file yet. |
+| `backlog` | Story exists in epics.md/stories/index.json; no story file yet. |
 | `ready-for-dev` | Story file created; waiting to be picked into a sprint. |
 | `in-progress` | Sprint-dev agent actively working it (worktree active). |
 | `review` | Worktree merged to main; awaiting post-merge sprint AVFL. |
-| `verify` | AVFL passed; behavioral verification running (momentum-verify). |
+| `verify` | AVFL passed; behavioral verification running (`momentum:verify`, future phase). |
 | `done` | Verified, complete. |
 | `dropped` | Removed — obsolete or duplicate (pre-development cancellation). |
 | `closed-incomplete` | Story in a force-closed sprint; migrated to next sprint or dropped. Worktree preserved. |
@@ -705,12 +718,12 @@ Story IDs are globally unique kebab-case slugs with no epic encoding. This allow
 
 ### Sprint Planning & Execution
 
-- **FR59:** Sprint planning workflow includes: backlog presentation (grouped by epic, excluding terminal states), story selection (3-8 stories with dependency warnings), story fleshing-out (spawn momentum-create-story for stubs), Gherkin spec generation, team composition, AVFL validation of the complete plan, developer review, and sprint activation. Planning decisions are logged throughout via the agent logging tool. **Priority: High** *(Phase 3)*
-- **FR60:** Sprint planning determines team composition: which agent roles the sprint needs (based on story `change_type` and `touches`), what project-specific guidelines each role receives, and which stories can run concurrently based on the dependency graph. Team composition is stored in the sprint record and read by sprint-dev for execution. **Priority: High** *(Phase 3)*
+- **FR59:** Sprint planning workflow includes: backlog presentation (grouped by epic, excluding terminal states), story selection (3-8 stories with dependency warnings), story fleshing-out (spawn `momentum:create-story` for stubs), Gherkin spec generation, team composition, AVFL validation of the complete plan, developer review, and sprint activation. Planning decisions are logged throughout via the agent logging tool. **Priority: High** *(Phase 3)*
+- **FR60:** Sprint planning determines team composition: which agent roles the sprint needs (based on story `change_type` and `touches`), what project-specific guidelines each role receives, and which stories can run concurrently based on the dependency graph. Team composition is stored in the sprint record and read by `momentum:sprint-dev` for execution. **Priority: High** *(Phase 3)*
 - **FR61:** Agent guidance uses a two-layer model. Momentum provides generic agent roles (Dev, QA, E2E Validator, Architect Guard) with orchestration patterns, logging requirements, and quality gates. Projects provide role-specific guidelines per role (e.g., stack conventions, TDD requirements). Sprint planning wires the two layers together for each story based on `change_type` and `touches`. **Priority: High** *(Phase 3)*
 - **FR61a:** Developer can invoke an agent-guidelines workflow that discovers the project's technology stack, researches current state and breaking changes, interactively recommends testing tools and validation approaches, and generates path-scoped rules (`.claude/rules/*.md`), reference docs (`docs/references/*.md`), and CLAUDE.md updates. The workflow uses parallel subagents for discovery and research, and validates generated artifacts via AVFL checkpoint. **Priority: High** *(Phase 3)*
-- **FR62:** Sprint execution reads the activated sprint record, creates a task list for progress tracking, spawns momentum-dev agents for unblocked stories (each in its own worktree), tracks completion via tasks, handles dependency-driven sequencing, runs post-merge AVFL, executes black-box verification against Gherkin specs, and surfaces a sprint summary. Every merge requires explicit developer confirmation. **Priority: High** *(Phase 3)*
-- **FR63:** Sprint execution spawns one agent per unblocked story (stories with no unmet dependencies). When a story completes and merges, sprint-dev checks whether previously blocked stories are now unblocked and spawns agents for those. Dependency ordering is strict — stories never start before all blockers have merged. This replaces rigid wave-tier scheduling with dependency-driven concurrency. **Priority: High** *(Phase 3)*
+- **FR62:** Sprint execution reads the activated sprint record, creates a task list for progress tracking, spawns `momentum:dev` agents for unblocked stories (each in its own worktree), tracks completion via tasks, handles dependency-driven sequencing, runs post-merge AVFL, executes black-box verification against Gherkin specs, and surfaces a sprint summary. Every merge requires explicit developer confirmation. **Priority: High** *(Phase 3)*
+- **FR63:** Sprint execution spawns one agent per unblocked story (stories with no unmet dependencies). When a story completes and merges, `momentum:sprint-dev` checks whether previously blocked stories are now unblocked and spawns agents for those. Dependency ordering is strict — stories never start before all blockers have merged. This replaces rigid wave-tier scheduling with dependency-driven concurrency. **Priority: High** *(Phase 3)*
 - **FR64:** AVFL validates the complete sprint plan during sprint planning (all stories together as one validation pass). During sprint execution, a single AVFL pass runs after all stories have merged — not per-story, not per-wave. This catches cross-story integration issues. **Priority: High** *(Phase 3)*
 - **FR65:** In Phase 3, verification takes the form of a developer-confirmation checklist derived from Gherkin scenarios — each scenario becomes a checkbox item the developer confirms. Full automated verification is deferred. Unconfirmed items become findings to address or follow-up stories. **Priority: High** *(Phase 3)*
 
@@ -723,19 +736,24 @@ Story IDs are globally unique kebab-case slugs with no epic encoding. This allow
 The sprint is the primary execution unit for Phase 3 and beyond. Stories are pulled from across epics during sprint planning (not bound to a single epic). The sprint lifecycle progresses through five phases:
 
 1. **Plan** — story selection from backlog (cross-epic), story fleshing-out, Gherkin spec generation, team composition, AVFL validation of complete plan, developer approval, sprint activation
-2. **Execute** — dependency-driven agent spawning (one momentum-dev per unblocked story), implementation in worktrees, progress tracking via tasks, merge gates with developer confirmation
+2. **Execute** — dependency-driven agent spawning (one `momentum:dev` per unblocked story), implementation in worktrees, progress tracking via tasks, merge gates with developer confirmation
 3. **Verify** — post-merge AVFL (single pass on full codebase), black-box verification against Gherkin specs (Phase 3: developer-confirmation checklist)
 4. **Complete** — sprint archival via `momentum-tools sprint complete`, sprint summary (stories completed, merge order, AVFL findings, verification results)
 5. **Retro** — agent log analysis, two-output triage (Momentum practice issues + project issues), findings feed back into respective refinement cycles
 
-The sprint model coexists with the epic orchestration model (FR49-FR53). Epics remain the primary unit for grouping related stories and managing scope. Sprints are the primary unit for execution — stories selected into a sprint may come from multiple epics. `/create-epic` produces stories; sprint planning selects stories for execution. `/develop-epic` remains valid for executing all stories within a single epic as a batch; sprint-dev provides the cross-epic execution model.
+The sprint model coexists with the epic orchestration model (FR49-FR53). Epics remain the primary unit for grouping related stories and managing scope. Sprints are the primary unit for execution — stories selected into a sprint may come from multiple epics. `/momentum:create-epic` produces stories; sprint planning selects stories for execution. `/momentum:develop-epic` remains valid for executing all stories within a single epic as a batch; `momentum:sprint-dev` provides the cross-epic execution model.
 
 ### Operational Requirements
 
 - **FR67:** Multi-step workflows use task-based tracking for position and progress that survives context compression. Sprint-dev creates a task per story with dependency metadata, updating task status as stories progress through the execution loop. **Priority: High** *(Phase 3)*
-- **FR68:** The sprint record in `sprints/index.json` stores team composition (roles, guidelines, story assignments) and the dependency graph. Sprint planning writes this record; sprint-dev reads it. The schema is defined by the architecture document. **Priority: High** *(Phase 3)*
+- **FR68:** The sprint record in `sprints/index.json` stores team composition (roles, guidelines, story assignments) and the dependency graph. Sprint planning writes this record; `momentum:sprint-dev` reads it. The schema is defined by the architecture document. **Priority: High** *(Phase 3)*
 - **FR69:** Sprint slugs follow the convention `sprint-YYYY-MM-DD` (date of planning). Same-day multiples append a sequence suffix: `sprint-2026-04-03-2`. **Priority: Medium** *(Phase 3)*
 - **FR70:** Sprint execution handles errors gracefully: no active sprint surfaces an error and returns to session menu; unlocked sprint surfaces an activation error; agent failure offers retry or skip (no auto-retry); merge conflicts surface with diff context for developer resolution; AVFL critical issues block verification until resolved; declined verification items log as findings with option to create follow-up stories. **Priority: High** *(Phase 3)*
+
+### Plugin Model
+
+- **FR71:** Momentum is distributed as a Claude Code plugin with a `.claude-plugin/plugin.json` manifest containing `name: "momentum"`. Bundled skills, hooks, agents, and scripts are discovered from the directory structure — the manifest does not enumerate them. **Priority: High** *(Foundation)*
+- **FR72:** All Momentum skills are addressable as `/momentum:<skill-name>`. The `momentum:` namespace is reserved by the plugin manifest and collision-free with other installed skills and plugins. Explicit invocations use the namespaced form; model-invoked skills may also be matched via the namespace. **Priority: High** *(Foundation)*
 
 ## Post-PRD Actions
 
