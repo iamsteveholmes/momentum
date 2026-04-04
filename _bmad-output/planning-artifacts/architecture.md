@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-03'
+lastEdited: '2026-04-04'
 editHistory:
+  - date: '2026-04-04'
+    changes: 'AVFL scan profile and hybrid resolution team: Phase 4 updated to run AVFL in scan profile (all 4 lenses, dual reviewers, max skepticism, zero fix iterations — scored findings list output only). Phase 5 updated to hybrid Agent Team model (Dev fixes AVFL findings, QA validates ACs, E2E Validator tests live behavior with external tools against Gherkin specs, Architect Guard checks pattern drift — all concurrent on main branch, fix loop within team). Decision 31 updated with forward reference to Decision 34. Added Decision 34 — AVFL Scan Profile and Hybrid Resolution Team.'
   - date: '2026-04-03'
     changes: 'Plugin model adoption: Momentum becomes a Claude Code plugin with .claude-plugin/plugin.json. Replaced skills-only flat deployment (npx skills add) with plugin packaging. Namespaced skills under momentum: prefix (momentum-avfl → momentum:avfl, momentum-dev → momentum:dev, etc.). Workflow modules (sprint-planning.md, sprint-dev.md) converted to proper skills invoked as /momentum:sprint-planning and /momentum:sprint-dev. Always-on hooks delivered via plugin hooks/hooks.json (not Impetus-written to settings.json). Rules bundled in plugin references/rules/ (Impetus still writes to ~/.claude/rules/ and .claude/rules/ on first run). Repository structure replaced with plugin root layout. Agent Teams for sprint execution: teammates load skills from project/user settings, sequential execution with commit-as-sync-point. Updated Decisions 5a, 5c, 25, 26, 29 and all deployment, naming, structural, and integration sections.'
   - date: '2026-04-02'
@@ -1395,21 +1397,22 @@ sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked 
 - After merge: transition to `review`, re-evaluate dependency graph, spawn newly unblocked stories
 - Repeat until all stories have merged
 
-**Phase 4: Post-Merge Quality Gate (Decision 31: AVFL at Sprint Level)**
-- Run single AVFL pass on the full codebase (all sprint changes together)
+**Phase 4: Post-Merge Quality Gate (Decision 31: AVFL at Sprint Level; Decision 34: Scan Profile)**
+- Run AVFL in **scan profile** on the full codebase (all sprint changes together): all 4 lenses, dual reviewers (Enumerator + Adversary), maximum skepticism (level 3), consolidation with cross-check confidence
+- Zero fix iterations — AVFL scan produces a scored findings list only (no fix loop within AVFL)
 - AVFL no longer runs per-story — it runs once after ALL stories merge
-- If findings: present to developer, iterate fixes
+- Output (scored findings list) is handed to the concurrent Agent Team for resolution
 - This catches cross-story integration issues that per-story AVFL would miss
 
-**Phase 5: Team Review (Option C: Two-Phase Sprint Execution)**
-- After all devs have merged and AVFL passes, sprint-dev spawns QA, E2E Validator, and Architect Guard agents working on the integrated codebase (main branch, no worktrees)
+**Phase 5: Hybrid Agent Team Resolution (Decision 34)**
+- Agent Team operates concurrently on main branch (no worktrees) with the AVFL findings list as input
+- **Dev Agent** — fixes AVFL findings from the scored list
 - **QA Agent** — reviews merged code against all sprint story ACs. Produces findings per story.
-- **E2E Validator** — validates behavior against Gherkin specs in `sprints/{sprint-slug}/specs/`. Black-box: reads specs and verifies behavior without knowledge of implementation approach.
+- **E2E Validator** — tests running behavior with external tools against Gherkin specs in `sprints/{sprint-slug}/specs/`. Black-box: fundamentally different from AVFL's file-content validation — tests live system behavior, not static content.
 - **Architect Guard** — checks for pattern drift against architecture decisions. Flags deviations from Decision 26 team model, coding conventions, and project guidelines.
-- All three run in parallel on the full integrated codebase
+- All four run concurrently on the full integrated codebase
 - Findings are consolidated and presented to the developer as a fix queue
-- Sprint-dev spawns targeted dev fix agents (no worktrees — small changes on main) to address findings
-- Fix loop: re-run affected reviewers after fixes until clean or developer accepts remaining items
+- Fix loop within the team: re-run affected reviewers after fixes until clean or developer accepts remaining items
 - Unresolved findings become follow-up stories or backlog items
 
 **Phase 6: Verification (Decision 30: Black-Box)**
@@ -1569,4 +1572,11 @@ Sprint planning (`/momentum:sprint-planning`) encompasses story selection, creat
 Story files retain plain English ACs (dev sees intent). Sprint-scoped specs directory holds detailed Gherkin `.feature` files (verifiers only). Black-box behavioral validation: specs written pre-implementation, validated post-implementation, by different agents. See Gherkin Specification Separation section.
 
 **Decision 31 — AVFL at Sprint Level**
-AVFL validates the complete sprint plan during planning (all stories together). AVFL runs once after ALL stories merge during sprint execution (not per-story). Per-story AVFL is removed from `momentum:create-story` and `momentum:dev`. This catches cross-story integration issues that per-story AVFL would miss. See Agent Pool Governance section.
+AVFL validates the complete sprint plan during planning (all stories together). AVFL runs once after ALL stories merge during sprint execution (not per-story). Per-story AVFL is removed from `momentum:create-story` and `momentum:dev`. This catches cross-story integration issues that per-story AVFL would miss. See Agent Pool Governance section. Phase 4 runs AVFL in scan profile (Decision 34) — discovery only, no fix loop. Findings are handed to the hybrid Agent Team.
+
+**Decision 34 — AVFL Scan Profile and Hybrid Resolution Team (2026-04-04)**
+AVFL and resolution teams serve distinct purposes. AVFL excels at adversarial multi-lens discovery (dual-reviewer cross-check). Teams excel at concurrent resolution and E2E behavioral verification. The scan profile separates these concerns.
+
+Scan profile: all 4 lenses, dual reviewers (Enumerator + Adversary), maximum skepticism (level 3), consolidation with cross-check confidence. Zero fix iterations — output is scored findings list only.
+
+Hybrid model: AVFL scan → findings handed to concurrent Agent Team (Dev, QA, E2E Validator, Architect Guard). Team works concurrently on main branch. E2E Validator tests running behavior with external tools — fundamentally different from AVFL's file-content validation.
