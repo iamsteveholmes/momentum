@@ -173,7 +173,7 @@
         ],
         "change_type": "config-structure + skill-instruction",
         "guidelines": {
-          "dev": "Create agents/dev.md agent definition following qa-reviewer.md pattern. Update sprint-dev Phase 2 to spawn agent instead of skill.",
+          "dev": "Create agents/dev.md agent definition following qa-reviewer.md pattern. Update sprint-dev Phase 2 to spawn agent instead of skill. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
           "qa": "Validate 7 ACs. Verify agent definition schema, sprint-dev spawning, momentum:dev non-regression."
         },
         "test_approach": "EDD \u2014 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
@@ -188,7 +188,7 @@
         ],
         "change_type": "config-structure + skill-instruction",
         "guidelines": {
-          "dev": "Create domain classification rules and 3+ specialist agent files. Update sprint-planning Step 5 and sprint-dev Phase 2.",
+          "dev": "Create domain classification rules and 3+ specialist agent files. Update sprint-planning Step 5 and sprint-dev Phase 2. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
           "qa": "Validate 7 ACs. Verify classification, specialist agents, fallback to base dev, sprint record schema.",
           "architect-guard": "Verify specialist model extends Decision 26 two-layer agent model without breaking existing patterns."
         },
@@ -205,7 +205,7 @@
         ],
         "change_type": "skill-instruction",
         "guidelines": {
-          "dev": "EDD \u2014 add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only.",
+          "dev": "EDD \u2014 add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
           "qa": "Validate 9 ACs. Verify detection, warnings, developer options, non-blocking behavior, sprint record tracking."
         },
         "test_approach": "EDD \u2014 3 evals: missing detection, developer options, sprint record status",
@@ -221,7 +221,7 @@
         ],
         "change_type": "config-structure + skill-instruction",
         "guidelines": {
-          "dev": "Create agents/architecture-guard.md following qa-reviewer.md pattern. Update SKILL.md stub. Update sprint-dev Phase 5.",
+          "dev": "Create agents/architecture-guard.md following qa-reviewer.md pattern. Update SKILL.md stub. Update sprint-dev Phase 5. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
           "qa": "Validate 9 ACs. Verify agent definition, decision extraction, findings format, Phase 5 spawning."
         },
         "test_approach": "EDD \u2014 evals: decision extraction, findings format, read-only constraint",
