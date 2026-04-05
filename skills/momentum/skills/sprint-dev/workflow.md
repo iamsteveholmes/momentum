@@ -119,12 +119,14 @@ Task list created for progress tracking.</output>
     <action>For each unblocked story:
       1. Transition to in-progress: `momentum-tools sprint status-transition --story {slug} --target in-progress`
       2. Look up role assignment from {{team}}.story_assignments[slug]
-      3. Spawn a momentum:dev agent with:
-         - Story key: {slug}
-         - Story file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
-         - Sprint context: {{sprint_slug}}
-         - Role: {{team}}.story_assignments[slug].role
-         - Guidelines: look up guidelines path from {{team}}.roles matching the assigned role (pass null if none)
+      3. Spawn a dev agent via the Agent tool using the agent definition at `skills/momentum/agents/dev.md`.
+         Pass the following context in the prompt:
+         - story_file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
+         - sprint_slug: {{sprint_slug}}
+         - role: {{team}}.story_assignments[slug].role
+         - guidelines: look up guidelines path from {{team}}.roles matching the assigned role (pass null if none)
+         - If the story's `touches` array includes paths under `skills/` or `agents/`, also pass:
+           reference: `skills/momentum/references/agent-skill-development-guide.md`
       4. Update task {{task_map}}[slug] to in_progress
     </action>
 
@@ -152,12 +154,12 @@ Task list created for progress tracking.</output>
 {{error_summary}}
 
 Options:
-  R — Retry: spawn a fresh momentum:dev agent for this story
+  R — Retry: spawn a fresh dev agent for this story
   S — Skip: leave story in-progress, continue with other stories
   H — Halt: stop sprint execution to investigate</output>
       <ask>Retry, Skip, or Halt?</ask>
       <check if="Retry">
-        <action>Spawn a new momentum:dev agent for the failed story (same parameters as Phase 2). Do not auto-retry — this is the single manual retry.</action>
+        <action>Spawn a new dev agent (using `skills/momentum/agents/dev.md`) for the failed story (same parameters as Phase 2). Do not auto-retry — this is the single manual retry.</action>
       </check>
       <check if="Skip">
         <action>Log skip decision. Continue monitoring other agents.</action>
