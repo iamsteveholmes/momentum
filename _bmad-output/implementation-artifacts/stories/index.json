@@ -998,7 +998,7 @@
     "status": "backlog",
     "title": "Sprint Workflow Alignment — Fix Slug Extraction and Status Transitions",
     "epic_slug": "greeting-redesign",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "sprint-lifecycle-tools"
     ],
