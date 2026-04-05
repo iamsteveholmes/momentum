@@ -964,7 +964,7 @@
     "status": "backlog",
     "title": "Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests",
     "epic_slug": "greeting-redesign",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "skills/momentum/scripts/momentum-tools.py",
