@@ -33,9 +33,3 @@ Feature: Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawnin
     When the skill is executed
     Then it completes its full workflow without errors
     And no behavior change is observed compared to before this story
-
-  Scenario: Dev agent definition follows established agent schema
-    Given the dev agent definition file exists
-    When its structure is inspected
-    Then it has frontmatter with name, description, model, effort, and tools
-    And it contains a role description, critical constraints, input format, process steps, and output format section

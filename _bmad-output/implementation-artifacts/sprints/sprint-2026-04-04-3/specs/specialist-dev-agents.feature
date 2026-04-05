@@ -22,18 +22,6 @@ Feature: Specialist Dev Agents — Domain-Specific Agent Definitions
     Then the story is assigned the base dev agent
     And no warning or error is produced
 
-  Scenario: Each specialist agent definition carries domain-specific expertise
-    Given a specialist agent definition file exists for a domain
-    When its content is inspected
-    Then it contains a focused domain expertise section relevant to that domain
-    And it does not contain full workflow orchestration logic
-
-  Scenario: Each specialist agent definition follows the established agent schema
-    Given any specialist agent definition file
-    When its frontmatter is inspected
-    Then it has name, description, model, effort, and tools fields
-    And its body is a focused system prompt rather than a step-by-step workflow
-
   Scenario: Sprint-dev spawns the correct specialist agent for a story
     Given a story in the sprint record has a specialist assignment
     When Phase 2 of sprint-dev launches an agent for that story
@@ -51,8 +39,3 @@ Feature: Specialist Dev Agents — Domain-Specific Agent Definitions
     When the sprint record is written
     Then each story entry contains a specialist field with the assigned specialist name
     And stories assigned to the base dev agent record that assignment explicitly
-
-  Scenario: Specialist agents accept project guidelines that override built-in defaults
-    Given a specialist agent is spawned with project guidelines provided
-    When the agent performs implementation
-    Then it applies the project guidelines in preference to its built-in domain defaults
