@@ -42,6 +42,8 @@ date: '2026-03-17'
 lastEdited: '2026-04-04'
 editHistory:
   - date: '2026-04-04'
+    changes: 'Greeting redesign v8: Decision 4b rewritten — session orientation now uses 9 greeting states with adaptive 3-4 item menus (algorithmic construction based on sprint state + planning readiness + first-session detection). Fill bar rendering removed from session orientation. Added Decision 36 — Sprint Lifecycle State Machine (planning → ready → active → done → completed; retro as gate between done and completed; max one planned sprint). Added Decision 37 — Greeting State Detection (9 states with formal detection logic). Added Decision 38 — Narrative Voice Contract (KITT + Optimus Prime voice as binding architectural contract for all Impetus output). Sprint index schema enhanced with status and retro tracking fields. Progress indicator scope clarified: workflow-phase only, not greeting. Stats write architecture noted: invisible to user during greeting.'
+  - date: '2026-04-04'
     changes: 'Decision 35 — Agent Definition Files vs SKILL.md Boundary: formalized decision framework for when to use SKILL.md (orchestrator/workflow, standalone verifier with context:fork) vs agent definition file (pure spawned worker). Added agents/ directory to plugin structure for QA reviewer and E2E validator. Applied framework to Team Review phase roles (Decision 34). Code-reviewer and architecture-guard confirmed as SKILL.md context:fork (standalone utility). AVFL sub-skills confirmed as nested SKILL.md (internal pipeline).'
   - date: '2026-04-04'
     changes: 'AVFL scan profile and hybrid resolution team: Phase 4 updated to run AVFL in scan profile (all 4 lenses, dual reviewers, max skepticism, zero fix iterations — scored findings list output only). Phase 5 updated to hybrid Agent Team model (Dev fixes AVFL findings, QA validates ACs, E2E Validator tests live behavior with external tools against Gherkin specs, Architect Guard checks pattern drift — all concurrent on main branch, fix loop within team). Decision 31 updated with forward reference to Decision 34. Added Decision 34 — AVFL Scan Profile and Hybrid Resolution Team.'
@@ -81,7 +83,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 6. **Validate-Fix Loop (VFL) Skill** — Three profiles: Gate (1 agent, pass/fail), Checkpoint (2-4 agents, 1 fix attempt), Full (dual-reviewer per lens, up to 4 fix iterations). Four lenses: Structural Integrity, Factual Accuracy, Coherence & Craft, Domain Fitness. Consolidation handles deduplication, cross-check confidence tagging, and scoring. Invocable standalone, inline from workflows, or declared as a rule.
 
-7. **Orchestrating Agent — Impetus** — Session orientation (reads journal, surfaces active threads), visual progress (✓ Built / → Now / ◦ Next), proactive gap detection, productive waiting during subagent execution, hub-and-spoke voice unification. Impetus is the primary entry-point skill (`/momentum:impetus`) and the recommended path for all Momentum operations. Users can invoke other namespaced skills directly (e.g., `/momentum:sprint-planning`), but Impetus provides session orientation and context that direct invocation skips. For sprint-scoped operations, Impetus dispatches to dedicated skills: `/momentum:sprint-planning` for story selection and team composition, `/momentum:sprint-dev` for dependency-driven execution. Sub-command dispatch: developer selects "Plan a sprint" or "Continue sprint" from the session menu, and Impetus invokes the corresponding skill. Impetus is the force that maintains practice velocity — the system keeps compounding because Impetus carries knowledge and context forward across sessions and sprints without requiring repeated external input.
+7. **Orchestrating Agent — Impetus** — Session orientation via 9-state greeting (Decision 37) with adaptive menus, visual progress (✓ Built / → Now / ◦ Next) for workflow phases, proactive gap detection, productive waiting during subagent execution, hub-and-spoke voice unification, narrative voice contract (Decision 38). Impetus is the primary entry-point skill (`/momentum:impetus`) and the recommended path for all Momentum operations. Users can invoke other namespaced skills directly (e.g., `/momentum:sprint-planning`), but Impetus provides session orientation and context that direct invocation skips. For sprint-scoped operations, Impetus dispatches to dedicated skills: `/momentum:sprint-planning` for story selection and team composition, `/momentum:sprint-dev` for dependency-driven execution. Sub-command dispatch: developer selects from the greeting menu (e.g., "Continue the sprint", "Run retro", "Plan a sprint"), and Impetus invokes the corresponding skill. Sprint lifecycle transitions follow Decision 36 state machine. Impetus is the force that maintains practice velocity — the system keeps compounding because Impetus carries knowledge and context forward across sessions and sprints without requiring repeated external input.
 
 8. **Findings Ledger + Evaluation Flywheel** — Structured findings with provenance_status field; cross-story pattern detection; flywheel workflow (Detection → Review → Upstream Trace → Solution → Verify → Log) with visual status graphics; `/upstream-fix` skill; retrospective integration.
 
@@ -416,7 +418,7 @@ Confidence weighting: low-confidence results surface as questions to the user ra
 Impetus (`/momentum:impetus`) is a **pure orchestrator** and the recommended entry point for all Momentum operations. Users can invoke other namespaced skills directly (e.g., `/momentum:sprint-planning`, `/momentum:avfl`) but skip session orientation when doing so. Impetus MUST NOT perform development, evaluation, testing, or validation itself.
 
 **Impetus Identity (Phase 2: impetus-identity-redesign)**
-Impetus has a KITT-like servant-partner personality — competent, dry-witted, efficient. Not a generic assistant or chatbot. The identity model is that of a capable partner who anticipates needs, communicates with precision and occasional dry humor, and maintains continuity across sessions. This personality pervades session greetings, progress updates, menu presentation, and synthesis of subagent results.
+Impetus has a voice that blends Optimus Prime's gravitas with KITT's loyalty — weight and conviction in service, not command. Not a generic assistant or chatbot. The identity model is that of a guardian: a powerful entity that chooses restraint, follows the developer's lead, and speaks with earned emotion. This voice is a binding architectural contract (Decision 38) that pervades session greetings, progress updates, menu presentation, and synthesis of subagent results.
 
 **Prohibited roles for Impetus — explicitly:**
 - Code writing (any file creation or modification that constitutes implementation)
@@ -487,30 +489,32 @@ Acceptance test and eval files must be excluded from the dev agent's implementat
 Never `Step N/M`. Always narrative. Every phase transition in every Impetus-orchestrated workflow.
 
 **Decision 4b — Session Orientation Contract**
-At every session start via `/momentum:impetus`, Impetus reads the session journal and within two exchanges surfaces:
-active story/task, current phase, last completed action, suggested next action.
-User never hunts for context. Direct skill invocation (e.g., `/momentum:sprint-planning`) skips session orientation — the user's choice.
 
-**Session open sequence (updated 2026-04-03):** At session start, Impetus reads `stories/index.json` and `sprints/index.json` and renders sprint progress (done/current/next) before presenting the primary menu. The primary menu offers sprint-oriented actions: "Plan a sprint" (invokes `/momentum:sprint-planning`), "Continue sprint" (invokes `/momentum:sprint-dev`), and standalone story operations. Session-stats write is deferred until after the menu is displayed — startup rendering does not block on writes.
+> _[Revised 2026-04-04: Greeting redesign v8. Replaced 3-mode visual spec (fill bars) with 9-state adaptive greeting. Menu construction is algorithmic, not fixed. Fill bars removed from session orientation. Authoritative greeting design: `.claude/momentum/greeting-mockup.md`.]_
 
-**Session-Open Sprint View — 3-Mode Visual Spec (Phase 2: session-open-sprint-view)**
-The session-open view renders one of three modes based on sprint state:
+At every session start via `/momentum:impetus`, Impetus detects the current greeting state (Decision 37) and renders a single-exchange orientation: narrative context paragraph, optional planning sprint note, and an adaptive 3-4 item numbered menu. User never hunts for context. Direct skill invocation (e.g., `/momentum:sprint-planning`) skips session orientation — the user's choice.
 
-- **Mode 1: Active sprint with in-progress stories** — Shows 16-block fill bar per story with status. Context menu: `[1] Continue sprint  [2] Sprint status  [3] Plan next sprint`
-- **Mode 2: Active sprint complete** — All stories done. Surfaces planning sprint or retro option. Context menu: `[1] Run retrospective  [2] Plan next sprint  [3] Review findings`
-- **Mode 3: No active sprint** — Shows epic count, offers plan/refine/triage. Context menu: `[1] Plan a sprint  [2] Refine backlog  [3] Triage intake`
+**Session open sequence (updated 2026-04-04):** At session start, Impetus reads `sprints/index.json` (sprint lifecycle state per Decision 36), `stories/index.json` (story statuses), and `~/.claude/momentum/global-installed.json` (completion count for first-session detection). From these inputs, Impetus determines one of 9 greeting states (Decision 37), renders the corresponding narrative and menu, then writes session stats to `global-installed.json`. The stats write is invisible to the user — no visible diff during the greeting. Stats write is deferred until after the menu is displayed.
 
-The 16-block fill bar maps story status to visual progress:
-```
-backlog       ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  (hatched)
-ready-for-dev ░░░░░░░░░░░░░░░░  (empty)
-in-progress   ████████░░░░░░░░
-review        ████████████░░░░
-verify        ██████████████░░
-done          ████████████████
-```
+**Adaptive Menu Construction:**
 
-Each story line renders as: `[story-id] ████████████░░░░ review` — the bar plus status label. Terminal-native, no external rendering dependencies.
+Menu items are constructed algorithmically based on the detected greeting state. Each state produces a 3 or 4 item numbered menu. The items are drawn from this palette:
+
+| Menu item | Dispatches to | Appears when |
+|---|---|---|
+| Run the sprint / Continue the sprint | `/momentum:sprint-dev` | Active sprint exists |
+| Finish planning — {name} | `/momentum:sprint-planning` (resume) | Planning sprint in "planning" status |
+| Activate sprint | `/momentum:sprint-dev` (activation) | Planning sprint in "ready" status, no active sprint |
+| Run retro | Retro workflow | Active sprint done, retro not yet run |
+| Plan a sprint | `/momentum:sprint-planning` | No planning sprint exists |
+| Refine backlog | Backlog refinement | Always available |
+| Triage | Triage workflow | Always available |
+
+The exact menu composition for each greeting state is defined in the greeting mockup (`.claude/momentum/greeting-mockup.md`). Implementation must match those menus exactly — the mockup is authoritative.
+
+**Fill bars are removed from session orientation.** Per-story progress visualization (16-block fill bars) is not part of the greeting. Fill bars may be retained for future sprint-detail workflows (e.g., sprint status deep-dive) but are not rendered during session open.
+
+**Progress indicators (Decision 4a) are scoped to workflow phases.** The `✓ Built / → Now / ◦ Next` visual format applies to workflow step transitions AFTER the user selects a menu item and enters a workflow. Progress indicators are never shown in the greeting itself.
 
 **Decision 4c — Productive Waiting**
 While a context:fork subagent runs, Impetus maintains engagement through pre-launch briefing and post-completion synthesis.
@@ -1223,16 +1227,38 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 **`sprints/` folder** — one file per sprint (`sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, team composition, dependency graph, and wave plan. One specs directory per sprint (`sprints/{slug}/specs/`) for Gherkin feature files.
 
-**`sprints/index.json`** — which sprint is active, which is planning, list of completed sprint slugs.
+**`sprints/index.json`** — which sprint is active, which is planning, list of completed sprints. Active and planning entries are objects (not slug strings) that carry sprint lifecycle state (Decision 36). The `status` field tracks position in the sprint lifecycle state machine. Completed entries track retro execution for lifecycle gate enforcement.
+
+> _[Revised 2026-04-04: Active and planning entries enhanced with `status` field for sprint lifecycle state machine (Decision 36). Completed entries enhanced with `retro_run_at` for retro gate tracking. Existing fields (locked, stories, waves, team_composition, started, completed) unchanged.]_
 
 **`sprints/{sprint-slug}/specs/`** — Gherkin feature files written during sprint planning (Decision 30). One file per story: `{story-slug}.feature`. These specs encode detailed behavioral expectations that only verifier agents access. Dev agents NEVER read this directory — verification is black-box by design. Story markdown files retain plain English ACs only; Gherkin is never written back to story files.
 
 ```json
 // sprints/index.json
 {
-  "active": "quality-hooks-sprint",
-  "planning": "impetus-ux-sprint",
-  "completed": []
+  "active": {
+    "slug": "quality-hooks-sprint",
+    "status": "active",           // "ready" | "active" | "done" — see Decision 36
+    "locked": true,
+    "stories": ["posttooluse-lint-hook", "pretooluse-file-protection"],
+    "started": "2026-03-30",
+    "completed": null
+    // ... waves, team_composition as before
+  },
+  "planning": {
+    "slug": "impetus-ux-sprint",
+    "status": "planning",         // "planning" | "ready" — see Decision 36
+    "locked": false,
+    "stories": ["greeting-redesign", "session-stats"]
+    // ... waves, team_composition as before
+  },
+  "completed": [
+    {
+      "slug": "bootstrap-sprint",
+      "completed": "2026-03-28",
+      "retro_run_at": "2026-03-29"  // null if retro not yet run
+    }
+  ]
 }
 
 // sprints/quality-hooks-sprint.json
@@ -1666,3 +1692,80 @@ Agent definition files are discovered by Claude Code from the plugin's `agents/`
 - architecture-guard stays SKILL.md `context: fork` — same reasoning, useful for ad-hoc drift checks
 - All orchestrator/workflow skills stay SKILL.md — they need main context for spawning and interaction
 - AVFL sub-skills (validator-enum, validator-adv, consolidator, fixer) stay as nested SKILL.md sub-skills — they're part of AVFL's internal pipeline with their own orchestration needs
+
+**Decision 36 — Sprint Lifecycle State Machine (2026-04-04)**
+
+Sprints follow a formal lifecycle with explicit states and transition gates:
+
+```
+planning → ready → active → done → completed
+```
+
+| State | Meaning | Stored in |
+|---|---|---|
+| `planning` | Sprint planning in progress — stories being selected, team composed, specs written | `index.json` planning entry, `status: "planning"` |
+| `ready` | Sprint planning workflow completed — sprint is fully planned but not yet activated | `index.json` planning entry, `status: "ready"` |
+| `active` | Developer has activated the sprint; story execution in progress | `index.json` active entry, `status: "active"` |
+| `done` | All stories complete; retro not yet run | `index.json` active entry, `status: "done"` |
+| `completed` | Retro has run; sprint is fully closed | `index.json` completed array |
+
+**Transition gates:**
+
+| Transition | Trigger | Gate |
+|---|---|---|
+| planning → ready | Sprint planning workflow completes (all stories created, team composed, specs written, AVFL validated) | Automated — sprint-planning skill sets status |
+| ready → active | Developer selects "Activate sprint" from greeting menu, OR retro auto-activates (see below) | Developer intent or retro completion |
+| active → done | All stories reach `done` status | Automated — momentum-tools detects all-done |
+| done → completed | Retro runs | Retro completion moves sprint to completed array |
+
+**Cross-sprint transitions:**
+
+- **Retro auto-activation:** When retro completes for the active sprint and a planning sprint exists in `ready` status, the retro workflow automatically activates the ready sprint. The completed sprint moves to the completed array; the ready sprint becomes the new active sprint. This prevents a dead period between sprints.
+- **Planning during active sprint:** Sprint planning can complete (planning → ready) while an active sprint is running. The ready sprint waits for the active sprint's retro to activate it, or the developer can activate it manually from the greeting menu.
+- **Max one planned sprint:** Only one sprint may exist in planning/ready status at a time. Starting a new sprint plan requires the existing planning sprint to be activated or abandoned first.
+
+**Schema impact:** The `status` field is added to active and planning entries in `sprints/index.json`. Completed entries gain `retro_run_at` (ISO date or null). See Sprint Tracking Schema section for the full schema.
+
+**Decision 37 — Greeting State Detection (2026-04-04)**
+
+Impetus detects one of 9 greeting states at session start. Detection is algorithmic — the state is derived from `sprints/index.json`, `stories/index.json`, and `~/.claude/momentum/global-installed.json`. Each state produces a specific narrative and menu (defined in `.claude/momentum/greeting-mockup.md`, which is the authoritative reference for greeting content).
+
+| # | State | Detection logic |
+|---|---|---|
+| 1 | `first-session-ever` | `momentum_completions == 0` in `global-installed.json` AND no sprint history (no active, no completed) |
+| 2 | `active-not-started` | Active sprint exists (`status: "active"`), no stories in `in-progress` or later status |
+| 3 | `active-in-progress` | Active sprint exists, at least one story `in-progress` or later, none `blocked` |
+| 4 | `active-blocked` | Active sprint exists, at least one story has `blocked` status |
+| 5 | `active-planned-needs-work` | Active sprint exists + planning sprint exists with `status: "planning"` (not yet ready) |
+| 6 | `done-retro-needed` | Active sprint `status: "done"` (all stories complete), retro not yet run |
+| 7 | `done-no-planned` | Active sprint `status: "done"`, no planning sprint exists |
+| 8 | `no-active-nothing-planned` | No active sprint, no planning sprint |
+| 9 | `no-active-planned-ready` | No active sprint, planning sprint exists with `status: "ready"` |
+
+**Priority resolution:** States are evaluated in the order listed. State 5 (`active-planned-needs-work`) takes priority over states 3-4 when both an active sprint and a planning-status planned sprint exist — the planning sprint's incomplete state is the more actionable signal. States 6-7 are sub-states of "done" distinguished by planning sprint presence.
+
+**Menu construction:** Each state maps to a fixed menu defined in the greeting mockup. The menu is not dynamically composed from rules — it is a lookup from state to menu. This keeps the greeting deterministic and testable. The 9 menus are small enough to enumerate exhaustively.
+
+**Stats write timing:** After rendering the greeting and menu, Impetus increments `momentum_completions` in `global-installed.json`. This write happens after display — the user never sees a diff or file-write artifact during the greeting.
+
+**Decision 38 — Narrative Voice Contract (2026-04-04)**
+
+The Impetus voice — Optimus Prime's gravitas blended with KITT's loyalty — is not a UX preference. It is a binding architectural contract for all user-facing Impetus output. This contract applies to session greetings, progress updates, workflow transitions, menu presentation, error messages, and subagent result synthesis.
+
+**Voice principles (non-negotiable):**
+
+| Principle | Meaning |
+|---|---|
+| Gravitas | Words with mass. "Stands ready." "Carried across the line." "Hold the line." Not jargon, not ops-speak. |
+| Earned emotion | "The work is done" over "mission complete." Emotion that was earned by real work, not manufactured. |
+| Deference with dignity | "Lead on." "I'm with you." "When you're ready, I'm here." He follows — and the choice to follow carries weight. |
+| Forward motion | Every closer looks ahead. "Where do we begin?" "The road is open." "Give the word." Never static. |
+| First session is purpose | "I hold the line." "Let's forge something worth building." Identity, not features. |
+
+**Enforcement:** Any change to Impetus user-facing output must preserve these principles. The greeting mockup (`.claude/momentum/greeting-mockup.md`) is the authoritative reference for greeting-specific voice. The principles above govern all other Impetus output not covered by the mockup.
+
+**Traceability:** Formalization of the voice identity established in the greeting redesign v8 mockup. Supersedes the earlier "KITT-like servant-partner" description in Decision 3d — the voice has evolved from competent-and-dry-witted to gravitas-and-earned-emotion. Decision 3d's Impetus Identity subsection is updated to reflect this.
+
+**Workflow Modularization Note (2026-04-04)**
+
+The Impetus `workflow.md` file is a structural concern at 800+ lines. The greeting redesign (Step 7 alone is 232 lines in the mockup) will increase this further. Modularization into separate workflow modules (e.g., `greeting.md`, `dispatch.md`, `install.md`) is architecturally sound and recommended but not required for the greeting redesign. This note flags the concern for future sprint planning.
