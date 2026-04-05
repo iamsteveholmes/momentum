@@ -69,7 +69,23 @@ schema migration — those are separate stories.
     single source of truth for greeting state — the workflow does not
     compute state detection itself.
 
-11. All new and modified commands have passing unit tests in
+11. A new `session startup-check` command exists that combines version
+    comparison, hash drift detection, and configuration gap scanning into
+    a single call. It reads `momentum-versions.json`, `global-installed.json`,
+    `installed.json`, and `.mcp.json`, and returns:
+    `{"needs_upgrade": bool, "hash_drift": bool, "config_gaps": [],
+    "installed_version": str, "current_version": str}`.
+    This replaces Steps 1 and 10 in the workflow (version routing + hash
+    drift), eliminating 6+ sequential file reads from the startup path.
+
+12. A new `sprint next-stories` command exists that reads the active sprint
+    from `sprints/index.json` and `stories/index.json`, resolves the
+    dependency graph, and returns the list of story slugs that are currently
+    unblocked (all `depends_on` entries are `done`) and not yet `done`
+    themselves. Returns `{"stories": ["slug-a", "slug-b"], "blocked": ["slug-c"]}`.
+    Sprint-dev calls this instead of computing dependency resolution itself.
+
+13. All new and modified commands have passing unit tests in
     test-momentum-tools.py following the existing subprocess-based pattern.
 
 ## Dev Notes
@@ -135,6 +151,53 @@ Returns JSON:
 The workflow calls this once, gets the state, and looks up the template.
 No file reads, no state computation in the workflow itself.
 
+**`session startup-check`:** Combines three startup checks into one call:
+1. **Version check:** reads `momentum-versions.json` (from the skill's
+   references dir), `global-installed.json`, and `installed.json`. Compares
+   component group versions against `current_version`. If any group is
+   behind → `needs_upgrade: true`.
+2. **Hash drift:** for each global component with a stored hash, runs
+   `git hash-object` on the target file and compares. If mismatch →
+   `hash_drift: true`.
+3. **Config gaps:** checks `.mcp.json` for required providers (currently
+   informational — list any absent providers).
+
+Returns JSON:
+```json
+{
+  "needs_upgrade": false,
+  "needs_install": false,
+  "hash_drift": false,
+  "config_gaps": [],
+  "installed_version": "1.0.0",
+  "current_version": "1.0.0"
+}
+```
+
+The workflow calls this once at startup. If all clean → skip straight to
+greeting-state. If needs_upgrade/hash_drift → route to the appropriate
+workflow step. Replaces Steps 1 and 10 file reads.
+
+**`sprint next-stories`:** Reads `sprints/index.json` to get the active
+sprint's story list, then reads `stories/index.json` for each story's
+status and `depends_on`. For each story in the sprint:
+- Skip if status is `done`, `dropped`, or `closed-incomplete`
+- Check each `depends_on` slug — if ALL are `done` → story is unblocked
+- If any `depends_on` is not `done` → story is blocked
+
+Returns JSON:
+```json
+{
+  "ready": ["story-a", "story-b"],
+  "blocked": [{"slug": "story-c", "waiting_on": ["story-a"]}],
+  "done": ["story-d"],
+  "sprint": "sprint-2026-04-05"
+}
+```
+
+Sprint-dev calls this after every story merge to determine what to work
+on next. No dependency graph computation in the workflow.
+
 ### Required unit tests
 
 All tests follow the existing pattern: subprocess-based execution with temp
@@ -163,6 +226,14 @@ project directories and `assert_eq` assertions.
 | test_greeting_state_no_active_planned_ready | Returns correct state with ready planning sprint |
 | test_greeting_state_active_planned_needs_work | Returns correct state with planning sprint in "planning" |
 | test_greeting_state_done_no_planned | Returns `done-no-planned` when done and no planning sprint |
+| test_startup_check_all_clean | Returns all false/empty when versions match and no drift |
+| test_startup_check_needs_upgrade | Returns `needs_upgrade: true` when version behind |
+| test_startup_check_hash_drift | Returns `hash_drift: true` when file hash mismatches |
+| test_startup_check_needs_install | Returns `needs_install: true` when no installed.json |
+| test_next_stories_all_unblocked | Returns all stories as ready when no dependencies |
+| test_next_stories_some_blocked | Returns correct ready/blocked split based on depends_on |
+| test_next_stories_done_excluded | Done stories not in ready or blocked lists |
+| test_next_stories_no_active_sprint | Fails when no active sprint exists |
 
 ### Files
 
