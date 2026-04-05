@@ -60,7 +60,16 @@ schema migration — those are separate stories.
    `session_stats.momentum_completions`, and updates `last_invocation`. It
    creates the `session_stats` section if absent.
 
-10. All new and modified commands have passing unit tests in
+10. A new `session greeting-state` command exists that deterministically
+    detects the current greeting state by reading `sprints/index.json`,
+    `stories/index.json`, and `.claude/momentum/installed.json`. It returns
+    a JSON object with `state` (one of the 9 state names), `active_sprint`
+    (name or null), `planning_sprint` (name or null), `planning_status`
+    (status or null), and `momentum_completions` (integer). This is the
+    single source of truth for greeting state — the workflow does not
+    compute state detection itself.
+
+11. All new and modified commands have passing unit tests in
     test-momentum-tools.py following the existing subprocess-based pattern.
 
 ## Dev Notes
@@ -97,6 +106,35 @@ skip auto-activation. Exits non-zero if no completed sprint has
 and updates `last_invocation`. Writes back. This replaces the Write-tool-based
 stats update that was producing ugly diffs during the Impetus greeting.
 
+**`session greeting-state`:** Deterministic greeting state detection. Reads
+three files: `sprints/index.json`, `stories/index.json`, and
+`.claude/momentum/installed.json`. Applies the 9-state detection algorithm:
+
+1. If `momentum_completions == 0` and no sprints exist → `first-session-ever`
+2. If `active` is null and `planning` is null → `no-active-nothing-planned`
+3. If `active` is null and `planning.status == "ready"` → `no-active-planned-ready`
+4. If `active.status == "done"` and no planning sprint → `done-no-planned`
+5. If `active.status == "done"` → `done-retro-needed`
+6. If active exists and planning exists with `status == "planning"` → `active-planned-needs-work`
+7. If any story in the active sprint has unmet `depends_on` → `active-blocked`
+8. If all stories are `ready-for-dev` or `backlog` → `active-not-started`
+9. Otherwise → `active-in-progress`
+
+Returns JSON:
+```json
+{
+  "state": "active-in-progress",
+  "active_sprint": "sprint-2026-04-05",
+  "planning_sprint": null,
+  "planning_status": null,
+  "momentum_completions": 3,
+  "last_completed_sprint": "sprint-2026-04-04"
+}
+```
+
+The workflow calls this once, gets the state, and looks up the template.
+No file reads, no state computation in the workflow itself.
+
 ### Required unit tests
 
 All tests follow the existing pattern: subprocess-based execution with temp
@@ -116,6 +154,15 @@ project directories and `assert_eq` assertions.
 | test_session_stats_update_creates | Creates `session_stats` section when absent |
 | test_session_stats_update_increments | Increments existing `momentum_completions` |
 | test_session_stats_update_preserves_data | Preserves other data in installed.json |
+| test_greeting_state_first_session | Returns `first-session-ever` when no sprints and completions == 0 |
+| test_greeting_state_active_in_progress | Returns `active-in-progress` with stories moving |
+| test_greeting_state_active_not_started | Returns `active-not-started` when all stories ready-for-dev |
+| test_greeting_state_active_blocked | Returns `active-blocked` when story has unmet depends_on |
+| test_greeting_state_done_retro_needed | Returns `done-retro-needed` when active.status == "done" |
+| test_greeting_state_no_active_nothing_planned | Returns correct state when both null |
+| test_greeting_state_no_active_planned_ready | Returns correct state with ready planning sprint |
+| test_greeting_state_active_planned_needs_work | Returns correct state with planning sprint in "planning" |
+| test_greeting_state_done_no_planned | Returns `done-no-planned` when done and no planning sprint |
 
 ### Files
 
