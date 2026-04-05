@@ -47,10 +47,10 @@
         ],
         "change_type": "config-structure",
         "guidelines": {
-          "dev": "Direct implementation — create plugin.json manifest, move Impetus to nested skills/impetus/. Verify with jq. No tests needed.",
+          "dev": "Direct implementation \u2014 create plugin.json manifest, move Impetus to nested skills/impetus/. Verify with jq. No tests needed.",
           "qa": "Validate 8 ACs. Verify plugin.json schema, Impetus SKILL.md name field, old files removed, non-Impetus files untouched."
         },
-        "test_approach": "Inspection — JSON validation, path existence checks",
+        "test_approach": "Inspection \u2014 JSON validation, path existence checks",
         "wave": 1,
         "dependencies": []
       },
@@ -61,10 +61,10 @@
         ],
         "change_type": "skill-instruction",
         "guidelines": {
-          "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
+          "dev": "EDD \u2014 write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description \u2264150 chars, model/effort frontmatter.",
           "qa": "Validate 7 ACs. Verify independent invocability, all 9 steps reachable, workflow moved from old location."
         },
-        "test_approach": "EDD — 2 evals: invocability, step coverage",
+        "test_approach": "EDD \u2014 2 evals: invocability, step coverage",
         "wave": 1,
         "dependencies": []
       },
@@ -75,10 +75,10 @@
         ],
         "change_type": "skill-instruction",
         "guidelines": {
-          "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
+          "dev": "EDD \u2014 write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description \u2264150 chars, model/effort frontmatter.",
           "qa": "Validate 7 ACs. Verify independent invocability, all 7 phases reachable, workflow moved from old location."
         },
-        "test_approach": "EDD — 2 evals: invocability, phase coverage",
+        "test_approach": "EDD \u2014 2 evals: invocability, phase coverage",
         "wave": 1,
         "dependencies": []
       },
@@ -92,7 +92,7 @@
           "dev": "Use git mv for history preservation. Update name field only. Verify subdirectories intact after each move.",
           "qa": "Validate 6 ACs. Verify all 10 skills moved, name fields updated, old dirs removed, plugin discovers 11 skills."
         },
-        "test_approach": "Inspection — path checks, glob verification",
+        "test_approach": "Inspection \u2014 path checks, glob verification",
         "wave": 2,
         "dependencies": [
           "plugin-skeleton"
@@ -122,7 +122,7 @@
         ],
         "change_type": "skill-instruction + specification",
         "guidelines": {
-          "dev": "EDD — write 2 evals for spawn names and dead references. Grep-driven audit then targeted updates.",
+          "dev": "EDD \u2014 write 2 evals for spawn names and dead references. Grep-driven audit then targeted updates.",
           "qa": "Validate 9 ACs. Zero dead references, correct spawn names, spec docs consistent.",
           "architect-guard": "Verify plugin model section in architecture.md matches actual directory structure. Check Decision 32 consistency."
         },
@@ -144,15 +144,91 @@
     ],
     "waves": [
       {
-        "wave": 0,
+        "wave": 1,
         "stories": [
           "dev-agent-definition-files",
-          "specialist-dev-agents",
-          "guidelines-verification-gate",
           "architecture-guard-implementation"
         ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "specialist-dev-agents"
+        ]
+      },
+      {
+        "wave": 3,
+        "stories": [
+          "guidelines-verification-gate"
+        ]
       }
-    ]
+    ],
+    "slug": "sprint-2026-04-04-3",
+    "started": "2026-04-04",
+    "team_composition": {
+      "dev-agent-definition-files": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "config-structure + skill-instruction",
+        "guidelines": {
+          "dev": "Create agents/dev.md agent definition following qa-reviewer.md pattern. Update sprint-dev Phase 2 to spawn agent instead of skill.",
+          "qa": "Validate 7 ACs. Verify agent definition schema, sprint-dev spawning, momentum:dev non-regression."
+        },
+        "test_approach": "EDD \u2014 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
+        "wave": 1,
+        "dependencies": []
+      },
+      "specialist-dev-agents": {
+        "roles": [
+          "dev",
+          "qa",
+          "architect-guard"
+        ],
+        "change_type": "config-structure + skill-instruction",
+        "guidelines": {
+          "dev": "Create domain classification rules and 3+ specialist agent files. Update sprint-planning Step 5 and sprint-dev Phase 2.",
+          "qa": "Validate 7 ACs. Verify classification, specialist agents, fallback to base dev, sprint record schema.",
+          "architect-guard": "Verify specialist model extends Decision 26 two-layer agent model without breaking existing patterns."
+        },
+        "test_approach": "EDD \u2014 evals for classification, specialist spawning, fallback behavior",
+        "wave": 2,
+        "dependencies": [
+          "dev-agent-definition-files"
+        ]
+      },
+      "guidelines-verification-gate": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "skill-instruction",
+        "guidelines": {
+          "dev": "EDD \u2014 add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only.",
+          "qa": "Validate 9 ACs. Verify detection, warnings, developer options, non-blocking behavior, sprint record tracking."
+        },
+        "test_approach": "EDD \u2014 3 evals: missing detection, developer options, sprint record status",
+        "wave": 3,
+        "dependencies": [
+          "specialist-dev-agents"
+        ]
+      },
+      "architecture-guard-implementation": {
+        "roles": [
+          "dev",
+          "qa"
+        ],
+        "change_type": "config-structure + skill-instruction",
+        "guidelines": {
+          "dev": "Create agents/architecture-guard.md following qa-reviewer.md pattern. Update SKILL.md stub. Update sprint-dev Phase 5.",
+          "qa": "Validate 9 ACs. Verify agent definition, decision extraction, findings format, Phase 5 spawning."
+        },
+        "test_approach": "EDD \u2014 evals: decision extraction, findings format, read-only constraint",
+        "wave": 1,
+        "dependencies": []
+      }
+    }
   },
   "completed": [
     {
@@ -170,10 +246,10 @@
           ],
           "change_type": "skill-instruction + config-structure",
           "guidelines": {
-            "dev": "EDD — write 3 behavioral evals before touching skill files. NFR: SKILL.md description ≤150 chars, model/effort frontmatter, body ≤500 lines. Scan profile adds to framework.json validation_profiles — do not modify existing profiles.",
+            "dev": "EDD \u2014 write 3 behavioral evals before touching skill files. NFR: SKILL.md description \u2264150 chars, model/effort frontmatter, body \u2264500 lines. Scan profile adds to framework.json validation_profiles \u2014 do not modify existing profiles.",
             "qa": "Validate against 11 ACs. Verify framework.json schema consistency with existing profiles. Verify scan composes with corpus mode. Verify backward compatibility of gate/checkpoint/full."
           },
-          "test_approach": "EDD — 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
+          "test_approach": "EDD \u2014 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
           "wave": 1,
           "dependencies": []
         }
