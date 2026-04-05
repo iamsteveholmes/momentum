@@ -266,6 +266,28 @@ Proceeding to team composition.</output>
       · If not, note that the role will use Momentum's generic patterns only
     </action>
 
+    <action>Domain classification — assign a specialist dev agent per story based on `touches` paths:
+
+    For each story, iterate its `touches` paths and match against this table (order matters — first match wins per path):
+
+      | Pattern                                                        | Specialist     |
+      |----------------------------------------------------------------|----------------|
+      | `skills/*/SKILL.md`, `skills/*/workflow.md`, `agents/*.md`     | dev-skills     |
+      | `*.gradle*`, `*.kts`, `build.gradle*`                          | dev-build      |
+      | `*.kt`, `*compose*`, `*Compose*`                               | dev-frontend   |
+      | `*.py`, `*.pyi`                                                | dev-python     |
+      | `scripts/`, `*.sh`                                             | dev-scripts    |
+      | (no match)                                                     | dev (base)     |
+
+    Resolution when a story's paths match multiple specialist types:
+      · Tally matches per specialist type across all `touches` paths
+      · Assign the specialist with the most matching paths (majority rule)
+      · Ties break to the first specialist in table order (most specific)
+      · If no paths match any pattern, assign `dev` (base agent)
+
+    Store the specialist assignment per story in {{team}}.story_assignments[slug].specialist
+    </action>
+
     <action>Check for `touches` path overlaps across stories:
       · For each pair of selected stories, compare their `touches` arrays
       · If two stories touch the same file or directory, flag as merge conflict risk
@@ -290,6 +312,11 @@ Proceeding to team composition.</output>
 
 Team composition:
   {{for each role: · Role — N stories, guidelines: [project-specific | generic]}}
+
+Dev specialists:
+  {{for each specialist type:
+    · specialist-type: story-a, story-b (guidelines: [project-specific | generic])
+  }}
 
 Dependency graph:
   Wave 1 (parallel): {{story_slugs}}
@@ -351,12 +378,16 @@ Address all findings before the plan can proceed.</output>
 Stories ({{count}}):
   {{for each story, grouped by wave:
     Wave N:
-      · story_slug — Title · Role: Dev[, QA][, E2E][, Arch Guard]
+      · story_slug — Title · Specialist: {{specialist}} · Role: Dev[, QA][, E2E][, Arch Guard]
   }}
 
 Team Composition:
   {{for each role:
     · Role — {{story_count}} stories · Guidelines: {{guideline_source}}
+  }}
+  Dev Specialists:
+  {{for each specialist type:
+    · {{specialist}}: {{story_slugs}} (guidelines: {{guideline_source}})
   }}
 
 Dependency Graph:
@@ -400,7 +431,8 @@ AVFL: {{avfl_result}}
     <action>Store team composition and dependency graph in the sprint record:
       · Update `{implementation_artifacts}/sprints/index.json` planning section with:
         - slug: {{sprint_slug}}
-        - team: {{team_composition object — roles with story assignments and guidelines}}
+        - team: {{team_composition object — roles with story assignments, specialist types, and guidelines}}
+          Each story_assignment entry includes: role, specialist (e.g., "dev-skills", "dev-build", "dev-frontend", or "dev"), and guidelines path
         - waves: {{already stored via momentum-tools}}
         - planned: today's date (YYYY-MM-DD)
     </action>
