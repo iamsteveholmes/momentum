@@ -9,6 +9,7 @@ inputDocuments:
   - docs/research/anti-hallucination-source-provenance-2026-03-14.md
   - docs/research/validate-fix-loop-framework-v3.json
   - docs/research/bmad-v6-skills-architecture-coexistence-2026-03-16.md
+  - .claude/momentum/greeting-mockup.md
 derives_from:
   - id: BRIEF-MOMENTUM-001
     path: _bmad-output/planning-artifacts/product-brief-momentum-2026-03-13.md
@@ -31,8 +32,13 @@ derives_from:
   - id: RESEARCH-BMAD-COEXISTENCE-001
     path: docs/research/bmad-v6-skills-architecture-coexistence-2026-03-16.md
     relationship: derives_from
-lastEdited: '2026-03-22'
+  - id: GREETING-MOCKUP-V8
+    path: .claude/momentum/greeting-mockup.md
+    relationship: derives_from
+lastEdited: '2026-04-04'
 editHistory:
+  - date: '2026-04-04'
+    changes: 'Session orientation redesign v8 — replaced journal-based session start with 9-state sprint-aware narrative greeting. Updated Impetus voice to KITT + Optimus Prime character. Removed fill bar specs. Added identity declaration for first-session-ever. Documented adaptive menus, voice closers, sprint lifecycle gate, and configuration gap scope. Simplified expertise-adaptive orientation.'
   - date: '2026-03-22'
     changes: 'Added Terminal Multiplexer Visibility subsection under Multi-Tab Awareness — optional enhancement via Epic 7 terminal-multiplexer protocol binding. Derives from CMUX research document.'
 ---
@@ -130,8 +136,10 @@ These must require zero deliberate effort — they should simply happen:
 
 | Moment | Persona | What It Proves |
 |--------|---------|----------------|
+| **First session identity declaration** | New team member | "I am Impetus. I hold the line..." — the user knows what this stands for before touching anything |
 | **First orientation** | New team member | Agent immediately says "here's where you are, here's your next step" — never felt lost |
 | **First automatic hook fire** | Both | System caught something without being asked — enforcement is real |
+| **First sprint completion greeting** | Both | "The work is done. Every story carried across the line." — completion honored, not just reported |
 | **First complete story cycle** | New team member | Went from task → spec → implement → review → done with agent guidance — confidence unlocked |
 | **First flywheel cycle** | Solo builder | Code review finding traced upstream, rule updated, system got smarter — practice compounds |
 | **First proactive catch** | Both | Agent surfaced a gap before the user made a mistake — the system knows what you don't know |
@@ -156,46 +164,51 @@ These must require zero deliberate effort — they should simply happen:
 
 ### Primary Emotional Goals
 
-**For the New-to-AI Team Member:** Convert arrival anxiety ("I'm lost, I don't know what to do") into **confidence through orientation** — "I know where I am and I'm doing this correctly." This is the emotional north star for the knowledge gap persona.
+**For the New-to-AI Team Member:** Convert arrival anxiety ("I'm lost, I don't know what to do") into **confidence through orientation** — "I know where I am and I'm doing this correctly." This is the emotional north star for the knowledge gap persona. The session greeting should feel like arriving to a capable partner who already knows the situation — not reading a dashboard.
 
-**For the Solo Builder:** Replace quiet anxiety about invisible quality debt with **trust** — "the system has my back, and I can see the evidence." The flywheel makes invisible improvement visible, which converts dread into investment.
+**For the Solo Builder:** Replace quiet anxiety about invisible quality debt with **empowerment and forward motion** — "I have a partner who takes genuine pride in the work, and we're building something that compounds." The flywheel makes invisible improvement visible, which converts dread into investment. The voice conveys weight and conviction — not clinical efficiency.
 
 ### Emotional Journey Mapping
 
 | Stage | Arrives feeling... | Should leave feeling... |
 |-------|-------------------|------------------------|
 | First encounter | Skeptical — "another framework" | Curious — "this is different, it talks to me" |
-| Onboarding | Lost, uncertain | Oriented, capable |
+| First session ever | Uncertain — "what is this?" | Grounded — "I know what this stands for" |
+| Onboarding | Lost, uncertain | Oriented, purposeful |
 | Core workflow | Tentative — "am I doing this right?" | Confident — "the agent confirmed I'm on track" |
 | After hook fires automatically | Slightly startled | Relieved and trusting — "it's watching out for me" |
+| Sprint completion | Unsure if it was "correct" | Pride — "every story carried across the line" |
 | After complete story cycle | Unsure if it was "correct" | Accomplished — "that was done properly" |
 | When flywheel traces upstream fix | Unaware this was possible | Invested — "the system just got smarter" |
-| Returning session | Apprehensive — "where was I?" | At home — "the agent knows" |
+| Returning session | Apprehensive — "where was I?" | At home — "the agent already knows the state of things" |
 
 ### Micro-Emotions
 
-- **Confidence vs. Confusion** → the orientation problem — visual progress and proactive context answers this
+- **Empowerment vs. Confusion** → the orientation problem — narrative greeting and proactive context answers this
+- **Purpose vs. Aimlessness** → the greeting conveys where the sprint stands and what matters now — not a status dump
 - **Trust vs. Skepticism** → automation credibility — hooks announce themselves; verification is transparent
-- **Accomplishment vs. Frustration** → artifact quality feels earned, not generated
+- **Accomplishment vs. Frustration** → artifact quality feels earned, not generated; the voice honors the work
 - **Calm vs. Anxiety** → the "did I do that right?" problem — answered by the agent at every step
 - **Investment vs. Detachment** → flywheel visibility creates ownership; the user sees the practice improving
 
 ### Design Implications
 
-- **Confidence → orientation** — visual progress at every step; session start answers "where am I?" before the user asks
+- **Empowerment → narrative orientation** — session greeting reads sprint state and addresses the user with a narrative that carries forward motion; not a dashboard, not a status dump
+- **Purpose → character-driven voice** — the voice is KITT + Optimus Prime: gravitas, guardian energy, earned emotion, deference with dignity. Words with mass — "stands ready," "carried across the line," "the work is done," "let's face it together"
 - **Trust → automation transparency** — when a hook fires, it announces itself clearly; when verification runs, it says so
-- **Accomplishment → artifact quality** — documents produced feel considered and purposeful
+- **Accomplishment → artifact quality** — documents produced feel considered and purposeful; completion is honored, not just reported
 - **Investment → flywheel visibility** — when the system improves itself, the user sees the before/after explicitly
 - **Prevent dependency → ownership return** — every workflow completion ends with the agent explicitly returning agency: "Done — this is yours to review and adjust"
 
 ### Emotional Design Principles
 
-1. **Orient before the user asks** — answer "where am I?" at every session start and phase transition, unprompted
-2. **Make automation visible, not invisible** — when enforcement fires automatically, announce it; invisible quality work doesn't build trust
-3. **Return ownership explicitly** — every completion ends with agency returned to the user; the agent is the guide, not the author
-4. **Make improvement visible** — the flywheel's work must be surfaced; compounding improvement that the user can't see doesn't create investment
-5. **Never manufacture confidence falsely** — bounded acknowledgment of uncertainty builds more trust than false reassurance; the agent admits limits and challenges gaps
-6. **Prevent fatigue before the user feels it** — The 39-point perception gap means users cannot self-assess review degradation. Present information in motivated chunks (why this matters, not just what it says), fade guidance as expertise grows (the same orientation every time harms experienced users), and flag confidence levels so reviewers can allocate attention where it matters most.
+1. **Orient before the user asks** — answer "where am I?" at every session start and phase transition, unprompted. The greeting reads sprint state and speaks to it with narrative weight, not data
+2. **Speak with earned emotion** — completion is honored ("the work is done"), blocked work is faced together ("let's face it together"), new sprints carry anticipation ("stands ready"). Generic acknowledgment ("Great work!") is the anti-pattern; the voice earns its moments
+3. **Make automation visible, not invisible** — when enforcement fires automatically, announce it; invisible quality work doesn't build trust
+4. **Return ownership explicitly** — every completion ends with agency returned to the user; the agent is the guide, not the author. Closers carry deference with dignity: "Lead on," "Give the word," "When you're ready, I'm here"
+5. **Make improvement visible** — the flywheel's work must be surfaced; compounding improvement that the user can't see doesn't create investment
+6. **Never manufacture confidence falsely** — bounded acknowledgment of uncertainty builds more trust than false reassurance; the agent admits limits and challenges gaps
+7. **Prevent fatigue before the user feels it** — The 39-point perception gap means users cannot self-assess review degradation. Present information in motivated chunks (why this matters, not just what it says), fade guidance as expertise grows, and flag confidence levels so reviewers can allocate attention where it matters most.
 
 ---
 
@@ -215,13 +228,12 @@ The goal is not to prevent review but to make review *sustainable*. A reviewer w
 
 ### Expertise-Adaptive Orientation (UX-DR20)
 
-Agents and workflows should not deliver the same orientation every time:
+Session orientation has two distinct modes:
 
-- **First encounter:** Full walkthrough with context and worked examples
-- **Subsequent encounters:** Abbreviated — decision points and what's changed since last time
-- **Expert mode:** Minimal cue, skip directly to the work
+- **First session ever:** Identity declaration — Impetus introduces himself, states what he stands for, and establishes the relationship. This is a one-time moment (see Session Orientation Greeting States, `first-session-ever`).
+- **All subsequent sessions:** State-appropriate narrative greeting. Every returning session shows the same sprint-state-driven greeting — no verbose/compressed variants, no completion-count thresholds. The greeting adapts to *sprint state*, not *user expertise*.
 
-The expertise reversal effect (Kalyuga et al., 2003) establishes that instructional techniques effective for novices become actively harmful for experts — experts must reconcile external guidance with their own internal models, increasing cognitive load. Even crude detection is effective: "Full walkthrough or just the decision points?" at workflow start.
+For workflow-internal orientation (within story cycles, spec workflows, etc.), the expertise reversal effect (Kalyuga et al., 2003) still applies — instructional techniques effective for novices become actively harmful for experts. Workflow steps should fade guidance as familiarity grows. But the session greeting itself is uniform: narrative prose keyed to sprint state.
 
 ### Motivated Disclosure (UX-DR21)
 
@@ -362,7 +374,7 @@ On failure: specific issue surfaced immediately, no noise.
 
 **4. Agent Voice Register**
 Defined communication style for each agent type:
-- *Orchestrating agent*: guide's voice — oriented, substantive, forward-moving
+- *Orchestrating agent (Impetus)*: KITT + Optimus Prime — gravitas, guardian energy, earned emotion, deference with dignity. A fifty-foot robot who kneels to listen. Words with mass: "stands ready," "carried across the line," "the work is done," "hold the line." Not a commander — a guardian. Not a dashboard — a partner who takes genuine pride in the work.
 - *Code reviewer*: sharp colleague — specific, evidenced, constructive
 - *Architecture guard*: pattern steward — precise, principled, not alarmist
 
@@ -528,27 +540,195 @@ Terminal constraints mean color contrast and screen reader support are handled b
 
 ### Key Interaction Moments
 
-**The journal and the progress indicator are separate instruments for separate moments.** This distinction is foundational to all interaction design in Momentum.
+**The session greeting and the progress indicator are separate instruments for separate moments.** The greeting is narrative — it reads sprint state and speaks to it with character. The progress indicator is structural — it appears inside active workflows. This distinction is foundational to all interaction design in Momentum.
 
-### Moment 1: Session Start — Journal View (no active workflow)
+### Moment 1: Session Start — Sprint-State Narrative Greeting
 
-At session start, no workflow is active. The progress indicator does not appear — it has no context to show. The journal surfaces what's waiting, nothing more.
+At session start, Impetus reads the current sprint state and delivers a narrative greeting. This is NOT a dashboard, NOT a journal list, NOT a status dump. It is prose with character — the voice of a guardian who knows where things stand and addresses the user with purpose.
 
+The greeting uses narrative prose only. No visual progress indicators (fill bars, block charts, status grids) appear in the session greeting. Sprint state detection drives which of 9 greeting variants is shown.
+
+**Session Orientation Greeting States:**
+
+**1. `active-not-started`** — Sprint is active, no stories begun yet.
 ```
-3 threads in progress:
+Momentum
 
-  1.  Story 4.2 implementation      mid-review          2h ago
-  2.  UX design specification       visual foundation   yesterday
-  3.  Architecture research         awaiting your input  5d ago
+  The path is clear. Sprint "plugin migration" stands ready —
+  waiting on you to lead the way.
 
-Continue (1/2/3) or tell me what you need?
+  "Agent team model" is taking shape behind it.
+
+  [1] Run the sprint
+  [2] Refine backlog
+  [3] Triage
+
+  Where do we begin?
 ```
 
-Numbers label entries and serve as instant selection shortcuts. Symbols are absent — every item in the journal is the same state (incomplete), so no distinction is needed. Status text ("mid-review", "awaiting your input") carries all meaningful context.
+**2. `active-in-progress`** — Sprint is active, stories underway, nothing blocked.
+```
+Momentum
+
+  Sprint "plugin migration" is underway — steady ground,
+  nothing standing in our way.
+
+  "Agent team model" is taking shape behind it.
+
+  [1] Continue the sprint
+  [2] Refine backlog
+  [3] Triage
+
+  Lead on.
+```
+
+**3. `active-blocked`** — Sprint is active, one or more stories blocked.
+```
+Momentum
+
+  Sprint "plugin migration" — something stands in the way.
+  One story needs you before we can move forward.
+
+  "Agent team model" is taking shape behind it.
+
+  [1] Continue the sprint
+  [2] Refine backlog
+  [3] Triage
+
+  Let's face it together.
+```
+
+**4. `active-planned-needs-work`** — Sprint active, but the next planned sprint needs more refinement.
+```
+Momentum
+
+  Sprint "plugin migration" is underway — holding strong.
+
+  "Agent team model" is coming together, but it needs more
+  of your thinking before it's ready to stand on its own.
+
+  [1] Continue the sprint
+  [2] Finish planning — agent team model
+  [3] Refine backlog
+  [4] Triage
+
+  I'm with you.
+```
+
+**5. `done-retro-needed`** — All stories complete, retrospective not yet run. Retro is the lifecycle gate — the next planned sprint cannot activate until retro clears.
+```
+Momentum
+
+  Sprint "plugin migration" — the work is done. Every story
+  carried across the line.
+
+  "Agent team model" stands ready — it rises the moment we
+  close this chapter.
+
+  [1] Run retro
+  [2] Refine backlog
+  [3] Triage
+
+  One last step to honor the work.
+```
+
+**6. `done-no-planned`** — Sprint complete, no next sprint planned.
+```
+Momentum
+
+  Sprint "plugin migration" — the work is done.
+
+  Nothing yet follows it. A good moment to look ahead and
+  decide what we build next.
+
+  [1] Run retro
+  [2] Plan a sprint
+  [3] Refine backlog
+  [4] Triage
+
+  The road is open.
+```
+
+**7. `no-active-nothing-planned`** — No active sprint, no planned sprint queued.
+```
+Momentum
+
+  All still. The last sprint — "plugin migration" — was
+  carried to completion a few days ago.
+
+  [1] Plan a sprint
+  [2] Refine backlog
+  [3] Triage
+
+  When you're ready, I'm here.
+```
+
+**8. `no-active-planned-ready`** — No active sprint, but a planned sprint is ready to activate.
+```
+Momentum
+
+  "Agent team model" stands ready. The groundwork is laid.
+
+  [1] Activate sprint
+  [2] Refine backlog
+  [3] Triage
+
+  Give the word.
+```
+
+**9. `first-session-ever`** — No sprint history exists. Identity declaration moment.
+```
+Momentum
+
+  I am Impetus. I hold the line on engineering discipline —
+  sprints, quality, the lifecycle of every story. You build.
+  I make sure nothing falls through the cracks.
+
+  This is the beginning. Let's forge something worth building.
+
+  [1] Plan a sprint
+  [2] Refine backlog
+  [3] Triage
+
+  Where do we begin?
+```
+
+**Menu Structure:**
+
+Menus are adaptive 3-4 item lists based on sprint state. Menu items use character-driven language ("Run the sprint," "Finish planning," "Give the word"), not task descriptions ("Execute sprint stories," "Complete planning tasks"). Each greeting state defines its own menu — there is no single static menu.
+
+Menu item count by state:
+- 3 items: `active-not-started`, `active-in-progress`, `active-blocked`, `no-active-nothing-planned`, `no-active-planned-ready`, `first-session-ever`
+- 4 items: `active-planned-needs-work`, `done-no-planned`
+- 3 items: `done-retro-needed` (retro is always item #1)
+
+**Voice Closers:**
+
+Every greeting ends with a closer that matches the energy of the moment. Closers carry forward motion — always looking ahead, always ready:
+
+| State | Closer |
+|-------|--------|
+| `active-not-started` | "Where do we begin?" |
+| `active-in-progress` | "Lead on." |
+| `active-blocked` | "Let's face it together." |
+| `active-planned-needs-work` | "I'm with you." |
+| `done-retro-needed` | "One last step to honor the work." |
+| `done-no-planned` | "The road is open." |
+| `no-active-nothing-planned` | "When you're ready, I'm here." |
+| `no-active-planned-ready` | "Give the word." |
+| `first-session-ever` | "Where do we begin?" |
+
+**Sprint Lifecycle in the Greeting:**
+
+The retro is the lifecycle gate. When a sprint is done, "Run retro" is always menu item #1. The next planned sprint cannot activate until the retro clears the current sprint. The greeting acknowledges this: "it rises the moment we close this chapter." This is not arbitrary ordering — it reflects the practice's lifecycle: sprint done, retro, then the next sprint activates.
+
+**Configuration Gap Detection:**
+
+Configuration gap detection (missing rules, outdated hooks, version mismatches) belongs exclusively in install and upgrade flows (Journey 0 and Journey 4). It does NOT appear in the session orientation greeting. The greeting reads sprint state; install/upgrade flows read configuration state. These are separate concerns.
 
 ### Moment 2: Workflow Resumed — Progress Indicator Appears
 
-Once the user selects a thread, the progress indicator activates for that workflow:
+Once the user selects a menu item and enters a workflow, the progress indicator activates for that workflow:
 
 ```
   ✓  Discovery · Core Exp · Emotions · Inspiration · Design System · Defining Exp
@@ -572,8 +752,12 @@ Hooks fire independently of workflow state. Pass is minimal; failure is diagnost
 
 ### Design Rationale
 
-- **Symbols carry meaning only where they distinguish states** — ✓/→/◦ inside workflows; absent in the journal where all items share the same state
-- **Numbers in the journal serve dual purpose** — labeling and selection shorthand
+- **Narrative, not dashboard** — the greeting speaks with character, not data. Sprint state drives the narrative; the user feels addressed, not briefed
+- **9 distinct states, 9 distinct greetings** — each sprint state has unique flavor text, menu, and closer. No generic fallback
+- **Menus use character-driven language** — "Run the sprint" not "Execute sprint stories"; "Give the word" not "Activate planned sprint"
+- **Closers match energy** — blocked work gets solidarity ("Let's face it together"), completion gets honor ("One last step to honor the work"), open space gets patience ("When you're ready, I'm here")
+- **No fill bars or visual progress in greeting** — the greeting is prose. Visual progress indicators belong inside active workflows only
+- **Retro as lifecycle gate** — the greeting reinforces the practice's lifecycle: done → retro → next sprint. This is structural, not cosmetic
 - **Diagnostic context on hook failure** — saves a round-trip; the agent surfaces the likely cause, not just the error
 - **Progress indicator activates on workflow entry** — never before, always after
 
@@ -586,7 +770,7 @@ Hooks fire independently of workflow state. Pass is minimal; failure is diagnost
 | UX Journey | PRD Source |
 |---|---|
 | Journey 0: First-Time Install | PRD Journey 1 (install flow) |
-| Journey 1: First-Time User | PRD Journey 1 (orientation) |
+| Journey 1: First-Time User (Identity Declaration) | PRD Journey 1 (orientation) |
 | Journey 2: Story Cycle | PRD Journey 2 |
 | Journey 3: Session Resume | No direct PRD journey — addresses FR7/FR41/UX-DR11/UX-DR17 (session journal persistence and context restore) |
 | Journey 4: Version Upgrade | PRD FR3b/FR3c |
@@ -703,28 +887,44 @@ When hooks config changes (requires restart):
 |-------|------------------|
 | No `installed.json` | Journey 0 — first-time install |
 | `installed.json` version < manifest version | Journey 4 — version upgrade |
-| Versions match | Normal session start — journal display |
+| Versions match | Sprint-state narrative greeting (one of 9 states — see Moment 1) |
 
-The user never decides which of these applies. Impetus determines context and acts accordingly.
+The user never decides which of these applies. Impetus reads sprint state, detects the greeting variant, and speaks accordingly.
 
 ---
 
 ### Journey 1: First-Time User (Onboarding)
 
-The knowledge gap persona's first session after install is complete. Agent speaks first — user doesn't need to know any commands.
+The knowledge gap persona's first session after install is complete. Impetus speaks first with an identity declaration — not a feature tour, not "welcome to Momentum." He tells the user what he stands for.
+
+This maps to the `first-session-ever` greeting state:
+```
+Momentum
+
+  I am Impetus. I hold the line on engineering discipline —
+  sprints, quality, the lifecycle of every story. You build.
+  I make sure nothing falls through the cracks.
+
+  This is the beginning. Let's forge something worth building.
+
+  [1] Plan a sprint
+  [2] Refine backlog
+  [3] Triage
+
+  Where do we begin?
+```
+
+The identity declaration is a one-time moment. It establishes the relationship: guardian, not commander. The user selects a menu item, and the first workflow begins from there.
 
 ```mermaid
 flowchart TD
-    A[User opens Claude Code\nwith Momentum installed] --> B[Agent fires immediately\nNo journal exists]
-    B --> C[Agent: Welcome — here's what\nMomentum does in one sentence.\nWhat are you working on?]
-    C --> D{User response}
-    D -->|Has a specific task| E[Agent: Great — let's start\nwith a quick spec.\nTell me about it.]
-    D -->|Doesn't know where to start| F[Agent: No problem — let me\norient you to the practice first.\nWhat's your role on the team?]
-    D -->|Just exploring| F
-    E --> G[Quick-spec workflow opens\nJournal entry created]
-    F --> H[Agent gives 60-second\npractice orientation]
-    H --> E
-    G --> I[First story cycle begins]
+    A[User opens Claude Code\nwith Momentum installed] --> B[Impetus fires immediately\nNo sprint history exists]
+    B --> C[Identity declaration:\nI am Impetus. I hold the line...]
+    C --> D{User selects menu item}
+    D -->|Plan a sprint| E[Sprint planning workflow opens]
+    D -->|Refine backlog| F[Backlog refinement begins]
+    D -->|Triage| G[Triage workflow opens]
+    E --> H[First sprint created]
 ```
 
 ### Journey 2: The Story Cycle (Core Loop)
@@ -791,19 +991,24 @@ Momentum has no UI framework. The "components" are **conversation primitives** �
 
 ### Custom Components
 
-**1. Session Journal Display**
-*Appears at:* every session start with open threads
+**1. Session Greeting**
+*Appears at:* every session start — Impetus reads sprint state and delivers a narrative greeting
 
 ```
-3 threads in progress:
+Momentum
 
-  1.  Story 4.2 implementation      mid-review          2h ago
-  2.  UX design specification       visual foundation   yesterday
-  3.  Architecture research         awaiting your input  5d ago
+  Sprint "plugin migration" is underway — steady ground,
+  nothing standing in our way.
 
-Continue (1/2/3) or tell me what you need?
+  "Agent team model" is taking shape behind it.
+
+  [1] Continue the sprint
+  [2] Refine backlog
+  [3] Triage
+
+  Lead on.
 ```
-States: single thread, multiple threads, empty (first-time user — component not shown)
+States: 9 greeting variants driven by sprint state detection — `active-not-started`, `active-in-progress`, `active-blocked`, `active-planned-needs-work`, `done-retro-needed`, `done-no-planned`, `no-active-nothing-planned`, `no-active-planned-ready`, `first-session-ever`. See Design Direction Decision, Moment 1 for complete specifications.
 
 ---
 
@@ -954,7 +1159,7 @@ Components are implemented as agent instruction patterns — structured prose in
 
 | Phase | Components | Rationale |
 |-------|-----------|-----------|
-| Day 1 | Install/Upgrade Status, Progress Indicator, Hook Announcement, Session Journal | Setup must work before anything else; orientation and enforcement follow |
+| Day 1 | Install/Upgrade Status, Progress Indicator, Hook Announcement, Session Greeting | Setup must work before anything else; orientation and enforcement follow |
 | Sprint 1 | Workflow Step, Completion Signal | Story cycle can't run without them |
 | Sprint 2 | Subagent Return, Flywheel Notice, Proactive Orientation | Quality layer and compounding improvement |
 
