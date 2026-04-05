@@ -4,29 +4,31 @@ Feature: Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawnin
     Given a sprint with unblocked stories ready for implementation
     And the sprint-dev workflow is executing Phase 2
 
-  Scenario: Dev agent accepts a story and sprint context as input
+  Scenario: Dev agent accepts a story and sprint context and proceeds without requesting input
     Given a story file path and sprint slug are provided to the dev agent
-    When the dev agent is spawned
-    Then it reads the story file to understand what to implement
-    And it proceeds with implementation without requesting additional input
+    When the dev agent is launched for that story
+    Then it proceeds to implement the story without asking for additional information
+    And implementation begins without any prompts or clarification requests
 
-  Scenario: Dev agent delegates implementation to bmad-dev-story
-    Given the dev agent has received a story file path
-    When the agent begins implementation
-    Then it delegates the story execution to the bmad-dev-story skill
-    And it does not perform story selection, worktree management, or merge operations
+  Scenario: Dev agent produces committed changes and structured completion output
+    Given the dev agent has been launched with a story file path and sprint context
+    When implementation completes
+    Then the story changes are committed to the working branch
+    And the agent returns output containing status, files changed, story key, and test results
+    And the output format is compatible with what sprint-dev Phase 3 expects
 
-  Scenario: Dev agent returns structured completion output
+  Scenario: Dev agent produces no worktree artifacts and handles no merge operations
     Given the dev agent has finished implementing a story
-    When implementation is complete
-    Then it returns structured output containing status, files changed, story key, and test results
-    And the output format matches the subagent completion contract expected by sprint-dev
+    When it returns completion output
+    Then no worktree creation or teardown has occurred
+    And no merge proposal or user confirmation was presented during implementation
 
-  Scenario: Sprint-dev spawns the dev agent via the Agent tool
+  Scenario: Sprint-dev Phase 2 launches a dev agent per unblocked story and receives completion output
     Given Phase 2 of sprint-dev is processing an unblocked story
-    When a dev agent is launched for that story
-    Then it is spawned via the Agent tool using the dev agent definition file
-    And it receives story file path, sprint slug, role, and optional guidelines as input
+    When sprint-dev runs Phase 2 for that story
+    Then an agent runs and produces a completion report for the story
+    And the report contains status, files changed, and test results
+    And sprint-dev Phase 3 receives the report and continues without manual intervention
 
   Scenario: Direct invocation of momentum:dev skill continues to work
     Given a developer invokes the momentum:dev skill directly
