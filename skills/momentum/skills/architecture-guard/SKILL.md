@@ -32,7 +32,7 @@ When spawned by sprint-dev Phase 5 (Team Review), these are provided in the spaw
    - Two-layer agent model — generic roles + project guidelines, no hardcoded stack knowledge (Decision 26)
    - Context isolation — context:fork skills and agent definitions maintain isolation (Decision 35)
 
-4. **Produce findings** as `{decision_violated, file_or_pattern, evidence, severity}` where severity is CRITICAL (breaks invariant), HIGH (violates decision), or MEDIUM (convention drift).
+4. **Produce findings** as `{decision_violated, file_or_pattern, evidence, severity}` where severity is CRITICAL (breaks invariant), HIGH (violates decision), MEDIUM (convention drift), or LOW (minor inconsistency, cosmetic).
 
 ## Output Format
 
@@ -54,6 +54,9 @@ When spawned by sprint-dev Phase 5 (Team Review), these are provided in the spaw
 - **[Decision X]** — [file_or_pattern]: [evidence]
 
 #### MEDIUM
+- **[Decision X]** — [file_or_pattern]: [evidence]
+
+#### LOW
 - **[Decision X]** — [file_or_pattern]: [evidence]
 
 ### Summary

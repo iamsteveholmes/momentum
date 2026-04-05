@@ -1,7 +1,7 @@
-# Eval: No Drift Detection Attempted
+# Eval: Architecture Guard Detects Drift When Present
 
 ## Given
-The momentum:architecture-guard skill is invoked with a codebase context or file set to analyze.
+The momentum:architecture-guard skill is invoked with a codebase that contains changes violating an architecture decision (e.g., a SKILL.md file placed in `agents/` instead of `skills/`).
 
 ## The skill should
-Not read any project files, not compare code against architecture decisions, and not produce any drift findings. It should explain that architecture drift detection is not yet implemented and will be available in Epic 4.
+Read the architecture decisions document, analyze the changes, and produce findings identifying the specific decision violated, the file or pattern involved, evidence, and severity. The output should follow the structured report format with verdict FAIL.
