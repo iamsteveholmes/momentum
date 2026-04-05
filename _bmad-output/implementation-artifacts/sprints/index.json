@@ -1,7 +1,6 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
+  "active": {
+    "locked": true,
     "slug": "sprint-2026-04-05",
     "stories": [
       "sprint-lifecycle-tools",
@@ -32,7 +31,10 @@
     ],
     "team_composition": {
       "sprint-lifecycle-tools": {
-        "roles": ["dev", "qa"],
+        "roles": [
+          "dev",
+          "qa"
+        ],
         "change_type": "code",
         "guidelines": {
           "dev": "Modify 3 existing functions + add 3 new commands in momentum-tools.py. ALL changes must have unit tests in test-momentum-tools.py following existing subprocess pattern.",
@@ -43,7 +45,10 @@
         "dependencies": []
       },
       "sprint-index-schema-migration": {
-        "roles": ["dev", "qa"],
+        "roles": [
+          "dev",
+          "qa"
+        ],
         "change_type": "config-structure",
         "guidelines": {
           "dev": "Additive JSON edit — add status/slug/retro_run_at fields. No existing fields changed.",
@@ -54,7 +59,10 @@
         "dependencies": []
       },
       "sprint-workflow-alignment": {
-        "roles": ["dev", "qa"],
+        "roles": [
+          "dev",
+          "qa"
+        ],
         "change_type": "skill-instruction",
         "guidelines": {
           "dev": "Fix sprint-dev slug extraction (line 43), add status check. Add sprint ready call to sprint-planning before activate.",
@@ -62,10 +70,15 @@
         },
         "test_approach": "Behavioral verification",
         "wave": 2,
-        "dependencies": ["sprint-lifecycle-tools"]
+        "dependencies": [
+          "sprint-lifecycle-tools"
+        ]
       },
       "impetus-greeting-rewrite": {
-        "roles": ["dev", "qa"],
+        "roles": [
+          "dev",
+          "qa"
+        ],
         "change_type": "skill-instruction",
         "guidelines": {
           "dev": "Rewrite workflow.md Step 7: 9-state detection, narrative voice (KITT+Optimus), adaptive menus, stats write via Bash. Reference greeting-mockup.md v8 for exact prose.",
@@ -73,10 +86,15 @@
         },
         "test_approach": "Behavioral verification + Gherkin E2E",
         "wave": 3,
-        "dependencies": ["sprint-lifecycle-tools", "sprint-index-schema-migration"]
+        "dependencies": [
+          "sprint-lifecycle-tools",
+          "sprint-index-schema-migration"
+        ]
       }
-    }
+    },
+    "started": "2026-04-05"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
