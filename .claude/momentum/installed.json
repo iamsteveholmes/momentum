@@ -4,5 +4,10 @@
     "hooks": {
       "version": "1.0.0"
     }
+  },
+  "session_stats": {
+    "momentum_completions": 1,
+    "first_invocation": "2026-04-04T00:00:00Z",
+    "last_invocation": "2026-04-04T00:00:00Z"
   }
 }

@@ -286,7 +286,7 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
       - Agent validates running behavior against Gherkin scenarios
       - Produces structured E2E Validation Report with per-scenario results
 
-    **Architect Guard** — spawn via Agent tool with `skills/momentum/agents/architecture-guard.md` definition:
+    **Architect Guard** — spawn `momentum:architecture-guard` skill (context: fork, read-only):
       - Provide: sprint slug, architecture doc path `_bmad-output/planning-artifacts/architecture.md`, list of touched files, sprint branch `sprint/{{sprint_slug}}`
       - Agent checks sprint changes for pattern drift against architecture decisions
       - Produces structured Architecture Guard Report with per-decision findings
