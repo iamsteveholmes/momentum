@@ -158,12 +158,20 @@ Approve, or request revisions?</output>
 
     <action>For each approved story in {{selected_stories}}:</action>
     <action>Read the story's acceptance criteria from its story file</action>
-    <action>Generate a detailed Gherkin `.feature` file that encodes the behavioral expectations:
+    <action>Generate a Gherkin `.feature` file for the **E2E Validator** — a black-box agent
+      that tests running behavior without source code access. The validator can invoke skills,
+      run commands, observe outputs, and check system state — but it CANNOT read SKILL.md files,
+      inspect frontmatter, review code structure, or examine file contents.
+
+      Spec rules:
       · Feature title matches the story title
-      · Each acceptance criterion maps to one or more Scenarios
+      · Scenarios test **observable behavior** — what happens when the system is used, not what files contain
+      · Ask: "Can the E2E Validator verify this by invoking a skill, running a command, or observing output?" If no, the scenario does not belong in Gherkin — it belongs in the QA code review checklist (the plain English ACs in the story file)
+      · ACs about file structure, frontmatter schema, naming conventions, and code patterns are QA concerns — do NOT map them to Gherkin scenarios
+      · ACs about system behavior (skill invocation, agent spawning, output format, error handling, workflow flow) DO map to Gherkin scenarios
+      · Some stories may produce only 2-3 behavioral scenarios; that is correct — not every AC has a behavioral equivalent
       · Use Given/When/Then with concrete, behavioral language
-      · Include edge cases and boundary conditions as separate Scenarios
-      · Keep Gherkin general and behavioral — do not couple to implementation details
+      · Include edge cases and error paths as separate Scenarios
     </action>
     <action>Write the spec to: `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/{{story_slug}}.feature`</action>
 
