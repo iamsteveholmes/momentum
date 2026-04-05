@@ -1006,5 +1006,18 @@
       "skills/momentum/skills/sprint-dev/workflow.md",
       "skills/momentum/skills/sprint-planning/workflow.md"
     ]
+  },
+  "journal-status-tool": {
+    "status": "backlog",
+    "title": "Journal Status Tool — Deterministic Open Thread Detection",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [
+      "sprint-lifecycle-tools"
+    ],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py"
+    ]
   }
 }
