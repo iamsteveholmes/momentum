@@ -48,7 +48,7 @@ state-based dispatch.
 
 5. Dispatch routes menu selections to the correct handler: Run/Continue sprint
    dispatches to sprint-dev, Plan/Finish planning dispatches to sprint-planning,
-   Activate dispatches to momentum-tools sprint activate, Run retro shows a
+   Activate runs `momentum-tools sprint activate` then dispatches to sprint-dev, Run retro shows a
    placeholder message, Refine backlog dispatches to create-story, and Triage
    shows a placeholder message.
 
@@ -73,7 +73,7 @@ state-based dispatch.
 | `active-in-progress` | active sprint exists, stories moving, none blocked |
 | `active-blocked` | active sprint exists, at least one story with unmet `depends_on` |
 | `active-planned-needs-work` | active sprint exists + planning sprint exists with `status=="planning"` |
-| `done-retro-needed` | `active.status=="done"` AND planning sprint exists |
+| `done-retro-needed` | `active.status=="done"` |
 | `done-no-planned` | `active.status=="done"` AND no planning sprint |
 | `no-active-nothing-planned` | `active==null` AND `planning==null` |
 | `no-active-planned-ready` | `active==null` AND `planning.status=="ready"` |
@@ -103,7 +103,7 @@ State-based dispatch mapping:
 |---|---|
 | Run/Continue sprint | sprint-dev |
 | Plan/Finish planning | sprint-planning |
-| Activate | `momentum-tools sprint activate` |
+| Activate | run `momentum-tools sprint activate`, then dispatch `momentum:sprint-dev` |
 | Run retro | placeholder message |
 | Refine backlog | create-story |
 | Triage | placeholder message |

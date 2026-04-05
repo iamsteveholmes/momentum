@@ -73,14 +73,14 @@ Feature: Impetus Greeting Rewrite — 9-State Narrative Orientation
   # Done states
   # -------------------------------------------------------------------
 
-  Scenario: Done state with planned sprint — retro is first menu item
-    Given a project with a done sprint and a planned sprint ready behind it
+  Scenario: done-retro-needed state — retro is first menu item
+    Given a project with an active sprint where status is "done" and a planning sprint exists
     When the user invokes /momentum:impetus
     Then the greeting conveys that the sprint work is complete
     And the first menu item is an option to run a retrospective
 
-  Scenario: Done state without planned sprint — retro is first, plan is available
-    Given a project with a done sprint and no planned sprint
+  Scenario: done-no-planned state — retro is first, plan is available
+    Given a project with an active sprint where status is "done" and no planning sprint exists
     When the user invokes /momentum:impetus
     Then the first menu item is an option to run a retrospective
     And the menu includes an option to plan a sprint
