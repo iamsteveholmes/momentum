@@ -29,7 +29,8 @@ Feature: Impetus Greeting Rewrite — 9-State Narrative Orientation
   # -------------------------------------------------------------------
 
   Scenario: First session ever shows identity declaration
-    Given a project with no sprint history and zero prior completions
+    Given a project with no sprint history
+    And installed.json has no session_stats or momentum_completions is 0
     When the user invokes /momentum:impetus
     Then the greeting includes an identity declaration stating what Impetus stands for
     And the greeting does not reference any sprint by name
@@ -96,10 +97,68 @@ Feature: Impetus Greeting Rewrite — 9-State Narrative Orientation
     And the menu includes an option to plan a sprint
 
   Scenario: No active sprint but planned sprint ready — menu offers to activate
-    Given a project with no active sprint and a planned sprint marked ready
+    Given a project with no active sprint and a planning sprint with status "ready"
     When the user invokes /momentum:impetus
     Then the greeting references the planned sprint by name
     And the menu includes an option to activate the sprint
+
+  # -------------------------------------------------------------------
+  # No-active state references last completed sprint
+  # -------------------------------------------------------------------
+
+  Scenario: No active sprint greeting references the last completed sprint
+    Given a project with no active sprint, no planned sprint, and a completed sprint named "plugin migration"
+    When the user invokes /momentum:impetus
+    Then the greeting references "plugin migration" by name
+
+  # -------------------------------------------------------------------
+  # State detection — correct state resolved from sprint data
+  # -------------------------------------------------------------------
+
+  Scenario: State detection — first-session-ever
+    Given installed.json has no session_stats or momentum_completions is 0
+    And no sprints exist in sprints/index.json
+    When the user invokes /momentum:impetus
+    Then the greeting state is "first-session-ever"
+
+  Scenario: State detection — active-not-started
+    Given an active sprint with status "active"
+    And all stories in the sprint have status "ready-for-dev" or "backlog"
+    When the user invokes /momentum:impetus
+    Then the greeting state is "active-not-started"
+
+  Scenario: State detection — active-in-progress
+    Given an active sprint with status "active"
+    And at least one story has status "in-progress" or later
+    And no story has unmet dependencies
+    When the user invokes /momentum:impetus
+    Then the greeting state is "active-in-progress"
+
+  Scenario: State detection — active-blocked
+    Given an active sprint with status "active"
+    And at least one story has unmet depends_on entries
+    When the user invokes /momentum:impetus
+    Then the greeting state is "active-blocked"
+
+  Scenario: State detection — done-retro-needed
+    Given an active sprint with status "done"
+    When the user invokes /momentum:impetus
+    Then the greeting state is "done-retro-needed"
+
+  Scenario: State detection — no-active-nothing-planned
+    Given no active sprint and no planning sprint in sprints/index.json
+    When the user invokes /momentum:impetus
+    Then the greeting state is "no-active-nothing-planned"
+
+  # -------------------------------------------------------------------
+  # Stats write timing
+  # -------------------------------------------------------------------
+
+  Scenario: Session stats written after menu selection, not during greeting
+    Given a project with an active sprint in progress
+    When the user invokes /momentum:impetus and selects a menu item
+    Then momentum-tools session stats-update is called after the menu selection
+    And no stats write occurs before the user makes a selection
 
   # -------------------------------------------------------------------
   # Voice characteristics
