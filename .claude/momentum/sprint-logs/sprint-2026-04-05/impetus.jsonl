@@ -1,0 +1,5 @@
+{"timestamp": "2026-04-05T07:50:04.582183", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Sprint sprint-2026-04-05 — selected 4 stories: sprint-lifecycle-tools, sprint-index-schema-migration, impetus-greeting-rewrite, sprint-workflow-alignment"}
+{"timestamp": "2026-04-05T07:56:47.357519", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Gherkin spec generated for sprint-workflow-alignment: 4 scenarios"}
+{"timestamp": "2026-04-05T07:56:55.931995", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Gherkin spec generated for sprint-index-schema-migration: 8 scenarios"}
+{"timestamp": "2026-04-05T07:57:10.843509", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Gherkin spec generated for sprint-lifecycle-tools: 14 scenarios"}
+{"timestamp": "2026-04-05T07:57:10.873619", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Gherkin spec generated for impetus-greeting-rewrite: 16 scenarios"}
