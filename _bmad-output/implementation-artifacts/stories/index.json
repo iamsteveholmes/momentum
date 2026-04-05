@@ -975,7 +975,7 @@
     "status": "backlog",
     "title": "Sprint Index Schema Migration — Add Status and Retro Fields",
     "epic_slug": "greeting-redesign",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "_bmad-output/implementation-artifacts/sprints/index.json"
