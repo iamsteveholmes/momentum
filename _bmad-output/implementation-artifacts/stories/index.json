@@ -910,10 +910,10 @@
     ]
   },
   "dev-agent-definition-files": {
-    "status": "backlog",
-    "title": "Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawning",
+    "status": "ready-for-dev",
+    "title": "Dev Agent Definition Files \u2014 Lightweight Agent for Sprint-Dev Spawning",
     "epic_slug": "agent-team-model",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "skills/momentum/agents/dev.md",
@@ -921,10 +921,10 @@
     ]
   },
   "specialist-dev-agents": {
-    "status": "backlog",
-    "title": "Specialist Dev Agents — Domain-Specific Agent Definitions",
+    "status": "ready-for-dev",
+    "title": "Specialist Dev Agents \u2014 Domain-Specific Agent Definitions",
     "epic_slug": "agent-team-model",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "dev-agent-definition-files"
     ],
@@ -935,10 +935,10 @@
     ]
   },
   "guidelines-verification-gate": {
-    "status": "backlog",
-    "title": "Guidelines Verification Gate — Sprint Planning Checks for Missing Guidelines",
+    "status": "ready-for-dev",
+    "title": "Guidelines Verification Gate \u2014 Sprint Planning Checks for Missing Guidelines",
     "epic_slug": "agent-team-model",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "specialist-dev-agents"
     ],
@@ -947,10 +947,10 @@
     ]
   },
   "architecture-guard-implementation": {
-    "status": "backlog",
-    "title": "Architecture Guard Implementation — Replace Stub with Real Agent Definition",
+    "status": "ready-for-dev",
+    "title": "Architecture Guard Implementation \u2014 Replace Stub with Real Agent Definition",
     "epic_slug": "agent-team-model",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "skills/momentum/agents/architecture-guard.md",
