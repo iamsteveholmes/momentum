@@ -166,12 +166,26 @@ Approve, or request revisions?</output>
       Spec rules:
       · Feature title matches the story title
       · Scenarios test **observable behavior** — what happens when the system is used, not what files contain
-      · Ask: "Can the E2E Validator verify this by invoking a skill, running a command, or observing output?" If no, the scenario does not belong in Gherkin — it belongs in the QA code review checklist (the plain English ACs in the story file)
       · ACs about file structure, frontmatter schema, naming conventions, and code patterns are QA concerns — do NOT map them to Gherkin scenarios
-      · ACs about system behavior (skill invocation, agent spawning, output format, error handling, workflow flow) DO map to Gherkin scenarios
+      · ACs about system behavior (workflow output, error handling, user-facing flow) DO map to Gherkin scenarios
       · Some stories may produce only 2-3 behavioral scenarios; that is correct — not every AC has a behavioral equivalent
       · Use Given/When/Then with concrete, behavioral language
       · Include edge cases and error paths as separate Scenarios
+
+      **The Outsider Test — apply to every scenario before writing it:**
+      Could someone who has never seen the source code verify this scenario by ONLY
+      invoking skills, running commands, and reading their outputs?
+
+      If a Given/When/Then clause requires knowing:
+        · which internal skill or tool was called ("delegates to bmad-dev-story")
+        · which mechanism was used to spawn an agent ("spawned via the Agent tool")
+        · which file was read internally ("reads the story file")
+        · what an agent did NOT do internally ("does not perform worktree management")
+      ...it fails the Outsider Test. Rewrite it to describe the **observable outcome**:
+        · "delegates to X" → "the story gets implemented and changes are committed"
+        · "spawned via X" → "an agent runs and produces a findings report"
+        · "reads file X" → "proceeds without requesting additional input"
+        · "does not perform X" → describe the observable absence ("no worktree artifacts remain")
     </action>
     <action>Write the spec to: `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/{{story_slug}}.feature`</action>
 
