@@ -134,7 +134,26 @@
       }
     }
   },
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "stories": [
+      "dev-agent-definition-files",
+      "specialist-dev-agents",
+      "guidelines-verification-gate",
+      "architecture-guard-implementation"
+    ],
+    "waves": [
+      {
+        "wave": 0,
+        "stories": [
+          "dev-agent-definition-files",
+          "specialist-dev-agents",
+          "guidelines-verification-gate",
+          "architecture-guard-implementation"
+        ]
+      }
+    ]
+  },
   "completed": [
     {
       "locked": true,

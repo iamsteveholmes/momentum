@@ -908,5 +908,53 @@
     "touches": [
       "skills/momentum/skills/sprint-dev/SKILL.md"
     ]
+  },
+  "dev-agent-definition-files": {
+    "status": "backlog",
+    "title": "Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawning",
+    "epic_slug": "agent-team-model",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/dev.md",
+      "skills/momentum/skills/sprint-dev/workflow.md"
+    ]
+  },
+  "specialist-dev-agents": {
+    "status": "backlog",
+    "title": "Specialist Dev Agents — Domain-Specific Agent Definitions",
+    "epic_slug": "agent-team-model",
+    "story_file": false,
+    "depends_on": [
+      "dev-agent-definition-files"
+    ],
+    "touches": [
+      "skills/momentum/agents/",
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md"
+    ]
+  },
+  "guidelines-verification-gate": {
+    "status": "backlog",
+    "title": "Guidelines Verification Gate — Sprint Planning Checks for Missing Guidelines",
+    "epic_slug": "agent-team-model",
+    "story_file": false,
+    "depends_on": [
+      "specialist-dev-agents"
+    ],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md"
+    ]
+  },
+  "architecture-guard-implementation": {
+    "status": "backlog",
+    "title": "Architecture Guard Implementation — Replace Stub with Real Agent Definition",
+    "epic_slug": "agent-team-model",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/architecture-guard.md",
+      "skills/momentum/skills/architecture-guard/SKILL.md"
+    ]
   }
 }
