@@ -267,25 +267,22 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
   <step n="5" goal="Parallel team review of integrated codebase">
     <output>Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated sprint/{{sprint_slug}}...</output>
 
-    <action>Spawn three agents in parallel (single message, all in one Agent tool call):
+    <action>Spawn three agents in parallel (single message, three Agent tool calls):
 
-    **QA Agent** (sonnet/medium):
-      - Reviews merged code for all sprint stories against their ACs
-      - Reads each story's AC section from `_bmad-output/implementation-artifacts/stories/{slug}.md`
-      - Checks each AC is demonstrably satisfied in the merged codebase
-      - Produces findings per story: {story_slug -> [AC gap or defect descriptions]}
+    **QA Agent** — spawn via Agent tool with `agents/qa-reviewer.md` definition:
+      - Provide: sprint slug, list of sprint stories, AVFL findings list
+      - Agent reads each story's AC section from `_bmad-output/implementation-artifacts/stories/{slug}.md`
+      - Produces structured QA Review Report with per-story AC verification
 
-    **E2E Validator** (sonnet/medium):
-      - Reads all `.feature` files from `sprints/{{sprint_slug}}/specs/`
-      - For each Gherkin scenario, validates the behavior exists in the merged codebase
-      - Black-box: uses only specs and observable behavior — no story file context
-      - Produces findings: {scenario -> pass/fail with evidence}
+    **E2E Validator** — spawn via Agent tool with `agents/e2e-validator.md` definition:
+      - Provide: sprint slug, path to Gherkin specs `sprints/{{sprint_slug}}/specs/`, AVFL findings list
+      - Agent validates running behavior against Gherkin scenarios
+      - Produces structured E2E Validation Report with per-scenario results
 
-    **Architect Guard** (sonnet/medium):
-      - Reads `_bmad-output/planning-artifacts/architecture.md` architecture decisions
-      - Checks sprint changes for pattern drift against key decisions (especially Decision 26 team model)
-      - Flags deviations from project conventions, naming, and structural rules
-      - Produces findings: {file/pattern -> decision violated}
+    **Architect Guard** — spawn via Agent tool with `agents/architecture-guard.md` definition:
+      - Provide: sprint slug, architecture doc path `_bmad-output/planning-artifacts/architecture.md`, list of touched files, sprint branch `sprint/{{sprint_slug}}`
+      - Agent checks sprint changes for pattern drift against architecture decisions
+      - Produces structured Architecture Guard Report with per-decision findings
     </action>
 
     <action>Wait for all three agents to complete.</action>
