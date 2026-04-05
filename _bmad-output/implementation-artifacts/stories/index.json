@@ -959,5 +959,52 @@
       "skills/momentum/skills/architecture-guard/SKILL.md",
       "skills/momentum/skills/sprint-dev/workflow.md"
     ]
+  },
+  "sprint-lifecycle-tools": {
+    "status": "backlog",
+    "title": "Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests",
+    "epic_slug": "greeting-redesign",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py"
+    ]
+  },
+  "sprint-index-schema-migration": {
+    "status": "backlog",
+    "title": "Sprint Index Schema Migration — Add Status and Retro Fields",
+    "epic_slug": "greeting-redesign",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "_bmad-output/implementation-artifacts/sprints/index.json"
+    ]
+  },
+  "impetus-greeting-rewrite": {
+    "status": "backlog",
+    "title": "Impetus Greeting Rewrite — 9-State Narrative Orientation",
+    "epic_slug": "greeting-redesign",
+    "story_file": false,
+    "depends_on": [
+      "sprint-lifecycle-tools",
+      "sprint-index-schema-migration"
+    ],
+    "touches": [
+      "skills/momentum/skills/impetus/workflow.md"
+    ]
+  },
+  "sprint-workflow-alignment": {
+    "status": "backlog",
+    "title": "Sprint Workflow Alignment — Fix Slug Extraction and Status Transitions",
+    "epic_slug": "greeting-redesign",
+    "story_file": false,
+    "depends_on": [
+      "sprint-lifecycle-tools"
+    ],
+    "touches": [
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md"
+    ]
   }
 }
