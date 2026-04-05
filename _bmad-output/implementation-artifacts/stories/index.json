@@ -985,7 +985,7 @@
     "status": "backlog",
     "title": "Impetus Greeting Rewrite — 9-State Narrative Orientation",
     "epic_slug": "greeting-redesign",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "sprint-lifecycle-tools",
       "sprint-index-schema-migration"
