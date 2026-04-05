@@ -296,9 +296,7 @@ Proceeding to team composition.</output>
       |----------------------------------------------------------------|----------------|
       | `skills/*/SKILL.md`, `skills/*/workflow.md`, `agents/*.md`     | dev-skills     |
       | `*.gradle*`, `*.kts`, `build.gradle*`                          | dev-build      |
-      | `*.kt`, `*compose*`, `*Compose*`                               | dev-frontend   |
-      | `*.py`, `*.pyi`                                                | dev-python     |
-      | `scripts/`, `*.sh`                                             | dev-scripts    |
+      | `*compose*`, `*Compose*`, `*ui/*`, `*screen*`                  | dev-frontend   |
       | (no match)                                                     | dev (base)     |
 
     Resolution when a story's paths match multiple specialist types:

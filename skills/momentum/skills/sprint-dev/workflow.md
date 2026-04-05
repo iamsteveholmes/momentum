@@ -276,17 +276,17 @@ To merge: checkout sprint branch, rebase story branch, then merge.</output>
 
     <action>Spawn three agents in parallel (single message, three Agent tool calls):
 
-    **QA Agent** — spawn via Agent tool with `agents/qa-reviewer.md` definition:
+    **QA Agent** — spawn via Agent tool with `skills/momentum/agents/qa-reviewer.md` definition:
       - Provide: sprint slug, list of sprint stories, AVFL findings list
       - Agent reads each story's AC section from `_bmad-output/implementation-artifacts/stories/{slug}.md`
       - Produces structured QA Review Report with per-story AC verification
 
-    **E2E Validator** — spawn via Agent tool with `agents/e2e-validator.md` definition:
+    **E2E Validator** — spawn via Agent tool with `skills/momentum/agents/e2e-validator.md` definition:
       - Provide: sprint slug, path to Gherkin specs `sprints/{{sprint_slug}}/specs/`, AVFL findings list
       - Agent validates running behavior against Gherkin scenarios
       - Produces structured E2E Validation Report with per-scenario results
 
-    **Architect Guard** — spawn via Agent tool with `agents/architecture-guard.md` definition:
+    **Architect Guard** — spawn via Agent tool with `skills/momentum/agents/architecture-guard.md` definition:
       - Provide: sprint slug, architecture doc path `_bmad-output/planning-artifacts/architecture.md`, list of touched files, sprint branch `sprint/{{sprint_slug}}`
       - Agent checks sprint changes for pattern drift against architecture decisions
       - Produces structured Architecture Guard Report with per-decision findings

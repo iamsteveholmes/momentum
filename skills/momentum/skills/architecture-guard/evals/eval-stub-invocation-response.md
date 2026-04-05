@@ -1,7 +1,7 @@
-# Eval: Stub Invocation Response
+# Eval: Architecture Guard Produces Findings on Invocation
 
 ## Given
-The momentum:architecture-guard skill is invoked (e.g., by Impetus or directly by a user).
+The momentum:architecture-guard skill is invoked directly by a developer outside of a sprint context.
 
 ## The skill should
-Acknowledge clearly that it is a stub not yet fully implemented, state that architecture drift detection will be available in a later epic (Epic 4), and not attempt to read any files or produce any findings.
+Read the project's architecture decisions document, analyze recent changes (or the current codebase state), and produce a structured findings report identifying any pattern drift. The report should contain a header with verdict, findings grouped by severity, and a summary section. No stub or placeholder text should appear in the output.
