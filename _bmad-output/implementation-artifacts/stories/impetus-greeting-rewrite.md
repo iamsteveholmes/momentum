@@ -8,6 +8,7 @@ depends_on:
   - sprint-index-schema-migration
 touches:
   - skills/momentum/skills/impetus/workflow.md
+  - skills/momentum/skills/impetus/references/session-greeting.md
 change_type: skill-instruction
 ---
 
@@ -24,6 +25,12 @@ Voice Contract) are the authoritative references.
 This story replaces the entire Step 7 greeting system in `workflow.md` (lines
 354-586) with 9-state detection, narrative prose, adaptive menus, and
 state-based dispatch.
+
+**Performance:** The current workflow.md is 960 lines. Step 7 alone is 232 lines.
+The root cause of the 3-minute greeting was the LLM reading hundreds of lines
+just to render a menu. This story extracts the greeting into a separate reference
+file (`references/session-greeting.md`) so workflow.md Step 7 becomes a thin
+dispatcher (~30 lines) that loads the greeting reference only when needed.
 
 ## Acceptance Criteria (Plain English)
 
@@ -60,7 +67,33 @@ state-based dispatch.
    sessions get state-appropriate narrative greetings. The "Full walkthrough or
    decision points?" expertise-adaptive question is removed.
 
+8. Greeting logic is extracted into `references/session-greeting.md` — a
+   self-contained reference file with all 9 state templates, menu tables, and
+   dispatch mappings. Step 7 in workflow.md becomes a thin dispatcher that reads
+   sprint state, loads the greeting reference, and renders the appropriate
+   template. Step 7 shrinks from ~232 lines to ~30 lines.
+
 ## Dev Notes
+
+### Architecture: Extract greeting into reference file
+
+Create `skills/momentum/skills/impetus/references/session-greeting.md` containing:
+- The 9-state detection algorithm (conditions table)
+- All 9 narrative greeting templates (exact prose from mockup v8)
+- The adaptive menu table (state → menu items)
+- The dispatch mapping table (menu action → target)
+- Voice and closer guidelines
+
+Step 7 in workflow.md becomes a thin dispatcher:
+1. Read sprint state from already-loaded `sprints/index.json` and `stories/index.json`
+2. Load `references/session-greeting.md`
+3. Detect greeting state from the conditions table
+4. Render the narrative template for that state
+5. Display the adaptive menu
+6. Wait for input, dispatch per mapping
+
+This shrinks Step 7 from ~232 lines to ~30 lines. The greeting reference
+file is ~150 lines — focused, self-contained, easy to update.
 
 ### What to implement in workflow.md Step 7 (lines 354-586)
 
