@@ -310,6 +310,58 @@ Proceeding to team composition.</output>
     Store the specialist assignment per story in {{team}}.story_assignments[slug].specialist
     </action>
 
+    <!-- Guidelines Verification Gate -->
+    <action>For each specialist domain assigned across all sprint stories, check whether project guidelines exist:
+      · Derive candidate filenames from the specialist domain: lowercase, hyphenated
+        (e.g., domain "Kotlin Compose" → check for `kotlin-compose.md`, `compose.md`, `kotlin.md`)
+      · Check `.claude/rules/` for any file matching those candidates
+      · This is a file existence check only — do not parse or validate content
+      · Build a map: {{guidelines_map}} = { domain → { status: "present" | "missing", stories: [slugs] } }
+      · For stories using the base Dev agent (no specialist), set guidelines_status = "n/a"
+    </action>
+
+    <check if="all specialist domains have guidelines present">
+      <action>Set guidelines_status = "present" for all specialist stories, "n/a" for base Dev stories. Continue silently — no output, no developer interaction.</action>
+    </check>
+
+    <check if="one or more specialist domains are missing guidelines">
+      <output>! Missing guidelines for {{missing_count}} specialist domain(s):
+  {{for each missing domain:
+    ! {{domain}} — affects: {{comma-separated story titles}}
+  }}
+
+Specialists without project guidelines fall back to built-in defaults only. This may produce code that violates project conventions or uses outdated patterns.
+
+For each missing domain, choose:
+  (G) Generate — run momentum:agent-guidelines now (planning pauses until done)
+  (P) Proceed — keep specialist, accept built-in defaults only
+  (D) Downgrade — replace specialist with base Dev agent for affected stories</output>
+
+      <ask>Enter choice per domain (e.g., "kotlin-compose: G, fastapi: P"):</ask>
+
+      <action>Process developer choices per missing domain:
+
+      For domains where developer chose **(G) Generate**:
+        1. Log: `momentum-tools log --agent impetus --event decision --detail "Generating guidelines for {{domain}}" --sprint {{sprint_slug}}`
+        2. Invoke `momentum:agent-guidelines` with the missing domain as context
+        3. Wait for the skill to complete (interactive — developer goes through the consultation workflow)
+        4. Re-check `.claude/rules/` for the domain's candidate filenames
+        5. If guidelines now exist: set guidelines_status = "present" for affected stories
+        6. If still missing (generation was cancelled or failed): fall back to Proceed behavior
+
+      For domains where developer chose **(P) Proceed**:
+        1. Keep the specialist assignment unchanged
+        2. Set guidelines_status = "missing" for affected stories
+        3. Log: `momentum-tools log --agent impetus --event decision --detail "Proceeding without guidelines for {{domain}}" --sprint {{sprint_slug}}`
+
+      For domains where developer chose **(D) Downgrade**:
+        1. Replace the specialist with the base Dev agent for all affected stories
+        2. Set guidelines_status = "skipped" for affected stories
+        3. Log: `momentum-tools log --agent impetus --event decision --detail "Downgraded {{domain}} specialist to base Dev for: {{affected_slugs}}" --sprint {{sprint_slug}}`
+      </action>
+    </check>
+    <!-- End Guidelines Verification Gate -->
+
     <action>Check for `touches` path overlaps across stories:
       · For each pair of selected stories, compare their `touches` arrays
       · If two stories touch the same file or directory, flag as merge conflict risk
@@ -335,9 +387,9 @@ Proceeding to team composition.</output>
 Team composition:
   {{for each role: · Role — N stories, guidelines: [project-specific | generic]}}
 
-Dev specialists:
-  {{for each specialist type:
-    · specialist-type: story-a, story-b (guidelines: [project-specific | generic])
+Dev specialists and guidelines:
+  {{for each story:
+    · story_slug — specialist: {{specialist_domain | "base Dev"}} · guidelines: {{guidelines_status}}
   }}
 
 Dependency graph:
@@ -400,7 +452,7 @@ Address all findings before the plan can proceed.</output>
 Stories ({{count}}):
   {{for each story, grouped by wave:
     Wave N:
-      · story_slug — Title · Specialist: {{specialist}} · Role: Dev[, QA][, E2E][, Arch Guard]
+      · story_slug — Title · Specialist: {{specialist}} · Role: Dev[, QA][, E2E][, Arch Guard] · Guidelines: {{guidelines_status}}
   }}
 
 Team Composition:
@@ -450,11 +502,11 @@ AVFL: {{avfl_result}}
   </step>
 
   <step n="8" goal="Activate the sprint">
-    <action>Store team composition and dependency graph in the sprint record:
+    <action>Store team composition, guidelines status, and dependency graph in the sprint record:
       · Update `{implementation_artifacts}/sprints/index.json` planning section with:
         - slug: {{sprint_slug}}
         - team: {{team_composition object — roles with story assignments, specialist types, and guidelines}}
-          Each story_assignment entry includes: role, specialist (e.g., "dev-skills", "dev-build", "dev-frontend", or "dev"), and guidelines path
+          Each story_assignment entry includes: role, specialist, guidelines path, and guidelines_status ("present", "missing", "skipped", or "n/a")
         - waves: {{already stored via momentum-tools}}
         - planned: today's date (YYYY-MM-DD)
     </action>
