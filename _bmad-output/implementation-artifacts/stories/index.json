@@ -951,10 +951,13 @@
     "title": "Architecture Guard Implementation \u2014 Replace Stub with Real Agent Definition",
     "epic_slug": "agent-team-model",
     "story_file": true,
-    "depends_on": [],
+    "depends_on": [
+      "dev-agent-definition-files"
+    ],
     "touches": [
       "skills/momentum/agents/architecture-guard.md",
-      "skills/momentum/skills/architecture-guard/SKILL.md"
+      "skills/momentum/skills/architecture-guard/SKILL.md",
+      "skills/momentum/skills/sprint-dev/workflow.md"
     ]
   }
 }

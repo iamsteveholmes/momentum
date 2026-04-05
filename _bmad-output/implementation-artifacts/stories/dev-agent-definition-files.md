@@ -47,7 +47,7 @@ gating stay in sprint-dev — the agent never handles those concerns.
 ### Current state
 
 Sprint-dev Phase 2 (step n="2") spawns `momentum:dev` as a skill for each
-unblocked story. But `momentum:dev` is a 7-step workflow (210 lines) that handles:
+unblocked story. But `momentum:dev` is a 7-step workflow (209 lines) that handles:
 
 - Story selection from stories/index.json (redundant — sprint-dev already selected)
 - Crash recovery and worktree creation (redundant — sprint-dev manages worktrees)
@@ -195,8 +195,8 @@ changes beyond the spawn mechanism.
    output format (it should be — the output contract is identical)
 
 **NFR compliance:**
-- Agent definition file should be concise — under 150 lines (qa-reviewer is 104,
-  e2e-validator is 106)
+- Agent definition file should be concise — under 150 lines (qa-reviewer is 103,
+  e2e-validator is 105)
 - Frontmatter `description` must be <= 150 characters
 - `model:` and `effort:` frontmatter must be present
 

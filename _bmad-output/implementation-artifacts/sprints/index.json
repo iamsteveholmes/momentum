@@ -146,13 +146,13 @@
       {
         "wave": 1,
         "stories": [
-          "dev-agent-definition-files",
-          "architecture-guard-implementation"
+          "dev-agent-definition-files"
         ]
       },
       {
         "wave": 2,
         "stories": [
+          "architecture-guard-implementation",
           "specialist-dev-agents"
         ]
       },
@@ -225,8 +225,10 @@
           "qa": "Validate 9 ACs. Verify agent definition, decision extraction, findings format, Phase 5 spawning."
         },
         "test_approach": "EDD \u2014 evals: decision extraction, findings format, read-only constraint",
-        "wave": 1,
-        "dependencies": []
+        "wave": 2,
+        "dependencies": [
+          "dev-agent-definition-files"
+        ]
       }
     }
   },

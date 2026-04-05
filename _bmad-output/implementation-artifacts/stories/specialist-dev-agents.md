@@ -183,9 +183,9 @@ and agent editable.
 
 ### What NOT to change
 
-- **`momentum:dev` skill** (`skills/momentum-dev/` or `skills/momentum/skills/dev/`) —
-  the skill workflow is unchanged. Specialist agents are passed TO the dev skill
-  as context, not wired into its workflow logic.
+- **`momentum:dev` skill** (`skills/momentum/skills/dev/`) —
+  the skill workflow is unchanged. Sprint-dev selects the specialist agent to spawn
+  based on the sprint record's `specialist` field — the dev skill itself is not modified.
 - **`bmad-dev-story`** — the BMad story execution skill is unmodified.
 - **Agent definitions for non-dev roles** (qa-reviewer, e2e-validator) — these are
   team review agents, not dev agents. Untouched.

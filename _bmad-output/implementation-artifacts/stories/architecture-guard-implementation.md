@@ -3,10 +3,12 @@ title: Architecture Guard Implementation — Replace Stub with Real Agent Defini
 story_key: architecture-guard-implementation
 status: ready-for-dev
 epic_slug: agent-team-model
-depends_on: []
+depends_on:
+  - dev-agent-definition-files
 touches:
   - skills/momentum/agents/architecture-guard.md
   - skills/momentum/skills/architecture-guard/SKILL.md
+  - skills/momentum/skills/sprint-dev/workflow.md
 change_type: config-structure + skill-instruction
 ---
 
@@ -275,8 +277,8 @@ separate concern).
 6. Confirm Phase 5 consolidation logic handles the agent's output format
 
 **NFR compliance:**
-- Agent definition file should be concise — under 150 lines (qa-reviewer is 104,
-  e2e-validator is 106)
+- Agent definition file should be concise — under 150 lines (qa-reviewer is 103,
+  e2e-validator is 105)
 - Frontmatter `description` must be <= 150 characters
 - `model:` and `effort:` frontmatter must be present
 
