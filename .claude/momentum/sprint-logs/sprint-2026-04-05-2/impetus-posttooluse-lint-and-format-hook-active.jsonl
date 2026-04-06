@@ -1,0 +1,1 @@
+{"timestamp": "2026-04-05T21:45:45.820644", "agent": "impetus", "story": "posttooluse-lint-and-format-hook-active", "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Merged posttooluse-lint to sprint/sprint-2026-04-05-2 — lint-format.sh + hooks-config update, conflict resolved in momentum-versions.json"}

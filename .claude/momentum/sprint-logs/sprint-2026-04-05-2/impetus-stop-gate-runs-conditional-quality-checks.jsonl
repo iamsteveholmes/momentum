@@ -1,0 +1,1 @@
+{"timestamp": "2026-04-05T21:51:39.885290", "agent": "impetus", "story": "stop-gate-runs-conditional-quality-checks", "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Merged stop-gate to sprint/sprint-2026-04-05-2 — stop-gate.sh + hooks-config update, conflict resolved in momentum-versions.json"}

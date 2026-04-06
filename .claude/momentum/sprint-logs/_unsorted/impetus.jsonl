@@ -3,3 +3,5 @@
 {"timestamp": "2026-04-04T17:00:31.631848", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Backlog presented: filtering and grouping stories"}
 {"timestamp": "2026-04-04T22:03:47.181584", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Sprint planning workflow initiated for Impetus Greeting Redesign"}
 {"timestamp": "2026-04-04T22:04:45.347309", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Backlog presented: 52 stories across 13 epics, 28 selectable"}
+{"timestamp": "2026-04-05T19:59:36.253134", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Sprint planning workflow initiated"}
+{"timestamp": "2026-04-05T20:02:11.747578", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Backlog presented: 45 stories across 14 epics + 6 master plan items, 15 selectable (backlog/ready-for-dev)"}
