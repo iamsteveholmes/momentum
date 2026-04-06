@@ -1,8 +1,7 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
-    "status": "planning",
+  "active": {
+    "locked": true,
+    "status": "active",
     "slug": "sprint-2026-04-05-2",
     "stories": [
       "retro-skill",
@@ -13,7 +12,12 @@
     ],
     "team_composition": {
       "retro-skill": {
-        "roles": ["dev", "qa", "e2e-validator", "architect-guard"],
+        "roles": [
+          "dev",
+          "qa",
+          "e2e-validator",
+          "architect-guard"
+        ],
         "change_type": "skill-instruction + code",
         "guidelines": {
           "dev": "EDD — write 2+ behavioral evals before creating skill files. SKILL.md: name=retro, description ≤150 chars, model/effort frontmatter, body delegates to workflow.md. workflow.md: XML step structure, <critical> invariants, momentum-tools log calls. 7-phase retro: sprint ID → log correlation → story verification → cross-log discovery → triage output → story stubs → sprint closure.",
@@ -26,7 +30,11 @@
         "guidelines_status": "missing"
       },
       "posttooluse-lint-and-format-hook-active": {
-        "roles": ["dev", "qa", "e2e-validator"],
+        "roles": [
+          "dev",
+          "qa",
+          "e2e-validator"
+        ],
         "change_type": "rule-hook + code",
         "guidelines": {
           "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-lint.sh: extract file_path from TOOL_INPUT JSON, run linter by extension (.py→ruff, .json→json.tool, .sh→shellcheck, .md→structural), output only on failure, track modified files.",
@@ -39,7 +47,11 @@
         "guidelines_status": "n/a"
       },
       "pretooluse-file-protection-hooks-active": {
-        "roles": ["dev", "qa", "e2e-validator"],
+        "roles": [
+          "dev",
+          "qa",
+          "e2e-validator"
+        ],
         "change_type": "rule-hook + code",
         "guidelines": {
           "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-protect.sh: extract file_path from TOOL_INPUT JSON, check against protected-paths.json patterns via fnmatch, exit non-zero to block. Create protected-paths.json config.",
@@ -52,7 +64,11 @@
         "guidelines_status": "n/a"
       },
       "stop-gate-runs-conditional-quality-checks": {
-        "roles": ["dev", "qa", "e2e-validator"],
+        "roles": [
+          "dev",
+          "qa",
+          "e2e-validator"
+        ],
         "change_type": "rule-hook + code",
         "guidelines": {
           "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-gate.sh: read session-modified-files.txt, batch lint by extension, check git status, write gate-findings.txt, always exit 0 (advisory), clean up modified files list.",
@@ -60,12 +76,18 @@
         },
         "test_approach": "Behavioral verification of gate output and cleanup",
         "wave": 2,
-        "dependencies": ["posttooluse-lint-and-format-hook-active"],
+        "dependencies": [
+          "posttooluse-lint-and-format-hook-active"
+        ],
         "specialist": "dev",
         "guidelines_status": "n/a"
       },
       "journal-status-tool": {
-        "roles": ["dev", "qa", "e2e-validator"],
+        "roles": [
+          "dev",
+          "qa",
+          "e2e-validator"
+        ],
         "change_type": "code",
         "guidelines": {
           "dev": "Add session journal-status subcommand to momentum-tools.py under existing session command group. Scan .claude/momentum/journal.jsonl: group by thread_id, detect open vs closed threads, handle malformed lines. All new code must have unit tests in test-momentum-tools.py.",
@@ -94,8 +116,10 @@
           "stop-gate-runs-conditional-quality-checks"
         ]
       }
-    ]
+    ],
+    "started": "2026-04-05"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
