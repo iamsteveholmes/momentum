@@ -11,7 +11,7 @@
     ]
   },
   "sprint-status-schema-redesign": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Sprint Status Schema Redesign",
     "epic_slug": "redesign-foundation",
     "story_file": true,
@@ -226,7 +226,7 @@
     ]
   },
   "completion-signals-and-productive-waiting": {
-    "status": "review",
+    "status": "done",
     "title": "Completion Signals and Productive Waiting",
     "epic_slug": "stay-oriented-impetus",
     "story_file": false,
@@ -234,7 +234,7 @@
     "touches": []
   },
   "spec-contextualization-and-configuration-gap-detection": {
-    "status": "review",
+    "status": "done",
     "title": "Spec Contextualization and Configuration Gap Detection",
     "epic_slug": "stay-oriented-impetus",
     "story_file": false,
@@ -801,7 +801,7 @@
     ]
   },
   "8-2-momentum-research-skill": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "momentum-research Skill — 6-Phase Deep Research Pipeline with Provenance",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
