@@ -509,6 +509,9 @@ AVFL: {{avfl_result}}
         - planned: today's date (YYYY-MM-DD)
     </action>
 
+    <action>Mark planning sprint as ready:
+      `momentum-tools sprint ready`</action>
+
     <action>Activate the sprint:
       `momentum-tools sprint activate`</action>
 

@@ -10,7 +10,7 @@
 
 <workflow>
   <critical>Read the active sprint slug from sprints/index.json, then read the per-sprint record from sprints/{slug}.json. Never invent team plans — all roles, guidelines, and dependencies come from the sprint record written by sprint-planning.</critical>
-  <critical>Every merge requires explicit developer confirmation. Never auto-execute git merge.</critical>
+  <critical>Worktree-to-sprint merges are autonomous — only pushes require developer confirmation.</critical>
   <critical>Dev agents never access sprints/{sprint-slug}/specs/ — verification is black-box.</critical>
   <critical>Stories are spawned strictly by dependency resolution. A story never starts before all its blockers are `done`.</critical>
   <critical>AVFL runs ONCE after ALL stories merge — not per-story. If AVFL finds critical issues, block Team Review until resolved.</critical>
@@ -40,10 +40,15 @@
 
   <step n="1" goal="Initialize sprint execution">
     <action>Read `sprints/index.json`</action>
-    <action>Store {{sprint_slug}} = the value of `active` field (a string slug, e.g., "sprint-2026-04-03")</action>
+    <action>Store {{sprint_slug}} = active.slug from sprints/index.json (active is an object containing slug, status, stories, waves, and team_composition)</action>
 
     <check if="active == null">
       <output>No active sprint found. Run sprint planning to create and activate a sprint first.</output>
+      <action>HALT — return to Impetus session menu.</action>
+    </check>
+
+    <check if="active.status != 'active'">
+      <output>Sprint {{sprint_slug}} is not in active status (currently: {{active.status}}). Cannot execute.</output>
       <action>HALT — return to Impetus session menu.</action>
     </check>
 
@@ -183,36 +188,28 @@ Options:
       <action>Log completion (best-effort):
         `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event decision --detail "Story {slug} merge-ready, files: {{file_list}}"`</action>
 
-      <output>Story **{slug}** is ready to merge.
+      <output>Story **{slug}** is merge-ready. Merging autonomously to sprint/{{sprint_slug}}...</output>
 
-Branch:  story/{slug}
-Target:  sprint/{{sprint_slug}}
+      <action>Run: `git rebase sprint/{{sprint_slug}} story/{slug}` (rebases story branch onto latest sprint branch — leaves HEAD on story/{slug})</action>
+      <check if="rebase conflicts">
+        <output>Rebase conflicts on story/{slug}. Resolve and run `git rebase --continue`.</output>
+        <action>HALT — wait for developer to resolve</action>
+      </check>
+      <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
+      <action>Run: `git merge story/{slug}`</action>
+      <action>Run: `git worktree remove --force .worktrees/story-{slug}`</action>
+      <action>Run: `git branch -d story/{slug}`</action>
+      <action>Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`</action>
+      <action>Update task {{task_map}}[slug] to completed</action>
 
-To merge: checkout sprint branch, rebase story branch, then merge.</output>
-      <ask>Merge story/{slug} now?</ask>
+      <action>Log merge (best-effort):
+        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event decision --detail "Merged story/{slug} to sprint/{{sprint_slug}}"`</action>
 
-      <check if="developer confirms merge">
-        <action>Run: `git rebase sprint/{{sprint_slug}} story/{slug}` (rebases story branch onto latest sprint branch — leaves HEAD on story/{slug})</action>
-        <check if="rebase conflicts">
-          <output>Rebase conflicts on story/{slug}. Resolve and run `git rebase --continue`.</output>
-          <action>HALT — wait for developer to resolve</action>
-        </check>
-        <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
-        <action>Run: `git merge story/{slug}`</action>
-        <action>Run: `git worktree remove --force .worktrees/story-{slug}`</action>
-        <action>Run: `git branch -d story/{slug}`</action>
-        <action>Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`</action>
-        <action>Update task {{task_map}}[slug] to completed</action>
+      <output>Merged story/{slug}. Checking for newly unblocked stories...</output>
 
-        <action>Log merge (best-effort):
-          `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event decision --detail "Merged story/{slug} to sprint/{{sprint_slug}}"`</action>
-
-        <output>Merged story/{slug}. Checking for newly unblocked stories...</output>
-
-        <action>Re-evaluate dependency graph: find stories where status == "ready-for-dev" AND all depends_on stories are now "done"</action>
-        <check if="newly unblocked stories found">
-          <action>Return to Phase 2 (step 2) to spawn agents for newly unblocked stories</action>
-        </check>
+      <action>Re-evaluate dependency graph: find stories where status == "ready-for-dev" AND all depends_on stories are now "done"</action>
+      <check if="newly unblocked stories found">
+        <action>Return to Phase 2 (step 2) to spawn agents for newly unblocked stories</action>
       </check>
     </check>
 
