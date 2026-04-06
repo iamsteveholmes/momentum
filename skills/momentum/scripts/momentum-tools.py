@@ -121,6 +121,7 @@ def cmd_status_transition(args: argparse.Namespace) -> None:
         error_result("status_transition", err, story=slug, current=current, target=target)
 
     stories[slug]["status"] = target
+    ensure_priority(stories[slug])
     write_json(path, stories)
     result("status_transition", success=True, story=slug, **{"from": current, "to": target})
 
@@ -180,6 +181,7 @@ def cmd_epic_membership(args: argparse.Namespace) -> None:
 
     old_epic = stories[slug].get("epic_slug", "")
     stories[slug]["epic_slug"] = args.epic
+    ensure_priority(stories[slug])
     write_json(path, stories)
     result("epic_membership", success=True, story=slug, from_epic=old_epic, to_epic=args.epic)
 

@@ -16,11 +16,11 @@
   <critical>Reassignment scope is limited to structural taxonomy changes (slug consolidations, category merges). Individual story classification corrections are handled by momentum:refine, not this skill.</critical>
 
   <step n="0" goal="Initialize task tracking">
-    <action>Create tasks for the 4 workflow phases:
-      1. Data collection — read all sources, enumerate slugs
-      2. Taxonomy analysis — identify overlaps, draft proposals
-      3. Developer review — present proposals, collect approval per change
-      4. Apply changes — update epics.md, reassign stories, log decisions
+    <action>Create tasks for the 4 workflow phases using TaskCreate:
+      - TaskCreate: "Phase 1 — Data collection" (read all sources, enumerate slugs)
+      - TaskCreate: "Phase 2 — Taxonomy analysis" (identify overlaps, draft proposals)
+      - TaskCreate: "Phase 3 — Developer review" (present proposals, collect approval per change)
+      - TaskCreate: "Phase 4 — Apply changes" (update epics.md, reassign stories, log decisions)
     </action>
     <action>Log workflow start:
       `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "Epic grooming workflow started" --sprint sprint-2026-04-06`

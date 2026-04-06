@@ -423,8 +423,8 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
   {{thread.context_summary}} — {{days}} days inactive.
   Close this thread? [Y] Yes · [N] Keep open
         </output>
-        <note>One confirmation per dormant thread. If developer confirms: append a new entry to journal.jsonl with same thread_id and `status: "closed"`. Then regenerate journal-view.md.</note>
-        <note>If developer declines [N]: record the declination per No-Re-Offer pattern — append journal entry with declined_offers.</note>
+        <note>One confirmation per dormant thread. If developer confirms: append a new entry to journal.jsonl with same thread_id and `status: "closed"` via Bash (step 13). Then regenerate journal-view.md via step 13.</note>
+        <note>If developer declines [N]: record the declination per No-Re-Offer pattern — append journal entry with declined_offers via Bash (step 13).</note>
       </check>
       <check if="declined_offers entry matches offer_type 'dormant-closure' + current context_hash">
         <note>Offer was previously declined and context has not changed. Suppress — do not surface.</note>
@@ -450,8 +450,8 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
   !  {{open_count}} open threads — consider a quick triage before starting new work.
   I'll surface each with status and age. Close any that are stale?
         </output>
-        <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then append closed entry to journal.jsonl.</note>
-        <note>If developer declines: record the declination per No-Re-Offer pattern — append journal entry with declined_offers on the reference thread.</note>
+        <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then append closed entry to journal.jsonl via Bash (step 13).</note>
+        <note>If developer declines: record the declination per No-Re-Offer pattern — append journal entry with declined_offers on the reference thread via Bash (step 13).</note>
       </check>
       <check if="declined_offers entry matches offer_type 'unwieldy-triage' + current context_hash">
         <note>Triage offer was previously declined and context has not changed. Suppress.</note>
@@ -489,13 +489,13 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
     <check if="developer chooses continue">
       <action>Resume workflow at `current_step` — proceed with the next action in that workflow phase</action>
-      <action>Update the thread's `last_active` timestamp by appending a new journal entry</action>
-      <action>Regenerate `.claude/momentum/journal-view.md`</action>
+      <action>Update the thread's `last_active` timestamp by appending a new journal entry via Bash (step 13)</action>
+      <action>Regenerate `.claude/momentum/journal-view.md` via step 13</action>
     </check>
     <check if="developer chooses restart">
-      <action>Reset to the beginning of the current phase — append a new journal entry with `current_step` set to the phase start</action>
-      <action>Update `last_active` timestamp</action>
-      <action>Regenerate `.claude/momentum/journal-view.md`</action>
+      <action>Reset to the beginning of the current phase — append a new journal entry with `current_step` set to the phase start via Bash (step 13)</action>
+      <action>Update `last_active` timestamp via Bash (step 13)</action>
+      <action>Regenerate `.claude/momentum/journal-view.md` via step 13</action>
       <action>Begin the phase from its first step</action>
     </check>
   </step>

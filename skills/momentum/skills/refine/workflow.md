@@ -10,14 +10,6 @@ apply approved changes via the momentum-tools CLI, and delegate new story creati
 
 ---
 
-## INITIALIZATION
-
-Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
-- `planning_artifacts` → path to `_bmad-output/planning-artifacts/`
-- `implementation_artifacts` → path to `_bmad-output/implementation-artifacts/`
-
----
-
 ## EXECUTION
 
 <workflow>
@@ -36,13 +28,13 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       5. Summary
     </action>
     <action>Log workflow start:
-      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Refine workflow initiated" --sprint _unsorted`</action>
+      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Refine workflow initiated" --sprint _unsorted`</action>
   </step>
 
   <step n="1" goal="Present backlog">
     <action>Read `{implementation_artifacts}/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>
-    <action>Store {{pre_refine_counts}} — count of stories by priority before any changes, for before/after comparison in Step 5</action>
+    <action>Store {{pre}} — count of stories by priority before any changes (keys: critical, high, medium, low), for before/after comparison in Step 5</action>
     <action>Group remaining stories by `epic_slug`</action>
     <action>Within each epic, sort stories by:
       (1) priority — critical first, then high, medium, low (stories missing priority field treated as low)
@@ -74,7 +66,7 @@ Running gap discovery — analyzing PRD and architecture coverage.
     </output>
 
     <action>Log backlog presentation:
-      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Refine backlog presented: N stories across M epics" --sprint _unsorted`</action>
+      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Refine backlog presented: N stories across M epics" --sprint _unsorted`</action>
   </step>
 
   <step n="2" goal="Run parallel gap discovery">
@@ -107,7 +99,7 @@ Running gap discovery — analyzing PRD and architecture coverage.
     <action>Store {{arch_gaps}} = Architecture coverage agent findings list</action>
 
     <action>Log discovery completion:
-      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Gap discovery complete: {{prd_gap_count}} PRD gaps, {{arch_gap_count}} architecture gaps" --sprint _unsorted`</action>
+      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Gap discovery complete: {{prd_gap_count}} PRD gaps, {{arch_gap_count}} architecture gaps" --sprint _unsorted`</action>
   </step>
 
   <step n="3" goal="Consolidate and present findings">
@@ -152,7 +144,7 @@ Running gap discovery — analyzing PRD and architecture coverage.
 
     <check if="no findings across all categories">
       <output>✓ Backlog is healthy — no priority, staleness, dependency, epic, or coverage issues detected.</output>
-      <action>Log result: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Refine findings: none — backlog is healthy" --sprint _unsorted`</action>
+      <action>Log result: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Refine findings: none — backlog is healthy" --sprint _unsorted`</action>
       <action>Skip to Step 5</action>
     </check>
 
@@ -187,10 +179,11 @@ For each finding, enter: A (approve), M (modify), or R (reject).
       </action>
 
       <action>Store {{approved_findings}} = findings approved (with any modifications applied)</action>
+      <action>Store {{approved_count}} = count of approved findings</action>
       <action>Store {{rejected_count}} = count of rejected findings</action>
 
       <action>Log findings review:
-        `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Findings reviewed: {{approved_count}} approved, {{rejected_count}} rejected" --sprint _unsorted`</action>
+        `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Findings reviewed: {{approved_count}} approved, {{rejected_count}} rejected" --sprint _unsorted`</action>
     </check>
   </step>
 
@@ -199,25 +192,25 @@ For each finding, enter: A (approve), M (modify), or R (reject).
 
     **Priority changes** — for each approved priority suggestion:
       Run: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py sprint set-priority --story SLUG --priority LEVEL`
-      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Priority change: SLUG → LEVEL" --sprint _unsorted`
+      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Priority change: SLUG → LEVEL" --sprint _unsorted`
 
     **Story drops** — for each approved stale drop:
       Run: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py sprint status-transition --story SLUG --target dropped`
-      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Story dropped: SLUG" --sprint _unsorted`
+      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Story dropped: SLUG" --sprint _unsorted`
 
     **Epic reassignments** — for each approved epic mismatch correction:
       Run: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py sprint epic-membership --story SLUG --epic EPIC_SLUG`
-      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Epic reassignment: SLUG → EPIC_SLUG" --sprint _unsorted`
+      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Epic reassignment: SLUG → EPIC_SLUG" --sprint _unsorted`
 
     **Dependency issues** — no CLI action available; these were already flagged for
       manual resolution in Step 3. Log the flag:
-      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Dependency issue flagged for manual resolution: SLUG — ISSUE_DESCRIPTION" --sprint _unsorted`
+      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Dependency issue flagged for manual resolution: SLUG — ISSUE_DESCRIPTION" --sprint _unsorted`
 
     **New stories from coverage gaps** — for each approved PRD or architecture gap:
       Ask the developer to confirm the story description, epic, and priority before delegating.
       Invoke `momentum:create-story` with the approved description, epic_slug, and priority.
       Wait for create-story to complete before moving to the next new story.
-      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "New story delegated to create-story: DESCRIPTION (epic: EPIC, priority: LEVEL)" --sprint _unsorted`
+      Log: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "New story delegated to create-story: DESCRIPTION (epic: EPIC, priority: LEVEL)" --sprint _unsorted`
     </action>
 
     <action>Store {{changes_applied}} = {priority_changes: N, drops: N, epic_moves: N, new_stories: N}</action>
@@ -225,7 +218,7 @@ For each finding, enter: A (approve), M (modify), or R (reject).
 
   <step n="5" goal="Log decisions and present summary">
     <action>Read `{implementation_artifacts}/stories/index.json` to compute post-refine priority distribution</action>
-    <action>Compute {{post_refine_counts}} — count of stories by priority after all changes</action>
+    <action>Compute {{post}} — count of stories by priority after all changes (keys: critical, high, medium, low)</action>
 
     <output>✓ Refinement complete.
 
@@ -251,7 +244,7 @@ The backlog is ready for sprint planning.
     </output>
 
     <action>Log summary:
-      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent impetus --event decision --detail "Refine complete: {{priority_changes}} priority changes, {{drops}} drops, {{epic_moves}} epic moves, {{new_stories}} new stories, {{rejected_count}} rejected" --sprint _unsorted`</action>
+      `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py log --agent refine --event decision --detail "Refine complete: {{priority_changes}} priority changes, {{drops}} drops, {{epic_moves}} epic moves, {{new_stories}} new stories, {{rejected_count}} rejected" --sprint _unsorted`</action>
   </step>
 
 </workflow>

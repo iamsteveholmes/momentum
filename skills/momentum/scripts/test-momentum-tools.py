@@ -1461,6 +1461,19 @@ def test_sprint_stories_all_grouped():
     assert_eq("l1 in low", "l1" in [s["slug"] for s in groups.get("low", [])], True)
 
 
+def test_sprint_stories_invalid_priority():
+    """stories --priority rejects invalid priority level with exit code 1."""
+    print("\n[sprint stories] Invalid priority level rejected")
+    stories = {
+        "s1": {"status": "backlog", "title": "S1", "epic_slug": "e",
+               "story_file": False, "depends_on": [], "touches": [], "priority": "low"},
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "stories", "--priority", "urgent")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
 def test_sprint_stories_empty_results():
     """stories --priority returns empty list when no stories match."""
     print("\n[sprint stories] Empty results")
@@ -1716,6 +1729,7 @@ def main():
     test_set_priority_idempotent()
     test_sprint_stories_single_priority()
     test_sprint_stories_all_grouped()
+    test_sprint_stories_invalid_priority()
     test_sprint_stories_empty_results()
     test_sprint_stories_missing_priority_defaults_low()
 
