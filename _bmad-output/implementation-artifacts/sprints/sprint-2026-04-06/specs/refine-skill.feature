@@ -19,8 +19,8 @@ Feature: Refine Skill — Backlog Grooming with PM and Architect
     And the output presents a consolidated findings section
 
   Scenario: Developer can approve or reject each finding individually
-    When the developer invokes the refine skill
-    And findings are presented after discovery completes
+    Given the refine skill has completed discovery and produced findings
+    When the developer responds to each finding
     Then each finding is presented as a discrete item requiring a decision
     And the developer can approve a finding to apply the suggested change
     And the developer can reject a finding to leave the story unchanged

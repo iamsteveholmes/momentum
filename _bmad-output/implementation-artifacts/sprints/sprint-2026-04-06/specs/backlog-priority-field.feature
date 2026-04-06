@@ -4,7 +4,7 @@ Feature: Add Priority to All Story Index Entries
     Given the momentum workspace is configured
     And stories exist in stories/index.json
 
-  Scenario: Stories in the index carry a priority level
+  Scenario: Developer runs sprint stories and sees a priority indicator on every entry
     When the developer runs "sprint stories"
     Then every story in the output displays a priority indicator
 
@@ -60,13 +60,14 @@ Feature: Add Priority to All Story Index Entries
     When the developer runs the sprint-planning skill through step one
     Then "critical-task" appears before "low-task" in the planning output
 
-  Scenario: All four priority levels are accepted by the set-priority command
+  Scenario Outline: Each valid priority level is accepted by the set-priority command
     Given a story with slug "sample-story" exists in the sprint
-    When the developer runs "sprint set-priority --story sample-story --priority critical"
+    When the developer runs "sprint set-priority --story sample-story --priority <level>"
     Then the command exits successfully
-    When the developer runs "sprint set-priority --story sample-story --priority high"
-    Then the command exits successfully
-    When the developer runs "sprint set-priority --story sample-story --priority medium"
-    Then the command exits successfully
-    When the developer runs "sprint set-priority --story sample-story --priority low"
-    Then the command exits successfully
+
+    Examples:
+      | level    |
+      | critical |
+      | high     |
+      | medium   |
+      | low      |
