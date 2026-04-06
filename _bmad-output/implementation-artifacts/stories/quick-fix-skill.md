@@ -19,8 +19,8 @@ change_type: skill-instruction + script-code
 ## Goal
 
 Create `momentum:quick-fix` — a streamlined single-story workflow that combines
-the essential quality steps from sprint-planning and sprint-dev into 6 phases:
-Define, Specify, Review, Implement, Validate, Ship. The skill handles one fix
+the essential quality steps from sprint-planning and sprint-dev into 5 phases:
+Define, Specify, Implement, Validate, Ship. The skill handles one fix
 discovered in the moment with full spec coverage (story file, Gherkin, architecture/PRD
 impact, AVFL, E2E validation) but no multi-story ceremony (no backlog, no wave planning,
 no dependency graphs, no sprint activation).
