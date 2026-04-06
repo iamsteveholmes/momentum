@@ -93,8 +93,13 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 - Developer reviews and approves (or requests revisions)
 
 **Phase 2: Specify**
-- Generate Gherkin spec (1 `.feature` file, Outsider Test)
-- Spec impact analysis (architecture + PRD discovery agents)
+- Spec impact discovery — spawn architecture + PRD discovery agents to identify
+  new decisions, modified constraints, or new FRs introduced by this fix
+- Spec impact updates — if impacts found, spawn architect agent to update
+  architecture.md and PM agent to update prd.md. These are the sole writers of
+  their respective files — the dev agent in Phase 3 never touches them
+- Generate Gherkin spec (1 `.feature` file, Outsider Test) — generated AFTER spec
+  updates so Gherkin can reference any new decisions or FRs
 - Determine specialist from `touches` paths (same classification table as sprint-planning)
 - Check guidelines in `.claude/rules/` — offer G/P/D if missing
 - AVFL checkpoint on story plan + Gherkin spec
