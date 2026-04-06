@@ -351,238 +351,41 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     <action>GOTO step 7 (session orientation — degraded)</action>
   </step>
 
-  <step n="7" goal="Session orientation — read journal and dispatch">
-    <action>Load `${CLAUDE_SKILL_DIR}/references/practice-overview.md` for context</action>
+  <step n="7" goal="Session orientation — greeting and dispatch">
     <action>Read `.claude/momentum/journal.jsonl` (if it exists). Parse per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`: read all lines, group by thread_id, take last entry per thread_id to get current state. Filter for `status: "open"`.</action>
-
-    <!-- Sprint-aware progress display (Story: session-open-sprint-view) -->
-    <!-- Load stories/index.json and sprints/index.json, detect sprint mode, render per-story fill bars -->
-    <action>Attempt to read `_bmad-output/implementation-artifacts/stories/index.json` (project-relative path, not CLAUDE_SKILL_DIR-relative). If the file does not exist or cannot be read, set {{stories_loaded}} = false.</action>
-    <action>Attempt to read `_bmad-output/implementation-artifacts/sprints/index.json` (project-relative path). If the file does not exist or cannot be read, set {{sprints_loaded}} = false.</action>
-
-    <!-- Sprint mode detection -->
-    <action>Determine sprint mode:
-      - If {{sprints_loaded}} is false: set {{sprint_mode}} = 3 (no sprint data — graceful degradation)
-      - Else if `sprints.active` is not null: check whether ALL stories in the active sprint have status `done` or `done-incomplete`. If yes: set {{sprint_mode}} = 2. If no: set {{sprint_mode}} = 1.
-      - Else if `sprints.planning` is not null: set {{sprint_mode}} = 2
-      - Else: set {{sprint_mode}} = 3
-    </action>
-
-    <!-- Per-story 16-block fill bar rendering function -->
-    <!-- Status-to-fill mapping (16 blocks total):
-         backlog         →  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  (16 hatched — not in sprint)
-         ready-for-dev   →  ░░░░░░░░░░░░░░░░  (16 empty — waiting)
-         in-progress     →  ████████░░░░░░░░  (8 filled, 8 empty — half)
-         review          →  ████████████░░░░  (12 filled, 4 empty — three-quarter)
-         verify          →  ██████████████░░  (14 filled, 2 empty — nearly full)
-         done            →  ████████████████  (16 filled — complete)
-         done-incomplete →  ████████████████  (16 filled — renders same as done)
-         dropped         →  (skip — do not render dropped stories)
-    -->
-
-    <!-- MODE 1: Active sprint with in-progress stories -->
-    <check if="{{sprint_mode}} == 1 AND {{stories_loaded}} == true">
-      <action>Identify the active sprint from `sprints.active`. Extract {{sprint_name}} from the active sprint object. Collect all story IDs listed in the active sprint's `stories` array. For each story ID, look up its entry in stories/index.json to get status and title. Skip any story with status `dropped`.</action>
-      <check if="session_stats.momentum_completions >= 3">
-        <!-- Compressed: sprint name + single-line summary -->
-        <action>Count stories by status category: {{done_count}} (done/done-incomplete), {{active_count}} (in-progress/review/verify), {{waiting_count}} (ready-for-dev/backlog).</action>
-        <output>  {{sprint_name}} — {{done_count}} done · {{active_count}} active · {{waiting_count}} waiting</output>
-      </check>
-      <check if="session_stats.momentum_completions < 3">
-        <!-- Verbose: per-story fill bars -->
-        <action>For each non-dropped story in the sprint, render a line with the 16-block fill bar, story slug (kebab-case, left-padded to align), and status label. Order: in-progress first, then review/verify, then ready-for-dev, then done.</action>
-        <output>
-  Active sprint — {{sprint_name}}
-
-    {{fill_bar}}  {{story_slug}}   {{status}}
-    {{fill_bar}}  {{story_slug}}   {{status}}
-    [... one line per non-dropped story in sprint ...]
-
-        </output>
-      </check>
-    </check>
-
-    <!-- MODE 2: Active sprint complete OR planning sprint ready -->
-    <check if="{{sprint_mode}} == 2 AND {{stories_loaded}} == true">
-      <check if="sprints.active is not null AND all active sprint stories are done">
-        <action>Extract {{sprint_name}} from active sprint. If `sprints.planning` exists, extract {{planning_name}} and count its stories as {{planning_story_count}}.</action>
-        <output>
-  {{sprint_name}} — all stories done
-
-        </output>
-        <check if="sprints.planning exists">
-          <output>  Planning sprint ready: "{{planning_name}}" — {{planning_story_count}} stories.
-          </output>
-        </check>
-      </check>
-      <check if="sprints.active is null AND sprints.planning is not null">
-        <action>Extract {{planning_name}} from planning sprint. Count its stories as {{planning_story_count}}.</action>
-        <output>
-  Planning sprint ready: "{{planning_name}}" — {{planning_story_count}} stories.
-
-        </output>
-      </check>
-      <!-- Show planning sprint stories with fill bars for verbose users -->
-      <check if="session_stats.momentum_completions < 3 AND sprints.planning exists">
-        <action>For each story in the planning sprint, render a 16-block fill bar line (most will be ready-for-dev/backlog).</action>
-        <output>
-    {{fill_bar}}  {{story_slug}}   {{status}}
-    [... one line per story in planning sprint ...]
-
-        </output>
-      </check>
-    </check>
-
-    <!-- MODE 3: No active sprint — fall back to epic-level view -->
-    <check if="{{sprint_mode}} == 3 AND {{stories_loaded}} == true">
-      <action>Parse all story entries (excluding dropped). Count total non-dropped stories as {{story_count}}. Count unique epic_slug values as {{epic_count}}.</action>
-      <check if="session_stats.momentum_completions >= 3">
-        <!-- Compressed: epic-level single-line summary (preserves legacy behavior) -->
-        <action>Group stories by epic_slug. For each epic: if all stories are done → epic is done; if any is in-progress/review/verify/ready-for-dev → epic is in-progress; otherwise → backlog. Count done epics as {{done_epic_count}}. List in-progress epic labels as {{in_progress_labels}}. Take first backlog epic as {{first_backlog_label}}.</action>
-        <output>  No active sprint · {{done_epic_count}} epics done  ·  → {{in_progress_labels}}  ·  next: {{first_backlog_label}}</output>
-      </check>
-      <check if="session_stats.momentum_completions < 3">
-        <!-- Verbose: epic-level multi-line bars (preserves legacy behavior) -->
-        <action>Group stories by epic_slug. Compute epic status as above. Compute epic label: key with dashes→spaces, title-cased.
-          - For each done epic: `  ✓  {{epic-label}}`
-          - For each in-progress epic: `  →  {{epic-label}}   {{N}} stories active`
-          - For first backlog epic: `  ◦  {{epic-label}}`</action>
-        <output>
-  No active sprint — {{story_count}} stories across {{epic_count}} epics.
-
-{{done_lines}}
-{{in_progress_lines}}
-{{first_backlog_line}}
-
-        </output>
-      </check>
-    </check>
-
-    <!-- Silent degradation: if neither stories nor sprints could be loaded, skip all bar rendering — zero output, no error surfaced -->
-
-    <!-- Expertise-adaptive orientation (UX-DR20, Story 2.5, Story 2.9) -->
-    <!-- momentum_completions already available from Step 1; read BEFORE incrementing — determines bar variant and orientation mode -->
-    <action>Read session_stats.momentum_completions from installed.json (already loaded in Step 1). If absent, treat as 0.</action>
-    <check if="session_stats.momentum_completions == 0">
-      <action>Deliver full orientation walkthrough with context</action>
-    </check>
-    <check if="session_stats.momentum_completions >= 1">
-      <action>Deliver abbreviated orientation — current state and decision points only</action>
-      <action>Optionally ask once: "Full walkthrough or just the decision points?"</action>
-    </check>
-
-    <!-- Configuration gap detection at session start (Story 2.5) -->
-    <action>Load `${CLAUDE_SKILL_DIR}/references/configuration-gap-detection.md`</action>
-    <action>Run gap detection scan: installed.json completeness, protocol mapping, .mcp.json providers</action>
-    <check if="blocking gaps detected">
-      <action>Surface blocking gap with description + why-it-matters. Guide resolution before proceeding.</action>
-    </check>
-    <check if="non-blocking gaps detected">
-      <action>Note gaps for proactive offer when conversational floor is open</action>
-    </check>
-
-    <check if="journal.jsonl does not exist OR has zero open threads">
-      <action>Skip journal display entirely — no mention of threads or journal</action>
-
-      <!-- Sprint-mode-aware context menu (Story: session-open-sprint-view) -->
-      <!-- Each mode gets a distinct numbered menu. Menu items referencing sub-commands that don't exist yet show a "coming in the next phase" message when selected — never hidden. -->
-
-      <!-- MODE 1 menu: Active sprint -->
-      <check if="{{sprint_mode}} == 1">
-        <output>
-  [1] Continue sprint
-  [2] Sprint status — full breakdown
-  [3] Triage — log an observation
-
-What would you like to work on?
-        </output>
-        <note>Number aliases: 1 = continue sprint, 2 = sprint status, 3 = triage. Natural language also accepted.</note>
-      </check>
-
-      <!-- MODE 2 menu: Sprint complete / planning ready -->
-      <check if="{{sprint_mode}} == 2">
-        <output>
-  [1] Start sprint — activate planning sprint
-  [2] Adjust plan — modify story selection
-  [3] Run retro — review completed sprint
-
-What would you like to do?
-        </output>
-        <note>Number aliases: 1 = start sprint, 2 = adjust plan, 3 = run retro.</note>
-      </check>
-
-      <!-- MODE 3 menu: No active sprint -->
-      <check if="{{sprint_mode}} == 3">
-        <output>
-  [1] Plan a sprint
-  [2] Refine backlog
-  [3] Triage — log an observation
-
-What would you like to work on?
-        </output>
-        <note>Number aliases: 1 = plan sprint, 2 = refine backlog, 3 = triage.</note>
-      </check>
-
-      <!-- Deferred stats write (Story 2a.1): write AFTER menu is displayed, not before — the menu must appear with zero I/O latency from the stats write. -->
-      <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
-      <action>Wait for developer input.</action>
-
-      <note>Natural language gate: If developer input is natural language (not a menu number or slash command), apply the Input Interpretation structural gate — confirm extracted intent before dispatching to any workflow. Do not skip confirmation even if the intent seems obvious.</note>
-
-      <!-- Story detail drill-down: when developer asks about a specific story by name/slug -->
-      <check if="developer asks about a specific story (e.g., 'tell me about posttooluse-lint-hook', 'what's the status of X', references a story slug)">
-        <action>Look up the story slug in stories/index.json. Read title, status, and epic_slug. If a story file exists at `stories/{slug}.md`, read its first few lines for additional context (acceptance criteria summary).</action>
-        <output>
-  {{story_title}}
-    Status: {{status}}  ·  Epic: {{epic_slug}}
-    {{optional: brief AC summary from story file if available}}
-        </output>
-        <action>Return to the current sprint-mode menu — re-display and wait for input. Do not navigate away from the session view.</action>
-      </check>
-
-      <!-- MODE 1 dispatch -->
-      <check if="{{sprint_mode}} == 1 AND developer selects 1 (Continue sprint)">
-        <action>Dispatch to momentum:sprint-dev skill — the sprint execution workflow. Execute it step-by-step, returning control to Impetus when the workflow completes.</action>
-      </check>
-      <check if="{{sprint_mode}} == 1 AND developer selects 2 (Sprint status)">
-        <output>  This workflow (momentum:sprint-status) is coming in the next phase. For now, review sprint state in `_bmad-output/implementation-artifacts/sprints/` directly.</output>
-        <action>Return to menu — re-display the Mode 1 menu and wait for input.</action>
-      </check>
-      <check if="{{sprint_mode}} == 1 AND developer selects 3 (Triage)">
-        <output>  This workflow (momentum:triage) is coming in the next phase. You can log observations manually in the journal for now.</output>
-        <action>Return to menu — re-display the Mode 1 menu and wait for input.</action>
-      </check>
-
-      <!-- MODE 2 dispatch -->
-      <check if="{{sprint_mode}} == 2 AND developer selects 1 (Start sprint)">
-        <output>  This workflow (momentum:sprint-start) is coming in the next phase. To activate a planning sprint manually, update `sprints/index.json` — move the planning sprint to `active`.</output>
-        <action>Return to menu — re-display the Mode 2 menu and wait for input.</action>
-      </check>
-      <check if="{{sprint_mode}} == 2 AND developer selects 2 (Adjust plan)">
-        <output>  This workflow (momentum:sprint-plan-adjust) is coming in the next phase. You can edit `sprints/index.json` directly to modify story selection.</output>
-        <action>Return to menu — re-display the Mode 2 menu and wait for input.</action>
-      </check>
-      <check if="{{sprint_mode}} == 2 AND developer selects 3 (Run retro)">
-        <output>  This workflow (momentum:retro) is coming in the next phase. You can review the completed sprint artifacts in `_bmad-output/implementation-artifacts/sprints/` manually.</output>
-        <action>Return to menu — re-display the Mode 2 menu and wait for input.</action>
-      </check>
-
-      <!-- MODE 3 dispatch -->
-      <check if="{{sprint_mode}} == 3 AND developer selects 1 (Plan a sprint)">
-        <action>Dispatch to momentum:sprint-planning skill — the sprint planning workflow. Execute it step-by-step, returning control to Impetus when the workflow completes.</action>
-      </check>
-      <check if="{{sprint_mode}} == 3 AND developer selects 2 (Refine backlog)">
-        <action>Dispatch to momentum:create-story workflow</action>
-      </check>
-      <check if="{{sprint_mode}} == 3 AND developer selects 3 (Triage)">
-        <output>  This workflow (momentum:triage) is coming in the next phase. You can log observations manually in the journal for now.</output>
-        <action>Return to menu — re-display the Mode 3 menu and wait for input.</action>
-      </check>
-    </check>
 
     <check if="one or more open threads exist">
       <action>GOTO step 11 (Session Journal Display — deferred stats write runs there after thread display)</action>
     </check>
+
+    <action>Run `momentum-tools session greeting-state` via Bash. Store the returned JSON as {{greeting}}.</action>
+    <action>Load `${CLAUDE_SKILL_DIR}/references/session-greeting.md`</action>
+
+    <action>Look up {{greeting.state}} in the session-greeting reference. Render the narrative template for that state, substituting {{greeting.active_sprint}}, {{greeting.planning_sprint}}, and {{greeting.last_completed_sprint}} into the template variables.</action>
+
+    <output>Momentum
+
+  {{rendered narrative for greeting.state}}
+  {{rendered planning sprint context if applicable}}
+
+  {{rendered menu for greeting.state}}
+
+  {{rendered closer for greeting.state}}</output>
+
+    <action>Wait for developer input.</action>
+
+    <note>Input interpretation: numbers select menu items. Natural language triggers the confirmation gate (see BEHAVIORAL PATTERNS → Input Interpretation). Fuzzy continue maps to the first menu item.</note>
+
+    <action>Run `momentum-tools session stats-update` via Bash (silent — after menu selection, not during greeting).</action>
+
+    <action>Dispatch based on the selected menu action per the dispatch table in session-greeting.md:
+      - Run/Continue sprint → dispatch momentum:sprint-dev
+      - Plan/Finish planning → dispatch momentum:sprint-planning
+      - Activate sprint → run `momentum-tools sprint activate` via Bash, then dispatch momentum:sprint-dev
+      - Run retro → output placeholder: "The retro workflow isn't built yet — it's on the roadmap. For now, you can run momentum-tools sprint retro-complete to mark the retro done and activate the next sprint."
+      - Refine backlog → dispatch momentum:create-story
+      - Triage → output placeholder: "Triage is coming in the next phase."
+    </action>
   </step>
 
   <!-- Session Journal Display and Thread Management (Story 2.2) -->
@@ -664,10 +467,10 @@ What would you like to work on?
   Continue (1/2/...) or tell me what you need?
     </output>
 
-    <!-- Deferred stats write for thread path (Story 2a.1): write AFTER all displayed content, before Wait — mirrors the no-thread path's deferred write in Step 7. -->
-    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
-
     <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
+
+    <!-- Deferred stats write for thread path (Story 2a.1): fires AFTER the Wait, not during display. -->
+    <action>Run momentum-tools session stats-update via Bash (discard output — do not display to user). This fires after the thread selection prompt, not during display.</action>
 
     <note>Natural language gate: If developer input is natural language (not a thread number, "continue", or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching. Do not skip confirmation even if the intent seems obvious.</note>
 

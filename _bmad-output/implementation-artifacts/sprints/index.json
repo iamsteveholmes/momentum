@@ -1,102 +1,5 @@
 {
-  "active": {
-    "locked": true,
-    "stories": [
-      "dev-agent-definition-files",
-      "specialist-dev-agents",
-      "guidelines-verification-gate",
-      "architecture-guard-implementation"
-    ],
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "dev-agent-definition-files"
-        ]
-      },
-      {
-        "wave": 2,
-        "stories": [
-          "architecture-guard-implementation",
-          "specialist-dev-agents"
-        ]
-      },
-      {
-        "wave": 3,
-        "stories": [
-          "guidelines-verification-gate"
-        ]
-      }
-    ],
-    "slug": "sprint-2026-04-04-3",
-    "started": "2026-04-04",
-    "team_composition": {
-      "dev-agent-definition-files": {
-        "roles": [
-          "dev",
-          "qa"
-        ],
-        "change_type": "config-structure + skill-instruction",
-        "guidelines": {
-          "dev": "Create agents/dev.md agent definition following qa-reviewer.md pattern. Update sprint-dev Phase 2 to spawn agent instead of skill. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
-          "qa": "Validate 7 ACs. Verify agent definition schema, sprint-dev spawning, momentum:dev non-regression."
-        },
-        "test_approach": "EDD — 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
-        "wave": 1,
-        "dependencies": []
-      },
-      "specialist-dev-agents": {
-        "roles": [
-          "dev",
-          "qa",
-          "architect-guard"
-        ],
-        "change_type": "config-structure + skill-instruction",
-        "guidelines": {
-          "dev": "Create domain classification rules and 3+ specialist agent files. Update sprint-planning Step 5 and sprint-dev Phase 2. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
-          "qa": "Validate 7 ACs. Verify classification, specialist agents, fallback to base dev, sprint record schema.",
-          "architect-guard": "Verify specialist model extends Decision 26 two-layer agent model without breaking existing patterns."
-        },
-        "test_approach": "EDD — evals for classification, specialist spawning, fallback behavior",
-        "wave": 2,
-        "dependencies": [
-          "dev-agent-definition-files"
-        ]
-      },
-      "guidelines-verification-gate": {
-        "roles": [
-          "dev",
-          "qa"
-        ],
-        "change_type": "skill-instruction",
-        "guidelines": {
-          "dev": "EDD — add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
-          "qa": "Validate 9 ACs. Verify detection, warnings, developer options, non-blocking behavior, sprint record tracking."
-        },
-        "test_approach": "EDD — 3 evals: missing detection, developer options, sprint record status",
-        "wave": 3,
-        "dependencies": [
-          "specialist-dev-agents"
-        ]
-      },
-      "architecture-guard-implementation": {
-        "roles": [
-          "dev",
-          "qa"
-        ],
-        "change_type": "config-structure + skill-instruction",
-        "guidelines": {
-          "dev": "Create agents/architecture-guard.md following qa-reviewer.md pattern. Update SKILL.md stub. Update sprint-dev Phase 5. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
-          "qa": "Validate 9 ACs. Verify agent definition, decision extraction, findings format, Phase 5 spawning."
-        },
-        "test_approach": "EDD — evals: decision extraction, findings format, read-only constraint",
-        "wave": 2,
-        "dependencies": [
-          "dev-agent-definition-files"
-        ]
-      }
-    }
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -130,7 +33,8 @@
           ]
         }
       ],
-      "completed": "2026-04-04"
+      "completed": "2026-04-04",
+      "retro_run_at": "2026-04-04"
     },
     {
       "locked": true,
@@ -266,7 +170,206 @@
           ]
         }
       },
-      "completed": "2026-04-04"
+      "completed": "2026-04-04",
+      "retro_run_at": "2026-04-04"
+    },
+    {
+      "locked": true,
+      "stories": [
+        "dev-agent-definition-files",
+        "specialist-dev-agents",
+        "guidelines-verification-gate",
+        "architecture-guard-implementation"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "dev-agent-definition-files"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "architecture-guard-implementation",
+            "specialist-dev-agents"
+          ]
+        },
+        {
+          "wave": 3,
+          "stories": [
+            "guidelines-verification-gate"
+          ]
+        }
+      ],
+      "slug": "sprint-2026-04-04-3",
+      "started": "2026-04-04",
+      "team_composition": {
+        "dev-agent-definition-files": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "config-structure + skill-instruction",
+          "guidelines": {
+            "dev": "Create agents/dev.md agent definition following qa-reviewer.md pattern. Update sprint-dev Phase 2 to spawn agent instead of skill. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
+            "qa": "Validate 7 ACs. Verify agent definition schema, sprint-dev spawning, momentum:dev non-regression."
+          },
+          "test_approach": "EDD — 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
+          "wave": 1,
+          "dependencies": []
+        },
+        "specialist-dev-agents": {
+          "roles": [
+            "dev",
+            "qa",
+            "architect-guard"
+          ],
+          "change_type": "config-structure + skill-instruction",
+          "guidelines": {
+            "dev": "Create domain classification rules and 3+ specialist agent files. Update sprint-planning Step 5 and sprint-dev Phase 2. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
+            "qa": "Validate 7 ACs. Verify classification, specialist agents, fallback to base dev, sprint record schema.",
+            "architect-guard": "Verify specialist model extends Decision 26 two-layer agent model without breaking existing patterns."
+          },
+          "test_approach": "EDD — evals for classification, specialist spawning, fallback behavior",
+          "wave": 2,
+          "dependencies": [
+            "dev-agent-definition-files"
+          ]
+        },
+        "guidelines-verification-gate": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "skill-instruction",
+          "guidelines": {
+            "dev": "EDD — add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
+            "qa": "Validate 9 ACs. Verify detection, warnings, developer options, non-blocking behavior, sprint record tracking."
+          },
+          "test_approach": "EDD — 3 evals: missing detection, developer options, sprint record status",
+          "wave": 3,
+          "dependencies": [
+            "specialist-dev-agents"
+          ]
+        },
+        "architecture-guard-implementation": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "config-structure + skill-instruction",
+          "guidelines": {
+            "dev": "Create agents/architecture-guard.md following qa-reviewer.md pattern. Update SKILL.md stub. Update sprint-dev Phase 5. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
+            "qa": "Validate 9 ACs. Verify agent definition, decision extraction, findings format, Phase 5 spawning."
+          },
+          "test_approach": "EDD — evals: decision extraction, findings format, read-only constraint",
+          "wave": 2,
+          "dependencies": [
+            "dev-agent-definition-files"
+          ]
+        }
+      },
+      "completed": "2026-04-05",
+      "retro_run_at": "2026-04-05"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "slug": "sprint-2026-04-05",
+      "stories": [
+        "sprint-lifecycle-tools",
+        "sprint-index-schema-migration",
+        "sprint-workflow-alignment",
+        "impetus-greeting-rewrite"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "sprint-lifecycle-tools",
+            "sprint-index-schema-migration"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "sprint-workflow-alignment"
+          ]
+        },
+        {
+          "wave": 3,
+          "stories": [
+            "impetus-greeting-rewrite"
+          ]
+        }
+      ],
+      "team_composition": {
+        "sprint-lifecycle-tools": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "code",
+          "guidelines": {
+            "dev": "Modify 3 existing functions + add 3 new commands in momentum-tools.py. ALL changes must have unit tests in test-momentum-tools.py following existing subprocess pattern.",
+            "qa": "Validate 10 ACs. Run full test suite. Verify status fields written on all lifecycle transitions."
+          },
+          "test_approach": "Unit tests — 12 new tests in test-momentum-tools.py",
+          "wave": 1,
+          "dependencies": []
+        },
+        "sprint-index-schema-migration": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "config-structure",
+          "guidelines": {
+            "dev": "Additive JSON edit — add status/slug/retro_run_at fields. No existing fields changed.",
+            "qa": "Validate 5 ACs. Verify JSON parses, new fields present, existing fields unchanged."
+          },
+          "test_approach": "Inspection — JSON validation",
+          "wave": 1,
+          "dependencies": []
+        },
+        "sprint-workflow-alignment": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "skill-instruction",
+          "guidelines": {
+            "dev": "Fix sprint-dev slug extraction (line 43), add status check. Add sprint ready call to sprint-planning before activate.",
+            "qa": "Validate 4 ACs. Verify slug extracted from object, halt on wrong status, ready before activate."
+          },
+          "test_approach": "Behavioral verification",
+          "wave": 2,
+          "dependencies": [
+            "sprint-lifecycle-tools"
+          ]
+        },
+        "impetus-greeting-rewrite": {
+          "roles": [
+            "dev",
+            "qa"
+          ],
+          "change_type": "skill-instruction",
+          "guidelines": {
+            "dev": "Rewrite workflow.md Step 7: 9-state detection, narrative voice (KITT+Optimus), adaptive menus, stats write via Bash. Reference greeting-mockup.md v8 for exact prose.",
+            "qa": "Validate 7 ACs. Verify all 9 greeting states render correctly, no fill bars, adaptive menus, invisible stats write."
+          },
+          "test_approach": "Behavioral verification + Gherkin E2E",
+          "wave": 3,
+          "dependencies": [
+            "sprint-lifecycle-tools",
+            "sprint-index-schema-migration"
+          ]
+        }
+      },
+      "started": "2026-04-05",
+      "completed": "2026-04-05",
+      "retro_run_at": null
     }
   ]
 }
