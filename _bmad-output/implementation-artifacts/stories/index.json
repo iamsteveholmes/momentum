@@ -1007,7 +1007,7 @@
     ]
   },
   "journal-status-tool": {
-    "status": "in-progress",
+    "status": "done",
     "title": "Journal Status Tool — Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1076,6 +1076,26 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/skills/agent-guidelines/workflow.md"
+    ]
+  },
+  "status-transition-walk-mode": {
+    "status": "backlog",
+    "title": "Status Transition Walk Mode — Auto-Step Through Intermediate States",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py"
+    ]
+  },
+  "dev-agent-hook-self-check": {
+    "status": "backlog",
+    "title": "Dev Agent Self-Check for Hook Stories — Pre-Completion Validation",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/dev.md"
     ]
   }
 }
