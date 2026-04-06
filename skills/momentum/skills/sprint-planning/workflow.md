@@ -157,7 +157,9 @@ Approve, or request revisions?</output>
       `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/`</action>
 
     <action>For each approved story in {{selected_stories}}:</action>
-    <action>Read the story's acceptance criteria from its story file</action>
+    <action>Read the story's acceptance criteria from its story file — read ALL ACs
+      holistically to understand the system's intended behavior, then write Gherkin
+      scenarios that describe that behavior end-to-end.</action>
     <action>Generate a Gherkin `.feature` file for the **E2E Validator** — a black-box agent
       that tests running behavior without source code access. The validator can invoke skills,
       run commands, observe outputs, and check system state — but it CANNOT read SKILL.md files,
@@ -165,10 +167,14 @@ Approve, or request revisions?</output>
 
       Spec rules:
       · Feature title matches the story title
+      · **Write behavioral scenarios, not AC-by-AC translations.** Read all ACs together,
+        understand the system's behavior holistically, then write scenarios that describe
+        how the system behaves. Do NOT label scenarios with AC numbers. Do NOT create one
+        scenario per AC. ACs that don't produce behavioral scenarios are simply left out —
+        they are QA concerns, not E2E specs.
       · Scenarios test **observable behavior** — what happens when the system is used, not what files contain
-      · ACs about file structure, frontmatter schema, naming conventions, and code patterns are QA concerns — do NOT map them to Gherkin scenarios
-      · ACs about system behavior (workflow output, error handling, user-facing flow) DO map to Gherkin scenarios
-      · Some stories may produce only 2-3 behavioral scenarios; that is correct — not every AC has a behavioral equivalent
+      · ACs about file structure, frontmatter schema, naming conventions, and code patterns are QA concerns — leave them out entirely
+      · Some stories may produce only 2-3 behavioral scenarios; that is correct
       · Use Given/When/Then with concrete, behavioral language
       · Include edge cases and error paths as separate Scenarios
 
