@@ -93,6 +93,7 @@ The skill is invocable as `/momentum:refine` or through the Impetus menu
 - Story drops use `momentum-tools sprint status-transition --story SLUG --target dropped`
 - Dependency updates are out of scope — no CLI command exists for dependency mutation; dependency issues are flagged for manual resolution
 - No direct JSON edits — all mutations go through the CLI (per write-authority rules)
+- Epic reassignment scope is limited to individual story classification corrections identified during gap analysis. Structural taxonomy changes (slug consolidations, category merges) are handled by momentum:epic-grooming, not this skill.
 
 ### AC6: New Stories Delegated to create-story
 

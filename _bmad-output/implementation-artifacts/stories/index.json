@@ -338,7 +338,7 @@
     "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
-    "depends_on": [],
+    "depends_on": ["backlog-priority-field"],
     "touches": [
       "skills/momentum/skills/epic-grooming/SKILL.md",
       "skills/momentum/skills/epic-grooming/workflow.md",

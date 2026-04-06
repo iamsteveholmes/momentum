@@ -42,6 +42,9 @@ testing, or validation").
    open-threads) continue to function correctly with only these five tools.
    Every action Impetus performs today uses only Read, Glob, Grep, Agent, or
    Bash — no regressions.
+   - All file mutation operations in Impetus workflow files use Bash tool calls
+     (cp, mkdir, python3 -c, tee); no Write or Edit tool calls remain in any
+     Impetus workflow file after the Task 0 refactor.
 
 3. The `Agent` tool remains available so Impetus can spawn subagents (this is
    its primary delegation mechanism). The `Bash` tool remains available for

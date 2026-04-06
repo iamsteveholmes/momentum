@@ -3,7 +3,7 @@ title: Epic Grooming — Holistic Epic Taxonomy and Story Organization
 story_key: epic-grooming
 status: ready-for-dev
 epic_slug: impetus-epic-orchestrator
-depends_on: []
+depends_on: [backlog-priority-field]
 touches:
   - skills/momentum/skills/epic-grooming/SKILL.md
   - skills/momentum/skills/epic-grooming/workflow.md
@@ -63,6 +63,10 @@ Unregistered slugs requiring resolution: `agent-team-model` (5 stories),
 5. On approval, the skill updates `epics.md` with new or revised epic
    definitions using the epic template format, and reassigns stories to
    their new epic slugs via `momentum-tools sprint epic-membership`.
+   Reassignment scope is limited to structural taxonomy changes — slug
+   consolidations and category merges approved during the taxonomy review.
+   Individual story classification corrections are handled by momentum:refine,
+   not this skill.
 
 6. The skill logs all taxonomy decisions (merges, creates, reassignments)
    via `momentum-tools log` with structured entries that capture the old
