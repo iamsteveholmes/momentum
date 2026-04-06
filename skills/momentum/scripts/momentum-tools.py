@@ -264,6 +264,137 @@ def cmd_log(args: argparse.Namespace) -> None:
     result("log", success=True, file=str(log_file), entry=entry)
 
 
+# --- Specialist Classify Command ---
+
+SPECIALIST_TABLE = [
+    # (pattern_list, specialist_name) — order matters for tie-breaking
+    (["skills/*/SKILL.md", "skills/*/workflow.md", "agents/*.md"], "dev-skills"),
+    (["*.gradle*", "*.kts", "build.gradle*"], "dev-build"),
+    (["*compose*", "*Compose*", "*ui/*", "*screen*"], "dev-frontend"),
+]
+
+
+def _match_specialist(path: str) -> str | None:
+    """Match a single path against the specialist classification table.
+    Returns specialist name or None if no match."""
+    import fnmatch
+    for patterns, specialist in SPECIALIST_TABLE:
+        for pattern in patterns:
+            if fnmatch.fnmatch(path, pattern):
+                return specialist
+    return None
+
+
+def cmd_specialist_classify(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    touches_raw = args.touches.strip()
+    if not touches_raw:
+        # Empty touches → dev (base)
+        agent_file = "skills/momentum/agents/dev.md"
+        fallback = not (project_dir / agent_file).exists()
+        output = {"action": "specialist_classify", "success": True,
+                  "specialist": "dev", "agent_file": agent_file}
+        if fallback:
+            output["fallback"] = True
+        print(json.dumps(output, indent=2))
+        sys.exit(0)
+
+    paths = [p.strip() for p in touches_raw.split(",") if p.strip()]
+    if not paths:
+        agent_file = "skills/momentum/agents/dev.md"
+        fallback = not (project_dir / agent_file).exists()
+        output = {"action": "specialist_classify", "success": True,
+                  "specialist": "dev", "agent_file": agent_file}
+        if fallback:
+            output["fallback"] = True
+        print(json.dumps(output, indent=2))
+        sys.exit(0)
+
+    # Tally matches per specialist
+    from collections import Counter
+    tally: Counter = Counter()
+    for p in paths:
+        specialist = _match_specialist(p)
+        if specialist:
+            tally[specialist] += 1
+
+    if not tally:
+        # No matches → dev (base)
+        chosen = "dev"
+    else:
+        # Majority rule, ties break to first in table order
+        max_count = max(tally.values())
+        candidates = [s for s, c in tally.items() if c == max_count]
+        if len(candidates) == 1:
+            chosen = candidates[0]
+        else:
+            # Tie-break: first in table order
+            table_order = [s for _, s in SPECIALIST_TABLE]
+            for s in table_order:
+                if s in candidates:
+                    chosen = s
+                    break
+
+    agent_file = f"skills/momentum/agents/{chosen}.md"
+    fallback = not (project_dir / agent_file).exists()
+
+    output = {"action": "specialist_classify", "success": True,
+              "specialist": chosen, "agent_file": agent_file}
+    if fallback:
+        output["fallback"] = True
+    print(json.dumps(output, indent=2))
+    sys.exit(0)
+
+
+# --- Quickfix Commands ---
+
+def cmd_quickfix_register(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    slug = args.slug
+    story = args.story
+
+    quickfixes = sprints.setdefault("quickfixes", [])
+
+    # Check for duplicate slug
+    for qf in quickfixes:
+        if qf["slug"] == slug:
+            error_result("quickfix_register", f"Quickfix '{slug}' already exists", slug=slug)
+
+    entry = {
+        "slug": slug,
+        "story": story,
+        "started": date.today().isoformat(),
+    }
+    quickfixes.append(entry)
+    write_json(path, sprints)
+    result("quickfix_register", success=True, **entry)
+
+
+def cmd_quickfix_complete(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    slug = args.slug
+    quickfixes = sprints.get("quickfixes", [])
+
+    found = None
+    for qf in quickfixes:
+        if qf["slug"] == slug:
+            found = qf
+            break
+
+    if found is None:
+        error_result("quickfix_complete", f"Quickfix '{slug}' not found", slug=slug)
+
+    found["completed"] = date.today().isoformat()
+    write_json(path, sprints)
+    result("quickfix_complete", success=True, slug=slug, completed=found["completed"])
+
+
 # --- Version Command ---
 
 def cmd_version_check(args: argparse.Namespace) -> None:
@@ -332,6 +463,28 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--stories", required=True, help="Comma-separated story slugs")
     sp.add_argument("--wave", type=int, default=None, help="Wave number (for add)")
     sp.set_defaults(func=cmd_sprint_plan)
+
+    # sprint ready (used by sprint-planning, kept for completeness)
+    sr = sprint_sub.add_parser("ready", help="Mark planning sprint as ready")
+    sr.set_defaults(func=lambda args: None)  # placeholder
+
+    # specialist-classify command
+    sc_cmd = subparsers.add_parser("specialist-classify", help="Classify specialist from file paths")
+    sc_cmd.add_argument("--touches", required=True, help="Comma-separated file paths")
+    sc_cmd.set_defaults(func=cmd_specialist_classify)
+
+    # quickfix command group
+    quickfix = subparsers.add_parser("quickfix", help="Quickfix registration and completion")
+    quickfix_sub = quickfix.add_subparsers(dest="quickfix_action", required=True)
+
+    qf_reg = quickfix_sub.add_parser("register", help="Register a quickfix entry")
+    qf_reg.add_argument("--slug", required=True, help="Quickfix slug (e.g., quickfix-YYYY-MM-DD)")
+    qf_reg.add_argument("--story", required=True, help="Story key")
+    qf_reg.set_defaults(func=cmd_quickfix_register)
+
+    qf_comp = quickfix_sub.add_parser("complete", help="Complete a quickfix entry")
+    qf_comp.add_argument("--slug", required=True, help="Quickfix slug")
+    qf_comp.set_defaults(func=cmd_quickfix_complete)
 
     # log command group
     log = subparsers.add_parser("log", help="Append structured event to agent log")
