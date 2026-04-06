@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-04'
+lastEdited: '2026-04-05'
 editHistory:
+  - date: '2026-04-05'
+    changes: 'Hook quality system spec impact: Added Session State Storage subsection (session-modified-files.txt, gate-findings.txt) under Storage & State. Extended Decision 2a with three-hook enforcement model (PreToolUse barrier, PostToolUse observability, Stop feedback gate) and protected-paths.json externalization. Updated Read/Write Authority table with session state file read/write entries for hooks. Updated Hooks row to reflect file-writing behavior. Added session state files to Installed Structure tree.'
   - date: '2026-04-04'
     changes: 'Quick-fix spec impact: Added Decision 39 (Quick-Fix Bypass-Sprint Lifecycle Path) and Decision 40 (Change-Type-Driven Validator Selection). Extended Decision 26 with specialist classification table note and momentum-tools specialist-classify. Extended Decision 35 E2E Validator scope to include quick-fix Phase 4. Added momentum-tools quickfix to Read/Write Authority table. Added cmux markdown surfaces to Integration Points.'
   - date: '2026-04-04'
@@ -305,6 +307,10 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Only flywheel workflow writes findings; read by Impetus at retrospective and upstream trace
 - Rationale: Global scope enables cross-project pattern detection — the same anti-pattern appearing in projects A and B becomes visible. Per-project scope would miss these systemic patterns.
 
+**Decision 1e — Session State Storage (Ephemeral + Inter-Session)**
+- `.claude/momentum/session-modified-files.txt` — Ephemeral session-scoped file. Written by PostToolUse lint hook (appends file paths of modified files, one per line, deduped). Read by Stop gate hook as the set of files to check. Cleaned up after the Stop gate runs. Not committed to git.
+- `.claude/momentum/gate-findings.txt` — Inter-session findings file. Written by the Stop gate hook when it detects lint issues or uncommitted changes among session-modified files. Read by Impetus at the next session open to surface unresolved quality issues from the previous session. Overwritten each time the Stop gate runs (not append-only).
+
 **Decision 1d — Installed State: JSON**
 - Location: `.claude/momentum/installed.json`
 - Written by Impetus on first install; updated on each upgrade
@@ -315,7 +321,17 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 
 ### Security & Integrity
 
-**Decision 2a — File Protection Targets (PreToolUse hook blocks)**
+**Decision 2a — File Protection & Quality Enforcement (Three-Hook System)**
+
+Enforcement is implemented as a three-hook quality system, each hook serving a distinct role:
+
+| Hook | Role | Behavior |
+|---|---|---|
+| PreToolUse | Enforcement barrier | Blocks writes to protected paths — hard stop, no override |
+| PostToolUse | Observability layer | Tracks modified files to `session-modified-files.txt`, lints them on write |
+| Stop | Feedback gate | Conditional checks on session-modified files (lint clean, committed), writes advisory findings to `gate-findings.txt` for next session |
+
+**Protected path targets (PreToolUse blocks writes to):**
 
 | Protected Path | Rationale |
 |---|---|
@@ -323,6 +339,8 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 | `_bmad-output/planning-artifacts/*.md` | Spec authority — coding agents read, never write |
 | `.claude/rules/` | Global enforcement rules — protected from coding agent modification |
 | `~/.claude/momentum/findings-ledger.jsonl` | Ledger integrity — only flywheel workflow writes. Note: global path is outside project PreToolUse scope; protection enforced by authority rule. |
+
+Protected paths are externalized to `skills/momentum/references/protected-paths.json` for declarative management — the PreToolUse hook reads this file at invocation rather than hardcoding paths in the hook script. This enables project-specific path additions without hook modification.
 
 **Decision 2b — Provenance Integrity Rules (Tier 3, promotable to Tier 1)**
 - Agents may not remove or modify `derives_from` frontmatter in spec files
@@ -980,6 +998,7 @@ momentum/                                    ← Plugin root
 │   │   ├── authority-hierarchy.md
 │   │   ├── anti-patterns.md
 │   │   └── model-routing.md
+│   ├── protected-paths.json                 ← Declarative protected path list (read by PreToolUse hook)
 │   ├── practice-overview.md
 │   ├── phase-guide.md
 │   └── momentum-versions.json               ← Per-version action list (install + upgrade instructions)
@@ -1038,6 +1057,8 @@ momentum/                                    ← Plugin root
         ├── journal.jsonl                     ← Session journal (JSONL append-only, Impetus reads/writes)
         ├── journal-view.md                   ← Human-readable view (auto-generated)
         ├── installed.json                   ← Install/upgrade state (version + per-component hashes)
+        ├── session-modified-files.txt       ← Ephemeral: PostToolUse writes, Stop reads + deletes (Decision 1e)
+        ├── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
         └── sprint-logs/                     ← Agent logging (Decision 24, runtime, gitignored)
             └── {sprint-slug}/
                 ├── impetus.jsonl            ← Impetus orchestration log
@@ -1054,7 +1075,7 @@ momentum/                                    ← Plugin root
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | stories/index.json, sprints/index.json, journal.jsonl, specs, findings-ledger.jsonl, sprint-logs/{sprint-slug}/ | journal.jsonl, journal-view.md, sprint-logs (via momentum-tools log) |
+| Impetus | stories/index.json, sprints/index.json, journal.jsonl, specs, findings-ledger.jsonl, sprint-logs/{sprint-slug}/, gate-findings.txt | journal.jsonl, journal-view.md, sprint-logs (via momentum-tools log) |
 | momentum-tools sprint | stories/index.json, sprints/index.json | stories/index.json (status fields), sprints/index.json, sprints/{slug}.json (sole writer) |
 | momentum-tools quickfix | sprints/index.json | sprints/index.json (register: adds quick-fix entry; complete: marks done) |
 | momentum:dev | Story files, code | Code in worktree only; sprint-logs (via momentum-tools log, best-effort); structured JSON completion output |
@@ -1067,11 +1088,13 @@ momentum/                                    ← Plugin root
 | VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report |
 | Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
 | Upstream-fix skill (Epic 4, standalone) | session journal, specs, rules | session journal only (not findings-ledger.jsonl) |
-| Hooks | Filesystem (reads), git status | Terminal output only (never modifies files) |
+| Hooks (PreToolUse) | Filesystem (reads), `references/protected-paths.json` | Terminal output only (blocks or allows) |
+| Hooks (PostToolUse) | Filesystem (reads) | `session-modified-files.txt` (append, deduped); terminal output (lint results) |
+| Hooks (Stop) | `session-modified-files.txt`, git status | `gate-findings.txt` (overwrite); deletes `session-modified-files.txt` after gate runs |
 | ATDD workflow | Gherkin spec | `tests/acceptance/` only |
 | Coding agents (dev-story) | Specs, rules, existing code | Source code, unit tests |
 
-**Protection boundaries (PreToolUse blocks writes to):**
+**Protection boundaries (PreToolUse blocks writes to — sourced from `references/protected-paths.json`):**
 - `tests/acceptance/` — acceptance test immutability
 - `_bmad-output/planning-artifacts/` — spec authority
 - `.claude/rules/` — enforcement rule integrity
@@ -1103,6 +1126,8 @@ momentum/                                    ← Plugin root
 | Session journal | (runtime) | `.claude/momentum/journal.jsonl` |
 | Findings ledger | (runtime) | `~/.claude/momentum/findings-ledger.jsonl` (global) |
 | Install state | (runtime) | `.claude/momentum/installed.json` |
+| Session modified files | (runtime, ephemeral) | `.claude/momentum/session-modified-files.txt` |
+| Gate findings | (runtime, inter-session) | `.claude/momentum/gate-findings.txt` |
 
 ---
 
