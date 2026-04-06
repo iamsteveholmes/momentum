@@ -115,13 +115,13 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 - Check current branch. If not `main`, warn: "You're on `{branch}`, not `main`.
   Quick-fix will branch from `main`. Continue, or switch first?"
 - Create worktree off `main`: `git worktree add .worktrees/quickfix-{slug} main`
-- When the story has multiple change types with non-overlapping file sets, spawn
-  one specialist per change type in parallel (e.g., `dev-python` for script tasks,
-  `dev-skills` for skill tasks). When change types overlap or there's only one,
-  spawn a single specialist.
-- Pass each agent: story file, their specific tasks, guidelines, sprint context,
+- Resolve specialist agent via `momentum-tools specialist-classify`. Spawn a single
+  specialist dev agent. When a story has multiple change types (e.g., skill-instruction
+  + script-code), the specialist is chosen by the dominant change type. Multi-specialist
+  parallel dev is a future enhancement — v1 uses one dev agent per story.
+- Pass agent: story file, all tasks, guidelines, sprint context,
   agent-skill-development-guide if touching skills/agents
-- On completion of all agents, merge worktree to main (rebase + merge)
+- On completion, merge worktree to main (rebase + merge)
 - Clean up worktree
 - The dev agent configuration (specialists, guidelines) carries into Phase 4
 
@@ -129,17 +129,15 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 - Post-merge AVFL scan (profile: scan, stage: final)
 - Fix critical findings before proceeding
 - Create an Agent Team via `TeamCreate` with these roles:
-  - **Dev agent(s):** same specialist(s) from Phase 3 — they stay resident to fix
-    issues as validators find them. If Phase 3 used multiple specialists, the same
-    specialists participate here (e.g., `dev-python` fixes script issues, `dev-skills`
-    fixes skill issues).
+  - **Dev agent:** same specialist from Phase 3 — stays resident to fix issues
+    as validators find them
   - **Validators:** determined by change types in the story:
     - `skill-instruction` → E2E Validator (behavioral verification via Gherkin specs)
     - `script-code` → QA (test coverage, edge cases, functional verification)
     - Both present → both validators join the team
 - The team collaborates via task list:
   - Validators run their checks, report failures as tasks
-  - Dev agent(s) pick up tasks matching their specialty and fix immediately
+  - Dev agent picks up tasks and fixes immediately
   - Validators re-verify fixed items
   - Loop until all validators report clean or developer halts
 - Transition story to done
