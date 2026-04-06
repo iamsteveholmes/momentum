@@ -1020,6 +1020,19 @@
       "skills/momentum/scripts/test-momentum-tools.py"
     ]
   },
+  "team-review-with-teamcreate": {
+    "status": "backlog",
+    "title": "Team Review with TeamCreate — Implement Decision 34 Hybrid Agent Team",
+    "epic_slug": "agent-team-model",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/agents/qa-reviewer.md",
+      "skills/momentum/agents/e2e-validator.md"
+    ]
+  },
   "quick-fix-skill": {
     "status": "ready-for-dev",
     "title": "Quick Fix Skill — Single-Story Tactical Workflow",
