@@ -906,125 +906,183 @@ def test_greeting_state_done_no_planned():
     assert_eq("state", out.get("state"), "done-no-planned")
 
 
-# --- Session Startup-Check Tests ---
+# --- Session Startup-Preflight Tests ---
 
-def test_startup_check_all_clean():
-    """Returns all false/empty when versions match and no drift."""
-    print("\n[session startup-check] All clean")
-    proj = setup_project()
-    setup_versions_json(proj, {"current_version": "1.0.0", "versions": {}})
-    setup_installed_json(proj, {"version": "1.0.0"})
-    # Create a temporary global-installed.json for this test
-    global_dir = proj / ".claude-global-test"
-    # We'll use env override — but startup-check reads ~/.claude/momentum/global-installed.json
-    # For testing, we need to ensure global version matches too
-    # The simplest approach: backup and create a test global-installed.json
+
+def _with_global_installed(data: dict, fn):
+    """Run fn with a temporary global-installed.json, restoring the original after."""
     global_path = Path.home() / ".claude" / "momentum" / "global-installed.json"
     backup = None
     if global_path.exists():
         backup = global_path.read_text()
     global_path.parent.mkdir(parents=True, exist_ok=True)
-    global_path.write_text(json.dumps({"version": "1.0.0", "components": {}}, indent=2) + "\n")
+    global_path.write_text(json.dumps(data, indent=2) + "\n")
     try:
-        code, out = run_tool(proj, "session", "startup-check")
+        fn()
+    finally:
+        if backup is not None:
+            global_path.write_text(backup)
+        else:
+            global_path.unlink(missing_ok=True)
+
+
+def test_startup_preflight_all_current():
+    """Route is 'greeting' when all component versions match current_version."""
+    print("\n[session startup-preflight] All current — route greeting")
+    proj = setup_project()
+    setup_versions_json(proj, {
+        "current_version": "1.0.0",
+        "versions": {
+            "1.0.0": {
+                "actions": [
+                    {"action": "add", "group": "rules", "scope": "global", "source": "rules/a.md", "target": "~/.claude/rules/a.md"},
+                    {"action": "migration", "group": "hooks", "scope": "project", "source": "m.md", "description": "hooks"}
+                ]
+            }
+        }
+    })
+    setup_installed_json(proj, {"components": {"hooks": {"version": "1.0.0"}}})
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
         assert_eq("exit code 0", code, 0)
-        assert_eq("needs_upgrade false", out.get("needs_upgrade"), False)
-        assert_eq("needs_install false", out.get("needs_install"), False)
+        assert_eq("route", out.get("route"), "greeting")
+        assert_eq("needs_work empty", out.get("needs_work"), [])
         assert_eq("hash_drift false", out.get("hash_drift"), False)
-        assert_eq("config_gaps empty", out.get("config_gaps"), [])
-        assert_eq("installed_version", out.get("installed_version"), "1.0.0")
+        assert_eq("greeting present", out.get("greeting") is not None, True)
         assert_eq("current_version", out.get("current_version"), "1.0.0")
-    finally:
-        if backup is not None:
-            global_path.write_text(backup)
-        else:
-            global_path.unlink(missing_ok=True)
+
+    _with_global_installed({"components": {"rules": {"version": "1.0.0", "hash": ""}}}, check)
 
 
-def test_startup_check_needs_upgrade():
-    """Returns needs_upgrade: true when version behind."""
-    print("\n[session startup-check] Needs upgrade")
+def test_startup_preflight_needs_upgrade():
+    """Route is 'upgrade' when a component version is behind current_version."""
+    print("\n[session startup-preflight] Needs upgrade")
     proj = setup_project()
-    setup_versions_json(proj, {"current_version": "2.0.0", "versions": {}})
-    setup_installed_json(proj, {"version": "1.0.0"})
-    global_path = Path.home() / ".claude" / "momentum" / "global-installed.json"
-    backup = None
-    if global_path.exists():
-        backup = global_path.read_text()
-    global_path.parent.mkdir(parents=True, exist_ok=True)
-    global_path.write_text(json.dumps({"version": "1.0.0", "components": {}}, indent=2) + "\n")
-    try:
-        code, out = run_tool(proj, "session", "startup-check")
+    setup_versions_json(proj, {
+        "current_version": "2.0.0",
+        "versions": {
+            "2.0.0": {
+                "actions": [
+                    {"action": "replace", "group": "rules", "scope": "global", "source": "rules/a.md", "target": "~/.claude/rules/a.md"},
+                    {"action": "migration", "group": "hooks", "scope": "project", "source": "m.md", "description": "hooks"}
+                ]
+            }
+        }
+    })
+    setup_installed_json(proj, {"components": {"hooks": {"version": "1.0.0"}}})
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
         assert_eq("exit code 0", code, 0)
-        assert_eq("needs_upgrade true", out.get("needs_upgrade"), True)
-        assert_eq("installed_version", out.get("installed_version"), "1.0.0")
+        assert_eq("route", out.get("route"), "upgrade")
+        assert_eq("needs_work non-empty", len(out.get("needs_work", [])) > 0, True)
         assert_eq("current_version", out.get("current_version"), "2.0.0")
-    finally:
-        if backup is not None:
-            global_path.write_text(backup)
-        else:
-            global_path.unlink(missing_ok=True)
+
+    _with_global_installed({"components": {"rules": {"version": "1.0.0"}}}, check)
 
 
-def test_startup_check_hash_drift():
-    """Returns hash_drift: true when file hash mismatches."""
-    print("\n[session startup-check] Hash drift detected")
+def test_startup_preflight_hash_drift():
+    """Route is 'hash-drift' when file hash mismatches stored hash."""
+    print("\n[session startup-preflight] Hash drift detected")
     proj = setup_project()
-    setup_versions_json(proj, {"current_version": "1.0.0", "versions": {}})
-    setup_installed_json(proj, {"version": "1.0.0"})
 
     # Create a target file for hash checking
-    target_file = proj / "test-rule.md"
-    target_file.write_text("# Original content\n")
+    rules_dir = Path.home() / ".claude" / "rules"
+    rules_dir.mkdir(parents=True, exist_ok=True)
+    target_file = rules_dir / "test-drift-target.md"
+    target_file.write_text("# Modified content\n")
 
-    # Get the real hash
-    proc = subprocess.run(["git", "hash-object", str(target_file)], capture_output=True, text=True)
-    real_hash = proc.stdout.strip()
-
-    # Set up global-installed with a WRONG hash for this file
-    global_path = Path.home() / ".claude" / "momentum" / "global-installed.json"
-    backup = None
-    if global_path.exists():
-        backup = global_path.read_text()
-    global_path.parent.mkdir(parents=True, exist_ok=True)
-    global_path.write_text(json.dumps({
-        "version": "1.0.0",
-        "components": {
-            "test-rule": {"hash": "wrong-hash-value", "target": str(target_file)}
+    setup_versions_json(proj, {
+        "current_version": "1.0.0",
+        "versions": {
+            "1.0.0": {
+                "actions": [
+                    {"action": "add", "group": "test-drift", "scope": "global",
+                     "source": "rules/a.md", "target": str(target_file)},
+                    {"action": "migration", "group": "hooks", "scope": "project",
+                     "source": "m.md", "description": "hooks"}
+                ]
+            }
         }
-    }, indent=2) + "\n")
-    try:
-        code, out = run_tool(proj, "session", "startup-check")
+    })
+    setup_installed_json(proj, {"components": {"hooks": {"version": "1.0.0"}}})
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
         assert_eq("exit code 0", code, 0)
+        assert_eq("route", out.get("route"), "hash-drift")
         assert_eq("hash_drift true", out.get("hash_drift"), True)
-    finally:
-        if backup is not None:
-            global_path.write_text(backup)
-        else:
-            global_path.unlink(missing_ok=True)
+
+    _with_global_installed({
+        "components": {
+            "test-drift": {"version": "1.0.0", "hash": "wrong-hash-value"}
+        }
+    }, check)
+
+    # Clean up target file
+    target_file.unlink(missing_ok=True)
 
 
-def test_startup_check_needs_install():
-    """Returns needs_install: true when no installed.json."""
-    print("\n[session startup-check] Needs install")
+def test_startup_preflight_first_install():
+    """Route is 'first-install' when no installed.json and no global components."""
+    print("\n[session startup-preflight] First install")
     proj = setup_project()
-    setup_versions_json(proj, {"current_version": "1.0.0", "versions": {}})
+    setup_versions_json(proj, {
+        "current_version": "1.0.0",
+        "versions": {
+            "1.0.0": {
+                "actions": [
+                    {"action": "add", "group": "rules", "scope": "global", "source": "rules/a.md", "target": "~/.claude/rules/a.md"},
+                    {"action": "migration", "group": "hooks", "scope": "project", "source": "m.md", "description": "hooks"}
+                ]
+            }
+        }
+    })
     # Do NOT create installed.json
-    global_path = Path.home() / ".claude" / "momentum" / "global-installed.json"
-    backup = None
-    if global_path.exists():
-        backup = global_path.read_text()
-    global_path.parent.mkdir(parents=True, exist_ok=True)
-    global_path.write_text(json.dumps({"version": "1.0.0", "components": {}}, indent=2) + "\n")
-    try:
-        code, out = run_tool(proj, "session", "startup-check")
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
         assert_eq("exit code 0", code, 0)
-        assert_eq("needs_install true", out.get("needs_install"), True)
-    finally:
-        if backup is not None:
-            global_path.write_text(backup)
-        else:
-            global_path.unlink(missing_ok=True)
+        assert_eq("route", out.get("route"), "first-install")
+        assert_eq("needs_work non-empty", len(out.get("needs_work", [])) > 0, True)
+
+    _with_global_installed({}, check)
+
+
+def test_startup_preflight_journal_threads():
+    """has_open_threads is true when journal.jsonl has open threads."""
+    print("\n[session startup-preflight] Open journal threads")
+    proj = setup_project()
+    setup_versions_json(proj, {
+        "current_version": "1.0.0",
+        "versions": {
+            "1.0.0": {
+                "actions": [
+                    {"action": "add", "group": "rules", "scope": "global", "source": "rules/a.md", "target": "~/.claude/rules/a.md"},
+                    {"action": "migration", "group": "hooks", "scope": "project", "source": "m.md", "description": "hooks"}
+                ]
+            }
+        }
+    })
+    setup_installed_json(proj, {"components": {"hooks": {"version": "1.0.0"}}})
+
+    # Create journal with an open thread
+    journal_dir = proj / ".claude" / "momentum"
+    journal_dir.mkdir(parents=True, exist_ok=True)
+    journal_path = journal_dir / "journal.jsonl"
+    journal_path.write_text(json.dumps({
+        "thread_id": "T-001", "status": "open",
+        "context_summary": "Test thread", "context_summary_short": "Test",
+        "last_active": "2026-04-04T00:00:00Z"
+    }) + "\n")
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
+        assert_eq("exit code 0", code, 0)
+        assert_eq("has_open_threads", out.get("has_open_threads"), True)
+
+    _with_global_installed({"components": {"rules": {"version": "1.0.0", "hash": ""}}}, check)
 
 
 # --- Specialist Classify Tests ---
@@ -1326,11 +1384,12 @@ def main():
     test_greeting_state_active_planned_needs_work()
     test_greeting_state_done_no_planned()
 
-    # Session startup-check tests
-    test_startup_check_all_clean()
-    test_startup_check_needs_upgrade()
-    test_startup_check_hash_drift()
-    test_startup_check_needs_install()
+    # Session startup-preflight tests
+    test_startup_preflight_all_current()
+    test_startup_preflight_needs_upgrade()
+    test_startup_preflight_hash_drift()
+    test_startup_preflight_first_install()
+    test_startup_preflight_journal_threads()
 
     # Specialist classify tests
     test_specialist_classify_dev_skills()

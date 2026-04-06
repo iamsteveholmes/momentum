@@ -431,7 +431,7 @@ def cmd_session_greeting_state(args: argparse.Namespace) -> None:
     result("session_greeting_state", success=True, **output)
 
 
-def cmd_session_startup_check(args: argparse.Namespace) -> None:
+def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
     import os
     import subprocess as sp
 
@@ -441,73 +441,211 @@ def cmd_session_startup_check(args: argparse.Namespace) -> None:
     versions_path = project_dir / "skills" / "momentum" / "references" / "momentum-versions.json"
     installed_path = claude_project_dir / ".claude" / "momentum" / "installed.json"
     global_installed_path = Path.home() / ".claude" / "momentum" / "global-installed.json"
+    journal_path = claude_project_dir / ".claude" / "momentum" / "journal.jsonl"
 
     # Read versions manifest
+    current_version = "0.0.0"
+    versions_data: dict = {}
     if versions_path.exists():
-        versions_data = json.loads(versions_path.read_text(encoding="utf-8"))
-        current_version = versions_data.get("current_version", "0.0.0")
-    else:
-        current_version = "0.0.0"
+        try:
+            versions_data = json.loads(versions_path.read_text(encoding="utf-8"))
+            current_version = versions_data.get("current_version", "0.0.0")
+        except json.JSONDecodeError:
+            pass
 
-    # Read installed.json
-    needs_install = not installed_path.exists()
+    # Read installed.json (project-scoped)
+    installed_data: dict = {}
     if installed_path.exists():
-        installed_data = json.loads(installed_path.read_text(encoding="utf-8"))
-        installed_version = installed_data.get("version", "0.0.0")
-    else:
-        installed_data = {}
-        installed_version = "0.0.0"
+        try:
+            installed_data = json.loads(installed_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
 
     # Read global-installed.json
+    global_data: dict = {}
     if global_installed_path.exists():
-        global_data = json.loads(global_installed_path.read_text(encoding="utf-8"))
-        global_version = global_data.get("version", "0.0.0")
-    else:
-        global_data = {}
-        global_version = "0.0.0"
+        try:
+            global_data = json.loads(global_installed_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
 
-    # Version comparison
-    needs_upgrade = installed_version != current_version or global_version != current_version
+    # Per-component version comparison (mirrors workflow Step 1 logic)
+    # Collect unique groups and their scopes from the current version's actions
+    version_actions = versions_data.get("versions", {}).get(current_version, {}).get("actions", [])
+    groups: dict[str, str] = {}  # group_name -> scope
+    for action in version_actions:
+        group = action.get("group")
+        scope = action.get("scope")
+        if group and scope and group not in groups:
+            groups[group] = scope
 
-    # Hash drift detection — check global components
+    needs_work: list[dict] = []
+    for group_name, scope in groups.items():
+        if scope == "global":
+            group_version = global_data.get("components", {}).get(group_name, {}).get("version")
+        else:
+            group_version = installed_data.get("components", {}).get(group_name, {}).get("version")
+
+        if group_version is None or group_version < current_version:
+            needs_work.append({"group": group_name, "scope": scope, "installed_version": group_version})
+
+    # Determine if any group has a version behind (upgrade) vs absent (first install)
+    any_behind = any(g.get("installed_version") is not None for g in needs_work)
+    all_absent = all(g.get("installed_version") is None for g in needs_work)
+    both_files_empty = not installed_data.get("components") and not global_data.get("components")
+
+    # Hash drift detection — resolve target paths from version manifest actions
     hash_drift = False
-    global_components = global_data.get("components", {})
-    for comp_name, comp_info in global_components.items():
-        if not isinstance(comp_info, dict):
-            continue
-        stored_hash = comp_info.get("hash")
-        target = comp_info.get("target")
-        if stored_hash and target:
-            target_path = Path(os.path.expanduser(target))
-            if target_path.exists():
-                try:
-                    proc = sp.run(
-                        ["git", "hash-object", str(target_path)],
-                        capture_output=True, text=True, timeout=5
-                    )
-                    if proc.returncode == 0:
-                        current_hash = proc.stdout.strip()
-                        if current_hash != stored_hash:
-                            hash_drift = True
-                except (sp.TimeoutExpired, FileNotFoundError):
-                    pass
+    hash_check_errors: list[str] = []
+    if not needs_work:  # only check drift when all groups are current
+        global_components = global_data.get("components", {})
+        for comp_name, comp_info in global_components.items():
+            if not isinstance(comp_info, dict):
+                continue
+            stored_hash = comp_info.get("hash")
+            if not stored_hash:
+                continue
 
-    # Config gaps — check .mcp.json for required providers
-    config_gaps = []
+            # Find the first add/replace action for this group to get the target path
+            target = None
+            for action in version_actions:
+                if action.get("group") == comp_name and action.get("action") in ("add", "replace"):
+                    target = action.get("target")
+                    break
+
+            if not target:
+                continue
+
+            target_path = Path(os.path.expanduser(target))
+            if not target_path.exists():
+                hash_check_errors.append(f"{comp_name}: target file missing ({target})")
+                continue
+
+            try:
+                proc = sp.run(
+                    ["git", "hash-object", str(target_path)],
+                    capture_output=True, text=True, timeout=5
+                )
+                if proc.returncode == 0:
+                    current_hash = proc.stdout.strip()
+                    if current_hash != stored_hash:
+                        hash_drift = True
+                else:
+                    hash_check_errors.append(f"{comp_name}: git hash-object failed (rc={proc.returncode})")
+            except sp.TimeoutExpired:
+                hash_check_errors.append(f"{comp_name}: git hash-object timed out")
+            except FileNotFoundError:
+                hash_check_errors.append(f"{comp_name}: git not found")
+
+    # Journal thread check
+    has_open_threads = False
+    if journal_path.exists():
+        try:
+            threads: dict[str, dict] = {}
+            for line in journal_path.read_text(encoding="utf-8").strip().splitlines():
+                if not line.strip():
+                    continue
+                entry = json.loads(line)
+                tid = entry.get("thread_id")
+                if tid:
+                    threads[tid] = entry
+            has_open_threads = any(t.get("status") == "open" for t in threads.values())
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Config gaps
+    config_gaps: list[str] = []
     mcp_path = claude_project_dir / ".mcp.json"
     if mcp_path.exists():
         try:
-            mcp_data = json.loads(mcp_path.read_text(encoding="utf-8"))
-            # Informational — list absent providers if needed
+            json.loads(mcp_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             config_gaps.append("invalid .mcp.json")
 
-    result("session_startup_check", success=True,
-           needs_upgrade=needs_upgrade,
-           needs_install=needs_install,
+    # Route determination
+    if needs_work and both_files_empty:
+        route = "first-install"
+    elif needs_work and any_behind:
+        route = "upgrade"
+    elif needs_work and all_absent:
+        route = "first-install"
+    elif hash_drift:
+        route = "hash-drift"
+    else:
+        route = "greeting"
+
+    # Inline greeting-state computation when route is "greeting"
+    greeting = None
+    if route == "greeting":
+        _sp = sprints_path(project_dir)
+        _st = stories_path(project_dir)
+        sprints = read_json(_sp) if _sp.exists() else {"active": None, "planning": None, "completed": []}
+        stories = read_json(_st) if _st.exists() else {}
+        session_stats = installed_data.get("session_stats", {})
+        momentum_completions = session_stats.get("momentum_completions", 0)
+
+        active = sprints.get("active")
+        planning = sprints.get("planning")
+        completed = sprints.get("completed", [])
+
+        active_sprint = active.get("slug") if active else None
+        planning_sprint = planning.get("slug") if planning else None
+        planning_status = planning.get("status") if planning else None
+        last_completed_sprint = completed[-1].get("slug") if completed else None
+        no_sprints = active is None and planning is None and len(completed) == 0
+
+        if momentum_completions == 0 and no_sprints:
+            state = "first-session-ever"
+        elif active is None and planning is None:
+            state = "no-active-nothing-planned"
+        elif active is None and planning and planning.get("status") == "ready":
+            state = "no-active-planned-ready"
+        elif active and active.get("status") == "done" and planning is None:
+            state = "done-no-planned"
+        elif active and active.get("status") == "done":
+            state = "done-retro-needed"
+        elif active and active.get("status") == "active" and planning and planning.get("status") in ("planning", "ready"):
+            state = "active-planned-needs-work"
+        else:
+            sprint_stories = active.get("stories", []) if active else []
+            has_blocked = False
+            all_not_started = True
+            for slug in sprint_stories:
+                story = stories.get(slug, {})
+                status = story.get("status", "backlog")
+                if status in ("done", "dropped", "closed-incomplete"):
+                    continue
+                if status not in ("backlog", "ready-for-dev"):
+                    all_not_started = False
+                for dep in story.get("depends_on", []):
+                    dep_story = stories.get(dep, {})
+                    if dep_story.get("status") != "done":
+                        has_blocked = True
+
+            if has_blocked:
+                state = "active-blocked"
+            elif all_not_started:
+                state = "active-not-started"
+            else:
+                state = "active-in-progress"
+
+        greeting = {
+            "state": state,
+            "active_sprint": active_sprint,
+            "planning_sprint": planning_sprint,
+            "planning_status": planning_status,
+            "momentum_completions": momentum_completions,
+            "last_completed_sprint": last_completed_sprint,
+        }
+
+    result("session_startup_preflight", success=True,
+           route=route,
+           needs_work=[{"group": g["group"], "scope": g["scope"]} for g in needs_work],
            hash_drift=hash_drift,
+           hash_check_errors=hash_check_errors,
+           has_open_threads=has_open_threads,
            config_gaps=config_gaps,
-           installed_version=installed_version,
+           greeting=greeting,
            current_version=current_version)
 
 
@@ -773,9 +911,9 @@ def build_parser() -> argparse.ArgumentParser:
     sgs = session_sub.add_parser("greeting-state", help="Detect greeting state from sprint/story data")
     sgs.set_defaults(func=cmd_session_greeting_state)
 
-    # session startup-check
-    ssc = session_sub.add_parser("startup-check", help="Check versions, hash drift, and config gaps")
-    ssc.set_defaults(func=cmd_session_startup_check)
+    # session startup-preflight
+    ssc = session_sub.add_parser("startup-preflight", help="Consolidated startup routing: versions, hash drift, journal, greeting state")
+    ssc.set_defaults(func=cmd_session_startup_preflight)
 
     # specialist-classify command
     sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")
