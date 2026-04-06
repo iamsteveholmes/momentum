@@ -88,7 +88,7 @@ fi
 # Load protected paths from protected-paths.json (canonical source)
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROTECTED_PATHS_JSON="$SCRIPT_DIR/protected-paths.json"
+PROTECTED_PATHS_JSON="$SCRIPT_DIR/../protected-paths.json"
 
 # Default protected paths (fallback if JSON not found)
 DEFAULT_PROTECTED_PATTERNS=(
@@ -164,12 +164,12 @@ get_policy_reason() {
 
 # 1. tests/acceptance/ — any path containing this directory
 if [[ "$NORM_PATH" == *"/tests/acceptance/"* ]] || [[ "$NORM_PATH" == tests/acceptance/* ]]; then
-  block_write "acceptance-test-dir" "no modification after ATDD phase begins"
+  block_write "acceptance-test-dir" "modify via sprint-planning only"
 fi
 
 # 2. **/*.feature — any .feature file anywhere in the tree
 if [[ "$NORM_PATH" == *.feature ]]; then
-  block_write "acceptance-test-dir" "no modification after ATDD phase begins"
+  block_write "acceptance-test-dir" "modify via sprint-planning only"
 fi
 
 # 3. .claude/rules/ — project-scoped only (not global ~/.claude/rules/)
@@ -187,7 +187,7 @@ if [[ "$NORM_PATH" == _bmad-output/planning-artifacts/*.md ]] || \
   BASENAME="${NORM_PATH##*/_bmad-output/planning-artifacts/}"
   BASENAME="${BASENAME##_bmad-output/planning-artifacts/}"
   if [[ "$BASENAME" == *.md ]] && [[ "$BASENAME" != */* ]]; then
-    block_write "planning-artifacts" "spec files are read-only during implementation"
+    block_write "planning-artifacts" "modify via refine workflow only"
   fi
 fi
 

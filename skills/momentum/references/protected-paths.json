@@ -4,12 +4,12 @@
     {
       "pattern": "tests/acceptance/*",
       "policy": "acceptance-test-dir",
-      "reason": "no modification after ATDD phase begins"
+      "reason": "modify via sprint-planning only"
     },
     {
       "pattern": "*.feature",
       "policy": "acceptance-test-dir",
-      "reason": "no modification after ATDD phase begins"
+      "reason": "modify via sprint-planning only"
     },
     {
       "pattern": ".claude/rules/*",
@@ -19,7 +19,7 @@
     {
       "pattern": "_bmad-output/planning-artifacts/*.md",
       "policy": "planning-artifacts",
-      "reason": "spec files are read-only during implementation"
+      "reason": "modify via refine workflow only"
     },
     {
       "pattern": "_bmad-output/implementation-artifacts/stories/index.json",
