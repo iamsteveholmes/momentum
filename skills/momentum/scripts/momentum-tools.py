@@ -339,7 +339,7 @@ def cmd_session_stats_update(args: argparse.Namespace) -> None:
         data["session_stats"] = {"momentum_completions": 0, "last_invocation": None}
 
     data["session_stats"]["momentum_completions"] = data["session_stats"].get("momentum_completions", 0) + 1
-    data["session_stats"]["last_invocation"] = date.today().isoformat()
+    data["session_stats"]["last_invocation"] = datetime.now().isoformat()
 
     installed_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -388,7 +388,7 @@ def cmd_session_greeting_state(args: argparse.Namespace) -> None:
         state = "done-no-planned"
     elif active and active.get("status") == "done":
         state = "done-retro-needed"
-    elif active and planning and planning.get("status") == "planning":
+    elif active and active.get("status") == "active" and planning and planning.get("status") in ("planning", "ready"):
         state = "active-planned-needs-work"
     else:
         # Active sprint exists with status "active" — sub-detection
@@ -400,7 +400,9 @@ def cmd_session_greeting_state(args: argparse.Namespace) -> None:
         for slug in sprint_stories:
             story = stories.get(slug, {})
             status = story.get("status", "backlog")
-            if status not in ("backlog", "ready-for-dev", "done", "dropped", "closed-incomplete"):
+            if status in ("done", "dropped", "closed-incomplete"):
+                continue
+            if status not in ("backlog", "ready-for-dev"):
                 all_not_started = False
             depends_on = story.get("depends_on", [])
             for dep in depends_on:

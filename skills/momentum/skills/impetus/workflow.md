@@ -467,10 +467,10 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
   Continue (1/2/...) or tell me what you need?
     </output>
 
-    <!-- Deferred stats write for thread path (Story 2a.1): write AFTER all displayed content, before Wait — mirrors the no-thread path's deferred write in Step 7. -->
-    <action>Increment session_stats.momentum_completions in installed.json. Update last_invocation to current ISO 8601 timestamp. If session_stats is absent, initialize with momentum_completions: 1, first_invocation: now, last_invocation: now. Write installed.json.</action>
-
     <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
+
+    <!-- Deferred stats write for thread path (Story 2a.1): fires AFTER the Wait, not during display. -->
+    <action>Run momentum-tools session stats-update via Bash (discard output — do not display to user). This fires after the thread selection prompt, not during display.</action>
 
     <note>Natural language gate: If developer input is natural language (not a thread number, "continue", or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching. Do not skip confirmation even if the intent seems obvious.</note>
 

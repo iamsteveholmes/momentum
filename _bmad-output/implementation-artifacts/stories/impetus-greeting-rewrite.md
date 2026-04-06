@@ -8,7 +8,7 @@ depends_on:
   - sprint-index-schema-migration
 touches:
   - skills/momentum/skills/impetus/workflow.md
-  - skills/momentum/skills/impetus/references/session-greeting.md
+  - skills/momentum/references/session-greeting.md
 change_type: skill-instruction
 ---
 
