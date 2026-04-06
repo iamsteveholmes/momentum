@@ -23,7 +23,7 @@
       4. Apply changes — update epics.md, reassign stories, log decisions
     </action>
     <action>Log workflow start:
-      `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "Epic grooming workflow started"`
+      `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "Epic grooming workflow started" --sprint sprint-2026-04-06`
     </action>
   </step>
 
@@ -109,7 +109,7 @@ Epic Taxonomy — Proposed Changes ({N} total)
 
     <check if="no proposals were approved">
       <output>No changes approved. Taxonomy unchanged. Workflow complete.</output>
-      <action>Log: `momentum-tools log --agent epic-grooming --event decision --detail "Taxonomy review complete — no changes approved by developer"`</action>
+      <action>Log: `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "Taxonomy review complete — no changes approved by developer" --sprint sprint-2026-04-06`</action>
     </check>
   </step>
 
@@ -120,7 +120,7 @@ Epic Taxonomy — Proposed Changes ({N} total)
       1. For each story in the source slug, call:
          `python3 skills/momentum/scripts/momentum-tools.py sprint epic-membership --story {story-slug} --epic {target-slug}`
       2. Log the decision:
-         `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "MERGE: {old-slug} → {target-slug} | story: {story-slug} | rationale: {reason}"`
+         `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "MERGE: {old-slug} → {target-slug} | story: {story-slug} | rationale: {reason}" --sprint sprint-2026-04-06`
     </action>
 
     <action>For each approved CREATE change:
@@ -129,14 +129,14 @@ Epic Taxonomy — Proposed Changes ({N} total)
          `python3 skills/momentum/scripts/momentum-tools.py sprint epic-membership --story {story-slug} --epic {new-slug}`
          (Only needed if the slug is being renamed — if the slug stays the same, epic-membership call is skipped as stories already belong to this slug)
       3. Log the decision:
-         `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "CREATE: new epic {new-slug} registered | stories: {N} | rationale: {reason}"`
+         `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "CREATE: new epic {new-slug} registered | stories: {N} | rationale: {reason}" --sprint sprint-2026-04-06`
     </action>
 
     <action>For each approved SPLIT change:
       1. For each story and its target split destination, call:
          `python3 skills/momentum/scripts/momentum-tools.py sprint epic-membership --story {story-slug} --epic {target-slug}`
       2. Log the decision:
-         `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "SPLIT: {source-slug} → {target-slug} | story: {story-slug} | rationale: {reason}"`
+         `python3 skills/momentum/scripts/momentum-tools.py log --agent epic-grooming --event decision --detail "SPLIT: {source-slug} → {target-slug} | story: {story-slug} | rationale: {reason}" --sprint sprint-2026-04-06`
     </action>
 
     <action>After all changes applied, re-read stories/index.json and epics.md to verify:

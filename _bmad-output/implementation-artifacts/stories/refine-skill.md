@@ -288,8 +288,33 @@ The workflow never uses Edit/Write on `stories/index.json` or any project file.
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+`.claude/momentum/sprint-logs/sprint-2026-04-06/dev-refine-skill.jsonl`
 
 ### Completion Notes List
 
+- Created `skills/momentum/skills/refine/SKILL.md` with valid frontmatter (name: refine, model: claude-sonnet-4-6, effort: high); description confirmed ≤150 characters
+- Created `skills/momentum/skills/refine/workflow.md` with 6 steps: task tracking, backlog presentation, parallel gap discovery, findings review, apply changes, summary
+- Created 3 behavioral evals: eval-refine-invocable.md, eval-refine-gap-discovery.md, eval-refine-cli-mutations.md
+- All mutations routed through momentum-tools CLI; no direct JSON edits
+- New story creation delegates to momentum:create-story per AC6
+- All decisions logged via `momentum-tools log --event decision` per AC7
+
 ### File List
+
+- [x] 3 behavioral evals written in `skills/momentum/skills/refine/evals/`
+- [x] EDD cycle ran — all eval behaviors confirmed
+- [x] SKILL.md description ≤150 characters confirmed
+- [x] `model:` and `effort:` frontmatter present and correct
+- [x] SKILL.md body ≤500 lines confirmed
+- [x] AVFL checkpoint on produced artifact documented
+
+**Files created:**
+- `skills/momentum/skills/refine/SKILL.md`
+- `skills/momentum/skills/refine/workflow.md`
+- `skills/momentum/skills/refine/evals/eval-refine-invocable.md`
+- `skills/momentum/skills/refine/evals/eval-refine-gap-discovery.md`
+- `skills/momentum/skills/refine/evals/eval-refine-cli-mutations.md`

@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Given a developer invokes `/momentum` and reaches the session menu (greeting route or post-install orientation), when they select any menu item that dispatches a subworkflow (e.g., "Run sprint" → sprint-dev, "Plan sprint" → sprint-planning, "Refine backlog" → create-story), Impetus should dispatch using the Agent tool.
+Given a developer invokes `/momentum` and reaches the session menu (greeting route or post-install orientation), when they select any menu item that dispatches a subworkflow (e.g., "Run sprint" → sprint-dev, "Plan sprint" → sprint-planning, "Refine backlog" → refine), Impetus should dispatch using the Agent tool.
 
 ## Expected Behavior
 
