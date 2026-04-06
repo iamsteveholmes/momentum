@@ -351,4 +351,25 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Task 1 (stop-gate.sh): Created at `skills/momentum/references/hooks/stop-gate.sh` and deployed to `.claude/momentum/hooks/stop-gate.sh`. Script is executable.
+- Task 2 (hooks-config.json): Replaced Stop placeholder with actual `stop-gate.sh` command. timeout=60, no matcher field. All three hook entries preserved.
+- Task 2 (hooks.json): Also updated `skills/momentum/hooks/hooks.json` (the actual runtime config) with the same Stop replacement.
+- Task 2b (momentum-versions.json): Added `add` action for `stop-gate.sh` deployment.
+- Task 3 (verification): All 7 scenarios verified functionally:
+  - 3.1: Session with code modified — lint (no tool) skips, tests (no runner) skips → exit 0
+  - 3.2: No code modified — only lint runs (skips, no tool) → exit 0
+  - 3.3: Lint failure — exit 1, AC3 format with file:line reference
+  - 3.4: Test failure — exit 1, AC5 format
+  - 3.5: Session state file deleted after every run — verified
+  - 3.6: No lint tool — `[stop-gate] ◦ lint — no lint tool configured` → exit 0
+  - 3.7: No test runner — `[stop-gate] ◦ tests — no test runner configured` → exit 0
+- AC2 verified: lint clean outputs `[stop-gate] ✓ checked lint — clean` → exit 0
+- AC4 verified: tests pass outputs `[stop-gate] ✓ checked tests — N passed` → exit 0
+
 ### File List
+
+- `skills/momentum/references/hooks/stop-gate.sh` (created)
+- `.claude/momentum/hooks/stop-gate.sh` (created — runtime deployment)
+- `skills/momentum/references/hooks-config.json` (modified — Stop placeholder replaced)
+- `skills/momentum/hooks/hooks.json` (modified — Stop placeholder replaced)
+- `skills/momentum/references/momentum-versions.json` (modified — stop-gate.sh add action)

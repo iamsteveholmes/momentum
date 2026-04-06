@@ -29,8 +29,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '[momentum-gate] ✓ checked stop conditions — quality gate placeholder (Story 3.3 implements)'",
-            "timeout": 10
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/momentum/hooks/stop-gate.sh",
+            "timeout": 60
           }
         ]
       }
