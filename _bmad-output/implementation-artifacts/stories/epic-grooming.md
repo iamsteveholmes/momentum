@@ -17,7 +17,7 @@ change_type: skill-instruction
 ## Description
 
 Momentum currently has 20 distinct `epic_slug` values across stories/index.json
-but only 11 epics registered in epics.md. The remaining 9 slugs emerged
+but only 13 epics registered in epics.md. The remaining 7 slugs emerged
 organically during sprint work — stories were assigned to epics that were never
 formally defined. This creates taxonomy drift: some slugs overlap
 (research-knowledge vs. research-knowledge-management), some represent work
@@ -74,7 +74,7 @@ Unregistered slugs requiring resolution: `agent-team-model` (5 stories),
 ## Tasks / Subtasks
 
 - [ ] Task 1: Create the epic template at `skills/momentum/references/templates/epic-template.md` (AC: 2)
-  - [ ] 1.1: Write the template with all six fields: slug, category, strategic intent, boundaries, FRs covered, NFRs covered, current state
+  - [ ] 1.1: Write the template with all seven fields: slug, category, strategic intent, boundaries, FRs covered, NFRs covered, current state
   - [ ] 1.2: Verify the template aligns with the existing epic format in epics.md (Epic List section)
 
 - [ ] Task 2: Create the epic-grooming SKILL.md at `skills/momentum/skills/epic-grooming/SKILL.md` (AC: 1)
@@ -117,7 +117,7 @@ Unregistered slugs requiring resolution: `agent-team-model` (5 stories),
    - Update `epics.md` with new epic definitions (using the template)
    - Call `momentum-tools sprint epic-membership --story <slug> --epic <new-epic>`
      for each story reassignment
-   - Call `momentum-tools log --type decision --message "..."` for each change
+   - Call `momentum-tools log --agent epic-grooming --event decision --detail "..."` for each change
    - Present a final summary: epics created, stories reassigned, orphan count
 
 ### momentum-tools.py — no changes needed

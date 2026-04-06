@@ -334,15 +334,18 @@
     "touches": []
   },
   "epic-grooming": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
     "epic_slug": "impetus-epic-orchestrator",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
-      "_bmad-output/planning-artifacts/epics.md",
-      "_bmad-output/implementation-artifacts/stories/index.json"
-    ]
+      "skills/momentum/skills/epic-grooming/SKILL.md",
+      "skills/momentum/skills/epic-grooming/workflow.md",
+      "skills/momentum/references/templates/epic-template.md",
+      "_bmad-output/planning-artifacts/epics.md"
+    ],
+    "change_type": "skill-instruction"
   },
   "momentum-dev-auto-variant": {
     "status": "backlog",
@@ -1116,25 +1119,29 @@
     "change_type": "code + skill-instruction"
   },
   "impetus-allowed-tools-restriction": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only",
     "epic_slug": "impetus-core",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "skills/momentum/skills/impetus/SKILL.md"
-    ]
+    ],
+    "change_type": "skill-instruction"
   },
   "refine-skill": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Refine Skill — Backlog Grooming with PM and Architect",
     "epic_slug": "impetus-epic-orchestrator",
-    "story_file": false,
-    "depends_on": [],
+    "story_file": true,
+    "depends_on": [
+      "backlog-priority-field"
+    ],
     "touches": [
       "skills/momentum/skills/refine/SKILL.md",
       "skills/momentum/skills/refine/workflow.md"
-    ]
+    ],
+    "change_type": "skill-instruction"
   },
   "create-story-update": {
     "status": "backlog",

@@ -7,7 +7,10 @@ depends_on: []
 touches:
   - skills/momentum/skills/impetus/SKILL.md
 change_type: skill-instruction
-derives_from: architecture-decision-3d
+derives_from:
+  - path: docs/planning-artifacts/momentum-master-plan.md
+    relationship: derives_from
+    section: "Part 4 Architecture Decisions — Decision 3d"
 ---
 
 # Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only
@@ -47,11 +50,24 @@ testing, or validation").
 
 ## Tasks
 
+### Task 0: Refactor Write-dependent Workflow Steps to Bash
+
+The install, upgrade, and hash-drift restore paths in `workflow.md` currently
+use model-level Write operations (e.g., "write to resolved target path",
+"write installed.json"). These must be refactored to use Bash-based file
+writes (`python3 -c`, `cp`, `tee`, etc.) before the restriction can ship.
+
+Affected steps: install consent (step 2 file copies), upgrade (step 9),
+hash-drift restore (step 10), gitignore fix, journal-view regeneration.
+
+**Change type:** skill-instruction (EDD)
+
 ### Task 1: Audit Current Tool Usage
 
 Scan `SKILL.md`, `workflow.md`, and `workflow-runtime.md` for every tool
 invocation Impetus makes. Confirm each one maps to Read, Glob, Grep, Agent,
-or Bash. Flag any invocation that would be blocked by the restriction.
+or Bash AFTER Task 0 refactoring. Flag any remaining invocation that would
+be blocked by the restriction.
 
 **Change type:** skill-instruction (EDD)
 
@@ -109,7 +125,7 @@ because:
 ### Workflow files to audit
 
 - `skills/momentum/skills/impetus/SKILL.md` — Bash (momentum-tools.py), Agent (dispatch)
-- `skills/momentum/skills/impetus/workflow.md` — Bash (copy, install), Read (files), Agent (subagents)
+- `skills/momentum/skills/impetus/workflow.md` — Bash (copy, install), Read (files), Agent (subagents). **WARNING:** install/upgrade/hash-drift steps currently use model-level Write — Task 0 must refactor these to Bash before restriction ships.
 - `skills/momentum/skills/impetus/workflow-runtime.md` — Agent (subagent dispatch), Read (context loading)
 
 ## Momentum Implementation Guide

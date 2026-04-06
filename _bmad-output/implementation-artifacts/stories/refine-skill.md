@@ -8,6 +8,7 @@ depends_on:
 touches:
   - skills/momentum/skills/refine/SKILL.md
   - skills/momentum/skills/refine/workflow.md
+  - skills/momentum/skills/impetus/SKILL.md
 change_type: skill-instruction
 derives_from:
   - path: docs/planning-artifacts/momentum-master-plan.md
@@ -90,7 +91,7 @@ The skill is invocable as `/momentum:refine` or through the Impetus menu
 - Priority changes use `momentum-tools sprint set-priority --story SLUG --priority LEVEL`
 - Epic reassignments use `momentum-tools sprint epic-membership --story SLUG --epic SLUG`
 - Story drops use `momentum-tools sprint status-transition --story SLUG --target dropped`
-- Dependency updates are applied through the appropriate momentum-tools command
+- Dependency updates are out of scope — no CLI command exists for dependency mutation; dependency issues are flagged for manual resolution
 - No direct JSON edits — all mutations go through the CLI (per write-authority rules)
 
 ### AC6: New Stories Delegated to create-story
@@ -223,14 +224,16 @@ presents information to the developer, but all mutations happen through:
 
 The workflow never uses Edit/Write on `stories/index.json` or any project file.
 
-### Data flow (from master plan)
+### Data flow
 
 | File | Access |
 |------|--------|
 | `stories/index.json` | Reads (mutations via momentum-tools CLI) |
-| `_bmad-output/planning-artifacts/prd.md` | Reads (via discovery subagent) |
-| `_bmad-output/planning-artifacts/architecture.md` | Reads (via discovery subagent) |
+| `_bmad-output/planning-artifacts/prd.md` | Reads only (via discovery subagent) |
+| `_bmad-output/planning-artifacts/architecture.md` | Reads only (via discovery subagent) |
 | `intake-queue.jsonl` | Reads (checks for untriaged items to flag) |
+
+**Note:** The master plan data flow table lists `momentum:refine` as the writer of prd.md and architecture.md. This is a data entry error — refine reads these files for gap analysis but never writes to them. They are protected planning artifacts (Decision 2a). The PreToolUse hook blocks writes to `_bmad-output/planning-artifacts/*.md` but does not block reads — discovery subagents will be able to read these files without hook interference.
 
 ### What NOT to change
 
