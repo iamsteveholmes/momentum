@@ -1,7 +1,8 @@
 Feature: Add Priority to All Story Index Entries
 
   Background:
-    Given a sprint is active with at least one story in the index
+    Given the momentum workspace is configured
+    And stories exist in stories/index.json
 
   Scenario: Stories in the index carry a priority level
     When the developer runs "sprint stories"

@@ -5,6 +5,12 @@ Feature: Epic Grooming — Holistic Epic Taxonomy and Story Organization
     And epics.md contains a registered set of epic definitions
     And some stories reference epic slugs that are not registered in epics.md
 
+  Scenario: Skill is independently invocable and enters data collection
+    When the developer invokes epic-grooming
+    Then the skill starts without errors
+    And the skill enters the data collection phase
+    And the skill outputs the set of epic slugs found in stories/index.json
+
   Scenario: Skill surfaces orphaned and unregistered epic slugs before proposing changes
     When the developer invokes epic-grooming
     Then the skill outputs a list of story epic slugs that have no matching entry in epics.md

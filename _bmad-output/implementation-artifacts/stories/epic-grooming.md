@@ -1,7 +1,7 @@
 ---
 title: Epic Grooming — Holistic Epic Taxonomy and Story Organization
 story_key: epic-grooming
-status: backlog
+status: ready-for-dev
 epic_slug: impetus-epic-orchestrator
 depends_on: []
 touches:

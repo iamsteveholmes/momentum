@@ -198,7 +198,8 @@ All workflows with 3+ steps MUST create tasks at entry. Claude Code's TaskCreate
 | Story files (`_bmad-output/`) | All skills | `momentum:create-story` |
 | Agent logs (`.claude/momentum/sprint-logs/`) | Impetus, `momentum:retro` | Each agent writes own log via `momentum-tools log` |
 | `journal.jsonl` | Impetus | Impetus |
-| `epics.md`, `prd.md`, `architecture.md` | Impetus, `momentum:refine` | `momentum:refine` |
+| `epics.md` | Impetus, `momentum:refine`, `momentum:epic-grooming` | `momentum:epic-grooming` |
+| `prd.md`, `architecture.md` | Impetus, `momentum:refine` (read-only) | Sprint planning spec impact (ad hoc) |
 
 ### Sprint Lifecycle
 

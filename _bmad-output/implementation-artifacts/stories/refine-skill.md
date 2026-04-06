@@ -1,7 +1,7 @@
 ---
 title: Refine Skill — Backlog Grooming with PM and Architect
 story_key: refine-skill
-status: backlog
+status: ready-for-dev
 epic_slug: impetus-epic-orchestrator
 depends_on:
   - backlog-priority-field

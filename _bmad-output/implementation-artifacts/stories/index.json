@@ -1125,7 +1125,9 @@
     "story_file": true,
     "depends_on": [],
     "touches": [
-      "skills/momentum/skills/impetus/SKILL.md"
+      "skills/momentum/skills/impetus/SKILL.md",
+      "skills/momentum/skills/impetus/workflow.md",
+      "skills/momentum/skills/impetus/workflow-runtime.md"
     ],
     "change_type": "skill-instruction"
   },
