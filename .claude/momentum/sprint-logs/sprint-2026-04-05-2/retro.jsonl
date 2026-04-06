@@ -1,0 +1,9 @@
+{"timestamp": "2026-04-06T00:38:55.769421", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Retrospective started for sprint sprint-2026-04-05-2 (completed 2026-04-06)"}
+{"timestamp": "2026-04-06T00:39:52.393595", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Log correlation complete: 24 events from 2 agents"}
+{"timestamp": "2026-04-06T00:43:04.127791", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Story verification: 5 done (journal-status-tool fixed: was stuck at in-progress due to non-adjacent transition in batch commit 33b1c71)"}
+{"timestamp": "2026-04-06T00:43:32.647223", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "finding", "detail": "Cross-log discovery: 5 items found (0 error-retry, 0 wrong-assumption, 0 ambiguity, 5 high-impact-decision, 0 unresolved)"}
+{"timestamp": "2026-04-06T00:44:25.366319", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Triage outputs written: 4 momentum, 1 project findings"}
+{"timestamp": "2026-04-06T00:53:07.470427", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Story stub created: status-transition-walk-mode"}
+{"timestamp": "2026-04-06T00:53:07.502583", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Story stub created: dev-agent-hook-self-check"}
+{"timestamp": "2026-04-06T00:53:12.483664", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Story stub phase complete: 2 approved, 0 rejected"}
+{"timestamp": "2026-04-06T00:53:43.302121", "agent": "retro", "story": null, "sprint": "sprint-2026-04-05-2", "event": "decision", "detail": "Sprint sprint-2026-04-05-2 closed: sprint complete + retro-complete called"}

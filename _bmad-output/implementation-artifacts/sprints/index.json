@@ -1,36 +1,5 @@
 {
-  "active": {
-    "locked": true,
-    "status": "active",
-    "stories": [
-      "backlog-priority-field",
-      "impetus-allowed-tools-restriction",
-      "epic-grooming",
-      "refine-skill"
-    ],
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "backlog-priority-field",
-          "impetus-allowed-tools-restriction"
-        ]
-      },
-      {
-        "wave": 2,
-        "stories": [
-          "epic-grooming"
-        ]
-      },
-      {
-        "wave": 3,
-        "stories": [
-          "refine-skill"
-        ]
-      }
-    ],
-    "started": "2026-04-06"
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -523,6 +492,40 @@
       "started": "2026-04-05",
       "completed": "2026-04-06",
       "retro_run_at": "2026-04-06"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "stories": [
+        "backlog-priority-field",
+        "impetus-allowed-tools-restriction",
+        "epic-grooming",
+        "refine-skill"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "backlog-priority-field",
+            "impetus-allowed-tools-restriction"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "epic-grooming"
+          ]
+        },
+        {
+          "wave": 3,
+          "stories": [
+            "refine-skill"
+          ]
+        }
+      ],
+      "started": "2026-04-06",
+      "completed": "2026-04-06",
+      "retro_run_at": null
     }
   ]
 }

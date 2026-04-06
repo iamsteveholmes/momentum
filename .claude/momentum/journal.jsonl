@@ -1,0 +1,5 @@
+{"ts":"2026-04-05T10:00:00Z","event":"thread_open","thread_id":"t1","title":"Thread A"}
+this is not valid json {{{{
+{"ts":"2026-04-05T10:02:00Z","event":"thread_open","thread_id":"t3","title":"Thread C"}
+corrupted line without braces
+{"ts":"2026-04-05T10:03:00Z","event":"thread_close","thread_id":"t1","title":"Thread A"}

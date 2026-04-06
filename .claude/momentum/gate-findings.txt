@@ -1,0 +1,10 @@
+# Gate Findings
+
+Generated: 2026-04-06T07:37:39Z
+
+## Uncommitted Changes
+
+ M .claude/momentum/sprint-logs/sprint-2026-04-05-2/impetus.jsonl
+?? .claude/momentum/gate-findings.txt
+?? .claude/momentum/journal.jsonl
+?? .claude/momentum/test-bad.json
