@@ -1033,17 +1033,6 @@
       "skills/momentum/agents/e2e-validator.md"
     ]
   },
-  "pre-push-version-check": {
-    "status": "backlog",
-    "title": "Pre-Push Version Check Hook — Block Push Without Plugin Version Bump",
-    "epic_slug": "quality-enforcement",
-    "story_file": false,
-    "depends_on": [],
-    "touches": [
-      ".claude/settings.json",
-      "skills/momentum/scripts/momentum-tools.py"
-    ]
-  },
   "quick-fix-skill": {
     "status": "ready-for-dev",
     "title": "Quick Fix Skill — Single-Story Tactical Workflow",
