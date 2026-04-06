@@ -50,7 +50,7 @@
   },
   "momentum-tooling": {
     "status": "done",
-    "title": "Momentum Tooling \u2014 Python CLI for Deterministic Operations",
+    "title": "Momentum Tooling — Python CLI for Deterministic Operations",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [
@@ -67,7 +67,7 @@
   },
   "impetus-identity-redesign": {
     "status": "done",
-    "title": "Impetus Identity Redesign \u2014 BMAD-Informed Character",
+    "title": "Impetus Identity Redesign — BMAD-Informed Character",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -77,7 +77,7 @@
   },
   "session-open-sprint-view": {
     "status": "done",
-    "title": "Session-Open Sprint View \u2014 Mode Detection and Fill Bars",
+    "title": "Session-Open Sprint View — Mode Detection and Fill Bars",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -728,7 +728,7 @@
   },
   "agent-logging-tool": {
     "status": "done",
-    "title": "Agent Logging Tool \u2014 momentum-tools log subcommand",
+    "title": "Agent Logging Tool — momentum-tools log subcommand",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -739,7 +739,7 @@
   },
   "momentum-dev-simplify": {
     "status": "done",
-    "title": "Momentum Dev Simplify \u2014 Pure Executor",
+    "title": "Momentum Dev Simplify — Pure Executor",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -778,7 +778,7 @@
   },
   "agent-guidelines-skill": {
     "status": "done",
-    "title": "Agent Guidelines Skill \u2014 Guided Technology Guidelines Generation for Projects",
+    "title": "Agent Guidelines Skill — Guided Technology Guidelines Generation for Projects",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -791,7 +791,7 @@
   },
   "8-1-avfl-corpus-mode": {
     "status": "done",
-    "title": "AVFL Corpus Mode \u2014 Multi-Document Cross-Validation for momentum-avfl",
+    "title": "AVFL Corpus Mode — Multi-Document Cross-Validation for momentum-avfl",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [],
@@ -803,7 +803,7 @@
   },
   "8-2-momentum-research-skill": {
     "status": "ready-for-dev",
-    "title": "momentum-research Skill \u2014 6-Phase Deep Research Pipeline with Provenance",
+    "title": "momentum-research Skill — 6-Phase Deep Research Pipeline with Provenance",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [],
@@ -816,7 +816,7 @@
   },
   "8-3-gemini-deep-research-automation": {
     "status": "ready-for-dev",
-    "title": "Gemini Deep Research Automation \u2014 cmux-browser Integration for momentum-research",
+    "title": "Gemini Deep Research Automation — cmux-browser Integration for momentum-research",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [
@@ -829,7 +829,7 @@
   },
   "avfl-scan-profile": {
     "status": "done",
-    "title": "AVFL Scan Profile \u2014 Discovery-Only Validation for Team Handoff",
+    "title": "AVFL Scan Profile — Discovery-Only Validation for Team Handoff",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -841,7 +841,7 @@
   },
   "plugin-skeleton": {
     "status": "ready-for-dev",
-    "title": "Plugin Skeleton \u2014 Create Plugin Root and Manifest",
+    "title": "Plugin Skeleton — Create Plugin Root and Manifest",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [],
@@ -852,7 +852,7 @@
   },
   "plugin-migrate-skills": {
     "status": "ready-for-dev",
-    "title": "Plugin Migrate Skills \u2014 Move Satellite Skills into Plugin Structure",
+    "title": "Plugin Migrate Skills — Move Satellite Skills into Plugin Structure",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [
@@ -864,7 +864,7 @@
   },
   "plugin-scripts-hooks-refs": {
     "status": "ready-for-dev",
-    "title": "Plugin Scripts, Hooks, and References \u2014 Consolidate at Plugin Root",
+    "title": "Plugin Scripts, Hooks, and References — Consolidate at Plugin Root",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [
@@ -878,7 +878,7 @@
   },
   "plugin-cross-references": {
     "status": "ready-for-dev",
-    "title": "Plugin Cross-References \u2014 Update All Internal References",
+    "title": "Plugin Cross-References — Update All Internal References",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [
@@ -891,7 +891,7 @@
   },
   "sprint-planning-skill": {
     "status": "ready-for-dev",
-    "title": "Sprint Planning Skill \u2014 Create SKILL.md for Sprint Planning Workflow",
+    "title": "Sprint Planning Skill — Create SKILL.md for Sprint Planning Workflow",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [],
@@ -901,7 +901,7 @@
   },
   "sprint-dev-skill": {
     "status": "ready-for-dev",
-    "title": "Sprint Dev Skill \u2014 Create SKILL.md for Sprint Execution Workflow",
+    "title": "Sprint Dev Skill — Create SKILL.md for Sprint Execution Workflow",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [],
@@ -911,7 +911,7 @@
   },
   "dev-agent-definition-files": {
     "status": "ready-for-dev",
-    "title": "Dev Agent Definition Files \u2014 Lightweight Agent for Sprint-Dev Spawning",
+    "title": "Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawning",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -922,7 +922,7 @@
   },
   "specialist-dev-agents": {
     "status": "ready-for-dev",
-    "title": "Specialist Dev Agents \u2014 Domain-Specific Agent Definitions",
+    "title": "Specialist Dev Agents — Domain-Specific Agent Definitions",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -936,7 +936,7 @@
   },
   "guidelines-verification-gate": {
     "status": "ready-for-dev",
-    "title": "Guidelines Verification Gate \u2014 Sprint Planning Checks for Missing Guidelines",
+    "title": "Guidelines Verification Gate — Sprint Planning Checks for Missing Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -948,7 +948,7 @@
   },
   "architecture-guard-implementation": {
     "status": "ready-for-dev",
-    "title": "Architecture Guard Implementation \u2014 Replace Stub with Real Agent Definition",
+    "title": "Architecture Guard Implementation — Replace Stub with Real Agent Definition",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -961,8 +961,8 @@
     ]
   },
   "sprint-lifecycle-tools": {
-    "status": "in-progress",
-    "title": "Sprint Lifecycle Tools \u2014 Status Fields, New Commands, and Unit Tests",
+    "status": "review",
+    "title": "Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [],
@@ -972,8 +972,8 @@
     ]
   },
   "sprint-index-schema-migration": {
-    "status": "in-progress",
-    "title": "Sprint Index Schema Migration \u2014 Add Status and Retro Fields",
+    "status": "review",
+    "title": "Sprint Index Schema Migration — Add Status and Retro Fields",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [],
@@ -982,8 +982,8 @@
     ]
   },
   "impetus-greeting-rewrite": {
-    "status": "ready-for-dev",
-    "title": "Impetus Greeting Rewrite \u2014 9-State Narrative Orientation",
+    "status": "review",
+    "title": "Impetus Greeting Rewrite — 9-State Narrative Orientation",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [
@@ -995,8 +995,8 @@
     ]
   },
   "sprint-workflow-alignment": {
-    "status": "ready-for-dev",
-    "title": "Sprint Workflow Alignment \u2014 Fix Slug Extraction and Status Transitions",
+    "status": "review",
+    "title": "Sprint Workflow Alignment — Fix Slug Extraction and Status Transitions",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [
@@ -1009,7 +1009,7 @@
   },
   "journal-status-tool": {
     "status": "backlog",
-    "title": "Journal Status Tool \u2014 Deterministic Open Thread Detection",
+    "title": "Journal Status Tool — Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [
@@ -1022,7 +1022,7 @@
   },
   "quick-fix-skill": {
     "status": "ready-for-dev",
-    "title": "Quick Fix Skill \u2014 Single-Story Tactical Workflow",
+    "title": "Quick Fix Skill — Single-Story Tactical Workflow",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],

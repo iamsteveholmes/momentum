@@ -7,3 +7,4 @@
 {"timestamp": "2026-04-05T08:55:43.516088", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Sprint sprint-2026-04-05 activated"}
 {"timestamp": "2026-04-05T16:56:33.384751", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Sprint execution started: 4 stories, 3 waves. Wave 1 unblocked: sprint-lifecycle-tools, sprint-index-schema-migration"}
 {"timestamp": "2026-04-05T16:57:45.389029", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Spawned dev agents for: sprint-lifecycle-tools (worktree), sprint-index-schema-migration (worktree)"}
+{"timestamp": "2026-04-05T18:44:00.321369", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-05", "event": "decision", "detail": "Spawned dev agents for: sprint-workflow-alignment (worktree), impetus-greeting-rewrite (worktree) — both dependencies merged"}
