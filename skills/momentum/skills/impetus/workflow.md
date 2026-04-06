@@ -251,38 +251,38 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     <action>Filter `versions["{{current_version}}"].actions` to only groups in {{needs_work}}</action>
     <action>Iterate filtered actions in order. For each action:</action>
 
-    <!-- add: write new file to target path -->
+    <!-- add: copy new file to target path via Bash -->
     <check if="action.action == 'add'">
       <action>Resolve source path: `${CLAUDE_SKILL_DIR}/references/{{action.source}}`</action>
       <action>Resolve target path: expand `~` to `$HOME` in `{{action.target}}`</action>
-      <action>Create parent directories if they don't exist</action>
+      <action>Create parent directories via Bash: `mkdir -p "$(dirname RESOLVED_TARGET)"`</action>
       <action>If target file already exists: warn but proceed (idempotent on first install)</action>
-      <action>Read source file content and write to resolved target path</action>
+      <action>Copy source to target via Bash: `cp "RESOLVED_SOURCE" "RESOLVED_TARGET"`</action>
       <action>If `action.requires_restart == true`: set restart_required = true</action>
       <output>  ✓  {{action.target}}</output><!-- display ~-form, not resolved absolute path -->
     </check>
 
-    <!-- replace: overwrite existing file at target path -->
+    <!-- replace: overwrite existing file at target path via Bash -->
     <check if="action.action == 'replace'">
       <action>Resolve source path: `${CLAUDE_SKILL_DIR}/references/{{action.source}}`</action>
       <action>Resolve target path: expand `~` to `$HOME` in `{{action.target}}`</action>
-      <action>Read source file content and write to resolved target path</action>
+      <action>Copy source to target via Bash: `cp "RESOLVED_SOURCE" "RESOLVED_TARGET"`</action>
       <action>If `action.requires_restart == true`: set restart_required = true</action>
       <output>  ✓  {{action.target}}</output>
     </check>
 
-    <!-- delete: remove file at target path -->
+    <!-- delete: remove file at target path via Bash -->
     <check if="action.action == 'delete'">
       <action>Resolve target path: expand `~` to `$HOME` in `{{action.target}}`</action>
-      <action>Delete the file at resolved target path. If file doesn't exist, skip silently.</action>
+      <action>Delete the file via Bash: `rm -f "RESOLVED_TARGET"` (silent if absent)</action>
       <output>  ✓  {{action.target}} — removed</output>
     </check>
 
-    <!-- migration: read instruction file and follow it -->
+    <!-- migration: read instruction file and execute mutations via Bash -->
     <check if="action.action == 'migration'">
       <action>Resolve instruction path: `${CLAUDE_SKILL_DIR}/references/{{action.source}}`</action>
       <action>Read the migration instruction file</action>
-      <action>Follow the natural language instructions in the file — they describe exactly what to read, modify, and write. The instruction file may reference additional bundled data files relative to `${CLAUDE_SKILL_DIR}/references/`.</action>
+      <action>Follow the natural language instructions in the file — they describe exactly what to read and what mutations to perform. Execute all file mutations via Bash (python3 -c, cp, tee, sed). The instruction file may reference additional bundled data files relative to `${CLAUDE_SKILL_DIR}/references/`.</action>
       <action>If `action.requires_restart == true`: set restart_required = true</action>
       <output>  ✓  {{action.description}}</output>
     </check>
@@ -302,26 +302,26 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
   <step n="4" goal="Write state files — record what was installed">
     <!-- Update global state file if any global-scoped groups were installed -->
     <check if="any installed group has scope == 'global'">
-      <action>Create `~/.claude/momentum/` directory if it doesn't exist</action>
+      <action>Create `~/.claude/momentum/` directory via Bash: `mkdir -p "$HOME/.claude/momentum"`</action>
       <action>Read existing `~/.claude/momentum/global-installed.json` (start with `{}` if absent)</action>
       <action>For each global-scoped group that was installed:
-        - Compute hash: run `git hash-object` on the first file in that group's actions (e.g., `~/.claude/rules/authority-hierarchy.md`). If command fails, use empty string.
+        - Compute hash: run `git hash-object` on the first file in that group's actions (e.g., `~/.claude/rules/authority-hierarchy.md`) via Bash. If command fails, use empty string.
         - Set `components.{{group}}.version` = {{current_version}}
         - Set `components.{{group}}.hash` = computed hash
       </action>
       <action>Set `installed_at` = current ISO 8601 timestamp</action>
-      <action>Write `~/.claude/momentum/global-installed.json`</action>
+      <action>Serialize updated JSON and write via Bash: `python3 -c "import json,sys; data=json.loads(sys.stdin.read()); open('$HOME/.claude/momentum/global-installed.json','w').write(json.dumps(data,indent=2))" <<< '{{serialized_json}}'`</action>
     </check>
 
     <!-- Update project state file if any project-scoped groups were installed -->
     <check if="any installed group has scope == 'project'">
-      <action>Create `.claude/momentum/` directory if it doesn't exist</action>
+      <action>Create `.claude/momentum/` directory via Bash: `mkdir -p ".claude/momentum"`</action>
       <action>Read existing `.claude/momentum/installed.json` (start with `{}` if absent)</action>
       <action>For each project-scoped group that was installed:
         - Set `components.{{group}}.version` = {{current_version}}
       </action>
       <action>Set `installed_at` = current ISO 8601 timestamp</action>
-      <action>Write `.claude/momentum/installed.json`</action>
+      <action>Serialize updated JSON and write via Bash: `python3 -c "import json,sys; data=json.loads(sys.stdin.read()); open('.claude/momentum/installed.json','w').write(json.dumps(data,indent=2))" <<< '{{serialized_json}}'`</action>
     </check>
 
     <action>GOTO step 5 (verify git tracking)</action>
@@ -331,7 +331,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     <action>Check `.gitignore` does not contain an entry excluding `.claude/momentum/installed.json` or `.claude/momentum/`</action>
     <check if=".gitignore excludes installed.json">
       <output>  !  .gitignore excludes .claude/momentum/installed.json — removing exclusion so team members can detect project setup state.</output>
-      <action>Remove or comment out the exclusion from .gitignore</action>
+      <action>Remove the exclusion via Bash: `python3 -c "import re,sys; content=open('.gitignore').read(); content=re.sub(r'(?m)^\.claude/momentum/installed\.json\n?', '', content); content=re.sub(r'(?m)^\.claude/momentum/\n?', '', content); open('.gitignore','w').write(content)"`</action>
     </check>
     <action>GOTO step 7 (session orientation)</action>
   </step>
@@ -502,13 +502,13 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
   <step n="13" goal="Journal write and view regeneration">
     <note>This step describes the journal write protocol invoked whenever any workflow step needs to update journal state. It is not reached by linear flow — it is a shared procedure.</note>
-    <action>Append a new JSON line to `.claude/momentum/journal.jsonl` with all required fields per `${CLAUDE_SKILL_DIR}/references/journal-schema.md`</action>
+    <action>Append a new JSON line to `.claude/momentum/journal.jsonl` via Bash: `echo '{{json_line}}' >> .claude/momentum/journal.jsonl`</action>
     <action>After append, regenerate `.claude/momentum/journal-view.md`:
       - Read all journal entries
       - Reconstruct current state per thread_id (last entry wins)
       - Render a markdown table with columns: Thread (context_summary_short), Story, Phase, Last Action, Last Active, Status (never use thread_id / T-NNN as a column value)
       - Include all open threads and threads closed within the last 7 days
-      - Write to `.claude/momentum/journal-view.md` (overwrite)</action>
+      - Write to `.claude/momentum/journal-view.md` via Bash: `python3 -c "open('.claude/momentum/journal-view.md','w').write('''{{rendered_markdown}}''')"` (overwrite)</action>
   </step>
 
   <!-- Version upgrade path -->
@@ -568,11 +568,12 @@ Where: restart_notice = "! Restart Claude Code after applying." if any action ha
       <action>Execute all filtered actions using step 3's action execution logic (add/replace/delete/migration)</action>
 
       <!-- After all actions for this version complete -->
-      <action>Update state files:
-        - For each global-scoped group upgraded: update global-installed.json.components.{{group}}.version = {{version_entry.version}}; recompute hash
+      <action>Update state files via Bash:
+        - For each global-scoped group upgraded: update global-installed.json.components.{{group}}.version = {{version_entry.version}}; recompute hash via `git hash-object`
         - For each project-scoped group upgraded: update installed.json.components.{{group}}.version = {{version_entry.version}}
         - Update `installed_at` in both files
-        - Write both state files
+        - Write global-installed.json via Bash: `python3 -c "import json,sys; data=json.loads(sys.stdin.read()); open('$HOME/.claude/momentum/global-installed.json','w').write(json.dumps(data,indent=2))" <<< '{{serialized_global_json}}'`
+        - Write installed.json via Bash: `python3 -c "import json,sys; data=json.loads(sys.stdin.read()); open('.claude/momentum/installed.json','w').write(json.dumps(data,indent=2))" <<< '{{serialized_project_json}}'`
       </action>
 
       <output>  All caught up — latest practice updates are in place.</output>
@@ -611,9 +612,9 @@ Where: restart_notice = "! Restart Claude Code after applying." if any action ha
       <ask>[R] or [K]?</ask>
 
       <check if="developer chooses [R]">
-        <action>Re-execute the `add` or `replace` actions from the current version's action list where `action.group` matches the drifted group. For each: resolve source from `${CLAUDE_SKILL_DIR}/references/{{action.source}}`, write to resolved target path.</action>
+        <action>Re-execute the `add` or `replace` actions from the current version's action list where `action.group` matches the drifted group. For each: resolve source from `${CLAUDE_SKILL_DIR}/references/{{action.source}}`, copy to resolved target via Bash: `cp "RESOLVED_SOURCE" "RESOLVED_TARGET"`</action>
         <output>  ✓  {{action.target}}</output><!-- one line per re-applied file -->
-        <action>Recompute hash and update `global-installed.json.components.{{group}}.hash`. Write updated global-installed.json.</action>
+        <action>Recompute hash via Bash: `git hash-object RESOLVED_TARGET`. Update `global-installed.json.components.{{group}}.hash`. Write updated global-installed.json via Bash: `python3 -c "import json,sys; data=json.loads(sys.stdin.read()); open('$HOME/.claude/momentum/global-installed.json','w').write(json.dumps(data,indent=2))" <<< '{{serialized_global_json}}'`</action>
         <action>GOTO step 7 (session orientation)</action>
       </check>
 
