@@ -3,10 +3,17 @@
 # Fires after Write, Edit, or NotebookEdit tool use.
 #
 # Output format (always exactly one line):
-#   [lint] ✓ checked [file path] — clean
-#   [lint] ✓ auto-fixed [N issue(s)] in [file path]
-#   [lint] ✗ [N issues] — [file:line of first] — [likely cause]
-#   [lint] ◦ skipped — no lint tool configured
+#   [momentum-lint] ✓ checked [file path] — clean
+#   [momentum-lint] ✓ auto-fixed [N issue(s)] in [file path]
+#   [momentum-lint] ✗ [N issues] — [file:line of first] — [likely cause]
+#   [momentum-lint] ◦ skipped [file path] — no lint tool configured
+#
+# Per-extension dispatch:
+#   .py  → ruff check FILE (if ruff available, skip if not)
+#   .json → python3 -m json.tool FILE > /dev/null
+#   .sh/.bash → shellcheck FILE (if available, skip if not)
+#   .md  → trailing whitespace check on non-empty lines
+#   Other → skip silently
 #
 # Session state: appends modified file path to .claude/momentum/session-modified-files.txt
 # Re-entrancy: uses filesystem lockfile to prevent recursive hook firing
@@ -42,161 +49,116 @@ if [[ -z "$FILE_PATH" ]]; then
   exit 0
 fi
 
-# --- Session state: record modified file ---
+# --- Session state: record modified file (dedup) ---
 mkdir -p "$MOMENTUM_DIR"
-echo "$FILE_PATH" >> "$SESSION_FILE"
+grep -qxF "$FILE_PATH" "$SESSION_FILE" 2>/dev/null || echo "$FILE_PATH" >> "$SESSION_FILE"
 
-# --- Lint tool detection ---
-# Walk up from file's directory looking for project root markers (same dir as PROJECT_DIR)
-detect_lint_tool() {
-  local pkg_json="$PROJECT_DIR/package.json"
-  local prettierrc="$PROJECT_DIR/.prettierrc"
-  local prettierrc_json="$PROJECT_DIR/.prettierrc.json"
-  local prettier_config="$PROJECT_DIR/prettier.config.js"
-  local eslintrc="$PROJECT_DIR/.eslintrc"
-  local eslintrc_json="$PROJECT_DIR/.eslintrc.json"
-  local eslint_config="$PROJECT_DIR/eslint.config.js"
-  local pyproject="$PROJECT_DIR/pyproject.toml"
-  local setup_cfg="$PROJECT_DIR/setup.cfg"
-
-  # 1. Check package.json scripts.lint or scripts.format
-  if [[ -f "$pkg_json" ]]; then
-    local lint_script
-    lint_script=$(python3 -c "
-import json, sys
-try:
-    data = json.load(open('$pkg_json'))
-    scripts = data.get('scripts', {})
-    if 'lint' in scripts:
-        print('npm run lint')
-    elif 'format' in scripts:
-        print('npm run format')
-except:
-    pass
-" 2>/dev/null || echo "")
-    if [[ -n "$lint_script" ]]; then
-      echo "$lint_script"
-      return
-    fi
-  fi
-
-  # 2. Prettier config files
-  if [[ -f "$prettierrc" || -f "$prettierrc_json" || -f "$prettier_config" ]]; then
-    echo "prettier --write"
-    return
-  fi
-
-  # 3. ESLint config files
-  if [[ -f "$eslintrc" || -f "$eslintrc_json" || -f "$eslint_config" ]]; then
-    echo "eslint --fix"
-    return
-  fi
-
-  # 4. Python tools: pyproject.toml with ruff or black
-  if [[ -f "$pyproject" ]]; then
-    if grep -q '\[tool\.ruff\]' "$pyproject" 2>/dev/null; then
-      echo "ruff format"
-      return
-    fi
-    if grep -q '\[tool\.black\]' "$pyproject" 2>/dev/null; then
-      echo "black"
-      return
-    fi
-  fi
-
-  # 5. setup.cfg with flake8
-  if [[ -f "$setup_cfg" ]] && grep -q '\[flake8\]' "$setup_cfg" 2>/dev/null; then
-    echo "flake8"
-    return
-  fi
-
-  # 6. No tool found
-  echo ""
-}
-
-LINT_TOOL=$(detect_lint_tool)
-
-if [[ -z "$LINT_TOOL" ]]; then
-  echo "[lint] ◦ skipped — no lint tool configured"
-  exit 0
-fi
-
-# --- Run lint tool ---
-# Determine if the tool supports auto-fix (write-back) or is lint-only
+# --- Per-extension lint dispatch ---
+EXT="${FILE_PATH##*.}"
 LINT_CMD=""
-IS_FIX_ONLY=false
+IS_FIX_TOOL=false
+IS_MD_CHECK=false
 
-case "$LINT_TOOL" in
-  "prettier --write")
-    LINT_CMD="prettier --write \"$FILE_PATH\""
-    IS_FIX_ONLY=true
+case "$EXT" in
+  py)
+    if command -v ruff >/dev/null 2>&1; then
+      # Try ruff format first (auto-fix), then ruff check (lint)
+      LINT_CMD="ruff format"
+      IS_FIX_TOOL=true
+    fi
     ;;
-  "eslint --fix")
-    LINT_CMD="eslint --fix \"$FILE_PATH\""
-    IS_FIX_ONLY=false
+  json)
+    LINT_CMD="python3 -m json.tool"
     ;;
-  "ruff format")
-    LINT_CMD="ruff format \"$FILE_PATH\""
-    IS_FIX_ONLY=true
+  sh|bash)
+    if command -v shellcheck >/dev/null 2>&1; then
+      LINT_CMD="shellcheck"
+    fi
     ;;
-  "black")
-    LINT_CMD="black \"$FILE_PATH\""
-    IS_FIX_ONLY=true
-    ;;
-  "flake8")
-    LINT_CMD="flake8 \"$FILE_PATH\""
-    IS_FIX_ONLY=false
-    ;;
-  npm\ run\ *)
-    # npm scripts — run without file arg; they handle their own scope
-    LINT_CMD="$LINT_TOOL"
-    IS_FIX_ONLY=false
+  md)
+    IS_MD_CHECK=true
     ;;
   *)
-    LINT_CMD="$LINT_TOOL \"$FILE_PATH\""
-    IS_FIX_ONLY=false
+    # Skip silently — no output for unsupported extensions
+    exit 0
     ;;
 esac
 
-# Capture output and exit code
+# If no tool available for this extension, skip silently
+if [[ -z "$LINT_CMD" && "$IS_MD_CHECK" == "false" ]]; then
+  exit 0
+fi
+
+# --- Run per-extension lint ---
+if [[ "$IS_MD_CHECK" == "true" ]]; then
+  # Markdown: check for trailing whitespace on non-empty lines
+  MD_ISSUES=$(grep -nE '[^ ] +$' "$FILE_PATH" 2>/dev/null || true)
+  if [[ -n "$MD_ISSUES" ]]; then
+    ISSUE_COUNT=$(echo "$MD_ISSUES" | grep -c '.' 2>/dev/null || echo "1")
+    FIRST_LINE=$(echo "$MD_ISSUES" | head -1 | cut -d: -f1)
+    echo "[momentum-lint] ✗ ${ISSUE_COUNT} issue(s) — ${FILE_PATH}:${FIRST_LINE} — trailing whitespace"
+  else
+    echo "[momentum-lint] ✓ checked ${FILE_PATH} — clean"
+  fi
+  exit 0
+fi
+
+if [[ "$LINT_CMD" == "python3 -m json.tool" ]]; then
+  # JSON validation — check only, no fix
+  LINT_OUTPUT=""
+  LINT_EXIT=0
+  LINT_OUTPUT=$(python3 -m json.tool "$FILE_PATH" > /dev/null 2>&1) || LINT_EXIT=$?
+  if [[ "$LINT_EXIT" -eq 0 ]]; then
+    echo "[momentum-lint] ✓ checked ${FILE_PATH} — clean"
+  else
+    echo "[momentum-lint] ✗ 1 issue(s) — ${FILE_PATH} — invalid JSON"
+  fi
+  exit 0
+fi
+
+# --- Run lint/format tool ---
 LINT_OUTPUT=""
 LINT_EXIT=0
-LINT_OUTPUT=$(cd "$PROJECT_DIR" && eval "$LINT_CMD" 2>&1) || LINT_EXIT=$?
+LINT_OUTPUT=$(cd "$PROJECT_DIR" && $LINT_CMD "$FILE_PATH" 2>&1) || LINT_EXIT=$?
 
-# --- Parse results and output one line ---
-if [[ "$IS_FIX_ONLY" == "true" ]]; then
-  # Fix-only tools (prettier, ruff format, black): any run = auto-fix applied
-  # Check if file was actually changed by comparing with git
+if [[ "$IS_FIX_TOOL" == "true" ]]; then
+  # Fix-only tools (ruff format): check if file was actually changed
   GIT_DIFF_COUNT=$(cd "$PROJECT_DIR" && git diff --name-only -- "$FILE_PATH" 2>/dev/null | wc -l | tr -d ' ') || GIT_DIFF_COUNT=0
   if [[ "$GIT_DIFF_COUNT" -gt 0 ]]; then
-    echo "[lint] ✓ auto-fixed 1 issue(s) in $FILE_PATH"
+    echo "[momentum-lint] ✓ auto-fixed 1 issue(s) in $FILE_PATH"
   else
-    echo "[lint] ✓ checked $FILE_PATH — clean"
+    echo "[momentum-lint] ✓ checked $FILE_PATH — clean"
   fi
-elif [[ $LINT_EXIT -eq 0 ]]; then
-  echo "[lint] ✓ checked $FILE_PATH — clean"
+  # Also run ruff check after formatting
+  if command -v ruff >/dev/null 2>&1; then
+    CHECK_OUTPUT=""
+    CHECK_EXIT=0
+    CHECK_OUTPUT=$(cd "$PROJECT_DIR" && ruff check "$FILE_PATH" 2>&1) || CHECK_EXIT=$?
+    if [[ "$CHECK_EXIT" -ne 0 ]]; then
+      ISSUE_COUNT=$(echo "$CHECK_OUTPUT" | grep -c '[^[:space:]]' 2>/dev/null || echo "1")
+      FIRST_ISSUE=$(echo "$CHECK_OUTPUT" | head -1 | sed 's/[[:space:]]*$//')
+      echo "[momentum-lint] ✗ ${ISSUE_COUNT} issue(s) — ${FIRST_ISSUE}"
+    fi
+  fi
+elif [[ "$LINT_EXIT" -eq 0 ]]; then
+  echo "[momentum-lint] ✓ checked $FILE_PATH — clean"
 else
-  # Lint reported issues — extract location and cause from first issue line
+  # Lint reported issues
   FIRST_ISSUE_LINE=$(echo "$LINT_OUTPUT" | head -1 | sed 's/[[:space:]]*$//')
-
-  # Count actual issue lines (non-empty lines that look like lint output)
   ISSUE_COUNT=$(echo "$LINT_OUTPUT" | grep -c '[^[:space:]]' 2>/dev/null || echo "1")
 
   if [[ -n "$FIRST_ISSUE_LINE" ]]; then
-    # Try to extract file:line reference — typical pattern: "file.ext:LINE:COL: message"
-    # or "file.ext(LINE,COL): message" or just use the full first line
     FILE_LINE_REF=$(echo "$FIRST_ISSUE_LINE" | grep -oE '[^/[:space:]]+\.[a-z]+:[0-9]+[^:]*' | head -1 || echo "")
     if [[ -z "$FILE_LINE_REF" ]]; then
       FILE_LINE_REF="$FILE_PATH"
     fi
-    # Extract cause: everything after the location reference
     CAUSE=$(echo "$FIRST_ISSUE_LINE" | sed 's/.*:[0-9][0-9]*:[[:space:]]*//' | sed 's/.*error:[[:space:]]*//' | sed 's/.*warning:[[:space:]]*//' | cut -c1-80)
     if [[ -z "$CAUSE" ]]; then
       CAUSE="$FIRST_ISSUE_LINE"
     fi
-    echo "[lint] ✗ ${ISSUE_COUNT} issue(s) — ${FILE_LINE_REF} — ${CAUSE}"
+    echo "[momentum-lint] ✗ ${ISSUE_COUNT} issue(s) — ${FILE_LINE_REF} — ${CAUSE}"
   else
-    echo "[lint] ✗ issue(s) found — $FILE_PATH — lint tool exited $LINT_EXIT"
+    echo "[momentum-lint] ✗ issue(s) found — $FILE_PATH — lint tool exited $LINT_EXIT"
   fi
 fi
 

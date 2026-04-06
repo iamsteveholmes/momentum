@@ -1,0 +1,35 @@
+{
+  "description": "Default protected path patterns for Momentum file-protection hook",
+  "paths": [
+    {
+      "pattern": "tests/acceptance/*",
+      "policy": "acceptance-test-dir",
+      "reason": "no modification after ATDD phase begins"
+    },
+    {
+      "pattern": "*.feature",
+      "policy": "acceptance-test-dir",
+      "reason": "no modification after ATDD phase begins"
+    },
+    {
+      "pattern": ".claude/rules/*",
+      "policy": "project-rules",
+      "reason": "project rules are read-only during implementation"
+    },
+    {
+      "pattern": "_bmad-output/planning-artifacts/*.md",
+      "policy": "planning-artifacts",
+      "reason": "spec files are read-only during implementation"
+    },
+    {
+      "pattern": "_bmad-output/implementation-artifacts/stories/index.json",
+      "policy": "index-files",
+      "reason": "index files are managed by sprint-manager only"
+    },
+    {
+      "pattern": "_bmad-output/implementation-artifacts/sprints/index.json",
+      "policy": "index-files",
+      "reason": "index files are managed by sprint-manager only"
+    }
+  ]
+}
