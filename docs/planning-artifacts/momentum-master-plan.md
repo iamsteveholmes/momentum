@@ -476,6 +476,7 @@ These items appear in the master plan or Phase 5 roadmap but have no correspondi
 | 34 | Retro owns sprint closure | 2026-04-04 | Sprint-dev hands off after merge+push. Retro runs holistic cross-log discovery, verifies story closure, produces two triage outputs (Decision 27), creates story stubs, calls `sprint complete`, archives sprint artifacts out of active scan paths. |
 | 35 | Sprint branch convention | 2026-04-04 | All sprint work (planning + dev) on `sprint/{sprint_slug}` branch. Merges to main only at sprint completion. Isolates concurrent sprints. Local until verified — pushed only after Phase 7. |
 | 36 | Backlog priority field | 2026-04-06 | All stories carry a `priority` field: critical, high, medium, low (default: low). Priority is set by user or suggested by agent and confirmed by user. Supports sprint planning story selection. |
+| 37 | Agent role simplification | 2026-04-06 | Momentum provides two agent types by methodology: **dev** (code, TDD) and **prompt-engineer** (skill instructions, EDD). Domain specialization (frontend, backend, build) comes from directory-scoped CLAUDE.md files in the project, not from separate agent definition files. Projects define developer roles (e.g., "Frontend Developer = dev agent + frontend/CLAUDE.md guidelines") via `momentum:agent-guidelines`, which handles both role definition and guideline creation. Sprint planning classifies stories by `change_type` for methodology and `touches` paths for guideline scoping. Replaces Decision 26's specialist agent files (dev-build, dev-frontend, dev-skills). |
 
 ---
 
@@ -664,3 +665,4 @@ _bmad-output/implementation-artifacts/
 | `npx skills add` installation | `claude plugin add momentum` | 2026-04-03 |
 | Per-story AVFL | Sprint-level AVFL (Decision 31) | Phase 3 |
 | 6-phase sprint-dev | 7-phase sprint-dev with Team Review | 2026-04-04 |
+| Domain-specific agent files (dev-build, dev-frontend, dev-skills) | Two methodology agents (dev, prompt-engineer) + directory-scoped CLAUDE.md (Decision 37) | 2026-04-06 |
