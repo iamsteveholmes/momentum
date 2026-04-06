@@ -304,16 +304,22 @@ Proceeding to implementation.</output>
 
   <step n="3" goal="Implement — worktree, dev agent, merge">
 
-    <!-- 3a: Branch check -->
+    <!-- 3a: Branch check and worktree creation -->
     <action>Check current branch via `git rev-parse --abbrev-ref HEAD`</action>
 
     <check if="current branch is not main">
-      <output>! You're on `{{current_branch}}`, not `main`. Quick-fix will branch from `main`. Continue, or switch first?</output>
-      <ask>Continue (worktree from main), or switch to main first?</ask>
+      <output>! You're on `{{current_branch}}`, not `main`.
+Quick-fix always creates a worktree from `main` — your current branch stays unchanged.
+The fix will be developed in an isolated worktree and merged to `main` when complete.</output>
+      <ask>Continue (worktree from main, your branch stays on {{current_branch}}), or switch to main first?</ask>
+    </check>
+
+    <check if="current branch is main">
+      <output>→ Creating worktree from `main` for quick-fix. Your branch stays on `main`.</output>
     </check>
 
     <!-- 3b: Create worktree -->
-    <action>Create worktree off main:
+    <action>Create worktree off main (does NOT change current branch):
       `git worktree add .worktrees/quickfix-{{story_slug}} main`
     Store {{worktree_path}} = `.worktrees/quickfix-{{story_slug}}`</action>
 
