@@ -629,6 +629,63 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
             else:
                 state = "active-in-progress"
 
+        # --- Render greeting templates inline (eliminates session-greeting.md read) ---
+        _vars = {
+            "active_sprint": active_sprint or planning_sprint or "unknown",
+            "planning_sprint": planning_sprint or "",
+            "last_completed_sprint": last_completed_sprint or "",
+        }
+
+        _narratives = {
+            "first-session-ever": "I am Impetus. I hold the line on engineering discipline \u2014 sprints, quality, the lifecycle of every story. You build. I make sure nothing falls through the cracks.\n\nThis is the beginning. Let\u2019s forge something worth building.",
+            "active-not-started": 'The path is clear. Sprint \u201c{active_sprint}\u201d stands ready \u2014 waiting on you to lead the way.',
+            "active-in-progress": 'Sprint \u201c{active_sprint}\u201d is underway \u2014 steady ground, nothing standing in our way.',
+            "active-blocked": 'Sprint \u201c{active_sprint}\u201d \u2014 something stands in the way. One story needs you before we can move forward.',
+            "active-planned-needs-work": 'Sprint \u201c{active_sprint}\u201d is underway \u2014 holding strong.',
+            "done-retro-needed": 'Sprint \u201c{active_sprint}\u201d \u2014 the work is done. Every story carried across the line.',
+            "done-no-planned": 'Sprint \u201c{active_sprint}\u201d \u2014 the work is done.',
+            "no-active-nothing-planned": 'All still. The last sprint \u2014 \u201c{last_completed_sprint}\u201d \u2014 was carried to completion.',
+            "no-active-planned-ready": '\u201c{planning_sprint}\u201d stands ready. The groundwork is laid.',
+        }
+
+        _planning_contexts = {
+            "active-not-started": '\u201c{planning_sprint}\u201d is taking shape behind it.',
+            "active-in-progress": '\u201c{planning_sprint}\u201d is taking shape behind it.',
+            "active-blocked": '\u201c{planning_sprint}\u201d is taking shape behind it.',
+            "active-planned-needs-work": '\u201c{planning_sprint}\u201d is coming together, but it needs more of your thinking before it\u2019s ready to stand on its own.',
+            "done-retro-needed": '\u201c{planning_sprint}\u201d stands ready \u2014 it rises the moment we close this chapter.',
+            "done-no-planned": 'Nothing yet follows it. A good moment to look ahead and decide what we build next.',
+        }
+
+        _menus = {
+            "first-session-ever": ["Plan a sprint", "Refine backlog", "Triage"],
+            "active-not-started": ["Run the sprint", "Refine backlog", "Triage"],
+            "active-in-progress": ["Continue the sprint", "Refine backlog", "Triage"],
+            "active-blocked": ["Continue the sprint", "Refine backlog", "Triage"],
+            "active-planned-needs-work": ["Continue the sprint", "Finish planning", "Refine backlog", "Triage"],
+            "done-retro-needed": ["Run retro", "Refine backlog", "Triage"],
+            "done-no-planned": ["Run retro", "Plan a sprint", "Refine backlog", "Triage"],
+            "no-active-nothing-planned": ["Plan a sprint", "Refine backlog", "Triage"],
+            "no-active-planned-ready": ["Activate sprint", "Refine backlog", "Triage"],
+        }
+
+        _closers = {
+            "first-session-ever": "Where do we begin?",
+            "active-not-started": "Where do we begin?",
+            "active-in-progress": "Lead on.",
+            "active-blocked": "Let\u2019s face it together.",
+            "active-planned-needs-work": "I\u2019m with you.",
+            "done-retro-needed": "One last step to honor the work.",
+            "done-no-planned": "The road is open.",
+            "no-active-nothing-planned": "When you\u2019re ready, I\u2019m here.",
+            "no-active-planned-ready": "Give the word.",
+        }
+
+        rendered_narrative = _narratives.get(state, "").format(**_vars)
+        rendered_planning_context = (_planning_contexts.get(state) or "").format(**_vars) or None
+        rendered_menu = [f"[{i+1}] {item}" for i, item in enumerate(_menus.get(state, []))]
+        rendered_closer = _closers.get(state, "")
+
         greeting = {
             "state": state,
             "active_sprint": active_sprint,
@@ -636,6 +693,10 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
             "planning_status": planning_status,
             "momentum_completions": momentum_completions,
             "last_completed_sprint": last_completed_sprint,
+            "narrative": rendered_narrative,
+            "planning_context": rendered_planning_context,
+            "menu": rendered_menu,
+            "closer": rendered_closer,
         }
 
     result("session_startup_preflight", success=True,

@@ -26,20 +26,18 @@ Run `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py ses
 </check>
 
 <check if="preflight.route == 'greeting' AND preflight.has_open_threads == false">
-  <!-- HAPPY PATH — no workflow.md load needed -->
+  <!-- HAPPY PATH — no workflow.md load, no reference file load needed -->
+  <!-- Preflight returns pre-rendered greeting fields: narrative, planning_context, menu[], closer -->
   Store `{{greeting}}` = `{{preflight.greeting}}`.
-  Load `${CLAUDE_SKILL_DIR}/references/session-greeting.md`.
-
-  Look up `{{greeting.state}}` in the session-greeting reference. Render the narrative template for that state, substituting `{{greeting.active_sprint}}`, `{{greeting.planning_sprint}}`, and `{{greeting.last_completed_sprint}}` into the template variables.
 
   <output>Momentum
 
-  {{rendered narrative for greeting.state}}
-  {{rendered planning sprint context if applicable}}
+  {{greeting.narrative}}
+  {{greeting.planning_context — include only if non-null, on its own line}}
 
-  {{rendered menu for greeting.state}}
+  {{greeting.menu — each item on its own line}}
 
-  {{rendered closer for greeting.state}}</output>
+  {{greeting.closer}}</output>
 
   Wait for developer input.
 
