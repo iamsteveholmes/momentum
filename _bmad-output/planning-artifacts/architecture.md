@@ -42,6 +42,8 @@ date: '2026-03-17'
 lastEdited: '2026-04-04'
 editHistory:
   - date: '2026-04-04'
+    changes: 'Quick-fix spec impact: Added Decision 39 (Quick-Fix Bypass-Sprint Lifecycle Path) and Decision 40 (Change-Type-Driven Validator Selection). Extended Decision 26 with specialist classification table note and momentum-tools specialist-classify. Extended Decision 35 E2E Validator scope to include quick-fix Phase 4. Added momentum-tools quickfix to Read/Write Authority table. Added cmux markdown surfaces to Integration Points.'
+  - date: '2026-04-04'
     changes: 'Greeting redesign v8: Decision 4b rewritten — session orientation now uses 9 greeting states with adaptive 3-4 item menus (algorithmic construction based on sprint state + planning readiness + first-session detection). Fill bar rendering removed from session orientation. Added Decision 36 — Sprint Lifecycle State Machine (planning → ready → active → done → completed; retro as gate between done and completed; max one planned sprint). Added Decision 37 — Greeting State Detection (9 states with formal detection logic). Added Decision 38 — Narrative Voice Contract (KITT + Optimus Prime voice as binding architectural contract for all Impetus output). Sprint index schema enhanced with status and retro tracking fields. Progress indicator scope clarified: workflow-phase only, not greeting. Stats write architecture noted: invisible to user during greeting.'
   - date: '2026-04-04'
     changes: 'Decision 35 — Agent Definition Files vs SKILL.md Boundary: formalized decision framework for when to use SKILL.md (orchestrator/workflow, standalone verifier with context:fork) vs agent definition file (pure spawned worker). Added agents/ directory to plugin structure for QA reviewer and E2E validator. Applied framework to Team Review phase roles (Decision 34). Code-reviewer and architecture-guard confirmed as SKILL.md context:fork (standalone utility). AVFL sub-skills confirmed as nested SKILL.md (internal pipeline).'
@@ -1054,6 +1056,7 @@ momentum/                                    ← Plugin root
 |---|---|---|
 | Impetus | stories/index.json, sprints/index.json, journal.jsonl, specs, findings-ledger.jsonl, sprint-logs/{sprint-slug}/ | journal.jsonl, journal-view.md, sprint-logs (via momentum-tools log) |
 | momentum-tools sprint | stories/index.json, sprints/index.json | stories/index.json (status fields), sprints/index.json, sprints/{slug}.json (sole writer) |
+| momentum-tools quickfix | sprints/index.json | sprints/index.json (register: adds quick-fix entry; complete: marks done) |
 | momentum:dev | Story files, code | Code in worktree only; sprint-logs (via momentum-tools log, best-effort); structured JSON completion output |
 | momentum:create-story | stories/index.json, epics.md | Story files in _bmad-output/implementation-artifacts/ |
 | momentum-tools log | (none — write-only append) | .claude/momentum/sprint-logs/{sprint-slug}/*.jsonl (sole writer per agent file) |
@@ -1118,6 +1121,8 @@ momentum/                                    ← Plugin root
 **Provenance Scanner ↔ Spec Files:** Reads all `derives_from` frontmatter across the project; computes `referenced_by` graph; compares stored hashes to current `git hash-object`; outputs suspect list to Impetus at session start. Placement: implemented as `references/provenance-scan.md` at the plugin root — runs as part of session orientation, not a separate skill.
 
 **Terminal Multiplexer ↔ Workflows:** Optional protocol binding for terminal pane management (create, read, send, notify, cleanup). Uses the detect-and-adapt pattern: skills check for environment indicators (`CMUX_WORKSPACE_ID`, `CMUX_SURFACE_ID`, `CMUX_SOCKET_PATH` for CMUX; `TMUX` env var for tmux) and adapt behavior when present. Null binding is the default — workflows function identically without a multiplexer. Primary use cases: worktree-to-tab automation (link story sessions to terminal tabs), external process monitoring (simulators, dev servers), and multi-session visual awareness. Reference implementations: CMUX (macOS), tmux (cross-platform). See Epic 7, Story 7.1.
+
+**CMUX Markdown Surfaces ↔ Quick-Fix:** cmux markdown surfaces serve as a primary developer review pattern in quick-fix Phases 1-2. The quick-fix skill renders implementation plans and file diffs to cmux surfaces for developer review and approval before changes are applied. This is a direct integration — not optional detect-and-adapt — within the quick-fix workflow.
 
 ---
 
@@ -1614,6 +1619,8 @@ Dependency-driven concurrency replaces rigid wave tiers. The sprint-dev skill (`
 **Decision 26 — Two-Layer Agent Model**
 Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard). Projects provide role-specific stack guidelines. Sprint planning (`/momentum:sprint-planning`) wires the layers together — for each story, determine which roles apply based on `change_type` and `touches`, then attach the project's guidelines. Team composition is stored in the sprint record. Agent Teams share a working directory; sequential story execution with commit-as-sync-point means no worktree needed within a team. Teammates load skills from project/user settings, not from `.agent.md` `skills` frontmatter — dev agents get workflow instructions through their spawn prompt. See Two-Layer Agent Model section.
 
+The specialist classification table (dev-skills, dev-build, dev-frontend, dev base) is a **canonical lookup**, not ad-hoc LLM derivation. `momentum-tools specialist-classify` is the deterministic implementation — it maps `change_type` to specialist and validator set. When a story has multiple change types, the dominant change type determines the specialist. This ensures identical inputs always produce identical role assignments across sessions and agents.
+
 **Decision 27 — Two-Output Retro**
 Retro produces two triage outputs from agent logs: Momentum triage (practice improvements) and Project triage (project-specific findings). Agent logs (Decision 24) are designed to support this dual-output pattern. Full retro implementation is deferred to Phase 5.
 
@@ -1665,7 +1672,7 @@ The hybrid Agent Team in Phase 5 spawns four concurrent roles. Their deployment:
 |---|---|---|
 | Dev (fix agent) | General-purpose agent via Agent tool | No custom definition needed — receives AVFL findings list and fix instructions in spawn prompt. Uses project's dev guidelines from sprint record. |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure worker: reviews code against story ACs, produces per-story findings. Read-only tools. Never user-invoked. |
-| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure worker: tests running behavior against Gherkin specs with external tools. Needs Bash for test execution. Never user-invoked. |
+| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure worker: tests running behavior against Gherkin specs with external tools. Needs Bash for test execution. Never user-invoked. Used in sprint Team Review (Decision 34) and quick-fix Phase 4 validation (Decision 40). |
 | Architect Guard | SKILL.md with `context: fork` (existing) | Already implemented as standalone verifier skill. Also useful outside Team Review (ad-hoc drift checks). Retains SKILL.md deployment. |
 
 **Plugin structure addition:**
@@ -1765,6 +1772,34 @@ The Impetus voice — Optimus Prime's gravitas blended with KITT's loyalty — i
 **Enforcement:** Any change to Impetus user-facing output must preserve these principles. The greeting mockup (`.claude/momentum/greeting-mockup.md`) is the authoritative reference for greeting-specific voice. The principles above govern all other Impetus output not covered by the mockup.
 
 **Traceability:** Formalization of the voice identity established in the greeting redesign v8 mockup. Supersedes the earlier "KITT-like servant-partner" description in Decision 3d — the voice has evolved from competent-and-dry-witted to gravitas-and-earned-emotion. Decision 3d's Impetus Identity subsection is updated to reflect this.
+
+**Decision 39 — Quick-Fix Bypass-Sprint Lifecycle Path (2026-04-04)**
+
+Quick-fix introduces a third execution path alongside epic orchestration and sprint orchestration. It is a bypass-sprint lifecycle path: single story from prompt → lightweight 4-phase workflow → `sprints/index.json` registration without activate/complete lifecycle states. The quick-fix path does not create a sprint, does not require sprint planning, and does not use the `planning → ready → active → done → completed` state machine (Decision 36). Instead, `momentum-tools quickfix register` writes a quick-fix entry directly to `sprints/index.json` and `momentum-tools quickfix complete` marks it done.
+
+**Three execution paths in Momentum:**
+
+| Path | Scope | Lifecycle | Entry point |
+|---|---|---|---|
+| Epic orchestration | Multi-sprint program | Full epic/sprint lifecycle | `/momentum:impetus` → sprint planning |
+| Sprint orchestration | Single sprint, multiple stories | Decision 36 state machine | `/momentum:sprint-planning` → `/momentum:sprint-dev` |
+| Quick-fix | Single story, single session | Register → execute → validate → complete | `/momentum:quick-fix` |
+
+**Traceability:** Quick-fix stories are registered in `sprints/index.json` for audit trail and retrospective input. They bypass sprint lifecycle but not traceability.
+
+**Decision 40 — Change-Type-Driven Validator Selection (2026-04-04)**
+
+Validators join the team based on story `change_type`, replacing the hardcoded all-four-roles team from sprint Team Review (Decision 34) for single-story workflows. This is the validator selection model for quick-fix Phase 4 and any future single-story execution path.
+
+| change_type | Validators |
+|---|---|
+| `skill-instruction` | E2E Validator |
+| `script-code` | QA reviewer |
+| `skill-instruction` + `script-code` (both) | E2E Validator + QA reviewer |
+
+The Dev fix agent and Architect Guard are not included — quick-fix is a single-story workflow where the developer is already the implementer and architecture drift is not a concern for targeted fixes. For sprint Team Review (multi-story, post-merge), the full team (Decision 34) still applies.
+
+**Traceability:** `momentum-tools specialist-classify` (Decision 26) provides the deterministic mapping from `change_type` to validator set. The same classification drives both specialist selection and validator selection.
 
 **Workflow Modularization Note (2026-04-04)**
 
