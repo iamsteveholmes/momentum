@@ -156,6 +156,19 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 - `momentum-tools.py log` — event logging
 - `cmux markdown open` — review surfaces
 
+### Orchestrator purity (Decision 3d)
+
+The quick-fix workflow is an orchestrator. It MUST NOT write files directly. Every
+file change happens through:
+- **Tool invocations:** `momentum-tools`, `cmux`, `git` commands via Bash
+- **Subagent spawns:** architect agent writes architecture.md, PM agent writes prd.md,
+  `momentum:create-story` writes story files, dev agent writes code, E2E/QA agents
+  write findings reports
+
+The workflow XML orchestrates, routes, and presents output to the developer. It
+never contains direct Edit/Write actions on project files. This matches the Impetus
+constraint: "Impetus reads but NEVER writes files."
+
 ### Outsider Test (must reproduce in workflow.md)
 
 From sprint-planning Step 4 — the Gherkin generation rules including the Outsider
