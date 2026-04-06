@@ -1,6 +1,18 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "slug": "sprint-2026-04-05-2",
+    "stories": [
+      "retro-skill",
+      "posttooluse-lint-and-format-hook-active",
+      "pretooluse-file-protection-hooks-active",
+      "stop-gate-runs-conditional-quality-checks",
+      "journal-status-tool"
+    ],
+    "waves": []
+  },
   "completed": [
     {
       "locked": true,

@@ -1045,5 +1045,17 @@
       "skills/momentum/commands/quick-fix.md",
       "skills/momentum/skills/quick-fix/evals/"
     ]
+  },
+  "retro-skill": {
+    "status": "backlog",
+    "title": "Retro Skill — Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/retro/SKILL.md",
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/scripts/momentum-tools.py"
+    ]
   }
 }
