@@ -8,28 +8,28 @@
           "action": "add",
           "group": "rules",
           "scope": "global",
-          "source": "rules/authority-hierarchy.md",
+          "source": "references/rules/authority-hierarchy.md",
           "target": "~/.claude/rules/authority-hierarchy.md"
         },
         {
           "action": "add",
           "group": "rules",
           "scope": "global",
-          "source": "rules/anti-patterns.md",
+          "source": "references/rules/anti-patterns.md",
           "target": "~/.claude/rules/anti-patterns.md"
         },
         {
           "action": "add",
           "group": "rules",
           "scope": "global",
-          "source": "rules/model-routing.md",
+          "source": "references/rules/model-routing.md",
           "target": "~/.claude/rules/model-routing.md"
         },
         {
           "action": "migration",
           "group": "hooks",
           "scope": "project",
-          "source": "migrations/1.0.0-hooks-install.md",
+          "source": "references/migrations/1.0.0-hooks-install.md",
           "description": "Merge enforcement hooks into .claude/settings.json",
           "requires_restart": true
         },
