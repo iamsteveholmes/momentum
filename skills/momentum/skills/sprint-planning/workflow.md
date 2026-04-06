@@ -34,8 +34,9 @@
     <action>Read `{implementation_artifacts}/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>
     <action>Group remaining stories by `epic_slug`</action>
-    <action>Within each epic, sort stories by dependency depth (leaves first — stories with no unsatisfied depends_on appear before those with pending dependencies), then alphabetical within the same depth</action>
+    <action>Within each epic, sort stories by: (1) priority — critical first, then high, medium, low (stories missing priority field treated as low); (2) dependency depth — leaves first (stories with no unsatisfied depends_on appear before those with pending dependencies); (3) alphabetical within the same priority and depth</action>
     <action>For each story, display:
+      · priority badge: [C] for critical, [H] for high, [M] for medium, [L] for low (stories missing priority field display as [L])
       · title
       · status (backlog, ready-for-dev, in-progress, review, verify)
       · depends_on (list dependency slugs; mark satisfied dependencies with ✓, unsatisfied with ◦)
@@ -48,12 +49,12 @@
 Backlog — N stories across M epics
 
 [Epic: epic-slug-1]
-  1. story-slug-a — Title · status · deps: [✓ dep1, ◦ dep2] · file: true
-  2. story-slug-b — Title · status · deps: none · file: false
+  1. [C] story-slug-a — Title · status · deps: [✓ dep1, ◦ dep2] · file: true
+  2. [L] story-slug-b — Title · status · deps: none · file: false
   ...
 
 [Epic: epic-slug-2]
-  3. story-slug-c — Title · status · deps: [✓ dep1] · file: true
+  3. [M] story-slug-c — Title · status · deps: [✓ dep1] · file: true
   ...
 
 Select 3-8 stories for this sprint by number or slug.
