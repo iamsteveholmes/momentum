@@ -1164,5 +1164,22 @@
       "skills/momentum/skills/verify/SKILL.md",
       "skills/momentum/skills/verify/workflow.md"
     ]
+  },
+  "agent-role-simplification": {
+    "status": "backlog",
+    "title": "Agent Role Simplification — Dev + Prompt Engineer with Directory-Scoped Guidelines",
+    "epic_slug": "agent-team-model",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/dev.md",
+      "skills/momentum/agents/dev-skills.md",
+      "skills/momentum/agents/dev-build.md",
+      "skills/momentum/agents/dev-frontend.md",
+      "skills/momentum/skills/agent-guidelines/SKILL.md",
+      "skills/momentum/skills/agent-guidelines/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md"
+    ]
   }
 }
