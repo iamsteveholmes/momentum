@@ -160,6 +160,9 @@ Approve, or request revisions?</output>
     <action>Read the story's acceptance criteria from its story file — read ALL ACs
       holistically to understand the system's intended behavior, then write Gherkin
       scenarios that describe that behavior end-to-end.</action>
+    <action>Read `skills/momentum/references/gherkin-template.md` for the required format,
+      voice, tense, naming, and structure rules. All generated `.feature` files must
+      follow this template exactly.</action>
     <action>Generate a Gherkin `.feature` file for the **E2E Validator** — a black-box agent
       that tests running behavior without source code access. The validator can invoke skills,
       run commands, observe outputs, and check system state — but it CANNOT read SKILL.md files,
