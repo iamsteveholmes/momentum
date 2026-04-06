@@ -15,7 +15,7 @@ change_type: rule-hook + code
 
 ## Description
 
-The hooks-config.json currently has a placeholder echo for the Stop hook.
+The `hooks/hooks.json` currently has a placeholder echo for the Stop hook.
 This story replaces the placeholder with a real implementation that runs
 quality checks before a session ends.
 
@@ -82,7 +82,7 @@ and run one linter invocation per group:
 ### gate-findings.txt format
 
 ```
-# Momentum Gate Findings — 2026-04-05T20:15:00
+# Momentum Gate Findings — {ISO_TIMESTAMP}
 ## Lint Issues
 - path/to/file.py:12: E501 line too long
 ## Uncommitted Changes

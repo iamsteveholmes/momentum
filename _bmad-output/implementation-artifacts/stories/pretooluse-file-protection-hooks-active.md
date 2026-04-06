@@ -15,14 +15,14 @@ change_type: rule-hook + code
 
 ## Description
 
-The hooks-config.json currently has a placeholder echo for the PreToolUse
+The `hooks/hooks.json` currently has a placeholder echo for the PreToolUse
 file protection hook. This story replaces the placeholder with a real
 implementation that blocks writes to protected file paths.
 
-Per Decision 2a, the protected paths are: `tests/acceptance/`,
-`**/*.feature`, `_bmad-output/planning-artifacts/*.md`, and
-`.claude/rules/`. These files should only be modified by their designated
-sole-writer agents, not by general development agents.
+Per Decision 2a, protected paths include `**/*.feature`,
+`_bmad-output/planning-artifacts/*.md`, `.claude/rules/*`, and the
+story/sprint index files. These files should only be modified by their
+designated sole-writer agents, not by general development agents.
 
 The hook must exit non-zero to block the tool use when a protected path
 is targeted. It must be fast and produce a clear message explaining why
@@ -43,7 +43,7 @@ the write was blocked.
    - `_bmad-output/planning-artifacts/*.md` — specs only modified by
      refine/planning workflows
    - `**/*.feature` — Gherkin specs only modified by sprint-planning
-   - `.claude/rules/` — rules only modified by Impetus
+   - `.claude/rules/*` — rules only modified by Impetus
    - `_bmad-output/implementation-artifacts/stories/index.json` — only
      modified by momentum-tools.py
    - `_bmad-output/implementation-artifacts/sprints/index.json` — only

@@ -1,7 +1,7 @@
 ---
 title: Journal Status Tool — Deterministic Open Thread Detection
 story_key: journal-status-tool
-status: backlog
+status: ready-for-dev
 epic_slug: impetus-core
 depends_on:
   - sprint-lifecycle-tools
@@ -67,6 +67,11 @@ Thread detection logic:
 - If the most recent event is `thread_close`, `session_end`, or `done` →
   thread is closed
 - Otherwise → thread is open
+
+### Dependencies
+
+Depends on `sprint-lifecycle-tools` (already done — the `session` command group
+exists in momentum-tools.py). This story adds a new subcommand under that group.
 
 ### CLI integration
 

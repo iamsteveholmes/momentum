@@ -1007,7 +1007,7 @@
     ]
   },
   "journal-status-tool": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Journal Status Tool — Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1046,7 +1046,7 @@
     ]
   },
   "retro-skill": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Retro Skill — Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
     "epic_slug": "impetus-core",
     "story_file": true,

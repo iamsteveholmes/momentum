@@ -14,7 +14,7 @@ change_type: rule-hook + code
 
 ## Description
 
-The hooks-config.json currently has a placeholder echo for the PostToolUse
+The `hooks/hooks.json` currently has a placeholder echo for the PostToolUse
 lint hook. This story replaces the placeholder with a real implementation
 that runs lint and format checks after every Edit/Write/NotebookEdit
 operation.

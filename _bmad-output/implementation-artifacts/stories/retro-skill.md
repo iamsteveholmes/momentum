@@ -1,7 +1,7 @@
 ---
 title: Retro Skill — Sprint Retrospective with Cross-Log Discovery and Sprint Closure
 story_key: retro-skill
-status: backlog
+status: ready-for-dev
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -53,8 +53,9 @@ to support it.
    stub entries in `stories/index.json` with status `backlog` and appropriate
    `epic_slug` assignment. The developer approves each stub before creation.
 
-6. The skill calls `momentum-tools sprint complete` to set the terminal sprint
-   state after all verification and triage is done.
+6. The skill calls `momentum-tools sprint complete` followed by
+   `momentum-tools sprint retro-complete` to set the terminal sprint state
+   and record the retro completion timestamp.
 
 7. The skill presents a summary to the developer showing: stories verified,
    findings count by category, story stubs created, and sprint closure
@@ -72,7 +73,7 @@ to support it.
 ### Workflow phases
 
 1. **Sprint identification** — Find the most recently completed sprint in
-   `sprints/index.json` (status: `done`, `retro_run_at: null`). If none,
+   `_bmad-output/implementation-artifacts/sprints/index.json` (status: `done`, `retro_run_at: null`). If none,
    error with clear message. Confirm with developer which sprint to retro.
 
 2. **Log collection and correlation** — Read all `.jsonl` files from
