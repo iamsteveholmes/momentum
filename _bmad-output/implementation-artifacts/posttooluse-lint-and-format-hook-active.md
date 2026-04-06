@@ -1,6 +1,6 @@
 # Story 3.1: PostToolUse Lint and Format Hook Active
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -55,22 +55,22 @@ And duplicate paths are acceptable — the Stop hook (Story 3.3) reads this file
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create the PostToolUse lint/format hook script (AC: 1, 2, 3, 4, 5, 6, 7)
-  - [ ] 1.1: Create `skills/momentum/references/hooks/lint-format.sh` — bash script implementing the lint/format hook logic
-  - [ ] 1.2: Implement re-entrancy guard: check `$MOMENTUM_LINT_RUNNING` at entry; export and set to 1 before invoking lint tool; unset on exit
-  - [ ] 1.3: Implement lint tool detection: check `package.json` for `prettier`/`eslint` scripts, check for `.prettierrc`/`.eslintrc`/`pyproject.toml`/`setup.cfg`; if none found output `[lint] ◦ skipped — no lint tool configured` and exit 0
-  - [ ] 1.4: Implement output format per AC2/AC3/AC4: capture lint tool exit code and output; produce exactly one line per spec
-  - [ ] 1.5: Implement session state append: after lint runs (or is skipped), append `$MODIFIED_FILE` to `.claude/momentum/session-modified-files.txt`; create parent dirs if absent
-  - [ ] 1.6: Make script executable: `chmod +x skills/momentum/references/hooks/lint-format.sh`
+- [x] Task 1: Create the PostToolUse lint/format hook script (AC: 1, 2, 3, 4, 5, 6, 7)
+  - [x] 1.1: Create `skills/momentum/references/hooks/lint-format.sh` — bash script implementing the lint/format hook logic
+  - [x] 1.2: Implement re-entrancy guard: check `$MOMENTUM_LINT_RUNNING` at entry; export and set to 1 before invoking lint tool; unset on exit
+  - [x] 1.3: Implement lint tool detection: check `package.json` for `prettier`/`eslint` scripts, check for `.prettierrc`/`.eslintrc`/`pyproject.toml`/`setup.cfg`; if none found output `[lint] ◦ skipped — no lint tool configured` and exit 0
+  - [x] 1.4: Implement output format per AC2/AC3/AC4: capture lint tool exit code and output; produce exactly one line per spec
+  - [x] 1.5: Implement session state append: after lint runs (or is skipped), append `$MODIFIED_FILE` to `.claude/momentum/session-modified-files.txt`; create parent dirs if absent
+  - [x] 1.6: Make script executable: `chmod +x skills/momentum/references/hooks/lint-format.sh`
 
-- [ ] Task 2: Register hook in hooks-config.json (AC: 1)
-  - [ ] 2.1: Read `skills/momentum/references/hooks-config.json` (or create if absent)
-  - [ ] 2.2: Add PostToolUse hook entry targeting `lint-format.sh` for `Write`, `Edit`, and `NotebookEdit` tool events (matching the existing template scope); hook receives the file path via environment variable — verify the correct env var name by checking existing hooks in `.claude/settings.json`
-  - [ ] 2.3: Confirm hook matcher is `"Edit|Write|NotebookEdit"` to match the existing hooks-config.json template scope
+- [x] Task 2: Register hook in hooks-config.json (AC: 1)
+  - [x] 2.1: Read `skills/momentum/references/hooks-config.json` (or create if absent)
+  - [x] 2.2: Add PostToolUse hook entry targeting `lint-format.sh` for `Write`, `Edit`, and `NotebookEdit` tool events (matching the existing template scope); hook receives the file path via environment variable — verify the correct env var name by checking existing hooks in `.claude/settings.json`
+  - [x] 2.3: Confirm hook matcher is `"Edit|Write|NotebookEdit"` to match the existing hooks-config.json template scope
 
-- [ ] Task 2b: Define hook script deployment path (AC: 1) — CRITICAL
-  - [ ] 2b.1: The hook script is authored at `skills/momentum/references/hooks/lint-format.sh` (bundled with the momentum skill) but must be executed from the project's `.claude/momentum/hooks/lint-format.sh` path at runtime (where Impetus deploys it)
-  - [ ] 2b.2: Add an `add` action entry to `skills/momentum/references/momentum-versions.json` under the current version's `actions` array so Impetus copies `lint-format.sh` on install/upgrade. Use the same schema as the existing rules entries:
+- [x] Task 2b: Define hook script deployment path (AC: 1) — CRITICAL
+  - [x] 2b.1: The hook script is authored at `skills/momentum/references/hooks/lint-format.sh` (bundled with the momentum skill) but must be executed from the project's `.claude/momentum/hooks/lint-format.sh` path at runtime (where Impetus deploys it)
+  - [x] 2b.2: Add an `add` action entry to `skills/momentum/references/momentum-versions.json` under the current version's `actions` array so Impetus copies `lint-format.sh` on install/upgrade. Use the same schema as the existing rules entries:
     ```json
     {
       "action": "add",
@@ -81,12 +81,12 @@ And duplicate paths are acceptable — the Stop hook (Story 3.3) reads this file
     }
     ```
     Note: `source` is relative to the skill's directory (`${CLAUDE_SKILL_DIR}`); `target` is relative to the project root.
-  - [ ] 2b.3: Add an AC-level verification step: confirm `.claude/momentum/hooks/lint-format.sh` exists and is executable after Impetus install — without this, the hook command silently fails at runtime
+  - [x] 2b.3: Add an AC-level verification step: confirm `.claude/momentum/hooks/lint-format.sh` exists and is executable after Impetus install — without this, the hook command silently fails at runtime
 
-- [ ] Task 3: Verify hook integration (AC: all)
-  - [ ] 3.1: Confirm `.claude/settings.json` in the project has the PostToolUse hook registered (Impetus writes this from hooks-config.json; this story adds the hook to the template so the next install/upgrade picks it up)
-  - [ ] 3.2: Verify `.claude/momentum/` directory creation path is handled gracefully (mkdir -p)
-  - [ ] 3.3: Manual smoke test: edit a file with a known lint violation, confirm correct output line appears
+- [x] Task 3: Verify hook integration (AC: all)
+  - [x] 3.1: Confirm `.claude/settings.json` in the project has the PostToolUse hook registered (Impetus writes this from hooks-config.json; this story adds the hook to the template so the next install/upgrade picks it up)
+  - [x] 3.2: Verify `.claude/momentum/` directory creation path is handled gracefully (mkdir -p)
+  - [x] 3.3: Manual smoke test: edit a file with a known lint violation, confirm correct output line appears
 
 **FRs Covered:** FR18 (auto-lint and auto-format on every file edit)
 **Cross-story contract:** Session state file `.claude/momentum/session-modified-files.txt` — Story 3.1 (PostToolUse) writes; Story 3.3 (Stop gate) reads and deletes.
@@ -248,9 +248,9 @@ Script and code changes use standard TDD (red-green-refactor). bmad-dev-story ha
 **Note:** The hook script (`lint-format.sh`) is a bash script. Use bats (Bash Automated Testing System) or a simple test script in `skills/momentum/references/hooks/tests/` if a test harness is appropriate. Alternatively, use functional integration testing per the rule-hook approach below — bash scripts for hooks are often better verified functionally than unit-tested.
 
 **DoD items for script-code tasks (bmad-dev-story standard DoD applies):**
-- Tests written and passing (or functional verification documented if unit tests don't apply)
-- No regressions in existing hook scripts
-- Script is executable (`chmod +x`)
+- [x] Tests written and passing (or functional verification documented if unit tests don't apply)
+- [x] No regressions in existing hook scripts
+- [x] Script is executable (`chmod +x`)
 
 ---
 
@@ -274,9 +274,9 @@ Hook configuration and the hook script itself (as a deployed hook) are verified 
 - No duplicate PostToolUse hook entries — merge, don't append
 
 **Additional DoD items for rule-hook tasks:**
-- [ ] Expected behavior stated as testable condition (in Dev Agent Record)
-- [ ] Functional verification performed and result documented
-- [ ] Format matches established patterns (one-line output, exact format per spec)
+- [x] Expected behavior stated as testable condition (in Dev Agent Record)
+- [x] Functional verification performed and result documented
+- [x] Format matches established patterns (one-line output, exact format per spec)
 
 ---
 
@@ -292,10 +292,10 @@ Hook configuration and the hook script itself (as a deployed hook) are verified 
 3. **Document** the hook entry structure in Dev Agent Record
 
 **DoD items for config-structure tasks:**
-- [ ] `hooks-config.json` parses without error (validated with `jq`)
-- [ ] PostToolUse hook entry present with correct matcher and command
-- [ ] All referenced paths in the hook command resolve at runtime
-- [ ] Changes documented in Dev Agent Record
+- [x] `hooks-config.json` parses without error (validated with `jq`)
+- [x] PostToolUse hook entry present with correct matcher and command
+- [x] All referenced paths in the hook command resolve at runtime
+- [x] Changes documented in Dev Agent Record
 
 ## Dev Agent Record
 
@@ -305,6 +305,37 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+No blocking issues. One design decision made: re-entrancy suppression uses filesystem lockfile (`.claude/momentum/.lint-running`) per dev notes recommendation — process-boundary-safe, cleaned up via `trap ... EXIT`.
+
 ### Completion Notes List
 
+- Implemented `skills/momentum/references/hooks/lint-format.sh` — PostToolUse lint/format hook with:
+  - Filesystem lockfile re-entrancy guard (process-boundary-safe)
+  - Lint tool detection in order: package.json scripts, prettier config, eslint config, pyproject.toml (ruff/black), setup.cfg (flake8)
+  - Exactly one line of output per AC2/AC3/AC4/AC5 spec
+  - Session state write to `.claude/momentum/session-modified-files.txt` (AC7)
+  - `mkdir -p` for all runtime dirs (graceful creation)
+- Updated `skills/momentum/references/hooks-config.json` — replaced PostToolUse placeholder echo with actual lint-format.sh command using `$CLAUDE_TOOL_INPUT_FILE_PATH`
+- Updated `skills/momentum/references/momentum-versions.json` — added `add` action for lint-format.sh deployment to `.claude/momentum/hooks/lint-format.sh`
+- Deployed hook to `.claude/momentum/hooks/lint-format.sh` (runtime path, makes hook active immediately in this project)
+
+**Expected behavior (testable):** Given Write/Edit/NotebookEdit tool use fires, the PostToolUse hook executes lint detection, runs the tool if found, outputs exactly one line matching AC2/AC3/AC4/AC5 format, and appends the file path to `.claude/momentum/session-modified-files.txt`.
+
+**Functional verification results:**
+- AC2 (clean file): `[lint] ✓ checked [path] — clean` — PASS
+- AC3 (auto-fix): `[lint] ✓ auto-fixed 1 issue(s) in [path]` — PASS
+- AC4 (non-fixable): `[lint] ✗ 1 issue(s) — test.js:1 — 'x' is assigned a value but never used. (no-unused-vars)` — PASS
+- AC5 (no lint tool): `[lint] ◦ skipped — no lint tool configured` — PASS
+- AC6 (re-entrancy): empty output, exit 0 when lockfile present — PASS
+- AC7 (session state): path appended to session-modified-files.txt — PASS
+- hooks-config.json parses: `jq .` valid — PASS
+- momentum-versions.json parses: `jq .` valid — PASS
+
 ### File List
+
+- `skills/momentum/references/hooks/lint-format.sh` — NEW: PostToolUse lint/format hook script
+- `skills/momentum/references/hooks-config.json` — MODIFIED: replaced PostToolUse placeholder with actual lint-format.sh command
+- `skills/momentum/references/momentum-versions.json` — MODIFIED: added add action for lint-format.sh deployment
+- `.claude/momentum/hooks/lint-format.sh` — NEW: deployed runtime copy of hook script
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — MODIFIED: story status in-progress
+- `_bmad-output/implementation-artifacts/posttooluse-lint-and-format-hook-active.md` — MODIFIED: tasks checked, dev agent record updated

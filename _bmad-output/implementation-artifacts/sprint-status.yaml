@@ -113,7 +113,7 @@ development_status:
 
   # Epic 3: Automatic Quality Enforcement
   epic-3: in-progress
-  posttooluse-lint-and-format-hook-active: ready-for-dev
+  posttooluse-lint-and-format-hook-active: review
   pretooluse-file-protection-hooks-active: ready-for-dev
   stop-gate-runs-conditional-quality-checks: ready-for-dev
   authority-hierarchy-rules-auto-load-every-session: dropped  # AVFL 2026-03-23: duplicates Stories 1.3/1.5; reassigned to 7.1/7.3

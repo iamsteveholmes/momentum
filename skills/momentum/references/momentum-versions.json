@@ -39,6 +39,13 @@
           "scope": "project",
           "source": "references/hooks/file-protection.sh",
           "target": ".claude/momentum/hooks/file-protection.sh"
+        },
+        {
+          "action": "add",
+          "group": "hooks",
+          "scope": "project",
+          "source": "references/hooks/lint-format.sh",
+          "target": ".claude/momentum/hooks/lint-format.sh"
         }
       ]
     }
