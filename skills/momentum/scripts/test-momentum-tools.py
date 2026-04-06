@@ -1027,6 +1027,230 @@ def test_startup_check_needs_install():
             global_path.unlink(missing_ok=True)
 
 
+# --- Specialist Classify Tests ---
+
+def test_specialist_classify_dev_skills():
+    """Single path matching dev-skills."""
+    print("\n[specialist-classify] Single path — dev-skills")
+    proj = setup_project()
+    # Create the agent file so fallback is false
+    agent_dir = proj / "skills" / "momentum" / "agents"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "dev-skills.md").write_text("# dev-skills\n")
+    code, out = run_tool(proj, "specialist-classify", "--touches", "skills/momentum/SKILL.md")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev-skills")
+    assert_eq("fallback false", out.get("fallback"), False)
+    assert_eq("matches", out.get("matches"), {"dev-skills": 1})
+
+
+def test_specialist_classify_dev_build():
+    """Single path matching dev-build."""
+    print("\n[specialist-classify] Single path — dev-build")
+    proj = setup_project()
+    agent_dir = proj / "skills" / "momentum" / "agents"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "dev-build.md").write_text("# dev-build\n")
+    code, out = run_tool(proj, "specialist-classify", "--touches", "app/build.gradle.kts")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev-build")
+    assert_eq("fallback false", out.get("fallback"), False)
+
+
+def test_specialist_classify_dev_frontend():
+    """Single path matching dev-frontend."""
+    print("\n[specialist-classify] Single path — dev-frontend")
+    proj = setup_project()
+    agent_dir = proj / "skills" / "momentum" / "agents"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "dev-frontend.md").write_text("# dev-frontend\n")
+    code, out = run_tool(proj, "specialist-classify", "--touches", "app/src/main/ui/HomeScreen.kt")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev-frontend")
+    assert_eq("fallback false", out.get("fallback"), False)
+
+
+def test_specialist_classify_no_match():
+    """No match returns dev base."""
+    print("\n[specialist-classify] No match — dev base")
+    proj = setup_project()
+    agent_dir = proj / "skills" / "momentum" / "agents"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "dev.md").write_text("# dev\n")
+    code, out = run_tool(proj, "specialist-classify", "--touches", "README.md,src/main.py")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev")
+    assert_eq("matches empty", out.get("matches"), {})
+    assert_eq("fallback false", out.get("fallback"), False)
+
+
+def test_specialist_classify_majority_rule():
+    """Multiple paths — majority wins."""
+    print("\n[specialist-classify] Majority rule")
+    proj = setup_project()
+    agent_dir = proj / "skills" / "momentum" / "agents"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "dev-skills.md").write_text("# dev-skills\n")
+    (agent_dir / "dev-build.md").write_text("# dev-build\n")
+    touches = "skills/foo/SKILL.md,skills/bar/SKILL.md,skills/baz/workflow.md,build.gradle.kts"
+    code, out = run_tool(proj, "specialist-classify", "--touches", touches)
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev-skills")
+    assert_eq("dev-skills count", out.get("matches", {}).get("dev-skills"), 3)
+    assert_eq("dev-build count", out.get("matches", {}).get("dev-build"), 1)
+
+
+def test_specialist_classify_tie_table_order():
+    """Tie broken by table order — dev-skills wins over dev-build."""
+    print("\n[specialist-classify] Tie — table order wins")
+    proj = setup_project()
+    agent_dir = proj / "skills" / "momentum" / "agents"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "dev-skills.md").write_text("# dev-skills\n")
+    (agent_dir / "dev-build.md").write_text("# dev-build\n")
+    touches = "skills/foo/SKILL.md,build.gradle.kts"
+    code, out = run_tool(proj, "specialist-classify", "--touches", touches)
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev-skills")
+    assert_eq("dev-skills count", out.get("matches", {}).get("dev-skills"), 1)
+    assert_eq("dev-build count", out.get("matches", {}).get("dev-build"), 1)
+
+
+def test_specialist_classify_empty_touches():
+    """Empty touches returns dev base."""
+    print("\n[specialist-classify] Empty touches — dev base")
+    proj = setup_project()
+    code, out = run_tool(proj, "specialist-classify", "--touches", "")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev")
+    assert_eq("matches empty", out.get("matches"), {})
+
+
+def test_specialist_classify_fallback_missing_agent():
+    """Agent file missing on disk sets fallback: true."""
+    print("\n[specialist-classify] Fallback — agent file missing")
+    proj = setup_project()
+    # Do NOT create any agent files
+    code, out = run_tool(proj, "specialist-classify", "--touches", "skills/foo/SKILL.md")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("specialist", out.get("specialist"), "dev-skills")
+    assert_eq("fallback true", out.get("fallback"), True)
+    assert_eq("agent_file falls back to dev", out.get("agent_file"), "skills/momentum/agents/dev.md")
+
+
+# --- Quickfix Tests ---
+
+def test_quickfix_register_creates_array():
+    """Register creates quickfixes array if absent."""
+    print("\n[quickfix register] Creates quickfixes array")
+    sprints = {"active": None, "planning": None, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "quickfix", "register", "--slug", "qf-2026-04-05", "--story", "quick-fix-skill")
+    assert_eq("exit code 0", code, 0)
+    data = read_sprints(proj)
+    assert_eq("quickfixes key exists", "quickfixes" in data, True)
+    assert_eq("one entry", len(data["quickfixes"]), 1)
+
+
+def test_quickfix_register_correct_fields():
+    """Register adds entry with correct fields."""
+    print("\n[quickfix register] Correct fields")
+    sprints = {"active": None, "planning": None, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "quickfix", "register", "--slug", "qf-2026-04-05", "--story", "quick-fix-skill")
+    assert_eq("exit code 0", code, 0)
+    data = read_sprints(proj)
+    entry = data["quickfixes"][0]
+    assert_eq("slug", entry["slug"], "qf-2026-04-05")
+    assert_eq("story", entry["story"], "quick-fix-skill")
+    assert_eq("started present", "started" in entry, True)
+    assert_eq("no completed yet", "completed" not in entry, True)
+
+
+def test_quickfix_register_auto_increment():
+    """Register auto-increments duplicate slugs."""
+    print("\n[quickfix register] Auto-increment duplicates")
+    sprints = {
+        "active": None, "planning": None, "completed": [],
+        "quickfixes": [{"slug": "qf-2026-04-05", "story": "s1", "started": "2026-04-05"}]
+    }
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "quickfix", "register", "--slug", "qf-2026-04-05", "--story", "s2")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("resolved slug incremented", out.get("slug"), "qf-2026-04-05-2")
+    data = read_sprints(proj)
+    assert_eq("two entries", len(data["quickfixes"]), 2)
+
+
+def test_quickfix_register_empty_story():
+    """Register rejects if story key is empty."""
+    print("\n[quickfix register] Rejects empty story")
+    sprints = {"active": None, "planning": None, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "quickfix", "register", "--slug", "qf-1", "--story", "")
+    assert_eq("rejected", code, 1)
+    assert_eq("error reported", out.get("success"), False)
+
+
+def test_quickfix_complete_sets_date():
+    """Complete sets completed date."""
+    print("\n[quickfix complete] Sets completed date")
+    sprints = {
+        "active": None, "planning": None, "completed": [],
+        "quickfixes": [{"slug": "qf-1", "story": "s1", "started": "2026-04-05"}]
+    }
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "quickfix", "complete", "--slug", "qf-1")
+    assert_eq("exit code 0", code, 0)
+    data = read_sprints(proj)
+    assert_eq("completed date set", "completed" in data["quickfixes"][0], True)
+    assert_eq("slug in output", out.get("slug"), "qf-1")
+
+
+def test_quickfix_complete_missing_slug():
+    """Complete errors on missing slug."""
+    print("\n[quickfix complete] Errors on missing slug")
+    sprints = {"active": None, "planning": None, "completed": [], "quickfixes": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "quickfix", "complete", "--slug", "ghost")
+    assert_eq("rejected", code, 1)
+    assert_eq("error reported", out.get("success"), False)
+
+
+def test_quickfix_complete_idempotent():
+    """Complete is idempotent — re-completing already-completed is fine."""
+    print("\n[quickfix complete] Idempotent re-complete")
+    sprints = {
+        "active": None, "planning": None, "completed": [],
+        "quickfixes": [{"slug": "qf-1", "story": "s1", "started": "2026-04-05", "completed": "2026-04-05"}]
+    }
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "quickfix", "complete", "--slug", "qf-1")
+    assert_eq("exit code 0", code, 0)
+    data = read_sprints(proj)
+    assert_eq("completed still present", "completed" in data["quickfixes"][0], True)
+
+
+def test_quickfix_round_trip():
+    """Register + complete round-trip."""
+    print("\n[quickfix] Register + complete round-trip")
+    sprints = {"active": None, "planning": None, "completed": []}
+    proj = setup_project(sprints=sprints)
+    # Register
+    code1, out1 = run_tool(proj, "quickfix", "register", "--slug", "qf-rt", "--story", "my-story")
+    assert_eq("register ok", code1, 0)
+    resolved_slug = out1.get("slug", "qf-rt")
+    # Complete
+    code2, out2 = run_tool(proj, "quickfix", "complete", "--slug", resolved_slug)
+    assert_eq("complete ok", code2, 0)
+    data = read_sprints(proj)
+    entry = data["quickfixes"][0]
+    assert_eq("slug matches", entry["slug"], "qf-rt")
+    assert_eq("story matches", entry["story"], "my-story")
+    assert_eq("started present", "started" in entry, True)
+    assert_eq("completed present", "completed" in entry, True)
+
+
 # --- Runner ---
 
 def main():
@@ -1107,6 +1331,26 @@ def main():
     test_startup_check_needs_upgrade()
     test_startup_check_hash_drift()
     test_startup_check_needs_install()
+
+    # Specialist classify tests
+    test_specialist_classify_dev_skills()
+    test_specialist_classify_dev_build()
+    test_specialist_classify_dev_frontend()
+    test_specialist_classify_no_match()
+    test_specialist_classify_majority_rule()
+    test_specialist_classify_tie_table_order()
+    test_specialist_classify_empty_touches()
+    test_specialist_classify_fallback_missing_agent()
+
+    # Quickfix tests
+    test_quickfix_register_creates_array()
+    test_quickfix_register_correct_fields()
+    test_quickfix_register_auto_increment()
+    test_quickfix_register_empty_story()
+    test_quickfix_complete_sets_date()
+    test_quickfix_complete_missing_slug()
+    test_quickfix_complete_idempotent()
+    test_quickfix_round_trip()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")

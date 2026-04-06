@@ -14,6 +14,9 @@ Usage:
     momentum-tools.py sprint complete
     momentum-tools.py sprint epic-membership --story SLUG --epic SLUG
     momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N]
+    momentum-tools.py specialist-classify --touches "path1,path2,..."
+    momentum-tools.py quickfix register --slug SLUG --story STORY_KEY
+    momentum-tools.py quickfix complete --slug SLUG
     momentum-tools.py version check
 """
 
@@ -508,6 +511,137 @@ def cmd_session_startup_check(args: argparse.Namespace) -> None:
            current_version=current_version)
 
 
+# --- Specialist Classify Command ---
+
+SPECIALIST_PATTERNS: list[tuple[list[str], str]] = [
+    # (glob-like patterns, specialist name) — checked in table order
+    (["skills/*/SKILL.md", "skills/*/workflow.md", "agents/*.md"], "dev-skills"),
+    (["*.gradle*", "*.kts", "build.gradle*"], "dev-build"),
+    (["*compose*", "*Compose*", "*ui/*", "*screen*"], "dev-frontend"),
+]
+
+
+def _match_specialist(path: str) -> str | None:
+    """Return specialist name if path matches any pattern, else None."""
+    import fnmatch
+    for patterns, specialist in SPECIALIST_PATTERNS:
+        for pat in patterns:
+            if fnmatch.fnmatch(path, pat):
+                return specialist
+    return None
+
+
+def cmd_specialist_classify(args: argparse.Namespace) -> None:
+    touches_raw = args.touches if args.touches else ""
+    paths = [p.strip() for p in touches_raw.split(",") if p.strip()]
+
+    if not paths:
+        result("specialist_classify", success=True,
+               specialist="dev",
+               agent_file="skills/momentum/agents/dev.md",
+               matches={},
+               fallback=False)
+        return
+
+    tally: dict[str, int] = {}
+    for p in paths:
+        spec = _match_specialist(p)
+        if spec:
+            tally[spec] = tally.get(spec, 0) + 1
+
+    if not tally:
+        # No matches — base dev
+        project_dir = resolve_project_dir()
+        agent_file = "skills/momentum/agents/dev.md"
+        fallback = not (project_dir / agent_file).exists()
+        result("specialist_classify", success=True,
+               specialist="dev",
+               agent_file=agent_file,
+               matches={},
+               fallback=fallback)
+        return
+
+    # Majority rule; ties broken by table order
+    max_count = max(tally.values())
+    winner = None
+    for _patterns, specialist in SPECIALIST_PATTERNS:
+        if tally.get(specialist, 0) == max_count:
+            winner = specialist
+            break
+
+    agent_file = f"skills/momentum/agents/{winner}.md"
+    project_dir = resolve_project_dir()
+    fallback = not (project_dir / agent_file).exists()
+
+    if fallback:
+        agent_file = "skills/momentum/agents/dev.md"
+
+    result("specialist_classify", success=True,
+           specialist=winner,
+           agent_file=agent_file,
+           matches=tally,
+           fallback=fallback)
+
+
+# --- Quickfix Commands ---
+
+def cmd_quickfix_register(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    slug = args.slug
+    story = args.story
+
+    if not story or not story.strip():
+        error_result("quickfix_register", "Story key must not be empty", slug=slug)
+
+    if "quickfixes" not in sprints:
+        sprints["quickfixes"] = []
+
+    # Auto-increment duplicate slugs
+    existing_slugs = {qf["slug"] for qf in sprints["quickfixes"]}
+    resolved_slug = slug
+    if resolved_slug in existing_slugs:
+        counter = 2
+        while f"{slug}-{counter}" in existing_slugs:
+            counter += 1
+        resolved_slug = f"{slug}-{counter}"
+
+    entry = {
+        "slug": resolved_slug,
+        "story": story,
+        "started": date.today().isoformat(),
+    }
+    sprints["quickfixes"].append(entry)
+    write_json(path, sprints)
+
+    result("quickfix_register", success=True, **entry)
+
+
+def cmd_quickfix_complete(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    slug = args.slug
+    quickfixes = sprints.get("quickfixes", [])
+
+    target = None
+    for qf in quickfixes:
+        if qf["slug"] == slug:
+            target = qf
+            break
+
+    if target is None:
+        error_result("quickfix_complete", f"Quickfix '{slug}' not found", slug=slug)
+
+    target["completed"] = date.today().isoformat()
+    write_json(path, sprints)
+
+    result("quickfix_complete", success=True, slug=slug, completed=target["completed"])
+
+
 # --- Log Command ---
 
 VALID_EVENT_TYPES = {"decision", "error", "retry", "assumption", "finding", "ambiguity"}
@@ -642,6 +776,26 @@ def build_parser() -> argparse.ArgumentParser:
     # session startup-check
     ssc = session_sub.add_parser("startup-check", help="Check versions, hash drift, and config gaps")
     ssc.set_defaults(func=cmd_session_startup_check)
+
+    # specialist-classify command
+    sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")
+    sc_parser.add_argument("--touches", required=True, help="Comma-separated file paths")
+    sc_parser.set_defaults(func=cmd_specialist_classify)
+
+    # quickfix command group
+    quickfix = subparsers.add_parser("quickfix", help="Quickfix tracking operations")
+    quickfix_sub = quickfix.add_subparsers(dest="quickfix_action", required=True)
+
+    # quickfix register
+    qfr = quickfix_sub.add_parser("register", help="Register a new quickfix")
+    qfr.add_argument("--slug", required=True, help="Quickfix slug")
+    qfr.add_argument("--story", required=True, help="Story key")
+    qfr.set_defaults(func=cmd_quickfix_register)
+
+    # quickfix complete
+    qfc = quickfix_sub.add_parser("complete", help="Complete a registered quickfix")
+    qfc.add_argument("--slug", required=True, help="Quickfix slug")
+    qfc.set_defaults(func=cmd_quickfix_complete)
 
     # log command group
     log = subparsers.add_parser("log", help="Append structured event to agent log")
