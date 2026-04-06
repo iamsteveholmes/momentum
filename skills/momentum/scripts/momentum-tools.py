@@ -431,6 +431,72 @@ def cmd_session_greeting_state(args: argparse.Namespace) -> None:
     result("session_greeting_state", success=True, **output)
 
 
+def cmd_session_journal_status(args: argparse.Namespace) -> None:
+    import os
+
+    project_dir = resolve_project_dir()
+    claude_project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", project_dir))
+    journal_path = claude_project_dir / ".claude" / "momentum" / "journal.jsonl"
+
+    if not journal_path.exists():
+        result("session_journal_status", success=True,
+               exists=False, open_threads=0, last_entry=None)
+        return
+
+    # Scan all entries
+    total_entries = 0
+    parse_errors = 0
+    last_entry = None
+    # thread_id -> list of events in order
+    thread_events: dict[str, list[dict]] = {}
+
+    TERMINAL_EVENTS = {"thread_close", "session_end", "done"}
+
+    for line in journal_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            parse_errors += 1
+            continue
+
+        total_entries += 1
+        ts = entry.get("timestamp")
+        if ts and (last_entry is None or ts > last_entry):
+            last_entry = ts
+
+        thread_id = entry.get("thread_id")
+        if thread_id:
+            thread_events.setdefault(thread_id, []).append(entry)
+
+    # Build thread summary
+    thread_summary = []
+    open_threads = 0
+    for thread_id, events in thread_events.items():
+        last_event_entry = events[-1]
+        last_event = last_event_entry.get("event", "")
+        last_ts = last_event_entry.get("timestamp")
+        status = "closed" if last_event in TERMINAL_EVENTS else "open"
+        if status == "open":
+            open_threads += 1
+        thread_summary.append({
+            "thread_id": thread_id,
+            "status": status,
+            "last_event": last_event,
+            "last_timestamp": last_ts,
+        })
+
+    result("session_journal_status", success=True,
+           exists=True,
+           open_threads=open_threads,
+           last_entry=last_entry,
+           total_entries=total_entries,
+           parse_errors=parse_errors,
+           thread_summary=thread_summary)
+
+
 def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
     import os
     import subprocess as sp
@@ -975,6 +1041,10 @@ def build_parser() -> argparse.ArgumentParser:
     # session startup-preflight
     ssc = session_sub.add_parser("startup-preflight", help="Consolidated startup routing: versions, hash drift, journal, greeting state")
     ssc.set_defaults(func=cmd_session_startup_preflight)
+
+    # session journal-status
+    sjs = session_sub.add_parser("journal-status", help="Scan journal for open threads")
+    sjs.set_defaults(func=cmd_session_journal_status)
 
     # specialist-classify command
     sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")

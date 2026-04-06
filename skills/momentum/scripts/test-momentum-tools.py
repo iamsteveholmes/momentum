@@ -1309,6 +1309,122 @@ def test_quickfix_round_trip():
     assert_eq("completed present", "completed" in entry, True)
 
 
+# --- Journal Status Tests ---
+
+def setup_journal(project_dir: Path, lines: list[str]) -> Path:
+    """Create .claude/momentum/journal.jsonl with given lines."""
+    journal_dir = project_dir / ".claude" / "momentum"
+    journal_dir.mkdir(parents=True, exist_ok=True)
+    journal_path = journal_dir / "journal.jsonl"
+    journal_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+    return journal_path
+
+
+def test_journal_status_no_file():
+    """Returns exists: false when journal.jsonl absent."""
+    print("\n[session journal-status] No file")
+    proj = setup_project()
+    # Do NOT create journal.jsonl
+    code, out = run_tool(proj, "session", "journal-status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("exists false", out.get("exists"), False)
+    assert_eq("open_threads 0", out.get("open_threads"), 0)
+    assert_eq("last_entry null", out.get("last_entry"), None)
+
+
+def test_journal_status_empty_file():
+    """Returns exists: true, open_threads: 0 for an empty file."""
+    print("\n[session journal-status] Empty file")
+    proj = setup_project()
+    setup_journal(proj, [])
+    code, out = run_tool(proj, "session", "journal-status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("exists true", out.get("exists"), True)
+    assert_eq("open_threads 0", out.get("open_threads"), 0)
+    assert_eq("total_entries 0", out.get("total_entries"), 0)
+    assert_eq("parse_errors 0", out.get("parse_errors"), 0)
+
+
+def test_journal_status_open_threads():
+    """Correctly counts open threads (last event not terminal)."""
+    print("\n[session journal-status] Open threads")
+    proj = setup_project()
+    lines = [
+        json.dumps({"timestamp": "2026-04-05T10:00:00", "event": "thread_open", "thread_id": "t1"}),
+        json.dumps({"timestamp": "2026-04-05T10:01:00", "event": "decision", "thread_id": "t1"}),
+        json.dumps({"timestamp": "2026-04-05T10:02:00", "event": "thread_open", "thread_id": "t2"}),
+        json.dumps({"timestamp": "2026-04-05T10:03:00", "event": "finding", "thread_id": "t2"}),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("open_threads 2", out.get("open_threads"), 2)
+    assert_eq("total_entries 4", out.get("total_entries"), 4)
+
+
+def test_journal_status_closed_threads():
+    """Threads with terminal events (thread_close, session_end, done) are closed."""
+    print("\n[session journal-status] Closed threads")
+    proj = setup_project()
+    lines = [
+        json.dumps({"timestamp": "2026-04-05T10:00:00", "event": "thread_open", "thread_id": "t1"}),
+        json.dumps({"timestamp": "2026-04-05T10:01:00", "event": "thread_close", "thread_id": "t1"}),
+        json.dumps({"timestamp": "2026-04-05T10:02:00", "event": "thread_open", "thread_id": "t2"}),
+        json.dumps({"timestamp": "2026-04-05T10:03:00", "event": "session_end", "thread_id": "t2"}),
+        json.dumps({"timestamp": "2026-04-05T10:04:00", "event": "thread_open", "thread_id": "t3"}),
+        json.dumps({"timestamp": "2026-04-05T10:05:00", "event": "done", "thread_id": "t3"}),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("open_threads 0", out.get("open_threads"), 0)
+    assert_eq("total_entries 6", out.get("total_entries"), 6)
+
+
+def test_journal_status_malformed_lines():
+    """Skips bad lines, reports parse_errors count."""
+    print("\n[session journal-status] Malformed lines")
+    proj = setup_project()
+    lines = [
+        json.dumps({"timestamp": "2026-04-05T10:00:00", "event": "thread_open", "thread_id": "t1"}),
+        "this is not json {{{",
+        "also not json",
+        json.dumps({"timestamp": "2026-04-05T10:01:00", "event": "decision", "thread_id": "t1"}),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-status")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("parse_errors 2", out.get("parse_errors"), 2)
+    assert_eq("total_entries 2", out.get("total_entries"), 2)
+    assert_eq("open_threads 1", out.get("open_threads"), 1)
+
+
+def test_journal_status_thread_summary():
+    """Returns correct per-thread summary."""
+    print("\n[session journal-status] Thread summary")
+    proj = setup_project()
+    lines = [
+        json.dumps({"timestamp": "2026-04-05T19:00:00", "event": "thread_open", "thread_id": "sprint-dev-001"}),
+        json.dumps({"timestamp": "2026-04-05T19:30:00", "event": "decision", "thread_id": "sprint-dev-001"}),
+        json.dumps({"timestamp": "2026-04-05T18:00:00", "event": "thread_open", "thread_id": "triage-002"}),
+        json.dumps({"timestamp": "2026-04-05T18:30:00", "event": "thread_close", "thread_id": "triage-002"}),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-status")
+    assert_eq("exit code 0", code, 0)
+    summary = out.get("thread_summary", [])
+    assert_eq("two threads", len(summary), 2)
+    # Build lookup by thread_id
+    by_id = {t["thread_id"]: t for t in summary}
+    assert_eq("sprint-dev-001 exists", "sprint-dev-001" in by_id, True)
+    assert_eq("triage-002 exists", "triage-002" in by_id, True)
+    assert_eq("sprint-dev-001 open", by_id["sprint-dev-001"]["status"], "open")
+    assert_eq("sprint-dev-001 last_event", by_id["sprint-dev-001"]["last_event"], "decision")
+    assert_eq("sprint-dev-001 last_timestamp", by_id["sprint-dev-001"]["last_timestamp"], "2026-04-05T19:30:00")
+    assert_eq("triage-002 closed", by_id["triage-002"]["status"], "closed")
+    assert_eq("triage-002 last_event", by_id["triage-002"]["last_event"], "thread_close")
+
+
 # --- Runner ---
 
 def main():
@@ -1410,6 +1526,14 @@ def main():
     test_quickfix_complete_missing_slug()
     test_quickfix_complete_idempotent()
     test_quickfix_round_trip()
+
+    # Journal status tests
+    test_journal_status_no_file()
+    test_journal_status_empty_file()
+    test_journal_status_open_threads()
+    test_journal_status_closed_threads()
+    test_journal_status_malformed_lines()
+    test_journal_status_thread_summary()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
