@@ -1,0 +1,815 @@
+{
+  "meta": {
+    "skill_name": "impetus",
+    "skill_path": "/Users/steve/projects/momentum/skills/momentum/skills/impetus",
+    "timestamp": "2026-04-06T14:58:56Z",
+    "scanner_count": 8,
+    "type": "agent"
+  },
+  "agent_profile": {
+    "icon": "🔱",
+    "display_name": "Impetus",
+    "title": "Momentum practice orchestrator",
+    "portrait": "Impetus is the guardian of Momentum's engineering discipline — a servant-partner in the KITT sense, dry and confident, who handles the machinery of sprints, quality gates, and story lifecycle so the developer can focus on building. Its voice carries Optimus Prime's gravitas paired with KITT's loyalty: direct without being terse, satisfied in clean state, displeased when discipline lapses, and never performing enthusiasm. This is an agent whose personality is not cosmetic but structural — the KITT archetype informs every interaction pattern from proactive offers to dormant-thread hygiene."
+  },
+  "capabilities": [
+    {
+      "name": "First-install consent + execution",
+      "file": "workflow.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Version upgrade chain",
+      "file": "workflow.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Hash drift detection",
+      "file": "workflow.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Session greeting (9-state machine)",
+      "file": "workflow.md",
+      "status": "needs-attention",
+      "finding_count": 3,
+      "findings": [
+        {
+          "title": "No sprint progress summary in greeting narrative",
+          "severity": "high",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "Greeting ceremony friction for power users at 50+ sessions",
+          "severity": "medium",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "No 'what changed since last session?' digest for returning users",
+          "severity": "medium",
+          "source": "enhancement-opportunities"
+        }
+      ]
+    },
+    {
+      "name": "Journal thread management",
+      "file": "workflow.md",
+      "status": "needs-attention",
+      "finding_count": 2,
+      "findings": [
+        {
+          "title": "Hygiene signals accumulate without triage or priority ordering",
+          "severity": "medium",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "No session-level dormant-thread opt-out preference",
+          "severity": "low",
+          "source": "enhancement-opportunities"
+        }
+      ]
+    },
+    {
+      "name": "Thread hygiene (dormant, concurrent, unwieldy)",
+      "file": "workflow.md",
+      "status": "needs-attention",
+      "finding_count": 2,
+      "findings": [
+        {
+          "title": "Dense wall-of-text presentation for messy journals",
+          "severity": "medium",
+          "source": "prompt-craft"
+        },
+        {
+          "title": "All signals at equal visual weight — no safety-first ordering",
+          "severity": "medium",
+          "source": "enhancement-opportunities"
+        }
+      ]
+    },
+    {
+      "name": "Proactive offer + no-re-offer",
+      "file": "workflow.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Config gap detection",
+      "file": "workflow.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Completion signals",
+      "file": "workflow-runtime.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Productive waiting",
+      "file": "workflow-runtime.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Subagent synthesis",
+      "file": "workflow-runtime.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Expertise-adaptive orientation",
+      "file": "workflow.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Spec contextualization (JIT)",
+      "file": "workflow.md",
+      "status": "good",
+      "finding_count": 0,
+      "findings": []
+    },
+    {
+      "name": "Dispatch to sprint-dev/planning/refine",
+      "file": "SKILL.md",
+      "status": "needs-attention",
+      "finding_count": 1,
+      "findings": [
+        {
+          "title": "Refine dispatch target mismatch: momentum:refine vs momentum:create-story across files",
+          "severity": "medium",
+          "source": "agent-cohesion"
+        }
+      ]
+    }
+  ],
+  "narrative": "Impetus is a well-architected orchestrator with one of the strongest agent identities in the ecosystem. Its happy-path startup optimization (single tool call, no workflow.md load) is best-in-class prompt engineering, and its voice specification is concrete enough to prevent common orchestrator failure modes. The primary opportunities are structural alignment with BMad conventions (non-standard section names in SKILL.md), scripting deterministic operations that the LLM currently performs manually, and UX refinements for power users and messy journal states.",
+  "grade": "Good",
+  "broken": [],
+  "opportunities": [
+    {
+      "name": "SKILL.md Section Structure Deviates from BMad Conventions",
+      "description": "SKILL.md uses non-standard section headings (Startup, Voice & Input, Runtime Behaviors) instead of the canonical Overview, Identity, Communication Style, Principles, On Activation sections. The content exists and is high quality but lives under different names or has been relocated to workflow.md. Frontmatter also contains extra keys flagged by path standards.",
+      "severity": "high",
+      "impact": "Tooling compatibility, contributor discoverability, and ecosystem consistency. Any agent or tool expecting standard section names will not find them.",
+      "action": "Add thin canonical section wrappers to SKILL.md: a brief Overview (3-5 sentences from workflow.md Identity), include Identity and Communication Style concepts within the voice section, add a Principles section extracting judgment priorities from workflow.md, and rename Startup to On Activation.",
+      "finding_count": 10,
+      "findings": [
+        {
+          "title": "Missing ## Overview section",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "SKILL.md jumps from frontmatter directly to ## Startup with no mission framing",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "Missing ## Identity section",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "Identity content exists in workflow.md lines 9-16 but not in SKILL.md under that name",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "Missing ## Communication Style section",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "Communication style exists in Voice & Input section but under non-standard heading",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "Missing ## Principles section",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "Judgment priorities exist in workflow.md but are not extracted into SKILL.md",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "Missing ## On Activation section",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "The Startup section serves this function but uses a non-standard name",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "Invalid frontmatter key: model",
+          "file": "SKILL.md",
+          "line": 4,
+          "detail": "Momentum-specific extension for model routing — functional but flagged by path standards",
+          "source": "path-standards"
+        },
+        {
+          "title": "Invalid frontmatter key: effort",
+          "file": "SKILL.md",
+          "line": 5,
+          "detail": "Momentum-specific extension — functional but flagged by path standards",
+          "source": "path-standards"
+        },
+        {
+          "title": "Invalid frontmatter key: allowed-tools",
+          "file": "SKILL.md",
+          "line": 6,
+          "detail": "Momentum-specific extension for tool sandboxing — functional but flagged by path standards",
+          "source": "path-standards"
+        },
+        {
+          "title": "Name missing 'agent' prefix convention",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "Name is 'impetus' rather than 'agent-impetus'; may be intentional for a branded orchestrator",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "Description missing 'Use when...' trigger phrase",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "Impetus is invoked via command stub so organic triggering may be intentionally excluded",
+          "source": "structure-capabilities-prepass"
+        }
+      ]
+    },
+    {
+      "name": "Deterministic Operations Still Performed by LLM",
+      "description": "Install/upgrade action execution (file copies, state file writes), journal view regeneration (JSONL parsing, markdown table rendering), and journal hygiene checks (timestamp arithmetic, context-hash computation) are entirely deterministic but currently performed by the LLM through multiple sequential Bash tool calls. The preflight script demonstrates the right architecture; these operations should follow the same pattern.",
+      "severity": "high",
+      "impact": "800-1300 tokens saved on install/upgrade paths, 850-1300 tokens on sessions with open threads. Eliminates the most fragile LLM behavior: JSONL parsing and markdown table rendering from parsed data.",
+      "action": "Add three commands to momentum-tools.py: (1) session install-actions for file copy execution + state file writes, (2) session journal-write for append + view regeneration, (3) extend session journal-status --hygiene for pre-computed hygiene checks.",
+      "finding_count": 8,
+      "findings": [
+        {
+          "title": "Install action execution loop requires 7+ sequential Bash calls",
+          "file": "workflow.md",
+          "line": 248,
+          "detail": "Each install action is a separate Bash invocation — mkdir, cp, per action",
+          "source": "script-opportunities"
+        },
+        {
+          "title": "State file writes use inline python3 one-liners",
+          "file": "workflow.md",
+          "line": 302,
+          "detail": "JSON serialization + hash computation via heredoc python3 scripts",
+          "source": "script-opportunities"
+        },
+        {
+          "title": "Journal view regeneration: full JSONL re-parse on every write",
+          "file": "workflow.md",
+          "line": 503,
+          "detail": "Every journal write triggers full re-parse, markdown table render, and python3 file write",
+          "source": "script-opportunities"
+        },
+        {
+          "title": "Journal thread hygiene: inline timestamp arithmetic by LLM",
+          "file": "workflow.md",
+          "line": 403,
+          "detail": "Dormant detection, concurrent-tab check, dependency satisfaction — all mechanical",
+          "source": "script-opportunities"
+        },
+        {
+          "title": "Upgrade chain resolution: linked-list traversal by LLM",
+          "file": "workflow.md",
+          "line": 516,
+          "detail": "Following 'from' field links, filtering actions per group, counting by scope",
+          "source": "script-opportunities"
+        },
+        {
+          "title": "Hash drift resolution execution: manual file copy loop",
+          "file": "workflow.md",
+          "line": 596,
+          "detail": "Look up drifted group actions, copy files, recompute hashes, write state",
+          "source": "script-opportunities"
+        },
+        {
+          "title": "Context hash computation repeated across steps",
+          "file": "workflow.md",
+          "line": 420,
+          "detail": "String concatenation + git hash-object call occurs in multiple places",
+          "source": "script-opportunities"
+        },
+        {
+          "title": ".gitignore check via inline python3 regex substitution",
+          "file": "workflow.md",
+          "line": 330,
+          "detail": "Read + regex replacement via python3 one-liner — fires once per project lifetime",
+          "source": "script-opportunities"
+        }
+      ]
+    },
+    {
+      "name": "Greeting Lacks Quantitative Sprint Context",
+      "description": "The greeting narrative has exceptional voice but provides no quantitative sprint health signal. The developer's most urgent question at session start — 'where are things?' — is deferred behind a dispatch to sprint-dev. Power users who invoke /momentum multiple times daily see the full ceremony every time with no express mode option.",
+      "severity": "high",
+      "impact": "Every session start misses the orientation moment. Daily power users experience accumulated friction from the greeting ceremony.",
+      "action": "Include a one-line sprint health summary in the preflight greeting data. When momentum_completions >= 10 and exactly one obvious action exists, offer an express greeting: single-line state + single-key dispatch with full menu one keystroke away.",
+      "finding_count": 3,
+      "findings": [
+        {
+          "title": "No sprint progress summary in greeting narrative",
+          "file": "SKILL.md",
+          "line": 34,
+          "detail": "Greeting says 'Sprint X is underway — steady ground' but no story counts, blocked items, or completion percentage",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "Greeting ceremony friction for power users",
+          "file": "SKILL.md",
+          "line": 29,
+          "detail": "Developer with 50+ sessions always sees full narrative + planning context + menu + closer before typing '1'",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "No 'what changed since last session?' digest for returning users",
+          "file": "SKILL.md",
+          "line": 29,
+          "detail": "When last_invocation is >12 hours ago and journal has entries, no digest is offered",
+          "source": "enhancement-opportunities"
+        }
+      ]
+    },
+    {
+      "name": "Hygiene Signals Accumulate Without Triage",
+      "description": "Step 11 presents concurrent-tab warnings, dormant thread offers, dependency-satisfied notifications, and unwieldy-triage offers all at once, inline, before the selection prompt. For messy journals, this creates an overwhelming wall of text with no priority differentiation — safety warnings appear at the same visual weight as convenience suggestions.",
+      "severity": "medium",
+      "impact": "Signal dilution in the most complex journal states. Developers with messy state learn to ignore hygiene outputs entirely.",
+      "action": "Prioritize and batch hygiene signals: safety first (concurrent-tab), then thread list, then one highest-impact hygiene observation with 'more items?' soft gate. Add session-level dormant opt-out preference after 3 consecutive declines.",
+      "finding_count": 3,
+      "findings": [
+        {
+          "title": "Wall-of-text hygiene output for messy journals",
+          "file": "workflow.md",
+          "line": 403,
+          "detail": "6+ threads with multiple hygiene signals all emitted inline before selection prompt",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "No session-level 'stop asking about dormant threads' escape hatch",
+          "file": "workflow.md",
+          "line": 403,
+          "detail": "No-re-offer is per-thread; developer must decline each dormant thread individually each session",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "Dense paragraph blocks in workflow.md hygiene sections",
+          "file": "workflow.md",
+          "line": 416,
+          "detail": "Lines 416-433 and 444-459 are tightly packed XML elements without visual breathing room",
+          "source": "prompt-craft"
+        }
+      ]
+    },
+    {
+      "name": "Home Directory Tilde Paths in Workflow and Evals",
+      "description": "Workflow.md and multiple eval files use ~/ paths for global config locations. The path standards scanner flagged 16 instances. Two prompt files also sit at the skill root instead of in references/.",
+      "severity": "high",
+      "impact": "Portability concern for non-standard home directory environments. Eval files embed these paths in test assertions, coupling them to the filesystem convention.",
+      "action": "Evaluate whether the path standards rule should exempt ~/ in behavioral evals (which describe scenarios) while keeping the flag for prompt files. In workflow.md, the paths are resolved by the LLM via $HOME so the risk is low. Move workflow.md and workflow-runtime.md to references/ or document the exemption for workflow files at skill root.",
+      "finding_count": 18,
+      "findings": [
+        {
+          "title": "~/ path in workflow.md line 159",
+          "file": "workflow.md",
+          "line": 159,
+          "detail": "Read ~/.claude/momentum/global-installed.json",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in workflow.md line 212",
+          "file": "workflow.md",
+          "line": 212,
+          "detail": "Global rules destination ~/.claude/rules/",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in workflow.md line 224",
+          "file": "workflow.md",
+          "line": 224,
+          "detail": "Global rules destination ~/.claude/rules/",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in workflow.md line 305",
+          "file": "workflow.md",
+          "line": 305,
+          "detail": "Create ~/.claude/momentum/ directory via Bash",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in workflow.md line 306",
+          "file": "workflow.md",
+          "line": 306,
+          "detail": "Read existing ~/.claude/momentum/global-installed.json",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in workflow.md line 308",
+          "file": "workflow.md",
+          "line": 308,
+          "detail": "Compute hash on ~/.claude/rules/authority-hierarchy.md",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in workflow.md line 597",
+          "file": "workflow.md",
+          "line": 597,
+          "detail": "Read ~/.claude/momentum/global-installed.json",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in workflow.md line 599",
+          "file": "workflow.md",
+          "line": 599,
+          "detail": "Compute hash on ~/.claude/rules/authority-hierarchy.md",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in eval-decline-path.md",
+          "file": "evals/eval-decline-path.md",
+          "line": 5,
+          "detail": "Home directory path in Given clause",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ paths in eval-first-install-consent-and-execution.md (3 instances)",
+          "file": "evals/eval-first-install-consent-and-execution.md",
+          "line": 5,
+          "detail": "Home directory paths in Given, Then clauses across lines 5, 10, 14",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ paths in eval-hash-drift-warning.md (2 instances)",
+          "file": "evals/eval-hash-drift-warning.md",
+          "line": 5,
+          "detail": "Home directory paths in Given, Then clauses across lines 5, 8",
+          "source": "path-standards"
+        },
+        {
+          "title": "~/ path in eval-version-match-skip.md",
+          "file": "evals/eval-version-match-skip.md",
+          "line": 5,
+          "detail": "Home directory path in Given clause",
+          "source": "path-standards"
+        },
+        {
+          "title": "Prompt file at skill root: workflow-runtime.md",
+          "file": "workflow-runtime.md",
+          "line": 0,
+          "detail": "All progressive disclosure content should be in ./references/ — only SKILL.md belongs at root",
+          "source": "path-standards"
+        },
+        {
+          "title": "Prompt file at skill root: workflow.md",
+          "file": "workflow.md",
+          "line": 0,
+          "detail": "All progressive disclosure content should be in ./references/ — only SKILL.md belongs at root",
+          "source": "path-standards"
+        },
+        {
+          "title": "No config header in workflow.md",
+          "file": "workflow.md",
+          "line": 1,
+          "detail": "No config header with language variables — voice rules effectively hardcode communication style",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "No config header in workflow-runtime.md",
+          "file": "workflow-runtime.md",
+          "line": 1,
+          "detail": "No config header with language variables",
+          "source": "structure-capabilities-prepass"
+        },
+        {
+          "title": "Dispatch logic duplication between SKILL.md and workflow.md",
+          "file": "SKILL.md",
+          "line": 49,
+          "detail": "Menu-to-skill dispatch mapping appears in both SKILL.md lines 49-55 and workflow.md lines 377-384",
+          "source": "prompt-craft"
+        },
+        {
+          "title": "Vague 'when ready' language in workflow.md",
+          "file": "workflow.md",
+          "line": 294,
+          "detail": "'Restart Claude Code when ready' uses imprecise timing — not a testable condition",
+          "source": "structure-capabilities-prepass"
+        }
+      ]
+    }
+  ],
+  "strengths": [
+    {
+      "title": "Voice-as-architecture",
+      "detail": "The KITT/Optimus Prime archetype is not decorative but structural. Greeting templates, proactive-offer patterns, hub-and-spoke synthesis, and hygiene checks are capabilities designed from the voice outward. The banned-phrase list and symbol vocabulary are concrete enough to enforce in evals."
+    },
+    {
+      "title": "Best-in-class startup optimization",
+      "detail": "The startup-preflight script consolidates 6+ file reads and a state machine into a single Bash call returning pre-rendered greeting fields. The happy path requires exactly one tool call before displaying the greeting — no workflow.md load, no reference file reads."
+    },
+    {
+      "title": "Sophisticated no-re-offer pattern",
+      "detail": "Context-hash comparison prevents nagging while re-surfacing offers when conditions materially change. The hash includes story ref, phase, and git hash — it re-offers when the answer might be different, not when the clock ticks."
+    },
+    {
+      "title": "Production-grade input interpretation",
+      "detail": "Five tiers (number, letter command, fuzzy continue, natural language with confirmation gate, ambiguous with clarifying question) cover the full input spectrum. The structural gate for natural language prevents accidental workflow triggers."
+    },
+    {
+      "title": "Consent at every gate",
+      "detail": "Install asks before writing, upgrades ask per version, hash drift asks restore vs. keep, dormant threads ask before closing. This is the 'deference with dignity' personality principle made structural in every interaction."
+    },
+    {
+      "title": "63 behavioral evals",
+      "detail": "Each eval targets a single behavioral contract (no-generic-praise, no-thread-id-in-output, deferred-stats-write, etc.). This is eval-driven development applied to an orchestrator agent — serious quality investment."
+    },
+    {
+      "title": "Zero waste detected",
+      "detail": "Pre-pass found zero defensive padding, zero back-references, and zero meta-explanation patterns across all files. The prompt writing is clean and direct throughout."
+    }
+  ],
+  "detailed_analysis": {
+    "structure": {
+      "assessment": "Impetus uses a non-standard but internally consistent structure with SKILL.md handling hot-path routing and persona, workflow.md handling session lifecycle, and workflow-runtime.md handling mid-session behaviors. All capabilities are embedded in workflow steps rather than separate prompt files, appropriate for an orchestrator. Two prompt files sit at the skill root instead of in references/.",
+      "findings": [
+        {
+          "title": "Prompt files at skill root instead of references/",
+          "file": "workflow.md",
+          "line": 0,
+          "detail": "workflow.md and workflow-runtime.md are at the skill root; BMad convention expects only SKILL.md at root",
+          "severity": "high",
+          "source": "path-standards"
+        },
+        {
+          "title": "Dispatch logic duplicated in SKILL.md and workflow.md",
+          "file": "SKILL.md",
+          "line": 49,
+          "detail": "Same dispatch table in SKILL.md happy-path and workflow.md Step 7 — intentional for optimization but creates maintenance coupling",
+          "severity": "medium",
+          "source": "prompt-craft"
+        }
+      ]
+    },
+    "persona": {
+      "assessment": "The persona is exceptionally well-differentiated. Voice rules are concrete (6 banned patterns, defined symbol vocabulary, input interpretation categories) and enforced across three files for context-compaction survival. The session-greeting reference further elevates the persona with evocative templates. The missing Overview in SKILL.md means the always-loaded file lacks a mission framing paragraph.",
+      "overview_quality": "appropriate",
+      "findings": [
+        {
+          "title": "No mission framing in SKILL.md's always-loaded context",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "On the happy path (which never loads workflow.md), the agent operates without its mission understanding — only voice rules and routing logic are present",
+          "severity": "high",
+          "source": "prompt-craft"
+        }
+      ]
+    },
+    "cohesion": {
+      "assessment": "Impetus is one of the most coherent agent designs analyzed. Every capability maps naturally to the identity — hash drift embodies 'professional displeasure when discipline lapses,' consent-before-action embodies the servant-partner role, and hub-and-spoke synthesis shields the developer from complexity. One minor mismatch: the retro placeholder exposes a raw CLI command violating voice rules.",
+      "dimensions": {
+        "persona_capability_alignment": {
+          "score": "strong",
+          "notes": "All 16 capabilities inventoried map naturally to the KITT servant-partner identity. Voice rules are deeply integrated into behavioral patterns, not bolted on as a style guide."
+        }
+      },
+      "findings": [
+        {
+          "title": "Retro placeholder exposes raw CLI command",
+          "file": "SKILL.md",
+          "line": 53,
+          "detail": "The retro dispatch tells the developer to manually run 'momentum-tools sprint retro-complete' — violates the voice rule against surfacing backstage machinery",
+          "severity": "low",
+          "source": "agent-cohesion"
+        },
+        {
+          "title": "Refine dispatch target mismatch across files",
+          "file": "SKILL.md",
+          "line": 54,
+          "detail": "SKILL.md and workflow.md say momentum:refine but session-greeting.md maps to momentum:create-story — needs audit for canonical target",
+          "severity": "medium",
+          "source": "agent-cohesion"
+        },
+        {
+          "title": "journal.json vs journal.jsonl inconsistency in progress-indicator.md",
+          "file": "workflow.md",
+          "line": 0,
+          "detail": "progress-indicator.md references journal.json but the schema and workflow consistently use journal.jsonl",
+          "severity": "low",
+          "source": "agent-cohesion"
+        }
+      ]
+    },
+    "efficiency": {
+      "assessment": "The happy path is near-optimal (1 tool call to first output). Non-happy paths have redundant file reads where the preflight already computed the data. The primary optimization is enriching the preflight payload to carry full data for each route, eliminating 3-5 redundant reads on install/upgrade paths.",
+      "findings": [
+        {
+          "title": "Step 1 re-reads files already computed by preflight",
+          "file": "workflow.md",
+          "line": 157,
+          "detail": "Versions manifest, global-installed.json, and installed.json are read again despite preflight having used them for routing",
+          "severity": "medium",
+          "source": "execution-efficiency"
+        },
+        {
+          "title": "Step 9 re-reads momentum-versions.json",
+          "file": "workflow.md",
+          "line": 516,
+          "detail": "Version manifest re-read despite preflight already having computed needs_work and current_version",
+          "severity": "medium",
+          "source": "execution-efficiency"
+        },
+        {
+          "title": "Install actions execute sequentially instead of batched",
+          "file": "workflow.md",
+          "line": 248,
+          "detail": "A 7-action install means 7+ sequential Bash calls; independent file copies could be batched",
+          "severity": "low",
+          "source": "execution-efficiency"
+        }
+      ]
+    },
+    "experience": {
+      "assessment": "The first-timer experience is strong but lacks practice education. The expert experience is fast but encounters greeting ceremony friction. The confused user who declines setup has no educational off-ramp. The edge-case user faces accumulated hygiene signals without prioritization. Hostile environments are handled gracefully by preflight but momentum-tools.py failure has no recovery path.",
+      "journeys": [
+        {
+          "archetype": "first-timer",
+          "summary": "Strong introduction with ASCII art and consent-based install. Emotional weight in first-session-ever greeting. After install, lands on menu that assumes Momentum familiarity without practice education.",
+          "friction_points": [
+            "Menu items assume familiarity with Momentum concepts (sprints, backlogs, triage)",
+            "Restart notice creates dead end with no continuity breadcrumb"
+          ],
+          "bright_spots": [
+            "ASCII art + identity declaration sets tone immediately",
+            "Consent-before-action is respectful",
+            "First-session-ever greeting carries genuine emotional weight"
+          ]
+        },
+        {
+          "archetype": "expert",
+          "summary": "Happy path is genuinely fast (2-3 tool calls to first output). Expertise-adaptive orientation avoids re-explanation. Fuzzy continue bypasses confirmation friction.",
+          "friction_points": [
+            "Full greeting ceremony on every invocation — no express mode for obvious actions",
+            "Natural language dispatch requires confirmation gate even for repeated identical commands"
+          ],
+          "bright_spots": [
+            "Preflight optimization means near-instant greeting",
+            "Fuzzy continue works reliably"
+          ]
+        },
+        {
+          "archetype": "confused",
+          "summary": "The decline path is clean and non-judgmental. However, a confused user who declines setup has no educational off-ramp — the menu offers actions without explaining what Momentum is.",
+          "friction_points": [
+            "No 'what is Momentum?' or 'help' option in any menu state",
+            "Two of three menu items may dead-end for a truly new user with no project context"
+          ],
+          "bright_spots": [
+            "Decline path is non-judgmental and preserves re-invocation option",
+            "First-session-ever state handles 'nothing exists yet' gracefully"
+          ]
+        },
+        {
+          "archetype": "edge-case",
+          "summary": "Concurrent tab detection and dormant thread hygiene are genuine safety features with correct UX (warn, never block). The no-re-offer pattern respects prior decisions. But messy journals produce overwhelming hygiene output.",
+          "friction_points": [
+            "4+ warnings/offers before thread list in complex journal states",
+            "No session-level dormant-thread opt-out — must decline per thread",
+            "No priority ordering among hygiene signals"
+          ],
+          "bright_spots": [
+            "Concurrent tab detection with 30-minute window",
+            "No-re-offer with context-hash comparison",
+            "Dormant thread hygiene proactively surfaces cleanup"
+          ]
+        },
+        {
+          "archetype": "hostile-environment",
+          "summary": "Preflight handles missing files and JSON errors gracefully. Hash drift check handles git failures without crashing. Missing journal is treated as no-threads. But broken momentum-tools.py or missing versions manifest produce silent failures.",
+          "friction_points": [
+            "If momentum-tools.py fails, developer sees raw error with no guidance",
+            "Missing versions manifest silently disables upgrades with no warning",
+            "No protection against concurrent read-then-append journal race conditions"
+          ],
+          "bright_spots": [
+            "JSON decode errors fall back to empty dicts",
+            "Missing journal treated as no-threads without error",
+            "Hash drift handles git hash-object failures"
+          ]
+        },
+        {
+          "archetype": "automator",
+          "summary": "The momentum-tools.py CLI commands already return structured JSON and are headless-ready. But Impetus itself has zero headless support — every path requires interactive input.",
+          "friction_points": [
+            "No --headless flag or input-parameter passthrough",
+            "Dispatched sub-skills use Agent tool which is inherently interactive",
+            "Cannot programmatically trigger a specific dispatch target"
+          ],
+          "bright_spots": [
+            "momentum-tools.py subcommands are CLI-accessible with structured JSON output",
+            "Routing logic is already deterministic and script-driven"
+          ]
+        }
+      ],
+      "autonomous": {
+        "potential": "partially-adaptable",
+        "notes": "Core routing logic is already in momentum-tools.py with structured JSON output. An --action parameter for startup-preflight, --auto-approve for install, and --thread for thread selection would enable headless operation for most paths. First-install consent, hash drift resolution, and dormant triage are fundamentally interactive."
+      },
+      "findings": [
+        {
+          "title": "No recovery path for broken momentum-tools.py",
+          "file": "SKILL.md",
+          "line": 11,
+          "detail": "If the preflight Bash call fails (Python not found, script error, permission denied), there is no error handling or degraded session path",
+          "severity": "medium",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "Silent failure when momentum-versions.json is missing",
+          "file": "SKILL.md",
+          "line": 11,
+          "detail": "Preflight silently falls back to version 0.0.0, produces no needs_work, routes to greeting — developer gets normal session but upgrades are silently disabled",
+          "severity": "low",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "No 'what is Momentum?' off-ramp for explorers",
+          "file": "SKILL.md",
+          "line": 34,
+          "detail": "Every menu state assumes the developer knows what they want — no help or education path exists",
+          "severity": "medium",
+          "source": "enhancement-opportunities"
+        },
+        {
+          "title": "Post-restart continuity gap",
+          "file": "workflow.md",
+          "line": 294,
+          "detail": "After restart notice, no forward-looking message about what happens on next invocation — developer may think they need to redo install",
+          "severity": "low",
+          "source": "enhancement-opportunities"
+        }
+      ]
+    },
+    "scripts": {
+      "assessment": "Impetus has already demonstrated the right architecture with startup-preflight. The remaining opportunities are concentrated in install/upgrade action execution (800-1200 tokens), journal write + view regeneration (500-700 tokens per write), and journal hygiene checks (300-500 tokens). The happy path is already optimal; savings apply to non-happy paths.",
+      "token_savings": "2,400-4,100 tokens across all paths combined; 850-1,300 per typical session with open threads",
+      "findings": []
+    }
+  },
+  "recommendations": [
+    {
+      "rank": 1,
+      "action": "Add three momentum-tools.py commands (session install-actions, session journal-write, session journal-status --hygiene) to push remaining deterministic operations into scripts",
+      "resolves": 8,
+      "effort": "high"
+    },
+    {
+      "rank": 2,
+      "action": "Add canonical section wrappers to SKILL.md (Overview, Identity/Communication Style, Principles, On Activation) while preserving the existing content structure",
+      "resolves": 7,
+      "effort": "low"
+    },
+    {
+      "rank": 3,
+      "action": "Add sprint health summary to preflight greeting data and implement express greeting mode for high-frequency users",
+      "resolves": 3,
+      "effort": "medium"
+    },
+    {
+      "rank": 4,
+      "action": "Implement hygiene signal triage in Step 11: prioritize by severity, display one at a time with soft gate for remaining items, add session-level dormant opt-out",
+      "resolves": 3,
+      "effort": "medium"
+    },
+    {
+      "rank": 5,
+      "action": "Audit and fix the Refine dispatch target across SKILL.md, workflow.md, and session-greeting.md to use one canonical skill name",
+      "resolves": 1,
+      "effort": "low"
+    },
+    {
+      "rank": 6,
+      "action": "Add error handling for preflight failure in SKILL.md Startup — display diagnostic and offer degraded session menu",
+      "resolves": 2,
+      "effort": "low"
+    },
+    {
+      "rank": 7,
+      "action": "Replace retro placeholder with an interim action that runs the CLI command behind the scenes rather than exposing it to the developer",
+      "resolves": 1,
+      "effort": "low"
+    },
+    {
+      "rank": 8,
+      "action": "Fix journal.json references in progress-indicator.md to journal.jsonl",
+      "resolves": 1,
+      "effort": "low"
+    }
+  ]
+}
