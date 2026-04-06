@@ -32,24 +32,25 @@ one continuous flow.
 1. `/momentum:quick-fix` is independently invocable — does not require Impetus or
    an active sprint
 2. Phase 1 (Define) creates a story via `momentum:create-story` from the user's
-   prompt and registers it in stories/index.json
+   prompt, registers it in stories/index.json, then opens the story spec in a cmux
+   markdown surface on the right pane for developer review and approval
 3. Phase 2 (Specify) generates a Gherkin `.feature` file applying the Outsider Test,
    runs spec impact analysis, determines specialist agent from touches paths, checks
-   guidelines, and runs AVFL checkpoint on the plan
-4. Phase 3 (Review) opens the story spec and Gherkin spec as cmux markdown surfaces
-   on the right pane for developer review
-5. Phase 4 (Implement) creates a worktree off `main` (warns if not on main), spawns
-   the specialist dev agent, and merges on completion
-6. Phase 5 (Validate) runs post-merge AVFL scan, then E2E Validator and Dev agent
-   collaborate via task list — E2E finds issues, Dev fixes, E2E re-verifies — looping
-   until clean or developer halts
-7. Phase 6 (Ship) merges to main, shows push summary, asks to push
-8. The workflow never presents a backlog, selects from multiple stories, computes waves,
+   guidelines, runs AVFL checkpoint on the plan, then opens the Gherkin spec in a
+   cmux markdown surface for developer review and approval
+4. Phase 3 (Implement) creates a worktree off `main` (warns if not on main), spawns
+   the specialist dev agent, and merges on completion. The dev agent uses the same
+   guidelines and specialist configuration that carries into Phase 4
+5. Phase 4 (Validate) runs post-merge AVFL scan, then the same Dev agent and E2E
+   Validator collaborate via task list — E2E finds issues, Dev fixes, E2E re-verifies
+   — looping until clean or developer halts
+6. Phase 5 (Ship) merges to main, shows push summary, asks to push
+7. The workflow never presents a backlog, selects from multiple stories, computes waves,
    builds dependency graphs, or runs sprint activation/completion lifecycle
-9. If the current branch is not `main`, the workflow warns the developer and offers
+8. If the current branch is not `main`, the workflow warns the developer and offers
    to continue or switch first — default is always worktree off `main`
-10. A lightweight quickfix entry is registered in sprints/index.json for traceability
-    (slug, story, started, completed) without using activate/complete lifecycle
+9. A lightweight quickfix entry is registered in sprints/index.json for traceability
+   (slug, story, started, completed) without using activate/complete lifecycle
 
 ## Dev Notes
 
@@ -82,13 +83,14 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 | Phase 6: Verification | SKIP — collapsed into Phase 5 |
 | Phase 7: Completion | SIMPLIFY — merge to main, push |
 
-### The 6 Phases
+### The 5 Phases
 
 **Phase 1: Define**
-- Create tasks for the 6 workflow phases
+- Create tasks for the 5 workflow phases
 - User describes the fix. Ask for epic_slug (default "ad-hoc")
 - Invoke `momentum:create-story` with the description
-- Developer approves the story
+- Open the story spec in a cmux markdown surface on the right pane
+- Developer reviews and approves (or requests revisions)
 
 **Phase 2: Specify**
 - Generate Gherkin spec (1 `.feature` file, Outsider Test)
@@ -96,14 +98,10 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 - Determine specialist from `touches` paths (same classification table as sprint-planning)
 - Check guidelines in `.claude/rules/` — offer G/P/D if missing
 - AVFL checkpoint on story plan + Gherkin spec
+- Open the Gherkin spec in a cmux markdown surface on the right pane
+- Developer reviews and approves (or requests revisions)
 
-**Phase 3: Review**
-- Open story spec in cmux markdown surface on right pane
-- Open Gherkin spec in cmux markdown surface on right pane
-- Developer reads in rendered viewer
-- Developer closes surfaces or says "approved" to proceed
-
-**Phase 4: Implement**
+**Phase 3: Implement**
 - Check current branch. If not `main`, warn: "You're on `{branch}`, not `main`.
   Quick-fix will branch from `main`. Continue, or switch first?"
 - Create worktree off `main`: `git worktree add .worktrees/quickfix-{slug} main`
@@ -111,18 +109,19 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 - Spawn agent in worktree with story file, guidelines, agent-skill-development-guide if touching skills/agents
 - On completion, merge worktree to main (rebase + merge)
 - Clean up worktree
+- The dev agent configuration (specialist, guidelines) is the same in Phase 3 and Phase 4
 
-**Phase 5: Validate**
+**Phase 4: Validate**
 - Post-merge AVFL scan (profile: scan, stage: final)
 - Fix critical findings before proceeding
-- Spawn Dev agent + E2E Validator in collaborative mode:
+- Dev agent + E2E Validator collaborate via task list (same dev agent config as Phase 3):
   - E2E Validator runs Gherkin scenarios, reports failures as tasks
   - Dev agent picks up tasks and fixes immediately
   - E2E re-verifies fixed scenarios
   - Loop until clean or developer halts
 - Transition story to done
 
-**Phase 6: Ship**
+**Phase 5: Ship**
 - Register quickfix completion in sprints/index.json (lightweight — just slug, story, started, completed)
 - Show push summary: `git log @{u}..HEAD --oneline`
 - Ask to push
@@ -175,8 +174,8 @@ Reproduce from sprint-planning Step 5:
 - [ ] Task 1 — Write behavioral evals (EDD: before skill creation)
   - [ ] Create `skills/momentum/skills/quick-fix/evals/eval-quick-fix-invocable.md`
     — verifies skill loads and begins Phase 1 when invoked directly
-  - [ ] Create `skills/momentum/skills/quick-fix/evals/eval-quick-fix-6-phases.md`
-    — verifies all 6 phases are reachable in the workflow
+  - [ ] Create `skills/momentum/skills/quick-fix/evals/eval-quick-fix-5-phases.md`
+    — verifies all 5 phases are reachable in the workflow
   - [ ] Create `skills/momentum/skills/quick-fix/evals/eval-quick-fix-single-story.md`
     — verifies no backlog, wave planning, dependency graphs, or sprint activation
 
