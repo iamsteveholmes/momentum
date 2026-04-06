@@ -43,9 +43,12 @@ one continuous flow.
 4. Phase 3 (Implement) creates a worktree off `main` (warns if not on main), spawns
    the specialist dev agent, and merges on completion. The dev agent uses the same
    guidelines and specialist configuration that carries into Phase 4
-5. Phase 4 (Validate) runs post-merge AVFL scan, then the same Dev agent and E2E
-   Validator collaborate via task list — E2E finds issues, Dev fixes, E2E re-verifies
-   — looping until clean or developer halts
+5. Phase 4 (Validate) runs post-merge AVFL scan, then the validation team
+   collaborates via task list with the Dev agent. Which validators run depends on
+   change type: E2E Validator for skill-instruction (behavioral verification),
+   QA for script-code (test coverage and functional verification). Both run when
+   both change types are present. Dev fixes issues as they come in, validators
+   re-verify. Loop until clean or developer halts.
 6. Phase 5 (Ship) merges to main, shows push summary, asks to push
 7. The workflow never presents a backlog, selects from multiple stories, computes waves,
    builds dependency graphs, or runs sprint activation/completion lifecycle
@@ -121,10 +124,14 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 **Phase 4: Validate**
 - Post-merge AVFL scan (profile: scan, stage: final)
 - Fix critical findings before proceeding
-- Dev agent + E2E Validator collaborate via task list (same dev agent config as Phase 3):
-  - E2E Validator runs Gherkin scenarios, reports failures as tasks
+- Determine which validators to run based on change types in the story:
+  - `skill-instruction` → E2E Validator (behavioral verification via Gherkin specs)
+  - `script-code` → QA (test coverage, edge cases, functional verification)
+  - Both present → both run
+- Dev agent + validators collaborate via task list (same dev agent config as Phase 3):
+  - Validators find issues, report as tasks
   - Dev agent picks up tasks and fixes immediately
-  - E2E re-verifies fixed scenarios
+  - Validators re-verify fixed items
   - Loop until clean or developer halts
 - Transition story to done
 
