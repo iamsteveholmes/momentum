@@ -135,6 +135,7 @@ def cmd_sprint_activate(args: argparse.Namespace) -> None:
     planning = sprints["planning"]
     planning["locked"] = True
     planning["started"] = date.today().isoformat()
+    planning["status"] = "active"
     sprints["active"] = planning
     sprints["planning"] = None
     write_json(path, sprints)
@@ -153,6 +154,8 @@ def cmd_sprint_complete(args: argparse.Namespace) -> None:
 
     active = sprints["active"]
     active["completed"] = date.today().isoformat()
+    active["status"] = "done"
+    active["retro_run_at"] = None
     if "completed" not in sprints:
         sprints["completed"] = []
     sprints["completed"].append(active)
@@ -185,7 +188,7 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
 
     # Create planning entry if it doesn't exist
     if not sprints.get("planning"):
-        sprints["planning"] = {"locked": False, "stories": [], "waves": []}
+        sprints["planning"] = {"locked": False, "status": "planning", "stories": [], "waves": []}
 
     planning = sprints["planning"]
     if planning.get("locked"):
@@ -224,6 +227,283 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
 
     write_json(path, sprints)
     result("sprint_plan", success=True, operation=args.operation, stories=story_slugs)
+
+
+def cmd_sprint_ready(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    if not sprints.get("planning"):
+        error_result("sprint_ready", "No planning sprint exists")
+
+    sprints["planning"]["status"] = "ready"
+    write_json(path, sprints)
+
+    slug = sprints["planning"].get("slug", "unknown")
+    result("sprint_ready", success=True, sprint=slug, status="ready")
+
+
+def cmd_sprint_retro_complete(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    completed = sprints.get("completed", [])
+    target = None
+    for entry in reversed(completed):
+        if entry.get("retro_run_at") is None:
+            target = entry
+            break
+
+    if target is None:
+        error_result("sprint_retro_complete", "No completed sprint with retro_run_at unset")
+
+    target["retro_run_at"] = date.today().isoformat()
+
+    auto_activated = False
+    planning = sprints.get("planning")
+    if planning and planning.get("status") == "ready":
+        planning["locked"] = True
+        planning["started"] = date.today().isoformat()
+        planning["status"] = "active"
+        sprints["active"] = planning
+        sprints["planning"] = None
+        auto_activated = True
+
+    write_json(path, sprints)
+
+    slug = target.get("slug", "unknown")
+    result("sprint_retro_complete", success=True, sprint=slug,
+           retro_run_at=target["retro_run_at"], auto_activated=auto_activated)
+
+
+def cmd_sprint_next_stories(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    sp = sprints_path(project_dir)
+    st = stories_path(project_dir)
+    sprints = read_json(sp)
+    stories = read_json(st)
+
+    active = sprints.get("active")
+    if not active:
+        error_result("sprint_next_stories", "No active sprint exists")
+
+    sprint_stories = active.get("stories", [])
+    sprint_slug = active.get("slug", "unknown")
+
+    ready = []
+    blocked = []
+    done_list = []
+
+    terminal = {"done", "dropped", "closed-incomplete"}
+
+    for slug in sprint_stories:
+        story = stories.get(slug, {})
+        status = story.get("status", "backlog")
+
+        if status in terminal:
+            done_list.append(slug)
+            continue
+
+        depends_on = story.get("depends_on", [])
+        waiting_on = []
+        for dep in depends_on:
+            dep_story = stories.get(dep, {})
+            if dep_story.get("status") != "done":
+                waiting_on.append(dep)
+
+        if waiting_on:
+            blocked.append({"slug": slug, "waiting_on": waiting_on})
+        else:
+            ready.append(slug)
+
+    result("sprint_next_stories", success=True, sprint=sprint_slug,
+           ready=ready, blocked=blocked, done=done_list)
+
+
+# --- Session Commands ---
+
+def cmd_session_stats_update(args: argparse.Namespace) -> None:
+    import os
+
+    project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", resolve_project_dir()))
+    installed_path = project_dir / ".claude" / "momentum" / "installed.json"
+
+    if not installed_path.exists():
+        error_result("session_stats_update", f"installed.json not found: {installed_path}")
+
+    data = json.loads(installed_path.read_text(encoding="utf-8"))
+
+    if "session_stats" not in data:
+        data["session_stats"] = {"momentum_completions": 0, "last_invocation": None}
+
+    data["session_stats"]["momentum_completions"] = data["session_stats"].get("momentum_completions", 0) + 1
+    data["session_stats"]["last_invocation"] = date.today().isoformat()
+
+    installed_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result("session_stats_update", success=True,
+           momentum_completions=data["session_stats"]["momentum_completions"],
+           last_invocation=data["session_stats"]["last_invocation"])
+
+
+def cmd_session_greeting_state(args: argparse.Namespace) -> None:
+    import os
+
+    project_dir = resolve_project_dir()
+    claude_project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", project_dir))
+
+    sp = sprints_path(project_dir)
+    st = stories_path(project_dir)
+    installed_path = claude_project_dir / ".claude" / "momentum" / "installed.json"
+
+    sprints = read_json(sp) if sp.exists() else {"active": None, "planning": None, "completed": []}
+    stories = read_json(st) if st.exists() else {}
+    installed = json.loads(installed_path.read_text(encoding="utf-8")) if installed_path.exists() else {}
+
+    session_stats = installed.get("session_stats", {})
+    momentum_completions = session_stats.get("momentum_completions", 0)
+
+    active = sprints.get("active")
+    planning = sprints.get("planning")
+    completed = sprints.get("completed", [])
+
+    active_sprint = active.get("slug") if active else None
+    planning_sprint = planning.get("slug") if planning else None
+    planning_status = planning.get("status") if planning else None
+
+    last_completed_sprint = completed[-1].get("slug") if completed else None
+
+    no_sprints = active is None and planning is None and len(completed) == 0
+
+    # State detection priority order from story
+    if momentum_completions == 0 and no_sprints:
+        state = "first-session-ever"
+    elif active is None and planning is None:
+        state = "no-active-nothing-planned"
+    elif active is None and planning and planning.get("status") == "ready":
+        state = "no-active-planned-ready"
+    elif active and active.get("status") == "done" and planning is None:
+        state = "done-no-planned"
+    elif active and active.get("status") == "done":
+        state = "done-retro-needed"
+    elif active and planning and planning.get("status") == "planning":
+        state = "active-planned-needs-work"
+    else:
+        # Active sprint exists with status "active" — sub-detection
+        sprint_stories = active.get("stories", []) if active else []
+
+        # Check for blocked stories
+        has_blocked = False
+        all_not_started = True
+        for slug in sprint_stories:
+            story = stories.get(slug, {})
+            status = story.get("status", "backlog")
+            if status not in ("backlog", "ready-for-dev", "done", "dropped", "closed-incomplete"):
+                all_not_started = False
+            depends_on = story.get("depends_on", [])
+            for dep in depends_on:
+                dep_story = stories.get(dep, {})
+                if dep_story.get("status") != "done":
+                    has_blocked = True
+
+        if has_blocked:
+            state = "active-blocked"
+        elif all_not_started:
+            state = "active-not-started"
+        else:
+            state = "active-in-progress"
+
+    output = {
+        "state": state,
+        "active_sprint": active_sprint,
+        "planning_sprint": planning_sprint,
+        "planning_status": planning_status,
+        "momentum_completions": momentum_completions,
+        "last_completed_sprint": last_completed_sprint,
+    }
+    result("session_greeting_state", success=True, **output)
+
+
+def cmd_session_startup_check(args: argparse.Namespace) -> None:
+    import os
+    import subprocess as sp
+
+    project_dir = resolve_project_dir()
+    claude_project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", project_dir))
+
+    versions_path = project_dir / "skills" / "momentum" / "references" / "momentum-versions.json"
+    installed_path = claude_project_dir / ".claude" / "momentum" / "installed.json"
+    global_installed_path = Path.home() / ".claude" / "momentum" / "global-installed.json"
+
+    # Read versions manifest
+    if versions_path.exists():
+        versions_data = json.loads(versions_path.read_text(encoding="utf-8"))
+        current_version = versions_data.get("current_version", "0.0.0")
+    else:
+        current_version = "0.0.0"
+
+    # Read installed.json
+    needs_install = not installed_path.exists()
+    if installed_path.exists():
+        installed_data = json.loads(installed_path.read_text(encoding="utf-8"))
+        installed_version = installed_data.get("version", "0.0.0")
+    else:
+        installed_data = {}
+        installed_version = "0.0.0"
+
+    # Read global-installed.json
+    if global_installed_path.exists():
+        global_data = json.loads(global_installed_path.read_text(encoding="utf-8"))
+        global_version = global_data.get("version", "0.0.0")
+    else:
+        global_data = {}
+        global_version = "0.0.0"
+
+    # Version comparison
+    needs_upgrade = installed_version != current_version or global_version != current_version
+
+    # Hash drift detection — check global components
+    hash_drift = False
+    global_components = global_data.get("components", {})
+    for comp_name, comp_info in global_components.items():
+        if not isinstance(comp_info, dict):
+            continue
+        stored_hash = comp_info.get("hash")
+        target = comp_info.get("target")
+        if stored_hash and target:
+            target_path = Path(os.path.expanduser(target))
+            if target_path.exists():
+                try:
+                    proc = sp.run(
+                        ["git", "hash-object", str(target_path)],
+                        capture_output=True, text=True, timeout=5
+                    )
+                    if proc.returncode == 0:
+                        current_hash = proc.stdout.strip()
+                        if current_hash != stored_hash:
+                            hash_drift = True
+                except (sp.TimeoutExpired, FileNotFoundError):
+                    pass
+
+    # Config gaps — check .mcp.json for required providers
+    config_gaps = []
+    mcp_path = claude_project_dir / ".mcp.json"
+    if mcp_path.exists():
+        try:
+            mcp_data = json.loads(mcp_path.read_text(encoding="utf-8"))
+            # Informational — list absent providers if needed
+        except json.JSONDecodeError:
+            config_gaps.append("invalid .mcp.json")
+
+    result("session_startup_check", success=True,
+           needs_upgrade=needs_upgrade,
+           needs_install=needs_install,
+           hash_drift=hash_drift,
+           config_gaps=config_gaps,
+           installed_version=installed_version,
+           current_version=current_version)
 
 
 # --- Log Command ---
@@ -332,6 +612,34 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--stories", required=True, help="Comma-separated story slugs")
     sp.add_argument("--wave", type=int, default=None, help="Wave number (for add)")
     sp.set_defaults(func=cmd_sprint_plan)
+
+    # sprint ready
+    sr = sprint_sub.add_parser("ready", help="Mark planning sprint as ready")
+    sr.set_defaults(func=cmd_sprint_ready)
+
+    # sprint retro-complete
+    src = sprint_sub.add_parser("retro-complete", help="Mark retro done on most recent completed sprint")
+    src.set_defaults(func=cmd_sprint_retro_complete)
+
+    # sprint next-stories
+    sns = sprint_sub.add_parser("next-stories", help="List unblocked stories in active sprint")
+    sns.set_defaults(func=cmd_sprint_next_stories)
+
+    # session command group
+    session = subparsers.add_parser("session", help="Session management operations")
+    session_sub = session.add_subparsers(dest="session_action", required=True)
+
+    # session stats-update
+    ssu = session_sub.add_parser("stats-update", help="Increment session stats in installed.json")
+    ssu.set_defaults(func=cmd_session_stats_update)
+
+    # session greeting-state
+    sgs = session_sub.add_parser("greeting-state", help="Detect greeting state from sprint/story data")
+    sgs.set_defaults(func=cmd_session_greeting_state)
+
+    # session startup-check
+    ssc = session_sub.add_parser("startup-check", help="Check versions, hash drift, and config gaps")
+    ssc.set_defaults(func=cmd_session_startup_check)
 
     # log command group
     log = subparsers.add_parser("log", help="Append structured event to agent log")
