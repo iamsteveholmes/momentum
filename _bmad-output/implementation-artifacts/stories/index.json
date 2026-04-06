@@ -1097,5 +1097,60 @@
     "touches": [
       "skills/momentum/agents/dev.md"
     ]
+  },
+  "backlog-priority-field": {
+    "status": "backlog",
+    "title": "Backlog Priority Field — Add Priority to All Story Index Entries",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "_bmad-output/implementation-artifacts/stories/index.json",
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/skills/sprint-planning/workflow.md"
+    ]
+  },
+  "impetus-allowed-tools-restriction": {
+    "status": "backlog",
+    "title": "Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/impetus/SKILL.md"
+    ]
+  },
+  "refine-skill": {
+    "status": "backlog",
+    "title": "Refine Skill — Backlog Grooming with PM and Architect",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/refine/SKILL.md",
+      "skills/momentum/skills/refine/workflow.md"
+    ]
+  },
+  "create-story-update": {
+    "status": "backlog",
+    "title": "Create Story Update — Remove AVFL Checkpoint, Add Gherkin Generation",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/create-story/SKILL.md",
+      "skills/momentum/skills/create-story/workflow.md"
+    ]
+  },
+  "verify-skill": {
+    "status": "backlog",
+    "title": "Verify Skill — Automated Behavioral Verification",
+    "epic_slug": "story-cycles",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/verify/SKILL.md",
+      "skills/momentum/skills/verify/workflow.md"
+    ]
   }
 }

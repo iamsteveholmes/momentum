@@ -29,6 +29,19 @@ dropped           removed -- obsolete or duplicate
 closed-incomplete sprint force-closed before completion; migrated to next sprint or dropped
 ```
 
+### Story Priority
+
+All stories carry a `priority` field in `stories/index.json`:
+
+| Priority | When |
+|----------|------|
+| `critical` | Blocks other work or has a deadline |
+| `high` | Important for current goals, should be in next sprint |
+| `medium` | Valuable, no urgency |
+| `low` | Default — nice to have, refine when relevant |
+
+Default is `low`. Priority is set by the user or suggested by the agent and confirmed by the user. Sprint planning uses priority as a signal alongside dependencies and epic grouping.
+
 ### Story IDs
 
 Globally unique kebab-case slugs. No epic encoding.
