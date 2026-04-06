@@ -16,7 +16,17 @@
       {
         "wave": 1,
         "stories": [
-          "workflow-fidelity-rule"
+          "workflow-fidelity-rule",
+          "retro-skill",
+          "posttooluse-lint-and-format-hook-active",
+          "pretooluse-file-protection-hooks-active",
+          "journal-status-tool"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "stop-gate-runs-conditional-quality-checks"
         ]
       }
     ]
