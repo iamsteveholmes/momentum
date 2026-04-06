@@ -9,9 +9,17 @@
       "posttooluse-lint-and-format-hook-active",
       "pretooluse-file-protection-hooks-active",
       "stop-gate-runs-conditional-quality-checks",
-      "journal-status-tool"
+      "journal-status-tool",
+      "workflow-fidelity-rule"
     ],
-    "waves": []
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "workflow-fidelity-rule"
+        ]
+      }
+    ]
   },
   "completed": [
     {

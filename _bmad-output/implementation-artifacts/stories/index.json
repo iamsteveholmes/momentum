@@ -1056,5 +1056,16 @@
       "skills/momentum/skills/retro/workflow.md",
       "skills/momentum/scripts/momentum-tools.py"
     ]
+  },
+  "workflow-fidelity-rule": {
+    "status": "done",
+    "title": "Workflow Fidelity Rule — Delegation Steps Are Binding",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/references/rules/workflow-fidelity.md",
+      ".claude/rules/workflow-fidelity.md"
+    ]
   }
 }
