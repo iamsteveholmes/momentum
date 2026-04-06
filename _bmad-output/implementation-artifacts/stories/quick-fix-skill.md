@@ -93,47 +93,52 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 **Phase 1: Define**
 - Create tasks for the 5 workflow phases
 - User describes the fix. Ask for epic_slug (default "ad-hoc")
-- Invoke `momentum:create-story` with the description
-- Open the story spec in a cmux markdown surface on the right pane
-- Developer reviews and approves (or requests revisions)
+- Invoke `momentum:create-story` (model: sonnet, effort: medium) with the description
+- **BLOCKING GATE:** Open the story spec in a cmux markdown surface on the right
+  pane. Do NOT proceed until the developer explicitly approves. If revisions
+  requested, re-invoke create-story and re-present.
 
 **Phase 2: Specify**
-- Spec impact discovery — spawn architecture + PRD discovery agents to identify
-  new decisions, modified constraints, or new FRs introduced by this fix
-- Spec impact updates — if impacts found, spawn architect agent to update
-  architecture.md and PM agent to update prd.md. These are the sole writers of
-  their respective files — the dev agent in Phase 3 never touches them
-- Generate Gherkin spec (1 `.feature` file, Outsider Test) — generated AFTER spec
-  updates so Gherkin can reference any new decisions or FRs
-- Determine specialist from `touches` paths (same classification table as sprint-planning)
+- Spec impact discovery — spawn architecture + PRD discovery agents (model: sonnet,
+  effort: medium) to identify new decisions, modified constraints, or new FRs
+- Spec impact updates — if impacts found, spawn architect agent (model: sonnet,
+  effort: medium) to update architecture.md and PM agent (model: sonnet, effort:
+  medium) to update prd.md. These are the sole writers of their respective files —
+  the dev agent in Phase 3 never touches them
+- Generate Gherkin spec — spawn subagent (model: sonnet, effort: medium) for 1
+  `.feature` file with Outsider Test. Generated AFTER spec updates so Gherkin can
+  reference any new decisions or FRs
+- **BLOCKING GATE:** Open the Gherkin spec in a cmux markdown surface on the right
+  pane. Do NOT proceed until the developer explicitly approves. If revisions
+  requested, regenerate and re-present.
+- Determine specialist via `momentum-tools specialist-classify --touches ...`
 - Check guidelines in `.claude/rules/` — offer G/P/D if missing
-- AVFL checkpoint on story plan + Gherkin spec
-- Open the Gherkin spec in a cmux markdown surface on the right pane
-- Developer reviews and approves (or requests revisions)
+- AVFL checkpoint (profile: checkpoint, stage: checkpoint) on story plan + Gherkin spec
 
 **Phase 3: Implement**
 - Check current branch. If not `main`, warn: "You're on `{branch}`, not `main`.
   Quick-fix will branch from `main`. Continue, or switch first?"
 - Create worktree off `main`: `git worktree add .worktrees/quickfix-{slug} main`
 - Resolve specialist agent via `momentum-tools specialist-classify`. Spawn a single
-  specialist dev agent. When a story has multiple change types (e.g., skill-instruction
-  + script-code), the specialist is chosen by the dominant change type. Multi-specialist
-  parallel dev is a future enhancement — v1 uses one dev agent per story.
+  specialist dev agent (model: per agent definition, effort: per agent definition).
+  When a story has multiple change types (e.g., skill-instruction + script-code),
+  the specialist is chosen by the dominant change type. Multi-specialist parallel
+  dev is a future enhancement — v1 uses one dev agent per story.
 - Pass agent: story file, all tasks, guidelines, sprint context,
   agent-skill-development-guide if touching skills/agents
 - On completion, merge worktree to main (rebase + merge)
 - Clean up worktree
-- The dev agent configuration (specialists, guidelines) carries into Phase 4
+- The dev agent configuration (specialist, guidelines) carries into Phase 4
 
 **Phase 4: Validate**
 - Post-merge AVFL scan (profile: scan, stage: final)
 - Fix critical findings before proceeding
-- Create an Agent Team via `TeamCreate` with these roles:
-  - **Dev agent:** same specialist from Phase 3 — stays resident to fix issues
-    as validators find them
+- Create an Agent Team via `TeamCreate` with these roles and model routing:
+  - **Dev agent:** same specialist from Phase 3 (model/effort: per agent definition)
+    — stays resident to fix issues as validators find them
   - **Validators:** determined by change types in the story:
-    - `skill-instruction` → E2E Validator (behavioral verification via Gherkin specs)
-    - `script-code` → QA (test coverage, edge cases, functional verification)
+    - `skill-instruction` → E2E Validator (model: sonnet, effort: medium)
+    - `script-code` → QA (model: sonnet, effort: medium)
     - Both present → both validators join the team
 - The team collaborates via task list:
   - Validators run their checks, report failures as tasks
@@ -143,7 +148,7 @@ sprint-planning and sprint-dev, adapted for a tactical single fix:
 - Transition story to done
 
 **Phase 5: Ship**
-- Register quickfix completion in sprints/index.json (lightweight — just slug, story, started, completed)
+- Register quickfix completion via `momentum-tools quickfix complete --slug {slug}`
 - Show push summary: `git log @{u}..HEAD --oneline`
 - Ask to push
 
