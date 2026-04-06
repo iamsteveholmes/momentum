@@ -16,8 +16,10 @@ stepsCompleted:
   - step-e-01-discovery
   - step-e-02-review
   - step-e-03-edit
-lastEdited: '2026-04-04'
+lastEdited: '2026-04-05'
 editHistory:
+  - date: '2026-04-05'
+    changes: 'Sprint 2026-04-05-2 spec impact: added FR79 (session file tracking — PostToolUse lint hook records modified files to .claude/momentum/session-modified-files.txt for conditional quality checks), FR80 (journal status tool — session journal-status subcommand provides structured JSON scan of journal.jsonl supporting FR54 session orientation); strengthened FR20 (advisory-only quality gate reads session-modified-files list, persists findings to gate-findings.txt, checks uncommitted changes via git status); strengthened FR66 (retro transitions unfinished work to closed-incomplete, creates story stubs from triage findings, calls sprint retro-complete for final closure).'
   - date: '2026-04-04'
     changes: 'Added FR78 (single-story tactical workflow — momentum:quick-fix) under new Tactical Workflows subsection. Streamlined 5-phase workflow (Define, Specify, Implement, Validate, Ship) with full quality gates but no sprint activation, backlog management, or dependency graphs. Independently invocable, registers lightweight traceability entry in sprints/index.json.'
   - date: '2026-04-04'
@@ -586,7 +588,8 @@ momentum/
 
 - **FR18:** System can auto-lint and auto-format code on every file edit (PostToolUse hook)
 - **FR19:** System can block modifications to acceptance test directories (PreToolUse hook)
-- **FR20:** System can run conditional quality gates before session end — tests only when any source file outside `tests/acceptance/` was written or edited during the current session (detectable via PostToolUse Write/Edit event tracking in session state), lint always (Stop hook)
+- **FR20:** System can run conditional quality gates before session end (Stop hook). The gate is advisory only — it never blocks session exit. It reads the session-modified-files list (FR79) and runs targeted checks: tests only when any source file outside `tests/acceptance/` was modified, lint always. The gate checks for uncommitted changes via `git status`. Findings are persisted to `.claude/momentum/gate-findings.txt` for pickup by the next session's orientation (FR54)
+- **FR79:** The PostToolUse lint hook tracks which files are modified during a session, recording each path to `.claude/momentum/session-modified-files.txt`. This file is the input for conditional quality checks (FR20) — the gate reads it to determine which checks to run rather than scanning the full project. The file is session-scoped and reset on each session start. **Priority: High** *(Phase 2)*
 - **FR21:** System can protect specified files from modification (PreToolUse hook)
 - **FR22:** System can ensure authority hierarchy rules auto-load in every Claude Code session including subagents via `.claude/rules/` — no manual loading required
 - **FR23:** Developer can configure model routing defaults per skill and agent via `model:` and `effort:` frontmatter, with a documented default strategy: Sonnet 4.6 at medium effort for general tasks; upgrade to Opus for complex reasoning, orchestration, or outputs without automated validation (cognitive hazard rule: invisible errors from cheaper models cost more than the flagship premium); downgrade to Haiku for well-constrained tasks with downstream validation
@@ -738,6 +741,7 @@ Story IDs are globally unique kebab-case slugs with no epic encoding. This allow
 ### FR55: Sprint-Manager Exclusive Write Authority
 
 - **FR55:** All writes to `stories/index.json` and `sprints/index.json` go through `momentum-tools.py`, a Python CLI tool invoked via Bash. No other agent, skill, or script writes to these files directly. This ensures atomic status transitions and prevents concurrent write conflicts. **Priority: High** *(Redesign Foundation)*
+- **FR80:** The `momentum-tools.py session journal-status` subcommand provides a structured JSON scan of `.claude/momentum/journal.jsonl` — thread counts, open/closed status per thread, and parse errors. This supports session orientation (FR54) by providing deterministic journal state without requiring context-expensive JSONL parsing by the LLM. Output is machine-readable JSON consumed by Impetus during greeting composition. **Priority: High** *(Phase 2)*
 
 ### Agent Observability
 
@@ -761,7 +765,7 @@ Story IDs are globally unique kebab-case slugs with no epic encoding. This allow
 
 ### Sprint Retrospective
 
-- **FR66:** The retrospective workflow analyzes all agent logs from the sprint and produces two triage outputs: (1) Momentum triage — practice-level issues feeding back into Momentum's own refinement cycle, (2) Project triage — project-level issues feeding back into the project's refinement cycle. Both outputs derive from the same evidence base (agent JSONL logs stored in `.claude/momentum/sprint-logs/{sprint-slug}/`). **Priority: High** *(Phase 5)*
+- **FR66:** The retrospective workflow analyzes all agent logs from the sprint and produces two triage outputs: (1) Momentum triage — practice-level issues feeding back into Momentum's own refinement cycle, (2) Project triage — project-level issues feeding back into the project's refinement cycle. Both outputs derive from the same evidence base (agent JSONL logs stored in `.claude/momentum/sprint-logs/{sprint-slug}/`). Retro can transition unfinished stories to `closed-incomplete` status. Actionable findings from either triage output are converted into story stubs for the next sprint's backlog. On completion, retro calls `momentum-tools sprint retro-complete` for final sprint closure. **Priority: High** *(Phase 5)*
 
 ### Sprint Lifecycle
 
