@@ -1309,6 +1309,185 @@ def test_quickfix_round_trip():
     assert_eq("completed present", "completed" in entry, True)
 
 
+# --- Priority Field Tests ---
+
+def test_priority_default_on_new_entry():
+    """New stories written without priority get 'low' by default via migration."""
+    print("\n[priority] Default priority on entries without field")
+    stories = {
+        "no-priority": {"status": "backlog", "title": "No Priority", "epic_slug": "e",
+                        "story_file": False, "depends_on": [], "touches": []},
+        "has-priority": {"status": "backlog", "title": "Has Priority", "epic_slug": "e",
+                         "story_file": False, "depends_on": [], "touches": [], "priority": "high"},
+    }
+    proj = setup_project(stories=stories)
+    # Run migrate to populate missing priority fields
+    code, out = run_tool(proj, "sprint", "migrate-priority")
+    assert_eq("exit code 0", code, 0)
+    data = read_stories(proj)
+    assert_eq("no-priority gets low", data["no-priority"]["priority"], "low")
+    assert_eq("has-priority unchanged", data["has-priority"]["priority"], "high")
+
+
+def test_priority_migrate_idempotent():
+    """Migration is idempotent — running twice doesn't corrupt data."""
+    print("\n[priority] Migration is idempotent")
+    stories = {
+        "s1": {"status": "backlog", "title": "S1", "epic_slug": "e",
+               "story_file": False, "depends_on": [], "touches": []},
+    }
+    proj = setup_project(stories=stories)
+    run_tool(proj, "sprint", "migrate-priority")
+    run_tool(proj, "sprint", "migrate-priority")
+    data = read_stories(proj)
+    assert_eq("s1 has low priority after two runs", data["s1"]["priority"], "low")
+
+
+def test_set_priority_valid():
+    """set-priority sets a valid priority value."""
+    print("\n[set-priority] Valid priority set")
+    stories = {
+        "my-story": {"status": "backlog", "title": "My Story", "epic_slug": "e",
+                     "story_file": False, "depends_on": [], "touches": [], "priority": "low"},
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "set-priority", "--story", "my-story", "--priority", "high")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    assert_eq("old_priority", out.get("old_priority"), "low")
+    assert_eq("new_priority", out.get("new_priority"), "high")
+    data = read_stories(proj)
+    assert_eq("file updated", data["my-story"]["priority"], "high")
+
+
+def test_set_priority_all_valid_levels():
+    """All four priority levels are accepted."""
+    print("\n[set-priority] All valid levels accepted")
+    for level in ["critical", "high", "medium", "low"]:
+        stories = {
+            "s": {"status": "backlog", "title": "S", "epic_slug": "e",
+                  "story_file": False, "depends_on": [], "touches": [], "priority": "low"},
+        }
+        proj = setup_project(stories=stories)
+        code, out = run_tool(proj, "sprint", "set-priority", "--story", "s", "--priority", level)
+        assert_eq(f"level {level} accepted", code, 0)
+
+
+def test_set_priority_invalid_level():
+    """Invalid priority level is rejected with exit code 1."""
+    print("\n[set-priority] Invalid level rejected")
+    stories = {
+        "s": {"status": "backlog", "title": "S", "epic_slug": "e",
+              "story_file": False, "depends_on": [], "touches": [], "priority": "low"},
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "set-priority", "--story", "s", "--priority", "urgent")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    data = read_stories(proj)
+    assert_eq("file unchanged", data["s"]["priority"], "low")
+
+
+def test_set_priority_missing_story():
+    """set-priority fails when story slug doesn't exist."""
+    print("\n[set-priority] Missing story slug")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "set-priority", "--story", "ghost", "--priority", "high")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_set_priority_idempotent():
+    """Setting the same priority twice is safe."""
+    print("\n[set-priority] Idempotent — same priority twice")
+    stories = {
+        "s": {"status": "backlog", "title": "S", "epic_slug": "e",
+              "story_file": False, "depends_on": [], "touches": [], "priority": "medium"},
+    }
+    proj = setup_project(stories=stories)
+    code1, out1 = run_tool(proj, "sprint", "set-priority", "--story", "s", "--priority", "medium")
+    assert_eq("first set exit 0", code1, 0)
+    assert_eq("old_priority same", out1.get("old_priority"), "medium")
+    assert_eq("new_priority same", out1.get("new_priority"), "medium")
+    data = read_stories(proj)
+    assert_eq("file still medium", data["s"]["priority"], "medium")
+
+
+def test_sprint_stories_single_priority():
+    """stories --priority filters to matching stories only."""
+    print("\n[sprint stories] Single priority filter")
+    stories = {
+        "crit": {"status": "backlog", "title": "Critical Story", "epic_slug": "e",
+                 "story_file": False, "depends_on": [], "touches": [], "priority": "critical"},
+        "high": {"status": "backlog", "title": "High Story", "epic_slug": "e",
+                 "story_file": False, "depends_on": [], "touches": [], "priority": "high"},
+        "low": {"status": "backlog", "title": "Low Story", "epic_slug": "e",
+                "story_file": False, "depends_on": [], "touches": [], "priority": "low"},
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "stories", "--priority", "high")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    slugs = [s["slug"] for s in out.get("stories", [])]
+    assert_eq("high story present", "high" in slugs, True)
+    assert_eq("crit story absent", "crit" in slugs, False)
+    assert_eq("low story absent", "low" in slugs, False)
+
+
+def test_sprint_stories_all_grouped():
+    """stories --priority all returns stories grouped critical→high→medium→low."""
+    print("\n[sprint stories] All grouped by priority")
+    stories = {
+        "c1": {"status": "backlog", "title": "C1", "epic_slug": "e",
+               "story_file": False, "depends_on": [], "touches": [], "priority": "critical"},
+        "h1": {"status": "backlog", "title": "H1", "epic_slug": "e",
+               "story_file": False, "depends_on": [], "touches": [], "priority": "high"},
+        "m1": {"status": "backlog", "title": "M1", "epic_slug": "e",
+               "story_file": False, "depends_on": [], "touches": [], "priority": "medium"},
+        "l1": {"status": "backlog", "title": "L1", "epic_slug": "e",
+               "story_file": False, "depends_on": [], "touches": [], "priority": "low"},
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "stories", "--priority", "all")
+    assert_eq("exit code 0", code, 0)
+    groups = out.get("groups", {})
+    assert_eq("critical group exists", "critical" in groups, True)
+    assert_eq("high group exists", "high" in groups, True)
+    assert_eq("medium group exists", "medium" in groups, True)
+    assert_eq("low group exists", "low" in groups, True)
+    assert_eq("c1 in critical", "c1" in [s["slug"] for s in groups.get("critical", [])], True)
+    assert_eq("h1 in high", "h1" in [s["slug"] for s in groups.get("high", [])], True)
+    assert_eq("m1 in medium", "m1" in [s["slug"] for s in groups.get("medium", [])], True)
+    assert_eq("l1 in low", "l1" in [s["slug"] for s in groups.get("low", [])], True)
+
+
+def test_sprint_stories_empty_results():
+    """stories --priority returns empty list when no stories match."""
+    print("\n[sprint stories] Empty results")
+    stories = {
+        "s1": {"status": "backlog", "title": "S1", "epic_slug": "e",
+               "story_file": False, "depends_on": [], "touches": [], "priority": "low"},
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "stories", "--priority", "critical")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("stories empty", out.get("stories"), [])
+
+
+def test_sprint_stories_missing_priority_defaults_low():
+    """stories query treats entries without priority field as 'low'."""
+    print("\n[sprint stories] Missing priority field defaults to low")
+    stories = {
+        "no-field": {"status": "backlog", "title": "No Field", "epic_slug": "e",
+                     "story_file": False, "depends_on": [], "touches": []},
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "stories", "--priority", "low")
+    assert_eq("exit code 0", code, 0)
+    slugs = [s["slug"] for s in out.get("stories", [])]
+    assert_eq("no-field treated as low", "no-field" in slugs, True)
+
+
 # --- Journal Status Tests ---
 
 def setup_journal(project_dir: Path, lines: list[str]) -> Path:
@@ -1526,6 +1705,19 @@ def main():
     test_quickfix_complete_missing_slug()
     test_quickfix_complete_idempotent()
     test_quickfix_round_trip()
+
+    # Priority field tests
+    test_priority_default_on_new_entry()
+    test_priority_migrate_idempotent()
+    test_set_priority_valid()
+    test_set_priority_all_valid_levels()
+    test_set_priority_invalid_level()
+    test_set_priority_missing_story()
+    test_set_priority_idempotent()
+    test_sprint_stories_single_priority()
+    test_sprint_stories_all_grouped()
+    test_sprint_stories_empty_results()
+    test_sprint_stories_missing_priority_defaults_low()
 
     # Journal status tests
     test_journal_status_no_file()

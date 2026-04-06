@@ -8,7 +8,8 @@
     "touches": [
       "_bmad-output/implementation-artifacts/sprint-status.yaml",
       "_bmad-output/implementation-artifacts/*.md"
-    ]
+    ],
+    "priority": "low"
   },
   "sprint-status-schema-redesign": {
     "status": "done",
@@ -28,7 +29,8 @@
       ".claude/skills/bmad-create-story/workflow.md",
       ".claude/skills/bmad-sprint-status/workflow.md",
       ".claude/skills/bmad-sprint-planning/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "sprint-manager-skill": {
     "status": "dropped",
@@ -46,7 +48,8 @@
       ".claude/skills/bmad-create-story/workflow.md",
       ".claude/skills/bmad-sprint-planning/workflow.md",
       ".claude/skills/bmad-dev-story/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "momentum-tooling": {
     "status": "done",
@@ -63,7 +66,8 @@
       "skills/momentum-sprint-manager/",
       "skills/momentum-dev/workflow.md",
       "skills/momentum-create-story/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "impetus-identity-redesign": {
     "status": "done",
@@ -73,7 +77,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "session-open-sprint-view": {
     "status": "done",
@@ -85,7 +90,8 @@
     ],
     "touches": [
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "repository-structure-established": {
     "status": "done",
@@ -97,7 +103,8 @@
       "skills/momentum/",
       "version.md",
       "mcp/findings-server/"
-    ]
+    ],
+    "priority": "low"
   },
   "skills-installable-via-npx-skills-add": {
     "status": "done",
@@ -111,7 +118,8 @@
       "skills/momentum-code-reviewer/",
       "skills/momentum-architecture-guard/",
       "skills/momentum-upstream-fix/"
-    ]
+    ],
+    "priority": "low"
   },
   "first-momentum-invocation-completes-setup": {
     "status": "done",
@@ -122,7 +130,8 @@
     "touches": [
       "skills/momentum/",
       ".claude/momentum/"
-    ]
+    ],
+    "priority": "low"
   },
   "momentum-detects-and-applies-upgrades": {
     "status": "done",
@@ -132,7 +141,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/"
-    ]
+    ],
+    "priority": "low"
   },
   "enforcement-degrades-gracefully-across-tool-tiers": {
     "status": "done",
@@ -142,7 +152,8 @@
     "depends_on": [],
     "touches": [
       "README.md"
-    ]
+    ],
+    "priority": "low"
   },
   "fix-npx-skills-add-experience": {
     "status": "done",
@@ -155,7 +166,8 @@
     "touches": [
       "package.json",
       "README.md"
-    ]
+    ],
+    "priority": "low"
   },
   "acceptance-testing-process-and-standards": {
     "status": "done",
@@ -169,7 +181,8 @@
       "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md",
       "_bmad-output/implementation-artifacts/visual-progress-tracks-workflow-position.md",
       "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
-    ]
+    ],
+    "priority": "low"
   },
   "orchestrator-purity-principle": {
     "status": "done",
@@ -181,7 +194,8 @@
       "_bmad-output/planning-artifacts/architecture.md",
       "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md",
       "_bmad-output/planning-artifacts/epics.md"
-    ]
+    ],
+    "priority": "low"
   },
   "journal-json-jsonl-migration-evaluation": {
     "status": "done",
@@ -192,7 +206,8 @@
     "touches": [
       "_bmad-output/planning-artifacts/architecture.md",
       "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md"
-    ]
+    ],
+    "priority": "low"
   },
   "impetus-skill-created-with-correct-persona-and-input-handling": {
     "status": "done",
@@ -202,7 +217,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/"
-    ]
+    ],
+    "priority": "low"
   },
   "session-orientation-and-thread-management": {
     "status": "done",
@@ -213,7 +229,8 @@
     "touches": [
       "skills/momentum/",
       ".claude/momentum/"
-    ]
+    ],
+    "priority": "low"
   },
   "visual-progress-tracks-workflow-position": {
     "status": "done",
@@ -223,7 +240,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/"
-    ]
+    ],
+    "priority": "low"
   },
   "completion-signals-and-productive-waiting": {
     "status": "done",
@@ -231,7 +249,8 @@
     "epic_slug": "stay-oriented-impetus",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "spec-contextualization-and-configuration-gap-detection": {
     "status": "done",
@@ -239,7 +258,8 @@
     "epic_slug": "stay-oriented-impetus",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "session-thread-display-fires-hygiene-checks": {
     "status": "done",
@@ -249,7 +269,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "natural-language-input-confirmed-before-dispatch": {
     "status": "done",
@@ -259,7 +280,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "impetus-first-impression-has-personality-and-identity": {
     "status": "done",
@@ -269,7 +291,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "behavioral-persistence-across-sessions": {
     "status": "done",
@@ -282,7 +305,8 @@
     "touches": [
       "skills/momentum/references/journal-schema.md",
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "background-agent-coordination-validated": {
     "status": "done",
@@ -294,7 +318,8 @@
       "docs/research/background-agent-coordination.md",
       "_bmad-output/planning-artifacts/architecture.md",
       "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
-    ]
+    ],
+    "priority": "low"
   },
   "silent-pre-flight-and-deferred-stats-write": {
     "status": "done",
@@ -307,7 +332,8 @@
     "touches": [
       "skills/momentum/workflow.md",
       "skills/momentum/evals/"
-    ]
+    ],
+    "priority": "low"
   },
   "session-open-menu-redesign": {
     "status": "done",
@@ -315,7 +341,8 @@
     "epic_slug": "impetus-ux-redesign",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "hash-drift-plain-language-message": {
     "status": "done",
@@ -323,7 +350,8 @@
     "epic_slug": "impetus-ux-redesign",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "triage-skill": {
     "status": "backlog",
@@ -331,21 +359,25 @@
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "epic-grooming": {
     "status": "ready-for-dev",
     "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
-    "depends_on": ["backlog-priority-field"],
+    "depends_on": [
+      "backlog-priority-field"
+    ],
     "touches": [
       "skills/momentum/skills/epic-grooming/SKILL.md",
       "skills/momentum/skills/epic-grooming/workflow.md",
       "skills/momentum/references/templates/epic-template.md",
       "_bmad-output/planning-artifacts/epics.md"
     ],
-    "change_type": "skill-instruction"
+    "change_type": "skill-instruction",
+    "priority": "low"
   },
   "momentum-dev-auto-variant": {
     "status": "backlog",
@@ -353,7 +385,8 @@
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "develop-epic-command": {
     "status": "backlog",
@@ -361,7 +394,8 @@
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "retro-triage-handoff": {
     "status": "backlog",
@@ -369,7 +403,8 @@
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "posttooluse-lint-and-format-hook-active": {
     "status": "done",
@@ -380,7 +415,8 @@
     "touches": [
       "skills/momentum/hooks/hooks.json",
       "skills/momentum/scripts/momentum-lint.sh"
-    ]
+    ],
+    "priority": "low"
   },
   "pretooluse-file-protection-hooks-active": {
     "status": "done",
@@ -392,7 +428,8 @@
       "skills/momentum/hooks/hooks.json",
       "skills/momentum/scripts/momentum-protect.sh",
       "skills/momentum/references/protected-paths.json"
-    ]
+    ],
+    "priority": "low"
   },
   "stop-gate-runs-conditional-quality-checks": {
     "status": "done",
@@ -405,7 +442,8 @@
     "touches": [
       "skills/momentum/hooks/hooks.json",
       "skills/momentum/scripts/momentum-gate.sh"
-    ]
+    ],
+    "priority": "low"
   },
   "authority-hierarchy-rules-auto-load-every-session": {
     "status": "dropped",
@@ -413,7 +451,8 @@
     "epic_slug": "quality-enforcement",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "model-routing-configured-by-frontmatter": {
     "status": "done",
@@ -429,7 +468,8 @@
       "skills/momentum-dev/",
       "skills/momentum-plan-audit/",
       "skills/momentum-avfl/"
-    ]
+    ],
+    "priority": "low"
   },
   "code-reviewer-skill-performs-adversarial-review": {
     "status": "backlog",
@@ -437,7 +477,8 @@
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "gherkin-acs-and-atdd-workflow-active": {
     "status": "backlog",
@@ -445,7 +486,8 @@
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "full-story-cycle-guided-by-impetus": {
     "status": "backlog",
@@ -453,7 +495,8 @@
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "create-story-and-dev-story-skills-active": {
     "status": "backlog",
@@ -461,7 +504,8 @@
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "upstream-fix-skill-analyzes-quality-failures": {
     "status": "backlog",
@@ -469,7 +513,8 @@
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "derives-from-frontmatter-establishes-traceability": {
     "status": "backlog",
@@ -477,7 +522,8 @@
     "epic_slug": "artifact-provenance",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "provenance-scanner-builds-referenced-by-graph": {
     "status": "backlog",
@@ -485,7 +531,8 @@
     "epic_slug": "artifact-provenance",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "hash-based-staleness-detection-for-internal-documents": {
     "status": "backlog",
@@ -493,7 +540,8 @@
     "epic_slug": "artifact-provenance",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "time-based-staleness-for-edge-documents": {
     "status": "backlog",
@@ -501,7 +549,8 @@
     "epic_slug": "artifact-provenance",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "claim-level-provenance-status-and-integrity-enforcement": {
     "status": "backlog",
@@ -509,7 +558,8 @@
     "epic_slug": "artifact-provenance",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "findings-ledger-accumulates-quality-findings-across-stories": {
     "status": "backlog",
@@ -517,7 +567,8 @@
     "epic_slug": "practice-compounds",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "cross-story-pattern-detection-surfaces-systemic-issues": {
     "status": "backlog",
@@ -525,7 +576,8 @@
     "epic_slug": "practice-compounds",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "flywheel-workflow-explains-issues-and-guides-upstream-trace": {
     "status": "backlog",
@@ -533,7 +585,8 @@
     "epic_slug": "practice-compounds",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "developer-consent-required-at-every-flywheel-step": {
     "status": "backlog",
@@ -541,7 +594,8 @@
     "epic_slug": "practice-compounds",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "practice-health-metric-and-fix-level-tracking": {
     "status": "backlog",
@@ -549,7 +603,8 @@
     "epic_slug": "practice-compounds",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "project-configuration-file-defines-protocol-bindings": {
     "status": "backlog",
@@ -557,7 +612,8 @@
     "epic_slug": "bring-your-own-tools",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "protocol-gap-resolution-creates-valid-config-entries": {
     "status": "backlog",
@@ -565,7 +621,8 @@
     "epic_slug": "bring-your-own-tools",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "workflow-steps-resolve-through-protocol-interfaces-at-invocation-time": {
     "status": "backlog",
@@ -573,7 +630,8 @@
     "epic_slug": "bring-your-own-tools",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "protocol-substitution-satisfies-interface-contract": {
     "status": "backlog",
@@ -581,7 +639,8 @@
     "epic_slug": "bring-your-own-tools",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "mcp-provider-registration-and-cursor-tool-ceiling-compliance": {
     "status": "backlog",
@@ -589,7 +648,8 @@
     "epic_slug": "bring-your-own-tools",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "multi-model-research-workflow-active": {
     "status": "backlog",
@@ -597,7 +657,8 @@
     "epic_slug": "research-knowledge",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "research-prompts-are-date-anchored-with-primary-source-directives": {
     "status": "backlog",
@@ -605,7 +666,8 @@
     "epic_slug": "research-knowledge",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "domain-specific-freshness-windows-define-document-currency": {
     "status": "backlog",
@@ -613,7 +675,8 @@
     "epic_slug": "research-knowledge",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "outdated-documents-archived-with-reference-chain-intact": {
     "status": "backlog",
@@ -621,7 +684,8 @@
     "epic_slug": "research-knowledge",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "promptfoo-configuration-benchmarks-skills-across-model-tiers": {
     "status": "backlog",
@@ -629,7 +693,8 @@
     "epic_slug": "performance-validation",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "bash-benchmarking-script-captures-time-cost-and-tokens": {
     "status": "backlog",
@@ -637,7 +702,8 @@
     "epic_slug": "performance-validation",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "golden-dataset-provides-canonical-benchmark-inputs-and-reference-outputs": {
     "status": "backlog",
@@ -645,7 +711,8 @@
     "epic_slug": "performance-validation",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "pydantic-ai-harness-benchmarks-agent-workflows-with-agent-override": {
     "status": "backlog",
@@ -653,7 +720,8 @@
     "epic_slug": "performance-validation",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files": {
     "status": "backlog",
@@ -661,7 +729,8 @@
     "epic_slug": "performance-validation",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [],
+    "priority": "low"
   },
   "remove-git-mcp-server-dependency": {
     "status": "done",
@@ -678,7 +747,8 @@
       "_bmad-output/planning-artifacts/ux-design-specification.md",
       "_bmad-output/implementation-artifacts/repository-structure-established.md",
       "_bmad-output/implementation-artifacts/first-momentum-invocation-completes-setup.md"
-    ]
+    ],
+    "priority": "low"
   },
   "findings-ledger-architecture-revision": {
     "status": "done",
@@ -697,7 +767,8 @@
       "mcp/findings-server/README.md",
       "_bmad-output/planning-artifacts/architecture.md",
       "_bmad-output/planning-artifacts/epics.md"
-    ]
+    ],
+    "priority": "low"
   },
   "lightweight-story-status-update-tool": {
     "status": "done",
@@ -714,7 +785,8 @@
       ".claude/skills/bmad-dev-story/workflow.md",
       "skills/momentum-create-story/workflow.md",
       "_bmad-output/planning-artifacts/architecture.md"
-    ]
+    ],
+    "priority": "low"
   },
   "cascade-spec-fatigue-patterns-into-prd-epics-and-stories": {
     "status": "done",
@@ -729,7 +801,8 @@
       "_bmad-output/implementation-artifacts/impetus-skill-created-with-correct-persona-and-input-handling.md",
       "_bmad-output/implementation-artifacts/session-orientation-and-thread-management.md",
       "_bmad-output/implementation-artifacts/completion-signals-and-productive-waiting.md"
-    ]
+    ],
+    "priority": "low"
   },
   "agent-logging-tool": {
     "status": "done",
@@ -740,7 +813,8 @@
     "touches": [
       "skills/momentum/scripts/momentum-tools.py",
       "skills/momentum/scripts/test-momentum-tools.py"
-    ]
+    ],
+    "priority": "low"
   },
   "momentum-dev-simplify": {
     "status": "done",
@@ -752,7 +826,8 @@
     ],
     "touches": [
       "skills/momentum-dev/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "momentum-sprint-planning": {
     "status": "done",
@@ -765,7 +840,8 @@
     "touches": [
       "skills/momentum/workflows/sprint-planning.md",
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "momentum-sprint-dev": {
     "status": "done",
@@ -779,7 +855,8 @@
     "touches": [
       "skills/momentum/workflows/sprint-dev.md",
       "skills/momentum/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "agent-guidelines-skill": {
     "status": "done",
@@ -792,7 +869,8 @@
       "skills/momentum-agent-guidelines/workflow.md",
       "skills/momentum-agent-guidelines/references/",
       "skills/momentum-agent-guidelines/sub-skills/"
-    ]
+    ],
+    "priority": "low"
   },
   "8-1-avfl-corpus-mode": {
     "status": "done",
@@ -804,7 +882,8 @@
       "skills/momentum-avfl/SKILL.md",
       "skills/momentum-avfl/references/framework.json",
       "skills/momentum-avfl/sub-skills/fixer/SKILL.md"
-    ]
+    ],
+    "priority": "low"
   },
   "8-2-momentum-research-skill": {
     "status": "done",
@@ -817,7 +896,8 @@
       "skills/momentum-research/workflow.md",
       "skills/momentum-research/references/",
       "skills/momentum-research/evals/"
-    ]
+    ],
+    "priority": "low"
   },
   "8-3-gemini-deep-research-automation": {
     "status": "ready-for-dev",
@@ -830,7 +910,8 @@
     "touches": [
       "skills/momentum/skills/research/workflow.md",
       "skills/momentum/skills/research/references/gemini-prompt-template.md"
-    ]
+    ],
+    "priority": "low"
   },
   "avfl-scan-profile": {
     "status": "done",
@@ -842,7 +923,8 @@
       "skills/momentum-avfl/SKILL.md",
       "skills/momentum-avfl/references/framework.json",
       "skills/momentum/workflows/sprint-dev.md"
-    ]
+    ],
+    "priority": "low"
   },
   "plugin-skeleton": {
     "status": "done",
@@ -853,7 +935,8 @@
     "touches": [
       "skills/momentum/.claude-plugin/plugin.json",
       "skills/momentum/skills/impetus/SKILL.md"
-    ]
+    ],
+    "priority": "low"
   },
   "plugin-migrate-skills": {
     "status": "done",
@@ -865,7 +948,8 @@
     ],
     "touches": [
       "skills/momentum/skills/"
-    ]
+    ],
+    "priority": "low"
   },
   "plugin-scripts-hooks-refs": {
     "status": "done",
@@ -879,7 +963,8 @@
       "skills/momentum/hooks/",
       "skills/momentum/scripts/",
       "skills/momentum/references/"
-    ]
+    ],
+    "priority": "low"
   },
   "plugin-cross-references": {
     "status": "done",
@@ -892,7 +977,8 @@
     "touches": [
       "skills/momentum/skills/*/SKILL.md",
       "skills/momentum/skills/impetus/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "sprint-planning-skill": {
     "status": "done",
@@ -902,7 +988,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/skills/sprint-planning/SKILL.md"
-    ]
+    ],
+    "priority": "low"
   },
   "sprint-dev-skill": {
     "status": "done",
@@ -912,7 +999,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/skills/sprint-dev/SKILL.md"
-    ]
+    ],
+    "priority": "low"
   },
   "dev-agent-definition-files": {
     "status": "done",
@@ -923,7 +1011,8 @@
     "touches": [
       "skills/momentum/agents/dev.md",
       "skills/momentum/skills/sprint-dev/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "specialist-dev-agents": {
     "status": "done",
@@ -937,7 +1026,8 @@
       "skills/momentum/agents/",
       "skills/momentum/skills/sprint-planning/workflow.md",
       "skills/momentum/skills/sprint-dev/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "guidelines-verification-gate": {
     "status": "done",
@@ -949,7 +1039,8 @@
     ],
     "touches": [
       "skills/momentum/skills/sprint-planning/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "architecture-guard-implementation": {
     "status": "done",
@@ -963,7 +1054,8 @@
       "skills/momentum/agents/architecture-guard.md",
       "skills/momentum/skills/architecture-guard/SKILL.md",
       "skills/momentum/skills/sprint-dev/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "sprint-lifecycle-tools": {
     "status": "done",
@@ -974,7 +1066,8 @@
     "touches": [
       "skills/momentum/scripts/momentum-tools.py",
       "skills/momentum/scripts/test-momentum-tools.py"
-    ]
+    ],
+    "priority": "low"
   },
   "sprint-index-schema-migration": {
     "status": "done",
@@ -984,7 +1077,8 @@
     "depends_on": [],
     "touches": [
       "_bmad-output/implementation-artifacts/sprints/index.json"
-    ]
+    ],
+    "priority": "low"
   },
   "impetus-greeting-rewrite": {
     "status": "done",
@@ -997,7 +1091,8 @@
     ],
     "touches": [
       "skills/momentum/skills/impetus/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "sprint-workflow-alignment": {
     "status": "done",
@@ -1010,7 +1105,8 @@
     "touches": [
       "skills/momentum/skills/sprint-dev/workflow.md",
       "skills/momentum/skills/sprint-planning/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "journal-status-tool": {
     "status": "done",
@@ -1023,7 +1119,8 @@
     "touches": [
       "skills/momentum/scripts/momentum-tools.py",
       "skills/momentum/scripts/test-momentum-tools.py"
-    ]
+    ],
+    "priority": "low"
   },
   "team-review-with-teamcreate": {
     "status": "backlog",
@@ -1036,7 +1133,8 @@
       "skills/momentum/skills/sprint-planning/workflow.md",
       "skills/momentum/agents/qa-reviewer.md",
       "skills/momentum/agents/e2e-validator.md"
-    ]
+    ],
+    "priority": "low"
   },
   "quick-fix-skill": {
     "status": "done",
@@ -1049,7 +1147,8 @@
       "skills/momentum/skills/quick-fix/workflow.md",
       "skills/momentum/commands/quick-fix.md",
       "skills/momentum/skills/quick-fix/evals/"
-    ]
+    ],
+    "priority": "low"
   },
   "retro-skill": {
     "status": "done",
@@ -1061,7 +1160,8 @@
       "skills/momentum/skills/retro/SKILL.md",
       "skills/momentum/skills/retro/workflow.md",
       "skills/momentum/scripts/momentum-tools.py"
-    ]
+    ],
+    "priority": "low"
   },
   "workflow-fidelity-rule": {
     "status": "done",
@@ -1072,7 +1172,8 @@
     "touches": [
       "skills/momentum/references/rules/workflow-fidelity.md",
       ".claude/rules/workflow-fidelity.md"
-    ]
+    ],
+    "priority": "low"
   },
   "guidelines-research-recency-gate": {
     "status": "backlog",
@@ -1082,7 +1183,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/skills/agent-guidelines/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "status-transition-walk-mode": {
     "status": "backlog",
@@ -1092,7 +1194,8 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/scripts/momentum-tools.py"
-    ]
+    ],
+    "priority": "low"
   },
   "dev-agent-hook-self-check": {
     "status": "backlog",
@@ -1102,10 +1205,11 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/agents/dev.md"
-    ]
+    ],
+    "priority": "low"
   },
   "backlog-priority-field": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Backlog Priority Field — Add Priority to All Story Index Entries",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1116,10 +1220,11 @@
       "skills/momentum/scripts/test-momentum-tools.py",
       "skills/momentum/skills/sprint-planning/workflow.md"
     ],
-    "change_type": "code + skill-instruction"
+    "change_type": "code + skill-instruction",
+    "priority": "low"
   },
   "impetus-allowed-tools-restriction": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1129,7 +1234,8 @@
       "skills/momentum/skills/impetus/workflow.md",
       "skills/momentum/skills/impetus/workflow-runtime.md"
     ],
-    "change_type": "skill-instruction"
+    "change_type": "skill-instruction",
+    "priority": "low"
   },
   "refine-skill": {
     "status": "ready-for-dev",
@@ -1143,7 +1249,8 @@
       "skills/momentum/skills/refine/SKILL.md",
       "skills/momentum/skills/refine/workflow.md"
     ],
-    "change_type": "skill-instruction"
+    "change_type": "skill-instruction",
+    "priority": "low"
   },
   "create-story-update": {
     "status": "backlog",
@@ -1154,7 +1261,8 @@
     "touches": [
       "skills/momentum/skills/create-story/SKILL.md",
       "skills/momentum/skills/create-story/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "verify-skill": {
     "status": "backlog",
@@ -1165,7 +1273,8 @@
     "touches": [
       "skills/momentum/skills/verify/SKILL.md",
       "skills/momentum/skills/verify/workflow.md"
-    ]
+    ],
+    "priority": "low"
   },
   "agent-role-simplification": {
     "status": "backlog",
@@ -1183,7 +1292,8 @@
       "skills/momentum/skills/sprint-planning/workflow.md",
       "skills/momentum/skills/sprint-dev/workflow.md"
     ],
-    "change_type": "skill-instruction"
+    "change_type": "skill-instruction",
+    "priority": "low"
   },
   "backlog-add-command": {
     "status": "backlog",
@@ -1195,6 +1305,7 @@
       "skills/momentum/skills/backlog-add/SKILL.md",
       "skills/momentum/skills/backlog-add/workflow.md",
       "_bmad-output/implementation-artifacts/stories/index.json"
-    ]
+    ],
+    "priority": "low"
   }
 }

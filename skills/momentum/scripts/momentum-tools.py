@@ -281,6 +281,80 @@ def cmd_sprint_retro_complete(args: argparse.Namespace) -> None:
            retro_run_at=target["retro_run_at"], auto_activated=auto_activated)
 
 
+PRIORITY_LEVELS = ["critical", "high", "medium", "low"]
+PRIORITY_ORDER = {p: i for i, p in enumerate(PRIORITY_LEVELS)}
+
+
+def ensure_priority(story: dict) -> dict:
+    """Return story with 'priority' field, defaulting to 'low' if absent."""
+    if "priority" not in story:
+        story["priority"] = "low"
+    return story
+
+
+def cmd_sprint_migrate_priority(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = stories_path(project_dir)
+    stories = read_json(path)
+
+    migrated = []
+    for slug, story in stories.items():
+        if "priority" not in story:
+            story["priority"] = "low"
+            migrated.append(slug)
+
+    write_json(path, stories)
+    result("migrate_priority", success=True, migrated=migrated, total=len(stories))
+
+
+def cmd_sprint_set_priority(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = stories_path(project_dir)
+    stories = read_json(path)
+
+    slug = args.story
+    if slug not in stories:
+        error_result("set_priority", f"Story '{slug}' not found in stories/index.json", story=slug)
+
+    priority = args.priority
+    if priority not in PRIORITY_LEVELS:
+        error_result("set_priority",
+                     f"Invalid priority: '{priority}'. Must be one of: {', '.join(PRIORITY_LEVELS)}",
+                     story=slug, priority=priority)
+
+    old_priority = stories[slug].get("priority", "low")
+    stories[slug]["priority"] = priority
+    write_json(path, stories)
+    result("set_priority", success=True, story=slug, old_priority=old_priority, new_priority=priority)
+
+
+def cmd_sprint_stories(args: argparse.Namespace) -> None:
+    project_dir = resolve_project_dir()
+    path = stories_path(project_dir)
+    stories = read_json(path)
+
+    priority_filter = args.priority
+
+    if priority_filter == "all":
+        groups: dict[str, list] = {p: [] for p in PRIORITY_LEVELS}
+        for slug, story in stories.items():
+            p = story.get("priority", "low")
+            entry = {"slug": slug, **story}
+            groups.get(p, groups["low"]).append(entry)
+        result("sprint_stories", success=True, priority="all", groups=groups)
+    else:
+        if priority_filter not in PRIORITY_LEVELS:
+            error_result("sprint_stories",
+                         f"Invalid priority: '{priority_filter}'. Must be one of: {', '.join(PRIORITY_LEVELS)} or 'all'",
+                         priority=priority_filter)
+        matched = [
+            {"slug": slug, **story}
+            for slug, story in stories.items()
+            if story.get("priority", "low") == priority_filter
+        ]
+        result("sprint_stories", success=True, priority=priority_filter, stories=matched)
+
+
 def cmd_sprint_next_stories(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
     sp = sprints_path(project_dir)
@@ -1025,6 +1099,22 @@ def build_parser() -> argparse.ArgumentParser:
     # sprint next-stories
     sns = sprint_sub.add_parser("next-stories", help="List unblocked stories in active sprint")
     sns.set_defaults(func=cmd_sprint_next_stories)
+
+    # sprint migrate-priority
+    smp = sprint_sub.add_parser("migrate-priority", help="Add priority=low to any story entry missing the field")
+    smp.set_defaults(func=cmd_sprint_migrate_priority)
+
+    # sprint set-priority
+    ssp = sprint_sub.add_parser("set-priority", help="Set priority on a story")
+    ssp.add_argument("--story", required=True, help="Story slug")
+    ssp.add_argument("--priority", required=True, help="Priority level: critical, high, medium, low")
+    ssp.set_defaults(func=cmd_sprint_set_priority)
+
+    # sprint stories
+    ss = sprint_sub.add_parser("stories", help="Query stories by priority")
+    ss.add_argument("--priority", required=True,
+                    help="Priority level (critical, high, medium, low) or 'all' for grouped output")
+    ss.set_defaults(func=cmd_sprint_stories)
 
     # session command group
     session = subparsers.add_parser("session", help="Session management operations")
