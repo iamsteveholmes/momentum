@@ -961,8 +961,8 @@
     ]
   },
   "sprint-lifecycle-tools": {
-    "status": "backlog",
-    "title": "Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests",
+    "status": "in-progress",
+    "title": "Sprint Lifecycle Tools \u2014 Status Fields, New Commands, and Unit Tests",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [],
@@ -972,8 +972,8 @@
     ]
   },
   "sprint-index-schema-migration": {
-    "status": "backlog",
-    "title": "Sprint Index Schema Migration — Add Status and Retro Fields",
+    "status": "in-progress",
+    "title": "Sprint Index Schema Migration \u2014 Add Status and Retro Fields",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [],
@@ -982,8 +982,8 @@
     ]
   },
   "impetus-greeting-rewrite": {
-    "status": "backlog",
-    "title": "Impetus Greeting Rewrite — 9-State Narrative Orientation",
+    "status": "ready-for-dev",
+    "title": "Impetus Greeting Rewrite \u2014 9-State Narrative Orientation",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [
@@ -995,8 +995,8 @@
     ]
   },
   "sprint-workflow-alignment": {
-    "status": "backlog",
-    "title": "Sprint Workflow Alignment — Fix Slug Extraction and Status Transitions",
+    "status": "ready-for-dev",
+    "title": "Sprint Workflow Alignment \u2014 Fix Slug Extraction and Status Transitions",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [
@@ -1009,7 +1009,7 @@
   },
   "journal-status-tool": {
     "status": "backlog",
-    "title": "Journal Status Tool — Deterministic Open Thread Detection",
+    "title": "Journal Status Tool \u2014 Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [
@@ -1018,6 +1018,19 @@
     "touches": [
       "skills/momentum/scripts/momentum-tools.py",
       "skills/momentum/scripts/test-momentum-tools.py"
+    ]
+  },
+  "quick-fix-skill": {
+    "status": "ready-for-dev",
+    "title": "Quick Fix Skill \u2014 Single-Story Tactical Workflow",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/quick-fix/SKILL.md",
+      "skills/momentum/skills/quick-fix/workflow.md",
+      "skills/momentum/commands/quick-fix.md",
+      "skills/momentum/skills/quick-fix/evals/"
     ]
   }
 }
