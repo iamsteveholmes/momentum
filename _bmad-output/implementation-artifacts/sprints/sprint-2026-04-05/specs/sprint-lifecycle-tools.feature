@@ -48,14 +48,14 @@ Feature: Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests
     Given a completed sprint exists in sprints/index.json with "retro_run_at" set to null
     When I run "python3 skills/momentum/scripts/momentum-tools.py sprint retro-complete"
     Then the command output is JSON with "success" set to true
-    And the most recent completed entry in sprints/index.json contains "retro_run_at" set to today's date in YYYY-MM-DD format
+    And the most recent completed entry in sprints/index.json contains "retro_run_at" set to an ISO 8601 timestamp for today
 
   Scenario: sprint retro-complete auto-activates a ready planning sprint
     Given a completed sprint exists in sprints/index.json with "retro_run_at" set to null
     And a planning sprint exists in sprints/index.json with "status" set to "ready"
     When I run "python3 skills/momentum/scripts/momentum-tools.py sprint retro-complete"
     Then the command output is JSON with "success" set to true
-    And the most recent completed entry in sprints/index.json contains "retro_run_at" set to today's date in YYYY-MM-DD format
+    And the most recent completed entry in sprints/index.json contains "retro_run_at" set to an ISO 8601 timestamp for today
     And no planning sprint exists in sprints/index.json
     And an active sprint exists in sprints/index.json with "status" set to "active"
 
@@ -64,7 +64,7 @@ Feature: Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests
     And a planning sprint exists in sprints/index.json with "status" set to "planning"
     When I run "python3 skills/momentum/scripts/momentum-tools.py sprint retro-complete"
     Then the command output is JSON with "success" set to true
-    And the most recent completed entry in sprints/index.json contains "retro_run_at" set to today's date in YYYY-MM-DD format
+    And the most recent completed entry in sprints/index.json contains "retro_run_at" set to an ISO 8601 timestamp for today
     And the planning entry in sprints/index.json still contains "status" set to "planning"
 
   Scenario: sprint retro-complete fails when no completed sprint has retro_run_at unset
@@ -81,14 +81,14 @@ Feature: Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests
     Then the command output is JSON with "success" set to true
     And installed.json contains a "session_stats" section
     And "session_stats.momentum_completions" is set to 1
-    And "session_stats.last_invocation" is set to today's date in YYYY-MM-DD format
+    And "session_stats.last_invocation" is set to an ISO 8601 timestamp for today
 
   Scenario: session stats-update increments existing momentum_completions
     Given installed.json contains "session_stats" with "momentum_completions" set to 5
     When I run "python3 skills/momentum/scripts/momentum-tools.py session stats-update"
     Then the command output is JSON with "success" set to true
     And "session_stats.momentum_completions" is set to 6
-    And "session_stats.last_invocation" is set to today's date in YYYY-MM-DD format
+    And "session_stats.last_invocation" is set to an ISO 8601 timestamp for today
 
   Scenario: session stats-update preserves other data in installed.json
     Given installed.json contains "session_stats" and other top-level keys with values
