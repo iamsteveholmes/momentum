@@ -515,7 +515,7 @@ def cmd_session_startup_check(args: argparse.Namespace) -> None:
 
 SPECIALIST_PATTERNS: list[tuple[list[str], str]] = [
     # (glob-like patterns, specialist name) — checked in table order
-    (["skills/*/SKILL.md", "skills/*/workflow.md", "agents/*.md"], "dev-skills"),
+    (["skills/*/SKILL.md", "skills/*/workflow.md", "*/agents/*.md", "agents/*.md"], "dev-skills"),
     (["*.gradle*", "*.kts", "build.gradle*"], "dev-build"),
     (["*compose*", "*Compose*", "*ui/*", "*screen*"], "dev-frontend"),
 ]
