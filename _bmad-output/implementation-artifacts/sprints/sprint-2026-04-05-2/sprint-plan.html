@@ -86,51 +86,91 @@
   </div>
 </div>
 
-<h2>Team Composition &amp; Validation</h2>
+<h2>Team Composition &amp; Review</h2>
+
+<div class="team-overview">
+  <div class="role-card">
+    <div class="role-icon">&#9881;</div>
+    <div class="role-name">Dev</div>
+    <div class="role-desc">Implements stories, fixes review findings</div>
+    <div class="role-count">5 stories</div>
+  </div>
+  <div class="role-card">
+    <div class="role-icon">&#128270;</div>
+    <div class="role-name">QA Reviewer</div>
+    <div class="role-desc">Reviews code against story ACs</div>
+    <div class="role-count">5 stories</div>
+  </div>
+  <div class="role-card">
+    <div class="role-icon">&#9654;</div>
+    <div class="role-name">E2E Validator</div>
+    <div class="role-desc">Black-box behavioral test against Gherkin</div>
+    <div class="role-count">5 stories</div>
+  </div>
+  <div class="role-card">
+    <div class="role-icon">&#127959;</div>
+    <div class="role-name">Architect Guard</div>
+    <div class="role-desc">Pattern drift against architecture decisions</div>
+    <div class="role-count">1 story</div>
+  </div>
+</div>
 
 <table class="team-table">
   <thead>
-    <tr><th>Story</th><th>Specialist</th><th>Roles</th><th>Test Approach</th></tr>
+    <tr><th>Story</th><th>Specialist</th><th>Dev</th><th>QA</th><th>E2E</th><th>Arch</th><th>Test Approach</th></tr>
   </thead>
   <tbody>
     <tr>
       <td class="slug">retro-skill</td>
       <td><span class="badge badge-skills">dev-skills</span></td>
-      <td><span class="badge badge-dev">Dev</span> <span class="badge badge-qa">QA</span></td>
-      <td>EDD &mdash; evals for log correlation, triage format, closure</td>
+      <td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td>
+      <td>EDD evals + Gherkin E2E</td>
     </tr>
     <tr>
       <td class="slug">posttooluse-lint</td>
       <td><span class="badge badge-dev">base Dev</span></td>
-      <td><span class="badge badge-dev">Dev</span> <span class="badge badge-qa">QA</span></td>
-      <td>Behavioral verification of hook output</td>
+      <td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&mdash;</td>
+      <td>Behavioral hook verification</td>
     </tr>
     <tr>
       <td class="slug">pretooluse-protect</td>
       <td><span class="badge badge-dev">base Dev</span></td>
-      <td><span class="badge badge-dev">Dev</span> <span class="badge badge-qa">QA</span></td>
-      <td>Behavioral verification of hook blocking</td>
+      <td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&mdash;</td>
+      <td>Behavioral hook verification</td>
     </tr>
     <tr>
       <td class="slug">stop-gate</td>
       <td><span class="badge badge-dev">base Dev</span></td>
-      <td><span class="badge badge-dev">Dev</span> <span class="badge badge-qa">QA</span></td>
-      <td>Behavioral verification of gate output</td>
+      <td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&mdash;</td>
+      <td>Behavioral gate verification</td>
     </tr>
     <tr>
       <td class="slug">journal-status-tool</td>
       <td><span class="badge badge-dev">base Dev</span></td>
-      <td><span class="badge badge-dev">Dev</span> <span class="badge badge-qa">QA</span></td>
-      <td>Unit tests &mdash; 6 new in test-momentum-tools.py</td>
+      <td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&mdash;</td>
+      <td>Unit tests (6) + Gherkin E2E</td>
     </tr>
   </tbody>
 </table>
 
+<div class="team-note">
+  <strong>Team Review phase (Decision 34):</strong> After all stories merge, QA + E2E + Architect Guard run in parallel via TeamCreate on the integrated codebase. Findings go to Dev fix agents. Fix loop until clean or developer accepts.
+</div>
+
 <style>
-  .team-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .team-overview { display: flex; gap: 8px; margin-bottom: 12px; }
+  .role-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; flex: 1; text-align: center; }
+  .role-icon { font-size: 18px; margin-bottom: 2px; }
+  .role-name { color: var(--accent); font-weight: bold; font-size: 12px; }
+  .role-desc { color: var(--dim); font-size: 10px; margin-bottom: 4px; }
+  .role-count { color: var(--fg); font-size: 11px; }
+  .team-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
   .team-table th { text-align: left; color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-  .team-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .team-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 12px; text-align: center; }
+  .team-table td:first-child, .team-table td:nth-child(2), .team-table td:last-child { text-align: left; }
   .team-table tr:last-child td { border-bottom: none; }
+  .team-note { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; font-size: 12px; color: var(--dim); margin-bottom: 16px; }
+  .team-note strong { color: var(--accent); }
 </style>
 
 <h2>Merge Conflict Risks</h2>
