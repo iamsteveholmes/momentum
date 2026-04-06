@@ -1166,10 +1166,10 @@
     ]
   },
   "agent-role-simplification": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Agent Role Simplification — Dev + Prompt Engineer with Directory-Scoped Guidelines",
     "epic_slug": "agent-team-model",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "skills/momentum/agents/dev.md",
@@ -1180,6 +1180,19 @@
       "skills/momentum/skills/agent-guidelines/workflow.md",
       "skills/momentum/skills/sprint-planning/workflow.md",
       "skills/momentum/skills/sprint-dev/workflow.md"
+    ],
+    "change_type": "skill-instruction"
+  },
+  "backlog-add-command": {
+    "status": "backlog",
+    "title": "Backlog Add Command — Lightweight Story Stub Creation with Design Intent",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/backlog-add/SKILL.md",
+      "skills/momentum/skills/backlog-add/workflow.md",
+      "_bmad-output/implementation-artifacts/stories/index.json"
     ]
   }
 }
