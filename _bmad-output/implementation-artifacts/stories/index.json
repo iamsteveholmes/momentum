@@ -372,20 +372,20 @@
     "story_file": true,
     "depends_on": [],
     "touches": [
-      "skills/momentum/references/hooks/",
-      "skills/momentum/references/hooks-config.json",
-      ".claude/momentum/session-modified-files.txt"
+      "skills/momentum/hooks/hooks.json",
+      "skills/momentum/scripts/momentum-lint.sh"
     ]
   },
   "pretooluse-file-protection-hooks-active": {
     "status": "ready-for-dev",
-    "title": "Pretooluse File Protection Hooks Active",
+    "title": "PreToolUse File Protection Hooks Active",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
     "touches": [
-      "skills/momentum/references/hooks/",
-      "skills/momentum/references/hooks-config.json"
+      "skills/momentum/hooks/hooks.json",
+      "skills/momentum/scripts/momentum-protect.sh",
+      "skills/momentum/references/protected-paths.json"
     ]
   },
   "stop-gate-runs-conditional-quality-checks": {
@@ -397,9 +397,8 @@
       "posttooluse-lint-and-format-hook-active"
     ],
     "touches": [
-      "skills/momentum/references/hooks/",
-      "skills/momentum/references/hooks-config.json",
-      ".claude/momentum/session-modified-files.txt"
+      "skills/momentum/hooks/hooks.json",
+      "skills/momentum/scripts/momentum-gate.sh"
     ]
   },
   "authority-hierarchy-rules-auto-load-every-session": {
@@ -1011,7 +1010,7 @@
     "status": "backlog",
     "title": "Journal Status Tool — Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "sprint-lifecycle-tools"
     ],
@@ -1050,7 +1049,7 @@
     "status": "backlog",
     "title": "Retro Skill — Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
     "epic_slug": "impetus-core",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "skills/momentum/skills/retro/SKILL.md",
