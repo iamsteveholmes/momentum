@@ -961,7 +961,7 @@
     ]
   },
   "sprint-lifecycle-tools": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests",
     "epic_slug": "greeting-redesign",
     "story_file": true,
@@ -972,7 +972,7 @@
     ]
   },
   "sprint-index-schema-migration": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint Index Schema Migration — Add Status and Retro Fields",
     "epic_slug": "greeting-redesign",
     "story_file": true,
@@ -982,7 +982,7 @@
     ]
   },
   "impetus-greeting-rewrite": {
-    "status": "review",
+    "status": "done",
     "title": "Impetus Greeting Rewrite — 9-State Narrative Orientation",
     "epic_slug": "greeting-redesign",
     "story_file": true,
@@ -995,7 +995,7 @@
     ]
   },
   "sprint-workflow-alignment": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint Workflow Alignment — Fix Slug Extraction and Status Transitions",
     "epic_slug": "greeting-redesign",
     "story_file": true,
