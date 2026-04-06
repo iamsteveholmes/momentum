@@ -15,18 +15,18 @@ Momentum is fully installed. All component groups are at current version. global
 
 ## Context to Load
 
-Load `skills/momentum/workflow.md` as the implementation under test.
+Load `skills/momentum/skills/impetus/SKILL.md` as the implementation under test (happy path startup is inline in SKILL.md; workflow.md is only loaded for non-happy paths).
 
 Simulate the following state:
 - `installed.json` has all component versions == current_version
-- `global-installed.json` exists and all stored hashes match the current hashes of all tracked files (no drift — Step 10 takes the silent GOTO step 7 path, not the drift warning path)
+- `global-installed.json` exists and all stored hashes match (no drift)
 - `journal.jsonl` does not exist
+- `startup-preflight` returns `route: "greeting"`, `has_open_threads: false`
 
 ## Expected Behavior
 
-1. Step 1 produces **zero output** — it reads files, checks versions, and dispatches to Step 10 silently
-2. Step 10 produces **zero output** — hash check passes, dispatches to Step 7 silently
-3. Step 7 produces the session menu — this is the **first visible output**
+1. `startup-preflight` runs silently (1 Bash call, zero output)
+2. SKILL.md routes to the inline greeting path — this produces the **first visible output** (session menu)
 
 The developer should see ONLY the session menu:
 ```

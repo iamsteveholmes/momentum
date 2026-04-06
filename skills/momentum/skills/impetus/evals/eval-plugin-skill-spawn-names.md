@@ -1,7 +1,7 @@
 # Eval: Plugin Skill Spawn Names
 
 ## Setup
-Read the Impetus workflow.md and all skill workflow files.
+Read the Impetus SKILL.md, workflow.md, workflow-runtime.md, and all skill workflow files.
 
 ## Expected Behavior
 1. All skill spawn/invoke references use `momentum:<name>` format (not `momentum-<name>`)

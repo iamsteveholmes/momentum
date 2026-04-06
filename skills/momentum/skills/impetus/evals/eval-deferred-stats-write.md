@@ -15,21 +15,20 @@ A repeat user invokes Momentum (momentum_completions >= 1). The session_stats wr
 
 ## Context to Load
 
-Load `skills/momentum/workflow.md` as the implementation under test.
+Load `skills/momentum/skills/impetus/SKILL.md` as the implementation under test (happy path is inline; workflow.md is loaded for thread path in Scenario 2).
 
 Simulate the following state:
 - `installed.json` has `session_stats.momentum_completions: 3`
 - No journal open threads
+- `startup-preflight` returns `route: "greeting"`, `greeting.momentum_completions: 3`
 
-## Expected Step 7 Sequence
+## Expected Happy Path Sequence
 
-1. Read journal (no open threads)
-2. Read `session_stats.momentum_completions` → value is **3** (pre-increment read for expertise-adaptive check)
-3. Since `momentum_completions >= 1`: deliver abbreviated orientation mode
-4. Run configuration gap detection
-5. Display session menu ← **first I/O write to the developer**
-6. Increment `session_stats.momentum_completions` to 4, update `last_invocation`, write `installed.json` ← **file write AFTER menu**
-7. Wait for developer input
+1. `startup-preflight` runs (returns greeting state with pre-increment `momentum_completions: 3`)
+2. Since `momentum_completions >= 1`: deliver abbreviated orientation mode
+3. Display session menu ← **first I/O write to the developer**
+4. `stats-update` runs AFTER menu display ← **file write AFTER menu**
+5. Wait for developer input
 
 ## Failure Conditions
 

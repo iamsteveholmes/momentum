@@ -23,4 +23,4 @@
 - Natural language input for old items 3–6 fails silently
 - Input Interpretation gate is bypassed (dispatch fires without confirmation)
 - Error occurs when typing "run quality validation" after 2-item menu is shown
-- Natural language gate note is absent from Step 7 of workflow.md
+- Natural language gate note is absent from SKILL.md happy path and Step 7 of workflow.md
