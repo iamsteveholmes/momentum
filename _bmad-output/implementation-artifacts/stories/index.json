@@ -1034,7 +1034,7 @@
     ]
   },
   "quick-fix-skill": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Quick Fix Skill — Single-Story Tactical Workflow",
     "epic_slug": "impetus-core",
     "story_file": true,
