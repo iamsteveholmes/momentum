@@ -1,6 +1,7 @@
 {
   "active": {
     "locked": true,
+    "status": "active",
     "slug": "sprint-2026-04-05",
     "stories": [
       "sprint-lifecycle-tools",
@@ -127,7 +128,8 @@
           ]
         }
       ],
-      "completed": "2026-04-04"
+      "completed": "2026-04-04",
+      "retro_run_at": "2026-04-04"
     },
     {
       "locked": true,
@@ -263,7 +265,8 @@
           ]
         }
       },
-      "completed": "2026-04-04"
+      "completed": "2026-04-04",
+      "retro_run_at": "2026-04-04"
     },
     {
       "locked": true,
@@ -362,7 +365,8 @@
           ]
         }
       },
-      "completed": "2026-04-05"
+      "completed": "2026-04-05",
+      "retro_run_at": "2026-04-05"
     }
   ]
 }
