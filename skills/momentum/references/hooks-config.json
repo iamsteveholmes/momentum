@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '[momentum-protect] ✓ checked file protection — hook placeholder (Story 3.2 implements)'",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/momentum/hooks/file-protection.sh",
             "timeout": 5
           }
         ]

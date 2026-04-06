@@ -32,6 +32,13 @@
           "source": "migrations/1.0.0-hooks-install.md",
           "description": "Merge enforcement hooks into .claude/settings.json",
           "requires_restart": true
+        },
+        {
+          "action": "add",
+          "group": "hooks",
+          "scope": "project",
+          "source": "references/hooks/file-protection.sh",
+          "target": ".claude/momentum/hooks/file-protection.sh"
         }
       ]
     }
