@@ -1,124 +1,5 @@
 {
-  "active": {
-    "locked": true,
-    "status": "active",
-    "slug": "sprint-2026-04-05-2",
-    "stories": [
-      "retro-skill",
-      "posttooluse-lint-and-format-hook-active",
-      "pretooluse-file-protection-hooks-active",
-      "stop-gate-runs-conditional-quality-checks",
-      "journal-status-tool"
-    ],
-    "team_composition": {
-      "retro-skill": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator",
-          "architect-guard"
-        ],
-        "change_type": "skill-instruction + code",
-        "guidelines": {
-          "dev": "EDD — write 2+ behavioral evals before creating skill files. SKILL.md: name=retro, description ≤150 chars, model/effort frontmatter, body delegates to workflow.md. workflow.md: XML step structure, <critical> invariants, momentum-tools log calls. 7-phase retro: sprint ID → log correlation → story verification → cross-log discovery → triage output → story stubs → sprint closure.",
-          "qa": "Validate 9 ACs. Verify cross-log correlation reads all agent files. Verify two triage outputs written. Verify sprint-complete and retro-complete both called. Verify closed-incomplete transitions for unfinished stories."
-        },
-        "test_approach": "EDD — evals for log correlation, triage output format, sprint closure",
-        "wave": 1,
-        "dependencies": [],
-        "specialist": "dev-skills",
-        "guidelines_status": "missing"
-      },
-      "posttooluse-lint-and-format-hook-active": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "rule-hook + code",
-        "guidelines": {
-          "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-lint.sh: extract file_path from TOOL_INPUT JSON, run linter by extension (.py→ruff, .json→json.tool, .sh→shellcheck, .md→structural), output only on failure, track modified files.",
-          "qa": "Validate 7 ACs. Verify hook fires on Edit/Write/NotebookEdit. Verify clean files produce no output. Verify session-modified-files.txt tracks and dedupes paths."
-        },
-        "test_approach": "Behavioral verification of hook output",
-        "wave": 1,
-        "dependencies": [],
-        "specialist": "dev",
-        "guidelines_status": "n/a"
-      },
-      "pretooluse-file-protection-hooks-active": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "rule-hook + code",
-        "guidelines": {
-          "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-protect.sh: extract file_path from TOOL_INPUT JSON, check against protected-paths.json patterns via fnmatch, exit non-zero to block. Create protected-paths.json config.",
-          "qa": "Validate 8 ACs. Verify protected paths blocked with clear message. Verify non-protected paths pass silently. Verify configurable paths list works."
-        },
-        "test_approach": "Behavioral verification of hook blocking",
-        "wave": 1,
-        "dependencies": [],
-        "specialist": "dev",
-        "guidelines_status": "n/a"
-      },
-      "stop-gate-runs-conditional-quality-checks": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "rule-hook + code",
-        "guidelines": {
-          "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-gate.sh: read session-modified-files.txt, batch lint by extension, check git status, write gate-findings.txt, always exit 0 (advisory), clean up modified files list.",
-          "qa": "Validate 9 ACs. Verify empty session = clean message. Verify modified files get final lint. Verify uncommitted changes warning. Verify always exit 0. Verify cleanup."
-        },
-        "test_approach": "Behavioral verification of gate output and cleanup",
-        "wave": 2,
-        "dependencies": [
-          "posttooluse-lint-and-format-hook-active"
-        ],
-        "specialist": "dev",
-        "guidelines_status": "n/a"
-      },
-      "journal-status-tool": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "code",
-        "guidelines": {
-          "dev": "Add session journal-status subcommand to momentum-tools.py under existing session command group. Scan .claude/momentum/journal.jsonl: group by thread_id, detect open vs closed threads, handle malformed lines. All new code must have unit tests in test-momentum-tools.py.",
-          "qa": "Validate 6 ACs. Run full test suite. Verify no-file returns exists:false. Verify open thread counting. Verify malformed line handling. Verify performance on large journals."
-        },
-        "test_approach": "Unit tests — 6 new tests in test-momentum-tools.py",
-        "wave": 1,
-        "dependencies": [],
-        "specialist": "dev",
-        "guidelines_status": "n/a"
-      }
-    },
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "retro-skill",
-          "posttooluse-lint-and-format-hook-active",
-          "pretooluse-file-protection-hooks-active",
-          "journal-status-tool"
-        ]
-      },
-      {
-        "wave": 2,
-        "stories": [
-          "stop-gate-runs-conditional-quality-checks"
-        ]
-      }
-    ],
-    "started": "2026-04-05"
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -489,6 +370,128 @@
       "started": "2026-04-05",
       "completed": "2026-04-05",
       "retro_run_at": "2026-04-05"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "slug": "sprint-2026-04-05-2",
+      "stories": [
+        "retro-skill",
+        "posttooluse-lint-and-format-hook-active",
+        "pretooluse-file-protection-hooks-active",
+        "stop-gate-runs-conditional-quality-checks",
+        "journal-status-tool"
+      ],
+      "team_composition": {
+        "retro-skill": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator",
+            "architect-guard"
+          ],
+          "change_type": "skill-instruction + code",
+          "guidelines": {
+            "dev": "EDD — write 2+ behavioral evals before creating skill files. SKILL.md: name=retro, description ≤150 chars, model/effort frontmatter, body delegates to workflow.md. workflow.md: XML step structure, <critical> invariants, momentum-tools log calls. 7-phase retro: sprint ID → log correlation → story verification → cross-log discovery → triage output → story stubs → sprint closure.",
+            "qa": "Validate 9 ACs. Verify cross-log correlation reads all agent files. Verify two triage outputs written. Verify sprint-complete and retro-complete both called. Verify closed-incomplete transitions for unfinished stories."
+          },
+          "test_approach": "EDD — evals for log correlation, triage output format, sprint closure",
+          "wave": 1,
+          "dependencies": [],
+          "specialist": "dev-skills",
+          "guidelines_status": "missing"
+        },
+        "posttooluse-lint-and-format-hook-active": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "rule-hook + code",
+          "guidelines": {
+            "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-lint.sh: extract file_path from TOOL_INPUT JSON, run linter by extension (.py→ruff, .json→json.tool, .sh→shellcheck, .md→structural), output only on failure, track modified files.",
+            "qa": "Validate 7 ACs. Verify hook fires on Edit/Write/NotebookEdit. Verify clean files produce no output. Verify session-modified-files.txt tracks and dedupes paths."
+          },
+          "test_approach": "Behavioral verification of hook output",
+          "wave": 1,
+          "dependencies": [],
+          "specialist": "dev",
+          "guidelines_status": "n/a"
+        },
+        "pretooluse-file-protection-hooks-active": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "rule-hook + code",
+          "guidelines": {
+            "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-protect.sh: extract file_path from TOOL_INPUT JSON, check against protected-paths.json patterns via fnmatch, exit non-zero to block. Create protected-paths.json config.",
+            "qa": "Validate 8 ACs. Verify protected paths blocked with clear message. Verify non-protected paths pass silently. Verify configurable paths list works."
+          },
+          "test_approach": "Behavioral verification of hook blocking",
+          "wave": 1,
+          "dependencies": [],
+          "specialist": "dev",
+          "guidelines_status": "n/a"
+        },
+        "stop-gate-runs-conditional-quality-checks": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "rule-hook + code",
+          "guidelines": {
+            "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-gate.sh: read session-modified-files.txt, batch lint by extension, check git status, write gate-findings.txt, always exit 0 (advisory), clean up modified files list.",
+            "qa": "Validate 9 ACs. Verify empty session = clean message. Verify modified files get final lint. Verify uncommitted changes warning. Verify always exit 0. Verify cleanup."
+          },
+          "test_approach": "Behavioral verification of gate output and cleanup",
+          "wave": 2,
+          "dependencies": [
+            "posttooluse-lint-and-format-hook-active"
+          ],
+          "specialist": "dev",
+          "guidelines_status": "n/a"
+        },
+        "journal-status-tool": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "code",
+          "guidelines": {
+            "dev": "Add session journal-status subcommand to momentum-tools.py under existing session command group. Scan .claude/momentum/journal.jsonl: group by thread_id, detect open vs closed threads, handle malformed lines. All new code must have unit tests in test-momentum-tools.py.",
+            "qa": "Validate 6 ACs. Run full test suite. Verify no-file returns exists:false. Verify open thread counting. Verify malformed line handling. Verify performance on large journals."
+          },
+          "test_approach": "Unit tests — 6 new tests in test-momentum-tools.py",
+          "wave": 1,
+          "dependencies": [],
+          "specialist": "dev",
+          "guidelines_status": "n/a"
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "retro-skill",
+            "posttooluse-lint-and-format-hook-active",
+            "pretooluse-file-protection-hooks-active",
+            "journal-status-tool"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "stop-gate-runs-conditional-quality-checks"
+          ]
+        }
+      ],
+      "started": "2026-04-05",
+      "completed": "2026-04-06",
+      "retro_run_at": null
     }
   ]
 }
