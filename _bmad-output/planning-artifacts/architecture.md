@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-05'
+lastEdited: '2026-04-06'
 editHistory:
+  - date: '2026-04-06'
+    changes: 'Sprint-2026-04-06 spec impact: Added priority field to stories/index.json schema (critical|high|medium|low, default low). Added priority sort note to Decision 29 Step 1 (backlog presentation sorts by priority within epic groups). Added sprint set-priority and sprint stories CLI subcommands under Sprint Planning Workflow. Added epic-grooming and refine flat skills to Skills Deployment Classification table. Extended Decision 5a with note that install/upgrade file writes refactored from Write tool to Bash (cp, python3 -c) for allowed-tools compatibility. Extended context:fork isolation constraint with note that flat orchestrator skills may declare allowed-tools in SKILL.md frontmatter, extending the pattern to the orchestrator layer.'
   - date: '2026-04-05'
     changes: 'Hook quality system spec impact: Added Session State Storage subsection (session-modified-files.txt, gate-findings.txt) under Storage & State. Extended Decision 2a with three-hook enforcement model (PreToolUse barrier, PostToolUse observability, Stop feedback gate) and protected-paths.json externalization. Updated Read/Write Authority table with session state file read/write entries for hooks. Updated Hooks row to reflect file-writing behavior. Added session state files to Installed Structure tree.'
   - date: '2026-04-04'
@@ -122,7 +124,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 - **Claude Code plugin model** — Momentum is packaged as a Claude Code plugin with `.claude-plugin/plugin.json` manifest. Plugin install delivers all skills, hooks, scripts, and references. Skills are namespaced under `momentum:` (e.g., `/momentum:impetus`, `/momentum:avfl`).
 - **Subagents cannot spawn subagents** — VFL orchestration chains through main conversation; affects Full-profile parallel execution design
-- **context:fork isolation** — `context: fork` is a SKILL.md frontmatter field, Claude Code-exclusive. Skills with `context: fork` run in isolated subagent contexts without access to conversation history. code-reviewer and architecture-guard are implemented as `context: fork` SKILL.md files. The `allowed-tools` frontmatter field restricts tool access (e.g., `Read` only for pure verifiers).
+- **context:fork isolation** — `context: fork` is a SKILL.md frontmatter field, Claude Code-exclusive. Skills with `context: fork` run in isolated subagent contexts without access to conversation history. code-reviewer and architecture-guard are implemented as `context: fork` SKILL.md files. The `allowed-tools` frontmatter field restricts tool access (e.g., `Read` only for pure verifiers). Flat orchestrator skills (e.g., Impetus) may also declare `allowed-tools` in SKILL.md frontmatter to enforce deterministic read-only behavior; this extends the `allowed-tools` pattern from `context:fork` verifier skills to the orchestrator layer (sprint-2026-04-06).
 - **Plugin-delivered vs. Impetus-written** — The plugin install delivers SKILL.md files, `hooks/hooks.json` (always-on hooks), `scripts/`, and `references/`. It cannot write to `~/.claude/rules/` or `.claude/rules/`. Rules are bundled in `references/rules/` and written by Impetus on first `/momentum:impetus` invocation. Install/upgrade logic is governed by `references/momentum-versions.json` and `installed.json` (Decision 5c). The UX interaction for install/upgrade is defined in the UX specification.
 - **Hooks: two deployment paths** — Always-on hooks (fire every session regardless of skill) are defined in `hooks/hooks.json` at the plugin root, delivered automatically by plugin install. Skill-lifecycle hooks (fire only while a specific skill is active) are defined in SKILL.md `hooks:` frontmatter and require no separate deployment — they travel with the skill. Both are Claude Code features.
 
@@ -171,6 +173,8 @@ The defining question for each component: *does this need main-context persona p
 | Sprint dev | Flat skill (`/momentum:sprint-dev`) | Dependency-driven execution needing main context; invoked by Impetus or directly |
 | AVFL | Flat skill (`/momentum:avfl`) | Must orchestrate parallel spawning from main context |
 | upstream-fix, create-story, dev, status, retro, plan-audit | Flat skills | Stateful workflows needing main context |
+| epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
+| refine | Flat skill (`/momentum:refine`) | Backlog refinement with parallel PRD/architecture gap discovery, priority management; CLI-only mutations |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure spawned worker — reviews code against story ACs during Team Review (Decision 34). Never user-invoked (Decision 35). |
@@ -562,6 +566,8 @@ The plugin install mechanism delivers rules to `references/rules/` at the plugin
 This happens on first invocation and on upgrade — governed by the manifest/installed state mechanism defined in Decision 5c. No separate CLI, no separate command. The UX interaction pattern (when to prompt, what to show) is defined in the UX specification.
 
 Update mechanism: Impetus compares the hash of installed global rules against the bundled rules in `references/rules/` using git blob SHA — zero extra tooling. See Decision 5c for the full version tracking schema.
+
+> _[Revised 2026-04-06: Install/upgrade file writes refactored from Write tool to Bash (`cp`, `python3 -c`) to support `allowed-tools` restriction on Impetus (sprint-2026-04-06). The Write tool is no longer used for rules deployment; Bash is the implementation mechanism.]_
 
 **Decision 5b — BMAD Enhancement Touch Points (MVP)**
 Impetus proactively enhances BMAD workflow boundaries. Each touchpoint is classified: **Gate** (blocks progress) or **Proposal** (user-discretionary).
@@ -1222,7 +1228,7 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 **`stories/` folder** — one file per story (`stories/{slug}.md`). Created early at backlog stage as a stub (slug, title, epic, status). Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum:create-story`. Story file content (ACs, dev notes) is written by `momentum:create-story`.
 
-**`stories/index.json`** — lightweight lookup index. Each entry: slug, status, title, epic slug, story_file (boolean — whether fleshed out), depends_on, touches. Epic membership lives here, not in epics.md.
+**`stories/index.json`** — lightweight lookup index. Each entry: slug, status, title, epic slug, story_file (boolean — whether fleshed out), depends_on, touches, priority (optional — `critical | high | medium | low`, default: `low`). Epic membership lives here, not in epics.md.
 
 ```json
 {
@@ -1404,7 +1410,7 @@ backlog (mutable) → /momentum:sprint-planning (story selection + team composit
 
 Sprint planning is a dedicated skill (`/momentum:sprint-planning`) with 8 steps. Invoked by Impetus when the developer selects "Plan a sprint" from the session menu, or directly by the user:
 
-1. **Backlog presentation** — read stories/index.json, group by epic, exclude terminal states
+1. **Backlog presentation** — read stories/index.json, group by epic, exclude terminal states. Within each epic group, sort by priority (critical > high > medium > low), then by dependency depth, then alphabetical.
 2. **Story selection** — developer selects 3-8 stories, register via momentum-tools sprint plan
 3. **Story fleshing-out** — spawn `/momentum:create-story` for each stub; developer approves each
 4. **Gherkin spec generation** — write detailed `.feature` files to `sprints/{sprint-slug}/specs/`; story files retain plain English ACs only (Decision 30)
@@ -1412,6 +1418,10 @@ Sprint planning is a dedicated skill (`/momentum:sprint-planning`) with 8 steps.
 6. **AVFL validation** — single AVFL pass on the complete sprint plan (all stories together, not per-story — Decision 31)
 7. **Developer review** — present full plan for approval; developer can request adjustments
 8. **Sprint activation** — call `momentum-tools sprint activate`; log the decision
+
+**Priority management CLI (sprint subcommands):**
+- `sprint set-priority --story <slug> --priority <level>` — Set story priority (`critical | high | medium | low`)
+- `sprint stories --priority <level|all>` — Query stories filtered by priority level
 
 ### Dependency-Driven Execution (Decision 25: Teams Over Waves)
 
