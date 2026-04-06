@@ -1,6 +1,6 @@
 # Momentum Master Plan
 
-**Last updated:** 2026-04-04
+**Last updated:** 2026-04-06
 **Source plans:** `~/.claude/plans/ethereal-popping-sun.md` (redesign), `~/.claude/plans/dapper-scribbling-hejlsberg.md` (Phase 3 execution)
 **Authoritative for:** model, status, architecture decisions, and roadmap
 
@@ -221,30 +221,14 @@ backlog (mutable)
 
 Key architecture decision from Phase 2: **deterministic logic goes to tools/scripts; judgment-requiring work goes to agents.**
 
-### Phase 3 -- Sprint Execution
-
-**Round 1 (Complete, in review):**
+### Phase 3 -- Sprint Execution (Complete)
 
 | Story | What | QA/Validator |
 |-------|------|--------------|
 | `agent-logging-tool` | `log` subcommand added to momentum-tools.py. 6 event types (decision, error, retry, assumption, finding, ambiguity). 95 tests (65 sprint + 30 log). | QA 8/8, Validator 17/17 |
-
-**Round 2 (Complete, in review):**
-
-| Story | What | QA/Validator |
-|-------|------|--------------|
 | `momentum-dev-simplify` | Stripped AVFL, status transitions, DoD, code review from momentum-dev. Added agent logging. 314 to 210 lines. Pure executor. | QA 8/8, Validator 19/20 |
 | `momentum-sprint-planning` | New skill (342 lines, 8 steps). Backlog display, story selection, create-story on stubs, Gherkin spec generation, team composition, AVFL on plan, developer review, sprint activation. | QA 16/16, Validator 29/30 |
-
-**Round 3 (In progress, separate session):**
-
-| Story | What |
-|-------|------|
-| `momentum-sprint-dev` | Sprint execution skill. 7-phase model: initialization, team spawn, progress tracking, post-merge AVFL, team review, verification, sprint completion. Story file + 28 Gherkin scenarios exist. |
-
-**Round 4 (Pending):**
-- Post-merge AVFL on full codebase
-- Transition all Phase 3 stories to `done`
+| `momentum-sprint-dev` | Sprint execution skill. 7-phase model: initialization, team spawn, progress tracking, post-merge AVFL, team review, verification, sprint completion. | — |
 
 ### Plugin Model Adoption (Complete, 2026-04-03)
 
@@ -261,6 +245,14 @@ AVFL corpus mode for multi-document cross-validation. Committed as `924d4ef`.
 ### Sprint-Dev Team Review Phase (Complete, 2026-04-04)
 
 Option C adopted: 7-phase execution model with Team Review phase between AVFL and Verification. QA, E2E Validator, and Architect Guard run in parallel on integrated codebase post-merge. Committed as `45dc0a0`.
+
+### Sprint sprint-2026-04-04 — AVFL Scan Profile (Complete, 2026-04-04)
+
+1 story. Added discovery-only scan profile to AVFL for team handoff validation.
+
+| Story | What |
+|-------|------|
+| `avfl-scan-profile` | Scan profile added to AVFL — no-fix-loop mode for Team Review integration |
 
 ### Sprint sprint-2026-04-04-2 — Plugin Migration (Complete, 2026-04-04)
 
@@ -281,6 +273,50 @@ Option C adopted: 7-phase execution model with Team Review phase between AVFL an
 - Fixed 1 dead reference (Impetus sprint-dev dispatch)
 - Pre-existing issues deferred: sprint-manager supersession, missing status/retro skills, upstream-fix steps/
 - Automated verification: 30/30 Gherkin scenarios pass
+
+### Sprint sprint-2026-04-04-3 — Agent Team Model (Complete, 2026-04-05)
+
+4 stories across 3 dependency waves. Two-layer agent model fully implemented.
+
+| Story | Wave | What |
+|-------|------|------|
+| `dev-agent-definition-files` | 1 | Created `agents/dev.md` agent definition, updated sprint-dev Phase 2 to spawn agent |
+| `specialist-dev-agents` | 2 | Domain classification rules (skills, build, frontend) + 3 specialist agent files |
+| `architecture-guard-implementation` | 2 | Real agent definition replacing stub, decision extraction, sprint-dev Phase 5 integration |
+| `guidelines-verification-gate` | 3 | Sprint-planning Step 5 guidelines check with Generate/Proceed/Downgrade options |
+
+### Sprint sprint-2026-04-05 — Greeting Redesign (Complete, 2026-04-05)
+
+4 stories across 3 dependency waves. Impetus greeting completely rewritten with 9-state narrative orientation.
+
+| Story | Wave | What |
+|-------|------|------|
+| `sprint-lifecycle-tools` | 1 | Status fields, `sprint ready/retro-complete/stats`, 12 new unit tests |
+| `sprint-index-schema-migration` | 1 | Added status/slug/retro_run_at fields to completed sprints |
+| `sprint-workflow-alignment` | 2 | Fixed sprint-dev slug extraction, added status checks, added ready-before-activate |
+| `impetus-greeting-rewrite` | 3 | 9-state narrative orientation, adaptive menus, deferred stats write, pre-rendered greeting fields |
+
+### Sprint sprint-2026-04-05-2 — Retro, Quality Hooks, Journal (Complete, 2026-04-06)
+
+5 stories across 2 dependency waves. Retro skill, all three quality hooks, and journal-status tool.
+
+| Story | Wave | What |
+|-------|------|------|
+| `retro-skill` | 1 | 7-phase retrospective: cross-log discovery, story verification, triage outputs, sprint closure |
+| `posttooluse-lint-and-format-hook-active` | 1 | PostToolUse lint hook — ruff/json.tool/shellcheck/structural by extension |
+| `pretooluse-file-protection-hooks-active` | 1 | PreToolUse file protection — configurable protected-paths.json with fnmatch blocking |
+| `journal-status-tool` | 1 | `session journal-status` subcommand — open thread detection for Impetus greeting |
+| `stop-gate-runs-conditional-quality-checks` | 2 | Stop gate — batch lint of session-modified files, uncommitted changes warning, advisory exit 0 |
+
+### Additional Completed Stories (outside sprints)
+
+| Story | What |
+|-------|------|
+| `quick-fix-skill` | Single-story tactical workflow — define, specify, implement, validate in one flow |
+| `workflow-fidelity-rule` | Delegation steps are binding — `.claude/rules/workflow-fidelity.md` |
+| `8-1-avfl-corpus-mode` | AVFL corpus mode for multi-document cross-validation |
+| `8-2-momentum-research-skill` | 6-phase deep research pipeline with provenance at `skills/momentum/skills/research/` |
+| `agent-guidelines-skill` | 5-phase technology guidelines generator with 4 discovery subagents |
 
 ### Gherkin Specs
 
@@ -304,36 +340,66 @@ Option C adopted: 7-phase execution model with Team Review phase between AVFL an
 | `momentum-sprint-planning.feature` | 30 |
 | `momentum-sprint-dev.feature` | 28 |
 
+**Sprint sprint-2026-04-04-3:** `_bmad-output/implementation-artifacts/sprints/sprint-2026-04-04-3/specs/`
+
+Agent team model stories — specs generated during sprint planning.
+
+**Sprint sprint-2026-04-05:** `_bmad-output/implementation-artifacts/sprints/sprint-2026-04-05/specs/`
+
+Greeting redesign stories — specs generated during sprint planning.
+
+**Sprint sprint-2026-04-05-2:** `_bmad-output/implementation-artifacts/sprints/sprint-2026-04-05-2/specs/`
+
+Retro, quality hooks, and journal-status stories — specs generated during sprint planning.
+
 ---
 
 ## Part 3: What's Next
 
 ### Immediate
 
-1. **Phase 3 Round 4:** Post-merge AVFL on Phase 3 stories, transition all to `done`
-2. **Phase 4:** `allowed-tools` restriction on Impetus (`Read, Glob, Grep, Agent, Bash`)
+1. **Phase 4:** `allowed-tools` restriction on Impetus (`Read, Glob, Grep, Agent, Bash`) — no backlog story exists yet
+2. **Backlog priority field:** Add priority (critical/high/medium/low) to all story index entries — story stub needed
+3. **Master plan freshness:** Keep this document current after each sprint
 
-### Deferred to Phase 5
+### Remaining Phase 5 Items
 
-| Item | Type |
-|------|------|
-| `momentum:triage` | Intake workflow (manual until then) |
-| `momentum:refine` | Backlog grooming with PM + Architect (manual until then) |
-| `momentum:retro` | Sprint retrospective — holistic cross-log discovery, story verification, two-output triage (Decision 27), story stub creation, sprint closure, artifact archival (Decision 34) |
-| `momentum-triage-writer-tool` | Triage subcommands for momentum-tools.py |
-| `momentum:create-story-update` | Remove AVFL checkpoint, add Gherkin generation |
-| `momentum:verify-skill` | Automated behavioral verification (Phase 3 uses developer-confirmation) |
+| Item | Status | Backlog Story |
+|------|--------|---------------|
+| `momentum:triage` | Not started | `triage-skill` (backlog, no story file) |
+| `momentum:refine` | Not started | **No backlog story** — needs stub |
+| `momentum:retro` | **Done** (sprint-2026-04-05-2) | `retro-skill` (done) |
+| `momentum-triage-writer-tool` | Not started | **No backlog story** — may fold into `triage-skill` |
+| `momentum:create-story-update` | Not started | **No backlog story** — needs stub |
+| `momentum:verify-skill` | Not started | **No backlog story** — needs stub |
 
-### Future Epics
+### Future Epics — Current Status
 
-| Epic | Focus |
-|------|-------|
-| Epic 3 | Quality hooks -- PostToolUse lint, PreToolUse file protection, stop-gate |
-| Epic 4 | Complete story cycles -- code review, architecture guard, full verify |
-| Epic 6 | Findings MCP -- structured query over findings-ledger.jsonl |
-| Epic 7 | Bring your own tools -- extensible tool integration |
-| Epic 8 | AVFL corpus mode + momentum:research skill + Gemini Deep Research automation (cmux-browser) |
-| Epic 9 | momentum:research skill |
+| Epic | Focus | Status |
+|------|-------|--------|
+| Quality Hooks (Epic 3) | PostToolUse lint, PreToolUse file protection, stop-gate | **Done** — all 3 hooks implemented in sprint-2026-04-05-2 |
+| Story Cycles (Epic 4) | Code review, ATDD workflow, full story cycle, upstream fix | 5 backlog stubs, no story files |
+| Artifact Provenance (Epic 5) | derives-from traceability, hash staleness, claim-level integrity | 5 backlog stubs, no story files |
+| Practice Compounds (Epic 6) | Findings ledger, cross-story patterns, flywheel, health metrics | 5 backlog stubs, no story files |
+| Bring Your Own Tools (Epic 7) | Protocol bindings, gap resolution, MCP provider registration | 5 backlog stubs, no story files |
+| Research & Knowledge (Epic 8) | AVFL corpus mode, research skill, Gemini Deep Research | Corpus + research **done**; `8-3-gemini-deep-research-automation` ready-for-dev |
+| Research (Legacy Epic 9) | momentum:research skill | **Done** — superseded by Epic 8 |
+| Performance Validation | Promptfoo benchmarks, golden dataset, Pydantic AI harness | 5 backlog stubs, no story files |
+| Impetus Orchestrator | Triage, create-epic, dev-auto, develop-epic, retro-triage-handoff | 5 backlog stubs, no story files |
+| Impetus Core | Status transition walk mode, dev-agent hook self-check | 2 backlog stubs |
+
+### Backlog Gap Analysis — Items in Plan Not in Backlog
+
+These items appear in the master plan or Phase 5 roadmap but have no corresponding story in `stories/index.json`:
+
+| Item | Recommendation |
+|------|---------------|
+| Phase 4: allowed-tools on Impetus | Create story — enforces orchestrator purity |
+| `momentum:refine` skill | Create story — backlog grooming with PM + Architect |
+| `momentum:create-story-update` | Create story — remove AVFL checkpoint, add Gherkin generation |
+| `momentum:verify-skill` | Create story — automated behavioral verification |
+| Team Review with TeamCreate implementation | Already exists: `team-review-with-teamcreate` (backlog) |
+| Guidelines research recency gate | Already exists: `guidelines-research-recency-gate` (backlog) |
 
 ---
 
@@ -396,6 +462,7 @@ Option C adopted: 7-phase execution model with Team Review phase between AVFL an
 | 33 | Agent Teams for sprint execution | 2026-04-03 | Shared working directory. Commit-as-sync-point. No worktree within team. Parallel execution requires separate terminal sessions. |
 | 34 | Retro owns sprint closure | 2026-04-04 | Sprint-dev hands off after merge+push. Retro runs holistic cross-log discovery, verifies story closure, produces two triage outputs (Decision 27), creates story stubs, calls `sprint complete`, archives sprint artifacts out of active scan paths. |
 | 35 | Sprint branch convention | 2026-04-04 | All sprint work (planning + dev) on `sprint/{sprint_slug}` branch. Merges to main only at sprint completion. Isolates concurrent sprints. Local until verified — pushed only after Phase 7. |
+| 36 | Backlog priority field | 2026-04-06 | All stories carry a `priority` field: critical, high, medium, low (default: low). Priority is set by user or suggested by agent and confirmed by user. Supports sprint planning story selection. |
 
 ---
 
