@@ -53,7 +53,7 @@
   },
   "momentum-tooling": {
     "status": "done",
-    "title": "Momentum Tooling — Python CLI for Deterministic Operations",
+    "title": "Momentum Tooling \u2014 Python CLI for Deterministic Operations",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [
@@ -71,7 +71,7 @@
   },
   "impetus-identity-redesign": {
     "status": "done",
-    "title": "Impetus Identity Redesign — BMAD-Informed Character",
+    "title": "Impetus Identity Redesign \u2014 BMAD-Informed Character",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -82,7 +82,7 @@
   },
   "session-open-sprint-view": {
     "status": "done",
-    "title": "Session-Open Sprint View — Mode Detection and Fill Bars",
+    "title": "Session-Open Sprint View \u2014 Mode Detection and Fill Bars",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -364,7 +364,7 @@
   },
   "epic-grooming": {
     "status": "done",
-    "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
+    "title": "Epic Grooming \u2014 Holistic Epic Taxonomy and Story Organization",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -806,7 +806,7 @@
   },
   "agent-logging-tool": {
     "status": "done",
-    "title": "Agent Logging Tool — momentum-tools log subcommand",
+    "title": "Agent Logging Tool \u2014 momentum-tools log subcommand",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -818,7 +818,7 @@
   },
   "momentum-dev-simplify": {
     "status": "done",
-    "title": "Momentum Dev Simplify — Pure Executor",
+    "title": "Momentum Dev Simplify \u2014 Pure Executor",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -860,7 +860,7 @@
   },
   "agent-guidelines-skill": {
     "status": "done",
-    "title": "Agent Guidelines Skill — Guided Technology Guidelines Generation for Projects",
+    "title": "Agent Guidelines Skill \u2014 Guided Technology Guidelines Generation for Projects",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -874,7 +874,7 @@
   },
   "8-1-avfl-corpus-mode": {
     "status": "done",
-    "title": "AVFL Corpus Mode — Multi-Document Cross-Validation for momentum-avfl",
+    "title": "AVFL Corpus Mode \u2014 Multi-Document Cross-Validation for momentum-avfl",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [],
@@ -887,7 +887,7 @@
   },
   "8-2-momentum-research-skill": {
     "status": "done",
-    "title": "momentum-research Skill — 6-Phase Deep Research Pipeline with Provenance",
+    "title": "momentum-research Skill \u2014 6-Phase Deep Research Pipeline with Provenance",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [],
@@ -901,7 +901,7 @@
   },
   "8-3-gemini-deep-research-automation": {
     "status": "ready-for-dev",
-    "title": "Gemini Deep Research Automation — cmux-browser Integration for momentum-research",
+    "title": "Gemini Deep Research Automation \u2014 cmux-browser Integration for momentum-research",
     "epic_slug": "research-knowledge-management",
     "story_file": true,
     "depends_on": [
@@ -915,7 +915,7 @@
   },
   "avfl-scan-profile": {
     "status": "done",
-    "title": "AVFL Scan Profile — Discovery-Only Validation for Team Handoff",
+    "title": "AVFL Scan Profile \u2014 Discovery-Only Validation for Team Handoff",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -928,7 +928,7 @@
   },
   "plugin-skeleton": {
     "status": "done",
-    "title": "Plugin Skeleton — Create Plugin Root and Manifest",
+    "title": "Plugin Skeleton \u2014 Create Plugin Root and Manifest",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [],
@@ -940,7 +940,7 @@
   },
   "plugin-migrate-skills": {
     "status": "done",
-    "title": "Plugin Migrate Skills — Move Satellite Skills into Plugin Structure",
+    "title": "Plugin Migrate Skills \u2014 Move Satellite Skills into Plugin Structure",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [
@@ -953,7 +953,7 @@
   },
   "plugin-scripts-hooks-refs": {
     "status": "done",
-    "title": "Plugin Scripts, Hooks, and References — Consolidate at Plugin Root",
+    "title": "Plugin Scripts, Hooks, and References \u2014 Consolidate at Plugin Root",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [
@@ -968,7 +968,7 @@
   },
   "plugin-cross-references": {
     "status": "done",
-    "title": "Plugin Cross-References — Update All Internal References",
+    "title": "Plugin Cross-References \u2014 Update All Internal References",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [
@@ -982,7 +982,7 @@
   },
   "sprint-planning-skill": {
     "status": "done",
-    "title": "Sprint Planning Skill — Create SKILL.md for Sprint Planning Workflow",
+    "title": "Sprint Planning Skill \u2014 Create SKILL.md for Sprint Planning Workflow",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [],
@@ -993,7 +993,7 @@
   },
   "sprint-dev-skill": {
     "status": "done",
-    "title": "Sprint Dev Skill — Create SKILL.md for Sprint Execution Workflow",
+    "title": "Sprint Dev Skill \u2014 Create SKILL.md for Sprint Execution Workflow",
     "epic_slug": "plugin-migration",
     "story_file": true,
     "depends_on": [],
@@ -1004,7 +1004,7 @@
   },
   "dev-agent-definition-files": {
     "status": "done",
-    "title": "Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawning",
+    "title": "Dev Agent Definition Files \u2014 Lightweight Agent for Sprint-Dev Spawning",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1016,7 +1016,7 @@
   },
   "specialist-dev-agents": {
     "status": "done",
-    "title": "Specialist Dev Agents — Domain-Specific Agent Definitions",
+    "title": "Specialist Dev Agents \u2014 Domain-Specific Agent Definitions",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -1031,7 +1031,7 @@
   },
   "guidelines-verification-gate": {
     "status": "done",
-    "title": "Guidelines Verification Gate — Sprint Planning Checks for Missing Guidelines",
+    "title": "Guidelines Verification Gate \u2014 Sprint Planning Checks for Missing Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -1044,7 +1044,7 @@
   },
   "architecture-guard-implementation": {
     "status": "done",
-    "title": "Architecture Guard Implementation — Replace Stub with Real Agent Definition",
+    "title": "Architecture Guard Implementation \u2014 Replace Stub with Real Agent Definition",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -1059,7 +1059,7 @@
   },
   "sprint-lifecycle-tools": {
     "status": "done",
-    "title": "Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests",
+    "title": "Sprint Lifecycle Tools \u2014 Status Fields, New Commands, and Unit Tests",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [],
@@ -1071,7 +1071,7 @@
   },
   "sprint-index-schema-migration": {
     "status": "done",
-    "title": "Sprint Index Schema Migration — Add Status and Retro Fields",
+    "title": "Sprint Index Schema Migration \u2014 Add Status and Retro Fields",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [],
@@ -1082,7 +1082,7 @@
   },
   "impetus-greeting-rewrite": {
     "status": "done",
-    "title": "Impetus Greeting Rewrite — 9-State Narrative Orientation",
+    "title": "Impetus Greeting Rewrite \u2014 9-State Narrative Orientation",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [
@@ -1096,7 +1096,7 @@
   },
   "sprint-workflow-alignment": {
     "status": "done",
-    "title": "Sprint Workflow Alignment — Fix Slug Extraction and Status Transitions",
+    "title": "Sprint Workflow Alignment \u2014 Fix Slug Extraction and Status Transitions",
     "epic_slug": "greeting-redesign",
     "story_file": true,
     "depends_on": [
@@ -1110,7 +1110,7 @@
   },
   "journal-status-tool": {
     "status": "done",
-    "title": "Journal Status Tool — Deterministic Open Thread Detection",
+    "title": "Journal Status Tool \u2014 Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -1124,7 +1124,7 @@
   },
   "team-review-with-teamcreate": {
     "status": "backlog",
-    "title": "Team Review with TeamCreate — Implement Decision 34 Hybrid Agent Team",
+    "title": "Team Review with TeamCreate \u2014 Implement Decision 34 Hybrid Agent Team",
     "epic_slug": "agent-team-model",
     "story_file": false,
     "depends_on": [],
@@ -1138,7 +1138,7 @@
   },
   "quick-fix-skill": {
     "status": "done",
-    "title": "Quick Fix Skill — Single-Story Tactical Workflow",
+    "title": "Quick Fix Skill \u2014 Single-Story Tactical Workflow",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1152,7 +1152,7 @@
   },
   "retro-skill": {
     "status": "done",
-    "title": "Retro Skill — Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
+    "title": "Retro Skill \u2014 Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1165,7 +1165,7 @@
   },
   "workflow-fidelity-rule": {
     "status": "done",
-    "title": "Workflow Fidelity Rule — Delegation Steps Are Binding",
+    "title": "Workflow Fidelity Rule \u2014 Delegation Steps Are Binding",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -1177,7 +1177,7 @@
   },
   "guidelines-research-recency-gate": {
     "status": "backlog",
-    "title": "Guidelines Research Recency Gate — Date-Anchor Web Search Results",
+    "title": "Guidelines Research Recency Gate \u2014 Date-Anchor Web Search Results",
     "epic_slug": "quality-enforcement",
     "story_file": false,
     "depends_on": [],
@@ -1188,7 +1188,7 @@
   },
   "status-transition-walk-mode": {
     "status": "backlog",
-    "title": "Status Transition Walk Mode — Auto-Step Through Intermediate States",
+    "title": "Status Transition Walk Mode \u2014 Auto-Step Through Intermediate States",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -1199,7 +1199,7 @@
   },
   "dev-agent-hook-self-check": {
     "status": "backlog",
-    "title": "Dev Agent Self-Check for Hook Stories — Pre-Completion Validation",
+    "title": "Dev Agent Self-Check for Hook Stories \u2014 Pre-Completion Validation",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -1210,7 +1210,7 @@
   },
   "backlog-priority-field": {
     "status": "done",
-    "title": "Backlog Priority Field — Add Priority to All Story Index Entries",
+    "title": "Backlog Priority Field \u2014 Add Priority to All Story Index Entries",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1225,7 +1225,7 @@
   },
   "impetus-allowed-tools-restriction": {
     "status": "done",
-    "title": "Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only",
+    "title": "Impetus Allowed-Tools Restriction \u2014 Enforce Orchestrator Read-Only",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1239,7 +1239,7 @@
   },
   "refine-skill": {
     "status": "done",
-    "title": "Refine Skill — Backlog Grooming with PM and Architect",
+    "title": "Refine Skill \u2014 Backlog Grooming with PM and Architect",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -1254,7 +1254,7 @@
   },
   "create-story-update": {
     "status": "backlog",
-    "title": "Create Story Update — Remove AVFL Checkpoint, Add Gherkin Generation",
+    "title": "Create Story Update \u2014 Remove AVFL Checkpoint, Add Gherkin Generation",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -1266,7 +1266,7 @@
   },
   "verify-skill": {
     "status": "backlog",
-    "title": "Verify Skill — Automated Behavioral Verification",
+    "title": "Verify Skill \u2014 Automated Behavioral Verification",
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
@@ -1278,7 +1278,7 @@
   },
   "agent-role-simplification": {
     "status": "backlog",
-    "title": "Agent Role Simplification — Dev + Prompt Engineer with Directory-Scoped Guidelines",
+    "title": "Agent Role Simplification \u2014 Dev + Prompt Engineer with Directory-Scoped Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1297,7 +1297,7 @@
   },
   "backlog-add-command": {
     "status": "backlog",
-    "title": "Backlog Add Command — Lightweight Story Stub Creation with Design Intent",
+    "title": "Backlog Add Command \u2014 Lightweight Story Stub Creation with Design Intent",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -1307,5 +1307,131 @@
       "_bmad-output/implementation-artifacts/stories/index.json"
     ],
     "priority": "low"
+  },
+  "impetus-journal-hygiene-script": {
+    "status": "backlog",
+    "title": "Impetus Journal Hygiene Script \u2014 Move Deterministic Thread Computations to momentum-tools",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "skills/momentum/skills/impetus/workflow.md"
+    ],
+    "change_type": "code + skill-instruction",
+    "priority": "medium",
+    "description": "Workflow Step 11 instructs the LLM to perform timestamp arithmetic, elapsed-time computation, concurrent-tab detection (30-min window), dormant-thread flagging (3-day threshold), dependency-satisfaction checks, context-hash matching for No-Re-Offer suppression, and unwieldy-journal triage (>5 threads). Every one of these operations is deterministic. The LLM currently reads the journal schema, parses JSONL, and evaluates multiple conditional branches \u2014 costing 800-1200 tokens per session on the open-threads path. Create a `momentum-tools session journal-hygiene` command that returns structured JSON with: sorted threads (by last_active descending), elapsed-time labels, warnings (concurrent, dormant, dependency-satisfied, unwieldy), suppressed offers (via declined_offers + context_hash matching), and suggested prompts. Also add a `momentum-tools session journal-append` command for safe JSONL writes with corruption resilience (malformed line handling) and concurrent-session safety. Rewrite workflow.md Step 11 to consume the structured JSON output \u2014 the LLM only formats and presents, no computation."
+  },
+  "impetus-ux-fallback-help-onboarding": {
+    "status": "backlog",
+    "title": "Impetus UX Gaps \u2014 Fallback Route, Help Command, Post-Install Onboarding, and Hash-Drift Accept",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/impetus/SKILL.md",
+      "skills/momentum/skills/impetus/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "medium",
+    "description": "Four user-journey gaps identified in quality analysis: (1) No fallback route in SKILL.md startup routing for unexpected preflight results \u2014 if preflight.route is not one of the five handled values, behavior is undefined. Add a catch-all check that surfaces the unexpected route and asks the developer what to do. (2) No help command \u2014 the input interpretation system handles numbers, letter commands, fuzzy continue, natural language, and ambiguous input, but 'help' and '?' have no dedicated handler. Add a brief self-description and menu explanation response. (3) Post-install onboarding cliff \u2014 after first-install completes (Steps 2-5 into Step 7), a brand-new user faces a sprint-aware menu with no mental model of Momentum's concepts. Add a fork after install offering a quick walkthrough or jump-to-planning. (4) Hash-drift warning has no permanent accept \u2014 the [K] keep option in Step 10 creates a recurring warning every session with no escape. Add an [A] accept option that updates the stored hash to match current, suppressing future warnings."
+  },
+  "impetus-path-standardization": {
+    "status": "backlog",
+    "title": "Impetus Path Standardization \u2014 Replace Home Directory Paths with $HOME",
+    "epic_slug": "impetus-core",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/impetus/workflow.md",
+      "skills/momentum/skills/impetus/evals/eval-hash-drift-warning.md",
+      "skills/momentum/skills/impetus/evals/eval-first-install-consent-and-execution.md",
+      "skills/momentum/skills/impetus/evals/eval-decline-path.md",
+      "skills/momentum/skills/impetus/evals/eval-version-match-skip.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "low",
+    "description": "15 instances of hardcoded ~/  paths across workflow.md (8 instances) and 4 eval files (7 instances). These paths reference ~/.claude/momentum/global-installed.json, ~/.claude/rules/, and similar locations. They are environment-specific and break in non-standard home directory configurations or CI/headless environments. Replace all ~/ references with $HOME expansion or have momentum-tools.py resolve paths internally so hardcoded home directory paths stay out of the workflow prompt. Eval files should use $HOME consistently to match the updated workflow expectations."
+  },
+  "orchestrator-deduplication-guard": {
+    "status": "backlog",
+    "title": "Orchestrator Deduplication Guard \u2014 Track Spawned Agents by (Story, Role)",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "critical",
+    "description": "Sprint-dev orchestrator spawns duplicate agents for the same (story, role) \u2014 47.8% compute waste (12,981KB, 1,662 turns). refine-skill had 7 identical dev agents when 1 was needed. Duplication cascades into review layer (7 prompt-engineers, 17 QA reviewers). ACs: (1) Orchestrator tracks spawned agents by (story, role) tuple, (2) Re-spawn of existing (story, role) is blocked with warning, (3) Duplicate detection works across waves, (4) Sprint metrics show 0 redundant agents."
+  },
+  "workflow-team-composition-spec": {
+    "status": "backlog",
+    "title": "Workflow Team Composition Spec \u2014 Codify Required Roles and Spawning Modes",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "critical",
+    "description": "6 of 10 user corrections were about team composition and spawning. AVFL team composed without dev/fixer twice in same session. Spawning mode (Agent vs TeamCreate) unclear. ACs: (1) Sprint-dev workflow specifies required roles per phase including dev/fixer, (2) AVFL workflow mandates validator + fixer roles, (3) Spawning mode (individual Agent vs TeamCreate) explicit per context, (4) Concurrency expectations explicit per phase."
+  },
+  "mandatory-task-tracking": {
+    "status": "backlog",
+    "title": "Mandatory Task Tracking \u2014 Enforce TaskCreate in Long Sessions",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "critical",
+    "description": "User hit peak frustration (ALL-CAPS \"WHy\") when task tracking was abandoned mid-session. Agent presented ad-hoc summaries instead of TaskCreate/TaskList. ACs: (1) Sprint-dev workflow creates TaskCreate at session start, (2) Sprint-planning workflow creates TaskCreate at session start, (3) Task state maintained throughout session, (4) Proactive task progress display at milestones."
+  },
+  "sprint-planning-synthesis-first": {
+    "status": "backlog",
+    "title": "Sprint Planning Synthesis-First \u2014 Lead with Recommendations Not Data Dumps",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "description": "Sprint planning dumped raw backlog without synthesis. User: \"Good lord that is a wall of crap. What about making some suggestions?\" Also presented stale stories without checking implementation status. ACs: (1) Sprint planning leads with prioritized recommendations not raw data, (2) Staleness check against git history before presenting candidates, (3) Master plan document read as mandatory step 1."
+  },
+  "review-orchestration-codification": {
+    "status": "backlog",
+    "title": "Review Orchestration Codification \u2014 Automate AVFL + Code Review Flow",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "description": "User had to micromanage review flow that should be automated \u2014 specifying exact AVFL + code-review + team composition. ACs: (1) Sprint-dev review phase codifies: AVFL (no-fix mode) + concurrent code-reviews then results fed to review team, (2) No user specification of review flow needed, (3) Flow documented as explicit workflow steps."
+  },
+  "agent-observability-system": {
+    "status": "backlog",
+    "title": "Agent Observability System \u2014 Hook-Based Logging for Retro Flywheel",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "description": "Retro flywheel depends on agent logging. User: \"If we can't implement good logging we're doomed.\" Current retro reads curated milestone logs (24 events). Actual session data: 246 user messages, 806 tool events, 97 subagents. SubagentStop hook provides transcript_path. ACs: (1) SubagentStop hook captures transcript path + outcome to sprint log, (2) Retro workflow ingests session transcripts not just milestone logs, (3) transcript-query.py or successor available as standard retro tooling."
+  },
+  "e2e-validator-toolsearch-fix": {
+    "status": "backlog",
+    "title": "E2E Validator ToolSearch Fix \u2014 Pre-load SendMessage Schema",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium",
+    "description": "7 of 14 E2E validators hit InputValidationError trying to use SendMessage before loading schema via ToolSearch. Self-recovering but adds 1 wasted turn per agent. QA reviewers did not have this issue. ACs: (1) E2E validator agent definition includes ToolSearch guidance, (2) Or SendMessage pre-loaded in spawn config, (3) Zero \"schema was not sent to the API\" errors in E2E validators."
+  },
+  "transcript-query-calibration": {
+    "status": "backlog",
+    "title": "Transcript Query Calibration \u2014 Fix Error False Positives and Schema Variants",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium",
+    "description": "65% false-positive rate on error extraction (529 of 806 flagged). 18 agents unparseable due to JSONL schema variants. Extraction heuristic matches string patterns not actual error indicators. ACs: (1) Error detection uses actual error indicators (is_error flag, tool_use_error), not string matching, (2) All JSONL schema variants handled, (3) False-positive rate < 5%."
+  },
+  "dev-skills-guidelines": {
+    "status": "backlog",
+    "title": "Dev-Skills Guidelines \u2014 EDD, Frontmatter, Workflow XML, 500-Line Limit",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "low",
+    "description": "dev-skills specialist agent ran without guidelines for 3 of 4 sprint stories. Sprint planning noted \"dev-skills missing, proceeding with defaults (P)\". ACs: (1) Guidelines file exists at references/guidelines/dev-skills.md, (2) Covers EDD eval-first methodology, (3) Covers SKILL.md frontmatter constraints (description \u2264150 chars, model/effort fields), (4) Covers workflow.md XML structure, (5) Covers 500-line skill body limit, (6) Sprint-planning guidelines check resolves present for dev-skills."
+  },
+  "sprint-slug-backfill": {
+    "status": "backlog",
+    "title": "Sprint Slug Backfill \u2014 Fix Missing Slug Field in Sprint Index",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "low",
+    "description": "Sprint-2026-04-06 entry in sprints/index.json has no slug field. All 5 prior completed sprints have slug. Data integrity gap from sprint-manager tool. ACs: (1) momentum-tools sprint activate always writes slug field, (2) Existing entry backfilled, (3) No completed sprint entry lacks slug."
   }
 }
