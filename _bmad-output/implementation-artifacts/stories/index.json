@@ -333,13 +333,16 @@
     "depends_on": [],
     "touches": []
   },
-  "create-epic-command": {
+  "epic-grooming": {
     "status": "backlog",
-    "title": "Create Epic Command",
+    "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": false,
     "depends_on": [],
-    "touches": []
+    "touches": [
+      "_bmad-output/planning-artifacts/epics.md",
+      "_bmad-output/implementation-artifacts/stories/index.json"
+    ]
   },
   "momentum-dev-auto-variant": {
     "status": "backlog",
