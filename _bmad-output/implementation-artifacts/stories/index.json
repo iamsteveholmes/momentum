@@ -1166,7 +1166,7 @@
     ]
   },
   "agent-role-simplification": {
-    "status": "ready-for-dev",
+    "status": "backlog",
     "title": "Agent Role Simplification — Dev + Prompt Engineer with Directory-Scoped Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
