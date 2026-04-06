@@ -1067,5 +1067,15 @@
       "skills/momentum/references/rules/workflow-fidelity.md",
       ".claude/rules/workflow-fidelity.md"
     ]
+  },
+  "guidelines-research-recency-gate": {
+    "status": "backlog",
+    "title": "Guidelines Research Recency Gate — Date-Anchor Web Search Results",
+    "epic_slug": "quality-enforcement",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/agent-guidelines/workflow.md"
+    ]
   }
 }
