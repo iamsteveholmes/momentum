@@ -1209,7 +1209,7 @@
     "priority": "low"
   },
   "backlog-priority-field": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Backlog Priority Field — Add Priority to All Story Index Entries",
     "epic_slug": "impetus-core",
     "story_file": true,

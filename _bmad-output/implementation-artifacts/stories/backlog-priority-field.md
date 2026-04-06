@@ -179,8 +179,27 @@ Script and code changes use standard TDD (red-green-refactor). bmad-dev-story ha
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+- `.claude/momentum/sprint-logs/sprint-2026-04-06/dev-backlog-priority-field.jsonl`
 
 ### Completion Notes List
 
+- Task 1: `sprint migrate-priority` subcommand added; one-time migration run on stories/index.json — 109 entries updated to `priority: "low"`
+- Task 2: `sprint set-priority --story <slug> --priority <level>` added; validates against critical/high/medium/low; returns old_priority and new_priority in JSON output
+- Task 3: `sprint stories --priority <level>` added; `--priority all` returns stories grouped by priority (critical→high→medium→low); entries missing priority field treated as low
+- Task 4: sprint-planning workflow.md Step 1 updated — priority badge `[C]/[H]/[M]/[L]` added to each story display; sort order changed to priority > dependency depth > alphabetical; 3 behavioral evals written and confirmed
+- All 310 tests pass, 0 failures; no regressions in existing test suite
+- EDD evals: eval-priority-display.md, eval-priority-sort-order.md, eval-priority-sort-tiebreak.md — all pass against updated workflow instructions
+
 ### File List
+
+- `skills/momentum/scripts/momentum-tools.py` — added PRIORITY_LEVELS, ensure_priority, cmd_sprint_migrate_priority, cmd_sprint_set_priority, cmd_sprint_stories, argparse subcommands
+- `skills/momentum/scripts/test-momentum-tools.py` — added 11 TDD tests for Tasks 1-3
+- `_bmad-output/implementation-artifacts/stories/index.json` — migrated: all 109 stories now have `priority: "low"`
+- `skills/momentum/skills/sprint-planning/workflow.md` — Step 1 updated: priority badge display + sort order
+- `skills/momentum/skills/sprint-planning/evals/eval-priority-display.md` — new eval
+- `skills/momentum/skills/sprint-planning/evals/eval-priority-sort-order.md` — new eval
+- `skills/momentum/skills/sprint-planning/evals/eval-priority-sort-tiebreak.md` — new eval
