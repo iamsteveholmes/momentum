@@ -366,7 +366,7 @@
     "touches": []
   },
   "posttooluse-lint-and-format-hook-active": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Posttooluse Lint and Format Hook Active",
     "epic_slug": "quality-enforcement",
     "story_file": true,
@@ -377,7 +377,7 @@
     ]
   },
   "pretooluse-file-protection-hooks-active": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "PreToolUse File Protection Hooks Active",
     "epic_slug": "quality-enforcement",
     "story_file": true,
@@ -389,7 +389,7 @@
     ]
   },
   "stop-gate-runs-conditional-quality-checks": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Stop Gate Runs Conditional Quality Checks",
     "epic_slug": "quality-enforcement",
     "story_file": true,
@@ -1007,7 +1007,7 @@
     ]
   },
   "journal-status-tool": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Journal Status Tool — Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1046,7 +1046,7 @@
     ]
   },
   "retro-skill": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Retro Skill — Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
     "epic_slug": "impetus-core",
     "story_file": true,
