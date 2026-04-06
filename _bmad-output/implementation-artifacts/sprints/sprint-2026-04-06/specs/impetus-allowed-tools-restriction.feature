@@ -49,6 +49,12 @@ Feature: Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only
     And the required configuration files are written to disk
     And Impetus confirms the installation is complete
 
+  Scenario: Install workflow writes files using Bash commands
+    Given the developer is in a project with no momentum configuration
+    When the developer invokes Impetus and the first-install workflow runs
+    Then all file creation operations execute through Bash commands
+    And no Write or Edit tool calls are used during the install process
+
   Scenario: Upgrade workflow runs when a newer version is detected
     Given the developer has an outdated momentum installation
     When the developer invokes Impetus
