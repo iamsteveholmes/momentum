@@ -191,20 +191,40 @@ this structure for each epic:
 - Skill names prefixed `momentum-` or within `momentum:` namespace (NFR12 — no naming collision with BMAD skills)
 
 **Additional DoD items for this story:**
-- [ ] 2+ behavioral evals written in `skills/momentum/skills/epic-grooming/evals/`
-- [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
-- [ ] SKILL.md description ≤150 characters confirmed
-- [ ] `model:` and `effort:` frontmatter present and correct
-- [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed
-- [ ] Epic template created at `skills/momentum/references/templates/epic-template.md`
+- [x] 2+ behavioral evals written in `skills/momentum/skills/epic-grooming/evals/`
+- [x] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
+- [x] SKILL.md description ≤150 characters confirmed (92 chars)
+- [x] `model:` and `effort:` frontmatter present and correct
+- [x] SKILL.md body ≤500 lines / 5000 tokens confirmed (175 total lines across SKILL.md + workflow.md)
+- [x] Epic template created at `skills/momentum/references/templates/epic-template.md`
 - [ ] AVFL checkpoint on produced artifact documented
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+- `.claude/momentum/sprint-logs/sprint-2026-04-06/dev-skills-epic-grooming.jsonl`
 
 ### Completion Notes List
 
+- EDD order followed: 3 evals written before any skill files created
+- Eval 1 (orphan identification): PASS — Phase 1 output block separates data collection from proposals; discrete step boundary enforced
+- Eval 2 (approval gate): PASS — `<critical>` constraint + `<check if="no proposals were approved">` block ensures no mutations without explicit per-change approval
+- Eval 3 (apply + logging): PASS — every MERGE/CREATE/SPLIT type has explicit `momentum-tools log` call and `sprint epic-membership` per-story calls; direct `stories/index.json` editing forbidden by critical constraint
+- SKILL.md description: 92 chars (limit: 150) — compliant
+- workflow.md: 167 lines, SKILL.md: 8 lines — 175 total (limit: 500) — compliant
+- Epic template aligns with existing epics.md body format (bold field labels, consistent structure)
+- `references/templates/` directory created (did not previously exist)
+
 ### File List
+
+- `skills/momentum/references/templates/epic-template.md` — reusable epic definition template (7 fields)
+- `skills/momentum/skills/epic-grooming/SKILL.md` — skill definition
+- `skills/momentum/skills/epic-grooming/workflow.md` — 4-phase workflow (167 lines)
+- `skills/momentum/skills/epic-grooming/evals/eval-identifies-orphaned-slugs.md`
+- `skills/momentum/skills/epic-grooming/evals/eval-proposes-changes-without-applying.md`
+- `skills/momentum/skills/epic-grooming/evals/eval-applies-changes-with-logging.md`

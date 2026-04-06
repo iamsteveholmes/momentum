@@ -363,7 +363,7 @@
     "priority": "low"
   },
   "epic-grooming": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
@@ -1224,7 +1224,7 @@
     "priority": "low"
   },
   "impetus-allowed-tools-restriction": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1238,7 +1238,7 @@
     "priority": "low"
   },
   "refine-skill": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Refine Skill — Backlog Grooming with PM and Architect",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
