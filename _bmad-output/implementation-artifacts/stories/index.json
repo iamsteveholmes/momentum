@@ -840,7 +840,7 @@
     ]
   },
   "plugin-skeleton": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Plugin Skeleton — Create Plugin Root and Manifest",
     "epic_slug": "plugin-migration",
     "story_file": true,
@@ -851,7 +851,7 @@
     ]
   },
   "plugin-migrate-skills": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Plugin Migrate Skills — Move Satellite Skills into Plugin Structure",
     "epic_slug": "plugin-migration",
     "story_file": true,
@@ -863,7 +863,7 @@
     ]
   },
   "plugin-scripts-hooks-refs": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Plugin Scripts, Hooks, and References — Consolidate at Plugin Root",
     "epic_slug": "plugin-migration",
     "story_file": true,
@@ -877,7 +877,7 @@
     ]
   },
   "plugin-cross-references": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Plugin Cross-References — Update All Internal References",
     "epic_slug": "plugin-migration",
     "story_file": true,
@@ -890,7 +890,7 @@
     ]
   },
   "sprint-planning-skill": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Sprint Planning Skill — Create SKILL.md for Sprint Planning Workflow",
     "epic_slug": "plugin-migration",
     "story_file": true,
@@ -900,7 +900,7 @@
     ]
   },
   "sprint-dev-skill": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Sprint Dev Skill — Create SKILL.md for Sprint Execution Workflow",
     "epic_slug": "plugin-migration",
     "story_file": true,
@@ -910,7 +910,7 @@
     ]
   },
   "dev-agent-definition-files": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawning",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -921,7 +921,7 @@
     ]
   },
   "specialist-dev-agents": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Specialist Dev Agents — Domain-Specific Agent Definitions",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -935,7 +935,7 @@
     ]
   },
   "guidelines-verification-gate": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Guidelines Verification Gate — Sprint Planning Checks for Missing Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -947,7 +947,7 @@
     ]
   },
   "architecture-guard-implementation": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Architecture Guard Implementation — Replace Stub with Real Agent Definition",
     "epic_slug": "agent-team-model",
     "story_file": true,
