@@ -9,7 +9,9 @@ touches:
   - skills/momentum/skills/quick-fix/workflow.md
   - skills/momentum/commands/quick-fix.md
   - skills/momentum/skills/quick-fix/evals/
-change_type: skill-instruction
+  - skills/momentum/scripts/momentum-tools.py
+  - skills/momentum/scripts/test-momentum-tools.py
+change_type: skill-instruction + script-code
 ---
 
 # Quick Fix Skill — Single-Story Tactical Workflow
@@ -184,19 +186,32 @@ Reproduce from sprint-planning Step 5:
   - [ ] Create `skills/momentum/skills/quick-fix/evals/eval-quick-fix-single-story.md`
     — verifies no backlog, wave planning, dependency graphs, or sprint activation
 
-- [ ] Task 2 — Create SKILL.md and command wrapper
+- [ ] Task 2 — Add momentum-tools subcommands (AC: deterministic operations)
+  - [ ] `momentum-tools specialist-classify --touches "path1,path2,..."` — returns
+    specialist name and agent file path (or fallback to dev.md). Uses the same
+    classification table as sprint-planning Step 5. Deterministic, testable,
+    consistent — eliminates LLM re-derivation of pattern matching.
+  - [ ] `momentum-tools quickfix register --slug {slug} --story {key}` — creates
+    a lightweight quickfix entry in sprints/index.json with slug, story, started date.
+    No activate lifecycle.
+  - [ ] `momentum-tools quickfix complete --slug {slug}` — sets completed date on
+    the quickfix entry. No sprint complete lifecycle.
+  - [ ] Add tests for both subcommands
+
+- [ ] Task 3 — Create SKILL.md and command wrapper
   - [ ] Create `skills/momentum/skills/quick-fix/SKILL.md` with frontmatter
     (name: quick-fix, model: claude-opus-4-6, effort: high)
   - [ ] Create `skills/momentum/commands/quick-fix.md` command wrapper
 
-- [ ] Task 3 — Create workflow.md (main deliverable)
-  - [ ] Write the 6-phase workflow with XML structure matching sprint-dev/sprint-planning pattern
+- [ ] Task 4 — Create workflow.md (main deliverable)
+  - [ ] Write the 5-phase workflow with XML structure matching sprint-dev/sprint-planning pattern
   - [ ] Include Outsider Test rules inline for Gherkin generation
-  - [ ] Include specialist classification table inline
-  - [ ] Include cmux markdown surface opening for Phase 3 review
-  - [ ] Include Dev + E2E collaborative fix loop for Phase 5
+  - [ ] Workflow invokes `momentum-tools specialist-classify` instead of LLM pattern matching
+  - [ ] Workflow invokes `momentum-tools quickfix register/complete` for sprint record
+  - [ ] Include cmux markdown surface opening for developer review in Phase 1 and 2
+  - [ ] Include Dev + E2E collaborative fix loop for Phase 4
 
-- [ ] Task 4 — Run evals and verify
+- [ ] Task 5 — Run evals and verify
   - [ ] Run each eval via subagent
   - [ ] Confirm skill is independently invocable
   - [ ] Confirm no multi-story overhead in the workflow
@@ -204,7 +219,9 @@ Reproduce from sprint-planning Step 5:
 ## Momentum Implementation Guide
 
 **Change Types in This Story:**
-- Tasks 1, 2, 3, 4 → skill-instruction (EDD)
+- Task 1 → skill-instruction (EDD)
+- Task 2 → script-code (TDD)
+- Tasks 3, 4, 5 → skill-instruction (EDD)
 
 ---
 
@@ -232,6 +249,31 @@ Reproduce from sprint-planning Step 5:
 - [ ] SKILL.md description ≤150 characters confirmed
 - [ ] `model:` and `effort:` frontmatter present
 - [ ] SKILL.md body ≤500 lines confirmed
+
+---
+
+### script-code Tasks: Test-Driven Development (TDD)
+
+**Before writing the implementation:**
+1. Write failing tests for each new subcommand in `test-momentum-tools.py`:
+   - `specialist-classify`: test each pattern row, test multi-match majority rule,
+     test tie-breaking, test no-match fallback to dev, test empty touches
+   - `quickfix register`: test creates entry in sprints/index.json, test slug
+     uniqueness, test started date
+   - `quickfix complete`: test sets completed date, test error if slug not found
+
+**Then implement:**
+2. Add `specialist-classify` and `quickfix register/complete` subcommands to
+   `momentum-tools.py`
+
+**Then verify:**
+3. Run `python3 test-momentum-tools.py` — all tests pass
+
+**DoD items for script-code tasks:**
+- [ ] Failing tests written before implementation
+- [ ] All tests pass after implementation
+- [ ] QA review confirms test coverage for edge cases
+- [ ] CLI help text present for new subcommands
 
 ## Dev Agent Record
 
