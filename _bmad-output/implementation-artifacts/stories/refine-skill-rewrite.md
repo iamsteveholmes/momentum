@@ -94,7 +94,9 @@ They are authoritative documents that must stay current.
 ### AC3: Batch Approval Operations
 
 - Findings are presented grouped by category (status mismatches, stale
-  candidates, planning artifact updates, epic issues)
+  candidates, epic issues). Planning artifact updates have their own
+  approval gate in Steps 2-3 and are not re-presented in the
+  consolidated findings to avoid redundant approval.
 - The developer can approve or reject entire categories at once:
   "approve all status mismatches", "reject all stale candidates"
 - The developer can approve or reject by range within a category:
@@ -233,10 +235,11 @@ They are authoritative documents that must stay current.
 
 **Step 7: Consolidated findings with batch approval**
 - Present all findings grouped by category:
-  1. Planning artifact updates (from wave 1, if any remain unapplied)
-  2. Status mismatches
-  3. Epic issues (from epic-grooming, if run)
-  4. Stale-story evaluations
+  1. Status mismatches
+  2. Epic issues (from epic-grooming, if run)
+  3. Stale-story evaluations
+  Note: Planning artifact updates have their own approval gate in
+  Steps 2-3 and are not re-presented here.
 - Scale-adaptive UX:
   - Under 5 findings: present individually, ask A/M/R per finding
   - 5+ findings: present by category, offer batch operations first
