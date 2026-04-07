@@ -358,6 +358,8 @@ Options:
 
     <ask>Acknowledge AVFL findings and continue to per-story code review?</ask>
     <note>This is a stop gate. Do NOT spawn fix agents here. All findings are held for Phase 4c consolidation. Acknowledge and move to Phase 4b regardless of severity — critical findings are NOT a blocker at this step.</note>
+
+    <action>Update task 4 (Post-Merge AVFL) to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->

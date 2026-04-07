@@ -15,6 +15,23 @@
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
   <critical>Spawn agents via individual Agent tool calls only. TeamCreate is never used in retro.</critical>
 
+  <team-composition>
+    <phase name="auditor-team" step="4">
+      <role name="auditor-human" spawning="individual-agent" concurrency="parallel">
+        Reads user-messages.jsonl. Sends findings to documenter via SendMessage.
+      </role>
+      <role name="auditor-execution" spawning="individual-agent" concurrency="parallel">
+        Reads agent-summaries.jsonl and errors.jsonl. Sends findings to documenter via SendMessage.
+      </role>
+      <role name="auditor-review" spawning="individual-agent" concurrency="parallel">
+        Reads team-messages.jsonl. Sends findings to documenter via SendMessage.
+      </role>
+      <role name="documenter" spawning="individual-agent" concurrency="parallel">
+        Receives findings from all auditors. Owns retro-transcript-audit.md exclusively.
+      </role>
+    </phase>
+  </team-composition>
+
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- PHASE 0: TASK TRACKING SETUP                           -->
   <!-- ═══════════════════════════════════════════════════════ -->
