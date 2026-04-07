@@ -487,7 +487,7 @@
     "story_file": false,
     "depends_on": [],
     "touches": [],
-    "priority": "low",
+    "priority": "medium",
     "description": " RETRO ADDITION (sprint-2026-04-06-2): Enforce outsider-test guardrail in ALL spec-generation paths. Add .feature to protected-paths.json so dev agents can never read Gherkin specs. Recurring retro finding: AC-by-AC translation anti-pattern resurfaces despite prior feedback."
   },
   "full-story-cycle-guided-by-impetus": {
@@ -1136,7 +1136,7 @@
       "skills/momentum/agents/qa-reviewer.md",
       "skills/momentum/agents/e2e-validator.md"
     ],
-    "priority": "low",
+    "priority": "medium",
     "description": " RETRO ADDITION (sprint-2026-04-06-2): (1) Add feature-level smoke tests at sprint completion, not just AC checks. (2) Run E2E validators parallel with QA review instead of sequential. Both retro findings from sprint-2026-04-06-2."
   },
   "quick-fix-skill": {
