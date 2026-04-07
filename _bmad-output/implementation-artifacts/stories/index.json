@@ -1373,7 +1373,7 @@
     "story_file": true
   },
   "mandatory-task-tracking": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Mandatory Task Tracking — Enforce TaskCreate in Long Sessions",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1418,7 +1418,7 @@
     "story_file": true
   },
   "transcript-query-calibration": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Transcript Query Calibration — Fix Error False Positives and Schema Variants",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1443,7 +1443,7 @@
     "description": "Sprint-2026-04-06 entry in sprints/index.json has no slug field. All 5 prior completed sprints have slug. Data integrity gap from sprint-manager tool. ACs: (1) momentum-tools sprint activate always writes slug field, (2) Existing entry backfilled, (3) No completed sprint entry lacks slug."
   },
   "retro-workflow-rewrite": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Retro Workflow Rewrite — Replace Milestone Logs with Transcript Audit",
     "epic_slug": "impetus-core",
     "depends_on": [
