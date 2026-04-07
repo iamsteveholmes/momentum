@@ -92,6 +92,99 @@ def query_user_messages(con, base, args):
     return con.sql(sql)
 
 
+def _get_jsonl_columns(con, jsonl_path):
+    """Return the set of column names in a JSONL file. Returns empty set on error."""
+    try:
+        desc = con.sql(
+            f"SELECT * FROM read_json('{jsonl_path}', {READ_JSON_OPTS}) LIMIT 0"
+        ).description
+        return {col[0] for col in desc}
+    except Exception:
+        return set()
+
+
+def _build_agent_summary_sql(jsonl_path, has_tool_use_result, has_source_tool_uuid):
+    """Build per-agent summary SQL adapted to the file's actual schema.
+
+    Handles three schema variants:
+    - Files with toolUseResult + sourceToolAssistantUUID (full schema)
+    - Files with toolUseResult but no sourceToolAssistantUUID
+    - Files with neither column (lightweight transcripts)
+
+    Error detection uses structural indicators only (no string pattern matching):
+    - Location 1: toolUseResult JSON object with success=false
+    - Location 2: message.content array element with is_error=true
+    - Location 3: toolUseResult JSON-encoded string with "Error: prefix
+    """
+    if has_tool_use_result:
+        error_conditions = """
+                    -- Location 1: structured tool result with success=false
+                    TRY(TRY_CAST(json_extract_string(toolUseResult::VARCHAR, '$.success') AS BOOLEAN)) = false
+                    -- Location 2: content array element with is_error=true
+                    OR message.content::VARCHAR LIKE '%"is_error":true%'
+                    OR message.content::VARCHAR LIKE '%"is_error": true%'
+                    -- Location 3: toolUseResult JSON-encoded string with Error prefix
+                    OR toolUseResult::VARCHAR LIKE '"Error:%'"""
+    else:
+        error_conditions = """
+                    -- Location 2 only (no toolUseResult column in this schema)
+                    message.content::VARCHAR LIKE '%"is_error":true%'
+                    OR message.content::VARCHAR LIKE '%"is_error": true%'"""
+
+    tool_results_col = (
+        "COUNT(*) FILTER (WHERE type = 'user' AND sourceToolAssistantUUID IS NOT NULL) as tool_results,"
+        if has_source_tool_uuid
+        else "0 as tool_results,"
+    )
+
+    return f"""
+                WITH entries AS (
+                    SELECT *, ROW_NUMBER() OVER (ORDER BY timestamp) as rn
+                    FROM read_json('{jsonl_path}', {READ_JSON_OPTS})
+                ),
+                first_user AS (
+                    SELECT message.content::VARCHAR as content
+                    FROM entries
+                    WHERE type = 'user' AND rn = (
+                        SELECT MIN(rn) FROM entries WHERE type = 'user'
+                    )
+                    LIMIT 1
+                ),
+                last_assistant AS (
+                    SELECT message.content::VARCHAR as content
+                    FROM entries
+                    WHERE type = 'assistant' AND rn = (
+                        SELECT MAX(rn) FROM entries WHERE type = 'assistant'
+                    )
+                    LIMIT 1
+                ),
+                tool_counts AS (
+                    SELECT
+                        COUNT(*) FILTER (WHERE type = 'assistant') as assistant_turns,
+                        {tool_results_col}
+                        COUNT(*) as total_entries
+                    FROM entries
+                ),
+                error_count AS (
+                    SELECT COUNT(*) as errors
+                    FROM entries
+                    WHERE type = 'user'
+                      AND ({error_conditions}
+                      )
+                )
+                SELECT
+                    tc.assistant_turns,
+                    tc.tool_results,
+                    tc.total_entries,
+                    ec.errors,
+                    LEFT(COALESCE(fu.content, ''), 300) as first_prompt,
+                    LEFT(COALESCE(la.content, ''), 300) as last_response
+                FROM tool_counts tc, error_count ec
+                LEFT JOIN first_user fu ON true
+                LEFT JOIN last_assistant la ON true
+            """
+
+
 def query_agent_summary(con, base, args):
     """Generate per-subagent summary from primary session subagents."""
     sa_dir = subagent_dir(base)
@@ -120,54 +213,11 @@ def query_agent_summary(con, base, args):
     results = []
     for agent in manifest:
         try:
-            row = con.sql(f"""
-                WITH entries AS (
-                    SELECT *, ROW_NUMBER() OVER (ORDER BY timestamp) as rn,
-                           ROW_NUMBER() OVER (ORDER BY timestamp DESC) as rn_desc
-                    FROM read_json('{agent['jsonl_path']}', {READ_JSON_OPTS})
-                ),
-                first_user AS (
-                    SELECT message.content::VARCHAR as content
-                    FROM entries
-                    WHERE type = 'user' AND rn = (
-                        SELECT MIN(rn) FROM entries WHERE type = 'user'
-                    )
-                    LIMIT 1
-                ),
-                last_assistant AS (
-                    SELECT message.content::VARCHAR as content
-                    FROM entries
-                    WHERE type = 'assistant' AND rn = (
-                        SELECT MAX(rn) FROM entries WHERE type = 'assistant'
-                    )
-                    LIMIT 1
-                ),
-                tool_counts AS (
-                    SELECT
-                        COUNT(*) FILTER (WHERE type = 'assistant') as assistant_turns,
-                        COUNT(*) FILTER (WHERE type = 'user' AND sourceToolAssistantUUID IS NOT NULL) as tool_results,
-                        COUNT(*) as total_entries
-                    FROM entries
-                ),
-                error_count AS (
-                    SELECT COUNT(*) as errors
-                    FROM entries
-                    WHERE type = 'user'
-                      AND (toolUseResult::VARCHAR LIKE '%error%'
-                           OR toolUseResult::VARCHAR LIKE '%Error%'
-                           OR toolUseResult::VARCHAR LIKE '%FAIL%'
-                           OR message.content::VARCHAR LIKE '%"is_error":true%'
-                           OR message.content::VARCHAR LIKE '%"is_error": true%')
-                )
-                SELECT
-                    tc.assistant_turns,
-                    tc.tool_results,
-                    tc.total_entries,
-                    ec.errors,
-                    LEFT(fu.content, 300) as first_prompt,
-                    LEFT(la.content, 300) as last_response
-                FROM tool_counts tc, error_count ec, first_user fu, last_assistant la
-            """).fetchone()
+            cols = _get_jsonl_columns(con, agent["jsonl_path"])
+            has_tr = "toolUseResult" in cols
+            has_sa = "sourceToolAssistantUUID" in cols
+            sql = _build_agent_summary_sql(agent["jsonl_path"], has_tr, has_sa)
+            row = con.sql(sql).fetchone()
 
             results.append({
                 "agent_id": agent["agent_id"],
@@ -218,12 +268,15 @@ def query_errors(con, base, args):
             LEFT(message.content::VARCHAR, 500) AS content_preview
         FROM {read_json_call(paths)}
         WHERE type = 'user'
-          AND (toolUseResult::VARCHAR LIKE '%error%'
-               OR toolUseResult::VARCHAR LIKE '%Error%'
-               OR toolUseResult::VARCHAR LIKE '%FAIL%'
-               OR toolUseResult::VARCHAR LIKE '%failed%'
-               OR message.content::VARCHAR LIKE '%"is_error":true%'
-               OR message.content::VARCHAR LIKE '%"is_error": true%')
+          AND (
+            -- Location 1: toolUseResult is a JSON object with success=false
+            TRY(TRY_CAST(json_extract_string(toolUseResult::VARCHAR, '$.success') AS BOOLEAN)) = false
+            -- Location 2: message.content array has an element with is_error=true
+            OR message.content::VARCHAR LIKE '%"is_error":true%'
+            OR message.content::VARCHAR LIKE '%"is_error": true%'
+            -- Location 3: toolUseResult is a JSON-encoded string with Error prefix
+            OR toolUseResult::VARCHAR LIKE '"Error:%'
+          )
         ORDER BY timestamp
     """
     if args.filter:
