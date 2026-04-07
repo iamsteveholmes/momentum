@@ -1400,7 +1400,7 @@
     "story_file": true
   },
   "agent-observability-system": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Agent Observability System — Hook-Based Logging for Retro Flywheel",
     "epic_slug": "impetus-core",
     "depends_on": [],
