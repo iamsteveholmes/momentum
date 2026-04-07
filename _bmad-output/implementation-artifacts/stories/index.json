@@ -1433,5 +1433,15 @@
     "depends_on": [],
     "priority": "low",
     "description": "Sprint-2026-04-06 entry in sprints/index.json has no slug field. All 5 prior completed sprints have slug. Data integrity gap from sprint-manager tool. ACs: (1) momentum-tools sprint activate always writes slug field, (2) Existing entry backfilled, (3) No completed sprint entry lacks slug."
+  },
+  "retro-workflow-rewrite": {
+    "status": "backlog",
+    "title": "Retro Workflow Rewrite \u2014 Replace Milestone Logs with Transcript Audit",
+    "epic_slug": "impetus-core",
+    "depends_on": [
+      "transcript-query-calibration"
+    ],
+    "priority": "critical",
+    "description": "The existing retro workflow (Phases 2-4: log collection, story verification, cross-log discovery) found 2 findings from 24 milestone log events. The ad-hoc transcript audit using DuckDB and a 3-auditor team found 10 struggle items, 7 success patterns, 13 user interventions, and 7 cross-cutting patterns \u2014 an order of magnitude more signal. The retro workflow must be rebuilt around session transcript analysis. Key changes: (1) Replace milestone-log Phases 2-4 with DuckDB-powered preprocessing step that extracts user-messages, agent-summaries, errors, and team-messages from session JSONL files, (2) Integrate transcript-query.py (or evolved successor) as standard retro tooling, (3) Add auditor team phase with 3 specialized roles: auditor-human (user interaction analysis), auditor-execution (agent efficiency), auditor-review (quality gate effectiveness), plus 1 documenter, (4) User-messages are first-class audit input \u2014 human prompts tell the real story, (5) Two-wave architecture: preprocessing then audit team, (6) Findings document replaces dual triage outputs as primary retro artifact. ACs: (1) Retro workflow includes DuckDB preprocessing step, (2) transcript-query.py available as standard retro tool, (3) User messages extracted and analyzed, (4) Auditor team spawned with specialized roles, (5) Findings document covers successes AND struggles, (6) Milestone log analysis removed or demoted to supplementary, (7) Retro produces actionable story stubs from transcript findings."
   }
 }
