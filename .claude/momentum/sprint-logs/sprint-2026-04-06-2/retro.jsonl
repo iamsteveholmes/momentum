@@ -1,0 +1,5 @@
+{"timestamp": "2026-04-07T07:34:13.969709", "agent": "retro", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Retrospective started for sprint sprint-2026-04-06-2 (completed 2026-04-07)"}
+{"timestamp": "2026-04-07T07:34:43.962142", "agent": "retro", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Transcript preprocessing: 684 user messages, 359 subagents, 584 errors, 589 team messages"}
+{"timestamp": "2026-04-07T07:34:58.442493", "agent": "retro", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Story verification: 9 done, 0 incomplete"}
+{"timestamp": "2026-04-07T08:06:50.166819", "agent": "retro", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Retrospective started (0.9.2 — TeamCreate auditor team)"}
+{"timestamp": "2026-04-07T08:44:16.849513", "agent": "retro", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Sprint sprint-2026-04-06-2 closed: retro-complete called. 7 new stories added to backlog, 4 existing stories enriched."}
