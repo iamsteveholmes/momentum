@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-06'
+lastEdited: '2026-04-07'
 editHistory:
+  - date: '2026-04-07'
+    changes: 'Refine skill spec impact: Updated refine row in Skills Deployment Classification table (two-wave planning artifact discovery+update, status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; removed dependency analysis mention). Added momentum:refine row to Read/Write Authority table (reads: prd.md, architecture.md, stories/index.json, story files; writes via subagents: prd.md, architecture.md; writes via CLI: stories/index.json; delegates: momentum:create-story, momentum:epic-grooming). Added protection boundary exception for refine wave-2 update subagents writing to prd.md and architecture.md following developer approval gate. Added momentum:refine rows to Decision 41 application table (Wave 1: prd-coverage-agent + architecture-coverage-agent, individual, parallel; Wave 2: prd-update-agent + architecture-update-agent conditional, individual, parallel). Documented refine two-wave conditional spawning pattern after Decision 41. Added developer-gated two-wave approval pattern to Process Patterns. Added momentum:refine ↔ momentum:epic-grooming to Integration Points.'
   - date: '2026-04-06'
     changes: 'Sprint-2026-04-06-2 spec impact: Added Spawn Registry Pattern to Sprint Execution Flow — in-memory (story_slug, role) deduplication guard surviving Phase 2→3→2 loops (orchestrator-deduplication-guard). Added Decision 41 — Workflow Team Composition Declarations with XML <team-composition> elements codifying required roles, spawning mode, and concurrency per phase (workflow-team-composition-spec). Noted TaskCreate/TaskUpdate enforcement via <critical> directive in Sprint Execution Flow and Sprint Planning Workflow (mandatory-task-tracking). Major rewrite of Decision 27 — Transcript Audit Retro replacing milestone-log-based retro with DuckDB preprocessing + 3-auditor team; new DuckDB dependency; transcript-query.py as standard retro tooling; retro-transcript-audit.md output (retro-workflow-rewrite). Extended Decision 29 Step 1 with master plan read, staleness check, and 3-5 recommendation synthesis before full backlog (sprint-planning-synthesis-first). Restructured Sprint Execution Flow Phase 4 with AVFL stop gate; added Phase 4b per-story code review, Phase 4c consolidated fix queue, Phase 4d selective re-review (review-orchestration-codification). Extended Decision 24 event types with subagent-start and subagent-stop; added SubagentStart/SubagentStop hooks to hooks infrastructure (agent-observability-system).'
   - date: '2026-04-06'
@@ -176,7 +178,7 @@ The defining question for each component: *does this need main-context persona p
 | AVFL | Flat skill (`/momentum:avfl`) | Must orchestrate parallel spawning from main context |
 | upstream-fix, create-story, dev, status, retro, plan-audit | Flat skills | Stateful workflows needing main context |
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
-| refine | Flat skill (`/momentum:refine`) | Backlog refinement with parallel PRD/architecture gap discovery, priority management; CLI-only mutations |
+| refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure spawned worker — reviews code against story ACs during Team Review (Decision 34). Never user-invoked (Decision 35). |
@@ -912,6 +914,14 @@ Never interrupt mid-task. Surface gaps at natural handoffs.
 `Detection → Review → Upstream Trace → Solution → Verify → Log`
 Finding logged to findings ledger at Detection. Fix logged at Log (sixth phase). Never patch code without tracing first.
 
+**Developer-gated two-wave approval pattern (2026-04-06):**
+A reusable orchestration pattern for workflows that discover then update planning artifacts:
+1. **Discovery wave** — spawn parallel agents to surface findings (coverage gaps, staleness, candidates for update)
+2. **Approval gate** — present consolidated findings to developer; require explicit per-document (or per-item) approval before proceeding
+3. **Conditional update wave** — spawn update agents only for approved items; skip agents for rejected items
+
+This pattern differs from per-finding A/M/R triage (which acts on individual findings) — approval is batched at the document or item level, giving developers coarse-grained control with minimal interaction steps. Current application: momentum:refine (prd.md and architecture.md updates).
+
 **SKILL.md description budget rule:**
 Descriptions are loaded at startup for ALL installed skills. Keep under 150 characters.
 Heavy content goes in `references/` — loaded only on invocation.
@@ -1089,6 +1099,7 @@ momentum/                                    ← Plugin root
 | momentum:dev | Story files, code | Code in worktree only; sprint-logs (via momentum-tools log, best-effort); structured JSON completion output |
 | momentum:create-story | stories/index.json, epics.md | Story files in _bmad-output/implementation-artifacts/ |
 | momentum-tools log | (none — write-only append) | .claude/momentum/sprint-logs/{sprint-slug}/*.jsonl (sole writer per agent file) |
+| momentum:refine | prd.md, architecture.md, stories/index.json, story files | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); stories/index.json mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
 | momentum:sprint-planning | stories/index.json, sprints/index.json, story files | sprints/{sprint-slug}/specs/*.feature (Gherkin specs); sprint record team composition (via momentum-tools sprint) |
 | momentum:sprint-dev | sprints/index.json (active sprint, team, deps), stories/index.json, sprints/{sprint-slug}/specs/*.feature | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete) |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
@@ -1104,7 +1115,7 @@ momentum/                                    ← Plugin root
 
 **Protection boundaries (PreToolUse blocks writes to — sourced from `references/protected-paths.json`):**
 - `tests/acceptance/` — acceptance test immutability
-- `_bmad-output/planning-artifacts/` — spec authority
+- `_bmad-output/planning-artifacts/` — spec authority. Exception: momentum:refine wave-2 update subagents may write to prd.md and architecture.md as sole authorized writers, following developer approval gate.
 - `.claude/rules/` — enforcement rule integrity
 - `~/.claude/momentum/findings-ledger.jsonl` — Ledger integrity (authority-enforced; global path is outside project PreToolUse scope)
 - `sprints/{sprint-slug}/specs/` — Gherkin spec integrity (Decision 30: dev agents must never write to this path; only sprint-planning writes, only verifiers read)
@@ -1156,6 +1167,8 @@ momentum/                                    ← Plugin root
 **Terminal Multiplexer ↔ Workflows:** Optional protocol binding for terminal pane management (create, read, send, notify, cleanup). Uses the detect-and-adapt pattern: skills check for environment indicators (`CMUX_WORKSPACE_ID`, `CMUX_SURFACE_ID`, `CMUX_SOCKET_PATH` for CMUX; `TMUX` env var for tmux) and adapt behavior when present. Null binding is the default — workflows function identically without a multiplexer. Primary use cases: worktree-to-tab automation (link story sessions to terminal tabs), external process monitoring (simulators, dev servers), and multi-session visual awareness. Reference implementations: CMUX (macOS), tmux (cross-platform). See Epic 7, Story 7.1.
 
 **CMUX Markdown Surfaces ↔ Quick-Fix:** cmux markdown surfaces serve as a primary developer review pattern in quick-fix Phases 1-2. The quick-fix skill renders implementation plans and file diffs to cmux surfaces for developer review and approval before changes are applied. This is a direct integration — not optional detect-and-adapt — within the quick-fix workflow.
+
+**momentum:refine ↔ momentum:epic-grooming:** momentum:refine delegates taxonomy analysis and story reassignment to momentum:epic-grooming as a substep during backlog refinement. Graceful degradation applies: if momentum:epic-grooming is absent, refine skips the taxonomy substep and continues with the remaining refinement work.
 
 ---
 
@@ -1941,12 +1954,21 @@ Workflows that spawn agents must declare their team composition requirements exp
 | AVFL | Validators | Enumerator, Adversary (per lens) | `individual` (Agent tool) | `parallel` |
 | AVFL | Consolidator | Consolidator | `individual` | `sequential` (after validators) |
 | AVFL | Fixer | Fixer | `individual` | `sequential` (after consolidator) |
+| momentum:refine | Wave 1 (discovery) | prd-coverage-agent, architecture-coverage-agent | `individual` | `parallel` |
+| momentum:refine | Wave 2 (updates, conditional) | prd-update-agent, architecture-update-agent (each conditional per document) | `individual` | `parallel` |
 
 **Sprint planning validation:** Step 5 (Execution plan and team composition) validates the planned `team` object against the workflow's declared required roles. If a required role is missing from the plan, sprint planning surfaces the gap before activation. This is a pre-activation gate — the sprint cannot be activated with an incomplete team.
 
 **Rationale:** Team composition rules were implicit — the sprint record carried a `team` object, but workflows did not declare what roles they need, how agents should be spawned, or concurrency expectations. When Impetus had to infer these from context, it improvised incorrectly. Explicit declarations make composition deterministic and testable.
 
 **Traceability:** Extends Decision 26 (Two-Layer Agent Model) with structural enforcement and Decision 29 (Sprint Planning Builds the Team) with a validation gate. Triggered by sprint-2026-04-06 retro finding: 6 of 10 user corrections were about team composition and spawning.
+
+**Documented pattern — refine two-wave conditional spawning (2026-04-06):**
+momentum:refine uses a two-wave conditional spawning pattern as a documented instance of Decision 41 composition:
+- **Wave 1:** Two discovery agents spawn in parallel (prd-coverage-agent, architecture-coverage-agent). Each independently analyzes its document for coverage gaps, staleness, and update candidates, returning structured findings.
+- **Developer approval gate:** Orchestrator presents Wave 1 findings and requires developer approval before proceeding. Developer may approve, modify, or reject updates per document independently.
+- **Wave 2:** Zero, one, or two update agents spawn based on Wave 1 findings and the developer's approval decision. Each approved document gets its own sole-writer update agent; no update agent spawns for a rejected document. Agents run in parallel when both are approved.
+This pattern is distinct from the per-finding Add/Modify/Remove triage used in other workflows — approval is per-document, not per-finding, enabling batch UX at the document level.
 
 **Workflow Modularization Note (2026-04-04)**
 
