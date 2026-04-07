@@ -13,23 +13,21 @@
   <critical>Story stubs require developer approval before being written to stories/index.json. Write stub entries directly to stories/index.json (no momentum-tools command exists for this operation).</critical>
   <critical>Transcript audit (Phases 2-3) is the primary data source. Milestone logs are NOT the critical path — retro proceeds and produces findings even when zero log events exist.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
-  <critical>Spawn agents via individual Agent tool calls only. TeamCreate is never used in retro.</critical>
+  <critical>Phase 4 auditor team uses TeamCreate — auditors and documenter collaborate via SendMessage during analysis. This is the collaborative team pattern, not independent fan-out.</critical>
 
   <team-composition>
-    <phase name="auditor-analysis" step="4a">
-      <role name="auditor-human" spawning="individual-agent" concurrency="parallel">
-        Reads user-messages.jsonl. Returns findings as structured output to orchestrator.
+    <phase name="auditor-team" step="4">
+      <role name="auditor-human" spawning="team-create" concurrency="parallel">
+        Reads user-messages.jsonl. Sends findings to documenter via SendMessage. Responds to documenter queries.
       </role>
-      <role name="auditor-execution" spawning="individual-agent" concurrency="parallel">
-        Reads agent-summaries.jsonl and errors.jsonl. Returns findings as structured output to orchestrator.
+      <role name="auditor-execution" spawning="team-create" concurrency="parallel">
+        Reads agent-summaries.jsonl and errors.jsonl. Sends findings to documenter via SendMessage. Runs ad-hoc DuckDB queries on request.
       </role>
-      <role name="auditor-review" spawning="individual-agent" concurrency="parallel">
-        Reads team-messages.jsonl. Returns findings as structured output to orchestrator.
+      <role name="auditor-review" spawning="team-create" concurrency="parallel">
+        Reads team-messages.jsonl. Sends findings to documenter via SendMessage. Correlates with other auditor findings.
       </role>
-    </phase>
-    <phase name="documenter-synthesis" step="4b">
-      <role name="documenter" spawning="individual-agent" concurrency="sequential">
-        Receives all 3 auditor outputs from orchestrator as input. Owns retro-transcript-audit.md exclusively.
+      <role name="documenter" spawning="team-create" concurrency="parallel">
+        Receives findings from all auditors. Evaluates, requests clarification, synthesizes. Owns retro-transcript-audit.md exclusively.
       </role>
     </phase>
   </team-composition>
@@ -237,15 +235,16 @@ For each of these, choose:
   <!-- PHASE 4: AUDITOR TEAM                                  -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Spawn 3 auditors in parallel, collect findings, then spawn documenter">
+  <step n="4" goal="Spawn auditor team via TeamCreate — collaborative analysis of extracts">
     <action>Update task 4 to in_progress</action>
 
-    <note>Two-phase spawn: auditors first (parallel), then documenter (sequential with collected findings).
-    NEVER use TeamCreate. Auditors return findings as structured output. The orchestrator collects
-    all 3 outputs and passes them to the documenter as input. No SendMessage between agents.</note>
+    <note>Spawn all 4 agents as a collaborative team via TeamCreate. Auditors read their assigned
+    extract files, send findings to the documenter via SendMessage, and respond to documenter
+    queries for clarification or deeper investigation. The documenter evaluates findings as they
+    arrive, may request additional DuckDB queries, and writes the final findings document.
+    This is the collaborative team pattern — auditors and documenter iterate together.</note>
 
-    <!-- Phase 4a: Spawn 3 auditors in parallel -->
-    <action>Spawn 3 auditors simultaneously via 3 individual Agent tool calls in a single message:
+    <action>Spawn 4 agents via TeamCreate:
 
       **auditor-human** — System prompt:
       ```
@@ -268,8 +267,9 @@ For each of these, choose:
         - what it reveals about practice gaps or strengths
         - recommendation (fix|keep|investigate)
 
-      Return ALL findings as your final output.
+      Send findings to the documenter agent via SendMessage as you discover them.
       Format as JSON array under key "human_findings".
+      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
 
       Available tool: transcript-query.py for additional ad-hoc queries if needed:
         python3 skills/momentum/scripts/transcript-query.py sql "SELECT ..." \
@@ -301,8 +301,9 @@ For each of these, choose:
         - root cause hypothesis
         - recommendation (fix|keep|investigate)
 
-      Return ALL findings as your final output.
+      Send findings to the documenter agent via SendMessage as you discover them.
       Format as JSON array under key "execution_findings".
+      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
       ```
 
       **auditor-review** — System prompt:
@@ -327,36 +328,27 @@ For each of these, choose:
         - impact on sprint velocity
         - recommendation (fix|keep|investigate)
 
-      Return ALL findings as your final output.
+      Send findings to the documenter agent via SendMessage as you discover them.
       Format as JSON array under key "review_findings".
+      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
       ```
-    </action>
-
-    <action>Wait for all 3 auditors to complete. Store their outputs:
-      {{human_findings}} = auditor-human output
-      {{execution_findings}} = auditor-execution output
-      {{review_findings}} = auditor-review output
-    </action>
-
-    <!-- Phase 4b: Spawn documenter with collected findings -->
-    <action>Spawn 1 documenter agent via Agent tool, passing all 3 auditor outputs as input:
 
       **documenter** — System prompt:
       ```
       You are the documenter for the {{sprint_slug}} retrospective.
 
-      You have been given findings from 3 auditors:
+      Wait for SendMessage findings from 3 auditors:
+        - auditor-human → "human_findings" JSON array
+        - auditor-execution → "execution_findings" JSON array
+        - auditor-review → "review_findings" JSON array
 
-      === HUMAN AUDIT FINDINGS ===
-      {{human_findings}}
+      As findings arrive:
+        - Evaluate each finding for evidence quality and actionability
+        - Ask auditors to dig deeper when evidence is thin (via SendMessage)
+        - Identify cross-cutting themes as patterns emerge
+        - Request additional DuckDB queries from auditors when correlations need verification
 
-      === EXECUTION AUDIT FINDINGS ===
-      {{execution_findings}}
-
-      === REVIEW AUDIT FINDINGS ===
-      {{review_findings}}
-
-      Perform a cross-cutting synthesis pass:
+      After receiving and evaluating all findings, perform a cross-cutting synthesis pass:
         - Identify themes that appear across multiple auditor reports
         - Prioritize findings by impact and actionability
         - Separate successes (preserve) from struggles (fix)
@@ -408,7 +400,7 @@ For each of these, choose:
       ```
     </action>
 
-    <action>Wait for documenter to complete.</action>
+    <action>Wait for the team to complete (documenter signals completion by writing the findings file)</action>
 
     <check if="findings document written at `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
       <output>Auditor team complete. Findings document written:
