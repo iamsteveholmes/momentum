@@ -1,6 +1,6 @@
 ---
 name: refine
-description: "Backlog refinement — prioritization, gap analysis, and story organization with PM and Architect."
+description: "Backlog hygiene — planning artifact drift detection, status mismatches, stale-story triage, and batch approval."
 model: claude-sonnet-4-6
 effort: high
 ---
