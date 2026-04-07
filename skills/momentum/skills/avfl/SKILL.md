@@ -158,6 +158,23 @@ Cross-check confidence during consolidation:
 
 ---
 
+## Team Composition
+
+All AVFL subagents are spawned as **individual agents** via the Agent tool. TeamCreate is never used in AVFL — every subagent is an independent spawn.
+
+| Role | Spawning | Concurrency | Notes |
+|---|---|---|---|
+| Validator (Enumerator) | `individual-agent` | parallel | All validators in one message turn |
+| Validator (Adversary) | `individual-agent` | parallel | All validators in one message turn |
+| Consolidator | `individual-agent` | sequential | Runs after **all** validators complete |
+| Fixer | `individual-agent` | sequential | Runs after consolidator completes |
+
+**Validator fixer agent is not missing.** Every role in the pipeline must be present. If a fix loop runs, the Fixer is required — it cannot be omitted. The `dev/fixer` role is defined in the Role Configuration table above and must always be spawned when Phase 4 is entered.
+
+Model and effort assignments per role are specified in the Role Configuration table. This section declares spawning mode; it does not duplicate the model/effort values.
+
+---
+
 ## Pipeline Execution
 
 Read `references/framework.json` → `prompts` for the exact prompt templates to give each subagent type. Use those templates — they encode the calibration rules that make findings structured and evidence-backed.
@@ -166,12 +183,12 @@ Read `references/framework.json` → `prompts` for the exact prompt templates to
 
 Each role has a prescribed model and effort level derived from Phase 4 benchmarking (36 runs across 3 models × 3 effort levels × all roles). Use these — they represent measured optima, not guesses.
 
-| Role | Model | Effort | Sub-skill path | Rationale |
-|---|---|---|---|---|
-| Enumerator validator | `sonnet` | `medium` | `sub-skills/validator-enum` | Reliable recall; no false-pass risk |
-| Adversary validator | `opus` | `high` | `sub-skills/validator-adv` | Best severity calibration; critical findings correctly classified |
-| Consolidator | `haiku` | `low` | `sub-skills/consolidator` | Fully invariant across all model/effort combos — cheapest is sufficient |
-| Fixer | `sonnet` | `medium` | `sub-skills/fixer` | Handles both mechanical and generative fixes |
+| Role | Model | Effort | Spawning | Concurrency | Sub-skill path | Rationale |
+|---|---|---|---|---|---|---|
+| Enumerator validator | `sonnet` | `medium` | `individual-agent` | parallel | `sub-skills/validator-enum` | Reliable recall; no false-pass risk |
+| Adversary validator | `opus` | `high` | `individual-agent` | parallel | `sub-skills/validator-adv` | Best severity calibration; critical findings correctly classified |
+| Consolidator | `haiku` | `low` | `individual-agent` | sequential (after all validators) | `sub-skills/consolidator` | Fully invariant across all model/effort combos — cheapest is sufficient |
+| Fixer | `sonnet` | `medium` | `individual-agent` | sequential (after consolidator) | `sub-skills/fixer` | Handles both mechanical and generative fixes |
 
 **How to apply:** When spawning subagents via the Agent tool, set the `model` parameter explicitly (`"sonnet"`, `"opus"`, `"haiku"`). Point the subagent at the appropriate sub-skill path — the skill carries the `effort` frontmatter that overrides the session level.
 

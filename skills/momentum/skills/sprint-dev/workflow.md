@@ -16,6 +16,73 @@
   <critical>AVFL runs ONCE after ALL stories merge — not per-story. If AVFL finds critical issues, block Team Review until resolved.</critical>
   <critical>Impetus always spawns agents. No agent spawns another agent.</critical>
   <critical>Log all sprint events via `momentum-tools log --agent impetus --sprint {slug}` at each phase transition.</critical>
+  <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint phases — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TEAM COMPOSITION DECLARATION                             -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <!--
+    This section codifies spawning mode and concurrency for every phase that spawns agents.
+    The mandatory field "spawning" must be one of: individual-agent | team-create.
+    Default is individual-agent. TeamCreate is NEVER used in sprint-dev.
+
+    Phase 2 — Dev Wave:
+      role: dev (specialist variant per story assignment)
+      spawning: individual-agent  (one Agent tool call per story — NEVER TeamCreate)
+      concurrency: parallel       (all unblocked stories in a single message turn)
+      agent-definition: skills/momentum/agents/{specialist}.md
+        fallback: skills/momentum/agents/dev.md
+      note: Each story gets its own isolated agent with its own worktree.
+            The specialist resolution logic (steps 2.3a–2.3d) selects the agent definition.
+
+    Phase 4 — AVFL Fix Agents (critical findings only):
+      role: dev-fixer
+      spawning: individual-agent  (one Agent tool call per critical finding — NEVER TeamCreate)
+      concurrency: sequential     (one fix agent per finding, in severity order)
+      note: No worktrees — fix agents run directly on the sprint branch.
+
+    Phase 5 — Team Review:
+      role: qa-reviewer
+        spawning: individual-agent  (Agent tool, parallel with peers)
+      role: e2e-validator
+        spawning: individual-agent  (Agent tool, parallel with peers)
+      role: architect-guard
+        spawning: individual-agent  (Agent tool, parallel with peers)
+      concurrency: parallel         (all three in a single message — three Agent tool calls)
+      note: These three roles are ALWAYS spawned as individual agents in one message.
+            Never group them into a TeamCreate call.
+  -->
+
+  <team-composition>
+    <phase name="dev-wave" step="2">
+      <role name="dev" spawning="individual-agent" concurrency="parallel">
+        One agent per unblocked story. Specialist agent definition resolved per
+        team.story_assignments[slug].specialist — fallback to skills/momentum/agents/dev.md.
+        Never use TeamCreate. Each story runs in its own worktree.
+      </role>
+    </phase>
+    <phase name="avfl-fix" step="4">
+      <role name="dev-fixer" spawning="individual-agent" concurrency="sequential">
+        One fix agent per critical finding, spawned in severity order.
+        No worktrees — operates directly on sprint/{{sprint_slug}} branch.
+        Never use TeamCreate.
+      </role>
+    </phase>
+    <phase name="team-review" step="5">
+      <role name="qa-reviewer" spawning="individual-agent" concurrency="parallel">
+        Agent definition: skills/momentum/agents/qa-reviewer.md
+      </role>
+      <role name="e2e-validator" spawning="individual-agent" concurrency="parallel">
+        Agent definition: skills/momentum/agents/e2e-validator.md
+      </role>
+      <role name="architect-guard" spawning="individual-agent" concurrency="parallel">
+        Invoked as: momentum:architecture-guard (context: fork, read-only)
+      </role>
+      <note>All three review roles spawn in a single message (three parallel Agent tool calls).
+        Never use TeamCreate for team review agents.</note>
+    </phase>
+  </team-composition>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- PHASE 0: TASK TRACKING SETUP                              -->
@@ -113,6 +180,7 @@ Task list created for progress tracking.</output>
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="2" goal="Spawn dev agents for unblocked stories">
+    <!-- Spawning mode: individual-agent | concurrency: parallel — see <team-composition> declaration above -->
     <action>Identify unblocked stories: status == "ready-for-dev" AND every story in depends_on has status == "done"</action>
 
     <check if="no unblocked stories and no in-progress stories">
@@ -137,7 +205,9 @@ Task list created for progress tracking.</output>
          b. Resolve agent definition file: `skills/momentum/agents/{specialist}.md`
          c. If the specialist file exists, use it as the agent definition
          d. If the specialist file does NOT exist, log a warning and fall back to `skills/momentum/agents/dev.md`
-      4. Spawn the resolved agent with:
+      4. Spawn the resolved agent via the Agent tool (individual-agent mode — one Agent tool call per story,
+         all in a single message turn for parallel execution). NEVER use TeamCreate for dev agents.
+         Provide:
          - Story key: {slug}
          - Story file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
          - Sprint context: {{sprint_slug}}
@@ -236,6 +306,7 @@ Options:
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="4" goal="Single AVFL pass on full integrated codebase">
+    <!-- Fix agents: spawning=individual-agent | concurrency=sequential | no worktrees — see <team-composition> above -->
     <output>All sprint stories merged. Running AVFL on the complete sprint changeset...</output>
 
     <action>Capture sprint diff: identify the commit before the first sprint merge and diff from there.
@@ -263,7 +334,8 @@ Options:
         `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "AVFL critical findings: {{count}}"`</action>
       <output>AVFL found **critical** issues. These must be resolved before proceeding.
 {{findings_summary}}</output>
-      <action>Spawn targeted fix agents on the sprint branch (no worktrees) for critical findings. Re-run AVFL after fixes.</action>
+      <action>Spawn targeted fix agents on the sprint branch (no worktrees) for critical findings — one individual Agent tool
+        call per finding, sequentially in severity order. Never use TeamCreate. Re-run AVFL after fixes.</action>
       <action>Do NOT proceed to Phase 5 until all critical findings are resolved.</action>
     </check>
 
@@ -272,7 +344,8 @@ Options:
 {{findings_summary}}</output>
       <ask>Address before Team Review, or proceed with known issues documented?</ask>
       <check if="developer wants to fix">
-        <action>Spawn targeted fix agents on the sprint branch (no worktrees). Re-run AVFL after fixes.</action>
+        <action>Spawn targeted fix agents on the sprint branch (no worktrees) — one individual Agent tool call per finding,
+          sequentially. Never use TeamCreate. Re-run AVFL after fixes.</action>
       </check>
     </check>
   </step>
@@ -282,6 +355,7 @@ Options:
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="5" goal="Parallel team review of integrated codebase">
+    <!-- Spawning mode: individual-agent for all three roles | concurrency: parallel — see <team-composition> above -->
     <output>Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated sprint/{{sprint_slug}}...</output>
 
     <action>Before spawning each reviewer, check {{spawn_registry}} for the reviewer's key:
@@ -293,7 +367,8 @@ Options:
       If a key is absent: spawn the reviewer and register the key: `{{spawn_registry}}[key] = { spawned: true }`
     </action>
 
-    <action>Spawn eligible reviewers in parallel (single message, Agent tool calls for each unregistered reviewer):
+    <action>Spawn eligible reviewers in parallel using individual Agent tool calls in a single message.
+      NEVER use TeamCreate — each reviewer is always an individual agent spawn:
 
     **QA Agent** — spawn via Agent tool with `skills/momentum/agents/qa-reviewer.md` definition:
       - Provide: sprint slug, list of sprint stories, AVFL findings list
@@ -338,7 +413,8 @@ Options:
       <ask>Address these findings now, defer to follow-up stories, or accept as-is?</ask>
 
       <check if="developer wants to fix">
-        <action>For each accepted finding, spawn a targeted dev fix agent (no worktree — direct on sprint branch).</action>
+        <action>For each accepted finding, spawn a targeted dev fix agent via individual Agent tool call
+          (no worktree — direct on sprint branch). Never use TeamCreate for fix agents.</action>
         <action>After fixes, re-run only the reviewer(s) that produced the fixed findings.
           Before re-spawning each reviewer, remove its registry entry to allow the intentional re-run:
           - If QA findings were fixed: delete `{{spawn_registry}}["sprint::qa-reviewer"]`, re-spawn QA Agent, re-register key

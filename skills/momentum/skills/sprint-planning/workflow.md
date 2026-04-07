@@ -15,13 +15,14 @@
   <critical>All planning decisions must be logged via `momentum-tools log` throughout the workflow.</critical>
 
   <step n="0" goal="Initialize task tracking">
-    <action>Create tasks for the 9 workflow steps:
+    <action>Create tasks for the 10 workflow steps:
       1. Synthesize recommendations from master plan and backlog
       2. Story selection
       3. Flesh out stories
       4. Generate Gherkin specs
       4.5. Spec impact analysis — update architecture and PRD
       5. Build team composition
+      5.5. Validate team composition against required roles
       6. Run AVFL
       7. Developer review
       8. Activate sprint
@@ -459,6 +460,65 @@ Dependency graph:
   ...
 
 Proceeding to AVFL validation.</output>
+  </step>
+
+  <step n="5.5" goal="Validate team composition against required roles">
+    <!-- This step enforces the spawning mode declarations from the sprint-dev workflow's
+         <team-composition> block. Every phase that spawns agents has declared required roles;
+         sprint planning must confirm the planned team satisfies those requirements before activation. -->
+
+    <action>Check that the planned {{team}} object satisfies the sprint-dev workflow's required roles:
+
+      Required roles per phase (from sprint-dev workflow team-composition declaration):
+        · Phase 2 (dev-wave): at least one dev-role agent assigned to each story
+        · Phase 5 (team-review): QA Reviewer, E2E Validator, and Architect Guard must all be present
+
+      For each story in {{selected_stories}}:
+        · Verify story has an entry in {{team}}.story_assignments with a non-null specialist or "dev"
+        · Verify the specialist agent file exists: `skills/momentum/agents/{specialist}.md`
+          If it does not exist, the story has no valid agent definition — flag as gap
+
+      For team review roles (applied to the sprint as a whole):
+        · Verify `skills/momentum/agents/qa-reviewer.md` exists
+        · Verify `skills/momentum/agents/e2e-validator.md` exists
+        · Verify `momentum:architecture-guard` skill is available (check skills/momentum/skills/architecture-guard/SKILL.md)
+    </action>
+
+    <check if="all required roles are filled and all agent files exist">
+      <output>✓ Team composition validated — all required roles are present and agent definitions resolve.</output>
+      <action>Proceed to Step 6 (AVFL validation)</action>
+    </check>
+
+    <check if="one or more gaps detected">
+      <output>! Team composition gaps detected:
+
+  {{for each gap:
+    · [UNASSIGNED] story-slug — no agent assigned (no entry in story_assignments)
+    · [MISSING-AGENT] story-slug — specialist {{specialist}} resolves to skills/momentum/agents/{{specialist}}.md which does not exist
+    · [MISSING-REVIEWER] role — required team review agent file not found at {{path}}
+  }}
+
+These gaps will prevent sprint-dev from spawning agents for the affected phases.
+Address them before activating the sprint.</output>
+
+      <ask>Resolve gaps now (R), accept with warnings (W), or halt planning (H)?</ask>
+
+      <check if="Resolve">
+        <action>For each unassigned story: reassign specialist or downgrade to base Dev agent</action>
+        <action>For each missing agent file: surface the file path that needs to be created</action>
+        <action>Re-run the validation check after changes</action>
+      </check>
+
+      <check if="Accept with warnings">
+        <action>Log each gap: `momentum-tools log --agent impetus --event finding --detail "Team composition gap: {{gap_description}}" --sprint {{sprint_slug}}`</action>
+        <output>! Proceeding with {{gap_count}} team composition warning(s) noted. Sprint execution will fall back to base Dev agent for stories with missing specialists.</output>
+        <action>Proceed to Step 6</action>
+      </check>
+
+      <check if="Halt">
+        <action>HALT — resolve team composition gaps before continuing sprint planning</action>
+      </check>
+    </check>
   </step>
 
   <step n="6" goal="AVFL validation of complete sprint plan">
