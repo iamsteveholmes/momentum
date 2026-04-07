@@ -55,6 +55,17 @@ except ImportError:
 READ_JSON_OPTS = "format='newline_delimited', ignore_errors=true, maximum_object_size=10485760"
 
 
+def _get_jsonl_columns(con, path: str) -> set[str]:
+    """Return the set of top-level column names in a JSONL file's inferred schema."""
+    try:
+        result = con.sql(
+            f"SELECT column_name FROM (DESCRIBE SELECT * FROM read_json('{path}', {READ_JSON_OPTS}))"
+        ).fetchall()
+        return {row[0] for row in result}
+    except Exception:
+        return set()
+
+
 # ---------------------------------------------------------------------------
 # Session discovery
 # ---------------------------------------------------------------------------
@@ -214,6 +225,34 @@ def query_agent_summary(con, sessions: list[str], subagents: list[str], args) ->
     results = []
     for agent in manifest:
         try:
+            columns = _get_jsonl_columns(con, agent["jsonl_path"])
+            has_tool_use_result = "toolUseResult" in columns
+            has_source_tool = "sourceToolAssistantUUID" in columns
+
+            # Build error detection clause based on available columns
+            if has_tool_use_result:
+                error_where = """
+                          -- Indicator 1: toolUseResult JSON object with success=false
+                          (TRY_CAST(toolUseResult AS JSON) IS NOT NULL
+                           AND json_extract_string(toolUseResult::VARCHAR, '$.success') = 'false')
+                          OR
+                          -- Indicator 2: content block with is_error=true flag
+                          message.content::VARCHAR LIKE '%"is_error":true%'
+                          OR message.content::VARCHAR LIKE '%"is_error": true%'"""
+            else:
+                error_where = """
+                          -- toolUseResult column absent — only check content block errors
+                          message.content::VARCHAR LIKE '%"is_error":true%'
+                          OR message.content::VARCHAR LIKE '%"is_error": true%'"""
+
+            # Build tool_results count — sourceToolAssistantUUID may be absent
+            if has_source_tool:
+                tool_results_expr = """COUNT(*) FILTER (
+                            WHERE type = 'user' AND sourceToolAssistantUUID IS NOT NULL
+                        ) AS tool_results"""
+            else:
+                tool_results_expr = "0 AS tool_results"
+
             row = con.sql(f"""
                 WITH entries AS (
                     SELECT *,
@@ -238,9 +277,7 @@ def query_agent_summary(con, sessions: list[str], subagents: list[str], args) ->
                 counts AS (
                     SELECT
                         COUNT(*) FILTER (WHERE type = 'assistant') AS assistant_turns,
-                        COUNT(*) FILTER (
-                            WHERE type = 'user' AND sourceToolAssistantUUID IS NOT NULL
-                        ) AS tool_results,
+                        {tool_results_expr},
                         COUNT(*) AS total_entries
                     FROM entries
                 ),
@@ -249,14 +286,7 @@ def query_agent_summary(con, sessions: list[str], subagents: list[str], args) ->
                     SELECT COUNT(*) AS errors
                     FROM entries
                     WHERE type = 'user'
-                      AND (
-                          -- Indicator 1: toolUseResult JSON object with success=false
-                          (TRY_CAST(toolUseResult AS JSON) IS NOT NULL
-                           AND json_extract_string(toolUseResult::VARCHAR, '$.success') = 'false')
-                          OR
-                          -- Indicator 2: content block with is_error=true flag
-                          message.content::VARCHAR LIKE '%"is_error":true%'
-                          OR message.content::VARCHAR LIKE '%"is_error": true%'
+                      AND ({error_where}
                       )
                 )
                 SELECT
