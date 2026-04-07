@@ -1360,7 +1360,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
-    "description": "Sprint-dev orchestrator spawns duplicate agents for the same (story, role) \u2014 47.8% compute waste (12,981KB, 1,662 turns). refine-skill had 7 identical dev agents when 1 was needed. Duplication cascades into review layer (7 prompt-engineers, 17 QA reviewers). ACs: (1) Orchestrator tracks spawned agents by (story, role) tuple, (2) Re-spawn of existing (story, role) is blocked with warning, (3) Duplicate detection works across waves, (4) Sprint metrics show 0 redundant agents."
+    "description": "Sprint-dev orchestrator spawns duplicate agents for the same (story, role) \u2014 47.8% compute waste (12,981KB, 1,662 turns). refine-skill had 7 identical dev agents when 1 was needed. Duplication cascades into review layer (7 prompt-engineers, 17 QA reviewers). ACs: (1) Orchestrator tracks spawned agents by (story, role) tuple, (2) Re-spawn of existing (story, role) is blocked with warning, (3) Duplicate detection works across waves, (4) Sprint metrics show 0 redundant agents.",
+    "story_file": true
   },
   "workflow-team-composition-spec": {
     "status": "backlog",
@@ -1368,7 +1369,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
-    "description": "6 of 10 user corrections were about team composition and spawning. AVFL team composed without dev/fixer twice in same session. Spawning mode (Agent vs TeamCreate) unclear. ACs: (1) Sprint-dev workflow specifies required roles per phase including dev/fixer, (2) AVFL workflow mandates validator + fixer roles, (3) Spawning mode (individual Agent vs TeamCreate) explicit per context, (4) Concurrency expectations explicit per phase."
+    "description": "6 of 10 user corrections were about team composition and spawning. AVFL team composed without dev/fixer twice in same session. Spawning mode (Agent vs TeamCreate) unclear. ACs: (1) Sprint-dev workflow specifies required roles per phase including dev/fixer, (2) AVFL workflow mandates validator + fixer roles, (3) Spawning mode (individual Agent vs TeamCreate) explicit per context, (4) Concurrency expectations explicit per phase.",
+    "story_file": true
   },
   "mandatory-task-tracking": {
     "status": "backlog",
@@ -1376,7 +1378,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
-    "description": "User hit peak frustration (ALL-CAPS \"WHy\") when task tracking was abandoned mid-session. Agent presented ad-hoc summaries instead of TaskCreate/TaskList. ACs: (1) Sprint-dev workflow creates TaskCreate at session start, (2) Sprint-planning workflow creates TaskCreate at session start, (3) Task state maintained throughout session, (4) Proactive task progress display at milestones."
+    "description": "User hit peak frustration (ALL-CAPS \"WHy\") when task tracking was abandoned mid-session. Agent presented ad-hoc summaries instead of TaskCreate/TaskList. ACs: (1) Sprint-dev workflow creates TaskCreate at session start, (2) Sprint-planning workflow creates TaskCreate at session start, (3) Task state maintained throughout session, (4) Proactive task progress display at milestones.",
+    "story_file": true
   },
   "sprint-planning-synthesis-first": {
     "status": "backlog",
@@ -1384,7 +1387,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high",
-    "description": "Sprint planning dumped raw backlog without synthesis. User: \"Good lord that is a wall of crap. What about making some suggestions?\" Also presented stale stories without checking implementation status. ACs: (1) Sprint planning leads with prioritized recommendations not raw data, (2) Staleness check against git history before presenting candidates, (3) Master plan document read as mandatory step 1."
+    "description": "Sprint planning dumped raw backlog without synthesis. User: \"Good lord that is a wall of crap. What about making some suggestions?\" Also presented stale stories without checking implementation status. ACs: (1) Sprint planning leads with prioritized recommendations not raw data, (2) Staleness check against git history before presenting candidates, (3) Master plan document read as mandatory step 1.",
+    "story_file": true
   },
   "review-orchestration-codification": {
     "status": "backlog",
@@ -1392,7 +1396,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high",
-    "description": "User had to micromanage review flow that should be automated \u2014 specifying exact AVFL + code-review + team composition. ACs: (1) Sprint-dev review phase codifies: AVFL (no-fix mode) + concurrent code-reviews then results fed to review team, (2) No user specification of review flow needed, (3) Flow documented as explicit workflow steps."
+    "description": "User had to micromanage review flow that should be automated \u2014 specifying exact AVFL + code-review + team composition. ACs: (1) Sprint-dev review phase codifies: AVFL (no-fix mode) + concurrent code-reviews then results fed to review team, (2) No user specification of review flow needed, (3) Flow documented as explicit workflow steps.",
+    "story_file": true
   },
   "agent-observability-system": {
     "status": "backlog",
@@ -1400,7 +1405,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high",
-    "description": "Retro flywheel depends on agent logging. User: \"If we can't implement good logging we're doomed.\" Current retro reads curated milestone logs (24 events). Actual session data: 246 user messages, 806 tool events, 97 subagents. SubagentStop hook provides transcript_path. ACs: (1) SubagentStop hook captures transcript path + outcome to sprint log, (2) Retro workflow ingests session transcripts not just milestone logs, (3) transcript-query.py or successor available as standard retro tooling."
+    "description": "Retro flywheel depends on agent logging. User: \"If we can't implement good logging we're doomed.\" Current retro reads curated milestone logs (24 events). Actual session data: 246 user messages, 806 tool events, 97 subagents. SubagentStop hook provides transcript_path. ACs: (1) SubagentStop hook captures transcript path + outcome to sprint log, (2) Retro workflow ingests session transcripts not just milestone logs, (3) transcript-query.py or successor available as standard retro tooling.",
+    "story_file": true
   },
   "e2e-validator-toolsearch-fix": {
     "status": "backlog",
@@ -1408,7 +1414,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
-    "description": "7 of 14 E2E validators hit InputValidationError trying to use SendMessage before loading schema via ToolSearch. Self-recovering but adds 1 wasted turn per agent. QA reviewers did not have this issue. ACs: (1) E2E validator agent definition includes ToolSearch guidance, (2) Or SendMessage pre-loaded in spawn config, (3) Zero \"schema was not sent to the API\" errors in E2E validators."
+    "description": "7 of 14 E2E validators hit InputValidationError trying to use SendMessage before loading schema via ToolSearch. Self-recovering but adds 1 wasted turn per agent. QA reviewers did not have this issue. ACs: (1) E2E validator agent definition includes ToolSearch guidance, (2) Or SendMessage pre-loaded in spawn config, (3) Zero \"schema was not sent to the API\" errors in E2E validators.",
+    "story_file": true
   },
   "transcript-query-calibration": {
     "status": "backlog",
@@ -1416,7 +1423,8 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
-    "description": "65% false-positive rate on error extraction (529 of 806 flagged). 18 agents unparseable due to JSONL schema variants. Extraction heuristic matches string patterns not actual error indicators. ACs: (1) Error detection uses actual error indicators (is_error flag, tool_use_error), not string matching, (2) All JSONL schema variants handled, (3) False-positive rate < 5%."
+    "description": "65% false-positive rate on error extraction (529 of 806 flagged). 18 agents unparseable due to JSONL schema variants. Extraction heuristic matches string patterns not actual error indicators. ACs: (1) Error detection uses actual error indicators (is_error flag, tool_use_error), not string matching, (2) All JSONL schema variants handled, (3) False-positive rate < 5%.",
+    "story_file": true
   },
   "dev-skills-guidelines": {
     "status": "backlog",

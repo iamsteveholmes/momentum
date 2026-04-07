@@ -7,6 +7,7 @@ depends_on: []
 touches:
   - skills/momentum/skills/sprint-dev/workflow.md
 change_type: skill-instruction
+priority: critical
 ---
 
 # Orchestrator Deduplication Guard — Track Spawned Agents by (Story, Role)
