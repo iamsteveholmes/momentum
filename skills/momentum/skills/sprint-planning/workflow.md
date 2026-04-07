@@ -13,6 +13,7 @@
   <critical>AVFL runs ONCE on the complete sprint plan — all stories together as a single validation pass, not per-story.</critical>
   <critical>Team composition uses a two-layer model: Momentum provides generic agent roles (Dev, QA, E2E Validator, Architect Guard), and the project provides stack-specific guidelines for each role.</critical>
   <critical>All planning decisions must be logged via `momentum-tools log` throughout the workflow.</critical>
+  <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
 
   <step n="0" goal="Initialize task tracking">
     <action>Create tasks for the 10 workflow steps:
@@ -32,6 +33,7 @@
   </step>
 
   <step n="1" goal="Synthesize recommendations from master plan and backlog">
+    <action>Update task 1 (Synthesize recommendations from master plan and backlog) to in_progress</action>
     <!-- Phase A: Master plan read -->
     <action>Read `{planning_artifacts}/prd.md` — extract current priorities and recent edit history (the frontmatter `editHistory` shows what was recently added or changed, indicating active areas)</action>
     <action>Read `{planning_artifacts}/product-brief-momentum-2026-03-13.md` — extract product vision and strategic goals</action>
@@ -116,9 +118,11 @@ Select 3-8 stories for this sprint by number or slug.
 
     <action>Log backlog presentation:
       `momentum-tools log --agent impetus --event decision --detail "Backlog presented: N stories across M epics, K selectable, K_stale potentially stale" --sprint _unsorted`</action>
+    <action>Update task 1 (Synthesize recommendations from master plan and backlog) to completed</action>
   </step>
 
   <step n="2" goal="Story selection">
+    <action>Update task 2 (Story selection) to in_progress</action>
     <ask>Select 3-8 stories for this sprint. Enter numbers or slugs, comma-separated.</ask>
 
     <action>Parse the developer's selection — accept numbers (from the backlog display) or story slugs</action>
@@ -162,9 +166,11 @@ These stories may be blocked during execution. Proceed anyway, or adjust selecti
   {{numbered list of selected story titles}}
 
 Proceeding to flesh out story stubs.</output>
+    <action>Update task 2 (Story selection) to completed</action>
   </step>
 
   <step n="3" goal="Flesh out stories">
+    <action>Update task 3 (Flesh out stories) to in_progress</action>
     <action>For each story in {{selected_stories}}, check `story_file` field in stories/index.json</action>
 
     <check if="story_file is true AND full story content exists">
@@ -205,9 +211,11 @@ Approve, or request revisions?</output>
 
     <action>After all stories are approved:</action>
     <output>All {{count}} stories approved. Proceeding to Gherkin spec generation.</output>
+    <action>Update task 3 (Flesh out stories) to completed</action>
   </step>
 
   <step n="4" goal="Generate Gherkin specs">
+    <action>Update task 4 (Generate Gherkin specs) to in_progress</action>
     <action>Create the sprint specs directory:
       `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/`</action>
 
@@ -264,9 +272,11 @@ Approve, or request revisions?</output>
 Specs written to sprints/{{sprint_slug}}/specs/. These are for verifier agents only — dev agents will not see them.
 
 Proceeding to spec impact analysis.</output>
+    <action>Update task 4 (Generate Gherkin specs) to completed</action>
   </step>
 
   <step n="4.5" goal="Spec impact analysis — update architecture and PRD">
+    <action>Update task 4.5 (Spec impact analysis) to in_progress</action>
     <action>Spawn two parallel discovery subagents:
 
     **Architecture discovery agent:**
@@ -334,9 +344,11 @@ Updating specs now.</output>
 
 Proceeding to team composition.</output>
     </check>
+    <action>Update task 4.5 (Spec impact analysis) to completed</action>
   </step>
 
   <step n="5" goal="Build team composition and execution plan">
+    <action>Update task 5 (Build team composition) to in_progress</action>
     <action>Analyze each selected story's `change_type` and `touches` paths to determine required agent roles:
 
     Role determination rules:
@@ -460,9 +472,11 @@ Dependency graph:
   ...
 
 Proceeding to AVFL validation.</output>
+    <action>Update task 5 (Build team composition) to completed</action>
   </step>
 
   <step n="5.5" goal="Validate team composition against required roles">
+    <action>Update task 5.5 (Validate team composition) to in_progress</action>
     <!-- This step enforces the spawning mode declarations from the sprint-dev workflow's
          <team-composition> block. Every phase that spawns agents has declared required roles;
          sprint planning must confirm the planned team satisfies those requirements before activation. -->
@@ -519,9 +533,11 @@ Address them before activating the sprint.</output>
         <action>HALT — resolve team composition gaps before continuing sprint planning</action>
       </check>
     </check>
+    <action>Update task 5.5 (Validate team composition) to completed</action>
   </step>
 
   <step n="6" goal="AVFL validation of complete sprint plan">
+    <action>Update task 6 (Run AVFL) to in_progress</action>
     <action>Gather all sprint plan artifacts for validation:
       · All approved story files (full content)
       · All generated Gherkin specs
@@ -565,9 +581,11 @@ Address all findings before the plan can proceed.</output>
 
     <action>Log AVFL result:
       `momentum-tools log --agent impetus --event decision --detail "AVFL {{avfl_result}} for sprint {{sprint_slug}}" --sprint {{sprint_slug}}`</action>
+    <action>Update task 6 (Run AVFL) to completed</action>
   </step>
 
   <step n="7" goal="Developer review of complete sprint plan">
+    <action>Update task 7 (Developer review) to in_progress</action>
     <output>Sprint Plan — {{sprint_slug}}
 
 Stories ({{count}}):
@@ -618,11 +636,13 @@ AVFL: {{avfl_result}}
     <check if="developer selects A (Approve)">
       <action>Log approval:
         `momentum-tools log --agent impetus --event decision --detail "Sprint {{sprint_slug}} approved by developer" --sprint {{sprint_slug}}`</action>
+      <action>Update task 7 (Developer review) to completed</action>
       <action>Proceed to Step 8</action>
     </check>
   </step>
 
   <step n="8" goal="Activate the sprint">
+    <action>Update task 8 (Activate sprint) to in_progress</action>
     <action>Store team composition, guidelines status, and dependency graph in the sprint record:
       · Update `{implementation_artifacts}/sprints/index.json` planning section with:
         - slug: {{sprint_slug}}
@@ -649,6 +669,7 @@ AVFL: {{avfl_result}}
   Started: {{today}}
 
 The sprint is live. Use "Continue sprint" from the session menu to begin execution.</output>
+    <action>Update task 8 (Activate sprint) to completed</action>
   </step>
 
 </workflow>

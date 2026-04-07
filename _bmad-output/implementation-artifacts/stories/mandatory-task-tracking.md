@@ -1,7 +1,7 @@
 ---
 title: Mandatory Task Tracking — Enforce TaskCreate in Long Sessions
 story_key: mandatory-task-tracking
-status: backlog
+status: review
 epic_slug: impetus-core
 depends_on: []
 touches:

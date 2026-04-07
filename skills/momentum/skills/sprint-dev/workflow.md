@@ -492,6 +492,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
 
     <action>Log re-review results (best-effort):
       `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Post-fix re-review: {{remaining_findings | length}} remaining findings"`</action>
+    <action>Update task 4 (Post-Merge AVFL) to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
