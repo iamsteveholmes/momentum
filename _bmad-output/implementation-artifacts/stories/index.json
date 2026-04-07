@@ -1543,5 +1543,18 @@
     "priority": "medium",
     "description": "Retro finding (sprint-2026-04-06-2): Fan-out and TeamCreate produced equivalent retro audit results. Documenter never iterated with auditors despite SendMessage being available. Research finding: genuine collaboration requires task-gated evaluator-optimizer loops (produce \u2192 challenge \u2192 revise), not just SendMessage availability. Three missing ingredients identified: (1) tasks with dependencies forcing sync points, (2) adversarial/skeptic positioning of the synthesizer agent, (3) structural enforcement ('MUST ask follow-up') vs soft language ('may request'). Spike should evaluate whether retro auditor team benefits from task-gated iteration or whether fan-out with orchestrator relay is sufficient. Compare: retro-transcript-audit.md (fan-out) vs retro-transcript-audit-teamcreate.md (TeamCreate) in sprints/sprint-2026-04-06-2/ for empirical baseline. Global rule added: ~/.claude/rules/spawning-patterns.md defines fan-out vs TeamCreate decision heuristic.",
     "retro_source": "sprint-2026-04-06-2"
+  },
+  "refine-skill-rewrite": {
+    "status": "backlog",
+    "title": "Refine Skill Rewrite \u2014 Practical Backlog Hygiene over Gap Analysis",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/refine/SKILL.md",
+      "skills/momentum/skills/refine/workflow.md",
+      "_bmad-output/implementation-artifacts/stories/refine-skill.md"
+    ],
+    "priority": "high"
   }
 }
