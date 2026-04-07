@@ -1442,6 +1442,23 @@
       "transcript-query-calibration"
     ],
     "priority": "critical",
-    "description": "The existing retro workflow (Phases 2-4: log collection, story verification, cross-log discovery) found 2 findings from 24 milestone log events. The ad-hoc transcript audit using DuckDB and a 3-auditor team found 10 struggle items, 7 success patterns, 13 user interventions, and 7 cross-cutting patterns \u2014 an order of magnitude more signal. The retro workflow must be rebuilt around session transcript analysis. Key changes: (1) Replace milestone-log Phases 2-4 with DuckDB-powered preprocessing step that extracts user-messages, agent-summaries, errors, and team-messages from session JSONL files, (2) Integrate transcript-query.py (or evolved successor) as standard retro tooling, (3) Add auditor team phase with 3 specialized roles: auditor-human (user interaction analysis), auditor-execution (agent efficiency), auditor-review (quality gate effectiveness), plus 1 documenter, (4) User-messages are first-class audit input \u2014 human prompts tell the real story, (5) Two-wave architecture: preprocessing then audit team, (6) Findings document replaces dual triage outputs as primary retro artifact. ACs: (1) Retro workflow includes DuckDB preprocessing step, (2) transcript-query.py available as standard retro tool, (3) User messages extracted and analyzed, (4) Auditor team spawned with specialized roles, (5) Findings document covers successes AND struggles, (6) Milestone log analysis removed or demoted to supplementary, (7) Retro produces actionable story stubs from transcript findings."
+    "description": "The existing retro workflow (Phases 2-4: log collection, story verification, cross-log discovery) found 2 findings from 24 milestone log events. The ad-hoc transcript audit using DuckDB and a 3-auditor team found 10 struggle items, 7 success patterns, 13 user interventions, and 7 cross-cutting patterns \u2014 an order of magnitude more signal. The retro workflow must be rebuilt around session transcript analysis. Key changes: (1) Replace milestone-log Phases 2-4 with DuckDB-powered preprocessing step that extracts user-messages, agent-summaries, errors, and team-messages from session JSONL files, (2) Integrate transcript-query.py (or evolved successor) as standard retro tooling, (3) Add auditor team phase with 3 specialized roles: auditor-human (user interaction analysis), auditor-execution (agent efficiency), auditor-review (quality gate effectiveness), plus 1 documenter, (4) User-messages are first-class audit input \u2014 human prompts tell the real story, (5) Two-wave architecture: preprocessing then audit team, (6) Findings document replaces dual triage outputs as primary retro artifact. ACs: (1) Retro workflow includes DuckDB preprocessing step, (2) transcript-query.py available as standard retro tool, (3) User messages extracted and analyzed, (4) Auditor team spawned with specialized roles, (5) Findings document covers successes AND struggles, (6) Milestone log analysis removed or demoted to supplementary, (7) Retro produces actionable story stubs from transcript findings.",
+    "story_file": true
+  },
+  "journal-duckdb-queries": {
+    "status": "backlog",
+    "title": "Journal DuckDB Queries \u2014 Replace Manual Journal Parsing with SQL",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium",
+    "description": "Impetus journal append uses Bash echo >> and regenerates journal-view.md from scratch on each write. DuckDB can query journal.jsonl state directly via SQL \u2014 thread status, open/closed counts, session history \u2014 without regenerating markdown. ACs: (1) Journal state queryable via DuckDB SQL, (2) Thread analytics (open vs closed, counts by type) available as queries, (3) journal-view.md regeneration replaced or supplemented with SQL-driven approach, (4) No change to journal append pattern (echo >> is fine for writes)."
+  },
+  "findings-ledger-duckdb": {
+    "status": "backlog",
+    "title": "Findings Ledger DuckDB Integration \u2014 Cross-Project Trend Analysis",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "low",
+    "description": "The findings ledger (~/.claude/momentum/findings-ledger.jsonl) is designed as a cross-project append-only log for pattern detection. DuckDB enables trend analysis and severity aggregation across projects via SQL joins on severity/tags. ACs: (1) Findings ledger queryable via DuckDB SQL, (2) Cross-project aggregation by severity and tag, (3) Trend analysis across sprints available as standard queries."
   }
 }
