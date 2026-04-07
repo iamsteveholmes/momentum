@@ -16,7 +16,7 @@
 
   <step n="0" goal="Initialize task tracking">
     <action>Create tasks for the 9 workflow steps:
-      1. Show prioritized backlog
+      1. Synthesize recommendations from master plan and backlog
       2. Story selection
       3. Flesh out stories
       4. Generate Gherkin specs
@@ -30,24 +30,76 @@
       `momentum-tools log --agent impetus --event decision --detail "Sprint planning workflow initiated" --sprint _unsorted`</action>
   </step>
 
-  <step n="1" goal="Show prioritized backlog">
+  <step n="1" goal="Synthesize recommendations from master plan and backlog">
+    <!-- Phase A: Master plan read -->
+    <action>Read `{planning_artifacts}/prd.md` — extract current priorities and recent edit history (the frontmatter `editHistory` shows what was recently added or changed, indicating active areas)</action>
+    <action>Read `{planning_artifacts}/product-brief-momentum-2026-03-13.md` — extract product vision and strategic goals</action>
+    <action>Store a mental model of "what matters most right now" based on these documents</action>
+
+    <check if="master plan documents are missing or empty">
+      <action>Set {{has_master_plan}} = false</action>
+      <note>Will fall back to sorted backlog display with warning — skip Phase C synthesis, present full backlog as primary content</note>
+    </check>
+    <check if="master plan documents exist and have content">
+      <action>Set {{has_master_plan}} = true</action>
+    </check>
+
+    <!-- Phase B: Staleness check -->
     <action>Read `{implementation_artifacts}/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>
-    <action>Group remaining stories by `epic_slug`</action>
-    <action>Within each epic, sort stories by: (1) priority — critical first, then high, medium, low (stories missing priority field treated as low); (2) dependency depth — leaves first (stories with no unsatisfied depends_on appear before those with pending dependencies); (3) alphabetical within the same priority and depth</action>
-    <action>For each story, display:
-      · priority badge: [C] for critical, [H] for high, [M] for medium, [L] for low (stories missing priority field display as [L])
-      · title
-      · status (backlog, ready-for-dev, in-progress, review, verify)
-      · depends_on (list dependency slugs; mark satisfied dependencies with ✓, unsatisfied with ◦)
-      · story_file (true/false — indicates whether a full story file exists)
+    <action>For each story with status `ready-for-dev` or `in-progress`:
+      · Get the story's `touches` paths
+      · Run: `git log --oneline --since="30 days ago" -- {{touches_paths}}` to find recent commits
+      · If commits exist, mark the story as potentially stale and store the commit evidence (one-liners)
     </action>
-    <action>Display count summary at top: "N stories across M epics"</action>
-    <action>Highlight stories with status `backlog` or `ready-for-dev` as selectable candidates</action>
+    <action>Partition the candidate pool:
+      · {{stale_candidates}}: stories with recent git activity on their touches paths
+      · {{clean_candidates}}: remaining stories (no recent activity or no touches paths to check)
+    </action>
 
-    <output>
+    <!-- Phase C: Synthesis and display -->
+    <check if="has_master_plan is false">
+      <output>! No master plan documents found — recommendations require prd.md and a product brief.
+Presenting full backlog instead.
+
 Backlog — N stories across M epics
 
+[Epic: epic-slug-1]
+  1. [C] story-slug-a — Title · status · deps: [✓ dep1, ◦ dep2] · file: true
+  2. [L] story-slug-b — Title · status · deps: none · file: false
+  ...
+
+Select 3-8 stories for this sprint by number or slug.</output>
+    </check>
+
+    <check if="has_master_plan is true">
+      <action>From {{clean_candidates}}, select 3-5 top recommendations:
+        · Weight by: priority field (critical > high > medium > low), master plan alignment (stories touching areas flagged as high priority in prd.md or product brief rank higher), dependency readiness (all depends_on satisfied > some pending), recency of related PRD edits
+        · Write a 1-2 sentence rationale for each recommendation explaining why this story matters now, grounded in master plan priorities and readiness
+      </action>
+      <action>Group the full backlog by `epic_slug`, sorted within each epic by: (1) priority — critical first, then high, medium, low; (2) dependency depth — leaves first; (3) alphabetical</action>
+
+      <output>
+Sprint Planning — Recommendations
+
+Based on the master plan and current backlog state:
+
+  1. [H] story-slug — Title
+     Why now: rationale based on master plan priorities and readiness
+
+  2. [C] story-slug — Title
+     Why now: rationale
+
+  3. [H] story-slug — Title
+     Why now: rationale
+
+  ...
+
+Potentially stale (may already be implemented):
+  · story-slug — Title · recent commits: a1b2c3d "commit msg", e4f5g6h "commit msg"
+  · story-slug — Title · recent commits: ...
+
+Full backlog — N stories across M epics:
 [Epic: epic-slug-1]
   1. [C] story-slug-a — Title · status · deps: [✓ dep1, ◦ dep2] · file: true
   2. [L] story-slug-b — Title · status · deps: none · file: false
@@ -58,10 +110,11 @@ Backlog — N stories across M epics
   ...
 
 Select 3-8 stories for this sprint by number or slug.
-    </output>
+      </output>
+    </check>
 
     <action>Log backlog presentation:
-      `momentum-tools log --agent impetus --event decision --detail "Backlog presented: N stories across M epics, K selectable" --sprint _unsorted`</action>
+      `momentum-tools log --agent impetus --event decision --detail "Backlog presented: N stories across M epics, K selectable, K_stale potentially stale" --sprint _unsorted`</action>
   </step>
 
   <step n="2" goal="Story selection">
