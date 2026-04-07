@@ -16,18 +16,20 @@
   <critical>Spawn agents via individual Agent tool calls only. TeamCreate is never used in retro.</critical>
 
   <team-composition>
-    <phase name="auditor-team" step="4">
+    <phase name="auditor-analysis" step="4a">
       <role name="auditor-human" spawning="individual-agent" concurrency="parallel">
-        Reads user-messages.jsonl. Sends findings to documenter via SendMessage.
+        Reads user-messages.jsonl. Returns findings as structured output to orchestrator.
       </role>
       <role name="auditor-execution" spawning="individual-agent" concurrency="parallel">
-        Reads agent-summaries.jsonl and errors.jsonl. Sends findings to documenter via SendMessage.
+        Reads agent-summaries.jsonl and errors.jsonl. Returns findings as structured output to orchestrator.
       </role>
       <role name="auditor-review" spawning="individual-agent" concurrency="parallel">
-        Reads team-messages.jsonl. Sends findings to documenter via SendMessage.
+        Reads team-messages.jsonl. Returns findings as structured output to orchestrator.
       </role>
-      <role name="documenter" spawning="individual-agent" concurrency="parallel">
-        Receives findings from all auditors. Owns retro-transcript-audit.md exclusively.
+    </phase>
+    <phase name="documenter-synthesis" step="4b">
+      <role name="documenter" spawning="individual-agent" concurrency="sequential">
+        Receives all 3 auditor outputs from orchestrator as input. Owns retro-transcript-audit.md exclusively.
       </role>
     </phase>
   </team-composition>
@@ -235,14 +237,15 @@ For each of these, choose:
   <!-- PHASE 4: AUDITOR TEAM                                  -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Spawn 3 auditors + 1 documenter to analyze extracts and produce findings document">
+  <step n="4" goal="Spawn 3 auditors in parallel, collect findings, then spawn documenter">
     <action>Update task 4 to in_progress</action>
 
-    <note>Spawn all 4 agents in parallel via individual Agent tool calls (4 Agent calls in a single message).
-    NEVER use TeamCreate. Auditors read their assigned extract files and send findings to the documenter via SendMessage.
-    The documenter owns the findings document exclusively — no other agent writes it.</note>
+    <note>Two-phase spawn: auditors first (parallel), then documenter (sequential with collected findings).
+    NEVER use TeamCreate. Auditors return findings as structured output. The orchestrator collects
+    all 3 outputs and passes them to the documenter as input. No SendMessage between agents.</note>
 
-    <action>Spawn 4 agents simultaneously via 4 individual Agent tool calls in a single message:
+    <!-- Phase 4a: Spawn 3 auditors in parallel -->
+    <action>Spawn 3 auditors simultaneously via 3 individual Agent tool calls in a single message:
 
       **auditor-human** — System prompt:
       ```
@@ -265,7 +268,7 @@ For each of these, choose:
         - what it reveals about practice gaps or strengths
         - recommendation (fix|keep|investigate)
 
-      After analysis, send ALL findings to the documenter agent via SendMessage.
+      Return ALL findings as your final output.
       Format as JSON array under key "human_findings".
 
       Available tool: transcript-query.py for additional ad-hoc queries if needed:
@@ -298,7 +301,7 @@ For each of these, choose:
         - root cause hypothesis
         - recommendation (fix|keep|investigate)
 
-      After analysis, send ALL findings to the documenter agent via SendMessage.
+      Return ALL findings as your final output.
       Format as JSON array under key "execution_findings".
       ```
 
@@ -324,20 +327,36 @@ For each of these, choose:
         - impact on sprint velocity
         - recommendation (fix|keep|investigate)
 
-      After analysis, send ALL findings to the documenter agent via SendMessage.
+      Return ALL findings as your final output.
       Format as JSON array under key "review_findings".
       ```
+    </action>
+
+    <action>Wait for all 3 auditors to complete. Store their outputs:
+      {{human_findings}} = auditor-human output
+      {{execution_findings}} = auditor-execution output
+      {{review_findings}} = auditor-review output
+    </action>
+
+    <!-- Phase 4b: Spawn documenter with collected findings -->
+    <action>Spawn 1 documenter agent via Agent tool, passing all 3 auditor outputs as input:
 
       **documenter** — System prompt:
       ```
       You are the documenter for the {{sprint_slug}} retrospective.
 
-      Wait for SendMessage messages from 3 auditors:
-        - auditor-human → "human_findings" JSON array
-        - auditor-execution → "execution_findings" JSON array
-        - auditor-review → "review_findings" JSON array
+      You have been given findings from 3 auditors:
 
-      After receiving all 3, perform a cross-cutting synthesis pass:
+      === HUMAN AUDIT FINDINGS ===
+      {{human_findings}}
+
+      === EXECUTION AUDIT FINDINGS ===
+      {{execution_findings}}
+
+      === REVIEW AUDIT FINDINGS ===
+      {{review_findings}}
+
+      Perform a cross-cutting synthesis pass:
         - Identify themes that appear across multiple auditor reports
         - Prioritize findings by impact and actionability
         - Separate successes (preserve) from struggles (fix)
@@ -346,7 +365,7 @@ For each of these, choose:
         `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`
 
       Document structure (required sections):
-      ```
+
       # Sprint Transcript Audit — {{sprint_slug}}
 
       **Retro date:** {{today}}
@@ -384,20 +403,19 @@ For each of these, choose:
 
       ## Priority Action Items
       [Ranked list: item, priority (critical/high/medium/low), recommended story stub title]
-      ```
 
       Each finding must include: what happened, evidence (quote or data), root cause, recommendation.
       ```
     </action>
 
-    <action>Wait for all 4 agents to complete (documenter signals completion by writing the findings file)</action>
+    <action>Wait for documenter to complete.</action>
 
     <check if="findings document written at `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
       <output>Auditor team complete. Findings document written:
   `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
     </check>
 
-    <check if="findings document not found after auditor team exits">
+    <check if="findings document not found after documenter exits">
       <output>Warning: Documenter did not write findings document. Check agent logs.</output>
       <ask>Continue retro without findings document (story stubs will be manually specified)?</ask>
       <check if="developer says no">
