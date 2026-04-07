@@ -1505,7 +1505,7 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
-    "description": "Retro finding: sprint-dev/workflow.md has grown to 600+ lines, sprint-planning to 400+. User reaction: 'WHAAT?! Why do we have an 800 line workflow?' Spike to determine modularization pattern (separate files, workflow includes, section references). Output: new Architecture Decision + implementation story stubs. Architecture already flags this as a concern (line 1951). RETRO ADDITION (sprint-2026-04-06-2 TeamCreate experiment): Fan-out (individual Agent spawns) and TeamCreate produced equivalent retro results \u2014 documenter never iterated with auditors despite TeamCreate enabling SendMessage. Research finding: genuine collaboration requires task-gated evaluator-optimizer loops (produce \u2192 challenge \u2192 revise), not just SendMessage availability. Three missing ingredients: (1) tasks with dependencies forcing sync points, (2) adversarial/skeptic positioning of the synthesizer agent, (3) structural enforcement ('MUST ask follow-up') vs soft language ('may request'). This spike should evaluate whether retro auditor team benefits from task-gated iteration or whether fan-out with orchestrator relay is sufficient. Compare: retro-transcript-audit.md (fan-out) vs retro-transcript-audit-teamcreate.md (TeamCreate) in sprints/sprint-2026-04-06-2/ for empirical baseline.",
+    "description": "Retro finding: sprint-dev/workflow.md has grown to 600+ lines, sprint-planning to 400+. User reaction: 'WHAAT?! Why do we have an 800 line workflow?' Spike to determine modularization pattern (separate files, workflow includes, section references). Output: new Architecture Decision + implementation story stubs. Architecture already flags this as a concern (line 1951).",
     "retro_source": "sprint-2026-04-06-2"
   },
   "verify-orchestrator-dedup-guard-coverage": {
@@ -1533,6 +1533,15 @@
     "depends_on": [],
     "priority": "low",
     "description": "Retro finding: E2E validator ran 582 turns in sprint-2026-04-05-2 (5.9x more than equivalent sprint-2026-04-06-2 validator at 98 turns). Add a turn budget (target: 150 turns for standard sprint) to the e2e-validator agent definition. Monitor if QA reviewer consistently exceeds 200 turns as a scope signal.",
+    "retro_source": "sprint-2026-04-06-2"
+  },
+  "agent-collaboration-pattern-evaluation": {
+    "status": "backlog",
+    "title": "Agent Collaboration Pattern Evaluation \u2014 Fan-Out vs Task-Gated TeamCreate (Spike)",
+    "epic_slug": "agent-team-model",
+    "depends_on": [],
+    "priority": "medium",
+    "description": "Retro finding (sprint-2026-04-06-2): Fan-out and TeamCreate produced equivalent retro audit results. Documenter never iterated with auditors despite SendMessage being available. Research finding: genuine collaboration requires task-gated evaluator-optimizer loops (produce \u2192 challenge \u2192 revise), not just SendMessage availability. Three missing ingredients identified: (1) tasks with dependencies forcing sync points, (2) adversarial/skeptic positioning of the synthesizer agent, (3) structural enforcement ('MUST ask follow-up') vs soft language ('may request'). Spike should evaluate whether retro auditor team benefits from task-gated iteration or whether fan-out with orchestrator relay is sufficient. Compare: retro-transcript-audit.md (fan-out) vs retro-transcript-audit-teamcreate.md (TeamCreate) in sprints/sprint-2026-04-06-2/ for empirical baseline. Global rule added: ~/.claude/rules/spawning-patterns.md defines fan-out vs TeamCreate decision heuristic.",
     "retro_source": "sprint-2026-04-06-2"
   }
 }
