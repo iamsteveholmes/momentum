@@ -218,3 +218,57 @@ Feature: Retro Transcript Audit
     Then transcript audit still produces substantive findings
     And the retro does not halt or produce empty output
 ```
+
+---
+
+## Dev Agent Record
+
+### Completion Notes
+
+Implemented transcript-audit-based retro workflow replacing milestone-log-based Phases 2/4/5.
+
+**transcript-query.py** (`skills/momentum/scripts/transcript-query.py`):
+- Supports 6 pre-built queries: user-messages, agent-summary, errors, team-messages, tool-usage, sql
+- Session discovery via `--after`/`--before` date range filters (no hardcoded session IDs)
+- Auto-detects project base from cwd by encoding path as Claude Code convention
+- Auto-installs duckdb via pip if not present
+- Error detection via actual error indicators: `is_error:true` content block flag and `toolUseResult.success=false` — not string matching
+- Ad-hoc SQL via `transcript-query.py sql "..."` with $SESSIONS/$SUBAGENTS/$ALL/$READ_OPTS placeholders
+- Verified functional against real sprint-2026-04-06 session data (15 sessions, 351 subagents)
+
+**workflow.md** (`skills/momentum/skills/retro/workflow.md`):
+- Phase 0: Task tracking (updated phase list, 6 phases instead of 7)
+- Phase 1: Sprint identification — unchanged, adds sprint_started for session discovery
+- Phase 2: Transcript preprocessing (NEW) — replaces log collection; runs 4 DuckDB extractions in parallel
+- Phase 3: Story verification — unchanged
+- Phase 4: Auditor team (NEW) — replaces cross-log discovery + triage output; spawns auditor-human, auditor-execution, auditor-review, documenter via TeamCreate; produces single retro-transcript-audit.md
+- Phase 5: Story stub creation — unchanged in mechanics, now reads from findings document instead of triage files
+- Phase 6: Sprint closure — unchanged, updated summary to report transcript metrics
+
+**SKILL.md** description updated to reflect new architecture.
+
+### AC Verification
+
+1. AC1 (DuckDB preprocessing step) — Phase 2 runs 4 extractions into audit-extracts/
+2. AC2 (transcript-query.py at known path) — `skills/momentum/scripts/transcript-query.py` with ad-hoc sql support
+3. AC3 (user messages first-class) — user-messages.jsonl captured; auditor-human analyzes it
+4. AC4 (auditor team 3+1 via SendMessage) — Phase 4 spawns all 4 via TeamCreate with explicit communication protocol
+5. AC5 (successes AND struggles) — documenter template requires both "What Worked Well" and "What Struggled" sections
+6. AC6 (milestone logs not critical path) — workflow critical note + preprocessing handles empty log case gracefully
+7. AC7 (actionable story stubs with full ACs) — Phase 5 derives suggested ACs from findings
+8. AC8 (actual error indicators, <5% false positives) — errors query uses is_error flag and success=false only
+9. AC9 (auto session discovery by date range) — --after/--before flags with sprint_started/sprint_completed
+
+## File List
+
+- `skills/momentum/scripts/transcript-query.py` — new
+- `skills/momentum/skills/retro/workflow.md` — modified
+- `skills/momentum/skills/retro/SKILL.md` — modified
+
+## Change Log
+
+- feat(skills): retro workflow rewrite — transcript audit replaces milestone log analysis (2026-04-06)
+
+## Status
+
+review

@@ -1,17 +1,17 @@
 # Retro Workflow
 
-**Goal:** Close a completed sprint — read all agent logs, verify story completion, produce dual triage outputs, create story stubs from actionable findings, and call sprint closure commands.
+**Goal:** Close a completed sprint — run transcript audit, verify story completion, produce findings document, create story stubs from audit findings, and call sprint closure commands.
 
 **Invoked by:** Impetus Mode → "Run retrospective" or user runs `/momentum:retro` directly.
 
-**Architecture references:** Decision 27 (Dual Triage Outputs), Decision 34 (Retro Owns Sprint Closure).
+**Architecture references:** Decision 27 (Findings Document), Decision 34 (Retro Owns Sprint Closure).
 
 ---
 
 <workflow>
   <critical>Never write to sprints/index.json directly — all sprint state mutations go through momentum-tools.</critical>
   <critical>Story stubs require developer approval before being written to stories/index.json. Write stub entries directly to stories/index.json (no momentum-tools command exists for this operation).</critical>
-  <critical>Log all retro events via `momentum-tools log --agent retro --sprint {{sprint_slug}}` at each phase transition.</critical>
+  <critical>Transcript audit (Phases 2-3) is the primary data source. Milestone logs are NOT the critical path — retro proceeds and produces findings even when zero log events exist.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -19,14 +19,13 @@
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="0" goal="Initialize phase-level task tracking">
-    <action>Create tasks for the 7 retro phases:
+    <action>Create tasks for the 6 retro phases:
       1. Sprint identification — find the sprint to retro
-      2. Log collection and correlation — read and sort all agent JSONL logs
+      2. Transcript preprocessing — DuckDB extraction of session data into audit-extracts/
       3. Story verification — check status of every sprint story
-      4. Cross-log discovery — analyze timeline for patterns and findings
-      5. Triage output generation — write momentum triage + project triage files
-      6. Story stub creation — propose and approve actionable backlog items
-      7. Sprint closure — call sprint complete + retro-complete, show summary
+      4. Auditor team — spawn 3 auditors + 1 documenter to analyze extracts and write findings
+      5. Story stub creation — propose and approve actionable backlog items from findings
+      6. Sprint closure — call sprint complete + retro-complete, show summary
     </action>
   </step>
 
@@ -35,6 +34,8 @@
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="1" goal="Identify the sprint to retrospect">
+    <action>Update task 1 to in_progress</action>
+
     <action>Read `_bmad-output/implementation-artifacts/sprints/index.json`</action>
     <action>Search the `completed` array for entries where `retro_run_at == null`</action>
 
@@ -67,7 +68,9 @@ Which sprint should we retrospect?</output>
     </check>
 
     <action>Store {{sprint_stories}} = candidate.stories (list of story slugs)</action>
-    <action>Store {{sprint_completed}} = candidate.completed</action>
+    <action>Store {{sprint_started}} = candidate.started (ISO date for session discovery)</action>
+    <action>Store {{sprint_completed}} = candidate.completed (ISO date for session discovery)</action>
+    <action>Store {{audit_dir}} = `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/audit-extracts`</action>
 
     <action>Log retro start:
       `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Retrospective started for sprint {{sprint_slug}} (completed {{sprint_completed}})"`</action>
@@ -76,40 +79,88 @@ Which sprint should we retrospect?</output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 2: LOG COLLECTION AND CORRELATION                 -->
+  <!-- PHASE 2: TRANSCRIPT PREPROCESSING (DuckDB)             -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="2" goal="Read and correlate all agent JSONL logs">
+  <step n="2" goal="Extract session transcript data into audit-extracts/ via transcript-query.py">
     <action>Update task 2 to in_progress</action>
 
-    <action>List all `.jsonl` files in `.claude/momentum/sprint-logs/{{sprint_slug}}/`</action>
+    <note>transcript-query.py lives at `skills/momentum/scripts/transcript-query.py`.
+    It auto-installs duckdb if missing. It discovers sessions by date range using --after / --before.
+    All errors use actual error indicators (is_error flag, success=false), not string matching.</note>
 
-    <check if="no log files found">
-      <output>No agent logs found for sprint {{sprint_slug}} at `.claude/momentum/sprint-logs/{{sprint_slug}}/`.
+    <action>Ensure `{{audit_dir}}` directory exists:
+      Create `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/audit-extracts/` if absent</action>
 
-The retrospective can continue without log data, but cross-log discovery will be limited to story status analysis only.</output>
-      <ask>Continue without log data?</ask>
-      <check if="developer says no">
-        <action>HALT — developer can check log path or sprint slug.</action>
-      </check>
-      <action>Set {{log_events}} = [] (empty timeline)</action>
-    </check>
+    <action>Run 4 extraction commands (can run in parallel):
 
-    <check if="log files found">
-      <action>For each `.jsonl` file:
-        - Read all lines
-        - Parse each line as JSON: {timestamp, agent, story, sprint, event, detail}
-        - Append to a unified event list
+      **1. User messages** — all human-typed prompts across all sprint sessions:
+      ```
+      python3 skills/momentum/scripts/transcript-query.py user-messages \
+        --after {{sprint_started}} --before {{sprint_completed}} \
+        --format json \
+        --output {{audit_dir}}/user-messages.jsonl
+      ```
+
+      **2. Agent summaries** — per-subagent digest (prompt, outcome, tool counts, error count):
+      ```
+      python3 skills/momentum/scripts/transcript-query.py agent-summary \
+        --after {{sprint_started}} --before {{sprint_completed}} \
+        --format json \
+        --output {{audit_dir}}/agent-summaries.jsonl
+      ```
+
+      **3. Errors** — tool errors using actual error indicators only:
+      ```
+      python3 skills/momentum/scripts/transcript-query.py errors \
+        --after {{sprint_started}} --before {{sprint_completed}} \
+        --format json \
+        --output {{audit_dir}}/errors.jsonl
+      ```
+
+      **4. Team messages** — inter-agent SendMessage and teammate-message content:
+      ```
+      python3 skills/momentum/scripts/transcript-query.py team-messages \
+        --after {{sprint_started}} --before {{sprint_completed}} \
+        --format json \
+        --output {{audit_dir}}/team-messages.jsonl
+      ```
+    </action>
+
+    <check if="all 4 extracts written successfully">
+      <action>Count lines in each extract file:
+        {{user_msg_count}} = line count of user-messages.jsonl
+        {{agent_count}} = line count of agent-summaries.jsonl
+        {{error_count}} = line count of errors.jsonl
+        {{team_msg_count}} = line count of team-messages.jsonl
       </action>
-      <action>Sort all events by `timestamp` ascending — this produces a cross-agent chronological timeline</action>
-      <action>Store {{log_events}} = sorted unified event list</action>
-      <action>Store {{log_agents}} = distinct agent values found across all events</action>
-      <output>Loaded {{log_events | length}} log events from {{log_files | length}} agent logs.
-Agents active this sprint: {{log_agents | join(", ")}}</output>
+      <output>Transcript preprocessing complete:
+  · user-messages.jsonl — {{user_msg_count}} human prompts
+  · agent-summaries.jsonl — {{agent_count}} subagent digests
+  · errors.jsonl — {{error_count}} tool errors (actual error indicators only)
+  · team-messages.jsonl — {{team_msg_count}} inter-agent messages
+
+Extracts written to: {{audit_dir}}/
+</output>
     </check>
 
-    <action>Log correlation complete:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Log correlation complete: {{log_events | length}} events from {{log_agents | length}} agents"`</action>
+    <check if="extraction produced empty results (no session files found)">
+      <output>Warning: No session files found for sprint date range ({{sprint_started}} to {{sprint_completed}}).
+
+The transcript audit will not have raw data to analyze. This may happen if:
+  · The sprint ran in a different project directory
+  · Session dates don't match the sprint's started/completed dates
+  · Claude Code session files have been deleted
+
+The retro can continue but auditor findings will be limited.</output>
+      <ask>Continue with empty extracts?</ask>
+      <check if="developer says no">
+        <action>HALT — developer can investigate session file location and re-run.</action>
+      </check>
+    </check>
+
+    <action>Log preprocessing complete:
+      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Transcript preprocessing: {{user_msg_count}} user messages, {{agent_count}} subagents, {{error_count}} errors, {{team_msg_count}} team messages"`</action>
 
     <action>Update task 2 to completed</action>
   </step>
@@ -163,174 +214,216 @@ For each of these, choose:
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 4: CROSS-LOG DISCOVERY                           -->
+  <!-- PHASE 4: AUDITOR TEAM                                  -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Analyze the unified timeline for patterns and findings">
+  <step n="4" goal="Spawn 3 auditors + 1 documenter to analyze extracts and produce findings document">
     <action>Update task 4 to in_progress</action>
 
-    <action>Scan {{log_events}} for the following signal patterns:
+    <note>Spawn all 4 agents in parallel via TeamCreate. Auditors read their
+    assigned extract files and send findings to the documenter via SendMessage.
+    The documenter owns the findings document exclusively — no other agent writes it.</note>
 
-      **Error and retry patterns** — sequences where an `error` event is followed by a `retry` event from the same agent within a short time window. Count repetitions. High repetition count suggests a process gap.
+    <action>Spawn 4 agents simultaneously via TeamCreate:
 
-      **Wrong assumptions** — `assumption` events followed later by `error` or `finding` events from the same agent on the same story. These indicate the assumption was not validated early enough.
+      **auditor-human** — System prompt:
+      ```
+      You are auditor-human for the {{sprint_slug}} retrospective.
 
-      **Ambiguity blockers** — `ambiguity` events. Each one represents a moment where an agent had to stop or guess due to unclear spec or context.
+      Read `{{audit_dir}}/user-messages.jsonl`. Each line is a JSON object with
+      timestamp, session_file, content, and is_first_message fields.
 
-      **High-impact decisions** — `decision` events that appear to have downstream consequences (referenced in later events by story slug or keyword matching).
+      Identify and categorize every notable pattern:
+        - Corrections: user fixing agent behavior mid-task
+        - Redirections: user changing approach or canceling agent work
+        - Frustration signals: repeated asks, escalating tone, explicit complaints
+        - Praise/approval: positive signals about what worked well
+        - Decision points: human exercised judgment agents couldn't handle
 
-      **Unaddressed quality findings** — `finding` events that do not have a corresponding later `decision` event indicating resolution.
+      For each finding, record:
+        - type (correction|redirection|frustration|praise|decision)
+        - severity (high|medium|low)
+        - quote or paraphrase of the message
+        - what it reveals about practice gaps or strengths
+        - recommendation (fix|keep|investigate)
+
+      After analysis, send ALL findings to the documenter agent via SendMessage.
+      Format as JSON array under key "human_findings".
+
+      Available tool: transcript-query.py for additional ad-hoc queries if needed:
+        python3 skills/momentum/scripts/transcript-query.py sql "SELECT ..." \
+          --after {{sprint_started}} --before {{sprint_completed}}
+      ```
+
+      **auditor-execution** — System prompt:
+      ```
+      You are auditor-execution for the {{sprint_slug}} retrospective.
+
+      Read:
+        - `{{audit_dir}}/agent-summaries.jsonl` — per-subagent digests
+        - `{{audit_dir}}/errors.jsonl` — tool errors (actual error indicators only)
+
+      Investigate patterns across the subagent population:
+        - Duplication: multiple agents with identical or near-identical first prompts
+        - Error recovery: which agents had high error counts, did they recover?
+        - Tool efficiency: agents with high tool_results but low assistant_turns
+        - Story iteration: stories with many dev agents (why did story X need N passes?)
+        - Abandoned agents: agents with very low turn counts (< 3 assistant turns)
+
+      For agents of interest, run ad-hoc queries via transcript-query.py sql "..." to
+      investigate their full transcripts.
+
+      For each finding, record:
+        - type (duplication|error-pattern|efficiency|iteration|abandon)
+        - affected agents or stories
+        - evidence (counts, examples)
+        - root cause hypothesis
+        - recommendation (fix|keep|investigate)
+
+      After analysis, send ALL findings to the documenter agent via SendMessage.
+      Format as JSON array under key "execution_findings".
+      ```
+
+      **auditor-review** — System prompt:
+      ```
+      You are auditor-review for the {{sprint_slug}} retrospective.
+
+      Read:
+        - `{{audit_dir}}/team-messages.jsonl` — inter-agent SendMessage content
+        - `{{audit_dir}}/agent-summaries.jsonl` — filter to review roles:
+            agent_type containing "reviewer", "validator", "qa", "prompt-engineer"
+
+      Evaluate quality gate effectiveness:
+        - Real issues caught: review findings that led to genuine fixes
+        - False positives: review blocks that were overturned or unnecessary
+        - Fix cycle quality: did fix passes converge or thrash?
+        - Inter-agent coordination: clear handoffs, confusion, missing context
+        - Reviewer prompt quality: were review agents well-instructed?
+
+      For each finding, record:
+        - type (real-catch|false-positive|thrash|coordination|prompt-quality)
+        - evidence (message quotes, patterns)
+        - impact on sprint velocity
+        - recommendation (fix|keep|investigate)
+
+      After analysis, send ALL findings to the documenter agent via SendMessage.
+      Format as JSON array under key "review_findings".
+      ```
+
+      **documenter** — System prompt:
+      ```
+      You are the documenter for the {{sprint_slug}} retrospective.
+
+      Wait for SendMessage messages from 3 auditors:
+        - auditor-human → "human_findings" JSON array
+        - auditor-execution → "execution_findings" JSON array
+        - auditor-review → "review_findings" JSON array
+
+      After receiving all 3, perform a cross-cutting synthesis pass:
+        - Identify themes that appear across multiple auditor reports
+        - Prioritize findings by impact and actionability
+        - Separate successes (preserve) from struggles (fix)
+
+      Write the findings document to:
+        `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`
+
+      Document structure (required sections):
+      ```
+      # Sprint Transcript Audit — {{sprint_slug}}
+
+      **Retro date:** {{today}}
+      **Sprint completed:** {{sprint_completed}}
+      **Data analyzed:** {{user_msg_count}} user messages | {{agent_count}} subagents | {{error_count}} errors | {{team_msg_count}} team messages
+
+      ## Executive Summary
+      [2-3 paragraph synthesis of the sprint — what happened, key themes, priority actions]
+
+      ## What Worked Well
+      [Each item: description, evidence, recommendation: KEEP]
+
+      ## What Struggled
+      [Each item: description, evidence, root cause, recommendation: FIX or INVESTIGATE]
+
+      ## User Interventions
+      [All corrections, redirections, frustration signals — with context and implications]
+
+      ## Story-by-Story Analysis
+      [For each story with notable patterns: what happened, iteration count, issues]
+
+      ## Cross-Cutting Patterns
+      [Themes that appear across human, execution, and review audits]
+
+      ## Metrics
+      | Metric | Value |
+      |--------|-------|
+      | User messages analyzed | {{user_msg_count}} |
+      | Subagents analyzed | {{agent_count}} |
+      | Tool errors detected | {{error_count}} |
+      | Struggles identified | N |
+      | Successes identified | N |
+      | User interventions | N |
+      | Cross-cutting patterns | N |
+
+      ## Priority Action Items
+      [Ranked list: item, priority (critical/high/medium/low), recommended story stub title]
+      ```
+
+      Each finding must include: what happened, evidence (quote or data), root cause, recommendation.
+      ```
     </action>
 
-    <action>For each pattern found, record a discovery item:
-      {
-        type: "error-retry" | "wrong-assumption" | "ambiguity-blocker" | "high-impact-decision" | "unresolved-finding",
-        agent: ...,
-        story: ...,
-        detail: ...,
-        raw_events: [list of relevant event timestamps]
-      }
-    </action>
+    <action>Wait for all 4 agents to complete (documenter signals completion by writing the findings file)</action>
 
-    <action>Store {{discoveries}} = list of all discovery items</action>
+    <check if="findings document written at `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
+      <output>Auditor team complete. Findings document written:
+  `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
+    </check>
 
-    <output>Cross-log discovery complete. Found {{discoveries | length}} items:
-  · Error/retry patterns: {{error_retry_count}}
-  · Wrong assumptions: {{wrong_assumption_count}}
-  · Ambiguity blockers: {{ambiguity_count}}
-  · High-impact decisions: {{high_impact_count}}
-  · Unresolved findings: {{unresolved_count}}</output>
+    <check if="findings document not found after auditor team exits">
+      <output>Warning: Documenter did not write findings document. Check agent logs.</output>
+      <ask>Continue retro without findings document (story stubs will be manually specified)?</ask>
+      <check if="developer says no">
+        <action>HALT — investigate auditor team failure.</action>
+      </check>
+    </check>
 
-    <action>Log discovery:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event finding --detail "Cross-log discovery: {{discoveries | length}} items found"`</action>
+    <action>Log auditor team complete:
+      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Auditor team complete — findings document written"`</action>
 
     <action>Update task 4 to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 5: TRIAGE OUTPUT GENERATION                       -->
+  <!-- PHASE 5: STORY STUB CREATION                           -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Classify discoveries into Momentum triage and Project triage">
+  <step n="5" goal="Propose and approve story stubs from audit findings">
     <action>Update task 5 to in_progress</action>
 
-    <action>Classify each discovery in {{discoveries}} into one of two buckets:
+    <action>Read `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
+    <action>Extract all items under "Priority Action Items" section</action>
 
-      **Momentum triage** (practice/process improvements):
-        - Workflow steps that failed repeatedly or caused retries
-        - Agent behaviors that produced ambiguity
-        - Sprint planning gaps (stories under-specified, missing context)
-        - AVFL or team review misses
-        - Tool or script issues in momentum-tools
-
-      **Project triage** (code/spec/test improvements):
-        - Architecture gaps uncovered during implementation
-        - Test coverage holes
-        - PRD or story spec inaccuracies
-        - Integration or dependency issues
-        - Documentation gaps
-    </action>
-
-    <action>Store {{momentum_findings}} = list of Momentum-classified items</action>
-    <action>Store {{project_findings}} = list of Project-classified items</action>
-
-    <action>Write Momentum triage file to:
-      `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-momentum-triage.md`
-
-      Format:
-      ```
-      # Momentum Triage — Sprint {{sprint_slug}}
-
-      **Retro date:** {{today}}
-      **Sprint completed:** {{sprint_completed}}
-
-      ## Summary
-      {{momentum_findings | length}} practice findings from cross-log analysis.
-
-      ## Findings
-
-      {{#each momentum_findings}}
-      ### {{loop.index}}. {{type | humanize}} — {{agent}} / {{story}}
-
-      **Detail:** {{detail}}
-      **Evidence:** {{raw_events | length}} log event(s)
-      **Suggested action:** [analyst fills in]
-
-      ---
-      {{/each}}
-      ```
-    </action>
-
-    <action>Write Project triage file to:
-      `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-project-triage.md`
-
-      Format:
-      ```
-      # Project Triage — Sprint {{sprint_slug}}
-
-      **Retro date:** {{today}}
-      **Sprint completed:** {{sprint_completed}}
-
-      ## Summary
-      {{project_findings | length}} project findings from cross-log analysis.
-
-      ## Findings
-
-      {{#each project_findings}}
-      ### {{loop.index}}. {{type | humanize}} — {{agent}} / {{story}}
-
-      **Detail:** {{detail}}
-      **Evidence:** {{raw_events | length}} log event(s)
-      **Suggested action:** [analyst fills in]
-
-      ---
-      {{/each}}
-      ```
-    </action>
-
-    <output>Triage outputs written:
-  · `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-momentum-triage.md` ({{momentum_findings | length}} findings)
-  · `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-project-triage.md` ({{project_findings | length}} findings)
-</output>
-
-    <action>Log triage written:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Triage outputs written: {{momentum_findings | length}} momentum, {{project_findings | length}} project findings"`</action>
-
-    <action>Update task 5 to completed</action>
-  </step>
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 6: STORY STUB CREATION                           -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-
-  <step n="6" goal="Propose and approve story stubs for actionable findings">
-    <action>Update task 6 to in_progress</action>
-
-    <action>From {{momentum_findings}} and {{project_findings}}, identify actionable items:
-      - Items that can be addressed as a discrete story
-      - Each actionable item becomes a proposed story stub
-    </action>
-
-    <check if="no actionable items found">
-      <output>No actionable items found in triage outputs. No story stubs to create.</output>
+    <check if="no priority action items found">
+      <output>No actionable items found in findings document. No story stubs to create.</output>
     </check>
 
-    <check if="actionable items found">
-      <action>For each actionable item, propose a story stub:
+    <check if="priority action items found">
+      <action>For each action item, derive a story stub:
         {
-          title: ...,
-          epic_slug: "impetus-core" (for Momentum findings) or appropriate project epic (for Project findings),
+          title: recommended story stub title from findings,
+          epic_slug: "impetus-core" (for Momentum/practice findings) or appropriate project epic,
           status: "backlog",
           description: one-sentence summary of the finding,
-          suggested_ac: bulleted list of acceptance criteria derived from the finding
+          suggested_ac: bulleted acceptance criteria derived from the finding's recommendation
         }
       </action>
 
-      <output>Proposed story stubs from retro findings:
+      <output>Proposed story stubs from transcript audit findings:
 
 {{#each proposed_stubs}}
 **{{loop.index}}.** {{title}}
   Epic: {{epic_slug}}
+  Priority: {{priority}}
   Finding: {{source_detail}}
   Suggested ACs:
 {{#each suggested_ac}}
@@ -356,15 +449,15 @@ Approve this stub? (Y/N)
     <action>Log story stubs phase:
       `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Story stub phase complete: {{approved_count}} approved, {{rejected_count}} rejected"`</action>
 
-    <action>Update task 6 to completed</action>
+    <action>Update task 5 to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 7: SPRINT CLOSURE                                 -->
+  <!-- PHASE 6: SPRINT CLOSURE                                 -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="7" goal="Call sprint closure commands and present final summary">
-    <action>Update task 7 to in_progress</action>
+  <step n="6" goal="Call sprint closure commands and present final summary">
+    <action>Update task 6 to in_progress</action>
 
     <action>Call sprint closure:
       `momentum-tools sprint complete`
@@ -384,25 +477,24 @@ Approve this stub? (Y/N)
 **Stories verified:** {{verified_stories | length}} / {{sprint_stories | length}} done
   {{#if incomplete_stories}}Stories closed-incomplete: {{force_closed_slugs | join(", ")}}{{/if}}
 
-**Cross-log events analyzed:** {{log_events | length}} events from {{log_agents | length}} agents
+**Transcript data analyzed:**
+  · {{user_msg_count}} user messages ({{session_count}} sessions)
+  · {{agent_count}} subagent digests
+  · {{error_count}} tool errors (actual indicators)
+  · {{team_msg_count}} inter-agent messages
 
-**Findings:**
-  · Momentum triage: {{momentum_findings | length}} practice findings
-  · Project triage: {{project_findings | length}} project findings
+**Findings document:**
+  `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`
 
 **Story stubs created:** {{approved_count}} added to backlog
-
-**Triage outputs:**
-  · `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-momentum-triage.md`
-  · `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-project-triage.md`
 
 **Sprint status:** closed (retro_run_at set to {{today}})
 
 ---
-Review the triage outputs and backlog stubs when planning the next sprint.
+Review the findings document and backlog stubs when planning the next sprint.
 </output>
 
-    <action>Update task 7 to completed</action>
+    <action>Update task 6 to completed</action>
   </step>
 
 </workflow>
