@@ -1,0 +1,2 @@
+{"timestamp": "2026-04-06T21:38:41.303124", "agent": "impetus", "story": "e2e-validator-toolsearch-fix", "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Story e2e-validator-toolsearch-fix merge-ready, files: skills/momentum/agents/e2e-validator.md, skills/momentum/agents/qa-reviewer.md"}
+{"timestamp": "2026-04-06T21:38:43.038048", "agent": "impetus", "story": "e2e-validator-toolsearch-fix", "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Merged e2e-validator-toolsearch-fix to sprint/sprint-2026-04-06-2 (direct commit on sprint branch)"}
