@@ -9,6 +9,7 @@ touches:
   - skills/momentum/skills/avfl/SKILL.md
   - skills/momentum/skills/sprint-planning/workflow.md
 change_type: skill-instruction
+priority: critical
 ---
 
 # Workflow Team Composition Spec — Codify Required Roles and Spawning Modes
