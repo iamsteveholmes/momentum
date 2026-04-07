@@ -6,3 +6,4 @@
 {"timestamp": "2026-04-06T19:52:45.732823", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "AVFL CHECKPOINT_WARNING for sprint sprint-2026-04-06-2 — merge order specified, composition gap noted"}
 {"timestamp": "2026-04-06T21:27:37.881552", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Sprint sprint-2026-04-06-2 approved by developer"}
 {"timestamp": "2026-04-06T21:47:47.887601", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "Spawned dev agent for retro-workflow-rewrite (wave 2, unblocked by transcript-query-calibration)"}
+{"timestamp": "2026-04-06T21:53:17.524003", "agent": "impetus", "story": null, "sprint": "sprint-2026-04-06-2", "event": "decision", "detail": "All 9 stories merged to sprint/sprint-2026-04-06-2 — proceeding to AVFL"}

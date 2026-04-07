@@ -1443,7 +1443,7 @@
     "description": "Sprint-2026-04-06 entry in sprints/index.json has no slug field. All 5 prior completed sprints have slug. Data integrity gap from sprint-manager tool. ACs: (1) momentum-tools sprint activate always writes slug field, (2) Existing entry backfilled, (3) No completed sprint entry lacks slug."
   },
   "retro-workflow-rewrite": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Retro Workflow Rewrite — Replace Milestone Logs with Transcript Audit",
     "epic_slug": "impetus-core",
     "depends_on": [
