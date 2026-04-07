@@ -169,7 +169,7 @@ All AVFL subagents are spawned as **individual agents** via the Agent tool. Team
 | Consolidator | `individual-agent` | sequential | Runs after **all** validators complete |
 | Fixer | `individual-agent` | sequential | Runs after consolidator completes |
 
-**Validator fixer agent is not missing.** Every role in the pipeline must be present. If a fix loop runs, the Fixer is required — it cannot be omitted. The `dev/fixer` role is defined in the Role Configuration table above and must always be spawned when Phase 4 is entered.
+**Validator fixer agent is not missing.** Every role in the pipeline must be present. If a fix loop runs, the Fixer is required — it cannot be omitted. The Fixer role is defined in the Role Configuration table below (under Pipeline Execution) and must always be spawned when Phase 4 is entered.
 
 Model and effort assignments per role are specified in the Role Configuration table. This section declares spawning mode; it does not duplicate the model/effort values.
 

@@ -13,6 +13,7 @@
   <critical>Story stubs require developer approval before being written to stories/index.json. Write stub entries directly to stories/index.json (no momentum-tools command exists for this operation).</critical>
   <critical>Transcript audit (Phases 2-3) is the primary data source. Milestone logs are NOT the critical path — retro proceeds and produces findings even when zero log events exist.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
+  <critical>Spawn agents via individual Agent tool calls only. TeamCreate is never used in retro.</critical>
 
   <!-- ═══════════════════════════════════════════════════════ -->
   <!-- PHASE 0: TASK TRACKING SETUP                           -->
@@ -220,11 +221,11 @@ For each of these, choose:
   <step n="4" goal="Spawn 3 auditors + 1 documenter to analyze extracts and produce findings document">
     <action>Update task 4 to in_progress</action>
 
-    <note>Spawn all 4 agents in parallel via TeamCreate. Auditors read their
-    assigned extract files and send findings to the documenter via SendMessage.
+    <note>Spawn all 4 agents in parallel via individual Agent tool calls (4 Agent calls in a single message).
+    NEVER use TeamCreate. Auditors read their assigned extract files and send findings to the documenter via SendMessage.
     The documenter owns the findings document exclusively — no other agent writes it.</note>
 
-    <action>Spawn 4 agents simultaneously via TeamCreate:
+    <action>Spawn 4 agents simultaneously via 4 individual Agent tool calls in a single message:
 
       **auditor-human** — System prompt:
       ```
@@ -478,7 +479,7 @@ Approve this stub? (Y/N)
   {{#if incomplete_stories}}Stories closed-incomplete: {{force_closed_slugs | join(", ")}}{{/if}}
 
 **Transcript data analyzed:**
-  · {{user_msg_count}} user messages ({{session_count}} sessions)
+  · {{user_msg_count}} user messages
   · {{agent_count}} subagent digests
   · {{error_count}} tool errors (actual indicators)
   · {{team_msg_count}} inter-agent messages
