@@ -985,7 +985,7 @@ def cmd_quickfix_complete(args: argparse.Namespace) -> None:
 
 # --- Log Command ---
 
-VALID_EVENT_TYPES = {"decision", "error", "retry", "assumption", "finding", "ambiguity"}
+VALID_EVENT_TYPES = {"decision", "error", "retry", "assumption", "finding", "ambiguity", "subagent-start", "subagent-stop"}
 
 
 def cmd_log(args: argparse.Namespace) -> None:

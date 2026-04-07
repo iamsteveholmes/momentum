@@ -428,13 +428,59 @@ def test_log_missing_required_args():
 
 
 def test_log_all_event_types():
-    """All 6 valid event types accepted."""
-    print("\n[log] All 6 event types accepted")
+    """All 8 valid event types accepted (includes subagent-start and subagent-stop)."""
+    print("\n[log] All 8 event types accepted")
     proj = setup_project()
-    for event_type in ["decision", "error", "retry", "assumption", "finding", "ambiguity"]:
+    for event_type in ["decision", "error", "retry", "assumption", "finding", "ambiguity",
+                       "subagent-start", "subagent-stop"]:
         code, out = run_tool(proj, "log", "--agent", "dev", "--event", event_type,
                              "--detail", f"test {event_type}", "--sprint", "s1")
         assert_eq(f"{event_type} accepted", code, 0)
+
+
+def test_log_subagent_start_event():
+    """subagent-start event type writes correct schema."""
+    print("\n[log] subagent-start event writes correct JSONL schema")
+    proj = setup_project()
+    detail = '{"session_id": "abc-123", "agent_type": "dev-agent"}'
+    code, out = run_tool(proj, "log", "--agent", "dev-agent", "--event", "subagent-start",
+                         "--detail", detail, "--sprint", "sprint-2026-04-06")
+    assert_eq("exit code 0", code, 0)
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "sprint-2026-04-06" / "dev-agent.jsonl"
+    assert_eq("log file created", log_file.exists(), True)
+    entry = json.loads(log_file.read_text().strip())
+    assert_eq("event type correct", entry["event"], "subagent-start")
+    assert_eq("agent field correct", entry["agent"], "dev-agent")
+    assert_eq("sprint field correct", entry["sprint"], "sprint-2026-04-06")
+    assert_eq("story field null", entry["story"], None)
+    assert_eq("detail preserved", entry["detail"], detail)
+    assert_eq("timestamp present", "timestamp" in entry, True)
+
+
+def test_log_subagent_stop_event():
+    """subagent-stop event type writes correct schema."""
+    print("\n[log] subagent-stop event writes correct JSONL schema")
+    proj = setup_project()
+    detail = '{"session_id": "abc-123", "agent_type": "dev-agent", "transcript_path": "/tmp/t.jsonl", "last_message": "Done."}'
+    code, out = run_tool(proj, "log", "--agent", "dev-agent", "--event", "subagent-stop",
+                         "--detail", detail, "--sprint", "sprint-2026-04-06")
+    assert_eq("exit code 0", code, 0)
+    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "sprint-2026-04-06" / "dev-agent.jsonl"
+    entry = json.loads(log_file.read_text().strip())
+    assert_eq("event type correct", entry["event"], "subagent-stop")
+    assert_eq("agent field correct", entry["agent"], "dev-agent")
+
+
+def test_log_subagent_events_rejected_as_invalid_before_change():
+    """subagent-start and subagent-stop are in VALID_EVENT_TYPES (regression guard)."""
+    print("\n[log] subagent event types in VALID_EVENT_TYPES")
+    proj = setup_project()
+    # These were NOT valid before this story — now they must be
+    for event_type in ["subagent-start", "subagent-stop"]:
+        code, out = run_tool(proj, "log", "--agent", "test", "--event", event_type,
+                             "--detail", "hook-generated entry", "--sprint", "s1")
+        assert_eq(f"{event_type} now valid (not rejected)", code, 0)
+        assert_eq(f"{event_type} success=true", out.get("success"), True)
 
 
 def test_log_special_characters():
@@ -1740,6 +1786,11 @@ def main():
     test_journal_status_closed_threads()
     test_journal_status_malformed_lines()
     test_journal_status_thread_summary()
+
+    # Subagent event type tests (agent observability system)
+    test_log_subagent_start_event()
+    test_log_subagent_stop_event()
+    test_log_subagent_events_rejected_as_invalid_before_change()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
