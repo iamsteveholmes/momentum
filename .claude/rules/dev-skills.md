@@ -1,3 +1,11 @@
+---
+paths:
+  - "skills/**/SKILL.md"
+  - "skills/**/workflow.md"
+  - "skills/**/agents/*.md"
+  - "skills/**/*.md"
+---
+
 # Dev-Skills Guidelines
 
 When creating or modifying SKILL.md files, workflow.md files, or agent definitions, always read and follow the conventions in:
