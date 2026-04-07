@@ -20,10 +20,10 @@ The current `momentum:refine` workflow (at `skills/momentum/skills/refine/`)
 is over-indexed on PRD/architecture gap analysis and under-indexed on
 practical backlog hygiene. Specific problems:
 
-1. **Stale planning artifact cross-referencing.** The workflow spawns parallel
-   agents to cross-reference PRD and architecture docs against the backlog.
-   These documents are increasingly stale — stories were already derived from
-   them. Heavy cross-referencing burns tokens for marginal signal.
+1. **Planning artifacts drift silently.** The workflow treats PRD and
+   architecture docs as static references. As sprints complete, requirements
+   get implemented, decisions change, and these documents fall behind. Nothing
+   detects or corrects the drift.
 
 2. **No status hygiene.** Stories can be fully implemented (DoD items checked,
    Dev Agent Record complete) but still show `ready-for-dev` in index.json.
@@ -37,9 +37,8 @@ practical backlog hygiene. Specific problems:
    overlapping epics, improving epic descriptions, or consolidating epics
    that cover the same domain.
 
-5. **No bulk stale-story triage.** When an epic contains only low-priority
-   stubs with no story files and no dependents, there is no way to drop them
-   in bulk with a safety check.
+5. **No stale-story triage.** Low-priority stubs accumulate in the backlog
+   with no systematic way to evaluate whether they still carry value.
 
 6. **Dependency analysis doesn't belong here.** Circular dependency detection,
    missing targets, and satisfied dependencies are sprint planning concerns,
@@ -47,19 +46,34 @@ practical backlog hygiene. Specific problems:
 
 ## Acceptance Criteria
 
-### AC1: Planning Artifact Staleness Check (Not Cross-Reference)
+### AC1: Planning Artifact Discovery and Update
 
-- The workflow checks whether `_bmad-output/planning-artifacts/prd.md` and
-  `_bmad-output/planning-artifacts/architecture.md` exist
-- If they exist, it checks their last-modified date against the most recent
-  sprint completion date
-- If stale (older than the most recent completed sprint), it flags them to
-  the developer: "Planning artifacts are stale — consider archiving or
-  updating. Stories may not capture everything from these docs."
-- The workflow does NOT spawn parallel agents to cross-reference these
-  documents against the backlog
-- If the developer decides to archive them, that is a manual action outside
-  this workflow
+The workflow runs a two-wave process to keep PRD and architecture current.
+
+**Wave 1 — Discovery (parallel).** Spawn two parallel subagents:
+- PRD coverage agent: reads `_bmad-output/planning-artifacts/prd.md` and
+  `stories/index.json`, identifies requirements that are missing, outdated,
+  or no longer accurate given completed work
+- Architecture coverage agent: reads
+  `_bmad-output/planning-artifacts/architecture.md` and
+  `stories/index.json`, identifies decisions that are missing, outdated,
+  or no longer accurate given completed work
+
+Each returns structured findings:
+`[{id, description, action_needed (add/update/remove), rationale}]`
+
+**Gate:** If neither agent finds required updates, skip wave 2.
+
+**Wave 2 — Update (parallel).** If gaps found, the developer reviews the
+discovery findings and approves before wave 2 runs. This is NOT automatic.
+Then spawn two parallel update subagents:
+- PRD update agent: reads prd.md, applies approved changes following
+  existing format. Sole writer of prd.md.
+- Architecture update agent: reads architecture.md, applies approved
+  changes following existing format. Sole writer of architecture.md.
+
+Planning artifacts are NOT optional and are NOT candidates for archiving.
+They are authoritative documents that must stay current.
 
 ### AC2: Status Hygiene Detection
 
@@ -75,7 +89,7 @@ practical backlog hygiene. Specific problems:
 ### AC3: Batch Approval Operations
 
 - Findings are presented grouped by category (status mismatches, stale
-  candidates, epic issues, planning staleness)
+  candidates, planning artifact updates, epic issues)
 - The developer can approve or reject entire categories at once:
   "approve all status mismatches", "reject all stale candidates"
 - The developer can approve or reject by range within a category:
@@ -84,30 +98,24 @@ practical backlog hygiene. Specific problems:
 - The interaction adapts to scale: 3 findings get individual treatment;
   20+ findings get batch-first presentation
 
-### AC4: Epic-Level Analysis
+### AC4: Epic-Level Analysis — Delegate to epic-grooming
 
-- The workflow compares all epic slugs for semantic overlap (e.g.,
-  `research-knowledge` vs `research-knowledge-management`)
-- It checks epic descriptions for vagueness or missing descriptions
-- It identifies epics that could be consolidated based on their stories'
-  `touches` paths clustering around the same directories
-- Findings are presented as suggestions — the developer decides
-- Scope is limited to individual classification corrections and container
-  optimization. Structural taxonomy overhauls remain the domain of
-  `momentum:epic-grooming`
+- The workflow invokes `momentum:epic-grooming` as a substep for
+  epic-level structural analysis (deduping, description quality,
+  consolidation)
+- Refine does not reimplement this logic
+- If `momentum:epic-grooming` doesn't exist yet, flag it and skip the step
 
-### AC5: Bulk Stale-Story Triage with Safety Net
+### AC5: Stale-Story Individual Evaluation
 
-- The workflow identifies epics where ALL remaining stories are: status
-  `backlog`, priority `low`, no story file, and no other stories depend
-  on them
-- For such epics, it offers to drop all stories in bulk
-- Before dropping, it checks whether any story titles or descriptions
-  reference concepts not captured elsewhere (in other stories, in the
-  codebase via `touches` paths, or in planning docs if they still exist)
-- If uncaptured concepts are found, it lists what would be lost and asks
-  for confirmation before proceeding
-- If all content is captured elsewhere, it drops without the extra warning
+- The workflow identifies candidate stale stories: status `backlog`,
+  priority `low`, no story file
+- For each candidate, the workflow evaluates individually:
+  - What value does this story represent?
+  - Is that value captured elsewhere (other stories, codebase, planning
+    docs)?
+  - Recommendation: keep or drop, with rationale
+- The developer reviews each evaluation and decides. No auto-dropping.
 
 ### AC6: No Dependency Analysis
 
@@ -116,52 +124,44 @@ practical backlog hygiene. Specific problems:
 - No findings are generated in a "dependency issues" category
 - Dependency validation is explicitly deferred to sprint planning
 
-### AC7: Decisions Logged and Summarized
-
-- All refinement decisions (status transitions, drops, epic suggestions
-  accepted) are logged via `momentum-tools log` with event type `decision`
-- A summary is presented at the end: changes applied by type, findings
-  rejected, before/after priority distribution
-
 ## Tasks / Subtasks
 
 - [ ] Task 1 — Write behavioral evals (EDD: before rewriting the skill)
+  - [ ] Create `skills/momentum/skills/refine/evals/eval-refine-planning-artifacts.md`
+    — verifies the workflow runs two-wave planning artifact discovery and
+    update, with developer approval gate between waves
   - [ ] Create `skills/momentum/skills/refine/evals/eval-refine-status-hygiene.md`
     — verifies the workflow detects stories with completed DoD but non-done
     status, and offers transitions via CLI
-  - [ ] Create `skills/momentum/skills/refine/evals/eval-refine-batch-approval.md`
-    — verifies the workflow supports batch approve/reject operations and
-    adapts presentation to finding count
-  - [ ] Create `skills/momentum/skills/refine/evals/eval-refine-no-dependency-analysis.md`
+  - [ ] Create `skills/momentum/skills/refine/evals/eval-refine-no-dependency-no-logging.md`
     — verifies the workflow does NOT produce dependency-category findings
-    and does NOT spawn PRD/architecture cross-reference agents
+    and does NOT emit any `momentum-tools log` calls
 
-- [ ] Task 2 — Rewrite workflow.md (AC: 1-7, main deliverable)
+- [ ] Task 2 — Rewrite workflow.md (AC: 1-6, main deliverable)
   - [ ] Step 0: Task tracking initialization
-  - [ ] Step 1: Backlog presentation (reuse existing pattern — group by epic,
-    sort by priority, show summary)
-  - [ ] Step 2: Planning artifact staleness check (light — no subagent spawns)
-  - [ ] Step 3: Status hygiene scan (read story files, detect completion
+  - [ ] Step 1: Backlog presentation (group by epic, sort by priority,
+    show summary)
+  - [ ] Step 2: Planning artifact discovery — wave 1 (two parallel agents)
+  - [ ] Step 3: Planning artifact update — wave 2 (two parallel agents,
+    only if wave 1 found gaps, developer approval gate between waves)
+  - [ ] Step 4: Status hygiene scan (read story files, detect completion
     mismatches)
-  - [ ] Step 4: Epic-level analysis (overlap detection, description quality,
-    consolidation candidates)
-  - [ ] Step 5: Stale-story triage with safety net (bulk epic drops with
-    content-loss check)
-  - [ ] Step 6: Consolidated findings with batch approval UX
-  - [ ] Step 7: Apply approved changes via momentum-tools CLI and delegate
-    new story creation if needed
-  - [ ] Step 8: Log decisions and present summary
+  - [ ] Step 5: Delegate to momentum:epic-grooming (if available)
+  - [ ] Step 6: Stale-story individual evaluation
+  - [ ] Step 7: Consolidated findings with batch approval UX
+  - [ ] Step 8: Apply approved changes via momentum-tools CLI
+  - [ ] Step 9: Summary (before/after presentation)
 
 - [ ] Task 3 — Update SKILL.md description (AC: 1)
   - [ ] Update description to reflect the rewritten workflow's focus on
     backlog hygiene over gap analysis
   - [ ] Confirm description is under 150 characters
 
-- [ ] Task 4 — Run evals and verify (AC: 1-7)
+- [ ] Task 4 — Run evals and verify (AC: 1-6)
   - [ ] Run each eval via subagent
+  - [ ] Confirm planning artifact discovery+update works
   - [ ] Confirm status hygiene detection works
-  - [ ] Confirm batch approval UX works
-  - [ ] Confirm no dependency analysis or heavy cross-referencing occurs
+  - [ ] Confirm no dependency analysis and no logging occurs
 
 ## Dev Notes
 
@@ -169,60 +169,67 @@ practical backlog hygiene. Specific problems:
 
 | Current (v1) | Rewritten (v2) |
 |---|---|
-| Step 2: Parallel PRD + architecture discovery agents | Step 2: Light staleness check (file date only, no agents) |
+| Step 2: Parallel PRD + architecture gap-discovery agents | Step 2-3: Two-wave discovery+update with developer approval gate |
 | Step 3: Dependency analysis (circular, missing, satisfied) | Removed entirely — sprint planning's job |
-| Step 3: Per-finding A/M/R approval loop | Step 6: Batch-first approval with category and range support |
-| No status hygiene | Step 3: Story completion vs index.json status mismatch detection |
-| No epic analysis | Step 4: Epic overlap, description quality, consolidation candidates |
-| No bulk triage | Step 5: Bulk stale-epic drops with safety net |
+| Step 3: Per-finding A/M/R approval loop | Step 7: Batch-first approval with category and range support |
+| No status hygiene | Step 4: Story completion vs index.json status mismatch detection |
+| Inline epic analysis | Step 5: Delegated to momentum:epic-grooming |
+| No stale-story triage | Step 6: Individual story evaluation with keep/drop recommendation |
+| AC7: Decisions logged via momentum-tools log | Removed — no logging calls anywhere |
 
-### Workflow Structure (9 Steps)
+### Workflow Structure (10 Steps)
 
 **Step 0: Initialize task tracking**
-- Create tasks for the 8 workflow steps
-- Log workflow start
+- Create tasks for the workflow steps
 
 **Step 1: Present backlog**
 - Same as current v1 — read index.json, filter terminal states, group by
   epic, sort by priority, display summary
 - Store pre-refine priority distribution for before/after comparison
 
-**Step 2: Planning artifact staleness check**
-- Check if prd.md and architecture.md exist
-- If they exist, compare last-modified date to the most recent completed
-  sprint date from `sprints/index.json`
-- If stale, flag to developer. No subagent spawns. No cross-referencing.
-- Store finding if stale
+**Step 2: Planning artifact discovery (wave 1)**
+- Spawn two parallel subagents:
+  - PRD coverage agent: reads prd.md + stories/index.json, returns
+    structured findings `[{id, description, action_needed, rationale}]`
+  - Architecture coverage agent: reads architecture.md +
+    stories/index.json, returns structured findings
+- Each agent identifies what is missing, outdated, or no longer accurate
+- If neither agent finds required updates, skip to step 4
 
-**Step 3: Status hygiene scan**
+**Step 3: Planning artifact update (wave 2)**
+- Present wave 1 findings to the developer for review and approval
+- Developer sees exactly what will change and confirms
+- Spawn two parallel update subagents:
+  - PRD update agent: sole writer of prd.md, applies approved changes
+  - Architecture update agent: sole writer of architecture.md, applies
+    approved changes
+- Only runs if wave 1 found gaps AND developer approved
+
+**Step 4: Status hygiene scan**
 - For each non-terminal story with `story_file: true`, read the story file
 - Look for Dev Agent Record section with a File List or DoD checklist
 - If all items are `[x]` (checked) and the story status is not `done`,
   flag as a status mismatch
 - Store mismatches as findings
 
-**Step 4: Epic-level analysis**
-- Compare epic slugs pairwise for semantic similarity
-- Check for epics with no description or very short descriptions
-- Analyze `touches` paths across stories within each epic — if stories in
-  different epics cluster around the same directories, suggest consolidation
-- Store findings
+**Step 5: Delegate to epic-grooming**
+- Invoke `momentum:epic-grooming` for epic-level structural analysis
+- If the skill doesn't exist yet, flag it and skip this step
 
-**Step 5: Stale-story triage**
-- Find epics where all remaining stories meet: backlog status, low priority,
-  no story file, no dependents
-- For each such epic, check story titles/descriptions for concepts not
-  captured in other stories or the codebase
-- If uncaptured content found: flag what would be lost
-- If all captured: mark as safe to bulk-drop
-- Store findings
+**Step 6: Stale-story individual evaluation**
+- Identify candidates: status `backlog`, priority `low`, no story file
+- For each candidate, evaluate:
+  - What value does this story represent?
+  - Is that value captured elsewhere?
+  - Recommendation: keep or drop, with rationale
+- Store evaluations as findings for developer review
 
-**Step 6: Consolidated findings with batch approval**
+**Step 7: Consolidated findings with batch approval**
 - Present all findings grouped by category:
-  1. Planning artifact staleness (if any)
+  1. Planning artifact updates (from wave 1, if any remain unapplied)
   2. Status mismatches
-  3. Epic issues (overlap, descriptions, consolidation)
-  4. Stale-story bulk drops
+  3. Epic issues (from epic-grooming, if run)
+  4. Stale-story evaluations
 - Scale-adaptive UX:
   - Under 5 findings: present individually, ask A/M/R per finding
   - 5+ findings: present by category, offer batch operations first
@@ -230,14 +237,13 @@ practical backlog hygiene. Specific problems:
 - Developer can: approve/reject entire categories, approve/reject by range
   (e.g., "1-5"), or go finding-by-finding
 
-**Step 7: Apply approved changes**
+**Step 8: Apply approved changes**
 - Status transitions: `momentum-tools sprint status-transition --story SLUG --target done`
 - Story drops: `momentum-tools sprint status-transition --story SLUG --target dropped`
 - Epic reassignments: `momentum-tools sprint epic-membership --story SLUG --epic SLUG`
 - New stories from findings: delegate to `momentum:create-story`
-- Log each change via `momentum-tools log`
 
-**Step 8: Summary**
+**Step 9: Summary**
 - Changes applied by type, findings rejected
 - Before/after priority distribution
 - Epic distribution changes if any
@@ -245,21 +251,17 @@ practical backlog hygiene. Specific problems:
 ### Orchestrator Purity
 
 Same rule as v1 — the workflow reads files and presents information, but
-all mutations go through `momentum-tools` CLI or `momentum:create-story`
-delegation. No Edit/Write on index.json or any project file.
+all mutations go through `momentum-tools` CLI or delegated skills. No
+Edit/Write on index.json or any project file.
 
 ### Existing Evals to Replace
 
 The current evals at `skills/momentum/skills/refine/evals/` test the v1
 behavior (gap discovery agents, CLI-only mutations). The v2 rewrite changes
 the workflow's analysis steps, so evals must be rewritten to test:
+- Planning artifact discovery and update with approval gate (new)
 - Status hygiene detection (new)
-- Batch approval UX (new)
-- Absence of dependency analysis and heavy cross-referencing (regression guard)
-
-The CLI-only mutation eval (`eval-refine-cli-mutations.md`) is still valid
-in spirit but should be updated to cover status-transition to `done` (new
-use case in v2).
+- Absence of dependency analysis and logging (regression guard)
 
 ### What NOT to Change
 
@@ -267,6 +269,7 @@ use case in v2).
 - `momentum:create-story` — invoke it, don't modify it
 - Sprint-planning or sprint-dev workflows
 - `stories/index.json` directly
+- Planning artifacts are authoritative — never archive or mark optional
 
 ## Momentum Implementation Guide
 
@@ -279,8 +282,9 @@ use case in v2).
 
 **Before writing a single line of the skill:**
 1. Write 3 behavioral evals in `skills/momentum/skills/refine/evals/`:
-   - One per eval above, testing status hygiene, batch approval, and absence
-     of dependency analysis
+   - Planning artifact discovery+update with approval gate
+   - Status hygiene detection and CLI transitions
+   - No dependency analysis and no logging
    - Format: "Given [input/context], the skill should [observable behavior]"
 
 **Then implement:**
