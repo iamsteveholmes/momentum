@@ -1,7 +1,7 @@
 ---
 title: Orchestrator Deduplication Guard — Track Spawned Agents by (Story, Role)
 story_key: orchestrator-deduplication-guard
-status: backlog
+status: review
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -89,7 +89,7 @@ review agents.
 ### Where to add the guard
 
 **Phase 1 (step 1) — Initialization:**
-Add `Store {{spawn_registry}} = {}` after the existing `Store {{task_map}}`
+Add `Store {{spawn_registry}} = {}` after the existing `{{task_map}}`
 instruction.
 
 **Phase 2 (step 2) — Dev Wave:**
@@ -138,35 +138,35 @@ schema changes.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add spawn registry initialization to Phase 1 (AC: 1, 6)
-  - [ ] Add `Store {{spawn_registry}} = {}` instruction after `{{task_map}}` in step 1
-  - [ ] Add a `<note>` explaining the registry's purpose and key format
+- [x] Task 1 — Add spawn registry initialization to Phase 1 (AC: 1, 6)
+  - [x] Add `Store {{spawn_registry}} = {}` instruction after `{{task_map}}` in step 1
+  - [x] Add a `<note>` explaining the registry's purpose and key format
 
-- [ ] Task 2 — Add dedup guard to Phase 2 spawn loop (AC: 2, 5)
-  - [ ] Wrap the "For each unblocked story" spawn body in a dedup check
-  - [ ] Before spawning: compute key `{slug}::{specialist}`, check registry
-  - [ ] If key exists: skip spawn, emit log via `momentum-tools log` with event
+- [x] Task 2 — Add dedup guard to Phase 2 spawn loop (AC: 2, 5)
+  - [x] Wrap the "For each unblocked story" spawn body in a dedup check
+  - [x] Before spawning: compute key `{slug}::{specialist}`, check registry
+  - [x] If key exists: skip spawn, emit log via `momentum-tools log` with event
     `decision` and detail identifying the suppressed duplicate
-  - [ ] If key absent: proceed with spawn, then register the key
-  - [ ] Ensure the guard works on re-entry from Phase 3 (newly unblocked stories
+  - [x] If key absent: proceed with spawn, then register the key
+  - [x] Ensure the guard works on re-entry from Phase 3 (newly unblocked stories
     pass because they were never registered)
 
-- [ ] Task 3 — Update Phase 3 retry handling to replace registry entry (AC: 3)
-  - [ ] In the "Retry" branch of agent failure handling, delete the existing
+- [x] Task 3 — Update Phase 3 retry handling to replace registry entry (AC: 3)
+  - [x] In the "Retry" branch of agent failure handling, delete the existing
     registry entry for the failed (story, specialist) before re-spawning
-  - [ ] After spawning the retry agent, register the new entry
+  - [x] After spawning the retry agent, register the new entry
 
-- [ ] Task 4 — Add dedup guard to Phase 5 Team Review spawns (AC: 4)
-  - [ ] Before spawning QA Agent: check `sprint::qa-reviewer` in registry
-  - [ ] Before spawning E2E Validator: check `sprint::e2e-validator` in registry
-  - [ ] Before spawning Architect Guard: check `sprint::architecture-guard` in registry
-  - [ ] Skip and log if already spawned
+- [x] Task 4 — Add dedup guard to Phase 5 Team Review spawns (AC: 4)
+  - [x] Before spawning QA Agent: check `sprint::qa-reviewer` in registry
+  - [x] Before spawning E2E Validator: check `sprint::e2e-validator` in registry
+  - [x] Before spawning Architect Guard: check `sprint::architecture-guard` in registry
+  - [x] Skip and log if already spawned
 
-- [ ] Task 5 — Add dedup logging for suppressed spawns (AC: 7)
-  - [ ] Each suppressed spawn logs via `momentum-tools log --agent impetus
+- [x] Task 5 — Add dedup logging for suppressed spawns (AC: 7)
+  - [x] Each suppressed spawn logs via `momentum-tools log --agent impetus
     --sprint {{sprint_slug}} --event decision --detail "Dedup: skipped
     duplicate spawn for {key}"`
-  - [ ] Verify log messages appear in the sprint event log
+  - [x] Verify log messages appear in the sprint event log
 
 ## Momentum Implementation Guide
 
@@ -192,18 +192,34 @@ schema changes.
 3. Run evals via subagent, confirm behaviors match
 
 **DoD items for skill-instruction tasks:**
-- [ ] 2 behavioral evals written
-- [ ] EDD cycle ran — all eval behaviors confirmed
-- [ ] Workflow modifications follow existing XML structure and conventions
-- [ ] Dedup guard does not alter dependency resolution or status transition logic
-- [ ] Suppressed spawns are logged with identifying detail
+- [x] 2 behavioral evals written
+- [x] EDD cycle ran — all eval behaviors confirmed
+- [x] Workflow modifications follow existing XML structure and conventions
+- [x] Dedup guard does not alter dependency resolution or status transition logic
+- [x] Suppressed spawns are logged with identifying detail
 
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
 
 ### Debug Log References
+- EDD: wrote 2 behavioral evals before touching workflow.md
+- Phase 1: Added spawn_registry initialization alongside task_map
+- Phase 2: Added dedup guard as step 0 in the "For each unblocked story" loop
+- Phase 3: Updated Retry branch to delete+re-register registry entry
+- Phase 5: Added pre-spawn registry check before all three reviewers; added registry cleanup before intentional re-runs after fixes
 
 ### Completion Notes List
+- Implemented spawn_registry as a workflow variable (in-memory, not persisted)
+- Key format: `{story_slug}::{specialist}` for dev agents, `sprint::{reviewer_role}` for team review
+- Guard added at three spawn points: Phase 2 dev spawns, Phase 3 retry, Phase 5 team review
+- Intentional re-spawns (retry, post-fix reviewer re-runs) clear the registry entry first
+- All suppressed spawns log via momentum-tools log with event=decision
+- Dependency resolution and status transitions unchanged
 
 ### File List
+- skills/momentum/skills/sprint-dev/workflow.md (modified)
+- skills/momentum/skills/sprint-dev/evals/eval-dedup-guard-blocks-duplicate.md (created)
+- skills/momentum/skills/sprint-dev/evals/eval-dedup-guard-allows-new-stories.md (created)
+- _bmad-output/implementation-artifacts/stories/orchestrator-deduplication-guard.md (created)

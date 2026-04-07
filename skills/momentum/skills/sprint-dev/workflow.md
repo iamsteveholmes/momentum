@@ -97,6 +97,8 @@ Resume these stories, or reset them to ready-for-dev?</output>
       Status: pending
     </action>
     <action>Store {{task_map}} = map of story slug → task ID</action>
+    <action>Store {{spawn_registry}} = {} (empty map — tracks every spawned agent by key "{story_slug}::{specialist}" for dev agents, "sprint::{role}" for team review agents; never reset between phases)</action>
+    <note>spawn_registry is an in-memory deduplication guard. It survives the Phase 2 → Phase 3 → Phase 2 loop. Keys use format "{story_slug}::{specialist}" for dev agents and "sprint::{reviewer_role}" for team review agents. A key's presence means an agent was already spawned — do not spawn again.</note>
 
     <action>Log sprint start (best-effort):
       `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Sprint execution started: {{sprint_stories | length}} stories"`</action>
@@ -122,6 +124,12 @@ Task list created for progress tracking.</output>
     </check>
 
     <action>For each unblocked story:
+      0. Compute dedup key: `{slug}::{specialist}` where specialist = {{team}}.story_assignments[slug].specialist
+         Check {{spawn_registry}}[key]:
+         - If key EXISTS: skip this story entirely — log suppression (best-effort):
+           `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Dedup: skipped duplicate spawn for {key}"`
+           Continue to next story.
+         - If key ABSENT: proceed with steps 1-6 below.
       1. Transition to in-progress: `momentum-tools sprint status-transition --story {slug} --target in-progress`
       2. Look up role assignment from {{team}}.story_assignments[slug]
       3. Resolve specialist agent:
@@ -139,7 +147,8 @@ Task list created for progress tracking.</output>
          - Agent definition: the resolved specialist agent file (or base dev.md fallback)
          - If the story's `touches` array includes paths under `skills/` or `agents/`, also pass:
            reference: `skills/momentum/references/agent-skill-development-guide.md`
-      5. Update task {{task_map}}[slug] to in_progress
+      5. Register in spawn registry: `{{spawn_registry}}[key] = { spawned: true }`
+      6. Update task {{task_map}}[slug] to in_progress
     </action>
 
     <action>Log spawns (best-effort):
@@ -171,7 +180,11 @@ Options:
   H — Halt: stop sprint execution to investigate</output>
       <ask>Retry, Skip, or Halt?</ask>
       <check if="Retry">
-        <action>Spawn a new dev agent (using `skills/momentum/agents/dev.md`) for the failed story (same parameters as Phase 2). Do not auto-retry — this is the single manual retry.</action>
+        <action>Compute dedup key for failed story: `{slug}::{specialist}` where specialist = {{team}}.story_assignments[slug].specialist
+          Remove existing registry entry: delete `{{spawn_registry}}[key]` (this allows the retry to be registered as a fresh spawn)
+          Spawn a new dev agent (using `skills/momentum/agents/dev.md`) for the failed story (same parameters as Phase 2).
+          Register the retry: `{{spawn_registry}}[key] = { spawned: true }`
+          Do not auto-retry — this is the single manual retry.</action>
       </check>
       <check if="Skip">
         <action>Log skip decision. Continue monitoring other agents.</action>
@@ -271,7 +284,16 @@ Options:
   <step n="5" goal="Parallel team review of integrated codebase">
     <output>Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated sprint/{{sprint_slug}}...</output>
 
-    <action>Spawn three agents in parallel (single message, three Agent tool calls):
+    <action>Before spawning each reviewer, check {{spawn_registry}} for the reviewer's key:
+      - QA Agent key: `sprint::qa-reviewer`
+      - E2E Validator key: `sprint::e2e-validator`
+      - Architect Guard key: `sprint::architecture-guard`
+      If a key already exists in {{spawn_registry}}: skip that reviewer, log suppression (best-effort):
+        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Dedup: skipped duplicate spawn for {key}"`
+      If a key is absent: spawn the reviewer and register the key: `{{spawn_registry}}[key] = { spawned: true }`
+    </action>
+
+    <action>Spawn eligible reviewers in parallel (single message, Agent tool calls for each unregistered reviewer):
 
     **QA Agent** — spawn via Agent tool with `skills/momentum/agents/qa-reviewer.md` definition:
       - Provide: sprint slug, list of sprint stories, AVFL findings list
@@ -317,10 +339,11 @@ Options:
 
       <check if="developer wants to fix">
         <action>For each accepted finding, spawn a targeted dev fix agent (no worktree — direct on sprint branch).</action>
-        <action>After fixes, re-run only the reviewer(s) that produced the fixed findings:
-          - If QA findings were fixed: re-spawn QA Agent only
-          - If Validator findings were fixed: re-spawn E2E Validator only
-          - If Guard findings were fixed: re-spawn Architect Guard only
+        <action>After fixes, re-run only the reviewer(s) that produced the fixed findings.
+          Before re-spawning each reviewer, remove its registry entry to allow the intentional re-run:
+          - If QA findings were fixed: delete `{{spawn_registry}}["sprint::qa-reviewer"]`, re-spawn QA Agent, re-register key
+          - If Validator findings were fixed: delete `{{spawn_registry}}["sprint::e2e-validator"]`, re-spawn E2E Validator, re-register key
+          - If Guard findings were fixed: delete `{{spawn_registry}}["sprint::architecture-guard"]`, re-spawn Architect Guard, re-register key
         </action>
         <action>Repeat until clean or developer accepts remaining items.</action>
       </check>
