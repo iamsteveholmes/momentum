@@ -1355,7 +1355,7 @@
     "description": "15 instances of hardcoded ~/  paths across workflow.md (8 instances) and 4 eval files (7 instances). These paths reference ~/.claude/momentum/global-installed.json, ~/.claude/rules/, and similar locations. They are environment-specific and break in non-standard home directory configurations or CI/headless environments. Replace all ~/ references with $HOME expansion or have momentum-tools.py resolve paths internally so hardcoded home directory paths stay out of the workflow prompt. Eval files should use $HOME consistently to match the updated workflow expectations."
   },
   "orchestrator-deduplication-guard": {
-    "status": "review",
+    "status": "done",
     "title": "Orchestrator Deduplication Guard — Track Spawned Agents by (Story, Role)",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1364,7 +1364,7 @@
     "story_file": true
   },
   "workflow-team-composition-spec": {
-    "status": "review",
+    "status": "done",
     "title": "Workflow Team Composition Spec — Codify Required Roles and Spawning Modes",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1373,7 +1373,7 @@
     "story_file": true
   },
   "mandatory-task-tracking": {
-    "status": "review",
+    "status": "done",
     "title": "Mandatory Task Tracking — Enforce TaskCreate in Long Sessions",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1382,7 +1382,7 @@
     "story_file": true
   },
   "sprint-planning-synthesis-first": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint Planning Synthesis-First — Lead with Recommendations Not Data Dumps",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1391,7 +1391,7 @@
     "story_file": true
   },
   "review-orchestration-codification": {
-    "status": "review",
+    "status": "done",
     "title": "Review Orchestration Codification — Automate AVFL + Code Review Flow",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1400,7 +1400,7 @@
     "story_file": true
   },
   "agent-observability-system": {
-    "status": "review",
+    "status": "done",
     "title": "Agent Observability System — Hook-Based Logging for Retro Flywheel",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1409,7 +1409,7 @@
     "story_file": true
   },
   "e2e-validator-toolsearch-fix": {
-    "status": "review",
+    "status": "done",
     "title": "E2E Validator ToolSearch Fix — Pre-load SendMessage Schema",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1418,7 +1418,7 @@
     "story_file": true
   },
   "transcript-query-calibration": {
-    "status": "review",
+    "status": "done",
     "title": "Transcript Query Calibration — Fix Error False Positives and Schema Variants",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -1443,7 +1443,7 @@
     "description": "Sprint-2026-04-06 entry in sprints/index.json has no slug field. All 5 prior completed sprints have slug. Data integrity gap from sprint-manager tool. ACs: (1) momentum-tools sprint activate always writes slug field, (2) Existing entry backfilled, (3) No completed sprint entry lacks slug."
   },
   "retro-workflow-rewrite": {
-    "status": "review",
+    "status": "done",
     "title": "Retro Workflow Rewrite — Replace Milestone Logs with Transcript Audit",
     "epic_slug": "impetus-core",
     "depends_on": [

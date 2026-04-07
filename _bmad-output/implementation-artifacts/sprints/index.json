@@ -1,158 +1,5 @@
 {
-  "active": {
-    "locked": true,
-    "status": "active",
-    "stories": [
-      "orchestrator-deduplication-guard",
-      "workflow-team-composition-spec",
-      "mandatory-task-tracking",
-      "retro-workflow-rewrite",
-      "sprint-planning-synthesis-first",
-      "review-orchestration-codification",
-      "agent-observability-system",
-      "e2e-validator-toolsearch-fix",
-      "transcript-query-calibration"
-    ],
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "orchestrator-deduplication-guard",
-          "workflow-team-composition-spec",
-          "mandatory-task-tracking",
-          "sprint-planning-synthesis-first",
-          "review-orchestration-codification",
-          "agent-observability-system",
-          "e2e-validator-toolsearch-fix",
-          "transcript-query-calibration"
-        ]
-      },
-      {
-        "wave": 2,
-        "stories": [
-          "retro-workflow-rewrite"
-        ]
-      }
-    ],
-    "slug": "sprint-2026-04-06-2",
-    "team_composition": {
-      "orchestrator-deduplication-guard": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator",
-          "architect-guard"
-        ],
-        "change_type": "skill-instruction",
-        "specialist": "dev-skills",
-        "guidelines_status": "missing",
-        "wave": 1,
-        "dependencies": []
-      },
-      "workflow-team-composition-spec": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator",
-          "architect-guard"
-        ],
-        "change_type": "skill-instruction",
-        "specialist": "dev-skills",
-        "guidelines_status": "missing",
-        "wave": 1,
-        "dependencies": []
-      },
-      "mandatory-task-tracking": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "skill-instruction",
-        "specialist": "dev-skills",
-        "guidelines_status": "missing",
-        "wave": 1,
-        "dependencies": []
-      },
-      "sprint-planning-synthesis-first": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "skill-instruction",
-        "specialist": "dev-skills",
-        "guidelines_status": "missing",
-        "wave": 1,
-        "dependencies": []
-      },
-      "review-orchestration-codification": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "skill-instruction",
-        "specialist": "dev-skills",
-        "guidelines_status": "missing",
-        "wave": 1,
-        "dependencies": []
-      },
-      "agent-observability-system": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator",
-          "architect-guard"
-        ],
-        "change_type": "rule-hook + code",
-        "specialist": "dev",
-        "guidelines_status": "n/a",
-        "wave": 1,
-        "dependencies": []
-      },
-      "e2e-validator-toolsearch-fix": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "config-structure",
-        "specialist": "dev-skills",
-        "guidelines_status": "missing",
-        "wave": 1,
-        "dependencies": []
-      },
-      "transcript-query-calibration": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "change_type": "code",
-        "specialist": "dev",
-        "guidelines_status": "n/a",
-        "wave": 1,
-        "dependencies": []
-      },
-      "retro-workflow-rewrite": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator",
-          "architect-guard"
-        ],
-        "change_type": "skill-instruction + code",
-        "specialist": "dev-skills",
-        "guidelines_status": "missing",
-        "wave": 2,
-        "dependencies": [
-          "transcript-query-calibration"
-        ]
-      }
-    },
-    "started": "2026-04-06"
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -679,6 +526,162 @@
       "started": "2026-04-06",
       "completed": "2026-04-06",
       "retro_run_at": "2026-04-06"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "stories": [
+        "orchestrator-deduplication-guard",
+        "workflow-team-composition-spec",
+        "mandatory-task-tracking",
+        "retro-workflow-rewrite",
+        "sprint-planning-synthesis-first",
+        "review-orchestration-codification",
+        "agent-observability-system",
+        "e2e-validator-toolsearch-fix",
+        "transcript-query-calibration"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "orchestrator-deduplication-guard",
+            "workflow-team-composition-spec",
+            "mandatory-task-tracking",
+            "sprint-planning-synthesis-first",
+            "review-orchestration-codification",
+            "agent-observability-system",
+            "e2e-validator-toolsearch-fix",
+            "transcript-query-calibration"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "retro-workflow-rewrite"
+          ]
+        }
+      ],
+      "slug": "sprint-2026-04-06-2",
+      "team_composition": {
+        "orchestrator-deduplication-guard": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator",
+            "architect-guard"
+          ],
+          "change_type": "skill-instruction",
+          "specialist": "dev-skills",
+          "guidelines_status": "missing",
+          "wave": 1,
+          "dependencies": []
+        },
+        "workflow-team-composition-spec": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator",
+            "architect-guard"
+          ],
+          "change_type": "skill-instruction",
+          "specialist": "dev-skills",
+          "guidelines_status": "missing",
+          "wave": 1,
+          "dependencies": []
+        },
+        "mandatory-task-tracking": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "skill-instruction",
+          "specialist": "dev-skills",
+          "guidelines_status": "missing",
+          "wave": 1,
+          "dependencies": []
+        },
+        "sprint-planning-synthesis-first": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "skill-instruction",
+          "specialist": "dev-skills",
+          "guidelines_status": "missing",
+          "wave": 1,
+          "dependencies": []
+        },
+        "review-orchestration-codification": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "skill-instruction",
+          "specialist": "dev-skills",
+          "guidelines_status": "missing",
+          "wave": 1,
+          "dependencies": []
+        },
+        "agent-observability-system": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator",
+            "architect-guard"
+          ],
+          "change_type": "rule-hook + code",
+          "specialist": "dev",
+          "guidelines_status": "n/a",
+          "wave": 1,
+          "dependencies": []
+        },
+        "e2e-validator-toolsearch-fix": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "config-structure",
+          "specialist": "dev-skills",
+          "guidelines_status": "missing",
+          "wave": 1,
+          "dependencies": []
+        },
+        "transcript-query-calibration": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "change_type": "code",
+          "specialist": "dev",
+          "guidelines_status": "n/a",
+          "wave": 1,
+          "dependencies": []
+        },
+        "retro-workflow-rewrite": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator",
+            "architect-guard"
+          ],
+          "change_type": "skill-instruction + code",
+          "specialist": "dev-skills",
+          "guidelines_status": "missing",
+          "wave": 2,
+          "dependencies": [
+            "transcript-query-calibration"
+          ]
+        }
+      },
+      "started": "2026-04-06",
+      "completed": "2026-04-07",
+      "retro_run_at": null
     }
   ]
 }
