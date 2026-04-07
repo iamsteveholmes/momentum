@@ -42,6 +42,8 @@ date: '2026-03-17'
 lastEdited: '2026-04-07'
 editHistory:
   - date: '2026-04-07'
+    changes: 'Backlog refinement architecture updates: Added momentum:quick-fix to Skills Deployment Classification table (flat skill, bypass-sprint lifecycle path per Decision 39). Added momentum:research to Skills Deployment Classification table (flat skill, deep research pipeline with parallel subagents). Marked momentum:status as planned/unimplemented in Skills Deployment Classification table (not yet implemented; status display currently handled by momentum-tools CLI and Impetus greeting). Added quick-fix, research, and status entries to Repository Structure, Installed Structure tree, and Requirements to Structure Mapping table. Verified momentum:dev pure executor documentation (D2), momentum-dev-auto subsumption documentation (D3), and sprint-manager replacement by momentum-tools.py CLI (D4) — all accurate, no changes needed.'
+  - date: '2026-04-07'
     changes: 'Refine skill spec impact: Updated refine row in Skills Deployment Classification table (two-wave planning artifact discovery+update, status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; removed dependency analysis mention). Added momentum:refine row to Read/Write Authority table (reads: prd.md, architecture.md, stories/index.json, story files; writes via subagents: prd.md, architecture.md; writes via CLI: stories/index.json; delegates: momentum:create-story, momentum:epic-grooming). Added protection boundary exception for refine wave-2 update subagents writing to prd.md and architecture.md following developer approval gate. Added momentum:refine rows to Decision 41 application table (Wave 1: prd-coverage-agent + architecture-coverage-agent, individual, parallel; Wave 2: prd-update-agent + architecture-update-agent conditional, individual, parallel). Documented refine two-wave conditional spawning pattern after Decision 41. Added developer-gated two-wave approval pattern to Process Patterns. Added momentum:refine ↔ momentum:epic-grooming to Integration Points.'
   - date: '2026-04-06'
     changes: 'Sprint-2026-04-06-2 spec impact: Added Spawn Registry Pattern to Sprint Execution Flow — in-memory (story_slug, role) deduplication guard surviving Phase 2→3→2 loops (orchestrator-deduplication-guard). Added Decision 41 — Workflow Team Composition Declarations with XML <team-composition> elements codifying required roles, spawning mode, and concurrency per phase (workflow-team-composition-spec). Noted TaskCreate/TaskUpdate enforcement via <critical> directive in Sprint Execution Flow and Sprint Planning Workflow (mandatory-task-tracking). Major rewrite of Decision 27 — Transcript Audit Retro replacing milestone-log-based retro with DuckDB preprocessing + 3-auditor team; new DuckDB dependency; transcript-query.py as standard retro tooling; retro-transcript-audit.md output (retro-workflow-rewrite). Extended Decision 29 Step 1 with master plan read, staleness check, and 3-5 recommendation synthesis before full backlog (sprint-planning-synthesis-first). Restructured Sprint Execution Flow Phase 4 with AVFL stop gate; added Phase 4b per-story code review, Phase 4c consolidated fix queue, Phase 4d selective re-review (review-orchestration-codification). Extended Decision 24 event types with subagent-start and subagent-stop; added SubagentStart/SubagentStop hooks to hooks infrastructure (agent-observability-system).'
@@ -176,7 +178,10 @@ The defining question for each component: *does this need main-context persona p
 | Sprint planning | Flat skill (`/momentum:sprint-planning`) | Multi-step workflow needing main context; invoked by Impetus or directly |
 | Sprint dev | Flat skill (`/momentum:sprint-dev`) | Dependency-driven execution needing main context; invoked by Impetus or directly |
 | AVFL | Flat skill (`/momentum:avfl`) | Must orchestrate parallel spawning from main context |
-| upstream-fix, create-story, dev, status, retro, plan-audit | Flat skills | Stateful workflows needing main context |
+| upstream-fix, create-story, dev, retro, plan-audit | Flat skills | Stateful workflows needing main context |
+| quick-fix | Flat skill (`/momentum:quick-fix`) | Single-story bypass-sprint lifecycle path (Decision 39); register, execute, validate, complete in one session |
+| research | Flat skill (`/momentum:research`) | Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking |
+| status | Flat skill (`/momentum:status`) — planned, not yet implemented | Sprint/story status display; currently handled by momentum-tools CLI and Impetus greeting |
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
@@ -205,7 +210,9 @@ momentum/                              ← Plugin root
 │   ├── upstream-fix/SKILL.md
 │   ├── create-story/SKILL.md
 │   ├── plan-audit/SKILL.md
-│   ├── status/SKILL.md
+│   ├── quick-fix/SKILL.md          ← /momentum:quick-fix (Decision 39)
+│   ├── research/SKILL.md           ← /momentum:research
+│   ├── status/SKILL.md             ← /momentum:status (planned — not yet implemented)
 │   └── retro/SKILL.md
 ├── agents/                           ← Agent definition files (Decision 35)
 │   ├── qa-reviewer.md               ← Pure worker: story AC review (Team Review)
@@ -998,7 +1005,11 @@ momentum/                                    ← Plugin root
 │   │   └── SKILL.md
 │   ├── plan-audit/                          ← /momentum:plan-audit
 │   │   └── SKILL.md
-│   ├── status/                              ← /momentum:status
+│   ├── quick-fix/                           ← /momentum:quick-fix (Decision 39)
+│   │   └── SKILL.md
+│   ├── research/                            ← /momentum:research
+│   │   └── SKILL.md
+│   ├── status/                              ← /momentum:status (planned — not yet implemented)
 │   │   └── SKILL.md
 │   └── retro/                               ← /momentum:retro
 │       └── SKILL.md
@@ -1139,6 +1150,9 @@ momentum/                                    ← Plugin root
 | architecture-guard | `skills/architecture-guard/SKILL.md` | Plugin skill: `/momentum:architecture-guard` (context:fork) |
 | Hook infrastructure (always-on) | `hooks/hooks.json` | Delivered by plugin install (active immediately) |
 | Plan audit gate hook | `skills/plan-audit/` | Plugin skill: `/momentum:plan-audit` |
+| Quick-fix | `skills/quick-fix/` | Plugin skill: `/momentum:quick-fix` |
+| Research | `skills/research/` | Plugin skill: `/momentum:research` |
+| Status | `skills/status/` | Plugin skill: `/momentum:status` (planned — not yet implemented) |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
