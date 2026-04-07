@@ -29,13 +29,15 @@ practical backlog hygiene. Specific problems:
    Dev Agent Record complete) but still show `ready-for-dev` in index.json.
    Nothing detects the mismatch.
 
-3. **Per-finding approval fatigue.** At scale (57+ stories, potentially
-   dozens of findings), presenting each finding individually and asking
-   A/M/R one at a time exhausts the developer. No batch operations exist.
+3. **Per-finding approval fatigue.** At scale (dozens of stories,
+   potentially dozens of findings), presenting each finding individually
+   and asking A/M/R one at a time exhausts the developer. No batch
+   operations exist.
 
-4. **No epic-level analysis.** The workflow has no step for deduping
-   overlapping epics, improving epic descriptions, or consolidating epics
-   that cover the same domain.
+4. **No structural epic analysis.** The workflow can reassign individual
+   stories to different epics, but has no step for deduping overlapping
+   epics, improving epic descriptions, or consolidating epics that cover
+   the same domain.
 
 5. **No stale-story triage.** Low-priority stubs accumulate in the backlog
    with no systematic way to evaluate whether they still carry value.
@@ -62,15 +64,18 @@ The workflow runs a two-wave process to keep PRD and architecture current.
 Each returns structured findings:
 `[{id, description, action_needed (add/update/remove), rationale}]`
 
-**Gate:** If neither agent finds required updates, skip wave 2.
+**Gate:** If neither agent finds required updates, skip wave 2. If only
+one agent finds gaps, only that document's update agent fires in wave 2.
 
-**Wave 2 — Update (parallel).** If gaps found, the developer reviews the
+**Wave 2 — Update (conditional per document).** The developer reviews the
 discovery findings and approves before wave 2 runs. This is NOT automatic.
-Then spawn two parallel update subagents:
-- PRD update agent: reads prd.md, applies approved changes following
-  existing format. Sole writer of prd.md.
-- Architecture update agent: reads architecture.md, applies approved
-  changes following existing format. Sole writer of architecture.md.
+Then spawn update subagents only for documents that had findings:
+- PRD update agent (if PRD gaps found): reads prd.md, applies approved
+  changes following existing format. Sole writer of prd.md.
+- Architecture update agent (if architecture gaps found): reads
+  architecture.md, applies approved changes following existing format.
+  Sole writer of architecture.md.
+Both can run in parallel if both documents need updates.
 
 Planning artifacts are NOT optional and are NOT candidates for archiving.
 They are authoritative documents that must stay current.
@@ -95,8 +100,8 @@ They are authoritative documents that must stay current.
 - The developer can approve or reject by range within a category:
   "approve findings 1-5, reject 6"
 - Individual A/M/R per finding is still available but not the only mode
-- The interaction adapts to scale: 3 findings get individual treatment;
-  20+ findings get batch-first presentation
+- The interaction adapts to scale: under 5 findings get individual
+  treatment; 5+ findings get batch-first presentation
 
 ### AC4: Epic-Level Analysis — Delegate to epic-grooming
 
@@ -169,13 +174,13 @@ They are authoritative documents that must stay current.
 
 | Current (v1) | Rewritten (v2) |
 |---|---|
-| Step 2: Parallel PRD + architecture gap-discovery agents | Step 2-3: Two-wave discovery+update with developer approval gate |
-| Step 3: Dependency analysis (circular, missing, satisfied) | Removed entirely — sprint planning's job |
+| Step 2: Cross-reference PRD/architecture FRs against backlog to find unimplemented requirements | Step 2-3: Two-wave discovery+update — detect document drift, then update docs with developer approval gate |
+| Step 3 (inline): Dependency issue detection within findings consolidation | Removed entirely — sprint planning's job |
 | Step 3: Per-finding A/M/R approval loop | Step 7: Batch-first approval with category and range support |
 | No status hygiene | Step 4: Story completion vs index.json status mismatch detection |
-| Inline epic analysis | Step 5: Delegated to momentum:epic-grooming |
+| Step 3 (inline): Epic mismatch detection within findings consolidation | Step 5: Delegated to momentum:epic-grooming |
 | No stale-story triage | Step 6: Individual story evaluation with keep/drop recommendation |
-| AC7: Decisions logged via momentum-tools log | Removed — no logging calls anywhere |
+| Logging calls throughout every step | Removed — no logging calls anywhere |
 
 ### Workflow Structure (10 Steps)
 
@@ -195,14 +200,16 @@ They are authoritative documents that must stay current.
     stories/index.json, returns structured findings
 - Each agent identifies what is missing, outdated, or no longer accurate
 - If neither agent finds required updates, skip to step 4
+- If only one agent finds gaps, only that document proceeds to wave 2
 
 **Step 3: Planning artifact update (wave 2)**
 - Present wave 1 findings to the developer for review and approval
 - Developer sees exactly what will change and confirms
-- Spawn two parallel update subagents:
-  - PRD update agent: sole writer of prd.md, applies approved changes
-  - Architecture update agent: sole writer of architecture.md, applies
-    approved changes
+- Spawn update subagents only for documents that had findings:
+  - PRD update agent (if PRD gaps found): sole writer of prd.md
+  - Architecture update agent (if architecture gaps found): sole writer
+    of architecture.md
+  - Both run in parallel if both documents need updates
 - Only runs if wave 1 found gaps AND developer approved
 
 **Step 4: Status hygiene scan**
