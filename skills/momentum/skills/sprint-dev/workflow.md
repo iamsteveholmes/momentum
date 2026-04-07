@@ -13,7 +13,7 @@
   <critical>Worktree-to-sprint merges are autonomous — only pushes require developer confirmation.</critical>
   <critical>Dev agents never access sprints/{sprint-slug}/specs/ — verification is black-box.</critical>
   <critical>Stories are spawned strictly by dependency resolution. A story never starts before all its blockers are `done`.</critical>
-  <critical>AVFL runs ONCE after ALL stories merge — not per-story. If AVFL finds critical issues, block Team Review until resolved.</critical>
+  <critical>AVFL runs ONCE after ALL stories merge — not per-story. AVFL findings are presented as a read-only stop gate (Phase 4). No fixes are spawned in Phase 4. All fixes happen in Phase 4d after developer review of the consolidated fix queue (Phase 4c).</critical>
   <critical>Impetus always spawns agents. No agent spawns another agent.</critical>
   <critical>Log all sprint events via `momentum-tools log --agent impetus --sprint {slug}` at each phase transition.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint phases — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
@@ -89,11 +89,14 @@
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="0" goal="Initialize phase-level task tracking">
-    <action>Create tasks for the 7 execution phases:
+    <action>Create tasks for the 11 execution phases:
       1. Initialization — read sprint record, build dependency graph
       2. Dev Wave — spawn agents for unblocked stories
       3. Progress Tracking — monitor completion, propose merges, unblock next wave
-      4. Post-Merge AVFL — sprint-level quality scan
+      4. Post-Merge AVFL — sprint-level quality scan (stop gate: findings presented, no fixes)
+      4b. Per-Story Code Review — independent code-reviewer per merged story
+      4c. Consolidated Fix Queue — merge AVFL + code review findings, developer fix/defer decision
+      4d. Targeted Fixes + Selective Re-review — spawn fix agents, re-run only affected reviewers
       5. Team Review — QA + E2E Validator + Architect Guard
       6. Verification — developer-confirmation checklist
       7. Sprint Completion — archive sprint, summary, suggest retro
@@ -106,6 +109,7 @@
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="1" goal="Initialize sprint execution">
+    <action>Update task 1 (Initialization) to in_progress</action>
     <action>Read `sprints/index.json`</action>
     <action>Store {{sprint_slug}} = active.slug from sprints/index.json (active is an object containing slug, status, stories, waves, and team_composition)</action>
 
@@ -173,6 +177,7 @@ Resume these stories, or reset them to ready-for-dev?</output>
     <output>Sprint **{{sprint_slug}}** initialized.
 {{sprint_stories | length}} stories, dependency graph resolved.
 Task list created for progress tracking.</output>
+    <action>Update task 1 (Initialization) to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -180,6 +185,7 @@ Task list created for progress tracking.</output>
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="2" goal="Spawn dev agents for unblocked stories">
+    <action>Update task 2 (Dev Wave) to in_progress</action>
     <!-- Spawning mode: individual-agent | concurrency: parallel — see <team-composition> declaration above -->
     <action>Identify unblocked stories: status == "ready-for-dev" AND every story in depends_on has status == "done"</action>
 
@@ -226,6 +232,7 @@ Task list created for progress tracking.</output>
 
     <output>Spawned dev agents for {{unblocked_count}} unblocked stories:
 {{list of spawned story slugs}}</output>
+    <action>Update task 2 (Dev Wave) to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -234,6 +241,7 @@ Task list created for progress tracking.</output>
 
   <step n="3" goal="Track progress and handle story completions">
     <note>This phase loops until all sprint stories have merged. Monitor via task status.</note>
+    <action>Update task 3 (Progress Tracking) to in_progress</action>
 
     <action>Watch task statuses for agent completion or failure signals.</action>
 
@@ -297,15 +305,17 @@ Options:
     </check>
 
     <check if="all sprint stories have merged (all status == 'review')">
+      <action>Update task 3 (Progress Tracking) to completed</action>
       <action>Proceed to Phase 4 (AVFL)</action>
     </check>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 4: POST-MERGE AVFL (Decision 31)                  -->
+  <!-- PHASE 4: POST-MERGE AVFL — STOP GATE (Decision 31)      -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Single AVFL pass on full integrated codebase">
+  <step n="4" goal="Single AVFL pass on full integrated codebase — read-only findings, no fixes">
+    <action>Update task 4 (Post-Merge AVFL) to in_progress</action>
     <!-- Fix agents: spawning=individual-agent | concurrency=sequential | no worktrees — see <team-composition> above -->
     <output>All sprint stories merged. Running AVFL on the complete sprint changeset...</output>
 
@@ -323,31 +333,165 @@ Options:
       - stage: final
     </action>
 
-    <check if="AVFL clean (no findings or no critical/high findings)">
-      <action>Log AVFL result (best-effort):
-        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "AVFL passed: CLEAN"`</action>
-      <output>AVFL passed. Proceeding to Team Review.</output>
+    <action>Store {{avfl_findings}} = full findings list from AVFL output, tagged with source="avfl" and severity per finding.</action>
+
+    <action>Log AVFL result (best-effort):
+      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "AVFL complete: {{avfl_findings | length}} findings (critical: {{critical_count}}, high: {{high_count}}, medium: {{medium_count}}, low: {{low_count}})"`</action>
+
+    <output>## AVFL Findings — Sprint {{sprint_slug}}
+
+{{avfl_findings_report}}
+
+---
+**AVFL complete.** No fixes are applied at this stage. Proceeding to per-story code review.</output>
+
+    <ask>Acknowledge AVFL findings and continue to per-story code review?</ask>
+    <note>This is a stop gate. Do NOT spawn fix agents here. All findings are held for Phase 4c consolidation. Acknowledge and move to Phase 4b regardless of severity — critical findings are NOT a blocker at this step.</note>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 4b: PER-STORY CODE REVIEW                         -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="4.1" goal="Independent code review per merged story">
+    <output>Running independent code review for each merged story...</output>
+
+    <action>For each story in {{sprint_stories}} (all stories now in "review" status):
+      Collect {{story_touches}} = the story's `touches` array from its story file.
+    </action>
+
+    <action>Spawn `momentum:code-reviewer` for each story IN PARALLEL (single message, one invocation per story):
+      For each story {slug}:
+        - Scope: files in {{story_touches}} for story {slug}
+        - Context: "Code review for story {slug} — sprint {{sprint_slug}}"
+        - Story file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
+        - Sprint branch: `sprint/{{sprint_slug}}`
+      Tag each review invocation with the story slug for findings attribution.
+    </action>
+
+    <action>Wait for all per-story code reviews to complete.</action>
+
+    <action>Store {{code_review_findings}} = merged list of all findings from all story reviews,
+      each tagged with: source="code-reviewer", story_key={slug}, severity, file, description.
+    </action>
+
+    <action>Log code review results (best-effort):
+      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "Per-story code review: {{code_review_findings | length}} findings across {{sprint_stories | length}} stories"`</action>
+
+    <output>Per-story code review complete. {{code_review_findings | length}} findings collected across {{sprint_stories | length}} stories.</output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 4c: CONSOLIDATED FIX QUEUE                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="4.2" goal="Merge all findings into prioritized fix queue, get developer fix/defer decisions">
+    <action>Merge {{avfl_findings}} and {{code_review_findings}} into a single list {{all_findings}},
+      sorted by severity: critical → high → medium → low.
+      Each item retains its source tag (avfl or code-reviewer + story_key) for selective re-review routing.
+    </action>
+
+    <output>## Consolidated Fix Queue — Sprint {{sprint_slug}}
+
+All findings from AVFL and per-story code review, sorted by severity:
+
+{{#each all_findings grouped by severity}}
+### {{severity}}
+{{#each findings}}
+- [{{source}}{{#if story_key}} / {{story_key}}{{/if}}] {{file}}: {{description}}
+{{/each}}
+{{/each}}
+
+**Total:** {{critical_count}} critical, {{high_count}} high, {{medium_count}} medium, {{low_count}} low
+
+---
+For each item above, mark: **fix** (spawn fix agent) or **defer** (create follow-up story).</output>
+
+    <ask>Confirm fix/defer decision for each finding. You may respond with a list (e.g., "fix all critical and high, defer the rest") or item-by-item.</ask>
+
+    <action>Store {{fix_items}} = findings confirmed for immediate fix.
+      Store {{defer_items}} = findings marked for deferral.
+    </action>
+
+    <check if="defer_items is not empty">
+      <action>For each deferred finding, offer to create a follow-up backlog story with:
+        - Title derived from the finding description
+        - AC from the finding details
+        - Source reference to the sprint and reviewer
+      </action>
     </check>
 
-    <check if="AVFL findings include critical severity">
-      <action>Log AVFL critical (best-effort):
-        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "AVFL critical findings: {{count}}"`</action>
-      <output>AVFL found **critical** issues. These must be resolved before proceeding.
-{{findings_summary}}</output>
-      <action>Spawn targeted fix agents on the sprint branch (no worktrees) for critical findings — one individual Agent tool
-        call per finding, sequentially in severity order. Never use TeamCreate. Re-run AVFL after fixes.</action>
-      <action>Do NOT proceed to Phase 5 until all critical findings are resolved.</action>
+    <check if="fix_items is empty">
+      <output>No items confirmed for fixing. Proceeding directly to Team Review (Phase 5).</output>
+      <action>Jump to Phase 5.</action>
     </check>
 
-    <check if="AVFL findings exist but none are critical">
-      <output>AVFL found non-critical issues:
-{{findings_summary}}</output>
-      <ask>Address before Team Review, or proceed with known issues documented?</ask>
-      <check if="developer wants to fix">
-        <action>Spawn targeted fix agents on the sprint branch (no worktrees) — one individual Agent tool call per finding,
-          sequentially. Never use TeamCreate. Re-run AVFL after fixes.</action>
+    <action>Log fix queue decisions (best-effort):
+      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Fix queue: {{fix_items | length}} to fix, {{defer_items | length}} deferred"`</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 4d: TARGETED FIXES + SELECTIVE RE-REVIEW          -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="4.3" goal="Spawn fix agents for confirmed items, then re-run only affected reviewers">
+    <output>Spawning fix agents for {{fix_items | length}} confirmed findings...</output>
+
+    <action>For each item in {{fix_items}}:
+      Spawn a targeted dev fix agent (no worktree — direct on sprint branch) scoped to:
+        - The file(s) identified in the finding
+        - The fix description from the finding detail
+        - Sprint branch: `sprint/{{sprint_slug}}`
+      Group fix agents by story/file proximity — spawn related fixes together where possible.
+    </action>
+
+    <action>Wait for all fix agents to complete.</action>
+
+    <action>Log fixes applied (best-effort):
+      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Fixes applied: {{fix_items | length}} items"`</action>
+
+    <!-- Selective re-review: only re-run reviewers whose findings were fixed -->
+    <action>Determine which reviewers to re-run:
+      - If any fix_items have source="avfl": schedule AVFL re-scan
+      - If any fix_items have source="code-reviewer" for story {slug}: schedule code-reviewer re-run for that story only
+      Do NOT re-run reviewers that had no fixed findings.
+    </action>
+
+    <check if="AVFL re-scan scheduled">
+      <action>Run lightweight AVFL re-scan scoped to the files modified by fix agents.
+        Use same parameters as Phase 4 but with profile: lightweight (if supported) or standard.
+      </action>
+      <action>Update {{avfl_findings}} with re-scan results — remove resolved items, keep any new findings.</action>
+    </check>
+
+    <check if="code-reviewer re-run scheduled for any story">
+      <action>Spawn code-reviewer for each affected story (files modified by fixes in that story's scope).
+        Run in parallel if multiple stories are affected.
+      </action>
+      <action>Update {{code_review_findings}} — remove resolved items, keep any new findings.</action>
+    </check>
+
+    <action>Collect remaining findings (if any) from re-reviews into {{remaining_findings}}.</action>
+
+    <check if="remaining_findings is not empty">
+      <output>Re-review found remaining issues after fixes:
+
+{{remaining_findings_summary}}
+
+Accept these as-is, fix them now, or defer to follow-up stories?</output>
+      <ask>Accept, fix, or defer remaining findings?</ask>
+      <check if="developer wants to fix remaining">
+        <action>Repeat Phase 4d for remaining confirmed items (single iteration — do not recurse indefinitely).</action>
+      </check>
+      <check if="developer defers remaining">
+        <action>Offer follow-up stories for each deferred remaining finding.</action>
       </check>
     </check>
+
+    <output>Fix and re-review cycle complete. Proceeding to Team Review.</output>
+
+    <action>Log re-review results (best-effort):
+      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Post-fix re-review: {{remaining_findings | length}} remaining findings"`</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -355,6 +499,7 @@ Options:
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="5" goal="Parallel team review of integrated codebase">
+    <action>Update task 5 (Team Review) to in_progress</action>
     <!-- Spawning mode: individual-agent for all three roles | concurrency: parallel — see <team-composition> above -->
     <output>Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated sprint/{{sprint_slug}}...</output>
 
@@ -429,6 +574,7 @@ Options:
         <action>Add accepted follow-up stories to the backlog.</action>
       </check>
     </check>
+    <action>Update task 5 (Team Review) to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -436,6 +582,7 @@ Options:
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="6" goal="Developer-confirmation checklist from Gherkin specs">
+    <action>Update task 6 (Verification) to in_progress</action>
     <action>Read all `.feature` files from `sprints/{{sprint_slug}}/specs/`</action>
     <action>For each feature file, extract all scenario names and their Given/When/Then steps</action>
 
@@ -477,6 +624,7 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
       <action>Transition confirmed stories to done. Leave unconfirmed at verify.</action>
       <output>Some scenarios unconfirmed. Follow-up stories created. Confirmed stories marked done.</output>
     </check>
+    <action>Update task 6 (Verification) to completed</action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -484,6 +632,7 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="7" goal="Archive sprint, merge to main, and surface summary">
+    <action>Update task 7 (Sprint Completion) to in_progress</action>
     <action>Run: `momentum-tools sprint complete`</action>
 
     <action>Log sprint completion (best-effort):
@@ -508,7 +657,9 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
 **Stories done:** {{done_count}} / {{total_count}}
 **Merge order:** {{merge_sequence}}
 
-**AVFL:** {{avfl_findings_count}} findings, {{avfl_resolved}} resolved
+**AVFL:** {{avfl_findings_count}} findings
+**Per-Story Code Review:** {{code_review_findings_count}} findings across {{sprint_stories | length}} stories
+**Fix Queue:** {{fix_items_count}} fixed, {{defer_items_count}} deferred
 **Team Review:** {{team_findings_count}} findings, {{team_resolved}} resolved, {{team_deferred}} deferred
 **Verification:** {{confirmed_scenarios}} / {{total_scenarios}} scenarios confirmed
 
@@ -522,6 +673,8 @@ Sprint branch `sprint/{{sprint_slug}}` merged to main. Push when ready.
 Run **retrospective** to analyze agent logs and surface practice improvements?</output>
 
     <ask>Run retrospective now?</ask>
+    <action>Update task 7 (Sprint Completion) to completed</action>
+
     <check if="developer says yes">
       <action>Return to Impetus session menu and surface the retrospective option.</action>
     </check>
