@@ -380,7 +380,7 @@
     "priority": "low"
   },
   "momentum-dev-auto-variant": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Momentum Dev Auto Variant",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": false,
@@ -472,7 +472,7 @@
     "priority": "low"
   },
   "code-reviewer-skill-performs-adversarial-review": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Code Reviewer Skill Performs Adversarial Review",
     "epic_slug": "story-cycles",
     "story_file": false,
@@ -491,7 +491,7 @@
     "description": " RETRO ADDITION (sprint-2026-04-06-2): Enforce outsider-test guardrail in ALL spec-generation paths. Add .feature to protected-paths.json so dev agents can never read Gherkin specs. Recurring retro finding: AC-by-AC translation anti-pattern resurfaces despite prior feedback."
   },
   "full-story-cycle-guided-by-impetus": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Full Story Cycle Guided by Impetus",
     "epic_slug": "story-cycles",
     "story_file": false,
@@ -500,7 +500,7 @@
     "priority": "low"
   },
   "create-story-and-dev-story-skills-active": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Create Story and Dev Story Skills Active",
     "epic_slug": "story-cycles",
     "story_file": false,
@@ -509,7 +509,7 @@
     "priority": "low"
   },
   "upstream-fix-skill-analyzes-quality-failures": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Upstream Fix Skill Analyzes Quality Failures",
     "epic_slug": "story-cycles",
     "story_file": false,
