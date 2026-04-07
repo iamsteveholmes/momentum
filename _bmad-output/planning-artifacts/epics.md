@@ -425,6 +425,23 @@ The model routing decisions made in earlier epics are validated empirically. The
 
 ---
 
+### Epic 10: Impetus Core Infrastructure
+The engine room — Impetus orchestrator workflow modules, Python tooling scripts, agent observability, and cross-cutting improvements that enable the practice to run reliably and efficiently. Retro-driven and sprint-driven improvements that don't belong to a specific capability epic land here.
+**FRs covered:** FR6, FR7, FR8 (orchestrating agent capabilities — shared with Epic 2)
+**NFRs covered:** NFR3 (token economics)
+**Additional:** momentum-tools.py CLI, sprint workflow modules, quick-fix and retro skills, agent logging/observability, journal tooling, orchestrator guards
+**Priority:** Ongoing (continuous improvement)
+
+---
+
+### Epic 11: Agent Team Model
+Sprint-dev assembles the right execution team — agent roles, spawning modes (fan-out vs TeamCreate), communication patterns, deduplication guards, and quality gate coordination. Ensures the right agents are spawned with the right tools for each development and review phase.
+**FRs covered:** FR84, FR85 (spawn registry, duplicate logging), FR88 (per-story code review), FR91 (E2E validator accuracy)
+**Additional:** Agent role definitions, specialist vs generalist agent decisions, turn budgets, self-routing filters, collaboration pattern research
+**Priority:** High (sprint execution quality depends on correct team composition)
+
+---
+
 ## Epic 1: Foundation & Bootstrap
 
 A developer installs Momentum from scratch — global practice files in place, project bootstrapped, all structure scaffolded through Impetus. Everything subsequent depends on this.
@@ -584,6 +601,46 @@ A developer benchmarks BMAD skills and sub-agents across model tiers to validate
 **Priority:** Growth (requires Epics 2–4 to have real skills to benchmark)
 **UX-DRs covered:** UX-DR8 (benchmark warnings advisory), UX-DR16 (benchmark results surfaced in Impetus's voice before developer acts on them)
 
+
+> Story details are tracked in `stories/index.json`. Epic membership is authoritative there.
+
+---
+
+## Epic 10: Impetus Core Infrastructure
+
+The engine room — continuous improvement of the Impetus orchestrator itself: workflow modules, Python CLI scripts, agent observability, sprint execution improvements, and cross-cutting quality work that enables the practice but doesn't belong to a specific capability epic.
+
+**Category:** Core orchestration and tooling
+
+**Strategic intent:** Momentum's orchestrator accumulates improvements from every sprint retrospective and quality audit. These improvements — deduplication guards, task tracking enforcement, synthesis-first patterns, observability hooks — are too heterogeneous for any single capability epic but collectively determine whether the practice runs reliably. This epic is their home.
+
+**Boundaries:** Includes Impetus workflow changes, momentum-tools.py script additions, agent observability/logging, sprint workflow modules (planning, dev, retro, quick-fix), journal/DuckDB tooling, and orchestrator behavioral guards. Excludes capability-specific work (provenance → Epic 5, research → Epic 8, protocol integration → Epic 7) and agent team composition decisions (→ Epic 11).
+
+**FRs covered:** FR6, FR7, FR8 (shared with Epic 2)
+
+**NFRs covered:** NFR3
+
+**Current state:** 23 done, 13 remaining
+
+> Story details are tracked in `stories/index.json`. Epic membership is authoritative there.
+
+---
+
+## Epic 11: Agent Team Model
+
+Sprint-dev assembles the right execution team for each development and review phase — agent roles, spawning modes, communication patterns, deduplication guards, and quality gate coordination.
+
+**Category:** Sprint execution team composition
+
+**Strategic intent:** The quality and efficiency of sprint execution depends on correct team composition. Duplicate agent spawns wasted 47.8% of compute in one sprint. Agent role confusion led to 6 of 10 user corrections in another. This epic formalizes the team model so sprint-dev consistently spawns the right agents with the right tools, and review teams coordinate without waste.
+
+**Boundaries:** Includes agent role definitions (dev, dev-skills, dev-build, dev-frontend), spawning mode decisions (fan-out vs TeamCreate), deduplication guards, collaboration pattern research, turn budgets, and self-routing filters. Excludes individual skill implementations (→ Epic 10), quality gate definitions (→ Epic 3), and story cycle tooling (→ Epic 4).
+
+**FRs covered:** FR84, FR85, FR88, FR91
+
+**NFRs covered:** none
+
+**Current state:** 4 done, 6 remaining
 
 > Story details are tracked in `stories/index.json`. Epic membership is authoritative there.
 
