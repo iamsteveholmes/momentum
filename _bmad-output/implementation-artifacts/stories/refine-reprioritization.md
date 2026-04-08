@@ -40,9 +40,12 @@ staying low despite recurring every sprint).
 
 This story adds a re-prioritization step to the refine workflow between stale-story
 evaluation (Step 6) and consolidated findings (Step 7). The step analyzes the backlog
-using practical heuristics, produces priority change recommendations, and feeds them
-into the existing batch approval UX alongside status mismatches, epic issues, and
-stale-story evaluations.
+using practical heuristics, then engages the developer in a back-and-forth conversation
+about priorities — not a fixed list of recommendations to approve/reject, but a
+collaborative discussion grounded in the heuristic findings and the developer's
+current goals. The conversation may shift priorities in directions the heuristics
+didn't anticipate, because the developer's goals may have changed since the last
+refinement.
 
 ## Acceptance Criteria (Plain English)
 
@@ -60,8 +63,7 @@ stale-story evaluations.
   sprints by checking:
   - Retro findings in `_bmad-output/implementation-artifacts/sprints/*/retro-*.md`
     that reference the same story slug or topic across sprints
-  - Sprint logs in `.claude/momentum/sprint-logs/` for patterns of the same manual
-    workaround being prompted repeatedly
+  - Assessment findings that surface the same gaps repeatedly
 - Stories connected to recurring pain points are recommended for priority promotion
   with rationale citing the recurrence evidence
 
@@ -95,18 +97,28 @@ stale-story evaluations.
     but is still sitting at low priority
 - Dependency-based recommendations cite the specific blocking/blocked relationship
 
-### AC6: Recommendations Surface in Consolidated Findings
+### AC6: Conversational Re-prioritization Discussion
 
-- Priority change recommendations appear as a new category in the Step 7 consolidated
-  findings alongside existing categories (status mismatches, epic issues, stale stories)
-- Each recommendation shows: story slug, current priority, recommended priority,
-  heuristic(s) that triggered it, and rationale
-- The existing batch approval UX (A/M/R per finding, batch operations for 5+) applies
-  to priority recommendations the same way it applies to other finding categories
+- The step does NOT present a fixed list for batch approval. Instead it opens a
+  back-and-forth conversation with the developer:
+  - Presents initial assessment: "Based on [heuristic findings], my recommendation
+    is to reprioritize these stories for the following reasons, in line with [goals
+    from PRD/product brief]. Does that align with your current goals?"
+  - The developer may agree, disagree, redirect ("I've changed my goals — I want to
+    prioritize stories that help us ship X faster"), or refine ("Yes but also promote
+    these others because...")
+  - The skill adapts its recommendations based on the developer's input — this is
+    not a formulaic checklist but an informed conversation grounded in heuristic
+    evidence and the developer's stated direction
+  - The conversation continues until the developer is satisfied with the priority
+    changes
+- Final agreed-upon changes are collected as `{{priority_recommendations}}` and
+  fed into the consolidated findings step for formal application
 
-### AC7: Approved Changes Applied via CLI
+### AC7: Agreed Changes Applied via CLI
 
-- Approved priority changes are applied in the "Apply approved changes" step using:
+- Agreed priority changes from the conversation are applied in the "Apply approved
+  changes" step using:
   `momentum-tools sprint set-priority --story SLUG --priority LEVEL`
 - The summary step shows priority distribution before/after (this already exists in
   the workflow)
@@ -158,10 +170,12 @@ The current workflow has steps 0–9. The new step slots in as Step 7 (between c
 Step 6: stale-story evaluation and current Step 7: consolidated findings). All steps
 from current Step 7 onward shift by +1.
 
-**Consolidated findings pattern (reuse):**
-Step 7 (current) already groups findings by category with batch approval. Add
-"Priority recommendations" as a fourth category alongside status mismatches, epic
-issues, and stale stories. No new UX pattern needed.
+**Conversational model (new pattern for this step):**
+Unlike other refine findings that use batch approval, re-prioritization is a
+back-and-forth conversation. The step presents heuristic-grounded recommendations
+tied to goals from the PRD/product brief, then adapts based on developer input.
+The conversation produces a final list of agreed changes that feeds into the
+consolidated findings step for formal application alongside other finding categories.
 
 **Apply step pattern (reuse):**
 Step 8 (current) already dispatches approved findings by type. Add a
@@ -176,10 +190,11 @@ Step 9 (current) already computes before/after priority distribution from
 | Heuristic | Data source | What to look for |
 |---|---|---|
 | Recurrence | `_bmad-output/implementation-artifacts/sprints/*/retro-*.md` | Story slugs or topic keywords appearing in findings across 2+ sprint retros |
-| Recurrence | `.claude/momentum/sprint-logs/**/*.jsonl` | Repeated manual prompting patterns for the same workaround |
+| Recurrence | `_bmad-output/planning-artifacts/assessments/*.md` | Assessment findings that surface the same gaps repeatedly |
 | Workaround burden | Story description + current implementation | Complexity of the manual alternative |
 | Forgetting risk | Story description + failure mode analysis | What breaks silently when the workaround is skipped |
 | Dependency promotion | `stories/index.json` `depends_on` + `priority` fields | Low-priority stories blocking high-priority ones |
+| Developer goals | `_bmad-output/planning-artifacts/prd.md`, product brief | Current priorities and strategic direction — the basis for "in line with your goal to do X" |
 
 ### Important Constraints
 
