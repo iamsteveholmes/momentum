@@ -1599,5 +1599,33 @@
     ],
     "change_type": "config-structure",
     "priority": "high"
+  },
+  "decision-registry-skill": {
+    "status": "backlog",
+    "title": "Decision Registry Skill \u2014 Capture Strategic Decisions in SDR Format",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/decision-registry/SKILL.md",
+      "skills/momentum/skills/decision-registry/workflow.md",
+      "_bmad-output/planning-artifacts/decisions/"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "medium"
+  },
+  "refine-decision-review-step": {
+    "status": "backlog",
+    "title": "Refine Workflow \u2014 Decision Review Step",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [
+      "decision-registry-skill"
+    ],
+    "touches": [
+      "skills/momentum/skills/refine/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "medium"
   }
 }
