@@ -1473,10 +1473,21 @@
     "description": "The findings ledger (~/.claude/momentum/findings-ledger.jsonl) is designed as a cross-project append-only log for pattern detection. DuckDB enables trend analysis and severity aggregation across projects via SQL joins on severity/tags. ACs: (1) Findings ledger queryable via DuckDB SQL, (2) Cross-project aggregation by severity and tag, (3) Trend analysis across sprints available as standard queries."
   },
   "agent-prompt-large-file-guidance": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Agent Prompt Large-File Guidance \u2014 Standard Instructions for Context-Exceeding Files",
     "epic_slug": "agent-team-model",
+    "story_file": true,
     "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/dev.md",
+      "skills/momentum/agents/dev-skills.md",
+      "skills/momentum/agents/dev-build.md",
+      "skills/momentum/agents/dev-frontend.md",
+      "skills/momentum/agents/qa-reviewer.md",
+      "skills/momentum/agents/e2e-validator.md",
+      "skills/momentum/references/agent-skill-development-guide.md"
+    ],
+    "change_type": "config-structure",
     "priority": "critical",
     "description": "Retro finding: 210 file-too-large errors (35% of all errors) from agents reading large spec files without pagination. Agent definitions and spawn prompts must include explicit guidance for handling files exceeding context limits (chunked reads, offset/limit). New FR needed. Affects all agent definitions in agents/*.md.",
     "retro_source": "sprint-2026-04-06-2"
