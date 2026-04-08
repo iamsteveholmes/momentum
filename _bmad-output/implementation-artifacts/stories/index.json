@@ -481,14 +481,22 @@
     "priority": "low"
   },
   "gherkin-acs-and-atdd-workflow-active": {
-    "status": "backlog",
-    "title": "Gherkin Acs and Atdd Workflow Active",
+    "status": "ready-for-dev",
+    "title": "Gherkin ACs and ATDD Workflow Active",
     "epic_slug": "story-cycles",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/dev/workflow.md",
+      "skills/momentum/skills/create-story/workflow.md",
+      "skills/momentum/references/gherkin-template.md",
+      "skills/momentum/references/protected-paths.json",
+      "skills/momentum/agents/e2e-validator.md"
+    ],
     "priority": "high",
-    "description": " RETRO ADDITION (sprint-2026-04-06-2): Enforce outsider-test guardrail in ALL spec-generation paths. Add .feature to protected-paths.json so dev agents can never read Gherkin specs. Recurring retro finding: AC-by-AC translation anti-pattern resurfaces despite prior feedback."
+    "description": "RETRO ADDITION (sprint-2026-04-06-2): Enforce outsider-test guardrail in ALL spec-generation paths. Add .feature to protected-paths.json so dev agents can never read Gherkin specs. Recurring retro finding: AC-by-AC translation anti-pattern resurfaces despite prior feedback."
   },
   "full-story-cycle-guided-by-impetus": {
     "status": "dropped",
