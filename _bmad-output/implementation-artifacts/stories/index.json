@@ -1584,5 +1584,20 @@
     ],
     "change_type": "skill-instruction",
     "priority": "high"
+  },
+  "hooks-global-distribution": {
+    "status": "ready-for-dev",
+    "title": "Hooks Global Distribution \u2014 Move Hook Scripts to Global Path",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/references/hooks-config.json",
+      "skills/momentum/references/hooks/stop-gate.sh",
+      "skills/momentum/references/hooks/lint-format.sh",
+      "skills/momentum/references/hooks/file-protection.sh"
+    ],
+    "change_type": "config-structure",
+    "priority": "high"
   }
 }
