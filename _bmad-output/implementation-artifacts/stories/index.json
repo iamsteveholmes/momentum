@@ -1312,11 +1312,13 @@
     "priority": "low"
   },
   "impetus-journal-hygiene-script": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Impetus Journal Hygiene Script \u2014 Move Deterministic Thread Computations to momentum-tools",
     "epic_slug": "impetus-core",
-    "story_file": false,
-    "depends_on": [],
+    "story_file": true,
+    "depends_on": [
+      "journal-status-tool"
+    ],
     "touches": [
       "skills/momentum/scripts/momentum-tools.py",
       "skills/momentum/scripts/test-momentum-tools.py",
