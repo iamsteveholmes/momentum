@@ -57,6 +57,10 @@ post-merge AVFL scan, code review, and team validation."
 6. The PRD is updated with a new FR stating the quality gate parity requirement.
 7. Gate failures in momentum:dev are presented to the developer with fix/defer/
    accept options, matching the UX pattern used by quick-fix Phase 4.
+8. Worktree cleanup is deferred until all quality gates pass. The worktree must
+   remain available for fix iterations during AVFL, code review, and team
+   validation. Only after all gates pass (or the developer explicitly accepts
+   remaining findings) is the worktree deleted.
 
 ## Dev Notes
 
@@ -84,6 +88,11 @@ story merges, the workflow is done. No AVFL scan, no code review, no team
 validation.
 
 ### What This Story Changes in momentum:dev
+
+**Worktree lifecycle change:** Currently the worktree is cleaned up at Step 4
+(after merge). This must move to after all quality gates pass — the worktree
+stays alive for fix iterations during AVFL, code review, and team validation.
+Cleanup becomes the final step before the completion signal.
 
 Add three new steps between the current Step 7 (merge) and the completion signal:
 
