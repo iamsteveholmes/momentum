@@ -8,6 +8,7 @@ depends_on:
 touches:
   - skills/momentum/skills/decision/SKILL.md
   - skills/momentum/skills/decision/workflow.md
+  - skills/momentum/skills/decision/references/sdr-template.md
   - _bmad-output/planning-artifacts/decisions/index.md
 change_type: skill-instruction
 derives_from:
@@ -77,9 +78,18 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
   - Affected stories (existing backlog stories impacted by the decision)
   - Affected architecture decisions (if any AD in architecture.md changes)
 
-### AC4: SDR Document Written with Proper Format
+### AC4: SDR Template Exists
 
-- The output follows the SDR format with frontmatter:
+- A template exists at `skills/momentum/skills/decision/references/sdr-template.md`
+- The template defines the complete SDR structure: frontmatter schema, body sections
+  (Summary, individual Decisions with recommendation/decision/rationale, Phased
+  Implementation Plan, Decision Gates), and formatting conventions
+- The workflow uses this template to produce every SDR document — ensuring consistent
+  format across decisions
+
+### AC5: SDR Document Written from Template
+
+- The output follows the SDR template with frontmatter:
   - id: SDR-NNN (auto-incremented from existing decisions)
   - title, date, status (decided/deferred/superseded)
   - source_research: list of source docs with type and date
@@ -90,18 +100,18 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
   rationale), Phased Implementation Plan (if applicable), Decision Gates (if any)
 - Written to `_bmad-output/planning-artifacts/decisions/`
 
-### AC5: Upstream and Downstream Links Updated
+### AC6: Upstream and Downstream Links Updated
 
 - If the SDR was produced from an ASR, update the ASR's `decisions_produced`
   frontmatter field with the new SDR id
 - Update `decisions/index.md` with the new entry
 
-### AC6: Committed
+### AC7: Committed
 
 - The SDR document, index update, and any ASR frontmatter update are committed
   together
 
-### AC7: Bridge to Story Creation
+### AC8: Bridge to Story Creation
 
 - After decisions are captured, the skill offers: "Want to create stories for
   these decisions?"
@@ -110,24 +120,29 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-7)
+- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-8)
   - [ ] Create eval verifying the three input flows and decision capture format
 
-- [ ] Task 2 — Create SKILL.md (AC: 1)
+- [ ] Task 2 — Create SDR template (AC: 4)
+  - [ ] Create `skills/momentum/skills/decision/references/sdr-template.md`
+  - [ ] Include complete frontmatter schema and all body sections
+  - [ ] Use nornspun SDR-001 as reference for format
+
+- [ ] Task 3 — Create SKILL.md (AC: 1)
   - [ ] Frontmatter: name: decision, model: claude-sonnet-4-6, effort: high
   - [ ] SKILL.md body delegates to ./workflow.md
 
-- [ ] Task 3 — Create workflow.md (AC: 2-7)
+- [ ] Task 4 — Create workflow.md (AC: 2-3, 5-8)
   - [ ] Step 1: Determine input flow (A/B/C) and load source material
   - [ ] Step 2: Walk through findings/recommendations with developer
   - [ ] Step 3: For each finding, capture decision + rationale
   - [ ] Step 4: Identify affected stories and architecture decisions
-  - [ ] Step 5: Write SDR document with proper frontmatter
+  - [ ] Step 5: Write SDR document from template with proper frontmatter
   - [ ] Step 6: Update upstream links (ASR decisions_produced if applicable)
   - [ ] Step 7: Update decisions/index.md, commit
   - [ ] Step 8: Offer bridge to story creation
 
-- [ ] Task 4 — Run eval and verify (AC: 1-7)
+- [ ] Task 5 — Run eval and verify (AC: 1-8)
 
 ## Dev Notes
 

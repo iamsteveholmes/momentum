@@ -7,6 +7,7 @@ depends_on: []
 touches:
   - skills/momentum/skills/assessment/SKILL.md
   - skills/momentum/skills/assessment/workflow.md
+  - skills/momentum/skills/assessment/references/asr-template.md
   - _bmad-output/planning-artifacts/assessments/index.md
 change_type: skill-instruction
 derives_from:
@@ -99,9 +100,18 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
 - Next steps should be concrete and actionable (not vague "consider doing X")
 - The developer approves the final next steps list before it's written
 
-### AC6: ASR Document Written with Proper Format
+### AC6: ASR Template Exists
 
-- The output follows the ASR format with frontmatter:
+- A template exists at `skills/momentum/skills/assessment/references/asr-template.md`
+- The template defines the complete ASR structure: frontmatter schema, body sections
+  (Purpose, Method, Findings, Recommended Next Steps, Raw Data), and formatting
+  conventions
+- The workflow uses this template to produce every ASR document — ensuring consistent
+  format across assessments
+
+### AC7: ASR Document Written from Template
+
+- The output follows the ASR template with frontmatter:
   - id: ASR-NNN (auto-incremented from existing assessments)
   - title, date, status (current), method (describes what agents were spawned)
   - decisions_produced: [] (empty — decisions come later)
@@ -110,12 +120,12 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
   Recommended Next Steps, Raw Data (if applicable)
 - Written to `_bmad-output/planning-artifacts/assessments/`
 
-### AC7: Registry Updated and Committed
+### AC8: Registry Updated and Committed
 
 - `assessments/index.md` is updated with the new entry
 - The ASR document and index update are committed together
 
-### AC8: Bridge to Decision Skill
+### AC9: Bridge to Decision Skill
 
 - After the ASR is written, the skill offers: "These findings are ready to feed
   into a decision record. Want to capture decisions now?"
@@ -124,24 +134,29 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-8)
+- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-9)
   - [ ] Create eval verifying the skill scopes collaboratively and validates
     findings with the developer before writing
 
-- [ ] Task 2 — Create SKILL.md (AC: 1)
+- [ ] Task 2 — Create ASR template (AC: 6)
+  - [ ] Create `skills/momentum/skills/assessment/references/asr-template.md`
+  - [ ] Include complete frontmatter schema and all body sections
+  - [ ] Use nornspun ASR-001 as reference for format
+
+- [ ] Task 3 — Create SKILL.md (AC: 1)
   - [ ] Frontmatter: name: assessment, model: claude-sonnet-4-6, effort: high
   - [ ] SKILL.md body delegates to ./workflow.md
 
-- [ ] Task 3 — Create workflow.md (AC: 2-8)
+- [ ] Task 4 — Create workflow.md (AC: 2-5, 7-9)
   - [ ] Step 1: Scoping conversation — ask what to assess, agree on agent roster
   - [ ] Step 2: Spawn parallel discovery agents per agreed scope
   - [ ] Step 3: Present findings section by section with developer validation
   - [ ] Step 4: Collaboratively draft recommended next steps
-  - [ ] Step 5: Write ASR document with proper frontmatter
+  - [ ] Step 5: Write ASR document from template with proper frontmatter
   - [ ] Step 6: Update assessments/index.md, commit
   - [ ] Step 7: Offer bridge to decision skill
 
-- [ ] Task 4 — Run eval and verify (AC: 1-8)
+- [ ] Task 5 — Run eval and verify (AC: 1-9)
 
 ## Dev Notes
 

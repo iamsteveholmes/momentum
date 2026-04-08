@@ -1686,6 +1686,7 @@
     "touches": [
       "skills/momentum/skills/assessment/SKILL.md",
       "skills/momentum/skills/assessment/workflow.md",
+      "skills/momentum/skills/assessment/references/asr-template.md",
       "_bmad-output/planning-artifacts/assessments/index.md"
     ],
     "change_type": "skill-instruction",
@@ -1702,6 +1703,7 @@
     "touches": [
       "skills/momentum/skills/decision/SKILL.md",
       "skills/momentum/skills/decision/workflow.md",
+      "skills/momentum/skills/decision/references/sdr-template.md",
       "_bmad-output/planning-artifacts/decisions/index.md"
     ],
     "change_type": "skill-instruction",
