@@ -1557,6 +1557,20 @@
     ],
     "priority": "high"
   },
+  "intake-skill": {
+    "status": "ready-for-dev",
+    "title": "Intake Skill \u2014 Lightweight Story Capture from Conversation",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/intake/SKILL.md",
+      "skills/momentum/skills/intake/workflow.md",
+      "skills/momentum/skills/intake/references/stub-template.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
+  },
   "refine-reprioritization": {
     "status": "ready-for-dev",
     "title": "Refine Reprioritization \u2014 Add Priority Change Phase to Backlog Refinement",
