@@ -71,8 +71,8 @@ specs to reflect the actual architecture.
 - sprint-planning workflow: all 15 `momentum-tools log` calls removed
 - quick-fix workflow: all 11 `momentum-tools log` calls removed
 - retro workflow: all 8 `momentum-tools log` calls removed
-- epic-grooming workflow: all 5 `momentum-tools log` calls removed
-- dev workflow: all 8 `momentum-tools log` calls removed
+- epic-grooming workflow: 1 `momentum-tools log` reference removed (in a
+  `<critical>` directive — reword the directive rather than deleting it)
 - No `momentum-tools log` calls remain in any workflow
 - Workflow logic is otherwise unchanged — only the log calls are removed, not the
   surrounding actions or decisions
@@ -82,7 +82,8 @@ specs to reflect the actual architecture.
 - `skills/momentum/hooks/subagent-start.sh` is deleted
 - `skills/momentum/hooks/subagent-stop.sh` is deleted
 - Hook registrations for SubagentStart and SubagentStop are removed from
-  `skills/momentum/references/hooks-config.json`
+  `skills/momentum/hooks/hooks.json` (not hooks-config.json — the always-on
+  hooks are registered in hooks.json)
 - Any project-level settings.json entries for these hooks are removed
 
 ### AC4: Specifications Updated
@@ -124,19 +125,21 @@ specs to reflect the actual architecture.
   - [ ] sprint-planning/workflow.md: remove 15 log calls
   - [ ] quick-fix/workflow.md: remove 11 log calls
   - [ ] retro/workflow.md: remove 8 log calls
-  - [ ] epic-grooming/workflow.md: remove 5 log calls
-  - [ ] dev/workflow.md: remove 8 log calls
+  - [ ] epic-grooming/workflow.md: reword 1 `<critical>` directive that references
+    momentum-tools log (remove the log instruction, keep the directive's intent)
   - [ ] Verify no `momentum-tools log` calls remain anywhere in the project
 
 - [ ] Task 3 — Remove observability hooks (AC: 3)
   - [ ] Delete subagent-start.sh and subagent-stop.sh
-  - [ ] Remove SubagentStart/SubagentStop entries from hooks-config.json
+  - [ ] Remove SubagentStart/SubagentStop entries from hooks/hooks.json
   - [ ] Check for and remove any project-level hook registrations
 
-- [ ] Task 4 — Update specifications (AC: 4)
-  - [ ] PRD: mark FR56, FR57, FR85, FR89 as removed with rationale
-  - [ ] Architecture: update Decision 24 to reflect removal
-  - [ ] Remove any sprint-log references from architecture data flow tables
+- [ ] Task 4 — Verify specifications already updated (AC: 4)
+  - [ ] Confirm PRD FR56, FR57, FR89 are already marked REMOVED (applied in
+    sprint planning spec impact step)
+  - [ ] Confirm FR85 already updated to reference DuckDB transcript audit
+  - [ ] Confirm architecture Decision 24 already marked Historical
+  - [ ] No spec writes needed — already applied
 
 - [ ] Task 5 — Verify retro still works (AC: 6)
   - [ ] Confirm retro workflow has no references to sprint-logs or momentum-tools log
@@ -175,11 +178,8 @@ entire action.
 | `skills/momentum/skills/sprint-planning/workflow.md` | Remove 15 log actions |
 | `skills/momentum/skills/quick-fix/workflow.md` | Remove 11 log actions |
 | `skills/momentum/skills/retro/workflow.md` | Remove 8 log actions |
-| `skills/momentum/skills/epic-grooming/workflow.md` | Remove 5 log actions |
-| `skills/momentum/skills/dev/workflow.md` | Remove 8 log actions |
-| `skills/momentum/references/hooks-config.json` | Remove SubagentStart/Stop entries |
-| `_bmad-output/planning-artifacts/prd.md` | Mark FR56/57/85/89 removed |
-| `_bmad-output/planning-artifacts/architecture.md` | Update Decision 24 |
+| `skills/momentum/skills/epic-grooming/workflow.md` | Reword 1 `<critical>` directive |
+| `skills/momentum/hooks/hooks.json` | Remove SubagentStart/Stop entries |
 
 ### What NOT to Change
 

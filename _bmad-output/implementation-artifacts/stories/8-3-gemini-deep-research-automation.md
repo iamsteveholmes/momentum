@@ -1,7 +1,7 @@
 ---
 title: Gemini Deep Research Automation — cmux-browser Integration for momentum-research
 status: ready-for-dev
-epic_slug: research-knowledge-management
+epic_slug: research-knowledge
 story_key: 8-3-gemini-deep-research-automation
 depends_on:
   - 8-2-momentum-research-skill
@@ -32,7 +32,7 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 
 ### AC1: Deep Research Replaces Basic Gemini Prompt
 
-- The workflow step 1.4 in `skills/momentum-research/workflow.md` uses cmux-browser to automate `gemini.google.com` Deep Research instead of `gemini -p`
+- The workflow step 1.4 in `skills/momentum/skills/research/workflow.md` uses cmux-browser to automate `gemini.google.com` Deep Research instead of `gemini -p`
 - The `gemini -p` fallback is retained as a degraded path when cmux-browser is unavailable
 - The Gemini prompt template (`references/gemini-prompt-template.md`) remains unchanged — it generates the prompt text for both paths
 

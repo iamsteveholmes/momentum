@@ -12,7 +12,7 @@ touches:
   - skills/momentum/agents/qa-reviewer.md
   - skills/momentum/agents/e2e-validator.md
   - skills/momentum/references/agent-skill-development-guide.md
-change_type: config-structure
+change_type: skill-instruction
 derives_from:
   - path: _bmad-output/implementation-artifacts/sprints/sprint-2026-04-06-2/retro-transcript-audit-teamcreate.md
     relationship: retro_finding

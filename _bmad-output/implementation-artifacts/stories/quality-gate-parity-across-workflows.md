@@ -5,9 +5,7 @@ status: ready-for-dev
 epic_slug: quality-enforcement
 depends_on: []
 touches:
-  - skills/momentum/skills/sprint-dev/workflow.md
   - skills/momentum/skills/quick-fix/workflow.md
-  - skills/momentum/skills/dev/workflow.md
   - skills/momentum/skills/impetus/workflow.md
 change_type: skill-instruction
 ---
@@ -118,10 +116,11 @@ called through a parent workflow that handles checkpointing upstream.
 
 ### Orchestrator Purity
 
-momentum:dev is a pure executor — it orchestrates but does not write files
-directly. The new steps follow this principle: AVFL, code-reviewer, and
-validators are all spawned as subagents or skill invocations. The dev workflow
-only routes, presents findings, and waits for developer decisions.
+momentum:dev remains a pure executor — it resolves a story, creates a worktree,
+delegates to bmad-dev-story, proposes merge, and emits a completion signal. No
+quality gates are added to dev itself. Gates are the calling workflow's
+responsibility (sprint-dev, quick-fix). This story adds code review to
+quick-fix's Phase 4, not to dev.
 
 ### Requirements Coverage
 
@@ -133,35 +132,31 @@ only routes, presents findings, and waits for developer decisions.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral evals (EDD: before workflow changes)
-  - [ ] Create `skills/momentum/skills/dev/evals/eval-dev-post-merge-avfl.md`
-    — verifies AVFL runs after merge before completion signal
-  - [ ] Create `skills/momentum/skills/dev/evals/eval-dev-code-review.md`
-    — verifies code review runs after merge with findings presented
-  - [ ] Create `skills/momentum/skills/dev/evals/eval-dev-team-validation.md`
-    — verifies team validators run based on change_type
+- [ ] Task 1 — Write behavioral eval (EDD: before workflow changes)
+  - [ ] Create `skills/momentum/skills/quick-fix/evals/eval-quickfix-code-review.md`
+    — verifies code review runs in Phase 4 between AVFL scan and team validation
 
-- [ ] Task 2 — Update momentum:dev workflow with post-merge gates (ACs 1-4, 7)
-  - [ ] Add Step 8: Post-merge AVFL scan (profile: checkpoint, stage: final)
-  - [ ] Add Step 9: Code review via momentum:code-reviewer
-  - [ ] Add Step 10: Team validation based on change_type
-  - [ ] Add developer fix/defer/accept UX for gate findings
-  - [ ] Move completion signal emission to after all gates pass
-
-- [ ] Task 3 — Add code review step to quick-fix workflow (AC 5)
+- [ ] Task 2 — Add code review step to quick-fix workflow (AC: 1, 2, 7)
   - [ ] Insert momentum:code-reviewer invocation in Phase 4 between AVFL scan
     and team creation
   - [ ] Merge code review findings into the collaborative fix loop task list
+  - [ ] Ensure worktree remains alive through all gate iterations
 
-- [ ] Task 4 — Update PRD with quality gate parity FR (AC 6)
-  - [ ] Add new FR under the Sprint Execution section: "All execution paths
-    (sprint, quick-fix, dev) must apply equivalent quality gates"
+- [ ] Task 3 — Remove /develop from Impetus (AC: 3, 5)
+  - [ ] Remove the /develop menu item from the Impetus dispatch table in
+    `skills/momentum/skills/impetus/workflow.md`
+  - [ ] Remove any menu entry that routes to momentum:dev directly
+  - [ ] Update eval files that reference /develop dispatching to momentum:dev
 
-- [ ] Task 5 — Run evals and verify gate parity (AC 5)
-  - [ ] Run each eval via subagent
-  - [ ] Manually verify: invoke momentum:dev on a test story, confirm AVFL,
-    code review, and team validation all fire
+- [ ] Task 4 — Verify PRD already updated (AC: 6)
+  - [ ] Confirm FR95 (quality gate parity) already exists in prd.md
+  - [ ] Confirm FR53 already updated to state dev is internal-only
+  - [ ] No spec writes needed — already applied in spec impact step
+
+- [ ] Task 5 — Run eval and verify (AC: 1-7)
+  - [ ] Run eval via subagent
   - [ ] Verify quick-fix Phase 4 now includes code review
+  - [ ] Verify /develop no longer appears in Impetus menu
 
 ## Momentum Implementation Guide
 
@@ -193,11 +188,11 @@ only routes, presents findings, and waits for developer decisions.
 - AVFL/code-reviewer/validator invocations must match parameter patterns from sprint-dev
 
 **DoD items for skill-instruction tasks:**
-- [ ] 3 behavioral evals written
-- [ ] EDD cycle ran — all eval behaviors confirmed
-- [ ] dev/workflow.md updated with 3 new gate steps
+- [ ] 1 behavioral eval written (quick-fix code review)
+- [ ] EDD cycle ran — eval behavior confirmed
 - [ ] quick-fix/workflow.md updated with code review step
-- [ ] Gate findings UX matches quick-fix Phase 4 pattern
+- [ ] /develop menu item removed from impetus/workflow.md
+- [ ] PRD FR95 and FR53 update confirmed present
 
 ## Dev Agent Record
 

@@ -22,8 +22,8 @@ Feature: Remove Agent Journals — Delete Sprint-Log Write Infrastructure
     Then the retro completes all phases and produces an findings report
     And the report contains findings derived from transcript analysis
 
-  Scenario: Subagent lifecycle events produce no hook side effects
-    Given the hooks-config.json is loaded by the harness
-    When a subagent starts or stops during a workflow
-    Then no subagent-start.sh or subagent-stop.sh script is executed
-    And no observability JSONL entries are written
+  Scenario: Subagent lifecycle events produce no observability log entries
+    Given a workflow spawns subagents during execution
+    When the subagents start and stop
+    Then no observability JSONL entries are written to sprint-logs
+    And the workflow completes normally

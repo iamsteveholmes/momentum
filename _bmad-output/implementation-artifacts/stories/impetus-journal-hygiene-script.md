@@ -347,3 +347,13 @@ Total: 3-4 tool calls for the display phase, well within the 10-call budget.
   `session journal-append` commands
 - `skills/momentum/scripts/test-momentum-tools.py` — add unit tests for both commands
 - `skills/momentum/skills/impetus/workflow.md` — rewrite Steps 11 and 13
+
+## Dev Agent Record
+
+### Agent Model Used
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List

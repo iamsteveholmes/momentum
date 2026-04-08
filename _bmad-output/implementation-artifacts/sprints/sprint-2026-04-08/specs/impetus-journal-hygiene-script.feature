@@ -6,7 +6,7 @@ Feature: Impetus Journal Hygiene Script — Move Deterministic Thread Computatio
   Scenario: Impetus displays open threads instantly on session open without in-context computation
     Given one or more open threads exist in the journal
     When the developer invokes /momentum and the open-threads path is taken
-    Then Impetus displays the thread list and any hygiene warnings without performing JSONL parsing or timestamp arithmetic in-context
+    Then Impetus displays the thread list and any hygiene warnings
     And the display phase completes within 15 seconds wall-clock using fewer than 10 tool calls
 
   Scenario: Journal hygiene command returns structured display data for all open threads

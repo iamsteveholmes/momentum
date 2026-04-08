@@ -9,6 +9,7 @@ touches:
   - skills/momentum/references/hooks/stop-gate.sh
   - skills/momentum/references/hooks/lint-format.sh
   - skills/momentum/references/hooks/file-protection.sh
+  - skills/momentum/references/momentum-versions.json
 change_type: config-structure
 derives_from:
   - path: _bmad-output/planning-artifacts/prd.md

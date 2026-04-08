@@ -92,8 +92,8 @@ reinforces behavioral framing over structural testing.
 - Any scenario that references internal mechanisms (which skill was called, which
   file was read, which agent was spawned, what an agent did NOT do internally)
   is flagged and rewritten before the spec is saved
-- The quick-fix workflow's spec generation path (if it generates Gherkin) applies
-  the same guardrail
+- The quick-fix workflow's spec generation step (Phase 2, step 2b) applies the
+  same guardrail
 
 ### AC2: Dev Agent Black-Box Boundary Explicit
 
@@ -119,15 +119,15 @@ reinforces behavioral framing over structural testing.
 - Validation failures are surfaced to the developer with the specific clause
   that failed and why, and the spec is regenerated before planning proceeds
 
-### AC4: E2E Validator Findings Feed Back to Spec Improvement
+### AC4: E2E Validator Findings Tagged for Spec Improvement
 
 - When the E2E Validator (sprint-dev Phase 5) produces findings categorized as
   "untestable scenario" or "scenario fails Outsider Test," those findings are
-  tagged with `spec-quality` metadata
-- During sprint retrospective, `spec-quality` tagged findings are aggregated and
-  surfaced as a dedicated section in the retro output
-- This creates the feedback loop: retro findings inform future sprint planning's
-  spec generation quality
+  tagged with `spec-quality` metadata in the validator's structured output
+- The tagging enables downstream aggregation (retro integration is a follow-on
+  story — not in scope here)
+- This creates the data foundation for the feedback loop: tagged findings can
+  inform future sprint planning's spec generation quality
 
 ### AC5: Gherkin Specs Remain Behavioral and General
 

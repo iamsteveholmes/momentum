@@ -1,6 +1,53 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "intake-skill",
+      "refine-reprioritization",
+      "quality-gate-parity-across-workflows",
+      "agent-prompt-large-file-guidance",
+      "impetus-journal-hygiene-script",
+      "8-3-gemini-deep-research-automation",
+      "gherkin-acs-and-atdd-workflow-active",
+      "hooks-global-distribution",
+      "remove-agent-journals",
+      "assessment-skill",
+      "decision-skill",
+      "refine-assessment-decision-review"
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "intake-skill",
+          "refine-reprioritization",
+          "quality-gate-parity-across-workflows",
+          "agent-prompt-large-file-guidance",
+          "impetus-journal-hygiene-script",
+          "8-3-gemini-deep-research-automation",
+          "gherkin-acs-and-atdd-workflow-active",
+          "hooks-global-distribution",
+          "remove-agent-journals",
+          "assessment-skill"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "decision-skill"
+        ]
+      },
+      {
+        "wave": 3,
+        "stories": [
+          "refine-assessment-decision-review"
+        ]
+      }
+    ],
+    "slug": "sprint-2026-04-08"
+  },
   "completed": [
     {
       "locked": true,
