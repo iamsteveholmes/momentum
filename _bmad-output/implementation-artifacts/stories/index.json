@@ -1627,6 +1627,28 @@
     "change_type": "config-structure",
     "priority": "high"
   },
+  "remove-agent-journals": {
+    "status": "ready-for-dev",
+    "title": "Remove Agent Journals \u2014 Delete Sprint-Log Write Infrastructure",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/quick-fix/workflow.md",
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/skills/epic-grooming/workflow.md",
+      "skills/momentum/skills/dev/workflow.md",
+      "skills/momentum/hooks/subagent-start.sh",
+      "skills/momentum/hooks/subagent-stop.sh",
+      "skills/momentum/references/hooks-config.json"
+    ],
+    "change_type": "script-code",
+    "priority": "high"
+  },
   "decision-registry-skill": {
     "status": "backlog",
     "title": "Decision Registry Skill \u2014 Capture Strategic Decisions in SDR Format",
