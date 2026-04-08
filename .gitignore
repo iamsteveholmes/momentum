@@ -60,6 +60,9 @@ skills/tea-agent-testarch
 .claude/skills/momentum-upstream-fix
 .claude/skills/tea-agent-testarch
 
+# Quality analysis reports (regenerable output, findings captured as stories)
+_bmad-output/reports/
+
 # BMAD session memory (local/ephemeral)
 # (kept for clarity even though _bmad/ is now fully ignored)
 _bmad/_memory/
