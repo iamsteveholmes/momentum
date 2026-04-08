@@ -1650,7 +1650,7 @@
     "priority": "high"
   },
   "decision-registry-skill": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Decision Registry Skill \u2014 Capture Strategic Decisions in SDR Format",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1664,12 +1664,57 @@
     "priority": "medium"
   },
   "refine-decision-review-step": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Refine Workflow \u2014 Decision Review Step",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
       "decision-registry-skill"
+    ],
+    "touches": [
+      "skills/momentum/skills/refine/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "medium"
+  },
+  "assessment-skill": {
+    "status": "ready-for-dev",
+    "title": "Assessment Skill \u2014 Guided Product State Evaluation",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/assessment/SKILL.md",
+      "skills/momentum/skills/assessment/workflow.md",
+      "_bmad-output/planning-artifacts/assessments/index.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
+  },
+  "decision-skill": {
+    "status": "ready-for-dev",
+    "title": "Decision Skill \u2014 Capture Strategic Decisions from Assessments",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [
+      "assessment-skill"
+    ],
+    "touches": [
+      "skills/momentum/skills/decision/SKILL.md",
+      "skills/momentum/skills/decision/workflow.md",
+      "_bmad-output/planning-artifacts/decisions/index.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
+  },
+  "refine-assessment-decision-review": {
+    "status": "ready-for-dev",
+    "title": "Refine Workflow \u2014 Assessment & Decision Review Step",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [
+      "assessment-skill",
+      "decision-skill"
     ],
     "touches": [
       "skills/momentum/skills/refine/workflow.md"
