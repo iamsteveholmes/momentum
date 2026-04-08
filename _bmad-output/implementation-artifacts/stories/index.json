@@ -1482,11 +1482,17 @@
     "retro_source": "sprint-2026-04-06-2"
   },
   "quality-gate-parity-across-workflows": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Quality Gate Parity Across Workflows \u2014 Ensure sprint-dev, quick-fix, and dev Apply Equivalent Gates",
     "epic_slug": "quality-enforcement",
     "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/quick-fix/workflow.md",
+      "skills/momentum/skills/dev/workflow.md"
+    ],
     "priority": "high",
+    "story_file": true,
     "description": "Retro finding: sprint-dev, quick-fix, and direct dev workflows each have different quality gate implementations. Some paths skip AVFL, code review, or team review entirely. All execution paths must apply equivalent quality gates. New FR needed: 'All execution paths (sprint, quick-fix, dev) must apply equivalent quality gates.'",
     "retro_source": "sprint-2026-04-06-2"
   },
