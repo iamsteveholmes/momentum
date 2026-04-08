@@ -1,5 +1,5 @@
 ---
-title: Quality Gate Parity Across Workflows — Ensure sprint-dev, quick-fix, and dev Apply Equivalent Gates
+title: Quality Gate Parity Across Workflows — Align quick-fix Gates with sprint-dev, Remove Direct Dev Invocation
 story_key: quality-gate-parity-across-workflows
 status: ready-for-dev
 epic_slug: quality-enforcement
@@ -8,10 +8,11 @@ touches:
   - skills/momentum/skills/sprint-dev/workflow.md
   - skills/momentum/skills/quick-fix/workflow.md
   - skills/momentum/skills/dev/workflow.md
+  - skills/momentum/skills/impetus/workflow.md
 change_type: skill-instruction
 ---
 
-# Quality Gate Parity Across Workflows — Ensure sprint-dev, quick-fix, and dev Apply Equivalent Gates
+# Quality Gate Parity Across Workflows — Align quick-fix Gates with sprint-dev, Remove Direct Dev Invocation
 
 ## User Story
 
@@ -41,26 +42,27 @@ post-merge AVFL scan, code review, and team validation."
 
 ## Acceptance Criteria (Plain English)
 
-1. momentum:dev runs a post-merge AVFL scan (profile: checkpoint, stage: final)
-   after the story branch merges to the target branch, before emitting the
-   completion signal.
-2. momentum:dev runs a code review via momentum:code-reviewer scoped to the
-   story's touches array after merge, presenting findings to the developer.
-3. momentum:dev runs change_type-based team validation after AVFL and code
-   review: E2E Validator for skill-instruction, QA for script-code, both when
-   both types are present.
-4. momentum:dev reads the story's change_type field from the story file
-   frontmatter to determine which validators to spawn.
-5. All three workflows (sprint-dev, quick-fix, dev) apply these four gate types:
-   pre-implementation AVFL checkpoint, post-merge AVFL scan, code review, and
-   team validation — though profiles and scope may differ by workflow.
-6. The PRD is updated with a new FR stating the quality gate parity requirement.
-7. Gate failures in momentum:dev are presented to the developer with fix/defer/
-   accept options, matching the UX pattern used by quick-fix Phase 4.
-8. Worktree cleanup is deferred until all quality gates pass. The worktree must
-   remain available for fix iterations during AVFL, code review, and team
-   validation. Only after all gates pass (or the developer explicitly accepts
-   remaining findings) is the worktree deleted.
+1. quick-fix adds an explicit code review step via momentum:code-reviewer in
+   Phase 4, between the AVFL scan and team validation, presenting findings to
+   the developer.
+2. sprint-dev and quick-fix both apply these four gate types: pre-implementation
+   AVFL checkpoint, post-merge AVFL scan, code review, and team validation.
+   sprint-dev already has all four; quick-fix is missing code review (this story
+   adds it).
+3. momentum:dev is an internal sub-tool only — it is NOT a user-facing endpoint.
+   The `/develop` menu item in Impetus is removed. Users who want to develop a
+   single story use `/momentum:quick-fix` instead.
+4. momentum:dev does NOT run its own quality gates. Gates are the responsibility
+   of the calling workflow (sprint-dev or quick-fix). Dev is a pure executor:
+   resolve story, create worktree, delegate to bmad-dev-story, propose merge.
+5. The Impetus dispatch table and menu are updated to remove `/develop` and any
+   menu item that routes to momentum:dev directly.
+6. The PRD is updated with a new FR stating the quality gate parity requirement
+   and that momentum:dev is not user-invocable.
+7. Worktree cleanup in the calling workflow is deferred until all quality gates
+   pass. The worktree must remain available for fix iterations during AVFL, code
+   review, and team validation. Only after all gates pass (or the developer
+   explicitly accepts remaining findings) is the worktree deleted.
 
 ## Dev Notes
 
@@ -74,47 +76,22 @@ post-merge AVFL scan, code review, and team validation."
 | Team validation (E2E/QA)     | Phase 5: QA + E2E + Architect Guard, parallel | Phase 4 steps 4b-4d: TeamCreate with Dev + E2E/QA collaborative fix loop | NONE |
 | Developer review gate        | Phase 6: Gherkin verification checklist   | Phase 1 + Phase 2: BLOCKING gates with cmux surfaces | NONE              |
 
-### Key Gaps in momentum:dev
+### momentum:dev — Internal Sub-Tool Only
 
-The momentum:dev workflow (workflow.md) currently:
-1. Resolves a story from stories/index.json or an explicit path
-2. Creates a worktree and enters it
-3. Delegates ALL implementation to bmad-dev-story
-4. Proposes merge and cleans up worktree
-5. Emits a structured completion signal
+momentum:dev is a pure executor called by sprint-dev and quick-fix. It does NOT
+run its own quality gates — gates are the calling workflow's responsibility. This
+avoids double-gating (sprint-dev runs gates after dev finishes, so dev running
+them too would be redundant).
 
-It has zero post-merge quality gates. After bmad-dev-story completes and the
-story merges, the workflow is done. No AVFL scan, no code review, no team
-validation.
+This story removes the `/develop` menu item from Impetus and any direct user
+invocation path. Users who want to develop a single story use
+`/momentum:quick-fix` instead, which provides the full gate suite.
 
-### What This Story Changes in momentum:dev
+### What This Story Changes in Impetus
 
-**Worktree lifecycle change:** Currently the worktree is cleaned up at Step 4
-(after merge). This must move to after all quality gates pass — the worktree
-stays alive for fix iterations during AVFL, code review, and team validation.
-Cleanup becomes the final step before the completion signal.
-
-Add three new steps between the current Step 7 (merge) and the completion signal:
-
-**Step 8: Post-merge AVFL scan**
-- Invoke momentum:avfl with profile: checkpoint, stage: final
-- Scope: files in the story's touches array
-- Source material: story acceptance criteria
-- If critical findings: present to developer with fix/defer/accept options
-- If developer chooses fix: spawn a targeted fix agent on the target branch (no worktree)
-
-**Step 9: Code review**
-- Invoke momentum:code-reviewer scoped to the story's touches
-- Present findings to developer
-- Findings merge into the same fix queue as AVFL findings
-
-**Step 10: Team validation**
-- Read change_type from story frontmatter
-- skill-instruction -> spawn E2E Validator (agent: skills/momentum/agents/e2e-validator.md)
-- script-code -> spawn QA (agent: skills/momentum/agents/qa-reviewer.md)
-- Both present -> spawn both
-- Present findings with fix/defer/accept options
-- If fix: spawn dev fix agent, re-run only affected validators
+- Remove the `/develop` menu item from the Impetus dispatch table
+- Remove any menu entry that routes to momentum:dev directly
+- Update eval files that reference `/develop` dispatching to momentum:dev
 
 ### What This Story Changes in quick-fix
 
@@ -136,17 +113,8 @@ reference implementation.
 
 sprint-dev gets its pre-implementation checkpoint from sprint-planning (a
 separate upstream skill). quick-fix includes it inline in Phase 2 step 2f.
-momentum:dev currently has no equivalent.
-
-For this story, the pre-implementation checkpoint in dev is NOT added because
-dev receives stories that are already `ready-for-dev` — meaning they were
-already checkpointed during sprint-planning or create-story. Adding a redundant
-checkpoint would slow the workflow without adding value. The parity requirement
-covers the three post-implementation gates.
-
-If a story reaches dev without having gone through sprint-planning (e.g., a
-manually created story file), the post-merge gates will catch plan-level issues
-anyway. This is an acceptable trade-off.
+momentum:dev has no equivalent — and doesn't need one, because dev is always
+called through a parent workflow that handles checkpointing upstream.
 
 ### Orchestrator Purity
 
