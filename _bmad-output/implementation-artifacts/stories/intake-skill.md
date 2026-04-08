@@ -75,27 +75,38 @@ starting from scratch, but that integration is out of scope for this story.
 ### AC3: Stub Template Produces Clearly Draft Output
 
 - A stub template exists at `skills/momentum/skills/intake/references/stub-template.md`
-- The template includes all sections from the full story template but each section
-  that has not been fully populated is marked with a visible draft indicator
-  (e.g., `<!-- DRAFT: This section requires enrichment via create-story -->`)
+- The template includes all sections from the full story template
+- Every section that has not been fully populated MUST contain an explicit draft
+  marker that states this section is a draft and must be rewritten during the
+  create-story phase. The marker must be unambiguous — both an HTML comment
+  (e.g., `<!-- DRAFT: This section is a stub. It MUST be rewritten by create-story
+  before development. -->`) and visible inline text (e.g., `_DRAFT — requires
+  rewrite via create-story before this story is dev-ready._`)
+- The only sections that are NOT marked as drafts are: story key/slug, title, and
+  the initial description/user story captured by intake
+- Sections that MUST be marked as draft: Acceptance Criteria (rough ACs from
+  conversation are explicitly labeled as draft needing refinement), Dev Notes,
+  architecture compliance, testing requirements, implementation guide, Tasks/Subtasks,
+  Dev Agent Record
 - The status in the stub is set to `backlog` (NOT `ready-for-dev`)
-- Sections populated by intake: title, user story, description, rough ACs, pain
-  context
-- Sections marked as draft/empty: Dev Notes, architecture compliance, testing
-  requirements, implementation guide, Dev Agent Record
-- A dev agent reading this file should immediately recognize it is not ready for
-  implementation
+- A create-story agent reading this file should have zero confusion about which
+  sections need to be rewritten and which are already finalized
 
-### AC4: Index Entry Written
+### AC4: Index Entry Written with Epic Assignment
 
 - The skill adds an entry to `stories/index.json` via momentum-tools CLI with:
   - status: `backlog`
   - title: from captured context
-  - epic_slug: from suggested epic (or a default like `uncategorized` if not provided)
+  - epic_slug: assigned to an epic (required, not optional)
   - story_file: `true`
   - priority: from suggested priority (or `low` if not provided)
   - depends_on: `[]` (intake doesn't analyze dependencies)
   - touches: `[]` (intake doesn't analyze file scope)
+- Epic assignment is part of the intake workflow — the skill must determine which
+  epic the story belongs to, either from the user's suggestion or by reading
+  the epic list from epics.md/stories/index.json and recommending the best fit
+- If the epic cannot be determined, the skill asks the user rather than defaulting
+  to a placeholder
 
 ### AC5: Slug Generation
 
