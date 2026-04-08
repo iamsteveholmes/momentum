@@ -683,5 +683,13 @@
       "completed": "2026-04-07",
       "retro_run_at": "2026-04-07"
     }
+  ],
+  "quickfixes": [
+    {
+      "slug": "quickfix-2026-04-07",
+      "story": "refine-skill-rewrite",
+      "started": "2026-04-07",
+      "completed": "2026-04-07"
+    }
   ]
 }

@@ -63,6 +63,12 @@ skills/tea-agent-testarch
 # Quality analysis reports (regenerable output, findings captured as stories)
 _bmad-output/reports/
 
+# Retro audit extracts (regenerable from conversation logs)
+_bmad-output/implementation-artifacts/sprints/*/audit-extracts/
+
+# Python bytecode
+__pycache__/
+
 # BMAD session memory (local/ephemeral)
 # (kept for clarity even though _bmad/ is now fully ignored)
 _bmad/_memory/
