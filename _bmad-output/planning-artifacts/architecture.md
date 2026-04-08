@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-07'
+lastEdited: '2026-04-08'
 editHistory:
+  - date: '2026-04-08'
+    changes: 'Sprint-2026-04-08 spec impact: Removed agent journal write infrastructure (momentum-tools log, sprint-log writes, SubagentStart/SubagentStop hooks) per ARCH-5 — DuckDB transcript audit (Decision 27) is now the sole evidence source for retrospectives. Updated Decision 24 to historical status. Removed sprint-logs from Installed Structure tree, momentum-tools log from Read/Write Authority, sprint-logs write references from Impetus and momentum:dev rows. Removed SubagentStart/SubagentStop from Hook Infrastructure subsystem and hook event names. Updated Decision 39 per ARCH-7: momentum:dev is internal-only (not user-invocable from Impetus), quick-fix Phase 4 includes code review via momentum:code-reviewer, worktree cleanup deferred until quality gates pass. Updated Skills Deployment Classification for dev. Extended Decision 30 with spec-quality feedback loop (ARCH-9): E2E Validator findings tagged spec-quality are surfaced in dedicated retro section. Added spec quality pre-check gate to Decision 29 Step 4 (Gherkin generation). Expanded refine Read/Write Authority per ARCH-4: added assessments/*.md and decisions/*.md to reads.'
   - date: '2026-04-07'
     changes: 'Backlog refinement architecture updates: Added momentum:quick-fix to Skills Deployment Classification table (flat skill, bypass-sprint lifecycle path per Decision 39). Added momentum:research to Skills Deployment Classification table (flat skill, deep research pipeline with parallel subagents). Marked momentum:status as planned/unimplemented in Skills Deployment Classification table (not yet implemented; status display currently handled by momentum-tools CLI and Impetus greeting). Added quick-fix, research, and status entries to Repository Structure, Installed Structure tree, and Requirements to Structure Mapping table. Verified momentum:dev pure executor documentation (D2), momentum-dev-auto subsumption documentation (D3), and sprint-manager replacement by momentum-tools.py CLI (D4) — all accurate, no changes needed.'
   - date: '2026-04-07'
@@ -87,7 +89,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 2. **Provenance Infrastructure** — `derives_from` frontmatter (downstream-only authoring), content hash staleness detection, suspect link flagging (pull-based), auto-generated `referenced_by`, Chain of Evidences prompting, Citations API integration for mechanical grounding.
 
-3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, PreToolUse plan audit gate (ExitPlanMode), Stop conditional quality gate, SubagentStart/SubagentStop observability hooks (agent lifecycle logging to sprint-logs). Two hook deployment mechanisms: (1) **Always-on hooks** — defined in `hooks/hooks.json` at the plugin root; delivered automatically by the plugin install mechanism; these fire on every matching tool event in every session regardless of which skill is active. (2) **Skill-lifecycle hooks** — defined in SKILL.md `hooks:` frontmatter; scoped to the skill's lifetime; only fire while that skill is active; automatically cleaned up when the skill completes. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
+3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, PreToolUse plan audit gate (ExitPlanMode), Stop conditional quality gate. Two hook deployment mechanisms: (1) **Always-on hooks** — defined in `hooks/hooks.json` at the plugin root; delivered automatically by the plugin install mechanism; these fire on every matching tool event in every session regardless of which skill is active. (2) **Skill-lifecycle hooks** — defined in SKILL.md `hooks:` frontmatter; scoped to the skill's lifetime; only fire while that skill is active; automatically cleaned up when the skill completes. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
 
 4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `references/rules/` at the plugin root. The plugin install mechanism does not write to `~/.claude/rules/` or `.claude/rules/` directly — Impetus writes rules to both targets on first `/momentum:impetus` invocation using the Write tool. No separate setup step.
 
@@ -178,7 +180,8 @@ The defining question for each component: *does this need main-context persona p
 | Sprint planning | Flat skill (`/momentum:sprint-planning`) | Multi-step workflow needing main context; invoked by Impetus or directly |
 | Sprint dev | Flat skill (`/momentum:sprint-dev`) | Dependency-driven execution needing main context; invoked by Impetus or directly |
 | AVFL | Flat skill (`/momentum:avfl`) | Must orchestrate parallel spawning from main context |
-| upstream-fix, create-story, dev, retro, plan-audit | Flat skills | Stateful workflows needing main context |
+| upstream-fix, create-story, retro, plan-audit | Flat skills | Stateful workflows needing main context |
+| dev | Flat skill (`/momentum:dev`) — internal-only | Pure story executor; called by sprint-dev and quick-fix, not user-invocable from Impetus (Decision 39) |
 | quick-fix | Flat skill (`/momentum:quick-fix`) | Single-story bypass-sprint lifecycle path (Decision 39); register, execute, validate, complete in one session |
 | research | Flat skill (`/momentum:research`) | Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking |
 | status | Flat skill (`/momentum:status`) — planned, not yet implemented | Sprint/story status display; currently handled by momentum-tools CLI and Impetus greeting |
@@ -740,7 +743,7 @@ Same namespace as flat skills — distinguished by `context: fork` in SKILL.md f
 ```
 
 **Hook event names:** Use standard Claude Code lifecycle events verbatim:
-`PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`, `UserPromptSubmit`, `SubagentStart`, `SubagentStop`
+`PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`, `UserPromptSubmit`
 
 **Findings pattern tags:** kebab-case noun phrases:
 `direct-db-access`, `missing-provenance`, `test-modification`, `pattern-drift`, `cognitive-debt`
@@ -1087,11 +1090,7 @@ momentum/                                    ← Plugin root
         ├── journal-view.md                   ← Human-readable view (auto-generated)
         ├── installed.json                   ← Install/upgrade state (version + per-component hashes)
         ├── session-modified-files.txt       ← Ephemeral: PostToolUse writes, Stop reads + deletes (Decision 1e)
-        ├── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
-        └── sprint-logs/                     ← Agent logging (Decision 24, runtime, gitignored)
-            └── {sprint-slug}/
-                ├── impetus.jsonl            ← Impetus orchestration log
-                └── dev-{story-slug}.jsonl   ← Per-story agent logs
+        └── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
 ```
 
 ---
@@ -1100,17 +1099,16 @@ momentum/                                    ← Plugin root
 
 **Read/Write Authority:**
 
-<!-- REVISED Phase 3: Updated Impetus, momentum:dev, momentum:create-story rows; replaced momentum:sprint-manager subagent with momentum-tools CLI; added momentum-tools log, sprint-planning workflow, sprint-dev workflow rows. sprint-status.yaml references replaced with stories/index.json and sprints/index.json. -->
+<!-- REVISED Phase 3: Updated Impetus, momentum:dev, momentum:create-story rows; replaced momentum:sprint-manager subagent with momentum-tools CLI; added sprint-planning workflow, sprint-dev workflow rows. sprint-status.yaml references replaced with stories/index.json and sprints/index.json. momentum-tools log row removed 2026-04-08 (Decision 24 historical). -->
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | stories/index.json, sprints/index.json, journal.jsonl, specs, findings-ledger.jsonl, sprint-logs/{sprint-slug}/, gate-findings.txt | journal.jsonl, journal-view.md, sprint-logs (via momentum-tools log) |
+| Impetus | stories/index.json, sprints/index.json, journal.jsonl, specs, findings-ledger.jsonl, gate-findings.txt | journal.jsonl, journal-view.md |
 | momentum-tools sprint | stories/index.json, sprints/index.json | stories/index.json (status fields), sprints/index.json, sprints/{slug}.json (sole writer) |
 | momentum-tools quickfix | sprints/index.json | sprints/index.json (register: adds quick-fix entry; complete: marks done) |
-| momentum:dev | Story files, code | Code in worktree only; sprint-logs (via momentum-tools log, best-effort); structured JSON completion output |
+| momentum:dev | Story files, code | Code in worktree only; structured JSON completion output |
 | momentum:create-story | stories/index.json, epics.md | Story files in _bmad-output/implementation-artifacts/ |
-| momentum-tools log | (none — write-only append) | .claude/momentum/sprint-logs/{sprint-slug}/*.jsonl (sole writer per agent file) |
-| momentum:refine | prd.md, architecture.md, stories/index.json, story files | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); stories/index.json mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
+| momentum:refine | prd.md, architecture.md, stories/index.json, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); stories/index.json mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
 | momentum:sprint-planning | stories/index.json, sprints/index.json, story files | sprints/{sprint-slug}/specs/*.feature (Gherkin specs); sprint record team composition (via momentum-tools sprint) |
 | momentum:sprint-dev | sprints/index.json (active sprint, team, deps), stories/index.json, sprints/{sprint-slug}/specs/*.feature | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete) |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
@@ -1444,7 +1442,7 @@ Sprint planning is a dedicated skill (`/momentum:sprint-planning`) with 8 steps.
 1. **Backlog presentation (Synthesis-First)** — Read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read `stories/index.json`, group by epic, exclude terminal states. Within each epic group, sort by priority (critical > high > medium > low), then by dependency depth, then alphabetical. Run a staleness check: for each story with status `ready-for-dev` or `in-progress`, check `git log` for commits touching the story's `touches` paths — if substantial implementation commits exist, flag the story as potentially already implemented and exclude it from recommendations (surface in a separate "Potentially stale" section with evidence). Lead with a synthesis section: 3-5 prioritized recommendations with brief rationale for each, informed by the master plan's current priorities, dependency readiness, and backlog state. Present the full backlog below the recommendations as secondary reference material. If master plan documents are missing, fall back to the current behavior (sorted backlog) with a warning.
 2. **Story selection** — developer selects 3-8 stories, register via momentum-tools sprint plan
 3. **Story fleshing-out** — spawn `/momentum:create-story` for each stub; developer approves each
-4. **Gherkin spec generation** — write detailed `.feature` files to `sprints/{sprint-slug}/specs/`; story files retain plain English ACs only (Decision 30)
+4. **Gherkin spec generation** — write detailed `.feature` files to `sprints/{sprint-slug}/specs/`; story files retain plain English ACs only (Decision 30). After generation, a **spec quality pre-check gate** validates each `.feature` file: checks structural validity (valid Gherkin syntax, proper Given/When/Then flow), outsider-test compliance (scenarios testable without implementation knowledge), and template conformance (consistent tagging, background usage, scenario outline patterns). Specs that fail the pre-check are revised before dev agents spawn — catching spec-quality issues early avoids downstream E2E Validator findings that trace back to ambiguous specifications.
 5. **Execution plan and team composition** — analyze stories to determine agent roles, project guidelines, dependency graph, and execution waves (Decision 26: two-layer agent model). Validate the planned `team` object against workflow-declared required roles (Decision 41: Team Composition Declarations) — if a required role is missing from the plan, surface the gap before activation.
 6. **AVFL validation** — single AVFL pass on the complete sprint plan (all stories together, not per-story — Decision 31)
 7. **Developer review** — present full plan for approval; developer can request adjustments
@@ -1469,7 +1467,7 @@ Wave assignments in the sprint record are informational (planning visualization)
 ### Two-Layer Agent Model (Decision 26)
 
 Momentum provides generic agent roles with orchestration patterns:
-- **Dev** — implements stories in worktrees, logs decisions via momentum-tools log
+- **Dev** — implements stories in worktrees
 - **QA** — reviews code against acceptance criteria
 - **E2E Validator** — validates end-to-end behavior against Gherkin specs
 - **Architect Guard** — checks pattern drift against architecture decisions
@@ -1510,16 +1508,16 @@ sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked 
 - Build dependency graph from story `depends_on` fields
 - Initialize spawn registry as an empty map — tracks every agent spawned during this session, keyed by `{story_slug}::{role}` (e.g., `refine-skill::dev`, `sprint::qa-reviewer`). The registry survives the Phase 2 → Phase 3 → Phase 2 loop; it is never reset between phases and is not persisted to disk.
 - Create a task per story via TaskCreate for progress tracking
-- Log sprint start via momentum-tools log
+- Log sprint start
 
 <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint phases — this prevents context drift in long runs. Every phase entry updates the corresponding task to in_progress; every phase exit updates to completed. Ad-hoc narrative summaries are not a substitute for tool-queryable task state.</critical>
 
 **Phase 2: Team Spawn**
 - Identify unblocked stories
 - Transition each to `in-progress` via `momentum-tools sprint status-transition`
-- Before spawning any agent, check the spawn registry for an existing `{story_slug}::{role}` entry. If the entry exists, skip the spawn and log the suppressed duplicate via `momentum-tools log` with event type `decision`. If no entry exists, spawn the agent and register the `{story_slug}::{role}` tuple.
+- Before spawning any agent, check the spawn registry for an existing `{story_slug}::{role}` entry. If the entry exists, skip the spawn (suppressed duplicate). If no entry exists, spawn the agent and register the `{story_slug}::{role}` tuple.
 - Within the team, execute the first unblocked story sequentially; subsequent unblocked stories execute one at a time after each commit-as-sync-point (see Agent Teams model). Parallel execution of independent stories requires separate terminal sessions, not within a single team session.
-- Each agent logs all activity via momentum-tools log
+- Each agent produces structured completion output
 
 **Phase 3: Progress Tracking Loop**
 - Monitor spawned agents via task status
@@ -1599,7 +1597,7 @@ momentum:dev is a pure executor: worktree setup, bmad-dev-story invocation, agen
 - Apply DoD supplement (moved to sprint-level verification)
 - Offer code review (orthogonal concern managed by caller)
 
-momentum:dev emits structured JSON completion output that sprint-dev parses: status, files modified, test results. All decisions are logged via `momentum-tools log` with best-effort execution (logging failures do not block development).
+momentum:dev emits structured JSON completion output that sprint-dev parses: status, files modified, test results.
 
 **Note:** The pre-Phase-3 `momentum-dev-auto` variant (background-safe, no ask gates) is subsumed by this simplified momentum:dev. With AVFL, status transitions, DoD, and code review removed, momentum:dev itself is now a pure executor suitable for both interactive and background execution.
 
@@ -1636,67 +1634,14 @@ After each epic, the retro skill writes structured entries to `triage-inbox.md`.
 
 ---
 
-### Agent Logging Infrastructure (Decision 24)
+### Agent Logging Infrastructure (Decision 24) — Historical
 
 <!-- Added Phase 3: Agent logging as foundational infrastructure for retrospectives and observability. -->
+<!-- Updated 2026-04-08: Agent journal write infrastructure removed. DuckDB transcript audit (Decision 27) is now the sole evidence source. -->
 
-Every agent in the system records structured JSONL logs via the `momentum-tools log` CLI. Agent logs are the primary input for retrospective workflows — they provide the evidence trail of decisions, errors, and assumptions made during sprint execution.
+> _[Updated 2026-04-08: The agent journal write infrastructure — `momentum-tools log` CLI, sprint-log directory writes, SubagentStart/SubagentStop hooks — has been removed as of sprint-2026-04-08. Sprint-2026-04-06 retro demonstrated that DuckDB transcript audit (Decision 27) produces an order of magnitude more signal than milestone logs (246 user messages + 97 subagents + 806 tool events vs. 2 findings from 24 log events). The transcript audit pipeline is now the sole evidence source for retrospectives. No agent in the system writes structured JSONL logs. The `momentum-tools log` CLI subcommand, sprint-logs directory, and SubagentStart/SubagentStop hooks are all removed.]_
 
-**Storage location:** `.claude/momentum/sprint-logs/{sprint-slug}/`
-
-**File naming:**
-- `{agent-role}.jsonl` — orchestration-level logs (e.g., `impetus.jsonl`)
-- `{agent-role}-{story-slug}.jsonl` — per-story agent logs (e.g., `dev-agent-logging-tool.jsonl`)
-
-**JSONL entry schema:**
-```json
-{"timestamp": "2026-04-02T14:30:00.123456", "agent": "momentum:dev", "story": "agent-logging-tool", "event": "decision", "detail": "Chose worktree-based isolation for concurrent story execution"}
-```
-
-**Event type vocabulary (8 types, no others):**
-
-| Event | When to use |
-|---|---|
-| `decision` | Agent chose between alternatives — record the choice and why |
-| `error` | Something failed — record what and context |
-| `retry` | Agent is retrying an operation — record attempt number and reason |
-| `assumption` | Agent assumed something not explicitly stated — record what |
-| `finding` | Agent discovered something noteworthy — record observation |
-| `ambiguity` | Agent encountered unclear input — record what was unclear |
-| `subagent-start` | Subagent was spawned — captured automatically by SubagentStart hook or written programmatically |
-| `subagent-stop` | Subagent completed — captured automatically by SubagentStop hook or written programmatically |
-
-> _[Extended 2026-04-06: `subagent-start` and `subagent-stop` event types added for hook-based observability. See Hook-Based Observability section below.]_
-
-**Hook-Based Observability (SubagentStart / SubagentStop)**
-
-Claude Code `SubagentStart` and `SubagentStop` lifecycle hooks fire in the main session whenever a subagent is spawned or completes. These hooks automatically capture every subagent lifecycle event without any agent needing to remember to log.
-
-**SubagentStart hook** — registered in `hooks/hooks.json`. Fires when a subagent is spawned. Captures: subagent name/type, session ID, timestamp. Writes a `subagent-start` JSONL entry to the sprint log directory.
-
-**SubagentStop hook** — registered in `hooks/hooks.json`. Fires when a subagent completes. Captures: subagent name/type, session ID, `agent_transcript_path`, `last_assistant_message` (truncated to 500 characters maximum), duration (if calculable from start/stop timestamps). Writes a `subagent-stop` JSONL entry to the sprint log directory. The `detail` field contains a JSON-encoded object with hook-provided metadata (session_id, transcript_path, last_message_summary).
-
-**Hook script constraints:**
-- Shell scripts (`bash`), not Python — fast startup, no heavy imports
-- Silent failure: if the sprint slug cannot be determined (no active sprint), events are written to the `_unsorted` log directory. If the script fails for any reason, it exits silently (exit code 0) so it never blocks agent work.
-- Each hook must complete within 5 seconds (configured timeout). No large file reads, no network calls.
-- `last_assistant_message` truncated to 500 characters — full transcript remains available at `agent_transcript_path` for deeper analysis.
-- Log files follow the existing naming convention: `{agent-name}.jsonl` within `.claude/momentum/sprint-logs/{sprint-slug}/`. A dedicated `hooks-observability.jsonl` file is used if the subagent name cannot be reliably determined at hook time.
-
-**Retro compatibility:** These events use the same JSONL schema as existing `momentum-tools log` entries (`{timestamp, agent, story, sprint, event, detail}`). The retro skill's log collection phase reads them without modification — they appear in the same log directory alongside manually-written milestone logs.
-
-**Write authority model:** Each agent file has exclusive write authority by the agent that created it. Append-only — no reads or modifications by any agent. The `momentum-tools log` CLI is the sole write interface for programmatic logging. Hook scripts append directly to log files for observability events.
-
-**CLI interface:**
-```
-momentum-tools log --agent <role> --story <slug> --sprint <slug> --event <type> --detail "..."
-```
-
-**Runtime characteristics:**
-- Sprint-logs are runtime artifacts, not committed to version control (gitignored)
-- Directory structure is created automatically on first write
-- Log calls are best-effort from momentum:dev — logging failures do not block development
-- Sprint-logs are supplementary input for the retro workflow (Decision 27: Transcript Audit Retro). The primary retro data source is raw session JSONL transcripts via DuckDB preprocessing; milestone logs provide additional context alongside hook-captured observability events.
+This section is retained for historical context. The original design called for per-agent JSONL logging via `momentum-tools log` with exclusive write authority per agent file, 8 event types, and hook-based observability via SubagentStart/SubagentStop lifecycle hooks. In practice, the overhead of manual milestone logging produced sparse, low-signal data compared to the comprehensive evidence available in raw session transcripts via DuckDB preprocessing (Decision 27).
 
 ### Gherkin Specification Separation (Decision 30)
 
@@ -1709,10 +1654,12 @@ Story files and Gherkin specs are deliberately separated to enforce black-box va
 
 **Key constraints:**
 - Gherkin specs are written during sprint planning (Step 4), before any code exists
+- A spec quality pre-check gate runs after generation (Step 4): validates structure, outsider-test compliance, and template conformance before dev agents spawn
 - Dev agents NEVER access `sprints/{sprint-slug}/specs/` — this is a protection boundary
 - Gherkin is NEVER written back to story files
 - Specs are validated post-implementation by different agents than those who wrote the code
 - This separation enables true black-box behavioral validation
+- E2E Validator findings about untestable scenarios are tagged `spec-quality` and surfaced in a dedicated retro section (see Decision 30 spec-quality feedback loop)
 
 ---
 
@@ -1720,8 +1667,8 @@ Story files and Gherkin specs are deliberately separated to enforce black-box va
 
 <!-- Added Phase 3: Decisions from the Phase 3 plan that govern sprint execution, agent logging, and team model. -->
 
-**Decision 24 — Agent Logging as Foundational Infrastructure (Extended 2026-04-06: Hook-Based Observability)**
-Every agent writes JSONL logs via `momentum-tools log`. Logs are supplementary input for retrospectives (primary data source is raw session JSONL transcripts via DuckDB — see Decision 27). Per-agent exclusive write authority. Storage: `.claude/momentum/sprint-logs/{sprint-slug}/`. Event type vocabulary extended to 8 types: the original 6 (`decision`, `error`, `retry`, `assumption`, `finding`, `ambiguity`) plus `subagent-start` and `subagent-stop` captured automatically by SubagentStart/SubagentStop hooks in `hooks/hooks.json`. Hook scripts are shell-based, silent-failure, with 500-character message truncation. See Agent Logging Infrastructure section for full specification.
+**Decision 24 — Agent Logging Infrastructure (Historical — Removed 2026-04-08)**
+The agent journal write infrastructure (`momentum-tools log` CLI, sprint-log directory writes, SubagentStart/SubagentStop hooks) has been removed as of sprint-2026-04-08. DuckDB transcript audit (Decision 27) is now the sole evidence source for retrospectives. Raw session JSONL transcripts provide comprehensive coverage (user messages, subagent events, tool calls) that milestone logs could not match. See Agent Logging Infrastructure (Historical) section for original design context.
 
 **Decision 25 — Teams Over Waves**
 Dependency-driven concurrency replaces rigid wave tiers. The sprint-dev skill (`/momentum:sprint-dev`) spawns agents for unblocked stories and spawns more as dependencies complete. Wave assignments in sprint records are informational for planning visualization — execution order is determined by dependency resolution at runtime. See Dependency-Driven Execution section.
@@ -1775,8 +1722,10 @@ Sprint planning (`/momentum:sprint-planning`) encompasses story selection, creat
 
 Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. If master plan documents are missing, fall back to sorted backlog with a warning.
 
-**Decision 30 — Gherkin Separation**
+**Decision 30 — Gherkin Separation (Extended 2026-04-08: Spec-Quality Feedback Loop)**
 Story files retain plain English ACs (dev sees intent). Sprint-scoped specs directory holds detailed Gherkin `.feature` files (verifiers only). Black-box behavioral validation: specs written pre-implementation, validated post-implementation, by different agents. See Gherkin Specification Separation section.
+
+**Spec-quality feedback loop:** When E2E Validator encounters untestable Gherkin scenarios (ambiguous steps, missing preconditions, implementation-coupled assertions), findings are tagged with `spec-quality` metadata. These findings are surfaced in a dedicated "Spec Quality" section of the retrospective output, separate from implementation findings. This closes the loop between validation and specification: spec authoring issues are traced back to the sprint planning Gherkin generation step (Decision 29, Step 4) rather than treated as implementation failures.
 
 **Decision 31 — AVFL at Sprint Level**
 AVFL validates the complete sprint plan during planning (all stories together). AVFL runs once after ALL stories merge during sprint execution (not per-story). Per-story AVFL is removed from `momentum:create-story` and `momentum:dev`. This catches cross-story integration issues that per-story AVFL would miss. See Agent Pool Governance section. Phase 4 runs AVFL in scan profile (Decision 34) — discovery only, no fix loop. Findings are handed to the hybrid Agent Team.
@@ -1918,7 +1867,7 @@ The Impetus voice — Optimus Prime's gravitas blended with KITT's loyalty — i
 
 **Traceability:** Formalization of the voice identity established in the greeting redesign v8 mockup. Supersedes the earlier "KITT-like servant-partner" description in Decision 3d — the voice has evolved from competent-and-dry-witted to gravitas-and-earned-emotion. Decision 3d's Impetus Identity subsection is updated to reflect this.
 
-**Decision 39 — Quick-Fix Bypass-Sprint Lifecycle Path (2026-04-04)**
+**Decision 39 — Quick-Fix Bypass-Sprint Lifecycle Path (2026-04-04, Extended 2026-04-08)**
 
 Quick-fix introduces a third execution path alongside epic orchestration and sprint orchestration. It is a bypass-sprint lifecycle path: single story from prompt → lightweight 4-phase workflow → `sprints/index.json` registration without activate/complete lifecycle states. The quick-fix path does not create a sprint, does not require sprint planning, and does not use the `planning → ready → active → done → completed` state machine (Decision 36). Instead, `momentum-tools quickfix register` writes a quick-fix entry directly to `sprints/index.json` and `momentum-tools quickfix complete` marks it done.
 
@@ -1929,6 +1878,12 @@ Quick-fix introduces a third execution path alongside epic orchestration and spr
 | Epic orchestration | Multi-sprint program | Full epic/sprint lifecycle | `/momentum:impetus` → sprint planning |
 | Sprint orchestration | Single sprint, multiple stories | Decision 36 state machine | `/momentum:sprint-planning` → `/momentum:sprint-dev` |
 | Quick-fix | Single story, single session | Register → execute → validate → complete | `/momentum:quick-fix` |
+
+**momentum:dev is internal-only:** momentum:dev is called by sprint-dev and quick-fix as a story executor — it is not user-invocable from Impetus menus or directly by the developer. It has no standalone entry point; it always runs within the context of a calling workflow (sprint-dev or quick-fix).
+
+**Quick-fix Phase 4 code review:** Quick-fix Phase 4 includes code review via `momentum:code-reviewer` between the AVFL scan and team validation. This ensures single-story fixes receive the same adversarial code review applied to sprint stories, without requiring the full sprint Team Review process.
+
+**Worktree cleanup timing:** Worktree cleanup is deferred until all quality gates pass in the calling workflow. The worktree remains available during AVFL, code review, and team validation phases so that fix agents can apply corrections without re-creating the worktree. Cleanup occurs only after the calling workflow (sprint-dev or quick-fix) confirms all gates are satisfied.
 
 **Traceability:** Quick-fix stories are registered in `sprints/index.json` for audit trail and retrospective input. They bypass sprint lifecycle but not traceability.
 
