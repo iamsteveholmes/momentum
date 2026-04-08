@@ -1556,5 +1556,19 @@
       "_bmad-output/implementation-artifacts/stories/refine-skill.md"
     ],
     "priority": "high"
+  },
+  "refine-reprioritization": {
+    "status": "ready-for-dev",
+    "title": "Refine Reprioritization \u2014 Add Priority Change Phase to Backlog Refinement",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [
+      "refine-skill-rewrite"
+    ],
+    "touches": [
+      "skills/momentum/skills/refine/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
   }
 }
