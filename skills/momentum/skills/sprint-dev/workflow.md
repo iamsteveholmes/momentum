@@ -659,12 +659,10 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
 
 **Follow-up items:** {{followup_count}} stories added to backlog
 
-**Agent logs:** `.claude/momentum/sprint-logs/{{sprint_slug}}/`
-
 Sprint branch `sprint/{{sprint_slug}}` merged to main. Push when ready.
 
 ---
-Run **retrospective** to analyze agent logs and surface practice improvements?</output>
+Run **retrospective** to surface practice improvements?</output>
 
     <ask>Run retrospective now?</ask>
     <action>Update task 7 (Sprint Completion) to completed</action>
