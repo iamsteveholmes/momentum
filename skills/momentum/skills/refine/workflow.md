@@ -29,9 +29,10 @@ changes via momentum-tools CLI.
       5. Epic grooming delegation
       6. Stale-story evaluation
       7. Re-prioritization analysis and conversation
-      8. Consolidated findings with batch approval
-      9. Apply approved changes
-      10. Summary
+      8. Assessment &amp; decision review
+      9. Consolidated findings with batch approval
+      10. Apply approved changes
+      11. Summary
     </action>
   </step>
 
@@ -300,19 +301,92 @@ Stale story evaluations — {{count}} candidates:
     </check>
   </step>
 
-  <step n="8" goal="Consolidated findings with batch approval">
+  <step n="8" goal="Assessment and decision review">
+    <action>Glob `{planning_artifacts}/assessments/*.md` to find all ASR documents.
+    For each ASR with status "current":
+      · Parse frontmatter: id, title, date, decisions_produced
+      · Compute age = today minus date in days
+      · Flag as potentially stale if age > 30 days
+      · Flag as unacted-on if decisions_produced is empty or []
+      · Read the "Recommended Next Steps" section of the ASR
+      · For each next step: check whether an SDR exists that references this ASR id
+        (via source_research) OR a story in stories/index.json addresses it by
+        searching story titles and descriptions for keyword overlap
+      · Flag next steps with no SDR coverage and no backlog story as unresolved
+    </action>
+
+    <action>Glob `{planning_artifacts}/decisions/*.md` to find all SDR documents.
+    Read `{implementation_artifacts}/stories/index.json` (use offset/limit if large).
+    For each SDR:
+      · Parse frontmatter: id, title, date, status, stories_affected
+      · For each slug in stories_affected: check whether it exists in stories/index.json
+      · Flag missing slugs with: SDR id, decision title, missing story slug
+      · If a "Phased Implementation Plan" table exists, extract "Key Stories" column
+        slugs and check each against stories/index.json — flag gaps
+      · If a "Decision Gates" section exists, for each gate:
+        - Parse gate timing condition (e.g., "Phase 1 done")
+        - Identify the stories associated with that phase (from Phased Implementation
+          Plan or stories_affected)
+        - Check if all those stories are status "done" in stories/index.json
+        - If all gate-associated stories are done, flag gate as ready for review
+          with gate criteria quoted verbatim
+    </action>
+
+    <action>Collect all findings into {{assessment_decision_findings}}:
+      · Assessment staleness findings: {type: "stale-assessment", asr_id, title,
+        date, age_days, has_decisions: bool}
+      · Unacted-on assessment findings: {type: "unacted-assessment", asr_id, title,
+        date, decisions_produced: []}
+      · Unresolved next steps: {type: "unresolved-next-step", asr_id, next_step_text}
+      · Missing story from SDR: {type: "missing-story", sdr_id, decision_title,
+        missing_slug}
+      · Decision gate ready: {type: "gate-ready", sdr_id, gate_name, timing,
+        criteria_text}
+    </action>
+
+    <check if="no assessment or decision files found">
+      <output>✓ No assessments or decisions found — skipping assessment &amp; decision review.</output>
+      <action>Store {{assessment_decision_findings}} = empty list</action>
+    </check>
+
+    <check if="assessments and decisions exist but no findings">
+      <output>✓ Assessments and decisions look healthy — no staleness, coverage gaps, or ready gates detected.</output>
+      <action>Store {{assessment_decision_findings}} = empty list</action>
+    </check>
+
+    <check if="findings exist">
+      <output>
+Assessment &amp; decision review — {{count}} findings:
+
+{{if stale or unacted-on assessments:
+[Assessments]
+  {{for each stale: ! [ASR-NNN] title — {{age_days}} days old{{", no decisions produced" if unacted-on}}}}
+  {{for each unresolved next step: · [ASR-NNN] unresolved next step: "{{next_step_text}}"}}
+}}
+
+{{if SDR findings:
+[Decisions]
+  {{for each missing story: · [SDR-NNN] title — missing story: {{missing_slug}}}}
+  {{for each gate: ! [SDR-NNN] gate "{{gate_name}}" appears ready for review — criteria: {{criteria_text}}}}
+}}
+      </output>
+    </check>
+  </step>
+
+  <step n="9" goal="Consolidated findings with batch approval">
     <action>Collect all findings into a single list grouped by category:
       1. Status mismatches (from Step 4)
       2. Epic issues (from Step 5, if epic-grooming ran)
       3. Stale-story evaluations (from Step 6)
       4. Priority changes (from Step 7 — {{priority_recommendations}})
+      5. Assessment &amp; decision review (from Step 8 — {{assessment_decision_findings}})
     Note: planning artifact updates (Steps 2-3) are handled in their own approval
     gate and are NOT re-presented here.
     </action>
 
     <check if="no findings across all categories">
       <output>✓ Backlog is healthy — no issues detected requiring action.</output>
-      <action>Skip to Step 10</action>
+      <action>Skip to Step 11</action>
     </check>
 
     <check if="total findings fewer than 5">
@@ -364,6 +438,13 @@ Findings — {{total_count}} items across {{category_count}} categories:
   {{for each: [N] story-slug — priority: CURRENT → NEW — rationale}}
   → Approve all? (A=all / R=all / pick individually)
 
+[Assessment &amp; decision review] — {{count}} items
+  {{for each stale assessment: [N] [ASR-NNN] title — stale ({{age_days}} days){{", no decisions" if unacted-on}}}}
+  {{for each unresolved next step: [N] [ASR-NNN] unresolved next step — create story or decision}}
+  {{for each missing story: [N] [SDR-NNN] missing story: {{missing_slug}} — create story}}
+  {{for each gate ready: [N] [SDR-NNN] gate "{{gate_name}}" ready for review — criteria: {{criteria_text}}}}
+  → Approve all? (A=all / R=all / pick individually)
+
 Override specific findings? Enter numbers or ranges, or 'done' to proceed.
       </output>
     </check>
@@ -372,7 +453,7 @@ Override specific findings? Enter numbers or ranges, or 'done' to proceed.
     <action>Store {{rejected_count}} = count of rejected findings</action>
   </step>
 
-  <step n="9" goal="Apply approved changes">
+  <step n="10" goal="Apply approved changes">
     <action>Process each finding in {{approved_findings}} by type:
 
     **Status transitions** — for each approved status mismatch:
@@ -387,7 +468,18 @@ Override specific findings? Enter numbers or ranges, or 'done' to proceed.
     **Priority changes** — for each approved priority recommendation (from Step 7):
       Run: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py sprint set-priority --story SLUG --priority LEVEL`
 
-    **New stories from findings** — for any finding that requires creating a new story:
+    **New stories from assessment/decision findings** — for each approved finding
+    of type missing-story or unresolved-next-step:
+      Confirm description, epic, and priority with the developer.
+      Invoke `momentum:create-story` with the approved details.
+      Wait for create-story to complete before moving to the next new story.
+
+    **Decision gate reviews** — for each approved gate-ready finding:
+      Present the gate criteria to the developer and ask them to evaluate and
+      document their decision. Do NOT modify the SDR document automatically.
+
+    **New stories from other findings** — for any other finding that requires
+    creating a new story:
       Confirm description, epic, and priority with the developer.
       Invoke `momentum:create-story` with the approved details.
       Wait for create-story to complete before moving to the next.
@@ -396,7 +488,7 @@ Override specific findings? Enter numbers or ranges, or 'done' to proceed.
     <action>Store {{changes_applied}} = {status_transitions: N, drops: N, epic_moves: N, priority_changes: N, new_stories: N}</action>
   </step>
 
-  <step n="10" goal="Summary">
+  <step n="11" goal="Summary">
     <action>Read `{implementation_artifacts}/stories/index.json` to compute post-refine priority distribution</action>
     <action>Compute {{post}} — count of stories by priority after all changes (keys: critical, high, medium, low)</action>
 

@@ -1,7 +1,7 @@
 ---
 title: Refine Workflow — Assessment & Decision Review Step
 story_key: refine-assessment-decision-review
-status: ready-for-dev
+status: review
 epic_slug: impetus-epic-orchestrator
 depends_on:
   - assessment-skill
@@ -103,22 +103,22 @@ consolidated findings batch approval UX.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-6)
-  - [ ] Create eval verifying assessment staleness detection and decision story
+- [x] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-6)
+  - [x] Create eval verifying assessment staleness detection and decision story
     coverage checking
 
-- [ ] Task 2 — Add assessment & decision review step to workflow.md (AC: 1-4)
-  - [ ] Read all ASR documents, check staleness and decisions_produced
-  - [ ] Read all SDR documents, check story coverage and gate conditions
-  - [ ] Store results as {{assessment_decision_findings}}
+- [x] Task 2 — Add assessment & decision review step to workflow.md (AC: 1-4)
+  - [x] Read all ASR documents, check staleness and decisions_produced
+  - [x] Read all SDR documents, check story coverage and gate conditions
+  - [x] Store results as {{assessment_decision_findings}}
 
-- [ ] Task 3 — Integrate into consolidated findings (AC: 5, 6)
-  - [ ] Add "Assessment & decision review" as a new category in consolidated
+- [x] Task 3 — Integrate into consolidated findings (AC: 5, 6)
+  - [x] Add "Assessment & decision review" as a new category in consolidated
     findings
-  - [ ] Include in batch approval UX
-  - [ ] Update Step 0 task list
+  - [x] Include in batch approval UX
+  - [x] Update Step 0 task list
 
-- [ ] Task 4 — Run eval and verify (AC: 1-6)
+- [x] Task 4 — Run eval and verify (AC: 1-6)
 
 ## Dev Notes
 
@@ -171,8 +171,23 @@ The refine workflow after all stories in this sprint would be:
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None.
 
 ### Completion Notes List
 
+- Added Step 8 "Assessment and decision review" to refine workflow.md between re-prioritization (Step 7) and consolidated findings (now Step 9). Step reads all ASR docs for staleness (>30 days), unacted-on findings (empty decisions_produced), and unresolved next steps. Reads all SDR docs for missing stories from stories_affected, phased plan gaps, and decision gates whose timing conditions appear met. Stores all findings as {{assessment_decision_findings}}.
+- Updated consolidated findings step (now Step 9) to include "Assessment & decision review" as category 5, with batch approval UX (A/M/R per finding, batch operations for 5+).
+- Updated apply step (now Step 10) to handle missing-story and unresolved-next-step findings via momentum:create-story delegation, and gate-ready findings as presentational developer evaluation (no auto-closure).
+- Updated Step 0 task list from 10 to 11 steps to reflect the new step.
+- Renumbered: old Step 8 (consolidated findings) → Step 9, old Step 9 (apply) → Step 10, old Step 10 (summary) → Step 11. Also updated "Skip to Step 11" in consolidated findings no-findings path.
+- Wrote eval file: eval-refine-assessment-decision-review.md with 37 behavioral assertions covering all 6 ACs and read-only constraints.
+- All step 8 actions are read-only (Glob/Read/Grep only). No Edit/Write calls in the review step. Mutations deferred to Step 10. New story creation always delegates to momentum:create-story.
+
 ### File List
+
+- skills/momentum/skills/refine/workflow.md (modified)
+- skills/momentum/skills/refine/evals/eval-refine-assessment-decision-review.md (created)
