@@ -1,6 +1,43 @@
 {
-  "current_version": "1.0.0",
+  "current_version": "1.1.0",
   "versions": {
+    "1.1.0": {
+      "description": "Global hook distribution — move hook scripts to ~/.claude/momentum/hooks/",
+      "actions": [
+        {
+          "action": "add",
+          "group": "hooks",
+          "scope": "global",
+          "source": "references/hooks/stop-gate.sh",
+          "target": "~/.claude/momentum/hooks/stop-gate.sh",
+          "executable": true
+        },
+        {
+          "action": "add",
+          "group": "hooks",
+          "scope": "global",
+          "source": "references/hooks/lint-format.sh",
+          "target": "~/.claude/momentum/hooks/lint-format.sh",
+          "executable": true
+        },
+        {
+          "action": "add",
+          "group": "hooks",
+          "scope": "global",
+          "source": "references/hooks/file-protection.sh",
+          "target": "~/.claude/momentum/hooks/file-protection.sh",
+          "executable": true
+        },
+        {
+          "action": "migration",
+          "group": "hooks",
+          "scope": "project",
+          "source": "references/migrations/1.1.0-hooks-global.md",
+          "description": "Update hook commands in .claude/settings.json to use global path with project-local override",
+          "requires_restart": true
+        }
+      ]
+    },
     "1.0.0": {
       "description": "Initial release — repository structure established",
       "actions": [

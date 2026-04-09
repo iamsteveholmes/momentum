@@ -1,7 +1,7 @@
 ---
 title: Hooks Global Distribution — Move Hook Scripts to Global Path
 story_key: hooks-global-distribution
-status: ready-for-dev
+status: review
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -79,21 +79,21 @@ reference that global path. The plugin install process should place them there.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Update hooks-config.json to use global path (AC: 2)
-  - [ ] Change `${CLAUDE_PROJECT_DIR}/.claude/momentum/hooks/` to global path
-  - [ ] Determine correct global path pattern (`~/.claude/momentum/hooks/` or plugin path)
+- [x] Task 1 — Update hooks-config.json to use global path (AC: 2)
+  - [x] Change `${CLAUDE_PROJECT_DIR}/.claude/momentum/hooks/` to global path
+  - [x] Determine correct global path pattern (`~/.claude/momentum/hooks/` or plugin path)
 
-- [ ] Task 2 — Update install/upgrade to distribute scripts globally (AC: 1, 4)
-  - [ ] Add upgrade action in momentum-versions.json to copy scripts to global path
-  - [ ] Ensure scripts have execute permission
+- [x] Task 2 — Update install/upgrade to distribute scripts globally (AC: 1, 4)
+  - [x] Add upgrade action in momentum-versions.json to copy scripts to global path
+  - [x] Ensure scripts have execute permission
 
-- [ ] Task 3 — Add project-local override support (AC: 5)
-  - [ ] Wrapper pattern: check project-local first, fall back to global
-  - [ ] Or: hook command itself checks for local override before running global
+- [x] Task 3 — Add project-local override support (AC: 5)
+  - [x] Wrapper pattern: check project-local first, fall back to global
+  - [x] Or: hook command itself checks for local override before running global
 
-- [ ] Task 4 — Verify no errors in non-Momentum projects (AC: 3)
-  - [ ] Test in a project without `.claude/momentum/` directory
-  - [ ] Confirm silent exit (exit 0) with no error output
+- [x] Task 4 — Verify no errors in non-Momentum projects (AC: 3)
+  - [x] Test in a project without `.claude/momentum/` directory
+  - [x] Confirm silent exit (exit 0) with no error output
 
 ## Dev Notes
 
@@ -141,8 +141,23 @@ Or the scripts themselves could check for a project-local override at the top.
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — implementation was straightforward.
 
 ### Completion Notes List
 
+- hooks-config.json updated: replaced project-local paths with wrapper commands that check project-local first, then fall back to `~/.claude/momentum/hooks/`. If neither exists, hook exits silently (exit 0).
+- momentum-versions.json bumped to 1.1.0 with three global `add` actions (scope: global) to install hook scripts to `~/.claude/momentum/hooks/` with execute permission, plus a migration action referencing 1.1.0-hooks-global.md.
+- Created migrations/1.1.0-hooks-global.md: instructions to update existing Momentum hook entries in `.claude/settings.json` to the new wrapper command format.
+- Hook scripts themselves are unchanged — same functionality, new distribution path.
+- Project-local override pattern implemented via wrapper: `$CLAUDE_PROJECT_DIR/.claude/momentum/hooks/<script>` takes precedence over `$HOME/.claude/momentum/hooks/<script>`.
+- Existing project-local copies continue to work during transition (they take priority in the wrapper).
+
 ### File List
+
+- skills/momentum/references/hooks-config.json (modified)
+- skills/momentum/references/momentum-versions.json (modified)
+- skills/momentum/references/migrations/1.1.0-hooks-global.md (created)
