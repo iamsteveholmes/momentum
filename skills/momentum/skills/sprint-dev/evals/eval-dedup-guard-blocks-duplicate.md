@@ -19,10 +19,7 @@ When Phase 2 processes `story-beta` on re-entry:
 1. The orchestrator computes key `story-beta::dev-skills`
 2. The orchestrator finds that key in `{{spawn_registry}}`
 3. The orchestrator does NOT spawn a second agent for `story-beta`
-4. The orchestrator emits a log via `momentum-tools log` with:
-   - `--event decision`
-   - `--detail` containing "Dedup" and "story-beta::dev-skills"
-5. Execution continues — the duplicate suppression does not stall the sprint
+4. Execution continues — the duplicate suppression does not stall the sprint
 
 ## Failure Condition
 
@@ -33,5 +30,4 @@ registered in `{{spawn_registry}}`, the deduplication guard is not functioning.
 
 The workflow.md step n="2" must contain:
 - A check against `{{spawn_registry}}` before the spawn action
-- A log emission for suppressed duplicates
 - Logic that continues (does not halt) when a duplicate is detected

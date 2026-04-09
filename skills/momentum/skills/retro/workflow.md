@@ -90,9 +90,6 @@ Which sprint should we retrospect?</output>
     <action>Store {{sprint_completed}} = candidate.completed (ISO date for session discovery)</action>
     <action>Store {{audit_dir}} = `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/audit-extracts`</action>
 
-    <action>Log retro start:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Retrospective started for sprint {{sprint_slug}} (completed {{sprint_completed}})"`</action>
-
     <action>Update task 1 to completed</action>
   </step>
 
@@ -177,9 +174,6 @@ The retro can continue but auditor findings will be limited.</output>
       </check>
     </check>
 
-    <action>Log preprocessing complete:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Transcript preprocessing: {{user_msg_count}} user messages, {{agent_count}} subagents, {{error_count}} errors, {{team_msg_count}} team messages"`</action>
-
     <action>Update task 2 to completed</action>
   </step>
 
@@ -220,13 +214,7 @@ For each of these, choose:
       <action>For each story where developer chose F:
         `momentum-tools sprint status-transition --story {{slug}} --target closed-incomplete`
       </action>
-      <action>Log force-closed stories:
-        `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Force-closed incomplete stories: {{force_closed_slugs | join(', ')}}"`
-      </action>
     </check>
-
-    <action>Log story verification:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Story verification: {{verified_stories | length}} done, {{incomplete_stories | length}} incomplete"`</action>
 
     <action>Update task 3 to completed</action>
   </step>
@@ -415,9 +403,6 @@ For each of these, choose:
       </check>
     </check>
 
-    <action>Log auditor team complete:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Auditor team complete — findings document written"`</action>
-
     <action>Update task 4 to completed</action>
   </step>
 
@@ -468,14 +453,10 @@ Approve this stub? (Y/N)
         - Generate a slug from the title (kebab-case)
         - Add entry: { "title": ..., "status": "backlog", "epic_slug": ..., "depends_on": [] }
         - Write updated stories/index.json
-        - Log stub creation: `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Story stub created: {{slug}}"`
       </action>
 
       <output>Created {{approved_count}} story stubs in the backlog.</output>
     </check>
-
-    <action>Log story stubs phase:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Story stub phase complete: {{approved_count}} approved, {{rejected_count}} rejected"`</action>
 
     <action>Update task 5 to completed</action>
   </step>
@@ -496,9 +477,6 @@ Approve this stub? (Y/N)
     <action>Call retro completion:
       `momentum-tools sprint retro-complete`
     </action>
-
-    <action>Log sprint closure:
-      `momentum-tools log --agent retro --sprint {{sprint_slug}} --event decision --detail "Sprint {{sprint_slug}} closed: sprint complete + retro-complete called"`</action>
 
     <output>## Retrospective Complete — Sprint {{sprint_slug}}
 

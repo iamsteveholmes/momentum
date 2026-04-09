@@ -1,7 +1,7 @@
 ---
 title: Remove Agent Journals — Delete Sprint-Log Write Infrastructure
 story_key: remove-agent-journals
-status: ready-for-dev
+status: review
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -113,37 +113,37 @@ specs to reflect the actual architecture.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Remove momentum-tools log command and tests (AC: 1)
-  - [ ] Delete `cmd_log()` function from momentum-tools.py
-  - [ ] Delete CLI registration for `log` subcommand
-  - [ ] Delete `VALID_EVENT_TYPES` constant
-  - [ ] Delete all log-related tests from test-momentum-tools.py
-  - [ ] Run remaining tests to confirm no breakage
+- [x] Task 1 — Remove momentum-tools log command and tests (AC: 1)
+  - [x] Delete `cmd_log()` function from momentum-tools.py
+  - [x] Delete CLI registration for `log` subcommand
+  - [x] Delete `VALID_EVENT_TYPES` constant
+  - [x] Delete all log-related tests from test-momentum-tools.py
+  - [x] Run remaining tests to confirm no breakage
 
-- [ ] Task 2 — Remove all workflow log calls (AC: 2)
-  - [ ] sprint-dev/workflow.md: remove 17 log calls
-  - [ ] sprint-planning/workflow.md: remove 15 log calls
-  - [ ] quick-fix/workflow.md: remove 11 log calls
-  - [ ] retro/workflow.md: remove 8 log calls
-  - [ ] epic-grooming/workflow.md: reword 1 `<critical>` directive that references
+- [x] Task 2 — Remove all workflow log calls (AC: 2)
+  - [x] sprint-dev/workflow.md: remove 17 log calls
+  - [x] sprint-planning/workflow.md: remove 15 log calls
+  - [x] quick-fix/workflow.md: remove 11 log calls
+  - [x] retro/workflow.md: remove 8 log calls
+  - [x] epic-grooming/workflow.md: reword 1 `<critical>` directive that references
     momentum-tools log (remove the log instruction, keep the directive's intent)
-  - [ ] Verify no `momentum-tools log` calls remain anywhere in the project
+  - [x] Verify no `momentum-tools log` calls remain anywhere in the project
 
-- [ ] Task 3 — Remove observability hooks (AC: 3)
-  - [ ] Delete subagent-start.sh and subagent-stop.sh
-  - [ ] Remove SubagentStart/SubagentStop entries from hooks/hooks.json
-  - [ ] Check for and remove any project-level hook registrations
+- [x] Task 3 — Remove observability hooks (AC: 3)
+  - [x] Delete subagent-start.sh and subagent-stop.sh
+  - [x] Remove SubagentStart/SubagentStop entries from hooks/hooks.json
+  - [x] Check for and remove any project-level hook registrations
 
-- [ ] Task 4 — Verify specifications already updated (AC: 4)
-  - [ ] Confirm PRD FR56, FR57, FR89 are already marked REMOVED (applied in
+- [x] Task 4 — Verify specifications already updated (AC: 4)
+  - [x] Confirm PRD FR56, FR57, FR89 are already marked REMOVED (applied in
     sprint planning spec impact step)
-  - [ ] Confirm FR85 already updated to reference DuckDB transcript audit
-  - [ ] Confirm architecture Decision 24 already marked Historical
-  - [ ] No spec writes needed — already applied
+  - [x] Confirm FR85 already updated to reference DuckDB transcript audit
+  - [x] Confirm architecture Decision 24 already marked Historical
+  - [x] No spec writes needed — already applied
 
-- [ ] Task 5 — Verify retro still works (AC: 6)
-  - [ ] Confirm retro workflow has no references to sprint-logs or momentum-tools log
-  - [ ] Confirm transcript-query.py is unaffected
+- [x] Task 5 — Verify retro still works (AC: 6)
+  - [x] Confirm retro workflow has no references to sprint-logs or momentum-tools log
+  - [x] Confirm transcript-query.py is unaffected
 
 ## Dev Notes
 
@@ -208,8 +208,41 @@ confirm none remain.
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None.
 
 ### Completion Notes List
 
+- Removed `cmd_log()`, `VALID_EVENT_TYPES`, and `log` CLI registration from momentum-tools.py
+- Removed 16 log test functions and their runner calls from test-momentum-tools.py (subagent event type block at bottom also removed)
+- Removed 17 `momentum-tools log` action elements from sprint-dev/workflow.md (including `<critical>` directive, dedup log suppression text, and Phase 4d cleanup log)
+- Removed 15 `momentum-tools log` calls from sprint-planning/workflow.md (including `<critical>` directive and all inline log actions)
+- Removed 11 `momentum-tools log` calls from quick-fix/workflow.md
+- Removed 8 `momentum-tools log` calls from retro/workflow.md
+- Rewrote epic-grooming `<critical>` directive to reference completion notes for decision traceability instead of momentum-tools log
+- Deleted subagent-start.sh and subagent-stop.sh hook scripts
+- Removed SubagentStart and SubagentStop entries from hooks/hooks.json
+- Confirmed settings.json has no SubagentStart/SubagentStop registrations
+- Confirmed PRD FR56, FR57, FR89 already REMOVED; FR85 updated; architecture Decision 24 already marked Historical
+- Updated sprint-dev dedup eval to remove log emission expectation
+- Updated epic-grooming logging eval to document via completion notes instead of momentum-tools log
+- 346 tests pass (0 failed)
+
 ### File List
+
+- skills/momentum/scripts/momentum-tools.py
+- skills/momentum/scripts/test-momentum-tools.py
+- skills/momentum/skills/sprint-dev/workflow.md
+- skills/momentum/skills/sprint-planning/workflow.md
+- skills/momentum/skills/quick-fix/workflow.md
+- skills/momentum/skills/retro/workflow.md
+- skills/momentum/skills/epic-grooming/workflow.md
+- skills/momentum/hooks/hooks.json
+- skills/momentum/hooks/subagent-start.sh (deleted)
+- skills/momentum/hooks/subagent-stop.sh (deleted)
+- skills/momentum/skills/sprint-dev/evals/eval-dedup-guard-blocks-duplicate.md
+- skills/momentum/skills/epic-grooming/evals/eval-applies-changes-with-logging.md
+- _bmad-output/implementation-artifacts/stories/remove-agent-journals.md

@@ -35,27 +35,5 @@
         ]
       }
     ],
-    "SubagentStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/momentum/hooks/subagent-start.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/momentum/hooks/subagent-stop.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
   }
 }

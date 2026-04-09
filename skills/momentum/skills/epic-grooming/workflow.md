@@ -12,7 +12,7 @@
   <critical>Epics are categories — long-lived, never-closing groupings of related work. Do NOT propose closing or completing epics. Only propose merges, splits, renames, or new epic creation.</critical>
   <critical>No mutations happen without explicit developer approval of each proposed change individually. Present proposals first; apply only after approval.</critical>
   <critical>All story reassignments go through `momentum-tools sprint epic-membership`. Never edit stories/index.json directly.</critical>
-  <critical>Every approved change must be logged via `momentum-tools log --agent epic-grooming --event decision` before the workflow completes.</critical>
+  <critical>Every approved change must be documented in the Dev Agent Record completion notes before the workflow completes. Agent journal logging has been removed project-wide — use task completion notes for decision traceability.</critical>
   <critical>Reassignment scope is limited to structural taxonomy changes (slug consolidations, category merges). Individual story classification corrections are handled by momentum:refine, not this skill.</critical>
 
   <step n="0" goal="Initialize task tracking">

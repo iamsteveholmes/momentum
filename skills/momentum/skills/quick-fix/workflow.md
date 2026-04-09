@@ -191,9 +191,6 @@ Options:
       <action>Re-present the approval prompt. Repeat until approved.</action>
     </check>
 
-    <action>Log Gherkin approval:
-      `momentum-tools log --agent impetus --event decision --detail "Gherkin spec approved for {{story_slug}}" --sprint _unsorted`</action>
-
     <!-- 2c: Specialist classification -->
     <action>Read the story's `touches` array from {{story_file}} frontmatter.
     Run: `momentum-tools specialist-classify --touches "{{comma_separated_touches}}"`
@@ -243,12 +240,10 @@ Choose:
 
       <check if="developer chose P">
         <action>Keep specialist unchanged. Set guidelines_status = "missing".</action>
-        <action>Log: `momentum-tools log --agent impetus --event decision --detail "Proceeding without guidelines for {{specialist}}" --sprint _unsorted`</action>
       </check>
 
       <check if="developer chose D">
         <action>Replace {{specialist}} with "dev" and {{agent_file}} with "skills/momentum/agents/dev.md". Set guidelines_status = "skipped".</action>
-        <action>Log: `momentum-tools log --agent impetus --event decision --detail "Downgraded {{specialist}} to base Dev" --sprint _unsorted`</action>
       </check>
     </check>
 
@@ -258,9 +253,6 @@ Choose:
     Store as {{quickfix_slug}}.
 
     Run: `momentum-tools quickfix register --slug {{quickfix_slug}} --story {{story_slug}}`</action>
-
-    <action>Log registration:
-      `momentum-tools log --agent impetus --event decision --detail "Quickfix {{quickfix_slug}} registered for story {{story_slug}}" --sprint _unsorted`</action>
 
     <!-- 2f: AVFL checkpoint -->
     <action>Invoke `momentum:avfl` with:
@@ -315,9 +307,6 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
       `git worktree add .worktrees/quickfix-{{story_slug}} main`
     Store {{worktree_path}} = `.worktrees/quickfix-{{story_slug}}`</action>
 
-    <action>Log implementation start:
-      `momentum-tools log --agent impetus --event decision --detail "Worktree created for {{story_slug}}, specialist: {{specialist}}" --sprint {{quickfix_slug}}`</action>
-
     <!-- 3c: Spawn specialist dev agent -->
     <action>Resolve specialist agent definition:
       - Read {{agent_file}} (e.g., `skills/momentum/agents/dev-skills.md`)
@@ -348,9 +337,6 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
       <output>Merge conflicts detected. Resolve and continue.</output>
       <action>HALT — wait for developer to resolve conflicts</action>
     </check>
-
-    <action>Log merge:
-      `momentum-tools log --agent impetus --event decision --detail "Story {{story_slug}} merged to main" --sprint {{quickfix_slug}}`</action>
 
     <output>Implementation complete. {{story_slug}} merged to main.
 Worktree retained at {{worktree_path}} — available for fix iterations during validation.
@@ -406,9 +392,6 @@ Code review: {{code_review_findings | length}} findings
 
 All findings will be addressed in the collaborative fix loop.</output>
 
-    <action>Log code review results:
-      `momentum-tools log --agent impetus --event finding --detail "Code review: {{code_review_findings | length}} findings; AVFL: {{avfl_findings | length}} findings" --sprint {{quickfix_slug}}`</action>
-
     <!-- 4b: Determine validators from change_type -->
     <action>Read the story's `change_type` field from {{story_file}} frontmatter.
 
@@ -461,9 +444,6 @@ All findings will be addressed in the collaborative fix loop.</output>
       `git branch -d quickfix-{{story_slug}}`
     </action>
 
-    <action>Log validation results:
-      `momentum-tools log --agent impetus --event decision --detail "Validation complete: {{findings_count}} findings, {{resolved_count}} resolved; worktree cleaned up" --sprint {{quickfix_slug}}`</action>
-
     <action>Transition story to done:
       `momentum-tools sprint status-transition --story {{story_slug}} --target done --force`</action>
 
@@ -479,9 +459,6 @@ Proceeding to ship.</output>
 
     <!-- 5a: Register quickfix completion -->
     <action>Run: `momentum-tools quickfix complete --slug {{quickfix_slug}}`</action>
-
-    <action>Log completion:
-      `momentum-tools log --agent impetus --event decision --detail "Quickfix {{quickfix_slug}} completed" --sprint {{quickfix_slug}}`</action>
 
     <!-- 5b: Push summary -->
     <action>Show push summary: `git log @{u}..HEAD --oneline`</action>

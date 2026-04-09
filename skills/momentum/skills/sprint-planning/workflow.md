@@ -12,7 +12,6 @@
   <critical>Story markdown files retain ONLY plain English ACs. Gherkin specs are written to `sprints/{sprint-slug}/specs/` and are exclusively for verifier agents. Dev agents never access that path.</critical>
   <critical>AVFL runs ONCE on the complete sprint plan — all stories together as a single validation pass, not per-story.</critical>
   <critical>Team composition uses a two-layer model: Momentum provides generic agent roles (Dev, QA, E2E Validator, Architect Guard), and the project provides stack-specific guidelines for each role.</critical>
-  <critical>All planning decisions must be logged via `momentum-tools log` throughout the workflow.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
 
   <step n="0" goal="Initialize task tracking">
@@ -28,8 +27,6 @@
       7. Developer review
       8. Activate sprint
     </action>
-    <action>Log workflow start:
-      `momentum-tools log --agent impetus --event decision --detail "Sprint planning workflow initiated" --sprint _unsorted`</action>
   </step>
 
   <step n="1" goal="Synthesize recommendations from master plan and backlog">
@@ -116,8 +113,6 @@ Select 3-8 stories for this sprint by number or slug.
       </output>
     </check>
 
-    <action>Log backlog presentation:
-      `momentum-tools log --agent impetus --event decision --detail "Backlog presented: N stories across M epics, K selectable, K_stale potentially stale" --sprint _unsorted`</action>
     <action>Update task 1 (Synthesize recommendations from master plan and backlog) to completed</action>
   </step>
 
@@ -158,9 +153,6 @@ These stories may be blocked during execution. Proceed anyway, or adjust selecti
 
     <action>Register selected stories in the planning sprint:
       `momentum-tools sprint plan --operation add --stories {{comma-separated-slugs}}`</action>
-
-    <action>Log selection:
-      `momentum-tools log --agent impetus --event decision --detail "Sprint {{sprint_slug}} — selected {{count}} stories: {{slugs}}" --sprint {{sprint_slug}}`</action>
 
     <output>Sprint {{sprint_slug}} — {{count}} stories selected:
   {{numbered list of selected story titles}}
@@ -205,9 +197,6 @@ Approve, or request revisions?</output>
         <action>Present the revised story for approval again</action>
       </check>
     </check>
-
-    <action>After each story is approved, log:
-      `momentum-tools log --agent impetus --event decision --detail "Story {{story_slug}} approved for sprint {{sprint_slug}}" --sprint {{sprint_slug}}`</action>
 
     <action>After all stories are approved:</action>
     <output>All {{count}} stories approved. Proceeding to Gherkin spec generation.</output>
@@ -279,9 +268,6 @@ Approve, or request revisions?</output>
     <action>Write the spec to: `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/{{story_slug}}.feature`</action>
 
     <action>Do NOT modify the story markdown file — story files retain plain English ACs only</action>
-
-    <action>Log each spec generation:
-      `momentum-tools log --agent impetus --event decision --detail "Gherkin spec generated for {{story_slug}}: N scenarios" --sprint {{sprint_slug}}`</action>
 
     <!-- Post-generation validation gate: runs after ALL specs are written -->
     <action>After generating all specs, run a structural validation pass over every generated `.feature` file:
@@ -370,9 +356,6 @@ Updating specs now.</output>
         Write the updated file. Follow existing document style and conventions.
       </action>
 
-      <action>Log spec updates:
-        `momentum-tools log --agent impetus --event decision --detail "Spec impact: {{count}} items updated ({{arch_count}} arch, {{prd_count}} PRD)" --sprint {{sprint_slug}}`</action>
-
       <output>✓ Specs updated:
   · Architecture: {{arch_count}} items
   · PRD: {{prd_count}} items
@@ -451,22 +434,19 @@ For each missing domain, choose:
       <action>Process developer choices per missing domain:
 
       For domains where developer chose **(G) Generate**:
-        1. Log: `momentum-tools log --agent impetus --event decision --detail "Generating guidelines for {{domain}}" --sprint {{sprint_slug}}`
-        2. Invoke `momentum:agent-guidelines` with the missing domain as context
-        3. Wait for the skill to complete (interactive — developer goes through the consultation workflow)
-        4. Re-check `.claude/rules/` for the domain's candidate filenames
-        5. If guidelines now exist: set guidelines_status = "present" for affected stories
-        6. If still missing (generation was cancelled or failed): fall back to Proceed behavior
+        1. Invoke `momentum:agent-guidelines` with the missing domain as context
+        2. Wait for the skill to complete (interactive — developer goes through the consultation workflow)
+        3. Re-check `.claude/rules/` for the domain's candidate filenames
+        4. If guidelines now exist: set guidelines_status = "present" for affected stories
+        5. If still missing (generation was cancelled or failed): fall back to Proceed behavior
 
       For domains where developer chose **(P) Proceed**:
         1. Keep the specialist assignment unchanged
         2. Set guidelines_status = "missing" for affected stories
-        3. Log: `momentum-tools log --agent impetus --event decision --detail "Proceeding without guidelines for {{domain}}" --sprint {{sprint_slug}}`
 
       For domains where developer chose **(D) Downgrade**:
         1. Replace the specialist with the base Dev agent for all affected stories
         2. Set guidelines_status = "skipped" for affected stories
-        3. Log: `momentum-tools log --agent impetus --event decision --detail "Downgraded {{domain}} specialist to base Dev for: {{affected_slugs}}" --sprint {{sprint_slug}}`
       </action>
     </check>
     <!-- End Guidelines Verification Gate -->
@@ -487,9 +467,6 @@ For each missing domain, choose:
 
     <action>Assign wave numbers via momentum-tools:
       For each wave, run: `momentum-tools sprint plan --operation add --stories {{wave_slugs}} --wave {{wave_number}}`</action>
-
-    <action>Log team composition:
-      `momentum-tools log --agent impetus --event decision --detail "Team composition: {{roles_list}}. Execution waves: {{wave_count}}" --sprint {{sprint_slug}}`</action>
 
     <output>Execution plan built:
 
@@ -559,7 +536,6 @@ Address them before activating the sprint.</output>
       </check>
 
       <check if="Accept with warnings">
-        <action>Log each gap: `momentum-tools log --agent impetus --event finding --detail "Team composition gap: {{gap_description}}" --sprint {{sprint_slug}}`</action>
         <output>! Proceeding with {{gap_count}} team composition warning(s) noted. Sprint execution will fall back to base Dev agent for stories with missing specialists.</output>
         <action>Proceed to Step 6</action>
       </check>
@@ -614,8 +590,6 @@ Address all findings before the plan can proceed.</output>
       <action>HALT — resolve findings and re-run AVFL before advancing to Step 7</action>
     </check>
 
-    <action>Log AVFL result:
-      `momentum-tools log --agent impetus --event decision --detail "AVFL {{avfl_result}} for sprint {{sprint_slug}}" --sprint {{sprint_slug}}`</action>
     <action>Update task 6 (Run AVFL) to completed</action>
   </step>
 
@@ -669,8 +643,6 @@ AVFL: {{avfl_result}}
     </check>
 
     <check if="developer selects A (Approve)">
-      <action>Log approval:
-        `momentum-tools log --agent impetus --event decision --detail "Sprint {{sprint_slug}} approved by developer" --sprint {{sprint_slug}}`</action>
       <action>Update task 7 (Developer review) to completed</action>
       <action>Proceed to Step 8</action>
     </check>
@@ -692,9 +664,6 @@ AVFL: {{avfl_result}}
 
     <action>Activate the sprint:
       `momentum-tools sprint activate`</action>
-
-    <action>Log activation:
-      `momentum-tools log --agent impetus --event decision --detail "Sprint {{sprint_slug}} activated" --sprint {{sprint_slug}}`</action>
 
     <output>✓ Sprint {{sprint_slug}} activated.
 
