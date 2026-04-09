@@ -187,6 +187,9 @@ The defining question for each component: *does this need main-context persona p
 | status | Flat skill (`/momentum:status`) — planned, not yet implemented | Sprint/story status display; currently handled by momentum-tools CLI and Impetus greeting |
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
+| intake | Flat skill (`/momentum:intake`) | User-invokable; triage and intake of new ideas, documents, or requests into the backlog as story stubs; no fork needed |
+| assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
+| decision | Flat skill (`/momentum:decision`) | User-invokable; facilitates architectural or product decision capture (ADR/trade-off analysis); no fork needed |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure spawned worker — reviews code against story ACs during Team Review (Decision 34). Never user-invoked (Decision 35). |
@@ -216,6 +219,9 @@ momentum/                              ← Plugin root
 │   ├── quick-fix/SKILL.md          ← /momentum:quick-fix (Decision 39)
 │   ├── research/SKILL.md           ← /momentum:research
 │   ├── status/SKILL.md             ← /momentum:status (planned — not yet implemented)
+│   ├── intake/SKILL.md             ← /momentum:intake
+│   ├── assessment/SKILL.md         ← /momentum:assessment
+│   ├── decision/SKILL.md           ← /momentum:decision
 │   └── retro/SKILL.md
 ├── agents/                           ← Agent definition files (Decision 35)
 │   ├── qa-reviewer.md               ← Pure worker: story AC review (Team Review)

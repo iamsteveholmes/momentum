@@ -1,6 +1,17 @@
 {
-  "current_version": "1.1.0",
+  "current_version": "1.2.0",
   "versions": {
+    "1.2.0": {
+      "description": "New skills: intake, assessment, decision — delivered via plugin, no file-system side effects beyond 1.1.0",
+      "actions": [
+        {
+          "action": "info",
+          "group": "skills",
+          "scope": "global",
+          "description": "intake, assessment, and decision skills are included in the plugin. No additional installation steps required — plugin update delivers the new SKILL.md files automatically."
+        }
+      ]
+    },
     "1.1.0": {
       "description": "Global hook distribution — move hook scripts to ~/.claude/momentum/hooks/",
       "actions": [
