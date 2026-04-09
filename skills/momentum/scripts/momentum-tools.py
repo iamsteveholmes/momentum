@@ -710,6 +710,16 @@ def cmd_session_journal_hygiene(args: argparse.Namespace) -> None:
     # Lookup for all thread states by thread_id (for dependency resolution)
     all_states_by_id = {t.get("thread_id", ""): t for t in thread_states}
 
+    # Lookup for most recent context_summary_short per thread across all events
+    # (thread_close events often lack context_summary_short; scan all entries)
+    context_summary_by_tid: dict[str, str] = {}
+    for tid, entries in thread_entries.items():
+        for entry in reversed(entries):
+            css = entry.get("context_summary_short")
+            if css:
+                context_summary_by_tid[tid] = css
+                break
+
     # --- Warning computation ---
     concurrent: list[dict] = []
     dormant_raw: list[dict] = []
@@ -749,7 +759,7 @@ def cmd_session_journal_hygiene(args: argparse.Namespace) -> None:
         if dep_tid:
             dep_state = all_states_by_id.get(dep_tid)
             if dep_state and dep_state.get("status") == "closed":
-                dep_summary = dep_state.get("context_summary_short", dep_tid)
+                dep_summary = context_summary_by_tid.get(dep_tid, dep_tid)
                 dependency_satisfied.append({
                     "thread_id": t["thread_id"],
                     "context_summary_short": t["context_summary_short"],

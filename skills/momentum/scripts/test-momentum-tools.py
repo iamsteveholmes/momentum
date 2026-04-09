@@ -1671,6 +1671,42 @@ def test_journal_hygiene_dependency_satisfied():
     assert_eq("depends_on_summary present", "depends_on_summary" in dep_sat[0], True)
 
 
+def test_journal_hygiene_dependency_satisfied_uses_context_summary_short():
+    """depends_on_summary uses context_summary_short from earlier events, not thread ID.
+
+    Covers the case where the thread_close event does not carry context_summary_short
+    (which is the common real-world scenario — the summary is set by earlier events).
+    """
+    print("\n[session journal-hygiene] Dependency satisfied — summary from earlier event")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    ts1 = (now - dt_module.timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%S")
+    ts2 = (now - dt_module.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    lines = [
+        # T-dep: opened with summary, closed without repeating context_summary_short
+        make_journal_entry("T-dep", "thread_open", last_active=ts1,
+                           context_summary_short="Dependency summary text",
+                           story_ref="s1", phase="impl"),
+        make_journal_entry("T-dep", "thread_close", last_active=ts1,
+                           story_ref="s1", phase="impl"),  # no context_summary_short here
+        # T-wait: depends on T-dep, which is now closed
+        make_journal_entry("T-wait", "thread_open", last_active=ts2,
+                           context_summary_short="Waiting story", story_ref="s2", phase="impl",
+                           depends_on_thread="T-dep"),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    dep_sat = out.get("warnings", {}).get("dependency_satisfied", [])
+    assert_eq("one dependency_satisfied", len(dep_sat), 1)
+    assert_eq("waiting thread flagged", dep_sat[0]["thread_id"], "T-wait")
+    assert_eq("depends_on_summary is context_summary_short not thread ID",
+              dep_sat[0].get("depends_on_summary"), "Dependency summary text")
+
+
 def test_journal_hygiene_unwieldy():
     """Warning present when more than 5 open threads exist."""
     print("\n[session journal-hygiene] Unwieldy warning")
@@ -1992,6 +2028,7 @@ def main():
     test_journal_hygiene_concurrent_warning()
     test_journal_hygiene_dormant_warning()
     test_journal_hygiene_dependency_satisfied()
+    test_journal_hygiene_dependency_satisfied_uses_context_summary_short()
     test_journal_hygiene_unwieldy()
     test_journal_hygiene_no_reoff_suppression()
     test_journal_hygiene_no_reoff_context_change()
