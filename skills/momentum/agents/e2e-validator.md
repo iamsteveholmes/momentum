@@ -44,6 +44,7 @@ For each scenario, determine how to validate it:
 - **Automated test exists**: If the project has a test runner (Playwright, Cypress, Jest, pytest, etc.) and the Gherkin scenario has a corresponding automated test, execute it
 - **CLI/API testable**: If the scenario describes CLI behavior or API responses, execute the relevant commands/requests via Bash and verify outputs
 - **Build/compile testable**: If the scenario describes build outputs, file generation, or configuration effects, execute the build and verify results
+- **Skill/workflow testable via cmux**: If the scenario describes Claude Code skill or agent behavior that must be observed in a live session (e.g., "When I invoke /momentum:skill, Then output contains X"), open a cmux terminal pane, run `claude`, send the skill command, and capture output. See **Skill and Workflow Testing via cmux** section below.
 - **Manual only**: If the scenario requires human interaction (UI visual verification, etc.), mark as MANUAL and describe what would need to be checked
 
 ### 3. Execute Scenarios
@@ -76,6 +77,55 @@ spec-quality-reason: "untestable-scenario" | "outsider-test-failure"
 ```
 
 These are spec authoring defects, not implementation defects. They do not affect the overall verdict (PASS/FAIL/BLOCKED) but are surfaced for retro aggregation.
+
+## Skill and Workflow Testing via cmux
+
+Skill and agent behaviors only manifest inside live Claude Code sessions — they cannot be validated by reading source files. Use cmux to open terminal panes and run Claude Code sub-sessions for true behavioral testing.
+
+**Pattern:**
+
+```bash
+# 1. Create a pane and label it
+SURFACE=$(cmux new-split right 2>&1 | grep -o 'surface:[0-9]*')
+cmux rename-tab --surface $SURFACE "E2E: skill-name"
+
+# 2. Launch Claude Code in the pane
+cmux send --surface $SURFACE "claude"
+
+# 3. Wait for the prompt (poll until ready)
+for i in $(seq 1 15); do
+  OUT=$(cmux capture-pane --surface $SURFACE --lines 3 2>&1)
+  if echo "$OUT" | grep -qE ">|\\$|❯"; then break; fi
+  sleep 2
+done
+
+# 4. Send the skill invocation
+cmux send --surface $SURFACE "/momentum:skill-name"
+
+# 5. Poll for completion (look for characteristic output)
+for i in $(seq 1 30); do
+  OUT=$(cmux capture-pane --surface $SURFACE --lines 20 2>&1)
+  if echo "$OUT" | grep -q "EXPECTED_OUTPUT_SIGNAL"; then break; fi
+  sleep 3
+done
+
+# 6. Capture full output for assertion
+RESULT=$(cmux capture-pane --surface $SURFACE 2>&1)
+
+# 7. Clean up
+cmux close-surface --surface $SURFACE
+```
+
+**When to use this pattern:**
+- Scenario says "When I run `/momentum:X`" or "When I invoke skill Y"
+- Scenario asserts on greeting text, status output, or session behavior
+- Scenario tests that a hook fires, a gate triggers, or a workflow step executes
+
+**What counts as PASS:** The captured pane output contains the expected text/behavior from the Gherkin `Then` clause.
+
+**What counts as FAIL:** The pane output contradicts the `Then` clause, or the skill errors, or the session exits unexpectedly.
+
+**Do NOT substitute file inspection.** Finding the right output string in a skill's source `.md` file is NOT a behavioral pass. Only live execution counts.
 
 ## Large File Handling
 
