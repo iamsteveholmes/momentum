@@ -169,6 +169,18 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
     </action>
     <action>Store {{needs_work}} = list of groups that need install/upgrade, with their scopes</action>
 
+    <!-- Returning-user override: momentum_completions > 0 in either installed file means a
+         real user who has completed sessions before. Route to session menu regardless of
+         component completeness — skills are delivered via plugin system, not Impetus install,
+         so missing component registrations do not indicate a new user. -->
+    <action>Read `session_stats.momentum_completions` from global-installed.json (treat as 0 if absent)</action>
+    <action>Read `session_stats.momentum_completions` from installed.json (treat as 0 if absent)</action>
+    <action>Set {{returning_user}} = true if either value is > 0, otherwise false</action>
+
+    <check if="returning_user is true">
+      <action>GOTO step 10 (hash drift check → session menu)</action>
+    </check>
+
     <check if="no groups need work (all current)">
       <action>GOTO step 10 (hash drift check)</action>
     </check>
