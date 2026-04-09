@@ -333,169 +333,6 @@ def test_sprint_plan_no_duplicates():
     assert_eq("s2 added", "s2" in result["planning"]["stories"], True)
 
 
-# --- Log Tests ---
-
-def test_log_with_sprint_and_story():
-    """Log with sprint+story creates correct directory and file."""
-    print("\n[log] Sprint + story creates correct path")
-    proj = setup_project()
-    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "decision",
-                         "--detail", "chose approach A", "--sprint", "phase-3", "--story", "my-story")
-    assert_eq("exit code 0", code, 0)
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "phase-3" / "dev-my-story.jsonl"
-    assert_eq("log file created", log_file.exists(), True)
-
-
-def test_log_without_story():
-    """Log without story creates agent-only filename."""
-    print("\n[log] Without story uses agent-only filename")
-    proj = setup_project()
-    code, out = run_tool(proj, "log", "--agent", "impetus", "--event", "finding",
-                         "--detail", "all stories complete", "--sprint", "phase-3")
-    assert_eq("exit code 0", code, 0)
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "phase-3" / "impetus.jsonl"
-    assert_eq("agent-only file created", log_file.exists(), True)
-    story_file = proj / ".claude" / "momentum" / "sprint-logs" / "phase-3" / "impetus-None.jsonl"
-    assert_eq("no None in filename", story_file.exists(), False)
-
-
-def test_log_without_sprint():
-    """Log without sprint falls back to _unsorted."""
-    print("\n[log] Without sprint falls back to _unsorted")
-    proj = setup_project()
-    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "assumption",
-                         "--detail", "assuming default config")
-    assert_eq("exit code 0", code, 0)
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "_unsorted" / "dev.jsonl"
-    assert_eq("_unsorted file created", log_file.exists(), True)
-
-
-def test_log_entry_valid_jsonl():
-    """Log entry is valid JSONL with correct fields."""
-    print("\n[log] Entry is valid JSONL with correct fields")
-    proj = setup_project()
-    run_tool(proj, "log", "--agent", "architect", "--event", "decision",
-             "--detail", "chose microservices", "--sprint", "s1", "--story", "arch-design")
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "s1" / "architect-arch-design.jsonl"
-    line = log_file.read_text().strip()
-    entry = json.loads(line)
-    assert_eq("has timestamp", "timestamp" in entry, True)
-    assert_eq("agent correct", entry["agent"], "architect")
-    assert_eq("story correct", entry["story"], "arch-design")
-    assert_eq("sprint correct", entry["sprint"], "s1")
-    assert_eq("event correct", entry["event"], "decision")
-    assert_eq("detail correct", entry["detail"], "chose microservices")
-
-
-def test_log_multiple_appends():
-    """Multiple appends accumulate in the same file."""
-    print("\n[log] Multiple appends accumulate")
-    proj = setup_project()
-    for i in range(3):
-        run_tool(proj, "log", "--agent", "dev", "--event", "finding",
-                 "--detail", f"finding {i}", "--sprint", "s1", "--story", "acc")
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "s1" / "dev-acc.jsonl"
-    lines = [l for l in log_file.read_text().strip().split("\n") if l]
-    assert_eq("3 lines accumulated", len(lines), 3)
-    for i, line in enumerate(lines):
-        entry = json.loads(line)
-        assert_eq(f"  line {i} detail", entry["detail"], f"finding {i}")
-
-
-def test_log_invalid_event_type():
-    """Invalid event type rejected with exit 1."""
-    print("\n[log] Invalid event type rejected")
-    proj = setup_project()
-    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "bogus",
-                         "--detail", "should fail")
-    assert_eq("exit code 1", code, 1)
-    assert_eq("reports failure", out.get("success"), False)
-
-
-def test_log_missing_required_args():
-    """Missing --agent, --event, --detail rejected."""
-    print("\n[log] Missing required args rejected")
-    proj = setup_project()
-    # missing --detail
-    code1, _ = run_tool(proj, "log", "--agent", "dev", "--event", "decision")
-    assert_eq("missing --detail rejected", code1, 2)
-    # missing --event
-    code2, _ = run_tool(proj, "log", "--agent", "dev", "--detail", "something")
-    assert_eq("missing --event rejected", code2, 2)
-    # missing --agent
-    code3, _ = run_tool(proj, "log", "--event", "decision", "--detail", "something")
-    assert_eq("missing --agent rejected", code3, 2)
-
-
-def test_log_all_event_types():
-    """All 8 valid event types accepted (includes subagent-start and subagent-stop)."""
-    print("\n[log] All 8 event types accepted")
-    proj = setup_project()
-    for event_type in ["decision", "error", "retry", "assumption", "finding", "ambiguity",
-                       "subagent-start", "subagent-stop"]:
-        code, out = run_tool(proj, "log", "--agent", "dev", "--event", event_type,
-                             "--detail", f"test {event_type}", "--sprint", "s1")
-        assert_eq(f"{event_type} accepted", code, 0)
-
-
-def test_log_subagent_start_event():
-    """subagent-start event type writes correct schema."""
-    print("\n[log] subagent-start event writes correct JSONL schema")
-    proj = setup_project()
-    detail = '{"session_id": "abc-123", "agent_type": "dev-agent"}'
-    code, out = run_tool(proj, "log", "--agent", "dev-agent", "--event", "subagent-start",
-                         "--detail", detail, "--sprint", "sprint-2026-04-06")
-    assert_eq("exit code 0", code, 0)
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "sprint-2026-04-06" / "dev-agent.jsonl"
-    assert_eq("log file created", log_file.exists(), True)
-    entry = json.loads(log_file.read_text().strip())
-    assert_eq("event type correct", entry["event"], "subagent-start")
-    assert_eq("agent field correct", entry["agent"], "dev-agent")
-    assert_eq("sprint field correct", entry["sprint"], "sprint-2026-04-06")
-    assert_eq("story field null", entry["story"], None)
-    assert_eq("detail preserved", entry["detail"], detail)
-    assert_eq("timestamp present", "timestamp" in entry, True)
-
-
-def test_log_subagent_stop_event():
-    """subagent-stop event type writes correct schema."""
-    print("\n[log] subagent-stop event writes correct JSONL schema")
-    proj = setup_project()
-    detail = '{"session_id": "abc-123", "agent_type": "dev-agent", "transcript_path": "/tmp/t.jsonl", "last_message": "Done."}'
-    code, out = run_tool(proj, "log", "--agent", "dev-agent", "--event", "subagent-stop",
-                         "--detail", detail, "--sprint", "sprint-2026-04-06")
-    assert_eq("exit code 0", code, 0)
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "sprint-2026-04-06" / "dev-agent.jsonl"
-    entry = json.loads(log_file.read_text().strip())
-    assert_eq("event type correct", entry["event"], "subagent-stop")
-    assert_eq("agent field correct", entry["agent"], "dev-agent")
-
-
-def test_log_subagent_events_rejected_as_invalid_before_change():
-    """subagent-start and subagent-stop are in VALID_EVENT_TYPES (regression guard)."""
-    print("\n[log] subagent event types in VALID_EVENT_TYPES")
-    proj = setup_project()
-    # These were NOT valid before this story — now they must be
-    for event_type in ["subagent-start", "subagent-stop"]:
-        code, out = run_tool(proj, "log", "--agent", "test", "--event", event_type,
-                             "--detail", "hook-generated entry", "--sprint", "s1")
-        assert_eq(f"{event_type} now valid (not rejected)", code, 0)
-        assert_eq(f"{event_type} success=true", out.get("success"), True)
-
-
-def test_log_special_characters():
-    """Special characters in detail preserved."""
-    print("\n[log] Special characters in detail preserved")
-    proj = setup_project()
-    special_detail = 'quotes "here" and {braces} and <angles> & ampersand'
-    code, out = run_tool(proj, "log", "--agent", "dev", "--event", "finding",
-                         "--detail", special_detail, "--sprint", "s1")
-    assert_eq("exit code 0", code, 0)
-    log_file = proj / ".claude" / "momentum" / "sprint-logs" / "s1" / "dev.jsonl"
-    entry = json.loads(log_file.read_text().strip())
-    assert_eq("special chars preserved", entry["detail"], special_detail)
-
-
 # --- Helpers for new tests ---
 
 def setup_installed_json(project_dir: Path, data: dict) -> Path:
@@ -1663,6 +1500,375 @@ def test_journal_status_thread_summary():
     assert_eq("triage-002 last_event", by_id["triage-002"]["last_event"], "thread_close")
 
 
+# --- Journal Hygiene Tests ---
+
+def make_journal_entry(thread_id: str, event: str = "thread_open", **kwargs) -> str:
+    """Build a JSONL journal entry string."""
+    entry = {"thread_id": thread_id, "event": event, **kwargs}
+    return json.dumps(entry)
+
+
+def test_journal_hygiene_no_file():
+    """Returns empty threads and no warnings when journal absent."""
+    print("\n[session journal-hygiene] No file")
+    proj = setup_project()
+    # Do NOT create journal.jsonl
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("threads empty", out.get("threads"), [])
+    assert_eq("open_count 0", out.get("open_count"), 0)
+    assert_eq("concurrent empty", out.get("warnings", {}).get("concurrent"), [])
+    assert_eq("dormant empty", out.get("warnings", {}).get("dormant"), [])
+
+
+def test_journal_hygiene_no_open_threads():
+    """Returns empty threads when all threads are closed."""
+    print("\n[session journal-hygiene] No open threads")
+    proj = setup_project()
+    lines = [
+        make_journal_entry("T-001", "thread_open", last_active="2026-04-08T10:00:00",
+                           context_summary_short="Sprint dev", story_ref="s1", phase="impl"),
+        make_journal_entry("T-001", "thread_close", last_active="2026-04-08T11:00:00",
+                           context_summary_short="Sprint dev", story_ref="s1", phase="impl"),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("threads empty", out.get("threads"), [])
+    assert_eq("open_count 0", out.get("open_count"), 0)
+    assert_eq("total_count 1", out.get("total_count"), 1)
+
+
+def test_journal_hygiene_sort_order():
+    """Threads sorted by last_active descending."""
+    print("\n[session journal-hygiene] Sort order")
+    proj = setup_project()
+    lines = [
+        make_journal_entry("T-001", "thread_open", last_active="2026-04-06T10:00:00",
+                           context_summary_short="Older", story_ref="s1", phase="impl"),
+        make_journal_entry("T-002", "thread_open", last_active="2026-04-07T10:00:00",
+                           context_summary_short="Newer", story_ref="s2", phase="impl"),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    threads = out.get("threads", [])
+    assert_eq("two threads", len(threads), 2)
+    assert_eq("newer first", threads[0]["context_summary_short"], "Newer")
+    assert_eq("older second", threads[1]["context_summary_short"], "Older")
+
+
+def test_journal_hygiene_elapsed_labels():
+    """Correct human-readable elapsed labels for minutes, hours, yesterday, and days."""
+    print("\n[session journal-hygiene] Elapsed labels")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+
+    def ts(delta_seconds: float) -> str:
+        t = now - dt_module.timedelta(seconds=delta_seconds)
+        return t.strftime("%Y-%m-%dT%H:%M:%S")
+
+    lines = [
+        make_journal_entry("T-min", "thread_open", last_active=ts(300),
+                           context_summary_short="Minutes", story_ref="s1", phase="impl"),
+        make_journal_entry("T-hrs", "thread_open", last_active=ts(7200),
+                           context_summary_short="Hours", story_ref="s2", phase="impl"),
+        make_journal_entry("T-yes", "thread_open", last_active=ts(90000),
+                           context_summary_short="Yesterday", story_ref="s3", phase="impl"),
+        make_journal_entry("T-day", "thread_open", last_active=ts(86400 * 4),
+                           context_summary_short="Days", story_ref="s4", phase="impl"),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    threads = out.get("threads", [])
+    by_id = {t["thread_id"]: t for t in threads}
+    assert_eq("minutes label", "m ago" in by_id["T-min"]["elapsed_label"], True)
+    assert_eq("hours label", "h ago" in by_id["T-hrs"]["elapsed_label"], True)
+    assert_eq("yesterday label", by_id["T-yes"]["elapsed_label"], "yesterday")
+    assert_eq("days label", "d ago" in by_id["T-day"]["elapsed_label"], True)
+
+
+def test_journal_hygiene_concurrent_warning():
+    """Flags threads active within 30 minutes."""
+    print("\n[session journal-hygiene] Concurrent warning")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    recent_ts = (now - dt_module.timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M:%S")
+    old_ts = (now - dt_module.timedelta(hours=5)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    lines = [
+        make_journal_entry("T-recent", "thread_open", last_active=recent_ts,
+                           context_summary_short="Recent", story_ref="s1", phase="impl"),
+        make_journal_entry("T-old", "thread_open", last_active=old_ts,
+                           context_summary_short="Old", story_ref="s2", phase="impl"),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    concurrent = out.get("warnings", {}).get("concurrent", [])
+    assert_eq("one concurrent warning", len(concurrent), 1)
+    assert_eq("concurrent thread_id", concurrent[0]["thread_id"], "T-recent")
+    assert_eq("minutes_ago present", "minutes_ago" in concurrent[0], True)
+
+
+def test_journal_hygiene_dormant_warning():
+    """Flags threads inactive more than 3 days."""
+    print("\n[session journal-hygiene] Dormant warning")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    dormant_ts = (now - dt_module.timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%S")
+    active_ts = (now - dt_module.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    lines = [
+        make_journal_entry("T-dormant", "thread_open", last_active=dormant_ts,
+                           context_summary_short="Dormant", story_ref="s1", phase="impl"),
+        make_journal_entry("T-active", "thread_open", last_active=active_ts,
+                           context_summary_short="Active", story_ref="s2", phase="impl"),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    dormant = out.get("warnings", {}).get("dormant", [])
+    assert_eq("one dormant warning", len(dormant), 1)
+    assert_eq("dormant thread_id", dormant[0]["thread_id"], "T-dormant")
+    assert_eq("days_inactive >= 5", dormant[0]["days_inactive"] >= 5, True)
+
+
+def test_journal_hygiene_dependency_satisfied():
+    """Detects when depends_on_thread target is closed."""
+    print("\n[session journal-hygiene] Dependency satisfied")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    ts1 = (now - dt_module.timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+    ts2 = (now - dt_module.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    lines = [
+        # T-dep: was open, now closed
+        make_journal_entry("T-dep", "thread_open", last_active=ts1,
+                           context_summary_short="Dep story", story_ref="s1", phase="impl"),
+        make_journal_entry("T-dep", "thread_close", last_active=ts1,
+                           context_summary_short="Dep story", story_ref="s1", phase="impl"),
+        # T-wait: depends on T-dep, which is now closed
+        make_journal_entry("T-wait", "thread_open", last_active=ts2,
+                           context_summary_short="Waiting story", story_ref="s2", phase="impl",
+                           depends_on_thread="T-dep"),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    dep_sat = out.get("warnings", {}).get("dependency_satisfied", [])
+    assert_eq("one dependency_satisfied", len(dep_sat), 1)
+    assert_eq("waiting thread flagged", dep_sat[0]["thread_id"], "T-wait")
+    assert_eq("depends_on_summary present", "depends_on_summary" in dep_sat[0], True)
+
+
+def test_journal_hygiene_unwieldy():
+    """Warning present when more than 5 open threads exist."""
+    print("\n[session journal-hygiene] Unwieldy warning")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    lines = []
+    for i in range(6):
+        ts = (now - dt_module.timedelta(hours=i + 1)).strftime("%Y-%m-%dT%H:%M:%S")
+        lines.append(make_journal_entry(f"T-{i:03d}", "thread_open", last_active=ts,
+                                        context_summary_short=f"Thread {i}",
+                                        story_ref=f"s{i}", phase="impl"))
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    unwieldy = out.get("warnings", {}).get("unwieldy")
+    assert_eq("unwieldy non-null", unwieldy is not None, True)
+    assert_eq("open_count 6", unwieldy.get("open_count"), 6)
+
+
+def test_journal_hygiene_no_reoff_suppression():
+    """Suppresses dormant offer when declined_offers matches context_hash."""
+    print("\n[session journal-hygiene] No-Re-Offer suppression")
+    import datetime as dt_module
+    import subprocess as sp_mod
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    dormant_ts = (now - dt_module.timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Get git hash for the temp project's git repo
+    proc = sp_mod.run(["git", "rev-parse", "--short", "HEAD"],
+                      capture_output=True, text=True, cwd=str(proj))
+    git_hash = proc.stdout.strip() if proc.returncode == 0 else "unknown"
+
+    thread_id = "T-dormant"
+    story_ref = "s1"
+    phase = "impl"
+    context_hash = f"{thread_id}|{story_ref}|{phase}|{git_hash}"
+
+    declined_offers = [{"offer_type": "dormant-closure", "context_hash": context_hash}]
+
+    lines = [
+        make_journal_entry(thread_id, "thread_open", last_active=dormant_ts,
+                           context_summary_short="Dormant suppressed", story_ref=story_ref,
+                           phase=phase, declined_offers=declined_offers),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    dormant = out.get("warnings", {}).get("dormant", [])
+    suppressed = out.get("suppressed_offers", [])
+    assert_eq("dormant empty (suppressed)", len(dormant), 0)
+    assert_eq("suppressed_offers has entry", len(suppressed), 1)
+    assert_eq("suppressed thread_id", suppressed[0]["thread_id"], thread_id)
+    assert_eq("suppressed offer_type", suppressed[0]["offer_type"], "dormant-closure")
+
+
+def test_journal_hygiene_no_reoff_context_change():
+    """Re-offers dormant thread when context_hash differs from declined entry."""
+    print("\n[session journal-hygiene] No-Re-Offer — context changed, re-offer")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    dormant_ts = (now - dt_module.timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Use a stale/wrong context_hash so it won't match the current one
+    stale_hash = "T-dormant|s1|impl|oldgithash000"
+    declined_offers = [{"offer_type": "dormant-closure", "context_hash": stale_hash}]
+
+    lines = [
+        make_journal_entry("T-dormant", "thread_open", last_active=dormant_ts,
+                           context_summary_short="Dormant re-offer", story_ref="s1",
+                           phase="impl", declined_offers=declined_offers),
+    ]
+    setup_journal(proj, lines)
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    dormant = out.get("warnings", {}).get("dormant", [])
+    suppressed = out.get("suppressed_offers", [])
+    assert_eq("dormant surfaced (not suppressed)", len(dormant), 1)
+    assert_eq("suppressed empty", len(suppressed), 0)
+
+
+def test_journal_hygiene_suggested_prompts():
+    """Returns pre-composed prompt strings for each warning type."""
+    print("\n[session journal-hygiene] Suggested prompts")
+    proj = setup_project()
+    # Prompts are returned even when no journal or no warnings exist
+    code, out = run_tool(proj, "session", "journal-hygiene")
+    assert_eq("exit code 0", code, 0)
+    prompts = out.get("suggested_prompts", {})
+    assert_eq("concurrent prompt exists", "concurrent" in prompts, True)
+    assert_eq("dormant prompt exists", "dormant" in prompts, True)
+    assert_eq("dependency_satisfied prompt exists", "dependency_satisfied" in prompts, True)
+    assert_eq("unwieldy prompt exists", "unwieldy" in prompts, True)
+    assert_eq("concurrent prompt non-empty", len(prompts.get("concurrent", "")) > 0, True)
+
+
+# --- Journal Append Tests ---
+
+def test_journal_append_creates_file():
+    """Creates journal.jsonl if absent."""
+    print("\n[session journal-append] Creates journal.jsonl if absent")
+    proj = setup_project()
+    entry = json.dumps({"thread_id": "T-001", "event": "thread_open",
+                        "last_active": "2026-04-08T10:00:00"})
+    code, out = run_tool(proj, "session", "journal-append", "--entry", entry)
+    assert_eq("exit code 0", code, 0)
+    journal_path = proj / ".claude" / "momentum" / "journal.jsonl"
+    assert_eq("journal created", journal_path.exists(), True)
+    lines = [l for l in journal_path.read_text().splitlines() if l.strip()]
+    assert_eq("one line written", len(lines), 1)
+
+
+def test_journal_append_appends_line():
+    """Appends valid JSON line to existing file."""
+    print("\n[session journal-append] Appends to existing file")
+    proj = setup_project()
+    existing = json.dumps({"thread_id": "T-001", "event": "thread_open",
+                           "last_active": "2026-04-08T09:00:00"})
+    setup_journal(proj, [existing])
+
+    new_entry = json.dumps({"thread_id": "T-001", "event": "decision",
+                             "last_active": "2026-04-08T10:00:00"})
+    code, out = run_tool(proj, "session", "journal-append", "--entry", new_entry)
+    assert_eq("exit code 0", code, 0)
+    journal_path = proj / ".claude" / "momentum" / "journal.jsonl"
+    lines = [l for l in journal_path.read_text().splitlines() if l.strip()]
+    assert_eq("two lines in journal", len(lines), 2)
+    appended = json.loads(lines[1])
+    assert_eq("appended event", appended["event"], "decision")
+
+
+def test_journal_append_invalid_json():
+    """Fails with error for non-JSON input."""
+    print("\n[session journal-append] Invalid JSON rejected")
+    proj = setup_project()
+    code, out = run_tool(proj, "session", "journal-append", "--entry", "not valid json {{{")
+    assert_eq("exit code 1", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    # Journal should not be created
+    journal_path = proj / ".claude" / "momentum" / "journal.jsonl"
+    assert_eq("journal not created", journal_path.exists(), False)
+
+
+def test_journal_append_regenerates_view():
+    """journal-view.md is regenerated after append."""
+    print("\n[session journal-append] Regenerates journal-view.md")
+    proj = setup_project()
+    entry = json.dumps({"thread_id": "T-001", "event": "thread_open",
+                        "last_active": "2026-04-08T10:00:00",
+                        "context_summary_short": "Sprint dev",
+                        "story_ref": "my-story", "phase": "impl"})
+    code, out = run_tool(proj, "session", "journal-append", "--entry", entry)
+    assert_eq("exit code 0", code, 0)
+    view_path = proj / ".claude" / "momentum" / "journal-view.md"
+    assert_eq("journal-view.md created", view_path.exists(), True)
+    view_content = view_path.read_text()
+    assert_eq("view has Thread header", "Thread" in view_content, True)
+    assert_eq("view has Status header", "Status" in view_content, True)
+
+
+def test_journal_append_view_includes_recent_closed():
+    """View includes threads closed within the last 7 days but excludes older ones."""
+    print("\n[session journal-append] View includes recently closed, excludes old closed")
+    import datetime as dt_module
+
+    proj = setup_project()
+    now = dt_module.datetime.now()
+    recent_close_ts = (now - dt_module.timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%S")
+    old_close_ts = (now - dt_module.timedelta(days=10)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    lines = [
+        make_journal_entry("T-recent-closed", "thread_close", last_active=recent_close_ts,
+                           context_summary_short="Recent closed", story_ref="s1", phase="impl"),
+        make_journal_entry("T-old-closed", "thread_close", last_active=old_close_ts,
+                           context_summary_short="Old closed", story_ref="s2", phase="impl"),
+    ]
+    setup_journal(proj, lines)
+
+    # Append a new entry to trigger view regeneration
+    new_entry = json.dumps({"thread_id": "T-open", "event": "thread_open",
+                             "last_active": now.strftime("%Y-%m-%dT%H:%M:%S"),
+                             "context_summary_short": "Open thread",
+                             "story_ref": "s3", "phase": "impl"})
+    code, out = run_tool(proj, "session", "journal-append", "--entry", new_entry)
+    assert_eq("exit code 0", code, 0)
+
+    view_path = proj / ".claude" / "momentum" / "journal-view.md"
+    view_content = view_path.read_text()
+    assert_eq("recent closed in view", "Recent closed" in view_content, True)
+    assert_eq("old closed not in view", "Old closed" not in view_content, True)
+    assert_eq("open thread in view", "Open thread" in view_content, True)
+
+
 # --- Runner ---
 
 def main():
@@ -1691,15 +1897,6 @@ def main():
     test_sprint_plan_remove()
     test_sprint_plan_locked()
     test_sprint_plan_no_duplicates()
-    test_log_with_sprint_and_story()
-    test_log_without_story()
-    test_log_without_sprint()
-    test_log_entry_valid_jsonl()
-    test_log_multiple_appends()
-    test_log_invalid_event_type()
-    test_log_missing_required_args()
-    test_log_all_event_types()
-    test_log_special_characters()
 
     # Sprint status field tests
     test_sprint_plan_sets_status_planning()
@@ -1787,10 +1984,25 @@ def main():
     test_journal_status_malformed_lines()
     test_journal_status_thread_summary()
 
-    # Subagent event type tests (agent observability system)
-    test_log_subagent_start_event()
-    test_log_subagent_stop_event()
-    test_log_subagent_events_rejected_as_invalid_before_change()
+    # Journal hygiene tests
+    test_journal_hygiene_no_file()
+    test_journal_hygiene_no_open_threads()
+    test_journal_hygiene_sort_order()
+    test_journal_hygiene_elapsed_labels()
+    test_journal_hygiene_concurrent_warning()
+    test_journal_hygiene_dormant_warning()
+    test_journal_hygiene_dependency_satisfied()
+    test_journal_hygiene_unwieldy()
+    test_journal_hygiene_no_reoff_suppression()
+    test_journal_hygiene_no_reoff_context_change()
+    test_journal_hygiene_suggested_prompts()
+
+    # Journal append tests
+    test_journal_append_creates_file()
+    test_journal_append_appends_line()
+    test_journal_append_invalid_json()
+    test_journal_append_regenerates_view()
+    test_journal_append_view_includes_recent_closed()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")

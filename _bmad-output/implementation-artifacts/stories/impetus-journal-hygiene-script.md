@@ -1,7 +1,7 @@
 ---
 title: Impetus Journal Hygiene Script — Move Deterministic Thread Computations to momentum-tools
 story_key: impetus-journal-hygiene-script
-status: ready-for-dev
+status: review
 epic_slug: impetus-core
 depends_on:
   - journal-status-tool
@@ -128,7 +128,7 @@ to menu display. Currently the happy-path greeting achieves this via
 
 ## Tasks
 
-### Task 1: Implement `session journal-hygiene` command
+### Task 1: Implement `session journal-hygiene` command [x]
 
 Add `cmd_session_journal_hygiene` to momentum-tools.py under the `session`
 command group. This command:
@@ -155,25 +155,25 @@ command group. This command:
 - Composes `suggested_prompts` for each warning type
 - Returns single JSON object
 
-#### Subtask 1a: Core thread sorting and elapsed labels
+#### Subtask 1a: Core thread sorting and elapsed labels [x]
 
 Implement the thread scanning, sorting, and elapsed-time computation. Wire up
 the parser and CLI registration.
 
-#### Subtask 1b: Warning computation
+#### Subtask 1b: Warning computation [x]
 
 Add concurrent, dormant, dependency-satisfied, and unwieldy detection.
 
-#### Subtask 1c: No-Re-Offer suppression
+#### Subtask 1c: No-Re-Offer suppression [x]
 
 Add context_hash computation and declined_offers matching. Integrate with
 dormant warning logic.
 
-#### Subtask 1d: Suggested prompts
+#### Subtask 1d: Suggested prompts [x]
 
 Add pre-composed prompt strings keyed by warning type.
 
-### Task 2: Implement `session journal-append` command
+### Task 2: Implement `session journal-append` command [x]
 
 Add `cmd_session_journal_append` to momentum-tools.py under the `session`
 command group. This command:
@@ -188,16 +188,16 @@ command group. This command:
   table with Thread, Story, Phase, Last Action, Last Active, Status columns,
   includes open threads and threads closed within 7 days
 
-#### Subtask 2a: Atomic append implementation
+#### Subtask 2a: Atomic append implementation [x]
 
 Write the temp-file-then-append logic with proper error handling.
 
-#### Subtask 2b: Journal-view regeneration
+#### Subtask 2b: Journal-view regeneration [x]
 
 Port the view regeneration logic from workflow Step 13's natural language
 description into deterministic Python code.
 
-### Task 3: Rewrite workflow Step 11
+### Task 3: Rewrite workflow Step 11 [x]
 
 Replace the current Step 11 content with a thin presenter:
 
@@ -208,7 +208,7 @@ Replace the current Step 11 content with a thin presenter:
 - Keep the selection prompt and deferred stats-update
 - Remove all JSONL parsing, timestamp arithmetic, conditional hygiene branches
 
-### Task 4: Rewrite workflow Step 13
+### Task 4: Rewrite workflow Step 13 [x]
 
 Replace the current Step 13 content:
 
@@ -217,7 +217,7 @@ Replace the current Step 13 content:
 - Remove the journal-view.md regeneration action (handled by the tool)
 - Keep the step's role as a shared procedure invoked by other steps
 
-### Task 5: Unit tests
+### Task 5: Unit tests [x]
 
 Add tests following the existing subprocess-based pattern in
 test-momentum-tools.py.
@@ -352,8 +352,24 @@ Total: 3-4 tool calls for the display phase, well within the 10-call budget.
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None.
 
 ### Completion Notes List
 
+- Implemented `cmd_session_journal_hygiene` in momentum-tools.py: reads journal.jsonl, resolves open threads (last-entry-wins per thread_id), sorts by last_active descending, computes elapsed labels, builds all four warning categories (concurrent/dormant/dependency_satisfied/unwieldy), applies No-Re-Offer suppression via context_hash matching, returns pre-composed suggested_prompts. CLI registered as `session journal-hygiene`.
+- Implemented `_regenerate_journal_view` helper: reads journal, groups by thread_id (last entry wins), renders markdown table with open threads + threads closed within 7 days, open threads sorted most-recent-first.
+- Implemented `cmd_session_journal_append` in momentum-tools.py: validates JSON, atomic append via temp file (write → verify → append → cleanup), triggers view regeneration. CLI registered as `session journal-append --entry <json>`.
+- Rewrote workflow Step 11 to single tool call (`momentum-tools session journal-hygiene`), template rendering only — zero in-context JSONL parsing, timestamp arithmetic, or conditional hygiene branching.
+- Rewrote workflow Step 13 to single tool call (`momentum-tools session journal-append --entry '{{json_line}}'`), removing manual view regeneration (now handled by the tool).
+- Updated Step 12 references to remove redundant "Regenerate journal-view.md" actions.
+- Added 16 unit tests covering all AC behaviors; all 346 tests pass.
+
 ### File List
+
+- `skills/momentum/scripts/momentum-tools.py`
+- `skills/momentum/scripts/test-momentum-tools.py`
+- `skills/momentum/skills/impetus/workflow.md`

@@ -386,87 +386,69 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
   <!-- Session Journal Display and Thread Management (Story 2.2) -->
 
-  <step n="11" goal="Session Journal Display — show open threads, run hygiene checks, prompt for selection">
+  <step n="11" goal="Session Journal Display — show open threads, hygiene warnings, prompt for selection">
     <note>Voice rule (non-negotiable): When referencing any thread in output, use the thread's `context_summary` or `context_summary_short` — never the `thread_id` field or its T-NNN value. Internal identifiers do not appear in any user-facing output.</note>
 
-    <!-- Display threads -->
-    <action>Sort open threads by `last_active` descending (most recent first)</action>
-    <action>For each thread, compute elapsed time since `last_active` (e.g., "2h ago", "yesterday", "5d ago")</action>
-    <output>
-  {{thread_count}} threads in progress:
+    <!-- Single tool call fetches all display data — no JSONL parsing, no timestamp arithmetic -->
+    <action>Run `momentum-tools session journal-hygiene` via Bash. Store result as {{hygiene}}.</action>
 
-    1.  {{thread_1.context_summary_short}}   {{thread_1.phase}}   {{thread_1.elapsed}}
-    2.  {{thread_2.context_summary_short}}   {{thread_2.phase}}   {{thread_2.elapsed}}
-    [... one line per open thread ...]
+    <!-- Render thread list from {{hygiene.threads}} — sorted by last_active descending, labels pre-computed -->
+    <output>
+  {{hygiene.open_count}} threads in progress:
+
+    1.  {{hygiene.threads[0].context_summary_short}}   {{hygiene.threads[0].phase}}   {{hygiene.threads[0].elapsed_label}}
+    2.  {{hygiene.threads[1].context_summary_short}}   {{hygiene.threads[1].phase}}   {{hygiene.threads[1].elapsed_label}}
+    [... one line per entry in {{hygiene.threads}} ...]
     </output>
 
-    <!-- Thread hygiene checks — run inline before selection prompt (Story 2.2 AC4-AC7) -->
+    <!-- Render warnings from {{hygiene.warnings}} using pre-composed prompts from {{hygiene.suggested_prompts}} -->
 
-    <!-- Multi-tab concurrent work detection (AC4) -->
-    <action>For each open thread: if `last_active` is within the last 30 minutes, flag it</action>
-    <check if="any thread was active within 30 minutes">
+    <!-- Concurrent tab warning (AC4) — warn, never block -->
+    <check if="{{hygiene.warnings.concurrent}} is non-empty">
       <output>
-  !  Thread "{{thread.context_summary_short}}" appears active in another tab ({{minutes}} minutes ago).
-     Opening here may cause conflicts. Proceed anyway?
+  [For each entry in {{hygiene.warnings.concurrent}}:]
+  !  "{{entry.context_summary_short}}" appears active in another tab ({{entry.minutes_ago}} minutes ago). Opening here may cause conflicts. Proceed anyway?
       </output>
-      <note>Warn, never block — developer decides. If developer proceeds on same story, confirm before starting a competing thread.</note>
-      <note>Do not pause here for a response. Emit inline and continue — the developer's answer will arrive with their thread selection at the Wait action below.</note>
+      <note>Do not pause here. Emit inline and continue — developer's answer arrives with thread selection below.</note>
     </check>
 
-    <!-- Dormant thread hygiene (AC5) -->
-    <action>For each open thread: if `last_active` is more than 3 days ago, surface it</action>
-    <check if="any thread is dormant (>3 days inactive)">
-      <!-- No-Re-Offer guard: before surfacing, check declined_offers for this thread -->
-      <action>For this dormant thread, compute current context_hash: thread_id|story_ref|phase|git_hash (per journal schema)</action>
-      <check if="no declined_offers entry matches offer_type 'dormant-closure' + current context_hash for this thread">
-        <output>
-  {{thread.context_summary}} — {{days}} days inactive.
+    <!-- Dormant thread offers (AC5) — suppression already handled by tool -->
+    <check if="{{hygiene.warnings.dormant}} is non-empty">
+      <output>
+  [For each entry in {{hygiene.warnings.dormant}}:]
+  {{entry.context_summary_short}} — {{entry.days_inactive}} days inactive.
   Close this thread? [Y] Yes · [N] Keep open
-        </output>
-        <note>One confirmation per dormant thread. If developer confirms: append a new entry to journal.jsonl with same thread_id and `status: "closed"` via Bash (step 13). Then regenerate journal-view.md via step 13.</note>
-        <note>If developer declines [N]: record the declination per No-Re-Offer pattern — append journal entry with declined_offers via Bash (step 13).</note>
-      </check>
-      <check if="declined_offers entry matches offer_type 'dormant-closure' + current context_hash">
-        <note>Offer was previously declined and context has not changed. Suppress — do not surface.</note>
-      </check>
-      <note>Do not pause here for a response. Emit inline and continue — the developer's answer will arrive with their thread selection at the Wait action below.</note>
+      </output>
+      <note>One confirmation per dormant thread. If developer confirms [Y]: call step 13 to append close entry. If developer declines [N]: call step 13 to record declined_offers entry. Do not pause for response — continue to selection prompt.</note>
     </check>
 
     <!-- Dependency-satisfied notification (AC6) -->
-    <action>For each open thread with `depends_on_thread` set: check if the depended-on thread has `status: "closed"`</action>
-    <check if="any dependency is now satisfied">
+    <check if="{{hygiene.warnings.dependency_satisfied}} is non-empty">
       <output>
-  The work "{{depended_thread.context_summary_short}}" that thread "{{waiting_thread.context_summary_short}}" was waiting on is complete — ready to continue?
+  [For each entry in {{hygiene.warnings.dependency_satisfied}}:]
+  The work "{{entry.depends_on_summary}}" that "{{entry.context_summary_short}}" was waiting on is complete — ready to continue?
       </output>
       <note>Developer decides whether to activate the waiting thread.</note>
     </check>
 
-    <!-- Unwieldy journal triage (AC7) -->
-    <check if="more than 5 open threads">
-      <!-- No-Re-Offer guard: check if unwieldy-triage was previously declined -->
-      <action>Compute context_hash for unwieldy-triage: use the thread with the most recent last_active as the reference thread, format: thread_id|story_ref|phase|git_hash</action>
-      <check if="no declined_offers entry matches offer_type 'unwieldy-triage' + current context_hash">
-        <output>
-  !  {{open_count}} open threads — consider a quick triage before starting new work.
+    <!-- Unwieldy triage offer (AC7) -->
+    <check if="{{hygiene.warnings.unwieldy}} is non-null">
+      <output>
+  !  {{hygiene.warnings.unwieldy.open_count}} open threads — consider a quick triage before starting new work.
   I'll surface each with status and age. Close any that are stale?
-        </output>
-        <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then append closed entry to journal.jsonl via Bash (step 13).</note>
-        <note>If developer declines: record the declination per No-Re-Offer pattern — append journal entry with declined_offers on the reference thread via Bash (step 13).</note>
-      </check>
-      <check if="declined_offers entry matches offer_type 'unwieldy-triage' + current context_hash">
-        <note>Triage offer was previously declined and context has not changed. Suppress.</note>
-      </check>
+      </output>
+      <note>If developer agrees: iterate each open thread showing status + age + one-action close option. Each closure = single confirmation, then call step 13. If developer declines: call step 13 to record declined_offers entry on the most-recent thread.</note>
     </check>
 
-    <!-- Selection prompt — always the final element before the deferred write -->
+    <!-- Selection prompt -->
     <output>
   Continue (1/2/...) or tell me what you need?
     </output>
 
     <action>Wait for developer input — thread selection (by number), new work request, or hygiene response</action>
 
-    <!-- Deferred stats write for thread path (Story 2a.1): fires AFTER the Wait, not during display. -->
-    <action>Run momentum-tools session stats-update via Bash (discard output — do not display to user). This fires after the thread selection prompt, not during display.</action>
+    <!-- Deferred stats write fires AFTER the Wait, not during display -->
+    <action>Run momentum-tools session stats-update via Bash (discard output — do not display to user)</action>
 
     <note>Natural language gate: If developer input is natural language (not a thread number, "continue", or hygiene response), apply the Input Interpretation structural gate — confirm extracted intent before dispatching. Do not skip confirmation even if the intent seems obvious.</note>
 
@@ -489,26 +471,17 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
     <check if="developer chooses continue">
       <action>Resume workflow at `current_step` — proceed with the next action in that workflow phase</action>
-      <action>Update the thread's `last_active` timestamp by appending a new journal entry via Bash (step 13)</action>
-      <action>Regenerate `.claude/momentum/journal-view.md` via step 13</action>
+      <action>Update the thread's `last_active` timestamp via step 13 (journal-append handles view regeneration automatically)</action>
     </check>
     <check if="developer chooses restart">
-      <action>Reset to the beginning of the current phase — append a new journal entry with `current_step` set to the phase start via Bash (step 13)</action>
-      <action>Update `last_active` timestamp via Bash (step 13)</action>
-      <action>Regenerate `.claude/momentum/journal-view.md` via step 13</action>
+      <action>Reset to the beginning of the current phase — append a new journal entry with `current_step` set to the phase start via step 13</action>
       <action>Begin the phase from its first step</action>
     </check>
   </step>
 
-  <step n="13" goal="Journal write and view regeneration">
+  <step n="13" goal="Journal write — atomic append with automatic view regeneration">
     <note>This step describes the journal write protocol invoked whenever any workflow step needs to update journal state. It is not reached by linear flow — it is a shared procedure.</note>
-    <action>Append a new JSON line to `.claude/momentum/journal.jsonl` via Bash: `echo '{{json_line}}' >> .claude/momentum/journal.jsonl`</action>
-    <action>After append, regenerate `.claude/momentum/journal-view.md`:
-      - Read all journal entries
-      - Reconstruct current state per thread_id (last entry wins)
-      - Render a markdown table with columns: Thread (context_summary_short), Story, Phase, Last Action, Last Active, Status (never use thread_id / T-NNN as a column value)
-      - Include all open threads and threads closed within the last 7 days
-      - Write to `.claude/momentum/journal-view.md` via Bash: `python3 -c "open('.claude/momentum/journal-view.md','w').write('''{{rendered_markdown}}''')"` (overwrite)</action>
+    <action>Run `momentum-tools session journal-append --entry '{{json_line}}'` via Bash. The tool performs an atomic write (temp file + verify + append) and regenerates `.claude/momentum/journal-view.md` automatically. No additional view regeneration action is needed.</action>
   </step>
 
   <!-- Version upgrade path -->

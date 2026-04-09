@@ -1518,6 +1518,15 @@ def build_parser() -> argparse.ArgumentParser:
     sjs = session_sub.add_parser("journal-status", help="Scan journal for open threads")
     sjs.set_defaults(func=cmd_session_journal_status)
 
+    # session journal-hygiene
+    sjh = session_sub.add_parser("journal-hygiene", help="Return structured hygiene data for all open threads")
+    sjh.set_defaults(func=cmd_session_journal_hygiene)
+
+    # session journal-append
+    sja = session_sub.add_parser("journal-append", help="Atomic append to journal.jsonl and regenerate view")
+    sja.add_argument("--entry", required=True, help="JSON string to append as a new journal line")
+    sja.set_defaults(func=cmd_session_journal_append)
+
     # specialist-classify command
     sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")
     sc_parser.add_argument("--touches", required=True, help="Comma-separated file paths")
