@@ -10,6 +10,7 @@
 
 <workflow>
   <critical>Do not re-implement bmad-dev-story logic. Delegate all implementation to that skill.</critical>
+  <critical>Never read files under sprints/{sprint-slug}/specs/ or any .feature file. Gherkin specs are for verifier agents only (Decision 30 — black-box separation). The dev agent must implement against plain English ACs in the story file, not against Gherkin specs. This is a read barrier, not just a write barrier — dev agents must never access specs regardless of protected-paths.json policy.</critical>
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum:create-story. Offer to run the injection step manually before proceeding.</critical>
   <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
   <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>

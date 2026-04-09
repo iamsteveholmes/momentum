@@ -61,6 +61,22 @@ For each scenario:
 - Verify that no story's behavior conflicts with another story's expected behavior
 - Flag any specs that became unreachable due to integration changes
 
+### 5. Spec Quality Classification
+
+While validating, identify findings that indicate spec quality problems (not just implementation problems):
+
+- **Untestable scenario:** A scenario that cannot be verified by external observation — e.g., it requires reading source code, checking internal state not exposed by any command, or verifying something an agent "did not do" internally
+- **Outsider Test failure:** A scenario whose Given/When/Then clauses reference internal mechanisms (which tool was called, which file was read internally, which agent was spawned) rather than observable outcomes
+
+Tag these findings with `spec-quality` metadata in the structured output. The tag format is:
+
+```
+tags: ["spec-quality"]
+spec-quality-reason: "untestable-scenario" | "outsider-test-failure"
+```
+
+These are spec authoring defects, not implementation defects. They do not affect the overall verdict (PASS/FAIL/BLOCKED) but are surfaced for retro aggregation.
+
 ## Large File Handling
 
 Some project files exceed the Read tool's token limit (10,000 tokens). When you
@@ -110,6 +126,11 @@ Return a structured validation report:
 
 ### Manual Verification Needed
 [List scenarios requiring human verification, with instructions]
+
+### Spec Quality Findings
+[Only if spec-quality issues detected]
+
+- **[feature]:[scenario]** — tags: ["spec-quality"] spec-quality-reason: "untestable-scenario" | "outsider-test-failure" — [description of what makes this scenario untestable or what internal mechanism it references]
 
 ### Summary
 [1-2 sentences: behavioral health of the sprint, recommended action]

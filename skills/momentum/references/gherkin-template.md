@@ -55,3 +55,88 @@ Feature: {Story title}
 - No Scenario Outline/Examples — keep scenarios concrete
 - No comments (`#`) — scenario names should be self-explanatory
 - No data tables unless the scenario genuinely requires structured input
+
+## Anti-Patterns
+
+These patterns recur in generated specs and undermine behavioral quality. Each has a concrete Bad/Good pair.
+
+### AC-by-AC Translation
+
+One scenario per AC, with AC numbers in scenario names. This is a structural dump of the story, not behavioral specification.
+
+**Bad:**
+```gherkin
+Scenario: AC 1 — sprint-planning generates feature files
+  Given the developer has selected stories
+  When AC 1 is executed
+  Then feature files are created for each story
+```
+
+**Good:**
+```gherkin
+Scenario: Developer receives a spec for each story after planning completes
+  Given the developer has approved a set of stories for the sprint
+  When sprint planning completes
+  Then a Gherkin spec file exists for each approved story in the sprint specs directory
+```
+
+### Internal Mechanism References
+
+Clauses that reference which skill was called, which tool was invoked, which file was read, or what an agent did internally. These fail the Outsider Test — an external observer cannot verify them.
+
+**Bad:**
+```gherkin
+Scenario: Dev workflow delegates to bmad-dev-story
+  Given a story is ready-for-dev
+  When the developer invokes momentum:dev
+  Then bmad-dev-story is spawned via the Agent tool
+  And the EnterWorktree tool is called with the worktree path
+```
+
+**Good:**
+```gherkin
+Scenario: Developer receives implemented story changes after invoking dev
+  Given a story is in ready-for-dev status
+  When the developer invokes momentum:dev
+  Then the story's changes are committed on an isolated branch
+  And the story status is updated to review
+```
+
+### Implementation-Coupled Assertions
+
+Scenarios that assert on specific file paths, function names, class names, frontmatter keys, or internal data structures. These couple the test to implementation and break when internals change.
+
+**Bad:**
+```gherkin
+Scenario: SKILL.md frontmatter is valid
+  Given a new skill is created
+  When the SKILL.md file is written
+  Then the file contains a valid `name` frontmatter key
+  And the `allowed-tools` field lists only approved tools
+```
+
+**Good:**
+```gherkin
+Scenario: New skill is invocable after creation
+  Given a new skill has been created for the project
+  When the developer invokes the skill by name
+  Then the skill executes and produces its expected output
+```
+
+### Passive Voice in When Clauses
+
+When clauses that use passive voice hide who is doing the action and make scenarios ambiguous.
+
+**Bad:**
+```gherkin
+  When quick-fix is invoked
+  When the sprint is activated
+  When validation is run
+```
+
+**Good:**
+```gherkin
+  When the developer invokes quick-fix
+  When the developer activates the sprint
+  When the developer runs validation
+```

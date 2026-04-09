@@ -224,8 +224,9 @@ Approve, or request revisions?</output>
       holistically to understand the system's intended behavior, then write Gherkin
       scenarios that describe that behavior end-to-end.</action>
     <action>Read `skills/momentum/references/gherkin-template.md` for the required format,
-      voice, tense, naming, and structure rules. All generated `.feature` files must
-      follow this template exactly.</action>
+      voice, tense, naming, and structure rules — including the Anti-Patterns section.
+      All generated `.feature` files must follow this template exactly and avoid all
+      listed anti-patterns.</action>
     <action>Generate a Gherkin `.feature` file for the **E2E Validator** — a black-box agent
       that tests running behavior without source code access. The validator can invoke skills,
       run commands, observe outputs, and check system state — but it CANNOT read SKILL.md files,
@@ -259,6 +260,22 @@ Approve, or request revisions?</output>
         · "reads file X" → "proceeds without requesting additional input"
         · "does not perform X" → describe the observable absence ("no worktree artifacts remain")
     </action>
+    <action>Before writing the spec, perform a self-check on every Generated/When/Then clause:
+      Apply the Outsider Test to each clause — could someone who has never seen the source code
+      verify this clause by ONLY invoking skills, running commands, and reading outputs?
+
+      Clauses that fail the Outsider Test:
+        · Reference which internal skill or tool was called ("delegates to bmad-dev-story", "uses the Agent tool")
+        · Reference which mechanism spawned an agent ("spawned via Agent tool")
+        · Reference what a file contains internally ("reads the story file's Dev Notes")
+        · Reference what an agent did NOT do internally ("does not perform worktree management")
+        · Use AC numbers or phase numbers in scenario names ("AC 1", "Phase 2")
+        · Use passive voice in When clauses ("When quick-fix is invoked")
+
+      For each failing clause: rewrite it to describe the observable outcome before saving.
+      Do NOT save a spec that contains failing clauses — rewrite until all pass.
+    </action>
+
     <action>Write the spec to: `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/{{story_slug}}.feature`</action>
 
     <action>Do NOT modify the story markdown file — story files retain plain English ACs only</action>
@@ -266,7 +283,25 @@ Approve, or request revisions?</output>
     <action>Log each spec generation:
       `momentum-tools log --agent impetus --event decision --detail "Gherkin spec generated for {{story_slug}}: N scenarios" --sprint {{sprint_slug}}`</action>
 
-    <output>Gherkin specs generated:
+    <!-- Post-generation validation gate: runs after ALL specs are written -->
+    <action>After generating all specs, run a structural validation pass over every generated `.feature` file:
+
+      For each `.feature` file, check:
+        1. **Structure:** Every scenario has at least one Given, one When, and one Then clause
+        2. **Naming:** No scenario name contains AC numbers ("AC 1", "AC-2", "AC3") or phase numbers ("Phase 1", "Phase 2")
+        3. **Outsider Test:** No Given/When/Then clause references internal agent names (used as mechanism), tool names, or file paths in a way that fails the Outsider Test
+        4. **Format:** Indentation matches gherkin-template.md (Feature: no indent, Background/Scenario: 2 spaces, Given/When/Then: 4 spaces); no tags, no Scenario Outline, no comments
+
+      On validation failure:
+        · Surface the specific file, scenario name, and failing clause to the developer
+        · State why the clause fails (structure gap, naming violation, outsider-test failure, or format error)
+        · Regenerate the affected spec before proceeding to team composition
+        · Re-run validation on the regenerated spec
+
+      Only proceed to Step 4.5 when all specs pass all four checks.
+    </action>
+
+    <output>Gherkin specs generated and validated:
   {{for each story: · story_slug — N scenarios}}
 
 Specs written to sprints/{{sprint_slug}}/specs/. These are for verifier agents only — dev agents will not see them.

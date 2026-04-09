@@ -70,6 +70,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       - Implementation approach per type (EDD steps for skill-instruction; TDD delegation for script-code; functional verification for rule-hook; direct+inspect for config-structure; direct authoring with cross-reference verification for specification)
       - NFR compliance requirements for any skill-instruction tasks
       - DoD additions specific to this story's change types
+      - A reminder that Gherkin specs exist for this sprint (in sprints/{sprint-slug}/specs/) but are off-limits to the dev agent — the dev agent implements against plain English ACs in the story file only, never against .feature files (Decision 30 black-box separation)
     </critical>
 
     <action>Save {{story_file}} with the injected section</action>
