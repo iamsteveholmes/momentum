@@ -1,7 +1,7 @@
 ---
 title: Assessment Skill — Guided Product State Evaluation
 story_key: assessment-skill
-status: ready-for-dev
+status: review
 epic_slug: impetus-epic-orchestrator
 depends_on: []
 touches:
@@ -134,29 +134,29 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-9)
-  - [ ] Create eval verifying the skill scopes collaboratively and validates
+- [x] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-9)
+  - [x] Create eval verifying the skill scopes collaboratively and validates
     findings with the developer before writing
 
-- [ ] Task 2 — Create ASR template (AC: 6)
-  - [ ] Create `skills/momentum/skills/assessment/references/asr-template.md`
-  - [ ] Include complete frontmatter schema and all body sections
-  - [ ] Use nornspun ASR-001 as reference for format
+- [x] Task 2 — Create ASR template (AC: 6)
+  - [x] Create `skills/momentum/skills/assessment/references/asr-template.md`
+  - [x] Include complete frontmatter schema and all body sections
+  - [x] Use nornspun ASR-001 as reference for format
 
-- [ ] Task 3 — Create SKILL.md (AC: 1)
-  - [ ] Frontmatter: name: assessment, model: claude-sonnet-4-6, effort: high
-  - [ ] SKILL.md body delegates to ./workflow.md
+- [x] Task 3 — Create SKILL.md (AC: 1)
+  - [x] Frontmatter: name: assessment, model: claude-sonnet-4-6, effort: high
+  - [x] SKILL.md body delegates to ./workflow.md
 
-- [ ] Task 4 — Create workflow.md (AC: 2-5, 7-9)
-  - [ ] Step 1: Scoping conversation — ask what to assess, agree on agent roster
-  - [ ] Step 2: Spawn parallel discovery agents per agreed scope
-  - [ ] Step 3: Present findings section by section with developer validation
-  - [ ] Step 4: Collaboratively draft recommended next steps
-  - [ ] Step 5: Write ASR document from template with proper frontmatter
-  - [ ] Step 6: Update assessments/index.md, commit
-  - [ ] Step 7: Offer bridge to decision skill
+- [x] Task 4 — Create workflow.md (AC: 2-5, 7-9)
+  - [x] Step 1: Scoping conversation — ask what to assess, agree on agent roster
+  - [x] Step 2: Spawn parallel discovery agents per agreed scope
+  - [x] Step 3: Present findings section by section with developer validation
+  - [x] Step 4: Collaboratively draft recommended next steps
+  - [x] Step 5: Write ASR document from template with proper frontmatter
+  - [x] Step 6: Update assessments/index.md, commit
+  - [x] Step 7: Offer bridge to decision skill
 
-- [ ] Task 5 — Run eval and verify (AC: 1-9)
+- [x] Task 5 — Run eval and verify (AC: 1-9)
 
 ## Dev Notes
 
@@ -202,8 +202,24 @@ report generator — it's a guided investigation.
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None
 
 ### Completion Notes List
 
+- Created `skills/momentum/skills/assessment/SKILL.md` — valid frontmatter, delegates to workflow.md, description 117 chars (under 150)
+- Created `skills/momentum/skills/assessment/workflow.md` — 7-step workflow: scoping, parallel discovery, per-finding validation, collaborative next steps, ASR write from template, registry commit, decision bridge
+- Created `skills/momentum/skills/assessment/references/asr-template.md` — complete frontmatter schema, body structure, evidence table conventions, naming convention, registry entry format; based on nornspun ASR-001 reference
+- Created `skills/momentum/skills/assessment/evals/eval-collaborative-scoping-and-validation.md` — behavioral eval verifying that scoping precedes discovery and findings require developer confirmation before writing
+- All 9 ACs satisfied: independently invocable, collaborative scoping, parallel discovery, per-finding validation, collaborative next steps, template exists, ASR from template, registry update + commit, decision bridge offer
+
 ### File List
+
+- skills/momentum/skills/assessment/SKILL.md
+- skills/momentum/skills/assessment/workflow.md
+- skills/momentum/skills/assessment/references/asr-template.md
+- skills/momentum/skills/assessment/evals/eval-collaborative-scoping-and-validation.md
+- _bmad-output/implementation-artifacts/stories/assessment-skill.md
