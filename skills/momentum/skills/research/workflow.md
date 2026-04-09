@@ -92,27 +92,172 @@ sub_questions:
     <output>Research project created at {{project_dir}}. Profile: {{profile}}. {{count}} sub-questions defined.</output>
   </step>
 
-  <step n="1.4" goal="Optional Gemini triangulation setup">
-    <action>Check if gemini CLI is available: run `which gemini` via Bash</action>
-    <check if="gemini is available">
-      <check if="{{project_dir}}/raw/gemini-output.md already exists">
-        <output>Gemini output already exists at raw/gemini-output.md — skipping Gemini step.</output>
-        <action>Continue to Phase 2</action>
+  <step n="1.4" goal="Gemini triangulation — Deep Research via cmux-browser (with gemini -p fallback)">
+    <!-- ── GATE 1: Check for existing output ──────────────────────────── -->
+    <check if="{{project_dir}}/raw/gemini-deep-research-output.md exists OR {{project_dir}}/raw/gemini-output.md exists">
+      <output>Gemini output already exists — skipping Gemini step.</output>
+      <action>Continue to Phase 2</action>
+    </check>
+
+    <!-- ── GATE 2: Generate prompt (used by both paths) ──────────────── -->
+    <action>Load ./references/gemini-prompt-template.md</action>
+    <action>Generate prompt by substituting {{topic}}, {{goals}}, {{sub_questions}}, {{date}}</action>
+    <action>Write to {{project_dir}}/raw/gemini-prompt.md</action>
+
+    <!-- ── GATE 3: cmux availability check ───────────────────────────── -->
+    <action>Check if cmux is available: run `which cmux` via Bash</action>
+    <check if="cmux is NOT available">
+      <!-- Degrade to gemini -p basic path -->
+      <action>GOTO [[gemini-basic-fallback]]</action>
+    </check>
+
+    <!-- ── DEEP RESEARCH PATH (cmux available) ───────────────────────── -->
+
+    <!-- Auth state load/verify/save -->
+    <action>Set {{auth_state_path}} = ~/.claude/browser-state/google-auth.json</action>
+    <action>Open browser surface to https://gemini.google.com via: cmux browser open https://gemini.google.com --json</action>
+    <action>Capture {{surface}} from the JSON output (e.g. "surface:1")</action>
+    <action>Wait for page load: cmux browser {{surface}} wait --load-state complete --timeout-ms 15000</action>
+
+    <check if="~/.claude/browser-state/google-auth.json exists">
+      <action>Load auth state: cmux browser {{surface}} state load ~/.claude/browser-state/google-auth.json</action>
+      <action>Reload page to apply session: cmux browser {{surface}} reload</action>
+      <action>Wait for page load: cmux browser {{surface}} wait --load-state complete --timeout-ms 15000</action>
+    </check>
+
+    <!-- Verify authentication via DOM inspection (not URL) -->
+    <action>Snapshot the page: cmux browser {{surface}} snapshot --interactive</action>
+    <action>Inspect DOM for auth status: cmux browser {{surface}} eval 'document.querySelectorAll("[aria-label*=\"Sign in\"], a[href*=\"accounts.google.com\"]").length'</action>
+    <check if="sign-in elements found (count > 0)">
+      <output>Not authenticated — no saved auth state or stale session detected.</output>
+      <ask>Please log in to your Google account in the browser pane, then confirm when done.</ask>
+      <action>Wait for user confirmation of login</action>
+      <action>Verify auth again: cmux browser {{surface}} eval 'document.querySelectorAll("[aria-label*=\"Sign in\"], a[href*=\"accounts.google.com\"]").length'</action>
+      <action>Create directory if needed: mkdir -p ~/.claude/browser-state/</action>
+      <action>Save auth state: cmux browser {{surface}} state save ~/.claude/browser-state/google-auth.json</action>
+      <output>Auth state saved to ~/.claude/browser-state/google-auth.json</output>
+    </check>
+
+    <!-- Ensure surface is wide enough for follow-up input to be visible -->
+    <note>UI width requirement: Deep Research renders as a full-screen overlay at narrow widths, hiding the chat input. Maximize or widen the surface before starting to ensure follow-up input remains accessible after research completes.</note>
+
+    <!-- Deep Research execution pipeline -->
+    <action>Set {{dr_retry_count}} = 0</action>
+    <action>Set {{dr_max_retries}} = 2</action>
+
+    <!-- [[deep-research-attempt]] -->
+    <action>Navigate to chat: cmux browser {{surface}} goto https://gemini.google.com</action>
+    <action>Wait for page load: cmux browser {{surface}} wait --load-state complete --timeout-ms 15000</action>
+
+    <!-- Enable Deep Research via Tools menu -->
+    <action>Click Tools menu: cmux browser {{surface}} click "button[aria-label='Tools']" --snapshot-after</action>
+    <action>Enable Deep Research checkbox via eval: cmux browser {{surface}} eval 'Array.from(document.querySelectorAll("[role=menuitemcheckbox]")).find(el => el.textContent.includes("Deep research"))?.click()'</action>
+    <action>Close Tools menu if still open: cmux browser {{surface}} press Escape</action>
+
+    <!-- Fill research prompt -->
+    <action>Fill prompt: cmux browser {{surface}} fill "[contenteditable], textarea, [role=textbox]" "$(cat {{project_dir}}/raw/gemini-prompt.md)"</action>
+
+    <!-- Submit -->
+    <action>Click send: cmux browser {{surface}} eval 'Array.from(document.querySelectorAll("button")).find(b => b.getAttribute("aria-label")?.includes("Send") || b.textContent.trim() === "Send message")?.click()'</action>
+
+    <!-- Poll for "Start research" button (plan generation) -->
+    <note>Poll every 10 seconds for up to 3 minutes. If "Start research" button appears, auto-click it immediately without waiting for user approval.</note>
+    <action>Poll for plan readiness: cmux browser {{surface}} wait --function 'Array.from(document.querySelectorAll("button")).some(b => b.textContent.includes("Start research"))' --timeout-ms 180000</action>
+
+    <check if="plan generation times out (no 'Start research' button after 3 minutes)">
+      <check if="{{dr_retry_count}} < {{dr_max_retries}}">
+        <action>Increment {{dr_retry_count}} by 1</action>
+        <output>Plan generation timed out. Reloading and retrying (attempt {{dr_retry_count}} of {{dr_max_retries}})...</output>
+        <action>Reload page: cmux browser {{surface}} reload</action>
+        <action>Wait for load: cmux browser {{surface}} wait --load-state complete --timeout-ms 15000</action>
+        <action>GOTO [[deep-research-attempt]]</action>
       </check>
-      <ask>Gemini CLI detected. Would you like to generate a Gemini Deep Research prompt for external triangulation? (The prompt will be written to raw/gemini-prompt.md and you can choose to run it.)</ask>
-      <check if="user says yes">
-        <action>Load ./references/gemini-prompt-template.md</action>
-        <action>Generate prompt by substituting {{topic}}, {{goals}}, {{sub_questions}}, {{date}}</action>
-        <action>Write to {{project_dir}}/raw/gemini-prompt.md</action>
-        <ask>Prompt written to raw/gemini-prompt.md. Run it now via `gemini -p`?</ask>
-        <check if="user confirms">
-          <action>Run: gemini -p "$(cat {{project_dir}}/raw/gemini-prompt.md)" and capture output</action>
-          <check if="gemini command fails or auth error">
-            <output>Gemini auth failed. Run `! gemini` in the terminal to authenticate, then re-invoke.</output>
-            <action>Continue to Phase 2 without Gemini output — it can be added later</action>
-          </check>
-          <check if="gemini succeeds">
-            <action>Write output to {{project_dir}}/raw/gemini-output.md with frontmatter:</action>
+      <check if="{{dr_retry_count}} >= {{dr_max_retries}}">
+        <output>Deep Research failed after {{dr_max_retries}} retries. Falling back to gemini -p basic mode.</output>
+        <action>GOTO [[gemini-basic-fallback]]</action>
+      </check>
+    </check>
+
+    <!-- Auto-approve the research plan -->
+    <action>Click "Start research": cmux browser {{surface}} eval 'Array.from(document.querySelectorAll("button")).find(b => b.textContent.includes("Start research"))?.click()'</action>
+    <output>Research plan approved — research underway.</output>
+
+    <!-- Poll for research completion via text length stabilization -->
+    <note>Poll every 30 seconds. Read the largest .markdown.markdown-main-panel element. If text length hasn't changed in 5 minutes, treat as stale and reload. Research is complete when text length > 10000 and stable (same value across two reads 30s apart).</note>
+    <action>Initialize {{prev_length}} = 0, {{stable_since}} = now</action>
+    <action>Loop: read cmux browser {{surface}} eval 'Math.max(0, ...Array.from(document.querySelectorAll(".markdown.markdown-main-panel")).map(el => el.textContent.length))'</action>
+    <action>Store result as {{current_length}}</action>
+    <check if="{{current_length}} == {{prev_length}} AND {{current_length}} > 10000">
+      <action>Research complete — exit polling loop</action>
+    </check>
+    <check if="{{current_length}} == {{prev_length}} AND time since {{stable_since}} > 5 minutes">
+      <output>Response stalled. Reloading page — completed report should reload from Gemini server-side state.</output>
+      <action>Reload page: cmux browser {{surface}} reload</action>
+      <action>Wait for load: cmux browser {{surface}} wait --load-state complete --timeout-ms 30000</action>
+      <!-- Session recovery: if reload loses the conversation -->
+      <action>Check if report text is present: cmux browser {{surface}} eval 'Math.max(0, ...Array.from(document.querySelectorAll(".markdown.markdown-main-panel")).map(el => el.textContent.length))'</action>
+      <check if="report text NOT found (length == 0)">
+        <note>Session recovery: open sidebar, find most recent conversation matching {{topic}}, click into it to recover the completed output.</note>
+        <action>Snapshot sidebar: cmux browser {{surface}} snapshot --interactive</action>
+        <action>Click the most recent conversation item whose text matches {{topic}}</action>
+        <action>Wait for load: cmux browser {{surface}} wait --load-state complete --timeout-ms 15000</action>
+      </check>
+    </check>
+    <action>Update {{prev_length}} = {{current_length}}; sleep 30s; continue polling</action>
+
+    <!-- Extract report -->
+    <action>Extract report text: cmux browser {{surface}} eval 'Array.from(document.querySelectorAll(".markdown.markdown-main-panel")).filter(el => el.textContent.length > 10000).sort((a,b) => b.textContent.length - a.textContent.length)[0]?.textContent'</action>
+    <action>Store as {{deep_research_report}}</action>
+
+    <!-- Write output with provenance frontmatter -->
+    <action>Write {{project_dir}}/raw/gemini-deep-research-output.md with content:</action>
+
+```yaml
+---
+content_origin: gemini-deep-research
+date: {{date}}
+topic: "{{topic}}"
+method: cmux-browser
+---
+```
+
+    <action>Append {{deep_research_report}} to the file after the frontmatter</action>
+    <output>Gemini Deep Research output saved to raw/gemini-deep-research-output.md</output>
+
+    <!-- Follow-up questions cycle (AC6) -->
+    <note>AC6: After extracting the Deep Research report, send 2-3 targeted follow-up questions in the same Gemini conversation to probe gaps from scope.md sub-questions thinly covered. Each response is appended under a ## Follow-Up section. Ensure the surface is wide enough that the chat input is visible alongside the report panel before submitting follow-ups.</note>
+    <action>Review sub-questions from scope.md against report content. Identify 2-3 areas with thin coverage.</action>
+    <action>Generate follow-up questions targeting those gaps.</action>
+    <action>For each follow-up question:</action>
+    <action>  Verify chat input is visible: cmux browser {{surface}} snapshot --interactive — confirm text input element is present</action>
+    <check if="chat input NOT visible">
+      <action>Widen browser surface or scroll to make input visible before proceeding</action>
+    </check>
+    <action>  Fill follow-up question: cmux browser {{surface}} fill "[contenteditable], textarea, [role=textbox]" "{{follow_up_question}}"</action>
+    <action>  Submit: cmux browser {{surface}} eval 'Array.from(document.querySelectorAll("button")).find(b => b.getAttribute("aria-label")?.includes("Send") || b.textContent.trim() === "Send message")?.click()'</action>
+    <action>  Poll for response: read last .markdown.markdown-main-panel element (not the main report one), check length stabilization (two reads 5s apart with same non-zero length)</action>
+    <action>  Extract response text and append to raw/gemini-deep-research-output.md under ## Follow-Up section</action>
+
+    <action>Continue to Phase 2</action>
+
+    <!-- ── GEMINI -p BASIC FALLBACK ────────────────────────────────── -->
+    <!-- [[gemini-basic-fallback]] -->
+    <action>Check if gemini CLI is available: run `which gemini` via Bash</action>
+    <check if="gemini is NOT available">
+      <output>Neither cmux nor gemini CLI available — skipping Gemini triangulation. Continuing to Phase 2.</output>
+      <action>Continue to Phase 2</action>
+    </check>
+
+    <check if="gemini is available">
+      <ask>Gemini Deep Research via browser is unavailable. Would you like to run a basic Gemini prompt via `gemini -p` for triangulation instead?</ask>
+      <check if="user says yes or confirms">
+        <action>Run: gemini -p "$(cat {{project_dir}}/raw/gemini-prompt.md)" and capture output</action>
+        <check if="gemini command fails or auth error">
+          <output>Gemini auth failed. Run `! gemini` in the terminal to authenticate, then re-invoke.</output>
+          <action>Continue to Phase 2 without Gemini output — it can be added later</action>
+        </check>
+        <check if="gemini succeeds">
+          <action>Write output to {{project_dir}}/raw/gemini-output.md with frontmatter:</action>
 
 ```yaml
 ---
@@ -122,13 +267,12 @@ topic: "{{topic}}"
 ---
 ```
 
-            <output>Gemini output saved to raw/gemini-output.md</output>
-          </check>
+          <output>Gemini output saved to raw/gemini-output.md</output>
         </check>
       </check>
-    </check>
-    <check if="gemini is NOT available">
-      <action>Skip Gemini — continue to Phase 2</action>
+      <check if="user declines">
+        <action>Continue to Phase 2 without Gemini output</action>
+      </check>
     </check>
   </step>
 
@@ -249,7 +393,8 @@ topic: "{{topic}}"
   <step n="5.1" goal="Synthesize research into final document">
     <action>Collect all input file paths:
       - All {{project_dir}}/raw/research-*.md files
-      - {{project_dir}}/raw/gemini-output.md (if exists)
+      - {{project_dir}}/raw/gemini-deep-research-output.md (if exists — Deep Research path)
+      - {{project_dir}}/raw/gemini-output.md (if exists — gemini -p fallback path)
       - {{project_dir}}/validation/avfl-report.md (if exists)
       - {{project_dir}}/raw/practitioner-notes.md (if exists)
       - {{project_dir}}/scope.md
@@ -261,6 +406,7 @@ topic: "{{topic}}"
 
     <action>Build the derives_from chain:
       - Each raw/research-*.md → relationship: synthesized_from
+      - raw/gemini-deep-research-output.md (if present) → relationship: synthesized_from
       - raw/gemini-output.md (if present) → relationship: synthesized_from
       - validation/avfl-report.md (if present) → relationship: validated_by
       - raw/practitioner-notes.md (if present) → relationship: informed_by

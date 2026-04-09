@@ -1,6 +1,6 @@
 ---
 title: Gemini Deep Research Automation — cmux-browser Integration for momentum-research
-status: ready-for-dev
+status: review
 epic_slug: research-knowledge
 story_key: 8-3-gemini-deep-research-automation
 depends_on:
@@ -20,7 +20,7 @@ derives_from:
 
 # Story 8-3: Gemini Deep Research Automation
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -87,18 +87,18 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Update workflow.md step 1.4 with cmux-browser Deep Research pipeline (AC: 1, 3, 5, 6)
-  - [ ] 1.1: Replace the existing step 1.4 with the new decision tree structure
-  - [ ] 1.2: Add cmux availability check as the first gate
-  - [ ] 1.3: Add auth state load/verify/save sequence
-  - [ ] 1.4: Add Deep Research execution steps (Tools menu, fill, submit, auto-approve plan, poll completion)
-  - [ ] 1.5: Add output extraction steps (DOM query, text extraction, file write with provenance)
-  - [ ] 1.6: Add error handling branches (plan timeout, staleness, session recovery, total failure fallback)
-  - [ ] 1.7: Retain `gemini -p` as explicit fallback path
+- [x] Task 1: Update workflow.md step 1.4 with cmux-browser Deep Research pipeline (AC: 1, 3, 5, 6)
+  - [x] 1.1: Replace the existing step 1.4 with the new decision tree structure
+  - [x] 1.2: Add cmux availability check as the first gate
+  - [x] 1.3: Add auth state load/verify/save sequence
+  - [x] 1.4: Add Deep Research execution steps (Tools menu, fill, submit, auto-approve plan, poll completion)
+  - [x] 1.5: Add output extraction steps (DOM query, text extraction, file write with provenance)
+  - [x] 1.6: Add error handling branches (plan timeout, staleness, session recovery, total failure fallback)
+  - [x] 1.7: Retain `gemini -p` as explicit fallback path
 
-- [ ] Task 2: Update gemini-prompt-template.md usage notes (AC: 1)
-  - [ ] 2.1: Add note that the template is used for both Deep Research (cmux-browser) and basic Gemini (`gemini -p`) paths
-  - [ ] 2.2: No changes to the template content itself — it generates the same prompt text for both paths
+- [x] Task 2: Update gemini-prompt-template.md usage notes (AC: 1)
+  - [x] 2.1: Add note that the template is used for both Deep Research (cmux-browser) and basic Gemini (`gemini -p`) paths
+  - [x] 2.2: No changes to the template content itself — it generates the same prompt text for both paths
 
 ## Dev Notes
 
@@ -168,12 +168,12 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 - Skill names prefixed `momentum-` (NFR12 — no naming collision with BMAD skills)
 
 **Additional DoD items for this story:**
-- [ ] 2+ behavioral evals written in `skills/momentum/skills/research/evals/`
-- [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
-- [ ] SKILL.md description ≤150 characters confirmed
-- [ ] `model:` and `effort:` frontmatter present and correct
-- [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed
-- [ ] AVFL checkpoint on produced artifact documented
+- [x] 2+ behavioral evals written in `skills/momentum/skills/research/evals/`
+- [x] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
+- [x] SKILL.md description ≤150 characters confirmed (118 chars)
+- [x] `model:` and `effort:` frontmatter present and correct
+- [x] SKILL.md body ≤500 lines / 5000 tokens confirmed (13 lines)
+- [x] AVFL checkpoint on produced artifact documented
 
 ### References
 
@@ -187,8 +187,31 @@ so that I get higher-quality triangulation from Gemini's multi-step research pip
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — clean implementation, no errors.
 
 ### Completion Notes List
 
+- Replaced workflow.md step 1.4 with full cmux-browser Deep Research pipeline using a 3-gate decision tree (existing output → prompt generation → cmux availability)
+- Auth state management: loads from `~/.claude/browser-state/google-auth.json`, verifies via DOM inspection (not URL), prompts user for manual login if stale, saves after successful auth
+- Deep Research execution: Tools menu eval pattern (menuitemcheckbox), rich-text-editor fill, auto-approves plan (no user gate), polls completion via text length stabilization
+- Error handling: plan timeout → 2 retries with page reload; stale response → page reload + session recovery via sidebar; total failure → gemini -p fallback
+- Follow-up questions cycle: identifies thinly-covered sub-questions, sends 2-3 follow-ups, checks surface width before submission, appends under ## Follow-Up section
+- Output extraction uses `.markdown.markdown-main-panel` filter `>10000 chars` (authoritative selector from prototyping)
+- Output file: `raw/gemini-deep-research-output.md` with provenance frontmatter `content_origin: gemini-deep-research`, `method: cmux-browser`
+- gemini -p fallback retained with user confirmation ask; writes to `raw/gemini-output.md` with `content_origin: gemini-cli`
+- Phase 5 synthesis step updated to include `raw/gemini-deep-research-output.md` as a source alongside `raw/gemini-output.md`
+- Dual-path usage note added to gemini-prompt-template.md references section
+- 2 behavioral evals written (happy path + fallback scenarios); both pass against workflow logic
+- EDD verification: all eval expectations satisfied by the updated workflow
+- AVFL checkpoint: workflow produces provenance-tracked output with correct content_origin values
+
 ### File List
+
+- `skills/momentum/skills/research/workflow.md` — modified (step 1.4 replaced; step 5.1 updated for gemini-deep-research-output.md)
+- `skills/momentum/skills/research/references/gemini-prompt-template.md` — modified (Dual-Path Usage section added)
+- `skills/momentum/skills/research/evals/eval-deep-research-automation.md` — created
+- `skills/momentum/skills/research/evals/eval-deep-research-fallback.md` — created

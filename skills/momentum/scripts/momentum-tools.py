@@ -14,6 +14,7 @@ Usage:
     momentum-tools.py sprint complete
     momentum-tools.py sprint epic-membership --story SLUG --epic SLUG
     momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N]
+    momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY]
     momentum-tools.py specialist-classify --touches "path1,path2,..."
     momentum-tools.py quickfix register --slug SLUG --story STORY_KEY
     momentum-tools.py quickfix complete --slug SLUG
@@ -573,6 +574,378 @@ def cmd_session_journal_status(args: argparse.Namespace) -> None:
            thread_summary=thread_summary)
 
 
+def cmd_session_journal_hygiene(args: argparse.Namespace) -> None:
+    import os
+    import subprocess as sp
+    from datetime import timedelta
+
+    project_dir = resolve_project_dir()
+    claude_project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", project_dir))
+    journal_path = claude_project_dir / ".claude" / "momentum" / "journal.jsonl"
+
+    TERMINAL_EVENTS = {"thread_close", "session_end", "done"}
+
+    suggested_prompts = {
+        "concurrent": '!  "{summary}" appears active in another tab ({minutes} minutes ago). Opening here may cause conflicts. Proceed anyway?',
+        "dormant": "{summary} — {days} days inactive. Close this thread? [Y] Yes · [N] Keep open",
+        "dependency_satisfied": 'The work "{dep_summary}" that "{summary}" was waiting on is complete — ready to continue?',
+        "unwieldy": "!  {count} open threads — consider a quick triage before starting new work. Close any that are stale?",
+    }
+
+    empty_result = {
+        "threads": [],
+        "warnings": {
+            "concurrent": [],
+            "dormant": [],
+            "dependency_satisfied": [],
+            "unwieldy": None,
+        },
+        "suppressed_offers": [],
+        "suggested_prompts": suggested_prompts,
+        "open_count": 0,
+        "total_count": 0,
+    }
+
+    if not journal_path.exists():
+        result("session_journal_hygiene", success=True, **empty_result)
+        return
+
+    # Parse journal — group by thread_id, collect all entries in order
+    thread_entries: dict[str, list[dict]] = {}
+    for line in journal_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        tid = entry.get("thread_id")
+        if tid:
+            thread_entries.setdefault(tid, []).append(entry)
+
+    # Build thread state — last entry per thread determines current state
+    thread_states: list[dict] = []
+    for tid, entries in thread_entries.items():
+        last = entries[-1]
+        last_event = last.get("event", "")
+        status = "closed" if last_event in TERMINAL_EVENTS else "open"
+        state = {**last, "status": status}
+        thread_states.append(state)
+
+    total_count = len(thread_states)
+
+    # Filter to open threads only
+    open_threads = [t for t in thread_states if t.get("status") == "open"]
+
+    if not open_threads:
+        empty_result["total_count"] = total_count
+        result("session_journal_hygiene", success=True, **empty_result)
+        return
+
+    # Get current datetime and git hash (once per invocation)
+    now = datetime.now()
+    git_hash = "unknown"
+    try:
+        proc = sp.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5, cwd=str(project_dir)
+        )
+        if proc.returncode == 0:
+            git_hash = proc.stdout.strip()
+    except (sp.TimeoutExpired, FileNotFoundError):
+        pass
+
+    def parse_ts(ts_str: str) -> "datetime | None":
+        if not ts_str:
+            return None
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%f"):
+            try:
+                return datetime.strptime(ts_str, fmt)
+            except ValueError:
+                continue
+        try:
+            return datetime.fromisoformat(ts_str.replace("Z", "+00:00")).replace(tzinfo=None)
+        except (ValueError, AttributeError):
+            return None
+
+    def elapsed_label(ts: datetime) -> str:
+        delta = now - ts
+        total_seconds = delta.total_seconds()
+        if total_seconds < 3600:
+            mins = max(1, int(total_seconds / 60))
+            return f"{mins}m ago"
+        if total_seconds < 86400:
+            hours = int(total_seconds / 3600)
+            return f"{hours}h ago"
+        if total_seconds < 172800:
+            return "yesterday"
+        days = int(total_seconds / 86400)
+        return f"{days}d ago"
+
+    # Build enriched thread list with elapsed labels
+    enriched: list[dict] = []
+    for t in open_threads:
+        ts_str = t.get("last_active") or t.get("timestamp", "")
+        ts = parse_ts(ts_str)
+        label = elapsed_label(ts) if ts else "unknown"
+        enriched.append({
+            "thread_id": t.get("thread_id", ""),
+            "context_summary_short": t.get("context_summary_short", ""),
+            "context_summary": t.get("context_summary", ""),
+            "phase": t.get("phase", ""),
+            "story_ref": t.get("story_ref", ""),
+            "last_active": ts_str,
+            "elapsed_label": label,
+            "status": "open",
+            # Internal fields for warning computation — stripped before output
+            "_ts": ts,
+            "_declined_offers": t.get("declined_offers", []),
+            "_depends_on_thread": t.get("depends_on_thread"),
+        })
+
+    # Sort by last_active descending (most recent first)
+    enriched.sort(key=lambda x: x["_ts"] or datetime.min, reverse=True)
+
+    # Lookup for all thread states by thread_id (for dependency resolution)
+    all_states_by_id = {t.get("thread_id", ""): t for t in thread_states}
+
+    # --- Warning computation ---
+    concurrent: list[dict] = []
+    dormant_raw: list[dict] = []
+    dependency_satisfied: list[dict] = []
+
+    thirty_min_ago = now - timedelta(minutes=30)
+    three_days_ago = now - timedelta(days=3)
+
+    for t in enriched:
+        ts = t["_ts"]
+        if ts is None:
+            continue
+
+        # Concurrent: active within 30 minutes of now
+        if ts >= thirty_min_ago:
+            minutes_ago = max(0, int((now - ts).total_seconds() / 60))
+            concurrent.append({
+                "thread_id": t["thread_id"],
+                "context_summary_short": t["context_summary_short"],
+                "minutes_ago": minutes_ago,
+            })
+
+        # Dormant: inactive more than 3 days
+        if ts < three_days_ago:
+            days_inactive = int((now - ts).total_seconds() / 86400)
+            dormant_raw.append({
+                "thread_id": t["thread_id"],
+                "context_summary_short": t["context_summary_short"],
+                "days_inactive": days_inactive,
+                "_declined_offers": t["_declined_offers"],
+                "_story_ref": t["story_ref"],
+                "_phase": t["phase"],
+            })
+
+        # Dependency satisfied
+        dep_tid = t["_depends_on_thread"]
+        if dep_tid:
+            dep_state = all_states_by_id.get(dep_tid)
+            if dep_state and dep_state.get("status") == "closed":
+                dep_summary = dep_state.get("context_summary_short", dep_tid)
+                dependency_satisfied.append({
+                    "thread_id": t["thread_id"],
+                    "context_summary_short": t["context_summary_short"],
+                    "depends_on_summary": dep_summary,
+                })
+
+    # Unwieldy: more than 5 open threads
+    open_count = len(enriched)
+    unwieldy = {"open_count": open_count} if open_count > 5 else None
+
+    # --- No-Re-Offer suppression for dormant threads ---
+    dormant: list[dict] = []
+    suppressed_offers: list[dict] = []
+
+    for d in dormant_raw:
+        tid = d["thread_id"]
+        story_ref = d["_story_ref"]
+        phase = d["_phase"]
+        context_hash = f"{tid}|{story_ref}|{phase}|{git_hash}"
+
+        suppressed = any(
+            offer.get("offer_type") == "dormant-closure"
+            and offer.get("context_hash") == context_hash
+            for offer in d["_declined_offers"]
+        )
+
+        if suppressed:
+            suppressed_offers.append({
+                "thread_id": tid,
+                "offer_type": "dormant-closure",
+                "reason": "declined, context unchanged",
+            })
+        else:
+            dormant.append({
+                "thread_id": tid,
+                "context_summary_short": d["context_summary_short"],
+                "days_inactive": d["days_inactive"],
+            })
+
+    # Strip internal fields before output
+    threads_out = [{k: v for k, v in t.items() if not k.startswith("_")} for t in enriched]
+
+    output = {
+        "threads": threads_out,
+        "warnings": {
+            "concurrent": concurrent,
+            "dormant": dormant,
+            "dependency_satisfied": dependency_satisfied,
+            "unwieldy": unwieldy,
+        },
+        "suppressed_offers": suppressed_offers,
+        "suggested_prompts": suggested_prompts,
+        "open_count": open_count,
+        "total_count": total_count,
+    }
+    result("session_journal_hygiene", success=True, **output)
+
+
+def _regenerate_journal_view(journal_path: Path, view_path: Path) -> None:
+    """Regenerate journal-view.md from journal.jsonl."""
+    from datetime import timedelta
+
+    TERMINAL_EVENTS = {"thread_close", "session_end", "done"}
+
+    if not journal_path.exists():
+        return
+
+    # Read and group by thread_id (last entry wins)
+    thread_last: dict[str, dict] = {}
+    for line in journal_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        tid = entry.get("thread_id")
+        if tid:
+            thread_last[tid] = entry
+
+    now = datetime.now()
+    seven_days_ago = now - timedelta(days=7)
+
+    def parse_ts_view(ts_str: str) -> "datetime | None":
+        if not ts_str:
+            return None
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%f"):
+            try:
+                return datetime.strptime(ts_str, fmt)
+            except ValueError:
+                continue
+        try:
+            return datetime.fromisoformat(ts_str.replace("Z", "+00:00")).replace(tzinfo=None)
+        except (ValueError, AttributeError):
+            return None
+
+    rows = []
+    for tid, entry in thread_last.items():
+        last_event = entry.get("event", "")
+        is_closed = last_event in TERMINAL_EVENTS
+
+        ts_str = entry.get("last_active") or entry.get("timestamp", "")
+        ts = parse_ts_view(ts_str)
+
+        # For closed threads: only include if closed within 7 days
+        if is_closed:
+            if ts is None or ts < seven_days_ago:
+                continue
+
+        rows.append({
+            "thread": entry.get("context_summary_short", ""),
+            "story": entry.get("story_ref", ""),
+            "phase": entry.get("phase", ""),
+            "last_action": last_event,
+            "last_active": ts_str,
+            "status": "closed" if is_closed else "open",
+            "_ts": ts,
+            "_is_closed": is_closed,
+        })
+
+    # Sort: open threads first (most recent first), then recent closed (most recent first)
+    open_rows = sorted(
+        [r for r in rows if not r["_is_closed"]],
+        key=lambda r: r["_ts"] or datetime.min,
+        reverse=True,
+    )
+    closed_rows = sorted(
+        [r for r in rows if r["_is_closed"]],
+        key=lambda r: r["_ts"] or datetime.min,
+        reverse=True,
+    )
+    rows = open_rows + closed_rows
+
+    lines = [
+        "# Journal View\n",
+        "| Thread | Story | Phase | Last Action | Last Active | Status |",
+        "|--------|-------|-------|-------------|-------------|--------|",
+    ]
+    for r in rows:
+        thread = r["thread"].replace("|", "&#124;")
+        story = r["story"].replace("|", "&#124;")
+        phase = r["phase"].replace("|", "&#124;")
+        last_action = r["last_action"].replace("|", "&#124;")
+        lines.append(
+            f"| {thread} | {story} | {phase} | {last_action} | {r['last_active']} | {r['status']} |"
+        )
+
+    view_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def cmd_session_journal_append(args: argparse.Namespace) -> None:
+    import os
+
+    project_dir = resolve_project_dir()
+    claude_project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", project_dir))
+    journal_dir = claude_project_dir / ".claude" / "momentum"
+    journal_path = journal_dir / "journal.jsonl"
+    view_path = journal_dir / "journal-view.md"
+
+    entry_str = args.entry
+
+    # Validate JSON
+    try:
+        entry_data = json.loads(entry_str)
+    except json.JSONDecodeError as e:
+        error_result("session_journal_append", f"Invalid JSON: {e}")
+        return
+
+    # Ensure journal directory exists
+    journal_dir.mkdir(parents=True, exist_ok=True)
+
+    # Atomic append: write to temp file, verify, then append to journal
+    tmp_path = journal_dir / "journal.jsonl.tmp"
+    line = json.dumps(entry_data, ensure_ascii=False)
+    try:
+        tmp_path.write_text(line + "\n", encoding="utf-8")
+        # Verify temp file is valid JSON
+        json.loads(tmp_path.read_text(encoding="utf-8").strip())
+        # Append to journal
+        with open(journal_path, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+        tmp_path.unlink(missing_ok=True)
+    except Exception as e:
+        tmp_path.unlink(missing_ok=True)
+        error_result("session_journal_append", f"Append failed: {e}")
+        return
+
+    # Regenerate journal-view.md
+    _regenerate_journal_view(journal_path, view_path)
+
+    result("session_journal_append", success=True,
+           journal_path=str(journal_path),
+           view_path=str(view_path))
+
+
 def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
     import os
     import subprocess as sp
@@ -983,42 +1356,41 @@ def cmd_quickfix_complete(args: argparse.Namespace) -> None:
     result("quickfix_complete", success=True, slug=slug, completed=target["completed"])
 
 
-# --- Log Command ---
+# --- Story Commands ---
 
-VALID_EVENT_TYPES = {"decision", "error", "retry", "assumption", "finding", "ambiguity", "subagent-start", "subagent-stop"}
+VALID_PRIORITIES = {"critical", "high", "medium", "low"}
 
 
-def cmd_log(args: argparse.Namespace) -> None:
-    event = args.event
-    if event not in VALID_EVENT_TYPES:
-        error_result("log", f"Invalid event type: '{event}'. Must be one of: {', '.join(sorted(VALID_EVENT_TYPES))}")
-
+def cmd_story_add(args: argparse.Namespace) -> None:
+    """Add a new story entry to stories/index.json."""
     project_dir = resolve_project_dir()
+    path = stories_path(project_dir)
+    stories = read_json(path)
 
-    sprint_slug = args.sprint if args.sprint else "_unsorted"
-    log_dir = project_dir / ".claude" / "momentum" / "sprint-logs" / sprint_slug
-    log_dir.mkdir(parents=True, exist_ok=True)
+    slug = args.slug.strip()
+    if not slug:
+        error_result("story_add", "Slug must not be empty", slug=slug)
 
-    if args.story:
-        filename = f"{args.agent}-{args.story}.jsonl"
-    else:
-        filename = f"{args.agent}.jsonl"
+    if slug in stories:
+        error_result("story_add", f"Story slug '{slug}' already exists in stories/index.json", slug=slug)
 
-    log_file = log_dir / filename
+    priority = args.priority if args.priority else "low"
+    if priority not in VALID_PRIORITIES:
+        error_result("story_add", f"Invalid priority '{priority}'. Must be one of: {', '.join(sorted(VALID_PRIORITIES))}", slug=slug)
 
     entry = {
-        "timestamp": datetime.now().isoformat(),
-        "agent": args.agent,
-        "story": args.story if args.story else None,
-        "sprint": args.sprint if args.sprint else None,
-        "event": event,
-        "detail": args.detail,
+        "status": "backlog",
+        "title": args.title.strip(),
+        "epic_slug": args.epic.strip(),
+        "story_file": True,
+        "depends_on": [],
+        "touches": [],
+        "priority": priority,
     }
+    stories[slug] = entry
+    write_json(path, stories)
 
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-
-    result("log", success=True, file=str(log_file), entry=entry)
+    result("story_add", success=True, slug=slug, **entry)
 
 
 # --- Version Command ---
@@ -1112,6 +1484,14 @@ def build_parser() -> argparse.ArgumentParser:
     ssp.add_argument("--priority", required=True, help="Priority level: critical, high, medium, low")
     ssp.set_defaults(func=cmd_sprint_set_priority)
 
+    # sprint story-add
+    sta = sprint_sub.add_parser("story-add", help="Add a new story entry to stories/index.json")
+    sta.add_argument("--slug", required=True, help="Story slug (kebab-case, unique)")
+    sta.add_argument("--title", required=True, help="Human-readable story title")
+    sta.add_argument("--epic", required=True, help="Epic slug this story belongs to")
+    sta.add_argument("--priority", default="low", help="Priority: critical, high, medium, low (default: low)")
+    sta.set_defaults(func=cmd_story_add)
+
     # sprint stories
     ss = sprint_sub.add_parser("stories", help="Query stories by priority")
     ss.add_argument("--priority", required=True,
@@ -1157,15 +1537,6 @@ def build_parser() -> argparse.ArgumentParser:
     qfc = quickfix_sub.add_parser("complete", help="Complete a registered quickfix")
     qfc.add_argument("--slug", required=True, help="Quickfix slug")
     qfc.set_defaults(func=cmd_quickfix_complete)
-
-    # log command group
-    log = subparsers.add_parser("log", help="Append structured event to agent log")
-    log.add_argument("--agent", required=True, help="Agent role (e.g. dev, pm, architect)")
-    log.add_argument("--event", required=True, help="Event type: decision, error, retry, assumption, finding, ambiguity")
-    log.add_argument("--detail", required=True, help="Human-readable detail text")
-    log.add_argument("--story", default=None, help="Story slug (optional)")
-    log.add_argument("--sprint", default=None, help="Sprint slug (optional, defaults to _unsorted)")
-    log.set_defaults(func=cmd_log)
 
     # version command group
     version = subparsers.add_parser("version", help="Version management")

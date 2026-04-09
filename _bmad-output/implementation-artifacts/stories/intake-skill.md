@@ -1,7 +1,7 @@
 ---
 title: Intake Skill — Lightweight Story Capture from Conversation
 story_key: intake-skill
-status: ready-for-dev
+status: review
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -124,36 +124,36 @@ starting from scratch, but that integration is out of scope for this story.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-6)
-  - [ ] Create `skills/momentum/skills/intake/evals/eval-intake-captures-context.md`
+- [x] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-6)
+  - [x] Create `skills/momentum/skills/intake/evals/eval-intake-captures-context.md`
     — verifies the skill captures conversational context into a stub file with draft
     markers and writes an index entry
 
-- [ ] Task 2 — Create stub template (AC: 3)
-  - [ ] Create `skills/momentum/skills/intake/references/stub-template.md`
-  - [ ] Include all sections from full story template
-  - [ ] Add visible draft indicators to unpopulated sections
-  - [ ] Ensure status defaults to `backlog`
-  - [ ] Verify a dev agent would clearly recognize this as not ready for implementation
+- [x] Task 2 — Create stub template (AC: 3)
+  - [x] Create `skills/momentum/skills/intake/references/stub-template.md`
+  - [x] Include all sections from full story template
+  - [x] Add visible draft indicators to unpopulated sections
+  - [x] Ensure status defaults to `backlog`
+  - [x] Verify a dev agent would clearly recognize this as not ready for implementation
 
-- [ ] Task 3 — Create SKILL.md (AC: 1)
-  - [ ] Create `skills/momentum/skills/intake/SKILL.md` with frontmatter
+- [x] Task 3 — Create SKILL.md (AC: 1)
+  - [x] Create `skills/momentum/skills/intake/SKILL.md` with frontmatter
     (name: intake, model: claude-sonnet-4-6, effort: low)
-  - [ ] SKILL.md body delegates to `./workflow.md`
-  - [ ] Verify description under 150 characters
+  - [x] SKILL.md body delegates to `./workflow.md`
+  - [x] Verify description under 150 characters (135 chars confirmed)
 
-- [ ] Task 4 — Create workflow.md (AC: 2, 4, 5, 6)
-  - [ ] Step 1: Extract story context from conversation/arguments
-  - [ ] Step 2: Generate slug, check for conflicts in stories/index.json
-  - [ ] Step 3: Populate stub template with captured context
-  - [ ] Step 4: Write stub file and add index entry via momentum-tools CLI
-  - [ ] Step 5: Report what was captured and what still needs enrichment
+- [x] Task 4 — Create workflow.md (AC: 2, 4, 5, 6)
+  - [x] Step 1: Extract story context from conversation/arguments
+  - [x] Step 2: Generate slug, check for conflicts in stories/index.json
+  - [x] Step 3: Populate stub template with captured context
+  - [x] Step 4: Write stub file and add index entry via momentum-tools CLI
+  - [x] Step 5: Report what was captured and what still needs enrichment
 
-- [ ] Task 5 — Run eval and verify (AC: 1-6)
-  - [ ] Run eval via subagent
-  - [ ] Confirm skill is independently invocable
-  - [ ] Confirm stub file has clear draft indicators
-  - [ ] Confirm index entry uses momentum-tools CLI (not direct JSON edit)
+- [x] Task 5 — Run eval and verify (AC: 1-6)
+  - [x] Run eval via subagent
+  - [x] Confirm skill is independently invocable
+  - [x] Confirm stub file has clear draft indicators
+  - [x] Confirm index entry uses momentum-tools CLI (not direct JSON edit)
 
 ## Dev Notes
 
@@ -233,8 +233,27 @@ The intake skill is lightweight but still follows orchestrator purity (Decision 
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Added `sprint story-add` command to momentum-tools.py — required since no story-add
+  CLI existed. Command writes a new entry to stories/index.json with status: backlog,
+  story_file: true, depends_on: [], touches: []. Tested: success and conflict detection
+  both work correctly.
+- Stub template uses dual-signal draft markers on all draft sections: HTML comment
+  (machine-readable) + italic inline text (human-readable). Status hardcoded to `backlog`.
+  Sections NOT marked as draft: title, story key/slug, Story section, Description.
+- SKILL.md description is 135 chars (under 150-char AC1 limit).
+- Workflow enforces minimal tool calls via critical elements: 1 read, 1 write, 1 bash.
+- Epic determination step asks user if not suggested — no silent placeholder fallback.
+
 ### File List
+
+- skills/momentum/skills/intake/SKILL.md
+- skills/momentum/skills/intake/workflow.md
+- skills/momentum/skills/intake/references/stub-template.md
+- skills/momentum/skills/intake/evals/eval-intake-captures-context.md
+- skills/momentum/scripts/momentum-tools.py
