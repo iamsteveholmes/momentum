@@ -129,8 +129,8 @@ Epic Taxonomy — Proposed Changes ({N} total)
          `python3 skills/momentum/scripts/momentum-tools.py sprint epic-membership --story {story-slug} --epic {target-slug}`
     </action>
 
-    <action>After all changes applied, re-read stories/index.json and epics.md to verify:
-      · Every epic_slug in stories/index.json now has a matching definition in epics.md
+    <action>After all changes applied, re-read `_bmad-output/implementation-artifacts/stories/index.json` and `_bmad-output/planning-artifacts/epics.md` to verify:
+      · Every epic_slug in `_bmad-output/implementation-artifacts/stories/index.json` now has a matching definition in `_bmad-output/planning-artifacts/epics.md`
       · Or confirm which orphans remain (if some proposals were rejected)
     </action>
     <action>TaskUpdate Phase 4 to completed.</action>
@@ -151,7 +151,7 @@ Taxonomy health:
 ! Remaining orphans were not approved for resolution in this session.
   Run /momentum:epic-grooming again to address them.
 
-All decisions logged to sprint log.
+All decisions documented in task completion notes.
     </output>
   </step>
 </workflow>

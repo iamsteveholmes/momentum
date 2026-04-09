@@ -2,7 +2,7 @@
 
 **Goal:** Implement a Momentum story by selecting the next unblocked story (or using an explicit path), running in an isolated git worktree, delegating to bmad-dev-story, then returning merge-ready output.
 
-**Role:** Pure executor with agent logging. Manages story selection from stories/index.json, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum:create-story) contains the developer's implementation instructions.
+**Role:** Pure executor. Manages story selection from stories/index.json, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum:create-story) contains the developer's implementation instructions.
 
 ---
 
@@ -118,7 +118,7 @@ Resolve blocking stories first, then re-invoke momentum:dev.</output>
     <action>Delete the lock file `.worktrees/story-{{story_key}}.lock`</action>
 
     <action>Read `{implementation_artifacts}/stories/index.json` and look up {{story_key}}.touches</action>
-    <action>Check for overlap: are any paths in {{touches}} also listed in other stories whose `status` is `in-progress` in stories/index.json? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
+    <action>Check for overlap: are any paths in {{touches}} also listed in other stories whose `status` is `in-progress` in `{implementation_artifacts}/stories/index.json`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
     <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in-progress stories or no overlap, use "none".</action>
 
     <output>Story {{story_key}} is done and ready to merge.
