@@ -1509,6 +1509,7 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/skills/quick-fix/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md",
       "skills/momentum/skills/impetus/workflow.md"
     ],
     "priority": "high",

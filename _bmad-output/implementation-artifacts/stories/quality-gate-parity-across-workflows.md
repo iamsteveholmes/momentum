@@ -6,6 +6,7 @@ epic_slug: quality-enforcement
 depends_on: []
 touches:
   - skills/momentum/skills/quick-fix/workflow.md
+  - skills/momentum/skills/sprint-dev/workflow.md
   - skills/momentum/skills/impetus/workflow.md
 change_type: skill-instruction
 ---
@@ -142,20 +143,29 @@ quick-fix's Phase 4, not to dev.
   - [ ] Merge code review findings into the collaborative fix loop task list
   - [ ] Ensure worktree remains alive through all gate iterations
 
-- [ ] Task 3 — Remove /develop from Impetus (AC: 3, 5)
+- [ ] Task 3 — Defer worktree cleanup in sprint-dev (AC: 7)
+  - [ ] Move worktree removal from Phase 3 (per-story merge) to after Phase 4d
+    (fix agents complete) — worktrees must survive through AVFL, code review,
+    and fix iterations so fix agents can work in the isolated story context
+  - [ ] Remove story branch deletion from Phase 3; move to after worktree removal
+  - [ ] Fix agents in Phase 4d should use the story worktree instead of working
+    directly on the sprint branch
+
+- [ ] Task 4 — Remove /develop from Impetus (AC: 3, 5)
   - [ ] Remove the /develop menu item from the Impetus dispatch table in
     `skills/momentum/skills/impetus/workflow.md`
   - [ ] Remove any menu entry that routes to momentum:dev directly
   - [ ] Update eval files that reference /develop dispatching to momentum:dev
 
-- [ ] Task 4 — Verify PRD already updated (AC: 6)
+- [ ] Task 5 — Verify PRD already updated (AC: 6)
   - [ ] Confirm FR95 (quality gate parity) already exists in prd.md
   - [ ] Confirm FR53 already updated to state dev is internal-only
   - [ ] No spec writes needed — already applied in spec impact step
 
-- [ ] Task 5 — Run eval and verify (AC: 1-7)
+- [ ] Task 6 — Run eval and verify (AC: 1-7)
   - [ ] Run eval via subagent
   - [ ] Verify quick-fix Phase 4 now includes code review
+  - [ ] Verify sprint-dev worktrees survive through Phase 4d
   - [ ] Verify /develop no longer appears in Impetus menu
 
 ## Momentum Implementation Guide
@@ -191,6 +201,7 @@ quick-fix's Phase 4, not to dev.
 - [ ] 1 behavioral eval written (quick-fix code review)
 - [ ] EDD cycle ran — eval behavior confirmed
 - [ ] quick-fix/workflow.md updated with code review step
+- [ ] sprint-dev/workflow.md updated — worktree cleanup deferred to after Phase 4d
 - [ ] /develop menu item removed from impetus/workflow.md
 - [ ] PRD FR95 and FR53 update confirmed present
 
