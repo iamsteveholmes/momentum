@@ -1,6 +1,6 @@
 ---
 name: dev-skills
-description: Specialist dev agent for SKILL.md, workflow, and agent definition authoring. Knows EDD patterns, frontmatter schema, 500-line limit, workflow XML structure. Spawned by sprint-dev for skill/agent stories.
+description: Specialist dev agent for SKILL.md, workflow.md, and agent definitions. Knows EDD patterns, frontmatter schema, 500-line limit. Spawned by sprint-dev.
 model: sonnet
 effort: medium
 tools:
