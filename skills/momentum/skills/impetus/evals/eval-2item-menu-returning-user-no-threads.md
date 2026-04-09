@@ -1,32 +1,29 @@
-# Eval: 2-Item Menu — Returning User, No Threads
+# Eval: Session Menu — Returning User, No Threads
 
 ## Story
 
-2a-3: Session-Open Menu Redesign
+quality-gate-parity-across-workflows
 
 ## Setup
 
 - `momentum_completions = 3` (returning user)
 - `journal.jsonl` absent or contains zero open threads
 - Momentum fully installed, version matches
+- Active sprint exists (`active-in-progress` state)
 
 ## Expected Behavior
 
-1. Session menu renders with exactly 2 items:
-   - `/create` — Write a story
-   - `/develop` — Build the next story
-2. Items 3–6 from the old menu (Review a plan, Run quality validation, Audit spec provenance, Show session threads) do NOT appear
-3. Number alias `1` dispatches identically to `/create` → momentum:create-story workflow
-4. Number alias `2` dispatches identically to `/develop` → momentum:dev workflow
-5. Slash command `/create` dispatches to momentum:create-story workflow
-6. Slash command `/develop` dispatches to momentum:dev workflow
+1. Session menu renders with context-appropriate items (e.g., "Continue the sprint",
+   "Refine backlog", "Triage") — driven by `greeting.state` from session-greeting.md
+2. `/develop` does NOT appear as a menu item — momentum:dev is an internal sub-tool only
+3. `/momentum:quick-fix` is the user-facing path for single-story development (via natural language input)
+4. Number aliases dispatch to the items shown in the rendered menu for the detected state
+5. Stats write (deferred) does not block or delay menu rendering
 
 ## Fail Conditions
 
-- Any of the old items 3–6 appear in the menu
-- Number aliases (1, 2) are not recognized
-- `/create` dispatches to wrong workflow
-- `/develop` dispatches to wrong workflow
-- Menu has more than 2 items
-- Menu has fewer than 2 items
-- Stats write (deferred) blocks or delays menu rendering
+- `/develop` appears as a menu item in any session state
+- `momentum:dev` is dispatched directly from a menu selection
+- Number aliases are not recognized
+- Menu renders without reading `greeting.state` from session-greeting.md
+- Stats write blocks menu rendering

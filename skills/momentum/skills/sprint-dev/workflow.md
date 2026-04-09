@@ -15,7 +15,6 @@
   <critical>Stories are spawned strictly by dependency resolution. A story never starts before all its blockers are `done`.</critical>
   <critical>AVFL runs ONCE after ALL stories merge — not per-story. AVFL findings are presented as a read-only stop gate (Phase 4). No fixes are spawned in Phase 4. All fixes happen in Phase 4d after developer review of the consolidated fix queue (Phase 4c).</critical>
   <critical>Impetus always spawns agents. No agent spawns another agent.</critical>
-  <critical>Log all sprint events via `momentum-tools log --agent impetus --sprint {slug}` at each phase transition.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint phases — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -76,7 +75,9 @@
     <phase name="avfl-fix" step="4d">
       <role name="dev-fixer" spawning="individual-agent" concurrency="sequential">
         One fix agent per developer-confirmed finding, spawned in severity order.
-        No worktrees — operates directly on sprint/{{sprint_slug}} branch.
+        Operates in the story worktree (.worktrees/story-{slug}) when a matching
+        worktree is available in {{pending_worktree_cleanup}}; falls back to
+        sprint/{{sprint_slug}} branch when no matching worktree is found.
         Never use TeamCreate.
       </role>
     </phase>
@@ -107,7 +108,7 @@
       4. Post-Merge AVFL — sprint-level quality scan (stop gate: findings presented, no fixes)
       4b. Per-Story Code Review — independent code-reviewer per merged story
       4c. Consolidated Fix Queue — merge AVFL + code review findings, developer fix/defer decision
-      4d. Targeted Fixes + Selective Re-review — spawn fix agents, re-run only affected reviewers
+      4d. Targeted Fixes + Selective Re-review — spawn fix agents in story worktrees, re-run only affected reviewers, clean up worktrees
       5. Team Review — QA + E2E Validator + Architect Guard
       6. Verification — developer-confirmation checklist
       7. Sprint Completion — archive sprint, summary, suggest retro
@@ -180,10 +181,8 @@ Resume these stories, or reset them to ready-for-dev?</output>
     </action>
     <action>Store {{task_map}} = map of story slug → task ID</action>
     <action>Store {{spawn_registry}} = {} (empty map — tracks every spawned agent by key "{story_slug}::{specialist}" for dev agents, "sprint::{role}" for team review agents; never reset between phases)</action>
+    <action>Store {{pending_worktree_cleanup}} = [] (empty list — accumulates story slugs whose worktrees and branches have been merged but not yet removed; worktrees are cleaned up in Phase 4d after all quality gates complete)</action>
     <note>spawn_registry is an in-memory deduplication guard. It survives the Phase 2 → Phase 3 → Phase 2 loop. Keys use format "{story_slug}::{specialist}" for dev agents and "sprint::{reviewer_role}" for team review agents. A key's presence means an agent was already spawned — do not spawn again.</note>
-
-    <action>Log sprint start (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Sprint execution started: {{sprint_stories | length}} stories"`</action>
 
     <output>Sprint **{{sprint_slug}}** initialized.
 {{sprint_stories | length}} stories, dependency graph resolved.
@@ -211,9 +210,7 @@ Task list created for progress tracking.</output>
     <action>For each unblocked story:
       0. Compute dedup key: `{slug}::{specialist}` where specialist = {{team}}.story_assignments[slug].specialist
          Check {{spawn_registry}}[key]:
-         - If key EXISTS: skip this story entirely — log suppression (best-effort):
-           `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Dedup: skipped duplicate spawn for {key}"`
-           Continue to next story.
+         - If key EXISTS: skip this story entirely — continue to next story.
          - If key ABSENT: proceed with steps 1-6 below.
       1. Transition to in-progress: `momentum-tools sprint status-transition --story {slug} --target in-progress`
       2. Look up role assignment from {{team}}.story_assignments[slug]
@@ -238,9 +235,6 @@ Task list created for progress tracking.</output>
       6. Update task {{task_map}}[slug] to in_progress
     </action>
 
-    <action>Log spawns (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Spawned dev agents for: {{list of spawned slugs}}"`</action>
-
     <output>Spawned dev agents for {{unblocked_count}} unblocked stories:
 {{list of spawned story slugs}}</output>
     <action>Update task 2 (Dev Wave) to completed</action>
@@ -258,8 +252,6 @@ Task list created for progress tracking.</output>
 
     <!-- Agent failure handling -->
     <check if="agent reports failure or error">
-      <action>Log failure (best-effort):
-        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event error --detail "Dev agent failed for story {slug}: {{error_summary}}"`</action>
       <output>Dev agent for story **{slug}** failed:
 {{error_summary}}
 
@@ -287,9 +279,6 @@ Options:
     <check if="story agent signals merge-ready">
       <action>Read the story's completion output to get {{file_list}}</action>
 
-      <action>Log completion (best-effort):
-        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event decision --detail "Story {slug} merge-ready, files: {{file_list}}"`</action>
-
       <output>Story **{slug}** is merge-ready. Merging autonomously to sprint/{{sprint_slug}}...</output>
 
       <action>Run: `git rebase sprint/{{sprint_slug}} story/{slug}` (rebases story branch onto latest sprint branch — leaves HEAD on story/{slug})</action>
@@ -299,15 +288,15 @@ Options:
       </check>
       <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
       <action>Run: `git merge story/{slug}`</action>
-      <action>Run: `git worktree remove --force .worktrees/story-{slug}`</action>
-      <action>Run: `git branch -d story/{slug}`</action>
+      <note>Worktree .worktrees/story-{slug} and branch story/{slug} are intentionally NOT removed here.
+        They remain available through Phase 4 (AVFL), Phase 4b (code review), and Phase 4d (fix agents)
+        so fix agents can operate in the isolated story context. Cleanup runs after Phase 4d completes.
+        Register story/{slug} in {{pending_worktree_cleanup}} for deferred removal.</note>
+      <action>Add `{slug}` to {{pending_worktree_cleanup}} list (initialize the list if this is the first entry).</action>
       <action>Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`</action>
       <action>Update task {{task_map}}[slug] to completed</action>
 
-      <action>Log merge (best-effort):
-        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --story {slug} --event decision --detail "Merged story/{slug} to sprint/{{sprint_slug}}"`</action>
-
-      <output>Merged story/{slug}. Checking for newly unblocked stories...</output>
+      <output>Merged story/{slug}. Worktree retained for quality gate iterations. Checking for newly unblocked stories...</output>
 
       <action>Re-evaluate dependency graph: find stories where status == "ready-for-dev" AND all depends_on stories are now "done"</action>
       <check if="newly unblocked stories found">
@@ -327,7 +316,7 @@ Options:
 
   <step n="4" goal="Single AVFL pass on full integrated codebase — read-only findings, no fixes">
     <action>Update task 4 (Post-Merge AVFL) to in_progress</action>
-    <!-- Fix agents: spawning=individual-agent | concurrency=sequential | no worktrees — see <team-composition> above -->
+    <!-- Fix agents in Phase 4d: spawning=individual-agent | concurrency=sequential | use story worktrees from {{pending_worktree_cleanup}} — see <team-composition> above -->
     <output>All sprint stories merged. Running AVFL on the complete sprint changeset...</output>
 
     <action>Capture sprint diff: identify the commit before the first sprint merge and diff from there.
@@ -345,9 +334,6 @@ Options:
     </action>
 
     <action>Store {{avfl_findings}} = full findings list from AVFL output, tagged with source="avfl" and severity per finding.</action>
-
-    <action>Log AVFL result (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "AVFL complete: {{avfl_findings | length}} findings (critical: {{critical_count}}, high: {{high_count}}, medium: {{medium_count}}, low: {{low_count}})"`</action>
 
     <output>## AVFL Findings — Sprint {{sprint_slug}}
 
@@ -388,9 +374,6 @@ Options:
     <action>Store {{code_review_findings}} = merged list of all findings from all story reviews,
       each tagged with: source="code-reviewer", story_key={slug}, severity, file, description.
     </action>
-
-    <action>Log code review results (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "Per-story code review: {{code_review_findings | length}} findings across {{sprint_stories | length}} stories"`</action>
 
     <output>Per-story code review complete. {{code_review_findings | length}} findings collected across {{sprint_stories | length}} stories.</output>
     <action>Update task 4b (Per-Story Code Review) to completed</action>
@@ -442,8 +425,6 @@ For each item above, mark: **fix** (spawn fix agent) or **defer** (create follow
       <action>Jump to Phase 5.</action>
     </check>
 
-    <action>Log fix queue decisions (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Fix queue: {{fix_items | length}} to fix, {{defer_items | length}} deferred"`</action>
     <action>Update task 4c (Consolidated Fix Queue) to completed</action>
   </step>
 
@@ -456,17 +437,18 @@ For each item above, mark: **fix** (spawn fix agent) or **defer** (create follow
     <output>Spawning fix agents for {{fix_items | length}} confirmed findings...</output>
 
     <action>For each item in {{fix_items}}:
-      Spawn a targeted dev fix agent (no worktree — direct on sprint branch) scoped to:
+      Determine the story worktree for this fix item:
+        - Look up which story the affected file belongs to (from {{story_map}} touches arrays)
+        - If a matching story slug in {{pending_worktree_cleanup}} has worktree `.worktrees/story-{slug}` present: use that worktree path
+        - If no matching story worktree is found (file touched by multiple stories or unattributed): work directly on sprint/{{sprint_slug}} branch
+      Spawn a targeted dev fix agent scoped to:
         - The file(s) identified in the finding
         - The fix description from the finding detail
-        - Sprint branch: `sprint/{{sprint_slug}}`
+        - Working directory: story worktree (preferred) or sprint branch (fallback)
       Group fix agents by story/file proximity — spawn related fixes together where possible.
     </action>
 
     <action>Wait for all fix agents to complete.</action>
-
-    <action>Log fixes applied (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Fixes applied: {{fix_items | length}} items"`</action>
 
     <!-- Selective re-review: only re-run reviewers whose findings were fixed -->
     <action>Determine which reviewers to re-run:
@@ -506,10 +488,14 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
       </check>
     </check>
 
-    <output>Fix and re-review cycle complete. Proceeding to Team Review.</output>
+    <!-- Worktree cleanup — deferred from Phase 3, runs now after all fix iterations complete -->
+    <action>For each slug in {{pending_worktree_cleanup}}:
+      Run: `git worktree remove --force .worktrees/story-{slug}` (if worktree still exists)
+      Run: `git branch -d story/{slug}` (if branch still exists)
+    </action>
 
-    <action>Log re-review results (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Post-fix re-review: {{remaining_findings | length}} remaining findings"`</action>
+    <output>Fix and re-review cycle complete. All worktrees cleaned up. Proceeding to Team Review.</output>
+
     <action>Update task 4d (Targeted Fixes) to completed</action>
   </step>
 
@@ -526,8 +512,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
       - QA Agent key: `sprint::qa-reviewer`
       - E2E Validator key: `sprint::e2e-validator`
       - Architect Guard key: `sprint::architecture-guard`
-      If a key already exists in {{spawn_registry}}: skip that reviewer, log suppression (best-effort):
-        `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Dedup: skipped duplicate spawn for {key}"`
+      If a key already exists in {{spawn_registry}}: skip that reviewer.
       If a key is absent: spawn the reviewer and register the key: `{{spawn_registry}}[key] = { spawned: true }`
     </action>
 
@@ -553,9 +538,6 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
     <action>Wait for all three agents to complete.</action>
     <action>Consolidate findings into a unified fix queue, grouped by severity.
       Tag each finding with which reviewer produced it (QA / Validator / Guard) so the correct reviewer can be re-run after fixes.</action>
-
-    <action>Log team review results (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "Team Review: QA={{qa_count}}, Validator={{validator_count}}, Guard={{guard_count}} findings"`</action>
 
     <check if="no findings from any reviewer">
       <output>Team Review passed — no findings from QA, E2E Validator, or Architect Guard.</output>
@@ -619,12 +601,8 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
     <ask>Confirm completed scenarios above.</ask>
 
     <action>For any unconfirmed scenarios:
-      - Log as finding: `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event finding --detail "Unconfirmed scenario: {{scenario_name}}"`
       - Offer to create a follow-up story with the Gherkin scenario as the AC
     </action>
-
-    <action>Log verification results (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Verification: {{confirmed}} / {{total}} scenarios confirmed"`</action>
 
     <action>Transition all sprint stories to verify:
       For each story in {{sprint_stories}}:
@@ -653,9 +631,6 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
   <step n="7" goal="Archive sprint, merge to main, and surface summary">
     <action>Update task 7 (Sprint Completion) to in_progress</action>
     <action>Run: `momentum-tools sprint complete`</action>
-
-    <action>Log sprint completion (best-effort):
-      `momentum-tools log --agent impetus --sprint {{sprint_slug}} --event decision --detail "Sprint complete"`</action>
 
     <action>Merge sprint branch to main:
       1. `git checkout main`

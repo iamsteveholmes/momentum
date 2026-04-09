@@ -1,7 +1,7 @@
 ---
 title: Quality Gate Parity Across Workflows — Align quick-fix Gates with sprint-dev, Remove Direct Dev Invocation
 story_key: quality-gate-parity-across-workflows
-status: ready-for-dev
+status: review
 epic_slug: quality-enforcement
 depends_on: []
 touches:
@@ -133,40 +133,40 @@ quick-fix's Phase 4, not to dev.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before workflow changes)
-  - [ ] Create `skills/momentum/skills/quick-fix/evals/eval-quickfix-code-review.md`
+- [x] Task 1 — Write behavioral eval (EDD: before workflow changes)
+  - [x] Create `skills/momentum/skills/quick-fix/evals/eval-quickfix-code-review.md`
     — verifies code review runs in Phase 4 between AVFL scan and team validation
 
-- [ ] Task 2 — Add code review step to quick-fix workflow (AC: 1, 2, 7)
-  - [ ] Insert momentum:code-reviewer invocation in Phase 4 between AVFL scan
+- [x] Task 2 — Add code review step to quick-fix workflow (AC: 1, 2, 7)
+  - [x] Insert momentum:code-reviewer invocation in Phase 4 between AVFL scan
     and team creation
-  - [ ] Merge code review findings into the collaborative fix loop task list
-  - [ ] Ensure worktree remains alive through all gate iterations
+  - [x] Merge code review findings into the collaborative fix loop task list
+  - [x] Ensure worktree remains alive through all gate iterations
 
-- [ ] Task 3 — Defer worktree cleanup in sprint-dev (AC: 7)
-  - [ ] Move worktree removal from Phase 3 (per-story merge) to after Phase 4d
+- [x] Task 3 — Defer worktree cleanup in sprint-dev (AC: 7)
+  - [x] Move worktree removal from Phase 3 (per-story merge) to after Phase 4d
     (fix agents complete) — worktrees must survive through AVFL, code review,
     and fix iterations so fix agents can work in the isolated story context
-  - [ ] Remove story branch deletion from Phase 3; move to after worktree removal
-  - [ ] Fix agents in Phase 4d should use the story worktree instead of working
+  - [x] Remove story branch deletion from Phase 3; move to after worktree removal
+  - [x] Fix agents in Phase 4d should use the story worktree instead of working
     directly on the sprint branch
 
-- [ ] Task 4 — Remove /develop from Impetus (AC: 3, 5)
-  - [ ] Remove the /develop menu item from the Impetus dispatch table in
-    `skills/momentum/skills/impetus/workflow.md`
-  - [ ] Remove any menu entry that routes to momentum:dev directly
-  - [ ] Update eval files that reference /develop dispatching to momentum:dev
+- [x] Task 4 — Remove /develop from Impetus (AC: 3, 5)
+  - [x] Remove the /develop menu item from the Impetus dispatch table in
+    `skills/momentum/skills/impetus/workflow.md` (was not present — confirmed)
+  - [x] Remove any menu entry that routes to momentum:dev directly
+  - [x] Update eval files that reference /develop dispatching to momentum:dev
 
-- [ ] Task 5 — Verify PRD already updated (AC: 6)
-  - [ ] Confirm FR95 (quality gate parity) already exists in prd.md
-  - [ ] Confirm FR53 already updated to state dev is internal-only
-  - [ ] No spec writes needed — already applied in spec impact step
+- [x] Task 5 — Verify PRD already updated (AC: 6)
+  - [x] Confirm FR95 (quality gate parity) already exists in prd.md
+  - [x] Confirm FR53 already updated to state dev is internal-only
+  - [x] No spec writes needed — already applied in spec impact step
 
-- [ ] Task 6 — Run eval and verify (AC: 1-7)
-  - [ ] Run eval via subagent
-  - [ ] Verify quick-fix Phase 4 now includes code review
-  - [ ] Verify sprint-dev worktrees survive through Phase 4d
-  - [ ] Verify /develop no longer appears in Impetus menu
+- [x] Task 6 — Run eval and verify (AC: 1-7)
+  - [x] Run eval via subagent
+  - [x] Verify quick-fix Phase 4 now includes code review
+  - [x] Verify sprint-dev worktrees survive through Phase 4d
+  - [x] Verify /develop no longer appears in Impetus menu
 
 ## Momentum Implementation Guide
 
@@ -198,19 +198,41 @@ quick-fix's Phase 4, not to dev.
 - AVFL/code-reviewer/validator invocations must match parameter patterns from sprint-dev
 
 **DoD items for skill-instruction tasks:**
-- [ ] 1 behavioral eval written (quick-fix code review)
-- [ ] EDD cycle ran — eval behavior confirmed
-- [ ] quick-fix/workflow.md updated with code review step
-- [ ] sprint-dev/workflow.md updated — worktree cleanup deferred to after Phase 4d
-- [ ] /develop menu item removed from impetus/workflow.md
-- [ ] PRD FR95 and FR53 update confirmed present
+- [x] 1 behavioral eval written (quick-fix code review)
+- [x] EDD cycle ran — eval behavior confirmed
+- [x] quick-fix/workflow.md updated with code review step
+- [x] sprint-dev/workflow.md updated — worktree cleanup deferred to after Phase 4d
+- [x] /develop menu item removed from impetus/workflow.md (was never present; impetus evals updated to assert absence)
+- [x] PRD FR95 and FR53 update confirmed present
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+N/A
 
 ### Completion Notes List
 
+- Wrote behavioral eval `eval-quickfix-code-review.md` before workflow changes (EDD order preserved)
+- Added code review step 4a.1 to quick-fix Phase 4 between AVFL scan and team validation; `momentum:code-reviewer` scoped to story touches; findings merged into `{{all_findings}}` passed to Dev agent in collaborative fix loop
+- Deferred quick-fix worktree cleanup from Phase 3 to Phase 4e (after collaborative fix loop completes)
+- Added `{{pending_worktree_cleanup}}` list to sprint-dev Phase 1 initialization; Phase 3 populates it instead of removing worktrees immediately; Phase 4d fix agents prefer story worktrees from this list; cleanup runs at end of Phase 4d
+- Updated sprint-dev `<team-composition>` Phase 4d role note to reflect worktree-based operation
+- Updated sprint-dev Phase 0 task description to mention worktree cleanup
+- Confirmed impetus/workflow.md and session-greeting.md never had `/develop` as a menu item; updated three stale impetus eval files (eval-2item-menu-returning-user-no-threads.md, eval-2item-menu-returning-user-open-threads.md, eval-2item-menu-natural-language-fallback.md) that described the old 2-item menu design — evals now assert that `/develop` does NOT appear and `momentum:dev` is not user-invocable
+- Added `user-invocable: false` to `skills/momentum/skills/dev/SKILL.md` and updated its description to reflect pure executor role
+- Confirmed FR95 and FR53 already present in prd.md — no spec writes needed
+
 ### File List
+
+- skills/momentum/skills/quick-fix/evals/eval-quickfix-code-review.md (created)
+- skills/momentum/skills/quick-fix/workflow.md (modified)
+- skills/momentum/skills/sprint-dev/workflow.md (modified)
+- skills/momentum/skills/impetus/evals/eval-2item-menu-returning-user-no-threads.md (modified)
+- skills/momentum/skills/impetus/evals/eval-2item-menu-returning-user-open-threads.md (modified)
+- skills/momentum/skills/impetus/evals/eval-2item-menu-natural-language-fallback.md (modified)
+- skills/momentum/skills/dev/SKILL.md (modified)

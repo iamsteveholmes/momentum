@@ -22,12 +22,9 @@
       1. Define — create story from description
       2. Specify — Gherkin, spec impact, specialist, guidelines, AVFL
       3. Implement — worktree, dev agent, merge
-      4. Validate — post-merge AVFL, collaborative fix loop
+      4. Validate — post-merge AVFL, code review, collaborative fix loop
       5. Ship — register completion, push summary
     </action>
-
-    <action>Log workflow start:
-      `momentum-tools log --agent impetus --event decision --detail "Quick-fix workflow initiated" --sprint _unsorted`</action>
 
     <ask>Describe the fix you need to make. What's the problem and what should change?</ask>
 
@@ -64,9 +61,6 @@ Options:
         `cmux markdown open {{story_file}} --title "Quick Fix Story — Revised — Review & Approve"`</action>
       <action>Re-present the approval prompt. Repeat until approved.</action>
     </check>
-
-    <action>Log story approval:
-      `momentum-tools log --agent impetus --event decision --detail "Story {{story_slug}} approved for quick-fix" --sprint _unsorted`</action>
 
     <output>Story {{story_slug}} approved. Proceeding to specification.</output>
   </step>
@@ -127,8 +121,6 @@ Updating specs now.</output>
         Write the updated file. This agent is the sole writer of prd.md.
       </action>
 
-      <action>Log spec updates:
-        `momentum-tools log --agent impetus --event decision --detail "Spec impact: {{count}} items updated" --sprint _unsorted`</action>
     </check>
 
     <!-- 2b: Generate Gherkin spec (AFTER spec updates so Gherkin can reference new decisions/FRs) -->
@@ -357,15 +349,11 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
       <action>HALT — wait for developer to resolve conflicts</action>
     </check>
 
-    <!-- 3e: Clean up worktree -->
-    <action>Clean up:
-      `git worktree remove --force {{worktree_path}}`
-      `git branch -d quickfix-{{story_slug}}`</action>
-
     <action>Log merge:
       `momentum-tools log --agent impetus --event decision --detail "Story {{story_slug}} merged to main" --sprint {{quickfix_slug}}`</action>
 
     <output>Implementation complete. {{story_slug}} merged to main.
+Worktree retained at {{worktree_path}} — available for fix iterations during validation.
 Proceeding to validation.</output>
   </step>
 
@@ -373,7 +361,7 @@ Proceeding to validation.</output>
   <!-- PHASE 4: VALIDATE                                       -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Validate — post-merge AVFL, collaborative fix loop">
+  <step n="4" goal="Validate — post-merge AVFL, code review, collaborative fix loop">
 
     <!-- 4a: Post-merge AVFL scan -->
     <action>Invoke `momentum:avfl` with:
@@ -385,15 +373,41 @@ Proceeding to validation.</output>
       - stage: final
     </action>
 
+    <action>Store {{avfl_findings}} = full findings list from AVFL output, tagged with source="avfl" and severity per finding.</action>
+
     <check if="AVFL finds critical issues">
-      <output>AVFL found critical issues. These must be resolved before team validation.</output>
-      <action>Spawn a targeted fix agent on main for critical findings. Re-run AVFL after fixes.
-      Do NOT proceed to team validation until critical findings are resolved.</action>
+      <output>AVFL found critical issues. These must be resolved before code review and team validation.</output>
+      <action>Spawn a targeted fix agent in {{worktree_path}} for critical findings. Re-run AVFL after fixes.
+      Do NOT proceed to code review or team validation until critical findings are resolved.</action>
     </check>
 
     <check if="AVFL clean or non-critical only">
-      <output>AVFL scan complete. Proceeding to team validation.</output>
+      <output>AVFL scan complete. Proceeding to code review.</output>
     </check>
+
+    <!-- 4a.1: Code review — between AVFL and team validation -->
+    <action>Read the story's `touches` array from {{story_file}} frontmatter.</action>
+
+    <action>Invoke `momentum:code-reviewer` with:
+      - Scope: files in the story's `touches` array
+      - Context: "Code review for quick-fix {{story_slug}}"
+      - Story file: {{story_file}}
+      - Working branch: main (post-merge)
+    </action>
+
+    <action>Store {{code_review_findings}} = findings from code-reviewer output, tagged with source="code-reviewer" and severity per finding.</action>
+
+    <action>Merge {{avfl_findings}} and {{code_review_findings}} into {{all_findings}}, sorted by severity: critical → high → medium → low.</action>
+
+    <output>Code review complete. Combined findings for {{story_slug}}:
+
+AVFL: {{avfl_findings | length}} findings
+Code review: {{code_review_findings | length}} findings
+
+All findings will be addressed in the collaborative fix loop.</output>
+
+    <action>Log code review results:
+      `momentum-tools log --agent impetus --event finding --detail "Code review: {{code_review_findings | length}} findings; AVFL: {{avfl_findings | length}} findings" --sprint {{quickfix_slug}}`</action>
 
     <!-- 4b: Determine validators from change_type -->
     <action>Read the story's `change_type` field from {{story_file}} frontmatter.
@@ -410,18 +424,20 @@ Proceeding to validation.</output>
     **Dev agent** (resident fixer):
       Same specialist from Phase 3: {{specialist}}
       Model/effort: per agent definition
+      Working directory: {{worktree_path}} (worktree kept alive for fix iterations)
       Purpose: stays resident to fix issues as validators find them
+      Provide: {{all_findings}} as the initial task list (both AVFL and code review findings)
 
     **Validators** (determined by change_type):
 
       If `skill-instruction`:
         **E2E Validator** — agent definition: `skills/momentum/agents/e2e-validator.md`
-        Provide: story slug, Gherkin spec path, AVFL findings list
+        Provide: story slug, Gherkin spec path, {{all_findings}} list
         Model: sonnet, effort: medium
 
       If `script-code`:
         **QA Reviewer** — agent definition: `skills/momentum/agents/qa-reviewer.md`
-        Provide: story slug, story file path, AVFL findings list
+        Provide: story slug, story file path, {{all_findings}} list
         Model: sonnet, effort: medium
 
       If both change types present: include both validators.
@@ -429,8 +445,8 @@ Proceeding to validation.</output>
 
     <!-- 4d: Collaborative fix loop -->
     <action>The team collaborates via task list:
-      1. Validators run their checks, report failures as tasks
-      2. Dev agent picks up tasks and fixes immediately
+      1. Validators run their checks against the full {{all_findings}} task list
+      2. Dev agent picks up tasks and fixes in {{worktree_path}}
       3. Validators re-verify fixed items
       4. Loop until all validators report clean or developer halts
 
@@ -439,13 +455,19 @@ Proceeding to validation.</output>
       - The workflow proceeds to Phase 5
     </action>
 
+    <!-- 4e: Worktree cleanup — deferred until all gates pass -->
+    <action>After the collaborative fix loop completes (all validators clean or developer accepts remaining findings):
+      `git worktree remove --force {{worktree_path}}`
+      `git branch -d quickfix-{{story_slug}}`
+    </action>
+
     <action>Log validation results:
-      `momentum-tools log --agent impetus --event decision --detail "Validation complete: {{findings_count}} findings, {{resolved_count}} resolved" --sprint {{quickfix_slug}}`</action>
+      `momentum-tools log --agent impetus --event decision --detail "Validation complete: {{findings_count}} findings, {{resolved_count}} resolved; worktree cleaned up" --sprint {{quickfix_slug}}`</action>
 
     <action>Transition story to done:
       `momentum-tools sprint status-transition --story {{story_slug}} --target done --force`</action>
 
-    <output>Validation complete. Story {{story_slug}} marked done.
+    <output>Validation complete. Worktree cleaned up. Story {{story_slug}} marked done.
 Proceeding to ship.</output>
   </step>
 
