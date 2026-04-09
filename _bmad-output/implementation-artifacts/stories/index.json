@@ -1725,13 +1725,13 @@
     "change_type": "skill-instruction",
     "priority": "medium"
   },
-  "eval-coverage-dashboard": {
+  "sprint-dev-phase-7-gate": {
     "status": "backlog",
-    "title": "Eval Coverage Dashboard",
-    "epic_slug": "impetus-core",
+    "title": "Sprint-Dev Phase 7 Gate — Block Completion Until MANUAL Scenarios Are Developer-Signed-Off",
+    "epic_slug": "sprint-dev-workflow",
     "story_file": true,
     "depends_on": [],
     "touches": [],
-    "priority": "low"
+    "priority": "medium"
   }
 }

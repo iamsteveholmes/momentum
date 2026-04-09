@@ -1,13 +1,13 @@
 ---
-title: Eval Coverage Dashboard
-story_key: eval-coverage-dashboard
+title: Sprint-Dev Phase 7 Gate — Block Completion Until MANUAL Scenarios Are Developer-Signed-Off
+story_key: sprint-dev-phase-7-gate
 status: backlog
-epic_slug: impetus-core
+epic_slug: sprint-dev-workflow
 depends_on: []
 touches: []
 ---
 
-# Eval Coverage Dashboard
+# Sprint-Dev Phase 7 Gate — Block Completion Until MANUAL Scenarios Are Developer-Signed-Off
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -19,14 +19,18 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 ## Story
 
 As a developer,
-I want to view a dashboard showing which skills have evals and which don't,
-so that I can identify gaps in test coverage at a glance.
+I want Phase 7 of sprint-dev to be blocked when MANUAL verification scenarios remain unresolved,
+so that no sprint merges to main without explicit developer sign-off on every unvalidated behavior.
 
 ## Description
 
-Build a coverage dashboard (or report) that scans the Momentum skill library and shows which skills have corresponding eval tests and which ones are missing them. The goal is to surface test coverage gaps across the full skill library without having to manually inspect each skill directory.
+The sprint-dev workflow currently proceeds to Phase 7 (sprint completion, merge to main) even when Phase 6 verification has unresolved MANUAL items from the E2E validator. MANUAL scenarios represent behaviors that cannot be automatically verified — they require a human to physically inspect, click, or make a visual judgment. These cannot be silently deferred; they must be explicitly resolved before the sprint is considered done.
 
-**Pain context:** There is currently no way to quickly see which skills lack test coverage — you'd have to manually inspect each skill directory for evals. This makes it hard to prioritize which skills to write evals for and impossible to track coverage trends over time.
+The fix requires Phase 7 to inspect the E2E validation report for unresolved MANUAL items. If any exist, the orchestrator should present them to the developer and require either: (a) explicit sign-off that each MANUAL item was verified and passes, or (b) conversion of each unresolved MANUAL item to a follow-up backlog story before proceeding.
+
+This was identified during sprint-2026-04-08 Team Review where the sprint merged before all E2E validation was complete and unresolved MANUALs were silently skipped.
+
+**Pain context:** Discovered during sprint-2026-04-08 when sprint merged to main with unresolved MANUAL scenarios in the E2E validation report. The current workflow has no gate — Phase 7 proceeds unconditionally after Phase 6 reports any verdict including MANUAL items. This creates a systematic gap where any behavior requiring human verification can silently slip through sprint completion.
 
 ## Acceptance Criteria
 
@@ -37,12 +41,12 @@ Build a coverage dashboard (or report) that scans the Momentum skill library and
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 The following are rough draft ACs captured from conversation:
-
-- Dashboard lists all skills in the Momentum plugin
-- Each skill entry indicates whether it has eval tests or not
-- Summary shows overall coverage (e.g., "12 of 30 skills have evals — 40% coverage")
-- Output is viewable at a glance (terminal table, markdown, or similar)
-- Dashboard is runnable as a script or momentum-tools command
+- Before Phase 7 executes, sprint-dev checks whether the E2E validation report contains any MANUAL items
+- If MANUAL items exist, the orchestrator presents each one to the developer with a sign-off prompt
+- Developer can respond: "verified, PASS", "verified, FAIL" (creates follow-up story), or "defer" (creates follow-up backlog story)
+- Phase 7 proceeds only after all MANUAL items are resolved (signed off or converted to follow-up stories)
+- If no MANUAL items exist, Phase 7 proceeds without developer interruption (no change to happy path)
+- Follow-up stories created from deferred/failed MANUAL items are added to backlog via momentum:intake
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
