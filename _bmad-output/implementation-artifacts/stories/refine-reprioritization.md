@@ -1,7 +1,7 @@
 ---
 title: Refine Reprioritization — Add Priority Change Phase to Backlog Refinement
 story_key: refine-reprioritization
-status: ready-for-dev
+status: review
 epic_slug: impetus-epic-orchestrator
 depends_on:
   - refine-skill-rewrite
@@ -125,35 +125,35 @@ refinement.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-7)
-  - [ ] Create `skills/momentum/skills/refine/evals/eval-refine-reprioritization.md`
+- [x] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-7)
+  - [x] Create `skills/momentum/skills/refine/evals/eval-refine-reprioritization.md`
     — verifies the re-prioritization step produces recommendations using the four
     heuristics and feeds them into consolidated findings
 
-- [ ] Task 2 — Add re-prioritization step to workflow.md (AC: 1, 2, 3, 4, 5)
-  - [ ] Insert new step between current Step 6 and Step 7
-  - [ ] Implement recurrence heuristic: scan retro findings and sprint logs for
+- [x] Task 2 — Add re-prioritization step to workflow.md (AC: 1, 2, 3, 4, 5)
+  - [x] Insert new step between current Step 6 and Step 7
+  - [x] Implement recurrence heuristic: scan retro findings and sprint logs for
     patterns
-  - [ ] Implement workaround burden heuristic: assess manual effort level
-  - [ ] Implement forgetting risk heuristic: assess failure mode severity
-  - [ ] Implement dependency promotion heuristic: cross-reference priority vs.
+  - [x] Implement workaround burden heuristic: assess manual effort level
+  - [x] Implement forgetting risk heuristic: assess failure mode severity
+  - [x] Implement dependency promotion heuristic: cross-reference priority vs.
     dependency chains
-  - [ ] Store results as `{{priority_recommendations}}`
-  - [ ] Renumber subsequent steps
+  - [x] Store results as `{{priority_recommendations}}`
+  - [x] Renumber subsequent steps
 
-- [ ] Task 3 — Integrate into consolidated findings (AC: 6)
-  - [ ] Add "Priority recommendations" as a new category in Step 7 (renumbered Step 8)
-  - [ ] Include recommendations in the batch approval UX
-  - [ ] Update Step 0 task list to reflect new step count
+- [x] Task 3 — Integrate into consolidated findings (AC: 6)
+  - [x] Add "Priority recommendations" as a new category in Step 7 (renumbered Step 8)
+  - [x] Include recommendations in the batch approval UX
+  - [x] Update Step 0 task list to reflect new step count
 
-- [ ] Task 4 — Add set-priority to the apply step (AC: 7)
-  - [ ] Add priority change application in the "Apply approved changes" step using
+- [x] Task 4 — Add set-priority to the apply step (AC: 7)
+  - [x] Add priority change application in the "Apply approved changes" step using
     `momentum-tools sprint set-priority`
-  - [ ] Verify the summary step already captures priority distribution delta (it does)
+  - [x] Verify the summary step already captures priority distribution delta (it does)
 
-- [ ] Task 5 — Run eval and verify (AC: 1-7)
-  - [ ] Run eval via subagent
-  - [ ] Manually verify workflow step ordering and numbering
+- [x] Task 5 — Run eval and verify (AC: 1-7)
+  - [x] Run eval via subagent
+  - [x] Manually verify workflow step ordering and numbering
 
 ## Dev Notes
 
@@ -236,8 +236,25 @@ Step 9 (current) already computes before/after priority distribution from
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None.
 
 ### Completion Notes List
 
+- Wrote behavioral eval `eval-refine-reprioritization.md` before implementation (EDD)
+- Added Step 7 "Re-prioritization analysis and conversation" to workflow.md between stale-story evaluation (Step 6) and consolidated findings (now Step 8)
+- Implemented all four heuristics: recurrence (retro file scan), workaround burden, forgetting risk, dependency promotion
+- Step 7 uses conversational back-and-forth model grounded in PRD goals; stores `{{priority_recommendations}}`
+- Step 8 (consolidated findings) now includes "Priority changes" as a fourth category
+- Step 9 (apply approved changes) adds `momentum-tools sprint set-priority` handler for priority changes
+- Step 10 (summary) includes `priority_changes` count in `changes_applied` output
+- Step 0 task list updated to reflect 10-step workflow
+- All constraints verified: no `set-priority` calls outside apply step, no Edit/Write in step 7, `{{priority_recommendations}}` flows correctly from Step 7 to Step 8
+
 ### File List
+
+- skills/momentum/skills/refine/evals/eval-refine-reprioritization.md (created)
+- skills/momentum/skills/refine/workflow.md (modified)

@@ -28,16 +28,17 @@ changes via momentum-tools CLI.
       4. Status hygiene scan
       5. Epic grooming delegation
       6. Stale-story evaluation
-      7. Consolidated findings with batch approval
-      8. Apply approved changes
-      9. Summary
+      7. Re-prioritization analysis and conversation
+      8. Consolidated findings with batch approval
+      9. Apply approved changes
+      10. Summary
     </action>
   </step>
 
   <step n="1" goal="Present backlog">
     <action>Read `{implementation_artifacts}/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>
-    <action>Store {{pre}} — count of stories by priority before any changes (keys: critical, high, medium, low), for before/after comparison in Step 9</action>
+    <action>Store {{pre}} — count of stories by priority before any changes (keys: critical, high, medium, low), for before/after comparison in Step 10</action>
     <action>Group remaining stories by `epic_slug`</action>
     <action>Within each epic, sort stories by:
       (1) priority — critical first, then high, medium, low (stories missing priority field treated as low)
@@ -220,18 +221,98 @@ Stale story evaluations — {{count}} candidates:
     </check>
   </step>
 
-  <step n="7" goal="Consolidated findings with batch approval">
+  <step n="7" goal="Re-prioritization analysis and conversation">
+    <action>Read `{implementation_artifacts}/stories/index.json` — extract all active
+    stories (exclude done, dropped, closed-incomplete) with their `priority` and
+    `depends_on` fields</action>
+    <action>Read `{planning_artifacts}/prd.md` (if exists) to extract current
+    project goals and strategic direction for grounding recommendations</action>
+
+    <action>Run four heuristic analyses:
+
+    **Recurrence heuristic:**
+      · Glob `{implementation_artifacts}/sprints/*/retro-*.md`
+      · For each retro file found, scan for story slugs and topic keywords in findings
+      · Identify stories or topics that appear in findings across 2 or more sprint retros
+      · These are recurring pain points — recommend promotion with citation of which
+        sprint retros surfaced the pattern
+
+    **Workaround burden heuristic:**
+      · For each active story, assess the complexity of the manual workaround if the
+        story is not yet implemented:
+        - High burden: requires complex multi-step prompting, custom instructions, or
+          significant developer attention each time
+        - Medium burden: some prompting but straightforward
+        - Low burden: trivial or one-liner workaround
+      · High-burden stories are candidates for stronger priority promotion than low-burden
+
+    **Forgetting risk heuristic:**
+      · For each active story with a workaround, assess what breaks when the workaround
+        is forgotten:
+        - High risk: silent failures, data quality degradation, broken output
+        - Medium risk: noticeable but recoverable failures
+        - Low risk: cosmetic or easily caught issues
+      · High forgetting risk stories are candidates for promotion regardless of burden
+
+    **Dependency promotion heuristic:**
+      · Cross-reference `depends_on` fields against story priorities
+      · Identify: a low or medium priority story that is listed in the `depends_on` of
+        one or more critical or high priority stories (it is blocking critical-path work)
+      · Recommend promoting the blocker to match the priority of the highest-priority
+        story it blocks
+      · Cite the specific blocker/blocked story slug relationship in the rationale
+    </action>
+
+    <action>Synthesize heuristic findings into an initial recommendation set.
+    Each recommendation includes:
+      · story-slug
+      · current priority
+      · recommended priority
+      · heuristics triggered (recurrence / burden / forgetting-risk / dependency)
+      · rationale citing specific evidence (retro file names, sprint cycles, story slugs)
+    </action>
+
+    <action>Open a back-and-forth conversation with the developer — NOT a fixed approval
+    list. Present the initial assessment and invite dialogue:
+
+    Framing: reference goals from prd.md where relevant ("In line with your goal to
+    [X], I recommend promoting [story-slug] because [evidence]")
+
+    The developer may:
+      · Agree with recommendations
+      · Disagree and explain why ("that story is blocked externally, keep it low")
+      · Redirect ("I've changed focus — prioritize stories that help us ship X faster")
+      · Refine ("yes, and also promote these others because...")
+
+    Adapt recommendations based on developer input. The conversation is not a checklist —
+    it is an informed discussion grounded in heuristic evidence and the developer's
+    stated direction. Continue the conversation until the developer explicitly signals
+    they are satisfied.
+    </action>
+
+    <action>Store {{priority_recommendations}} = final agreed-upon list of priority
+    changes from the conversation. Each entry: {story_slug, current_priority,
+    new_priority, rationale}</action>
+
+    <check if="no heuristic findings and developer confirms no priority changes needed">
+      <output>✓ No priority changes identified — backlog priorities look well-aligned.</output>
+      <action>Store {{priority_recommendations}} = empty list</action>
+    </check>
+  </step>
+
+  <step n="8" goal="Consolidated findings with batch approval">
     <action>Collect all findings into a single list grouped by category:
       1. Status mismatches (from Step 4)
       2. Epic issues (from Step 5, if epic-grooming ran)
       3. Stale-story evaluations (from Step 6)
+      4. Priority changes (from Step 7 — {{priority_recommendations}})
     Note: planning artifact updates (Steps 2-3) are handled in their own approval
     gate and are NOT re-presented here.
     </action>
 
     <check if="no findings across all categories">
       <output>✓ Backlog is healthy — no issues detected requiring action.</output>
-      <action>Skip to Step 9</action>
+      <action>Skip to Step 10</action>
     </check>
 
     <check if="total findings fewer than 5">
@@ -279,6 +360,10 @@ Findings — {{total_count}} items across {{category_count}} categories:
   {{for each: [N] story-slug — recommendation: keep/drop — rationale}}
   → Approve all? (A=all / R=all / pick individually)
 
+[Priority changes] — {{count}} items
+  {{for each: [N] story-slug — priority: CURRENT → NEW — rationale}}
+  → Approve all? (A=all / R=all / pick individually)
+
 Override specific findings? Enter numbers or ranges, or 'done' to proceed.
       </output>
     </check>
@@ -287,7 +372,7 @@ Override specific findings? Enter numbers or ranges, or 'done' to proceed.
     <action>Store {{rejected_count}} = count of rejected findings</action>
   </step>
 
-  <step n="8" goal="Apply approved changes">
+  <step n="9" goal="Apply approved changes">
     <action>Process each finding in {{approved_findings}} by type:
 
     **Status transitions** — for each approved status mismatch:
@@ -299,16 +384,19 @@ Override specific findings? Enter numbers or ranges, or 'done' to proceed.
     **Epic reassignments** — for each approved epic reassignment (from epic-grooming findings):
       Run: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py sprint epic-membership --story SLUG --epic EPIC_SLUG`
 
+    **Priority changes** — for each approved priority recommendation (from Step 7):
+      Run: `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py sprint set-priority --story SLUG --priority LEVEL`
+
     **New stories from findings** — for any finding that requires creating a new story:
       Confirm description, epic, and priority with the developer.
       Invoke `momentum:create-story` with the approved details.
       Wait for create-story to complete before moving to the next.
     </action>
 
-    <action>Store {{changes_applied}} = {status_transitions: N, drops: N, epic_moves: N, new_stories: N}</action>
+    <action>Store {{changes_applied}} = {status_transitions: N, drops: N, epic_moves: N, priority_changes: N, new_stories: N}</action>
   </step>
 
-  <step n="9" goal="Summary">
+  <step n="10" goal="Summary">
     <action>Read `{implementation_artifacts}/stories/index.json` to compute post-refine priority distribution</action>
     <action>Compute {{post}} — count of stories by priority after all changes (keys: critical, high, medium, low)</action>
 
@@ -318,6 +406,7 @@ Changes applied:
   · Status transitions: {{changes_applied.status_transitions}}
   · Stories dropped: {{changes_applied.drops}}
   · Epic reassignments: {{changes_applied.epic_moves}}
+  · Priority changes: {{changes_applied.priority_changes}}
   · New stories created: {{changes_applied.new_stories}}
   · Findings rejected: {{rejected_count}}
   · Planning artifacts updated: {{prd_updated (yes/no)}}, {{arch_updated (yes/no)}}
