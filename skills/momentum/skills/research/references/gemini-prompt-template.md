@@ -36,3 +36,14 @@ Date context: Today is {{date}}. Prioritize current and recent sources.
 - The `{{#each}}` syntax is illustrative — expand the sub-questions inline as a numbered list
 - Gemini Deep Research performs best with specific, bounded questions rather than broad open-ended topics
 - If more than 6 sub-questions, consider grouping related ones for the Gemini prompt while keeping them separate for Claude subagents
+
+## Dual-Path Usage
+
+This template generates the same prompt text for **both** Gemini triangulation paths:
+
+| Path | Trigger | Output file |
+|------|---------|-------------|
+| **Deep Research (cmux-browser)** | `cmux` is available and authenticated | `raw/gemini-deep-research-output.md` |
+| **Basic Gemini (`gemini -p`)** | cmux unavailable or Deep Research fails | `raw/gemini-output.md` |
+
+The prompt content itself is identical across both paths — only the execution method and output file name differ. The `gemini-prompt.md` file is written first (before path selection) and consumed by whichever path executes.
