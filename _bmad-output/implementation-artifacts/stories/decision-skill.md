@@ -1,7 +1,7 @@
 ---
 title: Decision Skill — Capture Strategic Decisions from Assessments
 story_key: decision-skill
-status: ready-for-dev
+status: review
 epic_slug: impetus-epic-orchestrator
 depends_on:
   - assessment-skill
@@ -120,29 +120,29 @@ Reference implementation: `/Users/steve/projects/nornspun/_bmad-output/planning-
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-8)
-  - [ ] Create eval verifying the three input flows and decision capture format
+- [x] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-8)
+  - [x] Create eval verifying the three input flows and decision capture format
 
-- [ ] Task 2 — Create SDR template (AC: 4)
-  - [ ] Create `skills/momentum/skills/decision/references/sdr-template.md`
-  - [ ] Include complete frontmatter schema and all body sections
-  - [ ] Use nornspun SDR-001 as reference for format
+- [x] Task 2 — Create SDR template (AC: 4)
+  - [x] Create `skills/momentum/skills/decision/references/sdr-template.md`
+  - [x] Include complete frontmatter schema and all body sections
+  - [x] Use nornspun SDR-001 as reference for format
 
-- [ ] Task 3 — Create SKILL.md (AC: 1)
-  - [ ] Frontmatter: name: decision, model: claude-sonnet-4-6, effort: high
-  - [ ] SKILL.md body delegates to ./workflow.md
+- [x] Task 3 — Create SKILL.md (AC: 1)
+  - [x] Frontmatter: name: decision, model: claude-sonnet-4-6, effort: high
+  - [x] SKILL.md body delegates to ./workflow.md
 
-- [ ] Task 4 — Create workflow.md (AC: 2-3, 5-8)
-  - [ ] Step 1: Determine input flow (A/B/C) and load source material
-  - [ ] Step 2: Walk through findings/recommendations with developer
-  - [ ] Step 3: For each finding, capture decision + rationale
-  - [ ] Step 4: Identify affected stories and architecture decisions
-  - [ ] Step 5: Write SDR document from template with proper frontmatter
-  - [ ] Step 6: Update upstream links (ASR decisions_produced if applicable)
-  - [ ] Step 7: Update decisions/index.md, commit
-  - [ ] Step 8: Offer bridge to story creation
+- [x] Task 4 — Create workflow.md (AC: 2-3, 5-8)
+  - [x] Step 1: Determine input flow (A/B/C) and load source material
+  - [x] Step 2: Walk through findings/recommendations with developer
+  - [x] Step 3: For each finding, capture decision + rationale
+  - [x] Step 4: Identify affected stories and architecture decisions
+  - [x] Step 5: Write SDR document from template with proper frontmatter
+  - [x] Step 6: Update upstream links (ASR decisions_produced if applicable)
+  - [x] Step 7: Update decisions/index.md, commit
+  - [x] Step 8: Offer bridge to story creation
 
-- [ ] Task 5 — Run eval and verify (AC: 1-8)
+- [x] Task 5 — Run eval and verify (AC: 1-8)
 
 ## Dev Notes
 
@@ -197,8 +197,24 @@ developer makes the actual decisions.
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None.
 
 ### Completion Notes List
 
+- Implemented eval-first (EDD): behavioral eval written before any skill files
+- sdr-template.md modeled on nornspun SDR-001 reference — includes frontmatter schema with all required fields, decision section format (recommendation/decision/rationale), Phased Implementation Plan and Decision Gates as optional sections, naming convention, auto-increment logic, and registry entry format
+- SKILL.md delegates entirely to workflow.md — no inline logic; description is 128 chars (under 150 limit)
+- workflow.md implements all three input flows (A: from assessment, B: from research, C: revisit) with flow-specific source loading; walks findings one at a time; captures verdict (adopt/reject/defer/adapt) and rationale; updates ASR decisions_produced for Flow A; commits all artifacts together; bridges to momentum:create-story or momentum:intake
+- Step 3 of workflow separates affected stories and architecture decisions as a distinct capture phase before writing the SDR, ensuring full context is collected
+- Verified all 8 ACs satisfied against eval criteria
+
 ### File List
+
+- skills/momentum/skills/decision/SKILL.md (created)
+- skills/momentum/skills/decision/workflow.md (created)
+- skills/momentum/skills/decision/references/sdr-template.md (created)
+- skills/momentum/skills/decision/evals/eval-three-input-flows-and-decision-capture.md (created)
