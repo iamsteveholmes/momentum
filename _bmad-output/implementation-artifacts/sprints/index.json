@@ -1,8 +1,7 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
-    "status": "planning",
+  "active": {
+    "locked": true,
+    "status": "active",
     "stories": [
       "intake-skill",
       "refine-reprioritization",
@@ -46,8 +45,80 @@
         ]
       }
     ],
-    "slug": "sprint-2026-04-08"
+    "slug": "sprint-2026-04-08",
+    "team": {
+      "story_assignments": {
+        "intake-skill": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "refine-reprioritization": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "quality-gate-parity-across-workflows": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "agent-prompt-large-file-guidance": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "impetus-journal-hygiene-script": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "8-3-gemini-deep-research-automation": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "gherkin-acs-and-atdd-workflow-active": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "hooks-global-distribution": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "remove-agent-journals": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "assessment-skill": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "decision-skill": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        },
+        "refine-assessment-decision-review": {
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present"
+        }
+      },
+      "review_roles": {
+        "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
+        "e2e-validator": "skills/momentum/agents/e2e-validator.md",
+        "architecture-guard": "skills/momentum/skills/architecture-guard/SKILL.md"
+      }
+    },
+    "planned": "2026-04-08",
+    "started": "2026-04-08"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
