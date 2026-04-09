@@ -1724,5 +1724,14 @@
     ],
     "change_type": "skill-instruction",
     "priority": "medium"
+  },
+  "eval-coverage-dashboard": {
+    "status": "backlog",
+    "title": "Eval Coverage Dashboard",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low"
   }
 }
