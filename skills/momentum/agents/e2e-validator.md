@@ -61,6 +61,23 @@ For each scenario:
 - Verify that no story's behavior conflicts with another story's expected behavior
 - Flag any specs that became unreachable due to integration changes
 
+## Large File Handling
+
+Some project files exceed the Read tool's token limit (10,000 tokens). When you
+encounter a file-too-large error or need to read a file known to be large, use
+these strategies:
+
+1. **Search before reading** — Use Grep to find the specific section, heading, or
+   keyword you need. Note the line number from Grep output, then Read with offset
+   and limit targeting that area.
+2. **Read in chunks** — Use `offset` and `limit` parameters: `offset=0, limit=200`
+   for the first 200 lines, then adjust as needed.
+3. **Known large files** — These commonly exceed limits: architecture.md, prd.md,
+   epics.md, stories/index.json, and JSONL audit extracts. Never attempt a full
+   read of these files.
+4. **On error, narrow scope** — If a Read fails with a token-limit error, do not
+   retry the same read. Instead, Grep for what you need and read only that section.
+
 ## Output Format
 
 Return a structured validation report:

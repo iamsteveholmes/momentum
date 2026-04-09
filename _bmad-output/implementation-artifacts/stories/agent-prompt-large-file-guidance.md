@@ -1,7 +1,7 @@
 ---
 title: Agent Prompt Large-File Guidance — Standard Instructions for Context-Exceeding Files
 story_key: agent-prompt-large-file-guidance
-status: ready-for-dev
+status: review
 epic_slug: agent-team-model
 depends_on: []
 touches:
@@ -102,38 +102,38 @@ so that future agent definitions inherit the pattern by convention.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-5)
-  - [ ] Create `skills/momentum/agents/evals/eval-large-file-guidance-present.md`
+- [x] Task 1 — Write behavioral eval (EDD: before implementation) (AC: 1-5)
+  - [x] Create `skills/momentum/agents/evals/eval-large-file-guidance-present.md`
     — verifies every agent definition in agents/*.md includes a large-file handling
     section with offset/limit guidance, named large files, and search-before-read
     pattern
 
-- [ ] Task 2 — Draft the standard large-file handling section (AC: 1, 2, 5)
-  - [ ] Write the reusable section content covering: known large files,
+- [x] Task 2 — Draft the standard large-file handling section (AC: 1, 2, 5)
+  - [x] Write the reusable section content covering: known large files,
     offset/limit mechanics, search-before-read pattern, error recovery
-  - [ ] Keep it under 20 lines
-  - [ ] Ensure it references only tools available to all agents (Read, Grep —
+  - [x] Keep it under 20 lines
+  - [x] Ensure it references only tools available to all agents (Read, Grep —
     both are in every agent's tool list)
 
-- [ ] Task 3 — Add section to all agent definitions (AC: 1, 4)
-  - [ ] Add to `skills/momentum/agents/dev.md`
-  - [ ] Add to `skills/momentum/agents/dev-skills.md`
-  - [ ] Add to `skills/momentum/agents/dev-build.md`
-  - [ ] Add to `skills/momentum/agents/dev-frontend.md`
-  - [ ] Add to `skills/momentum/agents/qa-reviewer.md`
-  - [ ] Add to `skills/momentum/agents/e2e-validator.md`
-  - [ ] Verify no existing sections are modified — addition only
+- [x] Task 3 — Add section to all agent definitions (AC: 1, 4)
+  - [x] Add to `skills/momentum/agents/dev.md`
+  - [x] Add to `skills/momentum/agents/dev-skills.md`
+  - [x] Add to `skills/momentum/agents/dev-build.md`
+  - [x] Add to `skills/momentum/agents/dev-frontend.md`
+  - [x] Add to `skills/momentum/agents/qa-reviewer.md`
+  - [x] Add to `skills/momentum/agents/e2e-validator.md`
+  - [x] Verify no existing sections are modified — addition only
 
-- [ ] Task 4 — Update agent-skill-development-guide.md (AC: 3)
-  - [ ] Add a "Large File Handling" subsection under the Agent Definition Files
+- [x] Task 4 — Update agent-skill-development-guide.md (AC: 3)
+  - [x] Add a "Large File Handling" subsection under the Agent Definition Files
     section of `skills/momentum/references/agent-skill-development-guide.md`
-  - [ ] Document this as a standard convention for all agent definitions
+  - [x] Document this as a standard convention for all agent definitions
 
-- [ ] Task 5 — Run eval and verify non-regression (AC: 1-5)
-  - [ ] Run eval via subagent
-  - [ ] Confirm all 6 agent definitions have the section
-  - [ ] Confirm no other sections in any agent file were modified (diff check)
-  - [ ] Confirm agent-skill-development-guide.md has the convention
+- [x] Task 5 — Run eval and verify non-regression (AC: 1-5)
+  - [x] Run eval via subagent
+  - [x] Confirm all 6 agent definitions have the section
+  - [x] Confirm no other sections in any agent file were modified (diff check)
+  - [x] Confirm agent-skill-development-guide.md has the convention
 
 ## Dev Notes
 
@@ -229,8 +229,27 @@ Placement per file:
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+No issues encountered.
 
 ### Completion Notes List
 
+- Created eval at skills/momentum/agents/evals/eval-large-file-guidance-present.md covering all 5 verification dimensions (section presence, offset/limit, named files, search-before-read, error recovery)
+- Drafted standard "## Large File Handling" section: 13 lines of instruction, uses only Read and Grep (available in all agents), names architecture.md, prd.md, epics.md, index.json, and JSONL extracts
+- Added section to all 6 agent definitions in the positions specified by the story spec — pure insertion, 0 lines modified or deleted in any existing content
+- Updated agent-skill-development-guide.md with "Large File Handling (Required Convention)" subsection marking this as mandatory for all future agent definitions
+- Verified non-regression: git diff shows 134 insertions, 0 deletions across all 7 modified files
+
 ### File List
+
+- skills/momentum/agents/evals/eval-large-file-guidance-present.md (created)
+- skills/momentum/agents/dev.md (modified — Large File Handling section added)
+- skills/momentum/agents/dev-skills.md (modified — Large File Handling section added)
+- skills/momentum/agents/dev-build.md (modified — Large File Handling section added)
+- skills/momentum/agents/dev-frontend.md (modified — Large File Handling section added)
+- skills/momentum/agents/qa-reviewer.md (modified — Large File Handling section added)
+- skills/momentum/agents/e2e-validator.md (modified — Large File Handling section added)
+- skills/momentum/references/agent-skill-development-guide.md (modified — Large File Handling convention added)

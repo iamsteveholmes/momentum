@@ -29,6 +29,38 @@ skills: [skill1, skill2]            # Optional: preload full skill content
 - System prompt (markdown body) is the agent's core instruction
 - Agent definitions should be focused — a system prompt, not a full workflow
 
+### Large File Handling (Required Convention)
+
+Every agent definition MUST include a `## Large File Handling` section in its system
+prompt body. This is a standard convention — not optional. Sprint retro analysis found
+that 33.6% of all tool errors were `file_too_large` errors caused by agents attempting
+full reads of large files without offset/limit.
+
+The standard section content (keep it under 20 lines):
+
+```markdown
+## Large File Handling
+
+Some project files exceed the Read tool's token limit (10,000 tokens). When you
+encounter a file-too-large error or need to read a file known to be large, use
+these strategies:
+
+1. **Search before reading** — Use Grep to find the specific section, heading, or
+   keyword you need. Note the line number from Grep output, then Read with offset
+   and limit targeting that area.
+2. **Read in chunks** — Use `offset` and `limit` parameters: `offset=0, limit=200`
+   for the first 200 lines, then adjust as needed.
+3. **Known large files** — These commonly exceed limits: architecture.md, prd.md,
+   epics.md, stories/index.json, and JSONL audit extracts. Never attempt a full
+   read of these files.
+4. **On error, narrow scope** — If a Read fails with a token-limit error, do not
+   retry the same read. Instead, Grep for what you need and read only that section.
+```
+
+Placement: after the agent's process/behavior sections, before the output format
+section. Only reference tools available to the agent (Read and Grep are in every
+agent's tool list and are appropriate for all agents — read-only or read-write).
+
 ## SKILL.md Files (`skills/<skill-name>/SKILL.md`)
 
 ### Frontmatter Schema
