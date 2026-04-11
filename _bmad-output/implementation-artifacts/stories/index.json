@@ -2063,5 +2063,32 @@
     "depends_on": [],
     "touches": [],
     "priority": "medium"
+  },
+  "sprint-scope-tracking": {
+    "status": "backlog",
+    "title": "Sprint Scope Tracking — Planned vs Unplanned Work Log",
+    "epic_slug": "sprint-dev-workflow",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low"
+  },
+  "module-upgrade-change-preview": {
+    "status": "backlog",
+    "title": "Module Upgrade Change Preview — Diff Before Apply",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium"
+  },
+  "maestro-ux-spec-sync-guidance": {
+    "status": "backlog",
+    "title": "Maestro UX Spec Sync Guidance — Scan Test Fixtures After UX Story Completions",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low"
   }
 }
