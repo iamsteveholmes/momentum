@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-04-08'
+lastEdited: '2026-04-11'
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
 ---
 
@@ -14,3 +14,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | ID | Title | Date | Source Research | Status |
 |----|-------|------|-----------------|--------|
 | DEC-001 | [Three-Tier Agent Guidelines Architecture](dec-001-three-tier-agent-guidelines-2026-04-09.md) | 2026-04-09 | agent-guidelines-architecture-2026-04-09 | decided |
+| DEC-002 | [Feature Visualization and Developer Orientation](dec-002-feature-visualization-and-orientation-2026-04-11.md) | 2026-04-11 | project-knowledge-visualization-ai-2026-04-11 | decided |
