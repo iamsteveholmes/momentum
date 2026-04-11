@@ -1992,6 +1992,33 @@ This pattern is distinct from the per-finding Add/Modify/Remove triage used in o
 
 ---
 
+**Decision 43 — Retro Phase 0: Session Analytics and Regression Detection (2026-04-11)**
+
+`/momentum:retro` gains a Phase 0 that runs before the qualitative audit phases. Phase 0 queries the Claude Code session JSONL logs for the current sprint window using DuckDB, computes a core metric set, compares to the prior sprint window, and produces a structured brief that informs Phase 1 auditors where to focus.
+
+**Framing — regression detection, not trend tracking:** The primary value is detecting when a practice change made something worse. "Research skill error rate was 0% last sprint and 8% this sprint" is an actionable regression signal. Sprint-over-sprint trend analysis is secondary.
+
+**DuckDB as the query layer:** Session JSONL files at `~/.claude/projects/<project>/` are the data source. DuckDB reads them via `read_csv_auto` with `VARCHAR` columns (required — `queue-operation` entries break `read_ndjson_auto` type inference). All JSON extraction uses `json_extract_string()` / `json_extract()` inline.
+
+**Core metric set (Phase 0 computes all of these):**
+- Tool error rate per skill (`is_error: true` on `tool_result` entries, grouped by preceding skill invocation)
+- Hook prevention events (`system.stop_hook_summary.preventedContinuation = true`) — gate-failure signal
+- Compaction frequency (`system.compact_boundary` count) — context pressure indicator
+- Skill invocation counts by skill name — detects unused or regression-prone skills
+- Turn duration vs. context depth (`system.turn_duration.durationMs / messageCount`) — performance degradation signal
+- Cache hit rate (`cache_read_input_tokens / (cache_read + cache_creation_input_tokens)`) — context efficiency
+- Git commit type distribution (regex on `Bash` `git commit` inputs) — `fix` spike signals quality regression
+
+**Findings-ledger versioning — Option A + Option B:**
+- **Option A (primary):** Every findings-ledger write includes a `momentum_version` field populated from the installed plugin version at write time. Applies to all ledger writers: `momentum:distill`, `momentum:retro` (Phase 0 brief + Phase 5 stubs), and any future writers.
+- **Option B (validation):** Git log timestamps map sessions to Momentum version bumps for cross-checking. Used to validate Option A data and to backfill version attribution for ledger entries that predate the `momentum_version` field.
+
+**Phase 0 output:** A structured session-analytics brief written to the retro working directory. Contains: sprint window, sessions analyzed, metric table with sprint-over-sprint delta, and flagged regressions. Phase 1 auditors receive this brief before qualitative review begins.
+
+**Traceability:** Motivated by Fowler feedback flywheel research (2026-04-10) — Momentum captures failure signals but not quantitative regression signals. Log-audit research (2026-04-11) confirmed all metrics are extractable from existing session JSONL files without instrumentation changes. The findings-ledger `momentum_version` field extends Decision 42's ledger schema.
+
+---
+
 **Workflow Modularization Note (2026-04-04)**
 
 The Impetus `workflow.md` file is a structural concern at 800+ lines. The greeting redesign (Step 7 alone is 232 lines in the mockup) will increase this further. Modularization into separate workflow modules (e.g., `greeting.md`, `dispatch.md`, `install.md`) is architecturally sound and recommended but not required for the greeting redesign. This note flags the concern for future sprint planning.

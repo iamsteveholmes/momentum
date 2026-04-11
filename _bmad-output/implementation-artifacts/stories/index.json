@@ -2126,5 +2126,14 @@
     "depends_on": [],
     "touches": [],
     "priority": "high"
+  },
+  "retro-session-analytics-phase-0": {
+    "status": "backlog",
+    "title": "Retro Phase 0 — Session Analytics and Regression Detection",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
   }
 }
