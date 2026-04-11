@@ -25,8 +25,10 @@ derives_from:
   - id: UX-MOMENTUM-001
     path: _bmad-output/planning-artifacts/ux-design-specification.md
     relationship: derives_from
-lastEdited: '2026-04-01'
+lastEdited: '2026-04-11'
 editHistory:
+  - date: '2026-04-11'
+    changes: 'Removed /momentum:create-epic and /momentum:develop-epic — superseded by momentum:create-story + momentum:epic-grooming + sprint model (developer decision 2026-04-11): replaced FR50 and FR51 rows in FR Coverage Map with removal notices; rewrote FR52 row to reflect current lifecycle (triage → sprint-planning → sprint-dev → retro → triage); renamed Epic 2b from "Impetus as Epic Orchestrator" to "Impetus as Sprint Orchestrator" in both the Epic List and the full epic body; rewrote Epic 2b description to replace create-epic/develop-epic workflow with create-story + epic-grooming + sprint model; updated Epic 2b FRs covered to remove FR50 and FR51; updated Epic 2a Additional field to remove /create and /develop references and reflect sprint-aware narrative greeting.'
   - date: '2026-04-01'
     changes: 'Added Epic 0 (Redesign Foundation — 3 stories): story-id-migration, sprint-status-schema-redesign, momentum-sprint-manager-skill. Added Epic 0 to epic list. These are the foundation for the full Momentum orchestration redesign.'
   - date: '2026-03-26'
@@ -306,9 +308,9 @@ UX-DR22: Implement Confidence-Directed Review — when generating or presenting 
 | FR47 | Epic 8 | Track document freshness using domain-specific freshness windows |
 | FR48 | Epic 4 | AVFL skill deployed with multi-lens validation pipeline |
 | FR49 | Epic 2b | triage workflow — raw input → epics.md mutations; only unlocked epics mutable |
-| FR50 | Epic 2b | /create-epic — lock epic, parallel story creation (batch 4-8), AVFL per story, epic locked on all-CLEAN |
-| FR51 | Epic 2b | /develop-epic — tier-sequential DAG execution with pre-flight validation and agent pool cap (default 12) |
-| FR52 | Epic 2b | Epic lifecycle: triage → create-epic (lock) → develop-epic → retro → triage; epic immutable after lock |
+| FR50 | — | Removed — /momentum:create-epic superseded by momentum:create-story + momentum:epic-grooming + sprint model |
+| FR51 | — | Removed — /momentum:develop-epic superseded by momentum:sprint-dev |
+| FR52 | Epic 2b | Epic lifecycle: triage → sprint-planning → sprint-dev → retro → triage |
 | FR53 | Epic 2b | momentum-dev-auto — background-safe story implementation: no ask gates, merge deferred, AVFL GATE_FAILED = clean structured fail |
 | FR54 | Epic 2a | Session-open epic progress bar: read sprint-status.yaml, render done/current/next bar, 2-item primary menu |
 
@@ -350,18 +352,19 @@ Migrate sprint-status.yaml to the new 3-section schema (stories/epics/sprints), 
 ---
 
 ### Epic 2a: Impetus UX Redesign
-The session-open experience communicates what Impetus is and shows real project state. Startup is silent on happy path. Menu is minimal and outcome-focused. Epic progress bar replaces the static 6-item menu as the primary orientation surface.
+The session-open experience communicates what Impetus is and shows real project state. Startup is silent on happy path. Menu is minimal and outcome-focused. Sprint-aware narrative greeting replaces the static menu as the primary orientation surface.
 **FRs covered:** FR54
 **UX-DRs covered:** UX-DR1, UX-DR2, UX-DR6 (extended)
-**Additional:** Replaces 6-item menu with 2-item primary menu (/create, /develop); adds epic progress bar from sprint-status.yaml; silent pre-flight voice rules; hash-drift plain language.
+**Additional:** Sprint-aware narrative greeting with 9 greeting states; adaptive 3-4 item menus; silent pre-flight voice rules; hash-drift plain language.
 **Priority:** High (before Epic 3)
 
 ---
 
-### Epic 2b: Impetus as Epic Orchestrator
-Impetus orchestrates work at the epic level. The developer uses triage to plan, /create-epic to lock and generate stories in parallel, /develop-epic to run the DAG, and retro to feed the next cycle. The epic is the primary, immutable unit of planned work.
-**FRs covered:** FR49, FR50, FR51, FR52, FR53
-**Additional:** triage skill (epics.md mutations), /create-epic (parallel story creation + AVFL), momentum-dev-auto (background-safe, no ask gates), /develop-epic (tier-sequential DAG, agent pool cap 12), retro handoff (triage-inbox.md), epic close-out (done-incomplete/closed-incomplete statuses), dag-executor integration (optional swappable wave scheduler).
+### Epic 2b: Impetus as Sprint Orchestrator
+Impetus orchestrates work at the sprint level. The developer uses triage to plan, momentum:create-story to add individual stories, momentum:epic-grooming to manage epic taxonomy, and sprint-planning + sprint-dev to execute. The sprint is the primary unit of execution; the epic is the primary unit for grouping and scoping work.
+**FRs covered:** FR49, FR52, FR53
+**Note:** FR50 (/momentum:create-epic) and FR51 (/momentum:develop-epic) removed — superseded by this model (developer decision 2026-04-11).
+**Additional:** triage skill (epics.md mutations), momentum:epic-grooming (taxonomy management), retro handoff (triage-inbox.md), sprint close-out (done-incomplete/closed-incomplete statuses).
 **Priority:** High (before Epic 3)
 
 ---
@@ -503,11 +506,12 @@ The session-open experience communicates what Impetus is and shows real project 
 
 ---
 
-## Epic 2b: Impetus as Epic Orchestrator
+## Epic 2b: Impetus as Sprint Orchestrator
 
-Impetus orchestrates work at the epic level. The developer uses triage to plan, /create-epic to lock and generate stories in parallel, /develop-epic to run the DAG, and retro to feed the next cycle. The epic is the primary, immutable unit of planned work.
+Impetus orchestrates work at the sprint level. The developer uses triage to plan, momentum:create-story to add individual stories, momentum:epic-grooming to manage epic taxonomy, and sprint-planning + sprint-dev to execute. The sprint is the primary unit of execution; the epic is the primary unit for grouping and scoping work.
 
-**FRs covered:** FR49, FR50, FR51, FR52, FR53
+**FRs covered:** FR49, FR52, FR53
+**Note:** FR50 (/momentum:create-epic) and FR51 (/momentum:develop-epic) removed — superseded by this model (developer decision 2026-04-11).
 
 
 > Story details are tracked in `stories/index.json`. Epic membership is authoritative there.

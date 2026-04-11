@@ -39,8 +39,12 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-08'
+lastEdited: '2026-04-11'
 editHistory:
+  - date: '2026-04-11'
+    changes: 'Removed /momentum:create-epic and /momentum:develop-epic — superseded by momentum:create-story + momentum:epic-grooming + sprint model (developer decision 2026-04-11): updated Rolling pool feasibility note (Decision 4c) to reference /momentum:sprint-dev instead of /develop-epic; rewrote Decision 39 execution paths table — removed "Epic orchestration" row, renamed to "Execution paths in Momentum" (3 paths: sprint orchestration, quick-fix, distill); updated Decision 42 distill description from "fourth execution path alongside epic orchestration" to "third execution path alongside sprint orchestration and quick-fix"; updated distill row in Skills Deployment Classification table to match.'
+  - date: '2026-04-11'
+    changes: 'Drift reconciliation (DRIFT-001 through DRIFT-008): Added note to distill entry in Skills Deployment Classification that story is handled via quick-fix workflow (DRIFT-001). Added momentum:sprint-manager to Skills Deployment Classification table — flat skill wrapping momentum-tools.py CLI, sole writer of sprints/index.json (DRIFT-002). Updated Hook Infrastructure subsystem description to reflect global hook script deployment to ~/.claude/momentum/hooks/ as primary path, plugin hooks/ as override fallback, hooks-config.json path resolution (DRIFT-003). Added dev.md, dev-skills.md, dev-build.md, dev-frontend.md specialist agent files to agents/ directory listing in both Repository Structure sections (DRIFT-004). Clarified Always-Worktree section: worktree model applies to standalone momentum:dev only; sprint-dev uses sequential commit-as-sync-point within Agent Team per Decision 26 (DRIFT-005). Updated momentum:status in Skills Deployment Classification to "not planned as standalone skill" — absorbed into Impetus and momentum-tools CLI, no backlog story needed; updated Repository Structure and Requirements to Structure Mapping consistently (DRIFT-006). Removed agent logging from momentum:dev pure executor description (removed per Decision 24/27); corrected bmad-dev-story indirection note — dev/workflow.md spawns agents directly (DRIFT-007). Added momentum:agent-guidelines to Skills Deployment Classification table — 5-phase guided workflow for technology-specific guidelines generation (DRIFT-008).'
   - date: '2026-04-08'
     changes: 'Sprint-2026-04-08 spec impact: Removed agent journal write infrastructure (momentum-tools log, sprint-log writes, SubagentStart/SubagentStop hooks) per ARCH-5 — DuckDB transcript audit (Decision 27) is now the sole evidence source for retrospectives. Updated Decision 24 to historical status. Removed sprint-logs from Installed Structure tree, momentum-tools log from Read/Write Authority, sprint-logs write references from Impetus and momentum:dev rows. Removed SubagentStart/SubagentStop from Hook Infrastructure subsystem and hook event names. Updated Decision 39 per ARCH-7: momentum:dev is internal-only (not user-invocable from Impetus), quick-fix Phase 4 includes code review via momentum:code-reviewer, worktree cleanup deferred until quality gates pass. Updated Skills Deployment Classification for dev. Extended Decision 30 with spec-quality feedback loop (ARCH-9): E2E Validator findings tagged spec-quality are surfaced in dedicated retro section. Added spec quality pre-check gate to Decision 29 Step 4 (Gherkin generation). Expanded refine Read/Write Authority per ARCH-4: added assessments/*.md and decisions/*.md to reads.'
   - date: '2026-04-07'
@@ -89,7 +93,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 2. **Provenance Infrastructure** — `derives_from` frontmatter (downstream-only authoring), content hash staleness detection, suspect link flagging (pull-based), auto-generated `referenced_by`, Chain of Evidences prompting, Citations API integration for mechanical grounding.
 
-3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, PreToolUse plan audit gate (ExitPlanMode), Stop conditional quality gate. Two hook deployment mechanisms: (1) **Always-on hooks** — defined in `hooks/hooks.json` at the plugin root; delivered automatically by the plugin install mechanism; these fire on every matching tool event in every session regardless of which skill is active. (2) **Skill-lifecycle hooks** — defined in SKILL.md `hooks:` frontmatter; scoped to the skill's lifetime; only fire while that skill is active; automatically cleaned up when the skill completes. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
+3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, PreToolUse plan audit gate (ExitPlanMode), Stop conditional quality gate. Two hook deployment mechanisms: (1) **Always-on hooks** — defined in `hooks/hooks.json` at the plugin root; delivered automatically by the plugin install mechanism; these fire on every matching tool event in every session regardless of which skill is active. Hook scripts are distributed globally to `~/.claude/momentum/hooks/` as the primary path; the plugin's `hooks/` directory serves as an override fallback for project-local scripts. The `hooks-config.json` in `references/` defines the path resolution logic — global scripts are preferred, with project-local scripts taking precedence when both exist. (2) **Skill-lifecycle hooks** — defined in SKILL.md `hooks:` frontmatter; scoped to the skill's lifetime; only fire while that skill is active; automatically cleaned up when the skill completes. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
 
 4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `references/rules/` at the plugin root. The plugin install mechanism does not write to `~/.claude/rules/` or `.claude/rules/` directly — Impetus writes rules to both targets on first `/momentum:impetus` invocation using the Write tool. No separate setup step.
 
@@ -184,13 +188,15 @@ The defining question for each component: *does this need main-context persona p
 | dev | Flat skill (`/momentum:dev`) — internal-only | Pure story executor; called by sprint-dev and quick-fix, not user-invocable from Impetus (Decision 39) |
 | quick-fix | Flat skill (`/momentum:quick-fix`) | Single-story bypass-sprint lifecycle path (Decision 39); register, execute, validate, complete in one session |
 | research | Flat skill (`/momentum:research`) | Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking |
-| status | Flat skill (`/momentum:status`) — planned, not yet implemented | Sprint/story status display; currently handled by momentum-tools CLI and Impetus greeting |
+| status | Not planned as standalone skill | Status functionality is absorbed into Impetus greeting workflow and momentum-tools CLI (`momentum-tools sprint status`). No backlog story exists or is needed. |
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; triage and intake of new ideas, documents, or requests into the backlog as story stubs; no fork needed |
-| distill | Flat skill (`/momentum:distill`) | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. User-invokable mid-session or from retro Phase 5 for Tier 1 findings. Fourth execution path alongside epic, sprint, and quick-fix (Decision 42). |
+| distill | Flat skill (`/momentum:distill`) | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. User-invokable mid-session or from retro Phase 5 for Tier 1 findings. Third execution path alongside sprint orchestration and quick-fix (Decision 42). Story: not yet in backlog — handled via quick-fix workflow. |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
+| sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
 | decision | Flat skill (`/momentum:decision`) | User-invokable; facilitates architectural or product decision capture (ADR/trade-off analysis); no fork needed |
+| agent-guidelines | Flat skill (`/momentum:agent-guidelines`) | 5-phase guided workflow for generating technology-specific development guidelines for a project: Discover (stack analysis), Research (web search), Consult (developer preferences), Generate (guidelines documents), Validate (AVFL checkpoint). Generates path-scoped rules and reference documents. |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure spawned worker — reviews code against story ACs during Team Review (Decision 34). Never user-invoked (Decision 35). |
@@ -219,14 +225,18 @@ momentum/                              ← Plugin root
 │   ├── plan-audit/SKILL.md
 │   ├── quick-fix/SKILL.md          ← /momentum:quick-fix (Decision 39)
 │   ├── research/SKILL.md           ← /momentum:research
-│   ├── status/SKILL.md             ← /momentum:status (planned — not yet implemented)
+│   ├── status/SKILL.md             ← /momentum:status (not planned as standalone skill — absorbed into Impetus and momentum-tools CLI)
 │   ├── intake/SKILL.md             ← /momentum:intake
 │   ├── assessment/SKILL.md         ← /momentum:assessment
 │   ├── decision/SKILL.md           ← /momentum:decision
 │   └── retro/SKILL.md
 ├── agents/                           ← Agent definition files (Decision 35)
 │   ├── qa-reviewer.md               ← Pure worker: story AC review (Team Review)
-│   └── e2e-validator.md             ← Pure worker: behavioral validation (Team Review)
+│   ├── e2e-validator.md             ← Pure worker: behavioral validation (Team Review)
+│   ├── dev.md                        ← Base dev agent for sprint-dev spawning
+│   ├── dev-skills.md                ← Specialist: SKILL.md, workflow.md, agent definitions
+│   ├── dev-build.md                 ← Specialist: Gradle and build system work
+│   └── dev-frontend.md              ← Specialist: Kotlin Compose and frontend UI work
 ├── hooks/
 │   └── hooks.json                    ← Always-on hooks (Tier 1 enforcement)
 ├── scripts/
@@ -568,7 +578,7 @@ Default: surface implementation summary ("here's what was built and how it maps 
 Dead air is a failure mode, not an acceptable pause.
 **Implementation note (updated 2026-03-24, Story 2.10 spike result):** The spike is complete. Results documented in `docs/research/background-agent-coordination.md`. Key findings: (1) No `SendMessage` or inter-agent messaging API exists in Claude Code — checkpoint/resume mid-task is not possible. (2) No `Agent` tool exists as a general-purpose callable tool — subagent execution is declared via `context:fork` in SKILL.md, not dispatched dynamically. (3) `run_in_background: true` on the Bash tool runs shell commands (not agents) in the background — fire-and-forget only. (4) Productive waiting is behavioral, not mechanical: Impetus briefs the user before subagent launch and synthesizes results after completion. Story 4.3 should decompose work into discrete `context:fork` invocations (each runs to completion) and use background Bash for test/build tasks only.
 
-**Rolling pool feasibility note (2026-03-26):** Story 2.10's spike was conducted in a bare Claude Code CLI session where the Agent tool was not available. In a skill execution context (where /develop-epic runs), the Agent tool with `run_in_background: true` and the notification model are available. Rolling pool dispatch (dispatch when a slot frees, not wait-for-all) is therefore architecturally feasible. Tier-sequential batching is the MVP implementation choice for simplicity and correctness — not an architectural constraint. Rolling dispatch is a valid follow-on enhancement.
+**Rolling pool feasibility note (2026-03-26):** Story 2.10's spike was conducted in a bare Claude Code CLI session where the Agent tool was not available. In a skill execution context (where `/momentum:sprint-dev` runs), the Agent tool with `run_in_background: true` and the notification model are available. Rolling pool dispatch (dispatch when a slot frees, not wait-for-all) is therefore architecturally feasible. Tier-sequential batching is the MVP implementation choice for simplicity and correctness — not an architectural constraint. Rolling dispatch is a valid follow-on enhancement.
 
 ---
 
@@ -1025,12 +1035,18 @@ momentum/                                    ← Plugin root
 │   │   └── SKILL.md
 │   ├── research/                            ← /momentum:research
 │   │   └── SKILL.md
-│   ├── status/                              ← /momentum:status (planned — not yet implemented)
+│   ├── status/                              ← /momentum:status (not planned as standalone skill — absorbed into Impetus and momentum-tools CLI)
 │   │   └── SKILL.md
 │   └── retro/                               ← /momentum:retro
 │       └── SKILL.md
 │
 ├── agents/                                  ← Custom agent definitions for teams
+│   ├── qa-reviewer.md                       ← Pure worker: story AC review (Team Review)
+│   ├── e2e-validator.md                     ← Pure worker: behavioral validation (Team Review)
+│   ├── dev.md                               ← Base dev agent for sprint-dev spawning
+│   ├── dev-skills.md                        ← Specialist: SKILL.md, workflow.md, agent definitions
+│   ├── dev-build.md                         ← Specialist: Gradle and build system work
+│   └── dev-frontend.md                      ← Specialist: Kotlin Compose and frontend UI work
 │
 ├── hooks/
 │   └── hooks.json                           ← Always-on hooks (Tier 1 enforcement; delivered by plugin)
@@ -1165,7 +1181,7 @@ momentum/                                    ← Plugin root
 | Quick-fix | `skills/quick-fix/` | Plugin skill: `/momentum:quick-fix` |
 | Distill | `skills/distill/` | Plugin skill: `/momentum:distill` |
 | Research | `skills/research/` | Plugin skill: `/momentum:research` |
-| Status | `skills/status/` | Plugin skill: `/momentum:status` (planned — not yet implemented) |
+| Status | `skills/status/` | Not planned as standalone skill — status functionality absorbed into Impetus greeting and momentum-tools CLI |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
@@ -1413,9 +1429,11 @@ The session journal `active_story` field (singular) extends to `active_stories` 
 
 Impetus's session orientation must handle the multi-story case: when multiple stories are active, summarize all active sessions and their current phases.
 
-### Parallel Story Execution Model (Always-Worktree)
+### Parallel Story Execution Model (Always-Worktree — Standalone momentum:dev Only)
 
-Every `momentum:dev` session runs in its own git worktree from the start — even if it appears to be the only session. This eliminates the mid-session file-change race (if Story A ran in main and Story B merged first, A would find changed files under it).
+> _Note: The worktree model described in this section applies to STANDALONE `momentum:dev` invocations (dev called directly by the developer, not via sprint-dev). Sprint-dev uses sequential execution with commit-as-sync-point within an Agent Team (Decision 26) — no worktrees are needed within a team. This section documents the worktree model for standalone use cases; do not apply it to sprint-dev team execution._
+
+Every standalone `momentum:dev` session runs in its own git worktree from the start — even if it appears to be the only session. This eliminates the mid-session file-change race (if Story A ran in main and Story B merged first, A would find changed files under it).
 
 **Worktree naming convention:** `.worktrees/story-{story_id}` on branch `story/{story_id}`
 
@@ -1606,13 +1624,14 @@ Phase 5 agents are checked against the spawn registry — each reviewer role (e.
 
 <!-- REVISED Phase 3: momentum:dev simplified to pure executor. momentum-dev-auto is subsumed — the simplified momentum:dev has no AVFL, no status writes, no DoD supplement, no code review offer, making it functionally equivalent to what momentum-dev-auto was designed to be. -->
 
-momentum:dev is a pure executor: worktree setup, bmad-dev-story invocation, agent logging, and structured completion output. It does NOT:
+momentum:dev is a pure executor: worktree setup, story implementation (spawning agents directly per story instructions), and structured completion output. It does NOT:
 - Run AVFL (moved to sprint-dev Phase 4)
 - Write status transitions (handled by sprint-dev after merge)
 - Apply DoD supplement (moved to sprint-level verification)
 - Offer code review (orthogonal concern managed by caller)
+- Write agent logs (removed — DuckDB transcript audit is the sole evidence source per Decision 24/27)
 
-momentum:dev emits structured JSON completion output that sprint-dev parses: status, files modified, test results.
+momentum:dev does NOT invoke bmad-dev-story as an indirection layer — the current dev/workflow.md spawns agents directly. momentum:dev emits structured JSON completion output that sprint-dev parses: status, files modified, test results.
 
 **Note:** The pre-Phase-3 `momentum-dev-auto` variant (background-safe, no ask gates) is subsumed by this simplified momentum:dev. With AVFL, status transitions, DoD, and code review removed, momentum:dev itself is now a pure executor suitable for both interactive and background execution.
 
@@ -1884,13 +1903,12 @@ The Impetus voice — Optimus Prime's gravitas blended with KITT's loyalty — i
 
 **Decision 39 — Quick-Fix Bypass-Sprint Lifecycle Path (2026-04-04, Extended 2026-04-08)**
 
-Quick-fix introduces a third execution path alongside epic orchestration and sprint orchestration. It is a bypass-sprint lifecycle path: single story from prompt → lightweight 4-phase workflow → `sprints/index.json` registration without activate/complete lifecycle states. The quick-fix path does not create a sprint, does not require sprint planning, and does not use the `planning → ready → active → done → completed` state machine (Decision 36). Instead, `momentum-tools quickfix register` writes a quick-fix entry directly to `sprints/index.json` and `momentum-tools quickfix complete` marks it done.
+Quick-fix introduces a third execution path alongside sprint orchestration and triage-based backlog management. It is a bypass-sprint lifecycle path: single story from prompt → lightweight 4-phase workflow → `sprints/index.json` registration without activate/complete lifecycle states. The quick-fix path does not create a sprint, does not require sprint planning, and does not use the `planning → ready → active → done → completed` state machine (Decision 36). Instead, `momentum-tools quickfix register` writes a quick-fix entry directly to `sprints/index.json` and `momentum-tools quickfix complete` marks it done.
 
-**Four execution paths in Momentum:**
+**Execution paths in Momentum:**
 
 | Path | Scope | Lifecycle | Entry point |
 |---|---|---|---|
-| Epic orchestration | Multi-sprint program | Full epic/sprint lifecycle | `/momentum:impetus` → sprint planning |
 | Sprint orchestration | Single sprint, multiple stories | Decision 36 state machine | `/momentum:sprint-planning` → `/momentum:sprint-dev` |
 | Quick-fix | Single story, single session | Register → execute → validate → complete | `/momentum:quick-fix` |
 | Distill | Single practice artifact, single session | Discover → classify → apply → validate → commit | `/momentum:distill` (Decision 42) |
@@ -1957,7 +1975,7 @@ This pattern is distinct from the per-finding Add/Modify/Remove triage used in o
 
 **Decision 42 — Distill Execution Path and AVFL Profile (2026-04-11)**
 
-`/momentum:distill` is a fourth execution path alongside epic orchestration, sprint orchestration, and quick-fix (Decision 39). It is the practice-artifact analogue of quick-fix: where quick-fix handles code stories, distill handles practice artifacts (rules, references, skill prompts, spec additions).
+`/momentum:distill` is a third execution path alongside sprint orchestration and quick-fix (Decision 39). It is the practice-artifact analogue of quick-fix: where quick-fix handles code stories, distill handles practice artifacts (rules, references, skill prompts, spec additions).
 
 **Distill AVFL profile:** A lightweight single-pass validation mode designated for distill's post-change validation step. Runs two subagents (Enumerator + Adversary) on only the changed files. No multi-lens parallelism — a single validation pass, not separate structural/accuracy/coherence passes. Model: Sonnet at medium-low effort. No fix iterations — output informs a developer-prompted correction or a clean commit. Implemented as a named profile in `skills/avfl/references/framework.json`.
 
