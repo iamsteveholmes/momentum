@@ -2117,5 +2117,14 @@
     "depends_on": [],
     "touches": [],
     "priority": "critical"
+  },
+  "kb-raw-ingest-spike": {
+    "status": "backlog",
+    "title": "Spike — KB Raw Source Ingestion: Obsidian, Document Trees, llms.txt, Research",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
   }
 }
