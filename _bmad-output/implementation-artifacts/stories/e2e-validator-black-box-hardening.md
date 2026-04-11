@@ -26,7 +26,15 @@ so that black-box behavioral testing is guaranteed — validators cannot cheat b
 
 The E2E validator repeatedly inspects source files instead of exercising the running system via cmux. This is the single highest-friction area across 3 sprint retros. The validator must invoke cmux browser or cmux send for every scenario — no exceptions. MANUAL rate >20% should trigger a self-audit mode that surfaces the leakage.
 
-**Pain context:** Recurs across sprint-2026-04-08 (#1), sprint-2026-04-06-2 (#8). Dominant sprint struggle — developers notice immediately when validators read files instead of running the app. Current partial fix (ToolSearch instruction) covers only the SendMessage gate, not the execution mandate.
+The skill must also encode a mandatory startup checklist that runs before any scenario execution:
+1. Services running (FastAPI, PostgreSQL) — detected via cmux pane capture
+2. Emulator running (Android) — confirmed before Maestro tests start
+3. Maestro connected — test runner ready
+4. Validate — only after all three confirmed
+
+If any checklist step fails, halt and report specifically what is missing rather than falling back to static analysis.
+
+**Pain context:** Recurs across sprint-2026-04-08 (#1), sprint-2026-04-06-2 (#8), and D3/nornspun-2026-04-10-2-retro (#2, Critical). Dominant sprint struggle — developers notice immediately when validators read files instead of running the app. D3 sprint spent 2.5 hours (messages 71–91) on unplanned work to establish proper guidelines after the validator defaulted to static analysis when no project-level E2E guidelines existed. Current partial fix (ToolSearch instruction) covers only the SendMessage gate, not the execution mandate or startup checklist.
 
 ## Acceptance Criteria
 
