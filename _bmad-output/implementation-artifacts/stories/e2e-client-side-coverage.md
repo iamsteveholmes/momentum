@@ -1,13 +1,13 @@
 ---
-title: Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
-story_key: spawning-mode-markers
+title: E2E Client-Side Coverage — Layer 2 UI Interaction Validation
+story_key: e2e-client-side-coverage
 status: backlog
-epic_slug: impetus-epic-orchestrator
+epic_slug: agent-team-model
 depends_on: []
 touches: []
 ---
 
-# Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
+# E2E Client-Side Coverage — Layer 2 UI Interaction Validation
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,23 +18,21 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a sprint orchestrator,
-I want explicit team composition limits, phase sequencing constraints, and spawning mode annotations in every sprint-dev workflow step that creates agents,
-so that code sprints use the correct team topology, phases execute in the right order, and orchestrators never guess individual vs TeamCreate.
+As an E2E validator,
+I want a two-layer coverage model that includes client-side UI interaction validation alongside API behavioral tests,
+so that a sprint's E2E validation is not declared complete when fundamental UI interaction bugs remain invisible to automated tests.
 
 ## Description
 
-Three related code-sprint orchestration failures, consolidated into one fix:
+The current E2E skill defines "covered" as: all Gherkin scenarios validated against live FastAPI endpoints (API-level). Client-integration flows — UI state management, screen transitions, context isolation between agents — are not included in the coverage requirement. This creates a false sense of completeness: a sprint can pass 57/71 API scenarios and still have fundamental user-facing bugs that only manifest in the client.
 
-**1. Team composition rules (Critical, D3):** Sprint-dev created per-story agents (dev-d4-1, dev-d4-2, etc.) instead of shared role agents. The correct pattern: one backend-dev, one frontend-dev (if needed), one QA, one E2E — shared across all stories. Max team size 4 (lead excluded). No per-story team decomposition. The user discovered a "massive team" and ordered immediate shutdown. Six+ agents were created where 2–3 were appropriate.
+Two-layer model:
+- **Layer 1 (current):** API behavioral coverage — all Gherkin scenarios against live FastAPI endpoints
+- **Layer 2 (required addition):** Client interaction coverage — UI state transitions, end-to-end user flows via Maestro (Android) and desktop UI testing, connection handling and error state display
 
-**2. Phase sequencing (Medium, D3):** Sprint-dev used TeamCreate before AVFL validation and before individual dev agents finished their stories. Correct order: Phase 1 — individual dev fan-out (no TeamCreate); Phase 2 — AVFL; Phase 3 — TeamCreate for dev+QA+E2E iteration. TeamCreate is prohibited in Phase 1.
+A sprint's E2E validation must not be declared complete until both layers pass. If Layer 2 is absent, the skill should surface a warning rather than declaring success.
 
-**3. Spawning mode markers (High, original):** Workflow steps don't declare whether they intend individual Agent calls or TeamCreate. Each spawn step should annotate: `spawning: individual` or `spawning: team`. Orchestrators currently infer this, leading to wrong topology.
-
-All three are the same underlying fix: encode hard constraints in the sprint-dev workflow XML so orchestrators can't make the wrong choice.
-
-**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issues 1 and 8, Critical/Medium). Per-story team decomposition produced 6+ agents where 2–3 were needed, contributing to 29% zero-turn agent waste. TeamCreate before AVFL required user intervention at message 54. The correct workflow sequence was user-specified mid-sprint. Original spawning-mode-markers pain: Sprint-2026-04-06-2 (#2, Critical) — wrong topology identified in spawning-patterns.md but never enforced at the workflow step level.
+**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issue 5, High). After automated E2E passed 57/71 API scenarios, 30 minutes of user manual testing found: norn switching didn't work, context wasn't isolated between norns, connection errors occurred. These were invisible to API-level validation because they're client-state concerns. User spent 30+ minutes (19:29–20:07) debugging issues the automated suite never touched.
 
 ## Acceptance Criteria
 
@@ -44,10 +42,11 @@ All three are the same underlying fix: encode hard constraints in the sprint-dev
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- All workflow steps with agent spawns include `spawning: individual` or `spawning: team` annotation
-- Orchestrator reads annotation before spawning — no inference required
-- spawning-patterns.md rule references the annotation format
-- At least sprint-dev and sprint-planning workflows updated
+The following are rough draft ACs captured from conversation:
+- E2E skill defines two coverage layers (Layer 1: API, Layer 2: client interaction)
+- Sprint E2E validation is not declared complete until both layers are addressed
+- If Layer 2 coverage is absent, skill surfaces explicit warning: "API validation complete. Client interaction coverage not performed. User manual testing required."
+- Layer 2 scope includes: UI state transitions, context isolation between agents, end-to-end user flows via Maestro
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.

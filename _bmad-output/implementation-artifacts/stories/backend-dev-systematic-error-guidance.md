@@ -1,13 +1,13 @@
 ---
-title: Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
-story_key: spawning-mode-markers
+title: Backend Dev Pre-Work Diagnostic Step — Baseline Error Categorization Before Implementing
+story_key: backend-dev-systematic-error-guidance
 status: backlog
-epic_slug: impetus-epic-orchestrator
+epic_slug: sprint-dev-workflow
 depends_on: []
 touches: []
 ---
 
-# Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
+# Backend Dev Pre-Work Diagnostic Step — Baseline Error Categorization Before Implementing
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,23 +18,24 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a sprint orchestrator,
-I want explicit team composition limits, phase sequencing constraints, and spawning mode annotations in every sprint-dev workflow step that creates agents,
-so that code sprints use the correct team topology, phases execute in the right order, and orchestrators never guess individual vs TeamCreate.
+As a backend dev agent,
+I want a mandatory pre-work diagnostic step that runs the full test suite before beginning implementation,
+so that pre-existing errors are categorized as known baseline rather than wasted debugging turns for each agent that independently rediscovers them.
 
 ## Description
 
-Three related code-sprint orchestration failures, consolidated into one fix:
+Momentum's dev agent prompts do not include: (1) known systematic error patterns for the project, (2) a "first run a smoke test before beginning" instruction, or (3) a mechanism for agents to share discoveries about systematic setup issues with subsequent agents.
 
-**1. Team composition rules (Critical, D3):** Sprint-dev created per-story agents (dev-d4-1, dev-d4-2, etc.) instead of shared role agents. The correct pattern: one backend-dev, one frontend-dev (if needed), one QA, one E2E — shared across all stories. Max team size 4 (lead excluded). No per-story team decomposition. The user discovered a "massive team" and ordered immediate shutdown. Six+ agents were created where 2–3 were appropriate.
+When a project's test suite has a repeatable error sequence during setup (import errors, environment initialization, fixture issues), every dev agent hits it independently. Each wastes 3–5 turns diagnosing the same pre-existing condition before reaching their actual task.
 
-**2. Phase sequencing (Medium, D3):** Sprint-dev used TeamCreate before AVFL validation and before individual dev agents finished their stories. Correct order: Phase 1 — individual dev fan-out (no TeamCreate); Phase 2 — AVFL; Phase 3 — TeamCreate for dev+QA+E2E iteration. TeamCreate is prohibited in Phase 1.
+The fix: a mandatory pre-work diagnostic step in sprint-dev skill:
+1. Run the full test suite once before beginning
+2. Categorize errors as: (a) pre-existing / known, (b) caused by your changes
+3. Report pre-existing errors in the opening summary so the lead can update the spawn prompt for subsequent agents
 
-**3. Spawning mode markers (High, original):** Workflow steps don't declare whether they intend individual Agent calls or TeamCreate. Each spawn step should annotate: `spawning: individual` or `spawning: team`. Orchestrators currently infer this, leading to wrong topology.
+Additionally: when the retro detects a pattern of identical error counts across many dev agents, it should flag it as a systematic environment issue requiring a one-time fix — not a per-agent debugging task.
 
-All three are the same underlying fix: encode hard constraints in the sprint-dev workflow XML so orchestrators can't make the wrong choice.
-
-**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issues 1 and 8, Critical/Medium). Per-story team decomposition produced 6+ agents where 2–3 were needed, contributing to 29% zero-turn agent waste. TeamCreate before AVFL required user intervention at message 54. The correct workflow sequence was user-specified mid-sprint. Original spawning-mode-markers pain: Sprint-2026-04-06-2 (#2, Critical) — wrong topology identified in spawning-patterns.md but never enforced at the workflow step level.
+**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issue 6, High). 20 backend-dev agents each produced exactly 19 errors — a suspiciously uniform count (212 errors / 20 agents = exactly 10.6, which rounds to 19 in per-agent tracking). The uniformity strongly suggests a systematic pre-work error sequence that every agent independently rediscovered. Combined cost: 60–100 wasted turns across 20 agents for a single fixable issue.
 
 ## Acceptance Criteria
 
@@ -44,10 +45,11 @@ All three are the same underlying fix: encode hard constraints in the sprint-dev
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- All workflow steps with agent spawns include `spawning: individual` or `spawning: team` annotation
-- Orchestrator reads annotation before spawning — no inference required
-- spawning-patterns.md rule references the annotation format
-- At least sprint-dev and sprint-planning workflows updated
+The following are rough draft ACs captured from conversation:
+- Sprint-dev skill includes a pre-work diagnostic step: run test suite once, categorize errors as pre-existing vs implementation-caused
+- Dev agent opening summary includes pre-existing error count and categories
+- Lead can update spawn prompt for subsequent agents with known-baseline errors
+- Retro skill flags uniform error counts across many agents as a systematic environment issue signal
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.

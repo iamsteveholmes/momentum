@@ -1,5 +1,5 @@
 ---
-title: Team Message Deduplication — Reduce 3:1 Duplication Ratio in Team Logs
+title: Team Message Noise Reduction — Idle Notification Dedup and Log Write Dedup
 story_key: team-message-deduplication
 status: backlog
 epic_slug: impetus-core
@@ -7,7 +7,7 @@ depends_on: []
 touches: []
 ---
 
-# Team Message Deduplication — Reduce 3:1 Duplication Ratio in Team Logs
+# Team Message Noise Reduction — Idle Notification Dedup and Log Write Dedup
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,15 +18,19 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a retro transcript analysis,
-I want deduplicate team messages in sprint logs so retro analysis isn't skewed by 3x duplicated identical messages,
-so that retro signal is accurate — team communication patterns reflect actual coordination, not logging artifacts.
+As a sprint orchestrator and retro analyst,
+I want team message noise reduced at both the runtime layer (idle notification deduplication) and the log layer (write deduplication),
+so that substantive team communication isn't buried in idle pings during sprints, and retro signal isn't skewed by logging artifacts after.
 
 ## Description
 
-Team messages in sprint JSONL logs have a 3:1 duplication ratio: each message is logged 3 times with identical content. This inflates message counts in retro analysis and obscures true communication patterns. Deduplication either at write time or during extraction would fix this.
+Two layers of team message noise, both requiring fixes:
 
-**Pain context:** Sprint-2026-04-08 retro (#13). Duplication discovered during retro analysis. 3:1 ratio means 67% of team message volume in logs is noise.
+**Layer 1 — Runtime idle spam (High, D3):** During active sprints, 40–50%+ of all team messages are idle notifications — often 3–5 in rapid succession from the same agent within seconds. Substantive messages (bug reports, fix confirmations, validation results) are buried. The idle notification system fires on a timer with no deduplication or backoff. Fix: one notification per agent per idle period; backoff if agent has been idle >60 seconds without new output; visual distinction between idle pings and substantive messages.
+
+**Layer 2 — Log write artifact (Low, original):** Team messages in sprint JSONL logs have a 3:1 duplication ratio — each message is logged 3 times with identical content. This inflates message counts in retro analysis and makes communication pattern metrics misleading. Fix: deduplication at write time or during extraction.
+
+**Pain context (Layer 1):** D3 sprint (nornspun-2026-04-10-2-retro.md, Issue 4, High). 451 team messages across the sprint; estimated 40–50%+ were idle notifications rather than substantive communication. Messages 60–70 show 10+ idle notifications in rapid succession. The same pattern recurred in the retro session itself. **Pain context (Layer 2):** Sprint-2026-04-08 retro. 3:1 ratio in JSONL logs discovered during retro analysis — 67% of logged volume was noise.
 
 ## Acceptance Criteria
 

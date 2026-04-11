@@ -1,13 +1,13 @@
 ---
-title: Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
-story_key: spawning-mode-markers
+title: Agent Spawn Pre-Flight Check — Validate Before Spawning
+story_key: agent-spawn-preflight-check
 status: backlog
-epic_slug: impetus-epic-orchestrator
+epic_slug: agent-team-model
 depends_on: []
 touches: []
 ---
 
-# Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
+# Agent Spawn Pre-Flight Check — Validate Before Spawning
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -19,22 +19,16 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 ## Story
 
 As a sprint orchestrator,
-I want explicit team composition limits, phase sequencing constraints, and spawning mode annotations in every sprint-dev workflow step that creates agents,
-so that code sprints use the correct team topology, phases execute in the right order, and orchestrators never guess individual vs TeamCreate.
+I want a pre-flight validation gate before spawning any agent,
+so that agents are only created when they have a valid prompt, correct type, and no duplicate already running the same task.
 
 ## Description
 
-Three related code-sprint orchestration failures, consolidated into one fix:
+Spawn workflows do not validate agent prompts or team composition before creating agents. Agents are created first, then given work — or not. No gate exists between "decide to spawn" and "actually spawn." This produces zero-turn agents that waste spawn overhead, context preparation, and JSONL manifest entries without producing any work.
 
-**1. Team composition rules (Critical, D3):** Sprint-dev created per-story agents (dev-d4-1, dev-d4-2, etc.) instead of shared role agents. The correct pattern: one backend-dev, one frontend-dev (if needed), one QA, one E2E — shared across all stories. Max team size 4 (lead excluded). No per-story team decomposition. The user discovered a "massive team" and ordered immediate shutdown. Six+ agents were created where 2–3 were appropriate.
+The fix: a pre-flight validation step on all spawn workflows that checks prompt non-empty, team size within bounds, agent type matches required tools, and no duplicate task is already running. For TeamCreate specifically: propose composition to the developer first, receive approval, then spawn. This eliminates the oversized-team failure mode.
 
-**2. Phase sequencing (Medium, D3):** Sprint-dev used TeamCreate before AVFL validation and before individual dev agents finished their stories. Correct order: Phase 1 — individual dev fan-out (no TeamCreate); Phase 2 — AVFL; Phase 3 — TeamCreate for dev+QA+E2E iteration. TeamCreate is prohibited in Phase 1.
-
-**3. Spawning mode markers (High, original):** Workflow steps don't declare whether they intend individual Agent calls or TeamCreate. Each spawn step should annotate: `spawning: individual` or `spawning: team`. Orchestrators currently infer this, leading to wrong topology.
-
-All three are the same underlying fix: encode hard constraints in the sprint-dev workflow XML so orchestrators can't make the wrong choice.
-
-**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issues 1 and 8, Critical/Medium). Per-story team decomposition produced 6+ agents where 2–3 were needed, contributing to 29% zero-turn agent waste. TeamCreate before AVFL required user intervention at message 54. The correct workflow sequence was user-specified mid-sprint. Original spawning-mode-markers pain: Sprint-2026-04-06-2 (#2, Critical) — wrong topology identified in spawning-patterns.md but never enforced at the workflow step level.
+**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issue 3, High). 38 of 129 agents (29%) had zero assistant turns. Combined with the planning sprint's 54-agent fan-out, spawn-before-think is a recurring orchestration failure mode across sprint types. The oversized-team incident alone (messages 45–46, user ordered immediate shutdown) likely accounts for a portion of these, but 29% is too high to attribute to a single incident.
 
 ## Acceptance Criteria
 
@@ -44,10 +38,11 @@ All three are the same underlying fix: encode hard constraints in the sprint-dev
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- All workflow steps with agent spawns include `spawning: individual` or `spawning: team` annotation
-- Orchestrator reads annotation before spawning — no inference required
-- spawning-patterns.md rule references the annotation format
-- At least sprint-dev and sprint-planning workflows updated
+The following are rough draft ACs captured from conversation:
+- Before spawning any agent, verify: (1) prompt is non-empty, (2) team size ≤ 4 for TeamCreate, (3) agent type matches required tools (read-only task → Explore, not general-purpose), (4) no duplicate agent already running the same task
+- For TeamCreate spawns: orchestrator proposes team composition to developer before spawning; spawn only after explicit approval
+- Pre-flight failures produce a clear halt message — not a silent skip or best-effort spawn
+- Zero-turn agent rate drops measurably in next sprint following fix
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.

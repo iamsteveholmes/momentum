@@ -1,13 +1,13 @@
 ---
-title: Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
-story_key: spawning-mode-markers
+title: Context-Aware Explanations — Calibrate to User Role, Not System Architecture
+story_key: user-context-aware-explanations
 status: backlog
-epic_slug: impetus-epic-orchestrator
+epic_slug: agent-team-model
 depends_on: []
 touches: []
 ---
 
-# Sprint-Dev Team Composition, Phase Sequencing, and Spawning Mode Markers
+# Context-Aware Explanations — Calibrate to User Role, Not System Architecture
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,23 +18,23 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a sprint orchestrator,
-I want explicit team composition limits, phase sequencing constraints, and spawning mode annotations in every sprint-dev workflow step that creates agents,
-so that code sprints use the correct team topology, phases execute in the right order, and orchestrators never guess individual vs TeamCreate.
+As a lead agent communicating with a developer-user,
+I want an explanation calibration rule that starts with the user's mental model before mapping to implementation,
+so that technical architecture questions get user-level answers first, not implementation dumps that lose non-technical developers.
 
 ## Description
 
-Three related code-sprint orchestration failures, consolidated into one fix:
+Momentum's lead agent prompts do not include instructions to calibrate explanation level to the user's role. When a non-technical user asks an architectural question, agents default to implementation-level answers (PostgreSQL, Docker, Alembic migration paths) when the user needed a conceptual explanation of where their data lives.
 
-**1. Team composition rules (Critical, D3):** Sprint-dev created per-story agents (dev-d4-1, dev-d4-2, etc.) instead of shared role agents. The correct pattern: one backend-dev, one frontend-dev (if needed), one QA, one E2E — shared across all stories. Max team size 4 (lead excluded). No per-story team decomposition. The user discovered a "massive team" and ordered immediate shutdown. Six+ agents were created where 2–3 were appropriate.
+Explanation calibration rule:
+1. Start with the user's mental model — what they experience, what they care about
+2. Map to implementation only after the user-level concept is clear
+3. Use concrete analogies from their domain (for a TTRPG app: campaign files, GM prep notes — not PostgreSQL tables, Docker volumes)
+4. If the user says "I'm lost" or asks the same question twice: stop, restart from the user's perspective, not the system's
 
-**2. Phase sequencing (Medium, D3):** Sprint-dev used TeamCreate before AVFL validation and before individual dev agents finished their stories. Correct order: Phase 1 — individual dev fan-out (no TeamCreate); Phase 2 — AVFL; Phase 3 — TeamCreate for dev+QA+E2E iteration. TeamCreate is prohibited in Phase 1.
+This is a general Momentum guidance capability gap. Skills should encode explanation-level awareness as a first-class concern, especially for products where the developer is also the primary user of what they're building.
 
-**3. Spawning mode markers (High, original):** Workflow steps don't declare whether they intend individual Agent calls or TeamCreate. Each spawn step should annotate: `spawning: individual` or `spawning: team`. Orchestrators currently infer this, leading to wrong topology.
-
-All three are the same underlying fix: encode hard constraints in the sprint-dev workflow XML so orchestrators can't make the wrong choice.
-
-**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issues 1 and 8, Critical/Medium). Per-story team decomposition produced 6+ agents where 2–3 were needed, contributing to 29% zero-turn agent waste. TeamCreate before AVFL required user intervention at message 54. The correct workflow sequence was user-specified mid-sprint. Original spawning-mode-markers pain: Sprint-2026-04-06-2 (#2, Critical) — wrong topology identified in spawning-patterns.md but never enforced at the workflow step level.
+**Pain context:** D3 sprint (nornspun-2026-04-10-2-retro.md, Issue 9, Medium). Messages 12–16: user asked "What does add persistent storage do?" and was given implementation layers (PostgreSQL, Docker, Alembic migrations). User: "Woof I'm getting lost. You keep talking very technical and I'm getting lost in the details." Then: "Where does all this get stored? When do we implement it?" — the same question rephrased. The agent was answering the system's perspective, not the user's question.
 
 ## Acceptance Criteria
 
@@ -44,10 +44,11 @@ All three are the same underlying fix: encode hard constraints in the sprint-dev
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- All workflow steps with agent spawns include `spawning: individual` or `spawning: team` annotation
-- Orchestrator reads annotation before spawning — no inference required
-- spawning-patterns.md rule references the annotation format
-- At least sprint-dev and sprint-planning workflows updated
+The following are rough draft ACs captured from conversation:
+- Lead agent prompts include an explanation calibration rule: start with user mental model, map to implementation second
+- Rule specifies: use domain analogies (not system internals) for domain-focused users
+- Rule specifies: if user says "I'm lost" or repeats the same question, restart from user perspective
+- Rule is present in sprint-dev lead agent prompt, at minimum
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
