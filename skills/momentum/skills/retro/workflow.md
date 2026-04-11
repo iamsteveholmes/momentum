@@ -410,7 +410,7 @@ For each of these, choose:
   <!-- PHASE 5: STORY STUB CREATION                           -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Propose and approve story stubs from audit findings">
+  <step n="5" goal="Propose and approve story stubs from audit findings; route Tier 1 findings to distill">
     <action>Update task 5 to in_progress</action>
 
     <action>Read `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
@@ -421,17 +421,68 @@ For each of these, choose:
     </check>
 
     <check if="priority action items found">
-      <action>For each action item, derive a story stub:
-        {
-          title: recommended story stub title from findings,
-          epic_slug: "impetus-core" (for Momentum/practice findings) or appropriate project epic,
-          status: "backlog",
-          description: one-sentence summary of the finding,
-          suggested_ac: bulleted acceptance criteria derived from the finding's recommendation
-        }
+
+      <note>Tier classification: Before creating story stubs, each action item is classified
+      as Tier 1 or Tier 2. Tier 1 findings with signal_type set route to momentum:distill for
+      immediate application. Tier 2 findings (and Tier 1 without signal_type) continue through
+      the existing stub creation path.
+
+      Tier 1 heuristic: single-sentence rule addition, one reference entry update, or a prompt
+      clarification. One file, minimal change, immediately expressible in a sentence or two.
+      Tier 2 heuristic: multi-file coordination, new skill creation, workflow redesign, or any
+      change requiring spec-level deliberation.
+
+      signal_type values (from Phase 4 classification): Context | Instruction | Workflow | Failure
+      Tier 1 applies only when signal_type is set AND the finding meets Tier 1 heuristics above.</note>
+
+      <action>For each priority action item, classify before routing:
+        1. Check if signal_type is set on the finding (from Phase 4 audit output)
+        2. Apply Tier heuristics:
+           - Tier 1 candidates: signal_type is set AND change is a single-sentence rule, reference
+             entry, or prompt clarification affecting one file
+           - Tier 2: signal_type not set OR change is multi-file, new skill, workflow redesign,
+             or any structural change
+
+        Store {{distill_candidates}} = items classified as Tier 1 with signal_type set
+        Store {{stub_candidates}} = remaining items (Tier 2, or Tier 1 without signal_type)
       </action>
 
-      <output>Proposed story stubs from transcript audit findings:
+      <check if="distill_candidates is not empty">
+        <output>Tier 1 findings identified for immediate distillation ({{distill_candidates | length}} items):
+
+{{#each distill_candidates}}
+  · **{{loop.index}}.** {{title}} [signal_type: {{signal_type}}]
+    Finding: {{source_detail}}
+    Proposed change: {{recommended_change}}
+{{/each}}
+
+These will be routed to momentum:distill for immediate application instead of stub creation.</output>
+
+        <action>For each Tier 1 finding in {{distill_candidates}}:
+          1. Invoke `momentum:distill` as an inline subagent spawn with:
+             - learning_description: the finding description + recommended change
+             - candidate_artifact: the target practice file identified in the finding
+             - source: "retro Phase 5 — Tier 1 routing"
+             (Do not ask the developer to describe the learning — it is provided from the finding)
+          2. Wait for distill to complete and return its outcome (applied | deferred | stubbed)
+          3. Record disposition for this finding: "distilled" if applied, or distill's own outcome
+        </action>
+
+        <action>Store {{distilled_dispositions}} = map of finding → distill outcome for each Tier 1 item</action>
+      </check>
+
+      <check if="stub_candidates is not empty">
+        <action>For each item in {{stub_candidates}}, derive a story stub:
+          {
+            title: recommended story stub title from findings,
+            epic_slug: "impetus-core" (for Momentum/practice findings) or appropriate project epic,
+            status: "backlog",
+            description: one-sentence summary of the finding,
+            suggested_ac: bulleted acceptance criteria derived from the finding's recommendation
+          }
+        </action>
+
+        <output>Proposed story stubs (Tier 2 / no-signal-type findings):
 
 {{#each proposed_stubs}}
 **{{loop.index}}.** {{title}}
@@ -446,16 +497,30 @@ For each of these, choose:
 Approve this stub? (Y/N)
 {{/each}}</output>
 
-      <ask>For each stub, enter Y or N:</ask>
+        <ask>For each stub, enter Y or N:</ask>
 
-      <action>For each approved stub:
-        - Read `_bmad-output/implementation-artifacts/stories/index.json`
-        - Generate a slug from the title (kebab-case)
-        - Add entry: { "title": ..., "status": "backlog", "epic_slug": ..., "depends_on": [] }
-        - Write updated stories/index.json
-      </action>
+        <action>For each approved stub:
+          - Read `_bmad-output/implementation-artifacts/stories/index.json`
+          - Generate a slug from the title (kebab-case)
+          - Add entry: { "title": ..., "status": "backlog", "epic_slug": ..., "depends_on": [] }
+          - Write updated stories/index.json
+        </action>
+      </check>
 
-      <output>Created {{approved_count}} story stubs in the backlog.</output>
+      <output>Phase 5 complete — action item dispositions:
+
+{{#each distill_candidates}}
+  · {{title}} → **distilled** ({{distilled_dispositions[title]}})
+{{/each}}
+{{#each approved_stubs}}
+  · {{title}} → **stubbed** (added to backlog)
+{{/each}}
+{{#each rejected_stubs}}
+  · {{title}} → skipped (developer declined)
+{{/each}}
+
+Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
+
     </check>
 
     <action>Update task 5 to completed</action>
