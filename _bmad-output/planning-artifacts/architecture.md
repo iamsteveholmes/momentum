@@ -188,6 +188,7 @@ The defining question for each component: *does this need main-context persona p
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; triage and intake of new ideas, documents, or requests into the backlog as story stubs; no fork needed |
+| distill | Flat skill (`/momentum:distill`) | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. User-invokable mid-session or from retro Phase 5 for Tier 1 findings. Fourth execution path alongside epic, sprint, and quick-fix (Decision 42). |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
 | decision | Flat skill (`/momentum:decision`) | User-invokable; facilitates architectural or product decision capture (ADR/trade-off analysis); no fork needed |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
@@ -328,7 +329,7 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - `upstream_fix_level` — null until a fix is applied; then one of: `spec-generating-workflow | specification | rules-or-CLAUDE.md | tooling | one-off-code-fix`
 - Queryable for cross-project and cross-story pattern detection
 - JSONL enables concurrent append from multiple Claude Code sessions without file locking (POSIX atomic append for lines under pipe buffer size)
-- Only flywheel workflow writes findings; read by Impetus at retrospective and upstream trace
+- Authorized writers: flywheel workflow (`origin: flywheel`) and `momentum:distill` (`origin: distill`). The `origin` field distinguishes code-review-origin findings from practice-distillation-origin findings for FR33 ratio tracking. All other components are read-only.
 - Rationale: Global scope enables cross-project pattern detection — the same anti-pattern appearing in projects A and B becomes visible. Per-project scope would miss these systemic patterns.
 
 **Decision 1e — Session State Storage (Ephemeral + Inter-Session)**
@@ -362,7 +363,7 @@ Enforcement is implemented as a three-hook quality system, each hook serving a d
 | `tests/acceptance/` and `**/*.feature` | Acceptance tests are immutable — agents never modify to make code pass |
 | `_bmad-output/planning-artifacts/*.md` | Spec authority — coding agents read, never write |
 | `.claude/rules/` | Global enforcement rules — protected from coding agent modification |
-| `~/.claude/momentum/findings-ledger.jsonl` | Ledger integrity — only flywheel workflow writes. Note: global path is outside project PreToolUse scope; protection enforced by authority rule. |
+| `~/.claude/momentum/findings-ledger.jsonl` | Ledger integrity — authorized writers: flywheel workflow and `momentum:distill` only (Decision 1c). Note: global path is outside project PreToolUse scope; protection enforced by authority rule. |
 
 Protected paths are externalized to `skills/momentum/references/protected-paths.json` for declarative management — the PreToolUse hook reads this file at invocation rather than hardcoding paths in the hook script. This enables project-specific path additions without hook modification.
 
@@ -876,6 +877,10 @@ Agents NEVER address the user directly. All output goes through Impetus.
   "upstream_fix_applied": false,
   "upstream_fix_level": null,     // null until fix applied; then: spec-generating-workflow | specification | rules-or-CLAUDE.md | tooling | one-off-code-fix
   "upstream_fix_ref": null,       // ID of the fix story/rule if applied
+  "behavioral_type": null,        // null until classified; then: correction | redirection | frustration | praise | decision (what the developer did)
+  "signal_type": null,            // null until classified; then: Context | Instruction | Workflow | Failure (Fowler causal taxonomy — what artifact category needs updating)
+  "destination": null,            // null until classified; then: CLAUDE.md | skill-reference | workflow-step | anti-pattern-rule
+  "origin": "flywheel",           // flywheel | distill — which path wrote this finding (enables FR33 ratio tracking across origin types)
   "timestamp": "2026-03-17T00:00:00Z"
 }
 ```
@@ -1016,6 +1021,8 @@ momentum/                                    ← Plugin root
 │   │   └── SKILL.md
 │   ├── quick-fix/                           ← /momentum:quick-fix (Decision 39)
 │   │   └── SKILL.md
+│   ├── distill/                             ← /momentum:distill (Decision 42)
+│   │   └── SKILL.md
 │   ├── research/                            ← /momentum:research
 │   │   └── SKILL.md
 │   ├── status/                              ← /momentum:status (planned — not yet implemented)
@@ -1121,6 +1128,7 @@ momentum/                                    ← Plugin root
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
 | VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report |
 | Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
+| momentum:distill | Session observation / retro findings, relevant spec/skill/rules files | rules/, references/, skill prompts (Tier 1 direct commit); stories/index.json stubs (Tier 2); findings-ledger.jsonl (`origin: distill`); plugin version + push (Momentum-level fixes in Momentum project only) |
 | Upstream-fix skill (Epic 4, standalone) | session journal, specs, rules | session journal only (not findings-ledger.jsonl) |
 | Hooks (PreToolUse) | Filesystem (reads), `references/protected-paths.json` | Terminal output only (blocks or allows) |
 | Hooks (PostToolUse) | Filesystem (reads) | `session-modified-files.txt` (append, deduped); terminal output (lint results) |
@@ -1155,6 +1163,7 @@ momentum/                                    ← Plugin root
 | Hook infrastructure (always-on) | `hooks/hooks.json` | Delivered by plugin install (active immediately) |
 | Plan audit gate hook | `skills/plan-audit/` | Plugin skill: `/momentum:plan-audit` |
 | Quick-fix | `skills/quick-fix/` | Plugin skill: `/momentum:quick-fix` |
+| Distill | `skills/distill/` | Plugin skill: `/momentum:distill` |
 | Research | `skills/research/` | Plugin skill: `/momentum:research` |
 | Status | `skills/status/` | Plugin skill: `/momentum:status` (planned — not yet implemented) |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
@@ -1877,13 +1886,14 @@ The Impetus voice — Optimus Prime's gravitas blended with KITT's loyalty — i
 
 Quick-fix introduces a third execution path alongside epic orchestration and sprint orchestration. It is a bypass-sprint lifecycle path: single story from prompt → lightweight 4-phase workflow → `sprints/index.json` registration without activate/complete lifecycle states. The quick-fix path does not create a sprint, does not require sprint planning, and does not use the `planning → ready → active → done → completed` state machine (Decision 36). Instead, `momentum-tools quickfix register` writes a quick-fix entry directly to `sprints/index.json` and `momentum-tools quickfix complete` marks it done.
 
-**Three execution paths in Momentum:**
+**Four execution paths in Momentum:**
 
 | Path | Scope | Lifecycle | Entry point |
 |---|---|---|---|
 | Epic orchestration | Multi-sprint program | Full epic/sprint lifecycle | `/momentum:impetus` → sprint planning |
 | Sprint orchestration | Single sprint, multiple stories | Decision 36 state machine | `/momentum:sprint-planning` → `/momentum:sprint-dev` |
 | Quick-fix | Single story, single session | Register → execute → validate → complete | `/momentum:quick-fix` |
+| Distill | Single practice artifact, single session | Discover → classify → apply → validate → commit | `/momentum:distill` (Decision 42) |
 
 **momentum:dev is internal-only:** momentum:dev is called by sprint-dev and quick-fix as a story executor — it is not user-invocable from Impetus menus or directly by the developer. It has no standalone entry point; it always runs within the context of a calling workflow (sprint-dev or quick-fix).
 
@@ -1944,6 +1954,25 @@ momentum:refine uses a two-wave conditional spawning pattern as a documented ins
 - **Developer approval gate:** Orchestrator presents Wave 1 findings and requires developer approval before proceeding. Developer may approve, modify, or reject updates per document independently.
 - **Wave 2:** Zero, one, or two update agents spawn based on Wave 1 findings and the developer's approval decision. Each approved document gets its own sole-writer update agent; no update agent spawns for a rejected document. Agents run in parallel when both are approved.
 This pattern is distinct from the per-finding Add/Modify/Remove triage used in other workflows — approval is per-document, not per-finding, enabling batch UX at the document level.
+
+**Decision 42 — Distill Execution Path and AVFL Profile (2026-04-11)**
+
+`/momentum:distill` is a fourth execution path alongside epic orchestration, sprint orchestration, and quick-fix (Decision 39). It is the practice-artifact analogue of quick-fix: where quick-fix handles code stories, distill handles practice artifacts (rules, references, skill prompts, spec additions).
+
+**Distill AVFL profile:** A lightweight single-pass validation mode designated for distill's post-change validation step. Runs two subagents (Enumerator + Adversary) on only the changed files. No multi-lens parallelism — a single validation pass, not separate structural/accuracy/coherence passes. Model: Sonnet at medium-low effort. No fix iterations — output informs a developer-prompted correction or a clean commit. Implemented as a named profile in `skills/avfl/references/framework.json`.
+
+**Rationale:** The discovery phase (two parallel agents before any changes are written) handles most structural and design correctness concerns upfront. The post-change AVFL pass is intentionally lighter — it validates a small, targeted artifact change, not a full document corpus. The lightweight profile preserves the "fast path" characteristic of distill while ensuring changes receive adversarial review before committing.
+
+**Fix scope routing:**
+- Project-local: applies to current project's rules/references only
+- Momentum-level (in Momentum project): applies to Momentum practice files; bumps plugin patch version; commits and pushes
+- Momentum-level (in external project): defer to retro queue OR generate remote distill prompt for developer to apply in a Momentum session
+
+**Findings-ledger write authority:** `momentum:distill` is an authorized writer to `~/.claude/momentum/findings-ledger.jsonl` (extending Decision 1c). Distill writes with `origin: distill`; the flywheel workflow writes with `origin: flywheel`. The `origin` field enables FR33 ratio tracking to count distillation-origin fixes separately from code-review-origin fixes.
+
+**Traceability:** Distill entries are registered in the findings-ledger with `origin: distill` for audit trail and retrospective input. They bypass sprint lifecycle but not traceability. Motivated by research finding (2026-04-10): Momentum lacks a mechanism for immediate artifact updates from session learnings — all findings must survive sprint planning before landing in practice files, creating multi-week lag.
+
+---
 
 **Workflow Modularization Note (2026-04-04)**
 
