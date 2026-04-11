@@ -42,7 +42,7 @@
       "default": null
     },
     "profile": {
-      "description": "Which validation profile to use: gate, checkpoint, full, or scan. See validation_profiles section.",
+      "description": "Which validation profile to use: gate, checkpoint, full, scan, or distill. See validation_profiles section.",
       "required": false,
       "default": "full"
     },
@@ -404,6 +404,7 @@
       "description": "Lightweight post-change discovery pass for practice artifact distillation. Two agents (Enumerator + Adversary framings) review only the changed files. No fix loop — findings are returned to the developer for a correction-or-commit decision. Single pass, no multi-lens parallelism.",
       "agents": "2 (Enumerator + Adversary framings)",
       "dual_review": false,
+      "multi_lens": false,
       "lenses_active": ["structural"],
       "fix_loop": false,
       "max_fix_attempts": 0,

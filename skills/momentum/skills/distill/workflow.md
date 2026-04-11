@@ -123,9 +123,17 @@ not weeks. Distill is the practice-artifact analogue of `/momentum:quick-fix`.
       - If adversary verdict is "revise": incorporate scope/target correction into {{enumerator_output}}.
       - If adversary tier_challenge.upholds_tier_1 = false: escalate to Tier 2 regardless of Enumerator classification.
       - Final {{path}} = enumerator_output.path (or scope_fit.alternative if adversary corrected it)
-      - Final {{tier}} = min(enumerator tier, adversary challenge outcome)
+      - Final {{tier}} = max(enumerator tier, adversary challenge outcome)
+        (Adversary challenges escalate only — Tier 2 takes precedence over Tier 1 when they disagree)
       - Final {{target_file}} = enumerator_output.target_file
       - Final {{proposed_change}} = enumerator_output.proposed_change
+    </action>
+
+    <action>Map {{path}} to a human-readable label for display:
+      - "A" → "project-local"
+      - "B" → "Momentum project"
+      - "C" → "external project / Momentum target"
+      Store as {{path_label}}.
     </action>
 
     <output>Discovery complete.
@@ -166,7 +174,8 @@ Proceed with this change?</output>
     <check if="tier == 2">
       <output>Tier 2 classification: this change requires a story stub rather than direct application.
 
-Reason: {{adversary_output.tier_challenge.reason | default: enumerator_output.rationale}}
+Reason: {{adversary_output.tier_challenge.reason}}
+(If empty, fall back to: {{enumerator_output.rationale}})
 
 A story stub will be created in `_bmad-output/implementation-artifacts/stories/` for sprint
 activation. No practice files will be modified in this session.</output>
@@ -204,7 +213,7 @@ Will bump plugin patch version after applying. Continuing to Phase 3.</output>
   <step n="3" goal="Apply — spawn write subagent (Tier 1) or create-story subagent (Tier 2)">
 
     <check if="tier == 2">
-      <action>Spawn `momentum:create-story` (model: sonnet, effort: medium) with:
+      <action>Spawn `momentum:create-story` (model: claude-sonnet-4-6, effort: medium) with:
         - Title: derived from {{learning_description}} (kebab-case slug, descriptive)
         - epic_slug: "impetus-core" for Momentum/practice findings, or appropriate project epic
         - change_type: determined from the nature of the change (skill-instruction, script-code, etc.)
@@ -214,10 +223,11 @@ Will bump plugin patch version after applying. Continuing to Phase 3.</output>
         - touches: [{{target_file}}] plus any additional files Adversary identified
       </action>
       <action>Store {{story_file}} from create-story output</action>
+      <action>Derive {{story_slug}} from {{story_file}}: take the filename (basename) without the `.md` extension.</action>
       <output>Story stub created: {{story_file}}
 The finding has been captured as a backlog story for sprint activation.
 Proceeding to Phase 6 (Ledger).</output>
-      <action>Skip to Phase 6 — no AVFL or commit for Tier 2 path.</action>
+      <action>Proceed to Phase 5 (Commit) — no AVFL for Tier 2 path. Phase 5 commits the story stub.</action>
     </check>
 
     <check if="tier == 1 and path == 'C' and path_c_choice == 'D'">
@@ -282,11 +292,11 @@ Findings-ledger entry will be written with disposition: remote-prompt-generated.
       <output>Change applied to {{target_file}}.</output>
     </check>
 
-    <check if="path == 'B'">
+    <check if="tier == 1 and path == 'B'">
       <action>Bump the plugin patch version:
         1. Read `skills/momentum/.claude-plugin/plugin.json`
         2. Parse the current version (e.g., "0.4.2")
-        3. Increment patch: "0.4.2" → "0.4.3"
+        3. Increment patch: "0.4.2" → "0.4.3". Store the new version as {{new_version}}.
         4. Spawn a write subagent to update the version field in plugin.json
       </action>
       <output>Plugin version bumped to {{new_version}}.</output>
@@ -300,7 +310,7 @@ Findings-ledger entry will be written with disposition: remote-prompt-generated.
 
   <step n="4" goal="Validate — invoke momentum:avfl with distill profile on changed files (Tier 1 only)">
 
-    <check if="tier == 2 or (path == 'C')">
+    <check if="tier == 2 or path == 'C'">
       <action>Skip Phase 4 — AVFL validation only runs for applied changes (Tier 1, Path A or B).</action>
     </check>
 
@@ -441,7 +451,7 @@ Push to remote?</output>
       {
         "timestamp": "{{iso_8601_now}}",
         "origin": "distill",
-        "artifact": {{artifact_json}},
+        "artifact": {{#if artifact}}"{{artifact}}"{{else}}null{{/if}},
         "learning": "{{learning_description}}",
         "tier": {{tier}},
         "path": "{{path}}",
