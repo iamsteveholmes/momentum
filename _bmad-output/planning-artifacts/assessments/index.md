@@ -25,4 +25,4 @@ Codebase state
 
 | ID | Title | Date | Decisions Produced | Status |
 |----|-------|------|--------------------|--------|
-| (none yet) | | | | |
+| AES-001 | [Agent Guidelines Current State — Gen-1 vs. Gen-2 Target](aes-001-agent-guidelines-current-state-2026-04-09.md) | 2026-04-09 | DEC-001 | current |

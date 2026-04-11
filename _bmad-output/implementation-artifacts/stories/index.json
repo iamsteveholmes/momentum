@@ -1288,7 +1288,7 @@
     "priority": "low"
   },
   "agent-role-simplification": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Agent Role Simplification — Dev + Prompt Engineer with Directory-Scoped Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -2090,5 +2090,32 @@
     "depends_on": [],
     "touches": [],
     "priority": "low"
+  },
+  "kb-init": {
+    "status": "backlog",
+    "title": "KB Init — Scaffold Cold Knowledge Base Repo for a Project",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical"
+  },
+  "kb-ingest": {
+    "status": "backlog",
+    "title": "KB Ingest — Ingest Documents into Project Knowledge Vault",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
+  },
+  "build-guidelines-skill": {
+    "status": "backlog",
+    "title": "Build-Guidelines Skill — Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical"
   }
 }

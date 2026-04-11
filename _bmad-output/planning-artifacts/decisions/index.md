@@ -13,4 +13,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 
 | ID | Title | Date | Source Research | Status |
 |----|-------|------|-----------------|--------|
-| (none yet) | | | | |
+| DEC-001 | [Three-Tier Agent Guidelines Architecture](dec-001-three-tier-agent-guidelines-2026-04-09.md) | 2026-04-09 | agent-guidelines-architecture-2026-04-09 | decided |

@@ -15,6 +15,12 @@ change_type: skill-instruction
 
 # Agent Guidelines Skill
 
+> **Gen-1 implementation — superseded by gen-2 architecture.**
+> This skill generates `.claude/rules/` and `docs/guidelines/` artifacts (the correct
+> content shape) but does NOT generate the Tier 1 hot constitution or Tier 2 composed
+> specialist agent files. See DEC-001 and `build-guidelines-skill` story for gen-2.
+> Gen-1 output is directly reusable as cold KB input for `momentum:kb-ingest`.
+
 ## Goal
 
 Create the `momentum-agent-guidelines` skill that fills the explicit gap in Decision 26
