@@ -12,7 +12,7 @@
 
 ## INITIALIZATION
 
-Load config via `bmad-init` skill (or directly from `{project-root}/_bmad/bmm/config.yaml`):
+Load config directly from `{project-root}/_bmad/bmm/config.yaml`:
 - `output_folder`, `user_name`, `communication_language`
 - Set `research_root` = `{output_folder}/research/`
 - Set `date` = today's date (YYYY-MM-DD)
