@@ -399,6 +399,21 @@
         "Post-sprint-merge quality gate — full codebase scan before handing to resolution team",
         "Any context where discovery quality matters more than resolution throughput"
       ]
+    },
+    "distill": {
+      "description": "Lightweight post-change discovery pass for practice artifact distillation. Two agents (Enumerator + Adversary framings) review only the changed files. No fix loop — findings are returned to the developer for a correction-or-commit decision. Single pass, no multi-lens parallelism.",
+      "agents": "2 (Enumerator + Adversary framings)",
+      "dual_review": false,
+      "lenses_active": ["structural"],
+      "fix_loop": false,
+      "max_fix_attempts": 0,
+      "on_fail": "return_findings_to_developer",
+      "scope": "changed_files_only",
+      "model": "claude-sonnet-4-6",
+      "effort": "medium-low",
+      "when_to_use": [
+        "Post-change validation for practice artifact distillation — changed files only, no multi-lens parallelism, findings surfaced to developer for correction-or-commit choice"
+      ]
     }
   },
   "dual_review": {
