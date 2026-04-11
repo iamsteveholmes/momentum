@@ -4,7 +4,7 @@ slug: implement-momentum-distill-skill
 story_key: implement-momentum-distill-skill
 title: "Implement /momentum:distill — Practice Artifact Distillation Skill"
 epic_slug: ad-hoc
-status: backlog
+status: done
 story_file: true
 change_type: skill-instruction
 depends_on: []
@@ -13,6 +13,12 @@ touches:
   - skills/momentum/skills/distill/workflow.md
   - skills/momentum/skills/avfl/references/framework.json
   - skills/momentum/skills/retro/workflow.md
+  - skills/momentum/skills/distill/evals/
+derives_from:
+  - _bmad-output/planning-artifacts/prd.md#FR96
+  - _bmad-output/planning-artifacts/prd.md#FR97
+  - _bmad-output/planning-artifacts/architecture.md#Decision42
+  - _bmad-output/research/momentum-vs-fowler-feedback-flywheel-2026-04-10/final/momentum-vs-fowler-feedback-flywheel-final-2026-04-10.md
 ---
 
 # Implement /momentum:distill — Practice Artifact Distillation Skill
@@ -45,8 +51,8 @@ needs updating. In retro Phase 5, Tier 1 findings (small, immediately applicable
 `/momentum:distill` instead of creating story stubs. Tier 2 findings (structural changes)
 continue through Phase 5's existing stub creation path.
 
-**Decision 42 (Distill Execution Path and AVFL Profile):** Distill is the fourth execution
-path alongside epic orchestration, sprint orchestration, and quick-fix. The discovery phase
+**Decision 42 (Distill Execution Path and AVFL Profile):** Distill is the third execution
+path alongside sprint orchestration and quick-fix. The discovery phase
 runs two parallel agents (Enumerator maps existing content; Adversary challenges redundancy
 and conflicts) before any changes are written. Fix scope is classified during discovery into
 one of three paths: project-local, Momentum-level in the Momentum project, or Momentum-level
@@ -61,7 +67,7 @@ updates from session learnings.
 ## Acceptance Criteria
 
 ### AC1 — Skill is invocable
-- `skills/momentum/skills/distill/SKILL.md` exists with `name: distill`, model: sonnet,
+- `skills/momentum/skills/distill/SKILL.md` exists with `name: distill`, model: claude-sonnet-4-6,
   effort: medium, and points to `workflow.md`
 - `skills/momentum/skills/distill/workflow.md` exists and is a complete, executable workflow
 - The skill is invocable as `/momentum:distill` from any session context
@@ -110,8 +116,9 @@ updates from session learnings.
 ### AC7 — Two-tier model: Tier 1 commits immediately, Tier 2 creates story stub
 - **Tier 1 (small, immediately applicable):** rule addition, reference entry, prompt
   clarification — distill applies the change, runs AVFL, and commits
-- **Tier 2 (structural changes):** changes requiring multi-file refactoring, new skill
-  creation, or workflow redesign — distill creates a story stub in
+- **Tier 2 (structural changes):** changes to workflow steps or spec documents (per FR97) —
+  examples include multi-file refactoring, new skill creation, or workflow redesign, but these
+  are illustrative, not a closed list — distill creates a story stub in
   `_bmad-output/implementation-artifacts/stories/` instead of writing changes directly
 - The Tier classification is determined during discovery, informed by Adversary output
 
@@ -133,6 +140,9 @@ updates from session learnings.
   the learning description, Tier classification, and path taken (A/B/C)
 - This enables FR33 ratio tracking to count distillation-origin fixes separately from
   code-review-origin fixes
+- If `findings-ledger.jsonl` does not exist, it is created on first write. Each entry is a
+  single JSON line with at minimum: `timestamp` (ISO 8601), `origin`, `artifact` (path or
+  null for Path C), `learning` (description string), `tier` (1 or 2), `path` ('A', 'B', or 'C')
 
 ### AC10 — Retro Phase 5 integration
 - `skills/momentum/skills/retro/workflow.md` Phase 5 is modified to add a classification
@@ -142,13 +152,40 @@ updates from session learnings.
   instead of creating a stub
 - Tier 2 retro findings continue through the existing stub creation path unchanged
 - The Phase 5 step documents the Tier classification logic used to route each finding
+- The classification check fires at the start of Phase 5's action-item loop, before stub
+  creation. `signal_type` is sourced from the finding's Phase 4 audit output. When distill
+  is invoked for a Tier 1 finding, it runs as an inline subagent spawn within the retro flow;
+  the retro records the distill outcome in its Phase 5 summary before proceeding to the next
+  finding. The Phase 5 output lists each action item with its disposition: `distilled` or
+  `stubbed`.
 
 ### AC11 — Distill AVFL profile added to framework.json
 - `skills/momentum/skills/avfl/references/framework.json` contains a `distill` profile entry
 - Profile specifies: two subagents (Enumerator + Adversary), single pass (no multi-lens
-  parallelism), model sonnet at medium-low effort, no fix iterations
+  parallelism), model claude-sonnet-4-6 at medium-low effort, no fix iterations
 - Profile is named `distill` and is a peer of existing profiles (`gate`, `checkpoint`,
   `full`, `scan`)
+- No multi-lens parallelism — a single validation pass (not separate structural/accuracy/coherence
+  passes).
+- The implementer must add the following entry under `validation_profiles` in framework.json,
+  following the same structure as the `scan` profile:
+  ```json
+  "distill": {
+    "description": "Lightweight post-change discovery pass for practice artifact distillation. Two agents (Enumerator + Adversary framings) review only the changed files. No fix loop — findings are returned to the developer for a correction-or-commit decision. Single pass, no multi-lens parallelism.",
+    "agents": "2 (Enumerator + Adversary framings)",
+    "dual_review": false,
+    "lenses_active": ["structural"],
+    "fix_loop": false,
+    "max_fix_attempts": 0,
+    "on_fail": "return_findings_to_developer",
+    "scope": "changed_files_only",
+    "model": "claude-sonnet-4-6",
+    "effort": "medium-low",
+    "when_to_use": [
+      "Post-change validation for practice artifact distillation — changed files only, no multi-lens parallelism, findings surfaced to developer for correction-or-commit choice"
+    ]
+  }
+  ```
 
 ## Tasks / Subtasks
 
