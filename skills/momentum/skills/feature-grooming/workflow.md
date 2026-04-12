@@ -155,6 +155,8 @@ Feature Grooming — Candidate Set ({N} features)
 
     <action>Wait for free-form developer feedback. Incorporate all requested changes into the candidate set.</action>
 
+    <action>For each ⚠ flagged feature: if the developer did not explicitly confirm its inclusion in their feedback, remove it from the candidate set. Do not carry un-confirmed ⚠ features forward to the approval gate.</action>
+
     <check if="developer requested more than 3 changes">
       <action>Re-present the full updated candidate set before proceeding to the approval gate.</action>
     </check>
