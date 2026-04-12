@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-11'
+lastEdited: '2026-04-12'
 editHistory:
+  - date: '2026-04-12'
+    changes: 'Feature-grooming spec impact (sprint-2026-04-11): Added Decision 49 (Feature Grooming Skill — flat orchestrator pattern, 2 discovery subagents, sole write authority over features.json, bootstrap/refine mode detection). Amended Decision 44 — added value_analysis (multi-paragraph required field: current value, full vision, known gaps) and system_context (required field: product fit) to features.json schema; updated write authority to momentum:feature-grooming as sole authorized writer; noted acceptance_conditions is an array of strings. Added momentum:feature-grooming ↔ momentum:feature-status integration point.'
   - date: '2026-04-11'
     changes: 'Feature-orientation epic spec impact (sprint-2026-04-11): Added Decision 44 (Feature Artifact Layer — features.json schema, feature types, orthogonality with epics). Added Decision 45 (Feature Status Skill — standalone momentum:feature-status skill, HTML+MD dual output, signal hierarchy, two rendering paths). Added Decision 46 (Feature Status Cache Pattern — startup-preflight inline hash computation, four cache states, NFR20 compliance, feature-status-hash momentum-tools command). Added Decision 47 (Sprint Summary at Retro Boundary — sprint-summary.md artifact, retro Phase 6, sprint planning Step 1 read). Added Decision 48 (Practice Project Detection — automatic path detection, ASCII skill topology, SDLC coverage table, dynamic glob discovery). Added momentum:feature-status to Skills Deployment Classification table. Added superseded note to status row (DRIFT-006). Added feature-status skill to Repository Structure tree and Requirements to Structure Mapping. Added feature-status.html and feature-status.md cache to Installed Structure. Added momentum:feature-status to Read/Write Authority table. Added sprint-summary.md to sprint folder structure. Added momentum:feature-status integration point.'
   - date: '2026-04-11'
@@ -1239,6 +1241,8 @@ momentum/                                    ← Plugin root
 
 **momentum:feature-status ↔ momentum:retro:** Retro orchestrator spawns `/momentum:feature-status` at Phase 6 close (after verification, before sprint summary write) to refresh the feature cache for the next session. This is a sequential dependency: feature-status runs first, its cache output is read by the retro orchestrator to populate the "Features Advanced" section of the sprint summary (Decision 47).
 
+**momentum:feature-grooming ↔ momentum:feature-status:** `momentum:feature-grooming` writes features.json and calls `momentum-tools feature-status-hash` post-write to invalidate the feature-status cache. `momentum:feature-status` reads features.json for display. This ensures the HTML dashboard and YAML cache are always considered stale after a grooming session, triggering a refresh on the next Impetus startup-preflight check.
+
 ---
 
 ## Validation Summary (Steps 7–8)
@@ -2081,7 +2085,13 @@ A new first-class planning artifact: `_bmad-output/planning-artifacts/features.j
     "name": "Session Orientation",
     "type": "flow",
     "description": "Developer opens Impetus and immediately understands sprint state, recent decisions, and best next action",
-    "acceptance_condition": "Greeting renders correct state from 9-state machine; menu items are contextually appropriate; no prompting required from developer",
+    "acceptance_conditions": [
+      "Greeting renders correct state from 9-state machine",
+      "Menu items are contextually appropriate",
+      "No prompting required from developer"
+    ],
+    "value_analysis": "Current value: Developer can orient within seconds of opening a session — sprint state, recent decisions, and next action are surfaced automatically.\n\nFull vision: Impetus becomes a genuine practice partner — proactively surfacing risk signals, suggesting story sequence adjustments, and adapting its greeting voice to sprint phase. Capabilities beyond current: risk-aware recommendations, multi-sprint trend awareness, integration with external signals (CI status, PR queue).\n\nKnown gaps: Greeting is currently state-driven but not risk-aware. No cross-sprint trend analysis. No external signal integration.",
+    "system_context": "Session Orientation is the entry point for all developer interaction with Momentum. It sets the cognitive frame for each work session. A well-functioning orientation feature reduces decision overhead and keeps the developer on the highest-value work. It is the primary surface through which the practice framework communicates its current understanding of the project.",
     "status": "working",
     "prd_section": "FR-7",
     "stories": ["greeting-redesign", "session-stats", "sprint-lifecycle-state-machine"],
@@ -2101,7 +2111,9 @@ A new first-class planning artifact: `_bmad-output/planning-artifacts/features.j
 | `name` | string | Human-readable display name |
 | `type` | enum | `flow` \| `connection` \| `quality` |
 | `description` | string | One sentence: what the user experiences |
-| `acceptance_condition` | string | Behavioral, verifiable, outsider-testable |
+| `acceptance_conditions` | array of strings | Behavioral, verifiable, outsider-testable — one condition per array entry |
+| `value_analysis` | string (multi-paragraph) | Required. Covers: (a) current value delivered, (b) full vision including new capabilities beyond pain removal, (c) known gaps |
+| `system_context` | string | Required. How this feature fits and enhances the overall product |
 | `status` | enum | `working` \| `partial` \| `not-working` \| `not-started` |
 | `prd_section` | string | FR/NFR reference (e.g., "FR-7", "NFR-3") — links feature to PRD |
 | `stories` | array | Story slugs that implement or advance this feature |
@@ -2110,7 +2122,7 @@ A new first-class planning artifact: `_bmad-output/planning-artifacts/features.j
 | `last_verified` | date | ISO 8601 date of last manual or automated verification |
 | `notes` | string | Free text for gaps, partial-status explanations, open questions |
 
-**Write authority:** `features.json` is written by the developer directly or by planning-workflow agents (momentum:create-story populates the `stories` array when stories are created for a known feature). No automated status update — status is set by the developer or by momentum:feature-status after running acceptance condition checks.
+**Write authority:** `features.json` is written exclusively by `momentum:feature-grooming` (bootstrap and refine modes). No other skill or tool writes features.json. Grooming mode detection: bootstrap = features.json absent or empty; refine = features.json has ≥1 entry. `acceptance_conditions` is an array of strings — each entry is one behavioral, verifiable acceptance condition.
 
 **Rationale:** Epics provide theme-based grouping that serves sprint planning. Features provide capability-based grouping that serves developer orientation and stakeholder communication. A feature can span multiple epics. An epic can advance multiple features. The two axes compose — neither replaces the other.
 
@@ -2316,6 +2328,25 @@ Redundancy flags: phases with 0 skills are flagged as uncovered; phases with 4+ 
 **Rationale:** Practice projects have a fundamentally different "feature" structure — their user-observable capabilities are skills and SDLC coverage, not product flows. Forcing a product-style feature table onto Momentum itself would require maintaining a features.json that describes Momentum's own skills as "features" — an awkward fit. The practice path renders the actually meaningful signal for a practice project developer. The detection heuristic is the minimal sufficient condition that distinguishes the two cases without requiring explicit configuration.
 
 **Traceability:** Introduced by feature-status-practice-path story in sprint-2026-04-11. Motivated by the observation that Momentum is its own primary dogfooding target — the feature status skill must work well when run against Momentum itself.
+
+---
+
+**Decision 49 — Feature Grooming Skill: Orchestrator Pattern and Write Authority (sprint-2026-04-11)**
+
+The `momentum:feature-grooming` skill is a flat orchestrator. It spawns exactly 2 discovery subagents in a single message (model: haiku, effort: quick):
+
+- **Agent A:** reads PRD and epics.md, extracts feature candidates and FR groupings
+- **Agent B:** reads architecture.md and stories/index.json, extracts capability clusters and story themes
+
+The orchestrator handles all synthesis, value analysis, developer interaction, and file writes directly. No additional subagents are spawned beyond the initial 2.
+
+**Write authority:** `momentum:feature-grooming` is the sole authorized writer of `features.json`. In bootstrap mode it also writes assessment documents to `_bmad-output/planning-artifacts/assessments/` and decision documents to `_bmad-output/planning-artifacts/decisions/` before writing features.json.
+
+**Mode detection:** bootstrap when features.json absent or has ≤2 entries; refine when features.json has ≥3 entries.
+
+**Rationale:** The flat orchestrator pattern keeps the synthesis step in a single context that can reason holistically across both discovery inputs. Two discovery subagents are sufficient to parallelize the read-heavy work; further parallelism would fragment the synthesis context without benefit. Sole write authority over features.json ensures the schema (including `value_analysis` and `system_context` fields added in Decision 44) is always populated correctly and consistently.
+
+**Traceability:** Introduced by feature-grooming story in sprint-2026-04-11. Complements Decision 44 (features.json schema and write authority) and Decision 45 (feature-status read path).
 
 ---
 
