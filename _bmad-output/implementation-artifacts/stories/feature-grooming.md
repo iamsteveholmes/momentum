@@ -11,6 +11,7 @@ touches:
   - skills/momentum/skills/feature-grooming/evals/eval-bootstrap-synthesizes-feature-list.md
   - skills/momentum/skills/feature-grooming/evals/eval-refine-detects-unmapped-stories.md
   - skills/momentum/skills/feature-grooming/evals/eval-no-mutation-before-approval.md
+  - _bmad-output/planning-artifacts/features.json
 change_type: skill-instruction
 priority: high
 ---
@@ -35,7 +36,7 @@ Key design principle: features are the unit of value delivery. Every feature mus
 
 3. Bootstrap range: 8–25 features are synthesized in bootstrap mode, with a ! warning if the candidate count falls outside this range.
 
-4. Orchestration: exactly 2 subagents spawned in parallel (haiku, quick) for discovery; orchestrator handles all synthesis, value analysis, and developer interaction directly.
+4. Orchestration: exactly 2 subagents spawned in parallel (model: haiku, effort: quick) for discovery; orchestrator handles all synthesis, value analysis, and developer interaction directly.
 
 ### Value Analysis
 
@@ -63,7 +64,7 @@ Key design principle: features are the unit of value delivery. Every feature mus
 
 14. No write before approval: features.json is untouched until the Step 5 approval gate is passed.
 
-15. `stories_done`/`remaining` accuracy: computed fresh from stories/index.json at write time; dropped/closed-incomplete stories excluded from remaining.
+15. `stories_done`/`stories_remaining` accuracy: computed fresh from stories/index.json at write time; dropped/closed-incomplete stories excluded from stories_remaining.
 
 16. Field preservation in refine: rejected proposals leave their feature entry byte-identical.
 
@@ -90,6 +91,7 @@ Key design principle: features are the unit of value delivery. Every feature mus
 
 - [ ] Task 2: Create the dispatch command at `skills/momentum/commands/feature-grooming.md` (AC: 1–4)
   - [ ] 2.1: Write single dispatch line delegating to the SKILL.md
+  - Note: Task 2 is a trivial single-line file — it does not require an EDD cycle. EDD applies to Tasks 3 and 4 (SKILL.md + workflow.md) only.
 
 - [ ] Task 3: Create the feature-grooming SKILL.md at `skills/momentum/skills/feature-grooming/SKILL.md` (AC: 1–4)
   - [ ] 3.1: Write SKILL.md frontmatter: name, description (≤150 chars), model: claude-sonnet-4-6, effort: high
@@ -100,7 +102,7 @@ Key design principle: features are the unit of value delivery. Every feature mus
   - [ ] 4.2: Write Step 2 — Parallel discovery: spawn exactly 2 haiku subagents (PRD/epics + arch/stories) in a single message
   - [ ] 4.3: Write Step 3 — Synthesis and value analysis: merge subagent findings, produce candidate feature list with value_analysis and system_context for each, flag ⚠ stepping-stone features
   - [ ] 4.4: Write Step 4 — Developer review UX: show full candidate set, ask three review questions, collect free-form feedback
-  - [ ] 4.5: Write Step 5 — Approval gate: no writes before this gate; on approval, type-validate, sort, compute stories_done/remaining from index, write features.json; for bootstrap write aes-NNN and dec-NNN first
+  - [ ] 4.5: Write Step 5 — Approval gate: no writes before this gate; on approval, type-validate, sort, compute stories_done/stories_remaining from index, write features.json; for bootstrap write aes-NNN and dec-NNN first
   - [ ] 4.6: Write Step 6 — Post-write: call momentum-tools feature-status-hash, report hash, report unmapped stories, commit with conventional message
 
 ## Dev Notes
@@ -131,7 +133,7 @@ Key design principle: features are the unit of value delivery. Every feature mus
 5. **Approval gate + write** — Require explicit approval. Do NOT write features.json before this gate. On approval:
    - Validate all types are in {flow, connection, quality}; reject invalid before write
    - In bootstrap mode: write aes-NNN to `_bmad-output/planning-artifacts/assessments/` and dec-NNN to `_bmad-output/planning-artifacts/decisions/`
-   - Compute stories_done and remaining fresh from stories/index.json (exclude dropped/closed-incomplete)
+   - Compute stories_done and stories_remaining fresh from stories/index.json (exclude dropped/closed-incomplete)
    - Sort output: flow→connection→quality, alpha within type
    - In refine mode: leave rejected feature entries byte-identical
 
@@ -169,12 +171,12 @@ Each feature entry must include at minimum:
 - `system_context` (string)
 - `acceptance_conditions` (array of strings, "A developer can [action] and [observe outcome]" format)
 - `stories_done` (integer, computed from index)
-- `remaining` (integer, computed from index)
+- `stories_remaining` (integer, computed from index)
 
 ## Momentum Implementation Guide
 
 **Change Types in This Story:**
-- Tasks 1, 2, 3, 4 → skill-instruction (EDD)
+- Tasks 1, 2, 3, 4 → skill-instruction; EDD cycle applies to Tasks 3 and 4 (SKILL.md + workflow.md); Task 2 is a trivial dispatch line, not subject to EDD
 
 ---
 
