@@ -257,6 +257,61 @@ seconds.
 - [Source: DEC-002 D5] — Decision authorizing practice project rendering path
 - [Depends: feature-status-skill] — Base skill that this story extends
 
+## Momentum Implementation Guide
+
+**Change Types in This Story:**
+- Task 1–6 → `skills/momentum/skills/feature-status/workflow.md` → skill-instruction (EDD)
+
+---
+
+### skill-instruction Tasks: Eval-Driven Development (EDD)
+
+**Do NOT use TDD for workflow.md files.** Workflow instructions are non-deterministic LLM prompts — unit tests do not apply. Use EDD:
+
+**Before writing a single line of the workflow changes:**
+1. Write 3 behavioral evals in `skills/momentum/skills/feature-status/evals/` (create `evals/` if it doesn't exist):
+   - `eval-practice-path-topology-shows-handoffs.md`
+     "Given a Momentum project with skills installed under `skills/momentum/skills/*/SKILL.md`,
+     the skill renders an ASCII topology block showing the canonical cycle
+     (intake → sprint-planning → sprint-dev → retro) and the assessment sub-cycle
+     (assessment → decision → create-story), with all discovered skills appearing in at least one position."
+   - `eval-practice-path-sdlc-coverage-flags-gaps.md`
+     "Given skills covering Discovery, Planning, Specification, Implementation, Review,
+     Retrospective, and Orientation but no skill mapped to Quality/Validation, the skill's
+     SDLC coverage table marks Quality/Validation as 'gap' and marks covered phases with
+     the relevant skill names."
+   - `eval-product-path-unaffected-by-practice-extension.md`
+     "Given a product project directory with no `skills/` directory containing SKILL.md files,
+     the skill renders feature type groups (flow/connection/quality) with status and gap analysis.
+     No topology block or SDLC coverage table appears in the output."
+
+**Then implement:**
+2. Add project type detection branch early in `feature-status/workflow.md`
+3. Add skill discovery via glob and frontmatter read
+4. Implement topology rendering, SDLC coverage map, and redundancy detection
+5. Validate output is under 40 lines
+
+**Then verify:**
+6. Run evals: for each eval file, spawn a subagent, give it the eval scenario and the relevant
+   workflow content as context. Observe whether the subagent's behavior matches the expected outcome.
+7. If all evals match → task complete
+8. If any eval fails → diagnose the gap, revise, re-run (max 3 cycles; surface to user if still failing)
+
+**NFR compliance — mandatory for every skill-instruction task:**
+- No new SKILL.md is created in this story — changes are to `feature-status/workflow.md` only.
+  The existing SKILL.md at `skills/momentum/skills/feature-status/SKILL.md` must remain unmodified.
+- `model:` and `effort:` frontmatter fields in feature-status/SKILL.md must not be altered.
+
+**Additional DoD items for skill-instruction tasks:**
+- [ ] 3 behavioral evals written in `skills/momentum/skills/feature-status/evals/`
+- [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
+- [ ] feature-status/SKILL.md description ≤150 characters confirmed (unchanged — verify it still holds)
+- [ ] `model:` and `effort:` frontmatter present in feature-status/SKILL.md
+- [ ] Total practice-path output confirmed under 40 lines via eval run
+- [ ] Product path confirmed unaffected via eval run
+
+---
+
 ## Dev Agent Record
 
 ### Agent Model Used
