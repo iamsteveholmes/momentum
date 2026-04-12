@@ -96,6 +96,28 @@ done
 cmux send --surface $SURFACE "short command here"
 ```
 
+### GUI App Launch Troubleshooting
+
+When a GUI app (desktop app, Android emulator) is launched via `respawn-pane` and its window
+does not appear in macOS, work through this checklist before concluding failure. Note: the cmux
+pane showing "closed unexpectedly" is normal — that refers to pane state when the GUI process
+detaches. A missing macOS window is the failure state that requires troubleshooting.
+
+1. **Wait 15–30 seconds.** GUI apps take time to initialize. Do not abort immediately.
+2. **Read the pane output.** Run `cmux capture-pane --surface surface:N` to distinguish a
+   crashed process (non-zero exit, error message) from one that is alive but still loading.
+3. **Try fallback flags if the process crashed:**
+   - **Android emulator:** Use the full SDK path — `$ANDROID_HOME/emulator/emulator`. For
+     Vulkan/GPU crashes, add `-gpu swiftshader`.
+   - **Desktop/Electron apps:** Check for an existing process (`pgrep -f <app-name>`) before
+     re-launching. Try the direct binary path instead of a wrapper script.
+   - **Environment variables missing:** Prefix the command with `source ~/.zshrc &&` to ensure
+     env vars like `$ANDROID_HOME` are available in the cmux shell.
+4. **Check Mission Control and the Dock.** The window may have opened behind other windows or
+   on a different Space.
+
+Never declare a GUI launch impossible from a cmux subprocess without completing this checklist.
+
 ## Gotchas (tested, verified)
 
 - `close-panel` does NOT exist — use `close-surface`
