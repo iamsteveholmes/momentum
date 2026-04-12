@@ -11,9 +11,9 @@
 <workflow>
   <critical>features.json is NOT written until the Step 5 approval gate is explicitly passed with "Y". No write occurs before this gate under any circumstance.</critical>
   <critical>Exactly 2 subagents are spawned in Step 2 — no more, no less. Both are launched in a single message (fan-out pattern, NOT TeamCreate). The orchestrator handles all synthesis, value analysis, developer interaction, and writing directly.</critical>
-  <critical>Every feature written to features.json must have a non-empty value_analysis (multi-paragraph), system_context, type in {flow, connection, quality}, and acceptance_conditions array. Any feature missing these fields is rejected before write.</critical>
+  <critical>Every feature written to features.json must have a non-empty value_analysis (multi-paragraph), system_context, type in {flow, connection, quality}, and acceptance_condition string. Any feature missing these fields is rejected before write.</critical>
   <critical>In refine mode: feature entries whose proposals are rejected are left byte-identical. Only approved-change entries are modified.</critical>
-  <critical>stories_done and stories_remaining are computed fresh from stories/index.json at write time (Step 6). Dropped and closed-incomplete stories are excluded from stories_remaining.</critical>
+  <critical>stories_done and stories_remaining are computed fresh from `_bmad-output/implementation-artifacts/stories/index.json` at write time (Step 6). They are derived from each feature's `stories` array — look up each story slug in the index, check its status. Dropped and closed-incomplete stories are excluded from stories_remaining.</critical>
 
   <step n="1" goal="Mode detection and task setup">
     <action>Check whether `_bmad-output/planning-artifacts/features.json` exists. If it exists, read it and count feature entries.
@@ -99,8 +99,9 @@
   <step n="4" goal="Synthesis and value analysis">
     <action>Merge Agent A and Agent B findings. Deduplicate candidates (same theme under different names → pick the clearer slug).</action>
     <action>For each candidate feature, produce:
-      - slug: kebab-case, unique
-      - title: clear noun phrase
+      - feature_slug: kebab-case, unique (this is the features.json key)
+      - name: clear noun phrase (display name)
+      - description: one-line summary sentence
       - type: flow | connection | quality
         · flow — end-to-end user journeys and workflows
         · connection — integrations, data bridges, external system interactions
@@ -111,7 +112,7 @@
           Paragraph 3 — Known gaps: what is missing, deferred, or not yet realized
         Do NOT reduce value_analysis to pain removal only. Explicitly consider capability expansion.
       - system_context: 1–2 sentences explaining how this feature fits and enhances the overall product architecture and user model
-      - acceptance_conditions: array of strings, each in format "A developer can [action] and [observe outcome]" — binary and verifiable
+      - acceptance_condition: single string in format "A developer can [action] and [observe outcome]" — binary and verifiable
       - ⚠ flag: add if the feature has no current delivery (all value is deferred/aspirational) — developer must confirm inclusion
     </action>
 
@@ -170,24 +171,28 @@ Approve writing features.json? [Y/N]
   {list slugs}
     </output>
 
-    <check if="developer does not confirm with Y">
-      <output>No write performed. features.json unchanged. Workflow complete.</output>
-    </check>
-
     <action>TaskUpdate Task 3 to completed.</action>
+
+    <check if="developer does not confirm with Y">
+      <action>TaskUpdate Task 4 to completed.</action>
+      <output>No write performed. features.json unchanged. Workflow complete.</output>
+      <action>STOP — do not proceed to Step 6 or any further steps.</action>
+    </check>
   </step>
 
   <step n="6" goal="Write and post-write">
     <action>TaskUpdate Task 4 to in_progress.</action>
 
     <action>Validate all candidate types before writing. Reject any feature whose type is not in {flow, connection, quality}:
-      ! REJECTED: {slug} — invalid type "{bad_type}". Must be flow, connection, or quality.
+      ! REJECTED: {feature_slug} — invalid type "{bad_type}". Must be flow, connection, or quality.
       Remove rejected features from the write set and notify the developer.
     </action>
 
     <action>Compute stories_done and stories_remaining for each feature from `_bmad-output/implementation-artifacts/stories/index.json` (use offset/limit — commonly large):
-      - stories_done: count of stories with status "done" whose feature_slug matches this feature
-      - stories_remaining: count of stories assigned to this feature with status not "done", excluding stories with status "dropped" or "closed-incomplete"
+      - Each feature has a `stories` array listing story slugs assigned to it
+      - stories_done: count of slugs in `stories` whose entry in the index has status "done"
+      - stories_remaining: count of slugs in `stories` whose entry has status not "done", not "dropped", not "closed-incomplete"
+      - If a slug in `stories` is not found in the index, exclude it from both counts
     </action>
 
     <check if="bootstrap mode">
@@ -198,32 +203,39 @@ Approve writing features.json? [Y/N]
       <action>For features whose proposals were not approved by the developer, copy the existing entry byte-identical from the current features.json. Do not modify these entries.</action>
     </check>
 
-    <action>Write `_bmad-output/planning-artifacts/features.json`. Sort order: flow features first (alpha by slug), then connection (alpha by slug), then quality (alpha by slug). Each entry schema:
+    <action>Write `_bmad-output/planning-artifacts/features.json`. features.json is a JSON object (dict) keyed by feature_slug. Sort order: flow features first (alpha by feature_slug), then connection, then quality. Each entry schema:
       {
-        "slug": "...",
-        "title": "...",
+        "feature_slug": "...",
+        "name": "...",
         "type": "flow|connection|quality",
+        "description": "...",
+        "acceptance_condition": "A developer can [action] and [observe outcome].",
         "value_analysis": "...",
         "system_context": "...",
-        "acceptance_conditions": ["A developer can ...", ...],
+        "status": "working|partial|not-started",
+        "stories": ["story-slug-1", ...],
         "stories_done": N,
-        "stories_remaining": M
+        "stories_remaining": M,
+        "last_verified": "YYYY-MM-DD",
+        "notes": ""
       }
+      Note: `acceptance_condition` is a string, not an array. `description` is a one-line summary; `value_analysis` is the multi-paragraph value content.
     </action>
 
     <action>Run: `python3 skills/momentum/scripts/momentum-tools.py feature-status-hash`
       Include the hash result in the output.
     </action>
 
-    <action>Compute unmapped stories: read stories/index.json and find all stories where:
+    <action>Compute unmapped stories: read `_bmad-output/implementation-artifacts/stories/index.json` and find all stories where:
       - status is not "done" AND status is not "dropped" AND status is not "closed-incomplete"
-      - feature_slug is absent, null, or does not match any slug in the written features.json
+      - the story slug does not appear in any feature's `stories` array in the written features.json
     </action>
 
     <action>Commit the changes:
-      git add `_bmad-output/planning-artifacts/features.json`
-      {In bootstrap mode: also add the aes-NNN and dec-NNN files}
+      git add _bmad-output/planning-artifacts/features.json
+      {In bootstrap mode: also add the aes-NNN and dec-NNN files by their exact paths from Step 3}
       git commit -m "docs(features): feature-grooming {bootstrap|refine} — {N} features, {M} proposals applied"
+      (In bootstrap: M = number of candidates accepted. In refine: M = number of signal-driven proposals approved.)
     </action>
 
     <action>TaskUpdate Task 4 to completed.</action>
@@ -245,7 +257,7 @@ Unmapped stories: {count}
     {· story-slug-1}
     {· story-slug-2}
     ...
-  Run /momentum:refine or update story feature_slug fields to resolve.
+  Run /momentum:feature-grooming (refine) or add story slugs to the appropriate feature's `stories` array to resolve.
 
 {In bootstrap mode:}
 Foundation docs written:
