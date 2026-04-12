@@ -42,6 +42,8 @@ date: '2026-03-17'
 lastEdited: '2026-04-11'
 editHistory:
   - date: '2026-04-11'
+    changes: 'Feature-orientation epic spec impact (sprint-2026-04-11): Added Decision 44 (Feature Artifact Layer — features.json schema, feature types, orthogonality with epics). Added Decision 45 (Feature Status Skill — standalone momentum:feature-status skill, HTML+MD dual output, signal hierarchy, two rendering paths). Added Decision 46 (Feature Status Cache Pattern — startup-preflight inline hash computation, four cache states, NFR20 compliance, feature-status-hash momentum-tools command). Added Decision 47 (Sprint Summary at Retro Boundary — sprint-summary.md artifact, retro Phase 6, sprint planning Step 1 read). Added Decision 48 (Practice Project Detection — automatic path detection, ASCII skill topology, SDLC coverage table, dynamic glob discovery). Added momentum:feature-status to Skills Deployment Classification table. Added superseded note to status row (DRIFT-006). Added feature-status skill to Repository Structure tree and Requirements to Structure Mapping. Added feature-status.html and feature-status.md cache to Installed Structure. Added momentum:feature-status to Read/Write Authority table. Added sprint-summary.md to sprint folder structure. Added momentum:feature-status integration point.'
+  - date: '2026-04-11'
     changes: 'Removed /momentum:create-epic and /momentum:develop-epic — superseded by momentum:create-story + momentum:epic-grooming + sprint model (developer decision 2026-04-11): updated Rolling pool feasibility note (Decision 4c) to reference /momentum:sprint-dev instead of /develop-epic; rewrote Decision 39 execution paths table — removed "Epic orchestration" row, renamed to "Execution paths in Momentum" (3 paths: sprint orchestration, quick-fix, distill); updated Decision 42 distill description from "fourth execution path alongside epic orchestration" to "third execution path alongside sprint orchestration and quick-fix"; updated distill row in Skills Deployment Classification table to match.'
   - date: '2026-04-11'
     changes: 'Drift reconciliation (DRIFT-001 through DRIFT-008): Added note to distill entry in Skills Deployment Classification that story is handled via quick-fix workflow (DRIFT-001). Added momentum:sprint-manager to Skills Deployment Classification table — flat skill wrapping momentum-tools.py CLI, sole writer of sprints/index.json (DRIFT-002). Updated Hook Infrastructure subsystem description to reflect global hook script deployment to ~/.claude/momentum/hooks/ as primary path, plugin hooks/ as override fallback, hooks-config.json path resolution (DRIFT-003). Added dev.md, dev-skills.md, dev-build.md, dev-frontend.md specialist agent files to agents/ directory listing in both Repository Structure sections (DRIFT-004). Clarified Always-Worktree section: worktree model applies to standalone momentum:dev only; sprint-dev uses sequential commit-as-sync-point within Agent Team per Decision 26 (DRIFT-005). Updated momentum:status in Skills Deployment Classification to "not planned as standalone skill" — absorbed into Impetus and momentum-tools CLI, no backlog story needed; updated Repository Structure and Requirements to Structure Mapping consistently (DRIFT-006). Removed agent logging from momentum:dev pure executor description (removed per Decision 24/27); corrected bmad-dev-story indirection note — dev/workflow.md spawns agents directly (DRIFT-007). Added momentum:agent-guidelines to Skills Deployment Classification table — 5-phase guided workflow for technology-specific guidelines generation (DRIFT-008).'
@@ -188,7 +190,6 @@ The defining question for each component: *does this need main-context persona p
 | dev | Flat skill (`/momentum:dev`) — internal-only | Pure story executor; called by sprint-dev and quick-fix, not user-invocable from Impetus (Decision 39) |
 | quick-fix | Flat skill (`/momentum:quick-fix`) | Single-story bypass-sprint lifecycle path (Decision 39); register, execute, validate, complete in one session |
 | research | Flat skill (`/momentum:research`) | Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking |
-| status | Not planned as standalone skill | Status functionality is absorbed into Impetus greeting workflow and momentum-tools CLI (`momentum-tools sprint status`). No backlog story exists or is needed. |
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; triage and intake of new ideas, documents, or requests into the backlog as story stubs; no fork needed |
@@ -197,6 +198,8 @@ The defining question for each component: *does this need main-context persona p
 | sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
 | decision | Flat skill (`/momentum:decision`) | User-invokable; facilitates architectural or product decision capture (ADR/trade-off analysis); no fork needed |
 | agent-guidelines | Flat skill (`/momentum:agent-guidelines`) | 5-phase guided workflow for generating technology-specific development guidelines for a project: Discover (stack analysis), Research (web search), Consult (developer preferences), Generate (guidelines documents), Validate (AVFL checkpoint). Generates path-scoped rules and reference documents. |
+| feature-status | Flat skill (`/momentum:feature-status`) | Reads features.json + stories/index.json; writes self-contained HTML dashboard (`.claude/momentum/feature-status.html`) and YAML-frontmatter cache (`.claude/momentum/feature-status.md`). Two rendering paths: product (flow/connection/quality tables + gap analysis) and practice (skill topology + SDLC coverage). Supersedes DRIFT-006 proposal to absorb into Impetus/momentum-tools — standalone skill per Decision 45. |
+| status | Not planned as standalone skill | ~~Status functionality is absorbed into Impetus greeting workflow and momentum-tools CLI (`momentum-tools sprint status`). No backlog story exists or is needed.~~ **Superseded by Decision 45 (sprint-2026-04-11):** feature-status is implemented as a dedicated standalone skill (`/momentum:feature-status`). The startup-preflight cache check (Decision 46) handles the Impetus greeting integration path. The momentum-tools `feature-status-hash` command provides the hash utility. This row is retained for historical context only. |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure spawned worker — reviews code against story ACs during Team Review (Decision 34). Never user-invoked (Decision 35). |
@@ -345,6 +348,15 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 **Decision 1e — Session State Storage (Ephemeral + Inter-Session)**
 - `.claude/momentum/session-modified-files.txt` — Ephemeral session-scoped file. Written by PostToolUse lint hook (appends file paths of modified files, one per line, deduped). Read by Stop gate hook as the set of files to check. Cleaned up after the Stop gate runs. Not committed to git.
 - `.claude/momentum/gate-findings.txt` — Inter-session findings file. Written by the Stop gate hook when it detects lint issues or uncommitted changes among session-modified files. Read by Impetus at the next session open to surface unresolved quality issues from the previous session. Overwritten each time the Stop gate runs (not append-only).
+
+**Decision 1f — Feature Status Cache: YAML-Frontmatter MD**
+- Location: `.claude/momentum/feature-status.md`
+- Written by `momentum:feature-status` after generating the HTML dashboard
+- YAML frontmatter fields: `input_hash` (SHA-256 of features_content + ":" + stories_content), `summary` (one-line feature status string, e.g., "3/5 features working, 1 partial, 1 not-started"), `generated_at` (ISO 8601)
+- Cache validity states (four): `no-features` (features.json absent — skip silently), `no-cache` (cache file absent — prompt feature-status run), `fresh` (input_hash matches current hash — display cached summary), `stale` (hash mismatch — offer feature-status refresh)
+- Hash computation: inline Python in startup-preflight, not a subprocess. Maintains NFR20 compliance (startup-preflight remains one Bash call).
+- Cache is read by Impetus at session start inside startup-preflight to surface feature health alongside sprint state
+- See Decision 46 for full startup-preflight integration architecture
 
 **Decision 1d — Installed State: JSON**
 - Location: `.claude/momentum/installed.json`
@@ -1035,7 +1047,9 @@ momentum/                                    ← Plugin root
 │   │   └── SKILL.md
 │   ├── research/                            ← /momentum:research
 │   │   └── SKILL.md
-│   ├── status/                              ← /momentum:status (not planned as standalone skill — absorbed into Impetus and momentum-tools CLI)
+│   ├── status/                              ← /momentum:status (superseded — see Decision 45 and feature-status entry below)
+│   │   └── SKILL.md
+│   ├── feature-status/                      ← /momentum:feature-status (Decision 45)
 │   │   └── SKILL.md
 │   └── retro/                               ← /momentum:retro
 │       └── SKILL.md
@@ -1077,6 +1091,7 @@ momentum/                                    ← Plugin root
 │   └── planning-artifacts/
 │       ├── prd.md
 │       ├── ux-design-specification.md
+│       ├── features.json                    ← Feature artifact layer (Decision 44)
 │       └── architecture.md                  ← This document
 │
 ├── _bmad/                                   ← BMAD framework (managed by BMAD)
@@ -1119,7 +1134,9 @@ momentum/                                    ← Plugin root
         ├── journal-view.md                   ← Human-readable view (auto-generated)
         ├── installed.json                   ← Install/upgrade state (version + per-component hashes)
         ├── session-modified-files.txt       ← Ephemeral: PostToolUse writes, Stop reads + deletes (Decision 1e)
-        └── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
+        ├── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
+        ├── feature-status.html              ← Self-contained HTML dashboard (Decision 45, written by momentum:feature-status)
+        └── feature-status.md               ← YAML-frontmatter cache (Decision 46, written by momentum:feature-status)
 ```
 
 ---
@@ -1138,8 +1155,10 @@ momentum/                                    ← Plugin root
 | momentum:dev | Story files, code | Code in worktree only; structured JSON completion output |
 | momentum:create-story | stories/index.json, epics.md | Story files in _bmad-output/implementation-artifacts/ |
 | momentum:refine | prd.md, architecture.md, stories/index.json, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); stories/index.json mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
+| momentum:feature-status | `_bmad-output/planning-artifacts/features.json`, stories/index.json | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
 | momentum:sprint-planning | stories/index.json, sprints/index.json, story files | sprints/{sprint-slug}/specs/*.feature (Gherkin specs); sprint record team composition (via momentum-tools sprint) |
 | momentum:sprint-dev | sprints/index.json (active sprint, team, deps), stories/index.json, sprints/{sprint-slug}/specs/*.feature | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete) |
+| momentum:retro | sprints/index.json, stories/index.json, session JSONL transcripts, decisions/*.md, `.claude/momentum/feature-status.md` | `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/retro-transcript-audit.md`; `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); spawns `/momentum:feature-status` to refresh cache before summary write |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
 | VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report |
@@ -1181,7 +1200,10 @@ momentum/                                    ← Plugin root
 | Quick-fix | `skills/quick-fix/` | Plugin skill: `/momentum:quick-fix` |
 | Distill | `skills/distill/` | Plugin skill: `/momentum:distill` |
 | Research | `skills/research/` | Plugin skill: `/momentum:research` |
-| Status | `skills/status/` | Not planned as standalone skill — status functionality absorbed into Impetus greeting and momentum-tools CLI |
+| Status | `skills/status/` | Superseded — see Feature Status below (Decision 45) |
+| Feature Status | `skills/feature-status/` | Plugin skill: `/momentum:feature-status`; HTML output: `.claude/momentum/feature-status.html`; cache: `.claude/momentum/feature-status.md` |
+| Feature artifact (features.json) | (runtime / planning artifact) | `_bmad-output/planning-artifacts/features.json` (written by developer or planning workflow) |
+| Sprint summary | (runtime, per-sprint) | `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` (written by retro orchestrator at Phase 6 close) |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
@@ -1212,6 +1234,10 @@ momentum/                                    ← Plugin root
 **CMUX Markdown Surfaces ↔ Quick-Fix:** cmux markdown surfaces serve as a primary developer review pattern in quick-fix Phases 1-2. The quick-fix skill renders implementation plans and file diffs to cmux surfaces for developer review and approval before changes are applied. This is a direct integration — not optional detect-and-adapt — within the quick-fix workflow.
 
 **momentum:refine ↔ momentum:epic-grooming:** momentum:refine delegates taxonomy analysis and story reassignment to momentum:epic-grooming as a substep during backlog refinement. Graceful degradation applies: if momentum:epic-grooming is absent, refine skips the taxonomy substep and continues with the remaining refinement work.
+
+**momentum:feature-status ↔ Impetus startup-preflight:** Impetus reads `.claude/momentum/feature-status.md` at session start (inside startup-preflight, one Bash call, inline hash computation — Decision 46). Cache state drives greeting behavior: `fresh` → display cached feature summary inline; `stale` → offer refresh; `no-features` → silent skip; `no-cache` → suggest running `/momentum:feature-status`. The feature-status skill itself is invoked on-demand (user request or retro Phase 6 trigger — Decision 47) — Impetus never spawns it autonomously during greeting.
+
+**momentum:feature-status ↔ momentum:retro:** Retro orchestrator spawns `/momentum:feature-status` at Phase 6 close (after verification, before sprint summary write) to refresh the feature cache for the next session. This is a sequential dependency: feature-status runs first, its cache output is read by the retro orchestrator to populate the "Features Advanced" section of the sprint summary (Decision 47).
 
 ---
 
@@ -1319,7 +1345,7 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 <!-- REVISED Phase 3: Added team composition, dependencies, and specs directory to sprint record schema per Decisions 25, 26, 29, 30. -->
 
-**`sprints/` folder** — one file per sprint (`sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, team composition, dependency graph, and wave plan. One specs directory per sprint (`sprints/{slug}/specs/`) for Gherkin feature files.
+**`sprints/` folder** — one file per sprint (`sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, team composition, dependency graph, and wave plan. One specs directory per sprint (`sprints/{slug}/specs/`) for Gherkin feature files. One sprint summary per sprint (`sprints/{slug}/sprint-summary.md`) written by the retro orchestrator at Phase 6 close (Decision 47).
 
 **`sprints/index.json`** — which sprint is active, which is planning, list of completed sprints. Active and planning entries are objects (not slug strings) that carry sprint lifecycle state (Decision 36). The `status` field tracks position in the sprint lifecycle state machine. Completed entries track retro execution for lifecycle gate enforcement.
 
@@ -1472,7 +1498,7 @@ Sprint planning is a dedicated skill (`/momentum:sprint-planning`) with 8 steps.
 
 <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Create a task per step at planning start. Every step entry updates the corresponding task to in_progress; every step exit updates to completed. Ad-hoc narrative summaries are not a substitute for tool-queryable task state.</critical>
 
-1. **Backlog presentation (Synthesis-First)** — Read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read `stories/index.json`, group by epic, exclude terminal states. Within each epic group, sort by priority (critical > high > medium > low), then by dependency depth, then alphabetical. Run a staleness check: for each story with status `ready-for-dev` or `in-progress`, check `git log` for commits touching the story's `touches` paths — if substantial implementation commits exist, flag the story as potentially already implemented and exclude it from recommendations (surface in a separate "Potentially stale" section with evidence). Lead with a synthesis section: 3-5 prioritized recommendations with brief rationale for each, informed by the master plan's current priorities, dependency readiness, and backlog state. Present the full backlog below the recommendations as secondary reference material. If master plan documents are missing, fall back to the current behavior (sorted backlog) with a warning.
+1. **Backlog presentation (Synthesis-First)** — Read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`_bmad-output/implementation-artifacts/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent. Read `stories/index.json`, group by epic, exclude terminal states. Within each epic group, sort by priority (critical > high > medium > low), then by dependency depth, then alphabetical. Run a staleness check: for each story with status `ready-for-dev` or `in-progress`, check `git log` for commits touching the story's `touches` paths — if substantial implementation commits exist, flag the story as potentially already implemented and exclude it from recommendations (surface in a separate "Potentially stale" section with evidence). Lead with a synthesis section: 3-5 prioritized recommendations with brief rationale for each, informed by the master plan's current priorities, dependency readiness, and backlog state. Present the full backlog below the recommendations as secondary reference material. If master plan documents are missing, fall back to the current behavior (sorted backlog) with a warning.
 2. **Story selection** — developer selects 3-8 stories, register via momentum-tools sprint plan
 3. **Story fleshing-out** — spawn `/momentum:create-story` for each stub; developer approves each
 4. **Gherkin spec generation** — write detailed `.feature` files to `sprints/{sprint-slug}/specs/`; story files retain plain English ACs only (Decision 30). After generation, a **spec quality pre-check gate** validates each `.feature` file: checks structural validity (valid Gherkin syntax, proper Given/When/Then flow), outsider-test compliance (scenarios testable without implementation knowledge), and template conformance (consistent tagging, background usage, scenario outline patterns). Specs that fail the pre-check are revised before dev agents spawn — catching spec-quality issues early avoids downstream E2E Validator findings that trace back to ambiguous specifications.
@@ -1604,6 +1630,7 @@ Phase 5 agents are checked against the spawn registry — each reviewer role (e.
 - Run `momentum-tools sprint complete` to archive the sprint
 - Surface summary: stories completed, merge order, AVFL findings, verification results
 - Suggest retrospective as next step
+- The retro workflow writes `sprints/{sprint-slug}/sprint-summary.md` at Phase 6 close (Decision 47) — sprint-dev does not write it
 
 ### Agent Pool Governance
 
@@ -1748,13 +1775,15 @@ Output: `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/retro-trans
 
 **What stays from the current retro:** Phase 1 (Sprint Identification), Phase 3 (Story Verification), Phase 6 (Story Stub Creation — now informed by transcript audit findings), Phase 7 (Sprint Closure). **What is replaced:** Phase 2 (Log Collection → DuckDB preprocessing), Phase 4 (Cross-Log Discovery → auditor team analysis), Phase 5 (Triage Output Generation → documenter's findings document).
 
+**Phase 6 extension (Decision 47):** After story stub creation and before sprint closure, the retro orchestrator: (1) spawns `/momentum:feature-status` to refresh the feature cache; (2) reads the updated `.claude/momentum/feature-status.md` for feature status deltas; (3) writes `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` with sections: Features Advanced (conditional), Stories Completed vs. Planned, Key Decisions, Unresolved Issues, Narrative (500-word cap). The sprint summary is the sole compression artifact for sprint-to-sprint context transfer.
+
 **Decision 28 — Triage vs Refinement Distinction**
 Triage is intake-focused: analyze documents/ideas, create story stubs, initial prioritization, assign to an epic. Refinement is organization-focused: classify, prioritize, gap-analyze the whole backlog. Different purposes, complementary workflows. Both deferred to Phase 5.
 
-**Decision 29 — Sprint Planning Builds the Team (Extended 2026-04-06: Synthesis-First)**
+**Decision 29 — Sprint Planning Builds the Team (Extended 2026-04-06: Synthesis-First; Extended 2026-04-11: Sprint Summary Read)**
 Sprint planning (`/momentum:sprint-planning`) encompasses story selection, create-story invocation, team composition, dependency graph construction, and execution plan generation. Sprint planning is a proper skill (not an inline workflow module) — invoked by Impetus or directly by the user. The sprint record stores team + dependencies (not just story lists and wave assignments). See Sprint Planning Workflow section.
 
-Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. If master plan documents are missing, fall back to sorted backlog with a warning.
+Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`_bmad-output/implementation-artifacts/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent (Decision 47). Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, sprint summary findings, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. If master plan documents are missing, fall back to sorted backlog with a warning.
 
 **Decision 30 — Gherkin Separation (Extended 2026-04-08: Spec-Quality Feedback Loop)**
 Story files retain plain English ACs (dev sees intent). Sprint-scoped specs directory holds detailed Gherkin `.feature` files (verifiers only). Black-box behavioral validation: specs written pre-implementation, validated post-implementation, by different agents. See Gherkin Specification Separation section.
@@ -2016,6 +2045,277 @@ This pattern is distinct from the per-finding Add/Modify/Remove triage used in o
 **Phase 0 output:** A structured session-analytics brief written to the retro working directory. Contains: sprint window, sessions analyzed, metric table with sprint-over-sprint delta, and flagged regressions. Phase 1 auditors receive this brief before qualitative review begins.
 
 **Traceability:** Motivated by Fowler feedback flywheel research (2026-04-10) — Momentum captures failure signals but not quantitative regression signals. Log-audit research (2026-04-11) confirmed all metrics are extractable from existing session JSONL files without instrumentation changes. The findings-ledger `momentum_version` field extends Decision 42's ledger schema.
+
+---
+
+## Feature-Orientation Architecture Decisions (44-48)
+
+<!-- Added sprint-2026-04-11: Feature-orientation epic decisions. These decisions introduce the feature artifact layer, feature status visualization, cache infrastructure, sprint summary artifact, and practice project detection. -->
+
+**Decision 44 — Feature Artifact Layer (sprint-2026-04-11)**
+
+A new first-class planning artifact: `_bmad-output/planning-artifacts/features.json`. Features represent user-observable capabilities — the persistent units of product value that survive sprint boundaries.
+
+**Features vs. Epics — orthogonal organization dimensions:**
+
+| Dimension | Epics | Features |
+|---|---|---|
+| Groups by | Theme or initiative | User-observable capability |
+| Lifecycle | Closed when stories complete | Persistent — tracked across all sprints |
+| Status | Done/not-done | working / partial / not-working / not-started |
+| Verification | Story completion | Acceptance condition (behavioral, verifiable) |
+
+**Feature types:**
+
+| Type | Meaning | Examples |
+|---|---|---|
+| `flow` | End-to-end user journey — user can accomplish a complete task | Impetus greeting → sprint selection → execution |
+| `connection` | Integration or handoff between subsystems | Hook fires → lint runs → finding surfaced to user |
+| `quality` | Non-functional requirement observable by users | Startup in under 2s; greeting voice matches contract |
+
+**`features.json` schema (keyed-object, same pattern as stories/index.json):**
+
+```json
+{
+  "impetus-session-orientation": {
+    "name": "Session Orientation",
+    "type": "flow",
+    "description": "Developer opens Impetus and immediately understands sprint state, recent decisions, and best next action",
+    "acceptance_condition": "Greeting renders correct state from 9-state machine; menu items are contextually appropriate; no prompting required from developer",
+    "status": "working",
+    "prd_section": "FR-7",
+    "stories": ["greeting-redesign", "session-stats", "sprint-lifecycle-state-machine"],
+    "stories_done": 3,
+    "stories_remaining": 0,
+    "last_verified": "2026-04-08",
+    "notes": ""
+  }
+}
+```
+
+**Schema field definitions:**
+
+| Field | Type | Values / Notes |
+|---|---|---|
+| `feature_slug` | key | kebab-case, globally unique |
+| `name` | string | Human-readable display name |
+| `type` | enum | `flow` \| `connection` \| `quality` |
+| `description` | string | One sentence: what the user experiences |
+| `acceptance_condition` | string | Behavioral, verifiable, outsider-testable |
+| `status` | enum | `working` \| `partial` \| `not-working` \| `not-started` |
+| `prd_section` | string | FR/NFR reference (e.g., "FR-7", "NFR-3") — links feature to PRD |
+| `stories` | array | Story slugs that implement or advance this feature |
+| `stories_done` | int | Count of stories in terminal state (`done`) |
+| `stories_remaining` | int | Count of stories not yet done |
+| `last_verified` | date | ISO 8601 date of last manual or automated verification |
+| `notes` | string | Free text for gaps, partial-status explanations, open questions |
+
+**Write authority:** `features.json` is written by the developer directly or by planning-workflow agents (momentum:create-story populates the `stories` array when stories are created for a known feature). No automated status update — status is set by the developer or by momentum:feature-status after running acceptance condition checks.
+
+**Rationale:** Epics provide theme-based grouping that serves sprint planning. Features provide capability-based grouping that serves developer orientation and stakeholder communication. A feature can span multiple epics. An epic can advance multiple features. The two axes compose — neither replaces the other.
+
+**Traceability:** Introduced by the feature-artifact-schema story in sprint-2026-04-11. Motivated by DEC-002 (Feature Visualization and Developer Orientation): the current epics-only model makes it impossible to answer "is the app usable end-to-end?" without reading all story files.
+
+---
+
+**Decision 45 — Feature Status Skill: Standalone with Dual Output (sprint-2026-04-11)**
+
+`/momentum:feature-status` is a standalone flat skill that reads `features.json` + `stories/index.json` and produces two output artifacts for different consumption contexts.
+
+**Inputs:**
+- `_bmad-output/planning-artifacts/features.json` — feature definitions and current status
+- `_bmad-output/implementation-artifacts/stories/index.json` — story statuses for gap detection
+
+**Outputs:**
+
+| Output | Path | Format | Consumer |
+|---|---|---|---|
+| HTML dashboard | `.claude/momentum/feature-status.html` | Self-contained HTML (all CSS inline, Mermaid via CDN ESM) | Browser (file://) — developer visual review |
+| Cache file | `.claude/momentum/feature-status.md` | Markdown with YAML frontmatter | Impetus startup-preflight (Decision 46) |
+
+**HTML dashboard layout:**
+
+```
+header (project name, generated timestamp)
+summary stats bar (N working / M partial / K not-working / J not-started)
+Mermaid dependency graph (collapsed <details> by default — feature→story edges)
+feature tables grouped by type (flow | connection | quality)
+footer (last verified, momentum version)
+```
+
+**Signal hierarchy (always visible vs. behind `<details>` expand):**
+
+| Signal | Visibility |
+|---|---|
+| Status badge (working/partial/not-working/not-started) | Always visible |
+| Story fraction (N done / M total) | Always visible |
+| GAP flag (stories_remaining > 0 AND status not "working") | Always visible |
+| Acceptance condition text | `<details>` expand |
+| Story list with individual statuses | `<details>` expand |
+| Gap description (notes field) | `<details>` expand |
+
+The signal hierarchy prioritizes scannability: a developer can assess the full feature health picture without expanding any rows. Detail is available on demand.
+
+**Rendering paths (two, auto-detected — Decision 48):**
+
+| Path | Detection | Renders |
+|---|---|---|
+| Product | Default (features.json present, not a practice project) | flow/connection/quality tables with gap analysis |
+| Practice | `skills/momentum/skills/*/SKILL.md` present + `_bmad-output/planning-artifacts/` present | ASCII skill topology + SDLC coverage table |
+
+**Standalone design:** This skill is intentionally not absorbed into Impetus or momentum-tools. The HTML generation logic (Mermaid, inline CSS, responsive layout) is too complex for a tool call embedded in a larger workflow. Supersedes DRIFT-006's proposal to fold status into Impetus/momentum-tools. The cache file (Decision 46) provides the lightweight integration path for Impetus greeting.
+
+**Mermaid dependency graph:** Renders feature-to-story relationships as a directed graph. Layout: top-down (features as parent nodes, stories as leaves). Status color-coding matches badge colors. Collapsed by default (`<details>` wrapper) — avoids overwhelming the page on projects with many stories.
+
+**Self-contained HTML constraint:** All CSS is inline (`<style>` block). Mermaid loads via CDN ESM script tag (`https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs`). The file must render correctly when opened directly as `file://` with no server — no relative asset paths, no external stylesheets, no localhost dependencies.
+
+**Traceability:** Introduced by feature-status-skill story in sprint-2026-04-11. Supersedes DRIFT-006. The standalone skill boundary is motivated by complexity of HTML generation (Mermaid, CSS) that would bloat Impetus context if inlined.
+
+---
+
+**Decision 46 — Feature Status Cache Pattern and Startup Integration (sprint-2026-04-11)**
+
+The feature status cache provides fast, zero-cost feature health visibility in the Impetus greeting without re-running the full feature-status skill at every session start.
+
+**Cache file:** `.claude/momentum/feature-status.md` — YAML frontmatter only (no body required):
+```yaml
+---
+input_hash: "sha256:<64-char hex>"
+summary: "3/5 features working — 1 partial (impetus-orientation), 1 not-started (mcp-integration)"
+generated_at: "2026-04-11T14:30:00Z"
+---
+```
+
+**Hash computation:**
+```python
+import hashlib, json
+features_content = open("_bmad-output/planning-artifacts/features.json").read()
+stories_content = open("_bmad-output/implementation-artifacts/stories/index.json").read()
+h = hashlib.sha256((features_content + ":" + stories_content).encode()).hexdigest()
+```
+
+**Cache validity — four states:**
+
+| State | Condition | Impetus behavior |
+|---|---|---|
+| `no-features` | `features.json` absent | Silent skip — no feature line in greeting |
+| `no-cache` | `features.json` present, cache absent | Surface in greeting: "Feature status not yet generated — run /momentum:feature-status" |
+| `fresh` | Hash matches | Display `summary` line inline in greeting narrative |
+| `stale` | Hash mismatch (features.json or stories/index.json changed since last run) | Display stale summary + offer refresh: "Feature status may be out of date — run /momentum:feature-status to refresh" |
+
+**NFR20 compliance (startup-preflight remains one Bash call):** Hash computation runs as inline Python inside the startup-preflight Bash call — not a subprocess fork. The startup-preflight already runs Python for other inline computations. Adding the hash check does not increase the number of Bash tool calls at session start.
+
+```bash
+# Inline inside startup-preflight (one Bash call total):
+python3 -c "
+import hashlib, json, os, sys
+# ... read files, compute hash, compare to cache frontmatter ...
+print(cache_state)  # no-features | no-cache | fresh | stale
+print(summary)      # empty string if not fresh
+"
+```
+
+**New momentum-tools command — `feature-status-hash`:** A standalone utility subcommand used by the feature-status skill when writing the cache file after HTML generation. Computes the SHA-256 hash of features.json + stories/index.json and prints the hex digest. This avoids duplicating the hash logic between startup-preflight (inline Python) and feature-status (CLI call).
+
+```bash
+momentum-tools feature-status-hash   # prints: sha256:<hex>
+```
+
+**Cache write authority:** `momentum:feature-status` is the sole writer of `.claude/momentum/feature-status.md`. Impetus reads it; never writes it. The cache is never committed to git — it is runtime state.
+
+**Rationale:** Running the full feature-status skill (HTML generation, Mermaid rendering, gap analysis) at every session start would violate NFR20 and introduce latency in the greeting. The cache provides a summary line at zero additional tool calls. The hash-based invalidation ensures the cache is refreshed when the underlying data changes.
+
+**Traceability:** Introduced by impetus-feature-status-cache story in sprint-2026-04-11. Extends Decision 1f (Feature Status Cache storage). Maintains NFR20 compliance established by startup-preflight design.
+
+---
+
+**Decision 47 — Sprint Summary at Retro Boundary (sprint-2026-04-11)**
+
+A new artifact written by the retro orchestrator at Phase 6 close: `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md`. It compresses each completed sprint's signal into a structured reference document for sprint planning and future retro context loading.
+
+**Artifact path:** `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md`
+
+**Written by:** Retro orchestrator at Phase 6 close, after spawning `/momentum:feature-status` for cache refresh and before sprint closure.
+
+**Sections:**
+
+| Section | Content | Conditional? |
+|---|---|---|
+| Features Advanced | Features whose status changed this sprint (status delta) | Yes — omit if features.json absent or no status changes |
+| Stories Completed vs. Planned | Count + list of completed and dropped/deferred stories | No |
+| Key Decisions | Architectural or product decisions made during the sprint (from decisions/) | No |
+| Unresolved Issues | Items from retro finding list that were NOT resolved before closure | No |
+| Narrative | 500-word max. Sprint story: what was built, what struggled, what changed in the practice | No |
+
+**Sprint planning integration (Decision 29 Step 1 extension):** Sprint planning Step 1 reads the most recent sprint summary before synthesizing backlog recommendations. The summary provides the "what just happened" context that informs priority recommendations. Non-blocking if absent (first sprint, or summary not yet written for the prior sprint).
+
+**Retro orchestrator sequence at Phase 6 close:**
+1. Spawn `/momentum:feature-status` (refresh cache)
+2. Read updated `.claude/momentum/feature-status.md` for status deltas
+3. Write `sprint-summary.md` (sole writer at close time)
+4. Proceed to sprint closure
+
+**Rationale:** Sprint summaries address a gap in context continuity across sessions. Without a summary, sprint planning Step 1 must reconstruct sprint history by reading all story files, retro findings, and git log. The 500-word cap keeps summaries dense and LLM-efficient — optimized for being read as context, not for human prose.
+
+**Traceability:** Introduced by sprint-boundary-compression story in sprint-2026-04-11. Motivated by sprint planning Step 1 synthesis: the "what just happened" signal was previously unstructured (scattered across retro-transcript-audit.md, story files, and decisions/). The sprint summary is the canonical compression of that signal.
+
+---
+
+**Decision 48 — Practice Project Detection and Practice Rendering Path (sprint-2026-04-11)**
+
+`/momentum:feature-status` automatically detects whether it is running inside a practice project (a project that IS a Momentum-like practice framework) or a product project, and selects the appropriate rendering path.
+
+**Detection heuristic:**
+
+```
+Practice project IF:
+  skills/momentum/skills/*/SKILL.md exists   (skill files at a practice-skill layout)
+  AND _bmad-output/planning-artifacts/ exists  (BMAD planning output present)
+```
+
+Both conditions must be true. The heuristic is intentionally conservative: it must not false-positive for regular product projects that happen to have a `skills/` directory. The dual condition (skill topology + planning artifacts) is specific to practice projects built on the Momentum pattern.
+
+**Detection mechanism:** Glob-based — `glob("skills/momentum/skills/*/SKILL.md")`. No hardcoded skill names. Dynamic discovery means new skills are automatically included without updating the detection logic or the rendering template.
+
+**Practice rendering path — two sections:**
+
+**Section 1: Skill Topology**
+
+ASCII representation of the skill graph showing hand-off relationships derived from workflow conventions. Relationships are inferred from workflow.md `spawn` directives and SKILL.md `invokes:` references — not hardcoded.
+
+```
+/momentum:impetus
+  ├── dispatches → /momentum:sprint-planning
+  ├── dispatches → /momentum:sprint-dev
+  └── dispatches → /momentum:retro
+/momentum:sprint-dev
+  ├── spawns    → momentum:dev (per story)
+  ├── spawns    → momentum:code-reviewer (Phase 4b)
+  └── spawns    → momentum:avfl (Phase 4)
+```
+
+**Section 2: SDLC Coverage Table**
+
+Maps each skill to the SDLC phases it covers. Eight phases (fixed, not derived):
+
+| SDLC Phase | Skills covering it |
+|---|---|
+| Discovery | momentum:research, momentum:intake |
+| Planning | momentum:sprint-planning, momentum:refine, momentum:epic-grooming |
+| Specification | momentum:create-story, momentum:plan-audit |
+| Implementation | momentum:dev, momentum:quick-fix |
+| Review | momentum:code-reviewer, momentum:architecture-guard, momentum:avfl |
+| Retrospective | momentum:retro, momentum:distill |
+| Orientation | momentum:impetus, momentum:feature-status |
+| Quality/Validation | momentum:avfl, momentum:code-reviewer, momentum:assessment |
+
+Redundancy flags: phases with 0 skills are flagged as uncovered; phases with 4+ skills are flagged as potentially over-invested (informational, not blocking).
+
+**Product rendering path:** The product path (default when practice detection returns false) renders the flow/connection/quality feature tables with gap analysis as described in Decision 45. No change to product path behavior.
+
+**Rationale:** Practice projects have a fundamentally different "feature" structure — their user-observable capabilities are skills and SDLC coverage, not product flows. Forcing a product-style feature table onto Momentum itself would require maintaining a features.json that describes Momentum's own skills as "features" — an awkward fit. The practice path renders the actually meaningful signal for a practice project developer. The detection heuristic is the minimal sufficient condition that distinguishes the two cases without requiring explicit configuration.
+
+**Traceability:** Introduced by feature-status-practice-path story in sprint-2026-04-11. Motivated by the observation that Momentum is its own primary dogfooding target — the feature status skill must work well when run against Momentum itself.
 
 ---
 
