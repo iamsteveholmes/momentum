@@ -2164,29 +2164,33 @@
     "priority": "critical"
   },
   "sprint-boundary-compression": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Sprint-Boundary Context Compression — Structured Sprint Summary at Retro Close",
     "epic_slug": "feature-orientation",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
-      "skills/momentum/skills/retro/workflow.md"
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md"
     ],
     "change_type": "skill-instruction",
     "priority": "high"
   },
   "impetus-feature-status-cache": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Impetus Feature Status Cache — Hash-Based Staleness Detection in Greeting",
     "epic_slug": "feature-orientation",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "feature-status-skill"
     ],
     "touches": [
-      "skills/momentum/skills/impetus/workflow.md"
+      "skills/momentum/skills/impetus/workflow.md",
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "skills/momentum/skills/impetus/SKILL.md"
     ],
-    "change_type": "skill-instruction",
+    "change_type": "skill-instruction + code",
     "priority": "high"
   },
   "feature-status-practice-path": {
