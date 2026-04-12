@@ -533,16 +533,6 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
   <step n="6" goal="Call sprint closure commands and present final summary">
     <action>Update task 6 to in_progress</action>
 
-    <action>Call sprint closure:
-      `momentum-tools sprint complete`
-    </action>
-
-    <note>sprint complete transitions the active sprint to the completed list. If this sprint was already moved to completed by sprint-dev Phase 7, this command will report no active sprint — that is expected and safe to ignore.</note>
-
-    <action>Call retro completion:
-      `momentum-tools sprint retro-complete`
-    </action>
-
     <!-- ─── SPRINT SUMMARY PRODUCTION ─── -->
 
     <action>Invoke `momentum:feature-status` as a subagent to refresh `.claude/momentum/feature-status.md`
@@ -611,6 +601,16 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
     </action>
 
     <!-- ─── END SPRINT SUMMARY PRODUCTION ─── -->
+
+    <action>Call sprint closure:
+      `momentum-tools sprint complete`
+    </action>
+
+    <note>sprint complete transitions the active sprint to the completed list. If this sprint was already moved to completed by sprint-dev Phase 7, this command will report no active sprint — that is expected and safe to ignore.</note>
+
+    <action>Call retro completion:
+      `momentum-tools sprint retro-complete`
+    </action>
 
     <output>## Retrospective Complete — Sprint {{sprint_slug}}
 

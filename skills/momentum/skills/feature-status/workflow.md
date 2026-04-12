@@ -514,16 +514,13 @@ Write an SDLC coverage table:
 
 ## Step 8 — Write Cache File
 
-Compute the SHA-256 input hash using Bash:
+Compute the SHA-256 input hash by calling `momentum-tools`:
 
 ```bash
-python3 -c "
-import hashlib, sys
-f = open('_bmad-output/planning-artifacts/features.json').read()
-s = open('_bmad-output/implementation-artifacts/stories/index.json').read() if __import__('os').path.exists('_bmad-output/implementation-artifacts/stories/index.json') else ''
-print(hashlib.sha256((f+':'+s).encode()).hexdigest())
-"
+python3 skills/momentum/scripts/momentum-tools.py feature-status-hash 2>&1
 ```
+
+Parse `hash_result.hash` from the JSON output. This is the canonical hash — the same algorithm used by `startup-preflight` and `greeting-state` for staleness detection.
 
 Compute `generated_at` using Bash:
 ```bash
