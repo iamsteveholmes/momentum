@@ -26,3 +26,4 @@ Codebase state
 | ID | Title | Date | Decisions Produced | Status |
 |----|-------|------|--------------------|--------|
 | AES-001 | [Agent Guidelines Current State — Gen-1 vs. Gen-2 Target](aes-001-agent-guidelines-current-state-2026-04-09.md) | 2026-04-09 | DEC-001 | current |
+| AES-002 | [Feature Schema Value Gap — Structural Definition Without Value Context](aes-002-feature-value-gap-2026-04-11.md) | 2026-04-11 | DEC-004 | current |
