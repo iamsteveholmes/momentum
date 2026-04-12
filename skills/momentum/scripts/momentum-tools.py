@@ -497,6 +497,8 @@ def cmd_session_greeting_state(args: argparse.Namespace) -> None:
         else:
             state = "active-in-progress"
 
+    feature_status = _compute_feature_status(project_dir, claude_project_dir)
+
     output = {
         "state": state,
         "active_sprint": active_sprint,
@@ -504,6 +506,7 @@ def cmd_session_greeting_state(args: argparse.Namespace) -> None:
         "planning_status": planning_status,
         "momentum_completions": momentum_completions,
         "last_completed_sprint": last_completed_sprint,
+        "feature_status": feature_status,
     }
     result("session_greeting_state", success=True, **output)
 
@@ -1211,6 +1214,8 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
         rendered_menu = [f"[{i+1}] {item}" for i, item in enumerate(_menus.get(state, []))]
         rendered_closer = _closers.get(state, "")
 
+        feature_status = _compute_feature_status(project_dir, claude_project_dir)
+
         greeting = {
             "state": state,
             "active_sprint": active_sprint,
@@ -1222,6 +1227,7 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
             "planning_context": rendered_planning_context,
             "menu": rendered_menu,
             "closer": rendered_closer,
+            "feature_status": feature_status,
         }
 
     result("session_startup_preflight", success=True,
@@ -1233,6 +1239,129 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
            config_gaps=config_gaps,
            greeting=greeting,
            current_version=current_version)
+
+
+# --- Feature Status Cache ---
+
+def _compute_feature_status(project_dir: Path, claude_project_dir: Path) -> dict:
+    """Compute feature status dict from cache and hash inputs.
+
+    Returns a dict with a 'state' key — one of:
+      - 'no-features': features.json absent
+      - 'no-cache':    features.json present but cache missing/unparseable
+      - 'fresh':       cache present and hash matches
+      - 'stale':       cache present but hash mismatches
+    """
+    import hashlib
+
+    features_path = project_dir / "_bmad-output" / "planning-artifacts" / "features.json"
+    stories_path_val = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    cache_path = claude_project_dir / ".claude" / "momentum" / "feature-status.md"
+
+    if not features_path.exists():
+        return {"state": "no-features"}
+
+    # Read raw content for hashing
+    try:
+        features_content = features_path.read_text(encoding="utf-8")
+    except OSError:
+        features_content = ""
+
+    try:
+        stories_content = stories_path_val.read_text(encoding="utf-8") if stories_path_val.exists() else ""
+    except OSError:
+        stories_content = ""
+
+    computed_hash = hashlib.sha256(
+        (features_content + ":" + stories_content).encode()
+    ).hexdigest()
+
+    # Parse frontmatter from cache file
+    frontmatter = _read_frontmatter(cache_path)
+    if frontmatter is None:
+        return {"state": "no-cache"}
+
+    cached_hash = frontmatter.get("input_hash", "")
+    summary = frontmatter.get("summary", "")
+
+    if cached_hash == computed_hash:
+        return {"state": "fresh", "summary": summary}
+    else:
+        return {"state": "stale", "summary": summary}
+
+
+def _read_frontmatter(path: Path) -> dict | None:
+    """Read YAML-style frontmatter from a markdown file.
+
+    Returns None if file is absent, not readable, or has no valid frontmatter block.
+    Returns a dict of key: value pairs parsed from the --- block.
+    """
+    if not path.exists():
+        return None
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+
+    # Find closing ---
+    end_idx = None
+    for i, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            end_idx = i
+            break
+
+    if end_idx is None:
+        return None
+
+    frontmatter: dict = {}
+    for line in lines[1:end_idx]:
+        if ":" in line:
+            key, _, value = line.partition(":")
+            key = key.strip()
+            value = value.strip()
+            # Strip surrounding quotes if present
+            if (value.startswith('"') and value.endswith('"')) or \
+               (value.startswith("'") and value.endswith("'")):
+                value = value[1:-1]
+            frontmatter[key] = value
+
+    return frontmatter
+
+
+def cmd_feature_status_hash(args: argparse.Namespace) -> None:
+    """Compute SHA-256 hash of features.json + stories/index.json."""
+    import hashlib
+    import os
+
+    project_dir = resolve_project_dir()
+
+    features_path = project_dir / "_bmad-output" / "planning-artifacts" / "features.json"
+    stories_path_val = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+
+    if not features_path.exists():
+        result("feature_status_hash", success=True,
+               hash_result={"hash": "", "features_present": False})
+        return
+
+    try:
+        features_content = features_path.read_text(encoding="utf-8")
+    except OSError:
+        features_content = ""
+
+    try:
+        stories_content = stories_path_val.read_text(encoding="utf-8") if stories_path_val.exists() else ""
+    except OSError:
+        stories_content = ""
+
+    combined = features_content + ":" + stories_content
+    digest = hashlib.sha256(combined.encode()).hexdigest()
+
+    result("feature_status_hash", success=True,
+           hash_result={"hash": digest, "features_present": True})
 
 
 # --- Specialist Classify Command ---
@@ -1563,6 +1692,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     vc = version_sub.add_parser("check", help="Check version hash")
     vc.set_defaults(func=cmd_version_check)
+
+    # feature-status-hash command
+    fsh = subparsers.add_parser("feature-status-hash",
+                                help="Compute SHA-256 hash of features.json + stories/index.json")
+    fsh.set_defaults(func=cmd_feature_status_hash)
 
     return parser
 

@@ -1,7 +1,7 @@
 ---
 title: Impetus Feature Status Cache — Hash-Based Staleness Detection in Greeting
 story_key: impetus-feature-status-cache
-status: ready-for-dev
+status: review
 epic_slug: feature-orientation
 depends_on:
   - feature-status-skill
@@ -141,7 +141,7 @@ returned in the existing `greeting` payload.
 
 ## Tasks
 
-### Task 1: Implement `feature-status-hash` command in momentum-tools.py
+### Task 1: [x] Implement `feature-status-hash` command in momentum-tools.py
 
 Add `cmd_feature_status_hash` to momentum-tools.py. This command:
 
@@ -153,17 +153,17 @@ Add `cmd_feature_status_hash` to momentum-tools.py. This command:
 - Returns `{ "hash": "<hex digest>", "features_present": true }`
 - Registers as top-level subcommand: `momentum-tools feature-status-hash`
 
-#### Subtask 1a: Hash computation logic
+#### Subtask 1a: [x] Hash computation logic
 
 Implement the file reading and SHA computation. Use `hashlib.sha256` —
 consistent with the existing hash patterns in the codebase.
 
-#### Subtask 1b: CLI registration
+#### Subtask 1b: [x] CLI registration
 
 Register `feature-status-hash` as a top-level command (alongside `session`,
 `sprint`, etc.) with `set_defaults(func=cmd_feature_status_hash)`.
 
-### Task 2: Extend `startup-preflight` to include feature status fields
+### Task 2: [x] Extend `startup-preflight` to include feature status fields
 
 Extend `cmd_session_startup_preflight` to compute feature status inline when
 `route == "greeting"`. This runs inside the existing function — no new Bash
@@ -183,7 +183,7 @@ subprocess:
   - Else: `feature_status = { "state": "stale", "summary": frontmatter.get("summary", "") }`
 - Add `feature_status` to the `greeting` dict before the `result(...)` call
 
-#### Subtask 2a: Extract `_compute_feature_status` shared helper
+#### Subtask 2a: [x] Extract `_compute_feature_status` shared helper
 
 Extract the feature status computation into a standalone module-level helper
 function: `_compute_feature_status(project_dir: Path, claude_project_dir: Path) -> dict`.
@@ -191,20 +191,20 @@ This helper is called by both `startup-preflight` and `greeting-state` (Task 4)
 to keep the logic DRY. The function always returns a dict with a `state` key —
 one of `no-features`, `no-cache`, `fresh`, or `stale`.
 
-#### Subtask 2b: Feature status inline computation
+#### Subtask 2b: [x] Feature status inline computation
 
 Call `_compute_feature_status(project_dir, claude_project_dir)` inside
 `cmd_session_startup_preflight` when `route == "greeting"`. Store the result
 as `feature_status`. Import `hashlib` at the top of the function or file if
 not already present — check existing imports first.
 
-#### Subtask 2c: Payload extension
+#### Subtask 2c: [x] Payload extension
 
 Extend the `greeting` dict with `"feature_status": feature_status`. Ensure
 `feature_status` is `None` (not absent) when `features.json` is absent so the
 greeting template can test for it safely.
 
-### Task 3: Update SKILL.md happy-path greeting block
+### Task 3: [x] Update SKILL.md happy-path greeting block
 
 Update the happy-path `<check if="preflight.route == 'greeting' AND preflight.has_open_threads == false">` block in `skills/momentum/skills/impetus/SKILL.md` to render the feature status line:
 
@@ -224,22 +224,22 @@ Feature status rendering rules (inline in SKILL.md):
 - `state == "fresh"` → `· {greeting.feature_status.summary}`
 - `state == "stale"` → `· {greeting.feature_status.summary}  ! may be out of date — run feature-status to refresh`
 
-### Task 4: Extend `greeting-state` command and update workflow.md Step 7
+### Task 4: [x] Extend `greeting-state` command and update workflow.md Step 7
 
-#### Subtask 4a: Extend `cmd_session_greeting_state`
+#### Subtask 4a: [x] Extend `cmd_session_greeting_state`
 
 Call `_compute_feature_status(project_dir, claude_project_dir)` (extracted in
 Subtask 2a) inside `cmd_session_greeting_state` and add `feature_status` to its
 return payload. This is the data source for workflow.md Step 7 rendering.
 
-#### Subtask 4b: Update workflow.md Step 7 greeting rendering
+#### Subtask 4b: [x] Update workflow.md Step 7 greeting rendering
 
 Update the `<output>` block in Step 7 of `skills/momentum/skills/impetus/workflow.md`
 to render the feature status line identically to the SKILL.md update in Task 3.
 Step 7 reads `{{greeting}}` from `momentum-tools session greeting-state` output —
 the `{{greeting.feature_status}}` field is now available via Subtask 4a.
 
-### Task 5: Unit tests for `feature-status-hash` and preflight extension
+### Task 5: [x] Unit tests for `feature-status-hash` and preflight extension
 
 Add tests in test-momentum-tools.py following the existing subprocess-based
 pattern. All tests must pass; no regressions in existing suite.
@@ -426,7 +426,7 @@ Script and code changes use standard TDD (red-green-refactor). bmad-dev-story ha
 
 ### Agent Model Used
 
-(to be filled)
+claude-sonnet-4-6
 
 ### Debug Log References
 
@@ -434,8 +434,22 @@ None.
 
 ### Completion Notes List
 
-(to be filled)
+- Implemented `_read_frontmatter()` helper to parse YAML-style frontmatter from markdown files (returns None if absent/unparseable)
+- Implemented `_compute_feature_status(project_dir, claude_project_dir)` shared helper — four states: no-features, no-cache, fresh, stale
+- Implemented `cmd_feature_status_hash` as a top-level subcommand returning `{ hash_result: { hash, features_present } }`
+- Extended `cmd_session_startup_preflight`: calls `_compute_feature_status` when `route == "greeting"` and adds `feature_status` to the greeting dict
+- Extended `cmd_session_greeting_state`: calls `_compute_feature_status` and adds `feature_status` to output payload
+- Updated SKILL.md happy-path `<check>` block with inline feature status rendering rules (4 states) and updated output template
+- Updated workflow.md Step 7 output block identically to SKILL.md
+- EDD: wrote 3 behavioral evals in `evals/` — all behaviors confirmed by inspection
+- TDD: wrote 14 unit tests (5 for feature-status-hash, 5 for preflight feature-status, 4 for greeting-state feature-status) — all pass; 386 total tests pass, 0 regressions
 
 ### File List
 
-(to be filled)
+- skills/momentum/scripts/momentum-tools.py
+- skills/momentum/scripts/test-momentum-tools.py
+- skills/momentum/skills/impetus/SKILL.md
+- skills/momentum/skills/impetus/workflow.md
+- skills/momentum/skills/impetus/evals/eval-feature-status-fresh-greeting.md
+- skills/momentum/skills/impetus/evals/eval-feature-status-stale-greeting.md
+- skills/momentum/skills/impetus/evals/eval-feature-status-absent-omitted.md

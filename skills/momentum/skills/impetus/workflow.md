@@ -371,10 +371,18 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
 
     <action>Look up {{greeting.state}} in the session-greeting reference. Render the narrative template for that state, substituting {{greeting.active_sprint}}, {{greeting.planning_sprint}}, and {{greeting.last_completed_sprint}} into the template variables.</action>
 
+    <!-- Feature status rendering rules:
+         state == "no-features" → ? No features defined yet — run feature-artifact-schema to plan features.
+         state == "no-cache"    → ? No feature status yet — run feature-status to generate one.
+         state == "fresh"       → · {greeting.feature_status.summary}
+         state == "stale"       → · {greeting.feature_status.summary}  ! may be out of date — run feature-status to refresh
+         Omit the line entirely if greeting.feature_status is null. -->
+
     <output>Momentum
 
   {{rendered narrative for greeting.state}}
   {{rendered planning sprint context if applicable}}
+  {{feature status line — render per rules above, omit if greeting.feature_status is null}}
 
   {{rendered menu for greeting.state}}
 
