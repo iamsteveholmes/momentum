@@ -28,6 +28,10 @@ derives_from:
 lastEdited: '2026-04-11'
 editHistory:
   - date: '2026-04-11'
+    changes: 'Sprint planning: registered new Epic 13 (feature-orientation) — Feature Visualization and Developer Orientation from DEC-002; added 5 story stubs to stories/index.json: feature-artifact-schema, feature-status-skill, sprint-boundary-compression, impetus-feature-status-cache, feature-status-practice-path.'
+  - date: '2026-04-11'
+    changes: 'Epic grooming: registered new Epic 12 (sprint-dev-workflow) — sprint-dev-phase-7-gate, backend-dev-systematic-error-guidance, sprint-scope-tracking were orphaned slugs with no epics.md definition; CREATE approved by developer. No story reassignments needed (slugs already correct).'
+  - date: '2026-04-11'
     changes: 'Removed /momentum:create-epic and /momentum:develop-epic — superseded by momentum:create-story + momentum:epic-grooming + sprint model (developer decision 2026-04-11): replaced FR50 and FR51 rows in FR Coverage Map with removal notices; rewrote FR52 row to reflect current lifecycle (triage → sprint-planning → sprint-dev → retro → triage); renamed Epic 2b from "Impetus as Epic Orchestrator" to "Impetus as Sprint Orchestrator" in both the Epic List and the full epic body; rewrote Epic 2b description to replace create-epic/develop-epic workflow with create-story + epic-grooming + sprint model; updated Epic 2b FRs covered to remove FR50 and FR51; updated Epic 2a Additional field to remove /create and /develop references and reflect sprint-aware narrative greeting.'
   - date: '2026-04-01'
     changes: 'Added Epic 0 (Redesign Foundation — 3 stories): story-id-migration, sprint-status-schema-redesign, momentum-sprint-manager-skill. Added Epic 0 to epic list. These are the foundation for the full Momentum orchestration redesign.'
@@ -445,6 +449,23 @@ Sprint-dev assembles the right execution team — agent roles, spawning modes (f
 
 ---
 
+### Epic 12: Sprint Execution Workflow
+Governs the behavioral contract of the sprint-dev workflow itself — phase gate enforcement, pre-implementation diagnostic steps, and sprint scope visibility. Complements story-cycles (individual story concerns) and impetus-core (cross-cutting infrastructure) by covering sprint-level execution mechanics.
+**FRs covered:** FR41 (partial — sprint execution flow)
+**Additional:** Phase 7 gate (MANUAL scenario developer sign-off), backend dev diagnostic pre-work step, planned vs unplanned work scope tracking
+**Priority:** Medium
+
+---
+
+### Epic 13: Feature Orientation
+A developer always knows which user-facing capabilities exist, whether each is working, and what sprint work is required to advance them. Features are tracked as first-class artifacts alongside stories and epics. The Impetus greeting includes a cached feature status summary so every session starts with feature-level context. Sprint boundaries produce structured summaries so orientation at the start of a new cycle is instant, not reconstructed from raw logs.
+**FRs covered:** New FRs pending PRD update (DEC-002 decisions D1–D5; DRIFT-006 superseded)
+**Source decision:** DEC-002 — Feature Visualization and Developer Orientation (2026-04-11)
+**Additional:** features.json schema with type taxonomy (flow/connection/quality), acceptance conditions, story cross-references; momentum:feature-status skill with coverage gap analysis and dual rendering paths (product vs practice projects); hash-based feature status cache in Impetus greeting; sprint-boundary compression artifact at retro close.
+**Priority:** High
+
+---
+
 ## Epic 1: Foundation & Bootstrap
 
 A developer installs Momentum from scratch — global practice files in place, project bootstrapped, all structure scaffolded through Impetus. Everything subsequent depends on this.
@@ -645,6 +666,37 @@ Sprint-dev assembles the right execution team for each development and review ph
 **NFRs covered:** none
 
 **Current state:** 4 done, 6 remaining
+
+> Story details are tracked in `stories/index.json`. Epic membership is authoritative there.
+
+---
+
+## Epic 12: Sprint Execution Workflow
+
+Governs the behavioral contract of the sprint-dev workflow itself — phase gate enforcement, pre-implementation diagnostic steps, and sprint scope visibility. Complements story-cycles (individual story concerns) and impetus-core (cross-cutting infrastructure) by addressing sprint-level execution mechanics specifically.
+
+**Category:** Sprint execution behavior
+
+**Strategic intent:** As sprint-dev matures, specific behavioral gaps emerge that are neither story-level (Epic 4) nor cross-cutting infrastructure (Epic 10): How does the workflow gate on MANUAL scenarios that require developer sign-off? How does a dev agent systematically diagnose errors before implementing? How does the sprint track planned vs unplanned scope drift? These concerns share a home here.
+
+**Boundaries:** Includes sprint-dev phase gate behavior, dev agent pre-work diagnostic patterns, and sprint-level scope tracking. Excludes: individual story implementation concerns (→ Epic 4), agent team composition (→ Epic 11), cross-cutting orchestrator improvements (→ Epic 10).
+
+**FRs covered:** FR41 (partial — sprint execution flow)
+
+**Current state:** 0 done, 3 remaining
+
+> Story details are tracked in `stories/index.json`. Epic membership is authoritative there.
+
+---
+
+## Epic 13: Feature Orientation
+
+A developer always knows which user-facing capabilities exist, whether each is working, and what sprint work is required to advance them. The feature artifact (`features.json`) is the missing layer between PRD functional requirements and stories — it tracks user-observable capabilities as persistent, finite units with acceptance conditions, status, and story links. `momentum:feature-status` actively evaluates each feature for coverage gaps, not just story counts. The Impetus greeting shows a cached feature summary (hash-based staleness detection — startup stays fast). Sprint boundaries produce structured summaries so the next sprint starts oriented, not adrift.
+
+**FRs covered:** New FRs pending PRD update (DEC-002 decisions D1–D5)
+**Source decision:** `_bmad-output/planning-artifacts/decisions/dec-002-feature-visualization-and-orientation-2026-04-11.md`
+**Architecture decisions affected:** DRIFT-006 superseded (momentum:feature-status is standalone, not absorbed into Impetus/momentum-tools); Decision 4b extended (greeting states include cached feature status with staleness flag)
+**Additional:** Feature type taxonomy (flow/connection/quality); two rendering paths — product projects (Nornspun: feature tracking with acceptance conditions) vs practice projects (Momentum: skill topology + SDLC coverage map); sprint-boundary compression artifact written at retro completion and loaded by sprint-planning.
 
 > Story details are tracked in `stories/index.json`. Epic membership is authoritative there.
 

@@ -2135,5 +2135,72 @@
     "depends_on": [],
     "touches": [],
     "priority": "high"
+  },
+  "feature-artifact-schema": {
+    "status": "backlog",
+    "title": "Feature Artifact Schema — Define features.json and Populate Initial Instances",
+    "epic_slug": "feature-orientation",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "_bmad-output/planning-artifacts/features.json"
+    ],
+    "change_type": "config-structure",
+    "priority": "critical"
+  },
+  "feature-status-skill": {
+    "status": "backlog",
+    "title": "Feature Status Skill — Coverage Gap Analysis with Per-Project-Type Rendering",
+    "epic_slug": "feature-orientation",
+    "story_file": false,
+    "depends_on": [
+      "feature-artifact-schema"
+    ],
+    "touches": [
+      "skills/momentum/skills/feature-status/SKILL.md",
+      "skills/momentum/skills/feature-status/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "critical"
+  },
+  "sprint-boundary-compression": {
+    "status": "backlog",
+    "title": "Sprint-Boundary Context Compression — Structured Sprint Summary at Retro Close",
+    "epic_slug": "feature-orientation",
+    "story_file": false,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/retro/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
+  },
+  "impetus-feature-status-cache": {
+    "status": "backlog",
+    "title": "Impetus Feature Status Cache — Hash-Based Staleness Detection in Greeting",
+    "epic_slug": "feature-orientation",
+    "story_file": false,
+    "depends_on": [
+      "feature-status-skill"
+    ],
+    "touches": [
+      "skills/momentum/skills/impetus/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
+  },
+  "feature-status-practice-path": {
+    "status": "backlog",
+    "title": "Feature Status Practice Path — Skill Topology and SDLC Coverage Map for Momentum",
+    "epic_slug": "feature-orientation",
+    "story_file": false,
+    "depends_on": [
+      "feature-status-skill"
+    ],
+    "touches": [
+      "skills/momentum/skills/feature-status/workflow.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
   }
 }
