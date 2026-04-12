@@ -2193,7 +2193,7 @@
     "status": "backlog",
     "title": "Feature Status Practice Path — Skill Topology and SDLC Coverage Map for Momentum",
     "epic_slug": "feature-orientation",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "feature-status-skill"
     ],
