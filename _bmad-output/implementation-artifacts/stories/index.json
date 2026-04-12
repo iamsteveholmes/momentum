@@ -2137,7 +2137,7 @@
     "priority": "high"
   },
   "feature-artifact-schema": {
-    "status": "review",
+    "status": "done",
     "title": "Feature Artifact Schema — Define features.json and Populate Initial Instances",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -2149,7 +2149,7 @@
     "priority": "critical"
   },
   "feature-status-skill": {
-    "status": "review",
+    "status": "done",
     "title": "Feature Status Skill — Coverage Gap Analysis with Per-Project-Type Rendering",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -2164,7 +2164,7 @@
     "priority": "critical"
   },
   "sprint-boundary-compression": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint-Boundary Context Compression — Structured Sprint Summary at Retro Close",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -2179,7 +2179,7 @@
     "priority": "high"
   },
   "impetus-feature-status-cache": {
-    "status": "review",
+    "status": "done",
     "title": "Impetus Feature Status Cache — Hash-Based Staleness Detection in Greeting",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -2196,7 +2196,7 @@
     "priority": "high"
   },
   "feature-status-practice-path": {
-    "status": "review",
+    "status": "done",
     "title": "Feature Status Practice Path — Skill Topology and SDLC Coverage Map for Momentum",
     "epic_slug": "feature-orientation",
     "story_file": true,
