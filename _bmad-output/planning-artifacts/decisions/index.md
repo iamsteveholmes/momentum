@@ -15,3 +15,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 |----|-------|------|-----------------|--------|
 | DEC-001 | [Three-Tier Agent Guidelines Architecture](dec-001-three-tier-agent-guidelines-2026-04-09.md) | 2026-04-09 | agent-guidelines-architecture-2026-04-09 | decided |
 | DEC-002 | [Feature Visualization and Developer Orientation](dec-002-feature-visualization-and-orientation-2026-04-11.md) | 2026-04-11 | project-knowledge-visualization-ai-2026-04-11 | decided |
+| DEC-003 | [Feature Status Artifact Design — HTML Report, Layout, Signals, and Rendering](dec-003-feature-status-artifact-design-2026-04-11.md) | 2026-04-11 | feature-status-visualization-2026-04-11 | decided |

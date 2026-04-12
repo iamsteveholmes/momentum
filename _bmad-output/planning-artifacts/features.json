@@ -1,0 +1,170 @@
+{
+  "nornspun-session-prep-loop": {
+    "feature_slug": "nornspun-session-prep-loop",
+    "name": "Session Prep Loop — Open App to Play-Ready",
+    "type": "flow",
+    "description": "The end-to-end session preparation flow: Spinner opens Nornspun, Verdandi greets them with current campaign state, generates a 'When Last Our Heroes Met' recap, surfaces upcoming encounters and NPC reminders, and leaves the Spinner ready to run their session in under 15 minutes.",
+    "acceptance_condition": "A Spinner with an active campaign can open Nornspun, complete session prep with Verdandi (recap + encounters + reminders), and be ready to run their session in under 15 minutes without manually consulting external notes.",
+    "status": "not-started",
+    "prd_section": "FR9, FR10, FR11, FR12, FR13 — Session Lifecycle",
+    "stories": [],
+    "stories_done": 0,
+    "stories_remaining": 0,
+    "last_verified": null,
+    "notes": "Core value proposition. Dogfood target: Steve actively using for real campaign prep. No Nornspun stories currently in Momentum index."
+  },
+  "nornspun-post-session-capture": {
+    "feature_slug": "nornspun-post-session-capture",
+    "name": "Post-Session Capture — Conversational Memory Update",
+    "type": "flow",
+    "description": "After a session, the Spinner describes what happened conversationally to Urd. Urd updates living memory (tracker, indexes, narrative state), records divergences from planned content, and confirms 'bind this?' before persisting — keeping the campaign's knowledge base current without homework-like data entry.",
+    "acceptance_condition": "A Spinner can describe a completed session to Urd in plain language, and Urd correctly updates living memory with session events, NPC changes, and plot divergences — with the Spinner confirming before any data is persisted.",
+    "status": "not-started",
+    "prd_section": "FR14, FR15, FR16, FR17, FR65 — Session Lifecycle",
+    "stories": [],
+    "stories_done": 0,
+    "stories_remaining": 0,
+    "last_verified": null,
+    "notes": "The 'capture doesn't get abandoned' metric is the 3-month dogfood success criterion. Pairs with session-prep-loop to form the prep-capture flywheel."
+  },
+  "nornspun-living-memory-cross-agent": {
+    "feature_slug": "nornspun-living-memory-cross-agent",
+    "name": "Living Memory Cross-Agent Context Sharing",
+    "type": "connection",
+    "description": "The handoff between Urd, Verdandi, and Skuld via shared living memory. When a Spinner switches from Verdandi's prep session to Urd's post-session capture, Urd already has the context from the prep — the GM does not need to re-explain what was planned. Each Norn's work summaries are queryable by other Norns.",
+    "acceptance_condition": "After a prep session with Verdandi, switching to Urd and beginning post-session capture results in Urd demonstrating awareness of what was prepared (encountered content, flagged NPCs, session goals) without the Spinner re-explaining.",
+    "status": "not-started",
+    "prd_section": "FR23, FR24 — Living Memory & Knowledge; FR31 — Agent Experience",
+    "stories": [],
+    "stories_done": 0,
+    "stories_remaining": 0,
+    "last_verified": null,
+    "notes": "This is the 'agents maintain work summaries with timestamps for cross-agent awareness' requirement. Key differentiator over single-agent tools."
+  },
+  "nornspun-document-ingestion-pipeline": {
+    "feature_slug": "nornspun-document-ingestion-pipeline",
+    "name": "Adventure Document Ingestion Pipeline",
+    "type": "connection",
+    "description": "The integration between uploaded adventure documents (PDF/markdown) and the agent knowledge base. A Spinner uploads an adventure PDF; the system ingests, indexes, and makes it available for Verdandi to reference during session prep — including handling edge cases (image-only, mixed-layout, password-protected, corrupt).",
+    "acceptance_condition": "A Spinner uploads a text-based adventure PDF and can ask Verdandi questions about content from that document (locations, encounters, NPCs) during a session prep conversation, with ≥80% field coverage for supported formats.",
+    "status": "not-started",
+    "prd_section": "FR2, FR12, FR21 — Campaign Management and Living Memory",
+    "stories": [],
+    "stories_done": 0,
+    "stories_remaining": 0,
+    "last_verified": null,
+    "notes": "Android PDF upload delivered D4. Desktop adventure upload deferred to follow-on story. Image-only PDFs, mixed-layout, password-protected, and corrupt PDFs each have defined error behaviors per FR21."
+  },
+  "nornspun-streaming-responsiveness": {
+    "feature_slug": "nornspun-streaming-responsiveness",
+    "name": "Real-Time Streaming Response Quality",
+    "type": "quality",
+    "description": "Agent responses stream to the client in real-time with no perceptible lag between first token and first character rendered. Norn switching cancels in-progress streaming cleanly with no partial or garbled text. The interface feels live and responsive throughout a prep or capture session.",
+    "acceptance_condition": "Agent responses begin rendering within 2 seconds of sending a message, stream continuously until complete, and switching Norns mid-response produces a clean state with no residual partial text in either pane.",
+    "status": "not-started",
+    "prd_section": "FR34 — Agent Experience; FR31 — Norn switch streaming cancel behavior",
+    "stories": [],
+    "stories_done": 0,
+    "stories_remaining": 0,
+    "last_verified": null,
+    "notes": "FR34 requires real-time streaming. FR31 specifies clean cancel on Norn switch. Streaming quality directly affects session prep UX — a laggy interface breaks the 15-minute prep goal."
+  },
+  "momentum-sprint-planning-to-ready": {
+    "feature_slug": "momentum-sprint-planning-to-ready",
+    "name": "Sprint Planning — Backlog Stubs to Ready Sprint",
+    "type": "flow",
+    "description": "The end-to-end sprint planning flow: developer invokes momentum:sprint-planning, the skill reads the backlog, presents synthesis-first recommendations (not a data dump), developer selects stories, AVFL validates them, Gherkin specs are generated, and the sprint is activated with a ready-for-dev story set.",
+    "acceptance_condition": "A developer with populated backlog stubs can invoke momentum:sprint-planning and receive an activated sprint with validated, Gherkin-specced, ready-for-dev stories — without manually specifying story selection criteria or review flow.",
+    "status": "working",
+    "prd_section": null,
+    "stories": [
+      "sprint-planning-skill",
+      "momentum-sprint-planning",
+      "sprint-workflow-alignment",
+      "sprint-planning-synthesis-first",
+      "mandatory-task-tracking",
+      "gherkin-acs-and-atdd-workflow-active"
+    ],
+    "stories_done": 6,
+    "stories_remaining": 0,
+    "last_verified": "2026-04-11",
+    "notes": "All 6 stories done. Feature is working for current sprint execution. Known gap: create-story-update story (backlog) would add Gherkin generation directly to create-story workflow."
+  },
+  "momentum-assessment-decision-story-pipeline": {
+    "feature_slug": "momentum-assessment-decision-story-pipeline",
+    "name": "Assessment → Decision → Story Traceability Pipeline",
+    "type": "flow",
+    "description": "The SDLC artifact traceability flow: a product state assessment (momentum:assessment) produces an assessment document; momentum:decision captures architectural decisions from that assessment into decision documents; momentum:create-story generates stories with derives_from frontmatter linking back to decisions. Every story has a traceable lineage to a decision and an assessment.",
+    "acceptance_condition": "A developer can run momentum:assessment, then momentum:decision, then momentum:create-story and produce a story whose derives_from frontmatter points to the decision document, which in turn references the assessment that motivated it.",
+    "status": "partial",
+    "prd_section": null,
+    "stories": [
+      "assessment-skill",
+      "decision-skill",
+      "refine-assessment-decision-review"
+    ],
+    "stories_done": 3,
+    "stories_remaining": 0,
+    "last_verified": "2026-04-11",
+    "notes": "Skills exist and are working. derives_from frontmatter is used in practice (e.g., feature-artifact-schema derives from DEC-002). Formal traceability validation (provenance scanner) is backlog — hence partial, not working."
+  },
+  "momentum-impetus-session-orientation": {
+    "feature_slug": "momentum-impetus-session-orientation",
+    "name": "Impetus Session Orientation — Sprint State and Feature Status",
+    "type": "connection",
+    "description": "The handoff between the developer's current context and the AI session. Impetus greets the developer at session start with current sprint state (stories in progress, blockers, fill bars), open journal threads, and — once feature-status cache is implemented — a cached feature status summary with staleness flag. Developer arrives oriented, not lost.",
+    "acceptance_condition": "A developer opening a new Claude Code session with momentum:impetus receives a greeting that shows current sprint name, stories in progress vs done vs remaining, open journal threads (if any), and a feature status summary (cached, with staleness flag if features.json has changed since last cache).",
+    "status": "partial",
+    "prd_section": null,
+    "stories": [
+      "impetus-skill-created-with-correct-persona-and-input-handling",
+      "session-orientation-and-thread-management",
+      "impetus-greeting-rewrite",
+      "impetus-feature-status-cache"
+    ],
+    "stories_done": 3,
+    "stories_remaining": 1,
+    "last_verified": "2026-04-11",
+    "notes": "Sprint state and journal orientation working. Feature status cache (impetus-feature-status-cache) is ready-for-dev — greeting lacks feature status until that story is complete."
+  },
+  "momentum-quality-gates-enforced": {
+    "feature_slug": "momentum-quality-gates-enforced",
+    "name": "Quality Gates — AVFL, Code Review, and Retro Applied to Every Sprint",
+    "type": "connection",
+    "description": "The quality gate integration across the sprint lifecycle. Every story goes through AVFL validation (adversarial validate-fix loop), concurrent code review, and E2E validation before merge. The sprint retro audits transcripts, not just milestone logs, and produces actionable findings that feed back into the backlog.",
+    "acceptance_condition": "A sprint completes with: every merged story having passed AVFL + code review + E2E validation; the retro producing a findings document from transcript audit (not just milestone logs); and at least one retro finding generating a story stub added to the backlog.",
+    "status": "partial",
+    "prd_section": null,
+    "stories": [
+      "posttooluse-lint-and-format-hook-active",
+      "stop-gate-runs-conditional-quality-checks",
+      "gherkin-acs-and-atdd-workflow-active",
+      "quality-gate-parity-across-workflows",
+      "avfl-scan-profile",
+      "retro-workflow-rewrite"
+    ],
+    "stories_done": 6,
+    "stories_remaining": 0,
+    "last_verified": "2026-04-11",
+    "notes": "Gate infrastructure is working. Known gaps: AVFL fixer agent not always composed (avfl-fixer-required-gate backlog), E2E validator black-box hardening backlog. Feature is partial because known escapes exist in practice."
+  },
+  "momentum-feature-status-visibility": {
+    "feature_slug": "momentum-feature-status-visibility",
+    "name": "Feature Status Visibility — Working, Partial, Not-Started per Feature",
+    "type": "quality",
+    "description": "The developer can run momentum:feature-status and see a per-feature status view showing which features are working, partial, or not-started — with explicit gap analysis flagging features where the assigned story set is insufficient to achieve the acceptance condition. For Momentum (practice project), this includes skill topology and SDLC coverage map.",
+    "acceptance_condition": "A developer can run momentum:feature-status and receive a rendered view showing all features in features.json with current status, story coverage counts, and explicit gap flags for features where planned stories do not fully cover the acceptance condition — without manually cross-referencing stories/index.json.",
+    "status": "not-started",
+    "prd_section": null,
+    "stories": [
+      "feature-artifact-schema",
+      "feature-status-skill",
+      "feature-status-practice-path",
+      "impetus-feature-status-cache"
+    ],
+    "stories_done": 0,
+    "stories_remaining": 4,
+    "last_verified": null,
+    "notes": "feature-artifact-schema is in-progress (this story). feature-status-skill, feature-status-practice-path, impetus-feature-status-cache are all ready-for-dev. stories_done will update as this sprint progresses."
+  }
+}

@@ -803,6 +803,92 @@
       "started": "2026-04-08",
       "completed": "2026-04-09",
       "retro_run_at": "2026-04-09"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "slug": "sprint-2026-04-11",
+      "epic": "feature-orientation",
+      "stories": [
+        "feature-artifact-schema",
+        "feature-status-skill",
+        "sprint-boundary-compression",
+        "impetus-feature-status-cache",
+        "feature-status-practice-path"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "feature-artifact-schema"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "feature-status-skill"
+          ]
+        },
+        {
+          "wave": 3,
+          "stories": [
+            "sprint-boundary-compression",
+            "impetus-feature-status-cache",
+            "feature-status-practice-path"
+          ]
+        }
+      ],
+      "team": {
+        "story_assignments": {
+          "feature-artifact-schema": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 1
+          },
+          "feature-status-skill": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          },
+          "sprint-boundary-compression": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 3
+          },
+          "impetus-feature-status-cache": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 3,
+            "note": "Tasks 1/2/5 are script-code TDD — use momentum:dev (bmad-dev-story) for those tasks; Tasks 3/4 are EDD for dev-skills"
+          },
+          "feature-status-practice-path": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 3
+          }
+        },
+        "review_roles": {
+          "qa-reviewer": "impetus-feature-status-cache",
+          "e2e-validator": [
+            "feature-status-skill",
+            "impetus-feature-status-cache",
+            "sprint-boundary-compression"
+          ],
+          "architecture-guard": [
+            "feature-status-skill",
+            "impetus-feature-status-cache"
+          ]
+        }
+      },
+      "planned": "2026-04-11",
+      "started": "2026-04-11",
+      "completed": "2026-04-12",
+      "retro_run_at": null
     }
   ],
   "quickfixes": [
@@ -811,6 +897,11 @@
       "story": "refine-skill-rewrite",
       "started": "2026-04-07",
       "completed": "2026-04-07"
+    },
+    {
+      "slug": "quickfix-2026-04-11",
+      "story": "implement-momentum-distill-skill",
+      "started": "2026-04-11"
     }
   ]
 }

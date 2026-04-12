@@ -44,6 +44,34 @@
       <action>Set {{has_master_plan}} = true</action>
     </check>
 
+    <!-- Phase A.5: Previous sprint summary load -->
+    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json`</action>
+    <action>Find the most recently completed sprint with `retro_run_at != null`
+      (latest by `completed` date in the `completed` array)</action>
+
+    <check if="a completed sprint with retro_run_at found">
+      <action>Store {{prev_sprint_slug}} = that sprint's slug</action>
+      <action>Attempt to read `_bmad-output/implementation-artifacts/sprints/{{prev_sprint_slug}}/sprint-summary.md`</action>
+
+      <check if="sprint-summary.md exists and has content">
+        <action>Store {{prev_sprint_summary}} = file contents</action>
+        <action>Include {{prev_sprint_summary}} in the "what matters most right now" synthesis context —
+          use it as the "what changed most recently" signal: features that advanced last sprint narrow
+          high-priority candidates; areas with incomplete stories increase urgency of follow-on work.
+          This supplements PRD/backlog analysis — it does not replace it.</action>
+      </check>
+
+      <check if="sprint-summary.md does not exist">
+        <output>· No sprint summary found for {{prev_sprint_slug}} — context from previous sprint unavailable.</output>
+        <action>Continue without previous sprint context</action>
+      </check>
+    </check>
+
+    <check if="no completed sprint with retro_run_at found">
+      <action>Continue without previous sprint context — no completed retro'd sprint exists yet</action>
+    </check>
+    <!-- End Phase A.5 -->
+
     <!-- Phase B: Staleness check -->
     <action>Read `{implementation_artifacts}/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>

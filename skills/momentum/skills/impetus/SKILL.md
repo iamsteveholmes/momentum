@@ -28,13 +28,21 @@ Run `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py ses
 
 <check if="preflight.route == 'greeting' AND preflight.has_open_threads == false">
   <!-- HAPPY PATH — no workflow.md load, no reference file load needed -->
-  <!-- Preflight returns pre-rendered greeting fields: narrative, planning_context, menu[], closer -->
+  <!-- Preflight returns pre-rendered greeting fields: narrative, planning_context, menu[], closer, feature_status -->
   Store `{{greeting}}` = `{{preflight.greeting}}`.
+
+  <!-- Feature status rendering rules:
+       state == "no-features" → ? No features defined yet — run feature-artifact-schema to plan features.
+       state == "no-cache"    → ? No feature status yet — run feature-status to generate one.
+       state == "fresh"       → · {greeting.feature_status.summary}
+       state == "stale"       → · {greeting.feature_status.summary}  ! may be out of date — run feature-status to refresh
+       Omit the line entirely if greeting.feature_status is null. -->
 
   <output>Momentum
 
   {{greeting.narrative}}
   {{greeting.planning_context — include only if non-null, on its own line}}
+  {{feature status line — render per rules above, omit if greeting.feature_status is null}}
 
   {{greeting.menu — each item on its own line}}
 

@@ -1,13 +1,13 @@
 ---
-title: Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
-story_key: retro-upstream-classifier
+title: Retro and Planning UX Defaults — Apply Established Workflow Patterns Without Asking
+story_key: retro-and-planning-ux-defaults
 status: backlog
 epic_slug: impetus-core
 depends_on: []
 touches: []
 ---
 
-# Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
+# Retro and Planning UX Defaults — Apply Established Workflow Patterns Without Asking
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,22 +18,24 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a retro workflow,
-I want automatically classify retro findings as 'project findings' (this repo's backlog) vs 'upstream findings' (nornspun-style intake for other projects) and route them to the correct artifact,
-so that multi-project Momentum deployments get clean intake routing — project issues go to stories/index.json, upstream issues go to intake docs.
+As a developer running retros and sprint planning,
+I want retro and planning skills to apply my established workflow patterns by default rather than asking for explicit instruction each time,
+so that recurring preferences (batch retros, auto-open review artifacts, cross-retro dedup) are applied automatically every session.
 
 ## Description
 
-As Momentum is deployed across multiple projects, retro findings will include both project-specific issues (this project's stories/index.json) and issues in the underlying Momentum practice (upstream). The retro workflow currently dumps everything into one findings doc. An upstream classifier step would route findings to the correct intake artifact.
+Three separate skill interactions required the user to explicitly request behavior that should be the default given their established workflow:
 
-**Pain context:** Nornspun upstream #13 (Medium, now escalated to High). The nornspun intake workflow was created manually. An automated classifier would make multi-project Momentum deployments self-sufficient without manual triage.
+1. **Batch retro**: When multiple sprints have `retro_run_at == null`, the retro skill presented an either/or choice instead of batching both. The user had to say "Can we do both?"
+2. **Auto-open review artifacts**: After sprint-planning generated story files, the user had to explicitly request they be opened in cmux markdown panes for review. This is always wanted.
+3. **Cross-retro dedup**: Findings deduplication against prior intake docs was not automatic — the user had to request it with "Make sure we dedup against the current one."
 
-**Additional evidence (nornspun sprint-04-10 retro, 2026-04-12):** The same manual correction was needed again this retro. User quotes:
-- "But this isn't a nornspun issue either. The retro is a momentum skill" (HF-10, 2026-04-11T02:32)
-- "Add them to Momentum, nothing here for Nornspun I think unless it's specific to guidance." (HF-11, 2026-04-11T04:44)
-- "Please have this document be very detailed so that momentum doesn't have to go search the logs itself" (HF-12, 2026-04-10T15:48)
+These are not one-off requests. They are the user's consistent expectations in every retro and planning session.
 
-The user has a clear and consistent heuristic: workflow/agent/skill findings default to Momentum upstream. The retro skill doesn't encode this, so the classification is manual every retro. Escalated from Medium → High based on recurrence across all retros.
+**Pain context:** 
+- HF-18 (2026-04-10T07:21): "Can we do both?" — retro presented either/or when user wanted both sprints retro'd
+- HF-14 (2026-04-11T05:43): "Please fire them up in CMUX pane/surface on the right so I can review them" — cmux review mode not offered by default
+- HF-16 (2026-04-11T04:18): "Oof...sure. Make sure we dedup against the current one." — dedup across retros not automatic
 
 ## Acceptance Criteria
 
@@ -43,11 +45,11 @@ The user has a clear and consistent heuristic: workflow/agent/skill findings def
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- Retro workflow includes classification step: project vs upstream finding
-- Classification heuristic: does the finding require changes to Momentum skills/agents/rules? → upstream
-- Project findings appended to stories/index.json backlog
-- Upstream findings written to intake doc (nornspun-style) for cross-project review
-- Classification decisions can be overridden by developer at review checkpoint
+The following are rough draft ACs captured from conversation:
+- momentum:retro: When multiple sprints have `retro_run_at == null`, batch-retro all of them by default rather than asking which one to retro
+- momentum:retro: Automatically dedup findings against prior intake docs in `docs/intake/` before producing output — no user prompt needed
+- momentum:sprint-planning: After generating story files, auto-open them in cmux markdown panes for review without requiring the user to ask
+- Both skills check for established usage patterns (prior cmux usage, prior retro batch behavior) and apply them
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.

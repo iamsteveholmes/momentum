@@ -1905,6 +1905,295 @@ def test_journal_append_view_includes_recent_closed():
     assert_eq("open thread in view", "Open thread" in view_content, True)
 
 
+# --- Feature Status Hash Tests ---
+
+def setup_features_file(project_dir: Path, content: str) -> Path:
+    """Create _bmad-output/planning-artifacts/features.json."""
+    features_dir = project_dir / "_bmad-output" / "planning-artifacts"
+    features_dir.mkdir(parents=True, exist_ok=True)
+    features_path = features_dir / "features.json"
+    features_path.write_text(content)
+    return features_path
+
+
+def setup_feature_status_cache(project_dir: Path, frontmatter: dict, body: str = "") -> Path:
+    """Create .claude/momentum/feature-status.md with YAML frontmatter."""
+    cache_dir = project_dir / ".claude" / "momentum"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = cache_dir / "feature-status.md"
+    lines = ["---"]
+    for key, value in frontmatter.items():
+        lines.append(f"{key}: {value}")
+    lines.append("---")
+    if body:
+        lines.append("")
+        lines.append(body)
+    cache_path.write_text("\n".join(lines) + "\n")
+    return cache_path
+
+
+def compute_expected_hash(features_content: str, stories_content: str) -> str:
+    """Compute expected SHA-256 hash matching the tool's logic."""
+    import hashlib
+    combined = features_content + ":" + stories_content
+    return hashlib.sha256(combined.encode()).hexdigest()
+
+
+def test_feature_status_hash_no_features_file():
+    """Returns features_present: false, empty hash when features.json absent."""
+    print("\n[feature-status-hash] No features.json — features_present false")
+    proj = setup_project()
+    code, out = run_tool(proj, "feature-status-hash")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("features_present false", out.get("hash_result", {}).get("features_present"), False)
+    assert_eq("hash empty string", out.get("hash_result", {}).get("hash"), "")
+
+
+def test_feature_status_hash_with_features_file():
+    """Returns features_present: true, non-empty hash when features.json present."""
+    print("\n[feature-status-hash] With features.json — features_present true")
+    proj = setup_project()
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    code, out = run_tool(proj, "feature-status-hash")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("features_present true", out.get("hash_result", {}).get("features_present"), True)
+    hash_val = out.get("hash_result", {}).get("hash", "")
+    assert_eq("hash non-empty", len(hash_val) > 0, True)
+
+
+def test_feature_status_hash_deterministic():
+    """Same inputs produce same hash on repeated calls."""
+    print("\n[feature-status-hash] Deterministic — same inputs same hash")
+    proj = setup_project()
+    features_content = '{"features": [{"slug": "auth"}]}'
+    setup_features_file(proj, features_content)
+    code1, out1 = run_tool(proj, "feature-status-hash")
+    code2, out2 = run_tool(proj, "feature-status-hash")
+    assert_eq("exit code 0 first", code1, 0)
+    assert_eq("exit code 0 second", code2, 0)
+    assert_eq("hashes match", out1.get("hash_result", {}).get("hash"),
+              out2.get("hash_result", {}).get("hash"))
+
+
+def test_feature_status_hash_changes_on_features_change():
+    """Hash differs when features.json content changes."""
+    print("\n[feature-status-hash] Hash changes on features change")
+    proj = setup_project()
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    code1, out1 = run_tool(proj, "feature-status-hash")
+    setup_features_file(proj, '{"features": [{"slug": "payments"}]}')
+    code2, out2 = run_tool(proj, "feature-status-hash")
+    assert_eq("exit codes 0", code1 == 0 and code2 == 0, True)
+    assert_eq("hashes differ", out1.get("hash_result", {}).get("hash") !=
+              out2.get("hash_result", {}).get("hash"), True)
+
+
+def test_feature_status_hash_changes_on_stories_change():
+    """Hash differs when stories/index.json content changes."""
+    print("\n[feature-status-hash] Hash changes on stories change")
+    proj = setup_project()
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    # First run with default stories
+    code1, out1 = run_tool(proj, "feature-status-hash")
+    # Change stories content
+    stories_path = proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    stories_path.write_text('{"new-story": {"status": "backlog", "title": "New"}}')
+    code2, out2 = run_tool(proj, "feature-status-hash")
+    assert_eq("exit codes 0", code1 == 0 and code2 == 0, True)
+    assert_eq("hashes differ", out1.get("hash_result", {}).get("hash") !=
+              out2.get("hash_result", {}).get("hash"), True)
+
+
+# --- Preflight Feature Status Tests ---
+
+def _setup_preflight_env(proj: Path, version: str = "1.0.0") -> None:
+    """Set up versions + installed to get route=greeting."""
+    setup_versions_json(proj, {
+        "current_version": version,
+        "versions": {
+            version: {
+                "actions": [
+                    {"action": "migration", "group": "hooks", "scope": "project",
+                     "source": "m.md", "description": "hooks"}
+                ]
+            }
+        }
+    })
+    setup_installed_json(proj, {
+        "components": {"hooks": {"version": version}},
+        "session_stats": {"momentum_completions": 3}
+    })
+
+
+def test_preflight_feature_status_no_features():
+    """greeting.feature_status.state == 'no-features' when features.json absent."""
+    print("\n[startup-preflight] Feature status — no features file")
+    proj = setup_project()
+    _setup_preflight_env(proj)
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
+        assert_eq("exit code 0", code, 0)
+        assert_eq("route greeting", out.get("route"), "greeting")
+        greeting = out.get("greeting", {})
+        fs = greeting.get("feature_status", {})
+        assert_eq("state no-features", fs.get("state"), "no-features")
+
+    _with_global_installed({"components": {"hooks": {"version": "1.0.0", "hash": ""}}}, check)
+
+
+def test_preflight_feature_status_no_cache():
+    """greeting.feature_status.state == 'no-cache' when features.json present but cache absent."""
+    print("\n[startup-preflight] Feature status — features present, no cache")
+    proj = setup_project()
+    _setup_preflight_env(proj)
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    # No cache file created
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
+        assert_eq("exit code 0", code, 0)
+        greeting = out.get("greeting", {})
+        fs = greeting.get("feature_status", {})
+        assert_eq("state no-cache", fs.get("state"), "no-cache")
+
+    _with_global_installed({"components": {"hooks": {"version": "1.0.0", "hash": ""}}}, check)
+
+
+def test_preflight_feature_status_fresh():
+    """state == 'fresh', correct summary when hash matches."""
+    print("\n[startup-preflight] Feature status — fresh cache")
+    proj = setup_project()
+    _setup_preflight_env(proj)
+    features_content = '{"features": [{"slug": "auth"}]}'
+    setup_features_file(proj, features_content)
+    # Read the default stories content to compute the hash
+    stories_content = (proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json").read_text()
+    expected_hash = compute_expected_hash(features_content, stories_content)
+    setup_feature_status_cache(proj, {
+        "input_hash": expected_hash,
+        "summary": "2 features: 1 working · 1 partial",
+        "generated_at": "2026-04-11T10:00:00"
+    })
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
+        assert_eq("exit code 0", code, 0)
+        greeting = out.get("greeting", {})
+        fs = greeting.get("feature_status", {})
+        assert_eq("state fresh", fs.get("state"), "fresh")
+        assert_eq("summary correct", fs.get("summary"), "2 features: 1 working · 1 partial")
+
+    _with_global_installed({"components": {"hooks": {"version": "1.0.0", "hash": ""}}}, check)
+
+
+def test_preflight_feature_status_stale():
+    """state == 'stale', correct summary when hash mismatches."""
+    print("\n[startup-preflight] Feature status — stale cache")
+    proj = setup_project()
+    _setup_preflight_env(proj)
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    setup_feature_status_cache(proj, {
+        "input_hash": "old-wrong-hash-value",
+        "summary": "2 features: 1 working · 1 partial",
+        "generated_at": "2026-04-11T10:00:00"
+    })
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
+        assert_eq("exit code 0", code, 0)
+        greeting = out.get("greeting", {})
+        fs = greeting.get("feature_status", {})
+        assert_eq("state stale", fs.get("state"), "stale")
+        assert_eq("summary correct", fs.get("summary"), "2 features: 1 working · 1 partial")
+
+    _with_global_installed({"components": {"hooks": {"version": "1.0.0", "hash": ""}}}, check)
+
+
+def test_preflight_feature_status_invalid_cache_json():
+    """Invalid cache frontmatter treated as absent — no-cache state."""
+    print("\n[startup-preflight] Feature status — invalid cache frontmatter")
+    proj = setup_project()
+    _setup_preflight_env(proj)
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    # Write a cache file with unparseable frontmatter
+    cache_path = proj / ".claude" / "momentum" / "feature-status.md"
+    cache_path.write_text("not valid yaml frontmatter\n")
+
+    def check():
+        code, out = run_tool(proj, "session", "startup-preflight")
+        assert_eq("exit code 0", code, 0)
+        greeting = out.get("greeting", {})
+        fs = greeting.get("feature_status", {})
+        assert_eq("state no-cache", fs.get("state"), "no-cache")
+
+    _with_global_installed({"components": {"hooks": {"version": "1.0.0", "hash": ""}}}, check)
+
+
+# --- Greeting-State Feature Status Tests ---
+
+def test_greeting_state_feature_status_no_features():
+    """greeting-state returns state == 'no-features' when features.json absent."""
+    print("\n[session greeting-state] Feature status — no features")
+    proj = setup_project()
+    setup_installed_json(proj, {"session_stats": {"momentum_completions": 3}})
+    code, out = run_tool(proj, "session", "greeting-state")
+    assert_eq("exit code 0", code, 0)
+    fs = out.get("feature_status", {})
+    assert_eq("state no-features", fs.get("state"), "no-features")
+
+
+def test_greeting_state_feature_status_no_cache():
+    """greeting-state returns state == 'no-cache' when features present but cache absent."""
+    print("\n[session greeting-state] Feature status — features present, no cache")
+    proj = setup_project()
+    setup_installed_json(proj, {"session_stats": {"momentum_completions": 3}})
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    code, out = run_tool(proj, "session", "greeting-state")
+    assert_eq("exit code 0", code, 0)
+    fs = out.get("feature_status", {})
+    assert_eq("state no-cache", fs.get("state"), "no-cache")
+
+
+def test_greeting_state_feature_status_fresh():
+    """greeting-state returns state == 'fresh' with correct summary."""
+    print("\n[session greeting-state] Feature status — fresh cache")
+    proj = setup_project()
+    setup_installed_json(proj, {"session_stats": {"momentum_completions": 3}})
+    features_content = '{"features": [{"slug": "auth"}]}'
+    setup_features_file(proj, features_content)
+    stories_content = (proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json").read_text()
+    expected_hash = compute_expected_hash(features_content, stories_content)
+    setup_feature_status_cache(proj, {
+        "input_hash": expected_hash,
+        "summary": "1 feature: 1 working",
+        "generated_at": "2026-04-11T10:00:00"
+    })
+    code, out = run_tool(proj, "session", "greeting-state")
+    assert_eq("exit code 0", code, 0)
+    fs = out.get("feature_status", {})
+    assert_eq("state fresh", fs.get("state"), "fresh")
+    assert_eq("summary correct", fs.get("summary"), "1 feature: 1 working")
+
+
+def test_greeting_state_feature_status_stale():
+    """greeting-state returns state == 'stale' with correct summary."""
+    print("\n[session greeting-state] Feature status — stale cache")
+    proj = setup_project()
+    setup_installed_json(proj, {"session_stats": {"momentum_completions": 3}})
+    setup_features_file(proj, '{"features": [{"slug": "auth"}]}')
+    setup_feature_status_cache(proj, {
+        "input_hash": "wrong-hash",
+        "summary": "1 feature: 1 not-started",
+        "generated_at": "2026-04-11T10:00:00"
+    })
+    code, out = run_tool(proj, "session", "greeting-state")
+    assert_eq("exit code 0", code, 0)
+    fs = out.get("feature_status", {})
+    assert_eq("state stale", fs.get("state"), "stale")
+    assert_eq("summary correct", fs.get("summary"), "1 feature: 1 not-started")
+
+
 # --- Runner ---
 
 def main():
@@ -2040,6 +2329,26 @@ def main():
     test_journal_append_invalid_json()
     test_journal_append_regenerates_view()
     test_journal_append_view_includes_recent_closed()
+
+    # Feature status hash tests
+    test_feature_status_hash_no_features_file()
+    test_feature_status_hash_with_features_file()
+    test_feature_status_hash_deterministic()
+    test_feature_status_hash_changes_on_features_change()
+    test_feature_status_hash_changes_on_stories_change()
+
+    # Preflight feature status tests
+    test_preflight_feature_status_no_features()
+    test_preflight_feature_status_no_cache()
+    test_preflight_feature_status_fresh()
+    test_preflight_feature_status_stale()
+    test_preflight_feature_status_invalid_cache_json()
+
+    # Greeting-state feature status tests
+    test_greeting_state_feature_status_no_features()
+    test_greeting_state_feature_status_no_cache()
+    test_greeting_state_feature_status_fresh()
+    test_greeting_state_feature_status_stale()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")

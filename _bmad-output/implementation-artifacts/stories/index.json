@@ -1921,7 +1921,7 @@
     "story_file": true,
     "depends_on": [],
     "touches": [],
-    "priority": "medium"
+    "priority": "high"
   },
   "verify-shell-before-fix": {
     "status": "backlog",
@@ -2137,10 +2137,10 @@
     "priority": "high"
   },
   "feature-artifact-schema": {
-    "status": "backlog",
+    "status": "done",
     "title": "Feature Artifact Schema — Define features.json and Populate Initial Instances",
     "epic_slug": "feature-orientation",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [],
     "touches": [
       "_bmad-output/planning-artifacts/features.json"
@@ -2149,10 +2149,10 @@
     "priority": "critical"
   },
   "feature-status-skill": {
-    "status": "backlog",
+    "status": "done",
     "title": "Feature Status Skill — Coverage Gap Analysis with Per-Project-Type Rendering",
     "epic_slug": "feature-orientation",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "feature-artifact-schema"
     ],
@@ -2164,36 +2164,42 @@
     "priority": "critical"
   },
   "sprint-boundary-compression": {
-    "status": "backlog",
+    "status": "done",
     "title": "Sprint-Boundary Context Compression — Structured Sprint Summary at Retro Close",
     "epic_slug": "feature-orientation",
-    "story_file": false,
-    "depends_on": [],
+    "story_file": true,
+    "depends_on": [
+      "feature-status-skill"
+    ],
     "touches": [
-      "skills/momentum/skills/retro/workflow.md"
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md"
     ],
     "change_type": "skill-instruction",
     "priority": "high"
   },
   "impetus-feature-status-cache": {
-    "status": "backlog",
+    "status": "done",
     "title": "Impetus Feature Status Cache — Hash-Based Staleness Detection in Greeting",
     "epic_slug": "feature-orientation",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "feature-status-skill"
     ],
     "touches": [
-      "skills/momentum/skills/impetus/workflow.md"
+      "skills/momentum/skills/impetus/SKILL.md",
+      "skills/momentum/skills/impetus/workflow.md",
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py"
     ],
-    "change_type": "skill-instruction",
+    "change_type": "skill-instruction + code",
     "priority": "high"
   },
   "feature-status-practice-path": {
-    "status": "backlog",
+    "status": "done",
     "title": "Feature Status Practice Path — Skill Topology and SDLC Coverage Map for Momentum",
     "epic_slug": "feature-orientation",
-    "story_file": false,
+    "story_file": true,
     "depends_on": [
       "feature-status-skill"
     ],
@@ -2202,5 +2208,41 @@
     ],
     "change_type": "skill-instruction",
     "priority": "high"
+  },
+  "retro-team-singleton-guard": {
+    "status": "backlog",
+    "title": "Retro Team Singleton Guard — Enforce Exactly-One Spawning for Documenter and Auditor Roles",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical"
+  },
+  "agent-state-verification-hook": {
+    "status": "backlog",
+    "title": "Agent State Verification — Require Post-Action System State Check Before Claiming Changes Live",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical"
+  },
+  "sprint-planning-investigate-first": {
+    "status": "backlog",
+    "title": "Sprint Planning Investigate-First — Look Before Asking Diagnostic Questions",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
+  },
+  "retro-and-planning-ux-defaults": {
+    "status": "backlog",
+    "title": "Retro and Planning UX Defaults — Apply Established Workflow Patterns Without Asking",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium"
   }
 }
