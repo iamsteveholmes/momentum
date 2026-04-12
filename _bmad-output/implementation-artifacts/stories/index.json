@@ -2244,5 +2244,22 @@
     "depends_on": [],
     "touches": [],
     "priority": "medium"
+  },
+  "feature-grooming": {
+    "status": "ready-for-dev",
+    "title": "Feature Grooming Skill — Holistic Feature Taxonomy Discovery and Refinement",
+    "epic_slug": "impetus-epic-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/commands/feature-grooming.md",
+      "skills/momentum/skills/feature-grooming/SKILL.md",
+      "skills/momentum/skills/feature-grooming/workflow.md",
+      "skills/momentum/skills/feature-grooming/evals/eval-bootstrap-synthesizes-feature-list.md",
+      "skills/momentum/skills/feature-grooming/evals/eval-refine-detects-unmapped-stories.md",
+      "skills/momentum/skills/feature-grooming/evals/eval-no-mutation-before-approval.md"
+    ],
+    "change_type": "skill-instruction",
+    "priority": "high"
   }
 }
