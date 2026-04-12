@@ -28,6 +28,10 @@ Fan-out agents (individual Agent spawns, no TeamCreate) frequently emit SendMess
 
 **Pain context:** Sprint-2026-04-08 retro (#8), sprint-2026-04-06-2 (#7). Recurring 1-2 wasted turns per agent in every fan-out wave. At 10-20 agents per sprint, this compounds.
 
+**Additional evidence (nornspun sprint-04-10 retro, 2026-04-12 — issue #9):** The `momentum:qa-reviewer` agent opened its session by explicitly disclaiming it lacked access to SendMessage and ToolSearch, then adapted by returning findings as a final message. The mismatch created friction and the disclaimer consumed context before any work. Agent quote: "I do not have access to ToolSearch or SendMessage as callable tools in this environment. Per my instructions, I will return the findings report directly as my final assistant message."
+
+Root cause: the qa-reviewer prompt includes SendMessage/ToolSearch references for team-context spawning (where it messages a team lead) but is also spawned standalone in fan-out pattern for sprint review. The prompt is not conditionalized on context. Fix: conditionalize on whether `team_name` is set — if so, use SendMessage; if not, return as final response. Or: always spawn qa-reviewer inside a review team so the standalone path is eliminated.
+
 ## Acceptance Criteria
 
 <!-- DRAFT: These are rough acceptance criteria captured from conversation. They have NOT

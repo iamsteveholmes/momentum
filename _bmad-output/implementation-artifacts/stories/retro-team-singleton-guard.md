@@ -1,13 +1,13 @@
 ---
-title: Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
-story_key: retro-upstream-classifier
+title: Retro Team Singleton Guard — Enforce Exactly-One Spawning for Documenter and Auditor Roles
+story_key: retro-team-singleton-guard
 status: backlog
 epic_slug: impetus-core
 depends_on: []
 touches: []
 ---
 
-# Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
+# Retro Team Singleton Guard — Enforce Exactly-One Spawning for Documenter and Auditor Roles
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -19,21 +19,16 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 ## Story
 
 As a retro workflow,
-I want automatically classify retro findings as 'project findings' (this repo's backlog) vs 'upstream findings' (nornspun-style intake for other projects) and route them to the correct artifact,
-so that multi-project Momentum deployments get clean intake routing — project issues go to stories/index.json, upstream issues go to intake docs.
+I want a singleton guard that prevents spawning duplicate roles during team-assemble,
+so that each retro runs with exactly the intended team (1 documenter + 3 auditors) and doesn't burn tokens on idle duplicate agents.
 
 ## Description
 
-As Momentum is deployed across multiple projects, retro findings will include both project-specific issues (this project's stories/index.json) and issues in the underlying Momentum practice (upstream). The retro workflow currently dumps everything into one findings doc. An upstream classifier step would route findings to the correct intake artifact.
+The retro skill's team-assemble step spawns duplicate singleton roles in every run, and the problem is escalating. In the sprint-04-08 retro (2026-04-10): 5× documenter spawned, 2× auditor-review — 6 surplus agents for an intended 4-agent team. In the sprint-04-10 retro (2026-04-12): 10× documenter, 3× auditor-review, 2× auditor-human, 2× auditor-execution — 17 total agents for an intended team of 4. Only 1 documenter and 3 auditors were productive; all others consumed tokens waiting for messages that never arrived.
 
-**Pain context:** Nornspun upstream #13 (Medium, now escalated to High). The nornspun intake workflow was created manually. An automated classifier would make multi-project Momentum deployments self-sufficient without manual triage.
+This was flagged as RV-05 in the sprint-04-08 retro and went unactioned. The multiplier grew from 5× to 10× duplicate documenters in a single retro interval.
 
-**Additional evidence (nornspun sprint-04-10 retro, 2026-04-12):** The same manual correction was needed again this retro. User quotes:
-- "But this isn't a nornspun issue either. The retro is a momentum skill" (HF-10, 2026-04-11T02:32)
-- "Add them to Momentum, nothing here for Nornspun I think unless it's specific to guidance." (HF-11, 2026-04-11T04:44)
-- "Please have this document be very detailed so that momentum doesn't have to go search the logs itself" (HF-12, 2026-04-10T15:48)
-
-The user has a clear and consistent heuristic: workflow/agent/skill findings default to Momentum upstream. The retro skill doesn't encode this, so the classification is manual every retro. Escalated from Medium → High based on recurrence across all retros.
+**Pain context:** Burning tokens in every retro run. Escalating: 5× documenters (sprint-04-08 retro) → 10× documenters (sprint-04-10 retro). Was flagged in the prior retro as RV-05 and not actioned — each retro now costs ~9 wasted documenter agents. The root cause appears to be a state-accumulation or loop-count bug, not a fixed off-by-one, since the multiplier is growing.
 
 ## Acceptance Criteria
 
@@ -43,11 +38,12 @@ The user has a clear and consistent heuristic: workflow/agent/skill findings def
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- Retro workflow includes classification step: project vs upstream finding
-- Classification heuristic: does the finding require changes to Momentum skills/agents/rules? → upstream
-- Project findings appended to stories/index.json backlog
-- Upstream findings written to intake doc (nornspun-style) for cross-project review
-- Classification decisions can be overridden by developer at review checkpoint
+The following are rough draft ACs captured from conversation:
+- Before team-assemble spawns agents, assert target counts: exactly 1 documenter, exactly 3 auditors (auditor-review, auditor-human, auditor-execution)
+- If actual spawn count would exceed the target for any role, halt and report the count before proceeding
+- A validation step confirms the assembled team is correctly sized before Phase 3 (extraction) begins
+- Zero surplus agents spawned in any retro run — no idle documenters, no duplicate auditors
+- Root cause of the state-accumulation or loop-count bug identified and fixed
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.

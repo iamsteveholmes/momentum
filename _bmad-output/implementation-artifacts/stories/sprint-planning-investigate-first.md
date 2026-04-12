@@ -1,13 +1,13 @@
 ---
-title: Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
-story_key: retro-upstream-classifier
+title: Sprint Planning Investigate-First — Look Before Asking Diagnostic Questions
+story_key: sprint-planning-investigate-first
 status: backlog
-epic_slug: impetus-core
+epic_slug: quality-enforcement
 depends_on: []
 touches: []
 ---
 
-# Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
+# Sprint Planning Investigate-First — Look Before Asking Diagnostic Questions
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,22 +18,17 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a retro workflow,
-I want automatically classify retro findings as 'project findings' (this repo's backlog) vs 'upstream findings' (nornspun-style intake for other projects) and route them to the correct artifact,
-so that multi-project Momentum deployments get clean intake routing — project issues go to stories/index.json, upstream issues go to intake docs.
+As a developer using sprint planning,
+I want the planning skill to search the codebase before presenting diagnostic questions about code state,
+so that my time is spent on decisions, not on answering questions the agent could answer itself by reading the code.
 
 ## Description
 
-As Momentum is deployed across multiple projects, retro findings will include both project-specific issues (this project's stories/index.json) and issues in the underlying Momentum practice (upstream). The retro workflow currently dumps everything into one findings doc. An upstream classifier step would route findings to the correct intake artifact.
+During sprint-04-10 planning, the agent asked the user to choose among multiple-choice options about API stub status — questions the agent could have answered by grepping NornApiClient.kt for TODO or stub markers. The user had to say they didn't know, prompting the agent to look for itself. This is the "ask-before-looking" anti-pattern applied to the sprint-planning skill.
 
-**Pain context:** Nornspun upstream #13 (Medium, now escalated to High). The nornspun intake workflow was created manually. An automated classifier would make multi-project Momentum deployments self-sufficient without manual triage.
+The user's response ("I hate when you ask me this without doing a bit of research") and the fact that the answer was "it just returns a scripted speech every time" (observable behavior, not architectural knowledge) illustrate that a simple grep would have resolved the question before it reached the user.
 
-**Additional evidence (nornspun sprint-04-10 retro, 2026-04-12):** The same manual correction was needed again this retro. User quotes:
-- "But this isn't a nornspun issue either. The retro is a momentum skill" (HF-10, 2026-04-11T02:32)
-- "Add them to Momentum, nothing here for Nornspun I think unless it's specific to guidance." (HF-11, 2026-04-11T04:44)
-- "Please have this document be very detailed so that momentum doesn't have to go search the logs itself" (HF-12, 2026-04-10T15:48)
-
-The user has a clear and consistent heuristic: workflow/agent/skill findings default to Momentum upstream. The retro skill doesn't encode this, so the classification is manual every retro. Escalated from Medium → High based on recurrence across all retros.
+**Pain context:** HF-02 in sprint-04-10 planning (2026-04-11T05:41). The user explicitly named the anti-pattern. Recurs whenever planning encounters ambiguous code state: API implementation status, platform coverage gaps, feature flag state. Sprint-planning is the session where these questions arise most — it's the wrong time to be blocked on code lookups.
 
 ## Acceptance Criteria
 
@@ -43,11 +38,11 @@ The user has a clear and consistent heuristic: workflow/agent/skill findings def
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- Retro workflow includes classification step: project vs upstream finding
-- Classification heuristic: does the finding require changes to Momentum skills/agents/rules? → upstream
-- Project findings appended to stories/index.json backlog
-- Upstream findings written to intake doc (nornspun-style) for cross-project review
-- Classification decisions can be overridden by developer at review checkpoint
+The following are rough draft ACs captured from conversation:
+- sprint-planning skill prompt includes an explicit rule: before presenting any diagnostic question about code state or existing implementation, grep/read the relevant files first
+- Only escalate to the user if the answer is genuinely ambiguous after reading
+- Never present "is it A or B or C?" to the user without first searching for A, B, and C in the code
+- When planning must escalate a question, it includes what it searched and what it found (or didn't find) before asking
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.

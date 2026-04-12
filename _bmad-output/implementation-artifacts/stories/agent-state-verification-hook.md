@@ -1,13 +1,13 @@
 ---
-title: Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
-story_key: retro-upstream-classifier
+title: Agent State Verification — Require Post-Action System State Check Before Claiming Changes Live
+story_key: agent-state-verification-hook
 status: backlog
-epic_slug: impetus-core
+epic_slug: agent-team-model
 depends_on: []
 touches: []
 ---
 
-# Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog
+# Agent State Verification — Require Post-Action System State Check Before Claiming Changes Live
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,22 +18,23 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a retro workflow,
-I want automatically classify retro findings as 'project findings' (this repo's backlog) vs 'upstream findings' (nornspun-style intake for other projects) and route them to the correct artifact,
-so that multi-project Momentum deployments get clean intake routing — project issues go to stories/index.json, upstream issues go to intake docs.
+As a dev/E2E agent,
+I want to verify actual system state after making changes (kill+relaunch, APK reinstall, process verification) rather than asserting claimed state from my execution trace,
+so that agents never declare a change "live" when the running system hasn't picked it up.
 
 ## Description
 
-As Momentum is deployed across multiple projects, retro findings will include both project-specific issues (this project's stories/index.json) and issues in the underlying Momentum practice (upstream). The retro workflow currently dumps everything into one findings doc. An upstream classifier step would route findings to the correct intake artifact.
+Dev and E2E agents repeatedly declared app or build state without verifying the running system reflected the change. UI changes were declared "live" without relaunching the app. Desktop launch failures went unnoticed because the agent didn't check. Android was declared "showing the new UI" without reinstalling the APK. E2E validation was claimed complete without a visible cmux surface.
 
-**Pain context:** Nornspun upstream #13 (Medium, now escalated to High). The nornspun intake workflow was created manually. An automated classifier would make multi-project Momentum deployments self-sufficient without manual triage.
+The `cmux.md` "Visible to the Developer" principle and GUI-launch checklist already encode the correct behavior. This is a compliance gap in dev/E2E skill prompts, not a knowledge gap in the rules.
 
-**Additional evidence (nornspun sprint-04-10 retro, 2026-04-12):** The same manual correction was needed again this retro. User quotes:
-- "But this isn't a nornspun issue either. The retro is a momentum skill" (HF-10, 2026-04-11T02:32)
-- "Add them to Momentum, nothing here for Nornspun I think unless it's specific to guidance." (HF-11, 2026-04-11T04:44)
-- "Please have this document be very detailed so that momentum doesn't have to go search the logs itself" (HF-12, 2026-04-10T15:48)
+**Pain context:** Nornspun sprint-04-08/04-10 execution. Multiple user interventions:
+- HF-04 (2026-04-09T19:47): "Where is the E2E? I didn't see the cmux pane/surface" — E2E claimed success without running in a visible pane
+- HF-06 (2026-04-09T21:37): "IT LOOKS LIKE DESktop failed?" — caps-lock frustration; desktop launch failed silently
+- HF-07 (2026-04-09T22:14–22:40): "I think you need to shut it off and restart" / "I didn't see the android re-launch" — said three times before the agent acted
+- HF-19 (2026-04-09T21:27–21:29): "I'm seeing Verdandi coming soon when I click. Is that the latest?" — agent's model of the running app diverged from the user's live observation
 
-The user has a clear and consistent heuristic: workflow/agent/skill findings default to Momentum upstream. The retro skill doesn't encode this, so the classification is manual every retro. Escalated from Medium → High based on recurrence across all retros.
+This pattern recurs every code sprint involving desktop or Android. The cmux rules exist but carry no enforcement weight in skill prompts.
 
 ## Acceptance Criteria
 
@@ -43,11 +44,12 @@ The user has a clear and consistent heuristic: workflow/agent/skill findings def
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- Retro workflow includes classification step: project vs upstream finding
-- Classification heuristic: does the finding require changes to Momentum skills/agents/rules? → upstream
-- Project findings appended to stories/index.json backlog
-- Upstream findings written to intake doc (nornspun-style) for cross-project review
-- Classification decisions can be overridden by developer at review checkpoint
+The following are rough draft ACs captured from conversation:
+- E2E skill: Output must include a surface reference (surface:N) — if absent, the step is not complete; sprint-dev review phase enforces this as a hard validation
+- Desktop launch: After any build or UI change, agents must kill + relaunch + verify via pgrep or cmux capture-pane with a version marker or visible indicator before declaring the change live
+- Android: After APK build, installDebug is required before claiming "Android has the new UI"; dev-frontend skill explicitly calls this out for any Android-affecting story
+- Dev/E2E skill prompts include a post-action verification checklist referencing cmux.md GUI-launch protocol
+- Zero occurrences of agents declaring state live without an observed process-level verification step
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.

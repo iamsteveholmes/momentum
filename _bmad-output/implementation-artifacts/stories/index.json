@@ -1921,7 +1921,7 @@
     "story_file": true,
     "depends_on": [],
     "touches": [],
-    "priority": "medium"
+    "priority": "high"
   },
   "verify-shell-before-fix": {
     "status": "backlog",
@@ -2208,5 +2208,41 @@
     ],
     "change_type": "skill-instruction",
     "priority": "high"
+  },
+  "retro-team-singleton-guard": {
+    "status": "backlog",
+    "title": "Retro Team Singleton Guard — Enforce Exactly-One Spawning for Documenter and Auditor Roles",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical"
+  },
+  "agent-state-verification-hook": {
+    "status": "backlog",
+    "title": "Agent State Verification — Require Post-Action System State Check Before Claiming Changes Live",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical"
+  },
+  "sprint-planning-investigate-first": {
+    "status": "backlog",
+    "title": "Sprint Planning Investigate-First — Look Before Asking Diagnostic Questions",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
+  },
+  "retro-and-planning-ux-defaults": {
+    "status": "backlog",
+    "title": "Retro and Planning UX Defaults — Apply Established Workflow Patterns Without Asking",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium"
   }
 }
