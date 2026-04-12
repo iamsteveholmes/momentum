@@ -1,7 +1,7 @@
 ---
 title: Feature Status Practice Path — Skill Topology and SDLC Coverage Map for Momentum
 story_key: feature-status-practice-path
-status: backlog
+status: ready-for-dev
 epic_slug: feature-orientation
 depends_on:
   - feature-status-skill
