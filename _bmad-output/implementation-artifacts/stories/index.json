@@ -2246,7 +2246,7 @@
     "priority": "medium"
   },
   "feature-grooming": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Feature Grooming Skill — Holistic Feature Taxonomy Discovery and Refinement",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
