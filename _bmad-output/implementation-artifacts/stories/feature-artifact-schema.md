@@ -1,7 +1,7 @@
 ---
 title: Feature Artifact Schema — Define features.json and Populate Initial Instances
 story_key: feature-artifact-schema
-status: ready-for-dev
+status: review
 epic_slug: feature-orientation
 depends_on: []
 touches:
@@ -102,31 +102,31 @@ Source decision: DEC-002 D1 at
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Define schema structure and write empty features.json (AC: 1)
-  - [ ] Create `_bmad-output/planning-artifacts/features.json` with keyed-object shape
-  - [ ] Confirm all required fields are present in schema documentation/comments
+- [x] Task 1 — Define schema structure and write empty features.json (AC: 1)
+  - [x] Create `_bmad-output/planning-artifacts/features.json` with keyed-object shape
+  - [x] Confirm all required fields are present in schema documentation/comments
     (use a README-style schema comment block at the top if JSON5 not available;
     otherwise document schema in Dev Agent Record)
-  - [ ] Validate the file parses as valid JSON
+  - [x] Validate the file parses as valid JSON
 
-- [ ] Task 2 — Research Nornspun features and populate initial instances (AC: 2, 4)
-  - [ ] Read Nornspun PRD or known artifacts to identify 3–5 representative features
-  - [ ] Ensure coverage of at least two feature types (flow, connection, quality)
-  - [ ] Write concrete, working/not-working `acceptance_condition` for each
-  - [ ] Set `prd_section` references where available
-  - [ ] Set `status` to reflect current known state
+- [x] Task 2 — Research Nornspun features and populate initial instances (AC: 2, 4)
+  - [x] Read Nornspun PRD or known artifacts to identify 3–5 representative features
+  - [x] Ensure coverage of at least two feature types (flow, connection, quality)
+  - [x] Write concrete, working/not-working `acceptance_condition` for each
+  - [x] Set `prd_section` references where available
+  - [x] Set `status` to reflect current known state
 
-- [ ] Task 3 — Research Momentum features and populate initial instances (AC: 3, 4)
-  - [ ] Map Momentum skill capabilities and SDLC coverage areas to 3–5 features
-  - [ ] For each, look up relevant story slugs in `stories/index.json`
-  - [ ] Count `stories_done` (status: done) and `stories_remaining` (non-done)
-  - [ ] Write concrete `acceptance_condition` for each
+- [x] Task 3 — Research Momentum features and populate initial instances (AC: 3, 4)
+  - [x] Map Momentum skill capabilities and SDLC coverage areas to 3–5 features
+  - [x] For each, look up relevant story slugs in `stories/index.json`
+  - [x] Count `stories_done` (status: done) and `stories_remaining` (non-done)
+  - [x] Write concrete `acceptance_condition` for each
 
-- [ ] Task 4 — Validate JSON and commit (AC: 5)
-  - [ ] Run `jq . _bmad-output/planning-artifacts/features.json` or equivalent to
+- [x] Task 4 — Validate JSON and commit (AC: 5)
+  - [x] Run `jq . _bmad-output/planning-artifacts/features.json` or equivalent to
     confirm valid JSON
-  - [ ] Confirm all required fields are present in every entry
-  - [ ] Commit the file
+  - [x] Confirm all required fields are present in every entry
+  - [x] Commit the file
 
 ## Dev Notes
 
@@ -242,8 +242,22 @@ against the plain English ACs in this story file only. Do not read or reference
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — direct config-structure implementation, no debug issues.
 
 ### Completion Notes List
 
+- Created `_bmad-output/planning-artifacts/features.json` with 10 entries: 5 Nornspun and 5 Momentum features.
+- Schema validated with `jq` — all 10 entries pass. All 12 required fields present in every entry. All `type` and `status` enum values valid.
+- Feature type taxonomy satisfied: 4 flow, 4 connection, 2 quality features across both projects.
+- Nornspun features (5): session-prep-loop (flow), post-session-capture (flow), living-memory-cross-agent (connection), document-ingestion-pipeline (connection), streaming-responsiveness (quality). All 5 use `not-started` status (no Nornspun stories in Momentum's story index). PRD section references point to FR numbers.
+- Momentum features (5): sprint-planning-to-ready (flow, working), assessment-decision-story-pipeline (flow, partial), impetus-session-orientation (connection, partial), quality-gates-enforced (connection, partial), feature-status-visibility (quality, not-started). All Momentum story slugs validated against stories/index.json — all resolve.
+- `stories_done` and `stories_remaining` computed by checking status of each story slug in stories/index.json. `feature-status-visibility` has stories_done=0, stories_remaining=4 since all 4 stories (including this one) are in-progress or ready-for-dev.
+- Schema documented: field definitions and type/status enums are described in the story's Dev Notes section (schema reference block). The JSON file itself follows the same keyed-object pattern as stories/index.json.
+
 ### File List
+
+- `_bmad-output/planning-artifacts/features.json` (created)
