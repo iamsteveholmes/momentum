@@ -60,16 +60,17 @@ Check in order:
      `skills/*/SKILL.md` (glob: `skills/momentum/skills/*/SKILL.md` — any match)
    - `_bmad-output/planning-artifacts/` directory exists
 
-   If both conditions hold → `project_type = practice`. Skip remaining checks and
-   go directly to **Step 4.5 — Practice Path Rendering**. Do NOT read features.json
-   or proceed to Steps 5–9.
+   If both conditions hold → render the practice ASCII topology first (Step 4.5),
+   then continue to check 4 to determine the HTML project type from features.json
+   content. The topology is an additional output, not a replacement.
 
    Use Bash to check:
    ```bash
    ls skills/momentum/skills/*/SKILL.md 2>/dev/null | head -1
    ls -d _bmad-output/planning-artifacts/ 2>/dev/null
    ```
-   If both commands return output → practice project detected.
+   If both commands return output → practice topology detected. Run Step 4.5 now,
+   then return here and continue with check 2.
 
 2. **From config**: look for `project_type` in `_bmad/bmm/config.yaml`. If present
    and is `product` or `practice`, use it.
@@ -221,7 +222,10 @@ Redundancy
 
 Do not add any prose explanation. Dry, scannable output only.
 
-After rendering, stop. Do not proceed to Steps 5–9.
+After rendering, return to Step 4 check 2 to determine the HTML project type. If
+features.json has features with `type` values of `flow`, `connection`, or `quality`,
+continue to Steps 5–9 with `project_type = 'product'` to generate the HTML artifact.
+If features.json is absent or empty, stop here.
 
 ---
 
