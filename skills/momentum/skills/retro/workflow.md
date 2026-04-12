@@ -543,6 +543,75 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
       `momentum-tools sprint retro-complete`
     </action>
 
+    <!-- ─── SPRINT SUMMARY PRODUCTION ─── -->
+
+    <action>Invoke `momentum:feature-status` as a subagent to refresh `.claude/momentum/feature-status.md`
+      and supply Features Advanced data for the sprint summary.
+      This is the only delegation in Phase 6 — all other summary content is assembled inline.</action>
+
+    <action>After `momentum:feature-status` completes (or if it fails), assemble the sprint summary:
+
+      **Features Advanced section (conditional):**
+      - If `momentum:feature-status` ran successfully AND `.claude/momentum/feature-status.md` exists:
+        Include `## Features Advanced` section. List features whose status changed or advanced during
+        this sprint, drawn from the feature-status output. If no changes found, write:
+        "No features advanced this sprint."
+      - If feature-status failed or file is absent: omit the `## Features Advanced` section entirely.
+
+      **Stories Completed vs. Planned:**
+      Count of stories that reached `done` out of {{sprint_stories | length}} originally planned.
+      List any stories in {{force_closed_slugs}} (closed-incomplete) or still in progress at retro time.
+
+      **Key Decisions:**
+      Read decision files in `_bmad-output/planning-artifacts/decisions/`. Include decisions whose
+      frontmatter `date` falls between {{sprint_started}} and {{sprint_completed}} (inclusive).
+      Format each as: `- DEC-XXX: {title} ({date})`
+      If none found, write: "No decisions recorded this sprint."
+
+      **Unresolved Issues:**
+      List story stubs added to backlog in Phase 5 (approved_count titles) plus any stories in
+      {{force_closed_slugs}}. If none, write: "None."
+
+      **Narrative:**
+      Write a single paragraph (3–5 sentences) summarising what the sprint accomplished, the primary
+      focus, and what changed in the practice or product as a result.
+
+      **Word count enforcement:**
+      After drafting, count total words. If over 500:
+        1. Shorten the Narrative paragraph first
+        2. Trim Key Decisions to most significant items
+        3. Trim Stories list to most significant items
+      The 500-word limit is a hard cap — summary is orientation, not a full report.
+    </action>
+
+    <action>Write the sprint summary to:
+      `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
+
+      Required structure (sections in this order):
+      ```
+      # Sprint Summary — {{sprint_slug}}
+
+      **Sprint completed:** {{sprint_completed}}
+      **Retro date:** {{today}}
+
+      {## Features Advanced — ONLY include if feature-status ran and feature-status.md exists}
+
+      ## Stories Completed vs. Planned
+      ...
+
+      ## Key Decisions
+      ...
+
+      ## Unresolved Issues
+      ...
+
+      ## Narrative
+      [single paragraph, 3–5 sentences]
+      ```
+    </action>
+
+    <!-- ─── END SPRINT SUMMARY PRODUCTION ─── -->
+
     <output>## Retrospective Complete — Sprint {{sprint_slug}}
 
 **Stories verified:** {{verified_stories | length}} / {{sprint_stories | length}} done
@@ -560,6 +629,8 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
 **Story stubs created:** {{approved_count}} added to backlog
 
 **Sprint status:** closed (retro_run_at set to {{today}})
+
+**Sprint summary:** `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
 
 ---
 Review the findings document and backlog stubs when planning the next sprint.

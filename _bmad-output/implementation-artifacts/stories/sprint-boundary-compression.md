@@ -3,7 +3,8 @@ title: Sprint-Boundary Context Compression — Structured Sprint Summary at Retr
 story_key: sprint-boundary-compression
 status: ready-for-dev
 epic_slug: feature-orientation
-depends_on: []
+depends_on:
+  - feature-status-skill
 touches:
   - skills/momentum/skills/retro/workflow.md
   - skills/momentum/skills/sprint-planning/workflow.md
@@ -32,13 +33,17 @@ capped at 500 words to enforce orientation, not reporting.
 ## Acceptance Criteria (Plain English)
 
 1. At the end of Phase 6 (Sprint Closure) of the retro workflow, after calling
-   `momentum-tools sprint retro-complete`, the retro orchestrator writes a `sprint-summary.md`
-   file to `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md`.
+   `momentum-tools sprint retro-complete`, the retro orchestrator invokes
+   `momentum:feature-status` as a subagent. This refreshes `.claude/momentum/feature-status.md`
+   (the Impetus cache) and produces the data for the Features Advanced section. After
+   `momentum:feature-status` completes, the retro orchestrator writes `sprint-summary.md`
+   to `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md`.
 
 2. The sprint summary contains the following sections:
-   - **Features Advanced** (conditional — only present if
-     `_bmad-output/implementation-artifacts/features.json` exists): lists features that had at
-     least one story move to `done` during this sprint, with the feature name and updated status.
+   - **Features Advanced** (conditional — only present if `momentum:feature-status` ran and
+     `.claude/momentum/feature-status.md` exists): lists features whose status changed or
+     advanced during this sprint, drawn from the feature-status output. If feature-status
+     found no changes, section reads "No features advanced this sprint."
    - **Stories Completed vs. Planned**: count of stories that reached `done` out of the stories
      originally planned for the sprint, plus names of any stories closed as `closed-incomplete`
      or still in progress at retro time.
@@ -88,9 +93,11 @@ capped at 500 words to enforce orientation, not reporting.
    line confirming the sprint summary was written:
    `Sprint summary: _bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md`
 
-7. No separate agent spawn is used to write the sprint summary. The retro orchestrator writes
-   it directly, using state already gathered during the retro (sprint stories, story statuses,
-   decision scan, story stubs created in Phase 5).
+7. The retro orchestrator spawns `momentum:feature-status` once in Phase 6 to refresh the
+   cache and supply Features Advanced data. The sprint-summary.md itself is written directly
+   by the retro orchestrator — no additional spawn for summary writing. The feature-status
+   spawn is the only delegation; all other summary content (decisions, stories, narrative)
+   is assembled inline from state already gathered during the retro.
 
 ## Dev Notes
 
@@ -105,11 +112,17 @@ point:
 - Story stubs created (approved_count, stub titles) — from Phase 5
 - `{{today}}` — current date for retro_date field
 
+**Feature-status spawn (Phase 6, before writing summary):**
+Invoke `momentum:feature-status` as a subagent after `sprint retro-complete`. This:
+1. Refreshes `.claude/momentum/feature-status.md` — Impetus will show a fresh status at
+   the next session start
+2. Produces the Features Advanced data for the sprint-summary
+
 **Features Advanced section (conditional):**
-Check whether `_bmad-output/implementation-artifacts/features.json` exists before writing this
-section. If the file does not exist, omit the section entirely (no placeholder, no empty
-heading). If it exists, read it and find features where any story in `stories` array has status
-`done` in `stories/index.json` and was in the sprint's story list.
+Only present if `momentum:feature-status` ran successfully and `.claude/momentum/feature-status.md`
+exists. Draw the features advanced list from the feature-status output — features whose status
+changed or advanced during this sprint. If feature-status found no changes, write:
+"No features advanced this sprint." If feature-status failed or file is absent, omit the section.
 
 **Key Decisions scan:**
 Read the decision files in `_bmad-output/planning-artifacts/decisions/`. The frontmatter `date`
@@ -149,7 +162,9 @@ the high-priority candidates for this sprint.
 - `skills/momentum/skills/retro/workflow.md` — add sprint-summary writing to Phase 6
 - `skills/momentum/skills/sprint-planning/workflow.md` — add sprint-summary load to Step 1
 
-No new files or scripts are required. Both changes are workflow instruction edits only.
+No new files or scripts are required. Changes are workflow instruction edits only:
+retro/workflow.md gains a feature-status spawn + sprint-summary write in Phase 6;
+sprint-planning/workflow.md gains a sprint-summary load in Step 1.
 
 ## Momentum Implementation Guide
 
@@ -211,8 +226,32 @@ prompts — unit tests do not apply. Use EDD:
 
 ## Dev Agent Record
 
-*(To be completed during implementation)*
-
 ### Completion Notes
 
+EDD cycle completed. Wrote 3 behavioral evals for retro Phase 6 and 1 eval (covering 2 scenarios)
+for sprint-planning Step 1 before implementing workflow changes. All 4 evals verified against the
+implemented workflow content — all pass.
+
+**retro/workflow.md Phase 6 changes:**
+- Added `momentum:feature-status` subagent spawn after `retro-complete` call
+- Added inline sprint-summary assembly block with all required sections (Features Advanced
+  conditional on feature-status success, Stories Completed, Key Decisions, Unresolved Issues,
+  Narrative)
+- Added 500-word hard cap with explicit trimming order (narrative → decisions → stories)
+- Added Write action targeting `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
+- Added sprint summary confirmation line to final developer output
+
+**sprint-planning/workflow.md Step 1 changes:**
+- Added Phase A.5 block after master plan reads and before Phase B staleness check
+- Reads sprints/index.json, finds most recently retro'd sprint (retro_run_at != null)
+- Reads sprint-summary.md from that sprint's directory
+- Includes summary in recommendation synthesis context when found
+- Shows non-blocking notice and continues when summary absent
+
+**NFR compliance:** Both SKILL.md files unchanged; model/effort frontmatter verified present;
+descriptions remain ≤150 chars.
+
 ### Change Log
+
+- feat(skills): add sprint-summary production to retro Phase 6 (2026-04-11)
+- feat(skills): add sprint-summary load to sprint-planning Step 1 (2026-04-11)
