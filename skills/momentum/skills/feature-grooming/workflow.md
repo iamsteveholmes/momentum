@@ -133,7 +133,7 @@
 Feature Grooming — Candidate Set ({N} features)
 
 {For each candidate:}
-◦ {slug} — "{title}" [{type}]
+◦ {feature_slug} — "{name}" [{type}]
   value_analysis:
     {paragraph 1 — current value}
 
@@ -141,10 +141,7 @@ Feature Grooming — Candidate Set ({N} features)
 
     {paragraph 3 — known gaps}
   system_context: {text}
-  acceptance_conditions:
-    · {condition 1}
-    · {condition 2}
-    ...
+  acceptance_condition: {A developer can [action] and [observe outcome].}
   {⚠ Deferred value — no current delivery. Confirm inclusion? if flagged}
 
 ---
