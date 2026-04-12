@@ -54,16 +54,33 @@ Build a lookup map: `story_key → { title, status, summary }`.
 
 Check in order:
 
-1. **From config**: look for `project_type` in `_bmad/bmm/config.yaml`. If present
+1. **Filesystem detection (practice project)**: Check whether BOTH of the following
+   are true:
+   - `skills/` directory exists and contains at least one file matching
+     `skills/*/SKILL.md` (glob: `skills/momentum/skills/*/SKILL.md` — any match)
+   - `_bmad-output/planning-artifacts/` directory exists
+
+   If both conditions hold → `project_type = practice`. Skip remaining checks and
+   go directly to **Step 4.5 — Practice Path Rendering**. Do NOT read features.json
+   or proceed to Steps 5–9.
+
+   Use Bash to check:
+   ```bash
+   ls skills/momentum/skills/*/SKILL.md 2>/dev/null | head -1
+   ls -d _bmad-output/planning-artifacts/ 2>/dev/null
+   ```
+   If both commands return output → practice project detected.
+
+2. **From config**: look for `project_type` in `_bmad/bmm/config.yaml`. If present
    and is `product` or `practice`, use it.
 
-2. **From features.json**: inspect the `project_type` field if present.
+3. **From features.json**: inspect the `project_type` field if present.
 
-3. **Infer from feature structure**:
+4. **Infer from feature structure**:
    - If features have `type` values of `flow`, `connection`, or `quality` → `product`
    - If features have `sdlc_phase` or `covering_skills` fields → `practice`
 
-4. **Ambiguous**: if neither approach resolves, ask the developer:
+5. **Ambiguous**: if neither approach resolves, ask the developer:
    ```
    I couldn't determine the project type from config or features.json.
    Is this a product project (flow/connection/quality features)
@@ -72,6 +89,139 @@ Check in order:
    ```
 
 Store as `project_type`.
+
+---
+
+## Step 4.5 — Practice Path Rendering
+
+**This step runs only when `project_type = practice` was detected in Step 4 check 1.**
+After completing this step, output the result and stop — do not proceed to Steps 5–9.
+
+### 4.5.1 — Skill Discovery
+
+Glob `skills/momentum/skills/*/SKILL.md`. For each file found:
+- Read the frontmatter (`name`, `description`)
+- If `name` is absent, derive it from the directory name
+- Build a list: `skill_inventory = [{ name, description, dir }, ...]`
+
+### 4.5.2 — SDLC Phase Mapping
+
+Map each discovered skill to one or more SDLC phases using these heuristics:
+
+| Skill name pattern        | Primary SDLC phase(s)                     |
+|---------------------------|-------------------------------------------|
+| research                  | Discovery                                 |
+| assessment                | Discovery                                 |
+| decision                  | Specification                             |
+| intake                    | Planning                                  |
+| sprint-planning           | Planning                                  |
+| create-story              | Specification                             |
+| dev, quick-fix            | Implementation                            |
+| code-reviewer, avfl       | Review, Quality/Validation                |
+| retro                     | Retrospective                             |
+| impetus, feature-status   | Orientation/Onboarding                    |
+| architecture-guard        | Quality/Validation                        |
+| refine                    | Planning, Specification                   |
+| distill                   | Orientation/Onboarding                    |
+| upstream-fix              | Review, Quality/Validation                |
+| agent-guidelines          | Specification                             |
+| sprint-dev, sprint-manager| Implementation                            |
+| epic-grooming             | Planning, Specification                   |
+| plan-audit                | Planning                                  |
+
+For skills not matching a known pattern, use the `description` to infer the most
+relevant phase(s). When ambiguous, assign to the single most relevant phase.
+
+Build a coverage map:
+```
+coverage = {
+  "Discovery":             [skill names],
+  "Planning":              [skill names],
+  "Specification":         [skill names],
+  "Implementation":        [skill names],
+  "Review":                [skill names],
+  "Retrospective":         [skill names],
+  "Orientation/Onboarding":[skill names],
+  "Quality/Validation":    [skill names],
+}
+```
+Phases with no skills → mark as "gap".
+
+### 4.5.3 — Skill Topology (ASCII)
+
+Render a compact ASCII topology block showing hand-off relationships. Use only the
+skills actually discovered. The canonical cycle and sub-cycles are:
+
+```
+  intake ──────────────────────────────────────────────────┐
+                                                           ▼
+  assessment ──► decision ──► create-story ──► sprint-planning
+                                                           │
+                                                      sprint-dev
+                                                           │
+                                                        retro ──► (next cycle)
+
+  orientation: impetus · feature-status (above the cycle)
+```
+
+Rules:
+- Only include nodes for skills that were actually discovered
+- If a skill in the topology is absent from the inventory, omit that node and
+  compress the chain (e.g., if `intake` is absent, drop the intake line)
+- Keep the topology block to 12 lines or fewer
+- Orientation skills (impetus, feature-status, distill) are listed below the topology,
+  not in the main flow
+
+### 4.5.4 — Redundancy Detection
+
+Check for skills that share a SDLC phase AND have similar descriptions. Criteria
+for flagging:
+- Two or more skills assigned to the same phase
+- Their descriptions share a domain (e.g., both mention "review", "validation", "fix")
+
+Flag pairs concisely: `Possible overlap: X and Y both cover [phase].`
+
+Only flag when evidence is clear. Do not over-flag. If no overlaps detected, omit
+the redundancy section entirely.
+
+### 4.5.5 — Render Practice Output
+
+Output the following blocks in order. Total output MUST be under 40 lines.
+
+**Block 1 — Skill Topology** (ASCII, ≤12 lines):
+```
+Skill Topology — Momentum Practice
+  intake ──────────────────────────────────────────────────┐
+  ...
+  orientation: impetus · feature-status
+```
+
+**Block 2 — SDLC Coverage** (compact table, ≤12 lines):
+```
+SDLC Coverage
+  Phase                    Skills                               Status
+  ─────────────────────────────────────────────────────────────────────
+  Discovery                research, assessment                 covered
+  Planning                 sprint-planning, intake              covered
+  Specification            create-story, decision               covered
+  Implementation           dev, quick-fix, sprint-dev           covered
+  Review                   code-reviewer                        covered
+  Retrospective            retro                                covered
+  Orientation/Onboarding   impetus, feature-status, distill     covered
+  Quality/Validation       architecture-guard, avfl             covered
+```
+Replace skill names and status with actual discovered data. Mark phases with no
+covering skill as `gap`.
+
+**Block 3 — Redundancy Flags** (only if overlaps detected, ≤4 lines):
+```
+Redundancy
+  Possible overlap: X and Y both cover Review.
+```
+
+Do not add any prose explanation. Dry, scannable output only.
+
+After rendering, stop. Do not proceed to Steps 5–9.
 
 ---
 
