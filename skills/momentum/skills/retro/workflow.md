@@ -240,6 +240,8 @@ For each of these, choose:
 
       Read `{{audit_dir}}/user-messages.jsonl`. Each line is a JSON object with
       timestamp, session_file, content, and is_first_message fields.
+      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
+      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
 
       Identify and categorize every notable pattern:
         - Corrections: user fixing agent behavior mid-task
@@ -271,6 +273,8 @@ For each of these, choose:
       Read:
         - `{{audit_dir}}/agent-summaries.jsonl` — per-subagent digests
         - `{{audit_dir}}/errors.jsonl` — tool errors (actual error indicators only)
+      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
+      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
 
       Investigate patterns across the subagent population:
         - Duplication: multiple agents with identical or near-identical first prompts
@@ -302,6 +306,8 @@ For each of these, choose:
         - `{{audit_dir}}/team-messages.jsonl` — inter-agent SendMessage content
         - `{{audit_dir}}/agent-summaries.jsonl` — filter to review roles:
             agent_type containing "reviewer", "validator", "qa", "prompt-engineer"
+      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
+      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
 
       Evaluate quality gate effectiveness:
         - Real issues caught: review findings that led to genuine fixes
