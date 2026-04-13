@@ -2261,5 +2261,61 @@
     ],
     "change_type": "skill-instruction",
     "priority": "high"
+  },
+  "retro-extract-preflight-validation": {
+    "status": "backlog",
+    "title": "Retro Extract Preflight Validation — Hard-Fail on Missing Sprint-Log Directory and Zero Sprint-Story Matches",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "critical"
+  },
+  "sprint-log-directory-enforcement": {
+    "status": "backlog",
+    "title": "Sprint Log Directory Enforcement — Create sprint-logs/{{sprint_slug}}/ in Sprint-Planning Preflight",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "critical"
+  },
+  "team-config-name-resolution-fix": {
+    "status": "backlog",
+    "title": "Team Config Name Resolution Fix — SendMessage Must Resolve Names of Members That Joined After Sender",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high"
+  },
+  "distill-worktree-isolation": {
+    "status": "backlog",
+    "title": "Distill Worktree Isolation — Spawn Write Subagent in Isolated Branch, Merge to Main Only After AVFL Clean",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high"
+  },
+  "distill-path-classification-redesign": {
+    "status": "backlog",
+    "title": "Distill Path Classification Redesign — Detect Plugin vs Personal Rule, Remove Defer Option, Handle Local Plugin Install",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high"
+  },
+  "impetus-workflow-state-anchor": {
+    "status": "backlog",
+    "title": "Impetus Workflow State Anchor — TaskCreate/TaskList Anchors at Sub-Skill Boundaries to Prevent Context Drift",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium"
+  },
+  "retro-prior-action-item-cross-ref": {
+    "status": "backlog",
+    "title": "Retro Prior Action Item Cross-Reference — Flag Recurrences From Previous Sprint Retros Before Writing Findings",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium"
+  },
+  "propagate-decision-skill-vocabulary": {
+    "status": "backlog",
+    "title": "Propagate Decision Skill Vocabulary — Adopt/Adapt/Reject Framing in Feature-Grooming and Epic-Grooming",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium"
   }
 }
