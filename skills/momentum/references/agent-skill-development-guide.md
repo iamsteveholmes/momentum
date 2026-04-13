@@ -29,6 +29,10 @@ skills: [skill1, skill2]            # Optional: preload full skill content
 - System prompt (markdown body) is the agent's core instruction
 - Agent definitions should be focused — a system prompt, not a full workflow
 
+### File Modification Safety
+
+After any Write or Edit to a file, re-Read it before making another Write or Edit to the same file. The PostToolUse lint/format hook rewrites files after every modification — your cached read becomes stale immediately, and a subsequent Write without re-reading will fail with a "file modified since read" error.
+
 ### Large File Handling (Required Convention)
 
 Every agent definition MUST include a `## Large File Handling` section in its system
