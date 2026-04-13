@@ -639,6 +639,16 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
       4. After successful merge: `git branch -d sprint/{{sprint_slug}}`
     </action>
 
+    <action>Delete all remaining worktree-agent-* branches (while on main):
+      Run: `git branch -l 'worktree-agent-*' | grep -q . && git branch -l 'worktree-agent-*' | xargs git branch -D || true`
+      Note: -D (force delete) is required — these branches are orphaned by rebase and
+      git --merged cannot detect them as merged even though their content is on main.
+      These branches are created by the Claude Code Agent tool harness as a side effect
+      of spawning dev agents in Phase 2 — they are distinct from story/{slug} branches,
+      which are cleaned up in Phase 4d. The glob matches all worktree-agent-* branches
+      regardless of sprint; this is correct since no sprint identifier is embedded in the name.
+    </action>
+
     <action>Show push summary: `git log @{u}..HEAD --oneline`
       Present the full list of commits that will be pushed (all sprint planning + dev work).</action>
     <ask>Push to origin/main?</ask>
@@ -659,7 +669,7 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
 
 **Follow-up items:** {{followup_count}} stories added to backlog
 
-Sprint branch `sprint/{{sprint_slug}}` merged to main. Push when ready.
+Sprint branch `sprint/{{sprint_slug}}` merged to main. Orphaned worktree-agent-* branches removed. Push when ready.
 
 ---
 Run **retrospective** to surface practice improvements?</output>
