@@ -150,10 +150,11 @@
       "sprint-boundary-compression",
       "cross-story-pattern-detection-surfaces-systemic-issues",
       "findings-ledger-accumulates-quality-findings-across-stories",
-      "flywheel-workflow-explains-issues-and-guides-upstream-trace"
+      "flywheel-workflow-explains-issues-and-guides-upstream-trace",
+      "retro-triage-handoff"
     ],
     "stories_done": 3,
-    "stories_remaining": 3,
+    "stories_remaining": 4,
     "last_verified": "2026-04-11",
     "notes": "Retro ceremony working. Flywheel accumulation stories (practice-compounds epic) all backlog. Sprint-summary write implemented in sprint-boundary-compression."
   },

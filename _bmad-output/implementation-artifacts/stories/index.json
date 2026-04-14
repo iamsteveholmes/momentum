@@ -360,7 +360,7 @@
     "story_file": false,
     "depends_on": [],
     "touches": [],
-    "priority": "low"
+    "priority": "medium"
   },
   "epic-grooming": {
     "status": "done",
