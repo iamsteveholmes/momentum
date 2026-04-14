@@ -97,7 +97,7 @@ Backlog — N stories across M epics
   2. [L] story-slug-b — Title · status · deps: none · file: false
   ...
 
-Select 3-8 stories for this sprint by number or slug.</output>
+Select 2-8 stories for this sprint by number or slug.</output>
     </check>
 
     <check if="has_master_plan is true">
@@ -137,7 +137,7 @@ Full backlog — N stories across M epics:
   3. [M] story-slug-c — Title · status · deps: [✓ dep1] · file: true
   ...
 
-Select 3-8 stories for this sprint by number or slug.
+Select 2-8 stories for this sprint by number or slug.
       </output>
     </check>
 
@@ -146,13 +146,13 @@ Select 3-8 stories for this sprint by number or slug.
 
   <step n="2" goal="Story selection">
     <action>Update task 2 (Story selection) to in_progress</action>
-    <ask>Select 3-8 stories for this sprint. Enter numbers or slugs, comma-separated.</ask>
+    <ask>Select 2-8 stories for this sprint. Enter numbers or slugs, comma-separated.</ask>
 
     <action>Parse the developer's selection — accept numbers (from the backlog display) or story slugs</action>
-    <action>Validate: selection count must be between 3 and 8 (inclusive)</action>
+    <action>Validate: selection count must be between 2 and 8 (inclusive)</action>
 
-    <check if="fewer than 3 or more than 8 stories selected">
-      <output>! Sprint requires 3-8 stories. You selected {{count}}. Adjust your selection.</output>
+    <check if="fewer than 2 or more than 8 stories selected">
+      <output>! Sprint requires 2-8 stories. You selected {{count}}. Adjust your selection.</output>
       <action>Re-present the selection prompt</action>
     </check>
 
