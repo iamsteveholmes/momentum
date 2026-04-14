@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-04-11'
+lastEdited: '2026-04-14'
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
 ---
 
@@ -17,3 +17,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-002 | [Feature Visualization and Developer Orientation](dec-002-feature-visualization-and-orientation-2026-04-11.md) | 2026-04-11 | project-knowledge-visualization-ai-2026-04-11 | decided |
 | DEC-003 | [Feature Status Artifact Design — HTML Report, Layout, Signals, and Rendering](dec-003-feature-status-artifact-design-2026-04-11.md) | 2026-04-11 | feature-status-visualization-2026-04-11 | decided |
 | DEC-004 | [Feature Schema Value-First Redesign — value_analysis and system_context Required Fields](dec-004-feature-value-first-2026-04-11.md) | 2026-04-11 | AES-002 | decided |
+| DEC-005 | [Momentum Cycle Redesign — Feature-First Practice, North Star Floors, Running-App Verification, and Failure as Diagnostic](dec-005-cycle-redesign-feature-first-practice-2026-04-14.md) | 2026-04-14 | adapting-agile-for-gen-ai-development-2026-04-13 | decided |
