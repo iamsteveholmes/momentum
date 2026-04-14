@@ -2317,5 +2317,23 @@
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium"
+  },
+  "dashboard-ux-wireframes": {
+    "status": "backlog",
+    "title": "Feature Dashboard UX Wireframes — Hierarchical Drill-Down",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
+  },
+  "feature-dependency-graph-ux-wireframes": {
+    "status": "backlog",
+    "title": "Story-Level Feature Dependency Graph UX Wireframes",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
   }
 }
