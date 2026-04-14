@@ -2335,5 +2335,14 @@
     "depends_on": [],
     "touches": [],
     "priority": "high"
+  },
+  "tier-classification-heuristic-redesign": {
+    "status": "backlog",
+    "title": "Tier Classification Heuristic Redesign — Well-Understood+Reversible vs Novel+Load-Bearing",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high"
   }
 }
