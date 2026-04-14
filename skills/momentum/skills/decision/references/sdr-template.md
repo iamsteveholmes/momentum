@@ -49,6 +49,7 @@ stories_affected:
 | `gemini-deep-research` | Source is a Gemini Deep Research output |
 | `prior-research` | Source is a prior research document or spike artifact |
 | `architecture-analysis` | Source is an architecture analysis or review |
+| `developer-conversation` | Source is a developer's verbal decision (Flow D — no source document); `path` is the literal string `"(conversation)"` |
 
 ---
 
@@ -70,6 +71,7 @@ what was adopted vs. rejected vs. deferred, and why the overall direction makes 
 ### D1: {{recommendation title}} — {{ADOPTED | REJECTED | DEFERRED | ADAPTED}}
 
 **Research recommended:** {{what the source material said — verbatim or close paraphrase}}
+(For Flow D — developer-originated decisions — use `**Developer framing:**` instead and describe what the developer was aiming for in their own words before capturing the formal decision.)
 
 **Decision:** {{adopted / rejected / deferred / adapted — plus any modifications if adapted}}
 
@@ -132,7 +134,7 @@ or before proceeding to a later phase.
 
 - **Summary** captures the overall judgment, not a list of decisions
 - **Decision headlines** must name the recommendation AND the verdict: "D1: LangGraph Migration — REJECTED", not "D1: LangGraph"
-- **Research recommended** quotes or closely paraphrases the source — do not rewrite it
+- **Research recommended** quotes or closely paraphrases the source — do not rewrite it. For Flow D (developer-originated), use `**Developer framing:**` instead: a short statement of what the developer was aiming for, in their own words, before the formal decision is stated.
 - **Decision** is a single clear statement: what was decided and how it differs from the recommendation (if adapted)
 - **Rationale** is the developer's reasoning — specific, not generic. "We rejected this because our architecture is fundamentally different" is better than "Not applicable"
 - **Phased Implementation Plan** is optional — include only when decisions create multi-phase work

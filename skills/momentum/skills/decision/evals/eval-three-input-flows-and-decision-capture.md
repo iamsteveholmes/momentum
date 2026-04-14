@@ -1,4 +1,4 @@
-# Eval: Three Input Flows and Decision Capture Format
+# Eval: Four Input Flows and Decision Capture Format
 
 **Skill:** `momentum:decision`
 **AC Coverage:** AC1, AC2, AC3, AC4, AC5, AC6, AC7, AC8
@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Verify that the decision skill correctly handles all three input flows, captures
+Verify that the decision skill correctly handles all four input flows, captures
 decisions with full context, produces properly structured SDR documents, updates
 upstream links, and bridges to story creation.
 
@@ -157,7 +157,7 @@ For each decision the SDR must contain:
 
 ### Pass Criteria
 
-- [ ] "Research recommended" section present — captures source material recommendation verbatim or summarized
+- [ ] "Research recommended" section present for Flows A/B/C (captures source material recommendation verbatim or summarized) — OR — "Developer framing" section present for Flow D (captures what the developer was aiming for in their own words)
 - [ ] "Decision" line clear — one of: adopted, rejected, deferred, adapted
 - [ ] "Rationale" captures the developer's reasoning in their words (not paraphrased by skill)
 - [ ] Source material links present in frontmatter `source_research`
@@ -208,3 +208,27 @@ Read `skills/momentum/skills/decision/SKILL.md` and verify:
 - [ ] description is under 150 characters
 - [ ] Body delegates to `./workflow.md`
 - [ ] No inline workflow logic in SKILL.md body (delegation only)
+
+---
+
+## Eval 8: Flow D — Developer-Originated Decision Capture
+
+### Intent
+
+Verify that momentum:decision correctly handles Flow D (developer-proposed decisions from conversation, not from a source document) with appropriate SDR output.
+
+### Pass Criteria
+
+- [ ] Flow D option is presented in Step 1's ask
+- [ ] Developer's verbal decision description is captured into discrete decision items
+- [ ] `{{source_research}}` is populated with `[{path: "(conversation)", type: developer-conversation, date: today}]`
+- [ ] SDR D-sections for Flow D use `**Developer framing:**` instead of `**Research recommended:**`
+- [ ] Walk-through captures rationale per decision the same way as Flows A/B/C
+- [ ] SDR is written to the decisions directory using the standard filename convention
+- [ ] Index update and commit steps proceed unchanged
+
+### Anti-patterns
+
+- Forcing Flow D into Flow B by asking for a source path
+- Leaving `source_research` empty or populating with a fabricated document path
+- Using `Research recommended:` for a Flow D SDR — misleading because there is no research source

@@ -29,9 +29,10 @@ what the developer decides. Move on. Do not deliberate.
     <action>Ask the developer which input flow they want:
       "(A) From assessment — walk through an ASR's findings and decide what to do about each
        (B) From research — extract recommendations from a research doc and decide what to adopt/reject/defer
-       (C) Revisit — re-evaluate a prior decision when conditions have changed"
+       (C) Revisit — re-evaluate a prior decision when conditions have changed
+       (D) From conversation — you've reached decisions through thinking or discussion and want to capture them in a structured SDR"
     </action>
-    <action>Store {{input_flow}} = A | B | C</action>
+    <action>Store {{input_flow}} = A | B | C | D</action>
 
     <!-- Flow A: From Assessment -->
     <check if="{{input_flow}} == A">
@@ -71,6 +72,17 @@ what the developer decides. Move on. Do not deliberate.
       <action>Set {{source_research}} = [{path: {{source_path}}, type: prior-research, date: {{date}}}]</action>
       <action>Add {{source_path}} to {{prior_decisions_reviewed}}</action>
       <output>Loaded SDR for revisit: {{source_path}}. Found {{count}} prior decisions to re-evaluate. Starting re-evaluation walk-through.</output>
+    </check>
+
+    <!-- Flow D: From Developer Conversation -->
+    <check if="{{input_flow}} == D">
+      <action>Ask: "Describe what you've decided — in plain language, as many decisions as you have. I'll walk through them one at a time."</action>
+      <action>Store {{raw_decisions}} = developer's verbal description</action>
+      <action>Parse {{raw_decisions}} into discrete decision items — each a distinct topic, choice, or stance the developer described</action>
+      <action>Store {{recommendations}} = list of {headline, recommendation_text} where headline is a short label for each decision item and recommendation_text is the developer's stated position or intent</action>
+      <action>Set {{source_type}} = developer-conversation</action>
+      <action>Set {{source_research}} = [{path: "(conversation)", type: developer-conversation, date: {{date}}}]</action>
+      <output>Parsed {{count}} decisions from your description. Starting decision walk-through.</output>
     </check>
   </step>
 
