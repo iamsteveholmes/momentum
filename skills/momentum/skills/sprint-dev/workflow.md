@@ -528,6 +528,16 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
       - Provide: sprint slug, path to Gherkin specs `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/specs/`, AVFL findings list
       - Agent validates running behavior against Gherkin scenarios
       - Produces structured E2E Validation Report with per-scenario results
+      - **Spawn prompt MUST include these constraints verbatim — do not paraphrase or omit. The agent definition does not make these redundant; they override any contextual claims in the spawn prompt about service state.**
+        1. Follow `.claude/rules/e2e-validation.md` Environment Startup to bring up services
+           (finch + PostgreSQL + FastAPI via cmux) before executing any scenario. Do not assume
+           services are already running.
+        2. Do NOT use pytest or unit-test runners as a substitute for live behavioral validation.
+           pytest is QA's domain. If services cannot be started after following e2e-validation.md,
+           return an E2E Validation Report with top-level Verdict: BLOCKED and halt — never fall
+           back to pytest.
+        3. MANUAL is only for scenarios requiring a human to physically observe a visual UI.
+           Missing infrastructure is ERROR (or BLOCKED if cmux itself is absent). It is never MANUAL.
 
     **Architect Guard** — spawn `momentum:architecture-guard` skill (context: fork, read-only):
       - Provide: sprint slug, architecture doc path `_bmad-output/planning-artifacts/architecture.md`, list of touched files, sprint branch `sprint/{{sprint_slug}}`
