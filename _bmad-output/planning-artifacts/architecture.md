@@ -194,7 +194,8 @@ The defining question for each component: *does this need main-context persona p
 | research | Flat skill (`/momentum:research`) | Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking |
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
-| intake | Flat skill (`/momentum:intake`) | User-invokable; triage and intake of new ideas, documents, or requests into the backlog as story stubs; no fork needed |
+| intake | Flat skill (`/momentum:intake`) | User-invokable; **single-item capture only** — one idea → one story stub, feature-slug and story-type aware per DEC-005 D1/D5. No batching (that is `momentum:triage`'s job). Writes `stories/{slug}.md` + `stories/index.json` entry via `momentum-tools sprint story-add`. |
+| triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into six classes (ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT) per DEC-007. Delegates ARTIFACT → `momentum:intake`, DISTILL → `momentum:distill`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `intake-queue.jsonl` via `momentum-tools` CLI. Classification inline in main context (no subagent); optional Explore subagents for duplicate detection and feature-assignment suggestion when N ≥ 5. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
 | distill | Flat skill (`/momentum:distill`) | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. User-invokable mid-session or from retro Phase 5 for Tier 1 findings. Third execution path alongside sprint orchestration and quick-fix (Decision 42). Story: not yet in backlog — handled via quick-fix workflow. |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
 | sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
@@ -1670,6 +1671,8 @@ momentum:dev does NOT invoke bmad-dev-story as an indirection layer — the curr
 
 ### Retro → Triage Handoff Format
 
+> _[Superseded 2026-04-14 by DEC-007 and story `retro-triage-handoff`: the `triage-inbox.md` contract described below was never built. Retro now writes handoff events to the unified `_bmad-output/implementation-artifacts/intake-queue.jsonl` event log with `source: "retro"`, `kind: "handoff"`. Implementation landing in the `retro-triage-handoff` story; schema defined in the `intake-queue.jsonl` subsection that follows. See `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`. The content below is retained as historical context.]_
+
 > _[Updated 2026-04-06: Retro's primary output is now `retro-transcript-audit.md` (Decision 27). The triage-inbox format below is used for structured action item handoff from retro to triage — downstream of the transcript audit.]_
 
 After each epic, the retro skill writes structured entries to `triage-inbox.md`. The developer reviews before triage runs — retro does not auto-launch triage.
@@ -1696,6 +1699,106 @@ After each epic, the retro skill writes structured entries to `triage-inbox.md`.
 - `blocker-resolution` — a dependency or external blocker that was worked around; resolution should be tracked
 
 **Triage consumption:** After triage processes an item, it appends a `consumed_at` timestamp and `triage_outcome` field to the entry. The inbox is never truncated — full history is preserved.
+
+---
+
+### `intake-queue.jsonl` Schema Contract (DEC-007)
+
+<!-- Added 2026-04-14: Unified triage/retro capture artifact per DEC-007. Supersedes the retired triage-inbox.md contract above. -->
+
+Single source of truth for triage-adjacent items that don't become stories immediately — SHAPING / DEFER / REJECT outcomes from `momentum:triage` and handoff events from `momentum:retro`. Per **DEC-007 (2026-04-14)**.
+
+**Path:** `_bmad-output/implementation-artifacts/intake-queue.jsonl` (per-project, not global)
+
+**Format:** Append-only JSONL event log. One JSON object per line. Never truncated.
+
+**Base schema fields (all entries):**
+
+| Field | Type | Values / Notes |
+|---|---|---|
+| `id` | string | Unique event id (ULID or timestamped slug) |
+| `source` | string | `triage` \| `retro` \| `assessment` (future upstreams welcome) |
+| `kind` | string | `shape` \| `watch` \| `rejected` \| `handoff` |
+| `title` | string | Short human-readable title |
+| `description` | string | One-to-three-sentence summary |
+| `status` | string | `open` \| `consumed` \| `rejected` (initial write is always `open`) |
+| `created_at` | string | ISO-8601 UTC timestamp |
+
+**Optional fields (present when applicable):**
+
+| Field | Used by | Notes |
+|---|---|---|
+| `sprint_slug` | retro handoffs | Provenance — the sprint the handoff originated from |
+| `feature_slug` | any | Existing feature the item relates to |
+| `story_slug` | any | Existing story the item relates to |
+
+**Retro-specific optional fields (DEC-005 framing):**
+
+| Field | Shape | When present |
+|---|---|---|
+| `feature_state_transition` | `{ feature_slug, prior_state, observed_state, evidence }` | Retro observed a D8 feature-state change (e.g., Done → Partial) |
+| `failure_diagnosis` | `{ attempted, didn_t_work, learned }` | Retro named a D7 diagnosed failure |
+| `suggested_feature_slug` | string | Retro finding implies new feature-bearing work (DEC-005 D1) |
+| `suggested_story_type` | string | `feature` \| `maintenance` \| `defect` \| `exploration` \| `practice` (DEC-005 D5) |
+| `evidence_refs` | array of strings | Pointers back to the findings document (e.g., section anchor or line range of `retro-transcript-audit.md`) |
+
+**Writers (CLI-only; never direct file edits):**
+
+- `momentum:triage` — appends `shape` / `watch` / `rejected` entries via `momentum-tools triage-queue append`.
+- `momentum:retro` — appends `handoff` entries via `momentum-tools triage-queue append` (Phase 5 carry-forward disposition).
+
+Both producers write exclusively through the `momentum-tools` CLI. Skills never open this file for direct mutation — matches the orchestrator-purity pattern used elsewhere in the practice.
+
+**Readers:**
+
+- `momentum:triage` — reads on start to re-surface open `shape` / `watch` / `handoff` entries for re-classification or promotion.
+- `momentum:sprint-planning` — Phase A.5 reads entries filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` during backlog synthesis; Phase C surfaces them in a labeled "Open handoff items from recent retros" section (see Decision 29 update below).
+- Potentially `momentum:refine` in a future hygiene pass — TBD.
+
+**Consumption semantics:** When an entry is acted on (promoted to a story via intake, distilled, decided, or explicitly rejected), its `status` is updated to `consumed` or `rejected` with an outcome reference (e.g., `outcome: "story:slug-name"` or `outcome: "dec-NNN"`) via the CLI update path. Entries are never deleted — full history preserved.
+
+**Replaces:** the retired `triage-inbox.md` contract above; a never-built `retro-summary.json` handoff artifact.
+
+---
+
+### `momentum:triage` Architecture (DEC-007, DEC-005)
+
+<!-- Added 2026-04-14: Entry-point and topology for the multi-item batch classification orchestrator. -->
+
+`momentum:triage` is the missing orchestrator that sits between upstream observation sources (mid-session conversation, retro Priority Action Items, assessment recommendations) and the per-item executors (`momentum:intake`, `momentum:distill`, `momentum:decision`). It fills the structural gap where `momentum:intake` is single-item-only but real-world triage is inherently multi-item.
+
+**Entry point:** Impetus dispatches from the `[3] Triage` menu item (replaces the placeholder in `skills/momentum/skills/impetus/workflow.md:403` and `skills/momentum/skills/impetus/SKILL.md:63`). Also independently invocable as `/momentum:triage` and programmatically callable from retro Phase 5 or sprint-planning backlog synthesis with an explicit observation list.
+
+**Classification taxonomy (six classes):** ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT. Classification runs **inline in main context** — no subagent spawn for the classification judgment itself (it is context-dependent and cheap, and the orchestrator holds session context triage needs).
+
+**Enrichment for ARTIFACT items:** each ARTIFACT is enriched with `feature_slug` (read from `features.json` — DEC-005 D1), `story_type` (DEC-005 D5 — default `feature`), suggested epic (DEC-005 D2 — DDD sub-domain aware), priority, and proposed dependencies. Enrichment is also inline by default.
+
+**Optional Explore subagents:** for enrichment work at scale — duplicate detection against `stories/index.json` and feature-assignment suggestion against `features.json` — optional Explore subagents may be spawned when observation count ≥ 5 or the developer explicitly requests deeper enrichment. For typical 2–3 observation sessions, triage does everything inline.
+
+**Batch approval UX:** mirrors the pattern established by `momentum:refine` Step 9 — consolidated findings list; accept / modify / reject per item; batch operations (accept-all / reject-all) when N ≥ 5. No silent writes; the developer approves before any delegation or CLI write fires.
+
+**Execution — delegation vs. direct write:**
+
+| Class | Action | Target |
+|---|---|---|
+| ARTIFACT | Delegates to `momentum:intake` (per item) | `stories/{slug}.md` + `stories/index.json` |
+| DISTILL | Delegates to `momentum:distill` (per item) | Target practice file (rule / skill / reference) |
+| DECISION | Delegates to `momentum:decision` (per item) | `planning-artifacts/decisions/dec-NNN-*.md` |
+| SHAPING | Direct CLI write to `intake-queue.jsonl` | `kind: "shape"` |
+| DEFER | Direct CLI write to `intake-queue.jsonl` | `kind: "watch"` |
+| REJECT | Direct CLI write to `intake-queue.jsonl` | `kind: "rejected"` + reason |
+
+Executor skills (`intake`, `distill`, `decision`) retain their existing model and effort settings. Triage does not bypass them.
+
+**Re-surfacing on start:** triage reads `intake-queue.jsonl` on session start to re-surface open `shape` / `watch` / `handoff` entries — items the developer captured previously but has not yet promoted, distilled, decided, or rejected. Handoff-kind entries (produced by retro — see `retro-triage-handoff` story) flow through the same classify / promote / continue-watching / reject UX as shape/watch entries.
+
+**No gap-check (DEC-005 D10):** triage performs no value-floor analysis. Classification only. Gap-check lives at refinement, sprint-planning, and retro.
+
+**Terminal-state awareness (DEC-005 D6):** items whose underlying feature is `Abandoned` or `Rejected` are auto-suggested for REJECT on re-surface.
+
+**Elevated effort (`high`):** justified because triage outputs are unvalidated downstream — the developer batch-approves but there is no AVFL on the delegated intake / distill / decision calls within the triage flow. Matches the pattern used for `momentum:refine` and `momentum:sprint-planning`.
+
+**Implementation story:** `triage-skill`. Implements DEC-005 D1/D2/D5/D6/D10 and DEC-007 D1 in a single sprint. Sibling story `retro-triage-handoff` adds the retro producer side once triage ships.
 
 ---
 
@@ -1781,13 +1884,18 @@ Output: `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/retro-trans
 
 **Phase 6 extension (Decision 47):** After story stub creation and before sprint closure, the retro orchestrator: (1) spawns `/momentum:feature-status` to refresh the feature cache; (2) reads the updated `.claude/momentum/feature-status.md` for feature status deltas; (3) writes `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` with sections: Features Advanced (conditional), Stories Completed vs. Planned, Key Decisions, Unresolved Issues, Narrative (500-word cap). The sprint summary is the sole compression artifact for sprint-to-sprint context transfer.
 
-**Decision 28 — Triage vs Refinement Distinction**
+**Phase 5 extension (DEC-007, 2026-04-14):** Retro gains a **secondary** machine-readable output alongside the primary `retro-transcript-audit.md` findings document. Un-actioned findings that the developer chooses to carry forward are written as `handoff` events to `_bmad-output/implementation-artifacts/intake-queue.jsonl` with `source: "retro"`, `kind: "handoff"`, `status: "open"` — via the `momentum-tools` CLI, not direct file writes. These events are consumed by `momentum:sprint-planning` Phase A.5 and by `momentum:triage` re-surfacing on session start. The primary `retro-transcript-audit.md` output is unchanged; handoff events are additive. See the `intake-queue.jsonl` Schema Contract section for the full field contract. Per DEC-005 D7/D8 (failure-as-diagnostic framing and feature-state transitions) and DEC-005 D10 (retro does not gap-check when emitting handoffs). Implementation story: `retro-triage-handoff`.
+
+**Decision 28 — Triage vs Refinement Distinction (superseded-partial 2026-04-14 by DEC-005 D10 and DEC-007)**
+
+> _[Superseded-partial 2026-04-14: The original framing of triage as "intake-focused: analyze documents/ideas, create story stubs, initial prioritization, assign to an epic" is reshaped. Under DEC-005 D10, gap-check is explicitly excluded from triage (and from intake); it lives only at refinement, sprint-planning, and retro. Under DEC-007, triage is a **batch-classification orchestrator with delegation-only semantics** — it classifies observations into a formalized six-class taxonomy (ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT) and delegates ARTIFACT/DISTILL/DECISION outcomes to the respective executor skills, writing SHAPING/DEFER/REJECT inline to `intake-queue.jsonl` via CLI. It is no longer the actor that "creates story stubs, does initial prioritization, assigns to an epic" — the delegated executor (`momentum:intake`) does that. See `momentum:triage` Architecture and `intake-queue.jsonl` Schema Contract sections above, and `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`.]_
+
 Triage is intake-focused: analyze documents/ideas, create story stubs, initial prioritization, assign to an epic. Refinement is organization-focused: classify, prioritize, gap-analyze the whole backlog. Different purposes, complementary workflows. Both deferred to Phase 5.
 
-**Decision 29 — Sprint Planning Builds the Team (Extended 2026-04-06: Synthesis-First; Extended 2026-04-11: Sprint Summary Read)**
+**Decision 29 — Sprint Planning Builds the Team (Extended 2026-04-06: Synthesis-First; Extended 2026-04-11: Sprint Summary Read; Extended 2026-04-14: Retro Handoff Queue Read)**
 Sprint planning (`/momentum:sprint-planning`) encompasses story selection, create-story invocation, team composition, dependency graph construction, and execution plan generation. Sprint planning is a proper skill (not an inline workflow module) — invoked by Impetus or directly by the user. The sprint record stores team + dependencies (not just story lists and wave assignments). See Sprint Planning Workflow section.
 
-Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`_bmad-output/implementation-artifacts/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent (Decision 47). Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, sprint summary findings, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. If master plan documents are missing, fall back to sorted backlog with a warning.
+Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`_bmad-output/implementation-artifacts/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent (Decision 47). **Phase A.5 additionally reads `_bmad-output/implementation-artifacts/intake-queue.jsonl` filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` — open handoff events from recent retros are folded into the synthesis context alongside the previous sprint summary (per DEC-007, 2026-04-14). If the queue file does not yet exist, treat as empty and continue silently.** Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, sprint summary findings, open retro handoff items, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. **Phase C output gains a labeled "Open handoff items from recent retros" section** that lists each open `source: "retro", kind: "handoff"` entry by title, source sprint, and (when present) its feature-state transition or failure-diagnosis framing. If master plan documents are missing, fall back to sorted backlog with a warning.
 
 **Decision 30 — Gherkin Separation (Extended 2026-04-08: Spec-Quality Feedback Loop)**
 Story files retain plain English ACs (dev sees intent). Sprint-scoped specs directory holds detailed Gherkin `.feature` files (verifiers only). Black-box behavioral validation: specs written pre-implementation, validated post-implementation, by different agents. See Gherkin Specification Separation section.

@@ -399,12 +399,18 @@
   },
   "retro-triage-handoff": {
     "status": "backlog",
-    "title": "Retro Triage Handoff",
+    "title": "Retro \u2192 Triage Handoff \u2014 Retro Findings Feed Planning via Unified Intake Queue",
     "epic_slug": "impetus-epic-orchestrator",
-    "story_file": false,
-    "depends_on": [],
-    "touches": [],
-    "priority": "low"
+    "story_file": true,
+    "depends_on": [
+      "triage-skill"
+    ],
+    "touches": [
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "_bmad-output/planning-artifacts/architecture.md"
+    ],
+    "priority": "medium"
   },
   "posttooluse-lint-and-format-hook-active": {
     "status": "done",
