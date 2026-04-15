@@ -2194,6 +2194,171 @@ def test_greeting_state_feature_status_stale():
     assert_eq("summary correct", fs.get("summary"), "1 feature: 1 not-started")
 
 
+# --- story-add --feature-slug / --story-type Tests ---
+
+def test_story_add_default_story_type():
+    """story-add writes story_type: feature by default."""
+    print("\n[story-add] Default story_type is feature")
+    proj = setup_project(stories={})
+    code, out = run_tool(proj, "sprint", "story-add",
+                         "--slug", "new-story", "--title", "New Story", "--epic", "core")
+    assert_eq("exit code 0", code, 0)
+    stories = read_stories(proj)
+    assert_eq("story_type field present", "story_type" in stories["new-story"], True)
+    assert_eq("story_type default feature", stories["new-story"]["story_type"], "feature")
+
+
+def test_story_add_explicit_story_type():
+    """story-add persists an explicit story_type."""
+    print("\n[story-add] Explicit story_type persisted")
+    proj = setup_project(stories={})
+    code, out = run_tool(proj, "sprint", "story-add",
+                         "--slug", "defect-story", "--title", "Defect Story", "--epic", "core",
+                         "--story-type", "defect")
+    assert_eq("exit code 0", code, 0)
+    stories = read_stories(proj)
+    assert_eq("story_type defect", stories["defect-story"]["story_type"], "defect")
+
+
+def test_story_add_invalid_story_type():
+    """story-add rejects unknown story_type."""
+    print("\n[story-add] Invalid story_type rejected")
+    proj = setup_project(stories={})
+    code, out = run_tool(proj, "sprint", "story-add",
+                         "--slug", "bad-story", "--title", "Bad", "--epic", "core",
+                         "--story-type", "unknown-type")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_story_add_feature_slug_persisted():
+    """story-add persists feature_slug when provided."""
+    print("\n[story-add] feature_slug persisted")
+    proj = setup_project(stories={})
+    code, out = run_tool(proj, "sprint", "story-add",
+                         "--slug", "feat-story", "--title", "Feature Story", "--epic", "core",
+                         "--feature-slug", "my-feature")
+    assert_eq("exit code 0", code, 0)
+    stories = read_stories(proj)
+    assert_eq("feature_slug set", stories["feat-story"].get("feature_slug"), "my-feature")
+
+
+def test_story_add_feature_slug_omitted_when_empty():
+    """story-add omits feature_slug field when not provided."""
+    print("\n[story-add] feature_slug absent when not provided")
+    proj = setup_project(stories={})
+    code, out = run_tool(proj, "sprint", "story-add",
+                         "--slug", "no-feat-story", "--title", "No Feature Story", "--epic", "core")
+    assert_eq("exit code 0", code, 0)
+    stories = read_stories(proj)
+    assert_eq("feature_slug absent", "feature_slug" not in stories["no-feat-story"], True)
+
+
+# --- intake-queue Tests ---
+
+def read_queue(project_dir: Path) -> list:
+    path = project_dir / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+    if not path.exists():
+        return []
+    lines = [l.strip() for l in path.read_text().splitlines() if l.strip()]
+    return [json.loads(l) for l in lines]
+
+
+def test_intake_queue_add_creates_file():
+    """queue-add creates intake-queue.jsonl if absent."""
+    print("\n[intake-queue queue-add] Creates file when absent")
+    proj = setup_project()
+    code, out = run_tool(proj, "intake-queue", "queue-add",
+                         "--kind", "shape", "--title", "Test item", "--description", "desc")
+    assert_eq("exit code 0", code, 0)
+    queue = read_queue(proj)
+    assert_eq("one event", len(queue), 1)
+
+
+def test_intake_queue_add_correct_fields():
+    """queue-add writes all required fields."""
+    print("\n[intake-queue queue-add] Required fields present")
+    proj = setup_project()
+    code, out = run_tool(proj, "intake-queue", "queue-add",
+                         "--kind", "watch", "--title", "Watch item",
+                         "--description", "Something to watch", "--source", "retro")
+    assert_eq("exit code 0", code, 0)
+    queue = read_queue(proj)
+    event = queue[0]
+    assert_eq("kind watch", event.get("kind"), "watch")
+    assert_eq("title correct", event.get("title"), "Watch item")
+    assert_eq("source correct", event.get("source"), "retro")
+    assert_eq("id present", "id" in event, True)
+    assert_eq("captured_at present", "captured_at" in event, True)
+    assert_eq("no resolved_at", "resolved_at" not in event, True)
+
+
+def test_intake_queue_add_invalid_kind():
+    """queue-add rejects unknown kind."""
+    print("\n[intake-queue queue-add] Invalid kind rejected")
+    proj = setup_project()
+    code, out = run_tool(proj, "intake-queue", "queue-add",
+                         "--kind", "invalid-kind", "--title", "Bad item")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_intake_queue_add_appends():
+    """queue-add appends — does not overwrite existing events."""
+    print("\n[intake-queue queue-add] Appends to existing file")
+    proj = setup_project()
+    run_tool(proj, "intake-queue", "queue-add", "--kind", "shape", "--title", "First")
+    run_tool(proj, "intake-queue", "queue-add", "--kind", "rejected", "--title", "Second")
+    queue = read_queue(proj)
+    assert_eq("two events", len(queue), 2)
+    assert_eq("first kind", queue[0].get("kind"), "shape")
+    assert_eq("second kind", queue[1].get("kind"), "rejected")
+
+
+def test_intake_queue_resolve_sets_timestamp():
+    """resolve sets resolved_at on the target event."""
+    print("\n[intake-queue resolve] Sets resolved_at")
+    proj = setup_project()
+    run_tool(proj, "intake-queue", "queue-add", "--kind", "shape", "--title", "To resolve")
+    queue = read_queue(proj)
+    event_id = queue[0]["id"]
+    code, out = run_tool(proj, "intake-queue", "resolve", "--id", event_id)
+    assert_eq("exit code 0", code, 0)
+    updated = read_queue(proj)
+    assert_eq("resolved_at set", "resolved_at" in updated[0], True)
+
+
+def test_intake_queue_resolve_missing_id():
+    """resolve errors when id not found."""
+    print("\n[intake-queue resolve] Errors on missing id")
+    proj = setup_project()
+    run_tool(proj, "intake-queue", "queue-add", "--kind", "shape", "--title", "Existing")
+    code, out = run_tool(proj, "intake-queue", "resolve", "--id", "nonexistent-id")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_intake_queue_resolve_missing_file():
+    """resolve errors when intake-queue.jsonl does not exist."""
+    print("\n[intake-queue resolve] Errors when file absent")
+    proj = setup_project()
+    code, out = run_tool(proj, "intake-queue", "resolve", "--id", "anything")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_intake_queue_resolve_idempotent():
+    """resolve on already-resolved event is safe (no error)."""
+    print("\n[intake-queue resolve] Idempotent re-resolve")
+    proj = setup_project()
+    run_tool(proj, "intake-queue", "queue-add", "--kind", "watch", "--title", "Resolve me")
+    queue = read_queue(proj)
+    event_id = queue[0]["id"]
+    run_tool(proj, "intake-queue", "resolve", "--id", event_id)
+    code, out = run_tool(proj, "intake-queue", "resolve", "--id", event_id)
+    assert_eq("exit code 0", code, 0)
+
+
 # --- Runner ---
 
 def main():
@@ -2349,6 +2514,23 @@ def main():
     test_greeting_state_feature_status_no_cache()
     test_greeting_state_feature_status_fresh()
     test_greeting_state_feature_status_stale()
+
+    # story-add --feature-slug / --story-type tests
+    test_story_add_default_story_type()
+    test_story_add_explicit_story_type()
+    test_story_add_invalid_story_type()
+    test_story_add_feature_slug_persisted()
+    test_story_add_feature_slug_omitted_when_empty()
+
+    # intake-queue tests
+    test_intake_queue_add_creates_file()
+    test_intake_queue_add_correct_fields()
+    test_intake_queue_add_invalid_kind()
+    test_intake_queue_add_appends()
+    test_intake_queue_resolve_sets_timestamp()
+    test_intake_queue_resolve_missing_id()
+    test_intake_queue_resolve_missing_file()
+    test_intake_queue_resolve_idempotent()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")

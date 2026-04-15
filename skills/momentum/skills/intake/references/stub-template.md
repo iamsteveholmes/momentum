@@ -3,6 +3,8 @@ title: {{title}}
 story_key: {{slug}}
 status: backlog
 epic_slug: {{epic_slug}}
+feature_slug: {{feature_slug}}
+story_type: {{story_type}}
 depends_on: []
 touches: []
 ---

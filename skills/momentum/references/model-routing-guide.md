@@ -12,5 +12,6 @@
 | momentum:create-story | claude-sonnet-4-6 | medium | Story authoring — well-validated by downstream AVFL |
 | momentum:dev | claude-sonnet-4-6 | medium | Story orchestration — validated by AVFL gate |
 | momentum:plan-audit | claude-sonnet-4-6 | medium | Plan classification + story creation |
+| momentum:triage | claude-sonnet-4-6 | high | Multi-item orchestrator; matches refine/sprint-planning effort level |
 
 Story 3.5 will elaborate this guide with the full decision framework.

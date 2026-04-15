@@ -400,7 +400,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
       - Activate sprint → run `momentum-tools sprint activate` via Bash, then dispatch momentum:sprint-dev
       - Run retro → output placeholder: "The retro workflow isn't built yet — it's on the roadmap. For now, you can run momentum-tools sprint retro-complete to mark the retro done and activate the next sprint."
       - Refine backlog → dispatch momentum:refine
-      - Triage → output placeholder: "Triage is coming in the next phase."
+      - Triage → dispatch momentum:triage
     </action>
   </step>
 

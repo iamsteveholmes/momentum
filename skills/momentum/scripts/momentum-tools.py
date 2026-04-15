@@ -1517,6 +1517,11 @@ def cmd_story_add(args: argparse.Namespace) -> None:
     if priority not in VALID_PRIORITIES:
         error_result("story_add", f"Invalid priority '{priority}'. Must be one of: {', '.join(sorted(VALID_PRIORITIES))}", slug=slug)
 
+    VALID_STORY_TYPES = {"feature", "maintenance", "defect", "exploration", "practice"}
+    story_type = (args.story_type or "feature").strip().lower()
+    if story_type not in VALID_STORY_TYPES:
+        error_result("story_add", f"Invalid story_type '{story_type}'. Must be one of: {', '.join(sorted(VALID_STORY_TYPES))}", slug=slug)
+
     entry = {
         "status": "backlog",
         "title": args.title.strip(),
@@ -1525,11 +1530,82 @@ def cmd_story_add(args: argparse.Namespace) -> None:
         "depends_on": [],
         "touches": [],
         "priority": priority,
+        "story_type": story_type,
     }
+
+    feature_slug = (args.feature_slug or "").strip()
+    if feature_slug:
+        entry["feature_slug"] = feature_slug
+
     stories[slug] = entry
     write_json(path, stories)
 
     result("story_add", success=True, slug=slug, **entry)
+
+
+# --- Intake Queue Commands ---
+
+VALID_QUEUE_KINDS = {"shape", "watch", "rejected", "handoff"}
+
+
+def intake_queue_path(project_dir: Path) -> Path:
+    return project_dir / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+
+
+def cmd_intake_queue_add(args: argparse.Namespace) -> None:
+    """Append an event to intake-queue.jsonl."""
+    import uuid
+    project_dir = resolve_project_dir()
+    path = intake_queue_path(project_dir)
+
+    kind = args.kind.strip().lower()
+    if kind not in VALID_QUEUE_KINDS:
+        error_result("intake_queue_add", f"Invalid kind '{kind}'. Must be one of: {', '.join(sorted(VALID_QUEUE_KINDS))}", kind=kind)
+
+    event = {
+        "id": str(uuid.uuid4())[:8],
+        "kind": kind,
+        "title": args.title.strip(),
+        "description": args.description.strip() if args.description else "",
+        "source": args.source.strip() if args.source else "triage",
+        "captured_at": datetime.now().isoformat(),
+    }
+
+    # Append to JSONL (create if absent)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(event) + "\n")
+
+    result("intake_queue_add", success=True, **event)
+
+
+def cmd_intake_queue_resolve(args: argparse.Namespace) -> None:
+    """Mark an intake-queue event as resolved by setting resolved_at."""
+    project_dir = resolve_project_dir()
+    path = intake_queue_path(project_dir)
+
+    if not path.exists():
+        error_result("intake_queue_resolve", "intake-queue.jsonl not found — nothing to resolve", id=args.id)
+
+    target_id = args.id.strip()
+    lines = path.read_text(encoding="utf-8").splitlines()
+    updated_lines = []
+    found = False
+    for line in lines:
+        if not line.strip():
+            continue
+        event = json.loads(line)
+        if event.get("id") == target_id:
+            if "resolved_at" not in event:
+                event["resolved_at"] = datetime.now().isoformat()
+            found = True
+        updated_lines.append(json.dumps(event))
+
+    if not found:
+        error_result("intake_queue_resolve", f"Event id '{target_id}' not found in intake-queue.jsonl", id=target_id)
+
+    path.write_text("\n".join(updated_lines) + "\n", encoding="utf-8")
+    result("intake_queue_resolve", success=True, id=target_id)
 
 
 # --- Version Command ---
@@ -1629,6 +1705,8 @@ def build_parser() -> argparse.ArgumentParser:
     sta.add_argument("--title", required=True, help="Human-readable story title")
     sta.add_argument("--epic", required=True, help="Epic slug this story belongs to")
     sta.add_argument("--priority", default="low", help="Priority: critical, high, medium, low (default: low)")
+    sta.add_argument("--feature-slug", default="", help="Feature slug this story belongs to (optional)")
+    sta.add_argument("--story-type", default="feature", help="Story type: feature, maintenance, defect, exploration, practice (default: feature)")
     sta.set_defaults(func=cmd_story_add)
 
     # sprint stories
@@ -1692,6 +1770,23 @@ def build_parser() -> argparse.ArgumentParser:
 
     vc = version_sub.add_parser("check", help="Check version hash")
     vc.set_defaults(func=cmd_version_check)
+
+    # intake-queue command group
+    iq = subparsers.add_parser("intake-queue", help="Intake queue operations (intake-queue.jsonl)")
+    iq_sub = iq.add_subparsers(dest="iq_action", required=True)
+
+    # intake-queue queue-add
+    iqa = iq_sub.add_parser("queue-add", help="Append an event to intake-queue.jsonl")
+    iqa.add_argument("--kind", required=True, help="Event kind: shape, watch, rejected, handoff")
+    iqa.add_argument("--title", required=True, help="Short title for the item")
+    iqa.add_argument("--description", default="", help="Full description of the item")
+    iqa.add_argument("--source", default="triage", help="Source of the item (e.g., triage, retro, assessment)")
+    iqa.set_defaults(func=cmd_intake_queue_add)
+
+    # intake-queue resolve
+    iqr = iq_sub.add_parser("resolve", help="Mark an intake-queue event as resolved")
+    iqr.add_argument("--id", required=True, help="Event ID to mark as resolved")
+    iqr.set_defaults(func=cmd_intake_queue_resolve)
 
     # feature-status-hash command
     fsh = subparsers.add_parser("feature-status-hash",

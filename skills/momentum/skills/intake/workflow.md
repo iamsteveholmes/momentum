@@ -23,8 +23,8 @@ stub file, add index entry. No analysis, no research, no subagents.
   <critical>Minimize tool calls: 1 read (slug conflict check), 1 write (stub file),
   1 bash (CLI index entry). No subagent spawns.</critical>
 
-  <step n="1" goal="Extract story context from conversation">
-    <action>Review the current conversation for story information. Extract:
+  <step n="1" goal="Extract story context from conversation or caller">
+    <action>Review the current conversation (or caller-provided context) for story information. Extract:
       - {{title}}: The story title (required — derive from conversation if not explicit)
       - {{description}}: The "why" and scope as described conversationally
       - {{user_role}}: The role in "As a..." (default: "developer" if not explicit)
@@ -34,9 +34,13 @@ stub file, add index entry. No analysis, no research, no subagents.
         not polished. Use bullet points. Label clearly as rough/draft.
       - {{pain_context}}: Recurrence, workaround burden, forgetting risk, and any
         other rationale the user gave for why this matters
-      - {{suggested_epic}}: Epic the user suggested, if any
+      - {{suggested_epic}}: Epic the user suggested or caller provided, if any
       - {{suggested_priority}}: Priority the user suggested (critical/high/medium/low),
         if any. Default to `low` if not mentioned.
+      - {{feature_slug}}: Feature this story belongs to — from caller context or
+        conversation. Leave blank if not provided or not determinable.
+      - {{story_type}}: Story type classification — feature / maintenance / defect /
+        exploration / practice. From caller or heuristic. Default: "feature".
     </action>
 
     <check if="title cannot be derived from conversation">
@@ -96,6 +100,8 @@ stub file, add index entry. No analysis, no research, no subagents.
       - {{pain_context}} → pain context from conversation
       - {{rough_acs}} → rough ACs captured as bullet points, prefixed with:
           "The following are rough draft ACs captured from conversation:"
+      - {{feature_slug}} → feature_slug if provided, else empty string
+      - {{story_type}} → story_type if provided, else "feature"
     </action>
 
     <action>Determine stub file path:
@@ -110,7 +116,9 @@ stub file, add index entry. No analysis, no research, no subagents.
         --slug "{{slug}}" \
         --title "{{title}}" \
         --epic "{{epic_slug}}" \
-        --priority "{{suggested_priority}}"
+        --priority "{{suggested_priority}}" \
+        {{if feature_slug is non-empty: --feature-slug "{{feature_slug}}"}} \
+        {{if story_type is non-empty: --story-type "{{story_type}}"}}
       ```
     </action>
 
