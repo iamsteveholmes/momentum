@@ -580,7 +580,20 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
     </check>
 
     <check if="{{handoff_items}} is not empty">
-      <output>Writing {{handoff_items | length}} findings to intake-queue.jsonl for next planning cycle...</output>
+      <output>{{handoff_items | length}} findings could carry forward to the next planning cycle:
+
+{{#each handoff_items}}
+  · {{title}}{{#if feature_slug}} (feature: {{feature_slug}}){{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}
+{{/each}}
+
+Carry these forward as handoff events in intake-queue.jsonl? (Y/N)</output>
+      <ask>Approve handoff writes?</ask>
+      <check if="developer declines">
+        <output>Handoff skipped — no events written to intake-queue.jsonl.</output>
+        <action>Update task 5.5 to completed</action>
+      </check>
+
+      <output>Writing {{handoff_items | length}} findings to intake-queue.jsonl...</output>
 
       <action>For each item in {{handoff_items}}, run one `python3 skills/momentum/scripts/momentum-tools.py intake-queue append` call:
 
