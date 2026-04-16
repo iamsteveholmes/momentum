@@ -298,14 +298,24 @@ Gherkin specs for this sprint exist at `sprints/{sprint-slug}/specs/retro-triage
 
 ## Dev Agent Record
 
-<!-- This section is populated only during and after development. -->
-
-_Populated by the dev agent during implementation._
-
 ### Agent Model Used
+
+claude-sonnet-4-6 (dev-skills specialist)
 
 ### Debug Log References
 
+None — clean implementation. momentum-tools test suite ran 386/386.
+
 ### Completion Notes List
 
+- Implemented `intake-queue` CLI command group in `momentum-tools.py` with three subcommands: `append` (write events), `list` (filter by source/kind/status), `consume` (mark event consumed). Uses atomic append pattern matching `journal-append`.
+- Added retro Phase 5.5 to `retro/workflow.md` — writes un-actioned findings (rejected stubs, feature-state transitions per DEC-005 D8, failure diagnoses per DEC-005 D7) to `intake-queue.jsonl`. Task tracking updated to 7 phases.
+- Updated `sprint-planning/workflow.md` Step 1 to read open retro handoff items from `intake-queue.jsonl` (Phase A.6) and surface them in both "no master plan" and "has master plan" output sections. Step 2 extended to allow promoting handoff items directly to story stubs during selection.
+- Updated `architecture.md` — retired `triage-inbox.md` contract, replaced with full `intake-queue.jsonl` schema documentation including DEC-005 D7/D8 field semantics and `momentum-tools intake-queue` CLI reference.
+
 ### File List
+
+- `skills/momentum/scripts/momentum-tools.py` — added `intake-queue` command group (append, list, consume)
+- `skills/momentum/skills/retro/workflow.md` — added Phase 5.5 (handoff to intake queue), updated task setup and Phase 6 summary
+- `skills/momentum/skills/sprint-planning/workflow.md` — added Phase A.6 (read retro handoff items), updated Step 1 display and Step 2 selection to surface and promote handoff items
+- `_bmad-output/planning-artifacts/architecture.md` — retired triage-inbox.md section, documented intake-queue.jsonl handoff contract

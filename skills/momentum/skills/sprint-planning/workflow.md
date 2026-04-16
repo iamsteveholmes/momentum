@@ -72,6 +72,26 @@
     </check>
     <!-- End Phase A.5 -->
 
+    <!-- Phase A.6: Retro handoff items from intake-queue.jsonl -->
+    <action>Run: `momentum-tools intake-queue list --source retro --kind handoff --status open`</action>
+
+    <check if="intake-queue.jsonl exists AND open retro handoff items found">
+      <action>Store {{retro_handoff_items}} = the `events` array from the command output</action>
+      <action>Include {{retro_handoff_items}} in the synthesis context alongside the sprint summary.
+        These are un-actioned findings from prior retros that were explicitly deferred into the queue
+        rather than immediately stubbed. Each carries provenance (sprint_slug), and optionally
+        feature-state-transition and failure-diagnosis context (per DEC-005 D7/D8).
+        Weight them as signals of known pain — findings with feature_state_transition indicating
+        regression carry higher urgency; findings with failure_diagnosis indicate unresolved systemic
+        issues that block repeatable success.</action>
+    </check>
+
+    <check if="intake-queue.jsonl does not exist OR no open retro handoff items">
+      <action>Set {{retro_handoff_items}} = []</action>
+      <action>Continue without retro handoff context</action>
+    </check>
+    <!-- End Phase A.6 -->
+
     <!-- Phase B: Staleness check -->
     <action>Read `{implementation_artifacts}/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>
@@ -90,6 +110,17 @@
       <output>! No master plan documents found — recommendations require prd.md and a product brief.
 Presenting full backlog instead.
 
+{{#if retro_handoff_items.length}}
+Retro handoff items — open findings from prior sprint retros:
+{{#each retro_handoff_items}}
+  · [RETRO:{{sprint_slug}}] {{title}}
+    {{#if feature_state_transition}}Feature state: {{feature_state_transition.feature_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
+    {{#if failure_diagnosis}}Failure: {{failure_diagnosis.attempted}} — {{failure_diagnosis.didnt_work}}{{/if}}
+{{/each}}
+
+These open findings were not stubbed in the retro that produced them. Consider whether any should be added to this sprint.
+
+{{/if}}
 Backlog — N stories across M epics
 
 [Epic: epic-slug-1]
@@ -103,6 +134,7 @@ Select 2-8 stories for this sprint by number or slug.</output>
     <check if="has_master_plan is true">
       <action>From {{clean_candidates}}, select 3-5 top recommendations:
         · Weight by: priority field (critical > high > medium > low), master plan alignment (stories touching areas flagged as high priority in prd.md or product brief rank higher), dependency readiness (all depends_on satisfied > some pending), recency of related PRD edits
+        · Also weight {{retro_handoff_items}} items: feature-state regression items (prior_state → observed_state showing regression) elevate urgency; failure-diagnosis items signal systemic issues worth blocking on
         · Write a 1-2 sentence rationale for each recommendation explaining why this story matters now, grounded in master plan priorities and readiness
       </action>
       <action>Group the full backlog by `epic_slug`, sorted within each epic by: (1) priority — critical first, then high, medium, low; (2) dependency depth — leaves first; (3) alphabetical</action>
@@ -122,6 +154,18 @@ Based on the master plan and current backlog state:
      Why now: rationale
 
   ...
+
+{{#if retro_handoff_items.length}}
+Retro handoff items — {{retro_handoff_items.length}} open finding(s) from prior sprint(s):
+{{#each retro_handoff_items}}
+  · [{{sprint_slug}}] {{title}}
+    {{#if feature_state_transition}}Feature state: {{feature_state_transition.feature_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
+    {{#if failure_diagnosis}}Failure: {{failure_diagnosis.attempted}} — {{failure_diagnosis.didnt_work}}{{/if}}
+    {{description}}
+{{/each}}
+
+These findings were not stubbed in their originating retro. Add any to this sprint by entering their title or the keyword "handoff-N" during story selection.
+{{/if}}
 
 Potentially stale (may already be implemented):
   · story-slug — Title · recent commits: a1b2c3d "commit msg", e4f5g6h "commit msg"
@@ -146,9 +190,31 @@ Select 2-8 stories for this sprint by number or slug.
 
   <step n="2" goal="Story selection">
     <action>Update task 2 (Story selection) to in_progress</action>
-    <ask>Select 2-8 stories for this sprint. Enter numbers or slugs, comma-separated.</ask>
+    <ask>Select 2-8 stories for this sprint. Enter numbers or slugs, comma-separated.
+If you want to include a retro handoff item as a story, enter "handoff-N" (where N is its position in the retro handoff list above) or paste the item title.</ask>
 
-    <action>Parse the developer's selection — accept numbers (from the backlog display) or story slugs</action>
+    <action>Parse the developer's selection — accept numbers (from the backlog display), story slugs, or "handoff-N" references to retro handoff items</action>
+
+    <check if="selection includes one or more handoff-N references or retro handoff item titles">
+      <action>For each referenced handoff item:
+        1. Look up the item in {{retro_handoff_items}} by index (handoff-N) or title match
+        2. Create a story stub from the handoff event:
+           - Generate slug from the handoff item title (kebab-case, max 50 chars)
+           - Run: `momentum-tools sprint story-add --slug {{slug}} --title "{{item.title}}" --epic impetus-epic-orchestrator`
+             (use appropriate epic if discernible from feature_slug context)
+           - Write story stub file at `_bmad-output/implementation-artifacts/stories/{{slug}}.md`
+             with the handoff item's description, feature_slug, story_type, and any
+             feature_state_transition / failure_diagnosis context in the story's Description section
+        3. Mark the handoff item consumed:
+           Run: `momentum-tools intake-queue consume --id {{item.id}} --outcome-ref {{slug}}`
+        4. Add the new slug to the sprint selection
+      </action>
+      <output>Handoff items promoted to story stubs:
+{{#each promoted_handoff_stories}}
+  · {{original_title}} → story: {{slug}} (intake-queue event consumed)
+{{/each}}</output>
+    </check>
+
     <action>Validate: selection count must be between 2 and 8 (inclusive)</action>
 
     <check if="fewer than 2 or more than 8 stories selected">

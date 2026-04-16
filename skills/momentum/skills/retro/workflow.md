@@ -37,12 +37,13 @@
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="0" goal="Initialize phase-level task tracking">
-    <action>Create tasks for the 6 retro phases:
+    <action>Create tasks for the 7 retro phases:
       1. Sprint identification — find the sprint to retro
       2. Transcript preprocessing — DuckDB extraction of session data into audit-extracts/
       3. Story verification — check status of every sprint story
       4. Auditor team — spawn 3 auditors + 1 documenter to analyze extracts and write findings
       5. Story stub creation — propose and approve actionable backlog items from findings
+      5.5. Handoff to intake queue — write un-actioned findings to intake-queue.jsonl for next planning cycle
       6. Sprint closure — call sprint complete + retro-complete, show summary
     </action>
   </step>
@@ -533,6 +534,108 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 5.5: HANDOFF TO INTAKE QUEUE                      -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="5.5" goal="Write un-actioned retro findings to intake-queue.jsonl for next sprint planning">
+    <action>Update task 5.5 to in_progress</action>
+
+    <note>The intake-queue.jsonl is the unified artifact (per DEC-007) for cross-workflow
+    handoffs. Retro writes `source: "retro"`, `kind: "handoff"` events so sprint-planning
+    Step 1 can surface them without manual re-injection. Each finding carries feature-state
+    transition context (DEC-005 D8) and failure-diagnosis framing (DEC-005 D7) when applicable.
+
+    Write CLI: `momentum-tools intake-queue append --source retro --kind handoff ...`
+
+    What goes into the queue:
+      - Findings from the "Priority Action Items" section that were NOT stubbed AND NOT distilled
+        (i.e., developer declined during Phase 5, or were low-priority observations worth watching)
+      - Feature-state transitions observed during this retro (feature X regressed, feature Y ready
+        for Done) — these carry `feature_state_transition` JSON
+      - Specific failures diagnosed during auditor analysis (DEC-005 D7) — these carry
+        `failure_diagnosis` JSON
+      - Cross-cutting patterns the documenter elevated but which don't warrant immediate stub creation
+
+    What DOES NOT go into the queue:
+      - Stubs already approved and added to stories/index.json (Phase 5) — those are tracked there
+      - Findings already routed to distill (Phase 5 Tier 1) — those are applied or staged
+      - The sprint-summary content — that stays in sprint-summary.md
+
+    One event per finding. Use `momentum-tools intake-queue append` for each.</note>
+
+    <action>Gather the items to hand off:
+      1. From {{rejected_stubs}} (Phase 5 developer-declined stubs): these are un-actioned findings
+         the developer chose not to stub but may want to revisit
+      2. From Phase 4 findings: any feature-state transitions observed (DEC-005 D8) — features
+         that regressed, partially advanced, or are candidates for Done/Shelved/Abandoned/Rejected
+      3. From Phase 4 findings: any specific failures with diagnosed causes (DEC-005 D7)
+      4. Any cross-cutting patterns from the documenter that aren't covered by approved stubs
+
+      Store {{handoff_items}} = list of all items to write to queue
+    </action>
+
+    <check if="{{handoff_items}} is empty">
+      <output>No un-actioned findings to hand off — all Priority Action Items were either stubbed or distilled.</output>
+      <action>Update task 5.5 to completed</action>
+    </check>
+
+    <check if="{{handoff_items}} is not empty">
+      <output>Writing {{handoff_items | length}} findings to intake-queue.jsonl for next planning cycle...</output>
+
+      <action>For each item in {{handoff_items}}, run one `momentum-tools intake-queue append` call:
+
+        Required flags for every event:
+          --source retro
+          --kind handoff
+          --title "{{item.title}}"
+          --description "{{item.description}}"
+          --sprint-slug "{{sprint_slug}}"
+
+        Optional flags (include when the finding has this context):
+          --feature-slug "{{item.feature_slug}}"            (when finding is tied to a feature)
+          --story-type "{{item.suggested_story_type}}"      (when finding implies future story work)
+          --feature-state-transition '{"feature_slug":"...","prior_state":"...","observed_state":"...","evidence":"..."}' (DEC-005 D8: feature state hygiene)
+          --failure-diagnosis '{"attempted":"...","didnt_work":"...","learned":"..."}' (DEC-005 D7: failure naming)
+
+        Example for a feature regression finding:
+          momentum-tools intake-queue append \
+            --source retro \
+            --kind handoff \
+            --title "M3 consistency regressed in sprint-2026-04-08" \
+            --description "Material 3 design tokens are inconsistent across 3 surfaces that were previously aligned" \
+            --sprint-slug "{{sprint_slug}}" \
+            --feature-slug "material-3-design-system" \
+            --story-type "defect" \
+            --feature-state-transition '{"feature_slug":"material-3-design-system","prior_state":"partial","observed_state":"partial","evidence":"User reported token inconsistency in Settings, Profile, and Home screens"}'
+
+        Example for a failure-diagnosis finding:
+          momentum-tools intake-queue append \
+            --source retro \
+            --kind handoff \
+            --title "E2E validator prompt produced false positives on UI stories" \
+            --description "E2E validator repeatedly flagged valid UI states as failures due to overly strict selector assumptions" \
+            --sprint-slug "{{sprint_slug}}" \
+            --failure-diagnosis '{"attempted":"E2E validation via DOM selector matching","didnt_work":"Selectors assumed specific CSS class names that change with M3 theming","learned":"E2E specs must use semantic roles and aria-labels, not CSS classes"}'
+      </action>
+
+      <action>Verify all events were written:
+        Run: `momentum-tools intake-queue list --source retro --kind handoff --status open`
+        Confirm the returned count matches {{handoff_items | length}}
+      </action>
+
+      <output>Phase 5.5 complete — {{handoff_items | length}} findings written to intake-queue.jsonl:
+
+{{#each handoff_items}}
+  · {{title}} [{{#if feature_slug}}feature: {{feature_slug}}{{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}]
+{{/each}}
+
+These will be surfaced automatically in the next sprint planning session (Step 1 — backlog synthesis).</output>
+
+      <action>Update task 5.5 to completed</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
   <!-- PHASE 6: SPRINT CLOSURE                                 -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
@@ -634,12 +737,15 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
 
 **Story stubs created:** {{approved_count}} added to backlog
 
+**Findings handed off:** {{handoff_items | length}} events written to intake-queue.jsonl (source: retro, kind: handoff)
+
 **Sprint status:** closed (retro_run_at set to {{today}})
 
 **Sprint summary:** `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
 
 ---
 Review the findings document and backlog stubs when planning the next sprint.
+Retro handoff items will surface automatically in sprint planning Step 1 (backlog synthesis).
 </output>
 
     <action>Update task 6 to completed</action>

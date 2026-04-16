@@ -222,7 +222,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
 
     **SHAPING items** — write to intake-queue.jsonl via CLI:
       For each approved SHAPING item:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue queue-add \
+        python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
           --kind shape \
           --title "{{title}}" \
           --description "{{description}}" \
@@ -230,7 +230,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
 
     **DEFER items** — write to intake-queue.jsonl via CLI:
       For each approved DEFER item:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue queue-add \
+        python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
           --kind watch \
           --title "{{title}}" \
           --description "{{description}}" \
@@ -238,7 +238,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
 
     **REJECT items** — write to intake-queue.jsonl via CLI:
       For each approved REJECT item:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue queue-add \
+        python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
           --kind rejected \
           --title "{{title}}" \
           --description "{{description}}" \
@@ -251,14 +251,14 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
     </check>
 
     <check if="any queue-add CLI call fails">
-      <output>! queue-add failed: {{error}} — item recorded here for manual capture:
+      <output>! append failed: {{error}} — item recorded here for manual capture:
         kind: {{kind}} · title: {{title}} · description: {{description}}</output>
       <action>Continue processing remaining items.</action>
     </check>
 
     <action>Mark resolved queue items:
       For each ID in {{resolved_queue_ids}}:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue resolve \
+        python3 skills/momentum/scripts/momentum-tools.py intake-queue consume \
           --id "{{queue_id}}"
     </action>
   </step>

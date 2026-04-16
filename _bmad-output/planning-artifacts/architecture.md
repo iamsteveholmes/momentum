@@ -1669,36 +1669,62 @@ momentum:dev does NOT invoke bmad-dev-story as an indirection layer — the curr
 
 ---
 
-### Retro → Triage Handoff Format
+### Retro → Planning Handoff via Unified Intake Queue
 
-> _[Superseded 2026-04-14 by DEC-007 and story `retro-triage-handoff`: the `triage-inbox.md` contract described below was never built. Retro now writes handoff events to the unified `_bmad-output/implementation-artifacts/intake-queue.jsonl` event log with `source: "retro"`, `kind: "handoff"`. Implementation landing in the `retro-triage-handoff` story; schema defined in the `intake-queue.jsonl` subsection that follows. See `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`. The content below is retained as historical context.]_
+> _[Updated 2026-04-15 (DEC-007, story: retro-triage-handoff): The prior `triage-inbox.md` contract is **retired**. Retro now writes handoff events directly to the unified `_bmad-output/implementation-artifacts/intake-queue.jsonl`. Sprint-planning Step 1 reads open handoff entries from the same file. No manual re-injection of retro findings into planning is required.]_
 
-> _[Updated 2026-04-06: Retro's primary output is now `retro-transcript-audit.md` (Decision 27). The triage-inbox format below is used for structured action item handoff from retro to triage — downstream of the transcript audit.]_
+After each sprint retro (Phase 5.5), un-actioned findings are written to `intake-queue.jsonl` as JSONL events. Sprint-planning Step 1 reads these open entries and surfaces them alongside the backlog — closing the retro → planning loop without developer re-injection.
 
-After each epic, the retro skill writes structured entries to `triage-inbox.md`. The developer reviews before triage runs — retro does not auto-launch triage.
+**Artifact:** `_bmad-output/implementation-artifacts/intake-queue.jsonl` (per DEC-007)
 
-**triage-inbox.md location:** `_bmad-output/implementation-artifacts/triage-inbox.md` (per-project, not global)
+**Write path:** `momentum-tools intake-queue append --source retro --kind handoff ...`
+**Read path:** `momentum-tools intake-queue list --source retro --kind handoff --status open`
+**Consume path:** `momentum-tools intake-queue consume --id ID --outcome-ref STORY_SLUG`
 
-**triage-inbox.md is append-only per epic.** Triage reads the full inbox and classifies each item before marking it consumed.
-
-**Entry format per action item:**
-```yaml
-- source: "epic-N-retro"
-  type: "action-item"        # action-item | incomplete-story | blocker-resolution
-  priority: "high"           # high | medium | low
-  description: "..."
-  references:
-    - story_key: "..."
-    - file: "..."
-  proposed_resolution: "..."
+**Event schema:**
+```jsonl
+{
+  "id": "iq-YYYYMMDDHHMMSS-XXXXXXXX",
+  "timestamp": "2026-04-15T17:34:00Z",
+  "source": "retro",
+  "kind": "handoff",
+  "status": "open",
+  "title": "Short title of the finding",
+  "description": "Full description of the finding",
+  "sprint_slug": "sprint-2026-04-08",
+  "feature_slug": "material-3-design-system",
+  "story_type": "defect",
+  "feature_state_transition": {
+    "feature_slug": "...",
+    "prior_state": "partial",
+    "observed_state": "partial",
+    "evidence": "..."
+  },
+  "failure_diagnosis": {
+    "attempted": "...",
+    "didnt_work": "...",
+    "learned": "..."
+  }
+}
 ```
 
-**Type vocabulary:**
-- `action-item` — a practice improvement, process fix, or architectural change surfaced by the retro
-- `incomplete-story` — a story that was `closed-incomplete` during the epic; needs re-triage before it can re-enter the backlog
-- `blocker-resolution` — a dependency or external blocker that was worked around; resolution should be tracked
+**Field semantics:**
+- `source: "retro"` — written by `momentum:retro` Phase 5.5
+- `kind: "handoff"` — un-actioned retro finding intended for next planning cycle
+- `status` — `open` (awaiting planning review) | `consumed` (promoted to story or explicitly rejected)
+- `sprint_slug` — provenance: which retro produced this finding
+- `feature_slug` — associated feature, if the finding is feature-bound (per DEC-005 D1)
+- `story_type` — suggested story type for downstream stub creation (per DEC-005 D5)
+- `feature_state_transition` — present when the finding involves a feature-state hygiene event (per DEC-005 D8): feature X asserted Done but retro observed regression
+- `failure_diagnosis` — present when the finding names a specific failure (per DEC-005 D7): what was attempted, what didn't work, what was learned
 
-**Triage consumption:** After triage processes an item, it appends a `consumed_at` timestamp and `triage_outcome` field to the entry. The inbox is never truncated — full history is preserved.
+**Consumption:** When a handoff item is promoted to a story stub during sprint-planning Step 2, `momentum-tools intake-queue consume --id ID --outcome-ref STORY_SLUG` marks it consumed. Items remain in the file (append-only); consumed items are skipped by `--status open` queries.
+
+**DEC-005 alignment (D7, D8):**
+- D8 — Retro gains feature-state hygienist role: `feature_state_transition` carries the observed state transition for any feature touched by the sprint
+- D7 — Failure as legitimate diagnostic category: `failure_diagnosis` names what was attempted, what failed, and what was learned — not softened into generic "learnings"
+
+**Retired:** The prior `triage-inbox.md` contract (YAML entries, `source: "epic-N-retro"`, `type: action-item | incomplete-story | blocker-resolution`) is superseded. The `triage-inbox.md` file was never created; its design is replaced by this unified JSONL contract per DEC-007.
 
 ---
 
