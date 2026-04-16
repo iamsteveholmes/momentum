@@ -2350,5 +2350,15 @@
     "depends_on": [],
     "touches": [],
     "priority": "high"
+  },
+  "add-dry-run-flag-to-sprint-activate-command": {
+    "status": "backlog",
+    "title": "Add --dry-run flag to sprint activate command",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature"
   }
 }
