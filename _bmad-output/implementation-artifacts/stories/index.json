@@ -354,7 +354,7 @@
     "priority": "low"
   },
   "triage-skill": {
-    "status": "review",
+    "status": "done",
     "title": "Triage Skill",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": false,
@@ -398,7 +398,7 @@
     "priority": "low"
   },
   "retro-triage-handoff": {
-    "status": "review",
+    "status": "done",
     "title": "Retro → Triage Handoff — Retro Findings Feed Planning via Unified Intake Queue",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,

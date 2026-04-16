@@ -1,58 +1,5 @@
 {
-  "active": {
-    "locked": true,
-    "status": "active",
-    "stories": [
-      "triage-skill",
-      "retro-triage-handoff"
-    ],
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "triage-skill"
-        ]
-      },
-      {
-        "wave": 2,
-        "stories": [
-          "retro-triage-handoff"
-        ]
-      }
-    ],
-    "started": "2026-04-14",
-    "slug": "sprint-2026-04-14",
-    "planned": "2026-04-14",
-    "team": {
-      "story_assignments": {
-        "triage-skill": {
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present",
-          "wave": 1
-        },
-        "retro-triage-handoff": {
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present",
-          "wave": 2
-        }
-      },
-      "review_roles": {
-        "qa-reviewer": [
-          "triage-skill",
-          "retro-triage-handoff"
-        ],
-        "e2e-validator": [
-          "triage-skill",
-          "retro-triage-handoff"
-        ],
-        "architecture-guard": [
-          "triage-skill"
-        ]
-      }
-    }
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -942,6 +889,62 @@
       "started": "2026-04-11",
       "completed": "2026-04-12",
       "retro_run_at": "2026-04-12"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "stories": [
+        "triage-skill",
+        "retro-triage-handoff"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "triage-skill"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "retro-triage-handoff"
+          ]
+        }
+      ],
+      "started": "2026-04-14",
+      "slug": "sprint-2026-04-14",
+      "planned": "2026-04-14",
+      "team": {
+        "story_assignments": {
+          "triage-skill": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 1
+          },
+          "retro-triage-handoff": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          }
+        },
+        "review_roles": {
+          "qa-reviewer": [
+            "triage-skill",
+            "retro-triage-handoff"
+          ],
+          "e2e-validator": [
+            "triage-skill",
+            "retro-triage-handoff"
+          ],
+          "architecture-guard": [
+            "triage-skill"
+          ]
+        }
+      },
+      "completed": "2026-04-15",
+      "retro_run_at": null
     }
   ],
   "quickfixes": [
