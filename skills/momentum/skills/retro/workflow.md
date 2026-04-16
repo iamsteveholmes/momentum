@@ -259,7 +259,14 @@ For each of these, choose:
         - recommendation (fix|keep|investigate)
 
       Send findings to the documenter agent via SendMessage as you discover them.
-      Format as JSON array under key "human_findings".
+      The SendMessage `message` field MUST be a STRING — not a JSON object.
+      Serialize your findings to a JSON-formatted string under key "human_findings".
+      Concrete example (note the outer quotes — `message` is a string):
+        SendMessage(to: "documenter", message: '{"human_findings": [{"type":"correction","severity":"high","quote":"...","reveals":"...","recommendation":"fix"}]}')
+      Equivalent with json.dumps:
+        SendMessage(to: "documenter", message: json.dumps({"human_findings": [...]}))
+      Passing a raw object (e.g. message: {"human_findings": [...]}) will fail
+      with InputValidationError "expected string, received object".
       Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
 
       Available tool: transcript-query.py for additional ad-hoc queries if needed:
@@ -295,7 +302,14 @@ For each of these, choose:
         - recommendation (fix|keep|investigate)
 
       Send findings to the documenter agent via SendMessage as you discover them.
-      Format as JSON array under key "execution_findings".
+      The SendMessage `message` field MUST be a STRING — not a JSON object.
+      Serialize your findings to a JSON-formatted string under key "execution_findings".
+      Concrete example (note the outer quotes — `message` is a string):
+        SendMessage(to: "documenter", message: '{"execution_findings": [{"type":"duplication","affected":"...","evidence":"...","hypothesis":"...","recommendation":"fix"}]}')
+      Equivalent with json.dumps:
+        SendMessage(to: "documenter", message: json.dumps({"execution_findings": [...]}))
+      Passing a raw object (e.g. message: {"execution_findings": [...]}) will fail
+      with InputValidationError "expected string, received object".
       Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
       ```
 
@@ -324,7 +338,14 @@ For each of these, choose:
         - recommendation (fix|keep|investigate)
 
       Send findings to the documenter agent via SendMessage as you discover them.
-      Format as JSON array under key "review_findings".
+      The SendMessage `message` field MUST be a STRING — not a JSON object.
+      Serialize your findings to a JSON-formatted string under key "review_findings".
+      Concrete example (note the outer quotes — `message` is a string):
+        SendMessage(to: "documenter", message: '{"review_findings": [{"type":"real-catch","evidence":"...","impact":"...","recommendation":"fix"}]}')
+      Equivalent with json.dumps:
+        SendMessage(to: "documenter", message: json.dumps({"review_findings": [...]}))
+      Passing a raw object (e.g. message: {"review_findings": [...]}) will fail
+      with InputValidationError "expected string, received object".
       Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
       ```
 
