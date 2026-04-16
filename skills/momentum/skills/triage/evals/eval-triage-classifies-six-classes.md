@@ -42,7 +42,7 @@ For item 1 (ARTIFACT), the classification output includes:
 ### B3: Batch Approval Presented Before Execution
 
 All six items are presented in a single batch-approval display grouped by class. No
-downstream executor (intake, distill, decision, queue-add) is invoked until after the
+downstream executor (intake, distill, decision, append) is invoked until after the
 developer approves.
 
 ### B4: No Gap-Check Performed

@@ -45,7 +45,7 @@ files directly — that is delegated to `momentum:intake`.
 
   <step n="1" goal="Surface source items and re-surface open queue items">
     <action>Read `_bmad-output/implementation-artifacts/intake-queue.jsonl` if it exists.
-    Filter for open items: kind in {shape, watch} that have no `resolved_at` field.
+    Filter for open items: kind in {shape, watch} with `status == "open"`.
     Store {{open_queue_items}} = list of open shape/watch events.
     </action>
 
@@ -54,7 +54,7 @@ files directly — that is delegated to `momentum:intake`.
 Open queue items from previous sessions ({{count}} pending):
 
 {{for each item:
-  · [{{kind|upper}}] {{item.title}} — {{item.description}} (captured: {{item.captured_at}})
+  · [{{kind|upper}}] {{item.title}} — {{item.description}} (captured: {{item.timestamp}})
     Source: {{item.source}} · id: {{item.id}}
 }}
 
@@ -226,7 +226,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
           --kind shape \
           --title "{{title}}" \
           --description "{{description}}" \
-          --source "{{source_label}}"
+          --source "triage"
 
     **DEFER items** — write to intake-queue.jsonl via CLI:
       For each approved DEFER item:
@@ -234,7 +234,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
           --kind watch \
           --title "{{title}}" \
           --description "{{description}}" \
-          --source "{{source_label}}"
+          --source "triage"
 
     **REJECT items** — write to intake-queue.jsonl via CLI:
       For each approved REJECT item:
@@ -242,7 +242,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
           --kind rejected \
           --title "{{title}}" \
           --description "{{description}}" \
-          --source "{{source_label}}"
+          --source "triage"
     </action>
 
     <check if="any intake invocation returns an error">
@@ -250,7 +250,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
       <action>Continue processing remaining items. Record failure for summary.</action>
     </check>
 
-    <check if="any queue-add CLI call fails">
+    <check if="any intake-queue append call fails">
       <output>! append failed: {{error}} — item recorded here for manual capture:
         kind: {{kind}} · title: {{title}} · description: {{description}}</output>
       <action>Continue processing remaining items.</action>

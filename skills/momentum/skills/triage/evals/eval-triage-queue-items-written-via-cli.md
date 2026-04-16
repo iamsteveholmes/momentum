@@ -3,7 +3,7 @@
 ## Purpose
 
 Verify that `momentum:triage` writes SHAPING, DEFER, and REJECT items to
-`intake-queue.jsonl` via the `momentum-tools intake-queue queue-add` CLI command —
+`intake-queue.jsonl` via the `momentum-tools intake-queue append` CLI command —
 never by direct Write or Edit of the JSONL file.
 
 ## Scenario
@@ -21,19 +21,19 @@ batch-approval:
 
 For the SHAPING item, triage runs:
 ```
-python3 skills/momentum/scripts/momentum-tools.py intake-queue queue-add \
+python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
   --kind shape \
   --title "..." \
   --description "..." \
   --source "triage"
 ```
 
-The event written to `intake-queue.jsonl` has `kind: "shape"` and no `resolved_at` field.
+The event written to `intake-queue.jsonl` has `kind: "shape"` and `status: "open"`.
 
 ### B2: DEFER → kind: watch
 
 For the DEFER item, triage runs the same CLI with `--kind watch`.
-The event written has `kind: "watch"` and no `resolved_at` field.
+The event written has `kind: "watch"` and `status: "open"`.
 
 ### B3: REJECT → kind: rejected
 
@@ -52,8 +52,9 @@ Each written event contains at minimum:
 - `kind`: one of {shape, watch, rejected, handoff}
 - `title`: non-empty string
 - `description`: non-empty string
-- `source`: non-empty string (e.g., "triage", "conversation")
-- `captured_at`: ISO timestamp
+- `source`: one of {triage, retro, assessment}
+- `status`: "open" on initial write
+- `timestamp`: ISO-8601 UTC timestamp
 
 ### B6: Summary Reports Queue Counts
 

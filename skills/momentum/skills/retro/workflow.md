@@ -545,7 +545,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
     Step 1 can surface them without manual re-injection. Each finding carries feature-state
     transition context (DEC-005 D8) and failure-diagnosis framing (DEC-005 D7) when applicable.
 
-    Write CLI: `momentum-tools intake-queue append --source retro --kind handoff ...`
+    Write CLI: `python3 skills/momentum/scripts/momentum-tools.py intake-queue append --source retro --kind handoff ...`
 
     What goes into the queue:
       - Findings from the "Priority Action Items" section that were NOT stubbed AND NOT distilled
@@ -561,7 +561,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
       - Findings already routed to distill (Phase 5 Tier 1) — those are applied or staged
       - The sprint-summary content — that stays in sprint-summary.md
 
-    One event per finding. Use `momentum-tools intake-queue append` for each.</note>
+    One event per finding. Use `python3 skills/momentum/scripts/momentum-tools.py intake-queue append` for each.</note>
 
     <action>Gather the items to hand off:
       1. From {{rejected_stubs}} (Phase 5 developer-declined stubs): these are un-actioned findings
@@ -582,7 +582,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
     <check if="{{handoff_items}} is not empty">
       <output>Writing {{handoff_items | length}} findings to intake-queue.jsonl for next planning cycle...</output>
 
-      <action>For each item in {{handoff_items}}, run one `momentum-tools intake-queue append` call:
+      <action>For each item in {{handoff_items}}, run one `python3 skills/momentum/scripts/momentum-tools.py intake-queue append` call:
 
         Required flags for every event:
           --source retro
@@ -598,7 +598,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
           --failure-diagnosis '{"attempted":"...","didnt_work":"...","learned":"..."}' (DEC-005 D7: failure naming)
 
         Example for a feature regression finding:
-          momentum-tools intake-queue append \
+          python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
             --source retro \
             --kind handoff \
             --title "M3 consistency regressed in sprint-2026-04-08" \
@@ -609,7 +609,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
             --feature-state-transition '{"feature_slug":"material-3-design-system","prior_state":"partial","observed_state":"partial","evidence":"User reported token inconsistency in Settings, Profile, and Home screens"}'
 
         Example for a failure-diagnosis finding:
-          momentum-tools intake-queue append \
+          python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
             --source retro \
             --kind handoff \
             --title "E2E validator prompt produced false positives on UI stories" \
@@ -619,7 +619,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
       </action>
 
       <action>Verify all events were written:
-        Run: `momentum-tools intake-queue list --source retro --kind handoff --status open`
+        Run: `python3 skills/momentum/scripts/momentum-tools.py intake-queue list --source retro --kind handoff --status open`
         Confirm the returned count matches {{handoff_items | length}}
       </action>
 

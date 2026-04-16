@@ -1671,7 +1671,7 @@ momentum:dev does NOT invoke bmad-dev-story as an indirection layer — the curr
 
 ### Retro → Planning Handoff via Unified Intake Queue
 
-> _[Updated 2026-04-15 (DEC-007, story: retro-triage-handoff): The prior `triage-inbox.md` contract is **retired**. Retro now writes handoff events directly to the unified `_bmad-output/implementation-artifacts/intake-queue.jsonl`. Sprint-planning Step 1 reads open handoff entries from the same file. No manual re-injection of retro findings into planning is required.]_
+> _[Updated 2026-04-14 (DEC-007, story: retro-triage-handoff): The prior `triage-inbox.md` contract is **retired**. Retro now writes handoff events directly to the unified `_bmad-output/implementation-artifacts/intake-queue.jsonl`. Sprint-planning Step 1 reads open handoff entries from the same file. No manual re-injection of retro findings into planning is required.]_
 
 After each sprint retro (Phase 5.5), un-actioned findings are written to `intake-queue.jsonl` as JSONL events. Sprint-planning Step 1 reads these open entries and surfaces them alongside the backlog — closing the retro → planning loop without developer re-injection.
 
@@ -1747,8 +1747,8 @@ Single source of truth for triage-adjacent items that don't become stories immed
 | `kind` | string | `shape` \| `watch` \| `rejected` \| `handoff` |
 | `title` | string | Short human-readable title |
 | `description` | string | One-to-three-sentence summary |
-| `status` | string | `open` \| `consumed` \| `rejected` (initial write is always `open`) |
-| `created_at` | string | ISO-8601 UTC timestamp |
+| `status` | string | `open` \| `consumed` (initial write is always `open`) |
+| `timestamp` | string | ISO-8601 UTC timestamp |
 
 **Optional fields (present when applicable):**
 
@@ -1763,22 +1763,22 @@ Single source of truth for triage-adjacent items that don't become stories immed
 | Field | Shape | When present |
 |---|---|---|
 | `feature_state_transition` | `{ feature_slug, prior_state, observed_state, evidence }` | Retro observed a D8 feature-state change (e.g., Done → Partial) |
-| `failure_diagnosis` | `{ attempted, didn_t_work, learned }` | Retro named a D7 diagnosed failure |
+| `failure_diagnosis` | `{ attempted, didnt_work, learned }` | Retro named a D7 diagnosed failure |
 | `suggested_feature_slug` | string | Retro finding implies new feature-bearing work (DEC-005 D1) |
-| `suggested_story_type` | string | `feature` \| `maintenance` \| `defect` \| `exploration` \| `practice` (DEC-005 D5) |
+| `story_type` | string | `feature` \| `maintenance` \| `defect` \| `exploration` \| `practice` (DEC-005 D5) |
 | `evidence_refs` | array of strings | Pointers back to the findings document (e.g., section anchor or line range of `retro-transcript-audit.md`) |
 
 **Writers (CLI-only; never direct file edits):**
 
-- `momentum:triage` — appends `shape` / `watch` / `rejected` entries via `momentum-tools triage-queue append`.
-- `momentum:retro` — appends `handoff` entries via `momentum-tools triage-queue append` (Phase 5 carry-forward disposition).
+- `momentum:triage` — appends `shape` / `watch` / `rejected` entries via `momentum-tools intake-queue append`.
+- `momentum:retro` — appends `handoff` entries via `momentum-tools intake-queue append` (Phase 5.5 — Handoff to Intake Queue).
 
 Both producers write exclusively through the `momentum-tools` CLI. Skills never open this file for direct mutation — matches the orchestrator-purity pattern used elsewhere in the practice.
 
 **Readers:**
 
 - `momentum:triage` — reads on start to re-surface open `shape` / `watch` / `handoff` entries for re-classification or promotion.
-- `momentum:sprint-planning` — Phase A.5 reads entries filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` during backlog synthesis; Phase C surfaces them in a labeled "Open handoff items from recent retros" section (see Decision 29 update below).
+- `momentum:sprint-planning` — Phase A.6 reads entries filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` during backlog synthesis; Phase C surfaces them in a labeled "Open handoff items from recent retros" section (see Decision 29 update below).
 - Potentially `momentum:refine` in a future hygiene pass — TBD.
 
 **Consumption semantics:** When an entry is acted on (promoted to a story via intake, distilled, decided, or explicitly rejected), its `status` is updated to `consumed` or `rejected` with an outcome reference (e.g., `outcome: "story:slug-name"` or `outcome: "dec-NNN"`) via the CLI update path. Entries are never deleted — full history preserved.
