@@ -12,3 +12,5 @@
 {"timestamp": "2026-04-06T14:46:27.845497", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Added 3 stories from quality analysis: impetus-journal-hygiene-script (M), impetus-ux-fallback-help-onboarding (M), impetus-path-standardization (L)"}
 {"timestamp": "2026-04-06T17:54:57.514290", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Sprint planning workflow initiated"}
 {"timestamp": "2026-04-06T17:55:22.679044", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Backlog presented: 58 stories across 11 epics, 58 selectable"}
+{"timestamp": "2026-04-07T22:21:32.293559", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Sprint planning workflow initiated"}
+{"timestamp": "2026-04-07T22:22:08.046923", "agent": "impetus", "story": null, "sprint": "_unsorted", "event": "decision", "detail": "Backlog presented: 54 stories across 10 epics, 2 critical, 6 high, 9 medium, 37 low"}

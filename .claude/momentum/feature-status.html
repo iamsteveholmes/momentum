@@ -39,8 +39,8 @@
     progress::-webkit-progress-value { background: #3b82f6; border-radius: 3px; }
     .gap-flag { display: inline-block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 4px; padding: 0.15em 0.5em; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; }
     details.row-details summary { cursor: pointer; font-size: 0.8rem; color: #3b82f6; list-style: none; }
-    details.row-details summary::before { content: "▶ "; }
-    details.row-details[open] summary::before { content: "▼ "; }
+    details.row-details summary::before { content: "\25B6  "; }
+    details.row-details[open] summary::before { content: "\25BC  "; }
     .acceptance-condition { font-size: 0.8rem; color: #475569; margin: 0.5rem 0; padding: 0.5rem; background: #f8fafc; border-left: 3px solid #e2e8f0; border-radius: 2px; }
     .stories-list { margin: 0.5rem 0; padding-left: 1rem; }
     .stories-list li { font-size: 0.8rem; color: #475569; margin-bottom: 0.125rem; }
@@ -48,6 +48,7 @@
     .story-status-in-progress { color: #f59e0b; }
     .story-status-backlog, .story-status-not-started { color: #9ca3af; }
     .gap-description { font-size: 0.8rem; color: #dc2626; margin-top: 0.5rem; padding: 0.375rem 0.5rem; background: #fef2f2; border-radius: 4px; }
+    .sdlc-table th:first-child { width: 180px; }
     footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #94a3b8; text-align: center; }
   </style>
 </head>
@@ -55,7 +56,7 @@
 
 <header>
   <h1>Feature Status — momentum</h1>
-  <p>Generated 2026-04-13T06:37:55.142516+00:00</p>
+  <p>Generated 2026-04-16T16:33:25Z</p>
 </header>
 
 <section class="summary-stats">
@@ -81,12 +82,12 @@
   </div>
   <div class="stat-card gaps">
     <div class="label">With Gaps</div>
-    <div class="value">19</div>
+    <div class="value">6</div>
   </div>
 </section>
 
 <details class="dependency-graph">
-  <summary>Feature Dependency Graph</summary>
+  <summary>Feature to Story Coverage Graph</summary>
   <div class="mermaid">
 flowchart TD
   classDef working fill:#22c55e,color:#fff
@@ -94,52 +95,47 @@ flowchart TD
   classDef notWorking fill:#ef4444,color:#fff
   classDef notStarted fill:#9ca3af,color:#fff
 
-  subgraph FLOW["Flow Features"]
-    SP["Sprint Planning"]:::working
-    SO["Sprint Orchestration"]:::partial
-    BR["Backlog Refinement"]:::partial
-    AD["Assessment→Decision"]:::partial
-    IE["Impetus Experience"]:::partial
-    QF["Quick Fix"]:::partial
-    RF["Retro & Flywheel"]:::partial
-    PD["Practice Distillation"]:::notStarted
-    SL["Session Prep Loop"]:::notStarted
-    PSC["Post-Session Capture"]:::notStarted
-  end
+  F_SP["Sprint Planning to Ready"]:::working
+  F_IO["Impetus Session Orientation"]:::working
+  F_FSV["Feature Status Visibility"]:::partial
+  F_ADP["Assessment Decision Pipeline"]:::partial
+  F_BR["Backlog Refinement"]:::partial
+  F_IE["Impetus Experience"]:::partial
+  F_QFW["Quick Fix Workflow"]:::partial
+  F_RF["Retro and Flywheel"]:::partial
+  F_SO["Sprint Orchestration"]:::partial
+  F_GS["Gherkin Separation"]:::partial
+  F_MR["Model Routing Strategy"]:::partial
+  F_QG["Quality Gates Enforced"]:::partial
+  F_StP["Startup Performance"]:::partial
+  F_PD["Practice Distillation"]:::notStarted
+  F_PBI["Protocol Based Integration"]:::notStarted
+  F_PC["Provenance Chain"]:::notStarted
+  F_NSP["Nornspun Session Prep Loop"]:::notStarted
+  F_NPC["Nornspun Post Session Capture"]:::notStarted
+  F_NLM["Nornspun Living Memory"]:::notStarted
+  F_NDI["Nornspun Document Ingestion"]:::notStarted
+  F_NSR["Nornspun Streaming Responsiveness"]:::notStarted
 
-  subgraph CONN["Connection Features"]
-    IO["Impetus Orientation"]:::working
-    FSV["Feature Status Visibility"]:::partial
-    PC["Provenance Chain"]:::notStarted
-    PI["Protocol Integration"]:::notStarted
-    LM["Living Memory Cross-Agent"]:::notStarted
-    DI["Document Ingestion"]:::notStarted
-  end
-
-  subgraph QUAL["Quality Features"]
-    QGE["Quality Gates"]:::partial
-    MR["Model Routing"]:::partial
-    GS["Gherkin Separation"]:::partial
-    SPerf["Startup Performance"]:::partial
-    SR["Streaming Responsiveness"]:::notStarted
-  end
-
-  BR --> SP
-  SP --> SO
-  SO --> QGE
-  RF --> PD
-  SP --> IO
-  IO --> FSV
-  AD --> PC
-  SL --> PSC
+  F_RF --> S_RT["retro-triage-handoff &#10003;"]
+  F_BR --> S_TR["triage-skill &#10003;"]
+  F_FSV --> S_FG["feature-grooming &#10003;"]
+  F_FSV --> S_FS["feature-status-skill &#10003;"]
+  F_IO --> S_IFSC["impetus-feature-status-cache &#10003;"]
+  F_SP --> S_MSP["momentum-sprint-planning &#10003;"]
+  F_SO --> S_MSD["momentum-sprint-dev &#10003;"]
+  F_QG --> S_QGP["quality-gate-parity &#10003;"]
+  F_PC --> S_PS["provenance-scanner &#9675;"]
+  F_PBI --> S_MCP["mcp-provider-registration &#9675;"]
+  F_GS --> S_ACPI["avfl-checkpoint-preview &#9675;"]
+  F_MR --> S_PBSK["promptfoo-benchmarks &#9675;"]
   </div>
 </details>
 
-<!-- FLOW FEATURES -->
 <section class="feature-group" data-type="flow">
   <div class="feature-group-header">
-    <h2>Flow</h2>
-    <span class="group-gap-summary">10 features · 9 with gaps</span>
+    <h2>Flow Features</h2>
+    <span class="group-gap-summary">10 features &middot; 3 with gaps</span>
   </div>
   <table>
     <thead>
@@ -153,150 +149,17 @@ flowchart TD
     </thead>
     <tbody>
 
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Assessment → Decision → Story Traceability Pipeline</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">3/4 <progress value="3" max="4"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can run momentum:assessment, then momentum:decision, then momentum:create-story and produce a story whose derives_from frontmatter points to the decision document, which in turn references the assessment that motivated it.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> assessment-skill (done)</li>
-              <li><span class="story-status-done">✓</span> decision-skill (done)</li>
-              <li><span class="story-status-done">✓</span> refine-assessment-decision-review (done)</li>
-              <li><span class="story-status-not-started">○</span> derives-from-frontmatter-establishes-traceability (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: derives_from frontmatter enforcement and navigable provenance chain not yet automated — derives-from-frontmatter-establishes-traceability story is backlog.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Backlog Refinement and Epic Taxonomy</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">4/7 <progress value="4" max="7"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can run momentum:epic-grooming and receive an outside-in view of whether the backlog covers the product vision, with gaps identified and story stub recommendations. A developer can run momentum:refine and receive a reprioritized backlog with duplicate stories flagged.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> epic-grooming (done)</li>
-              <li><span class="story-status-done">✓</span> refine-skill (done)</li>
-              <li><span class="story-status-done">✓</span> refine-skill-rewrite (done)</li>
-              <li><span class="story-status-done">✓</span> refine-reprioritization (done)</li>
-              <li><span class="story-status-not-started">○</span> backlog-add-command (backlog)</li>
-              <li><span class="story-status-not-started">○</span> coverage-analysis-deduplication (backlog)</li>
-              <li><span class="story-status-not-started">○</span> triage-skill (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: backlog-add command, coverage/deduplication analysis, and triage-skill remain undelivered. Full always-clean backlog vision not yet realized.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Impetus: Session Host and Practice Companion</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">3/5 <progress value="3" max="5"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer opens a Momentum session and is greeted by Impetus with a distinct personality — ASCII art header, nerdfont-icon-decorated status lines, a voice that matches the practice philosophy — such that the experience feels like opening a session with a collaborator rather than running a status command.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> impetus-first-impression-has-personality-and-identity (done)</li>
-              <li><span class="story-status-done">✓</span> impetus-identity-redesign (done)</li>
-              <li><span class="story-status-done">✓</span> session-open-menu-redesign (done)</li>
-              <li><span class="story-status-not-started">○</span> impetus-ux-fallback-help-onboarding (backlog)</li>
-              <li><span class="story-status-not-started">○</span> impetus-lifecycle-and-handoff-fix (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: ASCII art header and nerdfont-icon-decorated status lines not implemented. Developer describes current experience as "a lifeless config dump."</p>
-          </details>
-        </td>
-      </tr>
-
       <tr data-status="not-started" data-has-gap="true">
-        <td class="feature-name">Lightweight Practice Artifact Distillation</td>
+        <td class="feature-name">Session Prep Loop — Open App to Play-Ready</td>
         <td><span class="badge">not-started</span></td>
         <td class="story-fraction">0/0 <progress value="0" max="1"></progress></td>
         <td><span class="gap-flag">GAP</span></td>
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">A developer can invoke momentum:distill with a description of a practice pattern and receive a draft skill, rule, or agent definition that encodes the pattern — committed and immediately available in the practice.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> No stories assigned (distill skill bootstrapped in retro-2026-04-11 but feature record predates that work)</li>
-            </ul>
-            <p class="gap-description">Gap: no stories assigned to this feature; feature record predates distill skill bootstrap. Story to be created via quick-fix to update status.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Single-Story Tactical Workflow</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">2/3 <progress value="2" max="3"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can run momentum:quick-fix with a story title, receive a spec-placed story, have it executed by a dev agent, and merge the result — without activating a sprint.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> quick-fix-skill (done)</li>
-              <li><span class="story-status-done">✓</span> intake-skill (done)</li>
-              <li><span class="story-status-not-started">○</span> quick-fix-spec-placement-rules (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: spec-placement rules not yet defined; quick-fix-spec-placement-rules story is backlog.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Sprint Retro + Practice Improvement Flywheel</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">3/6 <progress value="3" max="6"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can run momentum:retro after a sprint and receive a findings document produced from transcript audit (not just milestone logs); at least one retro finding generates a story stub added to the backlog; cross-sprint patterns accumulate in the findings ledger.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> retro-skill (done)</li>
-              <li><span class="story-status-done">✓</span> retro-workflow-rewrite (done)</li>
-              <li><span class="story-status-done">✓</span> sprint-boundary-compression (done)</li>
-              <li><span class="story-status-not-started">○</span> cross-story-pattern-detection-surfaces-systemic-issues (backlog)</li>
-              <li><span class="story-status-not-started">○</span> findings-ledger-accumulates-quality-findings-across-stories (backlog)</li>
-              <li><span class="story-status-not-started">○</span> flywheel-workflow-explains-issues-and-guides-upstream-trace (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: retro ceremony works but flywheel accumulation not implemented — cross-story pattern detection, findings ledger, and forward-feed from retro into sprint planning are all backlog.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Sprint Execution — Concurrent Agents + Quality Gates</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">6/10 <progress value="6" max="10"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer with an activated sprint can run momentum:sprint-dev and have all sprint stories executed by specialist agents in parallel waves, with AVFL + team review gates applied before each merge — without manually managing agent sequencing or merge order.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> momentum-sprint-dev (done)</li>
-              <li><span class="story-status-done">✓</span> workflow-team-composition-spec (done)</li>
-              <li><span class="story-status-done">✓</span> dev-agent-definition-files (done)</li>
-              <li><span class="story-status-done">✓</span> specialist-dev-agents (done)</li>
-              <li><span class="story-status-done">✓</span> architecture-guard-implementation (done)</li>
-              <li><span class="story-status-done">✓</span> guidelines-verification-gate (done)</li>
-              <li><span class="story-status-not-started">○</span> sprint-dev-phase-7-gate (backlog)</li>
-              <li><span class="story-status-not-started">○</span> sprint-scope-tracking (backlog)</li>
-              <li><span class="story-status-not-started">○</span> fan-out-agent-prompt-fix (backlog)</li>
-              <li><span class="story-status-not-started">○</span> team-review-with-teamcreate (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: real-time developer visibility into in-flight vs blocked stories not implemented; sprint-scope-tracking, team-review improvements, and phase-7-gate are backlog.</p>
+            <p class="acceptance-condition">A Spinner with an active campaign can open Nornspun, complete session prep with Verdandi (recap + encounters + reminders), and be ready to run their session in under 15 minutes without manually consulting external notes.</p>
+            <ul class="stories-list"><li><em>No stories assigned</em></li></ul>
+            <p class="gap-description">Gap: no stories assigned — core value proposition not yet scoped into backlog.</p>
           </details>
         </td>
       </tr>
@@ -310,27 +173,149 @@ flowchart TD
           <details class="row-details">
             <summary>Details</summary>
             <p class="acceptance-condition">A Spinner can describe a completed session to Urd in plain language, and Urd correctly updates living memory with session events, NPC changes, and plot divergences — with the Spinner confirming before any data is persisted.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> No stories assigned</li>
-            </ul>
-            <p class="gap-description">Gap: no stories assigned; zero delivery. Pairs with session-prep-loop to form the prep-capture flywheel.</p>
+            <ul class="stories-list"><li><em>No stories assigned</em></li></ul>
+            <p class="gap-description">Gap: no stories assigned — pairs with session-prep-loop to form prep-capture flywheel.</p>
           </details>
         </td>
       </tr>
 
       <tr data-status="not-started" data-has-gap="true">
-        <td class="feature-name">Session Prep Loop — Open App to Play-Ready</td>
+        <td class="feature-name">Lightweight Practice Artifact Distillation</td>
         <td><span class="badge">not-started</span></td>
         <td class="story-fraction">0/0 <progress value="0" max="1"></progress></td>
         <td><span class="gap-flag">GAP</span></td>
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">A Spinner with an active campaign can open Nornspun, complete session prep with Verdandi (recap + encounters + reminders), and be ready to run their session in under 15 minutes without manually consulting external notes.</p>
+            <p class="acceptance-condition">A developer can invoke momentum:distill with a description of a practice pattern and receive a draft skill, rule, or agent definition that encodes the pattern — committed and immediately available in the practice.</p>
+            <ul class="stories-list"><li><em>No stories assigned</em></li></ul>
+            <p class="gap-description">Gap: features.json shows 0 stories, but a distill skill is present in the filesystem (skills/momentum/skills/distill). Feature entry is stale — stories exist in practice but are not catalogued.</p>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Assessment → Decision → Story Traceability Pipeline</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">3/4 <progress value="3" max="4"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can run momentum:assessment, then momentum:decision, then momentum:create-story and produce a story whose derives_from frontmatter points to the decision document, which in turn references the assessment that motivated it.</p>
             <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> No stories assigned</li>
+              <li><span class="story-status-done">&#10003;</span> Assessment Skill (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Decision Skill (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Refine Workflow — Assessment &amp; Decision Review (done)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Derives-From Frontmatter Traceability (backlog)</li>
             </ul>
-            <p class="gap-description">Gap: no Nornspun stories in Momentum index. Core product value proposition — zero delivery. Dogfood target: Steve actively using for real campaign prep.</p>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Backlog Refinement and Epic Taxonomy</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">5/7 <progress value="5" max="7"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can run momentum:epic-grooming and receive an outside-in view of whether the backlog covers the product vision, with gaps identified and story stub recommendations. A developer can run momentum:refine and receive a reprioritized backlog with duplicate stories flagged.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> Epic Grooming (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Refine Skill (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Refine Skill Rewrite (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Refine Reprioritization (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Triage Skill (done — sprint-2026-04-14)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Backlog-Add Command (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Coverage Analysis Deduplication (backlog)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Impetus: Session Host and Practice Companion</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">3/5 <progress value="3" max="5"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer opens a Momentum session and is greeted by Impetus with a distinct personality — ASCII art header, nerdfont-icon-decorated status lines, a voice that matches the practice philosophy.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> Impetus First Impression (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Impetus Identity Redesign (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Session Open Menu Redesign (done)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Impetus UX Fallback/Help/Onboarding (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Impetus Lifecycle and Handoff Fix (backlog)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Single-Story Tactical Workflow</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">2/3 <progress value="2" max="3"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can run momentum:quick-fix with a story title, receive a spec-placed story, have it executed by a dev agent, and merge the result — without activating a sprint.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> Quick Fix Skill (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Intake Skill (done)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Quick-Fix Spec Placement Rules (backlog)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Sprint Retro + Practice Improvement Flywheel</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">4/7 <progress value="4" max="7"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can run momentum:retro and receive a findings document produced from transcript audit; at least one retro finding generates a story stub added to the backlog; cross-sprint patterns accumulate in the findings ledger.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> Retro Skill (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Retro Workflow Rewrite (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Sprint Boundary Compression (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Retro → Triage Handoff (done — sprint-2026-04-14)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Cross-Story Pattern Detection (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Findings Ledger Accumulation (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Flywheel Workflow Upstream Trace (backlog)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Sprint Execution — Concurrent Agents + Quality Gates</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">6/10 <progress value="6" max="10"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer with an activated sprint can run momentum:sprint-dev and have all sprint stories executed by specialist agents in parallel waves, with AVFL + team review gates applied before each merge.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> Sprint Dev Workflow Module (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Workflow Team Composition Spec (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Dev Agent Definition Files (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Specialist Dev Agents (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Architecture Guard Implementation (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Guidelines Verification Gate (done)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Sprint-Dev Phase 7 Gate (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Sprint Scope Tracking (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Fan-Out Agent Prompt Fix (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Team Review with TeamCreate (backlog)</li>
+            </ul>
           </details>
         </td>
       </tr>
@@ -343,14 +328,14 @@ flowchart TD
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">A developer with populated backlog stubs can invoke momentum:sprint-planning and receive an activated sprint with validated, Gherkin-specced, ready-for-dev stories — without manually specifying story selection criteria or review flow.</p>
+            <p class="acceptance-condition">A developer with populated backlog stubs can invoke momentum:sprint-planning and receive an activated sprint with validated, Gherkin-specced, ready-for-dev stories.</p>
             <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> sprint-planning-skill (done)</li>
-              <li><span class="story-status-done">✓</span> momentum-sprint-planning (done)</li>
-              <li><span class="story-status-done">✓</span> sprint-workflow-alignment (done)</li>
-              <li><span class="story-status-done">✓</span> sprint-planning-synthesis-first (done)</li>
-              <li><span class="story-status-done">✓</span> mandatory-task-tracking (done)</li>
-              <li><span class="story-status-done">✓</span> gherkin-acs-and-atdd-workflow-active (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Sprint Planning Skill (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Sprint Planning Workflow Module (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Sprint Workflow Alignment (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Sprint Planning Synthesis-First (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Mandatory Task Tracking (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Gherkin ACs and ATDD Workflow Active (done)</li>
             </ul>
           </details>
         </td>
@@ -360,11 +345,10 @@ flowchart TD
   </table>
 </section>
 
-<!-- CONNECTION FEATURES -->
 <section class="feature-group" data-type="connection">
   <div class="feature-group-header">
-    <h2>Connection</h2>
-    <span class="group-gap-summary">6 features · 5 with gaps</span>
+    <h2>Connection Features</h2>
+    <span class="group-gap-summary">6 features &middot; 2 with gaps</span>
   </div>
   <table>
     <thead>
@@ -378,62 +362,17 @@ flowchart TD
     </thead>
     <tbody>
 
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Feature Status Visibility + Grooming</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">4/5 <progress value="4" max="5"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can run momentum:feature-status and receive a rendered view showing all features with current status, story coverage counts, and explicit gap flags — and can run momentum:feature-grooming to evaluate and update the feature taxonomy itself.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> feature-artifact-schema (done)</li>
-              <li><span class="story-status-done">✓</span> feature-status-skill (done)</li>
-              <li><span class="story-status-done">✓</span> feature-status-practice-path (done)</li>
-              <li><span class="story-status-done">✓</span> impetus-feature-status-cache (done)</li>
-              <li><span class="story-status-not-started">○</span> feature-grooming (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: momentum:feature-grooming skill not yet a durable command; feature-grooming story is backlog.</p>
-          </details>
-        </td>
-      </tr>
-
       <tr data-status="not-started" data-has-gap="true">
-        <td class="feature-name">Swappable Protocol Implementations</td>
+        <td class="feature-name">Living Memory Cross-Agent Context Sharing</td>
         <td><span class="badge">not-started</span></td>
-        <td class="story-fraction">0/4 <progress value="0" max="4"></progress></td>
+        <td class="story-fraction">0/0 <progress value="0" max="1"></progress></td>
         <td><span class="gap-flag">GAP</span></td>
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">A developer can define an alternative protocol binding in project configuration and have skill tool calls resolve through that binding — without modifying the skill's workflow.md.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> mcp-provider-registration-and-cursor-tool-ceiling-compliance (backlog)</li>
-              <li><span class="story-status-not-started">○</span> project-configuration-file-defines-protocol-bindings (backlog)</li>
-              <li><span class="story-status-not-started">○</span> protocol-substitution-satisfies-interface-contract (backlog)</li>
-              <li><span class="story-status-not-started">○</span> workflow-steps-resolve-through-protocol-interfaces-at-invocation-time (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: 0 of 4 stories delivered; no protocol abstraction layer exists. Included to make vendor lock-in gap explicit.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="not-started" data-has-gap="true">
-        <td class="feature-name">Artifact Provenance and Staleness Detection</td>
-        <td><span class="badge">not-started</span></td>
-        <td class="story-fraction">0/3 <progress value="0" max="3"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can run a provenance scan and receive a report showing which planning artifacts are stale (hash drift detected since last verification) and which stories reference them — enabling targeted re-verification before sprint planning.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> hash-based-staleness-detection-for-internal-documents (backlog)</li>
-              <li><span class="story-status-not-started">○</span> provenance-scanner-builds-referenced-by-graph (backlog)</li>
-              <li><span class="story-status-not-started">○</span> time-based-staleness-for-edge-documents (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: 0 of 3 stories delivered; no hash-based staleness detection or provenance scan exists.</p>
+            <p class="acceptance-condition">After a prep session with Verdandi, switching to Urd and beginning post-session capture results in Urd demonstrating awareness of what was prepared without the Spinner re-explaining.</p>
+            <ul class="stories-list"><li><em>No stories assigned</em></li></ul>
+            <p class="gap-description">Gap: no stories assigned — connective tissue between Norn interactions not yet scoped.</p>
           </details>
         </td>
       </tr>
@@ -446,28 +385,30 @@ flowchart TD
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">A Spinner uploads a text-based adventure PDF and can ask Verdandi questions about content from that document (locations, encounters, NPCs) during a session prep conversation, with ≥80% field coverage for supported formats.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> No stories assigned</li>
-            </ul>
-            <p class="gap-description">Gap: no stories assigned; zero delivery. Removes the transcription tax for published adventure PDFs.</p>
+            <p class="acceptance-condition">A Spinner uploads a text-based adventure PDF and can ask Verdandi questions about content from that document during a session prep conversation, with ≥80% field coverage for supported formats.</p>
+            <ul class="stories-list"><li><em>No stories assigned</em></li></ul>
+            <p class="gap-description">Gap: no stories assigned.</p>
           </details>
         </td>
       </tr>
 
-      <tr data-status="not-started" data-has-gap="true">
-        <td class="feature-name">Living Memory Cross-Agent Context Sharing</td>
-        <td><span class="badge">not-started</span></td>
-        <td class="story-fraction">0/0 <progress value="0" max="1"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Feature Status Visibility + Grooming</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">5/5 <progress value="5" max="5"></progress></td>
+        <td></td>
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">After a prep session with Verdandi, switching to Urd and beginning post-session capture results in Urd demonstrating awareness of what was prepared (encountered content, flagged NPCs, session goals) without the Spinner re-explaining.</p>
+            <p class="acceptance-condition">A developer can run momentum:feature-status and receive a rendered view showing all features with current status, story coverage counts, and explicit gap flags — and can run momentum:feature-grooming to evaluate and update the feature taxonomy itself.</p>
             <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> No stories assigned</li>
+              <li><span class="story-status-done">&#10003;</span> Feature Artifact Schema (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Feature Status Skill (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Feature Status Practice Path (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Impetus Feature Status Cache (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Feature Grooming (done)</li>
             </ul>
-            <p class="gap-description">Gap: no stories assigned; zero delivery. The connective tissue between all Norn interactions — without this, each agent interaction is isolated.</p>
+            <p class="gap-description">Status drift: all 5 assigned stories are done but feature status remains 'partial' in features.json. Candidate for promotion to 'working' on next feature-grooming run.</p>
           </details>
         </td>
       </tr>
@@ -480,12 +421,49 @@ flowchart TD
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">A developer opening a new Claude Code session with momentum:impetus receives a greeting that shows current sprint name, stories in progress vs done vs remaining, open journal threads (if any), and a feature status summary (cached, with staleness flag if features.json has changed since last cache).</p>
+            <p class="acceptance-condition">A developer opening a new Claude Code session with momentum:impetus receives a greeting that shows current sprint name, stories in progress vs done vs remaining, open journal threads, and a feature status summary.</p>
             <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> impetus-skill-created-with-correct-persona-and-input-handling (done)</li>
-              <li><span class="story-status-done">✓</span> session-orientation-and-thread-management (done)</li>
-              <li><span class="story-status-done">✓</span> impetus-greeting-rewrite (done)</li>
-              <li><span class="story-status-done">✓</span> impetus-feature-status-cache (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Impetus Skill Created (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Session Orientation and Thread Management (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Impetus Greeting Rewrite (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Impetus Feature Status Cache (done)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="not-started" data-has-gap="false">
+        <td class="feature-name">Swappable Protocol Implementations</td>
+        <td><span class="badge">not-started</span></td>
+        <td class="story-fraction">0/4 <progress value="0" max="4"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can define an alternative protocol binding in project configuration and have skill tool calls resolve through that binding — without modifying the skill's workflow.md.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-backlog">&#9675;</span> MCP Provider Registration (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Project Config File Protocol Bindings (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Protocol Substitution Interface Contract (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Workflow Steps Protocol Interface (backlog)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="not-started" data-has-gap="false">
+        <td class="feature-name">Artifact Provenance and Staleness Detection</td>
+        <td><span class="badge">not-started</span></td>
+        <td class="story-fraction">0/3 <progress value="0" max="3"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can run a provenance scan and receive a report showing which planning artifacts are stale and which stories reference them — enabling targeted re-verification before sprint planning.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-backlog">&#9675;</span> Hash-Based Staleness Detection (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Provenance Scanner Referenced-By Graph (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Time-Based Staleness for Edge Documents (backlog)</li>
             </ul>
           </details>
         </td>
@@ -495,11 +473,10 @@ flowchart TD
   </table>
 </section>
 
-<!-- QUALITY FEATURES -->
 <section class="feature-group" data-type="quality">
   <div class="feature-group-header">
-    <h2>Quality</h2>
-    <span class="group-gap-summary">5 features · 5 with gaps</span>
+    <h2>Quality Features</h2>
+    <span class="group-gap-summary">5 features &middot; 1 with gaps</span>
   </div>
   <table>
     <thead>
@@ -513,85 +490,6 @@ flowchart TD
     </thead>
     <tbody>
 
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Black-Box Behavioral Specification via Gherkin</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">0/2 <progress value="0" max="2"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can write a Gherkin spec for a skill that is validated by the E2E validator without the validator reading the skill's workflow.md — testing behavior, not implementation.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> avfl-checkpoint-preview-integration (backlog)</li>
-              <li><span class="story-status-not-started">○</span> story-spec-completeness-checklist (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: 0 of 2 tracked stories delivered; AVFL checkpoint preview integration and story-spec completeness checklist are backlog. (Gherkin workflow is active via sprint-planning-to-ready feature.)</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Model and Effort Routing Defaults</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">1/3 <progress value="1" max="3"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer can declare effort: quick in a SKILL.md and have all agent spawns from that skill route to haiku without any additional configuration — and can verify with a benchmark run that the routing matches cost expectations.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> model-routing-configured-by-frontmatter (done)</li>
-              <li><span class="story-status-not-started">○</span> promptfoo-configuration-benchmarks-skills-across-model-tiers (backlog)</li>
-              <li><span class="story-status-not-started">○</span> benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: routing works but benchmark verification of quality-vs-cost tradeoffs not yet implemented; promptfoo benchmarking stories are backlog.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Quality Gates — AVFL, Code Review, and Retro Applied to Every Sprint</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">6/8 <progress value="6" max="8"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A sprint completes with: every merged story having passed AVFL + code review + E2E validation; the retro producing a findings document from transcript audit; gate failures reported with actionable resolution guidance.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> posttooluse-lint-and-format-hook-active (done)</li>
-              <li><span class="story-status-done">✓</span> stop-gate-runs-conditional-quality-checks (done)</li>
-              <li><span class="story-status-done">✓</span> gherkin-acs-and-atdd-workflow-active (done)</li>
-              <li><span class="story-status-done">✓</span> quality-gate-parity-across-workflows (done)</li>
-              <li><span class="story-status-done">✓</span> avfl-scan-profile (done)</li>
-              <li><span class="story-status-done">✓</span> retro-workflow-rewrite (done)</li>
-              <li><span class="story-status-not-started">○</span> avfl-fixer-required-gate (backlog)</li>
-              <li><span class="story-status-not-started">○</span> avfl-default-agent-composition (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: AVFL fixer (automated remediation) not implemented; some gate failures require manual analysis. Known defect escapes exist in practice.</p>
-          </details>
-        </td>
-      </tr>
-
-      <tr data-status="partial" data-has-gap="true">
-        <td class="feature-name">Sub-2s Session Startup (NFR20)</td>
-        <td><span class="badge">partial</span></td>
-        <td class="story-fraction">1/2 <progress value="1" max="2"></progress></td>
-        <td><span class="gap-flag">GAP</span></td>
-        <td>
-          <details class="row-details">
-            <summary>Details</summary>
-            <p class="acceptance-condition">A developer running momentum:impetus in a cached state (no hash drift) receives the full greeting — sprint state, feature status, menu — in under 2 seconds on a standard developer machine.</p>
-            <ul class="stories-list">
-              <li><span class="story-status-done">✓</span> silent-pre-flight-and-deferred-stats-write (done)</li>
-              <li><span class="story-status-not-started">○</span> install-upgrade-io-consolidation (backlog)</li>
-            </ul>
-            <p class="gap-description">Gap: install/upgrade IO consolidation remaining; 2s target not formally verified across cold-start and cache-miss paths.</p>
-          </details>
-        </td>
-      </tr>
-
       <tr data-status="not-started" data-has-gap="true">
         <td class="feature-name">Real-Time Streaming Response Quality</td>
         <td><span class="badge">not-started</span></td>
@@ -600,11 +498,84 @@ flowchart TD
         <td>
           <details class="row-details">
             <summary>Details</summary>
-            <p class="acceptance-condition">Agent responses begin rendering within 2 seconds of sending a message, stream continuously until complete, and switching Norns mid-response produces a clean state with no residual partial text in either pane.</p>
+            <p class="acceptance-condition">Agent responses begin rendering within 2 seconds of sending a message, stream continuously until complete, and switching Norns mid-response produces a clean state.</p>
+            <ul class="stories-list"><li><em>No stories assigned</em></li></ul>
+            <p class="gap-description">Gap: no stories assigned. Quality floor for all Nornspun features.</p>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Black-Box Behavioral Specification via Gherkin</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">0/2 <progress value="0" max="2"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can write a Gherkin spec for a skill that is validated by the E2E validator without the validator reading the skill's workflow.md — testing behavior, not implementation.</p>
             <ul class="stories-list">
-              <li><span class="story-status-not-started">○</span> No stories assigned</li>
+              <li><span class="story-status-backlog">&#9675;</span> AVFL Checkpoint Preview Integration (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Story Spec Completeness Checklist (backlog)</li>
             </ul>
-            <p class="gap-description">Gap: no stories assigned; zero delivery. Quality floor that all Nornspun features depend on.</p>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Model and Effort Routing Defaults</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">1/3 <progress value="1" max="3"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer can declare effort: quick in a SKILL.md and have all agent spawns from that skill route to haiku without any additional configuration.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> Model Routing Configured by Frontmatter (done)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Promptfoo Configuration Benchmarks (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Benchmark Results Drive Model/Effort Updates (backlog)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Quality Gates — AVFL, Code Review, and Retro Applied to Every Sprint</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">6/8 <progress value="6" max="8"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A sprint completes with: every merged story having passed AVFL + code review + E2E validation; the retro producing a findings document from transcript audit; gate failures reported with actionable resolution guidance.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> PostToolUse Lint and Format Hook (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Stop Gate Conditional Quality Checks (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Gherkin ACs and ATDD Workflow Active (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Quality Gate Parity Across Workflows (done)</li>
+              <li><span class="story-status-done">&#10003;</span> AVFL Scan Profile (done)</li>
+              <li><span class="story-status-done">&#10003;</span> Retro Workflow Rewrite (done)</li>
+              <li><span class="story-status-backlog">&#9675;</span> AVFL Fixer Required Gate (backlog)</li>
+              <li><span class="story-status-backlog">&#9675;</span> AVFL Default Agent Composition (backlog)</li>
+            </ul>
+          </details>
+        </td>
+      </tr>
+
+      <tr data-status="partial" data-has-gap="false">
+        <td class="feature-name">Sub-2s Session Startup (NFR20)</td>
+        <td><span class="badge">partial</span></td>
+        <td class="story-fraction">1/2 <progress value="1" max="2"></progress></td>
+        <td></td>
+        <td>
+          <details class="row-details">
+            <summary>Details</summary>
+            <p class="acceptance-condition">A developer running momentum:impetus in a cached state receives the full greeting in under 2 seconds on a standard developer machine.</p>
+            <ul class="stories-list">
+              <li><span class="story-status-done">&#10003;</span> Silent Pre-Flight and Deferred Stats Write (done)</li>
+              <li><span class="story-status-backlog">&#9675;</span> Install/Upgrade IO Consolidation (backlog)</li>
+            </ul>
           </details>
         </td>
       </tr>
@@ -614,7 +585,7 @@ flowchart TD
 </section>
 
 <footer>
-  momentum:feature-status · momentum · 2026-04-13T06:37:55.142516+00:00
+  momentum:feature-status &middot; momentum &middot; 2026-04-16T16:33:25Z
 </footer>
 
 <script type="module">

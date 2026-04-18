@@ -1,10 +1,17 @@
 # Gate Findings
 
-Generated: 2026-04-06T07:37:39Z
+Generated: 2026-04-09T17:50:24Z
 
 ## Uncommitted Changes
 
- M .claude/momentum/sprint-logs/sprint-2026-04-05-2/impetus.jsonl
-?? .claude/momentum/gate-findings.txt
-?? .claude/momentum/journal.jsonl
-?? .claude/momentum/test-bad.json
+ M .claude/momentum/installed.json
+ M .claude/momentum/sprint-logs/_unsorted/hooks-observability.jsonl
+ M .claude/momentum/sprint-logs/_unsorted/impetus.jsonl
+ M _bmad-output/implementation-artifacts/stories/index.json
+?? .claude/momentum/journal-view.md
+?? .claude/momentum/sprint-logs/sprint-2026-04-08/
+?? _bmad-output/research/agent-guidelines-architecture-2026-04-09/raw/gemini-prompt.md
+?? _bmad-output/research/agent-guidelines-architecture-2026-04-09/raw/practitioner-notes.md
+?? _bmad-output/research/agent-guidelines-architecture-2026-04-09/raw/research-claude-code-scoping-mechanisms.md
+?? _bmad-output/research/agent-guidelines-architecture-2026-04-09/raw/research-dense-domain-guidelines-structure.md
+?? _bmad-output/research/agent-guidelines-architecture-2026-04-09/scope.md
