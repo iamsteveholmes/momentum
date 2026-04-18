@@ -2500,5 +2500,15 @@
     "touches": [],
     "priority": "high",
     "story_type": "practice"
+  },
+  "e2e-and-qa-validator-prompts-branch-standalone-vs-team": {
+    "status": "backlog",
+    "title": "e2e-validator and qa-reviewer — branch standalone vs teammate mode",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
   }
 }
