@@ -2530,5 +2530,35 @@
     "touches": [],
     "priority": "critical",
     "story_type": "defect"
+  },
+  "fix-transcript-extract-repr-null-tokens": {
+    "status": "backlog",
+    "title": "Fix transcript extract repr() NULL tokens in tool-result fields",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "defect"
+  },
+  "research-recency-enforcement-for-fast-moving-domains": {
+    "status": "backlog",
+    "title": "Research recency enforcement for fast-moving domains",
+    "epic_slug": "research-knowledge",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "impetus-orientation-active-sprint-and-cross-repo-git-state": {
+    "status": "backlog",
+    "title": "Impetus orientation — active-sprint detection and cross-repo git state",
+    "epic_slug": "stay-oriented-impetus",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
   }
 }
