@@ -2510,5 +2510,25 @@
     "touches": [],
     "priority": "high",
     "story_type": "practice"
+  },
+  "fix-stale-momentum-plugin-paths-in-workflows-and-rules": {
+    "status": "backlog",
+    "title": "Fix stale momentum plugin paths in workflows and rules",
+    "epic_slug": "foundation-fixes",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
+  },
+  "fix-retro-documenter-replication-defect": {
+    "status": "backlog",
+    "title": "Fix retro documenter replication defect (AC4 regression)",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "defect"
   }
 }
