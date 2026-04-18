@@ -2480,5 +2480,25 @@
     "touches": [],
     "priority": "critical",
     "story_type": "practice"
+  },
+  "harden-sprint-dev-phase5-spawn-prompts": {
+    "status": "backlog",
+    "title": "Harden sprint-dev Phase 5 spawn prompts (systemic)",
+    "epic_slug": "sprint-dev-workflow",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "practice"
+  },
+  "avfl-invoke-code-reviewer-via-skill-not-task": {
+    "status": "backlog",
+    "title": "AVFL — invoke code-reviewer via Skill not Task",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
   }
 }
