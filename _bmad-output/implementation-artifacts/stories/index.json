@@ -2560,5 +2560,15 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "commit-summary-template-enumerates-in-scope-out-of-scope-by-ac": {
+    "status": "backlog",
+    "title": "Commit summary template — enumerate in-scope and out-of-scope by AC",
+    "epic_slug": "story-cycles",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
   }
 }
