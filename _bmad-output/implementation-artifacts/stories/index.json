@@ -2580,5 +2580,25 @@
     "touches": [],
     "priority": "high",
     "story_type": "practice"
+  },
+  "enforce-parallel-spawning-for-independent-subagents": {
+    "status": "backlog",
+    "title": "Enforce parallel spawning for independent subagents",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
+  },
+  "compare-explore-fallback-vs-code-reviewer-prompt-quality": {
+    "status": "backlog",
+    "title": "Compare Explore-fallback vs code-reviewer prompt-quality parity",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "exploration"
   }
 }
