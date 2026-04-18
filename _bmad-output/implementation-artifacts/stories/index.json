@@ -2570,5 +2570,15 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "avfl-migration-story-exhaustive-call-site-audit": {
+    "status": "backlog",
+    "title": "AVFL migration-story finding template — exhaustive call-site audit",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
   }
 }
