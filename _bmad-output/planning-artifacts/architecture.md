@@ -196,6 +196,7 @@ The defining question for each component: *does this need main-context persona p
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; **single-item capture only** — one idea → one story stub, feature-slug and story-type aware per DEC-005 D1/D5. No batching (that is `momentum:triage`'s job). Writes `stories/{slug}.md` + `stories/index.json` entry via `momentum-tools sprint story-add`. |
 | triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into six classes (ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT) per DEC-007. Delegates ARTIFACT → `momentum:intake`, DISTILL → `momentum:distill`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `intake-queue.jsonl` via `momentum-tools` CLI. Classification inline in main context (no subagent); optional Explore subagents for duplicate detection and feature-assignment suggestion when N ≥ 5. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
+| feature-breakdown | Flat skill (`/momentum:feature-breakdown`) | Pure orchestrator; takes a feature slug as input, enumerates story gaps end-to-end, passes pre-enumerated candidate list to `momentum:triage` with `source_label = "feature-breakdown:{feature_slug}"`. NEVER writes to features.json or stories/index.json — all classification and write authority belongs to triage (Decision 50). |
 | distill | Flat skill (`/momentum:distill`) | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. User-invokable mid-session or from retro Phase 5 for Tier 1 findings. Third execution path alongside sprint orchestration and quick-fix (Decision 42). Story: not yet in backlog — handled via quick-fix workflow. |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
 | sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
@@ -2481,6 +2482,28 @@ The orchestrator handles all synthesis, value analysis, developer interaction, a
 **Rationale:** The flat orchestrator pattern keeps the synthesis step in a single context that can reason holistically across both discovery inputs. Two discovery subagents are sufficient to parallelize the read-heavy work; further parallelism would fragment the synthesis context without benefit. Sole write authority over features.json ensures the schema (including `value_analysis` and `system_context` fields added in Decision 44) is always populated correctly and consistently.
 
 **Traceability:** Introduced by feature-grooming story in sprint-2026-04-11. Complements Decision 44 (features.json schema and write authority) and Decision 45 (feature-status read path).
+
+---
+
+**Decision 50 — Feature Breakdown Skill: Canonical Feature-to-Story Gap Enumerator (sprint-2026-04-18)**
+
+The `momentum:feature-breakdown` skill is the canonical entry point for converting a feature slug into a prioritized list of story gaps required to ship that feature end to end. No other skill in the practice takes a feature slug as primary input and produces a gap enumeration as output.
+
+**Role boundary:** `feature-breakdown` is a pure orchestrator. It NEVER writes to `features.json`, `stories/index.json`, or any planning artifact. Its sole output is a ranked candidate list passed to `momentum:triage` for disposition. All classification and routing authority belongs to triage.
+
+**Delegation contract:** `feature-breakdown` passes `source_label = "feature-breakdown:{feature_slug}"` to `momentum:triage`, satisfying the pre-enumerated-list contract. Triage classifies each candidate into the standard six classes (ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT) and handles all writes.
+
+**Why this skill exists:** The practice has no prior skill that takes a feature slug and authors the missing work.
+- `momentum:feature-grooming` catalogs features (Decision 49) — does not enumerate story gaps
+- `momentum:feature-status` reports health — read-only, no gap authoring
+- `momentum:sprint-planning` assumes the backlog is already ready — does not create stories
+- `momentum:triage` classifies pre-formed observations — does not enumerate what is missing
+
+`feature-breakdown` fills this gap: given a feature, find what stories are required but do not yet exist.
+
+**Non-responsibility:** `feature-breakdown` does NOT decide sufficiency. It identifies candidates. The developer and triage decide what becomes a story.
+
+**Pattern references:** Fan-out spawning from Decision 41 / `spawning-patterns.md`; orchestrator purity from existing decisions; triage delegation contract from the triage row in the Skills Deployment Classification table.
 
 ---
 
