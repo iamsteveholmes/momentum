@@ -2600,5 +2600,15 @@
     "touches": [],
     "priority": "medium",
     "story_type": "exploration"
+  },
+  "feature-breakdown-skill": {
+    "status": "done",
+    "title": "Build the /momentum:feature-breakdown Skill — Feature → Gap List → Triage",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
   }
 }

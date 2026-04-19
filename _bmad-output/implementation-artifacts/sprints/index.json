@@ -964,6 +964,12 @@
       "story": "feature-grooming",
       "started": "2026-04-12",
       "completed": "2026-04-12"
+    },
+    {
+      "slug": "quickfix-feature-breakdown-skill",
+      "story": "feature-breakdown-skill",
+      "started": "2026-04-18",
+      "completed": "2026-04-18"
     }
   ]
 }
