@@ -2601,6 +2601,16 @@
     "priority": "medium",
     "story_type": "exploration"
   },
+  "orientation-auto-query-prior-transcripts-on-context-gap": {
+    "status": "backlog",
+    "title": "Impetus orientation — auto-query prior transcripts on context gap",
+    "epic_slug": "stay-oriented-impetus",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "exploration"
+  },
   "feature-breakdown-skill": {
     "status": "done",
     "title": "Build the /momentum:feature-breakdown Skill — Feature → Gap List → Triage",
