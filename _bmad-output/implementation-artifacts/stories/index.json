@@ -2620,5 +2620,137 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "base-body-collapse-rollback": {
+    "status": "backlog",
+    "title": "Base-body collapse rollback",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "rename-base-body-files-to-canonical-naming": {
+    "status": "backlog",
+    "title": "Rename base body files to canonical naming",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "architecture-decision-26-update-for-base-body-collapse": {
+    "status": "backlog",
+    "title": "Architecture Decision 26 update for base-body collapse",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "project-manifest-format-specification": {
+    "status": "backlog",
+    "title": "Project manifest format specification",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "constitutionmd-generation-acceptance-criteria": {
+    "status": "backlog",
+    "title": "Constitution.md generation acceptance criteria",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "sprint-dev-composed-file-spawn-wiring": {
+    "status": "backlog",
+    "title": "Sprint-dev composed-file spawn wiring",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "sprint-planning-composed-file-preference-update": {
+    "status": "backlog",
+    "title": "Sprint-planning composed-file preference update",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "specialist-classify-update-for-gen-2-paths": {
+    "status": "backlog",
+    "title": "Specialist-classify update for gen-2 paths",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "build-guidelines-invocation-surface-in-sprint-planning": {
+    "status": "backlog",
+    "title": "Build-guidelines invocation surface in sprint-planning",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "architect-base-body": {
+    "status": "backlog",
+    "title": "Architect base body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "sm-base-body": {
+    "status": "backlog",
+    "title": "SM base body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "pm-base-body": {
+    "status": "backlog",
+    "title": "PM base body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
   }
 }
