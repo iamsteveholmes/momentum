@@ -19,6 +19,13 @@ Load config from `_bmad/bmm/config.yaml`. Resolve:
 - `planning_artifacts` — path to `_bmad-output/planning-artifacts/`
 - `implementation_artifacts` — path to `_bmad-output/implementation-artifacts/`
 
+<check if="_bmad/bmm/config.yaml is missing OR planning_artifacts OR implementation_artifacts keys are unresolved">
+  <output>✗ Configuration error: _bmad/bmm/config.yaml is missing or incomplete.
+Required keys: planning_artifacts, implementation_artifacts.
+Ensure _bmad/bmm/config.yaml exists and both keys resolve to valid paths before running feature-breakdown.</output>
+  <action>HALT.</action>
+</check>
+
 Store {{planning_artifacts}} and {{implementation_artifacts}} for use throughout.
 
 ---
@@ -111,9 +118,17 @@ Run /momentum:feature-grooming to view the full feature list or add new features
       - Store {{architecture_context}} = relevant architectural components and constraints.
     </action>
 
+    <action>Derive {{feature_epics}} — the set of epic_slug values for this feature:
+      - For each slug in {{feature_stories}}, look up the story entry in stories/index.json.
+      - Collect the unique epic_slug values from those story entries.
+      - Store {{feature_epics}} = deduplicated list of epic slugs.
+      <note>features.json does not carry an epics field directly. Epics must be inferred
+      from the stories already on the feature by resolving their epic_slug in stories/index.json.</note>
+    </action>
+
     <action>Read `{{implementation_artifacts}}/stories/index.json`:
       - Read full file (use offset/limit chunks if large — read in 300-line pages until complete).
-      - Filter in-memory: keep stories where epic_slug is in the epics the feature touches,
+      - Filter in-memory: keep stories where epic_slug is in {{feature_epics}},
         OR where the story slug is in {{feature_stories}}.
       - Store {{related_stories}} = filtered list of {slug, title, status, epic_slug}.
     </action>
@@ -311,10 +326,14 @@ Enter item numbers to remove (e.g., "2, 4"), or press Enter / type "go" to appro
 
   <step n="6" goal="Delegate to momentum:triage with pre-enumerated list and correct source_label">
 
-    <check if="momentum:triage is not available">
+    <action>Check that the triage skill file exists before invoking:
+      Run: test -f skills/momentum/skills/triage/SKILL.md
+    </action>
+
+    <check if="skills/momentum/skills/triage/SKILL.md does not exist">
       <output>✗ momentum:triage is unavailable. Cannot delegate gap items.
-Required dependency: momentum:triage (skills/momentum/skills/triage/SKILL.md).
-Resolve the missing skill before proceeding.</output>
+Required dependency: skills/momentum/skills/triage/SKILL.md not found.
+Resolve the missing skill file before proceeding.</output>
       <action>HALT.</action>
     </check>
 
@@ -322,15 +341,20 @@ Resolve the missing skill before proceeding.</output>
     pre-enumerated source. Match the input shape that triage Step 1 accepts for the
     "invoked from retro or assessment with a pre-enumerated list" branch:
 
-      - raw_items: {{approved_gap_list}} — each item as a plain observation entry with:
-          title: {{item.title}}
-          description: {{item.description}}
-          suggested_class: {{item.suggested_class}} (advisory — triage classifies independently)
+      - raw_items: {{approved_gap_list}} — each item as a plain observation string:
+          "{{item.title}} — {{item.description}}"
+          (one string per item; do NOT include suggested_class in the payload)
       - source_label: "feature-breakdown:{{feature_slug}}"
 
-    Triage will re-classify each item using its own heuristics, present a batch-approval UX
-    to the developer, and delegate approved items to intake / decision / distill / intake-queue.
+    Triage will re-classify each item using its own heuristics (from original_text per its
+    Step 3 contract), present a batch-approval UX to the developer, and delegate approved items
+    to intake / decision / distill / intake-queue.
     </action>
+
+    <note>Triage classifies items fresh from original_text per its Step 1 contract. The
+    suggested_class values in {{approved_gap_list}} are synthesis suggestions used at the
+    developer review gate (Step 5) only — they must not be forwarded to triage as that would
+    pre-bias triage's independent classification pass.</note>
 
     <action>Wait for triage to complete. Store {{triage_output}} = triage's summary output.</action>
 
@@ -342,16 +366,19 @@ Resolve the missing skill before proceeding.</output>
 
   <step n="7" goal="Report — summarize outcomes after triage returns">
 
-    <action>Parse {{triage_output}} to extract:
-      - {{artifact_count}} — items routed as ARTIFACT (delegated to intake)
-      - {{decision_count}} — items routed as DECISION (delegated to momentum:decision)
-      - {{distill_count}} — items routed as DISTILL (delegated to momentum:distill)
-      - {{shaping_count}} — items routed as SHAPING (written to intake-queue.jsonl)
-      - {{defer_count}} — items routed as DEFER (written to intake-queue.jsonl)
-      - {{reject_count}} — items routed as REJECT (written to intake-queue.jsonl)
-      - {{story_paths}} — list of new story stub paths triage/intake created
-      - {{decision_paths}} — list of new decision doc paths
-      - {{distill_outcomes}} — list of distill outcomes
+    <action>Parse {{triage_output}} to extract the following counts. Triage Step 6 exposes
+    these variables directly in its summary output. If a class was not present in this triage
+    session, the count will be absent from the output — default any absent count to 0:
+      - {{artifact_count}} — from "Stubbed to backlog (N)" → intake_count in triage Step 6;
+          default 0 if absent
+      - {{distill_count}} — from "Distilled (N)"; default 0 if absent
+      - {{decision_count}} — from "Decisions recorded (N)"; default 0 if absent
+      - {{shaping_count}} — from "N shaping (kind: shape)"; default 0 if absent
+      - {{defer_count}} — from "N deferred (kind: watch)"; default 0 if absent
+      - {{reject_count}} — from "N rejected (kind: rejected)"; default 0 if absent
+      - {{story_paths}} — list of stub_path values from intake results; default []
+      - {{decision_paths}} — list of outcome paths from decision results; default []
+      - {{distill_outcomes}} — list of outcome strings from distill results; default []
     </action>
 
     <output>✓ Feature breakdown complete — {{feature_slug}}
