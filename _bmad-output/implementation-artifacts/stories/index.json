@@ -2752,5 +2752,126 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "intake-fixture-provenance-capture": {
+    "status": "backlog",
+    "title": "intake fixture: provenance capture",
+    "epic_slug": "epic-6-the-practice-compounds",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-retro-and-flywheel"
+  },
+  "feature-breakdown-fixture-enumeration-recall": {
+    "status": "backlog",
+    "title": "feature-breakdown fixture: enumeration recall",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-backlog-refinement"
+  },
+  "plan-audit-promote-eval-scenarios-to-yaml-fixtures": {
+    "status": "backlog",
+    "title": "plan-audit: promote existing eval scenarios to executable YAML fixtures",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "quick-fix-fixture-epic-slug-ad-hoc-used-silently": {
+    "status": "backlog",
+    "title": "quick-fix fixture: epic_slug \"ad-hoc\" used silently",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-quick-fix-workflow"
+  },
+  "sprint-planning-fixture-gherkin-behavioral-generality": {
+    "status": "backlog",
+    "title": "sprint-planning fixture: Gherkin behavioral generality",
+    "epic_slug": "epic-3-automatic-quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-gherkin-separation"
+  },
+  "upstream-fix-fixture-root-cause-not-symptom": {
+    "status": "backlog",
+    "title": "upstream-fix fixture: root-cause-not-symptom",
+    "epic_slug": "epic-6-the-practice-compounds",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-retro-and-flywheel"
+  },
+  "sprint-planning-fixture-team-composition-matches-story-type-mix": {
+    "status": "backlog",
+    "title": "sprint-planning fixture: team composition matches story type mix",
+    "epic_slug": "epic-12-sprint-execution-workflow",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-sprint-planning-to-ready"
+  },
+  "sprint-dev-fixture-autonomous-commit-per-story": {
+    "status": "backlog",
+    "title": "sprint-dev fixture: autonomous commit per story",
+    "epic_slug": "epic-12-sprint-execution-workflow",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-sprint-orchestration"
+  },
+  "impetus-fixture-startup-latency-budget": {
+    "status": "backlog",
+    "title": "impetus fixture: startup latency budget",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-startup-performance"
+  },
+  "sprint-dev-fixture-parallel-spawning-for-independent-stories": {
+    "status": "backlog",
+    "title": "sprint-dev fixture: parallel spawning for independent stories",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-sprint-orchestration"
+  },
+  "dev-skills-fixture-skill-md-frontmatter-conformance": {
+    "status": "backlog",
+    "title": "dev-skills fixture: SKILL.md frontmatter conformance",
+    "epic_slug": "epic-3-automatic-quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
   }
 }
