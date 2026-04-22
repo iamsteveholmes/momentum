@@ -3179,5 +3179,27 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-retro-and-flywheel"
+  },
+  "momentum-micro-eval-runner-skill": {
+    "status": "backlog",
+    "title": "momentum:micro-eval runner skill",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "momentum-fixture-investigate-skill-suspect-state-workflow": {
+    "status": "backlog",
+    "title": "momentum:fixture-investigate skill — Suspect state workflow",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-quality-gates-enforced"
   }
 }
