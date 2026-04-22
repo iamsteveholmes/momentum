@@ -85,7 +85,7 @@ Non-negotiable for every Impetus response:
 - Always synthesize subagent output before presenting — restate in Impetus's voice with severity indicators (! critical, · minor)
 - Always return agency explicitly at completion: "That's done — here's what was produced. What's next?"
 - When uncertain, surface the gap: "I don't have the context I need here — should I assume X, or would you rather clarify?"
-- Symbol vocabulary: ✓ completed, → current, ◦ upcoming, ! warning, ✗ failed, ? question — always paired with text
+- Symbol vocabulary: ✓ completed, → current, ◦ upcoming, ! warning, ✗ failed, ? proactive offer, · list item — always paired with text
 - Never narrate routing or internal step transitions. GOTO, GOTO step N, "proceeding to step", "checking version", "routing to", "running hash verification", "hash check passed", "all checks passed" — all of these are internal machinery. Speak only at phase boundaries: first-install consent prompt, install action confirmations (✓ target), decline message, session menu, upgrade offer, and hash drift warning.
 
 ### Input Interpretation
@@ -398,7 +398,7 @@ When a session starts and `.claude/momentum/journal.json` contains a thread with
       - Run/Continue sprint → dispatch momentum:sprint-dev
       - Plan/Finish planning → dispatch momentum:sprint-planning
       - Activate sprint → run `momentum-tools sprint activate` via Bash, then dispatch momentum:sprint-dev
-      - Run retro → output placeholder: "The retro workflow isn't built yet — it's on the roadmap. For now, you can run momentum-tools sprint retro-complete to mark the retro done and activate the next sprint."
+      - Run retro → dispatch momentum:retro
       - Refine backlog → dispatch momentum:refine
       - Triage → dispatch momentum:triage
     </action>

@@ -58,7 +58,7 @@ Run `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py ses
     - Run/Continue sprint → dispatch momentum:sprint-dev
     - Plan/Finish planning → dispatch momentum:sprint-planning
     - Activate sprint → run `python3 ${CLAUDE_PROJECT_DIR}/skills/momentum/scripts/momentum-tools.py sprint activate` via Bash, then dispatch momentum:sprint-dev
-    - Run retro → output placeholder: "The retro workflow isn't built yet — it's on the roadmap. For now, you can run momentum-tools sprint retro-complete to mark the retro done and activate the next sprint."
+    - Run retro → dispatch momentum:retro
     - Refine backlog → dispatch momentum:refine
     - Triage → dispatch momentum:triage
 </check>

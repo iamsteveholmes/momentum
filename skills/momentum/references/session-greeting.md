@@ -161,9 +161,9 @@ Planning context: none.
 | Run the sprint / Continue the sprint | `momentum:sprint-dev` |
 | Plan a sprint / Finish planning | `momentum:sprint-planning` |
 | Activate sprint | Run `momentum-tools sprint activate` via Bash, then dispatch `momentum:sprint-dev` |
-| Run retro | Placeholder: "The retro workflow isn't built yet — it's on the roadmap. For now, you can run `momentum-tools sprint retro-complete` to mark the retro done and activate the next sprint." |
-| Refine backlog | `momentum:create-story` |
-| Triage | Placeholder: "Triage is coming in the next phase." |
+| Run retro | `momentum:retro` |
+| Refine backlog | `momentum:refine` |
+| Triage | `momentum:triage` |
 
 ---
 
