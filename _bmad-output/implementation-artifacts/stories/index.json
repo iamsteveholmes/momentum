@@ -3168,5 +3168,16 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-practice-knowledge-base"
+  },
+  "momentum-retro-phase-4b-4f-fixture-generation": {
+    "status": "backlog",
+    "title": "momentum:retro Phase 4b-4f extension — fixture generation from findings",
+    "epic_slug": "epic-6-the-practice-compounds",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-retro-and-flywheel"
   }
 }
