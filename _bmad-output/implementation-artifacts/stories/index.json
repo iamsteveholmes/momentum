@@ -3102,5 +3102,71 @@
     "touches": [],
     "priority": "medium",
     "story_type": "maintenance"
+  },
+  "wiki-page-schema-and-frontmatter-formalization": {
+    "status": "backlog",
+    "title": "Wiki page schema and frontmatter formalization",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-practice-knowledge-base"
+  },
+  "vault-claudemd-navigation-contract-spec": {
+    "status": "backlog",
+    "title": "Vault CLAUDE.md navigation contract spec",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-practice-knowledge-base"
+  },
+  "vault-indexmd-registry-format-and-update-protocol": {
+    "status": "backlog",
+    "title": "Vault index.md registry format and update protocol",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-practice-knowledge-base"
+  },
+  "staleness-detection-mechanism-for-raw-sources": {
+    "status": "backlog",
+    "title": "Staleness detection mechanism for raw sources",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-practice-knowledge-base"
+  },
+  "citation-integrity-validation-in-build-guidelines-avfl": {
+    "status": "backlog",
+    "title": "Citation integrity validation in build-guidelines AVFL",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-practice-knowledge-base"
+  },
+  "build-guidelines-soft-stop-ux-for-missing-vault": {
+    "status": "backlog",
+    "title": "build-guidelines soft-stop UX for missing vault",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-practice-knowledge-base"
   }
 }
