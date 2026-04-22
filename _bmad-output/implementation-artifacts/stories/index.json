@@ -2873,5 +2873,234 @@
     "priority": "medium",
     "story_type": "practice",
     "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "impetus-fixture-auto-query-transcripts-on-context-gap": {
+    "status": "backlog",
+    "title": "impetus fixture: auto-query transcripts on context gap",
+    "epic_slug": "epic-2-stay-oriented-with-impetus",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-impetus-session-orientation"
+  },
+  "sprint-manager-fixture-exclusive-write-authority": {
+    "status": "backlog",
+    "title": "sprint-manager fixture: exclusive write authority",
+    "epic_slug": "epic-12-sprint-execution-workflow",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice",
+    "feature_slug": "momentum-sprint-orchestration"
+  },
+  "refine-fixture-stale-story-detection": {
+    "status": "backlog",
+    "title": "refine fixture: stale story detection",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-backlog-refinement"
+  },
+  "micro-eval-fixture-yaml-schema-schemamd": {
+    "status": "backlog",
+    "title": "micro-eval: fixture YAML schema (SCHEMA.md)",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "micro-eval-workflow-fidelity-meta-fixture": {
+    "status": "backlog",
+    "title": "micro-eval: workflow-fidelity meta-fixture",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "triage-fixture-routing-accuracy": {
+    "status": "backlog",
+    "title": "triage fixture: routing accuracy",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "distill-fixture-correct-layer-targeting": {
+    "status": "backlog",
+    "title": "distill fixture: correct layer targeting",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-practice-distillation"
+  },
+  "research-fixture-recency-enforcement": {
+    "status": "backlog",
+    "title": "research fixture: recency enforcement",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [
+      "research-recency-enforcement-for-fast-moving-domains"
+    ],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-deep-research-pipeline"
+  },
+  "avfl-fixture-enumeration-completeness-recall": {
+    "status": "backlog",
+    "title": "AVFL fixture: enumeration completeness recall",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "exploration",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "avfl-fixture-declining-skepticism-convergence": {
+    "status": "backlog",
+    "title": "AVFL fixture: declining skepticism convergence",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "e2e-validator-fixture-spec-sync-stale-reference-detection": {
+    "status": "backlog",
+    "title": "e2e-validator fixture: spec-sync stale reference detection",
+    "epic_slug": "epic-3-automatic-quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "architecture-guard-fixture-false-positive-rate": {
+    "status": "backlog",
+    "title": "architecture-guard fixture: false-positive rate",
+    "epic_slug": "epic-9-performance-validation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "research-fixture-source-grounded-synthesis": {
+    "status": "backlog",
+    "title": "research fixture: source-grounded synthesis",
+    "epic_slug": "epic-5-trust-artifact-provenance",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-provenance-chain"
+  },
+  "retro-fixture-transcript-extract-null-token-handling": {
+    "status": "backlog",
+    "title": "retro fixture: transcript-extract null token handling",
+    "epic_slug": "epic-4-complete-story-cycles",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "defect",
+    "feature_slug": "momentum-retro-and-flywheel"
+  },
+  "create-story-fixture-change-type-classification": {
+    "status": "backlog",
+    "title": "create-story fixture: change-type classification",
+    "epic_slug": "epic-11-agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "retro-fixture-documenter-no-replication-without-verification": {
+    "status": "backlog",
+    "title": "retro fixture: documenter no-replication-without-verification",
+    "epic_slug": "epic-4-complete-story-cycles",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "defect",
+    "feature_slug": "momentum-retro-and-flywheel"
+  },
+  "decision-fixture-sdr-cites-source-research": {
+    "status": "backlog",
+    "title": "decision fixture: SDR cites source research",
+    "epic_slug": "epic-5-trust-artifact-provenance",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "practice",
+    "feature_slug": "momentum-assessment-decision-pipeline"
+  },
+  "load-impetus-persona-on-happy-path-so-voice-is-in-context": {
+    "status": "backlog",
+    "title": "Load Impetus persona on happy path so voice is in context every session",
+    "epic_slug": "impetus-ux-redesign",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "impetus-state-aware-action-surface": {
+    "status": "backlog",
+    "title": "Replace static Impetus menu with state-aware action surface that names the next move and active features",
+    "epic_slug": "impetus-ux-redesign",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "preflight-context-envelope": {
+    "status": "backlog",
+    "title": "Preflight returns a context envelope of ingested project state, not just rendered greeting strings",
+    "epic_slug": "impetus-ux-redesign",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "extract-impetus-install-upgrade-shell-into-python-subcommands": {
+    "status": "backlog",
+    "title": "Extract Impetus install / upgrade / hash-drift shell work into Python subcommands",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
   }
 }
