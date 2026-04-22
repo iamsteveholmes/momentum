@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-04-14'
+lastEdited: '2026-04-22'
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
 ---
 
@@ -21,3 +21,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-005 | [Momentum Cycle Redesign — Feature-First Practice, North Star Floors, Running-App Verification, and Failure as Diagnostic](dec-005-cycle-redesign-feature-first-practice-2026-04-14.md) | 2026-04-14 | adapting-agile-for-gen-ai-development-2026-04-13 | decided |
 | DEC-006 | [Artifact Redesign for Dual-Audience Legibility — Story Template, Feature Dashboard, and Story-Level Dependency Graph](dec-006-artifact-redesign-dual-audience-2026-04-14.md) | 2026-04-14 | DEC-005 (developer-proposed follow-on) | decided |
 | DEC-007 | [Triage Capture Artifact — Unified Intake-Queue JSONL Event Log](dec-007-triage-capture-artifact-2026-04-14.md) | 2026-04-14 | (developer-conversation) | decided |
+| DEC-008 | [Composable Specialist Agents Architecture — Three-Tier Layout, KB Soft Stop, No-Fallback, SM Literacy](dec-008-composable-agents-architecture-2026-04-22.md) | 2026-04-22 | (developer-conversation) | decided |
