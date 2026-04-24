@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-04-22'
+lastEdited: '2026-04-24'
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
 ---
@@ -25,3 +25,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-008 | [Composable Specialist Agents Architecture — Three-Tier Layout, KB Soft Stop, No-Fallback, SM Literacy](dec-008-composable-agents-architecture-2026-04-22.md) | 2026-04-22 | (developer-conversation) | decided |
 | DEC-009 | [Practice Knowledge Base Vault — Orchestration Model, Isolation, Merge Strategy, Research Path](dec-009-kb-vault-orchestration-and-ingest-model-2026-04-22.md) | 2026-04-22 | (developer-conversation) | decided |
 | DEC-010 | [Fixture-Based Regression Testing as Practice Primitive — Schema, Lifecycle, Skills, and Pruning](dec-010-fixture-based-regression-testing-2026-04-22.md) | 2026-04-22 | retro-microeval-loop-analysis-2026-04-21 | decided |
+| DEC-011 | [Project Canvas Implementation Foundations — Canvas Rename, Vite Build, State Source Paths](dec-011-project-canvas-implementation-foundations-2026-04-24.md) | 2026-04-24 | (developer-conversation) | decided |
