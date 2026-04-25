@@ -2912,7 +2912,9 @@
     "title": "micro-eval: fixture YAML schema (SCHEMA.md)",
     "epic_slug": "epic-9-performance-validation",
     "story_file": true,
-    "depends_on": [],
+    "depends_on": [
+      "impetus-evals-legacy-triage"
+    ],
     "touches": [],
     "priority": "high",
     "story_type": "practice",
@@ -2923,7 +2925,9 @@
     "title": "micro-eval: workflow-fidelity meta-fixture",
     "epic_slug": "epic-9-performance-validation",
     "story_file": true,
-    "depends_on": [],
+    "depends_on": [
+      "impetus-evals-legacy-triage"
+    ],
     "touches": [],
     "priority": "high",
     "story_type": "practice",
@@ -3185,7 +3189,9 @@
     "title": "momentum:micro-eval runner skill",
     "epic_slug": "epic-9-performance-validation",
     "story_file": true,
-    "depends_on": [],
+    "depends_on": [
+      "impetus-evals-legacy-triage"
+    ],
     "touches": [],
     "priority": "high",
     "story_type": "feature",
@@ -3211,5 +3217,25 @@
     "touches": [],
     "priority": "medium",
     "story_type": "maintenance"
+  },
+  "impetus-evals-legacy-triage": {
+    "status": "backlog",
+    "title": "Impetus evals — triage legacy markdown evals against new memory agent",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
+  },
+  "semver-v2-version-release-skill": {
+    "status": "backlog",
+    "title": "Semantic versioning v2 enforcement and momentum:version release skill",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }
