@@ -3201,5 +3201,15 @@
     "priority": "low",
     "story_type": "feature",
     "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "impetus-momentum-state-migration": {
+    "status": "backlog",
+    "title": "Migrate Impetus State Reads to .momentum/",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
   }
 }
