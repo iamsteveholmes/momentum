@@ -2773,7 +2773,7 @@
     "touches": [],
     "priority": "low",
     "story_type": "practice",
-    "feature_slug": "momentum-backlog-refinement"
+    "feature_slug": "momentum-feature-taxonomy-maintenance"
   },
   "plan-audit-promote-eval-scenarios-to-yaml-fixtures": {
     "status": "backlog",
