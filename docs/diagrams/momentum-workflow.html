@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Momentum Flywheel</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: #111a2b;
+      --panel-2: #15203a;
+      --border: #1f2a44;
+      --border-strong: #2c3a5e;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --accent: #60a5fa;
+      --accent-strong: #3b82f6;
+      --feedback: #22c55e;
+      --warn: #f59e0b;
+      --fail: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 32px 80px;
+    }
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 24px; letter-spacing: 0.2px; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .lede {
+      color: var(--muted);
+      margin: 8px 0 24px;
+      max-width: 78ch;
+    }
+
+    /* Flywheel container */
+    .flywheel {
+      position: relative;
+      width: 100%;
+      max-width: 780px;
+      aspect-ratio: 1;
+      margin: 8px auto 0;
+    }
+    .ring-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Center hub */
+    .hub {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 18%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 35%, #1e2a4a 0%, #0f172a 70%);
+      border: 2px solid var(--accent-strong);
+      box-shadow: 0 0 36px rgba(59, 130, 246, 0.22);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 6px;
+    }
+    .hub .glyph {
+      font-size: 22px;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+    .hub .title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: #e0f2fe;
+    }
+    .hub .tagline {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    /* Phase stations around the ring */
+    .station {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 168px;
+      text-align: center;
+      /* subtle backdrop so arcs don't show through text */
+      background: radial-gradient(ellipse 75% 60% at 50% 50%,
+                  rgba(11, 18, 32, 0.92) 55%,
+                  rgba(11, 18, 32, 0) 100%);
+      padding: 10px 4px;
+      border-radius: 16px;
+    }
+    .station .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--panel-2);
+      border: 2px solid var(--accent-strong);
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+      font-size: 20px;
+      color: var(--accent);
+      font-weight: 800;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+    }
+    .station .name {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: #e0f2fe;
+    }
+    .station .name .glyph {
+      color: var(--fail);
+      margin-left: 4px;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .station .skills {
+      margin-top: 6px;
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      line-height: 1.7;
+    }
+    .station .skills .s { display: block; }
+    .station .skills .sub {
+      display: block;
+      color: var(--dim);
+      font-size: 10.5px;
+      padding-left: 12px;
+      position: relative;
+    }
+    .station .skills .sub::before {
+      content: "↳";
+      position: absolute;
+      left: 0;
+      color: var(--dim);
+    }
+    .station .purpose {
+      margin-top: 6px;
+      font-size: 10.5px;
+      color: var(--dim);
+      font-style: italic;
+    }
+
+    /* Cross-cutting band */
+    .cross {
+      margin-top: 32px;
+      border: 1px solid var(--border-strong);
+      background: linear-gradient(180deg, rgba(245,158,11,0.05), transparent);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    .cross-head {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .cross-title {
+      font-size: 12px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--warn);
+      font-weight: 700;
+    }
+    .cross-purpose { color: var(--muted); font-size: 13px; }
+    .cross-skills {
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .pill {
+      background: var(--panel);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+      font-size: 12.5px;
+      color: #dbeafe;
+    }
+    .pill .sub {
+      display: block;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 10.5px;
+      color: var(--dim);
+      margin-top: 2px;
+    }
+
+    /* Notes */
+    .notes {
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 22px;
+    }
+    .notes h2 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .notes h2:not(:first-child) { margin-top: 16px; }
+    .notes ul { margin: 6px 0 0; padding-left: 20px; }
+    .notes li { margin: 4px 0; color: var(--text); font-size: 13.5px; }
+    .notes code {
+      background: #0f1830;
+      border: 1px solid #1f2a44;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12.5px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      font-size: 12.5px;
+      color: var(--muted);
+      justify-content: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-swatch {
+      display: inline-block;
+      width: 22px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    .legend-swatch.flow { background: var(--accent-strong); }
+    .legend-swatch.feedback { background: var(--feedback); }
+    .legend-swatch.fail {
+      background: transparent;
+      border-top: 2px dashed var(--fail);
+      height: 0;
+    }
+
+    footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    footer code {
+      background: #0f1830;
+      border: 1px solid #1f2a44;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Momentum Flywheel</h1>
+      <span class="meta">docs/diagrams/momentum-workflow.html · v0.4</span>
+    </header>
+    <p class="lede">
+      Seven phases on a continuous loop. Forward flow is the dominant motion, but feedback
+      flows freely between many phases — the wheel doesn't require strict sequential
+      completion. Each rotation refines the practice itself, compounding over time.
+    </p>
+
+    <div class="flywheel">
+      <svg class="ring-svg" viewBox="0 0 1000 1000" aria-hidden="true">
+        <defs>
+          <marker id="arrow-flow" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6"/>
+          </marker>
+          <marker id="arrow-feedback" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e"/>
+          </marker>
+        </defs>
+
+        <!-- Forward-flow arcs (6 segments, blue) — radius 210 -->
+        <!-- 01 Discovery → 02 Capture -->
+        <path d="M 527.4 291.8 A 210 210 0 0 1 645.7 348.76"
+              fill="none" stroke="#3b82f6" stroke-width="5"
+              stroke-linecap="round" marker-end="url(#arrow-flow)"/>
+        <!-- 02 Capture → 03 Grooming -->
+        <path d="M 679.95 391.73 A 210 210 0 0 1 709.10 519.51"
+              fill="none" stroke="#3b82f6" stroke-width="5"
+              stroke-linecap="round" marker-end="url(#arrow-flow)"/>
+        <!-- 03 Grooming → 04 Sprint Planning -->
+        <path d="M 696.90 573.04 A 210 210 0 0 1 614.97 675.75"
+              fill="none" stroke="#3b82f6" stroke-width="5"
+              stroke-linecap="round" marker-end="url(#arrow-flow)"/>
+        <!-- 04 Sprint Planning → 05 Execution -->
+        <path d="M 565.69 699.46 A 210 210 0 0 1 434.31 699.46"
+              fill="none" stroke="#3b82f6" stroke-width="5"
+              stroke-linecap="round" marker-end="url(#arrow-flow)"/>
+        <!-- 05 Execution → 06 Verification -->
+        <path d="M 385.03 675.75 A 210 210 0 0 1 303.10 573.04"
+              fill="none" stroke="#3b82f6" stroke-width="5"
+              stroke-linecap="round" marker-end="url(#arrow-flow)"/>
+        <!-- 06 Verification → 07 Closure -->
+        <path d="M 290.90 519.66 A 210 210 0 0 1 320.05 391.73"
+              fill="none" stroke="#3b82f6" stroke-width="5"
+              stroke-linecap="round" marker-end="url(#arrow-flow)"/>
+
+        <!-- Feedback arc (Closure → Discovery, green) -->
+        <path d="M 354.30 348.76 A 210 210 0 0 1 472.60 291.80"
+              fill="none" stroke="#22c55e" stroke-width="5"
+              stroke-linecap="round" marker-end="url(#arrow-feedback)"/>
+
+      </svg>
+
+      <!-- Center hub -->
+      <div class="hub">
+        <div class="glyph">↻</div>
+        <div class="title">MOMENTUM</div>
+        <div class="tagline">each cycle<br/>compounds</div>
+      </div>
+
+      <!-- 01 Discovery (-90°) -->
+      <div class="station" style="top: 12%; left: 50%;">
+        <div class="num">01</div>
+        <div class="name">Discovery</div>
+        <div class="skills">
+          <span class="s">research</span>
+          <span class="s">assessment</span>
+          <span class="s">decision</span>
+        </div>
+        <div class="purpose">strategic context</div>
+      </div>
+
+      <!-- 02 Capture (-38.57°) -->
+      <div class="station" style="top: 26.31%; left: 79.71%;">
+        <div class="num">02</div>
+        <div class="name">Capture</div>
+        <div class="skills">
+          <span class="s">triage</span>
+          <span class="sub">intake</span>
+        </div>
+        <div class="purpose">signal → backlog</div>
+      </div>
+
+      <!-- 03 Grooming (12.86°) -->
+      <div class="station" style="top: 58.46%; left: 87.05%;">
+        <div class="num">03</div>
+        <div class="name">Grooming</div>
+        <div class="skills">
+          <span class="s">feature-grooming</span>
+          <span class="s">epic-grooming</span>
+          <span class="s">create-story</span>
+        </div>
+        <div class="purpose">shape into stories</div>
+      </div>
+
+      <!-- 04 Sprint Planning (64.29°) -->
+      <div class="station" style="top: 84.24%; left: 66.49%;">
+        <div class="num">04</div>
+        <div class="name">Sprint Planning</div>
+        <div class="skills">
+          <span class="s">sprint-planning</span>
+        </div>
+        <div class="purpose">stories → specifications</div>
+      </div>
+
+      <!-- 05 Execution (115.71°) -->
+      <div class="station" style="top: 84.24%; left: 33.51%;">
+        <div class="num">05</div>
+        <div class="name">Execution</div>
+        <div class="skills">
+          <span class="s">sprint-dev</span>
+          <span class="s">code-review</span>
+        </div>
+        <div class="purpose">build &amp; merge</div>
+      </div>
+
+      <!-- 06 Verification (167.14°) -->
+      <div class="station" style="top: 58.46%; left: 12.95%;">
+        <div class="num">06</div>
+        <div class="name">Verification</div>
+        <div class="skills">
+          <span class="s">e2e</span>
+          <span class="s">team-review</span>
+          <span class="s">avfl</span>
+        </div>
+        <div class="purpose">pass / fail per story</div>
+      </div>
+
+      <!-- 07 Closure (218.57°) -->
+      <div class="station" style="top: 26.31%; left: 20.29%;">
+        <div class="num">07</div>
+        <div class="name">Closure</div>
+        <div class="skills">
+          <span class="s">retro</span>
+          <span class="s">distill</span>
+        </div>
+        <div class="purpose">learn &amp; refine</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-swatch flow"></span>
+        <span>forward flow</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch feedback"></span>
+        <span>compounding feedback (rotation completes)</span>
+      </div>
+    </div>
+
+    <!-- Cross-cutting -->
+    <div class="cross">
+      <div class="cross-head">
+        <span class="cross-title">Cross-cutting</span>
+        <span class="cross-purpose">hygiene + drift control · runs alongside the wheel</span>
+      </div>
+      <div class="cross-skills">
+        <span class="pill">refine<span class="sub">backlog hygiene</span></span>
+        <span class="pill">architecture-guard<span class="sub">drift detection</span></span>
+        <span class="pill">upstream-fix<span class="sub">root-cause traces</span></span>
+        <span class="pill">feature-status<span class="sub">coverage report</span></span>
+      </div>
+    </div>
+
+    <div class="notes">
+      <h2>Feedback patterns (not strict)</h2>
+      <ul>
+        <li><b>Verification fail → Execution</b> — story flunks E2E, dev re-runs in this sprint.</li>
+        <li><b>Verification fail → Capture</b> — fix is too big; queue as new story for a future sprint.</li>
+        <li><b>Retro findings → Triage / Distill</b> — observations get classified or directly applied to rules/skills.</li>
+        <li><b>Distill outputs → all phases</b> — practice updates show up in better Discovery, Grooming, Execution next time.</li>
+        <li><b>Anything post-Capture → Discovery</b> — open questions surface that demand new research or assessment.</li>
+        <li>Forward arrows show the dominant flow; feedback can short-circuit at any point.</li>
+      </ul>
+      <h2>Open questions</h2>
+      <ul>
+        <li><b>quick-fix</b> — sidecar bypass for single-story changes (<code>intake → quick-fix → merge</code>). Show as a chord, separate sidecar diagram, or footnote?</li>
+        <li><b>Impetus</b> — orchestrator that fronts most skills. Sit at the hub instead of "MOMENTUM"?</li>
+        <li><b>Verification gap</b> — AVFL today validates docs/refs, not E2E behavior. Flagged as a missing capability.</li>
+      </ul>
+    </div>
+
+    <footer>
+      Source-of-truth markdown: <code>docs/diagrams/momentum-workflow.md</code> · Reload after edits.
+    </footer>
+  </div>
+</body>
+</html>
