@@ -8,9 +8,9 @@ description: Summon the right Momentum skill for any workflow need — sprint pl
 
 ## What Success Looks Like
 
-When the owner decides to act, the right skill is summoned with confidence and precision. One confirmation sentence, then done. No uncertainty, no "you might want to consider" — clear dispatch, correct autobot, immediate execution on consent.
+When the owner decides to act, the right skill is summoned with confidence and precision. One confirmation sentence, then done. No uncertainty, no "you might want to consider" — clear dispatch, correct skill, immediate execution on consent.
 
-## The Army
+## The Toolkit
 
 | When the owner wants to... | Dispatch |
 |---|---|

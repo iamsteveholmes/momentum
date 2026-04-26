@@ -8,7 +8,7 @@ description: Read project state silently and deliver a grounded situational repo
 
 ## What Success Looks Like
 
-After a silent read of sprint state and story status, the owner receives a clear situational report in plain language — where the mission stands, what's active, what's pending — and 2-3 specific next-step suggestions grounded in what the data actually shows. The owner should feel oriented within the first exchange, not after three questions.
+After a silent read of sprint state and story status, the owner receives a clear situational report in plain language — where the work stands, what's active, what's pending — and 2-3 specific next-step suggestions grounded in what the data actually shows. The owner should feel oriented within the first exchange, not after three questions.
 
 ## State Sources
 
