@@ -957,7 +957,8 @@
     {
       "slug": "quickfix-2026-04-11",
       "story": "implement-momentum-distill-skill",
-      "started": "2026-04-11"
+      "started": "2026-04-11",
+      "completed": "2026-04-26"
     },
     {
       "slug": "quickfix-2026-04-12",
