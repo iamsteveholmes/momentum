@@ -466,6 +466,14 @@ A developer always knows which user-facing capabilities exist, whether each is w
 
 ---
 
+### Epic Ad-Hoc: Ad-Hoc Work
+A catch-all bucket for quickfix and one-off stories that don't belong to a topical epic. Used by `momentum:quick-fix` per developer convention — every quickfix-originated story lands here unless reclassified later. Stories here are typically reactive: bug fixes, small enhancements, investigations not warranted by a dedicated epic.
+**Boundaries:** Includes quickfix-originated stories, one-off ad-hoc work, and investigations that don't fit existing topical epics. Excludes any story that would naturally land in a topical epic (those should be reclassified during refine).
+**Slug:** `ad-hoc`
+**Priority:** Ongoing (continuous, low-ceremony)
+
+---
+
 ## Epic 1: Foundation & Bootstrap
 
 A developer installs Momentum from scratch — global practice files in place, project bootstrapped, all structure scaffolded through Impetus. Everything subsequent depends on this.

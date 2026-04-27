@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-12'
+lastEdited: '2026-04-26'
 editHistory:
+  - date: '2026-04-26'
+    changes: 'Refine drift reconciliation (arch-1 through arch-5): Added Decision 51 (DEC-005 Cycle Redesign — formal section summarizing sub-decisions D1/D2/D5/D6/D7/D8/D10 referenced from triage-skill and retro-triage-handoff stories). Added Decision 52 (DEC-007 Unified Triage/Retro Capture Artifact — formal section summarizing intake-queue.jsonl producer/consumer model, CLI-only writes, retired triage-inbox.md). Added momentum:agent-guidelines to Repository Structure tree (both preview and full structure) and Requirements to Structure Mapping (FR61a). Added momentum_version field to Decision 1c findings-ledger schema and findings JSON example, with cross-reference to Decision 43; extended Decision 42 (Distill) ledger write authority paragraph with explicit momentum_version mention. Added intake-queue.jsonl to Installed Structure tree (under _bmad-output/implementation-artifacts/) and Requirements to Structure Mapping. Added per-sprint folder structure tree (under Sprint Tracking Schema) showing sprints/{sprint-slug}/sprint-summary.md alongside specs/, retro-transcript-audit.md, and audit-extracts/.'
   - date: '2026-04-12'
     changes: 'Feature-grooming spec impact (sprint-2026-04-11): Added Decision 49 (Feature Grooming Skill — flat orchestrator pattern, 2 discovery subagents, sole write authority over features.json, bootstrap/refine mode detection). Amended Decision 44 — added value_analysis (multi-paragraph required field: current value, full vision, known gaps) and system_context (required field: product fit) to features.json schema; updated write authority to momentum:feature-grooming as sole authorized writer; noted acceptance_conditions is an array of strings. Added momentum:feature-grooming ↔ momentum:feature-status integration point.'
   - date: '2026-04-11'
@@ -236,6 +238,7 @@ momentum/                              ← Plugin root
 │   ├── intake/SKILL.md             ← /momentum:intake
 │   ├── assessment/SKILL.md         ← /momentum:assessment
 │   ├── decision/SKILL.md           ← /momentum:decision
+│   ├── agent-guidelines/SKILL.md   ← /momentum:agent-guidelines (5-phase guided workflow, FR61a)
 │   └── retro/SKILL.md
 ├── agents/                           ← Agent definition files (Decision 35)
 │   ├── qa-reviewer.md               ← Pure worker: story AC review (Team Review)
@@ -342,8 +345,9 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 **Decision 1c — Findings Ledger: JSONL (Global)**
 - Location: `~/.claude/momentum/findings-ledger.jsonl` (global, not per-project)
 - Format: JSONL — one JSON object per line, append-only. No wrapping array.
-- Structured findings with fields: `id` (globally unique, format `F-{unix_ms}-{random_4hex}`), `project` (string, project identifier), `story_ref`, `phase`, `severity`, `pattern_tags`, `description`, `evidence`, `provenance_status`, `upstream_fix_applied`, `upstream_fix_level`, `upstream_fix_ref` (reference to the fix artifact), `timestamp` (ISO 8601 when finding was recorded)
+- Structured findings with fields: `id` (globally unique, format `F-{unix_ms}-{random_4hex}`), `project` (string, project identifier), `story_ref`, `phase`, `severity`, `pattern_tags`, `description`, `evidence`, `provenance_status`, `upstream_fix_applied`, `upstream_fix_level`, `upstream_fix_ref` (reference to the fix artifact), `momentum_version` (installed plugin version at write time, populated by all writers per Decision 43), `timestamp` (ISO 8601 when finding was recorded)
 - `upstream_fix_level` — null until a fix is applied; then one of: `spec-generating-workflow | specification | rules-or-CLAUDE.md | tooling | one-off-code-fix`
+- `momentum_version` — populated by every ledger writer (`momentum:distill`, `momentum:retro`, flywheel) at write time per Decision 43 (Findings-Ledger Versioning, Option A). Enables regression detection by mapping findings to the practice version that produced them. Entries written before the field's introduction are backfilled via Decision 43 Option B (git log timestamps).
 - Queryable for cross-project and cross-story pattern detection
 - JSONL enables concurrent append from multiple Claude Code sessions without file locking (POSIX atomic append for lines under pipe buffer size)
 - Authorized writers: flywheel workflow (`origin: flywheel`) and `momentum:distill` (`origin: distill`). The `origin` field distinguishes code-review-origin findings from practice-distillation-origin findings for FR33 ratio tracking. All other components are read-only.
@@ -907,6 +911,7 @@ Agents NEVER address the user directly. All output goes through Impetus.
   "signal_type": null,            // null until classified; then: Context | Instruction | Workflow | Failure (Fowler causal taxonomy — what artifact category needs updating)
   "destination": null,            // null until classified; then: CLAUDE.md | skill-reference | workflow-step | anti-pattern-rule
   "origin": "flywheel",           // flywheel | distill — which path wrote this finding (enables FR33 ratio tracking across origin types)
+  "momentum_version": "1.4.2",    // installed plugin version at write time — populated by all ledger writers per Decision 43 (regression detection)
   "timestamp": "2026-03-17T00:00:00Z"
 }
 ```
@@ -1055,6 +1060,8 @@ momentum/                                    ← Plugin root
 │   │   └── SKILL.md
 │   ├── feature-status/                      ← /momentum:feature-status (Decision 45)
 │   │   └── SKILL.md
+│   ├── agent-guidelines/                    ← /momentum:agent-guidelines (FR61a, 5-phase guided workflow)
+│   │   └── SKILL.md
 │   └── retro/                               ← /momentum:retro
 │       └── SKILL.md
 │
@@ -1131,16 +1138,23 @@ momentum/                                    ← Plugin root
     └── global-installed.json               ← Per-machine install state
 
 [project-root]/
-└── .claude/
-    ├── rules/                               ← Written by Impetus (from plugin references/rules/)
-    └── momentum/                            ← Per-project Momentum state
-        ├── journal.jsonl                     ← Session journal (JSONL append-only, Impetus reads/writes)
-        ├── journal-view.md                   ← Human-readable view (auto-generated)
-        ├── installed.json                   ← Install/upgrade state (version + per-component hashes)
-        ├── session-modified-files.txt       ← Ephemeral: PostToolUse writes, Stop reads + deletes (Decision 1e)
-        ├── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
-        ├── feature-status.html              ← Self-contained HTML dashboard (Decision 45, written by momentum:feature-status)
-        └── feature-status.md               ← YAML-frontmatter cache (Decision 46, written by momentum:feature-status)
+├── .claude/
+│   ├── rules/                               ← Written by Impetus (from plugin references/rules/)
+│   └── momentum/                            ← Per-project Momentum state
+│       ├── journal.jsonl                     ← Session journal (JSONL append-only, Impetus reads/writes)
+│       ├── journal-view.md                   ← Human-readable view (auto-generated)
+│       ├── installed.json                   ← Install/upgrade state (version + per-component hashes)
+│       ├── session-modified-files.txt       ← Ephemeral: PostToolUse writes, Stop reads + deletes (Decision 1e)
+│       ├── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
+│       ├── feature-status.html              ← Self-contained HTML dashboard (Decision 45, written by momentum:feature-status)
+│       └── feature-status.md               ← YAML-frontmatter cache (Decision 46, written by momentum:feature-status)
+└── _bmad-output/
+    └── implementation-artifacts/
+        ├── intake-queue.jsonl                ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes via momentum-tools intake-queue)
+        └── sprints/{sprint-slug}/            ← Per-sprint runtime artifacts (see Sprint Tracking Schema)
+            ├── specs/*.feature              ← Gherkin specs (Decision 30, written by sprint-planning)
+            ├── retro-transcript-audit.md    ← Retro findings document (Decision 27, written by retro)
+            └── sprint-summary.md            ← Sprint summary (Decision 47, written by retro at Phase 6 close)
 ```
 
 ---
@@ -1206,8 +1220,10 @@ momentum/                                    ← Plugin root
 | Research | `skills/research/` | Plugin skill: `/momentum:research` |
 | Status | `skills/status/` | Superseded — see Feature Status below (Decision 45) |
 | Feature Status | `skills/feature-status/` | Plugin skill: `/momentum:feature-status`; HTML output: `.claude/momentum/feature-status.html`; cache: `.claude/momentum/feature-status.md` |
+| Agent Guidelines | `skills/agent-guidelines/` | Plugin skill: `/momentum:agent-guidelines` (FR61a — 5-phase guided workflow generating path-scoped rules and reference docs) |
 | Feature artifact (features.json) | (runtime / planning artifact) | `_bmad-output/planning-artifacts/features.json` (written by developer or planning workflow) |
 | Sprint summary | (runtime, per-sprint) | `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` (written by retro orchestrator at Phase 6 close) |
+| Intake queue | (runtime, per-project) | `_bmad-output/implementation-artifacts/intake-queue.jsonl` (DEC-007 / Decision 52 — written by momentum:triage and momentum:retro via `momentum-tools intake-queue` CLI; append-only) |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
@@ -1352,6 +1368,23 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 <!-- REVISED Phase 3: Added team composition, dependencies, and specs directory to sprint record schema per Decisions 25, 26, 29, 30. -->
 
 **`sprints/` folder** — one file per sprint (`sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, team composition, dependency graph, and wave plan. One specs directory per sprint (`sprints/{slug}/specs/`) for Gherkin feature files. One sprint summary per sprint (`sprints/{slug}/sprint-summary.md`) written by the retro orchestrator at Phase 6 close (Decision 47).
+
+**Per-sprint folder structure (under `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/`):**
+
+```
+_bmad-output/implementation-artifacts/sprints/{sprint-slug}/
+├── specs/                                ← Gherkin feature files (Decision 30, sprint-planning writes; verifier-only reads)
+│   └── {story-slug}.feature
+├── retro-transcript-audit.md             ← Retro findings document (Decision 27, written by retro documenter)
+├── sprint-summary.md                     ← Sprint summary (Decision 47 — sole writer: retro orchestrator at Phase 6 close)
+└── audit-extracts/                       ← DuckDB preprocessing output (Decision 27)
+    ├── user-messages.jsonl
+    ├── agent-summaries.jsonl
+    ├── errors.jsonl
+    └── team-messages.jsonl
+```
+
+The per-sprint folder is the primary durable record of a sprint's execution. `sprint-summary.md` is the canonical compression artifact read by the next sprint-planning Step 1 (Decision 29).
 
 **`sprints/index.json`** — which sprint is active, which is planning, list of completed sprints. Active and planning entries are objects (not slug strings) that carry sprint lifecycle state (Decision 36). The `status` field tracks position in the sprint lifecycle state machine. Completed entries track retro execution for lifecycle gate enforcement.
 
@@ -2154,7 +2187,7 @@ This pattern is distinct from the per-finding Add/Modify/Remove triage used in o
 - Momentum-level (in Momentum project): applies to Momentum practice files; bumps plugin patch version; commits and pushes
 - Momentum-level (in external project): defer to retro queue OR generate remote distill prompt for developer to apply in a Momentum session
 
-**Findings-ledger write authority:** `momentum:distill` is an authorized writer to `~/.claude/momentum/findings-ledger.jsonl` (extending Decision 1c). Distill writes with `origin: distill`; the flywheel workflow writes with `origin: flywheel`. The `origin` field enables FR33 ratio tracking to count distillation-origin fixes separately from code-review-origin fixes.
+**Findings-ledger write authority:** `momentum:distill` is an authorized writer to `~/.claude/momentum/findings-ledger.jsonl` (extending Decision 1c). Distill writes with `origin: distill`; the flywheel workflow writes with `origin: flywheel`. The `origin` field enables FR33 ratio tracking to count distillation-origin fixes separately from code-review-origin fixes. Every distill-written entry also includes `momentum_version` (installed plugin version at write time) per Decision 43 — this enables regression attribution across practice versions.
 
 **Traceability:** Distill entries are registered in the findings-ledger with `origin: distill` for audit trail and retrospective input. They bypass sprint lifecycle but not traceability. Motivated by research finding (2026-04-10): Momentum lacks a mechanism for immediate artifact updates from session learnings — all findings must survive sprint planning before landing in practice files, creating multi-week lag.
 
@@ -2504,6 +2537,68 @@ The `momentum:feature-breakdown` skill is the canonical entry point for converti
 **Non-responsibility:** `feature-breakdown` does NOT decide sufficiency. It identifies candidates. The developer and triage decide what becomes a story.
 
 **Pattern references:** Fan-out spawning from Decision 41 / `spawning-patterns.md`; orchestrator purity from existing decisions; triage delegation contract from the triage row in the Skills Deployment Classification table.
+
+---
+
+**Decision 51 — Cycle Redesign: Feature-First Practice (DEC-005, 2026-04-14)**
+
+Formalizes the cycle redesign captured in `_bmad-output/planning-artifacts/decisions/dec-005-cycle-redesign-feature-first-practice-2026-04-14.md`. DEC-005 reframes the practice around features (the units of user-observable value) and codifies a set of capture, classification, and hygiene rules that ripple through intake, triage, retro, refinement, and sprint planning.
+
+**Adopted sub-decisions (D1–D10):**
+
+| Sub-decision | Summary |
+|---|---|
+| D1 — Feature-bound capture | Every captured observation must be feature-aware. `intake` and `triage` enrich items with `feature_slug` (read from `features.json`); items that imply new feature-bearing work carry `suggested_feature_slug`. |
+| D2 — DDD sub-domain awareness for epics | Epic suggestions during triage are sub-domain-aware: epic recommendations consider DDD bounded-context boundaries, not just thematic grouping. |
+| D5 — Story type taxonomy | Every story carries an explicit `story_type`: `feature` \| `maintenance` \| `defect` \| `exploration` \| `practice`. Default is `feature`. Type drives downstream validator selection and reporting. |
+| D6 — Terminal-state awareness | Items whose underlying feature is `Abandoned` or `Rejected` are auto-suggested for REJECT on triage re-surface. Prevents zombie capture against dead features. |
+| D7 — Failure as legitimate diagnostic category | Retro names specific failures via `failure_diagnosis` (`{ attempted, didnt_work, learned }`) — not softened into generic "learnings." Failure diagnosis is a first-class retro output. |
+| D8 — Retro feature-state hygienist role | Retro observes and records `feature_state_transition` events (`{ feature_slug, prior_state, observed_state, evidence }`) — e.g., feature X asserted Done but retro observed regression. |
+| D10 — Gap-check boundary | Gap-check (value-floor analysis, missing-work enumeration) is explicitly excluded from `triage` and `intake`. It lives only at refinement, sprint-planning, and retro. Triage classifies; it does not enumerate gaps. |
+
+(Sub-decisions D3, D4, D9 are reserved/deferred per the source decision document — no architectural impact in this revision.)
+
+**Where DEC-005 surfaces in the architecture:**
+- Skills Deployment Classification — `intake` (single-item, feature-slug and story-type aware per D1/D5) and `triage` (no gap-check per D10) rows reference the sub-decisions directly
+- `intake-queue.jsonl` Schema Contract — `feature_slug`, `suggested_feature_slug`, `story_type`, `feature_state_transition`, and `failure_diagnosis` optional fields encode D1, D5, D7, D8
+- `momentum:triage` Architecture — enrichment uses D1/D5/D2; terminal-state awareness uses D6; the no-gap-check rule enforces D10
+- Retro → Planning Handoff via Unified Intake Queue — D7 (`failure_diagnosis`) and D8 (`feature_state_transition`) define the structured framing for handoff events
+
+**Motivating stories:**
+- `triage-skill` — implements D1/D2/D5/D6/D10 in the new triage orchestrator
+- `retro-triage-handoff` — implements D7/D8 in the retro producer side
+
+**Source decision document:** `_bmad-output/planning-artifacts/decisions/dec-005-cycle-redesign-feature-first-practice-2026-04-14.md`
+
+---
+
+**Decision 52 — Unified Triage/Retro Capture Artifact (DEC-007, 2026-04-14)**
+
+Formalizes the capture-artifact decision recorded in `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`. DEC-007 establishes a single append-only event log as the source of truth for triage-adjacent items that don't become stories immediately, replacing the never-built `triage-inbox.md` and an unrealized `retro-summary.json` artifact.
+
+**What was decided:**
+
+- **Single artifact:** `_bmad-output/implementation-artifacts/intake-queue.jsonl` is the per-project, append-only JSONL event log for all SHAPING / DEFER / REJECT outcomes from `momentum:triage` and all `handoff` events from `momentum:retro`. One JSON object per line. Never truncated. Entries are never deleted — `status` flips from `open` to `consumed` (or `rejected`) with an outcome reference.
+- **CLI-only writes:** All writers go through `momentum-tools intake-queue append` / `update`. Skills never open the file for direct mutation — preserves the orchestrator-purity pattern used elsewhere in the practice.
+- **Producer/consumer matrix:**
+  - Producers: `momentum:triage` (`shape`/`watch`/`rejected` kinds), `momentum:retro` Phase 5.5 (`handoff` kind)
+  - Consumers: `momentum:triage` (re-surfaces open entries on session start), `momentum:sprint-planning` Phase A.5/A.6 (folds open `source: "retro", kind: "handoff"` entries into backlog synthesis), future `momentum:refine` hygiene pass
+- **Schema:** Base fields (`id`, `source`, `kind`, `title`, `description`, `status`, `timestamp`) plus optional fields (`sprint_slug`, `feature_slug`, `story_slug`) and DEC-005-aligned retro-specific fields (`feature_state_transition`, `failure_diagnosis`, `suggested_feature_slug`, `story_type`, `evidence_refs`). See the `intake-queue.jsonl` Schema Contract section for the full field table.
+
+**Retired by DEC-007:** the `triage-inbox.md` YAML contract (described in earlier architecture revisions) and a never-built `retro-summary.json` handoff artifact. Both are superseded by the unified JSONL event log.
+
+**Where DEC-007 surfaces in the architecture:**
+- Skills Deployment Classification — `triage` row references DEC-007 explicitly
+- Retro → Planning Handoff via Unified Intake Queue — describes the new producer/consumer flow
+- `intake-queue.jsonl` Schema Contract — full schema documentation
+- `momentum:triage` Architecture — entry-point and topology
+- Decision 27 Phase 5 extension and Decision 29 Phase A.5/A.6 extension — wire retro and sprint-planning into the queue
+
+**Motivating stories:**
+- `triage-skill` — implements DEC-007 D1 alongside DEC-005 sub-decisions in a single sprint
+- `retro-triage-handoff` — implements the retro producer side once triage ships
+
+**Source decision document:** `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`
 
 ---
 
