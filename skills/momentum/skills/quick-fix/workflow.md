@@ -457,6 +457,8 @@ Proceeding to ship.</output>
 
   <step n="5" goal="Ship — register completion, push summary">
 
+    <critical>Phase 5 is MANDATORY — the workflow is INCOMPLETE until step 5a's `momentum-tools quickfix complete --slug {{quickfix_slug}}` invocation succeeds. This is the sanctioned path for closing a quickfix; sprint-manager has no `quickfix_close` action by design. If the session is interrupted, ends, or is otherwise terminated after the Phase 3 implementation merge but before step 5a runs, the quickfix entry in `sprints/index.json` will remain open (no `completed` date) even though the story is `done` and the work is merged. In that case, the quickfix MUST be closed in a follow-up session by re-running step 5a (`momentum-tools quickfix complete --slug {{quickfix_slug}}`). To find the slug in a fresh session, inspect `_bmad-output/implementation-artifacts/sprints/index.json` for the most recent entry in `quickfixes[]` missing a `completed` date — that entry's `slug` is the value to pass.</critical>
+
     <!-- 5a: Register quickfix completion -->
     <action>Run: `momentum-tools quickfix complete --slug {{quickfix_slug}}`</action>
 
