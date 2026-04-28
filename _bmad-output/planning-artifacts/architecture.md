@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-26'
+lastEdited: '2026-04-28'
 editHistory:
+  - date: '2026-04-28'
+    changes: 'Sprint-2026-04-27 spec impact: State relocation to .momentum/ closes DEC-011 Gate G1 (impetus-momentum-state-migration). Added .momentum/ State Layout top-level section (single-source-of-truth invariant, hidden-prefix rationale, per-sprint subtree, signals/ ledger pattern with read-only contract). Updated all path references in Read/Write Authority table, Session-open sequence, Sprint Tracking Schema, and Installed Structure tree from `_bmad-output/implementation-artifacts/{sprints,stories,intake-queue.jsonl}` to `.momentum/` paths; planning carve-out: features.json stays under _bmad-output/planning-artifacts/. Added per-story approval contract — `approvals: []` on sprint records with story_file_sha (SHA-256), activation gate against current-matching SHAs (sprint-planning-adds-per-story-approval-gate). Added sprint-dev pre-execution verification gate (Phase 1 verify-approvals subcommand). Extended CMUX Markdown Surfaces integration to sprint-planning per-story approval viewer. Added Impetus session-start preflight component — plugin-cache-vs-source version-skew detector with status taxonomy (match/skew-cache-behind/skew-cache-ahead/no-cache/no-source/indeterminate) and `momentum-tools session plugin-cache-check` CLI; one explicit exception to never-narrate-the-reads rule (plugin-cache-staleness-detection). Added Orchestrator Behavioral Guards pattern with retro Phase 4 singleton-count guard as canonical example (retro-team-singleton-guard). Codified Decision 34 defense-in-depth: agent-definition Critical Constraints must be self-sufficient — QA Reviewer + E2E Validator parity contract for Phase 5 reviewer spawns (harden-sprint-dev-phase5-spawn-prompts). Added Decision 41 retro Phase 4 row (documenter as singleton coordinator distinct from auditor fan-out). Refined Decision 34 BLOCKED-vs-MISSING semantics — BLOCKED for missing infrastructure, MISSING reserved for execution-succeeded-without-AC-evidence; both reviewers follow .claude/rules/e2e-validation.md Environment Startup. Extended Decision 27 Wave 1 with dynamic transcript-query.py path resolution, worktree session discovery, UTC end-of-day inclusivity, --story-slugs filter, and explicit hard-fail on zero session matches. Promoted peek-first / 500-line-chunk convention to documented architectural convention under Cross-Cutting Concerns. Added one-line note that retire-sprint-log-final-cleanup story closes the ARCH-5 sprint-log historical cleanup.'
   - date: '2026-04-26'
     changes: 'Refine drift reconciliation (arch-1 through arch-5): Added Decision 51 (DEC-005 Cycle Redesign — formal section summarizing sub-decisions D1/D2/D5/D6/D7/D8/D10 referenced from triage-skill and retro-triage-handoff stories). Added Decision 52 (DEC-007 Unified Triage/Retro Capture Artifact — formal section summarizing intake-queue.jsonl producer/consumer model, CLI-only writes, retired triage-inbox.md). Added momentum:agent-guidelines to Repository Structure tree (both preview and full structure) and Requirements to Structure Mapping (FR61a). Added momentum_version field to Decision 1c findings-ledger schema and findings JSON example, with cross-reference to Decision 43; extended Decision 42 (Distill) ledger write authority paragraph with explicit momentum_version mention. Added intake-queue.jsonl to Installed Structure tree (under _bmad-output/implementation-artifacts/) and Requirements to Structure Mapping. Added per-sprint folder structure tree (under Sprint Tracking Schema) showing sprints/{sprint-slug}/sprint-summary.md alongside specs/, retro-transcript-audit.md, and audit-extracts/.'
   - date: '2026-04-12'
@@ -171,6 +173,99 @@ The vision: a developer running BMAD workflows gets Momentum's quality layer for
 4. **Model routing** — model: and effort: frontmatter required on every SKILL.md and agent definition. Cognitive hazard rule applies universally.
 5. **Visual progress** — ✓ Built / → Now / ◦ Next at every phase transition across all orchestrated workflows.
 6. **Protocol interfaces** — Every integration point defines an interface before any implementation is wired.
+7. **Peek-first read convention (added 2026-04-28)** — High-volume artifacts (`agent-summaries.jsonl`, `errors.jsonl`, `prd.md`, `architecture.md`, `stories/index.json`, retro extracts) are NEVER read with a full Read in one call. The convention: `wc -l` first to peek the size, then read in 500-line chunks via the `offset`/`limit` pattern. Skills that consume these artifacts (Impetus, sprint-planning, sprint-dev, retro auditors) MUST follow this convention to keep context budgets predictable. This is an architectural convention, not a hint — workflows that violate it accumulate avoidable token cost and risk truncation.
+
+---
+
+## `.momentum/` State Layout
+
+<!-- Added 2026-04-28: Single-source-of-truth state layout. Closes DEC-011 Gate G1. Origin: impetus-momentum-state-migration story. -->
+
+> _[Added 2026-04-28: Sprint-2026-04-27 introduces `.momentum/` as the single, hidden top-level location for Momentum's operational runtime state. Replaces the prior split where sprints/stories/intake-queue lived under `_bmad-output/implementation-artifacts/`. Closes DEC-011 Gate G1.]_
+
+Momentum's operational runtime state lives under a single hidden top-level directory: `.momentum/` at the project root. This directory holds everything the practice itself produces and consumes during normal operation — sprint records, story index, signals, the intake queue, and per-sprint working subtrees. Planning artifacts that describe what to build (PRD, architecture, features, decisions, assessments) remain under `_bmad-output/planning-artifacts/` — that carve-out is intentional.
+
+### Layout
+
+```
+.momentum/                                       ← Operational runtime state (single source of truth)
+├── sprints/
+│   ├── index.json                               ← Active / planning / completed sprint registry (Decision 36)
+│   └── {sprint-slug}/                           ← Per-sprint subtree
+│       ├── sprint-summary.md                    ← Decision 47 — written by retro at Phase 6 close
+│       ├── retro-transcript-audit.md            ← Decision 27 — written by retro documenter
+│       ├── specs/                               ← Decision 30 — Gherkin .feature files (sprint-planning writes; verifier-only reads)
+│       │   └── {story-slug}.feature
+│       └── audit-extracts/                      ← Decision 27 — DuckDB preprocessing output
+│           ├── user-messages.jsonl
+│           ├── agent-summaries.jsonl
+│           ├── errors.jsonl
+│           └── team-messages.jsonl
+├── stories/
+│   ├── index.json                               ← Lightweight story index (slug → status, epic, depends_on, touches, priority)
+│   └── {slug}.md                                ← Story files (written by momentum:create-story)
+├── signals/                                     ← Read-only ledger (see Signals schema below). Empty directory is valid.
+└── intake-queue.jsonl                           ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes)
+```
+
+### Single-source-of-truth invariant
+
+`.momentum/` is the **only** location for these artifacts. There is no fallback to a legacy path, no symlink to `_bmad-output/implementation-artifacts/`, no dual-write. Skills resolve paths to `.momentum/` directly. Migration of pre-existing state is handled once by the `impetus-momentum-state-migration` story; after migration, `_bmad-output/implementation-artifacts/{sprints,stories,intake-queue.jsonl}` is gone.
+
+### Hidden-prefix rationale
+
+The leading `.` distinguishes operational state (Momentum's working memory) from source content (planning artifacts, code, docs). Hidden directories are conventional for "tooling state" in Unix-shaped projects (`.git/`, `.cache/`, `.claude/`). Developers do not need to browse `.momentum/` during normal work — Momentum skills read and write it on their behalf. Surfacing it as a hidden directory keeps the visible project tree focused on intentional content.
+
+### Planning artifact carve-out
+
+`_bmad-output/planning-artifacts/features.json` (and the rest of `_bmad-output/planning-artifacts/`) intentionally stays where it is. Planning artifacts are spec/source — they describe the product, are committed to the repo as primary content, and are produced by planning workflows (PRD, architecture, feature grooming). They are not Momentum's operational state.
+
+### `.momentum/signals/` schema
+
+`.momentum/signals/` is a directory of read-only JSON signal files. It is a **ledger** pattern: writers append signal files, readers iterate the directory, and signals are typically resolved by a future workflow rather than mutated in place.
+
+**Filename pattern:** `{signal_type}-{slug-or-timestamp}.json`
+
+Examples:
+```
+.momentum/signals/triage-uncleared-2026-04-28T14-30-00Z.json
+.momentum/signals/avfl-finding-pending-upstream-fix-retro-team-singleton-guard.json
+```
+
+**Required fields (every signal file):**
+
+| Field | Type | Notes |
+|---|---|---|
+| `signal_type` | string | Recognized type (see below) |
+| `origin` | string | Skill or workflow that produced the signal (e.g., `momentum:retro`, `momentum:triage`, `momentum:avfl`) |
+| `created` | string | ISO-8601 UTC timestamp |
+| `payload` | object | Signal-type-specific structured content |
+
+**Optional fields:**
+
+| Field | Notes |
+|---|---|
+| `cleared` | ISO-8601 UTC timestamp; presence indicates the signal has been resolved by a downstream workflow. Absent means open. |
+
+**Recognized signal types (initial set):**
+
+- `triage-uncleared` — produced by `momentum:retro` or `momentum:triage` when triage-class observations remain after a session and the developer has not yet classified or rejected them
+- `avfl-finding-pending-upstream-fix` — produced by `momentum:avfl` when a finding is traced to a spec/rule/workflow root cause that requires upstream work before re-validation
+
+**Initial intended writers:** `momentum:retro`, `momentum:triage`, `momentum:avfl`. The `impetus-momentum-state-migration` story does **not** implement writers — it establishes the directory, the schema contract, and the reader contract. Writers are added by the skills that need them in subsequent stories.
+
+**Reader contract:** Impetus iterates `.momentum/signals/*.json` at session start (Session-open sequence below) and surfaces a "Pending signals present" situational state when at least one signal has no `cleared` field. An empty `.momentum/signals/` directory (zero files) is a valid state — readers must not error on it.
+
+**Why a directory of files (not a single JSONL):** Signals are infrequent, structured, and resolved individually. File-per-signal makes resolution a delete-or-mark operation rather than a JSONL rewrite, and lets git surface signal lifecycle in commits.
+
+### Cross-references
+
+- **DEC-011 Gate G1** — closure of the state-relocation gate; this section operationalizes the gate's exit criteria
+- **Decision 27** — retro audit-extracts subtree under `.momentum/sprints/{slug}/audit-extracts/`
+- **Decision 30** — Gherkin specs subtree under `.momentum/sprints/{slug}/specs/`
+- **Decision 36** — sprint lifecycle state machine; `.momentum/sprints/index.json` is its store
+- **Decision 47** — sprint-summary.md path; written under `.momentum/sprints/{slug}/`
+- **Decision 52 (DEC-007)** — `.momentum/intake-queue.jsonl` is the unified triage/retro capture artifact
 
 ---
 
@@ -569,7 +664,9 @@ Never `Step N/M`. Always narrative. Every phase transition in every Impetus-orch
 
 At every session start via `/momentum:impetus`, Impetus detects the current greeting state (Decision 37) and renders a single-exchange orientation: narrative context paragraph, optional planning sprint note, and an adaptive 3-4 item numbered menu. User never hunts for context. Direct skill invocation (e.g., `/momentum:sprint-planning`) skips session orientation — the user's choice.
 
-**Session open sequence (updated 2026-04-04):** At session start, Impetus reads `sprints/index.json` (sprint lifecycle state per Decision 36), `stories/index.json` (story statuses), and `~/.claude/momentum/global-installed.json` (completion count for first-session detection). From these inputs, Impetus determines one of 9 greeting states (Decision 37), renders the corresponding narrative and menu, then writes session stats to `global-installed.json`. The stats write is invisible to the user — no visible diff during the greeting. Stats write is deferred until after the menu is displayed.
+**Session open sequence (updated 2026-04-28):** At session start, Impetus reads `.momentum/sprints/index.json` (sprint lifecycle state per Decision 36), `.momentum/stories/index.json` (story statuses), iterates `.momentum/signals/*.json` (open signal files — see `.momentum/` State Layout), and reads `~/.claude/momentum/global-installed.json` (completion count for first-session detection). It also runs `momentum-tools session plugin-cache-check` to detect plugin-cache-vs-source version skew (see Impetus session-start preflight component below). From these inputs, Impetus determines one of 9 greeting states (Decision 37), renders the corresponding narrative and menu, then writes session stats to `global-installed.json`. The stats write is invisible to the user — no visible diff during the greeting. Stats write is deferred until after the menu is displayed.
+
+**Situational State — Pending signals present (added 2026-04-28):** When `.momentum/signals/` contains at least one signal file without a `cleared` field, Impetus surfaces a "Pending signals" line in the situational-state band of the greeting (e.g., "2 open signals — `triage-uncleared`, `avfl-finding-pending-upstream-fix`"). The signal types and counts are surfaced; full payloads are not — those belong to the workflows that resolve them. Empty `.momentum/signals/` produces no signal-related output and is not an error.
 
 **Adaptive Menu Construction:**
 
@@ -974,6 +1071,49 @@ A reusable orchestration pattern for workflows that discover then update plannin
 
 This pattern differs from per-finding A/M/R triage (which acts on individual findings) — approval is batched at the document or item level, giving developers coarse-grained control with minimal interaction steps. Current application: momentum:refine (prd.md and architecture.md updates).
 
+**Orchestrator Behavioral Guards — post-spawn singleton-count guard (added 2026-04-28):**
+
+A defensive pattern for orchestrators that spawn fixed-cardinality teams: after the spawn call returns, the orchestrator MUST assert that the spawned team's actual composition matches the declared composition before any downstream coordination begins. If the assertion fails, the orchestrator HALTs and surfaces the mismatch — it does not attempt to recover by spawning additional agents or proceeding with a partial team.
+
+**Canonical example — retro Phase 4 invariant guard:** Retro Phase 4 spawns 4 agents using Shape A (preferred topology): 1 documenter as a singleton coordinator (individual Agent spawn) and 3 auditors fanned out as individual Agent spawns (`auditor-human`, `auditor-execution`, `auditor-review`). After spawning, the retro orchestrator asserts:
+
+- Exactly one agent has role `documenter`
+- Exactly three agents have role `auditor`
+- The three auditor `subagent_type` values are distinct (`auditor-human` ≠ `auditor-execution` ≠ `auditor-review`)
+
+Any mismatch (e.g., two documenters because the orchestrator's spawn prompt was misinterpreted, or only two auditors because one role was dropped) triggers a HALT. The orchestrator emits a structured error and stops — it does not "fix" the team by spawning a missing agent.
+
+**Why a post-spawn guard:** The spawn layer is treated as a black-box primitive — the orchestrator declares intent, but the actual team composition is observable only after the call. Defensive composition checking catches integration drift between the orchestrator's declared `<team-composition>` (Decision 41) and the spawn-mechanics layer's behavior. The guard is the orchestrator's last line of defense against silent miscomposition.
+
+**Shape A vs Shape B:** Shape A (preferred) spawns the documenter as a singleton individual Agent and fans out the 3 auditors as individual Agent calls, eliminating the TeamCreate multiplexing path entirely. Shape B (fallback only) keeps all 4 roles in TeamCreate when a documenter handle must be carried in TeamCreate config — each role declared exactly once with no implicit cardinality. Use Shape A unless the documenter handle cannot be passed via any other mechanism.
+
+**Origin:** `retro-team-singleton-guard` story (sprint-2026-04-27). The pattern is reusable beyond retro — any orchestrator spawning a fixed-cardinality team should apply the same post-spawn invariant check.
+
+**Impetus session-start preflight component — plugin-cache-vs-source version-skew detector (added 2026-04-28):**
+
+Impetus session start runs a lightweight version-skew check against the installed Momentum plugin cache vs. the working source tree. The check is implemented as `momentum-tools session plugin-cache-check` and surfaces one of six status values:
+
+| Status | Meaning |
+|---|---|
+| `match` | Plugin cache version equals source version. Normal startup. |
+| `skew-cache-behind` | Cache is older than source. Source has unreleased work; cached plugin behavior may diverge from in-tree skill files. |
+| `skew-cache-ahead` | Cache is newer than source. Cached plugin contains shipped work not present in this checkout. |
+| `no-cache` | Plugin cache absent. Plugin not yet installed on this machine, or cache cleared. |
+| `no-source` | Source tree absent or unrecognized. Running outside a Momentum source checkout (normal for downstream projects). |
+| `indeterminate` | Version metadata unreadable on either side. Surface as a soft warning, do not block. |
+
+**Narration exception:** Per the established convention, Impetus does not narrate its session-start reads ("Reading sprints/index.json…" is noise). The plugin-cache check is the **one explicit exception** to that rule — when the status is anything other than `match` or `no-source`, Impetus narrates the skew status in a single sentence so the developer is aware that practice behavior may not match in-tree skill files. This narration rule is enforced as part of the greeting state composition; future preflight checks must justify their narration explicitly rather than inheriting this exemption.
+
+**Origin:** `plugin-cache-staleness-detection` story (sprint-2026-04-27). Closes a category of "why is the practice behaving like a previous version?" diagnostic friction.
+
+**Defense-in-depth across spawn-prompt and agent-definition layers (added 2026-04-28):**
+
+Decision 34 (AVFL Hybrid Resolution Team) establishes that Phase 5 reviewer agents — QA Reviewer and E2E Validator — are agent definition files (`agents/qa-reviewer.md`, `agents/e2e-validator.md`). These definitions carry their own Critical Constraints sections and must be **self-sufficient**: a reviewer spawned from these definitions must classify ACs correctly even if the orchestrator's spawn prompt is silent on a given concern. The orchestrator's spawn prompt and the agent definition are two independent enforcement layers — neither may rely on the other to be the only source of a critical rule.
+
+**Parity contract:** Every Critical Constraint that appears in the QA Reviewer definition must appear in the E2E Validator definition (and vice versa) when the constraint applies to both roles. Examples: AC classification rules, BLOCKED-vs-MISSING semantics, the mandate to follow `.claude/rules/e2e-validation.md` Environment Startup before classifying any AC. Drift between the two definitions creates inconsistent classifications between reviewers in the same sprint — which is a defect at the Decision 34 contract level.
+
+**Origin:** `harden-sprint-dev-phase5-spawn-prompts` story (sprint-2026-04-27). Codified into Decision 34's "What does NOT change type" guidance — see Decision 34 update below.
+
 **SKILL.md description budget rule:**
 Descriptions are loaded at startup for ALL installed skills. Keep under 150 characters.
 Heavy content goes in `references/` — loaded only on invocation.
@@ -1148,14 +1288,22 @@ momentum/                                    ← Plugin root
 │       ├── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
 │       ├── feature-status.html              ← Self-contained HTML dashboard (Decision 45, written by momentum:feature-status)
 │       └── feature-status.md               ← YAML-frontmatter cache (Decision 46, written by momentum:feature-status)
-└── _bmad-output/
-    └── implementation-artifacts/
-        ├── intake-queue.jsonl                ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes via momentum-tools intake-queue)
-        └── sprints/{sprint-slug}/            ← Per-sprint runtime artifacts (see Sprint Tracking Schema)
-            ├── specs/*.feature              ← Gherkin specs (Decision 30, written by sprint-planning)
-            ├── retro-transcript-audit.md    ← Retro findings document (Decision 27, written by retro)
-            └── sprint-summary.md            ← Sprint summary (Decision 47, written by retro at Phase 6 close)
+└── .momentum/                                  ← Operational runtime state (added 2026-04-28; see `.momentum/` State Layout section)
+    ├── sprints/
+    │   ├── index.json                          ← Sprint registry (Decision 36)
+    │   └── {sprint-slug}/                      ← Per-sprint runtime artifacts (see Sprint Tracking Schema)
+    │       ├── specs/*.feature                 ← Gherkin specs (Decision 30, written by sprint-planning)
+    │       ├── retro-transcript-audit.md       ← Retro findings document (Decision 27, written by retro)
+    │       ├── sprint-summary.md               ← Sprint summary (Decision 47, written by retro at Phase 6 close)
+    │       └── audit-extracts/                 ← DuckDB preprocessing output (Decision 27)
+    ├── stories/
+    │   ├── index.json                          ← Story status index
+    │   └── {slug}.md                           ← Story files (written by momentum:create-story)
+    ├── signals/                                ← Read-only signal ledger (see `.momentum/` State Layout section)
+    └── intake-queue.jsonl                      ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes via momentum-tools intake-queue)
 ```
+
+> _Planning artifacts (PRD, architecture, features.json, decisions, assessments) intentionally remain under `_bmad-output/planning-artifacts/` — they are spec/source, not operational state. See `.momentum/` State Layout section for the carve-out rationale._
 
 ---
 
@@ -1164,19 +1312,20 @@ momentum/                                    ← Plugin root
 **Read/Write Authority:**
 
 <!-- REVISED Phase 3: Updated Impetus, momentum:dev, momentum:create-story rows; replaced momentum:sprint-manager subagent with momentum-tools CLI; added sprint-planning workflow, sprint-dev workflow rows. sprint-status.yaml references replaced with stories/index.json and sprints/index.json. momentum-tools log row removed 2026-04-08 (Decision 24 historical). -->
+<!-- REVISED 2026-04-28: All sprints/, stories/, intake-queue.jsonl path references migrated to .momentum/ per State Layout section (DEC-011 Gate G1). Impetus reads .momentum/signals/ at session start. -->
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | stories/index.json, sprints/index.json, journal.jsonl, specs, findings-ledger.jsonl, gate-findings.txt | journal.jsonl, journal-view.md |
-| momentum-tools sprint | stories/index.json, sprints/index.json | stories/index.json (status fields), sprints/index.json, sprints/{slug}.json (sole writer) |
-| momentum-tools quickfix | sprints/index.json | sprints/index.json (register: adds quick-fix entry; complete: marks done) |
+| Impetus | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/signals/*.json`, journal.jsonl, specs, findings-ledger.jsonl, gate-findings.txt | journal.jsonl, journal-view.md |
+| momentum-tools sprint | `.momentum/stories/index.json`, `.momentum/sprints/index.json` | `.momentum/stories/index.json` (status fields), `.momentum/sprints/index.json`, `.momentum/sprints/{slug}.json` (sole writer) |
+| momentum-tools quickfix | `.momentum/sprints/index.json` | `.momentum/sprints/index.json` (register: adds quick-fix entry; complete: marks done) |
 | momentum:dev | Story files, code | Code in worktree only; structured JSON completion output |
-| momentum:create-story | stories/index.json, epics.md | Story files in _bmad-output/implementation-artifacts/ |
-| momentum:refine | prd.md, architecture.md, stories/index.json, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); stories/index.json mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
-| momentum:feature-status | `_bmad-output/planning-artifacts/features.json`, stories/index.json | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
-| momentum:sprint-planning | stories/index.json, sprints/index.json, story files | sprints/{sprint-slug}/specs/*.feature (Gherkin specs); sprint record team composition (via momentum-tools sprint) |
-| momentum:sprint-dev | sprints/index.json (active sprint, team, deps), stories/index.json, sprints/{sprint-slug}/specs/*.feature | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete) |
-| momentum:retro | sprints/index.json, stories/index.json, session JSONL transcripts, decisions/*.md, `.claude/momentum/feature-status.md` | `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/retro-transcript-audit.md`; `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); spawns `/momentum:feature-status` to refresh cache before summary write |
+| momentum:create-story | `.momentum/stories/index.json`, epics.md | Story files in `.momentum/stories/` |
+| momentum:refine | prd.md, architecture.md, `.momentum/stories/index.json`, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); `.momentum/stories/index.json` mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
+| momentum:feature-status | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json` | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
+| momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files | `.momentum/sprints/{sprint-slug}/specs/*.feature` (Gherkin specs); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
+| momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
+| momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md, `.claude/momentum/feature-status.md` | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`); spawns `/momentum:feature-status` to refresh cache before summary write |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
 | VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report |
@@ -1194,7 +1343,10 @@ momentum/                                    ← Plugin root
 - `_bmad-output/planning-artifacts/` — spec authority. Exception: momentum:refine wave-2 update subagents may write to prd.md and architecture.md as sole authorized writers, following developer approval gate.
 - `.claude/rules/` — enforcement rule integrity
 - `~/.claude/momentum/findings-ledger.jsonl` — Ledger integrity (authority-enforced; global path is outside project PreToolUse scope)
-- `sprints/{sprint-slug}/specs/` — Gherkin spec integrity (Decision 30: dev agents must never write to this path; only sprint-planning writes, only verifiers read)
+- `.momentum/sprints/{sprint-slug}/specs/` — Gherkin spec integrity (Decision 30: dev agents must never write to this path; only sprint-planning writes, only verifiers read)
+- `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/sprints/{slug}.json` — sole writer is `momentum-tools.py sprint`. Direct edits by any other agent are blocked.
+- `.momentum/intake-queue.jsonl` — append-only via `momentum-tools intake-queue`. Direct edits blocked.
+- `.momentum/signals/` — read-only ledger pattern. Writers go through skill-defined paths (e.g., retro/triage/avfl signal writers); manual edits blocked.
 
 ---
 
@@ -1222,8 +1374,11 @@ momentum/                                    ← Plugin root
 | Feature Status | `skills/feature-status/` | Plugin skill: `/momentum:feature-status`; HTML output: `.claude/momentum/feature-status.html`; cache: `.claude/momentum/feature-status.md` |
 | Agent Guidelines | `skills/agent-guidelines/` | Plugin skill: `/momentum:agent-guidelines` (FR61a — 5-phase guided workflow generating path-scoped rules and reference docs) |
 | Feature artifact (features.json) | (runtime / planning artifact) | `_bmad-output/planning-artifacts/features.json` (written by developer or planning workflow) |
-| Sprint summary | (runtime, per-sprint) | `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` (written by retro orchestrator at Phase 6 close) |
-| Intake queue | (runtime, per-project) | `_bmad-output/implementation-artifacts/intake-queue.jsonl` (DEC-007 / Decision 52 — written by momentum:triage and momentum:retro via `momentum-tools intake-queue` CLI; append-only) |
+| Sprint summary | (runtime, per-sprint) | `.momentum/sprints/{sprint-slug}/sprint-summary.md` (written by retro orchestrator at Phase 6 close) |
+| Intake queue | (runtime, per-project) | `.momentum/intake-queue.jsonl` (DEC-007 / Decision 52 — written by momentum:triage and momentum:retro via `momentum-tools intake-queue` CLI; append-only) |
+| Sprint registry | (runtime, per-project) | `.momentum/sprints/index.json` (sole writer: `momentum-tools sprint`) |
+| Story registry | (runtime, per-project) | `.momentum/stories/index.json` (sole writer: `momentum-tools sprint`) |
+| Signal ledger | (runtime, per-project) | `.momentum/signals/{signal_type}-{slug-or-timestamp}.json` (read-only ledger; writers per-skill — retro/triage/avfl) |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
@@ -1251,7 +1406,7 @@ momentum/                                    ← Plugin root
 
 **Terminal Multiplexer ↔ Workflows:** Optional protocol binding for terminal pane management (create, read, send, notify, cleanup). Uses the detect-and-adapt pattern: skills check for environment indicators (`CMUX_WORKSPACE_ID`, `CMUX_SURFACE_ID`, `CMUX_SOCKET_PATH` for CMUX; `TMUX` env var for tmux) and adapt behavior when present. Null binding is the default — workflows function identically without a multiplexer. Primary use cases: worktree-to-tab automation (link story sessions to terminal tabs), external process monitoring (simulators, dev servers), and multi-session visual awareness. Reference implementations: CMUX (macOS), tmux (cross-platform). See Epic 7, Story 7.1.
 
-**CMUX Markdown Surfaces ↔ Quick-Fix:** cmux markdown surfaces serve as a primary developer review pattern in quick-fix Phases 1-2. The quick-fix skill renders implementation plans and file diffs to cmux surfaces for developer review and approval before changes are applied. This is a direct integration — not optional detect-and-adapt — within the quick-fix workflow.
+**CMUX Markdown Surfaces ↔ Quick-Fix and Sprint-Planning:** cmux markdown surfaces serve as a primary developer review pattern in quick-fix Phases 1-2 and in sprint-planning's per-story approval flow (added 2026-04-28). The quick-fix skill renders implementation plans and file diffs to cmux surfaces for developer review and approval before changes are applied. The sprint-planning skill renders per-story approval views to a cmux markdown surface during Step 3 (Flesh out stories) — each fleshed-out story file is opened in its own surface so the developer can scan content before recording an approval entry (Per-story approval contract). This is a direct integration — not optional detect-and-adapt — within both workflows.
 
 **momentum:refine ↔ momentum:epic-grooming:** momentum:refine delegates taxonomy analysis and story reassignment to momentum:epic-grooming as a substep during backlog refinement. Graceful degradation applies: if momentum:epic-grooming is absent, refine skips the taxonomy substep and continues with the remaining refinement work.
 
@@ -1331,10 +1486,11 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 ### Sprint Tracking Schema — Folder-Based Model
 
 > _Revised 2026-04-01: sprint-status.yaml is deprecated. Story and sprint state is now decomposed into a `stories/` folder and a `sprints/` folder. All status writes via momentum-tools.py sprint CLI (formerly momentum:sprint-manager subagent)._
+> _Revised 2026-04-28: Folder root migrated to `.momentum/` per `.momentum/` State Layout section (DEC-011 Gate G1). All paths below resolve under `.momentum/`._
 
-**`stories/` folder** — one file per story (`stories/{slug}.md`). Created early at backlog stage as a stub (slug, title, epic, status). Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum:create-story`. Story file content (ACs, dev notes) is written by `momentum:create-story`.
+**`.momentum/stories/` folder** — one file per story (`.momentum/stories/{slug}.md`). Created early at backlog stage as a stub (slug, title, epic, status). Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum:create-story`. Story file content (ACs, dev notes) is written by `momentum:create-story`.
 
-**`stories/index.json`** — lightweight lookup index. Each entry: slug, status, title, epic slug, story_file (boolean — whether fleshed out), depends_on, touches, priority (optional — `critical | high | medium | low`, default: `low`). Epic membership lives here, not in epics.md.
+**`.momentum/stories/index.json`** — lightweight lookup index. Each entry: slug, status, title, epic slug, story_file (boolean — whether fleshed out), depends_on, touches, priority (optional — `critical | high | medium | low`, default: `low`). Epic membership lives here, not in epics.md.
 
 ```json
 {
@@ -1367,12 +1523,12 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 <!-- REVISED Phase 3: Added team composition, dependencies, and specs directory to sprint record schema per Decisions 25, 26, 29, 30. -->
 
-**`sprints/` folder** — one file per sprint (`sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, team composition, dependency graph, and wave plan. One specs directory per sprint (`sprints/{slug}/specs/`) for Gherkin feature files. One sprint summary per sprint (`sprints/{slug}/sprint-summary.md`) written by the retro orchestrator at Phase 6 close (Decision 47).
+**`.momentum/sprints/` folder** — one file per sprint (`.momentum/sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, team composition, dependency graph, wave plan, and per-story approvals (see Per-story approval contract below). One specs directory per sprint (`.momentum/sprints/{slug}/specs/`) for Gherkin feature files. One sprint summary per sprint (`.momentum/sprints/{slug}/sprint-summary.md`) written by the retro orchestrator at Phase 6 close (Decision 47).
 
-**Per-sprint folder structure (under `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/`):**
+**Per-sprint folder structure (under `.momentum/sprints/{sprint-slug}/`):**
 
 ```
-_bmad-output/implementation-artifacts/sprints/{sprint-slug}/
+.momentum/sprints/{sprint-slug}/
 ├── specs/                                ← Gherkin feature files (Decision 30, sprint-planning writes; verifier-only reads)
 │   └── {story-slug}.feature
 ├── retro-transcript-audit.md             ← Retro findings document (Decision 27, written by retro documenter)
@@ -1386,14 +1542,42 @@ _bmad-output/implementation-artifacts/sprints/{sprint-slug}/
 
 The per-sprint folder is the primary durable record of a sprint's execution. `sprint-summary.md` is the canonical compression artifact read by the next sprint-planning Step 1 (Decision 29).
 
-**`sprints/index.json`** — which sprint is active, which is planning, list of completed sprints. Active and planning entries are objects (not slug strings) that carry sprint lifecycle state (Decision 36). The `status` field tracks position in the sprint lifecycle state machine. Completed entries track retro execution for lifecycle gate enforcement.
+**`.momentum/sprints/index.json`** — which sprint is active, which is planning, list of completed sprints. Active and planning entries are objects (not slug strings) that carry sprint lifecycle state (Decision 36). The `status` field tracks position in the sprint lifecycle state machine. Active and planning entries also carry an `approvals: []` array (Per-story approval contract — added 2026-04-28). Completed entries track retro execution for lifecycle gate enforcement.
+
+**Per-story approval contract (added 2026-04-28):**
+
+Sprint records carry an `approvals: []` array on `planning`, `active`, and `completed` entries. Each entry records that the developer has approved a specific story file at a specific content state:
+
+```json
+"approvals": [
+  {
+    "story_slug": "impetus-momentum-state-migration",
+    "approved_at": "2026-04-27T17:42:11Z",
+    "decision": "approve",
+    "story_file_sha": "9b2c4f0e6a8d1e5b7c3a..."
+  }
+]
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `story_slug` | string | Slug from `.momentum/stories/index.json` |
+| `approved_at` | string | ISO-8601 UTC timestamp of the developer decision |
+| `decision` | string | `approve` (currently the only recognized value; reserved for future `reject` / `defer` extensions) |
+| `story_file_sha` | string | SHA-256 of the story file content at approval time. Hex-encoded. Used as a tamper-evident pin. |
+
+**Activation gate:** sprint-planning Step 8 (sprint activation) requires that every selected story has an `approvals[]` entry where `story_file_sha` matches the SHA-256 of the story file's current content on disk. If a story file changes after approval, its SHA no longer matches and activation is blocked until the developer re-approves the modified file.
+
+**Pre-execution gate:** sprint-dev Phase 1 re-verifies the approval SHAs against the current story files on disk before any in-progress transition. This catches edits made between activation and execution start. Implementation: `momentum-tools sprint verify-approvals --sprint <slug>` returns non-zero on any SHA mismatch; sprint-dev halts and surfaces the mismatch to the developer.
+
+**Origin:** `sprint-planning-adds-per-story-approval-gate` story (sprint-2026-04-27).
 
 > _[Revised 2026-04-04: Active and planning entries enhanced with `status` field for sprint lifecycle state machine (Decision 36). Completed entries enhanced with `retro_run_at` for retro gate tracking. Existing fields (locked, stories, waves, team_composition, started, completed) unchanged.]_
 
-**`sprints/{sprint-slug}/specs/`** — Gherkin feature files written during sprint planning (Decision 30). One file per story: `{story-slug}.feature`. These specs encode detailed behavioral expectations that only verifier agents access. Dev agents NEVER read this directory — verification is black-box by design. Story markdown files retain plain English ACs only; Gherkin is never written back to story files.
+**`.momentum/sprints/{sprint-slug}/specs/`** — Gherkin feature files written during sprint planning (Decision 30). One file per story: `{story-slug}.feature`. These specs encode detailed behavioral expectations that only verifier agents access. Dev agents NEVER read this directory — verification is black-box by design. Story markdown files retain plain English ACs only; Gherkin is never written back to story files.
 
 ```json
-// sprints/index.json
+// .momentum/sprints/index.json
 {
   "active": {
     "slug": "quality-hooks-sprint",
@@ -1401,26 +1585,29 @@ The per-sprint folder is the primary durable record of a sprint's execution. `sp
     "locked": true,
     "stories": ["posttooluse-lint-hook", "pretooluse-file-protection"],
     "started": "2026-03-30",
-    "completed": null
+    "completed": null,
+    "approvals": []               // see Per-story approval contract
     // ... waves, team_composition as before
   },
   "planning": {
     "slug": "impetus-ux-sprint",
     "status": "planning",         // "planning" | "ready" — see Decision 36
     "locked": false,
-    "stories": ["greeting-redesign", "session-stats"]
+    "stories": ["greeting-redesign", "session-stats"],
+    "approvals": []               // see Per-story approval contract
     // ... waves, team_composition as before
   },
   "completed": [
     {
       "slug": "bootstrap-sprint",
       "completed": "2026-03-28",
-      "retro_run_at": "2026-03-29"  // null if retro not yet run
+      "retro_run_at": "2026-03-29",  // null if retro not yet run
+      "approvals": []                // historical approval record preserved
     }
   ]
 }
 
-// sprints/quality-hooks-sprint.json
+// .momentum/sprints/quality-hooks-sprint.json
 {
   "name": "Quality Hooks Sprint",
   "slug": "quality-hooks-sprint",
@@ -1449,11 +1636,11 @@ The per-sprint folder is the primary durable record of a sprint's execution. `sp
 }
 ```
 
-**`epics.md`** — names, slugs, and descriptions only. No story lists. Pure documentation. Epic membership is tracked in `stories/index.json`.
+**`epics.md`** — names, slugs, and descriptions only. No story lists. Pure documentation. Epic membership is tracked in `.momentum/stories/index.json`.
 
 **`sprint-status.yaml` is deprecated** — replaced by the folder-based model above. The `sprint-status-schema-decomposition` migration story handles the transition from sprint-status.yaml to the new structure.
 
-**Write authority:** `momentum-tools.py sprint` is the sole writer of the `sprints/` folder and the `status` fields in `stories/index.json`. Story file content (ACs, dev notes, tasks) is written by `momentum:create-story`. Sprint-scoped Gherkin specs (`sprints/{sprint-slug}/specs/`) are written by the sprint-planning skill (`/momentum:sprint-planning`). No other agent or script writes to these files directly.
+**Write authority:** `momentum-tools.py sprint` is the sole writer of the `.momentum/sprints/` folder and the `status` fields in `.momentum/stories/index.json`. Story file content (ACs, dev notes, tasks) is written by `momentum:create-story`. Sprint-scoped Gherkin specs (`.momentum/sprints/{sprint-slug}/specs/`) are written by the sprint-planning skill (`/momentum:sprint-planning`). No other agent or script writes to these files directly.
 
 ### Story Assignment Model
 
@@ -1537,7 +1724,7 @@ Sprint planning is a dedicated skill (`/momentum:sprint-planning`) with 8 steps.
 
 <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Create a task per step at planning start. Every step entry updates the corresponding task to in_progress; every step exit updates to completed. Ad-hoc narrative summaries are not a substitute for tool-queryable task state.</critical>
 
-1. **Backlog presentation (Synthesis-First)** — Read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`_bmad-output/implementation-artifacts/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent. Read `stories/index.json`, group by epic, exclude terminal states. Within each epic group, sort by priority (critical > high > medium > low), then by dependency depth, then alphabetical. Run a staleness check: for each story with status `ready-for-dev` or `in-progress`, check `git log` for commits touching the story's `touches` paths — if substantial implementation commits exist, flag the story as potentially already implemented and exclude it from recommendations (surface in a separate "Potentially stale" section with evidence). Lead with a synthesis section: 3-5 prioritized recommendations with brief rationale for each, informed by the master plan's current priorities, dependency readiness, and backlog state. Present the full backlog below the recommendations as secondary reference material. If master plan documents are missing, fall back to the current behavior (sorted backlog) with a warning.
+1. **Backlog presentation (Synthesis-First)** — Read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`.momentum/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent. Read `.momentum/stories/index.json`, group by epic, exclude terminal states. Within each epic group, sort by priority (critical > high > medium > low), then by dependency depth, then alphabetical. Run a staleness check: for each story with status `ready-for-dev` or `in-progress`, check `git log` for commits touching the story's `touches` paths — if substantial implementation commits exist, flag the story as potentially already implemented and exclude it from recommendations (surface in a separate "Potentially stale" section with evidence). Lead with a synthesis section: 3-5 prioritized recommendations with brief rationale for each, informed by the master plan's current priorities, dependency readiness, and backlog state. Present the full backlog below the recommendations as secondary reference material. If master plan documents are missing, fall back to the current behavior (sorted backlog) with a warning.
 2. **Story selection** — developer selects 3-8 stories, register via momentum-tools sprint plan
 3. **Story fleshing-out** — spawn `/momentum:create-story` for each stub; developer approves each
 4. **Gherkin spec generation** — write detailed `.feature` files to `sprints/{sprint-slug}/specs/`; story files retain plain English ACs only (Decision 30). After generation, a **spec quality pre-check gate** validates each `.feature` file: checks structural validity (valid Gherkin syntax, proper Given/When/Then flow), outsider-test compliance (scenarios testable without implementation knowledge), and template conformance (consistent tagging, background usage, scenario outline patterns). Specs that fail the pre-check are revised before dev agents spawn — catching spec-quality issues early avoids downstream E2E Validator findings that trace back to ambiguous specifications.
@@ -1602,7 +1789,8 @@ The `agent-guidelines` skill (`/momentum:agent-guidelines`) creates the project-
 sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked by Impetus when the developer selects "Continue sprint" from the session menu, or directly by the user:
 
 **Phase 1: Initialization**
-- Read active sprint from `sprints/index.json`; validate locked state
+- Read active sprint from `.momentum/sprints/index.json`; validate locked state
+- **Verify per-story approvals against current story files (added 2026-04-28).** Run `momentum-tools sprint verify-approvals --sprint <slug>` to compare every entry in `active.approvals` against the SHA-256 of the corresponding story file's current content on disk. If any approval SHA does not match the current file, halt before any in-progress transition and surface the mismatch to the developer (story slug, expected SHA, actual SHA). This catches story-file edits made between activation and execution start. Re-execution requires the developer to re-approve via sprint-planning.
 - Build dependency graph from story `depends_on` fields
 - Initialize spawn registry as an empty map — tracks every agent spawned during this session, keyed by `{story_slug}::{role}` (e.g., `refine-skill::dev`, `sprint::qa-reviewer`). The registry survives the Phase 2 → Phase 3 → Phase 2 loop; it is never reset between phases and is not persisted to disk.
 - Create a task per story via TaskCreate for progress tracking
@@ -1705,11 +1893,11 @@ momentum:dev does NOT invoke bmad-dev-story as an indirection layer — the curr
 
 ### Retro → Planning Handoff via Unified Intake Queue
 
-> _[Updated 2026-04-14 (DEC-007, story: retro-triage-handoff): The prior `triage-inbox.md` contract is **retired**. Retro now writes handoff events directly to the unified `_bmad-output/implementation-artifacts/intake-queue.jsonl`. Sprint-planning Step 1 reads open handoff entries from the same file. No manual re-injection of retro findings into planning is required.]_
+> _[Updated 2026-04-14 (DEC-007, story: retro-triage-handoff): The prior `triage-inbox.md` contract is **retired**. Retro now writes handoff events directly to the unified `.momentum/intake-queue.jsonl` (path migrated 2026-04-28; previously `_bmad-output/implementation-artifacts/intake-queue.jsonl`). Sprint-planning Step 1 reads open handoff entries from the same file. No manual re-injection of retro findings into planning is required.]_
 
 After each sprint retro (Phase 5.5), un-actioned findings are written to `intake-queue.jsonl` as JSONL events. Sprint-planning Step 1 reads these open entries and surfaces them alongside the backlog — closing the retro → planning loop without developer re-injection.
 
-**Artifact:** `_bmad-output/implementation-artifacts/intake-queue.jsonl` (per DEC-007)
+**Artifact:** `.momentum/intake-queue.jsonl` (per DEC-007; path migrated 2026-04-28)
 
 **Write path:** `momentum-tools intake-queue append --source retro --kind handoff ...`
 **Read path:** `momentum-tools intake-queue list --source retro --kind handoff --status open`
@@ -1768,7 +1956,7 @@ After each sprint retro (Phase 5.5), un-actioned findings are written to `intake
 
 Single source of truth for triage-adjacent items that don't become stories immediately — SHAPING / DEFER / REJECT outcomes from `momentum:triage` and handoff events from `momentum:retro`. Per **DEC-007 (2026-04-14)**.
 
-**Path:** `_bmad-output/implementation-artifacts/intake-queue.jsonl` (per-project, not global)
+**Path:** `.momentum/intake-queue.jsonl` (per-project, not global; path migrated 2026-04-28)
 
 **Format:** Append-only JSONL event log. One JSON object per line. Never truncated.
 
@@ -1871,19 +2059,21 @@ Executor skills (`intake`, `distill`, `decision`) retain their existing model an
 
 This section is retained for historical context. The original design called for per-agent JSONL logging via `momentum-tools log` with exclusive write authority per agent file, 8 event types, and hook-based observability via SubagentStart/SubagentStop lifecycle hooks. In practice, the overhead of manual milestone logging produced sparse, low-signal data compared to the comprehensive evidence available in raw session transcripts via DuckDB preprocessing (Decision 27).
 
+> _[Cleanup note 2026-04-28: The historical-status text above remains the only sprint-log mention in the architecture. The `retire-sprint-log-final-cleanup` story (sprint-2026-04-27) closes the residual cleanup — removing any leftover sprint-log scaffolding (filesystem stubs, CLI subcommands, references in skill prompts) that survived the 2026-04-08 architectural removal.]_
+
 ### Gherkin Specification Separation (Decision 30)
 
 <!-- Added Phase 3: Black-box behavioral validation via separated Gherkin specs. -->
 
 Story files and Gherkin specs are deliberately separated to enforce black-box validation:
 
-- **Story files** (`stories/{slug}.md`) — contain plain English acceptance criteria. Dev agents read these to understand intent.
-- **Gherkin specs** (`sprints/{sprint-slug}/specs/{story-slug}.feature`) — contain detailed behavioral expectations. Only verifier agents read these.
+- **Story files** (`.momentum/stories/{slug}.md`) — contain plain English acceptance criteria. Dev agents read these to understand intent.
+- **Gherkin specs** (`.momentum/sprints/{sprint-slug}/specs/{story-slug}.feature`) — contain detailed behavioral expectations. Only verifier agents read these.
 
 **Key constraints:**
 - Gherkin specs are written during sprint planning (Step 4), before any code exists
 - A spec quality pre-check gate runs after generation (Step 4): validates structure, outsider-test compliance, and template conformance before dev agents spawn
-- Dev agents NEVER access `sprints/{sprint-slug}/specs/` — this is a protection boundary
+- Dev agents NEVER access `.momentum/sprints/{sprint-slug}/specs/` — this is a protection boundary
 - Gherkin is NEVER written back to story files
 - Specs are validated post-implementation by different agents than those who wrote the code
 - This separation enables true black-box behavioral validation
@@ -1915,6 +2105,12 @@ Retro is restructured as a two-wave transcript audit architecture. Milestone log
 **Wave 1: DuckDB Preprocessing (no agents)**
 Automated extraction using `transcript-query.py` (DuckDB wrapper). Reads Claude Code session JSONL files directly via SQL. Session discovery finds JSONL files by date range matching the sprint's started/completed dates in `~/.claude/projects/{project}/`. Subagent transcripts mapped via `{session-id}/subagents/` directories.
 
+**Path resolution and session discovery (added 2026-04-28):** `transcript-query.py` is resolved dynamically at retro start — the highest-semver glob match wins (e.g., `~/.claude/plugins/momentum-*/scripts/transcript-query.py`), with an in-repo fallback to the source-tree copy when no installed plugin is found. This avoids hard-coding install paths and makes the tool work in both downstream-project and dogfood contexts. Worktree session discovery uses `git worktree list --porcelain` so JSONL files produced inside per-story worktrees during sprint execution are captured alongside the main checkout's sessions.
+
+**Date filter semantics:** `--before` is **UTC end-of-day inclusive** — a sprint that completes on 2026-04-27 includes sessions up to `2026-04-27T23:59:59Z`. This avoids losing the last day of activity to timezone boundaries. `--story-slugs` is a same-day filter for sprints whose stories finished on the same calendar date as a previous sprint — passing the explicit story-slug list disambiguates which sessions belong to which sprint.
+
+**Hard-fail on zero session matches:** When session discovery returns zero matching JSONL files, retro **halts**. There is no "continue with empty extracts" branch — empty extracts produce vacuously clean retros that mask the underlying problem (wrong sprint window, unreadable plugin path, worktree not yet committed). The hard-fail surfaces the misconfiguration immediately so the developer can correct it before auditors run.
+
 New dependency: DuckDB (`pip install duckdb`). The tool checks and auto-installs if missing.
 
 Extraction queries (run automatically):
@@ -1926,7 +2122,7 @@ Extraction queries (run automatically):
 | `errors.jsonl` | Tool errors using actual error indicators (`is_error` flag, `tool_use_error` responses) | All JSONL files |
 | `team-messages.jsonl` | Inter-agent SendMessage and teammate-message content | Subagent JSONL files |
 
-Output directory: `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/audit-extracts/`
+Output directory: `.momentum/sprints/{sprint-slug}/audit-extracts/`
 
 `transcript-query.py` is standard retro tooling at a known path in the plugin, supporting both pre-built queries and ad-hoc SQL via `transcript-query.py sql "..."`.
 
@@ -1938,13 +2134,13 @@ Spawn 4 agents in parallel via TeamCreate:
 - **auditor-review** — reads `team-messages.jsonl` + agent summaries filtered to review roles. Evaluates quality gate effectiveness, fix cycle productivity, and inter-agent coordination quality.
 - **documenter** — receives findings from all 3 auditors via SendMessage. Builds the findings document. Owns it exclusively. After all auditors report, performs cross-cutting synthesis pass.
 
-Output: `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/retro-transcript-audit.md` — replaces the previous dual triage output. Structure: Executive Summary, What Worked Well, What Struggled, User Interventions, Story-by-Story Analysis, Cross-Cutting Patterns, Metrics, Priority Action Items. Each finding includes: what happened, evidence, root cause, recommendation (fix/keep/investigate).
+Output: `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md` — replaces the previous dual triage output. Structure: Executive Summary, What Worked Well, What Struggled, User Interventions, Story-by-Story Analysis, Cross-Cutting Patterns, Metrics, Priority Action Items. Each finding includes: what happened, evidence, root cause, recommendation (fix/keep/investigate).
 
 **What stays from the current retro:** Phase 1 (Sprint Identification), Phase 3 (Story Verification), Phase 6 (Story Stub Creation — now informed by transcript audit findings), Phase 7 (Sprint Closure). **What is replaced:** Phase 2 (Log Collection → DuckDB preprocessing), Phase 4 (Cross-Log Discovery → auditor team analysis), Phase 5 (Triage Output Generation → documenter's findings document).
 
-**Phase 6 extension (Decision 47):** After story stub creation and before sprint closure, the retro orchestrator: (1) spawns `/momentum:feature-status` to refresh the feature cache; (2) reads the updated `.claude/momentum/feature-status.md` for feature status deltas; (3) writes `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md` with sections: Features Advanced (conditional), Stories Completed vs. Planned, Key Decisions, Unresolved Issues, Narrative (500-word cap). The sprint summary is the sole compression artifact for sprint-to-sprint context transfer.
+**Phase 6 extension (Decision 47):** After story stub creation and before sprint closure, the retro orchestrator: (1) spawns `/momentum:feature-status` to refresh the feature cache; (2) reads the updated `.claude/momentum/feature-status.md` for feature status deltas; (3) writes `.momentum/sprints/{sprint-slug}/sprint-summary.md` with sections: Features Advanced (conditional), Stories Completed vs. Planned, Key Decisions, Unresolved Issues, Narrative (500-word cap). The sprint summary is the sole compression artifact for sprint-to-sprint context transfer.
 
-**Phase 5 extension (DEC-007, 2026-04-14):** Retro gains a **secondary** machine-readable output alongside the primary `retro-transcript-audit.md` findings document. Un-actioned findings that the developer chooses to carry forward are written as `handoff` events to `_bmad-output/implementation-artifacts/intake-queue.jsonl` with `source: "retro"`, `kind: "handoff"`, `status: "open"` — via the `momentum-tools` CLI, not direct file writes. These events are consumed by `momentum:sprint-planning` Phase A.5 and by `momentum:triage` re-surfacing on session start. The primary `retro-transcript-audit.md` output is unchanged; handoff events are additive. See the `intake-queue.jsonl` Schema Contract section for the full field contract. Per DEC-005 D7/D8 (failure-as-diagnostic framing and feature-state transitions) and DEC-005 D10 (retro does not gap-check when emitting handoffs). Implementation story: `retro-triage-handoff`.
+**Phase 5 extension (DEC-007, 2026-04-14):** Retro gains a **secondary** machine-readable output alongside the primary `retro-transcript-audit.md` findings document. Un-actioned findings that the developer chooses to carry forward are written as `handoff` events to `.momentum/intake-queue.jsonl` with `source: "retro"`, `kind: "handoff"`, `status: "open"` — via the `momentum-tools` CLI, not direct file writes. These events are consumed by `momentum:sprint-planning` Phase A.5 and by `momentum:triage` re-surfacing on session start. The primary `retro-transcript-audit.md` output is unchanged; handoff events are additive. See the `intake-queue.jsonl` Schema Contract section for the full field contract. Per DEC-005 D7/D8 (failure-as-diagnostic framing and feature-state transitions) and DEC-005 D10 (retro does not gap-check when emitting handoffs). Implementation story: `retro-triage-handoff`.
 
 **Decision 28 — Triage vs Refinement Distinction (superseded-partial 2026-04-14 by DEC-005 D10 and DEC-007)**
 
@@ -1955,7 +2151,7 @@ Triage is intake-focused: analyze documents/ideas, create story stubs, initial p
 **Decision 29 — Sprint Planning Builds the Team (Extended 2026-04-06: Synthesis-First; Extended 2026-04-11: Sprint Summary Read; Extended 2026-04-14: Retro Handoff Queue Read)**
 Sprint planning (`/momentum:sprint-planning`) encompasses story selection, create-story invocation, team composition, dependency graph construction, and execution plan generation. Sprint planning is a proper skill (not an inline workflow module) — invoked by Impetus or directly by the user. The sprint record stores team + dependencies (not just story lists and wave assignments). See Sprint Planning Workflow section.
 
-Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`_bmad-output/implementation-artifacts/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent (Decision 47). **Phase A.5 additionally reads `_bmad-output/implementation-artifacts/intake-queue.jsonl` filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` — open handoff events from recent retros are folded into the synthesis context alongside the previous sprint summary (per DEC-007, 2026-04-14). If the queue file does not yet exist, treat as empty and continue silently.** Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, sprint summary findings, open retro handoff items, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. **Phase C output gains a labeled "Open handoff items from recent retros" section** that lists each open `source: "retro", kind: "handoff"` entry by title, source sprint, and (when present) its feature-state transition or failure-diagnosis framing. If master plan documents are missing, fall back to sorted backlog with a warning.
+Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`.momentum/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent (Decision 47). **Phase A.5 additionally reads `.momentum/intake-queue.jsonl` filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` — open handoff events from recent retros are folded into the synthesis context alongside the previous sprint summary (per DEC-007, 2026-04-14). If the queue file does not yet exist, treat as empty and continue silently.** Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, sprint summary findings, open retro handoff items, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. **Phase C output gains a labeled "Open handoff items from recent retros" section** that lists each open `source: "retro", kind: "handoff"` entry by title, source sprint, and (when present) its feature-state transition or failure-diagnosis framing. If master plan documents are missing, fall back to sorted backlog with a warning.
 
 **Decision 30 — Gherkin Separation (Extended 2026-04-08: Spec-Quality Feedback Loop)**
 Story files retain plain English ACs (dev sees intent). Sprint-scoped specs directory holds detailed Gherkin `.feature` files (verifiers only). Black-box behavioral validation: specs written pre-implementation, validated post-implementation, by different agents. See Gherkin Specification Separation section.
@@ -1965,12 +2161,27 @@ Story files retain plain English ACs (dev sees intent). Sprint-scoped specs dire
 **Decision 31 — AVFL at Sprint Level**
 AVFL validates the complete sprint plan during planning (all stories together). AVFL runs once after ALL stories merge during sprint execution (not per-story). Per-story AVFL is removed from `momentum:create-story` and `momentum:dev`. This catches cross-story integration issues that per-story AVFL would miss. See Agent Pool Governance section. Phase 4 runs AVFL in scan profile (Decision 34) — discovery only, no fix loop. Findings are handed to the hybrid Agent Team.
 
-**Decision 34 — AVFL Scan Profile and Hybrid Resolution Team (2026-04-04)**
+**Decision 34 — AVFL Scan Profile and Hybrid Resolution Team (2026-04-04, Extended 2026-04-28)**
 AVFL and resolution teams serve distinct purposes. AVFL excels at adversarial multi-lens discovery (dual-reviewer cross-check). Teams excel at concurrent resolution and E2E behavioral verification. The scan profile separates these concerns.
 
 Scan profile: all 4 lenses, dual reviewers (Enumerator + Adversary), maximum skepticism (level 3), consolidation with cross-check confidence. Zero fix iterations — output is scored findings list only.
 
 Hybrid model: AVFL scan → findings handed to concurrent Agent Team (Dev, QA, E2E Validator, Architect Guard). Team works concurrently on main branch. E2E Validator tests running behavior with external tools — fundamentally different from AVFL's file-content validation.
+
+**BLOCKED-vs-MISSING semantics for AC classification (added 2026-04-28):**
+
+QA Reviewer and E2E Validator classify each acceptance criterion against observed sprint output. Two outcomes that look superficially similar must remain semantically distinct:
+
+| Classification | Meaning | When to use |
+|---|---|---|
+| `BLOCKED` | Execution was prevented by missing infrastructure (e.g., test runner not installed, environment dependency absent, required service not running). The reviewer could not even attempt to gather AC evidence. | Infrastructure gap — surface as a blocker, not as an AC failure |
+| `MISSING` | Execution succeeded, but no AC evidence was found (e.g., the test ran but the behavior the AC describes was not observed; the feature appears unimplemented). | Genuine AC failure — feature did not deliver what the story promised |
+
+`BLOCKED` items are not "the AC failed" — they are "the practice failed to produce evidence." Treating BLOCKED as MISSING produces false-failure findings that mischaracterize execution gaps as product gaps. Both reviewers MUST follow `.claude/rules/e2e-validation.md` Environment Startup before classifying any AC — environment readiness is a precondition for the BLOCKED-vs-MISSING distinction to be meaningful.
+
+**Defense-in-depth contract:** The QA Reviewer (`agents/qa-reviewer.md`) and E2E Validator (`agents/e2e-validator.md`) definitions both carry Critical Constraints sections that encode these rules. The constraints are kept in **parity** between the two definitions — see Defense-in-depth across spawn-prompt and agent-definition layers in the Process Patterns section. Drift between the two definitions creates inconsistent classifications and is a defect at the Decision 34 contract level.
+
+**Origin:** `harden-sprint-dev-phase5-spawn-prompts` story (sprint-2026-04-27).
 
 **AVFL Corpus Mode — Multi-Document Cross-Validation (2026-04-03, commit 924d4ef)**
 AVFL can validate a corpus of related documents together rather than validating artifacts individually. Corpus mode feeds multiple documents to validators simultaneously, enabling cross-document consistency checks: cross-reference errors between specs, contradictions between planning artifacts, and coverage gaps where one document promises something another omits. Validators receive the full corpus as input and apply their lens (Structural, Factual, Coherence, Domain) across document boundaries. Corpus mode uses the same validator pipeline (Enumerator + Adversary per lens, consolidator, fixer) — the difference is input scope, not execution architecture.
@@ -2160,6 +2371,7 @@ Workflows that spawn agents must declare their team composition requirements exp
 | AVFL | Fixer | Fixer | `individual` | `sequential` (after consolidator) |
 | momentum:refine | Wave 1 (discovery) | prd-coverage-agent, architecture-coverage-agent | `individual` | `parallel` |
 | momentum:refine | Wave 2 (updates, conditional) | prd-update-agent, architecture-update-agent (each conditional per document) | `individual` | `parallel` |
+| momentum:retro | Phase 4 (auditor team) | documenter (singleton coordinator, cardinality 1) — distinct from auditor fan-out group: auditor-human, auditor-execution, auditor-review (cardinality 3, distinct subagent_types) | `individual` (singleton spawn for documenter; fan-out for auditors via 3 individual Agent spawns — Shape A preferred; Shape B via TeamCreate as fallback only if documenter handle must be in TeamCreate config) | `parallel` |
 
 **Sprint planning validation:** Step 5 (Execution plan and team composition) validates the planned `team` object against the workflow's declared required roles. If a required role is missing from the plan, sprint planning surfaces the gap before activation. This is a pre-activation gate — the sprint cannot be activated with an incomplete team.
 
@@ -2411,9 +2623,9 @@ momentum-tools feature-status-hash   # prints: sha256:<hex>
 
 **Decision 47 — Sprint Summary at Retro Boundary (sprint-2026-04-11)**
 
-A new artifact written by the retro orchestrator at Phase 6 close: `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md`. It compresses each completed sprint's signal into a structured reference document for sprint planning and future retro context loading.
+A new artifact written by the retro orchestrator at Phase 6 close: `.momentum/sprints/{sprint-slug}/sprint-summary.md`. It compresses each completed sprint's signal into a structured reference document for sprint planning and future retro context loading.
 
-**Artifact path:** `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/sprint-summary.md`
+**Artifact path:** `.momentum/sprints/{sprint-slug}/sprint-summary.md`
 
 **Written by:** Retro orchestrator at Phase 6 close, after spawning `/momentum:feature-status` for cache refresh and before sprint closure.
 
@@ -2578,7 +2790,7 @@ Formalizes the capture-artifact decision recorded in `_bmad-output/planning-arti
 
 **What was decided:**
 
-- **Single artifact:** `_bmad-output/implementation-artifacts/intake-queue.jsonl` is the per-project, append-only JSONL event log for all SHAPING / DEFER / REJECT outcomes from `momentum:triage` and all `handoff` events from `momentum:retro`. One JSON object per line. Never truncated. Entries are never deleted — `status` flips from `open` to `consumed` (or `rejected`) with an outcome reference.
+- **Single artifact:** `.momentum/intake-queue.jsonl` is the per-project, append-only JSONL event log for all SHAPING / DEFER / REJECT outcomes from `momentum:triage` and all `handoff` events from `momentum:retro`. Path migrated 2026-04-28 from `_bmad-output/implementation-artifacts/intake-queue.jsonl`. One JSON object per line. Never truncated. Entries are never deleted — `status` flips from `open` to `consumed` (or `rejected`) with an outcome reference.
 - **CLI-only writes:** All writers go through `momentum-tools intake-queue append` / `update`. Skills never open the file for direct mutation — preserves the orchestrator-purity pattern used elsewhere in the practice.
 - **Producer/consumer matrix:**
   - Producers: `momentum:triage` (`shape`/`watch`/`rejected` kinds), `momentum:retro` Phase 5.5 (`handoff` kind)
