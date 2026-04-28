@@ -511,3 +511,155 @@ ${config.testGuidelines}
 - **(d) Agent Targets:** Cursor, Lovable, Windsurf, Roo Code, Claude Code, Cline, Codex, and Gemini.
 
 - **(e) Drift Prevention:** The project fundamentally prevents divergent state updates by forcing both the CLI UI and MCP tool handlers to defer to a centralized `tm-core` library. The system explicitly blocks any data transformation or ID parsing logic from living at the integration edge (`await tmCore.tasks.get(taskId)`). This architecture forces the LLM to interact with the task database solely through validated MCP operations rather than directly generating and writing text into the ledger.
+---
+
+## Follow-Up #2 Quick Response (Pre-Deep-Research, captured before DR run)
+
+Here is a deep technical drilldown into five of the most active cross-agent practice-distribution projects as of April 2026, focusing on their exact translation code paths, capabilities, and drift-prevention mechanics.
+
+### 1. BMAD-METHOD (Build More Architect Dreams)
+
+**Overview:** An enterprise-grade, multi-agent agile framework that structures analysis, planning, architecture, and implementation workflows.
+
+- **(a) Canonical Source-of-Truth:** The central configuration surface uses a four-layer TOML architecture, with human-authored team overrides persistently stored at `github.com/bmad-code-org/BMAD-METHOD/blob/main/_bmad/custom/config.toml`.
+
+- **(b) Installer & Code Path:** Bootstrapped via `npx bmad-method install`. As of v6.4.0, the legacy translation pipeline was completely refactored; the translation logic was gutted in favor of pure `SKILL.md` directory copying mapping to the target environment within `github.com/bmad-code-org/BMAD-METHOD/blob/main/src/installer/install.ts`.
+
+- **(c) Translation Pattern Excerpt:** The framework relies on structural merge rules for profiles, merging agent availability arrays and custom facts before writing to the agent's context:
+
+Ini, TOML
+
+```
+_bmad/config.toml (installer-owned) team scope: install answers + agent roster
+_bmad/config.user.toml (installer-owned) user scope: user_name, language, skill level
+_bmad/custom/config.toml (human-authored) team overrides (committed to git)
+_bmad/custom/config.user.toml (human-authored) personal overrides (gitignored)
+
+```
+
+- **(d) Agent Targets:** Actively emits to 42 platforms, including Claude Code, Cursor, Windsurf, Copilot, Aider, Codex, OpenCode, Amp, Goose, and Mistral Vibe.
+
+- **(e) Drift Prevention:** The installer entirely skips rewriting the `_bmad/custom/config.toml` files during updates, forcing a strict four-layer structural merge. This ensures human overrides (such as strictly pinned tool permissions or behavioral modifications) never experience regression drift when the module upgrades.
+
+### 2. SkillKit
+
+**Overview:** The universal CLI package manager that installs, translates, and deploys specialized AI skills across disconnected coding tools.
+
+- **(a) Canonical Source-of-Truth:** Skill manifests and XML translations originate from remote skill packages and are localized via adapter scripts.
+
+- **(b) Installer & Code Path:** Invoked via `npx skillkit sync --agent hermes`. The Hermes agent adapter translation executes specifically in `github.com/rohitg00/skillkit/blob/main/packages/agents/src/adapters/hermes.ts`.
+
+- **(c) Translation Pattern Excerpt:** SkillKit achieves idempotency by actively scoping XML tags through precise string injection into native files:
+SkillKit wraps its skill manifest in markers inside Hermes' AGENTS.md.
+Your mission, SOUL, and custom rules stay untouched.
+Re-running skillkit sync rewrites only the managed block.
+Proper XML parsing. The Hermes adapter scopes  tag matching to the managed block.
+
+- **(d) Agent Targets:** 46 separate coding agents natively supported.
+
+- **(e) Drift Prevention:** By wrapping the translated XML and markdown instructions in explicit comment markers (``), the adapter safely parses and rewrites only the managed block. Additionally, `skillkit doctor --fix` proactively detects and repairs broken filesystem symlinks to prevent silent skill degradation.
+
+### 3. ai-rulez
+
+**Overview:** A universal configuration manager that builds, compresses, and synchronizes native tool rules from a single master configuration document.
+
+- **(a) Canonical Source-of-Truth:** The entire project context is managed in `github.com/kreuzberg-dev/ai-rulez/blob/main/.ai-rulez/config.yaml`.
+
+- **(b) Installer & Code Path:** Rules are compiled via `npx ai-rulez@latest generate`. The translation mapping specific to Claude lives in `github.com/Goldziher/ai-rulez/blob/main/src/generators/claude.ts`.
+
+- **(c) Translation Pattern Excerpt:** The generator embeds an explicit read-only block to stop the LLM from attempting to vibe-code rule modifications directly into generated output files:
+---
+
+## Follow-Up #3 Quick Response (sent with corrections + DR demand; Gemini still answered without DR)
+
+Here is the verified technical drilldown into the five most active cross-agent practice-distribution projects based strictly on primary repository data from April 2026.
+
+### 1. Spec-Kit (GitHub)
+
+**Overview:** An open-source toolkit that enforces Spec-Driven Development, converting requirements directly into executable tasks ``.
+
+- **(a) Canonical Source-of-Truth:** The feature execution state is tracked via the task ledger at `.specify/specs/[feature-name]/tasks.md` ``.
+
+- **(b) Installer & Code Path:** Bootstrapped via `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git` `. Task execution and translation are handled by `src/commands/implement.ts`, which systematically executes the specification via the `runtask` subagent `.
+
+- **(c) Translation Pattern Excerpt:**
+
+- Invoke the `runtask` subagent (`.claude/agents/runtask`) with:
+
+- task-file: absolute path to `tasks.md`
+
+- task-id: exact task number (e.g., T003)
+
+- arguments: pass-through `$ARGUMENTS`
+
+- On success:
+
+- Mark the task as completed in `tasks.md` (use a checkmark)
+
+- Add brief notes if relevant
+
+- Save `tasks.md` to disk immediately before continuing ``
+
+- **(d) Agent Targets:** Integrates natively with Claude, Copilot, and Gemini ``.
+
+- **(e) Drift Prevention:** Drift is prevented via strict verification gates (e.g., `/speckit.analyze`) `and the `spec-kit-verify` extension, which operates as a post-implementation quality gate to validate written code against the original specification artifacts`.
+
+### 2. ai-rulez (Goldziher)
+
+**Overview:** A universal configuration manager that defines rules and context once, generating synchronized instructions for various AI tools ``.
+
+- **(a) Canonical Source-of-Truth:** The single source of truth is maintained in `.ai-rulez/config.yaml` ``.
+
+- **(b) Installer & Code Path:** Executed via `npx ai-rulez@latest generate` `. Translation to specific AI formats occurs within generator files like `src/generators/claude.ts` `.
+
+- **(c) Translation Pattern Excerpt:** The framework prepends strict warning headers onto the native configuration files to prevent agents from self-modifying the compiled output:
+
+HTML
+
+```
+``` ``
+*   **(d) Agent Targets:** Actively generates native configurations for 18+ tools, including Claude, Cursor, Copilot, Windsurf, Gemini, Cline, Continue.dev, Amp, Junie, Codex, and OpenCode ``.
+*   **(e) Drift Prevention:** Structural drift is blocked using dedicated pre-commit hooks (`ai-rulez-validate` and `ai-rulez-generate`) ``. Generating the configuration actively overwrites the old rules, guaranteeing that the `ai-rulez.yaml` file remains the absolute source of truth ``.
+
+### 3. BMAD-METHOD (BMad Code Org)
+**Overview:** A scale-adaptive, AI-driven agile development framework relying on specialized agent workflows ``.
+*   **(a) Canonical Source-of-Truth:** The central configuration surface uses a four-layer TOML merge architecture, with team-enforced overrides stored in `_bmad/custom/config.toml` ``.
+*   **(b) Installer & Code Path:** Bootstrapped via `npx bmad-method install` ``. As of v6, translation pipelines like `agent-command-generator.js` and `module-injections.js` were stripped out; `src/installer/install.ts` now uses `SKILL.md` directory copying as the sole installation path ``.
+*   **(c) Translation Pattern Excerpt:** Context translation is governed by a strict structural merge priority path:
+Priority 1 (wins): _bmad/custom/config.user.toml
+Priority 2: _bmad/custom/config.toml
+Priority 3: _bmad/config.user.toml
+Priority 4 (base): _bmad/config.toml ``
+*   **(d) Agent Targets:** 42 platform targets, including Claude Code, Cursor, Windsurf, Copilot, Aider, OpenClaw, OpenHands, Pochi, Replit Agent, and Warp ``.
+*   **(e) Drift Prevention:** The installer is strictly programmed to never touch or rewrite the `_bmad/custom/config.toml` files, ensuring human-authored facts and rules are never overwritten during upgrades ``. Furthermore, the framework relies heavily on step-file architecture and checklist-gated workflows to stop agents from drifting from requirements ``.
+
+### 4. SkillKit (rohitg00)
+**Overview:** A CLI package manager that translates, installs, and shares portable agent skills across disparate coding agents ``.
+*   **(a) Canonical Source-of-Truth:** Skill manifests are pulled directly from remote marketplace repositories (e.g., `npx skillkit add anthropics/skills`) ``. 
+*   **(b) Installer & Code Path:** Translates skills to target environments via commands like `skillkit sync --agent hermes`, applying adapter logic located in `packages/agents/src/adapters/hermes.ts` ``.
+*   **(c) Translation Pattern Excerpt:** 
+Idempotent AGENTS.md updates. SkillKit wraps its skill manifest in 
+markers inside Hermes' AGENTS.md.
+Your mission, SOUL, and custom rules stay untouched. 
+Re-running skillkit sync rewrites only the managed block.
+Proper XML parsing. The Hermes adapter scopes <name> tag matching to the managed block. ``
+*   **(d) Agent Targets:** Deploys across 46 separate agents, including Claude Code, Cursor, Codex, Copilot, Windsurf, and Hermes ``.
+*   **(e) Drift Prevention:** Safe idempotency is achieved by wrapping the injected instructions within specific XML/HTML markers (like ``), allowing SkillKit to parse and overwrite only the managed segments without generating false positives ``. A built-in `skillkit doctor --fix` command detects and actively repairs broken symlinks ``.
+
+### 5. Claude-Task-Master (eyaltoledano)
+**Overview:** An AI-powered task management system executing PRD parsing, task expansion, and centralized context orchestration ``.
+*   **(a) Canonical Source-of-Truth:** Configuration is stored in `.taskmaster/config.json`, while the task ledger relies on `.taskmaster/tasks/tasks.json` ``.
+*   **(b) Installer & Code Path:** Triggered via `npx -y task-master-ai init` ``. Rules configuration initiates through `task-master init -r <profiles>` (e.g., `cursor,roo`) ``.
+*   **(c) Translation Pattern Excerpt:** 
+```typescript
+// Correct approach:
+// ✓ Add method to TasksDomain: tasks.get(taskId) (automatically handles task and subtask IDs)
+// ✓ CLI calls: await tmCore.tasks.get(taskId) 
+// ✓ MCP calls: await tmCore.tasks.get(taskId) 
+// ✓ Single source of truth in tm-core.
+// ❌ Data transformation logic in CLI/MCP → Move to tm-core
+``` ``
+*   **(d) Agent Targets:** Built-in profiles for 8 IDEs (Claude Code, Cline, Codex, Cursor, Roo, Trae, VS Code, Windsurf) ``. Additionally supports API endpoints via MCP for Claude, OpenAI, Gemini, Perplexity, and xAI ``.
+*   **(e) Drift Prevention:** Structural drift is avoided by banning all business or validation logic from the CLI and MCP components, requiring both interaction layers to execute identical methods centrally through `tm-core` ``. Features "Two way task/PRD sync" `` and auto-enables deferred MCP loading for tighter control over context payloads ``.
+
+```
