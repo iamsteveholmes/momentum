@@ -40,6 +40,10 @@ derives_from:
     relationship: authoritative_correction
   - path: raw/verification-sq3-named-targets.md
     relationship: authoritative_correction
+  - path: raw/verification-bmad-extra-platforms.md
+    relationship: capability_extension
+  - path: raw/verification-goose-recipes-integrations.md
+    relationship: capability_extension
   - path: validation/avfl-report.md
     relationship: validated_by
 ---
@@ -382,6 +386,8 @@ A practice module that writes pure open-spec `SKILL.md` reaches ~38 products inc
 
 ## 6. Recommendations for Momentum
 
+> **Note:** §6 covers the skill-shaped emission layer (BMAD-pattern verbatim copy). After publishing the original synthesis, two additional research probes surfaced material extensions: **§9** documents BMAD-supported platforms that offer capabilities Momentum's current targets lack (Kiro's workflow-task hooks, Neovate's 23-event surface incl. system-prompt mutation, Antigravity's verification artifacts), and **§10** documents the Goose Recipes opportunity — no framework currently compiles practice workflows to Goose Recipes properly. The revised architectural recommendation is a **dual-emitter pattern** (skills + Recipes) detailed in §10.5.
+
 ### 6.1 Source-of-truth schema (minimal portable frontmatter)
 
 ```yaml
@@ -627,7 +633,102 @@ Six pieces of work for Momentum, in suggested order:
 
 ---
 
-## 9. Sources
+## 9. Capability Extensions — BMAD's 22 Untouched Platforms
+
+The original scope named six target agents. BMAD-METHOD v6.5.0 supports 42. After surveying the 22 platforms our research had not examined, five offer capabilities Momentum's current target set does not — three of them genuinely matter for what Momentum is trying to be ([verification-bmad-extra-platforms.md][VERIFIED-PRIMARY-SOURCE]).
+
+### 9.1 Tier-1 platforms with novel capabilities
+
+**Kiro (AWS).** Spec-driven workflow as a *native IDE primitive*. The on-disk model is `requirements.md` (EARS notation) → `design.md` → `tasks.md` with explicit dependency sequencing. Critically, Kiro's hooks are **scoped to spec tasks, not tool calls** — Pre/Post Task Execution events fire when the agent enters/exits a workflow step, not when it invokes a tool. Claude Code's 28-event hook system is rich at the *tool-invocation* layer; Kiro's smaller surface is a different abstraction, and it maps almost directly onto Momentum's sprint-driven structure (story → spec → impl). If Momentum ever wants workflow-aware automation rather than tool-call-aware automation, Kiro is the precedent. ([kiro.dev/docs/hooks/types](https://kiro.dev/docs/hooks/types) [VERIFIED]).
+
+**Neovate.** Open-source. **23 named hook events** including `systemPrompt`, `provider`, `modelAlias`, `outputStyle` — all of which Claude Code does not expose. Claude Code can't modify the system prompt mid-session; Neovate can. Open source means the patterns are inspectable. The richest extensibility surface in the survey ([neovateai.dev/en/docs/plugins](https://neovateai.dev/en/docs/plugins) [VERIFIED]).
+
+**Factory Droid.** 10 hook events with matchers richer than Claude Code: `SessionStart` accepts `startup|resume|clear|compact`; `PreCompact` distinguishes manual vs automatic. `.factory/droids/` subagent folder is structurally identical to `.claude/agents/`. Multi-surface (CLI + IDE + Slack + Jira) — closed source but enterprise-validated, useful as a forward indicator for how production hook contracts evolve ([docs.factory.ai/reference/hooks-reference](https://docs.factory.ai/reference/hooks-reference) [VERIFIED]).
+
+**Google Antigravity.** Verification artifacts (screenshots, browser recordings) as standard agent output. Live-editable plan artifacts. Manager surface for parallel agents — the UI version of Momentum's worktree pattern. Worth examining when Momentum considers visual/recording artifacts as practice output (currently Momentum produces only text-based AVFL findings, retros, decisions) ([Antigravity launch announcement](https://developers.googleblog.com/build-with-google-antigravity-our-new-agentic-development-platform/) [CITED]).
+
+**Sourcegraph Amp.** Persistent threads as project memory; `AGENT.md` as a single canonical structured-context document. A useful comparison point when Momentum's `MEMORY.md` + global rules + project rules + decision documents become sprawled enough that consolidation matters ([ampcode.com/manual](https://ampcode.com/manual) [CITED]).
+
+### 9.2 Tier-2 platforms worth watching
+
+| Platform | What's interesting | Source |
+|---|---|---|
+| Mux | Worktree-per-agent confirms Momentum's pattern | [verification-bmad-extra-platforms.md] |
+| Pochi | Skills-as-symlinks (avoids copy drift) | [verification-bmad-extra-platforms.md] |
+| Auggie | Auto-imports `.claude/commands/` — zero-config Claude Code reuse | [verification-bmad-extra-platforms.md] |
+| Replit Agent 4 | Manager/Editor/Verifier role separation | [verification-bmad-extra-platforms.md] |
+| Qoder | Async Quest Mode (background agents) | [verification-bmad-extra-platforms.md] |
+| Junie (JetBrains) | Static-analysis-driven context injection | [verification-bmad-extra-platforms.md] |
+| Ona | Sandboxed cloud envs as default execution | [verification-bmad-extra-platforms.md] |
+
+### 9.3 Skip
+
+**Trae (ByteDance).** Flagged for data-collection concerns ([unit221b report](https://blog.unit221b.com/dont-read-this-blog/unveiling-trae-bytedances-ai-ide-and-its-extensive-data-collection-system) [PRACTITIONER]). Do not target.
+
+### 9.4 Capability gaps Momentum's current target set does not cover
+
+1. **System-prompt-modifying hooks** (Neovate, 23 hook events including `systemPrompt`/`provider`/`modelAlias`). Momentum cannot currently inject context dynamically per-session beyond Claude's `UserPromptSubmit`.
+2. **Workflow-task-scoped hooks vs tool-call-scoped** (Kiro). Momentum is workflow-driven; tool-call hooks are at the wrong granularity for many practice goals like "after every story, run AVFL" or "before sprint close, run retro."
+3. **Verification artifacts as standard practice output** (Antigravity). Momentum produces text-based artifacts (AVFL findings, retros, decision docs); visual/recording artifacts as first-class output is a paradigm Momentum doesn't have.
+
+These three gaps are not addressable by adding new emit targets to a manifest registry. They are *capability* gaps that could inform future Momentum architecture decisions if/when Momentum migrates beyond Claude Code as primary host.
+
+---
+
+## 10. The Goose Recipes Opportunity
+
+Goose has a workflow primitive called **Recipes** that is materially distinct from its skill-loading mechanism. **No framework currently compiles practice workflows to Goose Recipes properly** — every framework surveyed (BMAD, vercel-labs/skills, openskills, skillkit, ai-rulez, rulesync, continuedev, claude-task-master) targets Goose by dropping `SKILL.md` files into `.agents/skills/` or `.goose/skills/`. github/spec-kit emits Recipes but flat ones — header + prompt scalar, hardcoded `developer` extension, no `parameters`, no `sub_recipes`, no `response`, no `settings`. It wastes ~80% of the Recipe schema ([verification-goose-recipes-integrations.md][VERIFIED-PRIMARY-SOURCE]).
+
+This is an **open opportunity** verified by source-level reading of every plausible competitor.
+
+### 10.1 Goose Recipe schema (verbatim from source)
+
+From `crates/goose/src/recipe/mod.rs:41-86` at SHA `96fa25b` ([verification-goose-recipes-integrations.md][VERIFIED-PRIMARY-SOURCE]):
+
+- **Required:** `title`, `description`, plus at least one of `instructions`/`prompt`
+- **Optional:** `version`, `extensions`, `settings` (`provider`/`model`/`temperature`/`max_turns`), `activities`, `author`, `parameters`, `response`, `sub_recipes`, `retry`
+- **Parameters:** typed (`String|Number|Boolean|Date|File|Select`), with requirement levels (`Required|Optional|UserPrompt`). Direct map to Momentum skill arguments (`epic_slug`, `story_id`, `sprint_slug`).
+- **Sub-recipes:** one level deep; parent's `summon` extension auto-injected when `sub_recipes` is non-empty (`mod.rs:254-270`); each sub-recipe becomes a tool the parent agent invokes; child runs in isolated session via `run_subagent_task`. Maps directly to Momentum's Impetus → sub-skill spawning pattern.
+- **Response:** JSON schema for structured output, validated via `jsonschema`. Maps to Momentum's structured deliverables (decision documents, retro findings, AVFL reports).
+- **Settings:** per-recipe model and provider override.
+- **MiniJinja `{{ var }}` templating** throughout.
+
+### 10.2 Recipe lookup order
+
+From `local_recipes.rs:21-46`: cwd → `$GOOSE_RECIPE_PATH` → `~/.config/goose/recipes/` → `./.goose/recipes/` → `./.agents/recipes/` → `~/.agents/recipes/`. Plus `GOOSE_RECIPE_GITHUB_REPO` for remote (shells out to `gh repo clone` + `git archive`). No first-party marketplace — distribution is via env var or fork-with-bundle ("Custom Distros") ([verification-goose-recipes-integrations.md][VERIFIED-PRIMARY-SOURCE]).
+
+### 10.3 Momentum primitives → Recipe primitives
+
+| Momentum primitive | Recipe primitive |
+|---|---|
+| Workflow definition (`workflow.md`) | Recipe with `instructions` + `tasks` |
+| Sub-skill spawn (Impetus → sub-skills) | Recipe `sub_recipes` |
+| Skill argument (e.g., `epic_slug`) | Recipe typed `parameter` |
+| Structured output (decision, retro findings) | Recipe `response` JSON schema |
+| Multi-step orchestration (sprint-planning) | Parent Recipe with N sub_recipes |
+| Skill body Markdown | Recipe `instructions` content |
+| MCP server config | Recipe `extensions` |
+
+### 10.4 Caveats Momentum will hit when targeting Recipes
+
+- **Goose has no hook system** — degrade to MCP-tool wrapping or `.goosehints` for static behavior. PR #8842 is in flight (verified) but unmerged.
+- **Goose has no global rules equivalent** — concatenate rules into Recipe `instructions` or rely on `.goosehints` for cross-session context.
+- **Sub-recipes are one level deep only** — Momentum's deeper orchestration trees (Impetus → sprint-planning → create-story → AVFL) would need to flatten or use parameter-passing tricks.
+- **No marketplace** — distribute via `GOOSE_RECIPE_GITHUB_REPO` env var or fork-with-bundle Custom Distro pattern.
+
+### 10.5 Revised architectural recommendation
+
+The Section 6 recommendation should be amended to a **dual-emitter pattern**:
+
+1. **Skill emitter** (BMAD-pattern): one `platform-codes.yaml` registry + one verbatim-copy adapter class. Targets every skill-shaped consumer: Claude Code, Codex, OpenCode, Cline, Continue, Cursor, Copilot, Goose-as-skill-host, Roo Code, ForgeCode, etc. ~38 destinations covered.
+
+2. **Goose Recipe emitter** (new — no precedent in the field): compile each Momentum workflow definition to a Goose Recipe YAML with `parameters`, `sub_recipes`, `response`, and `settings` mapped from Momentum primitives. Output to `.goose/recipes/<workflow>.yaml` for project-local install, plus optional `GOOSE_RECIPE_GITHUB_REPO` for team-wide distribution.
+
+This dual emitter would be a meaningful differentiation versus every other framework in the field — verified by source-level reading of all 13 plausible competitors. "Claude Code + Codex + OpenCode + Goose Recipes (not just Skills)" coverage is currently an open opportunity.
+
+---
+
+## 11. Sources
 
 ### VERIFIED — primary repo sources at named commit SHAs (Wave 2 verification files)
 
@@ -646,6 +747,12 @@ Six pieces of work for Momentum, in suggested order:
 | Cody | `sourcegraph/cody-public-snapshot` | HEAD `8e20ac6` | [verification-sq3-named-targets.md] |
 | Roo Code | `RooCodeInc/Roo-Code` | HEAD `ad25634` | [verification-sq3-named-targets.md] |
 | Cline | `cline/cline` | HEAD `5fe6c9a` | [verification-sq3-named-targets.md] |
+| BMAD platform-codes registry (live) | `bmad-code-org/BMAD-METHOD` | main / 2026-04-26 fetch | [verification-bmad-extra-platforms.md] |
+| Goose Recipes schema | `block/goose` | `96fa25b` | [verification-goose-recipes-integrations.md] |
+| Kiro hooks | `kiro.dev/docs/hooks/types` | live, 2026-04-26 fetch | [verification-bmad-extra-platforms.md] |
+| Neovate plugins | `neovateai.dev/en/docs/plugins` | live, 2026-04-26 fetch | [verification-bmad-extra-platforms.md] |
+| Factory Droid hooks | `docs.factory.ai/reference/hooks-reference` | live, 2026-04-26 fetch | [verification-bmad-extra-platforms.md] |
+| spec-kit Goose YamlIntegration | `github/spec-kit` | `src/specify_cli/integrations/goose/__init__.py` | [verification-goose-recipes-integrations.md] |
 
 ### CITED — official docs URLs and [OFFICIAL]-tagged Wave 1 sources
 
@@ -715,4 +822,4 @@ The following sources or specific claims appeared in the corpus but are not reli
 
 ---
 
-*End of report. Length: ~10,400 words. Authored 2026-04-26 by claude-code-synthesis based on the Wave 1 + Wave 2 corpus produced for the Momentum multi-agent deployment refactor decision.*
+*End of report. Length: ~12,500 words including §9 (Capability Extensions) and §10 (Goose Recipes Opportunity). Authored 2026-04-26 by claude-code-synthesis based on the Wave 1 + Wave 2 corpus produced for the Momentum multi-agent deployment refactor decision. §9 and §10 added 2026-04-27 from the BMAD-extra-platforms and Goose-Recipes verification reports.*
