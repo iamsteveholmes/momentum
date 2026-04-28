@@ -1,5 +1,171 @@
 {
-  "active": null,
+  "active": {
+    "locked": true,
+    "status": "active",
+    "stories": [
+      "impetus-momentum-state-migration",
+      "plugin-cache-staleness-detection",
+      "retire-sprint-log-final-cleanup",
+      "retro-transcript-extraction-hardening",
+      "retro-team-singleton-guard",
+      "fix-retro-documenter-replication-defect",
+      "harden-sprint-dev-phase5-spawn-prompts",
+      "sprint-planning-adds-per-story-approval-gate"
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "impetus-momentum-state-migration"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "plugin-cache-staleness-detection",
+          "retire-sprint-log-final-cleanup",
+          "retro-transcript-extraction-hardening",
+          "retro-team-singleton-guard",
+          "fix-retro-documenter-replication-defect",
+          "harden-sprint-dev-phase5-spawn-prompts",
+          "sprint-planning-adds-per-story-approval-gate"
+        ]
+      }
+    ],
+    "slug": "sprint-2026-04-27",
+    "planned": "2026-04-28",
+    "team": {
+      "story_assignments": {
+        "impetus-momentum-state-migration": {
+          "specialist": "dev-skills",
+          "guidelines_path": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 1
+        },
+        "plugin-cache-staleness-detection": {
+          "specialist": "dev",
+          "guidelines_path": null,
+          "guidelines_status": "n/a",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 2
+        },
+        "retire-sprint-log-final-cleanup": {
+          "specialist": "dev",
+          "guidelines_path": null,
+          "guidelines_status": "n/a",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 2
+        },
+        "retro-transcript-extraction-hardening": {
+          "specialist": "dev",
+          "guidelines_path": null,
+          "guidelines_status": "n/a",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 2
+        },
+        "retro-team-singleton-guard": {
+          "specialist": "dev-skills",
+          "guidelines_path": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 2
+        },
+        "fix-retro-documenter-replication-defect": {
+          "specialist": "dev-skills",
+          "guidelines_path": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 2
+        },
+        "harden-sprint-dev-phase5-spawn-prompts": {
+          "specialist": "dev-skills",
+          "guidelines_path": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 2
+        },
+        "sprint-planning-adds-per-story-approval-gate": {
+          "specialist": "dev-skills",
+          "guidelines_path": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "roles": [
+            "dev",
+            "qa",
+            "e2e",
+            "architect-guard"
+          ],
+          "wave": 2
+        }
+      },
+      "review_roles": {
+        "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
+        "e2e-validator": "skills/momentum/agents/e2e-validator.md",
+        "architect-guard": "skills/momentum/skills/architecture-guard/SKILL.md"
+      },
+      "merge_hotspots": [
+        {
+          "path": "skills/momentum/skills/retro/workflow.md",
+          "stories": [
+            "retire-sprint-log-final-cleanup",
+            "retro-transcript-extraction-hardening",
+            "retro-team-singleton-guard",
+            "fix-retro-documenter-replication-defect"
+          ]
+        },
+        {
+          "path": "skills/momentum/scripts/momentum-tools.py",
+          "stories": [
+            "plugin-cache-staleness-detection",
+            "sprint-planning-adds-per-story-approval-gate"
+          ]
+        },
+        {
+          "path": "skills/momentum/skills/sprint-dev/workflow.md",
+          "stories": [
+            "harden-sprint-dev-phase5-spawn-prompts",
+            "sprint-planning-adds-per-story-approval-gate"
+          ]
+        }
+      ]
+    },
+    "started": "2026-04-28"
+  },
   "planning": null,
   "completed": [
     {
