@@ -44,6 +44,8 @@ derives_from:
     relationship: capability_extension
   - path: raw/verification-goose-recipes-integrations.md
     relationship: capability_extension
+  - path: raw/analysis-momentum-porting-difficulty.md
+    relationship: corrective_addendum
   - path: validation/avfl-report.md
     relationship: validated_by
 ---
@@ -387,6 +389,8 @@ A practice module that writes pure open-spec `SKILL.md` reaches ~38 products inc
 ## 6. Recommendations for Momentum
 
 > **Note:** §6 covers the skill-shaped emission layer (BMAD-pattern verbatim copy). After publishing the original synthesis, two additional research probes surfaced material extensions: **§9** documents BMAD-supported platforms that offer capabilities Momentum's current targets lack (Kiro's workflow-task hooks, Neovate's 23-event surface incl. system-prompt mutation, Antigravity's verification artifacts), and **§10** documents the Goose Recipes opportunity — no framework currently compiles practice workflows to Goose Recipes properly. The revised architectural recommendation is a **dual-emitter pattern** (skills + Recipes) detailed in §10.5.
+>
+> **CORRECTIVE ADDENDUM:** This section's "drop SKILL.md and you're done" framing is materially incomplete. See `raw/analysis-momentum-porting-difficulty.md` for the 10 gaps the synthesis under-covered (tool name translation, sub-agent / Task-tool semantics, plan mode, Skill tool invocation contract drift, permission model translation, hook payload shape, memory architecture, update flow, auth, UI primitives) and the honest 12-25 engineer-week effort estimate for thorough multi-target coverage. The §6 patterns below are correct; they're just necessary-not-sufficient.
 
 ### 6.1 Source-of-truth schema (minimal portable frontmatter)
 
@@ -753,6 +757,7 @@ This dual emitter would be a meaningful differentiation versus every other frame
 | Neovate plugins | `neovateai.dev/en/docs/plugins` | live, 2026-04-26 fetch | [verification-bmad-extra-platforms.md] |
 | Factory Droid hooks | `docs.factory.ai/reference/hooks-reference` | live, 2026-04-26 fetch | [verification-bmad-extra-platforms.md] |
 | spec-kit Goose YamlIntegration | `github/spec-kit` | `src/specify_cli/integrations/goose/__init__.py` | [verification-goose-recipes-integrations.md] |
+| Porting-difficulty addendum (10 gaps + effort estimate) | this corpus | 2026-04-27 | [analysis-momentum-porting-difficulty.md] |
 
 ### CITED — official docs URLs and [OFFICIAL]-tagged Wave 1 sources
 
