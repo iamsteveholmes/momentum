@@ -122,12 +122,30 @@ Cost is not optimized. The skill is explicit: it is for projects *"where you wan
 5. **Evaluator praising its own fixes** — *"the evaluator only critiques; the generator fixes."* [line 255]
 6. **Context exhaustion** — automatic compaction or context resets. [line 257]
 
+### 2.6.1 An additional failure mode the Anthropic paper names but ECC does not
+
+Anthropic's paper documents a more subtle calibration defect that the ECC SKILL.md does not enumerate. They observed that their evaluator *"identified legitimate issues, then talked itself into deciding they weren't a big deal and approve the work anyway"* — required explicit prompt tuning to prevent. [PRAC — Anthropic harness blog]
+
+This is distinct from "evaluator too lenient" (rubric too generous): here the evaluator correctly *finds* the issue, then *rationalizes it away*. The fix was few-shot calibration with detailed score breakdowns showing the evaluator how to *hold* its objection rather than retract it.
+
+This matters for any Momentum live-evaluator design (§7.1 Option A): Adversary calibration is not just "be skeptical" — it must include explicit prompts that prevent post-hoc rationalization of found issues. AVFL's existing Adversary framing in `references/framework.json` already encodes severity-honesty calibration, but the live-evaluator path would need its own variant.
+
 ### 2.7 The "evolution across model capabilities" claim
 
 > "Every harness component encodes an assumption about what the model can't do alone. When models improve, re-test those assumptions. Strip away what's no longer needed."
 > [OFFICIAL — SKILL.md lines 197–217]
 
-The Anthropic paper makes the same argument and reports they removed the sprint-contract step from their final harness once Opus 4.6 could handle multi-hour coherent builds without it. [PRAC — Anthropic harness blog]
+The Anthropic paper documents this principle with a concrete worked example. Their three-stage evolution: [PRAC — Anthropic harness blog]
+
+1. **Stage 1** — context-resets-with-handoffs to defeat "context anxiety" (Sonnet 4.5 wrapping up prematurely as it sensed context limits approaching).
+2. **Stage 2** — GAN-inspired Generator + Evaluator separation, motivated by the pathological-optimism finding.
+3. **Stage 3** — Planner + Generator + Evaluator with Playwright; planner avoids "granular technical details upfront" and focuses on deliverables.
+
+When **Opus 4.6** arrived, Anthropic systematically *removed* harness pieces. They removed the sprint-contract step entirely — the model could *"natively handle the job without this sort of decomposition."* They also moved the evaluator from per-sprint grading to a single end-of-run pass, finding evaluator utility had become task-dependent: unnecessary for tasks within baseline competence, still valuable at the edge.
+
+Their summary: *"The space of interesting harness combinations doesn't shrink as models improve. Instead, it moves."* [PRAC]
+
+For Momentum, this is a direct argument that **structural decisions (sprint state machine, sole-writer pattern, AVFL gates, Team Review phases) should be periodically re-tested against current models.** Some may be load-bearing today and unnecessary in six months. See §7.6 — scaffolding audit.
 
 ---
 
@@ -251,6 +269,10 @@ There is no judge. The dev agent is its own evaluator for runtime behavior. **Th
 
 **Cost of the gap:** every dev agent's "I ran the tests, looks good" is structurally a self-evaluation. When that self-evaluation fails, the failure is caught only post-merge by `qa-reviewer` and `e2e-validator`. Both are cheap to spawn but expensive to act on, because the offending change has already been integrated.
 
+**Anthropic's reinforcement of this gap.** The paper makes the case that pathological optimism is *not* limited to subjective tasks — it persists in verifiable software work too: *"Even on tasks that do have verifiable outcomes, agents still sometimes exhibit poor judgment that impedes their performance while completing the task."* [PRAC — Anthropic harness blog] In other words: the dev agent running tests doesn't immunize it from the same calibration defect AVFL was built to catch. This is independent confirmation that Gap 2 is a real defect, not a theoretical one — Anthropic's own engineering team observed it in their own runs and built a harness around it.
+
+Their concrete fix matched ECC's: separate evaluator agent. Their measured impact: *6-hour, $200 harness produced "functional, polished, playable game"; 20-minute, $9 solo agent produced "broken gameplay mechanics, poor UX."* [PRAC — Anthropic table] Same retro-game test, different harness, phase change in quality.
+
 ### 5.3 Gap 3 — No quantified convergence signal during dev
 
 AVFL has a numeric pass threshold (95) and severity-weighted scoring. `gan-style-harness` has a numeric pass threshold (7.0) and a 4-criterion weighted rubric. Both can answer "is this iteration better than the last one?" with a number.
@@ -263,9 +285,11 @@ The dev agent has neither. It signals merge-ready when it judges itself done. Th
 
 `gan-style-harness` defaults to Playwright MCP. Screenshot-only is a degraded mode; code-only is for non-UI work. [OFFICIAL — gan-style-harness/SKILL.md lines 237–243]
 
+Anthropic's paper is even more emphatic. They describe Playwright not as one option but as **the** evaluation channel: *"I gave the evaluator the Playwright MCP, which let it interact with the live page directly before scoring each criterion."* [PRAC — Anthropic harness blog] The bug class they describe ("rectangle fill tool only places tiles at drag start/end points instead of filling the region") is exactly the class only browser-driving can find — invisible in code review, obvious when you click. So both ECC and Anthropic land on Playwright as the default for live-app verification.
+
 Momentum's `e2e-validator` lists Playwright as one option among many. There is no project-default. [OFFICIAL — e2e-validator.md lines 60–67]
 
-For the existing `e2e-validator` use case (sprint-end black-box of skills/agents/hooks/scripts/code), tool-agnostic is **correct**. But if a per-story behavioral verifier is added (Gap 1), it would need a more opinionated default for web projects, because the current cmux + project-runner choreography is heavy enough that running it per-story per-iteration would be cost-prohibitive without explicit project setup.
+For the existing `e2e-validator` use case (sprint-end black-box of skills/agents/hooks/scripts/code), tool-agnostic is **correct**. But if a per-story behavioral verifier is added (Gap 1), it would need a more opinionated default for web projects, because the current cmux + project-runner choreography is heavy enough that running it per-story per-iteration would be cost-prohibitive without explicit project setup. Anthropic and ECC both arriving at Playwright as the default is an argument that Momentum's "tool-agnostic" stance for the per-story verifier would be a mistake — opinionated wins.
 
 ### 5.5 Gap 5 — Coverage decomposition is asymmetric
 
@@ -335,12 +359,12 @@ Momentum codifies "Specifications > Tests > Code. Agents never modify specificat
 
 Decide whether Momentum needs a per-story per-iteration "live evaluator" sub-agent inside dev — distinct from `e2e-validator`. Options:
 
-- **A. Adopt as new sub-agent.** Add a `live-evaluator` agent definition that the dev agent must spawn before signaling merge-ready, scoped to the story's `touches` files only. New convergence signal: weighted runtime score ≥ threshold. Cost: doubles dev-iteration token spend. Risk: drift between this and `e2e-validator`.
-- **B. Extend dev agent.** Mandate that dev's own loop include a Playwright/cmux check before merge-ready. No new agent. Producer-judge split is **not** preserved.
+- **A. Adopt as new sub-agent.** Add a `live-evaluator` agent definition that the dev agent must spawn before signaling merge-ready, scoped to the story's `touches` files only. New convergence signal: weighted runtime score ≥ threshold. Cost: doubles dev-iteration token spend. Risk: drift between this and `e2e-validator`. **Implementation must include**: (1) explicit anti-rationalization prompting (per §2.6.1 — evaluator must not "talk itself into approving" found issues); (2) few-shot calibration examples showing the evaluator how to *hold* objections; (3) Playwright MCP as the opinionated default for web projects (per Gap 4 and Anthropic's lead); (4) file-based feedback (`feedback-NNN.md` pattern), never inline (per AVFL's existing anti-pattern guidance and Anthropic's documented practice).
+- **B. Extend dev agent.** Mandate that dev's own loop include a Playwright/cmux check before merge-ready. No new agent. Producer-judge split is **not** preserved. **Anthropic's paper argues this option is wrong:** their explicit finding was that self-evaluation fails even with prompting because "agents are pathological optimists." Listing this option for completeness, but the empirical evidence weighs against it.
 - **C. Move `e2e-validator` earlier.** Run per-story before merge. Preserves split. Cost: per-story Phase-5-equivalent run, much more expensive.
-- **D. Reject — defer to "strip when models improve."** Argue current Opus does enough self-eval; revisit when failure rate justifies.
+- **D. Reject — defer to "strip when models improve."** Argue current Opus does enough self-eval; revisit when failure rate justifies. **Caveat:** Anthropic *kept* their Generator-Evaluator separation through the Opus 4.6 transition. They removed sprint contracts; they did not remove the evaluator. So "strip when models improve" is not, on Anthropic's evidence, an argument against producer-judge separation specifically — only against process-orchestration overhead.
 
-Decision should land before any story is written.
+Decision should land before any story is written. The Anthropic harness paper at https://www.anthropic.com/engineering/harness-design-long-running-apps is required reading for the decision-maker.
 
 ### 7.2 Intake-stub (high priority) — Cite Anthropic harness paper
 
@@ -415,7 +439,7 @@ Anthropic's "every harness component encodes an assumption" principle is not cur
 - GitHub API listing confirming the directory contains exactly one file: `SKILL.md`.
 
 **External research (PRAC):**
-- Anthropic, "Harness Design for Long-Running Application Development", Prithvi Rajasekaran, 2026-03-24. https://www.anthropic.com/engineering/harness-design-long-running-apps
+- Anthropic, "Harness Design for Long-Running Application Development", Prithvi Rajasekaran, 2026-03-24. https://www.anthropic.com/engineering/harness-design-long-running-apps — read directly 2026-04-28; reinforces Gaps 2 and 4, supplies §2.6.1's evaluator-rationalization failure mode, supplies §2.7's three-stage evolution narrative, supplies §5.4's Playwright-as-default reinforcement, and informs §7.1 Option B and Option D analysis.
 - ECC SKILL.md secondary references (not independently verified for this paper): Epsilla's GAN-Style Agent Loop deconstruction; Martin Fowler's Harness Engineering; OpenAI's Harness Engineering.
 
 **Prior Momentum analysis (OFFICIAL):**
