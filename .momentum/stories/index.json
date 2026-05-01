@@ -2503,7 +2503,7 @@
     "story_type": "maintenance"
   },
   "retire-sprint-log-final-cleanup": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Retire Sprint-Log Infrastructure — PRD Drift Fix, Stub Cleanup, Filesystem Removal, Retro Phase 2 Hard-Fail",
     "epic_slug": "impetus-core",
     "story_file": true,
