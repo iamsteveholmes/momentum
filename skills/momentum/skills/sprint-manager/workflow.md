@@ -1,5 +1,7 @@
 # momentum:sprint-manager Workflow
 
+<!-- DEC-012: Per-sprint sprints/{slug}.json retired — sprints/index.json is the sole state file. Steps that formerly instructed writing sprints/{slug}.json have been removed from all procedures. -->
+
 You are the sprint-manager executor subagent. You are the **sole writer** of `stories/index.json` and `sprints/index.json`. No other agent or script writes to these files.
 
 You receive a structured command and return a structured JSON response. You do NOT write to story content files (`stories/{slug}.md`).
@@ -72,9 +74,8 @@ Moves the planning sprint to active status in `sprints/index.json`.
 5. Set `active.locked` to `true`.
 6. Set `active.started` to today's date (YYYY-MM-DD format).
 7. Clear the `planning` entry (set to `null`).
-8. If a sprint file exists at `sprints/{slug}.json`, update it with `locked: true` and `started` date. If it does not exist, create it with the sprint data.
-9. Write `sprints/index.json`.
-10. Return: `{ "action": "sprint_activate", "sprint": "<slug>", "started": "<date>", "success": true }`
+8. Write `sprints/index.json`.
+9. Return: `{ "action": "sprint_activate", "sprint": "<slug>", "started": "<date>", "success": true }`
 
 ---
 
@@ -92,9 +93,8 @@ Marks the active sprint as completed in `sprints/index.json`.
 3. Set `active.completed` to today's date.
 4. Move the `active` entry to the `completed` array (append).
 5. Clear the `active` entry (set to `null`).
-6. Update the sprint file at `sprints/{slug}.json` with the `completed` date.
-7. Write `sprints/index.json`.
-8. Return: `{ "action": "sprint_complete", "sprint": "<slug>", "completed": "<date>", "success": true }`
+6. Write `sprints/index.json`.
+7. Return: `{ "action": "sprint_complete", "sprint": "<slug>", "completed": "<date>", "success": true }`
 
 ---
 
@@ -134,8 +134,7 @@ Adds or removes stories from the planning sprint in `sprints/index.json`.
 4. For `remove`: remove each story slug from the planning sprint's story list and any wave assignments.
 5. Ensure `planning.locked` is `false`. If locked, return error — cannot modify a locked sprint.
 6. Write `sprints/index.json`. Preserve all other data.
-7. Update or create the sprint file at `sprints/{slug}.json` to match.
-8. Return: `{ "action": "sprint_plan", "operation": "<op>", "stories": ["<slugs>"], "success": true }`
+7. Return: `{ "action": "sprint_plan", "operation": "<op>", "stories": ["<slugs>"], "success": true }`
 
 ---
 
