@@ -8,6 +8,8 @@ Tests for momentum-tools.py — state machine validation and sprint operations.
 Run: python3 test-momentum-tools.py
 """
 
+import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -1935,7 +1937,6 @@ def setup_feature_status_cache(project_dir: Path, frontmatter: dict, body: str =
 
 def compute_expected_hash(features_content: str, stories_content: str) -> str:
     """Compute expected SHA-256 hash matching the tool's logic."""
-    import hashlib
     combined = features_content + ":" + stories_content
     return hashlib.sha256(combined.encode()).hexdigest()
 
@@ -2456,9 +2457,9 @@ def test_plugin_cache_check_match():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.17.4"])
     _make_source_plugin_json(proj, "0.17.4")
-    env = {**__import__("os").environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
-    proc = __import__("subprocess").run(
-        [__import__("sys").executable, str(SCRIPT), "session", "plugin-cache-check"],
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2475,10 +2476,9 @@ def test_plugin_cache_check_cache_behind():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.17.0"])
     _make_source_plugin_json(proj, "0.18.0")
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2495,10 +2495,9 @@ def test_plugin_cache_check_cache_ahead():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.18.0"])
     _make_source_plugin_json(proj, "0.17.0")
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2516,10 +2515,9 @@ def test_plugin_cache_check_no_cache_dir():
     home.mkdir(parents=True, exist_ok=True)
     # No cache directory created
     _make_source_plugin_json(proj, "0.17.4")
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2535,10 +2533,9 @@ def test_plugin_cache_check_no_source():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.17.4"])
     # No source plugin.json created
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2557,10 +2554,9 @@ def test_plugin_cache_check_malformed_cache_json():
     vdir.mkdir(parents=True, exist_ok=True)
     (vdir / "plugin.json").write_text("NOT VALID JSON {{{")
     _make_source_plugin_json(proj, "0.17.4")
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2576,10 +2572,9 @@ def test_plugin_cache_check_malformed_source_json():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.17.4"])
     _make_source_plugin_json(proj, malformed=True)
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2595,10 +2590,9 @@ def test_plugin_cache_check_missing_version_field():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.17.4"])
     _make_source_plugin_json(proj, version=None)  # writes JSON with no version key
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2613,10 +2607,9 @@ def test_plugin_cache_check_multiple_cache_versions_highest_selected():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.16.0", "0.17.0", "0.17.1", "0.17.2"])
     _make_source_plugin_json(proj, "0.17.2")
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
@@ -2632,15 +2625,60 @@ def test_plugin_cache_check_exit_code_zero_on_skew():
     home = proj / "fake_home"
     _make_cache_dir(home, ["0.15.0"])
     _make_source_plugin_json(proj, "0.17.4")
-    import os, subprocess, sys as _sys
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
     proc = subprocess.run(
-        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        [sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
         capture_output=True, text=True, env=env
     )
     out = json.loads(proc.stdout)
     assert_eq("exit code 0 on skew-cache-behind", proc.returncode, 0)
     assert_eq("status is skew-cache-behind", out.get("status"), "skew-cache-behind")
+
+
+# --- _parse_semver unit tests (AVFL-019) ---
+
+def _import_parse_semver():
+    """Import _parse_semver from momentum-tools.py via importlib."""
+    spec = importlib.util.spec_from_file_location("momentum_tools", str(SCRIPT))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod._parse_semver
+
+
+def test_parse_semver_rc_sorts_before_release():
+    """RC pre-release must sort before its release counterpart (0.17.0-rc1 < 0.17.0)."""
+    print("\n[_parse_semver] RC sorts before release")
+    _parse_semver = _import_parse_semver()
+    rc1 = _parse_semver("0.17.0-rc1")
+    release = _parse_semver("0.17.0")
+    assert_eq("0.17.0-rc1 < 0.17.0", rc1 < release, True)
+
+
+def test_parse_semver_release_sorts_before_next():
+    """Release sorts before next patch (0.17.0 < 0.17.1)."""
+    print("\n[_parse_semver] release sorts before next patch")
+    _parse_semver = _import_parse_semver()
+    v0 = _parse_semver("0.17.0")
+    v1 = _parse_semver("0.17.1")
+    assert_eq("0.17.0 < 0.17.1", v0 < v1, True)
+
+
+def test_parse_semver_rc1_sorts_before_rc2():
+    """rc1 sorts before rc2 (0.17.0-rc1 < 0.17.0-rc2)."""
+    print("\n[_parse_semver] rc1 < rc2")
+    _parse_semver = _import_parse_semver()
+    rc1 = _parse_semver("0.17.0-rc1")
+    rc2 = _parse_semver("0.17.0-rc2")
+    assert_eq("0.17.0-rc1 < 0.17.0-rc2", rc1 < rc2, True)
+
+
+def test_parse_semver_standard_ordering():
+    """Standard version ordering preserved (0.16.0 < 0.17.0 < 0.17.1 < 0.18.0)."""
+    print("\n[_parse_semver] standard ordering")
+    _parse_semver = _import_parse_semver()
+    versions = ["0.16.0", "0.17.0", "0.17.1", "0.18.0"]
+    tuples = [_parse_semver(v) for v in versions]
+    assert_eq("standard ordering correct", tuples, sorted(tuples))
 
 
 # --- Story Approval Tests ---
@@ -2656,7 +2694,6 @@ def setup_story_file(project_dir: Path, slug: str, content: str) -> Path:
 
 def compute_file_sha(path: Path) -> str:
     """Compute SHA-256 of a file's contents (matching tool logic)."""
-    import hashlib
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
@@ -3208,6 +3245,12 @@ def main():
     test_plugin_cache_check_multiple_cache_versions_highest_selected()
     test_plugin_cache_check_exit_code_zero_on_skew()
 
+    # _parse_semver unit tests (AVFL-019)
+    test_parse_semver_rc_sorts_before_release()
+    test_parse_semver_release_sorts_before_next()
+    test_parse_semver_rc1_sorts_before_rc2()
+    test_parse_semver_standard_ordering()
+
     # Story approval tests (Task 1 / Task 6)
     test_story_approve_writes_approved_entry()
     test_story_approve_writes_rejected_entry()
@@ -3244,7 +3287,6 @@ def setup_story_file(project_dir: Path, slug: str, content: str) -> Path:
 
 def compute_file_sha(path: Path) -> str:
     """Compute SHA-256 of a file's contents (matching tool logic)."""
-    import hashlib
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 

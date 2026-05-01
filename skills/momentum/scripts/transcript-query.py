@@ -39,6 +39,7 @@ Error detection (AC #8):
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -71,31 +72,56 @@ def _get_jsonl_columns(con, path: str) -> set[str]:
 # Session discovery
 # ---------------------------------------------------------------------------
 
+def _encode_project_path(abs_path: str) -> str:
+    """Encode an absolute filesystem path to Claude Code's project directory name.
+
+    Claude Code encodes project paths by replacing every '/' with '-'.
+    For absolute paths starting with '/', this produces a leading '-'.
+    """
+    return abs_path.replace("/", "-")
+
+
+def _resolve_project_dir(abs_path: str, projects_dir: str) -> str | None:
+    """Resolve the ~/.claude/projects/ directory for a given absolute project path.
+
+    Tries the canonical encoding first. If that directory doesn't exist, falls back
+    to a suffix-match search in projects_dir. Returns the matched path if found, or
+    None if no directory exists for the given project path.
+    """
+    encoded = _encode_project_path(abs_path)
+    candidate = os.path.join(projects_dir, encoded)
+    if os.path.isdir(candidate):
+        return candidate
+    # Fallback: search for a directory whose name decodes back to the path suffix
+    if os.path.isdir(projects_dir):
+        for entry in os.listdir(projects_dir):
+            if abs_path.endswith(entry.replace("-", "/")):
+                full = os.path.join(projects_dir, entry)
+                if os.path.isdir(full):
+                    return full
+    return None
+
+
 def _project_base():
     """Infer Claude Code project directory from cwd."""
     cwd = os.getcwd()
-    # Claude Code encodes path as hyphen-joined path components
-    encoded = cwd.replace("/", "-")
-    base = os.path.expanduser(f"~/.claude/projects/{encoded}")
-    if os.path.isdir(base):
-        return base
-    # Fallback: search ~/.claude/projects/ for a directory that matches end of cwd
     projects_dir = os.path.expanduser("~/.claude/projects")
-    if os.path.isdir(projects_dir):
-        for entry in os.listdir(projects_dir):
-            if cwd.endswith(entry.replace("-", "/")):
-                candidate = os.path.join(projects_dir, entry)
-                if os.path.isdir(candidate):
-                    return candidate
-    return base  # Return best-guess even if not found
+    resolved = _resolve_project_dir(cwd, projects_dir)
+    if resolved:
+        return resolved
+    # Return best-guess even if not found (caller handles missing dir gracefully)
+    encoded = _encode_project_path(cwd)
+    return os.path.join(projects_dir, encoded)
 
 
 def _worktree_bases(cwd: str | None = None) -> list[str]:
     """Discover Claude Code project directories for all git worktrees.
 
     Shells out to `git worktree list --porcelain` and for each worktree path
-    computes the Claude Code project encoding (path.replace('/', '-')).
-    Returns the list of ~/.claude/projects/<encoded>/ directories that exist.
+    resolves the Claude Code project directory using the same encoding logic as
+    _project_base (via _resolve_project_dir). Emits a stderr warning for any
+    worktree path whose encoded directory does not exist under ~/.claude/projects/.
+    Returns the list of directories that actually exist.
     Falls back to [] when not in a git repo or git is unavailable.
     """
     if cwd is None:
@@ -119,10 +145,17 @@ def _worktree_bases(cwd: str | None = None) -> list[str]:
     for line in result.stdout.splitlines():
         if line.startswith("worktree "):
             wt_path = line[len("worktree "):].strip()
-            encoded = wt_path.replace("/", "-")
-            candidate = os.path.join(projects_dir, encoded)
-            if os.path.isdir(candidate):
-                bases.append(candidate)
+            resolved = _resolve_project_dir(wt_path, projects_dir)
+            if resolved:
+                bases.append(resolved)
+            else:
+                encoded = _encode_project_path(wt_path)
+                print(
+                    f"_worktree_bases: no Claude Code project directory found for worktree '{wt_path}' "
+                    f"(tried encoded name: '{encoded}' under {projects_dir}). "
+                    "Sessions from this worktree will be skipped.",
+                    file=sys.stderr,
+                )
     return bases
 
 
@@ -226,35 +259,65 @@ def read_json_fragment(paths: list[str]) -> str:
 # Slug-based session filtering (Task 5)
 # ---------------------------------------------------------------------------
 
+_SLUG_RE = re.compile(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$')
+
+
 def _filter_sessions_by_slugs(con, session_paths: list[str], slugs: list[str]) -> list[str]:
     """Filter sessions to those that mention any of the given slugs.
 
-    For each session file, runs a DuckDB probe query to check if any message
-    content contains one of the supplied slugs. Returns filtered list.
+    For each session file, runs a DuckDB probe query using parameterized LIKE
+    conditions to check if any message content contains one of the supplied slugs.
+    Returns filtered list.
     Logs pre/post counts to stderr.
+
+    Raises ValueError if any slug fails shape validation (^[a-z0-9][a-z0-9-]*[a-z0-9]$).
     """
     if not slugs or not session_paths:
         return session_paths
 
+    # Validate slug shape at the boundary before any SQL is constructed
+    for slug in slugs:
+        if not _SLUG_RE.match(slug):
+            raise ValueError(
+                f"Invalid slug '{slug}': slugs must match ^[a-z0-9][a-z0-9-]*[a-z0-9]$ — "
+                "check your --story-slugs argument"
+            )
+
     pre_count = len(session_paths)
     kept = []
+    error_count = 0
     for path in session_paths:
-        slug_conditions = " OR ".join(
-            f"message.content::VARCHAR LIKE '%{slug}%'" for slug in slugs
+        # Build parameterized LIKE conditions: one placeholder per slug
+        placeholders = " OR ".join(
+            "message.content::VARCHAR LIKE ?" for _ in slugs
         )
         probe_sql = f"""
             SELECT 1
             FROM read_json('{path}', {READ_JSON_OPTS})
-            WHERE {slug_conditions}
+            WHERE {placeholders}
             LIMIT 1
         """
+        params = [f"%{slug}%" for slug in slugs]
         try:
-            row = con.sql(probe_sql).fetchone()
+            row = con.execute(probe_sql, params).fetchone()
             if row is not None:
                 kept.append(path)
-        except Exception:
+        except Exception as exc:
+            error_count += 1
+            print(
+                f"Slug filter: probe error for {path} (slugs: {slugs}): {exc}",
+                file=sys.stderr,
+            )
             # On error, keep the session (err on the side of inclusion)
             kept.append(path)
+
+    if error_count > 0:
+        threshold = max(1, pre_count // 4)  # 25% failure threshold
+        if error_count >= threshold:
+            raise RuntimeError(
+                f"Slug filter: {error_count}/{pre_count} probe queries failed "
+                f"(threshold: {threshold}). Session filter is unreliable — aborting."
+            )
 
     post_count = len(kept)
     if post_count < pre_count:

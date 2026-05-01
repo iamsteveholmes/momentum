@@ -1372,20 +1372,60 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
 # --- Plugin Cache Staleness Check ---
 
 def _parse_semver(version_str: str) -> tuple:
-    """Parse a version string into a comparable tuple.
+    """Parse a version string into a comparable tuple with correct pre-release ordering.
 
-    Splits on '.' and converts numeric components to int. Non-numeric components
-    are left as strings so they sort after their numeric counterparts.
+    Handles standard MAJOR.MINOR.PATCH versions and pre-release suffixes of the form
+    MAJOR.MINOR.PATCH-rcN (e.g. "0.17.0-rc1").
 
-    Returns a tuple suitable for comparison, e.g. "0.17.2" -> (0, 17, 2).
+    Pre-release versions sort BEFORE their release counterpart per semver convention:
+      0.17.0-rc1 < 0.17.0 < 0.17.1
+
+    Non-conforming version strings (not MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-rcN)
+    are parsed on a best-effort basis with a stderr note, and pre-release suffixes
+    are sorted after their numeric counterparts (legacy behaviour for unknown formats).
+
+    Returns a 4-tuple (major, minor, patch, pre) where:
+      pre = (0, rc_number) for pre-release versions (sorts before release)
+      pre = (1, 0)         for release versions (sorts after pre-release)
+      pre = (2, suffix)    for unrecognised non-numeric suffixes (sorts last)
     """
-    parts = []
-    for part in version_str.split("."):
-        try:
-            parts.append((0, int(part)))  # (0, int) sorts before (1, str)
-        except ValueError:
-            parts.append((1, part))
-    return tuple(parts)
+    import re as _re
+    _SEMVER_RE = _re.compile(
+        r'^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-(?P<pre>.+))?$'
+    )
+    m = _SEMVER_RE.match(version_str)
+    if m:
+        major = int(m.group("major"))
+        minor = int(m.group("minor"))
+        patch = int(m.group("patch"))
+        pre_str = m.group("pre")
+        if pre_str is None:
+            # Release version: sorts after any pre-release of the same M.M.P
+            pre = (1, 0)
+        else:
+            rc_m = _re.match(r'^rc(\d+)$', pre_str)
+            if rc_m:
+                # RC pre-release: sorts before the release (pre-tag = 0)
+                pre = (0, int(rc_m.group(1)))
+            else:
+                # Unknown pre-release tag: sort after release as a string
+                pre = (2, pre_str)
+        return (major, minor, patch, pre)
+    else:
+        # Non-conforming version string — fall back to component-wise parse with a note
+        import sys as _sys
+        print(
+            f"_parse_semver: non-standard version '{version_str}' — "
+            "sorting may be unreliable for pre-release comparisons",
+            file=_sys.stderr,
+        )
+        parts = []
+        for part in version_str.split("."):
+            try:
+                parts.append((0, int(part)))
+            except ValueError:
+                parts.append((1, part))
+        return tuple(parts)
 
 
 def cmd_session_plugin_cache_check(args: argparse.Namespace) -> None:
