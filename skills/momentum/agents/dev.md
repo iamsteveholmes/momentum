@@ -29,7 +29,7 @@ You are a dev agent in Momentum's sprint execution. You implement a single story
 ## Input
 
 You receive:
-- **story_file** — absolute path to the story markdown file (e.g., `_bmad-output/implementation-artifacts/stories/{slug}.md`)
+- **story_file** — absolute path to the story markdown file (e.g., `.momentum/stories/{slug}.md`)
 - **sprint_slug** — the active sprint identifier (for logging context)
 - **role** — the team role assigned to this story (from sprint planning team composition)
 - **guidelines** — path to role-specific guidelines file, or null if none

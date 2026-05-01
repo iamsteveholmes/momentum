@@ -45,7 +45,7 @@ You receive:
 ### 1. Load Sprint Context
 
 - Read the sprint record from `sprints/index.json`
-- For each story in the sprint, read the story file from `_bmad-output/implementation-artifacts/stories/`
+- For each story in the sprint, read the story file from `.momentum/stories/`
 - Extract all Acceptance Criteria from each story
 - Note the `change_type` and `touches` fields — scope your review accordingly
 

@@ -2398,7 +2398,7 @@ def test_sprints_path_resolves_to_momentum():
     import json as _json
     new_path.write_text(_json.dumps({
         "active": None,
-        "planning": {"slug": "test-sprint", "locked": False, "stories": ["test-story"]},
+        "planning": {"slug": "test-sprint", "locked": False, "stories": [], "approvals": []},
         "completed": []
     }, indent=2) + "\n")
     code, out = run_tool(proj, "sprint", "activate")
@@ -3234,8 +3234,8 @@ def main():
 # --- Story Approval Tests ---
 
 def setup_story_file(project_dir: Path, slug: str, content: str) -> Path:
-    """Create a story file in _bmad-output/implementation-artifacts/stories/<slug>.md."""
-    stories_dir = project_dir / "_bmad-output" / "implementation-artifacts" / "stories"
+    """Create a story file in .momentum/stories/<slug>.md."""
+    stories_dir = project_dir / ".momentum" / "stories"
     stories_dir.mkdir(parents=True, exist_ok=True)
     story_path = stories_dir / f"{slug}.md"
     story_path.write_text(content)
@@ -3400,7 +3400,7 @@ def test_verify_approvals_all_approved():
     sha = compute_file_sha(story_path)
 
     # Set up the approval entry manually
-    sprints_file = proj / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
     data = json.loads(sprints_file.read_text())
     data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
                                        "approved_at": "2026-04-30T00:00:00Z",
@@ -3475,7 +3475,7 @@ def test_verify_approvals_active_scope():
     real_sha = compute_file_sha(story_path)
 
     # Update approval to have the real SHA
-    sprints_file = proj / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
     data = json.loads(sprints_file.read_text())
     data["active"]["approvals"][0]["story_file_sha"] = real_sha
     sprints_file.write_text(json.dumps(data, indent=2) + "\n")
@@ -3545,7 +3545,7 @@ def test_activate_succeeds_all_approved():
     sha = compute_file_sha(story_path)
 
     # Write approval with correct SHA
-    sprints_file = proj / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
     data = json.loads(sprints_file.read_text())
     data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
                                        "approved_at": "2026-04-30T00:00:00Z",
@@ -3576,7 +3576,7 @@ def test_activate_approvals_carried_to_active():
     story_path = setup_story_file(proj, slug, "# Content\n")
     sha = compute_file_sha(story_path)
 
-    sprints_file = proj / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
     data = json.loads(sprints_file.read_text())
     data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
                                        "approved_at": "2026-04-30T12:00:00Z",
