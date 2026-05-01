@@ -1219,7 +1219,7 @@
     "story_type": "defect"
   },
   "fix-retro-documenter-replication-defect": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Fix retro documenter replication defect (AC4 regression)",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1320,7 +1320,7 @@
     "priority": "low"
   },
   "harden-sprint-dev-phase5-spawn-prompts": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Harden sprint-dev Phase 5 spawn prompts (systemic)",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
@@ -2010,7 +2010,7 @@
     "feature_slug": "momentum-quality-gates-enforced"
   },
   "plugin-cache-staleness-detection": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Impetus Session-Start Staleness Check — Detect Plugin Cache Skew and Prompt Update+Restart",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2503,7 +2503,7 @@
     "story_type": "maintenance"
   },
   "retire-sprint-log-final-cleanup": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Retire Sprint-Log Infrastructure — PRD Drift Fix, Stub Cleanup, Filesystem Removal, Retro Phase 2 Hard-Fail",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2529,11 +2529,12 @@
     "priority": "medium"
   },
   "retro-extract-preflight-validation": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Retro Extract Preflight Validation — Hard-Fail on Missing Sprint-Log Directory and Zero Sprint-Story Matches",
     "epic_slug": "impetus-core",
     "depends_on": [],
-    "priority": "critical"
+    "priority": "critical",
+    "notes": "Dropped per ARCH-5 — sprint-logs retired; superseded by retire-sprint-log-final-cleanup."
   },
   "retro-fixture-documenter-no-replication-without-verification": {
     "status": "backlog",
@@ -2596,7 +2597,7 @@
     "priority": "low"
   },
   "retro-team-singleton-guard": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Retro Team Singleton Guard — Enforce Exactly-One Spawning for Documenter and Auditor Roles",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2609,7 +2610,7 @@
     "priority": "critical"
   },
   "retro-transcript-extraction-hardening": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Retro Transcript Extraction Hardening — Worktree Path Resolution and UTC Boundary Fix",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2926,11 +2927,12 @@
     "priority": "low"
   },
   "sprint-log-directory-enforcement": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Sprint Log Directory Enforcement — Create sprint-logs/{{sprint_slug}}/ in Sprint-Planning Preflight",
     "epic_slug": "impetus-core",
     "depends_on": [],
-    "priority": "critical"
+    "priority": "critical",
+    "notes": "Dropped per ARCH-5 — sprint-logs retired; superseded by retire-sprint-log-final-cleanup."
   },
   "sprint-manager-fixture-exclusive-write-authority": {
     "status": "backlog",
@@ -2963,7 +2965,7 @@
     "priority": "low"
   },
   "sprint-planning-adds-per-story-approval-gate": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Sprint-planning adds per-story approval gate",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,

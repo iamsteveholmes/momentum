@@ -1,7 +1,7 @@
 ---
 title: Sprint-planning adds per-story approval gate
 story_key: sprint-planning-adds-per-story-approval-gate
-status: ready-for-dev
+status: done
 epic_slug: sprint-dev-workflow
 feature_slug:
 story_type: practice
@@ -63,34 +63,34 @@ Sprint-dev ran before the developer had approved the individual story specs. The
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Add `story-approve` and `verify-approvals` subcommands to `momentum-tools.py`** (AC 3, 6, 9)
-  - [ ] Subtask 1.1: Add `cmd_sprint_story_approve(args)` — accepts `--slug`, `--decision {approved|rejected}`, computes `story_file_sha` from `{implementation_artifacts}/stories/{slug}.md`, writes/replaces an entry in `sprints["planning"]["approvals"]` in `.momentum/sprints/index.json` (initialize array if absent). Errors if no planning sprint exists or if the slug is not in `planning["stories"]`.
-  - [ ] Subtask 1.2: Add `cmd_sprint_verify_approvals(args)` — reads `sprints["active"]` (or `planning` when invoked with `--scope planning`), confirms every story in `stories` has an `approvals` entry with `decision=="approved"` and a current-matching `story_file_sha`. Returns structured success/failure with the offending slugs.
-  - [ ] Subtask 1.3: Update `cmd_sprint_activate` — call the verify logic before promoting `planning` → `active`. If verification fails, `error_result("sprint_activate", "Stories missing approval: {slugs}", missing=...)` and exit non-zero.
-  - [ ] Subtask 1.4: Wire both subcommands into the argparse subcommand router at the bottom of `momentum-tools.py`.
+- [x] **Task 1: Add `story-approve` and `verify-approvals` subcommands to `momentum-tools.py`** (AC 3, 6, 9)
+  - [x] Subtask 1.1: Add `cmd_sprint_story_approve(args)` — accepts `--slug`, `--decision {approved|rejected}`, computes `story_file_sha` from `{implementation_artifacts}/stories/{slug}.md`, writes/replaces an entry in `sprints["planning"]["approvals"]` in `.momentum/sprints/index.json` (initialize array if absent). Errors if no planning sprint exists or if the slug is not in `planning["stories"]`.
+  - [x] Subtask 1.2: Add `cmd_sprint_verify_approvals(args)` — reads `sprints["active"]` (or `planning` when invoked with `--scope planning`), confirms every story in `stories` has an `approvals` entry with `decision=="approved"` and a current-matching `story_file_sha`. Returns structured success/failure with the offending slugs.
+  - [x] Subtask 1.3: Update `cmd_sprint_activate` — call the verify logic before promoting `planning` → `active`. If verification fails, `error_result("sprint_activate", "Stories missing approval: {slugs}", missing=...)` and exit non-zero.
+  - [x] Subtask 1.4: Wire both subcommands into the argparse subcommand router at the bottom of `momentum-tools.py`.
 
-- [ ] **Task 2: Update sprint-planning Step 3 to open viewer, prompt per-story, and persist approval** (AC 1, 2, 3, 4, 5)
-  - [ ] Subtask 2.1: After each story is confirmed/fleshed-out, run `cmux markdown open {{implementation_artifacts}}/stories/{{story_slug}}.md --title "Sprint Story Spec — {{story_slug}} — Review & Approve"` before the approval prompt.
-  - [ ] Subtask 2.2: Replace the existing two-option `Approve, or revise?` prompt with a three-option prompt: `A — Approve | R — Revise | J — Reject (remove from sprint)`.
-  - [ ] Subtask 2.3: On Approve: run `momentum-tools sprint story-approve --slug {{story_slug}} --decision approved`.
-  - [ ] Subtask 2.4: On Revise: re-spawn momentum:create-story with feedback; re-open the viewer with the title `"Sprint Story Spec — {{story_slug}} — Revised — Review & Approve"`; re-present the prompt. Loop until the developer chooses A or J.
-  - [ ] Subtask 2.5: On Reject: run `momentum-tools sprint plan --operation remove --stories {{story_slug}}` then `momentum-tools sprint story-approve --slug {{story_slug}} --decision rejected`; re-validate the 2–8 story bound; if the remaining selection is below 2, HALT with an explanatory message.
+- [x] **Task 2: Update sprint-planning Step 3 to open viewer, prompt per-story, and persist approval** (AC 1, 2, 3, 4, 5)
+  - [x] Subtask 2.1: After each story is confirmed/fleshed-out, run `cmux markdown open {{implementation_artifacts}}/stories/{{story_slug}}.md --title "Sprint Story Spec — {{story_slug}} — Review & Approve"` before the approval prompt.
+  - [x] Subtask 2.2: Replace the existing two-option `Approve, or revise?` prompt with a three-option prompt: `A — Approve | R — Revise | J — Reject (remove from sprint)`.
+  - [x] Subtask 2.3: On Approve: run `momentum-tools sprint story-approve --slug {{story_slug}} --decision approved`.
+  - [x] Subtask 2.4: On Revise: re-spawn momentum:create-story with feedback; re-open the viewer with the title `"Sprint Story Spec — {{story_slug}} — Revised — Review & Approve"`; re-present the prompt. Loop until the developer chooses A or J.
+  - [x] Subtask 2.5: On Reject: run `momentum-tools sprint plan --operation remove --stories {{story_slug}}` then `momentum-tools sprint story-approve --slug {{story_slug}} --decision rejected`; re-validate the 2–8 story bound; if the remaining selection is below 2, HALT with an explanatory message.
 
-- [ ] **Task 3: Update sprint-planning Step 8 (Activate) to rely on the activation-time check** (AC 6)
-  - [ ] Subtask 3.1: Verify the `momentum-tools sprint activate` call now performs the approval verification (see Task 1.3) — no extra workflow logic needed beyond surfacing a clear error message if activation fails. Add an explicit `<check>` after `momentum-tools sprint activate` that surfaces the missing-approvals error and HALTs the workflow rather than proceeding.
+- [x] **Task 3: Update sprint-planning Step 8 (Activate) to rely on the activation-time check** (AC 6)
+  - [x] Subtask 3.1: Verify the `momentum-tools sprint activate` call now performs the approval verification (see Task 1.3) — no extra workflow logic needed beyond surfacing a clear error message if activation fails. Add an explicit `<check>` after `momentum-tools sprint activate` that surfaces the missing-approvals error and HALTs the workflow rather than proceeding.
 
-- [ ] **Task 4: Update sprint-dev Phase 1 to verify approvals before transitioning any story** (AC 7, 10)
-  - [ ] Subtask 4.1: After reading the per-sprint record in sprint-dev step n=1, run `momentum-tools sprint verify-approvals --scope active`.
-  - [ ] Subtask 4.2: If verification fails, output the error with the offending slugs and HALT before any in-progress transitions or worktree creation. The HALT message must direct the developer back to sprint-planning.
-  - [ ] Subtask 4.3: Confirm the `approvals` array is part of the per-sprint structure read at the top of Phase 1 (it carries over from `planning` to `active` per Task 1.3 and AC 8) — adjust the read to capture it if needed.
+- [x] **Task 4: Update sprint-dev Phase 1 to verify approvals before transitioning any story** (AC 7, 10)
+  - [x] Subtask 4.1: After reading the per-sprint record in sprint-dev step n=1, run `momentum-tools sprint verify-approvals --scope active`.
+  - [x] Subtask 4.2: If verification fails, output the error with the offending slugs and HALT before any in-progress transitions or worktree creation. The HALT message must direct the developer back to sprint-planning.
+  - [x] Subtask 4.3: Confirm the `approvals` array is part of the per-sprint structure read at the top of Phase 1 (it carries over from `planning` to `active` per Task 1.3 and AC 8) — adjust the read to capture it if needed.
 
-- [ ] **Task 5: Behavioral evals for the workflow change**
-  - [ ] Subtask 5.1: Create `skills/momentum/skills/sprint-planning/evals/eval-blocks-activation-without-per-story-approval.md` — given a planning sprint with two stories where only one has an approval record, the workflow must NOT activate the sprint and must surface the missing-approval slug.
-  - [ ] Subtask 5.2: Create `skills/momentum/skills/sprint-planning/evals/eval-revision-invalidates-prior-approval.md` — given a story already approved, when the developer chooses Revise and the file SHA changes, activation must require a fresh approval against the new SHA.
-  - [ ] Subtask 5.3: Create `skills/momentum/skills/sprint-dev/evals/eval-halts-without-active-sprint-approvals.md` — given an active sprint where the on-disk SHA of one story file no longer matches its approval record, sprint-dev Phase 1 must HALT before any in-progress transition.
+- [x] **Task 5: Behavioral evals for the workflow change**
+  - [x] Subtask 5.1: Create `skills/momentum/skills/sprint-planning/evals/eval-blocks-activation-without-per-story-approval.md` — given a planning sprint with two stories where only one has an approval record, the workflow must NOT activate the sprint and must surface the missing-approval slug.
+  - [x] Subtask 5.2: Create `skills/momentum/skills/sprint-planning/evals/eval-revision-invalidates-prior-approval.md` — given a story already approved, when the developer chooses Revise and the file SHA changes, activation must require a fresh approval against the new SHA.
+  - [x] Subtask 5.3: Create `skills/momentum/skills/sprint-dev/evals/eval-halts-without-active-sprint-approvals.md` — given an active sprint where the on-disk SHA of one story file no longer matches its approval record, sprint-dev Phase 1 must HALT before any in-progress transition.
 
-- [ ] **Task 6: Tests for the new momentum-tools subcommands**
-  - [ ] Subtask 6.1: Add unit-style tests in `skills/momentum/scripts/test-momentum-tools.py` (matching the existing patterns there) covering: approve writes the entry; reject writes a rejection entry; activate fails when an approval is missing; activate fails when SHA mismatches; activate succeeds when all approved with matching SHAs; verify-approvals returns offending slugs.
+- [x] **Task 6: Tests for the new momentum-tools subcommands**
+  - [x] Subtask 6.1: Add unit-style tests in `skills/momentum/scripts/test-momentum-tools.py` (matching the existing patterns there) covering: approve writes the entry; reject writes a rejection entry; activate fails when an approval is missing; activate fails when SHA mismatches; activate succeeds when all approved with matching SHAs; verify-approvals returns offending slugs.
 
 ## Dev Notes
 
@@ -217,12 +217,32 @@ Gherkin specs exist for this sprint at `sprints/{sprint-slug}/specs/` and are of
 
 ## Dev Agent Record
 
-_DRAFT — this section is populated by the dev agent during and after implementation._
-
 ### Agent Model Used
+
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- Worktree path differs from main: uses `_bmad-output/implementation-artifacts/` not `.momentum/` (migration commit b1bee30 is not in worktree ancestry). `_compute_story_sha` targets worktree path.
+- `test_sprint_activate` and `test_sprint_activate_sets_status_active` broke after adding approval gate. Fixed by changing both to use `"stories": [], "approvals": []`.
+- `import hashlib` moved to top-level imports during REFACTOR phase for consistency.
+
 ### Completion Notes List
 
+- All 6 tasks implemented (Tasks 1–6 inclusive).
+- Task 1 (TDD): RED confirmed (argparse unknown subcommand). GREEN: 15 new tests + 2 fixed existing tests = 465 passing, 0 failing. REFACTOR: moved `import hashlib` to top-level.
+- Tasks 2–3 (EDD): sprint-planning workflow.md Step 3 replaced with cmux-viewer + A/R/J gate + `momentum-tools sprint story-approve` calls. Step 8 adds `<check>` for missing-approvals error from `sprint activate`.
+- Task 4 (EDD): sprint-dev workflow.md Phase 1 adds `verify-approvals --scope active` call after `locked` check; HALT on non-zero.
+- Task 5 (EDD): 3 behavioral evals created (sprint-planning x2, sprint-dev x1).
+- Task 6 covered within Task 1 (tests written before implementation).
+- AC 8 (approvals survive activation): confirmed by design — `cmd_sprint_activate` moves `planning` dict (including `approvals`) to `active`; test `test_activate_approvals_carried_to_active` verifies.
+
 ### File List
+
+- `skills/momentum/scripts/momentum-tools.py` — added `_compute_story_sha`, `_verify_approvals`, `cmd_sprint_story_approve`, `cmd_sprint_verify_approvals`; modified `cmd_sprint_activate`; added argparse wiring; moved `import hashlib` to top level
+- `skills/momentum/scripts/test-momentum-tools.py` — added 15 approval tests; fixed 2 existing activate tests
+- `skills/momentum/skills/sprint-planning/workflow.md` — Step 3 rewritten with cmux viewer + A/R/J gate; Step 8 extended with missing-approvals HALT
+- `skills/momentum/skills/sprint-dev/workflow.md` — Phase 1 step n=1 extended with verify-approvals gate
+- `skills/momentum/skills/sprint-planning/evals/eval-blocks-activation-without-per-story-approval.md` — new
+- `skills/momentum/skills/sprint-planning/evals/eval-revision-invalidates-prior-approval.md` — new
+- `skills/momentum/skills/sprint-dev/evals/eval-halts-without-active-sprint-approvals.md` — new
