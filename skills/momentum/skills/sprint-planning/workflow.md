@@ -269,7 +269,9 @@ Proceeding to flesh out story stubs.</output>
 
     <!-- Per-story review and approval gate — repeats until approved or rejected -->
     <action>Open the story in a cmux markdown viewer (BLOCKING — do not proceed until developer responds):
-      `cmux markdown open .momentum/stories/{{story_slug}}.md --title "Story Review — {{story_slug}}"`</action>
+      `cmux markdown open .momentum/stories/{{story_slug}}.md`
+      Capture the surface ref from the output, then:
+      `cmux rename-tab --surface <captured-surface-ref> "Story Review — {{story_slug}}"`</action>
 
     <output>Story {{story_slug}} is open in the right pane. Review it fully before responding.
 
@@ -289,7 +291,9 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
       <ask>Describe the revisions needed:</ask>
       <action>Re-spawn `momentum:create-story` with the developer's revision feedback</action>
       <action>Re-open the revised story in cmux:
-        `cmux markdown open .momentum/stories/{{story_slug}}.md --title "Story Review (Revised) — {{story_slug}}"`</action>
+        `cmux markdown open .momentum/stories/{{story_slug}}.md`
+        Capture the surface ref from the output, then:
+        `cmux rename-tab --surface <captured-surface-ref> "Story Review (Revised) — {{story_slug}}"`</action>
       <action>Re-present the A/R/J approval prompt. Repeat until the developer selects A or J.</action>
     </check>
 
