@@ -25,6 +25,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import date, datetime, timezone
@@ -130,6 +131,119 @@ def cmd_status_transition(args: argparse.Namespace) -> None:
     result("status_transition", success=True, story=slug, **{"from": current, "to": target})
 
 
+def _compute_story_sha(project_dir: Path, slug: str) -> str | None:
+    """Compute SHA-256 of the story file for the given slug.
+
+    Returns the hex digest string, or None if the file does not exist.
+    """
+    story_file = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / f"{slug}.md"
+    if not story_file.exists():
+        return None
+    return hashlib.sha256(story_file.read_bytes()).hexdigest()
+
+
+def _verify_approvals(project_dir: Path, sprint: dict) -> list[str]:
+    """Check that every story in sprint has an approved entry with a matching SHA.
+
+    Returns a list of story slugs that fail verification (missing or SHA mismatch).
+    An empty list means all stories are approved.
+    """
+    stories = sprint.get("stories", [])
+    approvals = sprint.get("approvals", [])
+
+    # Build a lookup: slug -> approval entry
+    approval_map = {a["story_slug"]: a for a in approvals if "story_slug" in a}
+
+    missing = []
+    for slug in stories:
+        entry = approval_map.get(slug)
+        if entry is None or entry.get("decision") != "approved":
+            missing.append(slug)
+            continue
+        # Check SHA
+        current_sha = _compute_story_sha(project_dir, slug)
+        if current_sha is None or current_sha != entry.get("story_file_sha"):
+            missing.append(slug)
+
+    return missing
+
+
+def cmd_sprint_story_approve(args: argparse.Namespace) -> None:
+    """Record a per-story approval or rejection in planning.approvals."""
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    if not sprints.get("planning"):
+        error_result("sprint_story_approve", "No planning sprint exists")
+
+    planning = sprints["planning"]
+    slug = args.slug
+    decision = args.decision
+
+    if slug not in planning.get("stories", []):
+        error_result("sprint_story_approve",
+                     f"Story '{slug}' is not in the planning sprint's stories list",
+                     story=slug)
+
+    # Compute SHA
+    story_sha = _compute_story_sha(project_dir, slug)
+    if story_sha is None:
+        # For rejected decisions, SHA may not matter — but we'll record None
+        story_sha = ""
+
+    # Build the new entry
+    approved_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    new_entry = {
+        "story_slug": slug,
+        "decision": decision,
+        "approved_at": approved_at,
+        "story_file_sha": story_sha,
+    }
+
+    # Initialize approvals array if absent
+    if "approvals" not in planning:
+        planning["approvals"] = []
+
+    # Replace existing entry for this slug, or append
+    existing = planning["approvals"]
+    replaced = False
+    for i, entry in enumerate(existing):
+        if entry.get("story_slug") == slug:
+            existing[i] = new_entry
+            replaced = True
+            break
+    if not replaced:
+        existing.append(new_entry)
+
+    write_json(path, sprints)
+    result("sprint_story_approve", success=True, story=slug, decision=decision,
+           story_file_sha=story_sha, approved_at=approved_at, replaced=replaced)
+
+
+def cmd_sprint_verify_approvals(args: argparse.Namespace) -> None:
+    """Verify that all stories in a sprint have matching approved entries."""
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    scope = args.scope  # "planning" or "active"
+    sprint = sprints.get(scope)
+    if not sprint:
+        error_result("sprint_verify_approvals",
+                     f"No {scope} sprint exists",
+                     scope=scope)
+
+    missing = _verify_approvals(project_dir, sprint)
+    if missing:
+        error_result("sprint_verify_approvals",
+                     f"Stories missing approval: {', '.join(missing)}",
+                     scope=scope,
+                     missing=missing)
+
+    result("sprint_verify_approvals", success=True, scope=scope, missing=[])
+
+
 def cmd_sprint_activate(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
     path = sprints_path(project_dir)
@@ -141,6 +255,14 @@ def cmd_sprint_activate(args: argparse.Namespace) -> None:
         error_result("sprint_activate", "An active sprint already exists. Complete it first.")
 
     planning = sprints["planning"]
+
+    # Approval verification gate (AC 6)
+    missing = _verify_approvals(project_dir, planning)
+    if missing:
+        error_result("sprint_activate",
+                     f"Stories missing approval: {', '.join(missing)}",
+                     missing=missing)
+
     planning["locked"] = True
     planning["started"] = date.today().isoformat()
     planning["status"] = "active"
@@ -1962,6 +2084,19 @@ def build_parser() -> argparse.ArgumentParser:
     sta.add_argument("--feature-slug", default="", help="Feature slug this story belongs to (optional)")
     sta.add_argument("--story-type", default="feature", help="Story type: feature, maintenance, defect, exploration, practice (default: feature)")
     sta.set_defaults(func=cmd_story_add)
+
+    # sprint story-approve
+    ssa = sprint_sub.add_parser("story-approve", help="Record per-story approval or rejection in planning.approvals")
+    ssa.add_argument("--slug", required=True, help="Story slug to approve or reject")
+    ssa.add_argument("--decision", required=True, choices=["approved", "rejected"],
+                     help="Approval decision: approved or rejected")
+    ssa.set_defaults(func=cmd_sprint_story_approve)
+
+    # sprint verify-approvals
+    sva = sprint_sub.add_parser("verify-approvals", help="Verify all stories have current approved entries")
+    sva.add_argument("--scope", required=True, choices=["planning", "active"],
+                     help="Sprint scope to verify: planning or active")
+    sva.set_defaults(func=cmd_sprint_verify_approvals)
 
     # sprint stories
     ss = sprint_sub.add_parser("stories", help="Query stories by priority")

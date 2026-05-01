@@ -255,23 +255,9 @@ Proceeding to flesh out story stubs.</output>
     <action>Update task 2 (Story selection) to completed</action>
   </step>
 
-  <step n="3" goal="Flesh out stories">
+  <step n="3" goal="Flesh out stories and record per-story approval">
     <action>Update task 3 (Flesh out stories) to in_progress</action>
     <action>For each story in {{selected_stories}}, check `story_file` field in stories/index.json</action>
-
-    <check if="story_file is true AND full story content exists">
-      <action>Read the story file at `{implementation_artifacts}/stories/{{story_slug}}.md`</action>
-      <output>Story {{story_slug}} already has a full story file. Surfacing for review:
-
-[story title, acceptance criteria summary, dev notes summary]
-
-Approve this story as-is, or request revisions?</output>
-      <ask>Approve, or revise?</ask>
-      <check if="developer requests revisions">
-        <action>Note the revision request and spawn `momentum:create-story` with the developer's feedback</action>
-        <action>Present the revised story for approval</action>
-      </check>
-    </check>
 
     <check if="story_file is false OR story content is a stub">
       <action>Spawn `momentum:create-story` to flesh out the story stub into a full story with:
@@ -279,20 +265,47 @@ Approve this story as-is, or request revisions?</output>
         · Dev notes
         · Tasks breakdown
       </action>
-      <action>Present the fleshed-out story to the developer</action>
-      <output>Story {{story_slug}} fleshed out:
+    </check>
 
-[story title, acceptance criteria summary, dev notes summary]
+    <!-- Per-story review and approval gate — repeats until approved or rejected -->
+    <action>Open the story in a cmux markdown viewer (BLOCKING — do not proceed until developer responds):
+      `cmux markdown open {implementation_artifacts}/stories/{{story_slug}}.md --title "Story Review — {{story_slug}}"`</action>
 
-Approve, or request revisions?</output>
-      <ask>Approve this story, or revise?</ask>
-      <check if="developer rejects and requests revisions">
-        <action>Re-spawn `momentum:create-story` with the developer's feedback</action>
-        <action>Present the revised story for approval again</action>
+    <output>Story {{story_slug}} is open in the right pane. Review it fully before responding.
+
+This is a BLOCKING GATE — the sprint cannot activate until every story is explicitly approved.
+
+  A — Approve this story as written
+  R — Request revisions (re-run create-story with your feedback)
+  J — Reject this story (remove from sprint)</output>
+    <ask>Your decision [A/R/J]:</ask>
+
+    <check if="developer selects A (Approve)">
+      <action>Record approval: `momentum-tools sprint story-approve --slug {{story_slug}} --decision approved`</action>
+      <output>✓ {{story_slug}} approved and recorded.</output>
+    </check>
+
+    <check if="developer selects R (Revise)">
+      <ask>Describe the revisions needed:</ask>
+      <action>Re-spawn `momentum:create-story` with the developer's revision feedback</action>
+      <action>Re-open the revised story in cmux:
+        `cmux markdown open {implementation_artifacts}/stories/{{story_slug}}.md --title "Story Review (Revised) — {{story_slug}}"`</action>
+      <action>Re-present the A/R/J approval prompt. Repeat until the developer selects A or J.</action>
+    </check>
+
+    <check if="developer selects J (Reject)">
+      <action>Record rejection: `momentum-tools sprint story-approve --slug {{story_slug}} --decision rejected`</action>
+      <action>Remove story from sprint: `momentum-tools sprint plan --operation remove --stories {{story_slug}}`</action>
+      <output>✗ {{story_slug}} rejected and removed from sprint.</output>
+      <check if="removing this story drops sprint below 2 stories">
+        <output>! Sprint now has fewer than 2 stories. You must add a replacement before proceeding.</output>
+        <action>Return to Step 2 to allow the developer to add replacement stories</action>
       </check>
     </check>
 
-    <action>After all stories are approved:</action>
+    <action>Repeat the review gate for each remaining story in {{selected_stories}}.</action>
+
+    <action>After all stories have been approved:</action>
     <output>All {{count}} stories approved. Proceeding to Gherkin spec generation.</output>
     <action>Update task 3 (Flesh out stories) to completed</action>
   </step>
@@ -772,6 +785,16 @@ AVFL: {{avfl_result}}
 
     <action>Activate the sprint:
       `momentum-tools sprint activate`</action>
+
+    <check if="activate exits non-zero with missing approvals error">
+      <output>✗ Sprint activation blocked — the following stories are missing a current approved entry:
+
+  {{for each missing slug: · {{slug}}}}
+
+Each story must be approved (or re-approved if the file changed since last approval).
+Return to Step 3 to review and approve each listed story, then retry activation.</output>
+      <action>HALT — resolve all missing approvals before retrying `momentum-tools sprint activate`</action>
+    </check>
 
     <output>✓ Sprint {{sprint_slug}} activated.
 

@@ -148,6 +148,17 @@
       <action>HALT — return to Impetus session menu.</action>
     </check>
 
+    <!-- Approval gate: every story must have a current approved entry (AC 7) -->
+    <action>Run: `momentum-tools sprint verify-approvals --scope active`</action>
+    <check if="verify-approvals exits non-zero">
+      <output>✗ Sprint approval gate failed — the following stories are missing a current approved entry or were modified after approval:
+
+  {{for each missing slug from the `missing` field in the error output: · {{slug}}}}
+
+Re-run sprint planning (Step 3) to approve or re-approve each listed story, then re-activate the sprint before continuing.</output>
+      <action>HALT — return to Impetus session menu.</action>
+    </check>
+
     <action>Store {{sprint_stories}} = `stories` array from {{sprint_record}}</action>
 
     <action>Read `.momentum/stories/index.json`</action>
