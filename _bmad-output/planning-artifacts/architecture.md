@@ -2134,12 +2134,12 @@ Output directory: `.momentum/sprints/{sprint-slug}/audit-extracts/`
 `transcript-query.py` is standard retro tooling resolved dynamically (highest-semver plugin-cache glob, in-repo fallback), supporting both pre-built queries and ad-hoc SQL via `transcript-query.py sql "..."`. The peek-first convention (run `wc -l` before reading any file, read in 500-line chunks for files over 200 lines, never full-Read known-large files) applies to all auditor and spec-impact-discovery agents reading extract files or planning artifacts.
 
 **Wave 2: Auditor Team (3 auditors + 1 documenter)**
-Spawn 4 agents in parallel via TeamCreate:
+Shape A topology (Decision 41; fix-retro-documenter-replication-defect): spawn the documenter alone first via TeamCreate(cardinality=1) into team `retro-{sprint-slug}`, then fan out 3 individual Agent spawns that join the same team:
 
-- **auditor-human** — reads `user-messages.jsonl`. Identifies corrections, redirections, frustration signals, praise/approval, and decision points.
-- **auditor-execution** — reads `agent-summaries.jsonl` + `errors.jsonl`. Investigates duplication patterns, error recovery, tool usage efficiency, and story iteration counts via ad-hoc `transcript-query.py` queries.
-- **auditor-review** — reads `team-messages.jsonl` + agent summaries filtered to review roles. Evaluates quality gate effectiveness, fix cycle productivity, and inter-agent coordination quality.
-- **documenter** — receives findings from all 3 auditors via SendMessage. Builds the findings document. Owns it exclusively. After all auditors report, performs cross-cutting synthesis pass.
+- **documenter** — spawned first via TeamCreate(cardinality=1). Receives findings from all 3 auditors via SendMessage. Builds the findings document. Owns it exclusively. After all auditors report, performs cross-cutting synthesis pass.
+- **auditor-human** — individual Agent spawn joining team `retro-{sprint-slug}`. Reads `user-messages.jsonl`. Identifies corrections, redirections, frustration signals, praise/approval, and decision points.
+- **auditor-execution** — individual Agent spawn joining team `retro-{sprint-slug}`. Reads `agent-summaries.jsonl` + `errors.jsonl`. Investigates duplication patterns, error recovery, tool usage efficiency, and story iteration counts via ad-hoc `transcript-query.py` queries.
+- **auditor-review** — individual Agent spawn joining team `retro-{sprint-slug}`. Reads `team-messages.jsonl` + agent summaries filtered to review roles. Evaluates quality gate effectiveness, fix cycle productivity, and inter-agent coordination quality.
 
 Output: `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md` — replaces the previous dual triage output. Structure: Executive Summary, What Worked Well, What Struggled, User Interventions, Story-by-Story Analysis, Cross-Cutting Patterns, Metrics, Priority Action Items. Each finding includes: what happened, evidence, root cause, recommendation (fix/keep/investigate).
 

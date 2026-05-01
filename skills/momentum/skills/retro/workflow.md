@@ -13,12 +13,12 @@
   <critical>Story stubs require developer approval before being written to stories/index.json. Write stub entries directly to stories/index.json (no momentum-tools command exists for this operation).</critical>
   <critical>Transcript audit (Phases 2-3) is the primary data source. Milestone logs are NOT the critical path — retro proceeds and produces findings even when zero log events exist.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
-  <critical>Phase 4 auditor team: exactly 1 documenter (singleton coordinator, spawned first as a single Agent) and exactly 3 auditors (individual Agent fan-out, each given the documenter handle for SendMessage). The documenter is NEVER placed in the same TeamCreate group as the auditors — that topology causes single-call replication (Decision 41; spawning-patterns.md Fan-Out vs TeamCreate decision rule).</critical>
+  <critical>Phase 4 auditor team: exactly 1 documenter (singleton coordinator, spawned first via TeamCreate with cardinality=1 into team `retro-{{sprint_slug}}`) and exactly 3 auditors (individual Agent fan-out, each joining the same team via team_name so they can SendMessage to the documenter). The documenter is NEVER placed in the same TeamCreate group as the auditors — that topology causes single-call replication (Decision 41; spawning-patterns.md Fan-Out vs TeamCreate decision rule). Shape A: TeamCreate(documenter, cardinality=1) → 3 individual Agent spawns joining same team.</critical>
 
   <team-composition>
     <phase name="auditor-team" step="4">
-      <role name="documenter" spawning="individual" concurrency="sequential" cardinality="1">
-        Singleton coordinator. Spawned first as a single Agent before auditors. Receives findings from all auditors via SendMessage. Evaluates, requests clarification, synthesizes. Owns retro-transcript-audit.md exclusively.
+      <role name="documenter" spawning="teamcreate" concurrency="sequential" cardinality="1">
+        Singleton coordinator. Spawned first via TeamCreate(cardinality=1) into team `retro-{{sprint_slug}}` before auditors. Receives findings from all auditors via SendMessage. Evaluates, requests clarification, synthesizes. Owns retro-transcript-audit.md exclusively.
       </role>
       <role name="auditor-human" spawning="individual" concurrency="parallel">
         Reads user-messages.jsonl. Sends findings to documenter via SendMessage using the documenter handle passed at spawn. Responds to documenter queries.
@@ -114,6 +114,7 @@ Which sprint should we retrospect?</output>
       [ -z "$TRANSCRIPT_QUERY" ] && [ -f skills/momentum/scripts/transcript-query.py ] \
         && TRANSCRIPT_QUERY=skills/momentum/scripts/transcript-query.py
       ```
+      Store {{transcript_query_path}} = $TRANSCRIPT_QUERY
       Log the resolved path: "Using transcript-query.py at: {{transcript_query_path}}"
     </action>
 
@@ -164,7 +165,7 @@ Which sprint should we retrospect?</output>
       ```
     </action>
 
-    <check if="all 4 extracts written successfully">
+    <check if="all 4 extracts written successfully AND at least one session file was discovered">
       <action>Count lines in each extract file:
         {{user_msg_count}} = line count of user-messages.jsonl
         {{agent_count}} = line count of agent-summaries.jsonl
@@ -270,8 +271,9 @@ For each of these, choose:
     eliminating the replication defect.</note>
 
     <action>Step 4a — Spawn the documenter singleton (cardinality=1):
-    In a single Agent spawn, create exactly 1 documenter. Do NOT use TeamCreate here — a single
-    Agent spawn is used so the documenter is never multiplexed.
+    Use TeamCreate to create a team named `retro-{{sprint_slug}}` with exactly 1 member (the
+    documenter, cardinality=1). TeamCreate with cardinality=1 ensures exactly one documenter
+    instance and produces the team config that the singleton guard reads.
 
       **documenter** — System prompt:
       ```

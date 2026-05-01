@@ -2,9 +2,10 @@
 
 ## Scenario
 
-Given a retro for `sprint-2026-04-20` where Phase 4 has called TeamCreate with team name
-`retro-sprint-2026-04-20`, and the team config file at
-`~/.claude/teams/retro-sprint-2026-04-20/config.json` exists and contains:
+Given a retro for `sprint-2026-04-20` where Phase 4 has used Shape A topology: TeamCreate
+with cardinality=1 produced the documenter into team `retro-sprint-2026-04-20`, then 3
+individual Agent spawns joined the same team (auditor-human, auditor-execution, auditor-review).
+The team config file at `~/.claude/teams/retro-sprint-2026-04-20/config.json` exists and contains:
 
 ```json
 {

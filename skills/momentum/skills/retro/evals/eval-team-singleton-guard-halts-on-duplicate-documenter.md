@@ -2,8 +2,8 @@
 
 ## Scenario
 
-Given a retro for `sprint-2026-04-08` where Phase 4 has called TeamCreate with team name
-`retro-sprint-2026-04-08`, and the team config file at
+Given a retro for `sprint-2026-04-08` where Phase 4 used TeamCreate without cardinality=1
+(Shape A misconfiguration) for team `retro-sprint-2026-04-08`, and the team config file at
 `~/.claude/teams/retro-sprint-2026-04-08/config.json` exists and contains:
 
 ```json
@@ -21,8 +21,9 @@ Given a retro for `sprint-2026-04-08` where Phase 4 has called TeamCreate with t
 }
 ```
 
-(8 total members: 5 documenters + 3 auditors — the replication defect pattern observed in
-sprint-2026-04-08.)
+(8 total members: 5 documenters + 3 auditors — the replication defect pattern the Shape A
+topology prevents by requiring TeamCreate with cardinality=1. The guard must catch this
+regardless of how the duplicate documenters arose.)
 
 The singleton guard step runs immediately after the spawn block and before the wait loop.
 
