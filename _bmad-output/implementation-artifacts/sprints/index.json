@@ -1137,6 +1137,11 @@
       "story": "feature-breakdown-skill",
       "started": "2026-04-18",
       "completed": "2026-04-18"
+    },
+    {
+      "slug": "quickfix-2026-04-30",
+      "story": "fix-per-sprint-json-contract-drift",
+      "started": "2026-04-30"
     }
   ]
 }

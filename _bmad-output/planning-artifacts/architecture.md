@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-28'
+lastEdited: '2026-04-30'
 editHistory:
+  - date: '2026-04-30'
+    changes: 'Retired `.momentum/sprints/{slug}.json` per-sprint state file per DEC-012 (story fix-per-sprint-json-contract-drift) — sprint state consolidated to holistic `.momentum/sprints/index.json` (`active`, `planning`, `completed[]`, `quickfixes[]` sections) as the sole canonical source. Updated three sections: Read/Write Authority table (`momentum-tools sprint` row no longer lists per-sprint file as a write target), Protection Boundaries list (per-sprint file entry removed — no longer a protected path because it is no longer written), Sprint Tracking Schema (`.momentum/sprints/` folder description rewritten to describe one canonical state file plus per-sprint subdirectories for specs/sprint-summary/retro/audit-extracts; per-sprint folder structure tree preserved unchanged). DEC-012 clarifies DEC-011 D3 at the state-model level (D3 specified canvas-read scope only).'
   - date: '2026-04-28'
     changes: 'Sprint-2026-04-27 spec impact: State relocation to .momentum/ closes DEC-011 Gate G1 (impetus-momentum-state-migration). Added .momentum/ State Layout top-level section (single-source-of-truth invariant, hidden-prefix rationale, per-sprint subtree, signals/ ledger pattern with read-only contract). Updated all path references in Read/Write Authority table, Session-open sequence, Sprint Tracking Schema, and Installed Structure tree from `_bmad-output/implementation-artifacts/{sprints,stories,intake-queue.jsonl}` to `.momentum/` paths; planning carve-out: features.json stays under _bmad-output/planning-artifacts/. Added per-story approval contract — `approvals: []` on sprint records with story_file_sha (SHA-256), activation gate against current-matching SHAs (sprint-planning-adds-per-story-approval-gate). Added sprint-dev pre-execution verification gate (Phase 1 verify-approvals subcommand). Extended CMUX Markdown Surfaces integration to sprint-planning per-story approval viewer. Added Impetus session-start preflight component — plugin-cache-vs-source version-skew detector with status taxonomy (match/skew-cache-behind/skew-cache-ahead/no-cache/no-source/indeterminate) and `momentum-tools session plugin-cache-check` CLI; one explicit exception to never-narrate-the-reads rule (plugin-cache-staleness-detection). Added Orchestrator Behavioral Guards pattern with retro Phase 4 singleton-count guard as canonical example (retro-team-singleton-guard). Codified Decision 34 defense-in-depth: agent-definition Critical Constraints must be self-sufficient — QA Reviewer + E2E Validator parity contract for Phase 5 reviewer spawns (harden-sprint-dev-phase5-spawn-prompts). Added Decision 41 retro Phase 4 row (documenter as singleton coordinator distinct from auditor fan-out). Refined Decision 34 BLOCKED-vs-MISSING semantics — BLOCKED for missing infrastructure, MISSING reserved for execution-succeeded-without-AC-evidence; both reviewers follow .claude/rules/e2e-validation.md Environment Startup. Extended Decision 27 Wave 1 with dynamic transcript-query.py path resolution, worktree session discovery, UTC end-of-day inclusivity, --story-slugs filter, and explicit hard-fail on zero session matches. Promoted peek-first / 500-line-chunk convention to documented architectural convention under Cross-Cutting Concerns. Added one-line note that retire-sprint-log-final-cleanup story closes the ARCH-5 sprint-log historical cleanup.'
   - date: '2026-04-26'
@@ -1317,7 +1319,7 @@ momentum/                                    ← Plugin root
 | Component | Reads | Writes |
 |---|---|---|
 | Impetus | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/signals/*.json`, journal.jsonl, specs, findings-ledger.jsonl, gate-findings.txt | journal.jsonl, journal-view.md |
-| momentum-tools sprint | `.momentum/stories/index.json`, `.momentum/sprints/index.json` | `.momentum/stories/index.json` (status fields), `.momentum/sprints/index.json`, `.momentum/sprints/{slug}.json` (sole writer) |
+| momentum-tools sprint | `.momentum/stories/index.json`, `.momentum/sprints/index.json` | `.momentum/stories/index.json` (status fields), `.momentum/sprints/index.json` (sole writer; per-sprint `.momentum/sprints/{slug}.json` retired per DEC-012) |
 | momentum-tools quickfix | `.momentum/sprints/index.json` | `.momentum/sprints/index.json` (register: adds quick-fix entry; complete: marks done) |
 | momentum:dev | Story files, code | Code in worktree only; structured JSON completion output |
 | momentum:create-story | `.momentum/stories/index.json`, epics.md | Story files in `.momentum/stories/` |
@@ -1344,7 +1346,7 @@ momentum/                                    ← Plugin root
 - `.claude/rules/` — enforcement rule integrity
 - `~/.claude/momentum/findings-ledger.jsonl` — Ledger integrity (authority-enforced; global path is outside project PreToolUse scope)
 - `.momentum/sprints/{sprint-slug}/specs/` — Gherkin spec integrity (Decision 30: dev agents must never write to this path; only sprint-planning writes, only verifiers read)
-- `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/sprints/{slug}.json` — sole writer is `momentum-tools.py sprint`. Direct edits by any other agent are blocked.
+- `.momentum/stories/index.json`, `.momentum/sprints/index.json` — sole writer is `momentum-tools.py sprint`. Direct edits by any other agent are blocked. (Per-sprint `.momentum/sprints/{slug}.json` retired per DEC-012 — no longer a protected path because it is no longer written.)
 - `.momentum/intake-queue.jsonl` — append-only via `momentum-tools intake-queue`. Direct edits blocked.
 - `.momentum/signals/` — read-only ledger pattern. Writers go through skill-defined paths (e.g., retro/triage/avfl signal writers); manual edits blocked.
 
@@ -1523,7 +1525,7 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 <!-- REVISED Phase 3: Added team composition, dependencies, and specs directory to sprint record schema per Decisions 25, 26, 29, 30. -->
 
-**`.momentum/sprints/` folder** — one file per sprint (`.momentum/sprints/{slug}.json`). Contains: name, slug, stories list, locked flag, started/completed dates, team composition, dependency graph, wave plan, and per-story approvals (see Per-story approval contract below). One specs directory per sprint (`.momentum/sprints/{slug}/specs/`) for Gherkin feature files. One sprint summary per sprint (`.momentum/sprints/{slug}/sprint-summary.md`) written by the retro orchestrator at Phase 6 close (Decision 47).
+**`.momentum/sprints/` folder** — one canonical state file (`.momentum/sprints/index.json`) holds all sprint state in sectioned blocks (`active`, `planning`, `completed[]`, `quickfixes[]`); see the schema description below. Per DEC-012, no per-sprint JSON file is written — the per-slug `.momentum/sprints/{slug}.json` pattern is retired in favor of the holistic index. Per-sprint **subdirectories** (`.momentum/sprints/{slug}/`) remain — one per sprint — and hold sprint-scoped artifacts: `specs/` (Gherkin feature files), `sprint-summary.md` (Decision 47, written by the retro orchestrator at Phase 6 close), `retro-transcript-audit.md` (Decision 27), and `audit-extracts/` (DuckDB preprocessing output). The subdirectory structure is shown below.
 
 **Per-sprint folder structure (under `.momentum/sprints/{sprint-slug}/`):**
 

@@ -3398,5 +3398,18 @@
     ],
     "priority": "critical",
     "story_type": "maintenance"
+  },
+  "fix-per-sprint-json-contract-drift": {
+    "status": "ready-for-dev",
+    "title": "Fix per-sprint JSON contract drift in sprint-dev and sprint-manager workflows",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/sprint-manager/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "defect"
   }
 }
