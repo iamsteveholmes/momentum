@@ -395,7 +395,12 @@ Proceeding to spec impact analysis.</output>
     <action>Spawn two parallel discovery subagents:
 
     **Architecture discovery agent:**
-      Read `{planning_artifacts}/architecture.md` and all approved story files.
+      Large-file protocol (mandatory — apply before reading any large file):
+        1. Run `wc -l` on architecture.md first. For files over 200 lines, read in 500-line
+           chunks via Read offset/limit. Never attempt a full Read on architecture.md,
+           prd.md, or stories/index.json. If a Read fails with a token-limit error, do not
+           retry the same read — use Grep to find the specific section, then read that section.
+      Read `{planning_artifacts}/architecture.md` (using the large-file protocol above) and all approved story files.
       For each story, identify:
         · New architecture decisions introduced (patterns, protocols, storage, deployment)
         · Changes to existing decisions (modified constraints, new options)
@@ -403,7 +408,12 @@ Proceeding to spec impact analysis.</output>
       Return a structured list: [{story_slug, decision_type, summary, section_affected}]
 
     **PRD discovery agent:**
-      Read `{planning_artifacts}/prd.md` and all approved story files.
+      Large-file protocol (mandatory — apply before reading any large file):
+        1. Run `wc -l` on prd.md first. For files over 200 lines, read in 500-line chunks
+           via Read offset/limit. Never attempt a full Read on prd.md, architecture.md,
+           or stories/index.json. If a Read fails with a token-limit error, do not retry
+           the same read — use Grep to find the specific section, then read that section.
+      Read `{planning_artifacts}/prd.md` (using the large-file protocol above) and all approved story files.
       For each story, identify:
         · New functional requirements (capabilities not covered by existing FRs)
         · Modifications to existing FRs (changed behavior, new constraints)
@@ -436,14 +446,18 @@ Updating specs now.</output>
       <action>Spawn two parallel update subagents:
 
       **Architecture update agent:**
-        Read `{planning_artifacts}/architecture.md`.
+        Large-file protocol: Run `wc -l` on architecture.md first. Read in 500-line chunks
+        via Read offset/limit for files over 200 lines. Never attempt a full Read.
+        Read `{planning_artifacts}/architecture.md` (chunked).
         Apply each architecture impact item:
           · NEW decisions: add to the appropriate section following existing format
           · MODIFIED decisions: update the existing section in place
         Write the updated file. Follow existing document style and conventions.
 
       **PRD update agent:**
-        Read `{planning_artifacts}/prd.md`.
+        Large-file protocol: Run `wc -l` on prd.md first. Read in 500-line chunks
+        via Read offset/limit for files over 200 lines. Never attempt a full Read.
+        Read `{planning_artifacts}/prd.md` (chunked).
         Apply each PRD impact item:
           · NEW FRs: assign next available FR number, add to appropriate section
           · MODIFIED FRs: update existing FR text in place

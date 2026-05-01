@@ -3,7 +3,7 @@ title: Retro Transcript Extraction Hardening — Worktree Path Resolution and UT
 story_key: retro-transcript-extraction-hardening
 story_type: practice
 priority: critical
-status: ready-for-dev
+status: review
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -16,7 +16,7 @@ touches:
 
 # Retro Transcript Extraction Hardening — Worktree Path Resolution and UTC Boundary Fix
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -52,27 +52,27 @@ The retro transcript extraction pipeline (Decision 27) is the sole evidence sour
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Worktree discovery in `transcript-query.py`** (AC: #1, #7, #8) — *change-type: script-code*
-  - [ ] 1.1 Inspect current `_project_base()` (lines 73–89) and `discover_sessions()` (lines 92–120). Document existing behavior in dev notes.
-  - [ ] 1.2 Add a `_worktree_bases(cwd)` helper: shells out `git worktree list --porcelain` (when inside a git repo); for each worktree path, computes the Claude Code project encoding (`path.replace('/', '-')`); returns the list of `~/.claude/projects/<encoded>/` directories that exist on disk. Fall back to `[]` when not in a git repo.
-  - [ ] 1.3 Update `discover_sessions(base, ...)` signature to accept either a single base or a list of bases. When called from `main()`, pass `[primary_base, *_worktree_bases(cwd)]`, deduplicated. Sort the merged session list by mtime then path for stable ordering.
-  - [ ] 1.4 Update `discover_subagent_files()` to walk subagent directories under each base session-id directory it finds.
-  - [ ] 1.5 Echo all resolved bases to stderr at startup (`Found N session(s) across M base(s): ...`).
+- [x] **Task 1 — Worktree discovery in `transcript-query.py`** (AC: #1, #7, #8) — *change-type: script-code*
+  - [x] 1.1 Inspect current `_project_base()` (lines 73–89) and `discover_sessions()` (lines 92–120). Document existing behavior in dev notes.
+  - [x] 1.2 Add a `_worktree_bases(cwd)` helper: shells out `git worktree list --porcelain` (when inside a git repo); for each worktree path, computes the Claude Code project encoding (`path.replace('/', '-')`); returns the list of `~/.claude/projects/<encoded>/` directories that exist on disk. Fall back to `[]` when not in a git repo.
+  - [x] 1.3 Update `discover_sessions(base, ...)` signature to accept either a single base or a list of bases. When called from `main()`, pass `[primary_base, *_worktree_bases(cwd)]`, deduplicated. Sort the merged session list by mtime then path for stable ordering.
+  - [x] 1.4 Update `discover_subagent_files()` to walk subagent directories under each base session-id directory it finds.
+  - [x] 1.5 Echo all resolved bases to stderr at startup (`Found N session(s) across M base(s): ...`).
 
-- [ ] **Task 2 — UTC day-boundary semantics** (AC: #2, #7) — *change-type: script-code*
-  - [ ] 2.1 In `discover_sessions()`, change `before_dt` resolution from `datetime.fromisoformat(before).replace(tzinfo=timezone.utc)` (which evaluates to `00:00:00Z`) to `datetime.fromisoformat(before).replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=timezone.utc)` so the comparison `mtime <= before_dt` includes the full final UTC day.
-  - [ ] 2.2 Confirm `after_dt` already evaluates to `00:00:00Z` of the after day (it does — keep behavior). Add a docstring note clarifying inclusivity at both ends.
-  - [ ] 2.3 Add a unit test fixture: two synthetic JSONL files with mtimes set via `os.utime` to `23:55:00Z` on day N and `00:05:00Z` on day N+1, asserting both are included when `--after N --before N` (boundary inclusivity for the closing day).
+- [x] **Task 2 — UTC day-boundary semantics** (AC: #2, #7) — *change-type: script-code*
+  - [x] 2.1 In `discover_sessions()`, change `before_dt` resolution from `datetime.fromisoformat(before).replace(tzinfo=timezone.utc)` (which evaluates to `00:00:00Z`) to `datetime.fromisoformat(before).replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=timezone.utc)` so the comparison `mtime <= before_dt` includes the full final UTC day.
+  - [x] 2.2 Confirm `after_dt` already evaluates to `00:00:00Z` of the after day (it does — keep behavior). Add a docstring note clarifying inclusivity at both ends.
+  - [x] 2.3 Add a unit test fixture: two synthetic JSONL files with mtimes set via `os.utime` to `23:55:00Z` on day N and `00:05:00Z` on day N+1, asserting both are included when `--after N --before N` (boundary inclusivity for the closing day).
 
-- [ ] **Task 3 — JSON serialization audit** (AC: #3, #7) — *change-type: script-code*
-  - [ ] 3.1 Search `transcript-query.py` for any `repr(`, `str(`, or f-string interpolation that emits Python data into JSONL lines. The current `emit_result()` already uses `json.dumps()` for `--format json` (line 460); confirm no path emits raw `str()` of a dict/list to a file or stdout when format is `json`.
-  - [ ] 3.2 Inspect `query_agent_summary()` lines 321–328: `output_text = "\n".join(json.dumps(r) for r in results)` is correct. Confirm. Add an assertion in tests that every emitted line `json.loads()` cleanly.
-  - [ ] 3.3 If any emit path uses `str()` or `repr()` for a JSON-shaped value, replace with `json.dumps(value, default=str)` (the `default=str` falls back to string for non-JSON-native types like `datetime`).
-  - [ ] 3.4 Add a regression test that runs each pre-built query against a fixture JSONL file, captures stdout/output file, and asserts every output line round-trips through `json.loads`.
+- [x] **Task 3 — JSON serialization audit** (AC: #3, #7) — *change-type: script-code*
+  - [x] 3.1 Search `transcript-query.py` for any `repr(`, `str(`, or f-string interpolation that emits Python data into JSONL lines. The current `emit_result()` already uses `json.dumps()` for `--format json` (line 460); confirm no path emits raw `str()` of a dict/list to a file or stdout when format is `json`.
+  - [x] 3.2 Inspect `query_agent_summary()` lines 321–328: `output_text = "\n".join(json.dumps(r) for r in results)` is correct. Confirm. Add an assertion in tests that every emitted line `json.loads()` cleanly.
+  - [x] 3.3 If any emit path uses `str()` or `repr()` for a JSON-shaped value, replace with `json.dumps(value, default=str)` (the `default=str` falls back to string for non-JSON-native types like `datetime`).
+  - [x] 3.4 Add a regression test that runs each pre-built query against a fixture JSONL file, captures stdout/output file, and asserts every output line round-trips through `json.loads`.
 
-- [ ] **Task 4 — Canonical dynamic script path resolution in retro workflow** (AC: #4, #8) — *change-type: skill-instruction*
-  - [ ] 4.1 In `skills/momentum/skills/retro/workflow.md` Phase 2 (`<step n="2">`), replace each occurrence of the bare relative path `skills/momentum/scripts/transcript-query.py` (lines 115, 124, 133, 142, plus the prose at line 104 and any other reference) with a resolved variable `{{transcript_query_path}}`.
-  - [ ] 4.2 Add a sub-step at the start of Phase 2 that resolves `{{transcript_query_path}}` via shell:
+- [x] **Task 4 — Canonical dynamic script path resolution in retro workflow** (AC: #4, #8) — *change-type: skill-instruction*
+  - [x] 4.1 In `skills/momentum/skills/retro/workflow.md` Phase 2 (`<step n="2">`), replace each occurrence of the bare relative path `skills/momentum/scripts/transcript-query.py` (lines 115, 124, 133, 142, plus the prose at line 104 and any other reference) with a resolved variable `{{transcript_query_path}}`.
+  - [x] 4.2 Add a sub-step at the start of Phase 2 that resolves `{{transcript_query_path}}` via shell:
     ```
     TRANSCRIPT_QUERY=$(ls -d ~/.claude/plugins/cache/momentum/momentum/*/scripts/transcript-query.py 2>/dev/null \
       | sort -V | tail -n1)
@@ -80,33 +80,33 @@ The retro transcript extraction pipeline (Decision 27) is the sole evidence sour
       && TRANSCRIPT_QUERY=skills/momentum/scripts/transcript-query.py
     ```
     Echo the resolved path to the orchestrator output before running extractions.
-  - [ ] 4.3 Confirm: when running inside `/Users/steve/projects/momentum/` itself, the dev-mode fallback kicks in and the in-repo script is used; in any downstream project, the highest-versioned plugin-cache copy is used.
-  - [ ] 4.4 Update the `<note>` block at the top of Phase 2 (lines 104–106) to reflect the dynamic path convention.
+  - [x] 4.3 Confirm: when running inside `/Users/steve/projects/momentum/` itself, the dev-mode fallback kicks in and the in-repo script is used; in any downstream project, the highest-versioned plugin-cache copy is used.
+  - [x] 4.4 Update the `<note>` block at the top of Phase 2 (lines 104–106) to reflect the dynamic path convention.
 
-- [ ] **Task 5 — Sprint-window alignment via story slugs** (AC: #5, #7, #8) — *change-type: script-code* + *skill-instruction*
-  - [ ] 5.1 Add a new `transcript-query.py` flag: `--story-slugs <comma-separated>` accepted by every pre-built query. When present, the per-query SQL adds a filter to drop sessions/subagent files whose union of `message.content::VARCHAR` does not contain any of the supplied slugs. (DuckDB SQL: `EXISTS (SELECT 1 FROM ... WHERE message.content::VARCHAR LIKE '%slug-1%' OR ...)` evaluated per session file.)
-  - [ ] 5.2 Implementation pattern: pre-filter session paths in `main()` before passing to query functions — for each session path, run a small DuckDB probe query (`SELECT 1 FROM read_json('{path}', {READ_JSON_OPTS}) WHERE message.content::VARCHAR LIKE '%slug%' LIMIT 1`); keep paths whose probe returns at least one row when `--story-slugs` is supplied. Log pre/post counts.
-  - [ ] 5.3 Update `skills/momentum/skills/retro/workflow.md` Phase 2 extraction commands (lines 113–144) to pass `--story-slugs "{{sprint_stories | join(',')}}"` to all four pre-built query invocations. The variable `{{sprint_stories}}` is already populated in Phase 1 line 89.
-  - [ ] 5.4 Behavior: when slug list is empty (`{{sprint_stories | length}} == 0`), `--story-slugs` is omitted; when non-empty, slug filtering applies and pre/post counts are logged.
+- [x] **Task 5 — Sprint-window alignment via story slugs** (AC: #5, #7, #8) — *change-type: script-code* + *skill-instruction*
+  - [x] 5.1 Add a new `transcript-query.py` flag: `--story-slugs <comma-separated>` accepted by every pre-built query. When present, the per-query SQL adds a filter to drop sessions/subagent files whose union of `message.content::VARCHAR` does not contain any of the supplied slugs. (DuckDB SQL: `EXISTS (SELECT 1 FROM ... WHERE message.content::VARCHAR LIKE '%slug-1%' OR ...)` evaluated per session file.)
+  - [x] 5.2 Implementation pattern: pre-filter session paths in `main()` before passing to query functions — for each session path, run a small DuckDB probe query (`SELECT 1 FROM read_json('{path}', {READ_JSON_OPTS}) WHERE message.content::VARCHAR LIKE '%slug%' LIMIT 1`); keep paths whose probe returns at least one row when `--story-slugs` is supplied. Log pre/post counts.
+  - [x] 5.3 Update `skills/momentum/skills/retro/workflow.md` Phase 2 extraction commands (lines 113–144) to pass `--story-slugs "{{sprint_stories | join(',')}}"` to all four pre-built query invocations. The variable `{{sprint_stories}}` is already populated in Phase 1 line 89.
+  - [x] 5.4 Behavior: when slug list is empty (`{{sprint_stories | length}} == 0`), `--story-slugs` is omitted; when non-empty, slug filtering applies and pre/post counts are logged.
 
-- [ ] **Task 6 — Peek-first convention in inline auditor/documenter prompts** (AC: #6) — *change-type: skill-instruction*
-  - [ ] 6.1 In `skills/momentum/skills/retro/workflow.md` Phase 4 inline system prompts (lines 238–414), strengthen the existing large-file note from "use offset/limit on Read to stream in chunks, or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once" to a numbered protocol matching the convention in `skills/momentum/agents/dev.md` lines 106–122. Add an explicit "known-large files" list: `agent-summaries.jsonl`, `errors.jsonl`, `prd.md`, `architecture.md`, `stories/index.json`.
-  - [ ] 6.2 Apply the same protocol to the spec-impact-discovery agents in `skills/momentum/skills/sprint-planning/workflow.md` Step 4.5 (lines 395–412) — they read `architecture.md` and `prd.md` and were also affected per the nornspun retro.
-  - [ ] 6.3 Wording standard: "Before reading any file in this list, run `wc -l` first. For files >200 lines, read in 500-line chunks via `Read offset/limit`, or stream JSONL line-by-line via `python3`. Never attempt a full `Read` on these files."
+- [x] **Task 6 — Peek-first convention in inline auditor/documenter prompts** (AC: #6) — *change-type: skill-instruction*
+  - [x] 6.1 In `skills/momentum/skills/retro/workflow.md` Phase 4 inline system prompts (lines 238–414), strengthen the existing large-file note from "use offset/limit on Read to stream in chunks, or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once" to a numbered protocol matching the convention in `skills/momentum/agents/dev.md` lines 106–122. Add an explicit "known-large files" list: `agent-summaries.jsonl`, `errors.jsonl`, `prd.md`, `architecture.md`, `stories/index.json`.
+  - [x] 6.2 Apply the same protocol to the spec-impact-discovery agents in `skills/momentum/skills/sprint-planning/workflow.md` Step 4.5 (lines 395–412) — they read `architecture.md` and `prd.md` and were also affected per the nornspun retro.
+  - [x] 6.3 Wording standard: "Before reading any file in this list, run `wc -l` first. For files >200 lines, read in 500-line chunks via `Read offset/limit`, or stream JSONL line-by-line via `python3`. Never attempt a full `Read` on these files."
 
-- [ ] **Task 7 — Tests** (AC: #7) — *change-type: script-code*
-  - [ ] 7.1 Add `skills/momentum/scripts/test-transcript-query.py` (new file) — pytest-style or stdlib `unittest`; runnable as `python3 skills/momentum/scripts/test-transcript-query.py` without external test runners. Mirror the structure of `test-momentum-tools.py`.
-  - [ ] 7.2 Test cases:
+- [x] **Task 7 — Tests** (AC: #7) — *change-type: script-code*
+  - [x] 7.1 Add `skills/momentum/scripts/test-transcript-query.py` (new file) — pytest-style or stdlib `unittest`; runnable as `python3 skills/momentum/scripts/test-transcript-query.py` without external test runners. Mirror the structure of `test-momentum-tools.py`.
+  - [x] 7.2 Test cases:
     - `test_worktree_bases_resolves_extra_paths`: stub `git worktree list --porcelain` output via monkeypatch; assert merged base list.
     - `test_utc_boundary_inclusive`: synthesize JSONL files at `23:55Z` day-N and `00:05Z` day-N+1; assert `--after N --before N` includes both.
     - `test_emit_json_roundtrips`: run each pre-built query against a 3-line fixture JSONL; assert every emitted line `json.loads()` succeeds.
     - `test_slug_filter_drops_unrelated_sessions`: two fixture sessions, one mentioning `story-foo`, one not; `--story-slugs story-foo` keeps only the first.
     - `test_no_worktrees_falls_back_to_primary_base`: outside a git repo, `_worktree_bases()` returns `[]` and discovery proceeds with only the primary base.
-  - [ ] 7.3 Wire test invocation into the developer's manual run note in the story dev notes — there is no CI test runner in this repo, but tests should exit non-zero on failure.
+  - [x] 7.3 Wire test invocation into the developer's manual run note in the story dev notes — there is no CI test runner in this repo, but tests should exit non-zero on failure.
 
-- [ ] **Task 8 — Documentation alignment** (AC: #4, #8) — *change-type: specification*
-  - [ ] 8.1 Update Decision 27 in `_bmad-output/planning-artifacts/architecture.md` (line 1909+) to mention dynamic path resolution and slug-based session filtering as part of the "Wave 1: DuckDB Preprocessing" subsection. Keep the change concise — one paragraph addition.
-  - [ ] 8.2 Add a row to the Read/Write Authority table for `transcript-query.py` if not already present (it's tooling, not an artifact writer; likely no change needed — verify).
+- [x] **Task 8 — Documentation alignment** (AC: #4, #8) — *change-type: specification*
+  - [x] 8.1 Update Decision 27 in `_bmad-output/planning-artifacts/architecture.md` (line 1909+) to mention dynamic path resolution and slug-based session filtering as part of the "Wave 1: DuckDB Preprocessing" subsection. Keep the change concise — one paragraph addition.
+  - [x] 8.2 Add a row to the Read/Write Authority table for `transcript-query.py` if not already present (it's tooling, not an artifact writer; likely no change needed — verify).
 
 ## Dev Notes
 
@@ -243,8 +243,27 @@ Gherkin specs for sprint-2026-04-27 (when generated) will live in `_bmad-output/
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — clean implementation, all tests passed on first run after test path fix.
 
 ### Completion Notes List
 
+- Task 1: Added `_worktree_bases(cwd)` helper that shells `git worktree list --porcelain`, encodes paths, returns existing `~/.claude/projects/<encoded>/` dirs. Updated `discover_sessions()` and `discover_subagent_files()` to accept `str | list[str]`, deduplicate via realpath, sort by mtime+path. Main passes `[primary_base, *worktree_bases]` deduplicated.
+- Task 2: Fixed `before_dt` to use `hour=23, minute=59, second=59, microsecond=999999` for UTC end-of-day inclusive semantics. `after_dt` was already correct at `00:00:00Z`. Documented in `discover_sessions()` docstring.
+- Task 3: Confirmed `emit_result()` and `query_agent_summary()` both use `json.dumps()` throughout. No `repr()` or raw `str()` of dicts found. Tests verify round-trip correctness and absence of Python literals.
+- Task 4: Replaced all hardcoded `skills/momentum/scripts/transcript-query.py` references in retro `workflow.md` Phase 2 with `{{transcript_query_path}}`. Added path-resolution action using glob + `sort -V | tail -1` with in-repo fallback. Updated the `<note>` block. Also updated auditor ad-hoc query reference.
+- Task 5: Added `--story-slugs` flag to `transcript-query.py`. Implemented `_filter_sessions_by_slugs()` using per-session DuckDB probe queries. Applied in `main()` after date-range discovery, before subagent discovery. Logs pre/post counts. Updated retro workflow Phase 2 to pass `{{slug_filter_arg}}` to all 4 extraction commands (empty string when no slugs).
+- Task 6: Upgraded all 3 auditor system prompts in retro `workflow.md` Phase 4 from single-line large-file hint to 4-step numbered protocol with explicit known-large files list. Applied same protocol to both discovery and update agents in sprint-planning `workflow.md` Step 4.5.
+- Task 7: Created `test-transcript-query.py` with 17 tests covering all 5 required AC areas. Uses importlib.util to load the hyphen-named module. All 17 tests pass. test-momentum-tools.py: 431/431 pass.
+- Task 8: Decision 27 in architecture.md already had the key additions (dynamic path, worktree discovery, UTC boundary, --story-slugs, hard-fail) from sprint planning spec impact. Updated the Wave 1 summary line to accurately reflect dynamic resolution and added the peek-first convention reference.
+
 ### File List
+
+- `skills/momentum/scripts/transcript-query.py` — modified (Tasks 1, 2, 3, 5)
+- `skills/momentum/scripts/test-transcript-query.py` — created (Task 7)
+- `skills/momentum/skills/retro/workflow.md` — modified (Tasks 4, 5, 6)
+- `skills/momentum/skills/sprint-planning/workflow.md` — modified (Task 6)
+- `_bmad-output/planning-artifacts/architecture.md` — modified (Task 8)

@@ -26,6 +26,7 @@ Session discovery:
     By default, discovers sessions from ~/.claude/projects/<project>/
     Use --source to override the base directory.
     Use --after / --before to filter by date range (YYYY-MM-DD).
+    Use --story-slugs to filter sessions by slug membership (comma-separated).
 
 Error detection (AC #8):
     Errors are detected via actual error indicators:
@@ -89,48 +90,125 @@ def _project_base():
     return base  # Return best-guess even if not found
 
 
-def discover_sessions(base: str, after: str | None = None, before: str | None = None) -> list[str]:
-    """Return JSONL session file paths in base, optionally filtered by mtime date range.
+def _worktree_bases(cwd: str | None = None) -> list[str]:
+    """Discover Claude Code project directories for all git worktrees.
 
-    Args:
-        base: Claude project directory (e.g. ~/.claude/projects/...)
-        after: ISO date string YYYY-MM-DD — include sessions modified on or after this date
-        before: ISO date string YYYY-MM-DD — include sessions modified on or before this date
+    Shells out to `git worktree list --porcelain` and for each worktree path
+    computes the Claude Code project encoding (path.replace('/', '-')).
+    Returns the list of ~/.claude/projects/<encoded>/ directories that exist.
+    Falls back to [] when not in a git repo or git is unavailable.
     """
-    if not os.path.isdir(base):
+    if cwd is None:
+        cwd = os.getcwd()
+
+    try:
+        result = subprocess.run(
+            ["git", "worktree", "list", "--porcelain"],
+            capture_output=True,
+            text=True,
+            cwd=cwd,
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return []
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return []
 
+    projects_dir = os.path.expanduser("~/.claude/projects")
+    bases = []
+    for line in result.stdout.splitlines():
+        if line.startswith("worktree "):
+            wt_path = line[len("worktree "):].strip()
+            encoded = wt_path.replace("/", "-")
+            candidate = os.path.join(projects_dir, encoded)
+            if os.path.isdir(candidate):
+                bases.append(candidate)
+    return bases
+
+
+def discover_sessions(
+    base: str | list[str],
+    after: str | None = None,
+    before: str | None = None,
+) -> list[str]:
+    """Return JSONL session file paths, optionally filtered by mtime date range.
+
+    Args:
+        base: Claude project directory (or list of directories) to search.
+              When a list is provided, all directories are searched and results
+              are deduplicated and sorted by mtime then path for stable ordering.
+        after: ISO date string YYYY-MM-DD — include sessions modified on or after
+               this date (start of UTC day, i.e. YYYY-MM-DDT00:00:00Z, inclusive).
+        before: ISO date string YYYY-MM-DD — include sessions modified on or before
+                this date (end of UTC day, i.e. YYYY-MM-DDT23:59:59.999999Z, inclusive).
+    """
+    # Normalise to list
+    bases = [base] if isinstance(base, str) else list(base)
+
     after_dt = datetime.fromisoformat(after).replace(tzinfo=timezone.utc) if after else None
-    before_dt = datetime.fromisoformat(before).replace(tzinfo=timezone.utc) if before else None
+    # Task 2: before_dt must be end-of-day UTC (23:59:59.999999Z) to include the full final day
+    before_dt = (
+        datetime.fromisoformat(before).replace(
+            hour=23, minute=59, second=59, microsecond=999999, tzinfo=timezone.utc
+        )
+        if before
+        else None
+    )
+
+    seen: set[str] = set()
+    paths: list[tuple[float, str]] = []  # (mtime, path) for stable sort
+
+    for b in bases:
+        if not os.path.isdir(b):
+            continue
+        for entry in os.listdir(b):
+            if not entry.endswith(".jsonl"):
+                continue
+            full = os.path.join(b, entry)
+            if not os.path.isfile(full):
+                continue
+            # Deduplicate by realpath
+            real = os.path.realpath(full)
+            if real in seen:
+                continue
+            mtime = os.path.getmtime(full)
+            mtime_dt = datetime.fromtimestamp(mtime, tz=timezone.utc)
+            if after_dt and mtime_dt < after_dt:
+                continue
+            if before_dt and mtime_dt > before_dt:
+                continue
+            seen.add(real)
+            paths.append((mtime, full))
+
+    # Sort by mtime then path for stable ordering
+    paths.sort(key=lambda x: (x[0], x[1]))
+    return [p for _, p in paths]
+
+
+def discover_subagent_files(base: str | list[str], sessions: list[str]) -> list[str]:
+    """Return all subagent JSONL paths found under session subagent directories.
+
+    Accepts either a single base directory or a list of base directories.
+    """
+    bases = [base] if isinstance(base, str) else list(base)
 
     paths = []
-    for entry in os.listdir(base):
-        if not entry.endswith(".jsonl"):
-            continue
-        full = os.path.join(base, entry)
-        if not os.path.isfile(full):
-            continue
-        if after_dt or before_dt:
-            mtime = datetime.fromtimestamp(os.path.getmtime(full), tz=timezone.utc)
-            if after_dt and mtime < after_dt:
-                continue
-            if before_dt and mtime > before_dt:
-                continue
-        paths.append(full)
-    return sorted(paths)
-
-
-def discover_subagent_files(base: str, sessions: list[str]) -> list[str]:
-    """Return all subagent JSONL paths found under session subagent directories."""
-    paths = []
+    seen: set[str] = set()
     for session_path in sessions:
         session_id = os.path.basename(session_path).replace(".jsonl", "")
-        sa_dir = os.path.join(base, session_id, "subagents")
-        if not os.path.isdir(sa_dir):
-            continue
-        for f in os.listdir(sa_dir):
-            if f.endswith(".jsonl"):
-                paths.append(os.path.join(sa_dir, f))
+        # Check each base for the subagent directory
+        for b in bases:
+            sa_dir = os.path.join(b, session_id, "subagents")
+            if not os.path.isdir(sa_dir):
+                continue
+            for f in os.listdir(sa_dir):
+                if not f.endswith(".jsonl"):
+                    continue
+                full = os.path.join(sa_dir, f)
+                real = os.path.realpath(full)
+                if real not in seen:
+                    seen.add(real)
+                    paths.append(full)
     return sorted(paths)
 
 
@@ -142,6 +220,55 @@ def read_json_fragment(paths: list[str]) -> str:
         return f"read_json('{paths[0]}', {READ_JSON_OPTS})"
     path_list = ", ".join(f"'{p}'" for p in paths)
     return f"read_json([{path_list}], {READ_JSON_OPTS}, union_by_name=true)"
+
+
+# ---------------------------------------------------------------------------
+# Slug-based session filtering (Task 5)
+# ---------------------------------------------------------------------------
+
+def _filter_sessions_by_slugs(con, session_paths: list[str], slugs: list[str]) -> list[str]:
+    """Filter sessions to those that mention any of the given slugs.
+
+    For each session file, runs a DuckDB probe query to check if any message
+    content contains one of the supplied slugs. Returns filtered list.
+    Logs pre/post counts to stderr.
+    """
+    if not slugs or not session_paths:
+        return session_paths
+
+    pre_count = len(session_paths)
+    kept = []
+    for path in session_paths:
+        slug_conditions = " OR ".join(
+            f"message.content::VARCHAR LIKE '%{slug}%'" for slug in slugs
+        )
+        probe_sql = f"""
+            SELECT 1
+            FROM read_json('{path}', {READ_JSON_OPTS})
+            WHERE {slug_conditions}
+            LIMIT 1
+        """
+        try:
+            row = con.sql(probe_sql).fetchone()
+            if row is not None:
+                kept.append(path)
+        except Exception:
+            # On error, keep the session (err on the side of inclusion)
+            kept.append(path)
+
+    post_count = len(kept)
+    if post_count < pre_count:
+        print(
+            f"Slug filter: {pre_count} → {post_count} sessions "
+            f"(dropped {pre_count - post_count} sessions not mentioning any of: {', '.join(slugs)})",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            f"Slug filter: {pre_count} sessions kept (all mention at least one slug)",
+            file=sys.stderr,
+        )
+    return kept
 
 
 # ---------------------------------------------------------------------------
@@ -510,12 +637,18 @@ def main():
     parser.add_argument(
         "--after",
         metavar="YYYY-MM-DD",
-        help="Include sessions modified on or after this date",
+        help="Include sessions modified on or after this date (UTC start-of-day, inclusive)",
     )
     parser.add_argument(
         "--before",
         metavar="YYYY-MM-DD",
-        help="Include sessions modified on or before this date",
+        help="Include sessions modified on or before this date (UTC end-of-day, inclusive)",
+    )
+    parser.add_argument(
+        "--story-slugs",
+        metavar="SLUG1,SLUG2,...",
+        help="Filter sessions to those mentioning any of these story slugs (comma-separated). "
+             "Used for same-day sprint disambiguation.",
     )
     parser.add_argument("--output", help="Output file path")
     parser.add_argument(
@@ -531,25 +664,60 @@ def main():
     if args.query == "sql" and not args.sql_query:
         parser.error("sql_query argument required when query is 'sql'")
 
-    base = args.source or _project_base()
-    if not os.path.isdir(base):
-        print(f"Warning: project directory not found: {base}", file=sys.stderr)
+    # Parse story slugs
+    story_slugs: list[str] = []
+    if getattr(args, "story_slugs", None):
+        story_slugs = [s.strip() for s in args.story_slugs.split(",") if s.strip()]
 
-    sessions = discover_sessions(base, after=args.after, before=args.before)
-    subagents = discover_subagent_files(base, sessions)
+    # Resolve session base directories (primary + worktrees)
+    cwd = os.getcwd()
+    if args.source:
+        primary_base = args.source
+        worktree_bases: list[str] = []
+    else:
+        primary_base = _project_base()
+        worktree_bases = _worktree_bases(cwd)
+
+    # Deduplicate: primary_base may already appear in worktree_bases
+    all_bases: list[str] = []
+    seen_bases: set[str] = set()
+    for b in [primary_base] + worktree_bases:
+        real = os.path.realpath(b) if os.path.isdir(b) else b
+        if real not in seen_bases:
+            seen_bases.add(real)
+            all_bases.append(b)
+
+    print(
+        f"Found {len(all_bases)} base(s): {', '.join(all_bases)}",
+        file=sys.stderr,
+    )
+
+    sessions = discover_sessions(all_bases, after=args.after, before=args.before)
+    pre_filter_count = len(sessions)
+
+    con = duckdb.connect()
+
+    # Apply slug-based filtering when --story-slugs provided
+    if story_slugs:
+        sessions = _filter_sessions_by_slugs(con, sessions, story_slugs)
+
+    post_filter_count = len(sessions)
+    subagents = discover_subagent_files(all_bases, sessions)
 
     if not sessions and not subagents:
-        print(f"No session files found in {base}", file=sys.stderr)
+        print(
+            f"No session files found across {len(all_bases)} base(s)",
+            file=sys.stderr,
+        )
         if not args.after and not args.before:
             print("Tip: use --after YYYY-MM-DD to filter by sprint date range", file=sys.stderr)
         sys.exit(1)
 
     print(
-        f"Found {len(sessions)} session(s), {len(subagents)} subagent file(s)",
+        f"Found {post_filter_count} session(s) (pre-filter: {pre_filter_count}), "
+        f"{len(subagents)} subagent file(s)",
         file=sys.stderr,
     )
-
-    con = duckdb.connect()
 
     dispatch = {
         "user-messages": lambda: query_user_messages(con, sessions, args),

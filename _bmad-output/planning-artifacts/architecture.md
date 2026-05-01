@@ -2131,7 +2131,7 @@ Extraction queries (run automatically):
 
 Output directory: `.momentum/sprints/{sprint-slug}/audit-extracts/`
 
-`transcript-query.py` is standard retro tooling at a known path in the plugin, supporting both pre-built queries and ad-hoc SQL via `transcript-query.py sql "..."`.
+`transcript-query.py` is standard retro tooling resolved dynamically (highest-semver plugin-cache glob, in-repo fallback), supporting both pre-built queries and ad-hoc SQL via `transcript-query.py sql "..."`. The peek-first convention (run `wc -l` before reading any file, read in 500-line chunks for files over 200 lines, never full-Read known-large files) applies to all auditor and spec-impact-discovery agents reading extract files or planning artifacts.
 
 **Wave 2: Auditor Team (3 auditors + 1 documenter)**
 Spawn 4 agents in parallel via TeamCreate:

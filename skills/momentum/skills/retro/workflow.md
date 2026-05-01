@@ -101,43 +101,64 @@ Which sprint should we retrospect?</output>
   <step n="2" goal="Extract session transcript data into audit-extracts/ via transcript-query.py">
     <action>Update task 2 to in_progress</action>
 
-    <note>transcript-query.py lives at `skills/momentum/scripts/transcript-query.py`.
-    It auto-installs duckdb if missing. It discovers sessions by date range using --after / --before.
+    <note>transcript-query.py is resolved dynamically — the highest-semver plugin-cache copy wins,
+    with an in-repo fallback for dogfood runs. It auto-installs duckdb if missing.
+    It discovers sessions by date range (--after / --before) with UTC end-of-day inclusive semantics
+    for --before. It also discovers sessions from git worktrees automatically.
     All errors use actual error indicators (is_error flag, success=false), not string matching.</note>
+
+    <action>Resolve the script path (store as {{transcript_query_path}}):
+      ```
+      TRANSCRIPT_QUERY=$(ls -d ~/.claude/plugins/cache/momentum/momentum/*/scripts/transcript-query.py 2>/dev/null \
+        | sort -V | tail -n1)
+      [ -z "$TRANSCRIPT_QUERY" ] && [ -f skills/momentum/scripts/transcript-query.py ] \
+        && TRANSCRIPT_QUERY=skills/momentum/scripts/transcript-query.py
+      ```
+      Log the resolved path: "Using transcript-query.py at: {{transcript_query_path}}"
+    </action>
 
     <action>Ensure `{{audit_dir}}` directory exists:
       Create `.momentum/sprints/{{sprint_slug}}/audit-extracts/` if absent</action>
+
+    <action>Build the slug filter argument:
+      If {{sprint_stories}} is non-empty: set {{slug_filter_arg}} = `--story-slugs "{{sprint_stories | join(',')}}"`
+      If {{sprint_stories}} is empty: set {{slug_filter_arg}} = "" (omit the flag)
+    </action>
 
     <action>Run 4 extraction commands (can run in parallel):
 
       **1. User messages** — all human-typed prompts across all sprint sessions:
       ```
-      python3 skills/momentum/scripts/transcript-query.py user-messages \
+      python3 {{transcript_query_path}} user-messages \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/user-messages.jsonl
       ```
 
       **2. Agent summaries** — per-subagent digest (prompt, outcome, tool counts, error count):
       ```
-      python3 skills/momentum/scripts/transcript-query.py agent-summary \
+      python3 {{transcript_query_path}} agent-summary \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/agent-summaries.jsonl
       ```
 
       **3. Errors** — tool errors using actual error indicators only:
       ```
-      python3 skills/momentum/scripts/transcript-query.py errors \
+      python3 {{transcript_query_path}} errors \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/errors.jsonl
       ```
 
       **4. Team messages** — inter-agent SendMessage and teammate-message content:
       ```
-      python3 skills/momentum/scripts/transcript-query.py team-messages \
+      python3 {{transcript_query_path}} team-messages \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/team-messages.jsonl
       ```
@@ -151,10 +172,12 @@ Which sprint should we retrospect?</output>
         {{team_msg_count}} = line count of team-messages.jsonl
       </action>
       <output>Transcript preprocessing complete:
+  · transcript-query.py path: {{transcript_query_path}}
   · user-messages.jsonl — {{user_msg_count}} human prompts
   · agent-summaries.jsonl — {{agent_count}} subagent digests
   · errors.jsonl — {{error_count}} tool errors (actual error indicators only)
   · team-messages.jsonl — {{team_msg_count}} inter-agent messages
+  {{#if slug_filter_arg}}· Slug filter applied: {{sprint_stories | join(', ')}}{{/if}}
 
 Extracts written to: {{audit_dir}}/
 </output>
@@ -167,12 +190,11 @@ The transcript audit will not have raw data to analyze. This may happen if:
   · The sprint ran in a different project directory
   · Session dates don't match the sprint's started/completed dates
   · Claude Code session files have been deleted
+  · transcript-query.py path could not be resolved: {{transcript_query_path}}
 
-The retro can continue but auditor findings will be limited.</output>
-      <ask>Continue with empty extracts?</ask>
-      <check if="developer says no">
-        <action>HALT — developer can investigate session file location and re-run.</action>
-      </check>
+HALT — investigate session file location and resolved script path before continuing.
+The retro cannot produce meaningful findings without raw session data.</output>
+      <action>HALT — developer must resolve the empty session set before auditors run.</action>
     </check>
 
     <action>Update task 2 to completed</action>
@@ -328,8 +350,14 @@ For each of these, choose:
 
       Read `{{audit_dir}}/user-messages.jsonl`. Each line is a JSON object with
       timestamp, session_file, content, and is_first_message fields.
-      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
-      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
+
+      Large-file protocol (mandatory — follow before reading any file):
+        1. Run `wc -l` on the file first to check its size.
+        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
+           or stream JSONL line-by-line via `python3`.
+        3. Never attempt a full Read on these known-large files:
+           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
+        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
 
       Identify and categorize every notable pattern:
         - Corrections: user fixing agent behavior mid-task
@@ -357,7 +385,7 @@ For each of these, choose:
       Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
 
       Available tool: transcript-query.py for additional ad-hoc queries if needed:
-        python3 skills/momentum/scripts/transcript-query.py sql "SELECT ..." \
+        python3 {{transcript_query_path}} sql "SELECT ..." \
           --after {{sprint_started}} --before {{sprint_completed}}
       ```
 
@@ -368,8 +396,14 @@ For each of these, choose:
       Read:
         - `{{audit_dir}}/agent-summaries.jsonl` — per-subagent digests
         - `{{audit_dir}}/errors.jsonl` — tool errors (actual error indicators only)
-      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
-      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
+
+      Large-file protocol (mandatory — follow before reading any file):
+        1. Run `wc -l` on each file first to check its size.
+        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
+           or stream JSONL line-by-line via `python3`.
+        3. Never attempt a full Read on these known-large files:
+           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
+        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
 
       Investigate patterns across the subagent population:
         - Duplication: multiple agents with identical or near-identical first prompts
@@ -408,8 +442,14 @@ For each of these, choose:
         - `{{audit_dir}}/team-messages.jsonl` — inter-agent SendMessage content
         - `{{audit_dir}}/agent-summaries.jsonl` — filter to review roles:
             agent_type containing "reviewer", "validator", "qa", "prompt-engineer"
-      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
-      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
+
+      Large-file protocol (mandatory — follow before reading any file):
+        1. Run `wc -l` on each file first to check its size.
+        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
+           or stream JSONL line-by-line via `python3`.
+        3. Never attempt a full Read on these known-large files:
+           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
+        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
 
       Evaluate quality gate effectiveness:
         - Real issues caught: review findings that led to genuine fixes
