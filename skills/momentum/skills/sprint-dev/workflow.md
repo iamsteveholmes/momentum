@@ -9,7 +9,8 @@
 ---
 
 <workflow>
-  <critical>Read the active sprint slug from sprints/index.json, then read the per-sprint record from sprints/{slug}.json. Never invent team plans — all roles, guidelines, and dependencies come from the sprint record written by sprint-planning.</critical>
+  <!-- DEC-012: Per-sprint sprints/{slug}.json retired — sprints/index.json active block is the sole sprint state source. -->
+  <critical>Read sprint state from sprints/index.json — bind {{sprint_record}} to its `active` block. Team composition, waves, and story_assignments all come from the active block. Per-story `depends_on` arrays come from stories/index.json. Never invent team plans — all roles, guidelines, and ordering derive from the holistic state file. Per DEC-012, no per-sprint sprints/{slug}.json file is read or expected to exist.</critical>
   <critical>Worktree-to-sprint merges are autonomous — only pushes require developer confirmation.</critical>
   <critical>Dev agents never access sprints/{sprint-slug}/specs/ — verification is black-box.</critical>
   <critical>Stories are spawned strictly by dependency resolution. A story never starts before all its blockers are `done`.</critical>
@@ -138,21 +139,26 @@
     <action>Ensure we are on the sprint branch: `git checkout sprint/{{sprint_slug}}`
       If the branch does not exist, HALT — sprint planning should have created it.</action>
 
-    <action>Read the per-sprint record: `sprints/{{sprint_slug}}.json`</action>
-    <action>Store {{sprint_locked}} = the value of `locked` field</action>
-
-    <check if="{{sprint_locked}} == false">
-      <output>Sprint {{sprint_slug}} has not been activated. Run `momentum-tools sprint activate` first.</output>
+    <!-- DEC-012: Read from sprints/index.json active block — no per-sprint file. Verify slug matches before proceeding. -->
+    <action>Bind {{sprint_record}} = the `active` block just read from sprints/index.json</action>
+    <check if="{{sprint_record}}.slug != {{sprint_slug}}">
+      <output>Slug mismatch: sprints/index.json active.slug is `{{sprint_record.slug}}` but expected `{{sprint_slug}}`. Inspect sprints/index.json `active` block to verify the correct sprint is active. Do NOT look for a per-sprint file — the active block in sprints/index.json is the sole state source (DEC-012).</output>
       <action>HALT — return to Impetus session menu.</action>
     </check>
 
-    <action>Store {{sprint_stories}} = `stories` array from the sprint record</action>
-    <action>Store {{team}} = `team` object from the sprint record (contains `roles` and `story_assignments`)</action>
-    <action>Store {{sprint_dependencies}} = `dependencies` object from the sprint record</action>
+    <check if="{{sprint_record}}.locked == false">
+      <output>Sprint {{sprint_slug}} has not been activated (active.locked is false in sprints/index.json). Run `momentum-tools sprint activate` first, then re-invoke sprint-dev.</output>
+      <action>HALT — return to Impetus session menu.</action>
+    </check>
+
+    <action>Store {{sprint_stories}} = `stories` array from {{sprint_record}}</action>
+    <action>Store {{team}} = `team` object from {{sprint_record}} (contains `story_assignments`)</action>
+    <action>Store {{sprint_waves}} = `waves` array from {{sprint_record}} (primary ordering source — story in wave N is blocked until every wave N-1 story is `done`)</action>
 
     <action>Read `_bmad-output/implementation-artifacts/stories/index.json`</action>
     <action>For each story in {{sprint_stories}}, read its entry: status, depends_on, touches, title</action>
     <action>Store {{story_map}} = map of story slug → {status, depends_on, touches, title}</action>
+    <action>Store {{story_depends_on_map}} = map of story slug → depends_on array from stories/index.json (cross-wave and intra-wave detail; secondary ordering source — supplements {{sprint_waves}})</action>
 
     <!-- Session resumption: detect partially-completed sprint -->
     <action>Check for stories already `in-progress` from a previous session:
@@ -172,7 +178,7 @@ Resume these stories, or reset them to ready-for-dev?</output>
       </check>
     </check>
 
-    <action>Build dependency graph from {{sprint_dependencies}} (primary) reconciled with story-level `depends_on` fields (secondary)</action>
+    <action>Build dependency graph from {{sprint_waves}} (primary — wave N stories are blocked until every wave N-1 story reaches `done`) reconciled with {{story_depends_on_map}} for any cross-wave or intra-wave story-level dependencies (secondary). There is no `dependencies` field on the sprint record — ordering is derived entirely from these two sources.</action>
 
     <action>Create a task per story via TaskCreate:
       - Title: story title
