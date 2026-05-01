@@ -37,7 +37,7 @@ changes via momentum-tools CLI.
   </step>
 
   <step n="1" goal="Present backlog">
-    <action>Read `{implementation_artifacts}/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>
     <action>Store {{pre}} — count of stories by priority before any changes (keys: critical, high, medium, low), for before/after comparison in Step 10</action>
     <action>Group remaining stories by `epic_slug`</action>
@@ -73,7 +73,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
     <action>Spawn two discovery subagents in parallel (model: sonnet, effort: medium):
 
     **PRD coverage agent:**
-      Read `{planning_artifacts}/prd.md` and `{implementation_artifacts}/stories/index.json`.
+      Read `{planning_artifacts}/prd.md` and `.momentum/stories/index.json`.
       Compare the PRD's requirements against the current backlog state — completed stories,
       changed priorities, dropped stories, new stories added since the PRD was written.
       Identify requirements that are:
@@ -84,7 +84,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
       `[{id, description, action_needed (add/update/remove), rationale}]`
 
     **Architecture coverage agent:**
-      Read `{planning_artifacts}/architecture.md` and `{implementation_artifacts}/stories/index.json`.
+      Read `{planning_artifacts}/architecture.md` and `.momentum/stories/index.json`.
       Compare architecture decisions and component descriptions against the current backlog
       state — completed stories, changed technical approaches, new components.
       Identify decisions that are:
@@ -153,7 +153,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
   </step>
 
   <step n="4" goal="Status hygiene scan">
-    <action>Read `{implementation_artifacts}/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>For each story where status is NOT in {done, dropped, closed-incomplete} AND story_file is true:
       · Read the story file
       · Look for a Dev Agent Record section containing a File List or DoD checklist
@@ -223,7 +223,7 @@ Stale story evaluations — {{count}} candidates:
   </step>
 
   <step n="7" goal="Re-prioritization analysis and conversation">
-    <action>Read `{implementation_artifacts}/stories/index.json` — extract all active
+    <action>Read `.momentum/stories/index.json` — extract all active
     stories (exclude done, dropped, closed-incomplete) with their `priority` and
     `depends_on` fields</action>
     <action>Read `{planning_artifacts}/prd.md` (if exists) to extract current
@@ -232,7 +232,7 @@ Stale story evaluations — {{count}} candidates:
     <action>Run four heuristic analyses:
 
     **Recurrence heuristic:**
-      · Glob `{implementation_artifacts}/sprints/*/retro-*.md`
+      · Glob `.momentum/sprints/*/retro-*.md`
       · For each retro file found, scan for story slugs and topic keywords in findings
       · Identify stories or topics that appear in findings across 2 or more sprint retros
       · These are recurring pain points — recommend promotion with citation of which
@@ -316,7 +316,7 @@ Stale story evaluations — {{count}} candidates:
     </action>
 
     <action>Glob `{planning_artifacts}/decisions/*.md` to find all SDR documents.
-    Read `{implementation_artifacts}/stories/index.json` (use offset/limit if large).
+    Read `.momentum/stories/index.json` (use offset/limit if large).
     For each SDR:
       · Parse frontmatter: id, title, date, status, stories_affected
       · For each slug in stories_affected: check whether it exists in stories/index.json
@@ -489,7 +489,7 @@ Override specific findings? Enter numbers or ranges, or 'done' to proceed.
   </step>
 
   <step n="11" goal="Summary">
-    <action>Read `{implementation_artifacts}/stories/index.json` to compute post-refine priority distribution</action>
+    <action>Read `.momentum/stories/index.json` to compute post-refine priority distribution</action>
     <action>Compute {{post}} — count of stories by priority after all changes (keys: critical, high, medium, low)</action>
 
     <output>✓ Refinement complete.

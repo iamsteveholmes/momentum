@@ -13,7 +13,7 @@
   <critical>Exactly 2 subagents are spawned in Step 2 — no more, no less. Both are launched in a single message (fan-out pattern, NOT TeamCreate). The orchestrator handles all synthesis, value analysis, developer interaction, and writing directly.</critical>
   <critical>Every feature written to features.json must have a non-empty value_analysis (multi-paragraph), system_context, type in {flow, connection, quality}, and acceptance_condition string. Any feature missing these fields is rejected before write.</critical>
   <critical>In refine mode: feature entries whose proposals are rejected are left byte-identical. Only approved-change entries are modified.</critical>
-  <critical>stories_done and stories_remaining are computed fresh from `_bmad-output/implementation-artifacts/stories/index.json` at write time (Step 6). They are derived from each feature's `stories` array — look up each story slug in the index, check its status. Dropped and closed-incomplete stories are excluded from stories_remaining.</critical>
+  <critical>stories_done and stories_remaining are computed fresh from `.momentum/stories/index.json` at write time (Step 6). They are derived from each feature's `stories` array — look up each story slug in the index, check its status. Dropped and closed-incomplete stories are excluded from stories_remaining.</critical>
 
   <step n="1" goal="Mode detection and task setup">
     <action>Check whether `_bmad-output/planning-artifacts/features.json` exists. If it exists, read it and count feature entries.
@@ -47,7 +47,7 @@
         Return a structured list of feature candidates.
 
       Agent B (model: haiku, effort: quick):
-        Read `_bmad-output/planning-artifacts/architecture.md` (use offset/limit — commonly large), `_bmad-output/implementation-artifacts/stories/index.json` (use offset/limit — commonly large), and `_bmad-output/planning-artifacts/features.json` if it exists.
+        Read `_bmad-output/planning-artifacts/architecture.md` (use offset/limit — commonly large), `.momentum/stories/index.json` (use offset/limit — commonly large), and `_bmad-output/planning-artifacts/features.json` if it exists.
         Return:
           - Capability clusters identified from architectural components and story themes, grouped by epic_slug
           - Unmapped story groups: stories whose themes don't align with any existing feature (if features.json exists) or any FR cluster
@@ -187,7 +187,7 @@ Approve writing features.json? [Y/N]
       Remove rejected features from the write set and notify the developer.
     </action>
 
-    <action>Compute stories_done and stories_remaining for each feature from `_bmad-output/implementation-artifacts/stories/index.json` (use offset/limit — commonly large):
+    <action>Compute stories_done and stories_remaining for each feature from `.momentum/stories/index.json` (use offset/limit — commonly large):
       - Each feature has a `stories` array listing story slugs assigned to it
       - stories_done: count of slugs in `stories` whose entry in the index has status "done"
       - stories_remaining: count of slugs in `stories` whose entry has status not "done", not "dropped", not "closed-incomplete"
@@ -225,7 +225,7 @@ Approve writing features.json? [Y/N]
       Include the hash result in the output.
     </action>
 
-    <action>Compute unmapped stories: read `_bmad-output/implementation-artifacts/stories/index.json` and find all stories where:
+    <action>Compute unmapped stories: read `.momentum/stories/index.json` and find all stories where:
       - status is not "done" AND status is not "dropped" AND status is not "closed-incomplete"
       - the story slug does not appear in any feature's `stories` array in the written features.json
     </action>

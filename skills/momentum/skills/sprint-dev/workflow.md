@@ -125,7 +125,7 @@
     <action>Update task 1 (Initialization) to in_progress</action>
 
     <!-- DEC-012: Read from sprints/index.json active block only — no per-sprint file exists. Bind {{sprint_record}} immediately so all checks use a single name. -->
-    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json` and bind:
+    <action>Read `.momentum/sprints/index.json` and bind:
       {{sprint_record}} = the `active` block
     </action>
 
@@ -148,12 +148,23 @@
       <action>HALT — return to Impetus session menu.</action>
     </check>
 
+    <!-- Approval gate: every story must have a current approved entry (AC 7) -->
+    <action>Run: `momentum-tools sprint verify-approvals --scope active`</action>
+    <check if="verify-approvals exits non-zero">
+      <output>✗ Sprint approval gate failed — the following stories are missing a current approved entry or were modified after approval:
+
+  {{for each missing slug from the `missing` field in the error output: · {{slug}}}}
+
+Re-run sprint planning (Step 3) to approve or re-approve each listed story, then re-activate the sprint before continuing.</output>
+      <action>HALT — return to Impetus session menu.</action>
+    </check>
+
     <action>Store {{sprint_stories}} = `stories` array from {{sprint_record}}</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>For each story in {{sprint_stories}}, read its entry: status, depends_on, touches, title</action>
     <action>Store {{story_map}} = map of story slug → {status, depends_on, touches, title}</action>
-    <action>Store {{story_depends_on_map}} = map of story slug → depends_on array from stories/index.json (cross-wave and intra-wave detail; secondary ordering source — supplements {{sprint_waves}})</action>
+    <action>Store {{story_depends_on_map}} = map of story slug → depends_on array from .momentum/stories/index.json (cross-wave and intra-wave detail; secondary ordering source — supplements {{sprint_waves}})</action>
 
     <!-- Session resumption: detect partially-completed sprint -->
     <action>Check for stories already `in-progress` from a previous session:
@@ -224,7 +235,7 @@ Task list created for progress tracking.</output>
          all in a single message turn for parallel execution). NEVER use TeamCreate for dev agents.
          Provide:
          - Story key: {slug}
-         - Story file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
+         - Story file: `.momentum/stories/{slug}.md`
          - Sprint context: {{sprint_slug}}
          - Role: {{team}}.story_assignments[slug].role
          - Specialist: {{team}}.story_assignments[slug].specialist
@@ -365,7 +376,7 @@ Options:
       For each story {slug}:
         - Scope: files in {{story_touches}} for story {slug}
         - Context: "Code review for story {slug} — sprint {{sprint_slug}}"
-        - Story file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
+        - Story file: `.momentum/stories/{slug}.md`
         - Sprint branch: `sprint/{{sprint_slug}}`
       Tag each review invocation with the story slug for findings attribution.
     </action>
@@ -522,11 +533,19 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
 
     **QA Agent** — spawn via Agent tool with `skills/momentum/agents/qa-reviewer.md` definition:
       - Provide: sprint slug, list of sprint stories, AVFL findings list
-      - Agent reads each story's AC section from `_bmad-output/implementation-artifacts/stories/{slug}.md`
+      - Agent reads each story's AC section from `.momentum/stories/{slug}.md`
       - Produces structured QA Review Report with per-story AC verification
+      - **Spawn prompt MUST include these constraints verbatim — do not paraphrase or omit. The agent definition does not make these redundant; they override any contextual claims in the spawn prompt about service state.**
+        1. Follow `.claude/rules/e2e-validation.md` Environment Startup before running any test that
+           depends on live services. Do not assume services are already running.
+        2. Reading source files is NEVER a substitute for executing the test suite. A source file
+           containing the right strings proves nothing about runtime behavior.
+        3. Missing infrastructure is BLOCKED, not MISSING. MISSING applies only when execution
+           succeeded but no evidence of the AC was found. If `.claude/rules/e2e-validation.md` is
+           absent, report Verdict: BLOCKED — do not fall back to static inspection.
 
     **E2E Validator** — spawn via Agent tool with `skills/momentum/agents/e2e-validator.md` definition:
-      - Provide: sprint slug, path to Gherkin specs `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/specs/`, AVFL findings list
+      - Provide: sprint slug, path to Gherkin specs `.momentum/sprints/{{sprint_slug}}/specs/`, AVFL findings list
       - Agent validates running behavior against Gherkin scenarios
       - Produces structured E2E Validation Report with per-scenario results
       - **Spawn prompt MUST include these constraints verbatim — do not paraphrase or omit. The agent definition does not make these redundant; they override any contextual claims in the spawn prompt about service state.**
@@ -595,7 +614,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
 
   <step n="6" goal="Developer-confirmation checklist from Gherkin specs">
     <action>Update task 6 (Verification) to in_progress</action>
-    <action>Read all `.feature` files from `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/specs/`</action>
+    <action>Read all `.feature` files from `.momentum/sprints/{{sprint_slug}}/specs/`</action>
     <action>For each feature file, extract all scenario names and their Given/When/Then steps</action>
 
     <output>## Verification Checklist — Sprint {{sprint_slug}}

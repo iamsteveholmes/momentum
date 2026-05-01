@@ -76,7 +76,7 @@ stub file, add index entry. No analysis, no research, no subagents.
       - Truncate to 60 characters at a word boundary
     </action>
 
-    <action>Read `_bmad-output/implementation-artifacts/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
 
     <check if="{{slug}} already exists in stories/index.json">
       <output>Slug conflict: `{{slug}}` already exists in the story index

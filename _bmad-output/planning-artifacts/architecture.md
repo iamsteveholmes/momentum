@@ -42,6 +42,10 @@ date: '2026-03-17'
 lastEdited: '2026-04-30'
 editHistory:
   - date: '2026-04-30'
+    changes: 'Wave 1 retry — per-story `.md` relocation (Task 2.3b, AC #8 follow-up). Migrated 268 per-story spec files from `_bmad-output/implementation-artifacts/stories/{slug}.md` to `.momentum/stories/{slug}.md` (byte-equivalent, file count preserved). Legacy `_bmad-output/implementation-artifacts/stories/` directory deleted to enforce single-source-of-truth (AC #11, Task 2.8). Supersedes the prior 2026-04-30 AC9 entry below where individual story `.md` files were left at the legacy location.'
+  - date: '2026-04-30'
+    changes: 'Wave 1 state relocation AC9 fixes: `_bmad-output/implementation-artifacts/sprints/index.json` + `stories/index.json` moved to `.momentum/`. All skill workflows and `momentum-tools.py` updated. Individual story `.md` files remain at `_bmad-output/implementation-artifacts/stories/`. Updated Decision 45 inputs list + hash computation (stories/index.json path). Added momentum:triage row to Read/Write Authority table (`.momentum/signals/` write target). Added `.momentum/signals/` write note to VFL/AVFL row. AC: impetus-momentum-state-migration (DEC-011 D3, DEC-012).'
+  - date: '2026-04-30'
     changes: 'Retired `.momentum/sprints/{slug}.json` per-sprint state file per DEC-012 (story fix-per-sprint-json-contract-drift) — sprint state consolidated to holistic `.momentum/sprints/index.json` (`active`, `planning`, `completed[]`, `quickfixes[]` sections) as the sole canonical source. Updated three sections: Read/Write Authority table (`momentum-tools sprint` row no longer lists per-sprint file as a write target), Protection Boundaries list (per-sprint file entry removed — no longer a protected path because it is no longer written), Sprint Tracking Schema (`.momentum/sprints/` folder description rewritten to describe one canonical state file plus per-sprint subdirectories for specs/sprint-summary/retro/audit-extracts; per-sprint folder structure tree preserved unchanged). DEC-012 clarifies DEC-011 D3 at the state-model level (D3 specified canvas-read scope only).'
   - date: '2026-04-28'
     changes: 'Sprint-2026-04-27 spec impact: State relocation to .momentum/ closes DEC-011 Gate G1 (impetus-momentum-state-migration). Added .momentum/ State Layout top-level section (single-source-of-truth invariant, hidden-prefix rationale, per-sprint subtree, signals/ ledger pattern with read-only contract). Updated all path references in Read/Write Authority table, Session-open sequence, Sprint Tracking Schema, and Installed Structure tree from `_bmad-output/implementation-artifacts/{sprints,stories,intake-queue.jsonl}` to `.momentum/` paths; planning carve-out: features.json stays under _bmad-output/planning-artifacts/. Added per-story approval contract — `approvals: []` on sprint records with story_file_sha (SHA-256), activation gate against current-matching SHAs (sprint-planning-adds-per-story-approval-gate). Added sprint-dev pre-execution verification gate (Phase 1 verify-approvals subcommand). Extended CMUX Markdown Surfaces integration to sprint-planning per-story approval viewer. Added Impetus session-start preflight component — plugin-cache-vs-source version-skew detector with status taxonomy (match/skew-cache-behind/skew-cache-ahead/no-cache/no-source/indeterminate) and `momentum-tools session plugin-cache-check` CLI; one explicit exception to never-narrate-the-reads rule (plugin-cache-staleness-detection). Added Orchestrator Behavioral Guards pattern with retro Phase 4 singleton-count guard as canonical example (retro-team-singleton-guard). Codified Decision 34 defense-in-depth: agent-definition Critical Constraints must be self-sufficient — QA Reviewer + E2E Validator parity contract for Phase 5 reviewer spawns (harden-sprint-dev-phase5-spawn-prompts). Added Decision 41 retro Phase 4 row (documenter as singleton coordinator distinct from auditor fan-out). Refined Decision 34 BLOCKED-vs-MISSING semantics — BLOCKED for missing infrastructure, MISSING reserved for execution-succeeded-without-AC-evidence; both reviewers follow .claude/rules/e2e-validation.md Environment Startup. Extended Decision 27 Wave 1 with dynamic transcript-query.py path resolution, worktree session discovery, UTC end-of-day inclusivity, --story-slugs filter, and explicit hard-fail on zero session matches. Promoted peek-first / 500-line-chunk convention to documented architectural convention under Cross-Cutting Concerns. Added one-line note that retire-sprint-log-final-cleanup story closes the ARCH-5 sprint-log historical cleanup.'
@@ -1328,9 +1332,10 @@ momentum/                                    ← Plugin root
 | momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files | `.momentum/sprints/{sprint-slug}/specs/*.feature` (Gherkin specs); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
 | momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
 | momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md, `.claude/momentum/feature-status.md` | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`); spawns `/momentum:feature-status` to refresh cache before summary write |
+| momentum:triage | `.momentum/stories/index.json`, `.momentum/intake-queue.jsonl` | `.momentum/intake-queue.jsonl` (SHAPING/DEFER/REJECT entries via `momentum-tools intake-queue`); `.momentum/signals/*.json` (e.g., `triage-uncleared-*` when observations remain unresolved) |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
-| VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report |
+| VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report; `.momentum/signals/*.json` (avfl-finding-pending-upstream-fix signals when findings trace to spec/rule root cause) |
 | Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
 | momentum:distill | Session observation / retro findings, relevant spec/skill/rules files | rules/, references/, skill prompts (Tier 1 direct commit); stories/index.json stubs (Tier 2); findings-ledger.jsonl (`origin: distill`); plugin version + push (Momentum-level fixes in Momentum project only) |
 | Upstream-fix skill (Epic 4, standalone) | session journal, specs, rules | session journal only (not findings-ledger.jsonl) |
@@ -2126,7 +2131,7 @@ Extraction queries (run automatically):
 
 Output directory: `.momentum/sprints/{sprint-slug}/audit-extracts/`
 
-`transcript-query.py` is standard retro tooling at a known path in the plugin, supporting both pre-built queries and ad-hoc SQL via `transcript-query.py sql "..."`.
+`transcript-query.py` is standard retro tooling resolved dynamically (highest-semver plugin-cache glob, in-repo fallback), supporting both pre-built queries and ad-hoc SQL via `transcript-query.py sql "..."`. The peek-first convention (run `wc -l` before reading any file, read in 500-line chunks for files over 200 lines, never full-Read known-large files) applies to all auditor and spec-impact-discovery agents reading extract files or planning artifacts.
 
 **Wave 2: Auditor Team (3 auditors + 1 documenter)**
 Spawn 4 agents in parallel via TeamCreate:
@@ -2518,7 +2523,7 @@ A new first-class planning artifact: `_bmad-output/planning-artifacts/features.j
 
 **Inputs:**
 - `_bmad-output/planning-artifacts/features.json` — feature definitions and current status
-- `_bmad-output/implementation-artifacts/stories/index.json` — story statuses for gap detection
+- `.momentum/stories/index.json` — story statuses for gap detection
 
 **Outputs:**
 
@@ -2584,7 +2589,7 @@ generated_at: "2026-04-11T14:30:00Z"
 ```python
 import hashlib, json
 features_content = open("_bmad-output/planning-artifacts/features.json").read()
-stories_content = open("_bmad-output/implementation-artifacts/stories/index.json").read()
+stories_content = open(".momentum/stories/index.json").read()
 h = hashlib.sha256((features_content + ":" + stories_content).encode()).hexdigest()
 ```
 

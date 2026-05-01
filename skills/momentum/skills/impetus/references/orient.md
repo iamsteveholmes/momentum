@@ -14,8 +14,11 @@ After a silent read of sprint state and story status, the owner receives a clear
 
 Read these silently at session open. No narration. The owner sees only the synthesis.
 
-- `{project-root}/_bmad-output/implementation-artifacts/sprints/index.json` — sprint lifecycle: check `active`, `planning`, `completed` (last entry), and `quickfixes`
-- `{project-root}/_bmad-output/implementation-artifacts/stories/index.json` — story status across the backlog: in-progress, ready-for-dev, done
+- `{project-root}/.momentum/sprints/index.json` — sprint lifecycle: check `active`, `planning`, `completed` (last entry), and `quickfixes`
+- `{project-root}/.momentum/stories/index.json` — story status across the backlog: in-progress, ready-for-dev, done
+- `{project-root}/.momentum/signals/` — pending work flags (retro-derived). Iterate the directory; if empty or absent, no narration. For each `*.json` signal file, read `signal_type`, `origin`, `payload` and surface as part of orientation context.
+
+There is no fallback to `_bmad-output/implementation-artifacts/`. If a source is missing, report state honestly (e.g., "no sprints recorded") rather than substituting old paths.
 
 ## Situational States
 
@@ -28,6 +31,7 @@ Derive which state the project is in and orient accordingly:
 | Between sprints | Both null, last sprint has `completed` date | When last sprint closed, retro status, suggest next move |
 | Clean slate | No sprints at all | Fresh start — suggest sprint planning |
 | Stories in-progress, no sprint | `stories/index.json` has `in-progress` items | Surface the active work, note the gap |
+| Pending signals present | `.momentum/signals/` has uncleared `*.json` files | Surface the outstanding signals alongside sprint/story state |
 
 ## Delivery Principles
 
@@ -36,6 +40,14 @@ Derive which state the project is in and orient accordingly:
 - If genuinely nothing is outstanding: "Clean slate — no active sprint, backlog is healthy. Want to explore what's next?"
 - 2-3 suggestions maximum — more is noise
 - Never narrate the reads. Ever.
+
+**One explicit exception to the silent-read rule:** the plugin cache staleness warning. When
+`session plugin-cache-check` returns `status: "skew-cache-behind"` or `"skew-cache-ahead"`,
+Impetus surfaces the warning from `references/staleness-warning.md` **before** the orientation
+greeting. This is a deliberate, sanctioned exception — not a narration of a read, but a
+protective action taken on behalf of the developer. All other reads remain silent. The staleness
+check is the safety net for operator-discipline lapses; the operator-discipline rule
+(`feedback_fresh_session_before_major_workflows`) remains the primary mitigation.
 
 ## Memory Integration
 

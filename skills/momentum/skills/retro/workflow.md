@@ -13,21 +13,21 @@
   <critical>Story stubs require developer approval before being written to stories/index.json. Write stub entries directly to stories/index.json (no momentum-tools command exists for this operation).</critical>
   <critical>Transcript audit (Phases 2-3) is the primary data source. Milestone logs are NOT the critical path — retro proceeds and produces findings even when zero log events exist.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
-  <critical>Phase 4 auditor team uses TeamCreate — auditors and documenter collaborate via SendMessage during analysis. This is the collaborative team pattern, not independent fan-out.</critical>
+  <critical>Phase 4 auditor team: exactly 1 documenter (singleton coordinator, spawned first as a single Agent) and exactly 3 auditors (individual Agent fan-out, each given the documenter handle for SendMessage). The documenter is NEVER placed in the same TeamCreate group as the auditors — that topology causes single-call replication (Decision 41; spawning-patterns.md Fan-Out vs TeamCreate decision rule).</critical>
 
   <team-composition>
     <phase name="auditor-team" step="4">
-      <role name="auditor-human" spawning="team-create" concurrency="parallel">
-        Reads user-messages.jsonl. Sends findings to documenter via SendMessage. Responds to documenter queries.
+      <role name="documenter" spawning="individual" concurrency="sequential" cardinality="1">
+        Singleton coordinator. Spawned first as a single Agent before auditors. Receives findings from all auditors via SendMessage. Evaluates, requests clarification, synthesizes. Owns retro-transcript-audit.md exclusively.
       </role>
-      <role name="auditor-execution" spawning="team-create" concurrency="parallel">
-        Reads agent-summaries.jsonl and errors.jsonl. Sends findings to documenter via SendMessage. Runs ad-hoc DuckDB queries on request.
+      <role name="auditor-human" spawning="individual" concurrency="parallel">
+        Reads user-messages.jsonl. Sends findings to documenter via SendMessage using the documenter handle passed at spawn. Responds to documenter queries.
       </role>
-      <role name="auditor-review" spawning="team-create" concurrency="parallel">
-        Reads team-messages.jsonl. Sends findings to documenter via SendMessage. Correlates with other auditor findings.
+      <role name="auditor-execution" spawning="individual" concurrency="parallel">
+        Reads agent-summaries.jsonl and errors.jsonl. Sends findings to documenter via SendMessage using the documenter handle passed at spawn. Runs ad-hoc DuckDB queries on request.
       </role>
-      <role name="documenter" spawning="team-create" concurrency="parallel">
-        Receives findings from all auditors. Evaluates, requests clarification, synthesizes. Owns retro-transcript-audit.md exclusively.
+      <role name="auditor-review" spawning="individual" concurrency="parallel">
+        Reads team-messages.jsonl. Sends findings to documenter via SendMessage using the documenter handle passed at spawn. Correlates with other auditor findings.
       </role>
     </phase>
   </team-composition>
@@ -55,7 +55,7 @@
   <step n="1" goal="Identify the sprint to retrospect">
     <action>Update task 1 to in_progress</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json`</action>
+    <action>Read `.momentum/sprints/index.json`</action>
     <action>Search the `completed` array for entries where `retro_run_at == null`</action>
 
     <check if="no completed sprint with retro_run_at == null">
@@ -89,7 +89,7 @@ Which sprint should we retrospect?</output>
     <action>Store {{sprint_stories}} = candidate.stories (list of story slugs)</action>
     <action>Store {{sprint_started}} = candidate.started (ISO date for session discovery)</action>
     <action>Store {{sprint_completed}} = candidate.completed (ISO date for session discovery)</action>
-    <action>Store {{audit_dir}} = `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/audit-extracts`</action>
+    <action>Store {{audit_dir}} = `.momentum/sprints/{{sprint_slug}}/audit-extracts`</action>
 
     <action>Update task 1 to completed</action>
   </step>
@@ -101,43 +101,64 @@ Which sprint should we retrospect?</output>
   <step n="2" goal="Extract session transcript data into audit-extracts/ via transcript-query.py">
     <action>Update task 2 to in_progress</action>
 
-    <note>transcript-query.py lives at `skills/momentum/scripts/transcript-query.py`.
-    It auto-installs duckdb if missing. It discovers sessions by date range using --after / --before.
+    <note>transcript-query.py is resolved dynamically — the highest-semver plugin-cache copy wins,
+    with an in-repo fallback for dogfood runs. It auto-installs duckdb if missing.
+    It discovers sessions by date range (--after / --before) with UTC end-of-day inclusive semantics
+    for --before. It also discovers sessions from git worktrees automatically.
     All errors use actual error indicators (is_error flag, success=false), not string matching.</note>
 
+    <action>Resolve the script path (store as {{transcript_query_path}}):
+      ```
+      TRANSCRIPT_QUERY=$(ls -d ~/.claude/plugins/cache/momentum/momentum/*/scripts/transcript-query.py 2>/dev/null \
+        | sort -V | tail -n1)
+      [ -z "$TRANSCRIPT_QUERY" ] && [ -f skills/momentum/scripts/transcript-query.py ] \
+        && TRANSCRIPT_QUERY=skills/momentum/scripts/transcript-query.py
+      ```
+      Log the resolved path: "Using transcript-query.py at: {{transcript_query_path}}"
+    </action>
+
     <action>Ensure `{{audit_dir}}` directory exists:
-      Create `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/audit-extracts/` if absent</action>
+      Create `.momentum/sprints/{{sprint_slug}}/audit-extracts/` if absent</action>
+
+    <action>Build the slug filter argument:
+      If {{sprint_stories}} is non-empty: set {{slug_filter_arg}} = `--story-slugs "{{sprint_stories | join(',')}}"`
+      If {{sprint_stories}} is empty: set {{slug_filter_arg}} = "" (omit the flag)
+    </action>
 
     <action>Run 4 extraction commands (can run in parallel):
 
       **1. User messages** — all human-typed prompts across all sprint sessions:
       ```
-      python3 skills/momentum/scripts/transcript-query.py user-messages \
+      python3 {{transcript_query_path}} user-messages \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/user-messages.jsonl
       ```
 
       **2. Agent summaries** — per-subagent digest (prompt, outcome, tool counts, error count):
       ```
-      python3 skills/momentum/scripts/transcript-query.py agent-summary \
+      python3 {{transcript_query_path}} agent-summary \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/agent-summaries.jsonl
       ```
 
       **3. Errors** — tool errors using actual error indicators only:
       ```
-      python3 skills/momentum/scripts/transcript-query.py errors \
+      python3 {{transcript_query_path}} errors \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/errors.jsonl
       ```
 
       **4. Team messages** — inter-agent SendMessage and teammate-message content:
       ```
-      python3 skills/momentum/scripts/transcript-query.py team-messages \
+      python3 {{transcript_query_path}} team-messages \
         --after {{sprint_started}} --before {{sprint_completed}} \
+        {{slug_filter_arg}} \
         --format json \
         --output {{audit_dir}}/team-messages.jsonl
       ```
@@ -151,28 +172,30 @@ Which sprint should we retrospect?</output>
         {{team_msg_count}} = line count of team-messages.jsonl
       </action>
       <output>Transcript preprocessing complete:
+  · transcript-query.py path: {{transcript_query_path}}
   · user-messages.jsonl — {{user_msg_count}} human prompts
   · agent-summaries.jsonl — {{agent_count}} subagent digests
   · errors.jsonl — {{error_count}} tool errors (actual error indicators only)
   · team-messages.jsonl — {{team_msg_count}} inter-agent messages
+  {{#if slug_filter_arg}}· Slug filter applied: {{sprint_stories | join(', ')}}{{/if}}
 
 Extracts written to: {{audit_dir}}/
 </output>
     </check>
 
     <check if="extraction produced empty results (no session files found)">
-      <output>Warning: No session files found for sprint date range ({{sprint_started}} to {{sprint_completed}}).
+      <output>ERROR: Retro for sprint "{{sprint_slug}}" found zero session files for date range {{sprint_started}} → {{sprint_completed}}.
 
-The transcript audit will not have raw data to analyze. This may happen if:
-  · The sprint ran in a different project directory
-  · Session dates don't match the sprint's started/completed dates
+Proceeding with empty extracts would produce false-positive audit findings. The retro is halted.
+
+Investigate one of the following before re-running:
+  · The sprint ran in a different project directory — session files may be elsewhere
+  · Session dates don't match the sprint's started/completed dates — check sprint record
   · Claude Code session files have been deleted
+  · transcript-query.py path could not be resolved: {{transcript_query_path}}
 
-The retro can continue but auditor findings will be limited.</output>
-      <ask>Continue with empty extracts?</ask>
-      <check if="developer says no">
-        <action>HALT — developer can investigate session file location and re-run.</action>
-      </check>
+Re-run `momentum:retro` after resolving the session file location.</output>
+      <action>HALT — do NOT spawn auditor team. Do NOT prompt developer to continue with empty extracts. The retro must stop here until the developer resolves the session file issue and re-runs.</action>
     </check>
 
     <action>Update task 2 to completed</action>
@@ -185,7 +208,7 @@ The retro can continue but auditor findings will be limited.</output>
   <step n="3" goal="Verify every sprint story reached done status">
     <action>Update task 3 to in_progress</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>For each story slug in {{sprint_stories}}:
       - Look up status in stories/index.json
       - If status == "done": mark as verified
@@ -224,130 +247,31 @@ For each of these, choose:
   <!-- PHASE 4: AUDITOR TEAM                                  -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Spawn auditor team via TeamCreate — collaborative analysis of extracts">
+  <step n="4" goal="Spawn documenter singleton then fan out 3 auditors — exactly 1 documenter + 3 auditors">
     <action>Update task 4 to in_progress</action>
 
-    <note>Spawn all 4 agents as a collaborative team via TeamCreate. Auditors read their assigned
-    extract files, send findings to the documenter via SendMessage, and respond to documenter
-    queries for clarification or deeper investigation. The documenter evaluates findings as they
-    arrive, may request additional DuckDB queries, and writes the final findings document.
-    This is the collaborative team pattern — auditors and documenter iterate together.</note>
+    <critical>Exactly 1 documenter and exactly 3 auditors must be spawned in Phase 4. The
+    documenter is a singleton coordinator — it must NEVER be placed in the same TeamCreate group
+    as the auditors, which would cause single-call replication (observed: 8–10 documenters per
+    retro run). Spawn topology (Shape A per Decision 41 and spawning-patterns.md):
+      1. First, spawn the documenter alone via a single TeamCreate call (team name:
+         `retro-{{sprint_slug}}`, 1 member: documenter).
+      2. Then, in a single message, fan out 3 individual Agent spawns — auditor-human,
+         auditor-execution, auditor-review — each joining the same team `retro-{{sprint_slug}}`
+         so they can SendMessage to the documenter.
+    The retro skill itself is the sole orchestrator. No retro-lead intermediate agent exists or
+    should ever be introduced. Reference: Decision 41; spawning-patterns.md Fan-Out vs TeamCreate;
+    AC4 of retro-workflow-rewrite (closed by fix-retro-documenter-replication-defect).</critical>
 
-    <action>Spawn 4 agents via TeamCreate:
+    <note>The documenter is spawned first (singleton, cardinality=1) so it exists and is
+    reachable via SendMessage when the 3 auditors start. Auditors send findings as they discover
+    them; the documenter evaluates, may request deeper investigation, and writes the final
+    findings document. This achieves the same collaborative iteration as before while
+    eliminating the replication defect.</note>
 
-      **auditor-human** — System prompt:
-      ```
-      You are auditor-human for the {{sprint_slug}} retrospective.
-
-      Read `{{audit_dir}}/user-messages.jsonl`. Each line is a JSON object with
-      timestamp, session_file, content, and is_first_message fields.
-      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
-      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
-
-      Identify and categorize every notable pattern:
-        - Corrections: user fixing agent behavior mid-task
-        - Redirections: user changing approach or canceling agent work
-        - Frustration signals: repeated asks, escalating tone, explicit complaints
-        - Praise/approval: positive signals about what worked well
-        - Decision points: human exercised judgment agents couldn't handle
-
-      For each finding, record:
-        - type (correction|redirection|frustration|praise|decision)
-        - severity (high|medium|low)
-        - quote or paraphrase of the message
-        - what it reveals about practice gaps or strengths
-        - recommendation (fix|keep|investigate)
-
-      Send findings to the documenter agent via SendMessage as you discover them.
-      The SendMessage `message` field MUST be a STRING — not a JSON object.
-      Serialize your findings to a JSON-formatted string under key "human_findings".
-      Concrete example (note the outer quotes — `message` is a string):
-        SendMessage(to: "documenter", message: '{"human_findings": [{"type":"correction","severity":"high","quote":"...","reveals":"...","recommendation":"fix"}]}')
-      Equivalent with json.dumps:
-        SendMessage(to: "documenter", message: json.dumps({"human_findings": [...]}))
-      Passing a raw object (e.g. message: {"human_findings": [...]}) will fail
-      with InputValidationError "expected string, received object".
-      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
-
-      Available tool: transcript-query.py for additional ad-hoc queries if needed:
-        python3 skills/momentum/scripts/transcript-query.py sql "SELECT ..." \
-          --after {{sprint_started}} --before {{sprint_completed}}
-      ```
-
-      **auditor-execution** — System prompt:
-      ```
-      You are auditor-execution for the {{sprint_slug}} retrospective.
-
-      Read:
-        - `{{audit_dir}}/agent-summaries.jsonl` — per-subagent digests
-        - `{{audit_dir}}/errors.jsonl` — tool errors (actual error indicators only)
-      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
-      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
-
-      Investigate patterns across the subagent population:
-        - Duplication: multiple agents with identical or near-identical first prompts
-        - Error recovery: which agents had high error counts, did they recover?
-        - Tool efficiency: agents with high tool_results but low assistant_turns
-        - Story iteration: stories with many dev agents (why did story X need N passes?)
-        - Abandoned agents: agents with very low turn counts (< 3 assistant turns)
-
-      For agents of interest, run ad-hoc queries via transcript-query.py sql "..." to
-      investigate their full transcripts.
-
-      For each finding, record:
-        - type (duplication|error-pattern|efficiency|iteration|abandon)
-        - affected agents or stories
-        - evidence (counts, examples)
-        - root cause hypothesis
-        - recommendation (fix|keep|investigate)
-
-      Send findings to the documenter agent via SendMessage as you discover them.
-      The SendMessage `message` field MUST be a STRING — not a JSON object.
-      Serialize your findings to a JSON-formatted string under key "execution_findings".
-      Concrete example (note the outer quotes — `message` is a string):
-        SendMessage(to: "documenter", message: '{"execution_findings": [{"type":"duplication","affected":"...","evidence":"...","hypothesis":"...","recommendation":"fix"}]}')
-      Equivalent with json.dumps:
-        SendMessage(to: "documenter", message: json.dumps({"execution_findings": [...]}))
-      Passing a raw object (e.g. message: {"execution_findings": [...]}) will fail
-      with InputValidationError "expected string, received object".
-      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
-      ```
-
-      **auditor-review** — System prompt:
-      ```
-      You are auditor-review for the {{sprint_slug}} retrospective.
-
-      Read:
-        - `{{audit_dir}}/team-messages.jsonl` — inter-agent SendMessage content
-        - `{{audit_dir}}/agent-summaries.jsonl` — filter to review roles:
-            agent_type containing "reviewer", "validator", "qa", "prompt-engineer"
-      These audit-extracts can be >10K tokens; use offset/limit on Read to stream in chunks,
-      or python3 to process JSONL line-by-line. Do not attempt to Read a whole file at once.
-
-      Evaluate quality gate effectiveness:
-        - Real issues caught: review findings that led to genuine fixes
-        - False positives: review blocks that were overturned or unnecessary
-        - Fix cycle quality: did fix passes converge or thrash?
-        - Inter-agent coordination: clear handoffs, confusion, missing context
-        - Reviewer prompt quality: were review agents well-instructed?
-
-      For each finding, record:
-        - type (real-catch|false-positive|thrash|coordination|prompt-quality)
-        - evidence (message quotes, patterns)
-        - impact on sprint velocity
-        - recommendation (fix|keep|investigate)
-
-      Send findings to the documenter agent via SendMessage as you discover them.
-      The SendMessage `message` field MUST be a STRING — not a JSON object.
-      Serialize your findings to a JSON-formatted string under key "review_findings".
-      Concrete example (note the outer quotes — `message` is a string):
-        SendMessage(to: "documenter", message: '{"review_findings": [{"type":"real-catch","evidence":"...","impact":"...","recommendation":"fix"}]}')
-      Equivalent with json.dumps:
-        SendMessage(to: "documenter", message: json.dumps({"review_findings": [...]}))
-      Passing a raw object (e.g. message: {"review_findings": [...]}) will fail
-      with InputValidationError "expected string, received object".
-      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
-      ```
+    <action>Step 4a — Spawn the documenter singleton (cardinality=1):
+    In a single Agent spawn, create exactly 1 documenter. Do NOT use TeamCreate here — a single
+    Agent spawn is used so the documenter is never multiplexed.
 
       **documenter** — System prompt:
       ```
@@ -370,7 +294,7 @@ For each of these, choose:
         - Separate successes (preserve) from struggles (fix)
 
       Write the findings document to:
-        `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`
+        `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
 
       Document structure (required sections):
 
@@ -416,11 +340,185 @@ For each of these, choose:
       ```
     </action>
 
+    <action>Step 4b — Fan out 3 auditor Agent spawns in a single message:
+    In a single message, make 3 individual Agent calls — one per auditor role. Each auditor is
+    given the documenter's agent handle so it can SendMessage findings to the documenter.
+    This is exactly 3 spawns — auditor-human, auditor-execution, auditor-review — no more, no less.
+
+      **auditor-human** — System prompt:
+      ```
+      You are auditor-human for the {{sprint_slug}} retrospective.
+
+      Read `{{audit_dir}}/user-messages.jsonl`. Each line is a JSON object with
+      timestamp, session_file, content, and is_first_message fields.
+
+      Large-file protocol (mandatory — follow before reading any file):
+        1. Run `wc -l` on the file first to check its size.
+        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
+           or stream JSONL line-by-line via `python3`.
+        3. Never attempt a full Read on these known-large files:
+           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
+        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
+
+      Identify and categorize every notable pattern:
+        - Corrections: user fixing agent behavior mid-task
+        - Redirections: user changing approach or canceling agent work
+        - Frustration signals: repeated asks, escalating tone, explicit complaints
+        - Praise/approval: positive signals about what worked well
+        - Decision points: human exercised judgment agents couldn't handle
+
+      For each finding, record:
+        - type (correction|redirection|frustration|praise|decision)
+        - severity (high|medium|low)
+        - quote or paraphrase of the message
+        - what it reveals about practice gaps or strengths
+        - recommendation (fix|keep|investigate)
+
+      Send findings to the documenter agent via SendMessage as you discover them.
+      The SendMessage `message` field MUST be a STRING — not a JSON object.
+      Serialize your findings to a JSON-formatted string under key "human_findings".
+      Concrete example (note the outer quotes — `message` is a string):
+        SendMessage(to: "documenter", message: '{"human_findings": [{"type":"correction","severity":"high","quote":"...","reveals":"...","recommendation":"fix"}]}')
+      Equivalent with json.dumps:
+        SendMessage(to: "documenter", message: json.dumps({"human_findings": [...]}))
+      Passing a raw object (e.g. message: {"human_findings": [...]}) will fail
+      with InputValidationError "expected string, received object".
+      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
+
+      Available tool: transcript-query.py for additional ad-hoc queries if needed:
+        python3 {{transcript_query_path}} sql "SELECT ..." \
+          --after {{sprint_started}} --before {{sprint_completed}}
+      ```
+
+      **auditor-execution** — System prompt:
+      ```
+      You are auditor-execution for the {{sprint_slug}} retrospective.
+
+      Read:
+        - `{{audit_dir}}/agent-summaries.jsonl` — per-subagent digests
+        - `{{audit_dir}}/errors.jsonl` — tool errors (actual error indicators only)
+
+      Large-file protocol (mandatory — follow before reading any file):
+        1. Run `wc -l` on each file first to check its size.
+        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
+           or stream JSONL line-by-line via `python3`.
+        3. Never attempt a full Read on these known-large files:
+           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
+        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
+
+      Investigate patterns across the subagent population:
+        - Duplication: multiple agents with identical or near-identical first prompts
+        - Error recovery: which agents had high error counts, did they recover?
+        - Tool efficiency: agents with high tool_results but low assistant_turns
+        - Story iteration: stories with many dev agents (why did story X need N passes?)
+        - Abandoned agents: agents with very low turn counts (< 3 assistant turns)
+
+      For agents of interest, run ad-hoc queries via transcript-query.py sql "..." to
+      investigate their full transcripts.
+
+      For each finding, record:
+        - type (duplication|error-pattern|efficiency|iteration|abandon)
+        - affected agents or stories
+        - evidence (counts, examples)
+        - root cause hypothesis
+        - recommendation (fix|keep|investigate)
+
+      Send findings to the documenter agent via SendMessage as you discover them.
+      The SendMessage `message` field MUST be a STRING — not a JSON object.
+      Serialize your findings to a JSON-formatted string under key "execution_findings".
+      Concrete example (note the outer quotes — `message` is a string):
+        SendMessage(to: "documenter", message: '{"execution_findings": [{"type":"duplication","affected":"...","evidence":"...","hypothesis":"...","recommendation":"fix"}]}')
+      Equivalent with json.dumps:
+        SendMessage(to: "documenter", message: json.dumps({"execution_findings": [...]}))
+      Passing a raw object (e.g. message: {"execution_findings": [...]}) will fail
+      with InputValidationError "expected string, received object".
+      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
+      ```
+
+      **auditor-review** — System prompt:
+      ```
+      You are auditor-review for the {{sprint_slug}} retrospective.
+
+      Read:
+        - `{{audit_dir}}/team-messages.jsonl` — inter-agent SendMessage content
+        - `{{audit_dir}}/agent-summaries.jsonl` — filter to review roles:
+            agent_type containing "reviewer", "validator", "qa", "prompt-engineer"
+
+      Large-file protocol (mandatory — follow before reading any file):
+        1. Run `wc -l` on each file first to check its size.
+        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
+           or stream JSONL line-by-line via `python3`.
+        3. Never attempt a full Read on these known-large files:
+           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
+        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
+
+      Evaluate quality gate effectiveness:
+        - Real issues caught: review findings that led to genuine fixes
+        - False positives: review blocks that were overturned or unnecessary
+        - Fix cycle quality: did fix passes converge or thrash?
+        - Inter-agent coordination: clear handoffs, confusion, missing context
+        - Reviewer prompt quality: were review agents well-instructed?
+
+      For each finding, record:
+        - type (real-catch|false-positive|thrash|coordination|prompt-quality)
+        - evidence (message quotes, patterns)
+        - impact on sprint velocity
+        - recommendation (fix|keep|investigate)
+
+      Send findings to the documenter agent via SendMessage as you discover them.
+      The SendMessage `message` field MUST be a STRING — not a JSON object.
+      Serialize your findings to a JSON-formatted string under key "review_findings".
+      Concrete example (note the outer quotes — `message` is a string):
+        SendMessage(to: "documenter", message: '{"review_findings": [{"type":"real-catch","evidence":"...","impact":"...","recommendation":"fix"}]}')
+      Equivalent with json.dumps:
+        SendMessage(to: "documenter", message: json.dumps({"review_findings": [...]}))
+      Passing a raw object (e.g. message: {"review_findings": [...]}) will fail
+      with InputValidationError "expected string, received object".
+      Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
+      ```
+    </action>
+
+    <action>Singleton guard — verify team composition before any agent work begins:
+
+      Read `~/.claude/teams/retro-{{sprint_slug}}/config.json`.
+
+      If the file does not exist, is unreadable, or does not contain a `members` array, emit
+      the diagnostic block below and HALT immediately — an unverifiable team is not a passing team.
+
+      Otherwise, parse the `members` array and tally per-role counts using either the `name`
+      field or the `agentType` field (whichever matches the role identifier — accept either).
+      The four expected role identifiers are: `documenter`, `auditor-human`, `auditor-execution`,
+      `auditor-review`.
+
+      Assert ALL of the following:
+        1. Total member count is exactly 4.
+        2. Exactly 1 member has role `documenter`.
+        3. Exactly 1 member has role `auditor-human`.
+        4. Exactly 1 member has role `auditor-execution`.
+        5. Exactly 1 member has role `auditor-review`.
+        6. No member has a role outside the four-role set above.
+
+      If ALL assertions pass: emit a single confirmation line such as
+      "Team composition verified: 1 documenter + 3 auditors" and continue to the wait action.
+
+      If ANY assertion fails (including unreadable config or missing members array): emit this
+      diagnostic block and HALT — do NOT proceed to the wait action, do NOT await the documenter,
+      do NOT write the findings document. There is no "continue anyway" path.
+
+        RETRO TEAM COMPOSITION MISMATCH — {{sprint_slug}}
+        Expected: 1 documenter + 1 auditor-human + 1 auditor-execution + 1 auditor-review (4 total)
+        Actual:   [per-role count tally from members array, e.g. "5 documenter, 1 auditor-human,
+                   1 auditor-execution, 1 auditor-review (8 total)"]
+        Config read: ~/.claude/teams/retro-{{sprint_slug}}/config.json
+        See stories: retro-team-singleton-guard, fix-retro-documenter-replication-defect
+        HALTING Phase 4 — investigate team spawn before retrying the retro.
+    </action>
+
     <action>Wait for the team to complete (documenter signals completion by writing the findings file)</action>
 
-    <check if="findings document written at `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
+    <check if="findings document written at `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
       <output>Auditor team complete. Findings document written:
-  `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
+  `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
     </check>
 
     <check if="findings document not found after documenter exits">
@@ -441,7 +539,7 @@ For each of these, choose:
   <step n="5" goal="Propose and approve story stubs from audit findings; route Tier 1 findings to distill">
     <action>Update task 5 to in_progress</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
+    <action>Read `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
     <action>Extract all items under "Priority Action Items" section</action>
 
     <check if="no priority action items found">
@@ -528,7 +626,7 @@ Approve this stub? (Y/N)
         <ask>For each stub, enter Y or N:</ask>
 
         <action>For each approved stub:
-          - Read `_bmad-output/implementation-artifacts/stories/index.json`
+          - Read `.momentum/stories/index.json`
           - Generate a slug from the title (kebab-case)
           - Add entry: { "title": ..., "status": "backlog", "epic_slug": ..., "depends_on": [] }
           - Write updated stories/index.json
@@ -718,7 +816,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
     </action>
 
     <action>Write the sprint summary to:
-      `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
+      `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`
 
       Required structure (sections in this order):
       ```
@@ -767,7 +865,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
   · {{team_msg_count}} inter-agent messages
 
 **Findings document:**
-  `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`
+  `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
 
 **Story stubs created:** {{approved_count}} added to backlog
 
@@ -775,7 +873,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 
 **Sprint status:** closed (retro_run_at set to {{today}})
 
-**Sprint summary:** `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
+**Sprint summary:** `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`
 
 ---
 Review the findings document and backlog stubs when planning the next sprint.

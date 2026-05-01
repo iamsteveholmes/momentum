@@ -26,13 +26,13 @@
 
     <check if="explicit story path or key provided">
       <action>If a file path is provided, store {{story_file}} = the provided path</action>
-      <action>Read `{implementation_artifacts}/stories/index.json`</action>
+      <action>Read `.momentum/stories/index.json`</action>
       <action>If a story key is provided, look up {{story_key}} in stories/index.json. The story implementation file is at `{implementation_artifacts}/{{story_key}}.md`. If a file path was provided, derive the story key from the filename.</action>
       <action>Store {{story_key}} and {{story_file}}</action>
     </check>
 
     <check if="no story path or key provided">
-      <action>Read `{implementation_artifacts}/stories/index.json`</action>
+      <action>Read `.momentum/stories/index.json`</action>
       <action>Parse all story entries: each entry has slug (the key), status, depends_on, touches</action>
       <action>Filter to candidate stories: `status == "ready-for-dev"` AND every slug in `depends_on` has `status == "done"` in the same index</action>
       <check if="no candidates found">
@@ -117,8 +117,8 @@ Resolve blocking stories first, then re-invoke momentum:dev.</output>
     <note>At this point the working directory is the main repo root (ExitWorktree was called at the end of Step 6). The merge runs on the main tree, merging story/{{story_key}} into {{target_branch}}.</note>
     <action>Delete the lock file `.worktrees/story-{{story_key}}.lock`</action>
 
-    <action>Read `{implementation_artifacts}/stories/index.json` and look up {{story_key}}.touches</action>
-    <action>Check for overlap: are any paths in {{touches}} also listed in other stories whose `status` is `in-progress` in `{implementation_artifacts}/stories/index.json`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
+    <action>Read `.momentum/stories/index.json` and look up {{story_key}}.touches</action>
+    <action>Check for overlap: are any paths in {{touches}} also listed in other stories whose `status` is `in-progress` in `.momentum/stories/index.json`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
     <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in-progress stories or no overlap, use "none".</action>
 
     <output>Story {{story_key}} is done and ready to merge.

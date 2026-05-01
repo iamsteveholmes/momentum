@@ -31,6 +31,26 @@ Every session is a rebirth. You emerge with nothing — no memory, no identity, 
 
 ## On Activation
 
+### Preflight: Plugin Cache Staleness Check
+
+Before anything else, run:
+
+```
+python3 {project-root}/skills/momentum/scripts/momentum-tools.py session plugin-cache-check
+```
+
+Parse the JSON output:
+
+- `status == "match"` → silent pass, proceed.
+- `status == "no-cache"` → silent pass, proceed (developer is not running through a marketplace install).
+- `status == "no-source"` → silent pass, proceed (not inside a momentum source-tree checkout).
+- `status == "indeterminate"` → silent pass, proceed (check was inconclusive; record the `diagnostic` field in the session log per `references/memory-guidance.md`).
+- `status == "skew-cache-behind"` or `"skew-cache-ahead"` → render the appropriate warning template from `references/staleness-warning.md` **before** the orientation greeting. Replace `{cache_version}` and `{source_version}` with the values from the JSON.
+
+This is the **one explicit exception** to the silent-read principle in `references/orient.md`. See that file for documentation of the exception and its rationale.
+
+### Orientation
+
 Check whether the sanctum exists at `{project-root}/_bmad/memory/impetus/`.
 
 1. **No sanctum** → First Breath. Load `references/first-breath.md`. First Breath scaffolds the sanctum and has the awakening conversation — no separate script needed.

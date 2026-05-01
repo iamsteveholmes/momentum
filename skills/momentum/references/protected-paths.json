@@ -22,12 +22,12 @@
       "reason": "modify via refine workflow only"
     },
     {
-      "pattern": "_bmad-output/implementation-artifacts/stories/index.json",
+      "pattern": ".momentum/stories/index.json",
       "policy": "index-files",
       "reason": "index files are managed by sprint-manager only"
     },
     {
-      "pattern": "_bmad-output/implementation-artifacts/sprints/index.json",
+      "pattern": ".momentum/sprints/index.json",
       "policy": "index-files",
       "reason": "index files are managed by sprint-manager only"
     }

@@ -9,8 +9,8 @@
 #   **/*.feature          — acceptance-test-dir
 #   .claude/rules/        — project-rules
 #   _bmad-output/planning-artifacts/*.md  — planning-artifacts
-#   _bmad-output/implementation-artifacts/stories/index.json — index-files
-#   _bmad-output/implementation-artifacts/sprints/index.json — index-files
+#   .momentum/stories/index.json — index-files
+#   .momentum/sprints/index.json — index-files
 #
 # Additional paths can be added via .claude/momentum/project-config.json
 # under a "protected_paths" array.
@@ -96,8 +96,8 @@ DEFAULT_PROTECTED_PATTERNS=(
   "*.feature"
   ".claude/rules/*"
   "_bmad-output/planning-artifacts/*.md"
-  "_bmad-output/implementation-artifacts/stories/index.json"
-  "_bmad-output/implementation-artifacts/sprints/index.json"
+  ".momentum/stories/index.json"
+  ".momentum/sprints/index.json"
 )
 
 # Load from JSON if available
@@ -192,13 +192,13 @@ if [[ "$NORM_PATH" == _bmad-output/planning-artifacts/*.md ]] || \
 fi
 
 # 5. Index files — exact path matches
-if [[ "$NORM_PATH" == _bmad-output/implementation-artifacts/stories/index.json ]] || \
-   [[ "$NORM_PATH" == */_bmad-output/implementation-artifacts/stories/index.json ]]; then
+if [[ "$NORM_PATH" == .momentum/stories/index.json ]] || \
+   [[ "$NORM_PATH" == */.momentum/stories/index.json ]]; then
   block_write "index-files" "index files are managed by sprint-manager only"
 fi
 
-if [[ "$NORM_PATH" == _bmad-output/implementation-artifacts/sprints/index.json ]] || \
-   [[ "$NORM_PATH" == */_bmad-output/implementation-artifacts/sprints/index.json ]]; then
+if [[ "$NORM_PATH" == .momentum/sprints/index.json ]] || \
+   [[ "$NORM_PATH" == */.momentum/sprints/index.json ]]; then
   block_write "index-files" "index files are managed by sprint-manager only"
 fi
 

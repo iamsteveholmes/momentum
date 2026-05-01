@@ -21,10 +21,10 @@ FAIL_COUNT = 0
 
 
 def setup_project(stories: dict | None = None, sprints: dict | None = None) -> Path:
-    """Create a temp project directory with stories/index.json and sprints/index.json."""
+    """Create a temp project directory with .momentum/stories/index.json and .momentum/sprints/index.json."""
     tmpdir = Path(tempfile.mkdtemp())
-    stories_dir = tmpdir / "_bmad-output" / "implementation-artifacts" / "stories"
-    sprints_dir = tmpdir / "_bmad-output" / "implementation-artifacts" / "sprints"
+    stories_dir = tmpdir / ".momentum" / "stories"
+    sprints_dir = tmpdir / ".momentum" / "sprints"
     stories_dir.mkdir(parents=True)
     sprints_dir.mkdir(parents=True)
 
@@ -74,12 +74,12 @@ def run_tool(project_dir: Path, *args: str) -> tuple[int, dict]:
 
 
 def read_stories(project_dir: Path) -> dict:
-    path = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    path = project_dir / ".momentum" / "stories" / "index.json"
     return json.loads(path.read_text())
 
 
 def read_sprints(project_dir: Path) -> dict:
-    path = project_dir / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    path = project_dir / ".momentum" / "sprints" / "index.json"
     return json.loads(path.read_text())
 
 
@@ -196,11 +196,12 @@ def test_data_preservation():
 # --- Sprint Lifecycle Tests ---
 
 def test_sprint_activate():
-    """Activating a planning sprint."""
+    """Activating a planning sprint (no stories — approval check passes trivially)."""
     print("\n[sprint activate] Basic activation")
     sprints = {
         "active": None,
-        "planning": {"slug": "test-sprint", "name": "Test Sprint", "locked": False, "stories": ["s1"]},
+        "planning": {"slug": "test-sprint", "name": "Test Sprint", "locked": False,
+                     "stories": [], "approvals": []},
         "completed": []
     }
     proj = setup_project(sprints=sprints)
@@ -380,11 +381,11 @@ def test_sprint_plan_sets_status_planning():
 
 
 def test_sprint_activate_sets_status_active():
-    """sprint activate sets active.status='active'."""
+    """sprint activate sets active.status='active' (no stories — approval check trivially passes)."""
     print("\n[sprint activate] Sets status active")
     sprints = {
         "active": None,
-        "planning": {"slug": "test-sprint", "locked": False, "stories": ["s1"]},
+        "planning": {"slug": "test-sprint", "locked": False, "stories": [], "approvals": []},
         "completed": []
     }
     proj = setup_project(sprints=sprints)
@@ -1996,7 +1997,7 @@ def test_feature_status_hash_changes_on_stories_change():
     # First run with default stories
     code1, out1 = run_tool(proj, "feature-status-hash")
     # Change stories content
-    stories_path = proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    stories_path = proj / ".momentum" / "stories" / "index.json"
     stories_path.write_text('{"new-story": {"status": "backlog", "title": "New"}}')
     code2, out2 = run_tool(proj, "feature-status-hash")
     assert_eq("exit codes 0", code1 == 0 and code2 == 0, True)
@@ -2068,7 +2069,7 @@ def test_preflight_feature_status_fresh():
     features_content = '{"features": [{"slug": "auth"}]}'
     setup_features_file(proj, features_content)
     # Read the default stories content to compute the hash
-    stories_content = (proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json").read_text()
+    stories_content = (proj / ".momentum" / "stories" / "index.json").read_text()
     expected_hash = compute_expected_hash(features_content, stories_content)
     setup_feature_status_cache(proj, {
         "input_hash": expected_hash,
@@ -2162,7 +2163,7 @@ def test_greeting_state_feature_status_fresh():
     setup_installed_json(proj, {"session_stats": {"momentum_completions": 3}})
     features_content = '{"features": [{"slug": "auth"}]}'
     setup_features_file(proj, features_content)
-    stories_content = (proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json").read_text()
+    stories_content = (proj / ".momentum" / "stories" / "index.json").read_text()
     expected_hash = compute_expected_hash(features_content, stories_content)
     setup_feature_status_cache(proj, {
         "input_hash": expected_hash,
@@ -2257,7 +2258,7 @@ def test_story_add_feature_slug_omitted_when_empty():
 # --- intake-queue Tests ---
 
 def read_queue(project_dir: Path) -> list:
-    path = project_dir / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+    path = project_dir / ".momentum" / "intake-queue.jsonl"
     if not path.exists():
         return []
     lines = [l.strip() for l in path.read_text().splitlines() if l.strip()]
@@ -2365,6 +2366,656 @@ def test_intake_queue_list_filters():
     assert_eq("exit code 0", code, 0)
     assert_eq("one filtered event", out.get("count"), 1)
     assert_eq("correct source", out["events"][0].get("source"), "retro")
+
+
+# --- .momentum/ Path Migration Tests ---
+
+def test_stories_path_resolves_to_momentum():
+    """stories_path() must resolve to .momentum/stories/index.json."""
+    print("\n[.momentum/ migration] stories_path resolves to .momentum/")
+    proj = setup_project()
+    # Verify the file was created at .momentum/stories/index.json (not old path)
+    new_path = proj / ".momentum" / "stories" / "index.json"
+    old_path = proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    assert_eq("new .momentum path exists", new_path.exists(), True)
+    assert_eq("old _bmad-output path absent", old_path.exists(), False)
+    # Verify the tool writes to and reads from the new path
+    code, out = run_tool(proj, "sprint", "status-transition", "--story", "test-story", "--target", "ready-for-dev")
+    assert_eq("exit code 0", code, 0)
+    stories = read_stories(proj)
+    assert_eq("status updated at new path", stories["test-story"]["status"], "ready-for-dev")
+
+
+def test_sprints_path_resolves_to_momentum():
+    """sprints_path() must resolve to .momentum/sprints/index.json."""
+    print("\n[.momentum/ migration] sprints_path resolves to .momentum/")
+    proj = setup_project()
+    new_path = proj / ".momentum" / "sprints" / "index.json"
+    old_path = proj / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    assert_eq("new .momentum path exists", new_path.exists(), True)
+    assert_eq("old _bmad-output path absent", old_path.exists(), False)
+    # Verify sprint activate reads/writes from new path
+    import json as _json
+    new_path.write_text(_json.dumps({
+        "active": None,
+        "planning": {"slug": "test-sprint", "locked": False, "stories": [], "approvals": []},
+        "completed": []
+    }, indent=2) + "\n")
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("activate exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("active sprint set at new path", result["active"]["slug"], "test-sprint")
+
+
+def test_intake_queue_path_resolves_to_momentum():
+    """intake_queue_path() must resolve to .momentum/intake-queue.jsonl."""
+    print("\n[.momentum/ migration] intake_queue_path resolves to .momentum/")
+    proj = setup_project()
+    code, out = run_tool(
+        proj, "intake-queue", "append",
+        "--source", "triage",
+        "--kind", "shape",
+        "--title", "Test item"
+    )
+    assert_eq("exit code 0", code, 0)
+    new_queue = proj / ".momentum" / "intake-queue.jsonl"
+    old_queue = proj / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+    assert_eq("queue created at new path", new_queue.exists(), True)
+    assert_eq("old path not created", old_queue.exists(), False)
+
+
+# --- Plugin Cache Check Tests ---
+
+def _make_cache_dir(base: Path, versions: list[str]) -> Path:
+    """Create a fake plugin cache directory structure with given version dirs."""
+    cache_root = base / ".claude" / "plugins" / "cache" / "momentum" / "momentum"
+    cache_root.mkdir(parents=True, exist_ok=True)
+    for v in versions:
+        vdir = cache_root / v / ".claude-plugin"
+        vdir.mkdir(parents=True, exist_ok=True)
+        (vdir / "plugin.json").write_text(json.dumps({"name": "momentum", "version": v}))
+    return cache_root
+
+
+def _make_source_plugin_json(proj: Path, version: str | None = "0.17.4", malformed: bool = False) -> None:
+    """Create a fake source-tree plugin.json at the expected location."""
+    plugin_dir = proj / "skills" / "momentum" / ".claude-plugin"
+    plugin_dir.mkdir(parents=True, exist_ok=True)
+    if malformed:
+        (plugin_dir / "plugin.json").write_text("THIS IS NOT JSON {{{")
+    elif version is None:
+        (plugin_dir / "plugin.json").write_text(json.dumps({"name": "momentum"}))
+    else:
+        (plugin_dir / "plugin.json").write_text(json.dumps({"name": "momentum", "version": version}))
+
+
+def test_plugin_cache_check_match():
+    """Cache version == source version -> status: match."""
+    print("\n[session plugin-cache-check] match")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.17.4"])
+    _make_source_plugin_json(proj, "0.17.4")
+    env = {**__import__("os").environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = __import__("subprocess").run(
+        [__import__("sys").executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is match", out.get("status"), "match")
+    assert_eq("cache_version reported", out.get("cache_version"), "0.17.4")
+    assert_eq("source_version reported", out.get("source_version"), "0.17.4")
+
+
+def test_plugin_cache_check_cache_behind():
+    """Cache version < source version -> status: skew-cache-behind."""
+    print("\n[session plugin-cache-check] cache behind")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.17.0"])
+    _make_source_plugin_json(proj, "0.18.0")
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is skew-cache-behind", out.get("status"), "skew-cache-behind")
+    assert_eq("cache_version 0.17.0", out.get("cache_version"), "0.17.0")
+    assert_eq("source_version 0.18.0", out.get("source_version"), "0.18.0")
+
+
+def test_plugin_cache_check_cache_ahead():
+    """Cache version > source version -> status: skew-cache-ahead."""
+    print("\n[session plugin-cache-check] cache ahead")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.18.0"])
+    _make_source_plugin_json(proj, "0.17.0")
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is skew-cache-ahead", out.get("status"), "skew-cache-ahead")
+    assert_eq("cache_version 0.18.0", out.get("cache_version"), "0.18.0")
+    assert_eq("source_version 0.17.0", out.get("source_version"), "0.17.0")
+
+
+def test_plugin_cache_check_no_cache_dir():
+    """Missing cache directory -> status: no-cache, exit 0."""
+    print("\n[session plugin-cache-check] no cache dir")
+    proj = setup_project()
+    home = proj / "fake_home"
+    home.mkdir(parents=True, exist_ok=True)
+    # No cache directory created
+    _make_source_plugin_json(proj, "0.17.4")
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is no-cache", out.get("status"), "no-cache")
+    assert_eq("cache_version is null", out.get("cache_version"), None)
+
+
+def test_plugin_cache_check_no_source():
+    """Source plugin.json not found -> status: no-source, exit 0."""
+    print("\n[session plugin-cache-check] no source plugin.json")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.17.4"])
+    # No source plugin.json created
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is no-source", out.get("status"), "no-source")
+    assert_eq("source_version is null", out.get("source_version"), None)
+
+
+def test_plugin_cache_check_malformed_cache_json():
+    """Malformed cache plugin.json -> status: indeterminate, exit 0, diagnostic present."""
+    print("\n[session plugin-cache-check] malformed cache JSON")
+    proj = setup_project()
+    home = proj / "fake_home"
+    cache_root = home / ".claude" / "plugins" / "cache" / "momentum" / "momentum"
+    vdir = cache_root / "0.17.4" / ".claude-plugin"
+    vdir.mkdir(parents=True, exist_ok=True)
+    (vdir / "plugin.json").write_text("NOT VALID JSON {{{")
+    _make_source_plugin_json(proj, "0.17.4")
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is indeterminate", out.get("status"), "indeterminate")
+    assert_eq("diagnostic key present", "diagnostic" in out, True)
+
+
+def test_plugin_cache_check_malformed_source_json():
+    """Malformed source plugin.json -> status: indeterminate, exit 0, diagnostic present."""
+    print("\n[session plugin-cache-check] malformed source JSON")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.17.4"])
+    _make_source_plugin_json(proj, malformed=True)
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is indeterminate", out.get("status"), "indeterminate")
+    assert_eq("diagnostic key present", "diagnostic" in out, True)
+
+
+def test_plugin_cache_check_missing_version_field():
+    """Source plugin.json present but no 'version' field -> status: indeterminate, exit 0."""
+    print("\n[session plugin-cache-check] missing version field in source")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.17.4"])
+    _make_source_plugin_json(proj, version=None)  # writes JSON with no version key
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is indeterminate", out.get("status"), "indeterminate")
+
+
+def test_plugin_cache_check_multiple_cache_versions_highest_selected():
+    """Multiple cache version dirs present — highest semver wins."""
+    print("\n[session plugin-cache-check] multiple cache versions, highest selected")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.16.0", "0.17.0", "0.17.1", "0.17.2"])
+    _make_source_plugin_json(proj, "0.17.2")
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0", proc.returncode, 0)
+    assert_eq("status is match (highest selected)", out.get("status"), "match")
+    assert_eq("cache_version is 0.17.2", out.get("cache_version"), "0.17.2")
+
+
+def test_plugin_cache_check_exit_code_zero_on_skew():
+    """Exit code must be 0 even when status indicates skew (callers parse JSON)."""
+    print("\n[session plugin-cache-check] exit code 0 on skew")
+    proj = setup_project()
+    home = proj / "fake_home"
+    _make_cache_dir(home, ["0.15.0"])
+    _make_source_plugin_json(proj, "0.17.4")
+    import os, subprocess, sys as _sys
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj), "HOME": str(home)}
+    proc = subprocess.run(
+        [_sys.executable, str(SCRIPT), "session", "plugin-cache-check"],
+        capture_output=True, text=True, env=env
+    )
+    out = json.loads(proc.stdout)
+    assert_eq("exit code 0 on skew-cache-behind", proc.returncode, 0)
+    assert_eq("status is skew-cache-behind", out.get("status"), "skew-cache-behind")
+
+
+# --- Story Approval Tests ---
+
+def setup_story_file(project_dir: Path, slug: str, content: str) -> Path:
+    """Create a story file in .momentum/stories/<slug>.md."""
+    stories_dir = project_dir / ".momentum" / "stories"
+    stories_dir.mkdir(parents=True, exist_ok=True)
+    story_path = stories_dir / f"{slug}.md"
+    story_path.write_text(content)
+    return story_path
+
+
+def compute_file_sha(path: Path) -> str:
+    """Compute SHA-256 of a file's contents (matching tool logic)."""
+    import hashlib
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_story_approve_writes_approved_entry():
+    """story-approve writes an approved entry to planning.approvals."""
+    print("\n[sprint story-approve] Writes approved entry")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# My Story\n\nSome content.\n")
+    expected_sha = compute_file_sha(story_path)
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "approved")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+
+    data = read_sprints(proj)
+    approvals = data["planning"].get("approvals", [])
+    assert_eq("one approval entry", len(approvals), 1)
+    entry = approvals[0]
+    assert_eq("slug correct", entry.get("story_slug"), slug)
+    assert_eq("decision approved", entry.get("decision"), "approved")
+    assert_eq("sha matches", entry.get("story_file_sha"), expected_sha)
+    assert_eq("approved_at present", "approved_at" in entry, True)
+
+
+def test_story_approve_writes_rejected_entry():
+    """story-approve with decision=rejected writes a rejection entry."""
+    print("\n[sprint story-approve] Writes rejected entry")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# My Story\n\nContent.\n")
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "rejected")
+    assert_eq("exit code 0", code, 0)
+
+    data = read_sprints(proj)
+    approvals = data["planning"].get("approvals", [])
+    assert_eq("one approval entry", len(approvals), 1)
+    assert_eq("decision rejected", approvals[0].get("decision"), "rejected")
+
+
+def test_story_approve_replaces_prior_entry():
+    """Re-approving a story replaces the prior entry (idempotent overwrite)."""
+    print("\n[sprint story-approve] Replaces prior entry (idempotent)")
+    slug = "my-story"
+    old_sha = "deadbeef" * 8
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": [{"story_slug": slug, "decision": "approved",
+                                             "approved_at": "2026-01-01T00:00:00Z",
+                                             "story_file_sha": old_sha}]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Updated content.\n")
+    new_sha = compute_file_sha(story_path)
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "approved")
+    assert_eq("exit code 0", code, 0)
+
+    data = read_sprints(proj)
+    approvals = data["planning"].get("approvals", [])
+    assert_eq("still one entry after re-approve", len(approvals), 1)
+    assert_eq("sha updated to new", approvals[0].get("story_file_sha"), new_sha)
+
+
+def test_story_approve_no_planning_sprint():
+    """story-approve fails when no planning sprint exists."""
+    print("\n[sprint story-approve] No planning sprint")
+    proj = setup_project(sprints={"active": None, "planning": None, "completed": []})
+    setup_story_file(proj, "ghost", "content")
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", "ghost", "--decision", "approved")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_story_approve_slug_not_in_sprint():
+    """story-approve fails when slug is not in planning.stories."""
+    print("\n[sprint story-approve] Slug not in sprint")
+    proj = setup_project(
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": ["other-story"]},
+                 "completed": []}
+    )
+    setup_story_file(proj, "my-story", "content")
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", "my-story", "--decision", "approved")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_story_approve_initializes_approvals_array():
+    """story-approve initializes planning.approvals array when absent."""
+    print("\n[sprint story-approve] Initializes approvals array if absent")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content\n")
+    # No approvals key initially
+    data = read_sprints(proj)
+    assert_eq("no approvals key yet", "approvals" not in data["planning"], True)
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "approved")
+    assert_eq("exit code 0", code, 0)
+
+    data = read_sprints(proj)
+    assert_eq("approvals key created", "approvals" in data["planning"], True)
+    assert_eq("one entry", len(data["planning"]["approvals"]), 1)
+
+
+def test_verify_approvals_all_approved():
+    """verify-approvals returns success when all stories have matching approved entries."""
+    print("\n[sprint verify-approvals] All approved — success")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Content\n")
+    sha = compute_file_sha(story_path)
+
+    # Set up the approval entry manually
+    data = read_sprints(proj)
+    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
+                                       "approved_at": "2026-04-30T00:00:00Z",
+                                       "story_file_sha": sha}]
+    (proj / ".momentum" / "sprints" / "index.json").write_text(
+        json.dumps(data, indent=2) + "\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    assert_eq("missing empty", out.get("missing", []), [])
+
+
+def test_verify_approvals_missing_approval():
+    """verify-approvals fails when a story has no approval entry."""
+    print("\n[sprint verify-approvals] Missing approval — fails")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": []},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    assert_eq("missing contains slug", slug in out.get("missing", []), True)
+
+
+def test_verify_approvals_sha_mismatch():
+    """verify-approvals fails when story file was edited after approval (SHA mismatch)."""
+    print("\n[sprint verify-approvals] SHA mismatch — fails")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": [{"story_slug": slug, "decision": "approved",
+                                             "approved_at": "2026-04-30T00:00:00Z",
+                                             "story_file_sha": "old-sha-value"}]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Updated content after approval\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    assert_eq("slug in missing", slug in out.get("missing", []), True)
+
+
+def test_verify_approvals_active_scope():
+    """verify-approvals --scope active reads from active sprint."""
+    print("\n[sprint verify-approvals] Active scope")
+    slug = "my-story"
+    story_path_placeholder = None
+    proj = setup_project(
+        stories={slug: {"status": "in-progress", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": {"slug": "s", "locked": True, "status": "active",
+                            "stories": [slug],
+                            "approvals": [{"story_slug": slug, "decision": "approved",
+                                           "approved_at": "2026-04-30T00:00:00Z",
+                                           "story_file_sha": "placeholder-sha"}]},
+                 "planning": None, "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Content\n")
+    real_sha = compute_file_sha(story_path)
+
+    # Update approval to have the real SHA
+    data = read_sprints(proj)
+    data["active"]["approvals"][0]["story_file_sha"] = real_sha
+    (proj / ".momentum" / "sprints" / "index.json").write_text(
+        json.dumps(data, indent=2) + "\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "active")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+
+
+def test_activate_blocked_missing_approval():
+    """sprint activate fails when approvals are missing."""
+    print("\n[sprint activate] Blocked — missing approval")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": []},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content\n")
+
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    assert_eq("error mentions missing", "missing" in out.get("error", "").lower()
+              or len(out.get("missing", [])) > 0, True)
+
+
+def test_activate_blocked_sha_mismatch():
+    """sprint activate fails when story file SHA mismatches approval record."""
+    print("\n[sprint activate] Blocked — SHA mismatch")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": [{"story_slug": slug, "decision": "approved",
+                                             "approved_at": "2026-04-30T00:00:00Z",
+                                             "story_file_sha": "stale-sha"}]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content changed after approval\n")
+
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_activate_succeeds_all_approved():
+    """sprint activate succeeds when all stories have matching approved SHAs."""
+    print("\n[sprint activate] Succeeds when all approved")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Approved story content.\n")
+    sha = compute_file_sha(story_path)
+
+    # Write approval with correct SHA
+    data = read_sprints(proj)
+    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
+                                       "approved_at": "2026-04-30T00:00:00Z",
+                                       "story_file_sha": sha}]
+    (proj / ".momentum" / "sprints" / "index.json").write_text(
+        json.dumps(data, indent=2) + "\n")
+
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+
+    result = read_sprints(proj)
+    assert_eq("sprint activated", result["active"]["slug"], "test-sprint")
+    assert_eq("approvals carried over", len(result["active"].get("approvals", [])), 1)
+
+
+def test_activate_approvals_carried_to_active():
+    """Approvals array is carried verbatim from planning to active on activation."""
+    print("\n[sprint activate] Approvals carried to active sprint")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Content\n")
+    sha = compute_file_sha(story_path)
+
+    data = read_sprints(proj)
+    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
+                                       "approved_at": "2026-04-30T12:00:00Z",
+                                       "story_file_sha": sha}]
+    (proj / ".momentum" / "sprints" / "index.json").write_text(
+        json.dumps(data, indent=2) + "\n")
+
+    run_tool(proj, "sprint", "activate")
+    result = read_sprints(proj)
+    approvals = result["active"].get("approvals", [])
+    assert_eq("one approval on active", len(approvals), 1)
+    assert_eq("sha preserved", approvals[0].get("story_file_sha"), sha)
+    assert_eq("timestamp preserved", approvals[0].get("approved_at"), "2026-04-30T12:00:00Z")
+
+
+def test_activate_no_approvals_when_no_stories():
+    """sprint activate with no stories in planning still succeeds (empty approvals OK)."""
+    print("\n[sprint activate] No stories — succeeds (no approvals needed)")
+    proj = setup_project(
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [],
+                              "approvals": []},
+                 "completed": []}
+    )
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("exit code 0", code, 0)
 
 
 # --- Runner ---
@@ -2540,10 +3191,418 @@ def main():
     test_intake_queue_consume_missing_file()
     test_intake_queue_list_filters()
 
+    # .momentum/ path migration tests
+    test_stories_path_resolves_to_momentum()
+    test_sprints_path_resolves_to_momentum()
+    test_intake_queue_path_resolves_to_momentum()
+
+    # session plugin-cache-check tests
+    test_plugin_cache_check_match()
+    test_plugin_cache_check_cache_behind()
+    test_plugin_cache_check_cache_ahead()
+    test_plugin_cache_check_no_cache_dir()
+    test_plugin_cache_check_no_source()
+    test_plugin_cache_check_malformed_cache_json()
+    test_plugin_cache_check_malformed_source_json()
+    test_plugin_cache_check_missing_version_field()
+    test_plugin_cache_check_multiple_cache_versions_highest_selected()
+    test_plugin_cache_check_exit_code_zero_on_skew()
+
+    # Story approval tests (Task 1 / Task 6)
+    test_story_approve_writes_approved_entry()
+    test_story_approve_writes_rejected_entry()
+    test_story_approve_replaces_prior_entry()
+    test_story_approve_no_planning_sprint()
+    test_story_approve_slug_not_in_sprint()
+    test_story_approve_initializes_approvals_array()
+    test_verify_approvals_all_approved()
+    test_verify_approvals_missing_approval()
+    test_verify_approvals_sha_mismatch()
+    test_verify_approvals_active_scope()
+    test_activate_blocked_missing_approval()
+    test_activate_blocked_sha_mismatch()
+    test_activate_succeeds_all_approved()
+    test_activate_approvals_carried_to_active()
+    test_activate_no_approvals_when_no_stories()
+
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
 
     sys.exit(1 if FAIL_COUNT > 0 else 0)
+
+
+# --- Story Approval Tests ---
+
+def setup_story_file(project_dir: Path, slug: str, content: str) -> Path:
+    """Create a story file in .momentum/stories/<slug>.md."""
+    stories_dir = project_dir / ".momentum" / "stories"
+    stories_dir.mkdir(parents=True, exist_ok=True)
+    story_path = stories_dir / f"{slug}.md"
+    story_path.write_text(content)
+    return story_path
+
+
+def compute_file_sha(path: Path) -> str:
+    """Compute SHA-256 of a file's contents (matching tool logic)."""
+    import hashlib
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_story_approve_writes_approved_entry():
+    """story-approve writes an approved entry to planning.approvals."""
+    print("\n[sprint story-approve] Writes approved entry")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# My Story\n\nSome content.\n")
+    expected_sha = compute_file_sha(story_path)
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "approved")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+
+    data = read_sprints(proj)
+    approvals = data["planning"].get("approvals", [])
+    assert_eq("one approval entry", len(approvals), 1)
+    entry = approvals[0]
+    assert_eq("slug correct", entry.get("story_slug"), slug)
+    assert_eq("decision approved", entry.get("decision"), "approved")
+    assert_eq("sha matches", entry.get("story_file_sha"), expected_sha)
+    assert_eq("approved_at present", "approved_at" in entry, True)
+
+
+def test_story_approve_writes_rejected_entry():
+    """story-approve with decision=rejected writes a rejection entry."""
+    print("\n[sprint story-approve] Writes rejected entry")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# My Story\n\nContent.\n")
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "rejected")
+    assert_eq("exit code 0", code, 0)
+
+    data = read_sprints(proj)
+    approvals = data["planning"].get("approvals", [])
+    assert_eq("one approval entry", len(approvals), 1)
+    assert_eq("decision rejected", approvals[0].get("decision"), "rejected")
+
+
+def test_story_approve_replaces_prior_entry():
+    """Re-approving a story replaces the prior entry (idempotent overwrite)."""
+    print("\n[sprint story-approve] Replaces prior entry (idempotent)")
+    slug = "my-story"
+    old_sha = "deadbeef" * 8
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": [{"story_slug": slug, "decision": "approved",
+                                             "approved_at": "2026-01-01T00:00:00Z",
+                                             "story_file_sha": old_sha}]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Updated content.\n")
+    new_sha = compute_file_sha(story_path)
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "approved")
+    assert_eq("exit code 0", code, 0)
+
+    data = read_sprints(proj)
+    approvals = data["planning"].get("approvals", [])
+    assert_eq("still one entry after re-approve", len(approvals), 1)
+    assert_eq("sha updated to new", approvals[0].get("story_file_sha"), new_sha)
+
+
+def test_story_approve_no_planning_sprint():
+    """story-approve fails when no planning sprint exists."""
+    print("\n[sprint story-approve] No planning sprint")
+    proj = setup_project(sprints={"active": None, "planning": None, "completed": []})
+    setup_story_file(proj, "ghost", "content")
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", "ghost", "--decision", "approved")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_story_approve_slug_not_in_sprint():
+    """story-approve fails when slug is not in planning.stories."""
+    print("\n[sprint story-approve] Slug not in sprint")
+    proj = setup_project(
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": ["other-story"]},
+                 "completed": []}
+    )
+    setup_story_file(proj, "my-story", "content")
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", "my-story", "--decision", "approved")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_story_approve_initializes_approvals_array():
+    """story-approve initializes planning.approvals array when absent."""
+    print("\n[sprint story-approve] Initializes approvals array if absent")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content\n")
+    # No approvals key initially
+    data = read_sprints(proj)
+    assert_eq("no approvals key yet", "approvals" not in data["planning"], True)
+
+    code, out = run_tool(proj, "sprint", "story-approve",
+                         "--slug", slug, "--decision", "approved")
+    assert_eq("exit code 0", code, 0)
+
+    data = read_sprints(proj)
+    assert_eq("approvals key created", "approvals" in data["planning"], True)
+    assert_eq("one entry", len(data["planning"]["approvals"]), 1)
+
+
+def test_verify_approvals_all_approved():
+    """verify-approvals returns success when all stories have matching approved entries."""
+    print("\n[sprint verify-approvals] All approved — success")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Content\n")
+    sha = compute_file_sha(story_path)
+
+    # Set up the approval entry manually
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
+    data = json.loads(sprints_file.read_text())
+    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
+                                       "approved_at": "2026-04-30T00:00:00Z",
+                                       "story_file_sha": sha}]
+    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    assert_eq("missing empty", out.get("missing", []), [])
+
+
+def test_verify_approvals_missing_approval():
+    """verify-approvals fails when a story has no approval entry."""
+    print("\n[sprint verify-approvals] Missing approval — fails")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": []},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    assert_eq("missing contains slug", slug in out.get("missing", []), True)
+
+
+def test_verify_approvals_sha_mismatch():
+    """verify-approvals fails when story file was edited after approval (SHA mismatch)."""
+    print("\n[sprint verify-approvals] SHA mismatch — fails")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "s", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": [{"story_slug": slug, "decision": "approved",
+                                             "approved_at": "2026-04-30T00:00:00Z",
+                                             "story_file_sha": "old-sha-value"}]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Updated content after approval\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    assert_eq("slug in missing", slug in out.get("missing", []), True)
+
+
+def test_verify_approvals_active_scope():
+    """verify-approvals --scope active reads from active sprint."""
+    print("\n[sprint verify-approvals] Active scope")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "in-progress", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": {"slug": "s", "locked": True, "status": "active",
+                            "stories": [slug],
+                            "approvals": [{"story_slug": slug, "decision": "approved",
+                                           "approved_at": "2026-04-30T00:00:00Z",
+                                           "story_file_sha": "placeholder-sha"}]},
+                 "planning": None, "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Content\n")
+    real_sha = compute_file_sha(story_path)
+
+    # Update approval to have the real SHA
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
+    data = json.loads(sprints_file.read_text())
+    data["active"]["approvals"][0]["story_file_sha"] = real_sha
+    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
+
+    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "active")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+
+
+def test_activate_blocked_missing_approval():
+    """sprint activate fails when approvals are missing."""
+    print("\n[sprint activate] Blocked — missing approval")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": []},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content\n")
+
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+    assert_eq("error mentions missing", "missing" in out.get("error", "").lower()
+              or len(out.get("missing", [])) > 0, True)
+
+
+def test_activate_blocked_sha_mismatch():
+    """sprint activate fails when story file SHA mismatches approval record."""
+    print("\n[sprint activate] Blocked — SHA mismatch")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug],
+                              "approvals": [{"story_slug": slug, "decision": "approved",
+                                             "approved_at": "2026-04-30T00:00:00Z",
+                                             "story_file_sha": "stale-sha"}]},
+                 "completed": []}
+    )
+    setup_story_file(proj, slug, "# Content changed after approval\n")
+
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("rejected", code, 1)
+    assert_eq("success false", out.get("success"), False)
+
+
+def test_activate_succeeds_all_approved():
+    """sprint activate succeeds when all stories have matching approved SHAs."""
+    print("\n[sprint activate] Succeeds when all approved")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Approved story content.\n")
+    sha = compute_file_sha(story_path)
+
+    # Write approval with correct SHA
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
+    data = json.loads(sprints_file.read_text())
+    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
+                                       "approved_at": "2026-04-30T00:00:00Z",
+                                       "story_file_sha": sha}]
+    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
+
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+
+    sprints_data = json.loads(sprints_file.read_text())
+    assert_eq("sprint activated", sprints_data["active"]["slug"], "test-sprint")
+    assert_eq("approvals carried over", len(sprints_data["active"].get("approvals", [])), 1)
+
+
+def test_activate_approvals_carried_to_active():
+    """Approvals array is carried verbatim from planning to active on activation."""
+    print("\n[sprint activate] Approvals carried to active sprint")
+    slug = "my-story"
+    proj = setup_project(
+        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
+                        "story_file": True, "depends_on": [], "touches": []}},
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [slug]},
+                 "completed": []}
+    )
+    story_path = setup_story_file(proj, slug, "# Content\n")
+    sha = compute_file_sha(story_path)
+
+    sprints_file = proj / ".momentum" / "sprints" / "index.json"
+    data = json.loads(sprints_file.read_text())
+    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
+                                       "approved_at": "2026-04-30T12:00:00Z",
+                                       "story_file_sha": sha}]
+    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
+
+    run_tool(proj, "sprint", "activate")
+    result_data = json.loads(sprints_file.read_text())
+    approvals = result_data["active"].get("approvals", [])
+    assert_eq("one approval on active", len(approvals), 1)
+    assert_eq("sha preserved", approvals[0].get("story_file_sha"), sha)
+    assert_eq("timestamp preserved", approvals[0].get("approved_at"), "2026-04-30T12:00:00Z")
+
+
+def test_activate_no_approvals_when_no_stories():
+    """sprint activate with no stories in planning still succeeds (empty approvals OK)."""
+    print("\n[sprint activate] No stories — succeeds (no approvals needed)")
+    proj = setup_project(
+        sprints={"active": None,
+                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
+                              "stories": [],
+                              "approvals": []},
+                 "completed": []}
+    )
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("exit code 0", code, 0)
 
 
 if __name__ == "__main__":

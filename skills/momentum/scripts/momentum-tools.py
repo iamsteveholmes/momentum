@@ -25,6 +25,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import date, datetime, timezone
@@ -77,11 +78,11 @@ def resolve_project_dir() -> Path:
 
 
 def stories_path(project_dir: Path) -> Path:
-    return project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    return project_dir / ".momentum" / "stories" / "index.json"
 
 
 def sprints_path(project_dir: Path) -> Path:
-    return project_dir / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    return project_dir / ".momentum" / "sprints" / "index.json"
 
 
 def read_json(path: Path) -> dict:
@@ -130,6 +131,122 @@ def cmd_status_transition(args: argparse.Namespace) -> None:
     result("status_transition", success=True, story=slug, **{"from": current, "to": target})
 
 
+def _compute_story_sha(project_dir: Path, slug: str) -> str | None:
+    """Compute SHA-256 of the story file for the given slug.
+
+    Returns the hex digest string, or None if the file does not exist.
+    """
+    story_file = project_dir / ".momentum" / "stories" / f"{slug}.md"
+    if not story_file.exists():
+        return None
+    return hashlib.sha256(story_file.read_bytes()).hexdigest()
+
+
+def _verify_approvals(project_dir: Path, sprint: dict) -> list[str]:
+    """Check that every story in sprint has an approved entry with a matching SHA.
+
+    Returns a list of story slugs that fail verification (missing or SHA mismatch).
+    An empty list means all stories are approved.
+    """
+    stories = sprint.get("stories", [])
+    approvals = sprint.get("approvals", [])
+
+    # Build a lookup: slug -> approval entry
+    approval_map = {a["story_slug"]: a for a in approvals if "story_slug" in a}
+
+    missing = []
+    for slug in stories:
+        entry = approval_map.get(slug)
+        if entry is None or entry.get("decision") != "approved":
+            missing.append(slug)
+            continue
+        # Check SHA
+        current_sha = _compute_story_sha(project_dir, slug)
+        if current_sha is None or current_sha != entry.get("story_file_sha"):
+            missing.append(slug)
+
+    return missing
+
+
+def cmd_sprint_story_approve(args: argparse.Namespace) -> None:
+    """Record a per-story approval or rejection in planning.approvals."""
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    if not sprints.get("planning"):
+        error_result("sprint_story_approve", "No planning sprint exists")
+
+    planning = sprints["planning"]
+    slug = args.slug
+    decision = args.decision
+
+    if slug not in planning.get("stories", []):
+        error_result("sprint_story_approve",
+                     f"Story '{slug}' is not in the planning sprint's stories list",
+                     story=slug)
+
+    # Compute SHA
+    story_sha = _compute_story_sha(project_dir, slug)
+    if story_sha is None:
+        # Story file not found at .momentum/stories/{slug}.md — this is expected for
+        # rejected decisions where no story file has been written yet. Record an empty
+        # SHA explicitly so downstream SHA-match checks will flag this entry as
+        # unverifiable rather than silently treating it as valid.
+        story_sha = ""
+
+    # Build the new entry
+    approved_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    new_entry = {
+        "story_slug": slug,
+        "decision": decision,
+        "approved_at": approved_at,
+        "story_file_sha": story_sha,
+    }
+
+    # Initialize approvals array if absent
+    if "approvals" not in planning:
+        planning["approvals"] = []
+
+    # Replace existing entry for this slug, or append
+    existing = planning["approvals"]
+    replaced = False
+    for i, entry in enumerate(existing):
+        if entry.get("story_slug") == slug:
+            existing[i] = new_entry
+            replaced = True
+            break
+    if not replaced:
+        existing.append(new_entry)
+
+    write_json(path, sprints)
+    result("sprint_story_approve", success=True, story=slug, decision=decision,
+           story_file_sha=story_sha, approved_at=approved_at, replaced=replaced)
+
+
+def cmd_sprint_verify_approvals(args: argparse.Namespace) -> None:
+    """Verify that all stories in a sprint have matching approved entries."""
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    scope = args.scope  # "planning" or "active"
+    sprint = sprints.get(scope)
+    if not sprint:
+        error_result("sprint_verify_approvals",
+                     f"No {scope} sprint exists",
+                     scope=scope)
+
+    missing = _verify_approvals(project_dir, sprint)
+    if missing:
+        error_result("sprint_verify_approvals",
+                     f"Stories missing approval: {', '.join(missing)}",
+                     scope=scope,
+                     missing=missing)
+
+    result("sprint_verify_approvals", success=True, scope=scope, missing=[])
+
+
 def cmd_sprint_activate(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
     path = sprints_path(project_dir)
@@ -141,6 +258,14 @@ def cmd_sprint_activate(args: argparse.Namespace) -> None:
         error_result("sprint_activate", "An active sprint already exists. Complete it first.")
 
     planning = sprints["planning"]
+
+    # Approval verification gate (AC 6)
+    missing = _verify_approvals(project_dir, planning)
+    if missing:
+        error_result("sprint_activate",
+                     f"Stories missing approval: {', '.join(missing)}",
+                     missing=missing)
+
     planning["locked"] = True
     planning["started"] = date.today().isoformat()
     planning["status"] = "active"
@@ -1244,6 +1369,165 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
            current_version=current_version)
 
 
+# --- Plugin Cache Staleness Check ---
+
+def _parse_semver(version_str: str) -> tuple:
+    """Parse a version string into a comparable tuple.
+
+    Splits on '.' and converts numeric components to int. Non-numeric components
+    are left as strings so they sort after their numeric counterparts.
+
+    Returns a tuple suitable for comparison, e.g. "0.17.2" -> (0, 17, 2).
+    """
+    parts = []
+    for part in version_str.split("."):
+        try:
+            parts.append((0, int(part)))  # (0, int) sorts before (1, str)
+        except ValueError:
+            parts.append((1, part))
+    return tuple(parts)
+
+
+def cmd_session_plugin_cache_check(args: argparse.Namespace) -> None:
+    """Check whether the active Claude Code plugin cache version matches the source-tree version.
+
+    JSON output schema:
+    {
+      "action": "session_plugin_cache_check",
+      "success": true,
+      "status": "match" | "skew-cache-behind" | "skew-cache-ahead" | "no-cache" | "no-source" | "indeterminate",
+      "cache_version": "<semver string>" | null,
+      "source_version": "<semver string>" | null,
+      "active_cache_dir": "<path string>" | null,
+      "diagnostic": "<description of what failed>" | null  (present only when status is indeterminate)
+    }
+
+    Exit code is always 0. Callers parse the JSON to determine whether action is needed.
+    """
+    import os
+
+    home = Path(os.environ.get("HOME", str(Path.home())))
+    cache_root = home / ".claude" / "plugins" / "cache" / "momentum" / "momentum"
+
+    # Resolve source-tree plugin.json
+    project_dir = resolve_project_dir()
+    source_plugin_path = project_dir / "skills" / "momentum" / ".claude-plugin" / "plugin.json"
+
+    # --- Step 1: Resolve active cache version ---
+    cache_version: str | None = None
+    active_cache_dir: str | None = None
+    cache_diagnostic: str | None = None
+
+    if not cache_root.exists():
+        # No cache installed — silent pass
+        _result_plugin_cache("no-cache", None, None, None, None)
+        return
+
+    # Scan for version subdirectories
+    version_dirs = [d for d in cache_root.iterdir() if d.is_dir()]
+    if not version_dirs:
+        # Cache root exists but is empty — silent pass
+        _result_plugin_cache("no-cache", None, None, None, None)
+        return
+
+    # Sort descending by semver; pick highest
+    try:
+        version_dirs_sorted = sorted(version_dirs, key=lambda d: _parse_semver(d.name), reverse=True)
+    except Exception:
+        version_dirs_sorted = sorted(version_dirs, key=lambda d: d.name, reverse=True)
+
+    active_dir = version_dirs_sorted[0]
+    active_cache_dir = str(active_dir)
+    cache_plugin_json = active_dir / ".claude-plugin" / "plugin.json"
+
+    if not cache_plugin_json.exists():
+        _result_plugin_cache(
+            "indeterminate", None, None, active_cache_dir,
+            f"cache plugin.json not found at {cache_plugin_json}"
+        )
+        return
+
+    try:
+        cache_data = json.loads(cache_plugin_json.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        _result_plugin_cache(
+            "indeterminate", None, None, active_cache_dir,
+            f"cache plugin.json parse error: {exc}"
+        )
+        return
+
+    cache_version = cache_data.get("version")
+    if not cache_version:
+        _result_plugin_cache(
+            "indeterminate", None, None, active_cache_dir,
+            "cache plugin.json missing 'version' field"
+        )
+        return
+
+    # --- Step 2: Resolve source-tree version ---
+    if not source_plugin_path.exists():
+        _result_plugin_cache("no-source", cache_version, None, active_cache_dir, None)
+        return
+
+    try:
+        source_data = json.loads(source_plugin_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        _result_plugin_cache(
+            "indeterminate", cache_version, None, active_cache_dir,
+            f"source plugin.json parse error: {exc}"
+        )
+        return
+
+    source_version = source_data.get("version")
+    if not source_version:
+        _result_plugin_cache(
+            "indeterminate", cache_version, None, active_cache_dir,
+            "source plugin.json missing 'version' field"
+        )
+        return
+
+    # --- Step 3: Compare versions ---
+    try:
+        cache_tuple = _parse_semver(cache_version)
+        source_tuple = _parse_semver(source_version)
+        if cache_tuple == source_tuple:
+            status = "match"
+        elif cache_tuple < source_tuple:
+            status = "skew-cache-behind"
+        else:
+            status = "skew-cache-ahead"
+    except Exception as exc:
+        _result_plugin_cache(
+            "indeterminate", cache_version, source_version, active_cache_dir,
+            f"version comparison error: {exc}"
+        )
+        return
+
+    _result_plugin_cache(status, cache_version, source_version, active_cache_dir, None)
+
+
+def _result_plugin_cache(
+    status: str,
+    cache_version: "str | None",
+    source_version: "str | None",
+    active_cache_dir: "str | None",
+    diagnostic: "str | None",
+) -> None:
+    """Print the plugin-cache-check JSON result and exit 0."""
+    output: dict = {
+        "action": "session_plugin_cache_check",
+        "success": True,
+        "status": status,
+        "cache_version": cache_version,
+        "source_version": source_version,
+        "active_cache_dir": active_cache_dir,
+    }
+    if diagnostic is not None:
+        output["diagnostic"] = diagnostic
+    print(json.dumps(output, indent=2))
+    sys.exit(0)
+
+
 # --- Feature Status Cache ---
 
 def _compute_feature_status(project_dir: Path, claude_project_dir: Path) -> dict:
@@ -1258,7 +1542,7 @@ def _compute_feature_status(project_dir: Path, claude_project_dir: Path) -> dict
     import hashlib
 
     features_path = project_dir / "_bmad-output" / "planning-artifacts" / "features.json"
-    stories_path_val = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    stories_path_val = project_dir / ".momentum" / "stories" / "index.json"
     cache_path = claude_project_dir / ".claude" / "momentum" / "feature-status.md"
 
     if not features_path.exists():
@@ -1343,7 +1627,7 @@ def cmd_feature_status_hash(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
 
     features_path = project_dir / "_bmad-output" / "planning-artifacts" / "features.json"
-    stories_path_val = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    stories_path_val = project_dir / ".momentum" / "stories" / "index.json"
 
     if not features_path.exists():
         result("feature_status_hash", success=True,
@@ -1554,7 +1838,7 @@ INTAKE_QUEUE_STATUSES = {"open", "consumed"}
 
 
 def intake_queue_path(project_dir: Path) -> Path:
-    return project_dir / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+    return project_dir / ".momentum" / "intake-queue.jsonl"
 
 
 def cmd_intake_queue_append(args: argparse.Namespace) -> None:
@@ -1804,6 +2088,19 @@ def build_parser() -> argparse.ArgumentParser:
     sta.add_argument("--story-type", default="feature", help="Story type: feature, maintenance, defect, exploration, practice (default: feature)")
     sta.set_defaults(func=cmd_story_add)
 
+    # sprint story-approve
+    ssa = sprint_sub.add_parser("story-approve", help="Record per-story approval or rejection in planning.approvals")
+    ssa.add_argument("--slug", required=True, help="Story slug to approve or reject")
+    ssa.add_argument("--decision", required=True, choices=["approved", "rejected"],
+                     help="Approval decision: approved or rejected")
+    ssa.set_defaults(func=cmd_sprint_story_approve)
+
+    # sprint verify-approvals
+    sva = sprint_sub.add_parser("verify-approvals", help="Verify all stories have current approved entries")
+    sva.add_argument("--scope", required=True, choices=["planning", "active"],
+                     help="Sprint scope to verify: planning or active")
+    sva.set_defaults(func=cmd_sprint_verify_approvals)
+
     # sprint stories
     ss = sprint_sub.add_parser("stories", help="Query stories by priority")
     ss.add_argument("--priority", required=True,
@@ -1838,6 +2135,10 @@ def build_parser() -> argparse.ArgumentParser:
     sja = session_sub.add_parser("journal-append", help="Atomic append to journal.jsonl and regenerate view")
     sja.add_argument("--entry", required=True, help="JSON string to append as a new journal line")
     sja.set_defaults(func=cmd_session_journal_append)
+
+    # session plugin-cache-check
+    spcc = session_sub.add_parser("plugin-cache-check", help="Compare active plugin cache version to source-tree version")
+    spcc.set_defaults(func=cmd_session_plugin_cache_check)
 
     # specialist-classify command
     sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")
