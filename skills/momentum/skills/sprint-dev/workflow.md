@@ -524,6 +524,14 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
       - Provide: sprint slug, list of sprint stories, AVFL findings list
       - Agent reads each story's AC section from `_bmad-output/implementation-artifacts/stories/{slug}.md`
       - Produces structured QA Review Report with per-story AC verification
+      - **Spawn prompt MUST include these constraints verbatim — do not paraphrase or omit. The agent definition does not make these redundant; they override any contextual claims in the spawn prompt about service state.**
+        1. Follow `.claude/rules/e2e-validation.md` Environment Startup before running any test that
+           depends on live services. Do not assume services are already running.
+        2. Reading source files is NEVER a substitute for executing the test suite. A source file
+           containing the right strings proves nothing about runtime behavior.
+        3. Missing infrastructure is BLOCKED, not MISSING. MISSING applies only when execution
+           succeeded but no evidence of the AC was found. If `.claude/rules/e2e-validation.md` is
+           absent, report Verdict: BLOCKED — do not fall back to static inspection.
 
     **E2E Validator** — spawn via Agent tool with `skills/momentum/agents/e2e-validator.md` definition:
       - Provide: sprint slug, path to Gherkin specs `.momentum/sprints/{{sprint_slug}}/specs/`, AVFL findings list
