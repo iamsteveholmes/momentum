@@ -41,6 +41,14 @@ Derive which state the project is in and orient accordingly:
 - 2-3 suggestions maximum — more is noise
 - Never narrate the reads. Ever.
 
+**One explicit exception to the silent-read rule:** the plugin cache staleness warning. When
+`session plugin-cache-check` returns `status: "skew-cache-behind"` or `"skew-cache-ahead"`,
+Impetus surfaces the warning from `references/staleness-warning.md` **before** the orientation
+greeting. This is a deliberate, sanctioned exception — not a narration of a read, but a
+protective action taken on behalf of the developer. All other reads remain silent. The staleness
+check is the safety net for operator-discipline lapses; the operator-discipline rule
+(`feedback_fresh_session_before_major_workflows`) remains the primary mitigation.
+
 ## Memory Integration
 
 Before speaking, check BOND.md:

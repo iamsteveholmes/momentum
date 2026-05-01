@@ -1244,6 +1244,165 @@ def cmd_session_startup_preflight(args: argparse.Namespace) -> None:
            current_version=current_version)
 
 
+# --- Plugin Cache Staleness Check ---
+
+def _parse_semver(version_str: str) -> tuple:
+    """Parse a version string into a comparable tuple.
+
+    Splits on '.' and converts numeric components to int. Non-numeric components
+    are left as strings so they sort after their numeric counterparts.
+
+    Returns a tuple suitable for comparison, e.g. "0.17.2" -> (0, 17, 2).
+    """
+    parts = []
+    for part in version_str.split("."):
+        try:
+            parts.append((0, int(part)))  # (0, int) sorts before (1, str)
+        except ValueError:
+            parts.append((1, part))
+    return tuple(parts)
+
+
+def cmd_session_plugin_cache_check(args: argparse.Namespace) -> None:
+    """Check whether the active Claude Code plugin cache version matches the source-tree version.
+
+    JSON output schema:
+    {
+      "action": "session_plugin_cache_check",
+      "success": true,
+      "status": "match" | "skew-cache-behind" | "skew-cache-ahead" | "no-cache" | "no-source" | "indeterminate",
+      "cache_version": "<semver string>" | null,
+      "source_version": "<semver string>" | null,
+      "active_cache_dir": "<path string>" | null,
+      "diagnostic": "<description of what failed>" | null  (present only when status is indeterminate)
+    }
+
+    Exit code is always 0. Callers parse the JSON to determine whether action is needed.
+    """
+    import os
+
+    home = Path(os.environ.get("HOME", str(Path.home())))
+    cache_root = home / ".claude" / "plugins" / "cache" / "momentum" / "momentum"
+
+    # Resolve source-tree plugin.json
+    project_dir = resolve_project_dir()
+    source_plugin_path = project_dir / "skills" / "momentum" / ".claude-plugin" / "plugin.json"
+
+    # --- Step 1: Resolve active cache version ---
+    cache_version: str | None = None
+    active_cache_dir: str | None = None
+    cache_diagnostic: str | None = None
+
+    if not cache_root.exists():
+        # No cache installed — silent pass
+        _result_plugin_cache("no-cache", None, None, None, None)
+        return
+
+    # Scan for version subdirectories
+    version_dirs = [d for d in cache_root.iterdir() if d.is_dir()]
+    if not version_dirs:
+        # Cache root exists but is empty — silent pass
+        _result_plugin_cache("no-cache", None, None, None, None)
+        return
+
+    # Sort descending by semver; pick highest
+    try:
+        version_dirs_sorted = sorted(version_dirs, key=lambda d: _parse_semver(d.name), reverse=True)
+    except Exception:
+        version_dirs_sorted = sorted(version_dirs, key=lambda d: d.name, reverse=True)
+
+    active_dir = version_dirs_sorted[0]
+    active_cache_dir = str(active_dir)
+    cache_plugin_json = active_dir / ".claude-plugin" / "plugin.json"
+
+    if not cache_plugin_json.exists():
+        _result_plugin_cache(
+            "indeterminate", None, None, active_cache_dir,
+            f"cache plugin.json not found at {cache_plugin_json}"
+        )
+        return
+
+    try:
+        cache_data = json.loads(cache_plugin_json.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        _result_plugin_cache(
+            "indeterminate", None, None, active_cache_dir,
+            f"cache plugin.json parse error: {exc}"
+        )
+        return
+
+    cache_version = cache_data.get("version")
+    if not cache_version:
+        _result_plugin_cache(
+            "indeterminate", None, None, active_cache_dir,
+            "cache plugin.json missing 'version' field"
+        )
+        return
+
+    # --- Step 2: Resolve source-tree version ---
+    if not source_plugin_path.exists():
+        _result_plugin_cache("no-source", cache_version, None, active_cache_dir, None)
+        return
+
+    try:
+        source_data = json.loads(source_plugin_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        _result_plugin_cache(
+            "indeterminate", cache_version, None, active_cache_dir,
+            f"source plugin.json parse error: {exc}"
+        )
+        return
+
+    source_version = source_data.get("version")
+    if not source_version:
+        _result_plugin_cache(
+            "indeterminate", cache_version, None, active_cache_dir,
+            "source plugin.json missing 'version' field"
+        )
+        return
+
+    # --- Step 3: Compare versions ---
+    try:
+        cache_tuple = _parse_semver(cache_version)
+        source_tuple = _parse_semver(source_version)
+        if cache_tuple == source_tuple:
+            status = "match"
+        elif cache_tuple < source_tuple:
+            status = "skew-cache-behind"
+        else:
+            status = "skew-cache-ahead"
+    except Exception as exc:
+        _result_plugin_cache(
+            "indeterminate", cache_version, source_version, active_cache_dir,
+            f"version comparison error: {exc}"
+        )
+        return
+
+    _result_plugin_cache(status, cache_version, source_version, active_cache_dir, None)
+
+
+def _result_plugin_cache(
+    status: str,
+    cache_version: "str | None",
+    source_version: "str | None",
+    active_cache_dir: "str | None",
+    diagnostic: "str | None",
+) -> None:
+    """Print the plugin-cache-check JSON result and exit 0."""
+    output: dict = {
+        "action": "session_plugin_cache_check",
+        "success": True,
+        "status": status,
+        "cache_version": cache_version,
+        "source_version": source_version,
+        "active_cache_dir": active_cache_dir,
+    }
+    if diagnostic is not None:
+        output["diagnostic"] = diagnostic
+    print(json.dumps(output, indent=2))
+    sys.exit(0)
+
+
 # --- Feature Status Cache ---
 
 def _compute_feature_status(project_dir: Path, claude_project_dir: Path) -> dict:
@@ -1838,6 +1997,10 @@ def build_parser() -> argparse.ArgumentParser:
     sja = session_sub.add_parser("journal-append", help="Atomic append to journal.jsonl and regenerate view")
     sja.add_argument("--entry", required=True, help="JSON string to append as a new journal line")
     sja.set_defaults(func=cmd_session_journal_append)
+
+    # session plugin-cache-check
+    spcc = session_sub.add_parser("plugin-cache-check", help="Compare active plugin cache version to source-tree version")
+    spcc.set_defaults(func=cmd_session_plugin_cache_check)
 
     # specialist-classify command
     sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")
