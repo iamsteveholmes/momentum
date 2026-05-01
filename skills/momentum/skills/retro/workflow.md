@@ -248,7 +248,7 @@ For each of these, choose:
   <!-- PHASE 4: AUDITOR TEAM                                  -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Spawn documenter singleton then fan out 3 auditors — exactly 1 documenter + 3 auditors">
+  <step n="4" goal="Spawn 1 documenter (singleton) then 3 auditors (fan-out)">
     <action>Update task 4 to in_progress</action>
 
     <critical>Exactly 1 documenter and exactly 3 auditors must be spawned in Phase 4. The

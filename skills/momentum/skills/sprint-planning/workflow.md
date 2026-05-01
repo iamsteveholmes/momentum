@@ -257,57 +257,62 @@ Proceeding to flesh out story stubs.</output>
 
   <step n="3" goal="Flesh out stories and record per-story approval">
     <action>Update task 3 (Flesh out stories) to in_progress</action>
-    <action>For each story in {{selected_stories}}, check `story_file` field in stories/index.json</action>
 
-    <check if="story_file is false OR story content is a stub">
-      <action>Spawn `momentum:create-story` to flesh out the story stub into a full story with:
-        · Acceptance criteria (plain English only — no Gherkin)
-        · Dev notes
-        · Tasks breakdown
-      </action>
-    </check>
+    <!-- Per-story loop: repeat steps 3a–3b for every story in {{selected_stories}} -->
+    <for-each item="story_slug" in="{{selected_stories}}">
 
-    <!-- Per-story review and approval gate — repeats until approved or rejected -->
-    <action>Open the story in a cmux markdown viewer (BLOCKING — do not proceed until developer responds):
-      `cmux markdown open .momentum/stories/{{story_slug}}.md`
-      Capture the surface ref from the output, then:
-      `cmux rename-tab --surface <captured-surface-ref> "Story Review — {{story_slug}}"`</action>
+      <!-- Step 3a: Flesh out the story if needed -->
+      <action>Check `story_file` field for {{story_slug}} in stories/index.json</action>
 
-    <output>Story {{story_slug}} is open in the right pane. Review it fully before responding.
+      <check if="story_file is false OR story content is a stub">
+        <action>Spawn `momentum:create-story` to flesh out the story stub into a full story with:
+          · Acceptance criteria (plain English only — no Gherkin)
+          · Dev notes
+          · Tasks breakdown
+        </action>
+      </check>
+
+      <!-- Step 3b: Per-story review and approval gate — repeats within this story until A or J -->
+      <action>Open the story in a cmux markdown viewer (BLOCKING — do not proceed until developer responds):
+        `cmux markdown open .momentum/stories/{{story_slug}}.md`
+        Capture the surface ref from the output, then:
+        `cmux rename-tab --surface <captured-surface-ref> "Story Review — {{story_slug}}"`</action>
+
+      <output>Story {{story_slug}} is open in the right pane. Review it fully before responding.
 
 This is a BLOCKING GATE — the sprint cannot activate until every story is explicitly approved.
 
   A — Approve this story as written
   R — Request revisions (re-run create-story with your feedback)
   J — Reject this story (remove from sprint)</output>
-    <ask>Your decision [A/R/J]:</ask>
+      <ask>Your decision [A/R/J]:</ask>
 
-    <check if="developer selects A (Approve)">
-      <action>Record approval: `momentum-tools sprint story-approve --slug {{story_slug}} --decision approved`</action>
-      <output>✓ {{story_slug}} approved and recorded.</output>
-    </check>
-
-    <check if="developer selects R (Revise)">
-      <ask>Describe the revisions needed:</ask>
-      <action>Re-spawn `momentum:create-story` with the developer's revision feedback</action>
-      <action>Re-open the revised story in cmux:
-        `cmux markdown open .momentum/stories/{{story_slug}}.md`
-        Capture the surface ref from the output, then:
-        `cmux rename-tab --surface <captured-surface-ref> "Story Review (Revised) — {{story_slug}}"`</action>
-      <action>Re-present the A/R/J approval prompt. Repeat until the developer selects A or J.</action>
-    </check>
-
-    <check if="developer selects J (Reject)">
-      <action>Record rejection: `momentum-tools sprint story-approve --slug {{story_slug}} --decision rejected`</action>
-      <action>Remove story from sprint: `momentum-tools sprint plan --operation remove --stories {{story_slug}}`</action>
-      <output>✗ {{story_slug}} rejected and removed from sprint.</output>
-      <check if="removing this story drops sprint below 2 stories">
-        <output>! Sprint now has fewer than 2 stories. You must add a replacement before proceeding.</output>
-        <action>Return to Step 2 to allow the developer to add replacement stories</action>
+      <check if="developer selects A (Approve)">
+        <action>Record approval: `momentum-tools sprint story-approve --slug {{story_slug}} --decision approved`</action>
+        <output>✓ {{story_slug}} approved and recorded.</output>
       </check>
-    </check>
 
-    <action>Repeat the review gate for each remaining story in {{selected_stories}}.</action>
+      <check if="developer selects R (Revise)">
+        <ask>Describe the revisions needed:</ask>
+        <action>Re-spawn `momentum:create-story` with the developer's revision feedback</action>
+        <action>Re-open the revised story in cmux:
+          `cmux markdown open .momentum/stories/{{story_slug}}.md`
+          Capture the surface ref from the output, then:
+          `cmux rename-tab --surface <captured-surface-ref> "Story Review (Revised) — {{story_slug}}"`</action>
+        <action>Re-present the A/R/J approval prompt. Repeat until the developer selects A or J.</action>
+      </check>
+
+      <check if="developer selects J (Reject)">
+        <action>Remove story from sprint: `momentum-tools sprint plan --operation remove --stories {{story_slug}}`</action>
+        <action>Record rejection: `momentum-tools sprint story-approve --slug {{story_slug}} --decision rejected`</action>
+        <output>✗ {{story_slug}} rejected and removed from sprint.</output>
+        <check if="removing this story drops sprint below 2 stories">
+          <action>HALT — sprint cannot proceed with fewer than 2 stories. Developer must run a fresh sprint-planning session or manually add stories via `momentum-tools sprint plan --operation add` before continuing.</action>
+        </check>
+      </check>
+
+      <!-- Repeat for next story until all stories in {{selected_stories}} are processed -->
+    </for-each>
 
     <action>After all stories have been approved:</action>
     <output>All {{count}} stories approved. Proceeding to Gherkin spec generation.</output>
