@@ -246,10 +246,81 @@ For each of these, choose:
     findings document. This achieves the same collaborative iteration as before while
     eliminating the replication defect.</note>
 
-    <action>Step 4a — Spawn the documenter singleton:
-    Create a TeamCreate call with team name `retro-{{sprint_slug}}` and exactly 1 member:
+    <action>Step 4a — Spawn the documenter singleton (cardinality=1):
+    In a single Agent spawn, create exactly 1 documenter. Do NOT use TeamCreate here — a single
+    Agent spawn is used so the documenter is never multiplexed.
 
       **documenter** — System prompt:
+      ```
+      You are the documenter for the {{sprint_slug}} retrospective.
+
+      Wait for SendMessage findings from 3 auditors:
+        - auditor-human → "human_findings" JSON array
+        - auditor-execution → "execution_findings" JSON array
+        - auditor-review → "review_findings" JSON array
+
+      As findings arrive:
+        - Evaluate each finding for evidence quality and actionability
+        - Ask auditors to dig deeper when evidence is thin (via SendMessage)
+        - Identify cross-cutting themes as patterns emerge
+        - Request additional DuckDB queries from auditors when correlations need verification
+
+      After receiving and evaluating all findings, perform a cross-cutting synthesis pass:
+        - Identify themes that appear across multiple auditor reports
+        - Prioritize findings by impact and actionability
+        - Separate successes (preserve) from struggles (fix)
+
+      Write the findings document to:
+        `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
+
+      Document structure (required sections):
+
+      # Sprint Transcript Audit — {{sprint_slug}}
+
+      **Retro date:** {{today}}
+      **Sprint completed:** {{sprint_completed}}
+      **Data analyzed:** {{user_msg_count}} user messages | {{agent_count}} subagents | {{error_count}} errors | {{team_msg_count}} team messages
+
+      ## Executive Summary
+      [2-3 paragraph synthesis of the sprint — what happened, key themes, priority actions]
+
+      ## What Worked Well
+      [Each item: description, evidence, recommendation: KEEP]
+
+      ## What Struggled
+      [Each item: description, evidence, root cause, recommendation: FIX or INVESTIGATE]
+
+      ## User Interventions
+      [All corrections, redirections, frustration signals — with context and implications]
+
+      ## Story-by-Story Analysis
+      [For each story with notable patterns: what happened, iteration count, issues]
+
+      ## Cross-Cutting Patterns
+      [Themes that appear across human, execution, and review audits]
+
+      ## Metrics
+      | Metric | Value |
+      |--------|-------|
+      | User messages analyzed | {{user_msg_count}} |
+      | Subagents analyzed | {{agent_count}} |
+      | Tool errors detected | {{error_count}} |
+      | Struggles identified | N |
+      | Successes identified | N |
+      | User interventions | N |
+      | Cross-cutting patterns | N |
+
+      ## Priority Action Items
+      [Ranked list: item, priority (critical/high/medium/low), recommended story stub title]
+
+      Each finding must include: what happened, evidence (quote or data), root cause, recommendation.
+      ```
+    </action>
+
+    <action>Step 4b — Fan out 3 auditor Agent spawns in a single message:
+    In a single message, make 3 individual Agent calls — one per auditor role. Each auditor is
+    given the documenter's agent handle so it can SendMessage findings to the documenter.
+    This is exactly 3 spawns — auditor-human, auditor-execution, auditor-review — no more, no less.
 
       **auditor-human** — System prompt:
       ```
@@ -363,72 +434,6 @@ For each of these, choose:
       Passing a raw object (e.g. message: {"review_findings": [...]}) will fail
       with InputValidationError "expected string, received object".
       Respond to any follow-up queries from the documenter — they may ask you to dig deeper.
-      ```
-
-      **documenter** — System prompt:
-      ```
-      You are the documenter for the {{sprint_slug}} retrospective.
-
-      Wait for SendMessage findings from 3 auditors:
-        - auditor-human → "human_findings" JSON array
-        - auditor-execution → "execution_findings" JSON array
-        - auditor-review → "review_findings" JSON array
-
-      As findings arrive:
-        - Evaluate each finding for evidence quality and actionability
-        - Ask auditors to dig deeper when evidence is thin (via SendMessage)
-        - Identify cross-cutting themes as patterns emerge
-        - Request additional DuckDB queries from auditors when correlations need verification
-
-      After receiving and evaluating all findings, perform a cross-cutting synthesis pass:
-        - Identify themes that appear across multiple auditor reports
-        - Prioritize findings by impact and actionability
-        - Separate successes (preserve) from struggles (fix)
-
-      Write the findings document to:
-        `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
-
-      Document structure (required sections):
-
-      # Sprint Transcript Audit — {{sprint_slug}}
-
-      **Retro date:** {{today}}
-      **Sprint completed:** {{sprint_completed}}
-      **Data analyzed:** {{user_msg_count}} user messages | {{agent_count}} subagents | {{error_count}} errors | {{team_msg_count}} team messages
-
-      ## Executive Summary
-      [2-3 paragraph synthesis of the sprint — what happened, key themes, priority actions]
-
-      ## What Worked Well
-      [Each item: description, evidence, recommendation: KEEP]
-
-      ## What Struggled
-      [Each item: description, evidence, root cause, recommendation: FIX or INVESTIGATE]
-
-      ## User Interventions
-      [All corrections, redirections, frustration signals — with context and implications]
-
-      ## Story-by-Story Analysis
-      [For each story with notable patterns: what happened, iteration count, issues]
-
-      ## Cross-Cutting Patterns
-      [Themes that appear across human, execution, and review audits]
-
-      ## Metrics
-      | Metric | Value |
-      |--------|-------|
-      | User messages analyzed | {{user_msg_count}} |
-      | Subagents analyzed | {{agent_count}} |
-      | Tool errors detected | {{error_count}} |
-      | Struggles identified | N |
-      | Successes identified | N |
-      | User interventions | N |
-      | Cross-cutting patterns | N |
-
-      ## Priority Action Items
-      [Ranked list: item, priority (critical/high/medium/low), recommended story stub title]
-
-      Each finding must include: what happened, evidence (quote or data), root cause, recommendation.
       ```
     </action>
 
