@@ -13,21 +13,21 @@
   <critical>Story stubs require developer approval before being written to stories/index.json. Write stub entries directly to stories/index.json (no momentum-tools command exists for this operation).</critical>
   <critical>Transcript audit (Phases 2-3) is the primary data source. Milestone logs are NOT the critical path — retro proceeds and produces findings even when zero log events exist.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
-  <critical>Phase 4 auditor team uses TeamCreate — auditors and documenter collaborate via SendMessage during analysis. This is the collaborative team pattern, not independent fan-out.</critical>
+  <critical>Phase 4 auditor team: exactly 1 documenter (singleton coordinator, spawned first as a single Agent) and exactly 3 auditors (individual Agent fan-out, each given the documenter handle for SendMessage). The documenter is NEVER placed in the same TeamCreate group as the auditors — that topology causes single-call replication (Decision 41; spawning-patterns.md Fan-Out vs TeamCreate decision rule).</critical>
 
   <team-composition>
     <phase name="auditor-team" step="4">
-      <role name="auditor-human" spawning="team-create" concurrency="parallel">
-        Reads user-messages.jsonl. Sends findings to documenter via SendMessage. Responds to documenter queries.
+      <role name="documenter" spawning="individual" concurrency="sequential" cardinality="1">
+        Singleton coordinator. Spawned first as a single Agent before auditors. Receives findings from all auditors via SendMessage. Evaluates, requests clarification, synthesizes. Owns retro-transcript-audit.md exclusively.
       </role>
-      <role name="auditor-execution" spawning="team-create" concurrency="parallel">
-        Reads agent-summaries.jsonl and errors.jsonl. Sends findings to documenter via SendMessage. Runs ad-hoc DuckDB queries on request.
+      <role name="auditor-human" spawning="individual" concurrency="parallel">
+        Reads user-messages.jsonl. Sends findings to documenter via SendMessage using the documenter handle passed at spawn. Responds to documenter queries.
       </role>
-      <role name="auditor-review" spawning="team-create" concurrency="parallel">
-        Reads team-messages.jsonl. Sends findings to documenter via SendMessage. Correlates with other auditor findings.
+      <role name="auditor-execution" spawning="individual" concurrency="parallel">
+        Reads agent-summaries.jsonl and errors.jsonl. Sends findings to documenter via SendMessage using the documenter handle passed at spawn. Runs ad-hoc DuckDB queries on request.
       </role>
-      <role name="documenter" spawning="team-create" concurrency="parallel">
-        Receives findings from all auditors. Evaluates, requests clarification, synthesizes. Owns retro-transcript-audit.md exclusively.
+      <role name="auditor-review" spawning="individual" concurrency="parallel">
+        Reads team-messages.jsonl. Sends findings to documenter via SendMessage using the documenter handle passed at spawn. Correlates with other auditor findings.
       </role>
     </phase>
   </team-composition>
@@ -224,16 +224,32 @@ For each of these, choose:
   <!-- PHASE 4: AUDITOR TEAM                                  -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Spawn auditor team via TeamCreate — collaborative analysis of extracts">
+  <step n="4" goal="Spawn documenter singleton then fan out 3 auditors — exactly 1 documenter + 3 auditors">
     <action>Update task 4 to in_progress</action>
 
-    <note>Spawn all 4 agents as a collaborative team via TeamCreate. Auditors read their assigned
-    extract files, send findings to the documenter via SendMessage, and respond to documenter
-    queries for clarification or deeper investigation. The documenter evaluates findings as they
-    arrive, may request additional DuckDB queries, and writes the final findings document.
-    This is the collaborative team pattern — auditors and documenter iterate together.</note>
+    <critical>Exactly 1 documenter and exactly 3 auditors must be spawned in Phase 4. The
+    documenter is a singleton coordinator — it must NEVER be placed in the same TeamCreate group
+    as the auditors, which would cause single-call replication (observed: 8–10 documenters per
+    retro run). Spawn topology (Shape A per Decision 41 and spawning-patterns.md):
+      1. First, spawn the documenter alone via a single TeamCreate call (team name:
+         `retro-{{sprint_slug}}`, 1 member: documenter).
+      2. Then, in a single message, fan out 3 individual Agent spawns — auditor-human,
+         auditor-execution, auditor-review — each joining the same team `retro-{{sprint_slug}}`
+         so they can SendMessage to the documenter.
+    The retro skill itself is the sole orchestrator. No retro-lead intermediate agent exists or
+    should ever be introduced. Reference: Decision 41; spawning-patterns.md Fan-Out vs TeamCreate;
+    AC4 of retro-workflow-rewrite (closed by fix-retro-documenter-replication-defect).</critical>
 
-    <action>Spawn 4 agents via TeamCreate:
+    <note>The documenter is spawned first (singleton, cardinality=1) so it exists and is
+    reachable via SendMessage when the 3 auditors start. Auditors send findings as they discover
+    them; the documenter evaluates, may request deeper investigation, and writes the final
+    findings document. This achieves the same collaborative iteration as before while
+    eliminating the replication defect.</note>
+
+    <action>Step 4a — Spawn the documenter singleton:
+    Create a TeamCreate call with team name `retro-{{sprint_slug}}` and exactly 1 member:
+
+      **documenter** — System prompt:
 
       **auditor-human** — System prompt:
       ```
@@ -414,6 +430,42 @@ For each of these, choose:
 
       Each finding must include: what happened, evidence (quote or data), root cause, recommendation.
       ```
+    </action>
+
+    <action>Singleton guard — verify team composition before any agent work begins:
+
+      Read `~/.claude/teams/retro-{{sprint_slug}}/config.json`.
+
+      If the file does not exist, is unreadable, or does not contain a `members` array, emit
+      the diagnostic block below and HALT immediately — an unverifiable team is not a passing team.
+
+      Otherwise, parse the `members` array and tally per-role counts using either the `name`
+      field or the `agentType` field (whichever matches the role identifier — accept either).
+      The four expected role identifiers are: `documenter`, `auditor-human`, `auditor-execution`,
+      `auditor-review`.
+
+      Assert ALL of the following:
+        1. Total member count is exactly 4.
+        2. Exactly 1 member has role `documenter`.
+        3. Exactly 1 member has role `auditor-human`.
+        4. Exactly 1 member has role `auditor-execution`.
+        5. Exactly 1 member has role `auditor-review`.
+        6. No member has a role outside the four-role set above.
+
+      If ALL assertions pass: emit a single confirmation line such as
+      "Team composition verified: 1 documenter + 3 auditors" and continue to the wait action.
+
+      If ANY assertion fails (including unreadable config or missing members array): emit this
+      diagnostic block and HALT — do NOT proceed to the wait action, do NOT await the documenter,
+      do NOT write the findings document. There is no "continue anyway" path.
+
+        RETRO TEAM COMPOSITION MISMATCH — {{sprint_slug}}
+        Expected: 1 documenter + 1 auditor-human + 1 auditor-execution + 1 auditor-review (4 total)
+        Actual:   [per-role count tally from members array, e.g. "5 documenter, 1 auditor-human,
+                   1 auditor-execution, 1 auditor-review (8 total)"]
+        Config read: ~/.claude/teams/retro-{{sprint_slug}}/config.json
+        See stories: retro-team-singleton-guard, fix-retro-documenter-replication-defect
+        HALTING Phase 4 — investigate team spawn before retrying the retro.
     </action>
 
     <action>Wait for the team to complete (documenter signals completion by writing the findings file)</action>
