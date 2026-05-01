@@ -3237,7 +3237,7 @@
     "feature_slug": "momentum-quality-gates-enforced"
   },
   "impetus-momentum-state-migration": {
-    "status": "in-progress",
+    "status": "done",
     "title": "Migrate Impetus State Reads to .momentum/",
     "epic_slug": "impetus-core",
     "story_file": true,
