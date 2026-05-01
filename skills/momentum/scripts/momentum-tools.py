@@ -77,11 +77,11 @@ def resolve_project_dir() -> Path:
 
 
 def stories_path(project_dir: Path) -> Path:
-    return project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    return project_dir / ".momentum" / "stories" / "index.json"
 
 
 def sprints_path(project_dir: Path) -> Path:
-    return project_dir / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    return project_dir / ".momentum" / "sprints" / "index.json"
 
 
 def read_json(path: Path) -> dict:
@@ -1258,7 +1258,7 @@ def _compute_feature_status(project_dir: Path, claude_project_dir: Path) -> dict
     import hashlib
 
     features_path = project_dir / "_bmad-output" / "planning-artifacts" / "features.json"
-    stories_path_val = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    stories_path_val = project_dir / ".momentum" / "stories" / "index.json"
     cache_path = claude_project_dir / ".claude" / "momentum" / "feature-status.md"
 
     if not features_path.exists():
@@ -1343,7 +1343,7 @@ def cmd_feature_status_hash(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
 
     features_path = project_dir / "_bmad-output" / "planning-artifacts" / "features.json"
-    stories_path_val = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    stories_path_val = project_dir / ".momentum" / "stories" / "index.json"
 
     if not features_path.exists():
         result("feature_status_hash", success=True,
@@ -1554,7 +1554,7 @@ INTAKE_QUEUE_STATUSES = {"open", "consumed"}
 
 
 def intake_queue_path(project_dir: Path) -> Path:
-    return project_dir / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+    return project_dir / ".momentum" / "intake-queue.jsonl"
 
 
 def cmd_intake_queue_append(args: argparse.Namespace) -> None:

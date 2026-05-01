@@ -21,10 +21,10 @@ FAIL_COUNT = 0
 
 
 def setup_project(stories: dict | None = None, sprints: dict | None = None) -> Path:
-    """Create a temp project directory with stories/index.json and sprints/index.json."""
+    """Create a temp project directory with .momentum/stories/index.json and .momentum/sprints/index.json."""
     tmpdir = Path(tempfile.mkdtemp())
-    stories_dir = tmpdir / "_bmad-output" / "implementation-artifacts" / "stories"
-    sprints_dir = tmpdir / "_bmad-output" / "implementation-artifacts" / "sprints"
+    stories_dir = tmpdir / ".momentum" / "stories"
+    sprints_dir = tmpdir / ".momentum" / "sprints"
     stories_dir.mkdir(parents=True)
     sprints_dir.mkdir(parents=True)
 
@@ -74,12 +74,12 @@ def run_tool(project_dir: Path, *args: str) -> tuple[int, dict]:
 
 
 def read_stories(project_dir: Path) -> dict:
-    path = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    path = project_dir / ".momentum" / "stories" / "index.json"
     return json.loads(path.read_text())
 
 
 def read_sprints(project_dir: Path) -> dict:
-    path = project_dir / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    path = project_dir / ".momentum" / "sprints" / "index.json"
     return json.loads(path.read_text())
 
 
@@ -1996,7 +1996,7 @@ def test_feature_status_hash_changes_on_stories_change():
     # First run with default stories
     code1, out1 = run_tool(proj, "feature-status-hash")
     # Change stories content
-    stories_path = proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    stories_path = proj / ".momentum" / "stories" / "index.json"
     stories_path.write_text('{"new-story": {"status": "backlog", "title": "New"}}')
     code2, out2 = run_tool(proj, "feature-status-hash")
     assert_eq("exit codes 0", code1 == 0 and code2 == 0, True)
@@ -2068,7 +2068,7 @@ def test_preflight_feature_status_fresh():
     features_content = '{"features": [{"slug": "auth"}]}'
     setup_features_file(proj, features_content)
     # Read the default stories content to compute the hash
-    stories_content = (proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json").read_text()
+    stories_content = (proj / ".momentum" / "stories" / "index.json").read_text()
     expected_hash = compute_expected_hash(features_content, stories_content)
     setup_feature_status_cache(proj, {
         "input_hash": expected_hash,
@@ -2162,7 +2162,7 @@ def test_greeting_state_feature_status_fresh():
     setup_installed_json(proj, {"session_stats": {"momentum_completions": 3}})
     features_content = '{"features": [{"slug": "auth"}]}'
     setup_features_file(proj, features_content)
-    stories_content = (proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json").read_text()
+    stories_content = (proj / ".momentum" / "stories" / "index.json").read_text()
     expected_hash = compute_expected_hash(features_content, stories_content)
     setup_feature_status_cache(proj, {
         "input_hash": expected_hash,
@@ -2257,7 +2257,7 @@ def test_story_add_feature_slug_omitted_when_empty():
 # --- intake-queue Tests ---
 
 def read_queue(project_dir: Path) -> list:
-    path = project_dir / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+    path = project_dir / ".momentum" / "intake-queue.jsonl"
     if not path.exists():
         return []
     lines = [l.strip() for l in path.read_text().splitlines() if l.strip()]
@@ -2365,6 +2365,62 @@ def test_intake_queue_list_filters():
     assert_eq("exit code 0", code, 0)
     assert_eq("one filtered event", out.get("count"), 1)
     assert_eq("correct source", out["events"][0].get("source"), "retro")
+
+
+# --- .momentum/ Path Migration Tests ---
+
+def test_stories_path_resolves_to_momentum():
+    """stories_path() must resolve to .momentum/stories/index.json."""
+    print("\n[.momentum/ migration] stories_path resolves to .momentum/")
+    proj = setup_project()
+    # Verify the file was created at .momentum/stories/index.json (not old path)
+    new_path = proj / ".momentum" / "stories" / "index.json"
+    old_path = proj / "_bmad-output" / "implementation-artifacts" / "stories" / "index.json"
+    assert_eq("new .momentum path exists", new_path.exists(), True)
+    assert_eq("old _bmad-output path absent", old_path.exists(), False)
+    # Verify the tool writes to and reads from the new path
+    code, out = run_tool(proj, "sprint", "status-transition", "--story", "test-story", "--target", "ready-for-dev")
+    assert_eq("exit code 0", code, 0)
+    stories = read_stories(proj)
+    assert_eq("status updated at new path", stories["test-story"]["status"], "ready-for-dev")
+
+
+def test_sprints_path_resolves_to_momentum():
+    """sprints_path() must resolve to .momentum/sprints/index.json."""
+    print("\n[.momentum/ migration] sprints_path resolves to .momentum/")
+    proj = setup_project()
+    new_path = proj / ".momentum" / "sprints" / "index.json"
+    old_path = proj / "_bmad-output" / "implementation-artifacts" / "sprints" / "index.json"
+    assert_eq("new .momentum path exists", new_path.exists(), True)
+    assert_eq("old _bmad-output path absent", old_path.exists(), False)
+    # Verify sprint activate reads/writes from new path
+    import json as _json
+    new_path.write_text(_json.dumps({
+        "active": None,
+        "planning": {"slug": "test-sprint", "locked": False, "stories": ["test-story"]},
+        "completed": []
+    }, indent=2) + "\n")
+    code, out = run_tool(proj, "sprint", "activate")
+    assert_eq("activate exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("active sprint set at new path", result["active"]["slug"], "test-sprint")
+
+
+def test_intake_queue_path_resolves_to_momentum():
+    """intake_queue_path() must resolve to .momentum/intake-queue.jsonl."""
+    print("\n[.momentum/ migration] intake_queue_path resolves to .momentum/")
+    proj = setup_project()
+    code, out = run_tool(
+        proj, "intake-queue", "append",
+        "--source", "triage",
+        "--kind", "shape",
+        "--title", "Test item"
+    )
+    assert_eq("exit code 0", code, 0)
+    new_queue = proj / ".momentum" / "intake-queue.jsonl"
+    old_queue = proj / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
+    assert_eq("queue created at new path", new_queue.exists(), True)
+    assert_eq("old path not created", old_queue.exists(), False)
 
 
 # --- Runner ---
@@ -2539,6 +2595,11 @@ def main():
     test_intake_queue_consume_missing_id()
     test_intake_queue_consume_missing_file()
     test_intake_queue_list_filters()
+
+    # .momentum/ path migration tests
+    test_stories_path_resolves_to_momentum()
+    test_sprints_path_resolves_to_momentum()
+    test_intake_queue_path_resolves_to_momentum()
 
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
