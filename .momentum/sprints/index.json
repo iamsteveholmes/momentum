@@ -873,7 +873,7 @@
           }
         },
         "review_roles": {
-          "qa-reviewer": "impetus-feature-status-cache",
+          "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
           "e2e-validator": [
             "feature-status-skill",
             "impetus-feature-status-cache",

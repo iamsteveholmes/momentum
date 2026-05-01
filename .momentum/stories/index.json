@@ -334,8 +334,8 @@
     "story_file": true,
     "depends_on": [],
     "touches": [
-      "skills/momentum-avfl/SKILL.md",
-      "skills/momentum-avfl/references/framework.json",
+      "skills/momentum/skills/avfl/SKILL.md",
+      "skills/momentum/skills/avfl/references/framework.json",
       "skills/momentum/workflows/sprint-dev.md"
     ],
     "priority": "low"
