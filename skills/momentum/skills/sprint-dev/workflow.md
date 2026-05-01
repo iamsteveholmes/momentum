@@ -125,7 +125,7 @@
     <action>Update task 1 (Initialization) to in_progress</action>
 
     <!-- DEC-012: Read from sprints/index.json active block only — no per-sprint file exists. Bind {{sprint_record}} immediately so all checks use a single name. -->
-    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json` and bind:
+    <action>Read `.momentum/sprints/index.json` and bind:
       {{sprint_record}} = the `active` block
     </action>
 
@@ -150,10 +150,10 @@
 
     <action>Store {{sprint_stories}} = `stories` array from {{sprint_record}}</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>For each story in {{sprint_stories}}, read its entry: status, depends_on, touches, title</action>
     <action>Store {{story_map}} = map of story slug → {status, depends_on, touches, title}</action>
-    <action>Store {{story_depends_on_map}} = map of story slug → depends_on array from stories/index.json (cross-wave and intra-wave detail; secondary ordering source — supplements {{sprint_waves}})</action>
+    <action>Store {{story_depends_on_map}} = map of story slug → depends_on array from .momentum/stories/index.json (cross-wave and intra-wave detail; secondary ordering source — supplements {{sprint_waves}})</action>
 
     <!-- Session resumption: detect partially-completed sprint -->
     <action>Check for stories already `in-progress` from a previous session:
@@ -526,7 +526,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
       - Produces structured QA Review Report with per-story AC verification
 
     **E2E Validator** — spawn via Agent tool with `skills/momentum/agents/e2e-validator.md` definition:
-      - Provide: sprint slug, path to Gherkin specs `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/specs/`, AVFL findings list
+      - Provide: sprint slug, path to Gherkin specs `.momentum/sprints/{{sprint_slug}}/specs/`, AVFL findings list
       - Agent validates running behavior against Gherkin scenarios
       - Produces structured E2E Validation Report with per-scenario results
       - **Spawn prompt MUST include these constraints verbatim — do not paraphrase or omit. The agent definition does not make these redundant; they override any contextual claims in the spawn prompt about service state.**
@@ -595,7 +595,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
 
   <step n="6" goal="Developer-confirmation checklist from Gherkin specs">
     <action>Update task 6 (Verification) to in_progress</action>
-    <action>Read all `.feature` files from `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/specs/`</action>
+    <action>Read all `.feature` files from `.momentum/sprints/{{sprint_slug}}/specs/`</action>
     <action>For each feature file, extract all scenario names and their Given/When/Then steps</action>
 
     <output>## Verification Checklist — Sprint {{sprint_slug}}

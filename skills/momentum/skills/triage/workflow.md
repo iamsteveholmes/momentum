@@ -44,7 +44,7 @@ files directly — that is delegated to `momentum:intake`.
   for a single-item triage session.</critical>
 
   <step n="1" goal="Surface source items and re-surface open queue items">
-    <action>Read `_bmad-output/implementation-artifacts/intake-queue.jsonl` if it exists.
+    <action>Read `.momentum/intake-queue.jsonl` if it exists.
     Filter for open items: kind in {shape, watch, handoff} with `status == "open"`.
     Store {{open_queue_items}} = list of open shape/watch events.
     </action>

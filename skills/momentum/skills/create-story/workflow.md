@@ -82,7 +82,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. Find the matching story slug in `stories/index.json`. Store as {{depends_on}} list of story slugs. If none found, use [].
       - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum/skills/dev/", ".claude/settings.json"]); if none found, use []
     </action>
-    <action>Read `{{implementation_artifacts}}/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>Add or update the entry keyed by {{story_key}} with:
       - status: "ready-for-dev"
       - title: human-readable title derived from story key

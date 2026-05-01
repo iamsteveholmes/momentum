@@ -126,7 +126,7 @@ Run /momentum:feature-grooming to view the full feature list or add new features
       from the stories already on the feature by resolving their epic_slug in stories/index.json.</note>
     </action>
 
-    <action>Read `{{implementation_artifacts}}/stories/index.json`:
+    <action>Read `.momentum/stories/index.json`:
       - Read full file (use offset/limit chunks if large — read in 300-line pages until complete).
       - Filter in-memory: keep stories where epic_slug is in {{feature_epics}},
         OR where the story slug is in {{feature_stories}}.

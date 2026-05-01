@@ -11,7 +11,7 @@ Read `_bmad/bmm/config.yaml` to get `project_name`.
 
 Resolve the following paths:
 - `features_path` = `_bmad-output/planning-artifacts/features.json`
-- `stories_path` = `_bmad-output/implementation-artifacts/stories/index.json`
+- `stories_path` = `.momentum/stories/index.json`
 - `html_out` = `.claude/momentum/feature-status.html`
 - `cache_out` = `.claude/momentum/feature-status.md`
 

@@ -45,13 +45,13 @@
     </check>
 
     <!-- Phase A.5: Previous sprint summary load -->
-    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json`</action>
+    <action>Read `.momentum/sprints/index.json`</action>
     <action>Find the most recently completed sprint with `retro_run_at != null`
       (latest by `completed` date in the `completed` array)</action>
 
     <check if="a completed sprint with retro_run_at found">
       <action>Store {{prev_sprint_slug}} = that sprint's slug</action>
-      <action>Attempt to read `_bmad-output/implementation-artifacts/sprints/{{prev_sprint_slug}}/sprint-summary.md`</action>
+      <action>Attempt to read `.momentum/sprints/{{prev_sprint_slug}}/sprint-summary.md`</action>
 
       <check if="sprint-summary.md exists and has content">
         <action>Store {{prev_sprint_summary}} = file contents</action>
@@ -93,7 +93,7 @@
     <!-- End Phase A.6 -->
 
     <!-- Phase B: Staleness check -->
-    <action>Read `{implementation_artifacts}/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>Filter: exclude stories with status in {done, dropped, closed-incomplete}</action>
     <action>For each story with status `ready-for-dev` or `in-progress`:
       · Get the story's `touches` paths
@@ -300,7 +300,7 @@ Approve, or request revisions?</output>
   <step n="4" goal="Generate Gherkin specs">
     <action>Update task 4 (Generate Gherkin specs) to in_progress</action>
     <action>Create the sprint specs directory:
-      `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/`</action>
+      `.momentum/sprints/{{sprint_slug}}/specs/`</action>
 
     <action>For each approved story in {{selected_stories}}:</action>
     <action>Read the story's acceptance criteria from its story file — read ALL ACs
@@ -359,7 +359,7 @@ Approve, or request revisions?</output>
       Do NOT save a spec that contains failing clauses — rewrite until all pass.
     </action>
 
-    <action>Write the spec to: `{implementation_artifacts}/sprints/{{sprint_slug}}/specs/{{story_slug}}.feature`</action>
+    <action>Write the spec to: `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.feature`</action>
 
     <action>Do NOT modify the story markdown file — story files retain plain English ACs only</action>
 
@@ -745,7 +745,7 @@ AVFL: {{avfl_result}}
   <step n="8" goal="Activate the sprint">
     <action>Update task 8 (Activate sprint) to in_progress</action>
     <action>Store team composition, guidelines status, and dependency graph in the sprint record:
-      · Update `{implementation_artifacts}/sprints/index.json` planning section with:
+      · Update `.momentum/sprints/index.json` planning section with:
         - slug: {{sprint_slug}}
         - team: {{team_composition object — roles with story assignments, specialist types, and guidelines}}
           Each story_assignment entry includes: role, specialist, guidelines path, and guidelines_status ("present", "missing", "skipped", or "n/a")

@@ -25,7 +25,7 @@
   </step>
 
   <step n="1" goal="Phase 1 — Data Collection">
-    <action>Read `_bmad-output/implementation-artifacts/stories/index.json`. Extract every unique `epic_slug` value with its story count. Build a complete slug → [story_slug, ...] map.</action>
+    <action>Read `.momentum/stories/index.json`. Extract every unique `epic_slug` value with its story count. Build a complete slug → [story_slug, ...] map.</action>
     <action>Read `_bmad-output/planning-artifacts/epics.md` Epic List section (the `### Epic N:` entries). Extract every registered epic slug and title. A registered slug is one that has a named section in epics.md.</action>
     <action>Cross-reference: produce two lists:
       · Registered slugs — appear in epics.md with a definition
@@ -129,8 +129,8 @@ Epic Taxonomy — Proposed Changes ({N} total)
          `python3 skills/momentum/scripts/momentum-tools.py sprint epic-membership --story {story-slug} --epic {target-slug}`
     </action>
 
-    <action>After all changes applied, re-read `_bmad-output/implementation-artifacts/stories/index.json` and `_bmad-output/planning-artifacts/epics.md` to verify:
-      · Every epic_slug in `_bmad-output/implementation-artifacts/stories/index.json` now has a matching definition in `_bmad-output/planning-artifacts/epics.md`
+    <action>After all changes applied, re-read `.momentum/stories/index.json` and `_bmad-output/planning-artifacts/epics.md` to verify:
+      · Every epic_slug in `.momentum/stories/index.json` now has a matching definition in `_bmad-output/planning-artifacts/epics.md`
       · Or confirm which orphans remain (if some proposals were rejected)
     </action>
     <action>TaskUpdate Phase 4 to completed.</action>

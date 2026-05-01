@@ -55,7 +55,7 @@
   <step n="1" goal="Identify the sprint to retrospect">
     <action>Update task 1 to in_progress</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json`</action>
+    <action>Read `.momentum/sprints/index.json`</action>
     <action>Search the `completed` array for entries where `retro_run_at == null`</action>
 
     <check if="no completed sprint with retro_run_at == null">
@@ -89,7 +89,7 @@ Which sprint should we retrospect?</output>
     <action>Store {{sprint_stories}} = candidate.stories (list of story slugs)</action>
     <action>Store {{sprint_started}} = candidate.started (ISO date for session discovery)</action>
     <action>Store {{sprint_completed}} = candidate.completed (ISO date for session discovery)</action>
-    <action>Store {{audit_dir}} = `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/audit-extracts`</action>
+    <action>Store {{audit_dir}} = `.momentum/sprints/{{sprint_slug}}/audit-extracts`</action>
 
     <action>Update task 1 to completed</action>
   </step>
@@ -106,7 +106,7 @@ Which sprint should we retrospect?</output>
     All errors use actual error indicators (is_error flag, success=false), not string matching.</note>
 
     <action>Ensure `{{audit_dir}}` directory exists:
-      Create `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/audit-extracts/` if absent</action>
+      Create `.momentum/sprints/{{sprint_slug}}/audit-extracts/` if absent</action>
 
     <action>Run 4 extraction commands (can run in parallel):
 
@@ -185,7 +185,7 @@ The retro can continue but auditor findings will be limited.</output>
   <step n="3" goal="Verify every sprint story reached done status">
     <action>Update task 3 to in_progress</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/stories/index.json`</action>
+    <action>Read `.momentum/stories/index.json`</action>
     <action>For each story slug in {{sprint_stories}}:
       - Look up status in stories/index.json
       - If status == "done": mark as verified
@@ -370,7 +370,7 @@ For each of these, choose:
         - Separate successes (preserve) from struggles (fix)
 
       Write the findings document to:
-        `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`
+        `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
 
       Document structure (required sections):
 
@@ -418,9 +418,9 @@ For each of these, choose:
 
     <action>Wait for the team to complete (documenter signals completion by writing the findings file)</action>
 
-    <check if="findings document written at `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
+    <check if="findings document written at `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
       <output>Auditor team complete. Findings document written:
-  `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
+  `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
     </check>
 
     <check if="findings document not found after documenter exits">
@@ -441,7 +441,7 @@ For each of these, choose:
   <step n="5" goal="Propose and approve story stubs from audit findings; route Tier 1 findings to distill">
     <action>Update task 5 to in_progress</action>
 
-    <action>Read `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
+    <action>Read `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
     <action>Extract all items under "Priority Action Items" section</action>
 
     <check if="no priority action items found">
@@ -528,7 +528,7 @@ Approve this stub? (Y/N)
         <ask>For each stub, enter Y or N:</ask>
 
         <action>For each approved stub:
-          - Read `_bmad-output/implementation-artifacts/stories/index.json`
+          - Read `.momentum/stories/index.json`
           - Generate a slug from the title (kebab-case)
           - Add entry: { "title": ..., "status": "backlog", "epic_slug": ..., "depends_on": [] }
           - Write updated stories/index.json
@@ -718,7 +718,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
     </action>
 
     <action>Write the sprint summary to:
-      `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
+      `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`
 
       Required structure (sections in this order):
       ```
@@ -767,7 +767,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
   · {{team_msg_count}} inter-agent messages
 
 **Findings document:**
-  `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/retro-transcript-audit.md`
+  `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
 
 **Story stubs created:** {{approved_count}} added to backlog
 
@@ -775,7 +775,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 
 **Sprint status:** closed (retro_run_at set to {{today}})
 
-**Sprint summary:** `_bmad-output/implementation-artifacts/sprints/{{sprint_slug}}/sprint-summary.md`
+**Sprint summary:** `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`
 
 ---
 Review the findings document and backlog stubs when planning the next sprint.
