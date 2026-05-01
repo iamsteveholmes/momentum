@@ -1574,7 +1574,7 @@ Sprint records carry an `approvals: []` array on `planning`, `active`, and `comp
 
 **Origin:** `sprint-planning-adds-per-story-approval-gate` story (sprint-2026-04-27).
 
-> _[Revised 2026-04-04: Active and planning entries enhanced with `status` field for sprint lifecycle state machine (Decision 36). Completed entries enhanced with `retro_run_at` for retro gate tracking. Existing fields (locked, stories, waves, team_composition, started, completed) unchanged.]_
+> _[Revised 2026-04-04: Active and planning entries enhanced with `status` field for sprint lifecycle state machine (Decision 36). Completed entries enhanced with `retro_run_at` for retro gate tracking. Existing fields (locked, stories, waves, team, started, completed) unchanged.]_
 
 **`.momentum/sprints/{sprint-slug}/specs/`** — Gherkin feature files written during sprint planning (Decision 30). One file per story: `{story-slug}.feature`. These specs encode detailed behavioral expectations that only verifier agents access. Dev agents NEVER read this directory — verification is black-box by design. Story markdown files retain plain English ACs only; Gherkin is never written back to story files.
 
@@ -1589,7 +1589,7 @@ Sprint records carry an `approvals: []` array on `planning`, `active`, and `comp
     "started": "2026-03-30",
     "completed": null,
     "approvals": []               // see Per-story approval contract
-    // ... waves, team_composition as before
+    // ... waves, team (contains story_assignments) as before
   },
   "planning": {
     "slug": "impetus-ux-sprint",
@@ -1597,7 +1597,7 @@ Sprint records carry an `approvals: []` array on `planning`, `active`, and `comp
     "locked": false,
     "stories": ["greeting-redesign", "session-stats"],
     "approvals": []               // see Per-story approval contract
-    // ... waves, team_composition as before
+    // ... waves, team (contains story_assignments) as before
   },
   "completed": [
     {

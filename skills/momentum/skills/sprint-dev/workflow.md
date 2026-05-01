@@ -123,28 +123,25 @@
 
   <step n="1" goal="Initialize sprint execution">
     <action>Update task 1 (Initialization) to in_progress</action>
-    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json`</action>
-    <action>Store {{sprint_slug}} = active.slug from sprints/index.json (active is an object containing slug, status, stories, waves, and team_composition)</action>
 
-    <check if="active == null">
-      <output>No active sprint found. Run sprint planning to create and activate a sprint first.</output>
+    <!-- DEC-012: Read from sprints/index.json active block only — no per-sprint file exists. Bind {{sprint_record}} immediately so all checks use a single name. -->
+    <action>Read `_bmad-output/implementation-artifacts/sprints/index.json` and bind:
+      {{sprint_record}} = the `active` block
+    </action>
+
+    <check if="{{sprint_record}} == null OR {{sprint_record}}.status != 'active'">
+      <output>No active sprint found (or sprint is not in active status). Run sprint planning to create and activate a sprint first.</output>
       <action>HALT — return to Impetus session menu.</action>
     </check>
 
-    <check if="active.status != 'active'">
-      <output>Sprint {{sprint_slug}} is not in active status (currently: {{active.status}}). Cannot execute.</output>
-      <action>HALT — return to Impetus session menu.</action>
-    </check>
+    <action>Bind:
+      {{sprint_slug}} = {{sprint_record}}.slug
+      {{team}} = {{sprint_record}}.team (contains `story_assignments` — DEC-012)
+      {{sprint_waves}} = {{sprint_record}}.waves (primary ordering source — story in wave N is blocked until every wave N-1 story is `done`)
+    </action>
 
     <action>Ensure we are on the sprint branch: `git checkout sprint/{{sprint_slug}}`
       If the branch does not exist, HALT — sprint planning should have created it.</action>
-
-    <!-- DEC-012: Read from sprints/index.json active block — no per-sprint file. Verify slug matches before proceeding. -->
-    <action>Bind {{sprint_record}} = the `active` block just read from sprints/index.json</action>
-    <check if="{{sprint_record}}.slug != {{sprint_slug}}">
-      <output>Slug mismatch: sprints/index.json active.slug is `{{sprint_record.slug}}` but expected `{{sprint_slug}}`. Inspect sprints/index.json `active` block to verify the correct sprint is active. Do NOT look for a per-sprint file — the active block in sprints/index.json is the sole state source (DEC-012).</output>
-      <action>HALT — return to Impetus session menu.</action>
-    </check>
 
     <check if="{{sprint_record}}.locked == false">
       <output>Sprint {{sprint_slug}} has not been activated (active.locked is false in sprints/index.json). Run `momentum-tools sprint activate` first, then re-invoke sprint-dev.</output>
@@ -152,8 +149,6 @@
     </check>
 
     <action>Store {{sprint_stories}} = `stories` array from {{sprint_record}}</action>
-    <action>Store {{team}} = `team` object from {{sprint_record}} (contains `story_assignments`)</action>
-    <action>Store {{sprint_waves}} = `waves` array from {{sprint_record}} (primary ordering source — story in wave N is blocked until every wave N-1 story is `done`)</action>
 
     <action>Read `_bmad-output/implementation-artifacts/stories/index.json`</action>
     <action>For each story in {{sprint_stories}}, read its entry: status, depends_on, touches, title</action>
