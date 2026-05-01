@@ -1219,7 +1219,7 @@
     "story_type": "defect"
   },
   "fix-retro-documenter-replication-defect": {
-    "status": "review",
+    "status": "closed-incomplete",
     "title": "Fix retro documenter replication defect (AC4 regression)",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1320,7 +1320,7 @@
     "priority": "low"
   },
   "harden-sprint-dev-phase5-spawn-prompts": {
-    "status": "review",
+    "status": "closed-incomplete",
     "title": "Harden sprint-dev Phase 5 spawn prompts (systemic)",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
@@ -2010,7 +2010,7 @@
     "feature_slug": "momentum-quality-gates-enforced"
   },
   "plugin-cache-staleness-detection": {
-    "status": "review",
+    "status": "closed-incomplete",
     "title": "Impetus Session-Start Staleness Check \u2014 Detect Plugin Cache Skew and Prompt Update+Restart",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2503,7 +2503,7 @@
     "story_type": "maintenance"
   },
   "retire-sprint-log-final-cleanup": {
-    "status": "review",
+    "status": "closed-incomplete",
     "title": "Retire Sprint-Log Infrastructure \u2014 PRD Drift Fix, Stub Cleanup, Filesystem Removal, Retro Phase 2 Hard-Fail",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2597,7 +2597,7 @@
     "priority": "low"
   },
   "retro-team-singleton-guard": {
-    "status": "review",
+    "status": "closed-incomplete",
     "title": "Retro Team Singleton Guard \u2014 Enforce Exactly-One Spawning for Documenter and Auditor Roles",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2610,7 +2610,7 @@
     "priority": "critical"
   },
   "retro-transcript-extraction-hardening": {
-    "status": "review",
+    "status": "closed-incomplete",
     "title": "Retro Transcript Extraction Hardening \u2014 Worktree Path Resolution and UTC Boundary Fix",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2965,7 +2965,7 @@
     "priority": "low"
   },
   "sprint-planning-adds-per-story-approval-gate": {
-    "status": "review",
+    "status": "closed-incomplete",
     "title": "Sprint-planning adds per-story approval gate",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
@@ -3425,5 +3425,83 @@
     "priority": "critical",
     "description": "6 of 10 user corrections were about team composition and spawning. AVFL team composed without dev/fixer twice in same session. Spawning mode (Agent vs TeamCreate) unclear. ACs: (1) Sprint-dev workflow specifies required roles per phase including dev/fixer, (2) AVFL workflow mandates validator + fixer roles, (3) Spawning mode (individual Agent vs TeamCreate) explicit per context, (4) Concurrency expectations explicit per phase.",
     "story_file": true
+  },
+  "consolidate-state-model-and-cross-skill-contract-tests": {
+    "status": "backlog",
+    "title": "Consolidate State-Model Contract \u2014 Unified Architectural Decision + Cross-Skill Schema Validation Tests",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "research-q-a-digest-first-rebuild": {
+    "status": "backlog",
+    "title": "Rebuild momentum:research Q/A as Digest-First \u2014 Structured Findings + Open Redirect Questions",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "specialist-agents-avfl-and-quickfix-phase2a": {
+    "status": "backlog",
+    "title": "Specialist Agents for AVFL and Quick-Fix Phase 2a \u2014 8 Typed Agent Roles",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "transcript-query-helper-stable-schema": {
+    "status": "backlog",
+    "title": "Transcript-Query Helper \u2014 Typed DuckDB Accessors with Stable content-string-vs-array Handling",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "architecture-guard-cross-section-check": {
+    "status": "backlog",
+    "title": "Architecture Guard Cross-Section Coherence Check \u2014 Catch editHistory Contradictions",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "momentum-tools-sprint-verify-evals": {
+    "status": "backlog",
+    "title": "momentum-tools sprint verify-evals \u2014 Pre-Merge Eval Presence Check",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "sprint-planning-story-size-heuristic": {
+    "status": "backlog",
+    "title": "Sprint-Planning Story-Size Heuristic \u2014 Detect Migration-Class Stories, Force Split or Annotate Permissions",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "audit-extract-first-prompt-full-capture": {
+    "status": "backlog",
+    "title": "Audit-Extract First-Prompt Full Capture \u2014 Store Complete First Prompt in agent-summary Output",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "avfl-consolidator-stylistic-filter": {
+    "status": "backlog",
+    "title": "AVFL Consolidator Stylistic Filter \u2014 Drop Style-Only and Past-Tense-Claim Findings",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "session-rule-read-before-edit": {
+    "status": "backlog",
+    "title": "Session Rule: Read Before Edit \u2014 Agent Must Read File Before Any Edit Tool Call",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "dev-prompt-git-revert-guidance": {
+    "status": "backlog",
+    "title": "Dev/Fixer Prompt Git-Revert Guidance \u2014 Prefer git revert Over git reset --hard",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "session-handoff-prompt-as-artifact": {
+    "status": "backlog",
+    "title": "Session-Handoff Prompt as Artifact \u2014 First-Class Next-Session Context Capture",
+    "epic_slug": "impetus-core",
+    "depends_on": []
+  },
+  "benchmark-capture-from-session-transcripts": {
+    "status": "backlog",
+    "title": "Benchmark Capture from Session Transcripts \u2014 Extract Pre/Post State + Inputs/Outputs as Benchmark Recipes",
+    "epic_slug": "impetus-core",
+    "depends_on": []
   }
 }
