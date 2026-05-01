@@ -76,3 +76,6 @@ _bmad/_memory/
 # Momentum story worktrees (local execution environments, not committed)
 .worktrees/
 .claude/worktrees/
+
+# Retired sprint-log infrastructure — see retire-sprint-log-final-cleanup (ARCH-5)
+.claude/momentum/sprint-logs/

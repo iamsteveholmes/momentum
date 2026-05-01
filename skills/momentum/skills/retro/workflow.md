@@ -184,17 +184,18 @@ Extracts written to: {{audit_dir}}/
     </check>
 
     <check if="extraction produced empty results (no session files found)">
-      <output>Warning: No session files found for sprint date range ({{sprint_started}} to {{sprint_completed}}).
+      <output>ERROR: Retro for sprint "{{sprint_slug}}" found zero session files for date range {{sprint_started}} → {{sprint_completed}}.
 
-The transcript audit will not have raw data to analyze. This may happen if:
-  · The sprint ran in a different project directory
-  · Session dates don't match the sprint's started/completed dates
+Proceeding with empty extracts would produce false-positive audit findings. The retro is halted.
+
+Investigate one of the following before re-running:
+  · The sprint ran in a different project directory — session files may be elsewhere
+  · Session dates don't match the sprint's started/completed dates — check sprint record
   · Claude Code session files have been deleted
   · transcript-query.py path could not be resolved: {{transcript_query_path}}
 
-HALT — investigate session file location and resolved script path before continuing.
-The retro cannot produce meaningful findings without raw session data.</output>
-      <action>HALT — developer must resolve the empty session set before auditors run.</action>
+Re-run `momentum:retro` after resolving the session file location.</output>
+      <action>HALT — do NOT spawn auditor team. Do NOT prompt developer to continue with empty extracts. The retro must stop here until the developer resolves the session file issue and re-runs.</action>
     </check>
 
     <action>Update task 2 to completed</action>

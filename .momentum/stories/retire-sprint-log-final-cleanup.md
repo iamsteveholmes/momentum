@@ -434,6 +434,24 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+_None — all tasks were surgical edits with no unexpected branches._
+
 ### Completion Notes List
 
+- **AC1 (PRD FR66):** Already satisfied before dev started — `grep sprint-logs prd.md` returned no matches. FR66 already reads "DuckDB transcript audit is the sole evidence source per ARCH-5 / Decision 27 — there is no secondary evidence source." No change required.
+- **AC2 (stories/index.json stubs):** Already satisfied before dev started — both `retro-extract-preflight-validation` and `sprint-log-directory-enforcement` already had `status: "dropped"` and the required provenance notes. No change required.
+- **AC3 (retro-session-analytics-phase-0 AC6):** Fixed path in `.momentum/stories/retro-session-analytics-phase-0.md` line 99 from `.claude/momentum/sprint-logs/<sprint>/session-analytics-brief.md` to `.momentum/sprints/<sprint_slug>/session-analytics-brief.md`. Verified no remaining sprint-logs references.
+- **AC4 (sprint-logs deletion + gitignore):** Deleted `.claude/momentum/sprint-logs/` directory tree (contained historical sprint data from sprint-2026-04-04 through sprint-2026-04-08, sprint-test, _unsorted). Added `.gitignore` rule `# Retired sprint-log infrastructure — see retire-sprint-log-final-cleanup (ARCH-5)` / `.claude/momentum/sprint-logs/` at end of `.gitignore`. Confirmed via `git check-ignore`.
+- **AC5 (retro Phase 2 hard-fail):** The workflow already had a HALT behavior but used "Warning:" framing. Updated to emit explicit "ERROR:" message naming `{{sprint_slug}}` and `{{sprint_started}} → {{sprint_completed}}` date range with 4 diagnostics. HALT action now explicitly says "do NOT spawn auditor team. Do NOT prompt developer to continue with empty extracts." Removed any continue-anyway path.
+- **EDD:** Wrote 2 behavioral evals — `eval-phase2-halts-on-zero-sessions.md` and `eval-phase2-proceeds-on-nonempty-sessions.md`. Both evals verified to pass against the updated workflow.md by inspection.
+- **Expected behavior (per AC5):** Given a sprint slug whose date range matches no session files, the retro workflow halts in Phase 2 before spawning the auditor team — preventing a false-positive audit against an empty dataset.
+
 ### File List
+
+- `.momentum/stories/retro-session-analytics-phase-0.md` — AC6 path updated
+- `.gitignore` — sprint-logs ignore rule added
+- `.claude/momentum/sprint-logs/` — deleted (no longer exists)
+- `skills/momentum/skills/retro/workflow.md` — Phase 2 zero-session check converted to hard-fail
+- `skills/momentum/skills/retro/evals/eval-phase2-halts-on-zero-sessions.md` — new eval
+- `skills/momentum/skills/retro/evals/eval-phase2-proceeds-on-nonempty-sessions.md` — new eval
+- `.momentum/stories/retire-sprint-log-final-cleanup.md` — Dev Agent Record updated

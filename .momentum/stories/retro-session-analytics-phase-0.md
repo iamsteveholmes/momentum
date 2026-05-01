@@ -96,7 +96,7 @@ window:
 
 ### AC6 — Structured brief output
 - Phase 0 writes a brief to the retro working directory (e.g.,
-  `.claude/momentum/sprint-logs/<sprint>/session-analytics-brief.md`)
+  `.momentum/sprints/<sprint_slug>/session-analytics-brief.md`)
 - Brief contains:
   - Sprint window dates and session count
   - Metric table: metric name, prior sprint value, current sprint value, delta, flagged/clean
