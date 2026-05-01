@@ -202,7 +202,7 @@ If you want to include a retro handoff item as a story, enter "handoff-N" (where
            - Generate slug from the handoff item title (kebab-case, max 50 chars)
            - Run: `momentum-tools sprint story-add --slug {{slug}} --title "{{item.title}}" --epic impetus-epic-orchestrator`
              (use appropriate epic if discernible from feature_slug context)
-           - Write story stub file at `_bmad-output/implementation-artifacts/stories/{{slug}}.md`
+           - Write story stub file at `.momentum/stories/{{slug}}.md`
              with the handoff item's description, feature_slug, story_type, and any
              feature_state_transition / failure_diagnosis context in the story's Description section
         3. Mark the handoff item consumed:
@@ -269,7 +269,7 @@ Proceeding to flesh out story stubs.</output>
 
     <!-- Per-story review and approval gate — repeats until approved or rejected -->
     <action>Open the story in a cmux markdown viewer (BLOCKING — do not proceed until developer responds):
-      `cmux markdown open {implementation_artifacts}/stories/{{story_slug}}.md --title "Story Review — {{story_slug}}"`</action>
+      `cmux markdown open .momentum/stories/{{story_slug}}.md --title "Story Review — {{story_slug}}"`</action>
 
     <output>Story {{story_slug}} is open in the right pane. Review it fully before responding.
 
@@ -289,7 +289,7 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
       <ask>Describe the revisions needed:</ask>
       <action>Re-spawn `momentum:create-story` with the developer's revision feedback</action>
       <action>Re-open the revised story in cmux:
-        `cmux markdown open {implementation_artifacts}/stories/{{story_slug}}.md --title "Story Review (Revised) — {{story_slug}}"`</action>
+        `cmux markdown open .momentum/stories/{{story_slug}}.md --title "Story Review (Revised) — {{story_slug}}"`</action>
       <action>Re-present the A/R/J approval prompt. Repeat until the developer selects A or J.</action>
     </check>
 

@@ -235,7 +235,7 @@ Task list created for progress tracking.</output>
          all in a single message turn for parallel execution). NEVER use TeamCreate for dev agents.
          Provide:
          - Story key: {slug}
-         - Story file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
+         - Story file: `.momentum/stories/{slug}.md`
          - Sprint context: {{sprint_slug}}
          - Role: {{team}}.story_assignments[slug].role
          - Specialist: {{team}}.story_assignments[slug].specialist
@@ -376,7 +376,7 @@ Options:
       For each story {slug}:
         - Scope: files in {{story_touches}} for story {slug}
         - Context: "Code review for story {slug} — sprint {{sprint_slug}}"
-        - Story file: `_bmad-output/implementation-artifacts/stories/{slug}.md`
+        - Story file: `.momentum/stories/{slug}.md`
         - Sprint branch: `sprint/{{sprint_slug}}`
       Tag each review invocation with the story slug for findings attribution.
     </action>
@@ -533,7 +533,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
 
     **QA Agent** — spawn via Agent tool with `skills/momentum/agents/qa-reviewer.md` definition:
       - Provide: sprint slug, list of sprint stories, AVFL findings list
-      - Agent reads each story's AC section from `_bmad-output/implementation-artifacts/stories/{slug}.md`
+      - Agent reads each story's AC section from `.momentum/stories/{slug}.md`
       - Produces structured QA Review Report with per-story AC verification
       - **Spawn prompt MUST include these constraints verbatim — do not paraphrase or omit. The agent definition does not make these redundant; they override any contextual claims in the spawn prompt about service state.**
         1. Follow `.claude/rules/e2e-validation.md` Environment Startup before running any test that
