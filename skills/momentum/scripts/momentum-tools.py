@@ -136,7 +136,7 @@ def _compute_story_sha(project_dir: Path, slug: str) -> str | None:
 
     Returns the hex digest string, or None if the file does not exist.
     """
-    story_file = project_dir / "_bmad-output" / "implementation-artifacts" / "stories" / f"{slug}.md"
+    story_file = project_dir / ".momentum" / "stories" / f"{slug}.md"
     if not story_file.exists():
         return None
     return hashlib.sha256(story_file.read_bytes()).hexdigest()
@@ -189,7 +189,10 @@ def cmd_sprint_story_approve(args: argparse.Namespace) -> None:
     # Compute SHA
     story_sha = _compute_story_sha(project_dir, slug)
     if story_sha is None:
-        # For rejected decisions, SHA may not matter — but we'll record None
+        # Story file not found at .momentum/stories/{slug}.md — this is expected for
+        # rejected decisions where no story file has been written yet. Record an empty
+        # SHA explicitly so downstream SHA-match checks will flag this entry as
+        # unverifiable rather than silently treating it as valid.
         story_sha = ""
 
     # Build the new entry
