@@ -167,12 +167,12 @@ Updating specs now.</output>
       - "reads file X" becomes "proceeds without requesting additional input"
       - "does not perform X" becomes describe the observable absence ("no worktree artifacts remain")
 
-    Write the spec to: `_bmad-output/implementation-artifacts/sprints/quickfix-{{story_slug}}/specs/{{story_slug}}.feature`
+    Write the spec to: `.momentum/sprints/quickfix-{{story_slug}}/specs/{{story_slug}}.feature`
     </action>
 
     <!-- BLOCKING GATE: Developer Review of Gherkin -->
     <action>Open the Gherkin spec in a cmux markdown surface for developer review:
-      `cmux markdown open _bmad-output/implementation-artifacts/sprints/quickfix-{{story_slug}}/specs/{{story_slug}}.feature --title "Gherkin Spec — Review & Approve"`</action>
+      `cmux markdown open .momentum/sprints/quickfix-{{story_slug}}/specs/{{story_slug}}.feature --title "Gherkin Spec — Review & Approve"`</action>
 
     <output>Gherkin spec generated for {{story_slug}}.
 
@@ -187,7 +187,7 @@ Options:
     <check if="developer requests revisions">
       <action>Re-invoke the Gherkin generation subagent with the revision feedback</action>
       <action>Re-open the updated spec in cmux:
-        `cmux markdown open _bmad-output/implementation-artifacts/sprints/quickfix-{{story_slug}}/specs/{{story_slug}}.feature --title "Gherkin Spec — Revised — Review & Approve"`</action>
+        `cmux markdown open .momentum/sprints/quickfix-{{story_slug}}/specs/{{story_slug}}.feature --title "Gherkin Spec — Revised — Review & Approve"`</action>
       <action>Re-present the approval prompt. Repeat until approved.</action>
     </check>
 

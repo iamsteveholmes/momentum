@@ -34,7 +34,7 @@ Store {{planning_artifacts}} and {{implementation_artifacts}} for use throughout
 
   <critical>Orchestrator purity: This workflow MUST NOT write files directly. No Write or Edit
   actions against features.json, stories/index.json, prd.md, epics.md, architecture.md, or any
-  file under _bmad-output/planning-artifacts/ or _bmad-output/implementation-artifacts/stories/.
+  file under _bmad-output/planning-artifacts/ or .momentum/stories/.
   All writes happen via delegated subagents — triage routes to intake / decision / distill, which
   own their respective writes. This orchestrator reads, synthesizes, gates, and delegates only.</critical>
 

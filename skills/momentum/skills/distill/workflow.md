@@ -177,7 +177,7 @@ Proceed with this change?</output>
 Reason: {{adversary_output.tier_challenge.reason}}
 (If empty, fall back to: {{enumerator_output.rationale}})
 
-A story stub will be created in `_bmad-output/implementation-artifacts/stories/` for sprint
+A story stub will be created in `.momentum/stories/` for sprint
 activation. No practice files will be modified in this session.</output>
       <action>Proceed directly to Phase 3 (Tier 2 path — create story stub).</action>
     </check>

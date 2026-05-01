@@ -43,7 +43,7 @@ If `e2e-validation.md` is absent from the project: report BLOCKED and halt. Do n
 
 You receive:
 - A sprint slug identifying the active sprint
-- Path to Gherkin specs: `_bmad-output/implementation-artifacts/sprints/{sprint-slug}/specs/`
+- Path to Gherkin specs: `.momentum/sprints/{sprint-slug}/specs/`
 - The AVFL findings list (for context — you may skip scenarios already covered by AVFL findings)
 
 ## Validation Process

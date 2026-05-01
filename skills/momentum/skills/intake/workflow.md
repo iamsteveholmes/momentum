@@ -105,7 +105,7 @@ stub file, add index entry. No analysis, no research, no subagents.
     </action>
 
     <action>Determine stub file path:
-      {{stub_path}} = `_bmad-output/implementation-artifacts/stories/{{slug}}.md`
+      {{stub_path}} = `.momentum/stories/{{slug}}.md`
     </action>
 
     <action>Write the populated stub to {{stub_path}}</action>

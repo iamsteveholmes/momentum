@@ -27,7 +27,7 @@
     <check if="explicit story path or key provided">
       <action>If a file path is provided, store {{story_file}} = the provided path</action>
       <action>Read `.momentum/stories/index.json`</action>
-      <action>If a story key is provided, look up {{story_key}} in stories/index.json. The story implementation file is at `{implementation_artifacts}/{{story_key}}.md`. If a file path was provided, derive the story key from the filename.</action>
+      <action>If a story key is provided, look up {{story_key}} in stories/index.json. The story implementation file is at `.momentum/stories/{{story_key}}.md`. If a file path was provided, derive the story key from the filename.</action>
       <action>Store {{story_key}} and {{story_file}}</action>
     </check>
 
@@ -48,7 +48,7 @@ Resolve blocking stories first, then re-invoke momentum:dev.</output>
         2. Story order within that epic (parse from key: `1-2-...` → epic 1, story 2)
       </action>
       <action>Store {{story_key}} = selected story key</action>
-      <action>Store {{story_file}} = `{implementation_artifacts}/{{story_key}}.md`.</action>
+      <action>Store {{story_file}} = `.momentum/stories/{{story_key}}.md`.</action>
       <output>Selected story {{story_key}} (status: ready-for-dev, depends_on satisfied). Proceeding to develop.</output>
     </check>
 
