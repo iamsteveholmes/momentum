@@ -1,7 +1,8 @@
 ---
 title: Specialist Dev Agents — Domain-Specific Agent Definitions
 story_key: specialist-dev-agents
-status: ready-for-dev
+status: done
+superseded_by: base-body-collapse-rollback
 epic_slug: agent-team-model
 depends_on:
   - dev-agent-definition-files

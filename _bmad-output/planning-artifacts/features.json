@@ -58,7 +58,6 @@
       "agent-guidelines-skill",
       "build-guidelines-skill",
       "dev-agent-definition-files",
-      "specialist-dev-agents",
       "guidelines-verification-gate",
       "architecture-guard-implementation",
       "dev-agent-executor-not-decider",
@@ -80,10 +79,10 @@
       "maestro-ux-spec-sync-guidance",
       "verify-shell-before-fix"
     ],
-    "stories_done": 6,
+    "stories_done": 5,
     "stories_remaining": 18,
     "last_verified": "2026-04-19",
-    "notes": "Gen-1 agent-guidelines shipped. Gen-2 build-guidelines + KB dependency + base-body collapse rollback are the remaining major work."
+    "notes": "Gen-1 agent-guidelines shipped. Gen-2 build-guidelines + KB dependency + base-body collapse rollback are the remaining major work. specialist-dev-agents removed from tracking \u2014 implemented at the wrong layer (plugin-level specialists); base-body-collapse-rollback undoes it."
   },
   "momentum-feature-taxonomy-maintenance": {
     "feature_slug": "momentum-feature-taxonomy-maintenance",
