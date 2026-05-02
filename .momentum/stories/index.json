@@ -3513,5 +3513,15 @@
     "touches": [],
     "priority": "low",
     "story_type": "maintenance"
+  },
+  "code-reviewer-withmartian-replay-fixture": {
+    "status": "backlog",
+    "title": "Code-Reviewer Withmartian Replay Fixture — Investigate Dataset Access",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "exploration"
   }
 }

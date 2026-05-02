@@ -1,13 +1,15 @@
 ---
-title: Agent Spawn Observability Metric — Track Zero-Turn Agents as Waste Signal
-story_key: agent-spawn-observability-metric
+title: Code-Reviewer Withmartian Replay Fixture — Investigate Dataset Access
+story_key: code-reviewer-withmartian-replay-fixture
 status: backlog
-epic_slug: agent-team-model
+epic_slug: quality-enforcement
+feature_slug: 
+story_type: exploration
 depends_on: []
 touches: []
 ---
 
-# Agent Spawn Observability Metric — Track Zero-Turn Agents as Waste Signal
+# Code-Reviewer Withmartian Replay Fixture — Investigate Dataset Access
 
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
@@ -18,17 +20,15 @@ dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
-As a sprint retro,
-I want see a count of zero-turn abandoned agents as a waste metric in the sprint retro report,
-so that invisible spawn waste becomes visible — retro can identify patterns in abandoned agent launches.
+As a developer,
+I want to build a behavioral micro-eval fixture that replays the Withmartian 50-PR golden set against momentum:code-reviewer,
+so that code-reviewer quality can be measured against a golden standard dataset, surfacing regressions before they ship.
 
 ## Description
 
-Agents that are spawned but take 0 turns (immediately return without doing work) are invisible in current retro analysis. These represent pure waste — compute allocated but never used. Tracking them as a metric surfaces spawn hygiene issues.
+Build a behavioral micro-eval fixture that replays the Withmartian 50-PR golden set against momentum:code-reviewer. Needs dataset access investigation first — the fixture depends on obtaining or replicating the dataset. Once access is confirmed, the fixture replays each PR through the code-reviewer and compares outputs against the golden labels.
 
-**Pain context:** Sprint-2026-04-08 retro (#12). Zero-turn agents were observed but not counted. Current metrics track turn counts for active agents but miss the abandoned spawn pattern.
-
-**Additional signal — sprint-2026-04-27:** 2 zero-turn subagents detected. Spawn conditions unknown — investigation needed to identify which workflow steps produced them and why they returned immediately without doing work.
+**Pain context:** No golden-set benchmark exists for momentum:code-reviewer. Quality is currently assessed only by human review, not by regression testing. Identified during triage of sprint-2026-04-27 retro findings.
 
 ## Acceptance Criteria
 
@@ -38,10 +38,13 @@ Agents that are spawned but take 0 turns (immediately return without doing work)
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- Retro extraction counts zero-turn agents per sprint
-- Zero-turn agents surfaced as a metric in the retro findings doc
-- Pattern analysis: which spawning contexts produce the most zero-turn agents
-- Metric available in sprint summary output
+The following are rough draft ACs captured from conversation:
+
+- Investigate Withmartian dataset access — confirm availability or replication path
+- Fixture replays each PR from the golden set through momentum:code-reviewer
+- Output compared against golden labels; pass/fail recorded per PR
+- Results surfaced as a metric in the eval runner
+- If dataset is not obtainable, fixture design is documented for when it becomes available
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
