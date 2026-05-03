@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-05-02'
+lastEdited: '2026-05-03'
 
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
@@ -31,3 +31,5 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-013 | [Universal Agent Model — No Bucket Distinction, Ask Not Fallback, Sprint Planning as Type Discovery](dec-013-universal-agent-model-ask-not-fallback-2026-05-02.md) | 2026-05-02 | (developer-conversation) | decided |
 | DEC-014 | [Composed Agent File Staleness — Discovery-Check Model, No Auto-Invalidation](dec-014-composed-file-staleness-discovery-check-2026-05-02.md) | 2026-05-02 | (developer-conversation) | decided |
 | DEC-015 | [KB Cold-Context Delivery — Workflow Steps, Prescriptive Constitution Triggers, Skills Audit](dec-015-kb-cold-context-workflow-steps-constitution-audit-2026-05-02.md) | 2026-05-02 | (developer-conversation) | decided |
+| DEC-016 | [Agent Taxonomy — Two-Tier Shipped/Customs Model](dec-016-agent-taxonomy-two-tier-shipped-customs-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
+| DEC-017 | [Momentum Practice Cycle — Formal Step Sequence Definition](dec-017-momentum-cycle-step-sequence-definition-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
