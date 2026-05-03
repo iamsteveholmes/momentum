@@ -3,7 +3,7 @@ title: "create-story fixture: change-type classification"
 story_key: create-story-fixture-change-type-classification
 status: backlog
 epic_slug: epic-11-agent-team-model
-feature_slug: momentum-composable-specialist-agents
+feature_slug: momentum-sprint-orchestration
 story_type: practice
 depends_on: []
 touches: []
