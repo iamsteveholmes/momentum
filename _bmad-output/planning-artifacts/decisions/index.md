@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-04-24'
+lastEdited: '2026-05-02'
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
 ---
@@ -26,3 +26,5 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-009 | [Practice Knowledge Base Vault — Orchestration Model, Isolation, Merge Strategy, Research Path](dec-009-kb-vault-orchestration-and-ingest-model-2026-04-22.md) | 2026-04-22 | (developer-conversation) | decided |
 | DEC-010 | [Fixture-Based Regression Testing as Practice Primitive — Schema, Lifecycle, Skills, and Pruning](dec-010-fixture-based-regression-testing-2026-04-22.md) | 2026-04-22 | retro-microeval-loop-analysis-2026-04-21 | decided |
 | DEC-011 | [Project Canvas Implementation Foundations — Canvas Rename, Vite Build, State Source Paths](dec-011-project-canvas-implementation-foundations-2026-04-24.md) | 2026-04-24 | (developer-conversation) | decided |
+| DEC-012 | [Retire Per-Sprint State File](dec-012-retire-per-sprint-state-file-2026-04-30.md) | 2026-04-30 | (developer-conversation) | decided |
+| DEC-013 | [Universal Agent Model — No Bucket Distinction, Ask Not Fallback, Sprint Planning as Type Discovery](dec-013-universal-agent-model-ask-not-fallback-2026-05-02.md) | 2026-05-02 | (developer-conversation) | decided |
