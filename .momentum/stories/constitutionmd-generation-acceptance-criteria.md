@@ -44,6 +44,7 @@ The following are rough draft ACs captured from conversation:
 - Content rules are defined: critical rules only, pointers to refs/ for detail
 - Citation integrity rule is defined: every rule must be traceable to a KB source or project decision
 - ACs are integrated into build-guidelines' verification logic or post-generation check
+- **DEC-015 D3 fold-in:** KB trigger language in the constitution must be prescriptive, not permissive. Do not use "if you need domain knowledge, check the KB." Instead enumerate specific named scenarios that require a KB query (e.g., "when classifying a story's domain", "when selecting a test pattern for a new library", "when choosing between library approaches on this stack"). Each trigger must name the exact context — no judgment call left to the agent. Rationale: LLMs always prefer training data; vague permission is effectively no instruction.
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
