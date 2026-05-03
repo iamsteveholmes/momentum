@@ -3765,5 +3765,27 @@
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
+  },
+  "momentum-cycle-features-lens": {
+    "status": "backlog",
+    "title": "Momentum Cycle — Features Lens",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-canvas"
+  },
+  "momentum-cycle-cycle-timeline-lens": {
+    "status": "backlog",
+    "title": "Momentum Cycle — Cycle Timeline Lens",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-canvas"
   }
 }
