@@ -3743,5 +3743,16 @@
     "touches": [],
     "priority": "medium",
     "story_type": "feature"
+  },
+  "drop-superseded-kb-stories-dec-018": {
+    "status": "backlog",
+    "title": "Drop Superseded KB Stories — DEC-018 Wiki Skills Replace KB/Vault Story Suite",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-practice-knowledge-base"
   }
 }
