@@ -3733,5 +3733,15 @@
     "touches": [],
     "priority": "medium",
     "story_type": "feature"
+  },
+  "wiki-query-interface-block-for-hot-constitution": {
+    "status": "backlog",
+    "title": "Wiki-Query Interface Block for Hot Constitution",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }
