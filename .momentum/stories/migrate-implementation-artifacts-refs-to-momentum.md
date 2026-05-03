@@ -16,6 +16,7 @@ touches:
   - skills/momentum/skills/feature-breakdown/workflow.md
   - skills/momentum/skills/feature-grooming/evals/eval-refine-detects-unmapped-stories.md
   - skills/momentum/scripts/update-story-status.sh
+  - skills/momentum/.claude-plugin/plugin.json
 change_type: skill-instruction
 ---
 
@@ -53,16 +54,39 @@ NOT be changed. PRD, architecture, epics, features, assessments, and decisions s
 uses `_bmad-output/implementation-artifacts/` references intentionally — the eval tests that Impetus
 does NOT fall back to those paths. Those occurrences are anti-pattern examples and must NOT be changed.
 
+## Tasks / Subtasks
+
+- [ ] Task 1: Fix stale `_bmad-output/implementation-artifacts/` path references in 12 skill/eval/workflow files
+  - [ ] 1.1: Fix sprint-planning/evals/eval-sprint-planning-invocable.md
+  - [ ] 1.2: Fix sprint-planning/evals/eval-sprint-planning-loads-sprint-summary-when-available.md
+  - [ ] 1.3: Fix distill/evals/eval-tier-classification.md
+  - [ ] 1.4: Fix triage/evals/eval-triage-delegates-not-writes.md
+  - [ ] 1.5: Fix intake/evals/eval-intake-captures-context.md
+  - [ ] 1.6: Fix retro/evals/eval-produces-sprint-summary-at-retro-close.md
+  - [ ] 1.7: Fix plan-audit/evals/eval-substantive-spec-audit.md (use .momentum/stories/ prefix — see Dev Notes)
+  - [ ] 1.8: Fix refine/evals/eval-refine-reprioritization.md
+  - [ ] 1.9: Fix refine/evals/eval-refine-assessment-decision-review.md
+  - [ ] 1.10: Fix feature-breakdown/workflow.md (Initialization block directive, not a comment)
+  - [ ] 1.11: Fix feature-grooming/evals/eval-refine-detects-unmapped-stories.md
+  - [ ] 1.12: Fix scripts/update-story-status.sh line 44
+- [ ] Task 2: Bump plugin.json version from 0.18.0 to 0.18.1
+- [ ] Task 3: Run grep verification (see Dev Notes)
+  - [ ] 3.1: Confirm zero remaining stale refs (excluding impetus eval and orient.md)
+  - [ ] 3.2: Confirm planning-artifacts count unchanged
+  - [ ] 3.3: Verify orient.md is correct (read it — confirm .momentum/ paths at lines 17-19 and negation at line 21)
+
 ## Acceptance Criteria
 
 1. **Zero remaining stale references:** Exhaustive grep of all skill files, evals, workflow.md
    files, agent definitions, scripts, and reference docs shows zero occurrences of
    `_bmad-output/implementation-artifacts/` outside of files that intentionally document the
-   old path as a rejected anti-pattern (the impetus eval).
+   old path as a rejected anti-pattern (the impetus eval and orient.md line 21).
 2. **Planning artifacts untouched:** All `_bmad-output/planning-artifacts/` references are
    untouched — a grep confirming 0 changes to planning-artifacts paths is required.
 3. **orient.md verified correct:** `skills/momentum/skills/impetus/references/orient.md`
-   contains only `.momentum/` paths (already fixed in source — verify not re-introduced).
+   uses `.momentum/` paths for all live state sources (lines 17-19) and contains a single
+   intentional negation statement on line 21 referencing the old path as a prohibition.
+   This is correct — do not modify orient.md.
 4. **Plugin patch version bumped:** `skills/momentum/.claude-plugin/plugin.json` version is
    incremented (patch) and committed after all fixes are applied.
 
@@ -99,10 +123,10 @@ all fixes, bump to `0.18.1`.
 | `skills/momentum/skills/triage/evals/eval-triage-delegates-not-writes.md` | 39-40 | `.momentum/stories/...` |
 | `skills/momentum/skills/intake/evals/eval-intake-captures-context.md` | 46 | `.momentum/stories/<slug>.md` |
 | `skills/momentum/skills/retro/evals/eval-produces-sprint-summary-at-retro-close.md` | 26, 38 | `.momentum/sprints/sprint-2026-03-01/sprint-summary.md` |
-| `skills/momentum/skills/plan-audit/evals/eval-substantive-spec-audit.md` | 57, 74 | `.momentum/` prefix |
+| `skills/momentum/skills/plan-audit/evals/eval-substantive-spec-audit.md` | 57, 74 | Replacement: `.momentum/stories/` prefix — **NOTE: this file's path has no `stories/` segment in the eval text, so the universal prefix swap is wrong here. Correct replacement: `_bmad-output/implementation-artifacts/p1-1-add-momentum-code-review-skill.md` → `.momentum/stories/p1-1-add-momentum-code-review-skill.md`. Insert `stories/` in the path, do not simply swap the prefix.** |
 | `skills/momentum/skills/refine/evals/eval-refine-reprioritization.md` | 6, 29 | `.momentum/sprints/...` |
 | `skills/momentum/skills/refine/evals/eval-refine-assessment-decision-review.md` | 19 | `.momentum/stories/index.json` |
-| `skills/momentum/skills/feature-breakdown/workflow.md` | 20 | `.momentum/` (loaded from config key — see note below) |
+| `skills/momentum/skills/feature-breakdown/workflow.md` | 20 | `.momentum/` (Initialization block directive — see note below) |
 | `skills/momentum/skills/feature-grooming/evals/eval-refine-detects-unmapped-stories.md` | 3 | `.momentum/stories/index.json` |
 
 **Files that must NOT be changed:**
@@ -115,17 +139,14 @@ all fixes, bump to `0.18.1`.
 
 The workflow.md Initialization block reads both `planning_artifacts` and `implementation_artifacts`
 from `_bmad/bmm/config.yaml`. The `implementation_artifacts` config key itself still points to
-`_bmad-output/implementation-artifacts/` in the config file. However, the **comment** in the
+`_bmad-output/implementation-artifacts/` in the config file. However, the **Initialization block directive** in the
 workflow reads `- implementation_artifacts — path to _bmad-output/implementation-artifacts/` — this
-inline comment is the stale reference to fix. Change the comment to reflect the new path:
+inline Initialization block directive is the stale reference to fix. Change the Initialization block directive to reflect the new path:
 `- implementation_artifacts — path to .momentum/` (or better: remove the inline path hint
 entirely, since the workflow loads this from config at runtime and should not hardcode the path
-in comments).
+in Initialization block directives).
 
-**However:** The `_bmad/bmm/config.yaml` `implementation_artifacts` key also needs to be
-consistent. Check whether the config still points to `_bmad-output/implementation-artifacts/`
-or `.momentum/`. The skills load this key dynamically — if the config is wrong, fixing comments
-alone won't help. Read the config before editing the workflow.
+**config.yaml is out of scope for this story.** `config.yaml` is a per-consumer project file generated by the BMM installer — updating it is out of scope for this story. Consumer projects must regenerate their config via `bmm init` or manually update `implementation_artifacts` to `.momentum/` in their local `_bmad/bmm/config.yaml` after installing the plugin update. Do not attempt to modify `config.yaml` as part of this story.
 
 ### Replacement pattern
 
@@ -142,7 +163,7 @@ remain unchanged. Only the prefix changes.
 After all edits, run:
 ```bash
 grep -rn "_bmad-output/implementation-artifacts" skills/momentum/ | \
-  grep -v "eval-impetus-reads-momentum-state"
+  grep -v "eval-impetus-reads-momentum-state\|orient.md"
 ```
 
 Expected result: zero output lines. Any remaining line is a missed edit.
@@ -174,7 +195,8 @@ These are edits to existing skill instruction files (evals, workflow.md, scripts
 
 **Implement:**
 4. Apply the `_bmad-output/implementation-artifacts/` → `.momentum/` substitution in each file.
-5. For `feature-breakdown/workflow.md`: update the inline comment on line 20 to remove the
+   **Exception — `eval-substantive-spec-audit.md`:** The universal prefix swap produces the wrong path for this file. The eval references a path with no `stories/` segment, so you must insert `stories/` explicitly: replace `_bmad-output/implementation-artifacts/p1-1-add-momentum-code-review-skill.md` with `.momentum/stories/p1-1-add-momentum-code-review-skill.md` (not `.momentum/p1-1-...`).
+5. For `feature-breakdown/workflow.md`: update the inline Initialization block directive on line 20 to remove the
    hardcoded old path. Do not change the config key load — that happens at runtime.
 6. For `update-story-status.sh`: update the `SPRINT_STATUS` variable path on line 44.
 7. For `plugin.json`: bump `version` from `0.18.0` to `0.18.1`.
@@ -210,7 +232,7 @@ These are edits to existing skill instruction files (evals, workflow.md, scripts
 - `skills/momentum/skills/plan-audit/evals/eval-substantive-spec-audit.md` — lines 57, 74
 - `skills/momentum/skills/refine/evals/eval-refine-reprioritization.md` — lines 6, 29
 - `skills/momentum/skills/refine/evals/eval-refine-assessment-decision-review.md` — line 19
-- `skills/momentum/skills/feature-breakdown/workflow.md` — line 20 comment
+- `skills/momentum/skills/feature-breakdown/workflow.md` — line 20 Initialization block directive
 - `skills/momentum/skills/feature-grooming/evals/eval-refine-detects-unmapped-stories.md` — line 3
 
 **Modify** (version bump):
@@ -222,4 +244,10 @@ These are edits to existing skill instruction files (evals, workflow.md, scripts
 
 ## Dev Agent Record
 
-Status: ready-for-dev
+### Agent Model Used
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List
