@@ -1,6 +1,6 @@
 ---
 title: Migrate implementation-artifacts path references to .momentum/
-status: ready-for-dev
+status: review
 epic_slug: impetus-core
 depends_on: []
 touches:
@@ -56,24 +56,24 @@ does NOT fall back to those paths. Those occurrences are anti-pattern examples a
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Fix stale `_bmad-output/implementation-artifacts/` path references in 12 skill/eval/workflow files
-  - [ ] 1.1: Fix sprint-planning/evals/eval-sprint-planning-invocable.md
-  - [ ] 1.2: Fix sprint-planning/evals/eval-sprint-planning-loads-sprint-summary-when-available.md
-  - [ ] 1.3: Fix distill/evals/eval-tier-classification.md
-  - [ ] 1.4: Fix triage/evals/eval-triage-delegates-not-writes.md
-  - [ ] 1.5: Fix intake/evals/eval-intake-captures-context.md
-  - [ ] 1.6: Fix retro/evals/eval-produces-sprint-summary-at-retro-close.md
-  - [ ] 1.7: Fix plan-audit/evals/eval-substantive-spec-audit.md (use .momentum/stories/ prefix — see Dev Notes)
-  - [ ] 1.8: Fix refine/evals/eval-refine-reprioritization.md
-  - [ ] 1.9: Fix refine/evals/eval-refine-assessment-decision-review.md
-  - [ ] 1.10: Fix feature-breakdown/workflow.md (Initialization block directive, not a comment)
-  - [ ] 1.11: Fix feature-grooming/evals/eval-refine-detects-unmapped-stories.md
-  - [ ] 1.12: Fix scripts/update-story-status.sh line 44
-- [ ] Task 2: Bump plugin.json version from 0.18.0 to 0.18.1
-- [ ] Task 3: Run grep verification (see Dev Notes)
-  - [ ] 3.1: Confirm zero remaining stale refs (excluding impetus eval and orient.md)
-  - [ ] 3.2: Confirm planning-artifacts count unchanged
-  - [ ] 3.3: Verify orient.md is correct (read it — confirm .momentum/ paths at lines 17-19 and negation at line 21)
+- [x] Task 1: Fix stale `_bmad-output/implementation-artifacts/` path references in 12 skill/eval/workflow files
+  - [x] 1.1: Fix sprint-planning/evals/eval-sprint-planning-invocable.md
+  - [x] 1.2: Fix sprint-planning/evals/eval-sprint-planning-loads-sprint-summary-when-available.md
+  - [x] 1.3: Fix distill/evals/eval-tier-classification.md
+  - [x] 1.4: Fix triage/evals/eval-triage-delegates-not-writes.md
+  - [x] 1.5: Fix intake/evals/eval-intake-captures-context.md
+  - [x] 1.6: Fix retro/evals/eval-produces-sprint-summary-at-retro-close.md
+  - [x] 1.7: Fix plan-audit/evals/eval-substantive-spec-audit.md (use .momentum/stories/ prefix — see Dev Notes)
+  - [x] 1.8: Fix refine/evals/eval-refine-reprioritization.md
+  - [x] 1.9: Fix refine/evals/eval-refine-assessment-decision-review.md
+  - [x] 1.10: Fix feature-breakdown/workflow.md (Initialization block directive, not a comment)
+  - [x] 1.11: Fix feature-grooming/evals/eval-refine-detects-unmapped-stories.md
+  - [x] 1.12: Fix scripts/update-story-status.sh line 44
+- [x] Task 2: Bump plugin.json version from 0.18.0 to 0.18.1
+- [x] Task 3: Run grep verification (see Dev Notes)
+  - [x] 3.1: Confirm zero remaining stale refs (excluding impetus eval and orient.md)
+  - [x] 3.2: Confirm planning-artifacts count unchanged
+  - [x] 3.3: Verify orient.md is correct (read it — confirm .momentum/ paths at lines 17-19 and negation at line 21)
 
 ## Acceptance Criteria
 
@@ -212,12 +212,12 @@ These are edits to existing skill instruction files (evals, workflow.md, scripts
 - No new eval files required (these ARE the eval files being corrected).
 
 **Additional DoD items for this story:**
-- [ ] Grep verification: zero remaining `_bmad-output/implementation-artifacts/` refs in skills/
+- [x] Grep verification: zero remaining `_bmad-output/implementation-artifacts/` refs in skills/
   (excluding eval-impetus-reads-momentum-state.md)
-- [ ] Grep verification: `_bmad-output/planning-artifacts/` count unchanged (no accidental changes)
-- [ ] orient.md confirmed correct (read the file — verify `.momentum/` paths only)
-- [ ] plugin.json version bumped to 0.18.1 and committed
-- [ ] feature-grooming eval (not in original user-provided list) confirmed fixed
+- [x] Grep verification: `_bmad-output/planning-artifacts/` count unchanged (no accidental changes)
+- [x] orient.md confirmed correct (read the file — verify `.momentum/` paths only)
+- [x] plugin.json version bumped to 0.18.1 and committed
+- [x] feature-grooming eval (not in original user-provided list) confirmed fixed
 
 ## File List
 
@@ -246,8 +246,35 @@ These are edits to existing skill instruction files (evals, workflow.md, scripts
 
 ### Agent Model Used
 
+claude-sonnet-4-6[1m]
+
 ### Debug Log References
+
+None — straightforward path substitution with no ambiguous cases.
 
 ### Completion Notes List
 
+- Applied `_bmad-output/implementation-artifacts/` → `.momentum/` substitution across 12 files in a single pass.
+- plan-audit eval required special handling: inserted `stories/` segment to produce `.momentum/stories/p1-1-...` (not a bare prefix swap).
+- feature-breakdown/workflow.md Initialization block directive updated to `.momentum/`.
+- Grep verification: zero stale refs remaining (excluding intentional impetus eval anti-pattern).
+- Grep verification: 61 planning-artifacts refs untouched.
+- orient.md confirmed correct: `.momentum/` on lines 17-19, single negation on line 21.
+- plugin.json bumped 0.18.0 → 0.18.1.
+- All changes committed in one logical commit.
+
 ### File List
+
+- skills/momentum/scripts/update-story-status.sh
+- skills/momentum/skills/sprint-planning/evals/eval-sprint-planning-invocable.md
+- skills/momentum/skills/sprint-planning/evals/eval-sprint-planning-loads-sprint-summary-when-available.md
+- skills/momentum/skills/distill/evals/eval-tier-classification.md
+- skills/momentum/skills/triage/evals/eval-triage-delegates-not-writes.md
+- skills/momentum/skills/intake/evals/eval-intake-captures-context.md
+- skills/momentum/skills/retro/evals/eval-produces-sprint-summary-at-retro-close.md
+- skills/momentum/skills/plan-audit/evals/eval-substantive-spec-audit.md
+- skills/momentum/skills/refine/evals/eval-refine-reprioritization.md
+- skills/momentum/skills/refine/evals/eval-refine-assessment-decision-review.md
+- skills/momentum/skills/feature-breakdown/workflow.md
+- skills/momentum/skills/feature-grooming/evals/eval-refine-detects-unmapped-stories.md
+- skills/momentum/.claude-plugin/plugin.json
