@@ -33,7 +33,7 @@ applicable) from Tier 2 (structural) and routes accordingly.
 ## Observable Verification
 
 - Tier 1: `git diff` shows the specific sentence added to the rule file; AVFL ran
-- Tier 2: story file appears in `_bmad-output/implementation-artifacts/stories/`; no
+- Tier 2: story file appears in `.momentum/stories/`; no
   practice file diff; no AVFL invocation
 
 ## Failure Mode

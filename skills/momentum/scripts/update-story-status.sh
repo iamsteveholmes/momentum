@@ -41,7 +41,7 @@ if [[ -z "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
-SPRINT_STATUS="$PROJECT_DIR/_bmad-output/implementation-artifacts/sprint-status.yaml"
+SPRINT_STATUS="$PROJECT_DIR/.momentum/sprint-status.yaml"
 
 if [[ ! -f "$SPRINT_STATUS" ]]; then
   echo "Error: sprint-status.yaml not found at $SPRINT_STATUS" >&2

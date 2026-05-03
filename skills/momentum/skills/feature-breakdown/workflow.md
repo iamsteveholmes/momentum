@@ -17,7 +17,7 @@ directly.
 
 Load config from `_bmad/bmm/config.yaml`. Resolve:
 - `planning_artifacts` — path to `_bmad-output/planning-artifacts/`
-- `implementation_artifacts` — path to `_bmad-output/implementation-artifacts/`
+- `implementation_artifacts` — path to `.momentum/`
 
 <check if="_bmad/bmm/config.yaml is missing OR planning_artifacts OR implementation_artifacts keys are unresolved">
   <output>✗ Configuration error: _bmad/bmm/config.yaml is missing or incomplete.

@@ -16,7 +16,7 @@ Invoke `/momentum:refine` on a project where:
   - `stories_affected` lists at least one story slug that DOES exist (present story)
   - Has a "Decision Gates" section with one gate whose timing condition appears met
     (e.g., "Phase 1 done" and all Phase 1 stories are status "done")
-- `_bmad-output/implementation-artifacts/stories/index.json` contains stories
+- `.momentum/stories/index.json` contains stories
   matching the SDR's present story refs and Phase 1 stories all marked done
 
 Run the workflow through to the assessment & decision review step (between

@@ -23,7 +23,7 @@ The retro orchestrator should:
 
 1. Invoke `momentum:feature-status` as a subagent after `retro-complete` and before writing the
    summary file.
-2. Write a file at `_bmad-output/implementation-artifacts/sprints/sprint-2026-03-01/sprint-summary.md`
+2. Write a file at `.momentum/sprints/sprint-2026-03-01/sprint-summary.md`
    using the Write tool directly (not via a subagent spawn).
 3. The written file contains all required sections in order:
    - `# Sprint Summary — sprint-2026-03-01` header
@@ -35,7 +35,7 @@ The retro orchestrator should:
    - `## Narrative` paragraph (3–5 sentences)
 4. The total word count of the written file is under 500 words.
 5. The final output shown to the developer includes the confirmation line:
-   `Sprint summary: _bmad-output/implementation-artifacts/sprints/sprint-2026-03-01/sprint-summary.md`
+   `Sprint summary: .momentum/sprints/sprint-2026-03-01/sprint-summary.md`
 
 ## What This Tests
 

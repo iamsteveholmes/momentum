@@ -43,7 +43,7 @@ The skill extracts without asking unnecessary questions:
 
 ### B3: Stub File Contents
 
-The stub file at `_bmad-output/implementation-artifacts/stories/<slug>.md` must:
+The stub file at `.momentum/stories/<slug>.md` must:
 
 - Have frontmatter with `status: backlog` (NOT `ready-for-dev`)
 - Contain both an HTML comment and visible inline text draft marker in every section

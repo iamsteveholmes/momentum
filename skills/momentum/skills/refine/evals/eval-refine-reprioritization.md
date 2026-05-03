@@ -3,7 +3,7 @@
 ## Setup
 Invoke `/momentum:refine` on a project where:
 - `stories/index.json` contains at least 10 backlog stories with varied priorities
-- `_bmad-output/implementation-artifacts/sprints/` contains at least two sprint
+- `.momentum/sprints/` contains at least two sprint
   directories each with a retro file referencing at least one common story slug
   or topic keyword
 - At least one story has `depends_on` pointing to a lower-priority story
@@ -26,7 +26,7 @@ evaluation and consolidated findings).
 ### AC2: Recurrence Heuristic
 
 4. The step reads retro files from
-   `_bmad-output/implementation-artifacts/sprints/*/retro-*.md`
+   `.momentum/sprints/*/retro-*.md`
 5. Stories or topics appearing in findings across 2 or more sprint retros are
    identified as recurring pain points
 6. Recommendations for these stories include rationale that cites the specific

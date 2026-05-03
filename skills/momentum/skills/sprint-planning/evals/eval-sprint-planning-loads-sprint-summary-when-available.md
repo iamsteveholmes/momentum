@@ -5,18 +5,18 @@
 Given sprint planning is running Step 1 (Synthesize recommendations from master plan and backlog),
 and the sprints/index.json `completed` array contains entries where the most recently completed
 sprint is `sprint-2026-03-01` with `retro_run_at: "2026-03-15"`,
-and the file `_bmad-output/implementation-artifacts/sprints/sprint-2026-03-01/sprint-summary.md`
+and the file `.momentum/sprints/sprint-2026-03-01/sprint-summary.md`
 exists with content describing features advanced, stories completed, and key decisions.
 
 ## Expected Behavior
 
 The sprint planning orchestrator should:
 
-1. Read `_bmad-output/implementation-artifacts/sprints/index.json` early in Step 1,
+1. Read `.momentum/sprints/index.json` early in Step 1,
    after reading PRD and product brief but before performing backlog staleness checks.
 2. Find the most recently completed sprint with a non-null `retro_run_at` value
    (in this case: `sprint-2026-03-01`).
-3. Read `_bmad-output/implementation-artifacts/sprints/sprint-2026-03-01/sprint-summary.md`.
+3. Read `.momentum/sprints/sprint-2026-03-01/sprint-summary.md`.
 4. Include the sprint summary content in its recommendation synthesis — the "what happened last
    sprint" signal informs which features advanced and which areas were in active development,
    thereby influencing which stories rank as high-priority candidates.
@@ -38,10 +38,10 @@ The sprint planning orchestrator should:
 ## Scenario
 
 Given sprint planning is running Step 1, and either:
-  (a) `_bmad-output/implementation-artifacts/sprints/index.json` has no completed sprints with
+  (a) `.momentum/sprints/index.json` has no completed sprints with
       `retro_run_at` set, OR
   (b) The most recently completed sprint is `sprint-2026-02-01` with `retro_run_at` set, but
-      `_bmad-output/implementation-artifacts/sprints/sprint-2026-02-01/sprint-summary.md`
+      `.momentum/sprints/sprint-2026-02-01/sprint-summary.md`
       does not exist.
 
 ## Expected Behavior

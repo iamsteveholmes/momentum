@@ -36,8 +36,8 @@ Each intake spawn receives:
 ### B3: No Direct File Mutations
 
 The triage skill itself makes zero Write or Edit calls to:
-- `_bmad-output/implementation-artifacts/stories/*.md`
-- `_bmad-output/implementation-artifacts/stories/index.json`
+- `.momentum/stories/*.md`
+- `.momentum/stories/index.json`
 - Any planning artifact file (prd.md, architecture.md, epics.md)
 
 ### B4: Parallel Spawns When Multiple Items

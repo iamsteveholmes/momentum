@@ -54,7 +54,7 @@ The skill should:
 1. **Load the plan** — read the most recently modified `.md` in `~/.claude/plans/`
 2. **Classify as substantive** — plan creates new skill files and modifies `.claude/settings.json`
 3. **Create process story** with key `p1-1-add-momentum-code-review-skill`:
-   - Write story content to `_bmad-output/implementation-artifacts/p1-1-add-momentum-code-review-skill.md` with frontmatter: `type: process`, `epic: P1 — Process Sprint-1`, `sprint: 1`
+   - Write story content to `.momentum/stories/p1-1-add-momentum-code-review-skill.md` with frontmatter: `type: process`, `epic: P1 — Process Sprint-1`, `sprint: 1`
    - Add `development_status` entry: `p1-1-add-momentum-code-review-skill: ready-for-dev`
    - Add `momentum_metadata` entry with `depends_on: []`, `touches`, and `story_file`
    - Story body derived from plan Context
@@ -71,7 +71,7 @@ The skill should:
 
 - `## Spec Impact` section present in plan file
 - `Classification: substantive`
-- Process story content file exists at `_bmad-output/implementation-artifacts/p1-1-add-momentum-code-review-skill.md` with correct frontmatter (`type: process`, `epic: P1 — Process Sprint-1`)
+- Process story content file exists at `.momentum/stories/p1-1-add-momentum-code-review-skill.md` with correct frontmatter (`type: process`, `epic: P1 — Process Sprint-1`)
 - sprint-status.yaml has `p1-1-add-momentum-code-review-skill: ready-for-dev` in `development_status` and a matching `momentum_metadata` entry
 - Story ACs are derived from plan's Verification section
 - AVFL was invoked exactly once (single combined pass)
