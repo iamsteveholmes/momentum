@@ -3558,5 +3558,16 @@
     "touches": [],
     "priority": "medium",
     "story_type": "feature"
+  },
+  "skills-kb-query-injection-audit": {
+    "status": "backlog",
+    "title": "Skills KB Query Injection Audit — Enumerate Injection Points Across All Momentum Skills",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "exploration",
+    "feature_slug": "momentum-composable-specialist-agents"
   }
 }
