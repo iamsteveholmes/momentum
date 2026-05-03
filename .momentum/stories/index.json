@@ -3569,5 +3569,169 @@
     "priority": "medium",
     "story_type": "exploration",
     "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "validator-agent-definition": {
+    "status": "backlog",
+    "title": "Validator Agent Definition — Abstract Base Role for AVFL/Distill Validation",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "enumerator-agent-definition": {
+    "status": "backlog",
+    "title": "Enumerator Agent Definition — Shipped AVFL/Distill Validation Custom",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "adversary-agent-definition": {
+    "status": "backlog",
+    "title": "Adversary Agent Definition — Shipped AVFL/Distill Validation Custom",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "retro-auditor-agent-definition": {
+    "status": "backlog",
+    "title": "Retro Auditor Agent Definition — Abstract Base Role for Sprint Retrospective Auditors",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "auditor-human-agent-definition": {
+    "status": "backlog",
+    "title": "Auditor Human Agent Definition — Shipped Retro Auditor for User Messages",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "auditor-execution-agent-definition": {
+    "status": "backlog",
+    "title": "Auditor Execution Agent Definition — Shipped Retro Auditor for Agent Summaries",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "auditor-review-agent-definition": {
+    "status": "backlog",
+    "title": "Auditor Review Agent Definition — Shipped Retro Auditor for Team Review Messages",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "documenter-agent-definition": {
+    "status": "backlog",
+    "title": "Documenter Agent Definition — Retro Synthesis Coordinator Base Body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "code-reviewer-agent-definition": {
+    "status": "backlog",
+    "title": "Code Reviewer Agent Definition — Sprint-Dev Team Review Base Body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "architect-guard-agent-definition": {
+    "status": "backlog",
+    "title": "Architect Guard Agent Definition — Sprint-Dev Team Review Architecture Body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "dev-fixer-agent-definition": {
+    "status": "backlog",
+    "title": "Dev Fixer Agent Definition — Sprint-Dev Fix Phase Base Body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "agents-md-manifest-format": {
+    "status": "backlog",
+    "title": "Agents.md Manifest Format — Per-Skill Agent Role Configuration Spec",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "missing-base-bodies-audit": {
+    "status": "backlog",
+    "title": "Missing Base Bodies Audit — Verify Universal Agent Model Coverage Post-DEC-013",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "exploration",
+    "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "retro-remove-teamcreate-documenter": {
+    "status": "backlog",
+    "title": "Remove TeamCreate from Retro Documenter — Refactor to Fan-Out + Orchestrator Handoff",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-retro-and-flywheel"
+  },
+  "nornspun-agent-constitution-wiki-query-block": {
+    "status": "backlog",
+    "title": "Add Wiki-Query Interface Block to Nornspun Agent Constitution (Tier 1)",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }
