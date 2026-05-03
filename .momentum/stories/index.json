@@ -3787,5 +3787,16 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
+  },
+  "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
+    "status": "backlog",
+    "title": "Momentum Cycle — Sprint Lens + Sprint Detail Drill-Down",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-canvas"
   }
 }
