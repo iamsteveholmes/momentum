@@ -34,3 +34,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-016 | [Agent Taxonomy — Two-Tier Shipped/Customs Model](dec-016-agent-taxonomy-two-tier-shipped-customs-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
 | DEC-017 | [Momentum Practice Cycle — Formal Step Sequence Definition](dec-017-momentum-cycle-step-sequence-definition-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
 | DEC-018 | [Obsidian Wiki Skills Replace Planned KB Stories — wiki-query as Cold KB Interface](dec-018-wiki-skills-replace-kb-stories-query-interface-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
+| DEC-019 | [Momentum Canvas Runtime Stack — Hono+HTMX+Bun Supersedes DEC-011 Vite Approach](dec-019-hono-htmx-bun-canvas-runtime-stack-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
