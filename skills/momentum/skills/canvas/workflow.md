@@ -1,4 +1,4 @@
-# cycle-dashboard Workflow
+# canvas Workflow
 
 Launch the Momentum Cycle live dashboard. If the Hono+Bun server is already
 listening on port 3456, skip the start step and open the browser directly.
@@ -10,7 +10,7 @@ listening on port 3456, skip the start step and open the browser directly.
 Resolve the server path relative to the project root:
 
 ```
-SERVER_FILE="skills/momentum/dashboard/server.tsx"
+SERVER_FILE="skills/momentum/skills/canvas/server.tsx"
 ```
 
 Verify the file exists:
@@ -22,9 +22,9 @@ test -f "$SERVER_FILE" && echo "ok" || echo "missing"
 If missing, output:
 
 ```
-Dashboard server not found at skills/momentum/dashboard/server.tsx
+Dashboard server not found at skills/momentum/skills/canvas/server.tsx
 Run: bun install hono    (first-time setup)
-Expected server entry: skills/momentum/dashboard/server.tsx
+Expected server entry: skills/momentum/skills/canvas/server.tsx
 ```
 
 Then stop.
@@ -58,14 +58,14 @@ If cmux is unavailable or no services pane exists, fall back to starting the
 server in the background:
 
 ```bash
-bun --hot skills/momentum/dashboard/server.tsx &
+bun --hot skills/momentum/skills/canvas/server.tsx &
 ```
 
 Otherwise, launch via respawn-pane so the developer can see it:
 
 ```bash
 cmux respawn-pane --surface "$SERVICES_SURFACE" \
-  --command "bun --hot skills/momentum/dashboard/server.tsx"
+  --command "bun --hot skills/momentum/skills/canvas/server.tsx"
 ```
 
 Wait up to 10 seconds for the port to become available:

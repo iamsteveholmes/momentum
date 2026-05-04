@@ -1,9 +1,23 @@
 {
   "name": "momentum",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "description": "Agentic engineering practice — rules, agents, quality gates, and workflow automation across projects",
   "author": {
     "name": "Steve Holmes",
     "email": "steve@iamsteveholmes.com"
-  }
+  },
+  "skills": [
+    {
+      "name": "canvas",
+      "path": "skills/canvas",
+      "description": "Launch the Momentum Cycle live dashboard (Hono+Bun server on port 3456).",
+      "user-invocable": true
+    },
+    {
+      "name": "feature-status",
+      "path": "skills/feature-status",
+      "description": "(deprecated — use /momentum:canvas)",
+      "user-invocable": true
+    }
+  ]
 }
