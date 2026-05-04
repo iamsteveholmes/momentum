@@ -10,6 +10,8 @@ import {
   computeCycleState,
   analyzeGap,
   buildSortedRows,
+  buildFeatureStoryRows,
+  FeatureDetailView,
   type Feature,
   type StoryMap,
 } from "./server";
@@ -434,5 +436,175 @@ describe("analyzeGap with missing story index", () => {
     };
     const result = analyzeGap(feature, {});
     expect(result.has_gap).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Feature L2 — buildFeatureStoryRows
+// ---------------------------------------------------------------------------
+describe("buildFeatureStoryRows", () => {
+  it("returns story rows with title and status from story map", () => {
+    const feature: Feature = {
+      feature_slug: "my-feature",
+      name: "My Feature",
+      status: "partial",
+      stories_done: 1,
+      stories_remaining: 1,
+      stories: ["story-a", "story-b"],
+    };
+    const storyMap: StoryMap = {
+      "story-a": { status: "done", title: "Story A" },
+      "story-b": { status: "in-progress", title: "Story B" },
+    };
+    const rows = buildFeatureStoryRows(feature, storyMap);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toEqual({ slug: "story-a", title: "Story A", status: "done" });
+    expect(rows[1]).toEqual({ slug: "story-b", title: "Story B", status: "in-progress" });
+  });
+
+  it("falls back to slug as title when story is not in map", () => {
+    const feature: Feature = {
+      feature_slug: "my-feature",
+      name: "My Feature",
+      status: "partial",
+      stories_done: 0,
+      stories_remaining: 1,
+      stories: ["unknown-story"],
+    };
+    const rows = buildFeatureStoryRows(feature, {});
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({ slug: "unknown-story", title: "unknown-story", status: "backlog" });
+  });
+
+  it("returns empty array when feature has no stories", () => {
+    const feature: Feature = {
+      feature_slug: "my-feature",
+      name: "My Feature",
+      status: "not-started",
+      stories_done: 0,
+      stories_remaining: 0,
+      stories: [],
+    };
+    const rows = buildFeatureStoryRows(feature, {});
+    expect(rows).toEqual([]);
+  });
+
+  it("returns empty array when stories field is undefined", () => {
+    const feature: Feature = {
+      feature_slug: "my-feature",
+      name: "My Feature",
+      status: "not-started",
+      stories_done: 0,
+      stories_remaining: 0,
+    };
+    const rows = buildFeatureStoryRows(feature, {});
+    expect(rows).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Feature L2 — FeatureDetailView HTML rendering
+// ---------------------------------------------------------------------------
+describe("FeatureDetailView", () => {
+  const baseFeature: Feature = {
+    feature_slug: "momentum-canvas",
+    name: "Momentum Canvas",
+    status: "partial",
+    stories_done: 3,
+    stories_remaining: 2,
+    acceptance_condition: "Developer can view feature L2.",
+    value_analysis: "This provides significant value.",
+    system_context: "Lives within the canvas skill.",
+    stories: ["story-a", "story-b"],
+  };
+
+  it("renders warm light reading-surface with readingPaper background", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain("reading-surface");
+  });
+
+  it("renders feature heading with feature name", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain("Momentum Canvas");
+    expect(html).toContain("feature-heading");
+  });
+
+  it("renders meta strip with status badge, story fraction, and reading mode label", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain("feature-meta-badge");
+    expect(html).toContain("partial");
+    expect(html).toContain("3 / 5 stories done");
+    expect(html).toContain("reading mode");
+  });
+
+  it("renders value narrative section when value_analysis is present", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain("Value Narrative");
+    expect(html).toContain("This provides significant value.");
+  });
+
+  it("does not render value narrative section when value_analysis is absent", () => {
+    const feature = { ...baseFeature, value_analysis: undefined };
+    const html = String(FeatureDetailView({ feature, storyRows: [] }));
+    expect(html).not.toContain("Value Narrative");
+  });
+
+  it("renders acceptance condition in boxed container with reading-ac-box", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain("reading-ac-box");
+    expect(html).toContain("Developer can view feature L2.");
+  });
+
+  it("renders system context as callout block", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain("reading-callout");
+    expect(html).toContain("Lives within the canvas skill.");
+  });
+
+  it("renders stories list with status icon and title", () => {
+    const storyRows = [
+      { slug: "story-a", title: "Story Alpha", status: "done" },
+      { slug: "story-b", title: "Story Beta", status: "in-progress" },
+    ];
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows }));
+    expect(html).toContain("Story Alpha");
+    expect(html).toContain("Story Beta");
+    expect(html).toContain("reading-story-row");
+    // clicking a story row should navigate to /stories/:slug
+    expect(html).toContain('hx-get="/stories/story-a"');
+    expect(html).toContain('hx-get="/stories/story-b"');
+  });
+
+  it("renders breadcrumb OOB swap with Dashboard link and Feature label in accent", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain('hx-swap-oob="true"');
+    expect(html).toContain('hx-get="/"');
+    expect(html).toContain("dashboard");
+    // Feature name appears as breadcrumb "here" segment
+    expect(html).toContain("Momentum Canvas");
+  });
+
+  it("renders hx-push-url for breadcrumb navigation back to root", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain('hx-push-url="/"');
+  });
+
+  it("reads 65ch measure column via reading-col class", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).toContain("reading-col");
+  });
+
+  it("does not render dependencies section when no dependencies", () => {
+    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
+    expect(html).not.toContain("Dependencies");
+  });
+
+  it("renders dependencies as plain list when present", () => {
+    const feature = { ...baseFeature, dependencies: ["dep-feature-a", "dep-feature-b"] };
+    const html = String(FeatureDetailView({ feature, storyRows: [] }));
+    expect(html).toContain("Dependencies");
+    expect(html).toContain("reading-deps-list");
+    expect(html).toContain("dep-feature-a");
+    expect(html).toContain("dep-feature-b");
   });
 });

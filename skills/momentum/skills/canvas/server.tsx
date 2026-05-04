@@ -20,6 +20,10 @@ export type Feature = {
   stories_remaining: number;
   stories?: string[];
   acceptance_condition?: string;
+  value_analysis?: string;
+  system_context?: string;
+  description?: string;
+  dependencies?: string[];
 };
 
 export type StoryEntry = { status: string; title?: string };
@@ -130,6 +134,19 @@ async function readStoriesIndex(): Promise<StoryMap> {
   }
 }
 
+async function readFeatureBySlug(slug: string): Promise<Feature | null> {
+  try {
+    const file = Bun.file("_bmad-output/planning-artifacts/features.json");
+    if (!(await file.exists())) return null;
+    const data = await file.json();
+    if (!data || typeof data !== "object") return null;
+    const feature = (data as Record<string, Feature>)[slug];
+    return feature ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Features lens — status badge colors (Task 4)
 // ---------------------------------------------------------------------------
@@ -168,7 +185,7 @@ function renderFeaturesTable(rows: FeatureRow[]): string {
       const badgeStyle = `background:${badgeColor(row.status)};color:#fff;padding:2px 7px;border-radius:3px;font-size:9.5px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;`;
       const tdStyle = "padding:7px 10px;font-size:12px;vertical-align:middle;border-bottom:1px solid var(--ruleDark,rgba(255,252,245,0.10));";
 
-      return `<tr${gapStyle}>
+      return `<tr${gapStyle} hx-get="/features/${row.feature_slug}" hx-target="#main-content" hx-push-url="/features/${row.feature_slug}" style="cursor:pointer;${row.has_gap ? "background:var(--gap,#a85a2a);" : ""}">
   <td style="${tdStyle}color:var(--inkOnDark,#f0eee9);">${row.name}${gapIcon}</td>
   <td style="${tdStyle}"><span style="${badgeStyle}">${row.status}</span></td>
   <td style="${tdStyle}color:var(--inkOnDarkMuted,rgba(240,238,233,0.70));font-variant-numeric:tabular-nums;">${done}/${total} <progress value="${done}" max="${Math.max(total,1)}" style="height:6px;width:60px;vertical-align:middle;accent-color:${badgeColor(row.status)};"></progress></td>
@@ -535,6 +552,152 @@ function SprintLensSection({ sprint }: { sprint: SprintEntry | null }) {
       </div>
       ${body}
     </section>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// Feature L2 detail view — reading mode
+// ---------------------------------------------------------------------------
+
+const STORY_STATUS_ICON: Record<string, string> = {
+  done: "✓",
+  "in-progress": "◎",
+  review: "◑",
+  blocked: "✗",
+  backlog: "○",
+  "ready-for-dev": "◌",
+};
+
+function storyStatusIcon(status: string): string {
+  return STORY_STATUS_ICON[status] ?? "○";
+}
+
+const STORY_BADGE_COLORS: Record<string, string> = {
+  done: "#4ade80",
+  "in-progress": "#f59e0b",
+  review: "#60a5fa",
+  blocked: "#ef4444",
+  backlog: "#9ca3af",
+  "ready-for-dev": "#a78bfa",
+};
+
+function storyBadgeColor(status: string): string {
+  return STORY_BADGE_COLORS[status] ?? "#9ca3af";
+}
+
+export function buildFeatureStoryRows(
+  feature: Feature,
+  storyMap: StoryMap
+): Array<{ slug: string; title: string; status: string }> {
+  const slugs = feature.stories ?? [];
+  return slugs.map((slug) => {
+    const entry = storyMap[slug];
+    return {
+      slug,
+      title: entry?.title ?? slug,
+      status: entry?.status ?? "backlog",
+    };
+  });
+}
+
+function FeatureStoryRow({ slug, title, status }: { slug: string; title: string; status: string }) {
+  const color = storyBadgeColor(status);
+  const icon = storyStatusIcon(status);
+  return html`
+    <div
+      class="reading-story-row"
+      hx-get="/stories/${slug}"
+      hx-target="#main-content"
+      hx-push-url="/stories/${slug}"
+    >
+      <span class="reading-story-title">
+        <span class="status-icon" style="color:${color};">${icon}</span>
+        ${title}
+      </span>
+      <span class="reading-story-badge" style="color:${color}; border-color:${color};">${status}</span>
+    </div>
+  `;
+}
+
+export function FeatureDetailView({
+  feature,
+  storyRows,
+}: {
+  feature: Feature;
+  storyRows: Array<{ slug: string; title: string; status: string }>;
+}) {
+  const done = feature.stories_done;
+  const total = feature.stories_done + feature.stories_remaining;
+  const badgeStyle = `background:${badgeColor(feature.status)};`;
+  const deps = feature.dependencies ?? [];
+
+  const storyRowsHtml = storyRows.length > 0
+    ? storyRows.map((r) => FeatureStoryRow(r)).join("")
+    : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No stories linked</div>`;
+
+  const depsHtml = deps.length > 0
+    ? `<ul class="reading-deps-list">${deps.map((d) => `<li>${d}</li>`).join("")}</ul>`
+    : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No dependencies</div>`;
+
+  return html`
+    <!-- Breadcrumb OOB swap — light mode crumb bar -->
+    <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
+      <div class="crumbs">
+        <a
+          class="seg"
+          hx-get="/"
+          hx-target="#main-content"
+          hx-push-url="/"
+          style="cursor:pointer;"
+        >dashboard</a>
+        <span class="sep">/</span>
+        <span class="seg here">${feature.name}</span>
+      </div>
+    </nav>
+
+    <!-- Feature detail content (primary payload → goes into #main-content) -->
+    <div class="reading-surface">
+      <div class="reading-col">
+
+        <!-- Feature heading -->
+        <h1 class="feature-heading">${feature.name}</h1>
+
+        <!-- Meta strip -->
+        <div class="feature-meta-strip">
+          <span class="feature-meta-badge" style="${badgeStyle}">${feature.status}</span>
+          <span class="feature-meta-fraction">${done} / ${total} stories done</span>
+          <span class="feature-reading-label">reading mode</span>
+        </div>
+
+        <!-- Value narrative -->
+        ${feature.value_analysis ? html`
+          <div class="reading-section-label">Value Narrative</div>
+          <div class="reading-prose">${feature.value_analysis}</div>
+        ` : ""}
+
+        <!-- Acceptance condition -->
+        ${feature.acceptance_condition ? html`
+          <div class="reading-section-label">Acceptance Condition</div>
+          <div class="reading-ac-box">${feature.acceptance_condition}</div>
+        ` : ""}
+
+        <!-- System context -->
+        ${feature.system_context ? html`
+          <div class="reading-section-label">System Context</div>
+          <div class="reading-callout">${feature.system_context}</div>
+        ` : ""}
+
+        <!-- Stories list -->
+        <div class="reading-section-label">Stories</div>
+        ${raw(storyRowsHtml)}
+
+        ${deps.length > 0 ? html`
+          <div class="reading-section-label">Dependencies</div>
+          ${raw(depsHtml)}
+        ` : ""}
+
+      </div>
+    </div>
   `;
 }
 
@@ -1057,6 +1220,163 @@ function DashboardShell({
       padding: 1px 5px;
       white-space: nowrap;
     }
+
+    /* ── Reading mode — warm light polarity ── */
+    /* Applied when main-content transitions to a feature/story detail view */
+    .reading-surface {
+      background: var(--readingPaper);
+      color: var(--ink);
+      transition: background 140ms ease, color 140ms ease;
+      min-height: 100%;
+      padding: 24px 20px 40px;
+    }
+
+    /* Breadcrumb override for reading mode (light background) */
+    .reading-crumb-bar {
+      background: var(--readingPaper);
+      border-bottom: 1px solid var(--readingRule);
+      transition: background 140ms ease;
+    }
+    .reading-crumb-bar .seg { color: var(--inkMuted); }
+    .reading-crumb-bar .seg:hover { color: var(--ink); }
+    .reading-crumb-bar .seg.here { color: var(--accent); }
+    .reading-crumb-bar .sep { color: var(--inkFaint); }
+
+    /* Feature heading */
+    .feature-heading {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.4px;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    /* Meta strip */
+    .feature-meta-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+    }
+    .feature-meta-badge {
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: #fff;
+      font-size: 9.5px;
+      letter-spacing: 0.5px;
+    }
+    .feature-meta-fraction {
+      color: var(--inkMuted);
+    }
+    .feature-reading-label {
+      color: var(--inkQuiet);
+      font-size: 9px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    /* Reading column — 65ch measure */
+    .reading-col {
+      max-width: 65ch;
+    }
+
+    /* Section labels in reading mode */
+    .reading-section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9.5px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--inkQuiet);
+      margin-bottom: 8px;
+      margin-top: 28px;
+    }
+
+    /* Value narrative prose */
+    .reading-prose {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 18px;
+      line-height: 1.70;
+      color: var(--ink);
+    }
+
+    /* Acceptance condition box */
+    .reading-ac-box {
+      border-left: 3px solid var(--accent);
+      background: var(--readingPaperAlt);
+      padding: 12px 16px;
+      border-radius: 0 4px 4px 0;
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 15px;
+      line-height: 1.60;
+      color: var(--ink);
+    }
+
+    /* System context callout */
+    .reading-callout {
+      background: var(--readingPaperAlt);
+      border: 1px solid var(--readingRule);
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 15px;
+      line-height: 1.60;
+      color: var(--inkMuted);
+    }
+
+    /* Stories list in reading mode — Inter */
+    .reading-story-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      margin-bottom: 3px;
+      border-radius: 4px;
+      background: var(--readingPaperAlt);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .reading-story-row:hover { background: var(--readingRule); }
+    .reading-story-title {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .reading-story-badge {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      border: 1px solid;
+      border-radius: 3px;
+      padding: 1px 5px;
+      white-space: nowrap;
+    }
+    .status-icon {
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    /* Dependencies list in reading mode */
+    .reading-deps-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .reading-deps-list li {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--inkMuted);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--readingRule);
+    }
+    .reading-deps-list li:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
@@ -1210,6 +1530,36 @@ app.get("/sprints/:slug", async (c) => {
   }
 
   return c.html(SprintDetailView({ sprint: activeSprint, bands }) as string);
+});
+
+// Feature L2 drill-down — reading mode
+app.get("/features/:slug", async (c) => {
+  const slug = c.req.param("slug");
+  const feature = await readFeatureBySlug(slug);
+
+  if (!feature) {
+    return c.html(`
+      <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
+        <div class="crumbs">
+          <a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <span class="sep">/</span>
+          <span class="seg here">feature</span>
+        </div>
+      </nav>
+      <div class="reading-surface">
+        <div class="reading-col">
+          <div style="font-family:'Source Serif 4',serif;font-size:16px;font-style:italic;color:var(--inkMuted);padding-top:16px;">
+            Feature "${slug}" not found.
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  const storyMap = await readStoriesIndex();
+  const storyRows = buildFeatureStoryRows(feature, (storyMap ?? {}) as StoryMap);
+
+  return c.html(FeatureDetailView({ feature, storyRows }) as string);
 });
 
 // ---------------------------------------------------------------------------
