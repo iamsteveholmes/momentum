@@ -3867,7 +3867,7 @@
     "priority": "medium"
   },
   "markdown-formatting-skill-output-templates": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Markdown Formatting for Skill Output Templates",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -3891,6 +3891,7 @@
       "skills/momentum/skills/triage/workflow.md",
       "skills/momentum/skills/agent-guidelines/workflow.md",
       "skills/momentum/skills/dev/workflow.md"
-    ]
+    ],
+    "priority": "low"
   }
 }

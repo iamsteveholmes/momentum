@@ -1391,7 +1391,8 @@
     {
       "slug": "quickfix-2026-05-03-2",
       "story": "markdown-formatting-skill-output-templates",
-      "started": "2026-05-03"
+      "started": "2026-05-03",
+      "completed": "2026-05-03"
     }
   ]
 }
