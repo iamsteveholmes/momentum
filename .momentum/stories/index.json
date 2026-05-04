@@ -3813,7 +3813,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-story-l3-drill-down-reading-mode": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Momentum Cycle — Story L3 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
