@@ -6,7 +6,7 @@
  */
 
 import { Hono } from "hono";
-import { html } from "hono/html";
+import { html, raw } from "hono/html";
 import { join } from "path";
 
 // ---------------------------------------------------------------------------
@@ -120,6 +120,140 @@ function LensSection({
 // ---------------------------------------------------------------------------
 // Data helpers — sprint + stories index
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Cycle state computation
+// ---------------------------------------------------------------------------
+
+export type PhaseState = "done" | "next-required" | "not-run" | "pending";
+
+export interface PhaseInfo {
+  slug: string;
+  label: string;
+  state: PhaseState;
+  required: boolean;
+}
+
+export interface CycleState {
+  phases: PhaseInfo[];
+  nextRequired: string | null;
+  lastSprintSlug: string | null;
+}
+
+const PHASES: Array<{ slug: string; label: string; required: boolean }> = [
+  { slug: "triage",          label: "triage",          required: false },
+  { slug: "feature-grooming", label: "feat\ngroom",    required: false },
+  { slug: "epic-grooming",   label: "epic\ngroom",     required: false },
+  { slug: "refine",          label: "refine",          required: false },
+  { slug: "sprint-planning", label: "planning",        required: true  },
+  { slug: "sprint-dev",      label: "sprint\ndev",     required: true  },
+  { slug: "retro",           label: "retro",           required: true  },
+];
+
+interface SprintIndexInput {
+  active?: { slug: string; status: string; planned?: string; started?: string; retro_run_at?: string | null; stories: string[] } | null;
+  planning?: { slug: string; status: string; planned?: string; started?: string; retro_run_at?: string | null; stories: string[] } | null;
+  completed?: Array<{ slug: string; status: string; planned?: string; started?: string; retro_run_at?: string | null; stories: string[] }>;
+}
+
+/**
+ * Pure function — derives cycle phase states from the sprints index.
+ *
+ * Cycle boundary: the most recent completed sprint with retro_run_at set.
+ * Everything after that retro is the "current cycle."
+ */
+export function computeCycleState(index: SprintIndexInput | null): CycleState {
+  const completed = index?.completed ?? [];
+  const active = index?.active ?? null;
+  const planning = index?.planning ?? null;
+
+  // Find last completed sprint (the most recent in completed array, last element)
+  const lastCompleted =
+    completed.length > 0 ? completed[completed.length - 1] : null;
+
+  // Most recent sprint with retro_run_at — marks the previous cycle's end
+  const lastRetroSprint = [...completed]
+    .reverse()
+    .find((s) => s.retro_run_at != null) ?? null;
+
+  const lastSprintSlug = lastCompleted?.slug ?? null;
+
+  // Determine which phases have run in the CURRENT cycle.
+  // Current cycle = everything after the last completed retro (or from the beginning if no retro).
+  //
+  // Phase detection for the current cycle:
+  //
+  // sprint-planning ran  → planning sprint exists (status "planning") OR active sprint has planned field
+  // sprint-dev ran       → active sprint exists with started field (status "active" or "done")
+  // retro ran            → active sprint has retro_run_at OR a completed sprint (in current cycle) has retro_run_at
+  //
+  // "Current cycle" sprints:
+  //   - the `planning` sprint (if any)
+  //   - the `active` sprint (if any)
+  //   - completed sprints that came AFTER the last retro sprint
+
+  // Find completed sprints in the current cycle (after last retro)
+  let currentCycleCompleted: typeof completed = [];
+  if (lastRetroSprint) {
+    const retroIdx = completed.findIndex((s) => s.slug === lastRetroSprint.slug);
+    currentCycleCompleted = completed.slice(retroIdx + 1);
+  } else {
+    // No retro ever — all completed sprints are in the current cycle
+    currentCycleCompleted = completed;
+  }
+
+  // Aggregate evidence for each phase
+  const currentCycleSprints = [
+    ...currentCycleCompleted,
+    ...(planning ? [planning] : []),
+    ...(active ? [active] : []),
+  ];
+
+  let sprintPlanningDone = false;
+  let sprintDevDone = false;
+  let retroDone = false;
+
+  for (const s of currentCycleSprints) {
+    // sprint-planning: sprint has a planned date (was formally planned)
+    if (s.planned) sprintPlanningDone = true;
+    // sprint-dev: sprint was actually started (has started date or is/was active)
+    if (s.started || s.status === "active" || s.status === "done") sprintDevDone = true;
+    // retro: retro_run_at is set
+    if (s.retro_run_at) retroDone = true;
+  }
+
+  // Build phase states
+  // Required phases sequence: sprint-planning → sprint-dev → retro
+  // next-required = first required phase that hasn't run yet (if any required phases remain)
+  let nextRequiredSlug: string | null = null;
+  if (!sprintPlanningDone) nextRequiredSlug = "sprint-planning";
+  else if (!sprintDevDone) nextRequiredSlug = "sprint-dev";
+  else if (!retroDone) nextRequiredSlug = "retro";
+  else nextRequiredSlug = null; // cycle complete
+
+  const phases: PhaseInfo[] = PHASES.map((p) => {
+    let state: PhaseState;
+
+    if (p.required) {
+      // Determine state for required phases
+      if (p.slug === "sprint-planning") {
+        state = sprintPlanningDone ? "done" : (nextRequiredSlug === "sprint-planning" ? "next-required" : "pending");
+      } else if (p.slug === "sprint-dev") {
+        state = sprintDevDone ? "done" : (nextRequiredSlug === "sprint-dev" ? "next-required" : "pending");
+      } else {
+        // retro
+        state = retroDone ? "done" : (nextRequiredSlug === "retro" ? "next-required" : "pending");
+      }
+    } else {
+      // Optional phases: done or not-run only, never next-required
+      state = "not-run"; // Optional phases don't leave traces in sprints index
+    }
+
+    return { slug: p.slug, label: p.label, state, required: p.required };
+  });
+
+  return { phases, nextRequired: nextRequiredSlug, lastSprintSlug };
+}
 
 interface SprintEntry {
   slug: string;
@@ -341,16 +475,81 @@ function SprintDetailView({
 }
 
 // ---------------------------------------------------------------------------
+// Cycle lens components
+// ---------------------------------------------------------------------------
+
+function cycleNodeHtml(p: PhaseInfo): string {
+  const stateClass =
+    p.state === "done" ? "done" :
+    p.state === "next-required" ? "next" :
+    p.state === "not-run" ? "not-run" :
+    "pending";
+  return `<div class="cycle-node ${stateClass}"><div class="dot"></div><div class="lbl">${p.label}</div></div>`;
+}
+
+function CycleTimeline({ phases }: { phases: PhaseInfo[] }) {
+  const nodesHtml = phases.map(cycleNodeHtml).join("");
+
+  return html`
+    <div class="cycle-line">
+      <div class="cycle-nodes">
+        ${raw(nodesHtml)}
+      </div>
+    </div>
+  `;
+}
+
+function CycleStatusLine({
+  nextRequired,
+  lastSprintSlug,
+}: {
+  nextRequired: string | null;
+  lastSprintSlug: string | null;
+}) {
+  const nextLabel = nextRequired ?? "none — cycle complete";
+  const sprintLabel = lastSprintSlug ?? "none";
+
+  return html`
+    <div class="cycle-summary">
+      <span><span class="tag">cycle</span><span class="v">started</span></span>
+      <span><span class="tag">next required</span><span class="${nextRequired ? "now" : "v"}">${nextLabel}</span></span>
+      <span><span class="tag">last sprint</span><span class="v">${sprintLabel}</span></span>
+    </div>
+  `;
+}
+
+function CycleLensSection({ cycleState }: { cycleState: CycleState }) {
+  return html`
+    <section
+      id="cycle"
+      class="dash-section"
+      hx-get="/lenses/cycle"
+      hx-trigger="every 5s"
+      hx-swap="outerHTML"
+    >
+      <div class="dash-lens-hdr">
+        <span class="tag">Cycle</span>
+        <div class="rule"></div>
+      </div>
+      ${CycleTimeline({ phases: cycleState.phases })}
+      ${CycleStatusLine({ nextRequired: cycleState.nextRequired, lastSprintSlug: cycleState.lastSprintSlug })}
+    </section>
+  `;
+}
+
+// ---------------------------------------------------------------------------
 // Shell page
 // ---------------------------------------------------------------------------
 function DashboardShell({
   hash,
   date,
   sprintSection,
+  cycleSection,
 }: {
   hash: string;
   date: string;
   sprintSection?: unknown;
+  cycleSection?: unknown;
 }) {
   return html`<!doctype html>
 <html lang="en">
@@ -569,6 +768,63 @@ function DashboardShell({
       color: var(--inkOnDarkMuted);
     }
 
+    /* ── Cycle timeline ── */
+    .cycle-line {
+      position: relative;
+    }
+    .cycle-line::before {
+      content: ""; position: absolute;
+      left: 0; right: 0; top: 8px; height: 1px;
+      background: var(--ruleDark);
+    }
+    .cycle-nodes {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+    .cycle-node {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 4px;
+    }
+    .cycle-node .dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      border: 1.5px solid var(--ruleDarkStrong);
+      background: var(--paperDark);
+      margin-top: 3px; z-index: 1;
+    }
+    .cycle-node .lbl {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 8.5px; letter-spacing: 0.4px;
+      color: var(--inkOnDarkQuiet); text-transform: lowercase;
+      line-height: 1.2; white-space: pre-line;
+    }
+    .cycle-node.done .dot { background: var(--accent); border-color: var(--accent); }
+    .cycle-node.done .lbl { color: var(--inkOnDark); }
+    .cycle-node.skipped .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+    .cycle-node.skipped .lbl { color: var(--inkOnDarkFaint); opacity: 0.45; }
+    .cycle-node.next .dot {
+      background: var(--paperDark); border-color: var(--accent); border-width: 2px;
+      box-shadow: 0 0 0 3px rgba(88,99,168,0.30);
+    }
+    .cycle-node.next .lbl { color: var(--accent); font-weight: 500; }
+    .cycle-node.pending .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+    .cycle-node.pending .lbl { color: var(--inkOnDarkFaint); opacity: 0.45; }
+    .cycle-node.not-run .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+    .cycle-node.not-run .lbl { color: var(--inkOnDarkFaint); opacity: 0.45; }
+
+    .cycle-summary {
+      margin: 10px 0 0;
+      display: flex; gap: 18px; flex-wrap: wrap; align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9.5px; color: var(--inkOnDarkMuted); letter-spacing: 0.3px;
+    }
+    .cycle-summary .tag {
+      color: var(--inkOnDarkFaint); letter-spacing: 1.2px; text-transform: uppercase; font-size: 9px;
+      margin-right: 4px;
+    }
+    .cycle-summary .v { color: var(--inkOnDark); }
+    .cycle-summary .now { color: var(--accent); font-weight: 500; }
+
     /* ── Sprint detail view ── */
     .sprint-detail-hdr {
       display: flex;
@@ -651,7 +907,7 @@ function DashboardShell({
     <div id="main-content" style="flex:1; overflow-y:auto;">
       ${LensSection({ id: "features", tag: "Features", title: "Features" })}
       ${sprintSection ?? SprintLensSection({ sprint: null })}
-      ${LensSection({ id: "cycle",    tag: "Cycle",    title: "Cycle"    })}
+      ${cycleSection ?? LensSection({ id: "cycle",    tag: "Cycle",    title: "Cycle"    })}
     </div>
 
   </div>
@@ -669,6 +925,8 @@ app.get("/", async (c) => {
   const sprintsIndex = await readSprintsIndex();
   const activeSprint = sprintsIndex?.active ?? null;
   const sprintSection = SprintLensSection({ sprint: activeSprint });
+  const cycleState = computeCycleState(sprintsIndex);
+  const cycleSection = CycleLensSection({ cycleState });
 
   // HTMX fragment request: return lens content + breadcrumb OOB reset
   if (c.req.header("HX-Request")) {
@@ -682,13 +940,13 @@ app.get("/", async (c) => {
       <!-- Dashboard lens sections (primary payload → #main-content innerHTML) -->
       ${LensSection({ id: "features", tag: "Features", title: "Features" }) as string}
       ${sprintSection as string}
-      ${LensSection({ id: "cycle", tag: "Cycle", title: "Cycle" }) as string}
+      ${cycleSection as string}
     `);
   }
 
   // Full page load
   return c.html(
-    DashboardShell({ hash: shortHash(), date: isoDate(), sprintSection }) as string
+    DashboardShell({ hash: shortHash(), date: isoDate(), sprintSection, cycleSection }) as string
   );
 });
 
@@ -708,19 +966,11 @@ app.get("/lens/features", (c) => {
   `);
 });
 
-app.get("/lens/cycle", (c) => {
-  return c.html(`
-    <section id="cycle" class="dash-section">
-      <div class="dash-lens-hdr">
-        <span class="tag">Cycle</span>
-        <div class="rule"></div>
-      </div>
-      <div class="lens-placeholder">
-        <span class="ph-label">Cycle lens</span>
-        <span class="ph-note">not yet implemented</span>
-      </div>
-    </section>
-  `);
+// Cycle lens — live-polling endpoint (every 5s)
+app.get("/lenses/cycle", async (c) => {
+  const sprintsIndex = await readSprintsIndex();
+  const cycleState = computeCycleState(sprintsIndex);
+  return c.html(CycleLensSection({ cycleState }) as string);
 });
 
 // Sprint lens — live-polling endpoint (every 2s)

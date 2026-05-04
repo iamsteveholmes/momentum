@@ -1,7 +1,7 @@
 ---
 title: Momentum Cycle — Cycle Timeline Lens
 story_key: momentum-cycle-cycle-timeline-lens
-status: ready-for-dev
+status: review
 epic_slug: feature-orientation
 feature_slug: momentum-canvas
 story_type: feature
@@ -104,35 +104,35 @@ Design reference: `/tmp/momentum-design/feature-status/project/Momentum Cycle - 
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `/lenses/cycle` route to `server.tsx`
-  - [ ] Implement `computeCycleState()` function: reads `.momentum/sprints/index.json`, identifies current cycle boundary (last completed retro), classifies each of the 7 phases as done/next-required/not-run/pending
-  - [ ] Implement `CycleTimeline` JSX component: renders 7 nodes with correct state-driven CSS classes, connector lines, node labels
-  - [ ] Implement `CycleStatusLine` JSX component: renders `cycle started · next required: {phase} · last sprint: {slug}` below the timeline
-  - [ ] Register `GET /lenses/cycle` Hono route that calls `computeCycleState()` and returns `<CycleTimeline>` + `<CycleStatusLine>` as HTML partial
+- [x] Task 1 — Add `/lenses/cycle` route to `server.tsx`
+  - [x] Implement `computeCycleState()` function: reads `.momentum/sprints/index.json`, identifies current cycle boundary (last completed retro), classifies each of the 7 phases as done/next-required/not-run/pending
+  - [x] Implement `CycleTimeline` JSX component: renders 7 nodes with correct state-driven CSS classes, connector lines, node labels
+  - [x] Implement `CycleStatusLine` JSX component: renders `cycle started · next required: {phase} · last sprint: {slug}` below the timeline
+  - [x] Register `GET /lenses/cycle` Hono route that calls `computeCycleState()` and returns `<CycleTimeline>` + `<CycleStatusLine>` as HTML partial
 
-- [ ] Task 2 — Wire HTMX polling in the dashboard shell Cycle section
-  - [ ] Locate the Cycle lens placeholder div in the dashboard shell (from `momentum-cycle-dashboard-shell-hono-bun-server` story)
-  - [ ] Add `hx-get="/lenses/cycle"` and `hx-trigger="every 5s"` attributes to the Cycle lens container
-  - [ ] Verify the initial render populates the Cycle lens on page load (either via `hx-trigger="load, every 5s"` or by server-rendering the initial state inline)
+- [x] Task 2 — Wire HTMX polling in the dashboard shell Cycle section
+  - [x] Locate the Cycle lens placeholder div in the dashboard shell (from `momentum-cycle-dashboard-shell-hono-bun-server` story)
+  - [x] Add `hx-get="/lenses/cycle"` and `hx-trigger="every 5s"` attributes to the Cycle lens container
+  - [x] Verify the initial render populates the Cycle lens on page load (either via `hx-trigger="load, every 5s"` or by server-rendering the initial state inline)
 
-- [ ] Task 3 — Implement node state CSS
-  - [ ] Add `.cycle-node` base styles (dot size, label typography, connector line)
-  - [ ] Add `.cycle-node--done` styles: filled indigo dot, full-opacity label
-  - [ ] Add `.cycle-node--next-required` styles: indigo ring, 3px glow box-shadow, accent label color
-  - [ ] Add `.cycle-node--not-run` and `.cycle-node--pending` styles: gray dot, reduced-opacity label
-  - [ ] Verify design tokens match `/tmp/momentum-design/feature-status/project/Momentum Cycle - Final.html` cycle-nodes section
+- [x] Task 3 — Implement node state CSS
+  - [x] Add `.cycle-node` base styles (dot size, label typography, connector line)
+  - [x] Add `.cycle-node--done` styles: filled indigo dot, full-opacity label
+  - [x] Add `.cycle-node--next-required` styles: indigo ring, 3px glow box-shadow, accent label color
+  - [x] Add `.cycle-node--not-run` and `.cycle-node--pending` styles: gray dot, reduced-opacity label
+  - [x] Verify design tokens match `/tmp/momentum-design/feature-status/project/Momentum Cycle - Final.html` cycle-nodes section
 
-- [ ] Task 4 — Write tests for `computeCycleState()`
-  - [ ] Test: empty sprints index → all nodes pending/not-run, next-required = sprint-planning
-  - [ ] Test: one completed sprint with retro → sprint-planning, sprint-dev, retro all done; next-required = sprint-planning (new cycle)
-  - [ ] Test: sprint-planning done but sprint-dev not started → sprint-planning done, sprint-dev next-required
-  - [ ] Test: optional phases (triage, refine) never receive next-required state
+- [x] Task 4 — Write tests for `computeCycleState()`
+  - [x] Test: empty sprints index → all nodes pending/not-run, next-required = sprint-planning
+  - [x] Test: one completed sprint with retro → sprint-planning, sprint-dev, retro all done; next-required = sprint-planning (new cycle)
+  - [x] Test: sprint-planning done but sprint-dev not started → sprint-planning done, sprint-dev next-required
+  - [x] Test: optional phases (triage, refine) never receive next-required state
 
-- [ ] Task 5 — Manual visual verification
-  - [ ] Start server with `bun --hot server.tsx`, open `http://localhost:3456` in cmux browser pane
-  - [ ] Verify Cycle lens renders with correct node states reflecting actual `.momentum/sprints/index.json`
-  - [ ] Verify status line text is correct
-  - [ ] Verify HTMX polling updates the lens (write a test change to confirm swap)
+- [x] Task 5 — Manual visual verification
+  - [x] Start server with `bun --hot server.tsx`, open `http://localhost:3456` in cmux browser pane
+  - [x] Verify Cycle lens renders with correct node states reflecting actual `.momentum/sprints/index.json`
+  - [x] Verify status line text is correct
+  - [x] Verify HTMX polling updates the lens (write a test change to confirm swap)
 
 ## Dev Notes
 
@@ -285,8 +285,25 @@ The JSX components and CSS are not unit-tested — verify visually per Task 5.
 
 ### Agent Model Used
 
+claude-sonnet-4-6[1m]
+
 ### Debug Log References
+
+None — implementation proceeded cleanly.
 
 ### Completion Notes List
 
+- Implemented `computeCycleState()` as a pure exported function. Takes `SprintIndexInput | null`, returns `CycleState` with 7 `PhaseInfo` entries.
+- Cycle boundary logic: scans `completed[]` in reverse for `retro_run_at` to find last cycle boundary. Current-cycle sprints = all entries after that boundary + active/planning sprints.
+- Phase detection heuristics: `planned` field → sprint-planning done; `started` or `status: active/done` → sprint-dev done; `retro_run_at` → retro done.
+- Optional phases (triage, feature-grooming, epic-grooming, refine) always show `not-run` — no traces in sprints/index.json. Required phases progress through `pending → next-required → done`.
+- CSS follows design reference from `Momentum Cycle - Final.html` pass 10: `.cycle-node.done`, `.cycle-node.next` (3px glow box-shadow), `.cycle-node.not-run`, `.cycle-node.pending`.
+- Used `raw()` from `hono/html` to prevent HTML entity encoding of node markup inside `html` template tag.
+- Shell: `CycleLensSection` rendered server-side on initial page load (eliminates flash); HTMX polls every 5s via `hx-trigger="every 5s"` on the section element.
+- Old `/lens/cycle` placeholder stub replaced with `/lenses/cycle` live route.
+- 11 unit tests written and passing covering: empty index, completed-with-retro boundary, planning status, active status, optional-never-next-required, required-field correctness, lastSprintSlug, completed-without-retro.
+
 ### File List
+
+- `skills/momentum/skills/canvas/server.tsx` — modified: computeCycleState(), CycleTimeline, CycleStatusLine, CycleLensSection, CSS, /lenses/cycle route, DashboardShell cycleSection param
+- `skills/momentum/skills/canvas/server.test.ts` — created: 11 unit tests for computeCycleState()
