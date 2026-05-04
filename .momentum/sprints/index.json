@@ -1,10 +1,9 @@
 {
-  "active": null,
-  "planning": {
+  "active": {
     "slug": "sprint-2026-05-03",
     "planned": "2026-05-03",
-    "locked": false,
-    "status": "planning",
+    "locked": true,
+    "status": "active",
     "merge_hotspots": [
       "skills/momentum/skills/canvas/server.tsx"
     ],
@@ -183,8 +182,10 @@
         "approved_at": "2026-05-04T00:26:52Z",
         "story_file_sha": "a34e8e585e014d16d873b5393f79d185df17f0b476cf3aa2d2026760f615d499"
       }
-    ]
+    ],
+    "started": "2026-05-03"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
