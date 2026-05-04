@@ -222,8 +222,8 @@ The `feature-status` skill directory remains at `skills/momentum/skills/feature-
 
 **Before writing SKILL.md and workflow.md:**
 1. Write 2 behavioral evals in `skills/momentum/skills/canvas/evals/`:
-   - `eval-canvas-opens-server-when-not-running.md`: "Given port 3456 is not listening and the developer runs `/momentum:canvas`, the skill should perform a port check (lsof or equivalent), then start the server in the cmux services pane via respawn-pane with `bun --hot server.tsx`, then open `http://localhost:3456` in the cmux viewer pane."
-   - `eval-canvas-skips-start-when-already-running.md`: "Given port 3456 is already listening and the developer runs `/momentum:canvas`, the skill should perform a port check (lsof or equivalent), determine the server is already running, skip the respawn-pane step entirely, and open `http://localhost:3456` in the cmux viewer pane directly."
+   - `eval-canvas-opens-server-when-not-running.md`: Scenario — port 3456 is not listening when the developer runs `/momentum:canvas`. Expected: the skill performs a port check (lsof or equivalent), starts the server in the cmux services pane via respawn-pane with `bun --hot server.tsx`, then opens `http://localhost:3456` in the cmux viewer pane.
+   - `eval-canvas-skips-start-when-already-running.md`: Scenario — port 3456 is already listening when the developer runs `/momentum:canvas`. Expected: the skill performs a port check (lsof or equivalent), determines the server is already running, skips the respawn-pane step entirely, and opens `http://localhost:3456` in the cmux viewer pane directly.
 
 **Then implement:**
 2. Write SKILL.md and workflow.md per the Skill Invoker Workflow notes above.
