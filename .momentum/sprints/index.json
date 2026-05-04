@@ -1,6 +1,56 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "momentum-cycle-dashboard-shell-hono-bun-server",
+      "momentum-cycle-features-lens",
+      "momentum-cycle-cycle-timeline-lens",
+      "momentum-cycle-feature-l2-drill-down-reading-mode",
+      "momentum-cycle-sprint-lens-sprint-detail-drill-down",
+      "momentum-cycle-story-l3-drill-down-reading-mode"
+    ],
+    "waves": [],
+    "approvals": [
+      {
+        "story_slug": "momentum-cycle-dashboard-shell-hono-bun-server",
+        "decision": "approved",
+        "approved_at": "2026-05-04T00:12:06Z",
+        "story_file_sha": "e2456b089c009d07600edf09dd2ea1a2f61d8ca4e163fba712e9d22fce72076f"
+      },
+      {
+        "story_slug": "momentum-cycle-features-lens",
+        "decision": "approved",
+        "approved_at": "2026-05-04T00:13:46Z",
+        "story_file_sha": "2a570377da5f7d699bad9b76d51656f19ef366f0c6569ec012bd5a88d7805bc3"
+      },
+      {
+        "story_slug": "momentum-cycle-sprint-lens-sprint-detail-drill-down",
+        "decision": "approved",
+        "approved_at": "2026-05-04T00:21:27Z",
+        "story_file_sha": "af27cdd7bc0f5631211574078ce1c2d0d6e5a736a07fcc1f63a6d5d03fbae4c0"
+      },
+      {
+        "story_slug": "momentum-cycle-cycle-timeline-lens",
+        "decision": "approved",
+        "approved_at": "2026-05-04T00:22:08Z",
+        "story_file_sha": "fc5afd8445bf7f44824445ded66ad3d791e6e38fe6b3597a1ae6f75c6a4277e7"
+      },
+      {
+        "story_slug": "momentum-cycle-feature-l2-drill-down-reading-mode",
+        "decision": "approved",
+        "approved_at": "2026-05-04T00:22:39Z",
+        "story_file_sha": "de2fff157a25e4c6017aaac058eae7f60ad2840fd34f852e05ba0d95596bd256"
+      },
+      {
+        "story_slug": "momentum-cycle-story-l3-drill-down-reading-mode",
+        "decision": "approved",
+        "approved_at": "2026-05-04T00:26:52Z",
+        "story_file_sha": "a34e8e585e014d16d873b5393f79d185df17f0b476cf3aa2d2026760f615d499"
+      }
+    ]
+  },
   "completed": [
     {
       "locked": true,
@@ -1196,6 +1246,12 @@
       "story": "fix-per-sprint-json-contract-drift",
       "started": "2026-04-30",
       "completed": "2026-04-30"
+    },
+    {
+      "slug": "quickfix-2026-05-03",
+      "story": "migrate-implementation-artifacts-refs-to-momentum",
+      "started": "2026-05-03",
+      "completed": "2026-05-03"
     }
   ]
 }
