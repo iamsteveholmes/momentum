@@ -465,7 +465,7 @@ Proceeding to ship.</output>
     <!-- 5b: Push summary -->
     <action>Show push summary: `git log @{u}..HEAD --oneline`</action>
 
-    <output>Quick-fix complete: {{story_slug}}
+    <output>## ✓ Quick-Fix Complete: `{{story_slug}}`
 
 Commits ready to push:
 {{push_summary}}

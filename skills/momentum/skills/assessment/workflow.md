@@ -46,7 +46,7 @@ the developer draw conclusions. Ask targeted questions to sharpen the picture.
     </action>
     <action>Incorporate feedback and store {{agreed_agents}} — final list of agents with their audit scope</action>
 
-    <output>Scope confirmed. {{count}} discovery agents will run in parallel. Starting discovery.</output>
+    <output>Scope confirmed. **{{count}} discovery agents** will run in parallel. Starting discovery.</output>
   </step>
 
   <!-- ============================================================ -->
@@ -68,7 +68,7 @@ the developer draw conclusions. Ask targeted questions to sharpen the picture.
     <action>Wait for all background agents to complete</action>
     <action>Collect all agent findings into {{raw_findings}} — one entry per agent</action>
 
-    <output>Discovery complete. {{count}} agents returned findings. Moving to validation.</output>
+    <output>Discovery complete. **{{count}} agents** returned findings. Moving to validation.</output>
   </step>
 
   <!-- ============================================================ -->
@@ -93,7 +93,7 @@ the developer draw conclusions. Ask targeted questions to sharpen the picture.
       7. Only move on when developer is satisfied with this finding
     </action>
 
-    <output>All findings validated. {{count}} confirmed findings ready for the ASR.</output>
+    <output>All findings validated. **{{count}} confirmed findings** ready for the ASR.</output>
   </step>
 
   <!-- ============================================================ -->

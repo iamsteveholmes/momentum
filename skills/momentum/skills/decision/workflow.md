@@ -71,7 +71,7 @@ what the developer decides. Move on. Do not deliberate.
       <action>Set {{source_type}} = prior-decision</action>
       <action>Set {{source_research}} = [{path: {{source_path}}, type: prior-research, date: {{date}}}]</action>
       <action>Add {{source_path}} to {{prior_decisions_reviewed}}</action>
-      <output>Loaded SDR for revisit: {{source_path}}. Found {{count}} prior decisions to re-evaluate. Starting re-evaluation walk-through.</output>
+      <output>Loaded decision document for revisit: {{source_path}}. Found {{count}} prior decisions to re-evaluate. Starting re-evaluation walk-through.</output>
     </check>
 
     <!-- Flow D: From Developer Conversation -->
@@ -129,7 +129,7 @@ what the developer decides. Move on. Do not deliberate.
       7. Increment {{decision_counter}}
     </action>
 
-    <output>All {{count}} decisions captured. Moving to affected stories and architecture.</output>
+    <output>All **{{count}} decisions** captured. Moving to affected stories and architecture.</output>
   </step>
 
   <!-- ============================================================ -->
@@ -194,7 +194,7 @@ Body:
 - Decision Gates: include if any decisions have explicit re-evaluation conditions
     </action>
 
-    <output>SDR written to {{sdr_path}}</output>
+    <output>**Decision document written to** `{{sdr_path}}`</output>
   </step>
 
   <!-- ============================================================ -->
@@ -211,7 +211,7 @@ Body:
     </check>
 
     <check if="{{input_flow}} != A">
-      <output>No ASR upstream link to update (source was not an assessment).</output>
+      <output>No ASR upstream link to update — source was not an assessment.</output>
     </check>
   </step>
 

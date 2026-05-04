@@ -233,7 +233,7 @@ This plan's process story (`{{process_story_key}}`) requires these status transi
       <ask>AVFL found critical issues in the plan or process story. Review above findings. Proceed to implementation, or address findings first?</ask>
     </check>
 
-    <output>momentum:plan-audit complete.
+    <output>## ✓ `momentum:plan-audit` Complete
 
 Plan: {{plan_file}}
 Classification: {{classification}}</output>

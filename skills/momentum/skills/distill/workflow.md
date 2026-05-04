@@ -462,7 +462,7 @@ Push to remote?</output>
       ```
     </action>
 
-    <output>Distill complete.
+    <output>## ✓ Distill Complete
 
 Summary:
   Learning: {{learning_description}}
