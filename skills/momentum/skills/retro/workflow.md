@@ -69,10 +69,11 @@ To complete the active sprint first, run sprint-dev through Phase 7.</output>
 
     <check if="exactly one candidate found">
       <action>Store {{sprint_slug}} = candidate.slug</action>
-      <output>Found sprint awaiting retrospective: **{{sprint_slug}}**
-Completed: {{candidate.completed}}
+      <output>## Sprint Awaiting Retrospective: `{{sprint_slug}}`
 
-Proceeding with retrospective for {{sprint_slug}}.</output>
+**Completed:** {{candidate.completed}}
+
+Proceeding with retrospective for `{{sprint_slug}}`.</output>
     </check>
 
     <check if="multiple candidates found">
@@ -172,15 +173,16 @@ Which sprint should we retrospect?</output>
         {{error_count}} = line count of errors.jsonl
         {{team_msg_count}} = line count of team-messages.jsonl
       </action>
-      <output>Transcript preprocessing complete:
-  · transcript-query.py path: {{transcript_query_path}}
-  · user-messages.jsonl — {{user_msg_count}} human prompts
-  · agent-summaries.jsonl — {{agent_count}} subagent digests
-  · errors.jsonl — {{error_count}} tool errors (actual error indicators only)
-  · team-messages.jsonl — {{team_msg_count}} inter-agent messages
-  {{#if slug_filter_arg}}· Slug filter applied: {{sprint_stories | join(', ')}}{{/if}}
+      <output>## Transcript Preprocessing Complete
 
-Extracts written to: {{audit_dir}}/
+- **`transcript-query.py` path:** `{{transcript_query_path}}`
+- **`user-messages.jsonl`** — {{user_msg_count}} human prompts
+- **`agent-summaries.jsonl`** — {{agent_count}} subagent digests
+- **`errors.jsonl`** — {{error_count}} tool errors (actual error indicators only)
+- **`team-messages.jsonl`** — {{team_msg_count}} inter-agent messages
+{{#if slug_filter_arg}}- **Slug filter applied:** {{sprint_stories | join(', ')}}{{/if}}
+
+**Extracts written to:** `{{audit_dir}}/`
 </output>
     </check>
 
@@ -220,7 +222,7 @@ Re-run `momentum:retro` after resolving the session file location.</output>
     <action>Store {{incomplete_stories}} = list of stories not at status "done" (with their current status)</action>
 
     <check if="{{incomplete_stories}} is empty">
-      <output>All {{sprint_stories | length}} sprint stories reached `done`. Story verification passed.</output>
+      <output>> ✓ All **{{sprint_stories | length}} sprint stories** reached `done`. Story verification passed.</output>
     </check>
 
     <check if="{{incomplete_stories}} is not empty">
@@ -519,7 +521,7 @@ For each of these, choose:
     <action>Wait for the team to complete (documenter signals completion by writing the findings file)</action>
 
     <check if="findings document written at `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
-      <output>Auditor team complete. Findings document written:
+      <output>**Auditor team complete.** Findings document written:
   `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
     </check>
 

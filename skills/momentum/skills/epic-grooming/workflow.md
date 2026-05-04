@@ -36,17 +36,17 @@
     <action>TaskUpdate Phase 1 to in_progress. After completing reads, TaskUpdate to completed.</action>
 
     <output>
-Epic Taxonomy — Data Collection
+## Epic Taxonomy — Data Collection
 
-Registered epics (N):
+**Registered epics (N):**
   ✓ {slug} — "{title}" · {M} stories
   ...
 
-Orphaned slugs ({K}):
+**Orphaned slugs ({K}):**
   ◦ {slug} · {M} stories · sample: [{story-1}, {story-2}, ...]
   ...
 
-Total: {N+K} unique epic_slug values across {total} stories.
+**Total:** {N+K} unique `epic_slug` values across {total} stories.
 
 → Proceeding to taxonomy analysis.
     </output>
@@ -77,15 +77,15 @@ Total: {N+K} unique epic_slug values across {total} stories.
     <action>Present all proposed changes to the developer, one at a time, in this order: MERGE proposals first (least disruptive), then CREATE proposals, then SPLIT proposals.</action>
 
     <output>
-Epic Taxonomy — Proposed Changes ({N} total)
+## Epic Taxonomy — Proposed Changes ({N} total)
 
-[{i}/{N}] {CHANGE_TYPE} proposal
-  From: {old-slug} ({M} stories)
-  {Into/New epic/Split target}: {target-slug}
-  Rationale: {1-2 sentences from story theme analysis and FR alignment}
-  Stories affected: {story-slug-1}, {story-slug-2}, ...
+**[{i}/{N}] {CHANGE_TYPE} proposal**
+  **From:** `{old-slug}` ({M} stories)
+  **{Into/New epic/Split target}:** `{target-slug}`
+  **Rationale:** {1-2 sentences from story theme analysis and FR alignment}
+  **Stories affected:** {story-slug-1}, {story-slug-2}, ...
 
-  Approve? [Y]es / [N]o / [M]odify
+  Approve? **[Y]**es / **[N]**o / **[M]**odify
     </output>
 
     <action>Wait for developer response to each proposal before presenting the next one.</action>
@@ -105,7 +105,7 @@ Epic Taxonomy — Proposed Changes ({N} total)
     <action>TaskUpdate Phase 3 to completed.</action>
 
     <check if="no proposals were approved">
-      <output>No changes approved. Taxonomy unchanged. Workflow complete.</output>
+      <output>> No changes approved. Taxonomy unchanged. Workflow complete.</output>
     </check>
   </step>
 
@@ -136,20 +136,20 @@ Epic Taxonomy — Proposed Changes ({N} total)
     <action>TaskUpdate Phase 4 to completed.</action>
 
     <output>
-Epic Grooming — Complete
+## Epic Grooming — Complete
 
-Applied changes:
+**Applied changes:**
   · Epics created: {N}
   · Epics updated (merge target): {M}
   · Stories reassigned: {K}
 
-Taxonomy health:
+**Taxonomy health:**
   · Registered epics: {R}
   · Orphaned slugs remaining: {O} {— list them if O > 0}
 
 {If O > 0:}
-! Remaining orphans were not approved for resolution in this session.
-  Run /momentum:epic-grooming again to address them.
+> ! Remaining orphans were not approved for resolution in this session.
+> Run `/momentum:epic-grooming` again to address them.
 
 All decisions documented in task completion notes.
     </output>

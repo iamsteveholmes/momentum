@@ -54,14 +54,14 @@ changes via momentum-tools CLI.
     <action>Display summary header: total stories, epics, priority distribution</action>
 
     <output>
-Backlog — N stories across M epics (K critical, H high, M medium, L low)
+## Backlog — N stories across M epics (K critical, H high, M medium, L low)
 
-[Epic: epic-slug-1]
+**[Epic: epic-slug-1]**
   · [C] story-slug-a — Title · status · file: true
   · [L] story-slug-b — Title · status · file: false
   ...
 
-[Epic: epic-slug-2]
+**[Epic: epic-slug-2]**
   · [M] story-slug-c — Title · status · file: true
   ...
 
@@ -100,7 +100,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
     <action>Store {{arch_findings}} = Architecture coverage agent findings list</action>
 
     <check if="neither agent found required updates (both findings lists empty)">
-      <output>✓ Planning artifacts are current — no drift detected. Skipping wave 2.</output>
+      <output>> ✓ Planning artifacts are current — no drift detected. Skipping wave 2.</output>
       <action>Skip to Step 4</action>
     </check>
   </step>
@@ -128,7 +128,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
     </ask>
 
     <check if="developer rejected all findings">
-      <output>→ Wave 2 skipped — no planning artifact updates approved.</output>
+      <output>> → Wave 2 skipped — no planning artifact updates approved.</output>
       <action>Skip to Step 4</action>
     </check>
 
@@ -148,7 +148,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
       </action>
 
       <action>Wait for update agents to complete</action>
-      <output>✓ Planning artifacts updated.</output>
+      <output>> ✓ Planning artifacts updated.</output>
     </check>
   </step>
 
@@ -163,12 +163,12 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
     <action>Store {{status_mismatches}} = list of flagged stories with their current status</action>
 
     <check if="no status mismatches found">
-      <output>✓ Status hygiene clean — all story statuses match their completion state.</output>
+      <output>> ✓ Status hygiene clean — all story statuses match their completion state.</output>
     </check>
 
     <check if="status mismatches found">
       <output>
-! Status mismatches detected — {{count}} stories appear complete but are not marked done:
+> ! **Status mismatches detected** — **{{count}} stories** appear complete but are not marked done:
   {{for each: · [story-slug] Title — status: CURRENT_STATUS, DoD: all checked}}
       </output>
     </check>
@@ -184,7 +184,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
     </check>
 
     <check if="momentum:epic-grooming does NOT exist">
-      <output>? epic-grooming skill not available — skipping epic-level analysis.</output>
+      <output>> ? `epic-grooming` skill not available — skipping epic-level analysis.</output>
       <action>Store {{epic_findings}} = empty list</action>
     </check>
   </step>
@@ -197,7 +197,7 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
     </action>
 
     <check if="no stale candidates found">
-      <output>✓ No stale story candidates — all low-priority backlog items have story files.</output>
+      <output>> ✓ No stale story candidates — all low-priority backlog items have story files.</output>
       <action>Store {{stale_evaluations}} = empty list</action>
     </check>
 
@@ -209,13 +209,14 @@ Backlog — N stories across M epics (K critical, H high, M medium, L low)
       </action>
 
       <output>
-Stale story evaluations — {{count}} candidates:
-  {{for each:
-  · [story-slug] Title
-    Value: {{value assessment}}
-    Captured elsewhere: {{yes/no — where}}
-    Recommendation: {{keep/drop}} — {{rationale}}
-  }}
+## Stale Story Evaluations — {{count}} Candidates
+
+{{for each:
+  · **[story-slug]** Title
+    **Value:** {{value assessment}}
+    **Captured elsewhere:** {{yes/no — where}}
+    **Recommendation:** {{keep/drop}} — {{rationale}}
+}}
       </output>
 
       <action>Store {{stale_evaluations}} = list of evaluations with recommendations</action>
@@ -296,7 +297,7 @@ Stale story evaluations — {{count}} candidates:
     new_priority, rationale}</action>
 
     <check if="no heuristic findings and developer confirms no priority changes needed">
-      <output>✓ No priority changes identified — backlog priorities look well-aligned.</output>
+      <output>> ✓ No priority changes identified — backlog priorities look well-aligned.</output>
       <action>Store {{priority_recommendations}} = empty list</action>
     </check>
   </step>
@@ -345,12 +346,12 @@ Stale story evaluations — {{count}} candidates:
     </action>
 
     <check if="no assessment or decision files found">
-      <output>✓ No assessments or decisions found — skipping assessment &amp; decision review.</output>
+      <output>> ✓ No assessments or decisions found — skipping assessment &amp; decision review.</output>
       <action>Store {{assessment_decision_findings}} = empty list</action>
     </check>
 
     <check if="assessments and decisions exist but no findings">
-      <output>✓ Assessments and decisions look healthy — no staleness, coverage gaps, or ready gates detected.</output>
+      <output>> ✓ Assessments and decisions look healthy — no staleness, coverage gaps, or ready gates detected.</output>
       <action>Store {{assessment_decision_findings}} = empty list</action>
     </check>
 
@@ -385,7 +386,7 @@ Assessment &amp; decision review — {{count}} findings:
     </action>
 
     <check if="no findings across all categories">
-      <output>✓ Backlog is healthy — no issues detected requiring action.</output>
+      <output>> ✓ Backlog is healthy — no issues detected requiring action.</output>
       <action>Skip to Step 11</action>
     </check>
 
@@ -492,9 +493,9 @@ Override specific findings? Enter numbers or ranges, or 'done' to proceed.
     <action>Read `.momentum/stories/index.json` to compute post-refine priority distribution</action>
     <action>Compute {{post}} — count of stories by priority after all changes (keys: critical, high, medium, low)</action>
 
-    <output>✓ Refinement complete.
+    <output>## ✓ Refinement Complete
 
-Changes applied:
+**Changes applied:**
   · Status transitions: {{changes_applied.status_transitions}}
   · Stories dropped: {{changes_applied.drops}}
   · Epic reassignments: {{changes_applied.epic_moves}}
@@ -503,18 +504,18 @@ Changes applied:
   · Findings rejected: {{rejected_count}}
   · Planning artifacts updated: {{prd_updated (yes/no)}}, {{arch_updated (yes/no)}}
 
-Priority distribution (before → after):
+**Priority distribution (before → after):**
   [C] critical: {{pre.critical}} → {{post.critical}}
   [H] high:     {{pre.high}} → {{post.high}}
   [M] medium:   {{pre.medium}} → {{post.medium}}
   [L] low:      {{pre.low}} → {{post.low}}
 
 {{if epic moves occurred:
-Epic distribution changes:
+**Epic distribution changes:**
   {{for each affected epic: · EPIC_SLUG: N → M stories}}
 }}
 
-The backlog is ready for sprint planning.
+> The backlog is ready for sprint planning.
     </output>
   </step>
 

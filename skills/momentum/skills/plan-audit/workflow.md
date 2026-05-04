@@ -39,7 +39,7 @@ Load `./references/spec-capture-guide.md` for classification signals, process st
     <action>Store {{classification}} = "trivial" or "substantive".</action>
     <action>Store {{classification_reason}} = one sentence explaining the key signal that determined the classification.</action>
 
-    <output>Classification: {{classification}} — {{classification_reason}}</output>
+    <output>**Classification:** {{classification}} — {{classification_reason}}</output>
 
     <check if="{{classification}} == trivial">
       <action>Skip to Step 6.</action>
@@ -89,7 +89,7 @@ Proceed with full audit, or skip? (Skip writes a minimal Spec Impact and unblock
     <action>Save stories/index.json, preserving ALL existing entries.</action>
     <action>Identify any upstream spec files that need updating per spec-capture-guide.md Section 7. Store {{upstream_updates}} = list of recommended changes (file + section + reason), or "None identified." if none.</action>
 
-    <output>Process story created: {{process_story_file}} (sprint-status.yaml updated: development_status + momentum_metadata)</output>
+    <output>**Process story created:** `{{process_story_file}}`</output>
   </step>
 
   <step n="4" goal="Targeted upstream spec audit (substantive only)">
@@ -98,7 +98,7 @@ Proceed with full audit, or skip? (Skip writes a minimal Spec Impact and unblock
     <action>Store {{spec_sections_read}} = list of "filename: section name" for each section read.</action>
     <action>For each section read, identify: contradictions with the plan, extensions the plan makes, or ambiguities the plan resolves. Store {{spec_findings}} = plain-language summary, or "No contradictions or extensions found." if clean.</action>
 
-    <output>Spec sections audited: {{spec_sections_read}}</output>
+    <output>**Spec sections audited:** {{spec_sections_read}}</output>
   </step>
 
   <step n="5" goal="AVFL checkpoint — single combined pass (substantive only)">
@@ -225,7 +225,7 @@ This plan's process story (`{{process_story_key}}`) requires these status transi
       </action>
     </check>
 
-    <output>## Spec Impact section written to {{plan_file}}. ExitPlanMode is now unblocked.</output>
+    <output>**`## Spec Impact` section written** to `{{plan_file}}`. ExitPlanMode is now unblocked.</output>
   </step>
 
   <step n="7" goal="Completion signal">
@@ -233,22 +233,22 @@ This plan's process story (`{{process_story_key}}`) requires these status transi
       <ask>AVFL found critical issues in the plan or process story. Review above findings. Proceed to implementation, or address findings first?</ask>
     </check>
 
-    <output>momentum:plan-audit complete.
+    <output>## `momentum:plan-audit` Complete
 
-Plan: {{plan_file}}
-Classification: {{classification}}</output>
+**Plan:** `{{plan_file}}`
+**Classification:** {{classification}}</output>
 
     <check if="{{classification}} == substantive">
-      <output>Process story: {{process_story_file}}
-AVFL: {{avfl_result}}</output>
+      <output>**Process story:** `{{process_story_file}}`
+**AVFL:** {{avfl_result}}</output>
     </check>
 
     <check if="{{classification}} == skipped">
-      <output>Audit skipped by user. Spec Impact written with skipped marker.</output>
+      <output>> Audit skipped by user. Spec Impact written with skipped marker.</output>
     </check>
 
     <output>
-ExitPlanMode is unblocked — ## Spec Impact section is present.</output>
+> ExitPlanMode is unblocked — `## Spec Impact` section is present.</output>
   </step>
 
 </workflow>

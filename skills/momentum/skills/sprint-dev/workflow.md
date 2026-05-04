@@ -196,8 +196,9 @@ Resume these stories, or reset them to ready-for-dev?</output>
     <action>Store {{pending_worktree_cleanup}} = [] (empty list — accumulates story slugs whose worktrees and branches have been merged but not yet removed; worktrees are cleaned up in Phase 4d after all quality gates complete)</action>
     <note>spawn_registry is an in-memory deduplication guard. It survives the Phase 2 → Phase 3 → Phase 2 loop. Keys use format "{story_slug}::{specialist}" for dev agents and "sprint::{reviewer_role}" for team review agents. A key's presence means an agent was already spawned — do not spawn again.</note>
 
-    <output>Sprint **{{sprint_slug}}** initialized.
-{{sprint_stories | length}} stories, dependency graph resolved.
+    <output>## Sprint `{{sprint_slug}}` Initialized
+
+**{{sprint_stories | length}} stories**, dependency graph resolved.
 Task list created for progress tracking.</output>
     <action>Update task 1 (Initialization) to completed</action>
   </step>
@@ -247,7 +248,7 @@ Task list created for progress tracking.</output>
       6. Update task {{task_map}}[slug] to in_progress
     </action>
 
-    <output>Spawned dev agents for {{unblocked_count}} unblocked stories:
+    <output>**Spawned dev agents** for **{{unblocked_count}} unblocked stories:**
 {{list of spawned story slugs}}</output>
     <action>Update task 2 (Dev Wave) to completed</action>
   </step>
@@ -291,7 +292,7 @@ Options:
     <check if="story agent signals merge-ready">
       <action>Read the story's completion output to get {{file_list}}</action>
 
-      <output>Story **{slug}** is merge-ready. Merging autonomously to sprint/{{sprint_slug}}...</output>
+      <output>**Story `{slug}`** is merge-ready. Merging autonomously to `sprint/{{sprint_slug}}`...</output>
 
       <action>Run: `git rebase sprint/{{sprint_slug}} story/{slug}` (rebases story branch onto latest sprint branch — leaves HEAD on story/{slug})</action>
       <check if="rebase conflicts">
@@ -308,7 +309,7 @@ Options:
       <action>Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`</action>
       <action>Update task {{task_map}}[slug] to completed</action>
 
-      <output>Merged story/{slug}. Worktree retained for quality gate iterations. Checking for newly unblocked stories...</output>
+      <output>**Merged** `story/{slug}`. Worktree retained for quality gate iterations. Checking for newly unblocked stories...</output>
 
       <action>Re-evaluate dependency graph: find stories where status == "ready-for-dev" AND all depends_on stories are now "done"</action>
       <check if="newly unblocked stories found">
@@ -329,7 +330,7 @@ Options:
   <step n="4" goal="Single AVFL pass on full integrated codebase — read-only findings, no fixes">
     <action>Update task 4 (Post-Merge AVFL) to in_progress</action>
     <!-- Fix agents in Phase 4d: spawning=individual-agent | concurrency=sequential | use story worktrees from {{pending_worktree_cleanup}} — see <team-composition> above -->
-    <output>All sprint stories merged. Running AVFL on the complete sprint changeset...</output>
+    <output>> All sprint stories merged. Running AVFL on the complete sprint changeset...</output>
 
     <action>Capture sprint diff: identify the commit before the first sprint merge and diff from there.
       Approach: use `git log --oneline` to find the merge boundary, or use a tag/ref if sprint-planning set one.
@@ -387,7 +388,7 @@ Options:
       each tagged with: source="code-reviewer", story_key={slug}, severity, file, description.
     </action>
 
-    <output>Per-story code review complete. {{code_review_findings | length}} findings collected across {{sprint_stories | length}} stories.</output>
+    <output>**Per-story code review complete.** **{{code_review_findings | length}} findings** collected across **{{sprint_stories | length}} stories**.</output>
     <action>Update task 4b (Per-Story Code Review) to completed</action>
   </step>
 
@@ -433,7 +434,7 @@ For each item above, mark: **fix** (spawn fix agent) or **defer** (create follow
     </check>
 
     <check if="fix_items is empty">
-      <output>No items confirmed for fixing. Proceeding directly to Team Review (Phase 5).</output>
+      <output>> No items confirmed for fixing. Proceeding directly to Team Review (Phase 5).</output>
       <action>Jump to Phase 5.</action>
     </check>
 
@@ -446,7 +447,7 @@ For each item above, mark: **fix** (spawn fix agent) or **defer** (create follow
 
   <step n="4.3" goal="Spawn fix agents for confirmed items, then re-run only affected reviewers">
     <action>Update task 4d (Targeted Fixes) to in_progress</action>
-    <output>Spawning fix agents for {{fix_items | length}} confirmed findings...</output>
+    <output>> Spawning fix agents for **{{fix_items | length}} confirmed findings**...</output>
 
     <action>For each item in {{fix_items}}:
       Determine the story worktree for this fix item:
@@ -506,7 +507,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
       Run: `git branch -d story/{slug}` (if branch still exists)
     </action>
 
-    <output>Fix and re-review cycle complete. All worktrees cleaned up. Proceeding to Team Review.</output>
+    <output>> Fix and re-review cycle complete. All worktrees cleaned up. Proceeding to Team Review.</output>
 
     <action>Update task 4d (Targeted Fixes) to completed</action>
   </step>
@@ -518,7 +519,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
   <step n="5" goal="Parallel team review of integrated codebase">
     <action>Update task 5 (Team Review) to in_progress</action>
     <!-- Spawning mode: individual-agent for all three roles | concurrency: parallel — see <team-composition> above -->
-    <output>Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated sprint/{{sprint_slug}}...</output>
+    <output>> Running Team Review — QA, E2E Validator, and Architect Guard in parallel on integrated `sprint/{{sprint_slug}}`...</output>
 
     <action>Before spawning each reviewer, check {{spawn_registry}} for the reviewer's key:
       - QA Agent key: `sprint::qa-reviewer`
@@ -570,7 +571,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
       Tag each finding with which reviewer produced it (QA / Validator / Guard) so the correct reviewer can be re-run after fixes.</action>
 
     <check if="no findings from any reviewer">
-      <output>Team Review passed — no findings from QA, E2E Validator, or Architect Guard.</output>
+      <output>> ✓ Team Review passed — no findings from QA, E2E Validator, or Architect Guard.</output>
       <action>Proceed to Phase 6 (Verification)</action>
     </check>
 
@@ -644,12 +645,12 @@ Check each item you've verified. Mark any you cannot confirm with X.</output>
         For each story in {{sprint_stories}}:
           `momentum-tools sprint status-transition --story {slug} --target done`
       </action>
-      <output>All scenarios confirmed. Sprint stories transitioned to done.</output>
+      <output>> ✓ All scenarios confirmed. Sprint stories transitioned to `done`.</output>
     </check>
 
     <check if="some scenarios unconfirmed">
       <action>Transition confirmed stories to done. Leave unconfirmed at verify.</action>
-      <output>Some scenarios unconfirmed. Follow-up stories created. Confirmed stories marked done.</output>
+      <output>> Some scenarios unconfirmed. Follow-up stories created. Confirmed stories marked `done`.</output>
     </check>
     <action>Update task 6 (Verification) to completed</action>
   </step>

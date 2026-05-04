@@ -89,7 +89,7 @@ sub_questions:
 
 **Important:** Write the sub-questions inline as literal YAML strings and numbered list items. Do not use template loop syntax — expand each sub-question directly.
 
-    <output>Research project created at {{project_dir}}. Profile: {{profile}}. {{count}} sub-questions defined.</output>
+    <output>**Research project created** at `{{project_dir}}`. **Profile:** {{profile}}. **{{count}} sub-questions** defined.</output>
   </step>
 
   <step n="1.4" goal="Gemini triangulation — Deep Research via cmux-browser (with gemini -p fallback)">
@@ -222,7 +222,7 @@ method: cmux-browser
 ```
 
     <action>Append {{deep_research_report}} to the file after the frontmatter</action>
-    <output>Gemini Deep Research output saved to raw/gemini-deep-research-output.md</output>
+    <output>**Gemini Deep Research output saved** to `raw/gemini-deep-research-output.md`</output>
 
     <!-- Follow-up questions cycle (AC6) -->
     <note>AC6: After extracting the Deep Research report, send 2-3 targeted follow-up questions in the same Gemini conversation to probe gaps from scope.md sub-questions thinly covered. Each response is appended under a ## Follow-Up section. Ensure the surface is wide enough that the chat input is visible alongside the report panel before submitting follow-ups.</note>
@@ -267,7 +267,7 @@ topic: "{{topic}}"
 ---
 ```
 
-          <output>Gemini output saved to raw/gemini-output.md</output>
+          <output>**Gemini output saved** to `raw/gemini-output.md`</output>
         </check>
       </check>
       <check if="user declines">
@@ -287,13 +287,13 @@ topic: "{{topic}}"
     <action>Compare: which expected files exist, which are missing</action>
 
     <check if="ALL expected files exist">
-      <output>All {{count}} research files found. Skipping to Phase 3.</output>
+      <output>> All **{{count}} research files** found. Skipping to Phase 3.</output>
       <action>GOTO step 3.1</action>
     </check>
 
     <check if="SOME files exist">
       <action>Store {{missing_subtopics}} = sub-questions without a corresponding raw file</action>
-      <output>Found {{existing_count}} of {{total_count}} research files. Will research {{missing_count}} remaining subtopics.</output>
+      <output>Found **{{existing_count}} of {{total_count}}** research files. Will research **{{missing_count}} remaining subtopics**.</output>
     </check>
 
     <check if="NO files exist">
@@ -310,7 +310,7 @@ topic: "{{topic}}"
 
     <action>Wait for all background agents to complete. As each finishes, note its inline summary.</action>
 
-    <output>All research subagents complete. {{count}} files written to raw/.</output>
+    <output>**All research subagents complete.** {{count}} files written to `raw/`.</output>
   </step>
 
   <!-- ============================================================ -->
@@ -319,7 +319,7 @@ topic: "{{topic}}"
 
   <step n="3.1" goal="AVFL corpus validation (profile-dependent)">
     <check if="{{profile}} == light">
-      <output>Light profile — skipping AVFL verification. Proceeding to synthesis.</output>
+      <output>> Light profile — skipping AVFL verification. Proceeding to synthesis.</output>
       <action>GOTO step 5.1</action>
     </check>
 
@@ -352,7 +352,7 @@ topic: "{{topic}}"
 
     <action>Write AVFL output to {{project_dir}}/validation/avfl-report.md</action>
     <action>Store {{avfl_findings_summary}} for Phase 4</action>
-    <output>AVFL validation complete. Report at validation/avfl-report.md.</output>
+    <output>**AVFL validation complete.** Report at `validation/avfl-report.md`.</output>
   </step>
 
   <!-- ============================================================ -->
@@ -365,7 +365,7 @@ topic: "{{topic}}"
     </check>
 
     <check if="no AVFL report exists at {{project_dir}}/validation/avfl-report.md">
-      <output>No AVFL report available — skipping Q&A phase.</output>
+      <output>> No AVFL report available — skipping Q&A phase.</output>
       <action>GOTO step 5.1</action>
     </check>
 
@@ -383,7 +383,7 @@ topic: "{{topic}}"
 ---
 ```
 
-    <output>Practitioner notes captured at raw/practitioner-notes.md</output>
+    <output>**Practitioner notes captured** at `raw/practitioner-notes.md`</output>
   </step>
 
   <!-- ============================================================ -->
@@ -420,7 +420,7 @@ topic: "{{topic}}"
     <critical>The synthesis agent must read ALL input files from disk — it receives file paths, not inline content. This gives it a clean 200K context window for synthesis, not polluted by the orchestrator's conversation history.</critical>
 
     <action>Confirm the final document was written</action>
-    <output>Final research document at final/{{topic_slug}}-final-{{date}}.md</output>
+    <output>**Final research document** at `final/{{topic_slug}}-final-{{date}}.md`</output>
   </step>
 
   <!-- ============================================================ -->
@@ -434,10 +434,10 @@ topic: "{{topic}}"
     <ask>Stage and commit these research artifacts?</ask>
     <check if="user confirms">
       <action>git add {{project_dir}}/ && git commit with the proposed message</action>
-      <output>Research committed. Project directory: {{project_dir}}</output>
+      <output>**Research committed.** Project directory: `{{project_dir}}`</output>
     </check>
     <check if="user declines">
-      <output>Commit deferred. Files are at {{project_dir}}/.</output>
+      <output>> Commit deferred. Files are at `{{project_dir}}/`.</output>
     </check>
   </step>
 

@@ -264,27 +264,27 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
   </step>
 
   <step n="6" goal="Summary">
-    <output>✓ Triage complete — {{total_processed}} items processed.
+    <output>## ✓ Triage Complete — {{total_processed}} Items Processed
 
-Stubbed to backlog ({{intake_count}}):
-{{for each intake result: · {{slug}} — {{stub_path}}}}
+**Stubbed to backlog ({{intake_count}}):**
+{{for each intake result: · `{{slug}}` — `{{stub_path}}`}}
 
-Distilled ({{distill_count}}):
+**Distilled ({{distill_count}}):**
 {{for each distill result: · {{title}} → {{outcome}}}}
 
-Decisions recorded ({{decision_count}}):
+**Decisions recorded ({{decision_count}}):**
 {{for each decision result: · {{title}} → {{outcome}}}}
 
-Parked to intake-queue.jsonl:
+**Parked to `intake-queue.jsonl`:**
   · {{shaping_count}} shaping (kind: shape)
   · {{defer_count}} deferred (kind: watch)
   · {{reject_count}} rejected (kind: rejected)
 
-{{if resolved_count > 0: ✓ {{resolved_count}} open queue items marked resolved.}}
+{{if resolved_count > 0: > ✓ {{resolved_count}} open queue items marked resolved.}}
 {{if rejected_count_approval > 0: · {{rejected_count_approval}} items declined at approval — no action taken.}}
-{{if failures: ! {{failure_count}} execution failures — see above for details.}}
+{{if failures: > ! {{failure_count}} execution failures — see above for details.}}
 
-Queue now has {{remaining_open_count}} open items (shape + watch) awaiting future triage.
+**Queue:** {{remaining_open_count}} open items (shape + watch) awaiting future triage.
     </output>
   </step>
 

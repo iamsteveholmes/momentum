@@ -50,8 +50,9 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <action>Store {{classification_list}}: the classification list produced above, with each task number/name and its assigned change type</action>
     <action>Store {{change_types_summary}}: e.g., "3 skill-instruction tasks, 1 config-structure task"</action>
 
-    <output>Change type classification:
-      {{classification_list}}
+    <output>## Change Type Classification
+
+{{classification_list}}
     </output>
   </step>
 
@@ -74,7 +75,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     </critical>
 
     <action>Save {{story_file}} with the injected section</action>
-    <output>Momentum Implementation Guide injected into {{story_file}}</output>
+    <output>**Momentum Implementation Guide** injected into `{{story_file}}`</output>
   </step>
 
   <step n="5" goal="Write story metadata to stories/index.json">
@@ -92,7 +93,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       - touches: {{touches}}
     </action>
     <action>Save stories/index.json, preserving ALL existing entries</action>
-    <output>Story metadata written to stories/index.json (depends_on: {{depends_on}}, touches: {{touches}})</output>
+    <output>**Story metadata written** to `stories/index.json` — `depends_on`: {{depends_on}}, `touches`: {{touches}}</output>
   </step>
 
   <step n="6" goal="Run AVFL checkpoint on the story file">
@@ -145,12 +146,12 @@ You may proceed to development with known issues, or halt to address them first.
   </step>
 
   <step n="7" goal="Completion signal">
-    <output>Story {{story_key}} is yours to review.
+    <output>## Story `{{story_key}}` — Ready for Review
 
-Produced: {{story_file}}
-Sprint tracking: stories/index.json (status: ready-for-dev, metadata: written)
-Change types: {{change_types_summary}}
-AVFL checkpoint: {{avfl_result}}
+**Produced:** `{{story_file}}`
+**Sprint tracking:** `stories/index.json` (status: `ready-for-dev`, metadata: written)
+**Change types:** {{change_types_summary}}
+**AVFL checkpoint:** {{avfl_result}}
 {{avfl_findings}}
 
 This story is yours to review and adjust. When ready: invoke `momentum:dev` to implement.</output>

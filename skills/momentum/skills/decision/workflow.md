@@ -44,7 +44,7 @@ what the developer decides. Move on. Do not deliberate.
       <action>Set {{source_type}} = assessment</action>
       <action>Extract {{source_date}} from ASR frontmatter `date` field</action>
       <action>Set {{source_research}} = [{path: {{source_path}}, type: assessment, date: {{source_date}}}]</action>
-      <output>Loaded ASR: {{source_path}}. Found {{count}} findings with recommendations. Starting decision walk-through.</output>
+      <output>**Loaded ASR:** `{{source_path}}`. Found **{{count}} findings** with recommendations. Starting decision walk-through.</output>
     </check>
 
     <!-- Flow B: From Research -->
@@ -57,7 +57,7 @@ what the developer decides. Move on. Do not deliberate.
       <action>Ask: "What type of research is this? (gemini-deep-research / prior-research / architecture-analysis)"</action>
       <action>Store {{source_type}}</action>
       <action>Set {{source_research}} = [{path: {{source_path}}, type: {{source_type}}, date: {{date}}}]</action>
-      <output>Loaded research doc: {{source_path}}. Found {{count}} recommendations. Starting decision walk-through.</output>
+      <output>**Loaded research doc:** `{{source_path}}`. Found **{{count}} recommendations**. Starting decision walk-through.</output>
     </check>
 
     <!-- Flow C: Revisit Prior Decision -->
@@ -71,7 +71,7 @@ what the developer decides. Move on. Do not deliberate.
       <action>Set {{source_type}} = prior-decision</action>
       <action>Set {{source_research}} = [{path: {{source_path}}, type: prior-research, date: {{date}}}]</action>
       <action>Add {{source_path}} to {{prior_decisions_reviewed}}</action>
-      <output>Loaded SDR for revisit: {{source_path}}. Found {{count}} prior decisions to re-evaluate. Starting re-evaluation walk-through.</output>
+      <output>**Loaded SDR for revisit:** `{{source_path}}`. Found **{{count}} prior decisions** to re-evaluate. Starting re-evaluation walk-through.</output>
     </check>
 
     <!-- Flow D: From Developer Conversation -->
@@ -82,7 +82,7 @@ what the developer decides. Move on. Do not deliberate.
       <action>Store {{recommendations}} = list of {headline, recommendation_text} where headline is a short label for each decision item and recommendation_text is the developer's stated position or intent</action>
       <action>Set {{source_type}} = developer-conversation</action>
       <action>Set {{source_research}} = [{path: "(conversation)", type: developer-conversation, date: {{date}}}]</action>
-      <output>Parsed {{count}} decisions from your description. Starting decision walk-through.</output>
+      <output>**Parsed {{count}} decisions** from your description. Starting decision walk-through.</output>
     </check>
   </step>
 
@@ -129,7 +129,7 @@ what the developer decides. Move on. Do not deliberate.
       7. Increment {{decision_counter}}
     </action>
 
-    <output>All {{count}} decisions captured. Moving to affected stories and architecture.</output>
+    <output>> All **{{count}} decisions** captured. Moving to affected stories and architecture.</output>
   </step>
 
   <!-- ============================================================ -->
@@ -194,7 +194,7 @@ Body:
 - Decision Gates: include if any decisions have explicit re-evaluation conditions
     </action>
 
-    <output>SDR written to {{sdr_path}}</output>
+    <output>**SDR written to** `{{sdr_path}}`</output>
   </step>
 
   <!-- ============================================================ -->
@@ -207,11 +207,11 @@ Body:
       <action>Find the `decisions_produced` frontmatter field</action>
       <action>Add {{sdr_id}} to the decisions_produced list</action>
       <action>Write the updated frontmatter back to {{source_path}}</action>
-      <output>Updated ASR `decisions_produced` with {{sdr_id}}</output>
+      <output>**Updated ASR** `decisions_produced` with `{{sdr_id}}`</output>
     </check>
 
     <check if="{{input_flow}} != A">
-      <output>No ASR upstream link to update (source was not an assessment).</output>
+      <output>> No ASR upstream link to update — source was not an assessment.</output>
     </check>
   </step>
 
@@ -240,7 +240,7 @@ Body:
       - Commit message: `docs(decisions): add {{sdr_id}} — {{title}}`
     </action>
 
-    <output>{{sdr_id}} committed. Registry updated. Source links updated (if applicable).</output>
+    <output>`{{sdr_id}}` committed. Registry updated. Source links updated (if applicable).</output>
   </step>
 
   <!-- ============================================================ -->
@@ -264,10 +264,9 @@ Body:
     </check>
 
     <check if="developer says no or later">
-      <output>Decisions captured. {{sdr_id}} is at {{sdr_path}}.
+      <output>**Decisions captured.** `{{sdr_id}}` is at `{{sdr_path}}`.
 
-When you're ready to create stories from these decisions, run `momentum:create-story` or
-`momentum:intake` and reference {{sdr_id}}.</output>
+When you're ready to create stories from these decisions, run `momentum:create-story` or `momentum:intake` and reference `{{sdr_id}}`.</output>
     </check>
   </step>
 

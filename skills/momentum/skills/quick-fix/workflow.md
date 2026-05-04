@@ -45,13 +45,13 @@
     <action>Open the story spec in a cmux markdown surface for developer review:
       `cmux markdown open {{story_file}} --title "Quick Fix Story — Review & Approve"`</action>
 
-    <output>Story created: {{story_slug}}
+    <output>## Story Created: `{{story_slug}}`
 
-Review the story spec in the right pane. This is a BLOCKING GATE — the workflow will not proceed until you approve.
+> Review the story spec in the right pane. This is a **BLOCKING GATE** — the workflow will not proceed until you approve.
 
-Options:
-  A — Approve and continue to specification
-  R — Revise (describe what to change)</output>
+**Options:**
+- **A** — Approve and continue to specification
+- **R** — Revise (describe what to change)</output>
 
     <ask>Approve or revise?</ask>
 
@@ -62,7 +62,7 @@ Options:
       <action>Re-present the approval prompt. Repeat until approved.</action>
     </check>
 
-    <output>Story {{story_slug}} approved. Proceeding to specification.</output>
+    <output>> Story `{{story_slug}}` approved. Proceeding to specification.</output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -174,13 +174,13 @@ Updating specs now.</output>
     <action>Open the Gherkin spec in a cmux markdown surface for developer review:
       `cmux markdown open .momentum/sprints/quickfix-{{story_slug}}/specs/{{story_slug}}.feature --title "Gherkin Spec — Review & Approve"`</action>
 
-    <output>Gherkin spec generated for {{story_slug}}.
+    <output>## Gherkin Spec Generated: `{{story_slug}}`
 
-Review the spec in the right pane. This is a BLOCKING GATE — the workflow will not proceed until you approve.
+> Review the spec in the right pane. This is a **BLOCKING GATE** — the workflow will not proceed until you approve.
 
-Options:
-  A — Approve and continue to implementation
-  R — Revise (describe what to change)</output>
+**Options:**
+- **A** — Approve and continue to implementation
+- **R** — Revise (describe what to change)</output>
 
     <ask>Approve or revise?</ask>
 
@@ -273,11 +273,12 @@ Choose:
       <action>Address findings (re-invoke create-story or Gherkin subagent as needed). Re-run AVFL.</action>
     </check>
 
-    <output>Specification complete:
-  Story: {{story_slug}}
-  Specialist: {{specialist}} (guidelines: {{guidelines_status}})
-  Gherkin: {{scenario_count}} scenarios
-  AVFL: passed
+    <output>## Specification Complete
+
+**Story:** `{{story_slug}}`
+**Specialist:** {{specialist}} (guidelines: {{guidelines_status}})
+**Gherkin:** {{scenario_count}} scenarios
+**AVFL:** passed
 
 Proceeding to implementation.</output>
   </step>
@@ -338,8 +339,10 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
       <action>HALT — wait for developer to resolve conflicts</action>
     </check>
 
-    <output>Implementation complete. {{story_slug}} merged to main.
-Worktree retained at {{worktree_path}} — available for fix iterations during validation.
+    <output>## Implementation Complete
+
+> `{{story_slug}}` merged to `main`. Worktree retained at `{{worktree_path}}` — available for fix iterations during validation.
+
 Proceeding to validation.</output>
   </step>
 
@@ -447,8 +450,7 @@ All findings will be addressed in the collaborative fix loop.</output>
     <action>Transition story to done:
       `momentum-tools sprint status-transition --story {{story_slug}} --target done --force`</action>
 
-    <output>Validation complete. Worktree cleaned up. Story {{story_slug}} marked done.
-Proceeding to ship.</output>
+    <output>> Validation complete. Worktree cleaned up. Story `{{story_slug}}` marked `done`. Proceeding to ship.</output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -465,9 +467,9 @@ Proceeding to ship.</output>
     <!-- 5b: Push summary -->
     <action>Show push summary: `git log @{u}..HEAD --oneline`</action>
 
-    <output>Quick-fix complete: {{story_slug}}
+    <output>## Quick-Fix Complete: `{{story_slug}}`
 
-Commits ready to push:
+**Commits ready to push:**
 {{push_summary}}
     </output>
 
@@ -475,11 +477,11 @@ Commits ready to push:
 
     <check if="developer confirms push">
       <action>Run: `git push`</action>
-      <output>Pushed.</output>
+      <output>> Pushed.</output>
     </check>
 
     <check if="developer declines push">
-      <output>Commits held locally. Push when ready.</output>
+      <output>> Commits held locally. Push when ready.</output>
     </check>
   </step>
 

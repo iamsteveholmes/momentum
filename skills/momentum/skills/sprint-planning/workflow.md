@@ -248,8 +248,9 @@ These stories may be blocked during execution. Proceed anyway, or adjust selecti
     <action>Register selected stories in the planning sprint:
       `momentum-tools sprint plan --operation add --stories {{comma-separated-slugs}}`</action>
 
-    <output>Sprint {{sprint_slug}} — {{count}} stories selected:
-  {{numbered list of selected story titles}}
+    <output>## Sprint `{{sprint_slug}}` — {{count}} Stories Selected
+
+{{numbered list of selected story titles}}
 
 Proceeding to flesh out story stubs.</output>
     <action>Update task 2 (Story selection) to completed</action>
@@ -315,7 +316,7 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
     </for-each>
 
     <action>After all stories have been approved:</action>
-    <output>All {{count}} stories approved. Proceeding to Gherkin spec generation.</output>
+    <output>> All **{{count}} stories** approved. Proceeding to Gherkin spec generation.</output>
     <action>Update task 3 (Flesh out stories) to completed</action>
   </step>
 
@@ -403,10 +404,11 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
       Only proceed to Step 4.5 when all specs pass all four checks.
     </action>
 
-    <output>Gherkin specs generated and validated:
-  {{for each story: · story_slug — N scenarios}}
+    <output>## Gherkin Specs Generated and Validated
 
-Specs written to sprints/{{sprint_slug}}/specs/. These are for verifier agents only — dev agents will not see them.
+{{for each story: · story_slug — N scenarios}}
+
+**Specs written to** `sprints/{{sprint_slug}}/specs/` — for verifier agents only, dev agents will not see them.
 
 Proceeding to spec impact analysis.</output>
     <action>Update task 4 (Generate Gherkin specs) to completed</action>
@@ -450,7 +452,7 @@ Proceeding to spec impact analysis.</output>
     </action>
 
     <check if="no spec impact found">
-      <output>✓ No spec impact detected — architecture and PRD already cover this sprint's scope.</output>
+      <output>> ✓ No spec impact detected — architecture and PRD already cover this sprint's scope.</output>
       <action>Proceed to Step 5</action>
     </check>
 
@@ -486,9 +488,10 @@ Updating specs now.</output>
         Write the updated file. Follow existing document style and conventions.
       </action>
 
-      <output>✓ Specs updated:
-  · Architecture: {{arch_count}} items
-  · PRD: {{prd_count}} items
+      <output>## ✓ Specs Updated
+
+- **Architecture:** {{arch_count}} items
+- **PRD:** {{prd_count}} items
 
 Proceeding to team composition.</output>
     </check>
@@ -641,7 +644,7 @@ Proceeding to AVFL validation.</output>
     </action>
 
     <check if="all required roles are filled and all agent files exist">
-      <output>✓ Team composition validated — all required roles are present and agent definitions resolve.</output>
+      <output>> ✓ Team composition validated — all required roles are present and agent definitions resolve.</output>
       <action>Proceed to Step 6 (AVFL validation)</action>
     </check>
 
@@ -697,7 +700,7 @@ Address them before activating the sprint.</output>
 
     <check if="AVFL returns CLEAN">
       <action>Store {{avfl_result}} = "CLEAN"</action>
-      <output>✓ AVFL validation passed — sprint plan is coherent.</output>
+      <output>> ✓ AVFL validation passed — sprint plan is coherent.</output>
     </check>
 
     <check if="AVFL returns CHECKPOINT_WARNING">
@@ -805,14 +808,14 @@ Return to Step 3 to review and approve each listed story, then retry activation.
       <action>HALT — resolve all missing approvals before retrying `momentum-tools sprint activate`</action>
     </check>
 
-    <output>✓ Sprint {{sprint_slug}} activated.
+    <output>## ✓ Sprint `{{sprint_slug}}` Activated
 
-  Stories: {{count}}
-  Waves: {{wave_count}}
-  Team: {{role_list}}
-  Started: {{today}}
+**Stories:** {{count}}
+**Waves:** {{wave_count}}
+**Team:** {{role_list}}
+**Started:** {{today}}
 
-The sprint is live. Use "Continue sprint" from the session menu to begin execution.</output>
+> The sprint is live. Use "Continue sprint" from the session menu to begin execution.</output>
     <action>Update task 8 (Activate sprint) to completed</action>
   </step>
 

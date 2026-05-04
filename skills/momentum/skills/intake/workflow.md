@@ -57,9 +57,10 @@ stub file, add index entry. No analysis, no research, no subagents.
       <action>Read `_bmad-output/planning-artifacts/epics.md` to get the current epic list</action>
       <action>Based on the story description, identify the 1-2 best-fit epics</action>
       <output>Based on the story description, I'd recommend assigning this to:
-        **{{recommended_epic}}** — {{brief_reason}}
 
-        Other options: {{alternative_epics}}
+**{{recommended_epic}}** — {{brief_reason}}
+
+**Other options:** {{alternative_epics}}
       </output>
       <ask>Which epic should this story belong to? (or confirm {{recommended_epic}})</ask>
       <action>Set {{epic_slug}} = user's confirmed choice (normalize to kebab-case)</action>
@@ -79,8 +80,7 @@ stub file, add index entry. No analysis, no research, no subagents.
     <action>Read `.momentum/stories/index.json`</action>
 
     <check if="{{slug}} already exists in stories/index.json">
-      <output>Slug conflict: `{{slug}}` already exists in the story index
-        (existing title: {{existing_title}}).
+      <output>> **Slug conflict:** `{{slug}}` already exists in the story index (existing title: {{existing_title}}).
       </output>
       <ask>Please suggest an alternative slug or title for this story.</ask>
       <action>Re-derive {{slug}} from the user's alternative and re-check for conflicts</action>
@@ -129,7 +129,7 @@ stub file, add index entry. No analysis, no research, no subagents.
   </step>
 
   <step n="5" goal="Report what was captured and what still needs enrichment">
-    <output>Story captured to backlog.
+    <output>## Story Captured to Backlog
 
 **Stub file:** `{{stub_path}}`
 **Story slug:** `{{slug}}`
@@ -137,20 +137,19 @@ stub file, add index entry. No analysis, no research, no subagents.
 **Priority:** `{{suggested_priority}}`
 **Status:** `backlog`
 
-**What intake captured:**
+## What Intake Captured
 - Title, description, user story statement
 - Pain context: {{pain_context_summary}}
 - Rough ACs (draft — need refinement)
 
-**What still needs enrichment before development:**
-- Acceptance Criteria — rough ACs need refinement and validation
-- Tasks/Subtasks — not yet analyzed or planned
-- Dev Notes — no architecture analysis performed
-- Testing requirements — not defined
-- Implementation guide — not injected
+## What Still Needs Enrichment
+- **Acceptance Criteria** — rough ACs need refinement and validation
+- **Tasks/Subtasks** — not yet analyzed or planned
+- **Dev Notes** — no architecture analysis performed
+- **Testing requirements** — not defined
+- **Implementation guide** — not injected
 
-**Next step:** When ready to develop this story, run `momentum:create-story` on
-`{{stub_path}}` to enrich it with full analysis and make it dev-ready.
+> **Next step:** When ready to develop this story, run `momentum:create-story` on `{{stub_path}}` to enrich it with full analysis and make it dev-ready.
     </output>
   </step>
 

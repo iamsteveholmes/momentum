@@ -72,13 +72,13 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     </output>
 
     <check if="no build files found and no technologies detected">
-      <output>No build files or recognizable technology signals were found in this project. This can happen with new projects or unusual structures.</output>
+      <output>> No build files or recognizable technology signals were found in this project. This can happen with new projects or unusual structures.</output>
       <stop-and-wait>Please describe your technology stack (languages, frameworks, target platforms, testing tools) and I'll proceed with that as the starting point.</stop-and-wait>
       <action>Use the user's description as the technology profile. Continue to step 2 with this manual profile.</action>
     </check>
 
     <check if="coverage gaps are empty — existing rules already cover all detected technologies">
-      <output>Your existing guidelines already cover all detected technologies. Instead of generating new guidelines, I can audit and update your existing ones — checking for version staleness, missing prohibitions, and outdated patterns.</output>
+      <output>> Your existing guidelines already cover all detected technologies. Instead of generating new guidelines, I can audit and update your existing ones — checking for version staleness, missing prohibitions, and outdated patterns.</output>
       <stop-and-wait>Would you like me to audit and update your existing guidelines, or generate fresh ones anyway?</stop-and-wait>
       <action>If user chooses audit-and-update: proceed to step 2 (research) with focus on finding updates for existing rules. Step 4 (generate) will update existing files rather than creating new ones.</action>
     </check>

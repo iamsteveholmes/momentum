@@ -37,10 +37,12 @@
       <action>Filter to candidate stories: `status == "ready-for-dev"` AND every slug in `depends_on` has `status == "done"` in the same index</action>
       <check if="no candidates found">
         <action>Build a status summary: (1) for each story with status `in-progress`, list it as 'in progress in another session'; (2) for each story with status `ready-for-dev` whose `depends_on` includes any key not yet `done`, list: key → blocked on [list of incomplete depends_on keys]. If a depends_on key is `in-progress`, note it as `in-progress (will unblock when done)`.</action>
-        <output>No unblocked stories are available. Current story status:
-[status summary]
+        <output>## No Unblocked Stories Available
 
-Resolve blocking stories first, then re-invoke momentum:dev.</output>
+> Resolve blocking stories first, then re-invoke `momentum:dev`.
+
+**Current story status:**
+[status summary]</output>
         <action>HALT</action>
       </check>
       <action>From the candidates, select the highest-priority story using this order:
@@ -49,7 +51,7 @@ Resolve blocking stories first, then re-invoke momentum:dev.</output>
       </action>
       <action>Store {{story_key}} = selected story key</action>
       <action>Store {{story_file}} = `.momentum/stories/{{story_key}}.md`.</action>
-      <output>Selected story {{story_key}} (status: ready-for-dev, depends_on satisfied). Proceeding to develop.</output>
+      <output>> Selected story `{{story_key}}` (status: `ready-for-dev`, depends_on satisfied). Proceeding to develop.</output>
     </check>
 
   </step>
@@ -87,12 +89,12 @@ Resolve blocking stories first, then re-invoke momentum:dev.</output>
 
   <step n="4" goal="Create git worktree">
     <action>Run: `git worktree add .worktrees/story-{{story_key}} -b story/{{story_key}}`</action>
-    <output>Worktree created at .worktrees/story-{{story_key}} on branch story/{{story_key}}</output>
+    <output>**Worktree created** at `.worktrees/story-{{story_key}}` on branch `story/{{story_key}}`</output>
   </step>
 
   <step n="5" goal="Mark story in-progress">
     <action>Write (or overwrite) the lock file `.worktrees/story-{{story_key}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum:dev session started {{timestamp}}". Overwriting is safe — the new timestamp reflects the current session.</action>
-    <output>Story {{story_key}} marked in-progress. Lock file created.</output>
+    <output>**Story `{{story_key}}`** marked `in-progress`. Lock file created.</output>
   </step>
 
   <step n="6" goal="Invoke bmad-dev-story">
@@ -121,14 +123,16 @@ Resolve blocking stories first, then re-invoke momentum:dev.</output>
     <action>Check for overlap: are any paths in {{touches}} also listed in other stories whose `status` is `in-progress` in `.momentum/stories/index.json`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
     <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in-progress stories or no overlap, use "none".</action>
 
-    <output>Story {{story_key}} is done and ready to merge.
+    <output>## Story `{{story_key}}` — Done and Ready to Merge
 
-  Branch:   story/{{story_key}}
-  Target:   {{target_branch}}
-  Touches overlap: {{touches_overlap_summary}}
+**Branch:** `story/{{story_key}}`
+**Target:** `{{target_branch}}`
+**Touches overlap:** {{touches_overlap_summary}}
 
 To merge, run:
-  git rebase {{target_branch}} story/{{story_key}} && git merge story/{{story_key}}
+```
+git rebase {{target_branch}} story/{{story_key}} && git merge story/{{story_key}}
+```
 
 Confirm to proceed with rebase and merge, or review the diff first.</output>
     <ask>Run the rebase and merge now?</ask>
@@ -149,7 +153,7 @@ After rebase completes, the merge will proceed.</output>
         <action>Run: `git worktree remove --force .worktrees/story-{{story_key}}`
 Note: Using --force because the merge has already succeeded — all work is safely on {{target_branch}}. Any uncommitted files in the worktree are discarded.</action>
         <action>Run: `git branch -d story/{{story_key}}`</action>
-        <output>Merged and cleaned up worktree for Story {{story_key}}.</output>
+        <output>**Merged and cleaned up** worktree for Story `{{story_key}}`.</output>
       </check>
       <check if="merge reports conflicts">
         <output>Merge conflicts detected. Resolve conflicts in the affected files, then run:
@@ -164,10 +168,12 @@ After merge is complete, clean up the worktree:
     </check>
 
     <check if="user declines merge">
-      <output>Merge deferred. When ready:
-  git merge story/{{story_key}}
-  git worktree remove .worktrees/story-{{story_key}}
-  git branch -d story/{{story_key}}</output>
+      <output>**Merge deferred.** When ready:
+```
+git merge story/{{story_key}}
+git worktree remove .worktrees/story-{{story_key}}
+git branch -d story/{{story_key}}
+```</output>
     </check>
 
     <action>Emit the structured completion signal (subagent output contract per Architecture Decision 3b):

@@ -164,9 +164,9 @@ Feature Grooming — Candidate Set ({N} features)
     <action>Do NOT write features.json before the following approval gate is passed.</action>
 
     <output>
-Approve writing features.json? [Y/N]
+## Approve Writing `features.json`? [Y/N]
 
-{N} features ready to write:
+**{N} features ready to write:**
   {list slugs}
     </output>
 
@@ -174,7 +174,7 @@ Approve writing features.json? [Y/N]
 
     <check if="developer does not confirm with Y">
       <action>TaskUpdate Task 4 to completed.</action>
-      <output>No write performed. features.json unchanged. Workflow complete.</output>
+      <output>> No write performed. `features.json` unchanged. Workflow complete.</output>
       <action>STOP — do not proceed to Step 6 or any further steps.</action>
     </check>
   </step>
@@ -240,30 +240,30 @@ Approve writing features.json? [Y/N]
     <action>TaskUpdate Task 4 to completed.</action>
 
     <output>
-Feature Grooming — Complete
+## Feature Grooming — Complete
 
-Mode: {bootstrap|refine}
-Features written: {N}
-  flow: {count} ({slugs})
-  connection: {count} ({slugs})
-  quality: {count} ({slugs})
+**Mode:** {bootstrap|refine}
+**Features written:** {N}
+  - flow: {count} ({slugs})
+  - connection: {count} ({slugs})
+  - quality: {count} ({slugs})
 
-Feature status hash: {hash}
+**Feature status hash:** `{hash}`
 
-Unmapped stories: {count}
+**Unmapped stories:** {count}
 {If count > 0:}
-  ! Stories not assigned to any feature:
-    {· story-slug-1}
-    {· story-slug-2}
-    ...
-  Run /momentum:feature-grooming (refine) or add story slugs to the appropriate feature's `stories` array to resolve.
+> ! Stories not assigned to any feature:
+>   {· story-slug-1}
+>   {· story-slug-2}
+>   ...
+>   Run `/momentum:feature-grooming` (refine) or add story slugs to the appropriate feature's `stories` array to resolve.
 
 {In bootstrap mode:}
-Foundation docs written:
-  · {aes-NNN-feature-value-gap.md}
-  · {dec-NNN-feature-value-first.md}
+**Foundation docs written:**
+  · `{aes-NNN-feature-value-gap.md}`
+  · `{dec-NNN-feature-value-first.md}`
 
-Committed: docs(features): feature-grooming {bootstrap|refine} — {N} features, {M} proposals applied
+**Committed:** `docs(features): feature-grooming {bootstrap|refine} — {N} features, {M} proposals applied`
     </output>
   </step>
 </workflow>

@@ -83,10 +83,11 @@ Run /momentum:feature-grooming to view the full feature list or add new features
       - {{feature_status}} — the status field
     </action>
 
-    <output>→ Feature loaded: {{feature_slug}}
-  Status: {{feature_status}}
-  Stories on feature: {{feature_stories | length}} ({{feature_stories | join ", "}})
-  {{#if focus_hint}}Focus hint: {{focus_hint}}{{/if}}</output>
+    <output>## Feature Loaded: `{{feature_slug}}`
+
+**Status:** {{feature_status}}
+**Stories on feature:** {{feature_stories | length}} ({{feature_stories | join ", "}})
+{{#if focus_hint}}**Focus hint:** {{focus_hint}}{{/if}}</output>
 
   </step>
 
@@ -133,11 +134,12 @@ Run /momentum:feature-grooming to view the full feature list or add new features
       - Store {{related_stories}} = filtered list of {slug, title, status, epic_slug}.
     </action>
 
-    <output>◦ Surrounding context loaded.
-  · PRD: relevant sections captured
-  · Epics: {{epics_context | count}} relevant epics
-  · Architecture: relevant components captured
-  · Stories index: {{related_stories | length}} related stories filtered</output>
+    <output>## Surrounding Context Loaded
+
+- **PRD:** relevant sections captured
+- **Epics:** {{epics_context | count}} relevant epics
+- **Architecture:** relevant components captured
+- **Stories index:** {{related_stories | length}} related stories filtered</output>
 
   </step>
 
@@ -232,9 +234,10 @@ Run /momentum:feature-grooming to view the full feature list or add new features
       {{agent_b_findings}} = Agent B's structured list
     </action>
 
-    <output>✓ Gap analysis complete.
-  · Agent A (Acceptance-first): {{agent_a_findings | length}} findings
-  · Agent B (Value-gap-first): {{agent_b_findings | length}} findings</output>
+    <output>## Gap Analysis Complete
+
+- **Agent A** (Acceptance-first): {{agent_a_findings | length}} findings
+- **Agent B** (Value-gap-first): {{agent_b_findings | length}} findings</output>
 
   </step>
 
@@ -316,7 +319,7 @@ Enter item numbers to remove (e.g., "2, 4"), or press Enter / type "go" to appro
       <action>HALT cleanly — do not invoke triage.</action>
     </check>
 
-    <output>✓ {{approved_gap_list | length}} items approved for triage. Proceeding to delegation.</output>
+    <output>> ✓ **{{approved_gap_list | length}} items** approved for triage. Proceeding to delegation.</output>
 
   </step>
 

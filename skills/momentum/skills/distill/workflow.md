@@ -136,20 +136,20 @@ not weeks. Distill is the practice-artifact analogue of `/momentum:quick-fix`.
       Store as {{path_label}}.
     </action>
 
-    <output>Discovery complete.
+    <output>## Discovery Complete
 
-Learning: {{learning_description}}
-Proposed change: {{proposed_change}}
-Target file: {{target_file}}
-Target section: {{enumerator_output.target_section}}
-Path: {{path}} ({{path_label}})
-Tier: {{tier}}
+**Learning:** {{learning_description}}
+**Proposed change:** {{proposed_change}}
+**Target file:** `{{target_file}}`
+**Target section:** {{enumerator_output.target_section}}
+**Path:** {{path}} ({{path_label}})
+**Tier:** {{tier}}
 
-Adversary findings:
-  Redundancy: {{adversary_output.redundancy.found}} {{#if adversary_output.redundancy.evidence}}— "{{adversary_output.redundancy.evidence}}"{{/if}}
-  Conflict: {{adversary_output.conflict.found}} {{#if adversary_output.conflict.description}}— {{adversary_output.conflict.description}}{{/if}}
-  Scope fit: {{adversary_output.scope_fit.correct}} {{#if adversary_output.scope_fit.alternative}}→ better target: {{adversary_output.scope_fit.alternative}}{{/if}}
-  Verdict: {{adversary_output.overall_verdict}}
+## Adversary Findings
+- **Redundancy:** {{adversary_output.redundancy.found}} {{#if adversary_output.redundancy.evidence}}— "{{adversary_output.redundancy.evidence}}"{{/if}}
+- **Conflict:** {{adversary_output.conflict.found}} {{#if adversary_output.conflict.description}}— {{adversary_output.conflict.description}}{{/if}}
+- **Scope fit:** {{adversary_output.scope_fit.correct}} {{#if adversary_output.scope_fit.alternative}}→ better target: `{{adversary_output.scope_fit.alternative}}`{{/if}}
+- **Verdict:** {{adversary_output.overall_verdict}}
 
 Proceed with this change?</output>
 
@@ -172,35 +172,37 @@ Proceed with this change?</output>
   <step n="2" goal="Route — branch on Path A / B / C and Tier 1 / Tier 2">
 
     <check if="tier == 2">
-      <output>Tier 2 classification: this change requires a story stub rather than direct application.
+      <output>## Tier 2 Classification
 
-Reason: {{adversary_output.tier_challenge.reason}}
+> This change requires a story stub rather than direct application.
+
+**Reason:** {{adversary_output.tier_challenge.reason}}
 (If empty, fall back to: {{enumerator_output.rationale}})
 
-A story stub will be created in `.momentum/stories/` for sprint
-activation. No practice files will be modified in this session.</output>
+A story stub will be created in `.momentum/stories/` for sprint activation. No practice files will be modified in this session.</output>
       <action>Proceed directly to Phase 3 (Tier 2 path — create story stub).</action>
     </check>
 
     <check if="tier == 1 and path == 'C'">
-      <output>Path C: this learning applies to Momentum's practice files, but the current project
-is NOT the Momentum project.
+      <output>## Path C — External Project
+
+> This learning applies to Momentum's practice files, but the current project is **not** the Momentum project.
 
 Distill cannot modify Momentum files from an external project. Choose:
-  D — Defer to retro: record in findings-ledger for next retro cycle
-  G — Generate remote prompt: produce a self-contained prompt to paste into a Momentum session</output>
+- **D** — Defer to retro: record in findings-ledger for next retro cycle
+- **G** — Generate remote prompt: produce a self-contained prompt to paste into a Momentum session</output>
       <ask>Choose D or G:</ask>
       <action>Store {{path_c_choice}} = developer's choice (D or G)</action>
       <action>Route to appropriate Phase 3 sub-path for Path C.</action>
     </check>
 
     <check if="tier == 1 and path == 'A'">
-      <output>Path A: project-local change — {{target_file}}
+      <output>**Path A** — project-local change: `{{target_file}}`
 Applying immediately via write subagent. Continuing to Phase 3.</output>
     </check>
 
     <check if="tier == 1 and path == 'B'">
-      <output>Path B: Momentum-level change in the Momentum project — {{target_file}}
+      <output>**Path B** — Momentum-level change in the Momentum project: `{{target_file}}`
 Will bump plugin patch version after applying. Continuing to Phase 3.</output>
     </check>
 
@@ -224,7 +226,7 @@ Will bump plugin patch version after applying. Continuing to Phase 3.</output>
       </action>
       <action>Store {{story_file}} from create-story output</action>
       <action>Derive {{story_slug}} from {{story_file}}: take the filename (basename) without the `.md` extension.</action>
-      <output>Story stub created: {{story_file}}
+      <output>**Story stub created:** `{{story_file}}`
 The finding has been captured as a backlog story for sprint activation.
 Proceeding to Phase 6 (Ledger).</output>
       <action>Proceed to Phase 5 (Commit) — no AVFL for Tier 2 path. Phase 5 commits the story stub.</action>
@@ -289,7 +291,7 @@ Findings-ledger entry will be written with disposition: remote-prompt-generated.
       </action>
 
       <action>Wait for write subagent to complete. Verify {{target_file}} was modified.</action>
-      <output>Change applied to {{target_file}}.</output>
+      <output>**Change applied** to `{{target_file}}`.</output>
     </check>
 
     <check if="tier == 1 and path == 'B'">
@@ -299,7 +301,7 @@ Findings-ledger entry will be written with disposition: remote-prompt-generated.
         3. Increment patch: "0.4.2" → "0.4.3". Store the new version as {{new_version}}.
         4. Spawn a write subagent to update the version field in plugin.json
       </action>
-      <output>Plugin version bumped to {{new_version}}.</output>
+      <output>**Plugin version bumped** to `{{new_version}}`.</output>
     </check>
 
   </step>
@@ -345,7 +347,7 @@ Choose:
       </check>
 
       <check if="AVFL returns clean">
-        <output>AVFL distill validation clean. Proceeding to commit.</output>
+        <output>> AVFL distill validation clean. Proceeding to commit.</output>
       </check>
     </check>
 
@@ -362,7 +364,7 @@ Choose:
         `git add {{story_file}}`
         `git commit -m "docs(stories): distill — {{story_slug}} [Tier 2]"`
       </action>
-      <output>Story stub committed. No practice files modified.</output>
+      <output>**Story stub committed.** No practice files modified.</output>
     </check>
 
     <check if="tier == 1 and path == 'A'">
@@ -377,7 +379,7 @@ Choose:
 
         `git commit -m "{{commit_type}}: distill — {{one_line_summary}}"`
       </action>
-      <output>Practice artifact committed (Path A).</output>
+      <output>**Practice artifact committed** (Path A).</output>
     </check>
 
     <check if="tier == 1 and path == 'B'">
@@ -396,9 +398,9 @@ Choose:
         `git log @{u}..HEAD --oneline`
       </action>
 
-      <output>Practice artifact committed (Path B — Momentum-level change).
+      <output>## Practice Artifact Committed (Path B — Momentum-level change)
 
-Commits ready to push:
+**Commits ready to push:**
 {{push_summary}}
 
 Push to remote?</output>
@@ -407,16 +409,16 @@ Push to remote?</output>
 
       <check if="developer confirms push">
         <action>Run: `git push`</action>
-        <output>Pushed.</output>
+        <output>> Pushed.</output>
       </check>
 
       <check if="developer declines push">
-        <output>Commits held locally. Push when ready.</output>
+        <output>> Commits held locally. Push when ready.</output>
       </check>
     </check>
 
     <check if="path == 'C'">
-      <output>No files committed — Path C does not modify project files.</output>
+      <output>> No files committed — Path C does not modify project files.</output>
     </check>
 
   </step>
@@ -462,18 +464,17 @@ Push to remote?</output>
       ```
     </action>
 
-    <output>Distill complete.
+    <output>## Distill Complete
 
-Summary:
-  Learning: {{learning_description}}
-  Artifact: {{artifact_or_story_or_null}}
-  Path: {{path}} | Tier: {{tier}} | Disposition: {{disposition}}
-  Ledger: ~/.claude/momentum/findings-ledger.jsonl updated
+**Learning:** {{learning_description}}
+**Artifact:** {{artifact_or_story_or_null}}
+**Path:** {{path}} | **Tier:** {{tier}} | **Disposition:** {{disposition}}
+**Ledger:** `~/.claude/momentum/findings-ledger.jsonl` updated
 
-{{#if disposition == 'applied'}}Practice updated and committed.{{/if}}
-{{#if disposition == 'stubbed'}}Story stub created: {{story_file}}{{/if}}
-{{#if disposition == 'deferred'}}Finding deferred — will surface at next retro.{{/if}}
-{{#if disposition == 'remote-prompt-generated'}}Remote prompt generated above — paste into a Momentum session to apply.{{/if}}
+{{#if disposition == 'applied'}}> Practice updated and committed.{{/if}}
+{{#if disposition == 'stubbed'}}> Story stub created: `{{story_file}}`{{/if}}
+{{#if disposition == 'deferred'}}> Finding deferred — will surface at next retro.{{/if}}
+{{#if disposition == 'remote-prompt-generated'}}> Remote prompt generated above — paste into a Momentum session to apply.{{/if}}
 </output>
 
   </step>
