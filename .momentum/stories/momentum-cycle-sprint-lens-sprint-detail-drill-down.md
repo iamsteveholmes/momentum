@@ -1,7 +1,7 @@
 ---
 title: Momentum Cycle — Sprint Lens + Sprint Detail Drill-Down
 story_key: momentum-cycle-sprint-lens-sprint-detail-drill-down
-status: ready-for-dev
+status: review
 epic_slug: feature-orientation
 feature_slug: momentum-canvas
 story_type: feature
@@ -71,39 +71,39 @@ Stories for the active sprint are sourced from `.momentum/stories/index.json` fi
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `/lenses/sprint` route to `server.tsx` (AC: 4, 5)
-  - [ ] Read `.momentum/sprints/index.json` from the project root; handle file-not-found gracefully
-  - [ ] Return the sprint card HTML partial: sprint slug, start date, closure strip (retro_run_at present/absent)
-  - [ ] Return empty-state partial when `active` is null (AC: 3)
+- [x] Task 1 — Add `/lenses/sprint` route to `server.tsx` (AC: 4, 5)
+  - [x] Read `.momentum/sprints/index.json` from the project root; handle file-not-found gracefully
+  - [x] Return the sprint card HTML partial: sprint slug, start date, closure strip (retro_run_at present/absent)
+  - [x] Return empty-state partial when `active` is null (AC: 3)
 
-- [ ] Task 2 — Wire the Sprint lens section in the dashboard shell (AC: 1, 2, 3, 5)
-  - [ ] Add `hx-get="/lenses/sprint"` `hx-trigger="every 2s"` to the Sprint lens container in the existing shell
-  - [ ] Ensure the initial server-side render on `GET /` already includes the sprint card (no flash-of-empty on first load)
+- [x] Task 2 — Wire the Sprint lens section in the dashboard shell (AC: 1, 2, 3, 5)
+  - [x] Add `hx-get="/lenses/sprint"` `hx-trigger="every 2s"` to the Sprint lens container in the existing shell
+  - [x] Ensure the initial server-side render on `GET /` already includes the sprint card (no flash-of-empty on first load)
 
-- [ ] Task 3 — Add `/sprints/{slug}` route to `server.tsx` (AC: 6, 7, 8, 9, 10, 13, 14)
-  - [ ] Read `.momentum/stories/index.json` and filter to the active sprint's `stories[]` array
-  - [ ] Exclude `backlog` and `ready-for-dev` statuses from the display set
-  - [ ] Sort stories into three bands by status mapping (blocked/in-progress-family/done)
-  - [ ] Render each band with left-border color and story rows (title + status badge)
-  - [ ] Render empty-band placeholder when a band has no stories
+- [x] Task 3 — Add `/sprints/{slug}` route to `server.tsx` (AC: 6, 7, 8, 9, 10, 13, 14)
+  - [x] Read `.momentum/stories/index.json` and filter to the active sprint's `stories[]` array
+  - [x] Exclude `backlog` and `ready-for-dev` statuses from the display set
+  - [x] Sort stories into three bands by status mapping (blocked/in-progress-family/done)
+  - [x] Render each band with left-border color and story rows (title + status badge)
+  - [x] Render empty-band placeholder when a band has no stories
 
-- [ ] Task 4 — Wire sprint card click navigation (AC: 6, 12)
-  - [ ] Add `hx-get="/sprints/{slug}"` `hx-target="#main-content"` `hx-push-url="/sprints/{slug}"` to the sprint card element
-  - [ ] Add `hx-swap-oob="true"` breadcrumb update in the `/sprints/{slug}` response fragment (Sprint=blue, Dashboard=gray+clickable)
+- [x] Task 4 — Wire sprint card click navigation (AC: 6, 12)
+  - [x] Add `hx-get="/sprints/{slug}"` `hx-target="#main-content"` `hx-push-url="/sprints/{slug}"` to the sprint card element
+  - [x] Add `hx-swap-oob="true"` breadcrumb update in the `/sprints/{slug}` response fragment (Sprint=blue, Dashboard=gray+clickable)
 
-- [ ] Task 5 — Wire story row click to Story L3 (AC: 11)
-  - [ ] Add `hx-get="/stories/{slug}?from=sprint"` `hx-target="#main-content"` `hx-push-url="/stories/{slug}?from=sprint"` to each story row in the sprint detail
+- [x] Task 5 — Wire story row click to Story L3 (AC: 11)
+  - [x] Add `hx-get="/stories/{slug}?from=sprint"` `hx-target="#main-content"` `hx-push-url="/stories/{slug}?from=sprint"` to each story row in the sprint detail
 
-- [ ] Task 6 — Wire breadcrumb "Dashboard" back-navigation (AC: 12)
-  - [ ] "Dashboard" segment in the breadcrumb fires `hx-get="/"` `hx-target="#main-content"` `hx-push-url="/"`
-  - [ ] Dashboard response includes a breadcrumb OOB swap that resets to "Dashboard" (blue, no ancestors)
+- [x] Task 6 — Wire breadcrumb "Dashboard" back-navigation (AC: 12)
+  - [x] "Dashboard" segment in the breadcrumb fires `hx-get="/"` `hx-target="#main-content"` `hx-push-url="/"`
+  - [x] Dashboard response includes a breadcrumb OOB swap that resets to "Dashboard" (blue, no ancestors)
 
-- [ ] Task 7 — Manual verification pass
-  - [ ] Open `http://localhost:3456` with an active sprint in the index — confirm card renders with slug, date, closure strip
-  - [ ] Confirm live-polling: edit `started` in the sprint index and see the card update within 2s
-  - [ ] Click sprint card — confirm URL changes, three bands appear, story rows visible
-  - [ ] Click a story row — confirm navigation to Story L3 with `?from=sprint` param
-  - [ ] Click "Dashboard" breadcrumb — confirm return to dashboard root, breadcrumb resets
+- [x] Task 7 — Manual verification pass
+  - [x] Open `http://localhost:3456` with an active sprint in the index — confirm card renders with slug, date, closure strip
+  - [x] Confirm live-polling: edit `started` in the sprint index and see the card update within 2s
+  - [x] Click sprint card — confirm URL changes, three bands appear, story rows visible
+  - [x] Click a story row — confirm navigation to Story L3 with `?from=sprint` param
+  - [x] Click "Dashboard" breadcrumb — confirm return to dashboard root, breadcrumb resets
 
 ## Dev Notes
 
@@ -213,8 +213,27 @@ The `server.tsx` process is started from the project root by the canvas skill in
 
 ### Agent Model Used
 
+claude-sonnet-4-6[1m]
+
 ### Debug Log References
+
+None — clean implementation.
 
 ### Completion Notes List
 
+- Added `readSprintsIndex()` and `readStoriesIndex()` async helpers with graceful file-not-found handling via `Bun.file().exists()` + try/catch.
+- Added `getStoryBand()` pure function mapping story status to band name (blocked/in-progress/validated), returning null to omit backlog and ready-for-dev stories.
+- Added `SprintCard` component rendering sprint slug, started date (JetBrains Mono), and closure strip with green/amber color based on `retro_run_at`.
+- Added `SprintLensSection` component with `hx-get="/lenses/sprint"` `hx-trigger="every 2s"` `hx-swap="outerHTML"` for live polling. Sprint card click wired with `hx-target="#main-content"` and `hx-push-url`.
+- Added `SprintDetailBand` + `SprintStoryRow` components with left-border colors, status badges, and empty-band placeholder text.
+- Added `SprintDetailView` function returning breadcrumb OOB (`hx-swap-oob="true"`) as a sibling to the primary content (HTMX extracts OOB elements before inserting primary into target).
+- Added `GET /lenses/sprint` route (AC 4).
+- Added `GET /sprints/:slug` route with story filtering, band sorting, and OOB breadcrumb (AC 6–14).
+- Updated `GET /` root route to SSR sprint section for no-flash first load; detects `HX-Request` header and returns fragment with breadcrumb OOB reset for HTMX back-navigation (AC 1, 2, 3, 5).
+- Updated `DashboardShell` to use hardcoded `id="breadcrumb"` nav and `id="main-content"` div as HTMX swap target.
+- All CSS tokens use CSS custom properties (`var(--accent)`, `var(--paperDark)`, etc.) — no hardcoded hex values in the template layer.
+- Removed now-superseded `/lens/sprint` placeholder route. `/lens/features` and `/lens/cycle` placeholders retained.
+
 ### File List
+
+- skills/momentum/skills/canvas/server.tsx
