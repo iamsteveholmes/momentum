@@ -606,9 +606,9 @@ function FeatureStoryRow({ slug, title, status }: { slug: string; title: string;
   return html`
     <div
       class="reading-story-row"
-      hx-get="/stories/${slug}"
+      hx-get="/stories/${slug}?from=feature"
       hx-target="#main-content"
-      hx-push-url="/stories/${slug}"
+      hx-push-url="/stories/${slug}?from=feature"
     >
       <span class="reading-story-title">
         <span class="status-icon" style="color:${color};">${icon}</span>
@@ -1377,6 +1377,92 @@ function DashboardShell({
       border-bottom: 1px solid var(--readingRule);
     }
     .reading-deps-list li:last-child { border-bottom: none; }
+
+    /* ── Story L3 reading mode ── */
+    .story-meta-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+    }
+    .story-meta-slug {
+      color: var(--inkMuted);
+      font-size: 10px;
+      letter-spacing: 0.3px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .story-meta-chip {
+      padding: 2px 7px;
+      border: 1px solid var(--readingRule);
+      border-radius: 3px;
+      color: var(--inkMuted);
+      font-size: 9.5px;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+    .story-meta-status {
+      background: var(--accentSoft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .story-meta-derives {
+      font-size: 9px;
+      color: var(--inkFaint);
+      letter-spacing: 0.3px;
+    }
+    /* Story narrative — slightly smaller than feature value prose */
+    .story-narrative {
+      font-size: 16px;
+      line-height: 1.70;
+    }
+    /* Acceptance criteria numbered list */
+    .story-ac-list {
+      list-style: decimal;
+      padding-left: 1.4em;
+      margin: 0;
+    }
+    .story-ac-list li {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--ink);
+      padding: 3px 0;
+    }
+    .story-ac-list li + li {
+      border-top: 1px solid var(--readingRule);
+    }
+    /* Dev notes summary block */
+    .story-dev-notes {
+      font-size: 13px;
+      line-height: 1.60;
+      color: var(--inkMuted);
+      font-style: italic;
+    }
+    /* File touches list */
+    .story-touches-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .story-touches-list li {
+      padding: 4px 0;
+      border-bottom: 1px solid var(--readingRule);
+    }
+    .story-touches-list li:last-child { border-bottom: none; }
+    .story-touch-path {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--inkMuted);
+      background: var(--readingPaperAlt);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
   </style>
 </head>
 <body>
@@ -1530,6 +1616,327 @@ app.get("/sprints/:slug", async (c) => {
   }
 
   return c.html(SprintDetailView({ sprint: activeSprint, bands }) as string);
+});
+
+// ---------------------------------------------------------------------------
+// Story L3 — data reader and markdown parser
+// ---------------------------------------------------------------------------
+
+export interface StoryMeta {
+  title: string;
+  story_key: string;
+  status: string;
+  epic_slug?: string;
+  feature_slug?: string;
+  story_type?: string;
+  derives_from?: string;
+  [key: string]: string | undefined;
+}
+
+export interface ParsedStory {
+  meta: StoryMeta;
+  storyNarrative: string;       // The "As a..." paragraph
+  acceptanceCriteria: string[]; // Numbered list items
+  devNotes: string;             // Full Dev Notes section text
+  touches: string[];            // File list from touches
+}
+
+/**
+ * Parse YAML-like frontmatter block (--- ... ---) from a markdown string.
+ * Returns a flat record of key: value strings.
+ */
+export function parseFrontmatter(source: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return result;
+
+  const block = match[1];
+  for (const line of block.split(/\r?\n/)) {
+    const colonIdx = line.indexOf(":");
+    if (colonIdx < 0) continue;
+    const key = line.slice(0, colonIdx).trim();
+    const val = line.slice(colonIdx + 1).trim();
+    if (key) result[key] = val;
+  }
+  return result;
+}
+
+/**
+ * Extract a markdown section by heading (e.g., "## Acceptance Criteria").
+ * Returns the text between that heading and the next same-level (or higher) heading.
+ */
+export function extractSection(source: string, heading: string): string {
+  // Determine heading level
+  const levelMatch = heading.match(/^(#{1,6})\s/);
+  const level = levelMatch ? levelMatch[1].length : 2;
+
+  // Escape special chars for regex
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Match the heading and capture everything until next heading of same or higher level
+  const sectionRe = new RegExp(
+    `${escaped}\\s*\\r?\\n([\\s\\S]*?)(?=\\n#{1,${level}}\\s|$)`,
+    "i"
+  );
+  const m = source.match(sectionRe);
+  return m ? m[1].trim() : "";
+}
+
+/**
+ * Parse numbered or bulleted list items from a text block.
+ * Returns an array of item strings (markup stripped).
+ */
+export function parseListItems(text: string): string[] {
+  const items: string[] = [];
+  const lineRe = /^\s*(?:\d+\.\s+|-\s+|\*\s+)(.+)$/;
+  for (const line of text.split(/\r?\n/)) {
+    const m = line.match(lineRe);
+    if (m) items.push(m[1].trim());
+  }
+  return items;
+}
+
+/**
+ * Parse touches array from the YAML frontmatter (multi-line list format).
+ * The raw frontmatter value may be empty; the actual lines follow as "  - path".
+ */
+function parseTouchesFromSource(source: string): string[] {
+  const touches: string[] = [];
+  const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return touches;
+
+  const block = match[1];
+  const lines = block.split(/\r?\n/);
+  let inTouches = false;
+  for (const line of lines) {
+    if (/^touches\s*:/.test(line)) {
+      inTouches = true;
+      continue;
+    }
+    if (inTouches) {
+      const itemMatch = line.match(/^\s+-\s+(.+)/);
+      if (itemMatch) {
+        touches.push(itemMatch[1].trim());
+      } else if (line.match(/^\S/)) {
+        // New top-level key — stop
+        inTouches = false;
+      }
+    }
+  }
+  return touches;
+}
+
+/**
+ * Parse a Momentum story markdown file into structured data.
+ */
+export function parseStoryMarkdown(source: string): ParsedStory {
+  const fm = parseFrontmatter(source);
+  const touches = parseTouchesFromSource(source);
+
+  const meta: StoryMeta = {
+    title: fm["title"] ?? "",
+    story_key: fm["story_key"] ?? "",
+    status: fm["status"] ?? "backlog",
+    epic_slug: fm["epic_slug"],
+    feature_slug: fm["feature_slug"],
+    story_type: fm["story_type"],
+    derives_from: fm["derives_from"],
+  };
+
+  // Extract the ## Story section for the narrative
+  const storySection = extractSection(source, "## Story");
+  // Grab the "As a..." paragraph — first non-empty block
+  const storyNarrative = storySection.split(/\n\n/)[0]?.trim() ?? "";
+
+  // Acceptance criteria section
+  const acSection = extractSection(source, "## Acceptance Criteria");
+  const acceptanceCriteria = parseListItems(acSection).filter(
+    (item) => !item.startsWith("_") && !item.startsWith("<!--")
+  );
+
+  // Dev Notes section
+  const devNotes = extractSection(source, "## Dev Notes");
+
+  return { meta, storyNarrative, acceptanceCriteria, devNotes, touches };
+}
+
+async function readStoryBySlug(slug: string): Promise<ParsedStory | null> {
+  try {
+    const projectRoot = process.cwd();
+    const file = Bun.file(join(projectRoot, ".momentum", "stories", `${slug}.md`));
+    if (!(await file.exists())) return null;
+    const source = await file.text();
+    return parseStoryMarkdown(source);
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Story L3 detail view — reading mode (warm light, same polarity as Feature L2)
+// ---------------------------------------------------------------------------
+
+export function StoryDetailView({
+  story,
+  from,
+}: {
+  story: ParsedStory;
+  from: "feature" | "sprint" | null;
+}) {
+  const { meta, storyNarrative, acceptanceCriteria, devNotes, touches } = story;
+
+  // Breadcrumb path depends on entry point
+  const breadcrumbMiddle =
+    from === "sprint"
+      ? `<a class="seg" hx-get="/lenses/sprint" hx-target="#main-content" hx-push-url="/sprints/${meta.story_key}" style="cursor:pointer;">sprint</a><span class="sep">/</span>`
+      : from === "feature" && meta.feature_slug
+      ? `<a class="seg" hx-get="/features/${meta.feature_slug}" hx-target="#main-content" hx-push-url="/features/${meta.feature_slug}" style="cursor:pointer;">feature</a><span class="sep">/</span>`
+      : "";
+
+  const acListHtml =
+    acceptanceCriteria.length > 0
+      ? `<ol class="story-ac-list">${acceptanceCriteria
+          .map((item) => `<li>${escapeHtml(item)}</li>`)
+          .join("")}</ol>`
+      : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No acceptance criteria found</div>`;
+
+  const touchesHtml =
+    touches.length > 0
+      ? `<ul class="story-touches-list">${touches
+          .map((t) => `<li><code class="story-touch-path">${escapeHtml(t)}</code></li>`)
+          .join("")}</ul>`
+      : "";
+
+  // Truncate dev notes for reading mode — first 400 chars + ellipsis
+  const devNotesSummary =
+    devNotes.length > 400
+      ? devNotes.slice(0, 400).replace(/\s+\S*$/, "") + " …"
+      : devNotes;
+
+  // Strip markdown formatting (_italic_, **bold**, `code`) for display
+  const cleanDevNotes = devNotesSummary
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    .replace(/`(.+?)`/g, "$1")
+    .replace(/#{1,6}\s/g, "");
+
+  return html`
+    <!-- Breadcrumb OOB swap — light mode crumb bar for story reading -->
+    <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
+      <div class="crumbs">
+        <a
+          class="seg"
+          hx-get="/"
+          hx-target="#main-content"
+          hx-push-url="/"
+          style="cursor:pointer;"
+        >dashboard</a>
+        <span class="sep">/</span>
+        ${raw(breadcrumbMiddle)}
+        <span class="seg here">${meta.story_key}</span>
+      </div>
+    </nav>
+
+    <!-- Story detail content (primary payload → goes into #main-content) -->
+    <div class="reading-surface">
+      <div class="reading-col">
+
+        <!-- Frontmatter meta strip -->
+        <div class="story-meta-strip">
+          <span class="story-meta-slug">${meta.story_key}</span>
+          ${meta.story_type
+            ? html`<span class="story-meta-chip">${meta.story_type}</span>`
+            : ""}
+          <span class="story-meta-chip story-meta-status">${meta.status}</span>
+          ${meta.epic_slug
+            ? html`<span class="story-meta-chip">${meta.epic_slug}</span>`
+            : ""}
+          ${meta.derives_from
+            ? html`<span class="story-meta-derives">derives: ${meta.derives_from}</span>`
+            : ""}
+          <span class="feature-reading-label">story</span>
+        </div>
+
+        <!-- Title -->
+        <h1 class="feature-heading">${meta.title || meta.story_key}</h1>
+
+        <!-- Value narrative / story statement -->
+        ${storyNarrative
+          ? html`
+            <div class="reading-section-label">Story</div>
+            <div class="reading-prose story-narrative">${storyNarrative}</div>
+          `
+          : ""}
+
+        <!-- Acceptance criteria -->
+        ${acceptanceCriteria.length > 0
+          ? html`
+            <div class="reading-section-label">Acceptance Criteria</div>
+            ${raw(acListHtml)}
+          `
+          : ""}
+
+        <!-- Dev notes (collapsed summary) -->
+        ${devNotes && cleanDevNotes
+          ? html`
+            <div class="reading-section-label">Dev Notes</div>
+            <div class="reading-callout story-dev-notes">${cleanDevNotes}</div>
+          `
+          : ""}
+
+        <!-- File list -->
+        ${touches.length > 0
+          ? html`
+            <div class="reading-section-label">File List</div>
+            ${raw(touchesHtml)}
+          `
+          : ""}
+
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Escape HTML special characters to prevent XSS in story content.
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Story L3 drill-down — reading mode
+app.get("/stories/:slug", async (c) => {
+  const slug = c.req.param("slug");
+  const fromParam = c.req.query("from");
+  const from: "feature" | "sprint" | null =
+    fromParam === "feature" ? "feature" : fromParam === "sprint" ? "sprint" : null;
+
+  const story = await readStoryBySlug(slug);
+
+  if (!story) {
+    return c.html(`
+      <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
+        <div class="crumbs">
+          <a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <span class="sep">/</span>
+          <span class="seg here">story</span>
+        </div>
+      </nav>
+      <div class="reading-surface">
+        <div class="reading-col">
+          <div style="font-family:'Source Serif 4',serif;font-size:16px;font-style:italic;color:var(--inkMuted);padding-top:16px;">
+            Story "${escapeHtml(slug)}" not found.
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  return c.html(StoryDetailView({ story, from }) as string);
 });
 
 // Feature L2 drill-down — reading mode

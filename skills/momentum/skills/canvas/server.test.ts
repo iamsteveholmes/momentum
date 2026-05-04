@@ -12,6 +12,11 @@ import {
   buildSortedRows,
   buildFeatureStoryRows,
   FeatureDetailView,
+  parseFrontmatter,
+  extractSection,
+  parseListItems,
+  parseStoryMarkdown,
+  StoryDetailView,
   type Feature,
   type StoryMap,
 } from "./server";
@@ -570,9 +575,9 @@ describe("FeatureDetailView", () => {
     expect(html).toContain("Story Alpha");
     expect(html).toContain("Story Beta");
     expect(html).toContain("reading-story-row");
-    // clicking a story row should navigate to /stories/:slug
-    expect(html).toContain('hx-get="/stories/story-a"');
-    expect(html).toContain('hx-get="/stories/story-b"');
+    // clicking a story row should navigate to /stories/:slug?from=feature
+    expect(html).toContain('hx-get="/stories/story-a?from=feature"');
+    expect(html).toContain('hx-get="/stories/story-b?from=feature"');
   });
 
   it("renders breadcrumb OOB swap with Dashboard link and Feature label in accent", () => {
@@ -606,5 +611,331 @@ describe("FeatureDetailView", () => {
     expect(html).toContain("reading-deps-list");
     expect(html).toContain("dep-feature-a");
     expect(html).toContain("dep-feature-b");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseFrontmatter — story L3 markdown parsing
+// ---------------------------------------------------------------------------
+describe("parseFrontmatter", () => {
+  it("parses key-value pairs from frontmatter block", () => {
+    const source = `---
+title: My Story Title
+story_key: my-story
+status: backlog
+---
+# Heading
+`;
+    const fm = parseFrontmatter(source);
+    expect(fm["title"]).toBe("My Story Title");
+    expect(fm["story_key"]).toBe("my-story");
+    expect(fm["status"]).toBe("backlog");
+  });
+
+  it("returns empty object when no frontmatter", () => {
+    const fm = parseFrontmatter("# No frontmatter here\n\nJust prose.");
+    expect(Object.keys(fm)).toHaveLength(0);
+  });
+
+  it("handles optional fields that are absent", () => {
+    const source = `---
+title: Minimal
+story_key: minimal
+status: backlog
+---
+`;
+    const fm = parseFrontmatter(source);
+    expect(fm["epic_slug"]).toBeUndefined();
+    expect(fm["derives_from"]).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractSection — section extraction helper
+// ---------------------------------------------------------------------------
+describe("extractSection", () => {
+  it("extracts content between two headings", () => {
+    const source = `---
+title: test
+---
+
+## Story
+
+As a developer, I want to build things.
+
+## Acceptance Criteria
+
+- AC one
+- AC two
+
+## Dev Notes
+
+Some technical notes here.
+`;
+    const story = extractSection(source, "## Story");
+    expect(story).toContain("As a developer");
+
+    const ac = extractSection(source, "## Acceptance Criteria");
+    expect(ac).toContain("AC one");
+    expect(ac).toContain("AC two");
+    expect(ac).not.toContain("technical notes");
+  });
+
+  it("returns empty string when section not found", () => {
+    const result = extractSection("# Some content\n\nNo sections.", "## Missing");
+    expect(result).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseListItems — list item parser
+// ---------------------------------------------------------------------------
+describe("parseListItems", () => {
+  it("parses numbered list items", () => {
+    const text = "1. First item\n2. Second item\n3. Third item";
+    const items = parseListItems(text);
+    expect(items).toHaveLength(3);
+    expect(items[0]).toBe("First item");
+    expect(items[2]).toBe("Third item");
+  });
+
+  it("parses bullet list items with dash", () => {
+    const text = "- Item alpha\n- Item beta";
+    const items = parseListItems(text);
+    expect(items).toHaveLength(2);
+    expect(items[0]).toBe("Item alpha");
+  });
+
+  it("returns empty array for non-list text", () => {
+    const items = parseListItems("Just a paragraph.\nNo list here.");
+    expect(items).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseStoryMarkdown — full story parser
+// ---------------------------------------------------------------------------
+describe("parseStoryMarkdown", () => {
+  const sampleStory = `---
+title: My Test Story
+story_key: my-test-story
+status: in-progress
+epic_slug: test-epic
+feature_slug: test-feature
+story_type: feature
+touches:
+  - src/foo.ts
+  - src/bar.ts
+---
+
+# My Test Story
+
+## Story
+
+As a developer,
+I want to implement something,
+so that I can demonstrate it.
+
+## Acceptance Criteria
+
+1. Route renders HTML correctly
+2. Breadcrumb shows correct path
+3. Story data sourced from .momentum/stories/
+
+## Dev Notes
+
+Some technical guidance here about architecture.
+
+### Testing Requirements
+
+Unit tests required.
+`;
+
+  it("parses story meta from frontmatter", () => {
+    const parsed = parseStoryMarkdown(sampleStory);
+    expect(parsed.meta.title).toBe("My Test Story");
+    expect(parsed.meta.story_key).toBe("my-test-story");
+    expect(parsed.meta.status).toBe("in-progress");
+    expect(parsed.meta.epic_slug).toBe("test-epic");
+    expect(parsed.meta.feature_slug).toBe("test-feature");
+    expect(parsed.meta.story_type).toBe("feature");
+  });
+
+  it("parses story narrative from ## Story section", () => {
+    const parsed = parseStoryMarkdown(sampleStory);
+    expect(parsed.storyNarrative).toContain("As a developer");
+  });
+
+  it("parses acceptance criteria as array", () => {
+    const parsed = parseStoryMarkdown(sampleStory);
+    expect(parsed.acceptanceCriteria).toHaveLength(3);
+    expect(parsed.acceptanceCriteria[0]).toBe("Route renders HTML correctly");
+    expect(parsed.acceptanceCriteria[1]).toBe("Breadcrumb shows correct path");
+  });
+
+  it("parses touches file list", () => {
+    const parsed = parseStoryMarkdown(sampleStory);
+    expect(parsed.touches).toHaveLength(2);
+    expect(parsed.touches[0]).toBe("src/foo.ts");
+    expect(parsed.touches[1]).toBe("src/bar.ts");
+  });
+
+  it("parses dev notes section", () => {
+    const parsed = parseStoryMarkdown(sampleStory);
+    expect(parsed.devNotes).toContain("Some technical guidance");
+  });
+
+  it("handles story with no touches", () => {
+    const minimal = `---
+title: Minimal Story
+story_key: minimal
+status: backlog
+---
+
+## Story
+As a user, I want basic functionality.
+`;
+    const parsed = parseStoryMarkdown(minimal);
+    expect(parsed.touches).toHaveLength(0);
+  });
+
+  it("filters DRAFT placeholder lines from acceptance criteria", () => {
+    const withDraft = `---
+title: Draft Story
+story_key: draft-story
+status: backlog
+---
+
+## Acceptance Criteria
+
+_DRAFT — requires rewrite via create-story before this story is dev-ready._
+
+- Actual AC one
+`;
+    const parsed = parseStoryMarkdown(withDraft);
+    // DRAFT lines starting with _ should be filtered out
+    const hasDraft = parsed.acceptanceCriteria.some((ac) => ac.startsWith("DRAFT"));
+    expect(hasDraft).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// StoryDetailView — HTML rendering
+// ---------------------------------------------------------------------------
+describe("StoryDetailView", () => {
+  const baseStory = {
+    meta: {
+      title: "My Test Story",
+      story_key: "my-test-story",
+      status: "in-progress",
+      epic_slug: "test-epic",
+      feature_slug: "test-feature",
+      story_type: "feature",
+    },
+    storyNarrative: "As a developer, I want to do things, so that I can build stuff.",
+    acceptanceCriteria: [
+      "Route renders HTML with story detail",
+      "Breadcrumb swaps correctly via HTMX OOB",
+    ],
+    devNotes: "Some development notes about architecture.",
+    touches: ["skills/momentum/skills/canvas/server.tsx"],
+  };
+
+  it("renders reading-surface with warm-light polarity", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("reading-surface");
+  });
+
+  it("renders story-meta-strip with slug, type, status, epic", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("story-meta-strip");
+    expect(h).toContain("my-test-story");
+    expect(h).toContain("in-progress");
+    expect(h).toContain("test-epic");
+  });
+
+  it("renders title in Source Serif 4 feature-heading", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("feature-heading");
+    expect(h).toContain("My Test Story");
+  });
+
+  it("renders story narrative when present", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("Story");
+    expect(h).toContain("As a developer");
+    expect(h).toContain("story-narrative");
+  });
+
+  it("renders acceptance criteria as numbered list", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("story-ac-list");
+    expect(h).toContain("Route renders HTML with story detail");
+    expect(h).toContain("Breadcrumb swaps correctly via HTMX OOB");
+  });
+
+  it("renders dev notes as callout", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("story-dev-notes");
+    expect(h).toContain("architecture");
+  });
+
+  it("renders file list when touches present", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("story-touches-list");
+    expect(h).toContain("skills/momentum/skills/canvas/server.tsx");
+  });
+
+  it("does not render file list when no touches", () => {
+    const story = { ...baseStory, touches: [] };
+    const h = String(StoryDetailView({ story, from: null }));
+    expect(h).not.toContain("story-touches-list");
+  });
+
+  it("renders breadcrumb OOB swap with dashboard link", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain('hx-swap-oob="true"');
+    expect(h).toContain("dashboard");
+    expect(h).toContain('hx-get="/"');
+  });
+
+  it("uses reading-crumb-bar class on breadcrumb (warm-light)", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("reading-crumb-bar");
+  });
+
+  it("breadcrumb includes feature link when from=feature", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: "feature" }));
+    expect(h).toContain('hx-get="/features/test-feature"');
+    expect(h).toContain("feature");
+  });
+
+  it("breadcrumb includes sprint link when from=sprint", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: "sprint" }));
+    expect(h).toContain("sprint");
+    expect(h).toContain("hx-get=\"/lenses/sprint\"");
+  });
+
+  it("breadcrumb has no middle segment when from=null", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    // Should not have feature or sprint links in breadcrumb
+    expect(h).not.toContain('hx-get="/features/test-feature"');
+    expect(h).not.toContain('hx-get="/lenses/sprint"');
+  });
+
+  it("renders reading-col for 65ch measure", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: null }));
+    expect(h).toContain("reading-col");
+  });
+
+  it("escapes HTML in story content to prevent XSS", () => {
+    const story = {
+      ...baseStory,
+      acceptanceCriteria: ['AC with <script>alert("xss")</script>'],
+      touches: ['path/to/<script>file</script>'],
+    };
+    const h = String(StoryDetailView({ story, from: null }));
+    expect(h).not.toContain('<script>alert("xss")</script>');
+    expect(h).toContain("&lt;script&gt;");
   });
 });
