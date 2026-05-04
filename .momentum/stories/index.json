@@ -3829,7 +3829,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-feature-l2-drill-down-reading-mode": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Momentum Cycle — Feature L2 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
