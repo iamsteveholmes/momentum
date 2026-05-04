@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-04-30'
+lastEdited: '2026-05-03'
 editHistory:
+  - date: '2026-05-03'
+    changes: 'Canvas skill spec impact (sprint-2026-05-03): Added momentum:canvas to Skills Deployment Classification table (flat skill, invoker with SKILL.md + workflow.md + server.tsx; supersedes momentum:feature-status per DEC-019). Added canvas/ directory to Repository Structure tree (both preview and full). Deprecated momentum:feature-status in Skills Deployment Classification table, Read/Write Authority table, and all Integration Points mentioning feature-status (deprecated — use momentum:canvas per DEC-019). Added canvas server read authority row to Read/Write Authority table (reads: features.json, stories/index.json, sprints/index.json, stories/{slug}.md; no writes). Extended Decision 44 features.json schema: added note to stories field (also story_slugs alias), added depends_on field (feature-to-feature dependency list, optional). Added Decision 53 (DEC-017: Canonical Momentum Cycle Step Sequence — triage → intake → feature-grooming → epic-grooming → refine → sprint-planning → sprint-dev → retro; 7-node canvas timeline; required/optional phase classification; cycle boundary rule). Added Decision 54 (DEC-019: Hono+HTMX+Bun Canvas Runtime Stack — single-file server.tsx, port 3456, bun --hot; HTMX navigation protocol for lens/L2/L3 routes; dark/light polarity model with 140ms CSS cross-fade; supersedes DEC-011 D2 Vite approach).'
   - date: '2026-04-30'
     changes: 'Wave 1 retry — per-story `.md` relocation (Task 2.3b, AC #8 follow-up). Migrated 268 per-story spec files from `_bmad-output/implementation-artifacts/stories/{slug}.md` to `.momentum/stories/{slug}.md` (byte-equivalent, file count preserved). Legacy `_bmad-output/implementation-artifacts/stories/` directory deleted to enforce single-source-of-truth (AC #11, Task 2.8). Supersedes the prior 2026-04-30 AC9 entry below where individual story `.md` files were left at the legacy location.'
   - date: '2026-04-30'
@@ -305,7 +307,8 @@ The defining question for each component: *does this need main-context persona p
 | sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
 | decision | Flat skill (`/momentum:decision`) | User-invokable; facilitates architectural or product decision capture (ADR/trade-off analysis); no fork needed |
 | agent-guidelines | Flat skill (`/momentum:agent-guidelines`) | 5-phase guided workflow for generating technology-specific development guidelines for a project: Discover (stack analysis), Research (web search), Consult (developer preferences), Generate (guidelines documents), Validate (AVFL checkpoint). Generates path-scoped rules and reference documents. |
-| feature-status | Flat skill (`/momentum:feature-status`) | Reads features.json + stories/index.json; writes self-contained HTML dashboard (`.claude/momentum/feature-status.html`) and YAML-frontmatter cache (`.claude/momentum/feature-status.md`). Two rendering paths: product (flow/connection/quality tables + gap analysis) and practice (skill topology + SDLC coverage). Supersedes DRIFT-006 proposal to absorb into Impetus/momentum-tools — standalone skill per Decision 45. |
+| feature-status | Flat skill (`/momentum:feature-status`) — **(deprecated — use momentum:canvas)** | Reads features.json + stories/index.json; writes self-contained HTML dashboard (`.claude/momentum/feature-status.html`) and YAML-frontmatter cache (`.claude/momentum/feature-status.md`). Two rendering paths: product (flow/connection/quality tables + gap analysis) and practice (skill topology + SDLC coverage). Supersedes DRIFT-006 proposal to absorb into Impetus/momentum-tools — standalone skill per Decision 45. **Deprecated by DEC-019 (2026-05-03) — canvas supersedes this skill as the unified planning dashboard.** |
+| canvas | Flat skill (`/momentum:canvas`) — invoker (SKILL.md + workflow.md + server.tsx) | Bun-based live dashboard server (port 3456). Reads features.json, stories/index.json, sprints/index.json to render a Hono+HTMX multi-lens planning canvas. Three view layers: L1 timeline/cycle overview (dark), L2 feature detail (warm light), L3 story detail (warm light). No writes. Supersedes momentum:feature-status per DEC-019. |
 | status | Not planned as standalone skill | ~~Status functionality is absorbed into Impetus greeting workflow and momentum-tools CLI (`momentum-tools sprint status`). No backlog story exists or is needed.~~ **Superseded by Decision 45 (sprint-2026-04-11):** feature-status is implemented as a dedicated standalone skill (`/momentum:feature-status`). The startup-preflight cache check (Decision 46) handles the Impetus greeting integration path. The momentum-tools `feature-status-hash` command provides the hash utility. This row is retained for historical context only. |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
@@ -1204,8 +1207,12 @@ momentum/                                    ← Plugin root
 │   │   └── SKILL.md
 │   ├── status/                              ← /momentum:status (superseded — see Decision 45 and feature-status entry below)
 │   │   └── SKILL.md
-│   ├── feature-status/                      ← /momentum:feature-status (Decision 45)
+│   ├── feature-status/                      ← /momentum:feature-status (Decision 45; deprecated — use canvas)
 │   │   └── SKILL.md
+│   ├── canvas/                              ← /momentum:canvas (DEC-019; supersedes feature-status)
+│   │   ├── SKILL.md
+│   │   ├── workflow.md
+│   │   └── server.tsx                       ← Bun+Hono+HTMX server (port 3456, bun --hot)
 │   ├── agent-guidelines/                    ← /momentum:agent-guidelines (FR61a, 5-phase guided workflow)
 │   │   └── SKILL.md
 │   └── retro/                               ← /momentum:retro
@@ -1328,7 +1335,8 @@ momentum/                                    ← Plugin root
 | momentum:dev | Story files, code | Code in worktree only; structured JSON completion output |
 | momentum:create-story | `.momentum/stories/index.json`, epics.md | Story files in `.momentum/stories/` |
 | momentum:refine | prd.md, architecture.md, `.momentum/stories/index.json`, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); `.momentum/stories/index.json` mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
-| momentum:feature-status | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json` | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
+| momentum:feature-status **(deprecated — use momentum:canvas)** | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json` | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
+| canvas server (Bun process, port 3456) | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/stories/{slug}.md` | _(none — read-only server)_ |
 | momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files | `.momentum/sprints/{sprint-slug}/specs/*.feature` (Gherkin specs); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
 | momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
 | momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md, `.claude/momentum/feature-status.md` | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`); spawns `/momentum:feature-status` to refresh cache before summary write |
@@ -1417,11 +1425,11 @@ momentum/                                    ← Plugin root
 
 **momentum:refine ↔ momentum:epic-grooming:** momentum:refine delegates taxonomy analysis and story reassignment to momentum:epic-grooming as a substep during backlog refinement. Graceful degradation applies: if momentum:epic-grooming is absent, refine skips the taxonomy substep and continues with the remaining refinement work.
 
-**momentum:feature-status ↔ Impetus startup-preflight:** Impetus reads `.claude/momentum/feature-status.md` at session start (inside startup-preflight, one Bash call, inline hash computation — Decision 46). Cache state drives greeting behavior: `fresh` → display cached feature summary inline; `stale` → offer refresh; `no-features` → silent skip; `no-cache` → suggest running `/momentum:feature-status`. The feature-status skill itself is invoked on-demand (user request or retro Phase 6 trigger — Decision 47) — Impetus never spawns it autonomously during greeting.
+**momentum:feature-status ↔ Impetus startup-preflight (deprecated — use momentum:canvas):** Impetus reads `.claude/momentum/feature-status.md` at session start (inside startup-preflight, one Bash call, inline hash computation — Decision 46). Cache state drives greeting behavior: `fresh` → display cached feature summary inline; `stale` → offer refresh; `no-features` → silent skip; `no-cache` → suggest running `/momentum:feature-status`. The feature-status skill itself is invoked on-demand (user request or retro Phase 6 trigger — Decision 47) — Impetus never spawns it autonomously during greeting. **Deprecated by DEC-019 — momentum:canvas supersedes feature-status as the unified planning dashboard.**
 
-**momentum:feature-status ↔ momentum:retro:** Retro orchestrator spawns `/momentum:feature-status` at Phase 6 close (after verification, before sprint summary write) to refresh the feature cache for the next session. This is a sequential dependency: feature-status runs first, its cache output is read by the retro orchestrator to populate the "Features Advanced" section of the sprint summary (Decision 47).
+**momentum:feature-status ↔ momentum:retro (deprecated — use momentum:canvas):** Retro orchestrator spawns `/momentum:feature-status` at Phase 6 close (after verification, before sprint summary write) to refresh the feature cache for the next session. This is a sequential dependency: feature-status runs first, its cache output is read by the retro orchestrator to populate the "Features Advanced" section of the sprint summary (Decision 47). **Deprecated by DEC-019.**
 
-**momentum:feature-grooming ↔ momentum:feature-status:** `momentum:feature-grooming` writes features.json and calls `momentum-tools feature-status-hash` post-write to invalidate the feature-status cache. `momentum:feature-status` reads features.json for display. This ensures the HTML dashboard and YAML cache are always considered stale after a grooming session, triggering a refresh on the next Impetus startup-preflight check.
+**momentum:feature-grooming ↔ momentum:feature-status (deprecated — use momentum:canvas):** `momentum:feature-grooming` writes features.json and calls `momentum-tools feature-status-hash` post-write to invalidate the feature-status cache. `momentum:feature-status` reads features.json for display. This ensures the HTML dashboard and YAML cache are always considered stale after a grooming session, triggering a refresh on the next Impetus startup-preflight check. **Deprecated by DEC-019 — canvas reads features.json directly via its live Bun server; no cache invalidation step needed.**
 
 ---
 
@@ -2503,11 +2511,12 @@ A new first-class planning artifact: `_bmad-output/planning-artifacts/features.j
 | `system_context` | string | Required. How this feature fits and enhances the overall product |
 | `status` | enum | `working` \| `partial` \| `not-working` \| `not-started` |
 | `prd_section` | string | FR/NFR reference (e.g., "FR-7", "NFR-3") — links feature to PRD |
-| `stories` | array | Story slugs that implement or advance this feature |
+| `stories` | array | Story slugs that implement or advance this feature (also referenced as `story_slugs` in some contexts — both refer to the same array of kebab-case slug strings) |
 | `stories_done` | int | Count of stories in terminal state (`done`) |
 | `stories_remaining` | int | Count of stories not yet done |
 | `last_verified` | date | ISO 8601 date of last manual or automated verification |
 | `notes` | string | Free text for gaps, partial-status explanations, open questions |
+| `depends_on` | array | Optional. Feature-to-feature dependency list — array of feature slugs that must reach `working` status before this feature can be considered complete. Absent or empty means no feature-level dependencies. |
 
 **Write authority:** `features.json` is written exclusively by `momentum:feature-grooming` (bootstrap and refine modes). No other skill or tool writes features.json. Grooming mode detection: bootstrap = features.json absent or empty; refine = features.json has ≥1 entry. `acceptance_conditions` is an array of strings — each entry is one behavioral, verifiable acceptance condition.
 
@@ -2824,3 +2833,78 @@ Formalizes the capture-artifact decision recorded in `_bmad-output/planning-arti
 **Workflow Modularization Note (2026-04-04)**
 
 The Impetus `workflow.md` file is a structural concern at 800+ lines. The greeting redesign (Step 7 alone is 232 lines in the mockup) will increase this further. Modularization into separate workflow modules (e.g., `greeting.md`, `dispatch.md`, `install.md`) is architecturally sound and recommended but not required for the greeting redesign. This note flags the concern for future sprint planning.
+
+---
+
+**Decision 53 — Canonical Momentum Cycle Step Sequence (DEC-017, 2026-05-03)**
+
+Formalizes the canonical step sequence for a Momentum practice cycle, establishing which phases are required and which are optional. DEC-017 also defines the cycle boundary rule used by the canvas dashboard timeline.
+
+**Canonical step sequence:**
+
+```
+triage → intake → feature-grooming → epic-grooming → refine → sprint-planning → sprint-dev → retro
+```
+
+The canvas timeline collapses `intake` into the `triage` node for visual compactness, rendering **7 nodes** (not 8).
+
+**Phase classification:**
+
+| Phase | Classification |
+|---|---|
+| `sprint-planning` | Required |
+| `sprint-dev` | Required |
+| `retro` | Required |
+| `triage` | Optional |
+| `feature-grooming` | Optional |
+| `epic-grooming` | Optional |
+| `refine` | Optional |
+
+**Cycle boundary rule:** The most recent sprint entry in `.momentum/sprints/index.json` whose `retro_run_at` field is set (non-null) marks the end of the previous cycle. All practice activity after that sprint's `retro_run_at` timestamp constitutes the current cycle. Sprints without `retro_run_at` belong to the current cycle.
+
+**Canvas timeline application:** The canvas L1 timeline view renders one column per cycle. Each column shows which phases ran (filled node) and which did not run (hollow node) during that cycle. The current cycle column is always the rightmost, showing in-progress phases in a distinct state.
+
+**Traceability:** Introduced by canvas-skill story (sprint-2026-05-03). Motivated by the need for a deterministic cycle boundary that the canvas timeline can compute without developer input.
+
+---
+
+**Decision 54 — Hono+HTMX+Bun Canvas Runtime Stack (DEC-019, 2026-05-03)**
+
+Formalizes the runtime stack for the canvas dashboard. DEC-019 supersedes DEC-011 D2 (which proposed a Vite-based approach) in favor of a single-file Bun server with no compile step.
+
+**Stack:**
+
+| Component | Choice | Notes |
+|---|---|---|
+| HTTP framework | Hono | Minimal, TypeScript-native, edge-compatible |
+| Frontend interaction | HTMX | Live fragment polling — no client-side JS framework |
+| Runtime | Bun | `bun --hot server.tsx`; no compile step; TypeScript runs directly |
+| Entry point | `skills/momentum/skills/canvas/server.tsx` | Single file; all routes and HTML fragments co-located |
+| Port | 3456 | Fixed; not configurable in MVP |
+
+**Supersedes:** DEC-011 D2 (Vite approach). Canvas serves HTML directly from the Bun process — no static asset pipeline, no build artifact, no hot-module-replacement complexity.
+
+**HTMX navigation protocol:**
+
+| Route type | HTMX response | Effect |
+|---|---|---|
+| Lens routes (L1 timeline, etc.) | Fragment HTML | `hx-swap="innerHTML"` on the container — replaces pane content |
+| L2 feature detail | Full-page HTML | `hx-swap="innerHTML"` on `<body>` — replaces entire body |
+| L3 story detail | Full-page HTML | `hx-swap="innerHTML"` on `<body>` — replaces entire body |
+| Breadcrumb updates | `hx-swap-oob="true"` fragment | Out-of-band breadcrumb refresh alongside the primary response |
+
+URL sync: all navigations use `hx-push-url` to keep the browser address bar in sync with the current view. Direct URL loads (browser refresh, link sharing) hit a full-page route and return a complete HTML document.
+
+**Polarity model — dark/light view layers:**
+
+| Layer | View | Background | CSS token |
+|---|---|---|---|
+| L1 | Timeline / cycle overview | Dark | `--paperDark: #16140f` |
+| L2 | Feature detail | Warm light | `--readingPaper: #faf6ec` |
+| L3 | Story detail | Warm light | `--readingPaper: #faf6ec` |
+
+**Polarity transition:** The `.reading-mode` CSS class is added to `.pane-inner` when navigating from L1 (dark) to L2/L3 (warm light). The cross-fade is a 140ms CSS transition on the `background-color` and `color` properties. Navigating back to L1 removes `.reading-mode`, reversing the transition.
+
+**Rationale:** Bun's `bun --hot` mode provides instant server reloads during development without a separate watcher process. HTMX's fragment-swap model keeps the server as the authoritative renderer with no client-side state synchronization. Single-file server keeps the canvas skill self-contained and reviewable without build tooling.
+
+**Traceability:** Introduced by canvas-skill story (sprint-2026-05-03). Supersedes DEC-011 D2. Motivated by DEC-019 adoption decision (2026-04-26) to replace the static HTML approach of momentum:feature-status with a live, navigable dashboard.
