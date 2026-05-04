@@ -3865,5 +3865,32 @@
       "skills/momentum/.claude-plugin/plugin.json"
     ],
     "priority": "medium"
+  },
+  "markdown-formatting-skill-output-templates": {
+    "status": "ready-for-dev",
+    "title": "Markdown Formatting for Skill Output Templates",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/quick-fix/workflow.md",
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/skills/create-story/workflow.md",
+      "skills/momentum/skills/research/workflow.md",
+      "skills/momentum/skills/assessment/workflow.md",
+      "skills/momentum/skills/decision/workflow.md",
+      "skills/momentum/skills/distill/workflow.md",
+      "skills/momentum/skills/refine/workflow.md",
+      "skills/momentum/skills/feature-breakdown/workflow.md",
+      "skills/momentum/skills/feature-grooming/workflow.md",
+      "skills/momentum/skills/epic-grooming/workflow.md",
+      "skills/momentum/skills/plan-audit/workflow.md",
+      "skills/momentum/skills/intake/workflow.md",
+      "skills/momentum/skills/triage/workflow.md",
+      "skills/momentum/skills/agent-guidelines/workflow.md",
+      "skills/momentum/skills/dev/workflow.md"
+    ]
   }
 }
