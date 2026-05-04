@@ -1,0 +1,13 @@
+{
+  "name": "momentum-cycle-dashboard",
+  "version": "0.1.0",
+  "description": "Momentum Cycle live dashboard — Hono+Bun server",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot server.tsx",
+    "start": "bun server.tsx"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  }
+}
