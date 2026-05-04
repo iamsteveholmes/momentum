@@ -3771,7 +3771,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-features-lens": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Momentum Cycle — Features Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3787,7 +3787,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-cycle-timeline-lens": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Momentum Cycle — Cycle Timeline Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3802,7 +3802,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Momentum Cycle — Sprint Lens + Sprint Detail Drill-Down",
     "epic_slug": "feature-orientation",
     "story_file": true,
