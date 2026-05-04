@@ -170,9 +170,11 @@ Apply formatting rules to `<output>` block text only. The workflow XML structure
 All modified files are `skill-instruction` type — they are LLM prompt/workflow
 instructions, not executable code. Changes are text-level formatting updates only.
 
-The workflow XML parser in bmad-dev-story reads `<output>` blocks as literal text to
-display — markdown within them renders correctly because Claude Code displays the
-output text in a markdown-aware terminal context.
+The Momentum workflow.md files use XML-like tags as LLM instruction conventions.
+When Claude executes a workflow step and encounters an `<output>` block, it displays
+that text in the terminal. Because Claude Code renders markdown in its output,
+`**bold**`, `## headers`, `> blockquotes`, and backtick inline code within `<output>`
+block text will render with visual hierarchy.
 
 ### Testing Requirements
 
@@ -181,7 +183,10 @@ This story uses EDD (Eval-Driven Development) — see Momentum Implementation Gu
 ### Project Structure Notes
 
 All workflow.md files are under `skills/momentum/skills/{skill-name}/workflow.md`.
-There are 18 files to update across Tasks 1–3.
+There are 18 workflow.md files that contain `<output>` blocks, across Tasks 1–3.
+Two additional workflow.md files exist (`feature-status/workflow.md` and
+`sprint-manager/workflow.md`) but contain no `<output>` blocks — they are correctly
+excluded from the touches list.
 
 No new files are created. No directory structure changes.
 
@@ -189,7 +194,6 @@ No new files are created. No directory structure changes.
 
 - [Claude Code markdown rendering]: Claude Code renders markdown in stdout — `**bold**`,
   `## headers`, `` `code` ``, `> blockquotes` all apply visual formatting in the terminal
-- [Existing story with formatted output]: `_bmad-output/implementation-artifacts/stories/8-3-gemini-deep-research-automation.md` — the completion signal in this story's `create-story/workflow.md` output block is an example of what good looks like
 - [Epic Ad-Hoc]: `_bmad-output/planning-artifacts/epics.md` § "Epic Ad-Hoc: Ad-Hoc Work"
 
 ## Momentum Implementation Guide
@@ -205,8 +209,7 @@ No new files are created. No directory structure changes.
 prompts — unit tests do not apply. Use EDD:
 
 **Before writing a single line of the changes:**
-1. Write 2–3 behavioral evals in `skills/momentum/skills/create-story/evals/`
-   (evals/ already exists — add to it, or create evals/ in the skill being changed):
+1. Write 2–3 behavioral evals distributed across representative skill directories:
    - One `.md` file per eval, named descriptively (e.g.,
      `eval-output-uses-markdown-headers.md`, `eval-output-warns-in-blockquote.md`)
    - Format each eval as: "Given [input and context], the skill should [observable
@@ -214,16 +217,17 @@ prompts — unit tests do not apply. Use EDD:
    - Test observable formatting behavior, not exact text
 
    **Suggested evals:**
-   - `eval-output-uses-markdown-headers.md`: Given a sprint-planning workflow that
-     completes successfully, the output should use `##` section headers to separate
-     the sprint summary from the next-steps block, and story slugs should appear in
-     bold or inline code
-   - `eval-output-warns-in-blockquote.md`: Given a quick-fix workflow that encounters
-     a gate failure (e.g., AVFL GATE_FAILED), the output should render the warning in
-     a `>` blockquote so it stands out visually from surrounding text
-   - `eval-no-behavior-change.md`: Given any workflow step where only `<output>` text
-     was updated, the workflow's action sequence, conditional logic, and variable
-     placeholders are unchanged — only the human-readable text gained formatting
+   - `sprint-planning/evals/eval-output-uses-markdown-headers.md`: Given a
+     sprint-planning workflow that completes successfully, the output should use `##`
+     section headers to separate the sprint summary from the next-steps block, and
+     story slugs should appear in bold or inline code
+   - `quick-fix/evals/eval-output-warns-in-blockquote.md`: Given a quick-fix workflow
+     that encounters a gate failure (e.g., AVFL GATE_FAILED), the output should render
+     the warning in a `>` blockquote so it stands out visually from surrounding text
+   - `retro/evals/eval-no-behavior-change.md`: Given any workflow step where only
+     `<output>` text was updated, the workflow's action sequence, conditional logic,
+     and variable placeholders are unchanged — only the human-readable text gained
+     formatting
 
 **Then implement:**
 2. Apply formatting to `<output>` blocks in each workflow.md, following the rules in
