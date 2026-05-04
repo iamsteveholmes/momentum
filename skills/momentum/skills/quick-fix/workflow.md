@@ -269,7 +269,7 @@ Choose:
     </check>
 
     <check if="AVFL returns GATE_FAILED">
-      <output>AVFL checkpoint FAILED — plan has defects that must be resolved before implementation.</output>
+      <output>> **AVFL checkpoint FAILED** — plan has defects that must be resolved before implementation.</output>
       <action>Address findings (re-invoke create-story or Gherkin subagent as needed). Re-run AVFL.</action>
     </check>
 
