@@ -3789,7 +3789,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Momentum Cycle — Sprint Lens + Sprint Detail Drill-Down",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3811,12 +3811,16 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-feature-l2-drill-down-reading-mode": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Momentum Cycle — Feature L2 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "momentum-cycle-features-lens"
+    ],
+    "touches": [
+      "skills/momentum/skills/canvas/server.tsx"
+    ],
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
