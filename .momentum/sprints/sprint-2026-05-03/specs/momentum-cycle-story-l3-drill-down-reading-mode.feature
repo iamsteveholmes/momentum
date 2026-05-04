@@ -6,7 +6,7 @@ Feature: Momentum Cycle — Story L3 Drill-Down (Reading Mode)
 
   Scenario: Developer reads a story in the polished reading view
     Given the developer navigates to a story via the Features lens drill-down path
-    When the story detail view loads
+    When the developer navigates to the story detail view
     Then the page displays the story title, acceptance criteria, and available metadata
     And the page uses a warm light reading surface
     And the URL reflects the story being viewed
@@ -19,13 +19,13 @@ Feature: Momentum Cycle — Story L3 Drill-Down (Reading Mode)
 
   Scenario: Breadcrumb reflects entry point when arriving from a feature
     Given the developer navigated to the story through a feature detail page
-    When the story detail view is displayed
+    When the developer arrives at the story detail view from a feature page
     Then the breadcrumb shows Feature and Dashboard as ancestor segments
     And Dashboard and Feature segments are clickable links
 
   Scenario: Breadcrumb reflects entry point when arriving from sprint detail
     Given the developer navigated to the story through a sprint detail page
-    When the story detail view is displayed
+    When the developer arrives at the story detail view from a sprint detail page
     Then the breadcrumb shows Sprint and Dashboard as ancestor segments
     And Dashboard and Sprint segments are clickable links
 

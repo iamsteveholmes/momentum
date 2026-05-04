@@ -192,6 +192,8 @@ The dashboard response resets the breadcrumb to just "Dashboard" in blue with no
 
 Single file touched: `skills/momentum/skills/canvas/server.tsx` (created by the dashboard shell story, extended here).
 
+**Merge Conflict Note:** This story runs in Wave 2 alongside momentum-cycle-features-lens, momentum-cycle-sprint-lens-sprint-detail-drill-down, and momentum-cycle-cycle-timeline-lens. All three stories modify skills/momentum/skills/canvas/server.tsx. To minimize conflicts: this story's changes are isolated to the `/lenses/sprint` and `/sprints/:slug` route handlers and helper functions. Do not modify the shell HTML (GET / route) — shell HTML changes are owned by Wave 1. When merging, the sequential merge gate in sprint-dev will sequence the merges — coordinate with the merge integrator if conflicts arise.
+
 No new files needed. The sprint data lives at:
 - `.momentum/sprints/index.json` — read relative to the Bun process's working directory (the project root where `bun --hot server.tsx` runs)
 - `.momentum/stories/index.json` — same root

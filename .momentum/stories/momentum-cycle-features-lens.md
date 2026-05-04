@@ -8,7 +8,8 @@ story_type: feature
 depends_on:
   - momentum-cycle-dashboard-shell-hono-bun-server
 touches:
-  - skills/momentum/skills/canvas/
+  - skills/momentum/skills/canvas/server.tsx
+  - skills/momentum/skills/canvas/server.test.ts
 ---
 
 # Momentum Cycle — Features Lens
@@ -25,7 +26,7 @@ Implement the `/lenses/features` Hono route and its rendered HTML fragment for t
 
 Each row in the features table displays: feature name, status badge (working=indigo `--accent #5863a8`, partial=amber, not-working=red, not-started=gray), gap indicator (terracotta `--gap #a85a2a` row background when `has_gap=true`), and a story fraction (N done / M total) with a mini progress bar. Rows sort: gap features first, then by status severity (not-working → partial → working → not-started), then alphabetically within each group.
 
-The dashboard shell placeholder `<div id="features-lens">` already has `hx-get="/lenses/features" hx-trigger="every 2s" hx-swap="innerHTML"` wired by the shell story. This story adds the server route that responds to those polls.
+Each Wave 2 story wires its own HTMX polling to the lens placeholder div. This story adds `hx-get="/lenses/features" hx-trigger="every 2s" hx-swap="innerHTML"` to the `id="lens-features"` placeholder and adds the server route that responds to those polls.
 
 **Pain context:** The current `momentum:feature-status` skill requires a manual re-run and writes a static HTML file. The Features lens polls live — the developer sees current state the moment features.json or stories/index.json changes.
 
@@ -97,7 +98,7 @@ This story adds a single Hono route to `server.tsx`. Per DEC-019 (Hono+HTMX+Bun 
 - `_bmad-output/planning-artifacts/features.json` — written solely by `momentum:feature-grooming`; the canvas never writes to it
 - `.momentum/stories/index.json` — written solely by `momentum:sprint-manager` and `momentum:sprint-planning`; the canvas never writes to it
 
-**Dependency:** `momentum-cycle-dashboard-shell-hono-bun-server` must be complete before this story begins. The HTMX polling wiring (`hx-get="/lenses/features" hx-trigger="every 2s"`) is already in the shell placeholder. This story only adds the server-side route.
+**Dependency:** `momentum-cycle-dashboard-shell-hono-bun-server` must be complete before this story begins. This story wires HTMX polling (`hx-get="/lenses/features" hx-trigger="every 2s" hx-swap="innerHTML"`) to the `id="lens-features"` placeholder div and adds the server-side route.
 
 **DEC-019 Gate 2 criterion:** This story helps satisfy Gate 2 — "Features lens updates within 2s of a features.json write; no flicker on re-render." The dev agent should verify this gate as part of Task 6 smoke testing.
 
@@ -150,6 +151,8 @@ if (await file.exists()) {
 **File scope:**
 - Modify: `skills/momentum/skills/canvas/server.tsx`
 - Create: `skills/momentum/skills/canvas/server.test.ts`
+
+**Merge Conflict Note:** This story runs in Wave 2 alongside momentum-cycle-features-lens, momentum-cycle-sprint-lens-sprint-detail-drill-down, and momentum-cycle-cycle-timeline-lens. All three stories modify skills/momentum/skills/canvas/server.tsx. To minimize conflicts: this story's changes are isolated to the `/lenses/features` route handler and helper functions. Do not modify the shell HTML (GET / route) — shell HTML changes are owned by Wave 1. When merging, the sequential merge gate in sprint-dev will sequence the merges — coordinate with the merge integrator if conflicts arise.
 
 ### References
 

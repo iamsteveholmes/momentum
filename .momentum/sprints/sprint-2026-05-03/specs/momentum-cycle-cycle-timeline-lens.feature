@@ -21,5 +21,5 @@ Feature: Momentum Cycle — Cycle Timeline Lens
 
   Scenario: Cycle timeline reflects updated sprint state within the polling interval
     Given the Cycle lens is visible on the dashboard
-    When the sprint index is updated to mark a sprint as complete with a retro timestamp
+    When the developer completes a sprint retro and the sprint data is updated accordingly
     Then the Cycle lens updates to show the retro phase as done within the polling interval without a page reload

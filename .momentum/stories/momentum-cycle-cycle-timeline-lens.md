@@ -203,7 +203,7 @@ This simplification is correct for the current sprint: the cycle timeline primar
 
 The dashboard shell story established the Cycle lens placeholder:
 ```html
-<div id="cycle-lens" hx-get="/lenses/cycle" hx-trigger="load, every 5s" hx-swap="innerHTML">
+<div id="lens-cycle" hx-get="/lenses/cycle" hx-trigger="load, every 5s" hx-swap="innerHTML">
   <!-- initial state rendered server-side on first request -->
 </div>
 ```
@@ -231,6 +231,8 @@ Connector lines between nodes use a thin horizontal rule at low opacity.
 ### Project Structure Notes
 
 All code for this story goes into `skills/momentum/skills/canvas/server.tsx`. No new files are created.
+
+**Merge Conflict Note:** This story runs in Wave 2 alongside momentum-cycle-features-lens, momentum-cycle-sprint-lens-sprint-detail-drill-down, and momentum-cycle-cycle-timeline-lens. All three stories modify skills/momentum/skills/canvas/server.tsx. To minimize conflicts: this story's changes are isolated to the `/lenses/cycle` route handler and helper functions. Do not modify the shell HTML (GET / route) — shell HTML changes are owned by Wave 1. When merging, the sequential merge gate in sprint-dev will sequence the merges — coordinate with the merge integrator if conflicts arise.
 
 This story depends on `momentum-cycle-dashboard-shell-hono-bun-server` being complete: the Hono server exists, the shell renders, and the Cycle lens placeholder div is present.
 
