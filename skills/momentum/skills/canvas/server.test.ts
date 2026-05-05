@@ -737,6 +737,12 @@ As a developer,
 I want to implement something,
 so that I can demonstrate it.
 
+## Description
+
+As a developer, I want to build something useful.
+
+This story covers the implementation of the reading mode feature for developer productivity.
+
 ## Acceptance Criteria
 
 1. Route renders HTML correctly
@@ -762,9 +768,11 @@ Unit tests required.
     expect(parsed.meta.story_type).toBe("feature");
   });
 
-  it("parses story narrative from ## Story section", () => {
+  it("parses story narrative from ## Description section (first prose paragraph, not user-story line)", () => {
     const parsed = parseStoryMarkdown(sampleStory);
-    expect(parsed.storyNarrative).toContain("As a developer");
+    // Should extract the first prose paragraph, skipping the "As a developer..." user-story line
+    expect(parsed.storyNarrative).toContain("reading mode feature");
+    expect(parsed.storyNarrative).not.toContain("As a developer");
   });
 
   it("parses acceptance criteria as array", () => {
@@ -839,6 +847,7 @@ describe("StoryDetailView", () => {
       "Breadcrumb swaps correctly via HTMX OOB",
     ],
     devNotes: "Some development notes about architecture.",
+    workflowSection: "",
     touches: ["skills/momentum/skills/canvas/server.tsx"],
   };
 
@@ -861,9 +870,9 @@ describe("StoryDetailView", () => {
     expect(h).toContain("My Test Story");
   });
 
-  it("renders story narrative when present", () => {
+  it("renders story narrative when present with Description label", () => {
     const h = String(StoryDetailView({ story: baseStory, from: null }));
-    expect(h).toContain("Story");
+    expect(h).toContain("Description");
     expect(h).toContain("As a developer");
     expect(h).toContain("story-narrative");
   });

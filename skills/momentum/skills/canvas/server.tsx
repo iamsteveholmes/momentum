@@ -1254,7 +1254,7 @@ function DashboardShell({
     /* Feature heading */
     .feature-heading {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 600;
       color: var(--ink);
       letter-spacing: -0.4px;
@@ -1425,9 +1425,8 @@ function DashboardShell({
       color: var(--inkFaint);
       letter-spacing: 0.3px;
     }
-    /* Story narrative — slightly smaller than feature value prose */
+    /* Story narrative — inherits 18px from .reading-prose */
     .story-narrative {
-      font-size: 16px;
       line-height: 1.70;
     }
     /* Acceptance criteria numbered list */
@@ -1438,8 +1437,8 @@ function DashboardShell({
     }
     .story-ac-list li {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 15px;
-      line-height: 1.65;
+      font-size: 18px;
+      line-height: 1.70;
       color: var(--ink);
       padding: 3px 0;
     }
@@ -1645,9 +1644,10 @@ export interface StoryMeta {
 
 export interface ParsedStory {
   meta: StoryMeta;
-  storyNarrative: string;       // The "As a..." paragraph
+  storyNarrative: string;       // First prose paragraph from ## Description (not user-story line)
   acceptanceCriteria: string[]; // Numbered list items
   devNotes: string;             // Full Dev Notes section text
+  workflowSection: string;      // ## Workflow section or frontmatter workflow field
   touches: string[];            // File list from touches
 }
 
@@ -1752,10 +1752,23 @@ export function parseStoryMarkdown(source: string): ParsedStory {
     derives_from: fm["derives_from"],
   };
 
-  // Extract the ## Story section for the narrative
-  const storySection = extractSection(source, "## Story");
-  // Grab the "As a..." paragraph — first non-empty block
-  const storyNarrative = storySection.split(/\n\n/)[0]?.trim() ?? "";
+  // Extract narrative from ## Description section — first prose paragraph only
+  // Skip "As a ..." user-story lines, list items, and headings
+  const descriptionSection = extractSection(source, "## Description");
+  let storyNarrative = "";
+  if (descriptionSection) {
+    const paragraphs = descriptionSection.split(/\n\n+/);
+    for (const para of paragraphs) {
+      const trimmed = para.trim();
+      if (!trimmed) continue;
+      if (trimmed.startsWith("As a ")) continue;          // user-story line
+      if (/^[-*]/.test(trimmed)) continue;                 // list item
+      if (/^\d+\./.test(trimmed)) continue;                // numbered list
+      if (trimmed.startsWith("#")) continue;               // heading
+      storyNarrative = trimmed;
+      break;
+    }
+  }
 
   // Acceptance criteria section
   const acSection = extractSection(source, "## Acceptance Criteria");
@@ -1766,7 +1779,11 @@ export function parseStoryMarkdown(source: string): ParsedStory {
   // Dev Notes section
   const devNotes = extractSection(source, "## Dev Notes");
 
-  return { meta, storyNarrative, acceptanceCriteria, devNotes, touches };
+  // Workflow section — body or frontmatter fallback
+  const bodyWorkflow = extractSection(source, "## Workflow");
+  const workflowSection = bodyWorkflow || fm["workflow"] || "";
+
+  return { meta, storyNarrative, acceptanceCriteria, devNotes, workflowSection, touches };
 }
 
 async function readStoryBySlug(slug: string): Promise<ParsedStory | null> {
@@ -1794,7 +1811,7 @@ export function StoryDetailView({
   from: "feature" | "sprint" | null;
   activeSprintSlug?: string | null;
 }) {
-  const { meta, storyNarrative, acceptanceCriteria, devNotes, touches } = story;
+  const { meta, storyNarrative, acceptanceCriteria, devNotes, workflowSection, touches } = story;
 
   // Breadcrumb path depends on entry point
   let breadcrumbMiddle: string;
@@ -1825,18 +1842,22 @@ export function StoryDetailView({
           .join("")}</ul>`
       : "";
 
-  // Truncate dev notes for reading mode — first 400 chars + ellipsis
-  const devNotesSummary =
-    devNotes.length > 400
-      ? devNotes.slice(0, 400).replace(/\s+\S*$/, "") + " …"
-      : devNotes;
-
   // Strip markdown formatting (_italic_, **bold**, `code`) for display
-  const cleanDevNotes = devNotesSummary
+  const cleanDevNotes = devNotes
     .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/_(.+?)_/g, "$1")
     .replace(/`(.+?)`/g, "$1")
     .replace(/#{1,6}\s/g, "");
+
+  // Count block-level elements to decide whether to collapse dev notes
+  const devNoteParagraphs = cleanDevNotes.split(/\n\n+/).filter((p) => p.trim().length > 0);
+  const devNoteListItems = cleanDevNotes.split(/\n/).filter((l) => /^\s*[-*]|\d+\./.test(l));
+  const devNoteBlockCount = devNoteParagraphs.length + devNoteListItems.length;
+  const devNotesShouldCollapse = devNoteBlockCount > 3 || cleanDevNotes.length > 400;
+  const devNotesInner = `<div class="reading-callout story-dev-notes">${cleanDevNotes}</div>`;
+  const devNotesHtml = devNotesShouldCollapse
+    ? `<details><summary>Dev Notes (click to expand)</summary>${devNotesInner}</details>`
+    : devNotesInner;
 
   return html`
     <!-- Breadcrumb OOB swap — light mode crumb bar for story reading -->
@@ -1851,7 +1872,7 @@ export function StoryDetailView({
         >dashboard</a>
         <span class="sep">/</span>
         ${raw(breadcrumbMiddle)}
-        <span class="seg here">${meta.story_key}</span>
+        <span class="seg here">Story</span>
       </div>
     </nav>
 
@@ -1881,7 +1902,7 @@ export function StoryDetailView({
         <!-- Value narrative / story statement -->
         ${storyNarrative
           ? html`
-            <div class="reading-section-label">Story</div>
+            <div class="reading-section-label">Description</div>
             <div class="reading-prose story-narrative">${storyNarrative}</div>
           `
           : ""}
@@ -1894,11 +1915,21 @@ export function StoryDetailView({
           `
           : ""}
 
-        <!-- Dev notes (collapsed summary) -->
+        <!-- Dev notes (collapsed if complex) -->
         ${devNotes && cleanDevNotes
           ? html`
             <div class="reading-section-label">Dev Notes</div>
-            <div class="reading-callout story-dev-notes">${cleanDevNotes}</div>
+            ${raw(devNotesHtml)}
+          `
+          : ""}
+
+        <!-- Workflow section -->
+        ${workflowSection
+          ? html`
+            <div class="reading-section">
+              <div class="reading-section-label">Workflow</div>
+              <div class="reading-col reading-prose">${workflowSection}</div>
+            </div>
           `
           : ""}
 
