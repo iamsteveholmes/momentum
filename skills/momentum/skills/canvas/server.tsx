@@ -1,7 +1,7 @@
 /**
  * Momentum Cycle Dashboard — Hono+Bun server
  *
- * Start: bun --hot skills/momentum/dashboard/server.tsx
+ * Start: bun --hot skills/momentum/skills/canvas/server.tsx
  * Port:  3456
  */
 
@@ -222,10 +222,21 @@ const tokens = {
 };
 
 // ---------------------------------------------------------------------------
+// Git hash — computed once at startup
+// ---------------------------------------------------------------------------
+let GIT_HASH = "no-git";
+try {
+  const result = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"]);
+  if (result.exitCode === 0) {
+    GIT_HASH = new TextDecoder().decode(result.stdout).trim();
+  }
+} catch {}
+
+// ---------------------------------------------------------------------------
 // Meta helpers
 // ---------------------------------------------------------------------------
 function shortHash(): string {
-  return Math.random().toString(36).slice(2, 9);
+  return GIT_HASH;
 }
 
 function isoDate(): string {

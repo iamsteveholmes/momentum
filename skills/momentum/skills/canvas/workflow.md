@@ -90,9 +90,19 @@ Then stop.
 
 ## Step 4 — Open dashboard in viewer pane
 
-Open `http://localhost:3456` in the viewer pane using cmux:
+Find the existing viewer pane surface ref:
 
 ```bash
+VIEWER=$(cmux list-panes 2>/dev/null | grep -i "viewer\|browser" | grep -o "surface:[0-9]*" | head -1)
+```
+
+Open `http://localhost:3456` in the viewer pane using cmux. If `VIEWER` is found, open into that surface; otherwise open without a surface flag (cmux will create a new browser surface):
+
+```bash
+# If VIEWER is set:
+cmux browser open --surface "$VIEWER" "http://localhost:3456"
+
+# If VIEWER is empty (fallback):
 cmux browser open "http://localhost:3456"
 ```
 
