@@ -652,7 +652,7 @@ export function FeatureDetailView({
     : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No stories linked</div>`;
 
   const depsHtml = deps.length > 0
-    ? `<ul class="reading-deps-list">${deps.map((d) => `<li>${d}</li>`).join("")}</ul>`
+    ? `<ul class="reading-deps-list">${deps.map((d) => `<li>${escapeHtml(d)}</li>`).join("")}</ul>`
     : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No dependencies</div>`;
 
   return html`
@@ -688,19 +688,19 @@ export function FeatureDetailView({
         <!-- Value narrative -->
         ${feature.value_analysis ? html`
           <div class="reading-section-label">Value Narrative</div>
-          <div class="reading-prose">${feature.value_analysis}</div>
+          <div class="reading-prose">${escapeHtml(feature.value_analysis)}</div>
         ` : ""}
 
         <!-- Acceptance condition -->
         ${feature.acceptance_condition ? html`
           <div class="reading-section-label">Acceptance Condition</div>
-          <div class="reading-ac-box">${feature.acceptance_condition}</div>
+          <div class="reading-ac-box">${escapeHtml(feature.acceptance_condition)}</div>
         ` : ""}
 
         <!-- System context -->
         ${feature.system_context ? html`
           <div class="reading-section-label">System Context</div>
-          <div class="reading-callout">${feature.system_context}</div>
+          <div class="reading-callout">${escapeHtml(feature.system_context)}</div>
         ` : ""}
 
         <!-- Stories list -->
@@ -1305,6 +1305,9 @@ function DashboardShell({
       max-width: 65ch;
     }
 
+    /* Reading section wrapper */
+    .reading-section { margin-top: 1.5rem; }
+
     /* Section labels in reading mode */
     .reading-section-label {
       font-family: "JetBrains Mono", monospace;
@@ -1862,10 +1865,13 @@ export function StoryDetailView({
 
   // Count block-level elements to decide whether to collapse dev notes
   const devNoteParagraphs = cleanDevNotes.split(/\n\n+/).filter((p) => p.trim().length > 0);
-  const devNoteListItems = cleanDevNotes.split(/\n/).filter((l) => /^\s*[-*]|\d+\./.test(l));
-  const devNoteBlockCount = devNoteParagraphs.length + devNoteListItems.length;
-  const devNotesShouldCollapse = devNoteBlockCount > 3 || cleanDevNotes.length > 400;
-  const devNotesInner = `<div class="reading-callout story-dev-notes">${cleanDevNotes}</div>`;
+  const devNoteListItems = cleanDevNotes.split(/\n/).filter((l) => /^\s*(?:[-*]|\d+\.)\s/.test(l));
+  const shouldCollapseByItems = devNoteListItems.length > 3;
+  const shouldCollapseByParagraphs = devNoteParagraphs.filter(
+    (p) => !p.trim().startsWith("-") && !p.trim().startsWith("*")
+  ).length > 1;
+  const devNotesShouldCollapse = shouldCollapseByItems || shouldCollapseByParagraphs || cleanDevNotes.length > 400;
+  const devNotesInner = `<div class="reading-callout story-dev-notes">${escapeHtml(cleanDevNotes)}</div>`;
   const devNotesHtml = devNotesShouldCollapse
     ? `<details><summary>Dev Notes (click to expand)</summary>${devNotesInner}</details>`
     : devNotesInner;
@@ -1914,7 +1920,7 @@ export function StoryDetailView({
         ${storyNarrative
           ? html`
             <div class="reading-section-label">Description</div>
-            <div class="reading-prose story-narrative">${storyNarrative}</div>
+            <div class="reading-prose story-narrative">${escapeHtml(storyNarrative)}</div>
           `
           : ""}
 
@@ -1939,7 +1945,7 @@ export function StoryDetailView({
           ? html`
             <div class="reading-section">
               <div class="reading-section-label">Workflow</div>
-              <div class="reading-col reading-prose">${workflowSection}</div>
+              <div class="reading-col reading-prose">${escapeHtml(workflowSection)}</div>
             </div>
           `
           : ""}
@@ -2031,9 +2037,15 @@ app.get("/features/:slug", async (c) => {
       </div>
     `;
     if (isHtmx) return c.html(notFoundFragment);
-    return c.html(
-      DashboardShell({ hash: shortHash(), date: isoDate() }) as string
+    // Direct navigation — inject not-found content into shell
+    const notFoundShell = DashboardShell({ hash: shortHash(), date: isoDate() }) as string;
+    // Strip OOB nav tag (contains hx-swap-oob="true") from fragment before injecting
+    const notFoundContent = notFoundFragment.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
+    const notFoundFullHtml = notFoundShell.replace(
+      `<div id="main-content" style="flex:1; overflow-y:auto;">`,
+      `<div id="main-content" style="flex:1; overflow-y:auto;">${notFoundContent}`
     );
+    return c.html(notFoundFullHtml);
   }
 
   const storyMap = (await readStoriesIndex()) ?? {};
@@ -2051,8 +2063,8 @@ app.get("/features/:slug", async (c) => {
   const cycleState = computeCycleState(sprintsIndex);
   const cycleSection = CycleLensSection({ cycleState });
   const shell = DashboardShell({ hash: shortHash(), date: isoDate(), sprintSection, cycleSection }) as string;
-  // Inject feature content into #main-content and set reading breadcrumb
-  const breadcrumbHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a><span class="sep">/</span><span class="seg here">${escapeHtml(feature.name)}</span></div></nav>`;
+  // Strip OOB nav tag (contains hx-swap-oob="true") from fragment before injecting
+  const featureContent = fragmentHtml.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
   const fullHtml = shell
     .replace(
       `<nav id="breadcrumb" class="crumb-bar">`,
@@ -2060,7 +2072,7 @@ app.get("/features/:slug", async (c) => {
     )
     .replace(
       `<div id="main-content" style="flex:1; overflow-y:auto;">`,
-      `<div id="main-content" style="flex:1; overflow-y:auto;">${fragmentHtml.replace(/<!--[\s\S]*?hx-swap-oob="true"[\s\S]*?<\/nav>/m, "")}`
+      `<div id="main-content" style="flex:1; overflow-y:auto;">${featureContent}`
     );
   return c.html(fullHtml);
 });
