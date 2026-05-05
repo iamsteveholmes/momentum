@@ -1,41 +1,54 @@
 ---
 name: constitution-builder
-description: "Builds or regenerates the hot constitution (## Standing Rules + ## Quick Routing) for any KB-backed agent skill. Standing Rules encode always-on behavioral constraints; Quick Routing maps developer symptoms to exact wiki-query invocations. Use when: creating a new KB-backed skill, the wiki KB has grown and routing entries are stale, or you hear 'build constitution', 'generate routing table', 'update quick routing', 'add routing to this skill', 'add standing rules', or 'momentum:constitution-builder'. Also invoke proactively after wiki-ingest adds a major new technology area to the KB."
+description: "Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill. Covers what the agent owns, what it can't touch, always-on behavioral constraints, and symptom→wiki-query routing. Use when: creating a new KB-backed skill, the wiki KB has grown and routing entries are stale, or you hear 'build constitution', 'generate routing table', 'update quick routing', 'add routing to this skill', 'add standing rules', 'define agent permissions', or 'momentum:constitution-builder'. Also invoke proactively after wiki-ingest adds a major new technology area to the KB."
 model: claude-opus-4-6
 effort: medium
 ---
 
 # momentum:constitution-builder
 
-Builds the hot constitution for KB-backed agent skills — two always-loaded sections that together define how the skill behaves without reading anything from the cold KB.
+Builds the hot constitution for KB-backed agent skills — three always-loaded sections that together define what an agent can touch, how it must behave, and where to look things up.
 
 ## Architecture
 
 Three tiers:
 - **Cold KB** — full wiki vault (vault path from `~/.obsidian-wiki/config`). Not in context. Everything.
-- **Hot Constitution** — `## Standing Rules` + `## Quick Routing` in SKILL.md. Always loaded. Rules and routing.
+- **Hot Constitution** — `## Permissions` + `## Standing Rules` + `## Quick Routing` in SKILL.md. Always loaded.
 - **Hot Selective** — wiki pages pulled into context when a symptom fires.
 
-**Two distinct jobs:**
+**Three distinct jobs:**
 
-| Section | Purpose | Source |
+| Section | Purpose | Enforced by |
 |---|---|---|
-| `## Standing Rules` | Always-on behavioral constraints the agent must follow without looking anything up | Developer practices + KB principle pages |
-| `## Quick Routing` | Symptom → `wiki-query` — fast path to cold KB content | Derived from cold KB index |
+| `## Permissions` | What the agent owns, what it cannot touch | Claude Code harness (path patterns + tool restrictions) |
+| `## Standing Rules` | Always-on behavioral constraints | Agent judgment, informed by this section |
+| `## Quick Routing` | Symptom → `wiki-query` fast path to cold KB | Agent judgment, informed by routing table |
 
-Never collapse these. A TDD rule ("write the test first") is a constraint, not a reference. A Kotest assertion syntax question is a reference, not a constraint.
+Never collapse these. Permissions are enforced by the harness. Rules are honored by the agent. Routing is consulted by the agent.
+
+## Permission Pattern Syntax
+
+Claude Code's permission system supports path-pattern restrictions on file tools:
+
+```json
+"allow": ["Edit(/src/**)", "Write(/src/**)"]      // owns these paths
+"deny":  ["Edit(/docs/**)", "Read(./.env)"]        // cannot touch these
+"allow": ["Bash(./gradlew *)", "Bash(git *)"]      // bash allowlist
+"deny":  ["Bash(git push *)", "Bash(rm -rf *)"]    // bash blocklist
+```
+
+- `/path` — relative to project root
+- `//path` — absolute filesystem path
+- `~/path` — home directory
+- `*` — one directory level; `**` — recursive
+
+Permissions restrict downward only — a subagent cannot have more access than its parent session.
 
 ## Routing Entry Format (DEC-018)
 
-Entries must be prescriptive named scenarios — exact invocations, not advisory language:
-
 ```
 **[developer symptom or trigger scenario]** → `wiki-query [specific question]`
-```
-
-For fast index-only lookups (definitions, API lookups, quick facts):
-```
-**[symptom]** → `wiki-query quick answer: [question]`
+**[symptom]** → `wiki-query quick answer: [question]`  ← for fast index-only lookups
 ```
 
 Never write "consult KB if needed." Name the exact moment and exact query string.
@@ -48,121 +61,168 @@ Never write "consult KB if needed." Name the exact moment and exact query string
 
 Ask the developer:
 1. What skill are we building the constitution for? (name, or path to SKILL.md)
-2. What technologies and domains does this skill cover?
-3. What problems does a developer bring to this skill? Describe 3–5 typical scenarios.
-4. What non-negotiable practices apply? (e.g., TDD discipline, architecture patterns, code style invariants, specific library conventions)
+2. What is this agent's role in the development cycle? (e.g., sprint planner, dev, retro, research, analyst)
+3. What technologies and domains does this skill cover?
+4. What problems does a developer bring to this skill? Describe 3–5 typical scenarios.
+5. What non-negotiable practices apply? (TDD discipline, architecture patterns, code style invariants)
 
-Store: `{{target_skill_path}}`, `{{technologies}}`, `{{typical_scenarios}}`, `{{practices}}`
+Store: `{{target_skill_path}}`, `{{agent_role}}`, `{{technologies}}`, `{{typical_scenarios}}`, `{{practices}}`
 
-Check if `## Standing Rules` or `## Quick Routing` already exist in the target SKILL.md. If either does, note it — offer to regenerate, replace, or merge each section independently.
+Check if any constitution sections already exist in the target SKILL.md. Offer to regenerate, replace, or merge each independently.
 
-### Phase 2 — Generate Standing Rules
+### Phase 2 — Permission Scoping
 
-Standing Rules are hard-coded behavioral constraints — things the agent must always do or never do, without a KB lookup. They come from two sources:
+This is the most important phase for multi-agent systems. The goal is to define hard boundaries: what this agent owns and what it has no business touching.
 
-**A. KB principle pages** — if the developer listed practices (e.g., TDD, a specific architecture), query the KB for any synthesis or principle pages on those practices:
-- `wiki-query [practice] principles` — retrieve the relevant pages
-- Extract the non-negotiable constraints (never/always rules, sequencing requirements, decision criteria)
-- Do NOT route to these pages — distill the rules directly into the section
+Ask the developer these questions in order:
 
-**B. Developer elicitation** — for practices not in the KB, or where the developer has project-specific conventions that override general guidance, ask:
-- "What should the agent always do when [scenario from Phase 1]?"
-- "Are there any hard rules about ordering, naming, patterns, or tooling in this codebase?"
+**A. What does this agent own?** (generates write allowlist)
+- "What files or directories is this agent responsible for creating or modifying as part of its job?"
+- Examples: source files, sprint indexes, story files, KB research pages, planning artifacts
+- For each answer, derive the path pattern: `Edit(/path/**)` or `Write(/path/**)`
 
-Format as grouped rules under named subsections:
+**B. What should it never write to?** (generates write denylist)
+- "What files or directories should this agent never modify, even if it thinks it needs to?"
+- Think about: other agents' domains, config files, secrets, shared indexes it doesn't own
+- For each answer, derive: `Edit(/path/**)` or `Write(/path/**)`
+
+**C. What should it never read?** (generates read denylist)
+- "Is there anything this agent has no business knowing? Secrets, other projects, business docs it doesn't need?"
+- For each answer, derive: `Read(/path/**)` or `Read(./.env)`
+
+**D. What bash commands does it need?** (generates bash allowlist)
+- "What shell operations are legitimate for this agent's job?" (build, test, git, search)
+- Be specific: `Bash(./gradlew *)` not just "gradle stuff"
+
+**E. What bash commands should it never run?** (generates bash denylist)
+- "What's off-limits?" (destructive ops, network calls, deployments, force pushes)
+- Be specific: `Bash(git push --force *)`, `Bash(rm -rf *)`
+
+Generate the permission block:
 
 ```markdown
-## Standing Rules
+## Permissions
 
-### [Practice Name, e.g., Test-Driven Development]
-- [Constraint phrased as always/never/must/before]
-- ...
+### Owns — may read and write
+- [path description] → `Edit(/path/**)`, `Write(/path/**)`
 
-### [Architecture Pattern, e.g., MVI]
-- ...
+### Off-limits — may not write
+- [path description] → denied write
+
+### Off-limits — may not read
+- [path description] → denied read
+
+### Bash allowlist
+- [command] — [why it needs this]
+
+### Bash denylist
+- [command] — [why it's blocked]
+
+### settings.json snippet
+\`\`\`json
+{
+  "permissions": {
+    "allow": [
+      "Edit(/path/**)",
+      "Bash(git *)"
+    ],
+    "deny": [
+      "Edit(/other/**)",
+      "Read(./.env)",
+      "Bash(git push *)"
+    ]
+  }
+}
+\`\`\`
 ```
 
-Rules should be:
-- **Actionable** — specific enough that the agent can follow without judgment
+Present to the developer. Ask: anything missing? Any path patterns that seem too broad or too narrow?
+
+### Phase 3 — Generate Standing Rules
+
+Standing Rules are behavioral constraints — things the agent must always do or never do, without a KB lookup.
+
+**A. KB principle pages** — query for any synthesis or principle pages on the declared practices:
+- `wiki-query [practice] principles`
+- Extract non-negotiable constraints (never/always rules, sequencing, decision criteria)
+- Distill directly into rules — do NOT route to these pages
+
+**B. Developer elicitation** — for project-specific conventions:
+- "What should this agent always do when [scenario]?"
+- "Any hard rules about ordering, naming, or tooling?"
+
+Rules must be:
+- **Actionable** — specific enough to follow without judgment
 - **Unconditional** — if it has exceptions, it's a guideline, not a rule
-- **Not redundant with routing** — if it needs a KB lookup to apply, it belongs in Quick Routing, not here
+- **Not redundant with routing** — if it needs a KB lookup to apply, it belongs in Quick Routing
 
-Present the draft Standing Rules to the developer. Ask: anything missing, wrong, or too rigid?
+Present draft. Ask: anything missing, wrong, or too rigid?
 
-### Phase 3 — Audit the KB
+### Phase 4 — Audit the KB
 
-Read the wiki KB index:
-
-1. Get vault path: `cat ~/.obsidian-wiki/config` — extract `OBSIDIAN_VAULT_PATH`
+1. `cat ~/.obsidian-wiki/config` — extract `OBSIDIAN_VAULT_PATH`
 2. Read `{vault_path}/index.md`
-3. For each technology/domain from Phase 1, scan the index for relevant entries
+3. For each technology/domain from Phase 1, scan for relevant entries
 
-Present a three-category audit:
-
+Present three-category audit:
 ```
-Covered (will generate routing entries):
-  - [concept] — [index description]
-
-Partial (entries will be thin — consider ingesting more):
-  - [concept] — [what's there]
-
-Gaps (no routing entries possible without more KB content):
-  - [technology]
+Covered (will generate routing entries): [concept — description]
+Partial (entries will be thin): [concept — what's there]
+Gaps (no routing possible): [technology]
 ```
 
-The audit grounds the next step — don't generate routing entries for concepts with no KB backing.
+### Phase 5 — Fill Gaps (optional)
 
-### Phase 4 — Fill Gaps (optional)
+For each gap or partial: "Would you like to ingest documentation now? I can invoke wiki-research or wiki-ingest."
 
-For each gap or partial concept, ask: "Would you like to ingest documentation for [technology] now? I can invoke wiki-research or wiki-ingest."
+If yes: invoke the skill, then re-read the index before continuing.
 
-If yes: invoke the appropriate wiki skill. After ingest, re-read the index for newly added concepts before continuing.
-
-If no: note the gap — routing coverage will be limited for that domain.
-
-### Phase 5 — Generate Routing Entries
+### Phase 6 — Generate Routing Entries
 
 For each **covered** concept:
+1. `wiki-query [concept]` — retrieve relevant pages
+2. Read returned pages — understand what problems they answer
+3. Write 2–4 entries per concept:
+   - **Symptom**: what the agent or developer would say, observe, or ask — specific and observable
+   - **Query**: exact wiki-query invocation
 
-1. Retrieve the relevant wiki pages: `wiki-query [concept]`
-2. Read the returned pages — understand what problems they answer, what errors they address, what decisions they inform
-3. Write 2–4 routing entries per concept:
-   - **Symptom**: what a developer would say, observe, or ask — specific and observable
-   - **Query**: the exact wiki-query invocation that retrieves the right pages
+Group into thematic subsections. Avoid routing to anything already covered by Standing Rules.
 
-Group entries into thematic subsections (e.g., `### Validation`, `### Testing`, `### State Management`).
+**Strong symptom phrasing:** specific, observable, diagnostic, scenario-based.
+**Weak phrasing to avoid:** "general questions about X", "use when you need help with X".
 
-**Strong symptom phrasing:**
-- "coroutine test won't advance virtual time" — specific, observable
-- "StateFlow not updating UI after emit" — diagnostic
-- "how to wire Ktor request into a use case" — scenario-based
+### Phase 7 — Review
 
-**Weak phrasing to avoid:**
-- "general Kotest questions" — not a symptom
-- "use when you need help with X" — not prescriptive
+Present all three sections together.
 
-**Avoid routing to principles already in Standing Rules.** If TDD red-green-refactor is a standing rule, don't add a routing entry for "how does TDD work" — that's already answered. Route only to implementation details the standing rule doesn't cover.
+For Permissions: are the path patterns right? Too broad, too narrow? Anything missing?
+For Standing Rules: anything missing, wrong, or too rigid?
+For Quick Routing: missing symptoms? Wrong query strings? Anything to cut?
 
-### Phase 6 — Review
+Incorporate feedback. Target: complete permission coverage, 3–8 standing rule groups, 15–40 routing entries.
 
-Present both sections together. For Standing Rules, ask:
-- Any rules missing?
-- Any that are too rigid or have valid exceptions we should handle differently?
+### Phase 8 — Write
 
-For Quick Routing, ask:
-- Any symptoms missing?
-- Do the query strings match what you'd actually search?
-- Anything to cut?
+Write all three sections into `{{target_skill_path}}`.
 
-Incorporate feedback. Target 3–8 standing rule groups, 15–40 routing entries.
-
-### Phase 7 — Write
-
-Format and write both sections into `{{target_skill_path}}`.
-
-**Order in SKILL.md:** Standing Rules before Quick Routing. Both go after the skill's opening description.
+**Order in SKILL.md:** Permissions first, then Standing Rules, then Quick Routing. All go after the skill's opening description.
 
 ```markdown
+## Permissions
+
+### Owns — may read and write
+- ...
+
+### Off-limits — may not write
+- ...
+
+### settings.json snippet
+\`\`\`json
+{ "permissions": { "allow": [...], "deny": [...] } }
+\`\`\`
+
+---
+
 ## Standing Rules
 
 ### [Practice]
@@ -179,7 +239,7 @@ Use this table first. Match your situation to a scenario and run the wiki-query 
 ```
 
 Write behavior:
-- If neither section exists: insert both after the opening description
-- If one or both exist: show existing, confirm replacement per section, then write
+- No existing sections: insert all three after the opening description
+- Partial: show existing, confirm replacement per section, then write
 
-Report: "Constitution written — N standing rules across M groups, P routing entries across Q subsections."
+Report: "Constitution written — permissions defined, N standing rules across M groups, P routing entries across Q subsections."
