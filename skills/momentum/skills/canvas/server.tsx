@@ -173,9 +173,6 @@ function renderFeaturesTable(rows: FeatureRow[]): string {
 
   return rows
     .map((row) => {
-      const gapStyle = row.has_gap
-        ? ' style="background:var(--gap,#a85a2a);"'
-        : "";
       const gapIcon = row.has_gap
         ? ' <span title="Gap detected" style="color:#fff8;font-size:10px;">⚠</span>'
         : "";
@@ -185,7 +182,7 @@ function renderFeaturesTable(rows: FeatureRow[]): string {
       const badgeStyle = `background:${badgeColor(row.status)};color:#fff;padding:2px 7px;border-radius:3px;font-size:9.5px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;`;
       const tdStyle = "padding:7px 10px;font-size:12px;vertical-align:middle;border-bottom:1px solid var(--ruleDark,rgba(255,252,245,0.10));";
 
-      return `<tr${gapStyle} hx-get="/features/${row.feature_slug}" hx-target="#main-content" hx-push-url="/features/${row.feature_slug}" style="cursor:pointer;${row.has_gap ? "background:var(--gap,#a85a2a);" : ""}">
+      return `<tr hx-get="/features/${row.feature_slug}" hx-target="#main-content" hx-push-url="/features/${row.feature_slug}" style="cursor:pointer;${row.has_gap ? "background:var(--gap,#a85a2a);" : ""}">
   <td style="${tdStyle}color:var(--inkOnDark,#f0eee9);">${row.name}${gapIcon}</td>
   <td style="${tdStyle}"><span style="${badgeStyle}">${row.status}</span></td>
   <td style="${tdStyle}color:var(--inkOnDarkMuted,rgba(240,238,233,0.70));font-variant-numeric:tabular-nums;">${done}/${total} <progress value="${done}" max="${Math.max(total,1)}" style="height:6px;width:60px;vertical-align:middle;accent-color:${badgeColor(row.status)};"></progress></td>
@@ -590,7 +587,7 @@ export function buildFeatureStoryRows(
   storyMap: StoryMap
 ): Array<{ slug: string; title: string; status: string }> {
   const slugs = feature.stories ?? [];
-  return slugs.map((slug) => {
+  const rows = slugs.map((slug) => {
     const entry = storyMap[slug];
     return {
       slug,
@@ -598,6 +595,13 @@ export function buildFeatureStoryRows(
       status: entry?.status ?? "backlog",
     };
   });
+  const STATUS_ORDER = ['in-progress', 'review', 'verify', 'ready-for-dev', 'backlog', 'done'];
+  rows.sort((a, b) => {
+    const ai = STATUS_ORDER.indexOf(a.status);
+    const bi = STATUS_ORDER.indexOf(b.status);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+  return rows;
 }
 
 function FeatureStoryRow({ slug, title, status }: { slug: string; title: string; status: string }) {
@@ -608,6 +612,7 @@ function FeatureStoryRow({ slug, title, status }: { slug: string; title: string;
       class="reading-story-row"
       hx-get="/stories/${slug}?from=feature"
       hx-target="#main-content"
+      hx-swap="innerHTML"
       hx-push-url="/stories/${slug}?from=feature"
     >
       <span class="reading-story-title">
@@ -1226,9 +1231,13 @@ function DashboardShell({
     .reading-surface {
       background: var(--readingPaper);
       color: var(--ink);
-      transition: background 140ms ease, color 140ms ease;
+      animation: fadeInLight 140ms ease forwards;
       min-height: 100%;
       padding: 24px 20px 40px;
+    }
+    @keyframes fadeInLight {
+      from { background: var(--paperDark, #16140f); }
+      to { background: var(--readingPaper, #faf6ec); }
     }
 
     /* Breadcrumb override for reading mode (light background) */
@@ -1960,9 +1969,10 @@ app.get("/stories/:slug", async (c) => {
 app.get("/features/:slug", async (c) => {
   const slug = c.req.param("slug");
   const feature = await readFeatureBySlug(slug);
+  const isHtmx = !!c.req.header("HX-Request");
 
   if (!feature) {
-    return c.html(`
+    const notFoundFragment = `
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
           <a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
@@ -1973,17 +1983,44 @@ app.get("/features/:slug", async (c) => {
       <div class="reading-surface">
         <div class="reading-col">
           <div style="font-family:'Source Serif 4',serif;font-size:16px;font-style:italic;color:var(--inkMuted);padding-top:16px;">
-            Feature "${slug}" not found.
+            Feature "${escapeHtml(slug)}" not found.
           </div>
         </div>
       </div>
-    `);
+    `;
+    if (isHtmx) return c.html(notFoundFragment);
+    return c.html(
+      DashboardShell({ hash: shortHash(), date: isoDate() }) as string
+    );
   }
 
   const storyMap = (await readStoriesIndex()) ?? {};
   const storyRows = buildFeatureStoryRows(feature, storyMap);
+  const fragmentHtml = FeatureDetailView({ feature, storyRows }) as string;
 
-  return c.html(FeatureDetailView({ feature, storyRows }) as string);
+  if (isHtmx) {
+    return c.html(fragmentHtml);
+  }
+
+  // Direct browser navigation — wrap in full shell with reading mode pre-loaded
+  const sprintsIndex = await readSprintsIndex();
+  const activeSprint = sprintsIndex?.active ?? null;
+  const sprintSection = SprintLensSection({ sprint: activeSprint });
+  const cycleState = computeCycleState(sprintsIndex);
+  const cycleSection = CycleLensSection({ cycleState });
+  const shell = DashboardShell({ hash: shortHash(), date: isoDate(), sprintSection, cycleSection }) as string;
+  // Inject feature content into #main-content and set reading breadcrumb
+  const breadcrumbHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a><span class="sep">/</span><span class="seg here">${escapeHtml(feature.name)}</span></div></nav>`;
+  const fullHtml = shell
+    .replace(
+      `<nav id="breadcrumb" class="crumb-bar">`,
+      `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar">`
+    )
+    .replace(
+      `<div id="main-content" style="flex:1; overflow-y:auto;">`,
+      `<div id="main-content" style="flex:1; overflow-y:auto;">${fragmentHtml.replace(/<!--[\s\S]*?hx-swap-oob="true"[\s\S]*?<\/nav>/m, "")}`
+    );
+  return c.html(fullHtml);
 });
 
 // ---------------------------------------------------------------------------

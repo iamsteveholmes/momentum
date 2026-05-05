@@ -463,8 +463,9 @@ describe("buildFeatureStoryRows", () => {
     };
     const rows = buildFeatureStoryRows(feature, storyMap);
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toEqual({ slug: "story-a", title: "Story A", status: "done" });
-    expect(rows[1]).toEqual({ slug: "story-b", title: "Story B", status: "in-progress" });
+    // Sorted by STATUS_ORDER: in-progress (idx 0) before done (idx 5)
+    expect(rows[0]).toEqual({ slug: "story-b", title: "Story B", status: "in-progress" });
+    expect(rows[1]).toEqual({ slug: "story-a", title: "Story A", status: "done" });
   });
 
   it("falls back to slug as title when story is not in map", () => {
