@@ -461,7 +461,7 @@ interface SprintsIndex {
   completed?: SprintEntry[];
 }
 
-interface StoryEntry {
+interface SprintStoryEntry {
   status: string;
   title: string;
   epic_slug?: string;
@@ -469,7 +469,7 @@ interface StoryEntry {
 }
 
 interface StoriesIndex {
-  [slug: string]: StoryEntry;
+  [slug: string]: SprintStoryEntry;
 }
 
 async function readSprintsIndex(): Promise<SprintsIndex | null> {
@@ -483,7 +483,7 @@ async function readSprintsIndex(): Promise<SprintsIndex | null> {
   }
 }
 
-async function readStoriesIndex(): Promise<StoriesIndex | null> {
+async function readStoriesIndexRaw(): Promise<StoriesIndex | null> {
   try {
     const projectRoot = process.cwd();
     const file = Bun.file(join(projectRoot, ".momentum", "stories", "index.json"));
@@ -1533,7 +1533,7 @@ app.get("/", async (c) => {
 // ---------------------------------------------------------------------------
 app.get("/lens/features", async (c) => {
   const features = await readFeaturesJson();
-  const stories = await readStoriesIndex();
+  const stories = (await readStoriesIndex()) ?? {};
   const rows = buildSortedRows(features, stories);
   const tableBody = renderFeaturesTable(rows);
   return c.html(`
@@ -1600,7 +1600,7 @@ app.get("/sprints/:slug", async (c) => {
     `);
   }
 
-  const storiesIndex = await readStoriesIndex();
+  const storiesIndex = await readStoriesIndexRaw();
   const bands: Record<BandName, Array<{ slug: string; title: string; status: string }>> = {
     blocked: [],
     "in-progress": [],
@@ -1963,8 +1963,8 @@ app.get("/features/:slug", async (c) => {
     `);
   }
 
-  const storyMap = await readStoriesIndex();
-  const storyRows = buildFeatureStoryRows(feature, (storyMap ?? {}) as StoryMap);
+  const storyMap = (await readStoriesIndex()) ?? {};
+  const storyRows = buildFeatureStoryRows(feature, storyMap);
 
   return c.html(FeatureDetailView({ feature, storyRows }) as string);
 });
