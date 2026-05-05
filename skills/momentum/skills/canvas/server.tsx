@@ -290,7 +290,7 @@ function LensSection({
     <section
       id="lens-${id}"
       class="dash-section"
-      hx-get="/lens/${id}"
+      hx-get="/lenses/${id}"
       hx-trigger="${trigger}"
       hx-swap="outerHTML"
     >
@@ -1531,14 +1531,14 @@ app.get("/", async (c) => {
 // ---------------------------------------------------------------------------
 // Features lens route — Task 1 (reads features.json + stories/index.json)
 // ---------------------------------------------------------------------------
-app.get("/lens/features", async (c) => {
+app.get("/lenses/features", async (c) => {
   const features = await readFeaturesJson();
   const stories = (await readStoriesIndex()) ?? {};
   const rows = buildSortedRows(features, stories);
   const tableBody = renderFeaturesTable(rows);
   return c.html(`
     <section id="lens-features" class="dash-section"
-      hx-get="/lens/features"
+      hx-get="/lenses/features"
       hx-trigger="every 2s"
       hx-swap="outerHTML"
     >
@@ -1581,11 +1581,12 @@ app.get("/lenses/sprint", async (c) => {
 
 // Sprint detail drill-down
 app.get("/sprints/:slug", async (c) => {
+  const requestedSlug = c.req.param("slug");
   const sprintsIndex = await readSprintsIndex();
   const activeSprint = sprintsIndex?.active ?? null;
 
-  // Only the active sprint is drillable for now
-  if (!activeSprint) {
+  // Validate that the requested slug matches the active sprint
+  if (!activeSprint || activeSprint.slug !== requestedSlug) {
     return c.html(`
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
@@ -1595,7 +1596,7 @@ app.get("/sprints/:slug", async (c) => {
         </div>
       </nav>
       <div class="dash-section">
-        <div class="sprint-empty">No active sprint found.</div>
+        <div class="sprint-empty">${activeSprint ? `Sprint "${requestedSlug}" not found — only the active sprint is available.` : "No active sprint found."}</div>
       </div>
     `);
   }
@@ -1778,19 +1779,28 @@ async function readStoryBySlug(slug: string): Promise<ParsedStory | null> {
 export function StoryDetailView({
   story,
   from,
+  activeSprintSlug,
 }: {
   story: ParsedStory;
   from: "feature" | "sprint" | null;
+  activeSprintSlug?: string | null;
 }) {
   const { meta, storyNarrative, acceptanceCriteria, devNotes, touches } = story;
 
   // Breadcrumb path depends on entry point
-  const breadcrumbMiddle =
-    from === "sprint"
-      ? `<a class="seg" hx-get="/lenses/sprint" hx-target="#main-content" hx-push-url="/sprints/${meta.story_key}" style="cursor:pointer;">sprint</a><span class="sep">/</span>`
-      : from === "feature" && meta.feature_slug
-      ? `<a class="seg" hx-get="/features/${meta.feature_slug}" hx-target="#main-content" hx-push-url="/features/${meta.feature_slug}" style="cursor:pointer;">feature</a><span class="sep">/</span>`
-      : "";
+  let breadcrumbMiddle: string;
+  if (from === "sprint") {
+    if (activeSprintSlug) {
+      breadcrumbMiddle = `<a class="seg" hx-get="/sprints/${activeSprintSlug}" hx-target="#main-content" hx-push-url="/sprints/${activeSprintSlug}" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
+    } else {
+      // Degraded fallback: no active sprint slug available
+      breadcrumbMiddle = `<a class="seg" hx-get="/lenses/sprint" hx-target="#main-content" hx-push-url="/lenses/sprint" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
+    }
+  } else if (from === "feature" && meta.feature_slug) {
+    breadcrumbMiddle = `<a class="seg" hx-get="/features/${meta.feature_slug}" hx-target="#main-content" hx-push-url="/features/${meta.feature_slug}" style="cursor:pointer;">feature</a><span class="sep">/</span>`;
+  } else {
+    breadcrumbMiddle = "";
+  }
 
   const acListHtml =
     acceptanceCriteria.length > 0
@@ -1936,7 +1946,14 @@ app.get("/stories/:slug", async (c) => {
     `);
   }
 
-  return c.html(StoryDetailView({ story, from }) as string);
+  // Read active sprint slug for sprint breadcrumb navigation
+  let activeSprintSlug: string | null = null;
+  if (from === "sprint") {
+    const sprintsData = await readSprintsIndex();
+    activeSprintSlug = sprintsData?.active?.slug ?? null;
+  }
+
+  return c.html(StoryDetailView({ story, from, activeSprintSlug }) as string);
 });
 
 // Feature L2 drill-down — reading mode
