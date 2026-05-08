@@ -79,3 +79,6 @@ _bmad/_memory/
 
 # Retired sprint-log infrastructure — see retire-sprint-log-final-cleanup (ARCH-5)
 .claude/momentum/sprint-logs/
+
+# Bun dependencies
+node_modules/

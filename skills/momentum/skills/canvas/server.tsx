@@ -1155,7 +1155,7 @@ function DashboardShell({
     .cycle-node.skipped .lbl { color: var(--inkOnDarkFaint); opacity: 0.45; }
     .cycle-node.next .dot {
       background: var(--paperDark); border-color: var(--accent); border-width: 2px;
-      box-shadow: 0 0 0 3px rgba(88,99,168,0.30);
+      box-shadow: 0 0 0 3px var(--accent);
     }
     .cycle-node.next .lbl { color: var(--accent); font-weight: 500; }
     .cycle-node.pending .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }

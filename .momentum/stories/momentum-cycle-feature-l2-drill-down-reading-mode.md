@@ -1,7 +1,7 @@
 ---
 title: Momentum Cycle — Feature L2 Drill-Down (Reading Mode)
 story_key: momentum-cycle-feature-l2-drill-down-reading-mode
-status: ready-for-dev
+status: review
 epic_slug: feature-orientation
 feature_slug: momentum-canvas
 story_type: feature
