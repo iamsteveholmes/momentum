@@ -658,13 +658,7 @@ export function FeatureDetailView({
     <!-- Breadcrumb OOB swap — light mode crumb bar -->
     <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
       <div class="crumbs">
-        <a
-          class="seg"
-          hx-get="/"
-          hx-target="#main-content"
-          hx-push-url="/"
-          style="cursor:pointer;"
-        >dashboard</a>
+        <a class="seg" href="/">dashboard</a>
         <span class="sep">/</span>
         <span class="seg here">${feature.name}</span>
       </div>
@@ -796,13 +790,7 @@ function SprintDetailView({
     <!-- Breadcrumb OOB swap — HTMX processes this before inserting into target -->
     <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
       <div class="crumbs">
-        <a
-          class="seg"
-          hx-get="/"
-          hx-target="#main-content"
-          hx-push-url="/"
-          style="cursor:pointer;"
-        >dashboard</a>
+        <a class="seg" href="/">dashboard</a>
         <span class="sep">/</span>
         <span class="seg here">sprint</span>
       </div>
@@ -896,11 +884,15 @@ function DashboardShell({
   date,
   sprintSection,
   cycleSection,
+  mainContent,
+  navHtml,
 }: {
   hash: string;
   date: string;
   sprintSection?: unknown;
   cycleSection?: unknown;
+  mainContent?: string;
+  navHtml?: string;
 }) {
   return html`<!doctype html>
 <html lang="en">
@@ -1499,17 +1491,19 @@ function DashboardShell({
     </header>
 
     <!-- Breadcrumb nav -->
-    <nav id="breadcrumb" class="crumb-bar">
+    ${navHtml != null ? raw(navHtml) : html`<nav id="breadcrumb" class="crumb-bar">
       <div class="crumbs">
         <span class="seg here">dashboard</span>
       </div>
-    </nav>
+    </nav>`}
 
     <!-- Scrollable lens area (HTMX main-content swap target) -->
     <div id="main-content" style="flex:1; overflow-y:auto;">
+      ${mainContent != null ? raw(mainContent) : html`
       ${cycleSection ?? LensSection({ id: "cycle",    tag: "Cycle",    title: "Cycle"    })}
       ${sprintSection ?? SprintLensSection({ sprint: null })}
       ${LensSection({ id: "features", tag: "Features", title: "Features" })}
+      `}
     </div>
 
   </div>
@@ -1758,6 +1752,18 @@ export function parseStoryMarkdown(source: string): ParsedStory {
   const fm = parseFrontmatter(source);
   const touches = parseTouchesFromSource(source);
 
+  // If no frontmatter found, extract title from first H1 and inline Status field
+  if (!fm["title"] && !fm["story_key"]) {
+    const h1 = source.match(/^#\s+(.+)$/m);
+    if (h1) fm["title"] = h1[1].trim();
+    const statusMatch = source.match(/^Status:\s*(.+)$/mi);
+    if (statusMatch) fm["status"] = statusMatch[1].trim();
+    const epicMatch = source.match(/^Epic:\s*(.+)$/mi);
+    if (epicMatch) fm["epic_slug"] = epicMatch[1].trim();
+    const featureMatch = source.match(/^Feature:\s*(.+)$/mi);
+    if (featureMatch) fm["feature_slug"] = featureMatch[1].trim();
+  }
+
   const meta: StoryMeta = {
     title: fm["title"] ?? "",
     story_key: fm["story_key"] ?? "",
@@ -1838,8 +1844,13 @@ export function StoryDetailView({
       // Degraded fallback: no active sprint slug available
       breadcrumbMiddle = `<a class="seg" href="/">sprint</a><span class="sep">/</span>`;
     }
-  } else if (from === "feature" && meta.feature_slug) {
-    breadcrumbMiddle = `<a class="seg" href="/features/${meta.feature_slug}">feature</a><span class="sep">/</span>`;
+  } else if (from === "feature") {
+    if (meta.feature_slug) {
+      breadcrumbMiddle = `<a class="seg" href="/features/${meta.feature_slug}">feature</a><span class="sep">/</span>`;
+    } else {
+      // feature_slug unavailable (e.g. stub file without frontmatter) — show unlinkable segment
+      breadcrumbMiddle = `<a class="seg" href="/">feature</a><span class="sep">/</span>`;
+    }
   } else {
     breadcrumbMiddle = "";
   }
@@ -1882,13 +1893,7 @@ export function StoryDetailView({
     <!-- Breadcrumb OOB swap — light mode crumb bar for story reading -->
     <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
       <div class="crumbs">
-        <a
-          class="seg"
-          hx-get="/"
-          hx-target="#main-content"
-          hx-push-url="/"
-          style="cursor:pointer;"
-        >dashboard</a>
+        <a class="seg" href="/">dashboard</a>
         <span class="sep">/</span>
         ${raw(breadcrumbMiddle)}
         <span class="seg here">Story</span>
@@ -1986,6 +1991,11 @@ app.get("/stories/:slug", async (c) => {
 
   const story = await readStoryBySlug(slug);
 
+  if (story) {
+    if (!story.meta.story_key) story.meta.story_key = slug;
+    if (!story.meta.title) story.meta.title = slug.replace(/-/g, ' ');
+  }
+
   if (!story) {
     return c.html(`
       <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
@@ -2058,25 +2068,16 @@ app.get("/features/:slug", async (c) => {
     return c.html(fragmentHtml);
   }
 
-  // Direct browser navigation — wrap in full shell with reading mode pre-loaded
-  const sprintsIndex = await readSprintsIndex();
-  const activeSprint = sprintsIndex?.active ?? null;
-  const sprintSection = SprintLensSection({ sprint: activeSprint });
-  const cycleState = computeCycleState(sprintsIndex);
-  const cycleSection = CycleLensSection({ cycleState });
-  const shell = DashboardShell({ hash: shortHash(), date: isoDate(), sprintSection, cycleSection }) as string;
+  // Direct browser navigation — wrap in full shell with ONLY the feature content in #main-content
   // Strip OOB nav tag (contains hx-swap-oob="true") from fragment before injecting
   const featureContent = fragmentHtml.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
-  const fullHtml = shell
-    .replace(
-      `<nav id="breadcrumb" class="crumb-bar">`,
-      `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar">`
-    )
-    .replace(
-      `<div id="main-content" style="flex:1; overflow-y:auto;">`,
-      `<div id="main-content" style="flex:1; overflow-y:auto;">${featureContent}`
-    );
-  return c.html(fullHtml);
+  const featureNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">/</span><span class="seg here">${escapeHtml(feature.name)}</span></div></nav>`;
+  return c.html(DashboardShell({
+    hash: shortHash(),
+    date: isoDate(),
+    mainContent: featureContent,
+    navHtml: featureNavHtml,
+  }) as string);
 });
 
 // ---------------------------------------------------------------------------

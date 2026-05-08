@@ -584,15 +584,16 @@ describe("FeatureDetailView", () => {
   it("renders breadcrumb OOB swap with Dashboard link and Feature label in accent", () => {
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
     expect(html).toContain('hx-swap-oob="true"');
-    expect(html).toContain('hx-get="/"');
+    expect(html).toContain('href="/"');
     expect(html).toContain("dashboard");
     // Feature name appears as breadcrumb "here" segment
     expect(html).toContain("Momentum Canvas");
   });
 
-  it("renders hx-push-url for breadcrumb navigation back to root", () => {
+  it("renders pure href for breadcrumb navigation back to root", () => {
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain('hx-push-url="/"');
+    expect(html).toContain('href="/"');
+    expect(html).not.toContain('hx-push-url="/"');
   });
 
   it("reads 65ch measure column via reading-col class", () => {
@@ -906,7 +907,8 @@ describe("StoryDetailView", () => {
     const h = String(StoryDetailView({ story: baseStory, from: null }));
     expect(h).toContain('hx-swap-oob="true"');
     expect(h).toContain("dashboard");
-    expect(h).toContain('hx-get="/"');
+    expect(h).toContain('href="/"');
+    expect(h).not.toContain('hx-get="/"');
   });
 
   it("uses reading-crumb-bar class on breadcrumb (warm-light)", () => {
