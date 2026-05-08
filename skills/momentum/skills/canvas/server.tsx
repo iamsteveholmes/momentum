@@ -1634,7 +1634,14 @@ app.get("/sprints/:slug", async (c) => {
     bands[band].push({ slug, title: entry.title, status: entry.status });
   }
 
-  return c.html(SprintDetailView({ sprint: activeSprint, bands }) as string);
+  const fragmentHtml = SprintDetailView({ sprint: activeSprint, bands }) as string;
+  const isHtmx = !!c.req.header("HX-Request");
+  if (isHtmx) return c.html(fragmentHtml);
+
+  // Direct browser navigation — wrap in full shell
+  const sprintContent = fragmentHtml.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
+  const sprintNavHtml = `<nav id="breadcrumb" class="crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">/</span><span class="seg here">sprint</span></div></nav>`;
+  return c.html(DashboardShell({ hash: shortHash(), date: isoDate(), mainContent: sprintContent, navHtml: sprintNavHtml }) as string);
 });
 
 // ---------------------------------------------------------------------------
@@ -2022,7 +2029,14 @@ app.get("/stories/:slug", async (c) => {
     activeSprintSlug = sprintsData?.active?.slug ?? null;
   }
 
-  return c.html(StoryDetailView({ story, from, activeSprintSlug }) as string);
+  const storyFragment = StoryDetailView({ story, from, activeSprintSlug }) as string;
+  const isHtmx = !!c.req.header("HX-Request");
+  if (isHtmx) return c.html(storyFragment);
+
+  // Direct browser navigation — wrap in full shell with reading mode
+  const storyContent = storyFragment.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
+  const storyNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">/</span><span class="seg here">story</span></div></nav>`;
+  return c.html(DashboardShell({ hash: shortHash(), date: isoDate(), mainContent: storyContent, navHtml: storyNavHtml }) as string);
 });
 
 // Feature L2 drill-down — reading mode
