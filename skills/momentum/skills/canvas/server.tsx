@@ -198,14 +198,15 @@ function renderFeaturesTable(rows: FeatureRow[]): string {
       const isLast = idx === rows.length - 1;
       const lastClass = isLast ? " last" : "";
       const gapBg = row.has_gap ? ` style="background:rgba(168,90,42,0.16);"` : "";
-      const gapIcon = row.has_gap
-        ? ` <span class="gap-flag" title="Gap: ${row.gap_reason}" style="font-size:9.5px;">⚠ gap</span>`
-        : "";
+      // Third column: gap-flag for gap rows, badge for non-gap
+      const rightCol = row.has_gap
+        ? `<span class="gap-flag prominent">⚠ gap</span>`
+        : `<span class="badge ${badgeClass(row.status)}"><span class="dot"></span>${row.status}</span>`;
 
       return `<a class="feat-row${lastClass}" href="/features/${row.feature_slug}"${gapBg}>
-  <span class="feat-name">${row.name}${gapIcon}</span>
-  <span class="frac"><span class="slash">${done}</span><span class="slash">/</span>${total}<span class="lbl">done</span></span>
-  <span class="badge ${badgeClass(row.status)}"><span class="dot"></span>${row.status}</span>
+  <span class="feat-name">${row.name}</span>
+  <span class="frac">${done}<span class="slash">/</span>${total}<span class="lbl">done</span></span>
+  ${rightCol}
 </a>`;
     })
     .join("\n");
@@ -1106,7 +1107,7 @@ function DashboardShell({
     .feat-row {
       display: grid; grid-template-columns: 1fr auto auto;
       align-items: center; gap: 10px;
-      padding: 5px 0; border-bottom: 1px dashed var(--ruleDark);
+      padding: 5px 4px 5px 0; border-bottom: 1px dashed var(--ruleDark);
       text-decoration: none; color: inherit; cursor: pointer;
     }
     .feat-row:last-child,
