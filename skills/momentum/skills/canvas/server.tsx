@@ -148,18 +148,36 @@ async function readFeatureBySlug(slug: string): Promise<Feature | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Features lens — status badge colors (Task 4)
+// Features lens — status badge CSS class (Task 4)
 // ---------------------------------------------------------------------------
 
-const STATUS_COLORS: Record<string, string> = {
-  working: "var(--accent, #5863a8)",
-  partial: "#d97706",
-  "not-working": "#dc2626",
-  "not-started": "#6b7280",
-};
+/**
+ * Returns the CSS class name for a status badge (matches reference design .badge.{class}).
+ */
+function badgeClass(status: string): string {
+  // Map status values to their CSS class names
+  const classMap: Record<string, string> = {
+    working: "working",
+    partial: "partial",
+    "not-working": "not-started", // maps to same visual as not-started in reference
+    "not-started": "not-started",
+    "in-progress": "in-progress",
+    blocked: "blocked",
+    "ready-for-dev": "ready-for-dev",
+    validated: "validated",
+  };
+  return classMap[status] ?? "not-started";
+}
 
+/** @deprecated Use badgeClass instead — kept for compatibility with FeatureDetailView */
 function badgeColor(status: string): string {
-  return STATUS_COLORS[status] ?? "#6b7280";
+  const colors: Record<string, string> = {
+    working: "var(--accent, #5863a8)",
+    partial: "#d97706",
+    "not-working": "#dc2626",
+    "not-started": "#6b7280",
+  };
+  return colors[status] ?? "#6b7280";
 }
 
 // ---------------------------------------------------------------------------
@@ -168,26 +186,27 @@ function badgeColor(status: string): string {
 
 function renderFeaturesTable(rows: FeatureRow[]): string {
   if (rows.length === 0) {
-    return `<tr><td colspan="4" style="padding:12px 8px;color:var(--inkOnDarkMuted,rgba(240,238,233,0.70));font-style:italic;font-size:12px;">No features found — run momentum:feature-grooming first</td></tr>`;
+    return `<div class="feat-row" style="padding:12px 0;">
+  <span class="feat-name" style="font-style:italic;color:var(--inkOnDarkMuted);">No features found — run momentum:feature-grooming first</span>
+</div>`;
   }
 
   return rows
-    .map((row) => {
-      const gapIcon = row.has_gap
-        ? ' <span title="Gap detected" style="color:#fff8;font-size:10px;">⚠</span>'
-        : "";
+    .map((row, idx) => {
       const done = row.stories_done;
       const total = row.total;
-      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-      const badgeStyle = `background:${badgeColor(row.status)};color:#fff;padding:2px 7px;border-radius:3px;font-size:9.5px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;`;
-      const tdStyle = "padding:7px 10px;font-size:12px;vertical-align:middle;border-bottom:1px solid var(--ruleDark,rgba(255,252,245,0.10));";
+      const isLast = idx === rows.length - 1;
+      const lastClass = isLast ? " last" : "";
+      const gapBg = row.has_gap ? ` style="background:rgba(168,90,42,0.16);"` : "";
+      const gapIcon = row.has_gap
+        ? ` <span class="gap-flag" title="Gap: ${row.gap_reason}" style="font-size:9.5px;">⚠ gap</span>`
+        : "";
 
-      return `<tr onclick="location.href='/features/${row.feature_slug}'" style="cursor:pointer;${row.has_gap ? "background:var(--gap,#a85a2a);" : ""}">
-  <td style="${tdStyle}color:var(--inkOnDark,#f0eee9);">${row.name}${gapIcon}</td>
-  <td style="${tdStyle}"><span style="${badgeStyle}">${row.status}</span></td>
-  <td style="${tdStyle}color:var(--inkOnDarkMuted,rgba(240,238,233,0.70));font-variant-numeric:tabular-nums;">${done}/${total} <progress value="${done}" max="${Math.max(total,1)}" style="height:6px;width:60px;vertical-align:middle;accent-color:${badgeColor(row.status)};"></progress></td>
-  <td style="${tdStyle}color:var(--inkOnDarkMuted,rgba(240,238,233,0.70));">${pct}%</td>
-</tr>`;
+      return `<a class="feat-row${lastClass}" href="/features/${row.feature_slug}"${gapBg}>
+  <span class="feat-name">${row.name}${gapIcon}</span>
+  <span class="frac"><span class="slash">${done}</span><span class="slash">/</span>${total}<span class="lbl">done</span></span>
+  <span class="badge ${badgeClass(row.status)}"><span class="dot"></span>${row.status}</span>
+</a>`;
     })
     .join("\n");
 }
@@ -910,6 +929,7 @@ function DashboardShell({
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
 
   <style>
+    /* ── Design tokens ── */
     :root {
       --paper:           ${tokens.paper};
       --paperAlt:        ${tokens.paperAlt};
@@ -953,76 +973,51 @@ function DashboardShell({
       height: 100%;
       background: var(--paperDark);
       color: var(--inkOnDark);
-      border-color: var(--ruleDark);
     }
 
     /* ── Top brand bar ── */
     .top-bar {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
+      display: flex; align-items: baseline; justify-content: space-between;
       padding: 14px 20px 12px;
       border-bottom: 1px solid var(--ruleDark);
       flex-shrink: 0;
     }
-
     .top-bar .brand {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 17px;
-      font-weight: 500;
-      letter-spacing: -0.3px;
+      font-size: 17px; font-weight: 500; letter-spacing: -0.3px;
       color: var(--inkOnDark);
     }
-
     .top-bar .meta {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px;
-      color: var(--inkOnDarkFaint);
-      letter-spacing: 0.3px;
+      font-size: 9.5px; color: var(--inkOnDarkFaint); letter-spacing: 0.3px;
     }
 
     /* ── Breadcrumb bar ── */
     .crumb-bar {
       padding: 8px 20px 10px;
       border-bottom: 1px solid var(--ruleDark);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       min-height: 36px;
       flex-shrink: 0;
     }
-
     .crumb-bar .crumbs {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      display: inline-flex; align-items: center; gap: 8px;
       font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-      letter-spacing: 0.3px;
+      font-size: 11px; letter-spacing: 0.3px;
     }
-
     .crumb-bar .seg {
       color: var(--inkOnDarkQuiet);
-      text-decoration: none;
-      cursor: pointer;
+      text-decoration: none; cursor: pointer;
       text-transform: lowercase;
       transition: color 0.12s;
     }
     .crumb-bar .seg:hover { color: var(--inkOnDark); }
     .crumb-bar .seg.here {
-      color: var(--accent);
-      font-weight: 500;
-      cursor: default;
+      color: var(--accent); font-weight: 500; cursor: default;
     }
     .crumb-bar .sep {
       color: var(--inkOnDarkFaint);
       font-family: "JetBrains Mono", monospace;
-    }
-
-    /* ── Scrollable body ── */
-    .pane-body {
-      flex: 1;
-      overflow-y: auto;
     }
 
     /* ── Lens sections ── */
@@ -1033,87 +1028,130 @@ function DashboardShell({
     .dash-section:last-child { border-bottom: none; }
 
     .dash-lens-hdr {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
     }
     .dash-lens-hdr .tag {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px;
-      letter-spacing: 1.3px;
-      text-transform: uppercase;
+      font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+      letter-spacing: 1.3px; text-transform: uppercase;
       color: var(--inkOnDarkQuiet);
     }
-    .dash-lens-hdr .rule {
-      flex: 1;
-      height: 1px;
-      background: var(--ruleDark);
+    .dash-lens-hdr .rule { flex: 1; height: 1px; background: var(--ruleDark); }
+    .dash-lens-hdr .count {
+      font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+      color: var(--inkOnDarkFaint);
     }
 
     /* ── Lens placeholder state ── */
     .lens-placeholder {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      display: flex; align-items: center; gap: 12px;
       padding: 16px 0 8px;
     }
     .ph-label {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 14px;
-      font-style: italic;
+      font-size: 14px; font-style: italic;
       color: var(--inkOnDarkMuted);
     }
     .ph-note {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px;
-      color: var(--inkOnDarkFaint);
-      letter-spacing: 0.3px;
+      font-size: 9.5px; color: var(--inkOnDarkFaint); letter-spacing: 0.3px;
+    }
+    .htmx-request .ph-note::after { content: " ⋯"; }
+
+    /* ── Badges (reference design) ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 1px 7px 1px 5px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9.5px; font-weight: 500; letter-spacing: 0.2px;
+      border-radius: 3px; white-space: nowrap;
+    }
+    .badge .dot { width: 5px; height: 5px; border-radius: 50%; }
+    .badge.working { color: #8fd1a9; background: rgba(62,122,90,0.18); }
+    .badge.working .dot { background: #3e7a5a; }
+    .badge.partial { color: #e6c07a; background: rgba(168,131,40,0.18); }
+    .badge.partial .dot { background: #a88328; }
+    .badge.not-started { color: rgba(240,238,233,0.72); background: rgba(240,238,233,0.07); }
+    .badge.not-started .dot { background: #8a8a8a; }
+    .badge.in-progress { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+    .badge.in-progress .dot { background: #5863a8; }
+    .badge.validated { color: rgba(192,200,188,0.85); background: rgba(106,122,106,0.14); }
+    .badge.validated .dot { background: #6a7a6a; }
+    .badge.blocked { color: #e0a07a; background: rgba(168,90,42,0.18); }
+    .badge.blocked .dot { background: #a85a2a; }
+    .badge.ready-for-dev { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+    .badge.ready-for-dev .dot { background: #5863a8; }
+
+    /* ── Gap flag ── */
+    .gap-flag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 1px 6px 1px 5px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9.5px; font-weight: 500;
+      color: var(--gap); letter-spacing: 0.2px;
+      border-radius: 3px; white-space: nowrap;
+      background: rgba(168,90,42,0.16);
+      border: 1px solid rgba(168,90,42,0.30);
     }
 
-    /* ── HTMX loading indicator ── */
-    .htmx-request .ph-note::after { content: " ⋯"; }
+    /* ── Fraction (story count) ── */
+    .frac {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10.5px; color: var(--inkOnDarkMuted);
+    }
+    .frac .slash { color: var(--inkOnDarkFaint); }
+    .frac .lbl { color: var(--inkOnDarkFaint); margin-left: 4px; font-size: 9.5px; }
+
+    /* ── Features list — grid rows ── */
+    .feat-list { padding: 4px 0 2px; }
+    .feat-row {
+      display: grid; grid-template-columns: 1fr auto auto;
+      align-items: center; gap: 10px;
+      padding: 5px 0; border-bottom: 1px dashed var(--ruleDark);
+      text-decoration: none; color: inherit; cursor: pointer;
+    }
+    .feat-row:last-child,
+    .feat-row.last { border-bottom: none; }
+    .feat-row:hover { background: rgba(255,252,245,0.04); }
+    .feat-name {
+      font-family: "Inter", sans-serif; font-size: 11.5px;
+      color: var(--inkOnDark); line-height: 1.35;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
 
     /* ── Sprint lens card ── */
     .sprint-card {
-      padding: 12px 0 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      padding: 10px 14px;
+      background: rgba(88,99,168,0.12);
+      border-left: 2px solid var(--accent);
+      cursor: pointer; display: block; text-decoration: none; color: inherit;
     }
     .sprint-card:hover { opacity: 0.85; }
     .sprint-card-slug {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--inkOnDark);
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 14px; font-weight: 500; color: var(--inkOnDark);
+      letter-spacing: -0.2px;
     }
     .sprint-card-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      display: flex; align-items: center; gap: 16px; margin-top: 6px;
     }
     .sprint-card-date {
       font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
-      color: var(--inkOnDarkQuiet);
+      font-size: 10px; color: var(--inkOnDarkQuiet);
     }
     .sprint-closure-badge {
       font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
-      font-weight: 500;
+      font-size: 10px; font-weight: 500;
     }
     .sprint-empty {
       padding: 16px 0 8px;
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 13px;
-      font-style: italic;
+      font-size: 13px; font-style: italic;
       color: var(--inkOnDarkMuted);
     }
 
     /* ── Cycle timeline ── */
     .cycle-line {
-      position: relative;
+      position: relative; height: 56px; margin: 8px 0 4px;
     }
     .cycle-line::before {
       content: ""; position: absolute;
@@ -1122,8 +1160,7 @@ function DashboardShell({
     }
     .cycle-nodes {
       position: relative;
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      display: grid; grid-template-columns: repeat(7, 1fr);
     }
     .cycle-node {
       display: flex; flex-direction: column; align-items: center;
@@ -1147,7 +1184,7 @@ function DashboardShell({
     .cycle-node.skipped .lbl { color: var(--inkOnDarkFaint); opacity: 0.45; }
     .cycle-node.next .dot {
       background: var(--paperDark); border-color: var(--accent); border-width: 2px;
-      box-shadow: 0 0 0 3px var(--accent);
+      box-shadow: 0 0 0 3px rgba(88,99,168,0.18);
     }
     .cycle-node.next .lbl { color: var(--accent); font-weight: 500; }
     .cycle-node.pending .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
@@ -1162,77 +1199,58 @@ function DashboardShell({
       font-size: 9.5px; color: var(--inkOnDarkMuted); letter-spacing: 0.3px;
     }
     .cycle-summary .tag {
-      color: var(--inkOnDarkFaint); letter-spacing: 1.2px; text-transform: uppercase; font-size: 9px;
-      margin-right: 4px;
+      color: var(--inkOnDarkFaint); letter-spacing: 1.2px; text-transform: uppercase;
+      font-size: 9px; margin-right: 4px;
     }
     .cycle-summary .v { color: var(--inkOnDark); }
     .cycle-summary .now { color: var(--accent); font-weight: 500; }
 
     /* ── Sprint detail view ── */
     .sprint-detail-hdr {
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
+      display: flex; align-items: baseline; gap: 16px;
       padding: 8px 0 16px;
     }
     .sprint-detail-slug {
       font-family: "JetBrains Mono", monospace;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--inkOnDark);
+      font-size: 14px; font-weight: 500; color: var(--inkOnDark);
     }
     .sprint-detail-date {
       font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
-      color: var(--inkOnDarkQuiet);
+      font-size: 10px; color: var(--inkOnDarkQuiet);
     }
-    .sprint-band {
-      margin-bottom: 16px;
-    }
+    .sprint-band { margin-bottom: 16px; }
     .band-label {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--inkOnDarkQuiet);
+      font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase;
       margin-bottom: 6px;
     }
     .band-empty {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 12px;
-      font-style: italic;
-      color: var(--inkOnDarkFaint);
-      padding: 4px 0;
+      font-size: 12px; font-style: italic;
+      color: var(--inkOnDarkFaint); padding: 4px 0;
     }
+
+    /* Story rows in sprint detail */
     .story-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 8px;
-      margin-bottom: 2px;
-      border-radius: 3px;
-      background: var(--paperDarkAlt);
-      text-decoration: none;
-      color: inherit;
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: center; gap: 8px;
+      padding: 5px 0; border-bottom: 1px solid var(--ruleDark);
+      text-decoration: none; color: inherit;
     }
-    .story-row:hover { background: rgba(255,252,245,0.06); }
+    .story-row:last-child { border-bottom: none; }
+    .story-row:hover { opacity: 0.85; }
     .story-row-title {
-      font-family: "Inter", system-ui, sans-serif;
-      font-size: 12px;
-      color: var(--inkOnDark);
+      font-family: "Inter", sans-serif; font-size: 11.5px;
+      color: var(--inkOnDark); line-height: 1.35;
     }
     .story-row-badge {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9px;
-      letter-spacing: 0.5px;
-      border: 1px solid;
-      border-radius: 3px;
-      padding: 1px 5px;
-      white-space: nowrap;
+      font-size: 9px; letter-spacing: 0.5px;
+      border: 1px solid; border-radius: 3px;
+      padding: 1px 5px; white-space: nowrap;
     }
 
     /* ── Reading mode — warm light polarity ── */
-    /* Applied when main-content transitions to a feature/story detail view */
     .reading-surface {
       background: var(--readingPaper);
       color: var(--ink);
@@ -1245,7 +1263,7 @@ function DashboardShell({
       to { background: var(--readingPaper, #faf6ec); }
     }
 
-    /* Breadcrumb override for reading mode (light background) */
+    /* Breadcrumb override for reading mode */
     .reading-crumb-bar {
       background: var(--readingPaper);
       border-bottom: 1px solid var(--readingRule);
@@ -1256,228 +1274,220 @@ function DashboardShell({
     .reading-crumb-bar .seg.here { color: var(--accent); }
     .reading-crumb-bar .sep { color: var(--inkFaint); }
 
+    /* Feature L2 reading ── */
+    .l2-body { padding: 16px 20px 18px; }
+    .l2-meta {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .l2-name {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 22px; line-height: 1.2; font-weight: 500;
+      letter-spacing: -0.3px; color: var(--ink); margin: 4px 0 6px;
+    }
+    .l2-desc {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 13px; line-height: 1.5; color: var(--inkMuted);
+      font-style: italic; max-width: 56ch;
+    }
+    .l2-section-cap {
+      margin-top: 16px; margin-bottom: 6px;
+      font-family: "JetBrains Mono", monospace; font-size: 8.5px;
+      letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+    }
+    .l2-narrative p {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 13.5px; line-height: 1.65; color: var(--ink);
+      margin: 0 0 8px; max-width: 60ch;
+    }
+    .l2-stories .story {
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: center; gap: 8px;
+      padding: 5px 0; border-bottom: 1px solid var(--readingRule);
+    }
+    .l2-stories .story .t {
+      font-family: "Inter", sans-serif; font-size: 11.5px; color: var(--ink);
+    }
+    .l2-stories .story.click .t {
+      color: var(--accent); font-weight: 500; cursor: pointer;
+    }
+
     /* Feature heading */
     .feature-heading {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--ink);
-      letter-spacing: -0.4px;
-      margin-bottom: 10px;
-      line-height: 1.3;
+      font-size: 24px; font-weight: 600;
+      color: var(--ink); letter-spacing: -0.4px;
+      margin-bottom: 10px; line-height: 1.3;
     }
 
     /* Meta strip */
     .feature-meta-strip {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap; margin-bottom: 24px;
+      font-family: "JetBrains Mono", monospace; font-size: 10px;
     }
     .feature-meta-badge {
-      padding: 2px 8px;
-      border-radius: 3px;
-      color: #fff;
-      font-size: 9.5px;
-      letter-spacing: 0.5px;
+      padding: 2px 8px; border-radius: 3px;
+      color: #fff; font-size: 9.5px; letter-spacing: 0.5px;
     }
-    .feature-meta-fraction {
-      color: var(--inkMuted);
-    }
+    .feature-meta-fraction { color: var(--inkMuted); }
     .feature-reading-label {
-      color: var(--inkQuiet);
-      font-size: 9px;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
+      color: var(--inkQuiet); font-size: 9px;
+      letter-spacing: 0.8px; text-transform: uppercase;
     }
 
-    /* Reading column — 65ch measure */
-    .reading-col {
-      max-width: 65ch;
-    }
-
-    /* Reading section wrapper */
+    /* Reading column */
+    .reading-col { max-width: 65ch; }
     .reading-section { margin-top: 1.5rem; }
 
-    /* Section labels in reading mode */
+    /* Section labels */
     .reading-section-label {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: var(--inkQuiet);
-      margin-bottom: 8px;
-      margin-top: 28px;
+      font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--inkQuiet); margin-bottom: 8px; margin-top: 28px;
     }
 
     /* Value narrative prose */
     .reading-prose {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 18px;
-      line-height: 1.70;
-      color: var(--ink);
+      font-size: 18px; line-height: 1.70; color: var(--ink);
     }
 
     /* Acceptance condition box */
     .reading-ac-box {
       border-left: 3px solid var(--accent);
       background: var(--readingPaperAlt);
-      padding: 12px 16px;
-      border-radius: 0 4px 4px 0;
+      padding: 12px 16px; border-radius: 0 4px 4px 0;
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 15px;
-      line-height: 1.60;
-      color: var(--ink);
+      font-size: 15px; line-height: 1.60; color: var(--ink);
     }
 
     /* System context callout */
     .reading-callout {
       background: var(--readingPaperAlt);
       border: 1px solid var(--readingRule);
-      border-radius: 4px;
-      padding: 12px 16px;
+      border-radius: 4px; padding: 12px 16px;
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 15px;
-      line-height: 1.60;
-      color: var(--inkMuted);
+      font-size: 15px; line-height: 1.60; color: var(--inkMuted);
     }
 
-    /* Stories list in reading mode — Inter */
+    /* Stories list in reading mode */
     .reading-story-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 10px;
-      margin-bottom: 3px;
-      border-radius: 4px;
-      background: var(--readingPaperAlt);
-      cursor: pointer;
-      text-decoration: none;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 10px; margin-bottom: 3px;
+      border-radius: 4px; background: var(--readingPaperAlt);
+      cursor: pointer; text-decoration: none;
     }
     .reading-story-row:hover { background: var(--readingRule); }
     .reading-story-title {
       font-family: "Inter", system-ui, sans-serif;
-      font-size: 13px;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 13px; color: var(--ink);
+      display: flex; align-items: center; gap: 8px;
     }
     .reading-story-badge {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9px;
-      letter-spacing: 0.5px;
-      border: 1px solid;
-      border-radius: 3px;
-      padding: 1px 5px;
-      white-space: nowrap;
+      font-size: 9px; letter-spacing: 0.5px;
+      border: 1px solid; border-radius: 3px;
+      padding: 1px 5px; white-space: nowrap;
     }
-    .status-icon {
-      font-size: 11px;
-      line-height: 1;
-    }
+    .status-icon { font-size: 11px; line-height: 1; }
 
-    /* Dependencies list in reading mode */
-    .reading-deps-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    /* Dependencies list */
+    .reading-deps-list { list-style: none; padding: 0; margin: 0; }
     .reading-deps-list li {
       font-family: "Inter", system-ui, sans-serif;
-      font-size: 13px;
-      color: var(--inkMuted);
-      padding: 4px 0;
-      border-bottom: 1px solid var(--readingRule);
+      font-size: 13px; color: var(--inkMuted);
+      padding: 4px 0; border-bottom: 1px solid var(--readingRule);
     }
     .reading-deps-list li:last-child { border-bottom: none; }
 
     /* ── Story L3 reading mode ── */
-    .story-meta-strip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
+    .l3 { padding: 16px 20px 18px; }
+    .l3-fm {
+      margin-top: 0; padding: 7px 10px;
+      background: var(--readingPaperAlt);
+      border: 1px solid var(--readingRule);
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
+      font-size: 8.5px; letter-spacing: 0.3px; color: var(--inkMuted);
+    }
+    .l3-fm .fk { color: var(--inkFaint); margin-right: 3px; }
+    .l3-fm .fv { color: var(--ink); }
+    .l3-title {
+      margin: 14px 0 5px;
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 24px; line-height: 1.2; font-weight: 500;
+      letter-spacing: -0.3px; color: var(--ink);
+    }
+    .l3-subtitle {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-style: italic; font-size: 14px; line-height: 1.4;
+      color: var(--inkMuted); margin-bottom: 14px; max-width: 56ch;
+    }
+    .l3 p.body {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 13.5px; line-height: 1.7; color: var(--ink);
+      max-width: 62ch; margin: 0 0 9px;
+    }
+    .l3 h3.sec {
+      margin: 16px 0 8px; padding-bottom: 4px;
+      border-bottom: 1px solid var(--readingRule);
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 13.5px; font-weight: 500; color: var(--ink);
+      display: flex; align-items: baseline; justify-content: space-between;
+    }
+    .l3 ol.num { list-style: none; padding: 0; margin: 0; counter-reset: acn; }
+    .l3 ol.num > li {
+      counter-increment: acn;
+      display: grid; grid-template-columns: 24px 1fr;
+      column-gap: 10px; padding: 6px 0 7px;
+      border-bottom: 1px solid var(--readingRule);
+    }
+    .l3 ol.num > li::before {
+      content: counter(acn, decimal-leading-zero);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px; color: var(--inkFaint); padding-top: 3px;
+    }
+    .l3 ol.num .num-body {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 12.5px; line-height: 1.55; color: var(--ink); max-width: 56ch;
+    }
+
+    .story-meta-strip {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin-bottom: 16px;
+      font-family: "JetBrains Mono", monospace; font-size: 10px;
     }
     .story-meta-slug {
-      color: var(--inkMuted);
-      font-size: 10px;
-      letter-spacing: 0.3px;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      color: var(--inkMuted); font-size: 10px; letter-spacing: 0.3px;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .story-meta-chip {
-      padding: 2px 7px;
-      border: 1px solid var(--readingRule);
-      border-radius: 3px;
-      color: var(--inkMuted);
-      font-size: 9.5px;
-      letter-spacing: 0.4px;
-      white-space: nowrap;
+      padding: 2px 7px; border: 1px solid var(--readingRule);
+      border-radius: 3px; color: var(--inkMuted);
+      font-size: 9.5px; letter-spacing: 0.4px; white-space: nowrap;
     }
     .story-meta-status {
-      background: var(--accentSoft);
-      border-color: var(--accent);
-      color: var(--accent);
+      background: var(--accentSoft); border-color: var(--accent); color: var(--accent);
     }
-    .story-meta-derives {
-      font-size: 9px;
-      color: var(--inkFaint);
-      letter-spacing: 0.3px;
-    }
-    /* Story narrative — inherits 18px from .reading-prose */
-    .story-narrative {
-      line-height: 1.70;
-    }
-    /* Acceptance criteria numbered list */
-    .story-ac-list {
-      list-style: decimal;
-      padding-left: 1.4em;
-      margin: 0;
-    }
+    .story-meta-derives { font-size: 9px; color: var(--inkFaint); letter-spacing: 0.3px; }
+    .story-narrative { line-height: 1.70; }
+    .story-ac-list { list-style: decimal; padding-left: 1.4em; margin: 0; }
     .story-ac-list li {
       font-family: "Source Serif 4", Georgia, serif;
-      font-size: 18px;
-      line-height: 1.70;
-      color: var(--ink);
-      padding: 3px 0;
+      font-size: 18px; line-height: 1.70; color: var(--ink); padding: 3px 0;
     }
-    .story-ac-list li + li {
-      border-top: 1px solid var(--readingRule);
-    }
-    /* Dev notes summary block */
-    .story-dev-notes {
-      font-size: 13px;
-      line-height: 1.60;
-      color: var(--inkMuted);
-      font-style: italic;
-    }
-    /* File touches list */
-    .story-touches-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    .story-ac-list li + li { border-top: 1px solid var(--readingRule); }
+    .story-dev-notes { font-size: 13px; line-height: 1.60; color: var(--inkMuted); font-style: italic; }
+    .story-touches-list { list-style: none; padding: 0; margin: 0; }
     .story-touches-list li {
-      padding: 4px 0;
-      border-bottom: 1px solid var(--readingRule);
+      padding: 4px 0; border-bottom: 1px solid var(--readingRule);
     }
     .story-touches-list li:last-child { border-bottom: none; }
     .story-touch-path {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-      color: var(--inkMuted);
-      background: var(--readingPaperAlt);
-      padding: 1px 5px;
-      border-radius: 3px;
+      font-family: "JetBrains Mono", monospace; font-size: 11px;
+      color: var(--inkMuted); background: var(--readingPaperAlt);
+      padding: 1px 5px; border-radius: 3px;
     }
   </style>
 </head>
@@ -1563,21 +1573,10 @@ app.get("/lenses/features", async (c) => {
       <div class="dash-lens-hdr">
         <span class="tag">Features</span>
         <div class="rule"></div>
+        <span class="count">${rows.length}</span>
       </div>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-          <thead>
-            <tr style="border-bottom:1px solid var(--ruleDarkStrong,rgba(255,252,245,0.18));">
-              <th style="padding:6px 10px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.8px;text-transform:uppercase;color:var(--inkOnDarkQuiet,rgba(240,238,233,0.48));font-weight:500;">Feature</th>
-              <th style="padding:6px 10px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.8px;text-transform:uppercase;color:var(--inkOnDarkQuiet,rgba(240,238,233,0.48));font-weight:500;">Status</th>
-              <th style="padding:6px 10px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.8px;text-transform:uppercase;color:var(--inkOnDarkQuiet,rgba(240,238,233,0.48));font-weight:500;">Stories</th>
-              <th style="padding:6px 10px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.8px;text-transform:uppercase;color:var(--inkOnDarkQuiet,rgba(240,238,233,0.48));font-weight:500;">Done</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableBody}
-          </tbody>
-        </table>
+      <div class="feat-list">
+        ${tableBody}
       </div>
     </section>
   `);
