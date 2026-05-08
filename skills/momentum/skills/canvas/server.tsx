@@ -917,9 +917,10 @@ function DashboardShell({
   <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
   <script>
-    // HTMX v2 does not re-process OOB-swapped elements — re-process on every swap
-    document.addEventListener('htmx:afterSwap', function(e) { htmx.process(e.target); });
-    document.addEventListener('htmx:oobAfterSwap', function(e) { if (e.detail && e.detail.target) htmx.process(e.detail.target); });
+    // HTMX v2 does not re-process OOB-swapped elements after navigation.
+    // Re-process the full body after every HTMX settle so breadcrumbs and swapped-in
+    // content always have working hx-* click handlers.
+    document.addEventListener('htmx:afterSettle', function() { htmx.process(document.body); });
   </script>
 
   <style>
@@ -1510,9 +1511,9 @@ function DashboardShell({
 
     <!-- Scrollable lens area (HTMX main-content swap target) -->
     <div id="main-content" style="flex:1; overflow-y:auto;">
-      ${LensSection({ id: "features", tag: "Features", title: "Features" })}
-      ${sprintSection ?? SprintLensSection({ sprint: null })}
       ${cycleSection ?? LensSection({ id: "cycle",    tag: "Cycle",    title: "Cycle"    })}
+      ${sprintSection ?? SprintLensSection({ sprint: null })}
+      ${LensSection({ id: "features", tag: "Features", title: "Features" })}
     </div>
 
   </div>
@@ -1543,9 +1544,9 @@ app.get("/", async (c) => {
         </div>
       </nav>
       <!-- Dashboard lens sections (primary payload → #main-content innerHTML) -->
-      ${LensSection({ id: "features", tag: "Features", title: "Features" }) as string}
-      ${sprintSection as string}
       ${cycleSection as string}
+      ${sprintSection as string}
+      ${LensSection({ id: "features", tag: "Features", title: "Features" }) as string}
     `);
   }
 
