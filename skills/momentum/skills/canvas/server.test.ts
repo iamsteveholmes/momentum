@@ -916,21 +916,20 @@ describe("StoryDetailView", () => {
 
   it("breadcrumb includes feature link when from=feature", () => {
     const h = String(StoryDetailView({ story: baseStory, from: "feature" }));
-    expect(h).toContain('hx-get="/features/test-feature"');
+    expect(h).toContain('href="/features/test-feature"');
     expect(h).toContain("feature");
   });
 
   it("breadcrumb includes sprint link when from=sprint with activeSprintSlug", () => {
     const h = String(StoryDetailView({ story: baseStory, from: "sprint", activeSprintSlug: "sprint-2026-05-03" }));
     expect(h).toContain("sprint");
-    expect(h).toContain('hx-get="/sprints/sprint-2026-05-03"');
-    expect(h).toContain('hx-push-url="/sprints/sprint-2026-05-03"');
+    expect(h).toContain('href="/sprints/sprint-2026-05-03"');
   });
 
   it("breadcrumb falls back to /lenses/sprint when from=sprint but no activeSprintSlug", () => {
     const h = String(StoryDetailView({ story: baseStory, from: "sprint", activeSprintSlug: null }));
     expect(h).toContain("sprint");
-    expect(h).toContain('hx-get="/lenses/sprint"');
+    expect(h).toContain('href="/"');
   });
 
   it("breadcrumb has no middle segment when from=null", () => {

@@ -182,7 +182,7 @@ function renderFeaturesTable(rows: FeatureRow[]): string {
       const badgeStyle = `background:${badgeColor(row.status)};color:#fff;padding:2px 7px;border-radius:3px;font-size:9.5px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;`;
       const tdStyle = "padding:7px 10px;font-size:12px;vertical-align:middle;border-bottom:1px solid var(--ruleDark,rgba(255,252,245,0.10));";
 
-      return `<tr hx-get="/features/${row.feature_slug}" hx-target="#main-content" hx-push-url="/features/${row.feature_slug}" style="cursor:pointer;${row.has_gap ? "background:var(--gap,#a85a2a);" : ""}">
+      return `<tr onclick="location.href='/features/${row.feature_slug}'" style="cursor:pointer;${row.has_gap ? "background:var(--gap,#a85a2a);" : ""}">
   <td style="${tdStyle}color:var(--inkOnDark,#f0eee9);">${row.name}${gapIcon}</td>
   <td style="${tdStyle}"><span style="${badgeStyle}">${row.status}</span></td>
   <td style="${tdStyle}color:var(--inkOnDarkMuted,rgba(240,238,233,0.70));font-variant-numeric:tabular-nums;">${done}/${total} <progress value="${done}" max="${Math.max(total,1)}" style="height:6px;width:60px;vertical-align:middle;accent-color:${badgeColor(row.status)};"></progress></td>
@@ -522,12 +522,10 @@ function SprintCard({ sprint }: { sprint: SprintEntry }) {
   const startDate = sprint.started ?? sprint.planned ?? "—";
 
   return html`
-    <div
+    <a
       class="sprint-card"
-      hx-get="/sprints/${sprint.slug}"
-      hx-target="#main-content"
-      hx-push-url="/sprints/${sprint.slug}"
-      style="cursor:pointer;"
+      href="/sprints/${sprint.slug}"
+      style="cursor:pointer;text-decoration:none;color:inherit;display:block;"
     >
       <div class="sprint-card-slug">${sprint.slug}</div>
       <div class="sprint-card-meta">
@@ -537,7 +535,7 @@ function SprintCard({ sprint }: { sprint: SprintEntry }) {
           style="color:${closureColor};"
         >${closureLabel}</span>
       </div>
-    </div>
+    </a>
   `;
 }
 
@@ -918,12 +916,6 @@ function DashboardShell({
 
   <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
-  <script>
-    // HTMX v2 does not re-process OOB-swapped elements after navigation.
-    // Re-process the full body after every HTMX settle so breadcrumbs and swapped-in
-    // content always have working hx-* click handlers.
-    document.addEventListener('htmx:afterSettle', function() { htmx.process(document.body); });
-  </script>
 
   <style>
     :root {
@@ -1622,7 +1614,7 @@ app.get("/sprints/:slug", async (c) => {
     return c.html(`
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
-          <a class="seg" href="/" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <a class="seg" href="/">dashboard</a>
           <span class="sep">/</span>
           <span class="seg here">sprint</span>
         </div>
@@ -1841,13 +1833,13 @@ export function StoryDetailView({
   let breadcrumbMiddle: string;
   if (from === "sprint") {
     if (activeSprintSlug) {
-      breadcrumbMiddle = `<a class="seg" href="/sprints/${activeSprintSlug}" hx-get="/sprints/${activeSprintSlug}" hx-target="#main-content" hx-push-url="/sprints/${activeSprintSlug}" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/sprints/${activeSprintSlug}">sprint</a><span class="sep">/</span>`;
     } else {
       // Degraded fallback: no active sprint slug available
-      breadcrumbMiddle = `<a class="seg" href="/lenses/sprint" hx-get="/lenses/sprint" hx-target="#main-content" hx-push-url="/lenses/sprint" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/">sprint</a><span class="sep">/</span>`;
     }
   } else if (from === "feature" && meta.feature_slug) {
-    breadcrumbMiddle = `<a class="seg" href="/features/${meta.feature_slug}" hx-get="/features/${meta.feature_slug}" hx-target="#main-content" hx-push-url="/features/${meta.feature_slug}" style="cursor:pointer;">feature</a><span class="sep">/</span>`;
+    breadcrumbMiddle = `<a class="seg" href="/features/${meta.feature_slug}">feature</a><span class="sep">/</span>`;
   } else {
     breadcrumbMiddle = "";
   }
@@ -1998,7 +1990,7 @@ app.get("/stories/:slug", async (c) => {
     return c.html(`
       <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
-          <a class="seg" href="/" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <a class="seg" href="/">dashboard</a>
           <span class="sep">/</span>
           <span class="seg here">story</span>
         </div>
@@ -2033,7 +2025,7 @@ app.get("/features/:slug", async (c) => {
     const notFoundFragment = `
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
-          <a class="seg" href="/" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <a class="seg" href="/">dashboard</a>
           <span class="sep">/</span>
           <span class="seg here">feature</span>
         </div>
