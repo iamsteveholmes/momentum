@@ -1088,10 +1088,10 @@ function DashboardShell({
       padding: 1px 6px 1px 5px;
       font-family: "JetBrains Mono", monospace;
       font-size: 9.5px; font-weight: 500;
-      color: var(--gap); letter-spacing: 0.2px;
+      color: #e8a070; letter-spacing: 0.2px;
       border-radius: 3px; white-space: nowrap;
-      background: rgba(168,90,42,0.16);
-      border: 1px solid rgba(168,90,42,0.30);
+      background: rgba(168,90,42,0.25);
+      border: 1px solid rgba(168,90,42,0.50);
     }
 
     /* ── Fraction (story count) ── */
