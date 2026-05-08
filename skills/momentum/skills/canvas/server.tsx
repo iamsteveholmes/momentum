@@ -614,7 +614,7 @@ function storyBadgeColor(status: string): string {
 export function buildFeatureStoryRows(
   feature: Feature,
   storyMap: StoryMap
-): Array<{ slug: string; title: string; status: string }> {
+): Array<{ slug: string; title: string; status: string; featureSlug: string }> {
   const slugs = feature.stories ?? [];
   const rows = slugs.map((slug) => {
     const entry = storyMap[slug];
@@ -622,6 +622,7 @@ export function buildFeatureStoryRows(
       slug,
       title: entry?.title ?? slug,
       status: entry?.status ?? "backlog",
+      featureSlug: feature.feature_slug,
     };
   });
   const STATUS_ORDER = ['in-progress', 'review', 'verify', 'ready-for-dev', 'backlog', 'done'];
@@ -633,17 +634,18 @@ export function buildFeatureStoryRows(
   return rows;
 }
 
-function FeatureStoryRow({ slug, title, status }: { slug: string; title: string; status: string }) {
+function FeatureStoryRow({ slug, title, status, featureSlug }: { slug: string; title: string; status: string; featureSlug: string }) {
   const color = storyBadgeColor(status);
   const icon = storyStatusIcon(status);
+  const storyUrl = `/stories/${slug}?from=feature&feature=${featureSlug}`;
   return html`
     <a
       class="reading-story-row"
-      href="/stories/${slug}?from=feature"
-      hx-get="/stories/${slug}?from=feature"
+      href="${storyUrl}"
+      hx-get="${storyUrl}"
       hx-target="#main-content"
       hx-swap="innerHTML"
-      hx-push-url="/stories/${slug}?from=feature"
+      hx-push-url="${storyUrl}"
     >
       <span class="reading-story-title">
         <span class="status-icon" style="color:${color};">${icon}</span>
@@ -1835,10 +1837,12 @@ export function StoryDetailView({
   story,
   from,
   activeSprintSlug,
+  featureSlugOverride,
 }: {
   story: ParsedStory;
   from: "feature" | "sprint" | null;
   activeSprintSlug?: string | null;
+  featureSlugOverride?: string | null;
 }) {
   const { meta, storyNarrative, acceptanceCriteria, devNotes, workflowSection, touches } = story;
 
@@ -1848,14 +1852,14 @@ export function StoryDetailView({
     if (activeSprintSlug) {
       breadcrumbMiddle = `<a class="seg" href="/sprints/${activeSprintSlug}">sprint</a><span class="sep">/</span>`;
     } else {
-      // Degraded fallback: no active sprint slug available
       breadcrumbMiddle = `<a class="seg" href="/">sprint</a><span class="sep">/</span>`;
     }
   } else if (from === "feature") {
-    if (meta.feature_slug) {
-      breadcrumbMiddle = `<a class="seg" href="/features/${meta.feature_slug}">feature</a><span class="sep">/</span>`;
+    // Use URL-passed feature slug first, then frontmatter, then fallback to dashboard
+    const featureSlug = featureSlugOverride || meta.feature_slug;
+    if (featureSlug) {
+      breadcrumbMiddle = `<a class="seg" href="/features/${featureSlug}">feature</a><span class="sep">/</span>`;
     } else {
-      // feature_slug unavailable (e.g. stub file without frontmatter) — show unlinkable segment
       breadcrumbMiddle = `<a class="seg" href="/">feature</a><span class="sep">/</span>`;
     }
   } else {
@@ -1936,7 +1940,9 @@ export function StoryDetailView({
             <div class="reading-section-label">Description</div>
             <div class="reading-prose story-narrative">${storyNarrative}</div>
           `
-          : ""}
+          : acceptanceCriteria.length === 0
+            ? html`<div class="reading-prose" style="font-style:italic;color:var(--inkMuted);margin-top:12px;">This story is a backlog stub — no description yet.</div>`
+            : ""}
 
         <!-- Acceptance criteria -->
         ${acceptanceCriteria.length > 0
@@ -1993,6 +1999,7 @@ function escapeHtml(str: string): string {
 app.get("/stories/:slug", async (c) => {
   const slug = c.req.param("slug");
   const fromParam = c.req.query("from");
+  const featureParam = c.req.query("feature"); // feature slug passed when coming from Feature L2
   const from: "feature" | "sprint" | null =
     fromParam === "feature" ? "feature" : fromParam === "sprint" ? "sprint" : null;
 
@@ -2029,7 +2036,7 @@ app.get("/stories/:slug", async (c) => {
     activeSprintSlug = sprintsData?.active?.slug ?? null;
   }
 
-  const storyFragment = StoryDetailView({ story, from, activeSprintSlug }) as string;
+  const storyFragment = StoryDetailView({ story, from, activeSprintSlug, featureSlugOverride: featureParam ?? null }) as string;
   const isHtmx = !!c.req.header("HX-Request");
   if (isHtmx) return c.html(storyFragment);
 

@@ -464,8 +464,8 @@ describe("buildFeatureStoryRows", () => {
     const rows = buildFeatureStoryRows(feature, storyMap);
     expect(rows).toHaveLength(2);
     // Sorted by STATUS_ORDER: in-progress (idx 0) before done (idx 5)
-    expect(rows[0]).toEqual({ slug: "story-b", title: "Story B", status: "in-progress" });
-    expect(rows[1]).toEqual({ slug: "story-a", title: "Story A", status: "done" });
+    expect(rows[0]).toEqual({ slug: "story-b", title: "Story B", status: "in-progress", featureSlug: "my-feature" });
+    expect(rows[1]).toEqual({ slug: "story-a", title: "Story A", status: "done", featureSlug: "my-feature" });
   });
 
   it("falls back to slug as title when story is not in map", () => {
@@ -479,7 +479,7 @@ describe("buildFeatureStoryRows", () => {
     };
     const rows = buildFeatureStoryRows(feature, {});
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toEqual({ slug: "unknown-story", title: "unknown-story", status: "backlog" });
+    expect(rows[0]).toEqual({ slug: "unknown-story", title: "unknown-story", status: "backlog", featureSlug: "my-feature" });
   });
 
   it("returns empty array when feature has no stories", () => {
@@ -569,16 +569,17 @@ describe("FeatureDetailView", () => {
 
   it("renders stories list with status icon and title", () => {
     const storyRows = [
-      { slug: "story-a", title: "Story Alpha", status: "done" },
-      { slug: "story-b", title: "Story Beta", status: "in-progress" },
+      { slug: "story-a", title: "Story Alpha", status: "done", featureSlug: "test-feature" },
+      { slug: "story-b", title: "Story Beta", status: "in-progress", featureSlug: "test-feature" },
     ];
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows }));
     expect(html).toContain("Story Alpha");
     expect(html).toContain("Story Beta");
     expect(html).toContain("reading-story-row");
-    // clicking a story row should navigate to /stories/:slug?from=feature
-    expect(html).toContain('hx-get="/stories/story-a?from=feature"');
-    expect(html).toContain('hx-get="/stories/story-b?from=feature"');
+    // clicking a story row should navigate to /stories/:slug?from=feature&feature=slug
+    // & is HTML-encoded to &amp; in html`` template
+    expect(html).toContain('href="/stories/story-a?from=feature&amp;feature=test-feature"');
+    expect(html).toContain('href="/stories/story-b?from=feature&amp;feature=test-feature"');
   });
 
   it("renders breadcrumb OOB swap with Dashboard link and Feature label in accent", () => {
