@@ -2042,7 +2042,16 @@ app.get("/stories/:slug", async (c) => {
 
   // Direct browser navigation — wrap in full shell with reading mode
   const storyContent = storyFragment.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
-  const storyNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">/</span><span class="seg here">story</span></div></nav>`;
+  // Build breadcrumb with correct back-links based on entry point
+  const featureSlug = featureParam || story.meta.feature_slug;
+  let crumbs = `<a class="seg" href="/">dashboard</a>`;
+  if (from === "feature" && featureSlug) {
+    crumbs += `<span class="sep">/</span><a class="seg" href="/features/${featureSlug}">feature</a>`;
+  } else if (from === "sprint" && activeSprintSlug) {
+    crumbs += `<span class="sep">/</span><a class="seg" href="/sprints/${activeSprintSlug}">sprint</a>`;
+  }
+  crumbs += `<span class="sep">/</span><span class="seg here">story</span>`;
+  const storyNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs">${crumbs}</div></nav>`;
   return c.html(DashboardShell({ hash: shortHash(), date: isoDate(), mainContent: storyContent, navHtml: storyNavHtml }) as string);
 });
 
