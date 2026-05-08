@@ -992,7 +992,7 @@ function DashboardShell({
     }
     .top-bar .meta {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px; color: var(--inkOnDarkFaint); letter-spacing: 0.3px;
+      font-size: 11px; color: var(--inkOnDarkFaint); letter-spacing: 0.3px;
     }
 
     /* ── Breadcrumb bar ── */
@@ -1034,13 +1034,13 @@ function DashboardShell({
       display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
     }
     .dash-lens-hdr .tag {
-      font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+      font-family: "JetBrains Mono", monospace; font-size: 11px;
       letter-spacing: 1.3px; text-transform: uppercase;
       color: var(--inkOnDarkQuiet);
     }
     .dash-lens-hdr .rule { flex: 1; height: 1px; background: var(--ruleDark); }
     .dash-lens-hdr .count {
-      font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+      font-family: "JetBrains Mono", monospace; font-size: 11px;
       color: var(--inkOnDarkFaint);
     }
 
@@ -1056,7 +1056,7 @@ function DashboardShell({
     }
     .ph-note {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px; color: var(--inkOnDarkFaint); letter-spacing: 0.3px;
+      font-size: 11px; color: var(--inkOnDarkFaint); letter-spacing: 0.3px;
     }
     .htmx-request .ph-note::after { content: " ⋯"; }
 
@@ -1065,7 +1065,7 @@ function DashboardShell({
       display: inline-flex; align-items: center; gap: 5px;
       padding: 1px 7px 1px 5px;
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px; font-weight: 500; letter-spacing: 0.2px;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.2px;
       border-radius: 3px; white-space: nowrap;
     }
     .badge .dot { width: 5px; height: 5px; border-radius: 50%; }
@@ -1089,7 +1089,7 @@ function DashboardShell({
       display: inline-flex; align-items: center; gap: 4px;
       padding: 1px 6px 1px 5px;
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px; font-weight: 500;
+      font-size: 11px; font-weight: 500;
       color: #e8a070; letter-spacing: 0.2px;
       border-radius: 3px; white-space: nowrap;
       background: rgba(168,90,42,0.25);
@@ -1099,10 +1099,10 @@ function DashboardShell({
     /* ── Fraction (story count) ── */
     .frac {
       font-family: "JetBrains Mono", monospace;
-      font-size: 10.5px; color: var(--inkOnDarkMuted);
+      font-size: 12px; color: var(--inkOnDarkMuted);
     }
     .frac .slash { color: var(--inkOnDarkFaint); }
-    .frac .lbl { color: var(--inkOnDarkFaint); margin-left: 4px; font-size: 9.5px; }
+    .frac .lbl { color: var(--inkOnDarkFaint); margin-left: 4px; font-size: 11px; }
 
     /* ── Features list — grid rows ── */
     .feat-list { padding: 4px 0 2px; }
@@ -1116,7 +1116,7 @@ function DashboardShell({
     .feat-row.last { border-bottom: none; }
     .feat-row:hover { background: rgba(255,252,245,0.04); }
     .feat-name {
-      font-family: "Inter", sans-serif; font-size: 11.5px;
+      font-family: "Inter", sans-serif; font-size: 13px;
       color: var(--inkOnDark); line-height: 1.35;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -1177,7 +1177,7 @@ function DashboardShell({
     }
     .cycle-node .lbl {
       font-family: "JetBrains Mono", monospace;
-      font-size: 8.5px; letter-spacing: 0.4px;
+      font-size: 10px; letter-spacing: 0.4px;
       color: var(--inkOnDarkQuiet); text-transform: lowercase;
       line-height: 1.2; white-space: pre-line;
     }
@@ -1199,7 +1199,7 @@ function DashboardShell({
       margin: 10px 0 0;
       display: flex; gap: 18px; flex-wrap: wrap; align-items: baseline;
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px; color: var(--inkOnDarkMuted); letter-spacing: 0.3px;
+      font-size: 11px; color: var(--inkOnDarkMuted); letter-spacing: 0.3px;
     }
     .cycle-summary .tag {
       color: var(--inkOnDarkFaint); letter-spacing: 1.2px; text-transform: uppercase;
@@ -1243,7 +1243,7 @@ function DashboardShell({
     .story-row:last-child { border-bottom: none; }
     .story-row:hover { opacity: 0.85; }
     .story-row-title {
-      font-family: "Inter", sans-serif; font-size: 11.5px;
+      font-family: "Inter", sans-serif; font-size: 13px;
       color: var(--inkOnDark); line-height: 1.35;
     }
     .story-row-badge {
@@ -1295,7 +1295,7 @@ function DashboardShell({
     }
     .l2-section-cap {
       margin-top: 16px; margin-bottom: 6px;
-      font-family: "JetBrains Mono", monospace; font-size: 8.5px;
+      font-family: "JetBrains Mono", monospace; font-size: 10px;
       letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
     }
     .l2-narrative p {
@@ -1309,7 +1309,7 @@ function DashboardShell({
       padding: 5px 0; border-bottom: 1px solid var(--readingRule);
     }
     .l2-stories .story .t {
-      font-family: "Inter", sans-serif; font-size: 11.5px; color: var(--ink);
+      font-family: "Inter", sans-serif; font-size: 13px; color: var(--ink);
     }
     .l2-stories .story.click .t {
       color: var(--accent); font-weight: 500; cursor: pointer;
@@ -1331,7 +1331,7 @@ function DashboardShell({
     }
     .feature-meta-badge {
       padding: 2px 8px; border-radius: 3px;
-      color: #fff; font-size: 9.5px; letter-spacing: 0.5px;
+      color: #fff; font-size: 11px; letter-spacing: 0.5px;
     }
     .feature-meta-fraction { color: var(--inkMuted); }
     .feature-reading-label {
@@ -1346,7 +1346,7 @@ function DashboardShell({
     /* Section labels */
     .reading-section-label {
       font-family: "JetBrains Mono", monospace;
-      font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase;
+      font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
       color: var(--inkQuiet); margin-bottom: 8px; margin-top: 28px;
     }
 
@@ -1412,7 +1412,7 @@ function DashboardShell({
       border: 1px solid var(--readingRule);
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       font-family: "JetBrains Mono", monospace;
-      font-size: 8.5px; letter-spacing: 0.3px; color: var(--inkMuted);
+      font-size: 10px; letter-spacing: 0.3px; color: var(--inkMuted);
     }
     .l3-fm .fk { color: var(--inkFaint); margin-right: 3px; }
     .l3-fm .fv { color: var(--ink); }
@@ -1468,7 +1468,7 @@ function DashboardShell({
     .story-meta-chip {
       padding: 2px 7px; border: 1px solid var(--readingRule);
       border-radius: 3px; color: var(--inkMuted);
-      font-size: 9.5px; letter-spacing: 0.4px; white-space: nowrap;
+      font-size: 11px; letter-spacing: 0.4px; white-space: nowrap;
     }
     .story-meta-status {
       background: var(--accentSoft); border-color: var(--accent); color: var(--accent);
