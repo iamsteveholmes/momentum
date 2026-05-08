@@ -619,8 +619,9 @@ function FeatureStoryRow({ slug, title, status }: { slug: string; title: string;
   const color = storyBadgeColor(status);
   const icon = storyStatusIcon(status);
   return html`
-    <div
+    <a
       class="reading-story-row"
+      href="/stories/${slug}?from=feature"
       hx-get="/stories/${slug}?from=feature"
       hx-target="#main-content"
       hx-swap="innerHTML"
@@ -631,7 +632,7 @@ function FeatureStoryRow({ slug, title, status }: { slug: string; title: string;
         ${title}
       </span>
       <span class="reading-story-badge" style="color:${color}; border-color:${color};">${status}</span>
-    </div>
+    </a>
   `;
 }
 
@@ -745,8 +746,9 @@ const BAND_CONFIG: Record<BandName, { label: string; borderColor: string; badgeC
 function SprintStoryRow({ slug, title, status, band }: { slug: string; title: string; status: string; band: BandName }) {
   const badgeColor = BAND_CONFIG[band].badgeColor;
   return html`
-    <div
+    <a
       class="story-row"
+      href="/stories/${slug}?from=sprint"
       hx-get="/stories/${slug}?from=sprint"
       hx-target="#main-content"
       hx-push-url="/stories/${slug}?from=sprint"
@@ -754,7 +756,7 @@ function SprintStoryRow({ slug, title, status, band }: { slug: string; title: st
     >
       <span class="story-row-title">${title}</span>
       <span class="story-row-badge" style="color:${badgeColor}; border-color:${badgeColor};">${status}</span>
-    </div>
+    </a>
   `;
 }
 
@@ -1226,6 +1228,8 @@ function DashboardShell({
       margin-bottom: 2px;
       border-radius: 3px;
       background: var(--paperDarkAlt);
+      text-decoration: none;
+      color: inherit;
     }
     .story-row:hover { background: rgba(255,252,245,0.06); }
     .story-row-title {
@@ -1618,7 +1622,7 @@ app.get("/sprints/:slug", async (c) => {
     return c.html(`
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
-          <a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <a class="seg" href="/" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
           <span class="sep">/</span>
           <span class="seg here">sprint</span>
         </div>
@@ -1837,13 +1841,13 @@ export function StoryDetailView({
   let breadcrumbMiddle: string;
   if (from === "sprint") {
     if (activeSprintSlug) {
-      breadcrumbMiddle = `<a class="seg" hx-get="/sprints/${activeSprintSlug}" hx-target="#main-content" hx-push-url="/sprints/${activeSprintSlug}" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/sprints/${activeSprintSlug}" hx-get="/sprints/${activeSprintSlug}" hx-target="#main-content" hx-push-url="/sprints/${activeSprintSlug}" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
     } else {
       // Degraded fallback: no active sprint slug available
-      breadcrumbMiddle = `<a class="seg" hx-get="/lenses/sprint" hx-target="#main-content" hx-push-url="/lenses/sprint" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/lenses/sprint" hx-get="/lenses/sprint" hx-target="#main-content" hx-push-url="/lenses/sprint" style="cursor:pointer;">sprint</a><span class="sep">/</span>`;
     }
   } else if (from === "feature" && meta.feature_slug) {
-    breadcrumbMiddle = `<a class="seg" hx-get="/features/${meta.feature_slug}" hx-target="#main-content" hx-push-url="/features/${meta.feature_slug}" style="cursor:pointer;">feature</a><span class="sep">/</span>`;
+    breadcrumbMiddle = `<a class="seg" href="/features/${meta.feature_slug}" hx-get="/features/${meta.feature_slug}" hx-target="#main-content" hx-push-url="/features/${meta.feature_slug}" style="cursor:pointer;">feature</a><span class="sep">/</span>`;
   } else {
     breadcrumbMiddle = "";
   }
@@ -1994,7 +1998,7 @@ app.get("/stories/:slug", async (c) => {
     return c.html(`
       <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
-          <a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <a class="seg" href="/" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
           <span class="sep">/</span>
           <span class="seg here">story</span>
         </div>
@@ -2029,7 +2033,7 @@ app.get("/features/:slug", async (c) => {
     const notFoundFragment = `
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
-          <a class="seg" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
+          <a class="seg" href="/" hx-get="/" hx-target="#main-content" hx-push-url="/" style="cursor:pointer;">dashboard</a>
           <span class="sep">/</span>
           <span class="seg here">feature</span>
         </div>
