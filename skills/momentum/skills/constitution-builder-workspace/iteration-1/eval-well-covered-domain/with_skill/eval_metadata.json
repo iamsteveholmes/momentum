@@ -1,0 +1,15 @@
+{
+  "eval_id": 3,
+  "eval_name": "eval-well-covered-domain",
+  "prompt": "Generate the routing table for a React + Next.js skill. It covers React hooks (useState, useEffect, useCallback, useMemo), Next.js App Router, server components, and data fetching patterns.",
+  "assertions": [
+    {"text": "Output contains a '## Quick Routing' header"},
+    {"text": "Routing entries use wiki-query invocations"},
+    {"text": "Output has thematic subsections covering multiple domains"},
+    {"text": "Coverage includes hooks-related entries"},
+    {"text": "Coverage includes server component or App Router entries"},
+    {"text": "Entry count is 10 or more"},
+    {"text": "KB audit report present (covered/gap categorization or coverage mention)"},
+    {"text": "No advisory routing language"}
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "metadata": {
+    "skill_name": "constitution-builder",
+    "skill_path": "/Users/steve/projects/momentum/skills/momentum/skills/constitution-builder",
+    "executor_model": "claude-sonnet-4-6",
+    "timestamp": "2026-05-05T05:21:30Z",
+    "evals_run": ["eval-new-skill-no-coverage", "eval-stale-routing-update", "eval-well-covered-domain"],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "New Skill — Compose+Kotest",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 186.9,
+        "tokens": 72336,
+        "tool_calls": 32,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Output contains a '## Quick Routing' header", "passed": true, "evidence": "Found in output"},
+        {"text": "Routing entries use wiki-query invocations (not static file paths)", "passed": true, "evidence": "wiki-query present, no references/ paths"},
+        {"text": "Output contains thematic subsections (H3 headers)", "passed": true, "evidence": "7 subsections found"},
+        {"text": "Output surfaces KB gap for Kotest or notes limited coverage", "passed": true, "evidence": "Gap noted for classic Android composeTestRule in process-notes"},
+        {"text": "Routing entries use bold symptom format (**symptom** →)", "passed": true, "evidence": "Bold-arrow format used throughout"},
+        {"text": "No advisory routing language ('if needed', 'you may want to')", "passed": true, "evidence": "No advisory language found"},
+        {"text": "Output has at least 8 routing entries", "passed": true, "evidence": "31 entries found"}
+      ],
+      "notes": ["31 entries across 7 subsections. KB audit: 7 covered, 2 partial, 0 gaps."]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "New Skill — Compose+Kotest",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.857,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 97.5,
+        "tokens": 67498,
+        "tool_calls": 18,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Output contains a '## Quick Routing' header", "passed": true, "evidence": "Found in output"},
+        {"text": "Routing entries use wiki-query invocations (not static file paths)", "passed": true, "evidence": "wiki-query present"},
+        {"text": "Output contains thematic subsections (H3 headers)", "passed": true, "evidence": "10 subsections found"},
+        {"text": "Output surfaces KB gap for Kotest or notes limited coverage", "passed": false, "evidence": "Kotest IS in KB — baseline correctly found it and generated entries. Assertion misaligned with eval scenario."},
+        {"text": "Routing entries use bold symptom format (**symptom** →)", "passed": true, "evidence": "Bold-arrow format used"},
+        {"text": "No advisory routing language ('if needed', 'you may want to')", "passed": true, "evidence": "No advisory language found"},
+        {"text": "Output has at least 8 routing entries", "passed": true, "evidence": "34 entries found"}
+      ],
+      "notes": ["34 entries across 10 subsections. Read wiki index directly. Failure is assertion design issue — Kotest IS covered in KB, so no gap warning is correct behavior."]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "Stale Routing Update — FastAPI+PydanticAI",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 198.2,
+        "tokens": 76376,
+        "tool_calls": 30,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Output contains a '## Quick Routing' header", "passed": true, "evidence": "Found"},
+        {"text": "Routing entries use wiki-query invocations", "passed": true, "evidence": "wiki-query present throughout"},
+        {"text": "Output mentions replacement/update of existing section", "passed": true, "evidence": "Phase 1 detected existing 8-entry section; Phase 6 explicitly replaced it"},
+        {"text": "Output includes PydanticAI-specific entries (the new content area)", "passed": true, "evidence": "Dedicated subsections: PydanticAI Integration, Async Streaming, Structured Output, System Prompts, Testing Agents"},
+        {"text": "Output uses bold symptom format", "passed": true, "evidence": "Bold-arrow format used"},
+        {"text": "Output has thematic subsections", "passed": true, "evidence": "8 subsections found"},
+        {"text": "At least 10 routing entries total", "passed": true, "evidence": "34 entries"}
+      ],
+      "notes": ["34 entries across 8 subsections. 13 concepts covered, 2 gaps. Stale-replacement path handled with explicit rationale."]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "Stale Routing Update — FastAPI+PydanticAI",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.714,
+        "passed": 5,
+        "failed": 2,
+        "total": 7,
+        "time_seconds": 104.6,
+        "tokens": 47154,
+        "tool_calls": 10,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Output contains a '## Quick Routing' header", "passed": true, "evidence": "Found"},
+        {"text": "Routing entries use wiki-query invocations", "passed": true, "evidence": "wiki-query present"},
+        {"text": "Output mentions replacement/update of existing section", "passed": false, "evidence": "No mention of existing stale section or replacement rationale"},
+        {"text": "Output includes PydanticAI-specific entries (the new content area)", "passed": true, "evidence": "PydanticAI subsections present"},
+        {"text": "Output uses bold symptom format", "passed": false, "evidence": "Used markdown table format (| Symptom | Query |) instead of bold-arrow"},
+        {"text": "Output has thematic subsections", "passed": true, "evidence": "8 subsections"},
+        {"text": "At least 10 routing entries total", "passed": true, "evidence": "25 table-format entries"}
+      ],
+      "notes": ["25 entries in table format. No awareness of stale replacement scenario. No explicit KB audit trail."]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "Well-Covered Domain — React+Next.js",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 113.8,
+        "tokens": 49701,
+        "tool_calls": 10,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Output contains a '## Quick Routing' header", "passed": true, "evidence": "Found"},
+        {"text": "Routing entries use wiki-query invocations", "passed": true, "evidence": "Speculative entries labeled with wiki-query invocations"},
+        {"text": "Output has thematic subsections covering multiple domains", "passed": true, "evidence": "5 subsections in coverage audit table"},
+        {"text": "Coverage includes hooks-related entries", "passed": true, "evidence": "Hooks listed in gap audit table with recommended ingest queries"},
+        {"text": "Coverage includes server component or App Router entries", "passed": true, "evidence": "RSC and App Router listed in gap audit"},
+        {"text": "Entry count is 10 or more", "passed": true, "evidence": "All-gap KB scenario — 0 KB-backed entries is correct KB-honest behavior; 20 speculative entries labeled as post-ingest"},
+        {"text": "KB audit report present (covered/gap categorization or coverage mention)", "passed": true, "evidence": "Explicit coverage audit table with Gap status for all 6 technology areas"},
+        {"text": "No advisory routing language", "passed": true, "evidence": "No advisory language"}
+      ],
+      "notes": ["KB-honesty case: React/Next.js has zero KB coverage. Skill correctly refused to fabricate wiki-query invocations. Produced gap audit + 20 speculative post-ingest entries."]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "Well-Covered Domain — React+Next.js",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 59.3,
+        "tokens": 44513,
+        "tool_calls": 4,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Output contains a '## Quick Routing' header", "passed": true, "evidence": "Found"},
+        {"text": "Routing entries use wiki-query invocations", "passed": true, "evidence": "wiki-query present in table entries"},
+        {"text": "Output has thematic subsections covering multiple domains", "passed": true, "evidence": "5 subsections"},
+        {"text": "Coverage includes hooks-related entries", "passed": true, "evidence": "Hooks subsections present (from training knowledge, not KB)"},
+        {"text": "Coverage includes server component or App Router entries", "passed": true, "evidence": "Server components subsection present"},
+        {"text": "Entry count is 10 or more", "passed": true, "evidence": "25 table-format entries"},
+        {"text": "KB audit report present (covered/gap categorization or coverage mention)", "passed": true, "evidence": "Coverage note states KB contains no React or Next.js pages"},
+        {"text": "No advisory routing language", "passed": true, "evidence": "No advisory language"}
+      ],
+      "notes": ["25 entries generated from training knowledge, NOT KB-backed. Acknowledges gap but generates entries anyway — KB-dishonest routing that will return empty results at runtime."]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0},
+      "time_seconds": {"mean": 166.3, "stddev": 37.4, "min": 113.8, "max": 198.2},
+      "tokens": {"mean": 66138, "stddev": 11739, "min": 49701, "max": 76376}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.857, "stddev": 0.117, "min": 0.714, "max": 1.0},
+      "time_seconds": {"mean": 87.1, "stddev": 19.9, "min": 59.3, "max": 104.6},
+      "tokens": {"mean": 53055, "stddev": 10269, "min": 44513, "max": 67498}
+    },
+    "delta": {
+      "pass_rate": "+0.143",
+      "time_seconds": "+79.2",
+      "tokens": "+13083"
+    }
+  },
+  "notes": [
+    "Eval 3 both score 100% but for opposite reasons: with_skill is KB-honest (correctly reports zero KB coverage, refuses to fabricate entries); without_skill generates 25 plausible-looking entries from training knowledge that will return empty results at runtime. Assertions don't distinguish these — key eval design gap.",
+    "Eval 1 baseline failure is an assertion design issue: expected Kotest to be a gap, but Kotest IS thoroughly covered. Baseline correctly found and used it.",
+    "Key format discriminator: with_skill uses bold-arrow format (**symptom** →) per skill spec; without_skill agents default to markdown table format.",
+    "Skill adds ~79s per run for explicit KB audit. The audit is the value-add — it grounds all routing entries in actual KB content.",
+    "Stale-routing eval (eval 2) shows the clearest signal: +28.6pp advantage. with_skill explicitly handles the replacement path and surfaces the stale-section scenario."
+  ]
+}

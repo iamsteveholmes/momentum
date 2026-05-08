@@ -1,0 +1,36 @@
+name: llama-model-benchmark
+description: Run sprint planning benchmark with Llama 3.3 model
+version: 1.0
+
+extends: sprint-planning-benchmark.yaml
+
+parameters:
+  model_variant:
+    default: llama
+
+variables:
+  model_config:
+    provider: custom_open_router_custom
+    model: meta-llama/llama-3.3-70b-instruct:free
+
+workflow:
+  - name: run_llama_benchmark
+    description: Execute benchmark with Llama 3.3
+    steps:
+      - delegate:
+          recipe: sprint-planning-benchmark
+          parameters:
+            model_variant: llama
+            benchmark_session: cdb7de2f
+          instructions: |
+            Run the full sprint planning benchmark using Llama 3.3 model.
+            Focus on measuring:
+            1. Execution speed vs quality balance
+            2. Tool call efficiency
+            3. Planning breakdown quality
+            4. Resource utilization
+
+      - shell: |
+          echo "Llama 3.3 benchmark completed"
+          # Store results
+          mkdir -p results/llama/cdb7de2f

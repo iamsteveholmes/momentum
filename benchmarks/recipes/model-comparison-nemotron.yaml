@@ -1,0 +1,36 @@
+name: nemotron-model-benchmark
+description: Run sprint planning benchmark with Nemotron model
+version: 1.0
+
+extends: sprint-planning-benchmark.yaml
+
+parameters:
+  model_variant:
+    default: nemotron
+
+variables:
+  model_config:
+    provider: custom_open_router_custom
+    model: nvidia/nemotron-3-super-120b-a12b:free
+
+workflow:
+  - name: run_nemotron_benchmark
+    description: Execute benchmark with Nemotron
+    steps:
+      - delegate:
+          recipe: sprint-planning-benchmark
+          parameters:
+            model_variant: nemotron
+            benchmark_session: cdb7de2f
+          instructions: |
+            Run the full sprint planning benchmark using Nemotron model.
+            Focus on measuring:
+            1. Validation thoroughness
+            2. Edge case detection
+            3. Adversarial reasoning quality
+            4. Resource utilization (expect higher usage)
+
+      - shell: |
+          echo "Nemotron benchmark completed"
+          # Store results
+          mkdir -p results/nemotron/cdb7de2f

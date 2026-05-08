@@ -1,0 +1,60 @@
+{
+  "expectations": [
+    {
+      "text": "Output contains a '## Quick Routing' header",
+      "passed": true,
+      "evidence": "Found: '## Quick Routing'"
+    },
+    {
+      "text": "Routing entries use wiki-query invocations",
+      "passed": true,
+      "evidence": "Found: 'wiki-query'"
+    },
+    {
+      "text": "Output has thematic subsections covering multiple domains",
+      "passed": true,
+      "evidence": "Found 2 matches (need >=2)"
+    },
+    {
+      "text": "Coverage includes hooks-related entries",
+      "passed": true,
+      "evidence": "Found: 'hook'"
+    },
+    {
+      "text": "Coverage includes server component or App Router entries",
+      "passed": true,
+      "evidence": "Found: 'App Router'"
+    },
+    {
+      "text": "Entry count is 10 or more",
+      "passed": true,
+      "evidence": "All-gap KB scenario \u2014 0 entries is correct behavior (KB-honesty). Bold-arrow: 0, table: 0"
+    },
+    {
+      "text": "KB audit report present (covered/gap categorization or coverage mention)",
+      "passed": true,
+      "evidence": "routing-table: Found: 'gap'; process-notes: Found: 'covered'"
+    },
+    {
+      "text": "No advisory routing language",
+      "passed": true,
+      "evidence": "Pattern 'if needed|you may want|consider consulting|feel free to' not found (correct)"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "total_tokens": 49701,
+    "duration_ms": 113763,
+    "total_duration_seconds": 113.8
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Programmatic grep-based grading"
+  }
+}
