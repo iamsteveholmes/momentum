@@ -688,19 +688,19 @@ export function FeatureDetailView({
         <!-- Value narrative -->
         ${feature.value_analysis ? html`
           <div class="reading-section-label">Value Narrative</div>
-          <div class="reading-prose">${escapeHtml(feature.value_analysis)}</div>
+          <div class="reading-prose">${feature.value_analysis}</div>
         ` : ""}
 
         <!-- Acceptance condition -->
         ${feature.acceptance_condition ? html`
           <div class="reading-section-label">Acceptance Condition</div>
-          <div class="reading-ac-box">${escapeHtml(feature.acceptance_condition)}</div>
+          <div class="reading-ac-box">${feature.acceptance_condition}</div>
         ` : ""}
 
         <!-- System context -->
         ${feature.system_context ? html`
           <div class="reading-section-label">System Context</div>
-          <div class="reading-callout">${escapeHtml(feature.system_context)}</div>
+          <div class="reading-callout">${feature.system_context}</div>
         ` : ""}
 
         <!-- Stories list -->
@@ -916,6 +916,11 @@ function DashboardShell({
 
   <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+  <script>
+    // HTMX v2 does not re-process OOB-swapped elements — re-process on every swap
+    document.addEventListener('htmx:afterSwap', function(e) { htmx.process(e.target); });
+    document.addEventListener('htmx:oobAfterSwap', function(e) { if (e.detail && e.detail.target) htmx.process(e.detail.target); });
+  </script>
 
   <style>
     :root {
@@ -1920,7 +1925,7 @@ export function StoryDetailView({
         ${storyNarrative
           ? html`
             <div class="reading-section-label">Description</div>
-            <div class="reading-prose story-narrative">${escapeHtml(storyNarrative)}</div>
+            <div class="reading-prose story-narrative">${storyNarrative}</div>
           `
           : ""}
 
@@ -1945,7 +1950,7 @@ export function StoryDetailView({
           ? html`
             <div class="reading-section">
               <div class="reading-section-label">Workflow</div>
-              <div class="reading-col reading-prose">${escapeHtml(workflowSection)}</div>
+              <div class="reading-col reading-prose">${workflowSection}</div>
             </div>
           `
           : ""}
