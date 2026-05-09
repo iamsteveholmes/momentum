@@ -118,7 +118,7 @@ describe("computeCycleState", () => {
     expect(result.nextRequired).toBe("sprint-dev");
   });
 
-  test("active sprint with active status and started — sprint-planning done, sprint-dev done, retro next-required", () => {
+  test("active sprint with active status and started — sprint-planning done, sprint-dev in-progress, retro next-required", () => {
     const result = computeCycleState(
       makeSprints({
         active: {
@@ -132,7 +132,7 @@ describe("computeCycleState", () => {
     );
 
     expect(result.phases.find((p) => p.slug === "sprint-planning")?.state).toBe("done");
-    expect(result.phases.find((p) => p.slug === "sprint-dev")?.state).toBe("done");
+    expect(result.phases.find((p) => p.slug === "sprint-dev")?.state).toBe("in-progress");
     expect(result.phases.find((p) => p.slug === "retro")?.state).toBe("next-required");
     expect(result.nextRequired).toBe("retro");
     expect(result.lastSprintSlug).toBeNull();
@@ -162,7 +162,7 @@ describe("computeCycleState", () => {
     );
 
     expect(result.phases.find((p) => p.slug === "sprint-planning")?.state).toBe("done");
-    expect(result.phases.find((p) => p.slug === "sprint-dev")?.state).toBe("done");
+    expect(result.phases.find((p) => p.slug === "sprint-dev")?.state).toBe("in-progress");
     expect(result.phases.find((p) => p.slug === "retro")?.state).toBe("next-required");
     expect(result.nextRequired).toBe("retro");
     expect(result.lastSprintSlug).toBe("sprint-2026-04-01");

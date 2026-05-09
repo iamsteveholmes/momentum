@@ -342,7 +342,7 @@ function LensSection({
 // Cycle state computation
 // ---------------------------------------------------------------------------
 
-export type PhaseState = "done" | "next-required" | "not-run" | "pending";
+export type PhaseState = "done" | "in-progress" | "next-required" | "not-run" | "pending";
 
 export interface PhaseInfo {
   slug: string;
@@ -456,7 +456,9 @@ export function computeCycleState(index: SprintIndexInput | null): CycleState {
       if (p.slug === "sprint-planning") {
         state = sprintPlanningDone ? "done" : (nextRequiredSlug === "sprint-planning" ? "next-required" : "pending");
       } else if (p.slug === "sprint-dev") {
-        state = sprintDevDone ? "done" : (nextRequiredSlug === "sprint-dev" ? "next-required" : "pending");
+        // In-progress: sprint has started but retro hasn't run yet (still executing)
+        const devInProgress = active != null && active.started != null && !active.retro_run_at;
+        state = devInProgress ? "in-progress" : sprintDevDone ? "done" : (nextRequiredSlug === "sprint-dev" ? "next-required" : "pending");
       } else {
         // retro
         state = retroDone ? "done" : (nextRequiredSlug === "retro" ? "next-required" : "pending");
@@ -847,9 +849,9 @@ function SprintDetailView({
 function cycleNodeHtml(p: PhaseInfo): string {
   const stateClass =
     p.state === "done" ? "done" :
-    p.state === "next-required" ? "next" :
+    p.state === "in-progress" ? "running" :
     p.state === "not-run" ? "not-run" :
-    "pending";
+    "pending"; // next-required renders same as pending — status line identifies it
   return `<div class="cycle-node ${stateClass}"><div class="dot"></div><div class="lbl">${p.label}</div></div>`;
 }
 
@@ -1200,6 +1202,8 @@ function DashboardShell({
     }
     .cycle-node.done .dot { background: var(--accent); border-color: var(--accent); }
     .cycle-node.done .lbl { color: var(--inkOnDark); }
+    .cycle-node.running .dot { background: transparent; border: 2px solid var(--accent); }
+    .cycle-node.running .lbl { color: var(--accent); font-weight: 500; }
     .cycle-node.skipped .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
     .cycle-node.skipped .lbl { color: var(--inkOnDarkFaint); opacity: 0.45; }
     .cycle-node.next .dot {
