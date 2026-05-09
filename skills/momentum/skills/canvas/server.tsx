@@ -1416,6 +1416,17 @@ function DashboardShell({
     }
     .l3-fm .fk { color: var(--inkFaint); margin-right: 3px; }
     .l3-fm .fv { color: var(--ink); }
+    .l3-fm .midot { color: var(--inkFaint); }
+    .reading-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; letter-spacing: 0.6px; color: var(--inkMuted);
+      margin-left: auto;
+    }
+    .reading-pill .rd {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); opacity: 0.6;
+    }
     .l3-title {
       margin: 14px 0 5px;
       font-family: "Source Serif 4", Georgia, serif;
@@ -1500,7 +1511,7 @@ function DashboardShell({
     <!-- Brand header -->
     <header class="top-bar">
       <span class="brand">Momentum Cycle</span>
-      <span class="meta">#${hash} · ${date}</span>
+      <span class="meta">${date} · hash ${hash.slice(0, 4)}</span>
     </header>
 
     <!-- Breadcrumb nav -->
@@ -1850,17 +1861,17 @@ export function StoryDetailView({
   let breadcrumbMiddle: string;
   if (from === "sprint") {
     if (activeSprintSlug) {
-      breadcrumbMiddle = `<a class="seg" href="/sprints/${activeSprintSlug}">sprint</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/sprints/${activeSprintSlug}">sprint</a><span class="sep">›</span>`;
     } else {
-      breadcrumbMiddle = `<a class="seg" href="/">sprint</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/">sprint</a><span class="sep">›</span>`;
     }
   } else if (from === "feature") {
     // Use URL-passed feature slug first, then frontmatter, then fallback to dashboard
     const featureSlug = featureSlugOverride || meta.feature_slug;
     if (featureSlug) {
-      breadcrumbMiddle = `<a class="seg" href="/features/${featureSlug}">feature</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/features/${featureSlug}">feature</a><span class="sep">›</span>`;
     } else {
-      breadcrumbMiddle = `<a class="seg" href="/">feature</a><span class="sep">/</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/">feature</a><span class="sep">›</span>`;
     }
   } else {
     breadcrumbMiddle = "";
@@ -1905,43 +1916,39 @@ export function StoryDetailView({
     <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
       <div class="crumbs">
         <a class="seg" href="/">dashboard</a>
-        <span class="sep">/</span>
+        <span class="sep">›</span>
         ${raw(breadcrumbMiddle)}
-        <span class="seg here">Story</span>
+        <span class="seg here">story</span>
       </div>
+      <span class="reading-pill"><span class="rd"></span>reading mode</span>
     </nav>
 
     <!-- Story detail content (primary payload → goes into #main-content) -->
     <div class="reading-surface">
       <div class="reading-col">
 
-        <!-- Frontmatter meta strip -->
-        <div class="story-meta-strip">
-          <span class="story-meta-slug">${meta.story_key}</span>
-          ${meta.story_type
-            ? html`<span class="story-meta-chip">${meta.story_type}</span>`
-            : ""}
-          <span class="story-meta-chip story-meta-status">${meta.status}</span>
+        <!-- Frontmatter meta strip (l3-fm) -->
+        <div class="l3-fm">
+          <span class="badge ${badgeClass(meta.status)}"><span class="dot"></span>${meta.status}</span>
           ${meta.epic_slug
-            ? html`<span class="story-meta-chip">${meta.epic_slug}</span>`
+            ? html`<span><span class="fk">epic</span><span class="fv">${meta.epic_slug}</span></span>`
             : ""}
-          ${meta.derives_from
-            ? html`<span class="story-meta-derives">derives: ${meta.derives_from}</span>`
+          ${meta.epic_slug && meta.story_type
+            ? html`<span class="midot">·</span>`
             : ""}
-          <span class="feature-reading-label">story</span>
+          ${meta.story_type
+            ? html`<span><span class="fk">type</span><span class="fv">${meta.story_type}</span></span>`
+            : ""}
         </div>
 
         <!-- Title -->
-        <h1 class="feature-heading">${meta.title || meta.story_key}</h1>
+        <h1 class="l3-title">${meta.title || meta.story_key}</h1>
 
-        <!-- Value narrative / story statement -->
+        <!-- Subtitle / value narrative -->
         ${storyNarrative
-          ? html`
-            <div class="reading-section-label">Description</div>
-            <div class="reading-prose story-narrative">${storyNarrative}</div>
-          `
+          ? html`<div class="l3-subtitle">${storyNarrative}</div>`
           : acceptanceCriteria.length === 0
-            ? html`<div class="reading-prose" style="font-style:italic;color:var(--inkMuted);margin-top:12px;">This story is a backlog stub — no description yet.</div>`
+            ? html`<div class="l3-subtitle" style="font-style:italic;color:var(--inkMuted);">This story is a backlog stub — no description yet.</div>`
             : ""}
 
         <!-- Acceptance criteria -->
@@ -2046,12 +2053,12 @@ app.get("/stories/:slug", async (c) => {
   const featureSlug = featureParam || story.meta.feature_slug;
   let crumbs = `<a class="seg" href="/">dashboard</a>`;
   if (from === "feature" && featureSlug) {
-    crumbs += `<span class="sep">/</span><a class="seg" href="/features/${featureSlug}">feature</a>`;
+    crumbs += `<span class="sep">›</span><a class="seg" href="/features/${featureSlug}">feature</a>`;
   } else if (from === "sprint" && activeSprintSlug) {
-    crumbs += `<span class="sep">/</span><a class="seg" href="/sprints/${activeSprintSlug}">sprint</a>`;
+    crumbs += `<span class="sep">›</span><a class="seg" href="/sprints/${activeSprintSlug}">sprint</a>`;
   }
-  crumbs += `<span class="sep">/</span><span class="seg here">story</span>`;
-  const storyNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs">${crumbs}</div></nav>`;
+  crumbs += `<span class="sep">›</span><span class="seg here">story</span>`;
+  const storyNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs">${crumbs}</div><span class="reading-pill"><span class="rd"></span>reading mode</span></nav>`;
   return c.html(DashboardShell({ hash: shortHash(), date: isoDate(), mainContent: storyContent, navHtml: storyNavHtml }) as string);
 });
 

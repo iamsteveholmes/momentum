@@ -858,25 +858,24 @@ describe("StoryDetailView", () => {
     expect(h).toContain("reading-surface");
   });
 
-  it("renders story-meta-strip with slug, type, status, epic", () => {
+  it("renders l3-fm with status badge and epic/type metadata", () => {
     const h = String(StoryDetailView({ story: baseStory, from: null }));
-    expect(h).toContain("story-meta-strip");
-    expect(h).toContain("my-test-story");
+    expect(h).toContain("l3-fm");
     expect(h).toContain("in-progress");
     expect(h).toContain("test-epic");
+    expect(h).toContain("feature"); // story_type
   });
 
-  it("renders title in Source Serif 4 feature-heading", () => {
+  it("renders title as l3-title", () => {
     const h = String(StoryDetailView({ story: baseStory, from: null }));
-    expect(h).toContain("feature-heading");
+    expect(h).toContain("l3-title");
     expect(h).toContain("My Test Story");
   });
 
-  it("renders story narrative when present with Description label", () => {
+  it("renders story narrative as l3-subtitle", () => {
     const h = String(StoryDetailView({ story: baseStory, from: null }));
-    expect(h).toContain("Description");
+    expect(h).toContain("l3-subtitle");
     expect(h).toContain("As a developer");
-    expect(h).toContain("story-narrative");
   });
 
   it("renders acceptance criteria as numbered list", () => {
