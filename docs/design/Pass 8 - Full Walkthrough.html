@@ -1,0 +1,1292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 8 · Full Walkthrough</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper:       #fbfaf7;
+    --paperAlt:    #f5f3ed;
+    --rule:        #e7e3d9;
+    --ruleStrong:  #d4cfc2;
+    --ink:         #1e1d1a;
+    --inkMuted:    #5a574f;
+    --inkQuiet:    #8a8678;
+    --inkFaint:    #b5b0a2;
+    --readingPaper:    #faf6ec;
+    --readingPaperAlt: #f3eedf;
+    --readingRule:     #e5dfce;
+    --accent:      #5863a8;
+    --accentSoft:  rgba(88,99,168,0.08);
+    --accentRule:  rgba(88,99,168,0.22);
+    --gap:         #a85a2a;
+    --gapSoft:     rgba(168,90,42,0.09);
+    --paperDark:      #16140f;
+    --paperDarkAlt:   #1e1b15;
+    --paperDarkCode:  #201d16;
+    --ruleDark:       rgba(255,252,245,0.10);
+    --ruleDarkStrong: rgba(255,252,245,0.18);
+    --inkOnDark:      #f0eee9;
+    --inkOnDarkMuted: rgba(240,238,233,0.70);
+    --inkOnDarkQuiet: rgba(240,238,233,0.48);
+    --inkOnDarkFaint: rgba(240,238,233,0.36);
+  }
+
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #e9e6df;
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+
+  .canvas { min-width: 4400px; padding: 64px 80px 240px; }
+  .canvas-title {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 38px; font-weight: 400; letter-spacing: -0.4px;
+  }
+  .canvas-sub {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.4px;
+    color: var(--inkQuiet); text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .canvas-intro {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.65; color: var(--inkMuted);
+    max-width: 72ch; margin-top: 20px;
+  }
+
+  /* Legend at the top */
+  .legend {
+    margin-top: 32px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: 1200px;
+  }
+  .legend .item .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.3px;
+    text-transform: uppercase; color: var(--inkQuiet);
+    margin-bottom: 6px; display: block;
+  }
+  .legend .item .v {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13.5px; line-height: 1.5; color: var(--ink);
+  }
+  .legend .item .v code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    background: var(--paperAlt);
+    padding: 1px 5px; border-radius: 2px;
+  }
+
+  /* Strip header */
+  .strip-header {
+    margin-top: 88px;
+    display: flex; align-items: baseline; gap: 16px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--ruleStrong);
+    max-width: 1100px;
+  }
+  .strip-header .n {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 1.3px;
+    color: var(--accent);
+  }
+  .strip-header .t {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 24px; font-weight: 500; letter-spacing: -0.3px;
+    color: var(--ink);
+  }
+  .strip-header .s {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic; font-size: 14px;
+    color: var(--inkMuted);
+  }
+
+  /* Strip layout */
+  .strip {
+    margin-top: 32px;
+    display: flex; align-items: flex-start;
+    gap: 24px;
+  }
+  .frame {
+    display: flex; flex-direction: column; gap: 12px;
+    flex-shrink: 0;
+  }
+  .frame .frame-cap {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.3px;
+    text-transform: uppercase; color: var(--inkQuiet);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .frame .frame-cap .step-num {
+    color: var(--accent); font-weight: 500;
+  }
+  .frame .frame-cap .mode-tag {
+    margin-left: auto;
+    font-size: 9.5px; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 2px;
+  }
+  .frame .frame-cap .mode-tag.dark {
+    background: var(--paperDark); color: var(--inkOnDarkMuted);
+  }
+  .frame .frame-cap .mode-tag.light {
+    background: var(--paperAlt); color: var(--inkMuted);
+  }
+  .frame .frame-cap .mode-tag.reading {
+    background: var(--readingPaperAlt); color: var(--inkMuted);
+  }
+
+  /* Connector arrows between frames */
+  .connector {
+    align-self: center;
+    margin-top: 200px;
+    width: 100px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .connector .arrow {
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--ruleStrong) 0%, var(--accent) 100%);
+    position: relative;
+  }
+  .connector .arrow::after {
+    content: ""; position: absolute; right: -1px; top: -4px;
+    border: 5px solid transparent;
+    border-left-color: var(--accent);
+  }
+  .connector .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.6px;
+    color: var(--inkQuiet); text-align: center; line-height: 1.5;
+  }
+  .connector .label .flip {
+    color: var(--gap); display: block; margin-top: 3px;
+    font-size: 9.5px;
+  }
+  .connector .label .same {
+    color: var(--inkFaint); display: block; margin-top: 3px;
+    font-size: 9.5px;
+  }
+  .connector.no-flip .arrow {
+    background: var(--ruleStrong);
+  }
+  .connector.no-flip .arrow::after { border-left-color: var(--inkQuiet); }
+
+  /* ─────────── Pane shell (small for walkthrough) ─────────── */
+  .pane-outer {
+    width: 532px; background: #2a2824;
+    border-radius: 8px; padding: 5px;
+    box-shadow: 0 22px 60px -22px rgba(0,0,0,0.32),
+                0 5px 14px -5px rgba(0,0,0,0.18);
+  }
+  .pane-chrome {
+    height: 22px; display: flex; align-items: center; gap: 7px;
+    padding: 0 9px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; color: rgba(240,238,233,0.5);
+    letter-spacing: 0.3px;
+  }
+  .pane-chrome .tl { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .pane-inner {
+    width: 522px; height: 660px;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 4px; position: relative; overflow: hidden;
+  }
+  .pane-inner.tall { height: 880px; }
+  .pane-inner.dark {
+    background: var(--paperDark); color: var(--inkOnDark);
+    border-color: var(--ruleDark);
+  }
+  .pane-inner.reading {
+    background: var(--readingPaper); color: var(--ink);
+    border-color: var(--readingRule);
+  }
+
+  /* Rail */
+  .rail {
+    position: absolute; top: 0; left: 0; width: 40px; height: 100%;
+    background: var(--paperAlt); border-right: 1px solid var(--rule);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 0; z-index: 3;
+  }
+  .dark .rail { background: var(--paperDarkAlt); border-right-color: var(--ruleDark); }
+  .reading .rail { background: var(--readingPaperAlt); border-right-color: var(--readingRule); }
+  .rail .brand {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 10.5px;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.4px; margin-bottom: 14px;
+    color: var(--ink);
+  }
+  .dark .rail .brand { color: var(--inkOnDark); }
+  .rail .divider { width: 1px; height: 22px; background: var(--rule); margin-bottom: 8px; }
+  .dark .rail .divider { background: var(--ruleDark); }
+  .reading .rail .divider { background: var(--readingRule); }
+  .rail .item {
+    padding: 7px 0; width: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    border-left: 2px solid transparent;
+  }
+  .rail .item.active { border-left-color: var(--accent); }
+  .rail .item .n {
+    font-family: "JetBrains Mono", monospace; font-size: 8px;
+    color: var(--inkFaint); letter-spacing: 0.3px;
+  }
+  .dark .rail .item .n { color: var(--inkOnDarkFaint); }
+  .rail .item.active .n { color: var(--accent); }
+  .rail .item .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 8.5px;
+    color: var(--inkMuted);
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.4px;
+  }
+  .dark .rail .item .lbl { color: var(--inkOnDarkMuted); }
+  .rail .item.active .lbl { color: var(--accent); font-weight: 500; }
+
+  /* Toggle in rail (mode switch) */
+  .rail .mode-toggle {
+    margin-top: auto; margin-bottom: 8px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--ruleStrong);
+    background: linear-gradient(135deg, #fbfaf7 0%, #fbfaf7 50%, #16140f 50%, #16140f 100%);
+    cursor: pointer;
+  }
+  .dark .rail .mode-toggle { border-color: var(--ruleDarkStrong); }
+
+  .pane-body { padding-left: 40px; height: 100%; overflow: hidden; }
+
+  /* ─────────── Crumb / header ─────────── */
+  .crumb-bar {
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; color: var(--inkQuiet); letter-spacing: 0.3px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dark .crumb-bar { border-bottom-color: var(--ruleDark); color: var(--inkOnDarkQuiet); }
+  .reading .crumb-bar { border-bottom-color: var(--readingRule); }
+  .crumb-bar .crumbs { display: inline-flex; align-items: center; gap: 6px; }
+  .crumb-bar a.seg { color: var(--inkQuiet); cursor: pointer; text-decoration: none; }
+  .dark .crumb-bar a.seg { color: var(--inkOnDarkQuiet); }
+  .crumb-bar .seg.here { color: var(--ink); }
+  .dark .crumb-bar .seg.here { color: var(--inkOnDark); }
+  .crumb-bar .sep { color: var(--inkFaint); }
+  .dark .crumb-bar .sep { color: var(--inkOnDarkFaint); }
+
+  .pane-header {
+    padding: 9px 16px; border-bottom: 1px solid var(--rule);
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .dark .pane-header { border-bottom-color: var(--ruleDark); }
+  .pane-header .t {
+    font-family: "Source Serif 4", Georgia, serif; font-size: 13px;
+    color: var(--ink); letter-spacing: -0.1px;
+  }
+  .dark .pane-header .t { color: var(--inkOnDark); }
+  .pane-header .m {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: var(--inkFaint);
+  }
+  .dark .pane-header .m { color: var(--inkOnDarkFaint); }
+
+  /* ─────────── Badges (compact) ─────────── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 1px 7px 1px 5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; font-weight: 500; letter-spacing: 0.2px;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .badge .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .badge.working     { color: #2a5a42; background: rgba(62,122,90,0.10); }
+  .badge.working .dot     { background: #3e7a5a; }
+  .badge.partial     { color: #7a5e1a; background: rgba(168,131,40,0.11); }
+  .badge.partial .dot     { background: #a88328; }
+  .badge.not-started { color: #5a5a5a; background: rgba(138,138,138,0.10); }
+  .badge.not-started .dot { background: #8a8a8a; }
+  .badge.ready-for-dev { color: #2a4a7a; background: rgba(88,99,168,0.10); }
+  .badge.ready-for-dev .dot { background: #5863a8; }
+  .badge.in-progress { color: #2a4a7a; background: rgba(88,99,168,0.10); }
+  .badge.in-progress .dot { background: #5863a8; }
+  .badge.validated   { color: #556555; background: rgba(106,122,106,0.08); opacity: 0.72; }
+  .badge.validated .dot   { background: #6a7a6a; }
+  .badge.blocked     { color: #7a4020; background: rgba(168,90,42,0.10); }
+  .badge.blocked .dot     { background: #a85a2a; }
+
+  .dark .badge.working     { color: #8fd1a9; background: rgba(62,122,90,0.18); }
+  .dark .badge.partial     { color: #e6c07a; background: rgba(168,131,40,0.18); }
+  .dark .badge.not-started { color: rgba(240,238,233,0.72); background: rgba(240,238,233,0.07); }
+  .dark .badge.ready-for-dev { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .dark .badge.in-progress { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .dark .badge.validated   { color: rgba(192,200,188,0.85); background: rgba(106,122,106,0.14); }
+  .dark .badge.blocked     { color: #e0a07a; background: rgba(168,90,42,0.18); }
+
+  .gap-flag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px 1px 5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; font-weight: 500;
+    color: var(--gap); letter-spacing: 0.2px;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .gap-flag.prominent {
+    background: var(--gapSoft);
+    border: 1px solid rgba(168,90,42,0.18);
+  }
+  .dark .gap-flag.prominent { background: rgba(168,90,42,0.16); border-color: rgba(168,90,42,0.30); }
+
+  .frac {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; color: var(--inkMuted);
+  }
+  .dark .frac { color: var(--inkOnDarkMuted); }
+  .frac .slash { color: var(--inkFaint); }
+  .dark .frac .slash { color: var(--inkOnDarkFaint); }
+  .frac .lbl { color: var(--inkFaint); margin-left: 3px; }
+  .dark .frac .lbl { color: var(--inkOnDarkFaint); }
+
+  /* ─────────── Frame 1: Dashboard (Features lens) ─────────── */
+  .dash-section {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dark .dash-section { border-bottom-color: var(--ruleDark); }
+  .dash-lens-hdr {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .dash-lens-hdr .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+  }
+  .dark .dash-lens-hdr .tag { color: var(--inkOnDarkQuiet); }
+  .dash-lens-hdr .rule { flex: 1; height: 1px; background: var(--rule); }
+  .dark .dash-lens-hdr .rule { background: var(--ruleDark); }
+  .dash-lens-hdr .count {
+    font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: var(--inkFaint);
+  }
+  .dark .dash-lens-hdr .count { color: var(--inkOnDarkFaint); }
+
+  .feat-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    align-items: center; gap: 8px;
+    padding: 3.5px 0; border-bottom: 1px dashed var(--rule);
+  }
+  .dark .feat-row { border-bottom-color: var(--ruleDark); }
+  .feat-row.last { border-bottom: none; }
+  .feat-row .name {
+    font-family: "Inter", sans-serif; font-size: 11px;
+    color: var(--ink); line-height: 1.35;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .dark .feat-row .name { color: var(--inkOnDark); }
+  .feat-row .name.click {
+    color: var(--accent); cursor: pointer; font-weight: 500;
+  }
+  .dark .feat-row .name.click { color: #a4b0e0; }
+  .feat-row .meta {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: var(--inkFaint); letter-spacing: 0.2px;
+  }
+  .dark .feat-row .meta { color: var(--inkOnDarkFaint); }
+
+  /* Sprint row in dashboard */
+  .sprint-card-mini {
+    padding: 9px 12px;
+    background: rgba(88,99,168,0.05);
+    border-left: 2px solid var(--accent);
+  }
+  .dark .sprint-card-mini { background: rgba(88,99,168,0.12); }
+  .sprint-card-mini .key {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px; font-weight: 500; color: var(--ink);
+    letter-spacing: -0.2px;
+  }
+  .dark .sprint-card-mini .key { color: var(--inkOnDark); }
+  .sprint-card-mini .goal {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 11.5px; line-height: 1.45; color: var(--inkMuted);
+    margin-top: 4px; max-width: 50ch;
+  }
+  .dark .sprint-card-mini .goal { color: var(--inkOnDarkMuted); }
+  .sprint-card-mini .row {
+    display: flex; gap: 8px; margin-top: 8px; align-items: center;
+  }
+
+  /* Click hint */
+  .click-hint {
+    position: absolute;
+    background: rgba(88,99,168,0.92);
+    color: white;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; letter-spacing: 0.4px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    z-index: 10;
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 10px -2px rgba(0,0,0,0.3);
+  }
+  .click-hint::before {
+    content: ""; position: absolute;
+    left: -5px; top: 50%; transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: rgba(88,99,168,0.92);
+  }
+
+  /* ─────────── Sprint detail compact ─────────── */
+  .sprint-detail { padding: 14px 16px; height: calc(100% - 30px); overflow: hidden; }
+  .sprint-detail .key {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px; font-weight: 500; letter-spacing: -0.2px;
+    color: var(--ink);
+  }
+  .dark .sprint-detail .key { color: var(--inkOnDark); }
+  .sprint-detail .lifecycle {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 1px 7px 1px 6px; margin-top: 5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px;
+    color: #2a4a7a; background: rgba(88,99,168,0.10);
+    border-radius: 3px;
+  }
+  .dark .sprint-detail .lifecycle { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .sprint-detail .lifecycle .sd { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .sprint-detail .goal {
+    margin-top: 8px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12px; line-height: 1.5; color: var(--ink);
+    max-width: 50ch;
+  }
+  .dark .sprint-detail .goal { color: var(--inkOnDark); }
+
+  .band {
+    margin-top: 14px;
+  }
+  .band .band-hdr {
+    display: flex; align-items: baseline; gap: 8px;
+    padding-bottom: 4px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dark .band .band-hdr { border-bottom-color: var(--ruleDark); }
+  .band .band-hdr .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    letter-spacing: 1.2px; text-transform: uppercase;
+  }
+  .band.attention .band-hdr .lbl { color: var(--gap); }
+  .band.active .band-hdr .lbl { color: var(--accent); }
+  .dark .band.active .band-hdr .lbl { color: #a4b0e0; }
+  .band.terminal .band-hdr .lbl { color: var(--inkQuiet); }
+  .dark .band.terminal .band-hdr .lbl { color: var(--inkOnDarkQuiet); }
+  .band .band-hdr .n {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: var(--inkFaint);
+  }
+  .dark .band .band-hdr .n { color: var(--inkOnDarkFaint); }
+
+  .story-row {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 8px;
+    padding: 5px 0; border-bottom: 1px solid var(--rule);
+  }
+  .dark .story-row { border-bottom-color: var(--ruleDark); }
+  .story-row.terminal { opacity: 0.62; }
+  .story-row .title {
+    font-family: "Inter", sans-serif; font-size: 11px;
+    color: var(--ink); line-height: 1.35;
+  }
+  .dark .story-row .title { color: var(--inkOnDark); }
+  .story-row.terminal .title { color: var(--inkMuted); }
+  .dark .story-row.terminal .title { color: var(--inkOnDarkMuted); }
+  .story-row.click .title {
+    color: var(--accent); cursor: pointer; font-weight: 500;
+  }
+  .dark .story-row.click .title { color: #a4b0e0; }
+
+  /* ─────────── Level-2 reading ─────────── */
+  .l2-body { padding: 14px 18px 18px; height: 100%; overflow: hidden; }
+  .l2-meta {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .l2-meta .type-tag {
+    font-family: "JetBrains Mono", monospace; font-size: 8.5px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+  }
+  .l2-name {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px; line-height: 1.2; font-weight: 500;
+    letter-spacing: -0.3px; color: var(--ink); margin: 4px 0 6px;
+  }
+  .l2-desc {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12.5px; line-height: 1.5; color: var(--inkMuted);
+    font-style: italic; max-width: 50ch;
+  }
+  .l2-section-cap {
+    margin-top: 14px; margin-bottom: 6px;
+    font-family: "JetBrains Mono", monospace; font-size: 8.5px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+  }
+  .l2-narrative p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px; line-height: 1.62; color: var(--ink);
+    margin: 0 0 8px; max-width: 56ch;
+  }
+  .l2-stories { margin-top: 14px; }
+  .l2-stories .story {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 8px;
+    padding: 5px 0; border-bottom: 1px solid var(--readingRule);
+    cursor: pointer;
+  }
+  .l2-stories .story .t {
+    font-family: "Inter", sans-serif; font-size: 11.5px;
+    color: var(--ink);
+  }
+  .l2-stories .story.click .t {
+    color: var(--accent); font-weight: 500;
+  }
+
+  /* ─────────── Level-3 reading ─────────── */
+  .l3 { padding: 14px 18px 18px; height: 100%; overflow: hidden; }
+  .l3-fm {
+    margin-top: 2px; padding: 7px 10px;
+    background: var(--readingPaperAlt);
+    border: 1px solid var(--readingRule);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8.5px; letter-spacing: 0.3px;
+    color: var(--inkMuted);
+  }
+  .l3-fm .fk { color: var(--inkFaint); margin-right: 3px; }
+  .l3-fm .fv { color: var(--ink); }
+  .l3-fm .midot { color: var(--inkFaint); }
+  .l3-title {
+    margin: 12px 0 4px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px; line-height: 1.2; font-weight: 500;
+    letter-spacing: -0.3px; color: var(--ink);
+  }
+  .l3-subtitle {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic; font-size: 13px; line-height: 1.4;
+    color: var(--inkMuted); margin-bottom: 12px; max-width: 50ch;
+  }
+  .l3 p.body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px; line-height: 1.7;
+    color: var(--ink); max-width: 56ch;
+    margin: 0 0 9px;
+  }
+  .l3 p.body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    background: var(--readingPaperAlt);
+    padding: 1px 4px; border-radius: 2px;
+  }
+  .l3 h3.sec {
+    margin: 14px 0 7px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--readingRule);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px; font-weight: 500; color: var(--ink);
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .l3 h3.sec .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8.5px; letter-spacing: 1.3px;
+    text-transform: uppercase; color: var(--inkQuiet); font-weight: 400;
+  }
+  .l3 ol.num {
+    list-style: none; padding: 0; margin: 0;
+    counter-reset: acn;
+  }
+  .l3 ol.num > li {
+    counter-increment: acn;
+    display: grid; grid-template-columns: 24px 1fr;
+    column-gap: 10px;
+    padding: 6px 0 7px;
+    border-bottom: 1px solid var(--readingRule);
+  }
+  .l3 ol.num > li::before {
+    content: counter(acn, decimal-leading-zero);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; color: var(--inkFaint);
+    padding-top: 3px;
+  }
+  .l3 ol.num .num-body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12px; line-height: 1.55; color: var(--ink);
+    max-width: 50ch;
+  }
+  .l3 ol.num .num-body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    background: var(--readingPaperAlt);
+    padding: 1px 4px; border-radius: 2px;
+  }
+
+  /* Reading affordance pill in crumb */
+  .reading-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; letter-spacing: 0.3px;
+    color: var(--accent);
+    cursor: help;
+    border-bottom: 1px dotted var(--accent);
+    padding-bottom: 1px;
+  }
+  .reading-pill .rd { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* ─────────── Post-its ─────────── */
+  .postits {
+    margin-top: 24px;
+    display: flex; gap: 18px; flex-wrap: wrap;
+    max-width: 1100px;
+  }
+  .postit {
+    width: 252px;
+    background: #fef6d0;
+    padding: 16px 18px 18px;
+    font-family: "Caveat", "Source Serif 4", cursive;
+    font-size: 16px; line-height: 1.42;
+    color: #3d2f1a;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05),
+                0 12px 26px -12px rgba(0,0,0,0.22),
+                0 4px 8px -4px rgba(0,0,0,0.10);
+    transform: rotate(-1deg);
+  }
+  .postit.r { transform: rotate(0.7deg); }
+  .postit.b { background: #dfe7ef; transform: rotate(-0.5deg); }
+  .postit.g { background: #e0eadf; transform: rotate(0.9deg); }
+  .postit .h {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(61,47,26,0.6);
+    margin-bottom: 8px; display: block;
+  }
+  .postit code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px; background: rgba(0,0,0,0.05);
+    padding: 0 3px; border-radius: 2px;
+  }
+
+  .strip-postits {
+    display: flex; gap: 18px; margin-top: 24px;
+    margin-left: 0;
+  }
+
+  /* Polarity diagram for the legend */
+  .polarity-swatch {
+    display: inline-flex; align-items: center; gap: 0; vertical-align: middle;
+    border: 1px solid var(--ruleStrong);
+    border-radius: 2px; overflow: hidden;
+  }
+  .polarity-swatch span {
+    display: inline-block;
+    width: 22px; height: 14px;
+  }
+  .polarity-swatch .d { background: var(--paperDark); }
+  .polarity-swatch .l { background: var(--paper); }
+  .polarity-swatch .r { background: var(--readingPaper); }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+  <div class="canvas-title">Feature Status — Pass 8</div>
+  <div class="canvas-sub">full walkthrough · the system, end-to-end</div>
+  <p class="canvas-intro">
+    The synthesizing pass. Decisions from passes 1–7 applied to one continuous
+    walkthrough: dashboard → sprint → feature → story. Two strips show the
+    polarity rule in action — the first crosses dark dashboards into reading
+    docs (polarity flip on entry); the second starts from a light dashboard
+    and the doc still warms its paper to signal "you're now reading."
+  </p>
+
+  <!-- ─────────── Legend ─────────── -->
+  <div class="legend">
+    <div class="item">
+      <span class="k">Polarity</span>
+      <div class="v">
+        Dashboards <span class="polarity-swatch"><span class="d"></span></span> dark · scan task<br>
+        Light dash <span class="polarity-swatch"><span class="l"></span></span> if toggled<br>
+        Reading <span class="polarity-swatch"><span class="r"></span></span> always — L2 + L3
+      </div>
+    </div>
+    <div class="item">
+      <span class="k">Toggle scope</span>
+      <div class="v">
+        The dark/light switch in the rail controls dashboard lenses only.
+        Reading surfaces ignore it.
+      </div>
+    </div>
+    <div class="item">
+      <span class="k">Cross-fade</span>
+      <div class="v">
+        140ms when polarity flips (dark → reading).
+        No fade when both surfaces are light (light dash → reading).
+        Paper warms instead, as the tell.
+      </div>
+    </div>
+    <div class="item">
+      <span class="k">Reading mode</span>
+      <div class="v">
+        Tuned variant of light: paper <code>#faf6ec</code>,
+        17→18px, 65ch measure, serif throughout.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       STRIP A — Dark dashboard → reading docs (with polarity flip)
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="strip-header">
+    <span class="n">strip · A</span>
+    <span class="t">Dark dashboard → story detail</span>
+    <span class="s">the polarity flip moment</span>
+  </div>
+
+  <div class="strip">
+    <!-- Frame 1: Dashboard (dark) -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">01</span><span>dashboard</span>
+        <span class="mode-tag dark">dark</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner dark tall">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+            <div class="mode-toggle"></div>
+          </div>
+          <div class="pane-body">
+            <div class="pane-header">
+              <span class="t">Feature Status</span>
+              <span class="m">2026-05-03 · hash 7f3a</span>
+            </div>
+
+            <!-- Features lens (01) -->
+            <div class="dash-section">
+              <div class="dash-lens-hdr">
+                <span class="tag">01 · features</span>
+                <span class="rule"></span>
+                <span class="count">14 · 2 gaps</span>
+              </div>
+              <div class="feat-row"><span class="name">Feature Status Dashboard</span><span class="frac">5<span class="slash">/</span>5</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Sprint Planning to Ready</span><span class="frac">4<span class="slash">/</span>4</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Feature Grooming Skill</span><span class="frac">3<span class="slash">/</span>3</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Story Authoring Workflow</span><span class="frac">4<span class="slash">/</span>4</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Sprint Dev Workflow</span><span class="frac">6<span class="slash">/</span>6</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Decision Log</span><span class="frac">3<span class="slash">/</span>3</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">AVFL Scan Profile</span><span class="frac">3<span class="slash">/</span>3</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name click">Sprint Retro + Practice Improvement Flywheel</span><span class="frac">4<span class="slash">/</span>7</span><span class="badge partial"><span class="dot"></span>partial</span></div>
+              <div class="feat-row"><span class="name">AVFL Required Gate</span><span class="frac">2<span class="slash">/</span>3</span><span class="badge in-progress"><span class="dot"></span>in progress</span></div>
+              <div class="feat-row"><span class="name">Practice Distillation</span><span class="frac">1<span class="slash">/</span>3</span><span class="badge in-progress"><span class="dot"></span>in progress</span></div>
+              <div class="feat-row"><span class="name">Findings Ledger</span><span class="frac">0<span class="slash">/</span>2</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+              <div class="feat-row"><span class="name">Cross-Sprint Pattern Surface</span><span class="frac">0<span class="slash">/</span>3</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+              <div class="feat-row"><span class="name">Architecture Doc Refresh</span><span class="frac">2<span class="slash">/</span>4</span><span class="gap-flag prominent">gap</span></div>
+              <div class="feat-row last"><span class="name">Multi-Project Index</span><span class="frac">0<span class="slash">/</span>5</span><span class="gap-flag prominent">gap</span></div>
+            </div>
+
+            <!-- Sprints lens (02) — current sprint card -->
+            <div class="dash-section">
+              <div class="dash-lens-hdr">
+                <span class="tag">02 · sprints</span>
+                <span class="rule"></span>
+                <span class="count">active</span>
+              </div>
+              <div class="sprint-card-mini">
+                <div class="key">sprint-2026-04-22</div>
+                <div class="goal">Close the flywheel loop — make retro findings compound across sprints.</div>
+                <div class="row">
+                  <span class="badge in-progress"><span class="dot"></span>active</span>
+                  <span class="frac">3<span class="slash">/</span>6<span class="lbl">in progress</span></span>
+                  <span class="gap-flag prominent">1 blocked</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flywheel lens (03) -->
+            <div class="dash-section" style="border-bottom:none;">
+              <div class="dash-lens-hdr">
+                <span class="tag">03 · flywheel</span>
+                <span class="rule"></span>
+                <span class="count">6 · 2 awaiting</span>
+              </div>
+              <div class="feat-row"><span class="name">retro-skill ↘ stub: avfl-decision-trace</span><span></span><span class="badge ready-for-dev"><span class="dot"></span>triaged</span></div>
+              <div class="feat-row"><span class="name">sprint-boundary ↘ stub: log-correlation</span><span></span><span class="badge ready-for-dev"><span class="dot"></span>triaged</span></div>
+              <div class="feat-row last"><span class="name">findings-ledger ↘ pattern: ambiguous-acs</span><span></span><span class="gap-flag prominent">awaiting</span></div>
+            </div>
+
+            <!-- click hint on the feature row -->
+            <div class="click-hint" style="top: 290px; left: 320px;">click → L2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="arrow"></div>
+      <div class="label">
+        click feature
+        <span class="flip">polarity flip · 140ms</span>
+      </div>
+    </div>
+
+    <!-- Frame 2: Level-2 (reading) -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">02</span><span>level-2 · feature</span>
+        <span class="mode-tag reading">reading</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner reading">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+            <div class="mode-toggle"></div>
+          </div>
+          <div class="pane-body">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">features</a>
+                <span class="sep">›</span>
+                <span class="seg here">sprint-retro-and-flywheel</span>
+              </span>
+              <span class="reading-pill"><span class="rd"></span>reading mode</span>
+            </div>
+            <div class="l2-body">
+              <div class="l2-meta">
+                <span class="badge partial"><span class="dot"></span>partial</span>
+                <span class="frac">4<span class="slash">/</span>7<span class="lbl">stories</span></span>
+                <span class="type-tag">flow</span>
+                <span class="gap-flag prominent">gap</span>
+              </div>
+              <h1 class="l2-name">Sprint Retro + Practice Improvement Flywheel</h1>
+              <div class="l2-desc">
+                Retro ceremony plus the flywheel — cross-story pattern detection
+                that feeds improvements forward into the practice.
+              </div>
+
+              <div class="l2-section-cap">value narrative</div>
+              <div class="l2-narrative">
+                <p>
+                  The retro skill closes the sprint loop. But the larger vision — the
+                  flywheel — is where this becomes transformative. A developer who
+                  runs 10 sprints with the flywheel should be dramatically more
+                  effective in sprint 10 than sprint 1.
+                </p>
+                <p>
+                  Currently, retro and sprint-summary writes are working. The flywheel
+                  accumulation is not yet implemented.
+                </p>
+              </div>
+
+              <div class="l2-section-cap">stories · 7 · click to open</div>
+              <div class="l2-stories">
+                <div class="story click">
+                  <span class="t">Retro Skill</span>
+                  <span class="badge ready-for-dev"><span class="dot"></span>ready for dev</span>
+                </div>
+                <div class="story">
+                  <span class="t">Cross-Story Pattern Detection</span>
+                  <span class="badge not-started"><span class="dot"></span>not started</span>
+                </div>
+                <div class="story">
+                  <span class="t">Findings Ledger</span>
+                  <span class="badge not-started"><span class="dot"></span>not started</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="click-hint" style="top: 472px; left: 326px;">click → L3</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector no-flip">
+      <div class="arrow"></div>
+      <div class="label">
+        click story
+        <span class="same">same polarity · no fade</span>
+      </div>
+    </div>
+
+    <!-- Frame 3: Level-3 (reading) -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">03</span><span>level-3 · story</span>
+        <span class="mode-tag reading">reading</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner reading">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+            <div class="mode-toggle"></div>
+          </div>
+          <div class="pane-body">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">features</a>
+                <span class="sep">›</span>
+                <a class="seg">retro-and-flywheel</a>
+                <span class="sep">›</span>
+                <span class="seg here">retro-skill</span>
+              </span>
+              <span class="reading-pill"><span class="rd"></span>reading mode</span>
+            </div>
+            <div class="l3">
+              <div class="l3-fm">
+                <span class="badge ready-for-dev"><span class="dot"></span>ready for dev</span>
+                <span><span class="fk">epic</span><span class="fv">impetus-core</span></span>
+                <span class="midot">·</span>
+                <span><span class="fk">change</span><span class="fv">skill + code</span></span>
+              </div>
+              <h1 class="l3-title">Retro Skill</h1>
+              <div class="l3-subtitle">
+                Sprint retrospective with cross-log discovery and sprint closure
+              </div>
+              <p class="body">
+                The sprint lifecycle is planning → dev → retro → next cycle. Planning
+                and dev are implemented; retro is the missing piece that closes the
+                loop. Per Decision 34, retro owns sprint closure.
+              </p>
+              <h3 class="sec">
+                Acceptance Criteria
+                <span class="tag">9 ACs</span>
+              </h3>
+              <ol class="num">
+                <li><div class="num-body">A skill exists at <code>skills/momentum/skills/retro/SKILL.md</code> invocable via <code>/momentum:retro</code>.</div></li>
+                <li><div class="num-body">The skill reads all agent JSONL log files from <code>.claude/momentum/sprint-logs/{sprint-slug}/</code> and correlates events to build a holistic timeline.</div></li>
+                <li><div class="num-body">Verifies every story reached <code>done</code>; otherwise flags <code>closed-incomplete</code>.</div></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- post-its for strip A -->
+  <div class="strip-postits">
+    <div class="postit">
+      <span class="h">strip A · the flip</span>
+      Going from a dark scan-surface into a light reading-surface is the only
+      time we cross-fade. <strong>140ms</strong>, ease-out. Long enough to
+      read as intentional, short enough not to drag.
+    </div>
+    <div class="postit r">
+      <span class="h">rail toggle stays put</span>
+      Even on reading surfaces, the toggle remains visible in the rail —
+      because it still <em>does</em> something: pressing it changes what
+      mode you'll return to when you go back to a dashboard.
+    </div>
+    <div class="postit b">
+      <span class="h">crumb pill</span>
+      <code>reading mode</code> pill in the crumb bar (dotted underline,
+      tooltip on hover) is the why-affordance from Pass 7. Same component
+      reused on both L2 and L3 — one place to learn the rule.
+    </div>
+    <div class="postit g">
+      <span class="h">lens order = numbering</span>
+      <strong>01 features → 02 sprints → 03 flywheel.</strong>
+      Features is the primary scan surface (what's working / partial / gap).
+      Sprints is the time-bound view of in-flight work. Flywheel is the
+      compounding meta-layer — what the practice is learning. Reading top
+      to bottom should feel like zooming out from "what" to "why."
+    </div>
+    <div class="postit">
+      <span class="h">yes — sprints drill</span>
+      Click the sprint card → sprint detail (outcome bands, closure strip).
+      Shown in <strong>strip B / frame 01</strong>. From there, click any
+      story → reading mode L3. Sprints is a peer drill-down to features,
+      not a leaf.
+    </div>
+    <div class="postit r">
+      <span class="h">flywheel · what it shows</span>
+      Triaged stubs from recent retros (ready to plan), plus cross-sprint
+      patterns (clusters of findings <em>awaiting</em> triage). Drilling a
+      stub → L3 of the new story. Drilling a pattern → a focused view of
+      the contributing findings (not yet shown — would be Pass 9).
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       STRIP B — Light dashboard → reading (no polarity flip)
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="strip-header">
+    <span class="n">strip · B</span>
+    <span class="t">Light dashboard → story detail</span>
+    <span class="s">no polarity flip — the paper warms instead</span>
+  </div>
+
+  <div class="strip">
+    <!-- Frame B1: Sprint lens (light) -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">01</span><span>sprint lens · light</span>
+        <span class="mode-tag light">light</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item active"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+            <div class="mode-toggle" style="background: linear-gradient(135deg, #16140f 0%, #16140f 50%, #fbfaf7 50%, #fbfaf7 100%);"></div>
+          </div>
+          <div class="pane-body">
+            <div class="pane-header">
+              <span class="t">Feature Status</span>
+              <span class="m">2026-05-03 · hash 7f3a</span>
+            </div>
+            <div class="sprint-detail">
+              <div class="key">sprint-2026-04-22</div>
+              <span class="lifecycle"><span class="sd"></span>active</span>
+              <div class="goal">
+                Close the flywheel loop — make retro findings compound across
+                sprints instead of dying in a markdown file.
+              </div>
+
+              <div class="band attention">
+                <div class="band-hdr">
+                  <span class="lbl">blocked</span>
+                  <span class="n">1</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">Flywheel Workflow Explains Issues</span>
+                  <span class="gap-flag prominent">blocked</span>
+                </div>
+              </div>
+
+              <div class="band active">
+                <div class="band-hdr">
+                  <span class="lbl">in progress</span>
+                  <span class="n">3</span>
+                </div>
+                <div class="story-row click">
+                  <span class="title">Cross-Story Pattern Detection</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">Findings Ledger</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">AVFL Fixer Required Gate</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+              </div>
+
+              <div class="band terminal">
+                <div class="band-hdr">
+                  <span class="lbl">validated</span>
+                  <span class="n">2</span>
+                </div>
+                <div class="story-row terminal">
+                  <span class="title">Retro → Triage Handoff</span>
+                  <span class="badge validated"><span class="dot"></span>validated</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="click-hint" style="top: 312px; left: 280px;">click story → L3</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector no-flip">
+      <div class="arrow"></div>
+      <div class="label">
+        click story
+        <span class="same">no flip · paper warms</span>
+      </div>
+    </div>
+
+    <!-- Frame B2: Level-3 reading (entered from light) -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">02</span><span>level-3 · story</span>
+        <span class="mode-tag reading">reading</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner reading">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item active"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+            <div class="mode-toggle" style="background: linear-gradient(135deg, #16140f 0%, #16140f 50%, #fbfaf7 50%, #fbfaf7 100%);"></div>
+          </div>
+          <div class="pane-body">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">sprints</a>
+                <span class="sep">›</span>
+                <a class="seg">2026-04-22</a>
+                <span class="sep">›</span>
+                <span class="seg here">cross-story-pattern-detection</span>
+              </span>
+              <span class="reading-pill"><span class="rd"></span>reading mode</span>
+            </div>
+            <div class="l3">
+              <div class="l3-fm">
+                <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                <span><span class="fk">epic</span><span class="fv">flywheel-mechanics</span></span>
+                <span class="midot">·</span>
+                <span><span class="fk">change</span><span class="fv">code</span></span>
+              </div>
+              <h1 class="l3-title">Cross-Story Pattern Detection</h1>
+              <div class="l3-subtitle">
+                Surface recurring shapes across stories so practice improves over time
+              </div>
+              <p class="body">
+                The flywheel hinges on noticing that the same kind of mistake or
+                ambiguity has shown up before. This story builds the detection layer
+                that reads <code>findings-ledger.jsonl</code> and emits cluster
+                signals to the next sprint's planning surface.
+              </p>
+              <h3 class="sec">
+                Acceptance Criteria
+                <span class="tag">6 ACs</span>
+              </h3>
+              <ol class="num">
+                <li><div class="num-body">Reads <code>findings-ledger.jsonl</code> across the last N sprints (default 5).</div></li>
+                <li><div class="num-body">Clusters findings by <code>category</code> + tokenized <code>summary</code>; minimum cluster size 2.</div></li>
+                <li><div class="num-body">Emits <code>cross-sprint-patterns.md</code> per planning cycle.</div></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visual diff annotation -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span style="color: var(--inkQuiet);">the tell</span>
+      </div>
+      <div style="width: 320px; padding: 18px 20px; background: var(--paper); border: 1px solid var(--rule);">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--inkQuiet); margin-bottom: 12px;">
+          paper · before / after
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+          <div style="width: 56px; height: 36px; background: var(--paper); border: 1px solid var(--rule);"></div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--inkMuted);">
+            <code style="font-size:10px;background:var(--paperAlt);padding:1px 4px;">#fbfaf7</code><br>
+            <span style="font-size:9.5px;color:var(--inkFaint);">light dash</span>
+          </div>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--inkFaint); text-align: center; margin: 4px 0;">↓ click into doc ↓</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="width: 56px; height: 36px; background: var(--readingPaper); border: 1px solid var(--readingRule);"></div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--inkMuted);">
+            <code style="font-size:10px;background:var(--readingPaperAlt);padding:1px 4px;">#faf6ec</code><br>
+            <span style="font-size:9.5px;color:var(--inkFaint);">reading</span>
+          </div>
+        </div>
+        <div style="margin-top: 14px; font-family: 'Source Serif 4', serif; font-size: 12px; line-height: 1.5; color: var(--inkMuted); font-style: italic;">
+          A 4-point warmth shift. Subtle but present in peripheral vision.
+          Combined with the type bump (17→18px) and serif ACs, the surface
+          announces itself as a doc.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- post-its for strip B -->
+  <div class="strip-postits">
+    <div class="postit">
+      <span class="h">strip B · no flip</span>
+      Light → reading is a <strong>property change</strong>, not a polarity flip.
+      No cross-fade — that would over-signal. Instead the paper warms and the
+      type tunes; the change is felt rather than announced.
+    </div>
+    <div class="postit r">
+      <span class="h">why warm, not cool</span>
+      Warmer paper (<code>#faf6ec</code>) reads as physical — closer to vellum
+      than to a screen. Reinforces "this is a document." Cool would have
+      pushed the opposite direction.
+    </div>
+    <div class="postit b">
+      <span class="h">assumption flagged</span>
+      <strong>One toggle, two effects:</strong> the rail switch only flips
+      dashboard polarity. Reading stays reading. If users want to read in dark
+      they can't — a future tweak might add a per-surface override, but I'd
+      resist it: the polarity rule is <em>the</em> design decision, not a
+      preference.
+    </div>
+    <div class="postit g">
+      <span class="h">back-navigation</span>
+      Going back (L3 → L2 → dashboard) reverses the same rule. From dark
+      origin: 140ms cross-fade returning to dark. From light origin: paper
+      cools back to <code>#fbfaf7</code>, no fade. <strong>Not shown</strong>
+      to keep this canvas focused on entry.
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

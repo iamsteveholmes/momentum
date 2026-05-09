@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 2 · Level 2 Drill-Down</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { background: #f0eee9; }
+  * { box-sizing: border-box; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="level-two.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard, DCPostIt, LevelTwoPage, T } = window;
+
+  function PassTwo() {
+    return (
+      <DesignCanvas>
+        <div style={{ padding: "0 60px 48px", maxWidth: 1200 }}>
+          <div style={{
+            fontFamily: T.fontMono, fontSize: 11, letterSpacing: 1.6,
+            color: "rgba(40,30,20,0.5)", textTransform: "uppercase",
+            marginBottom: 10,
+          }}>
+            Feature Status Redesign · Pass 2
+          </div>
+          <div style={{
+            fontFamily: T.fontSerif, fontSize: 38, lineHeight: 1.2,
+            color: "#1e1d1a", letterSpacing: -0.6, fontWeight: 400,
+            maxWidth: "32ch",
+          }}>
+            Level 2 — the feature as a thinking space.
+          </div>
+          <div style={{
+            fontFamily: T.fontSans, fontSize: 14, lineHeight: 1.6,
+            color: "rgba(40,30,20,0.65)", marginTop: 16,
+            maxWidth: "72ch",
+          }}>
+            One fully-populated feature drill-down, using Sprint Planning as the representative case.
+            Mid-fi — type and prose are real. Serif for the value narrative so reading it feels
+            like reading, not scanning. Stories + dependency container sit to the right, subordinate
+            to the narrative column.
+          </div>
+        </div>
+
+        <DCSection
+          title="01 · Sprint Planning · Level 2 drill-down"
+          subtitle="Narrative left, reference right. The feature's story is the page; the story list is its scaffolding."
+        >
+          <DCArtboard label="Level 2 · Sprint Planning" width={1400} height={1180}>
+            <LevelTwoPage />
+          </DCArtboard>
+
+          <div style={{ position: "relative", width: 300, paddingTop: 8 }}>
+            <DCPostIt top={30} left={0} width={280} rotate={-2}>
+              Reading column is serif, 17px, ~68ch. The value narrative is the one place serif earns its keep — it signals "this is a thing to read, not a thing to scan."
+            </DCPostIt>
+            <DCPostIt top={280} left={20} width={260} rotate={1.5}>
+              Acceptance is boxed with a left accent bar, still serif. It reads as a distinct utterance inside the narrative flow — not a data field.
+            </DCPostIt>
+            <DCPostIt top={520} left={0} width={270} rotate={-1}>
+              Gap prose is a callout, not a banner. Warm terracotta border, plain sans body. It advises the reader about a structural shortfall, without shouting.
+            </DCPostIt>
+            <DCPostIt top={760} left={20} width={260} rotate={2}>
+              Story list on the right is utilitarian — mono meta, status dot, arrow affordance. Intentionally less expressive than the left column so focus stays on the narrative.
+            </DCPostIt>
+            <DCPostIt top={1000} left={0} width={270} rotate={-1.5}>
+              Dep container starts in LIST mode. Graph is a mode switch, not the default. Auto-falls back to list when N &gt; 15 — the scale-bound decision is explicit in the chrome.
+            </DCPostIt>
+          </div>
+        </DCSection>
+
+        <DCSection
+          title="02 · Next"
+          subtitle="Pass 3: Level 3 drill-down (populated + stub state) and the dark-mode variant."
+        >
+          <DCArtboard label="Coming next" width={720} height={280} style={{ background: T.paperAlt }}>
+            <div style={{
+              padding: "36px 44px",
+              fontFamily: T.fontSans, color: T.ink,
+              height: "100%", boxSizing: "border-box",
+              display: "flex", flexDirection: "column", gap: 14,
+            }}>
+              <Row label="Pass 3">Level 3 story drill-down — populated human section and the graceful stub state.</Row>
+              <Row label="Pass 3b">Dark-mode variant of Level 2 (this page) as the key screen.</Row>
+              <Row label="Pass 4">Dependency graph fully expressed; Journey/Workflow layer exploration.</Row>
+              <Row label="Pass 5">Clickable prototype spanning all levels with Tweaks wired.</Row>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <div style={{ height: 40 }} />
+      </DesignCanvas>
+    );
+  }
+
+  function Row({ label, children }) {
+    return (
+      <div style={{
+        display: "grid", gridTemplateColumns: "72px 1fr", gap: 14,
+        fontFamily: T.fontSans, fontSize: 13, lineHeight: 1.55,
+        color: T.inkMuted,
+      }}>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 11, color: T.accent, letterSpacing: 0.3,
+        }}>{label}</span>
+        <div>{children}</div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<PassTwo />);
+</script>
+</body>
+</html>

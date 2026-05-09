@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 9 · Cycle Lens</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper:       #fbfaf7;
+    --paperAlt:    #f5f3ed;
+    --rule:        #e7e3d9;
+    --ruleStrong:  #d4cfc2;
+    --ink:         #1e1d1a;
+    --inkMuted:    #5a574f;
+    --inkQuiet:    #8a8678;
+    --inkFaint:    #b5b0a2;
+    --readingPaper:    #faf6ec;
+    --readingPaperAlt: #f3eedf;
+    --readingRule:     #e5dfce;
+    --accent:      #5863a8;
+    --accentSoft:  rgba(88,99,168,0.08);
+    --accentRule:  rgba(88,99,168,0.22);
+    --gap:         #a85a2a;
+    --gapSoft:     rgba(168,90,42,0.09);
+    --paperDark:      #16140f;
+    --paperDarkAlt:   #1e1b15;
+    --paperDarkCode:  #201d16;
+    --ruleDark:       rgba(255,252,245,0.10);
+    --ruleDarkStrong: rgba(255,252,245,0.18);
+    --inkOnDark:      #f0eee9;
+    --inkOnDarkMuted: rgba(240,238,233,0.70);
+    --inkOnDarkQuiet: rgba(240,238,233,0.48);
+    --inkOnDarkFaint: rgba(240,238,233,0.36);
+  }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #e9e6df;
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+  .canvas { min-width: 3200px; padding: 64px 80px 240px; }
+  .canvas-title {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 38px; font-weight: 400; letter-spacing: -0.4px;
+  }
+  .canvas-sub {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.4px;
+    color: var(--inkQuiet); text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .canvas-intro {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.65; color: var(--inkMuted);
+    max-width: 72ch; margin-top: 20px;
+  }
+
+  .strip-header {
+    margin-top: 64px;
+    display: flex; align-items: baseline; gap: 16px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--ruleStrong);
+    max-width: 1100px;
+  }
+  .strip-header .n {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 1.3px;
+    color: var(--accent);
+  }
+  .strip-header .t {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 24px; font-weight: 500; letter-spacing: -0.3px;
+  }
+  .strip-header .s {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic; font-size: 14px; color: var(--inkMuted);
+  }
+
+  .strip {
+    margin-top: 32px;
+    display: flex; align-items: flex-start; gap: 24px;
+  }
+  .frame { display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
+  .frame .frame-cap {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.3px;
+    text-transform: uppercase; color: var(--inkQuiet);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .frame .frame-cap .step-num { color: var(--accent); font-weight: 500; }
+  .frame .frame-cap .mode-tag {
+    margin-left: auto; font-size: 9.5px; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 2px;
+  }
+  .frame .frame-cap .mode-tag.dark { background: var(--paperDark); color: var(--inkOnDarkMuted); }
+  .frame .frame-cap .mode-tag.reading { background: var(--readingPaperAlt); color: var(--inkMuted); }
+
+  .connector {
+    align-self: center; margin-top: 280px;
+    width: 90px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .connector .arrow {
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, var(--ruleStrong) 0%, var(--accent) 100%);
+    position: relative;
+  }
+  .connector .arrow::after {
+    content: ""; position: absolute; right: -1px; top: -4px;
+    border: 5px solid transparent; border-left-color: var(--accent);
+  }
+  .connector .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: var(--inkQuiet); text-align: center; line-height: 1.5;
+  }
+  .connector .label .flip {
+    color: var(--gap); display: block; margin-top: 3px; font-size: 9.5px;
+  }
+  .connector .label .same {
+    color: var(--inkFaint); display: block; margin-top: 3px; font-size: 9.5px;
+  }
+
+  /* Pane */
+  .pane-outer {
+    width: 532px; background: #2a2824;
+    border-radius: 8px; padding: 5px;
+    box-shadow: 0 22px 60px -22px rgba(0,0,0,0.32),
+                0 5px 14px -5px rgba(0,0,0,0.18);
+  }
+  .pane-chrome {
+    height: 22px; display: flex; align-items: center; gap: 7px;
+    padding: 0 9px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; color: rgba(240,238,233,0.5);
+  }
+  .pane-chrome .tl { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .pane-inner {
+    width: 522px; height: 760px;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 4px; position: relative; overflow: hidden;
+  }
+  .pane-inner.dark {
+    background: var(--paperDark); color: var(--inkOnDark);
+    border-color: var(--ruleDark);
+  }
+  .pane-inner.reading {
+    background: var(--readingPaper); color: var(--ink);
+    border-color: var(--readingRule);
+  }
+
+  /* Rail — labels only, no numerals */
+  .rail {
+    position: absolute; top: 0; left: 0; width: 40px; height: 100%;
+    background: var(--paperAlt); border-right: 1px solid var(--rule);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 0; z-index: 3;
+  }
+  .dark .rail { background: var(--paperDarkAlt); border-right-color: var(--ruleDark); }
+  .reading .rail { background: var(--readingPaperAlt); border-right-color: var(--readingRule); }
+  .rail .brand {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 10.5px;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.4px; margin-bottom: 16px;
+    color: var(--ink);
+  }
+  .dark .rail .brand { color: var(--inkOnDark); }
+  .rail .divider { width: 1px; height: 22px; background: var(--rule); margin-bottom: 10px; }
+  .dark .rail .divider { background: var(--ruleDark); }
+  .reading .rail .divider { background: var(--readingRule); }
+  .rail .item {
+    padding: 8px 0; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    border-left: 2px solid transparent;
+  }
+  .rail .item.active { border-left-color: var(--accent); }
+  .rail .item .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+    color: var(--inkMuted);
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.6px;
+  }
+  .dark .rail .item .lbl { color: var(--inkOnDarkMuted); }
+  .rail .item.active .lbl { color: var(--accent); font-weight: 500; }
+
+  .rail .mode-toggle {
+    margin-top: auto; margin-bottom: 8px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--ruleStrong);
+    background: linear-gradient(135deg, #fbfaf7 0%, #fbfaf7 50%, #16140f 50%, #16140f 100%);
+  }
+  .dark .rail .mode-toggle { border-color: var(--ruleDarkStrong); }
+
+  .pane-body { padding-left: 40px; height: 100%; overflow: hidden; }
+
+  .crumb-bar {
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; color: var(--inkQuiet);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dark .crumb-bar { border-bottom-color: var(--ruleDark); color: var(--inkOnDarkQuiet); }
+  .reading .crumb-bar { border-bottom-color: var(--readingRule); }
+  .crumb-bar .crumbs { display: inline-flex; align-items: center; gap: 6px; }
+  .crumb-bar a.seg { color: var(--inkQuiet); cursor: pointer; text-decoration: none; }
+  .dark .crumb-bar a.seg { color: var(--inkOnDarkQuiet); }
+  .crumb-bar .seg.here { color: var(--ink); }
+  .dark .crumb-bar .seg.here { color: var(--inkOnDark); }
+  .crumb-bar .sep { color: var(--inkFaint); }
+  .dark .crumb-bar .sep { color: var(--inkOnDarkFaint); }
+  .reading-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; color: var(--accent);
+    border-bottom: 1px dotted var(--accent); padding-bottom: 1px;
+  }
+  .reading-pill .rd { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  .pane-header {
+    padding: 9px 16px; border-bottom: 1px solid var(--rule);
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .dark .pane-header { border-bottom-color: var(--ruleDark); }
+  .pane-header .t {
+    font-family: "Source Serif 4", Georgia, serif; font-size: 13px;
+    color: var(--ink);
+  }
+  .dark .pane-header .t { color: var(--inkOnDark); }
+  .pane-header .m {
+    font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--inkFaint);
+  }
+  .dark .pane-header .m { color: var(--inkOnDarkFaint); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 1px 7px 1px 5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; font-weight: 500;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .badge .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .badge.working     { color: #2a5a42; background: rgba(62,122,90,0.10); }
+  .badge.working .dot     { background: #3e7a5a; }
+  .badge.partial     { color: #7a5e1a; background: rgba(168,131,40,0.11); }
+  .badge.partial .dot     { background: #a88328; }
+  .badge.not-started { color: #5a5a5a; background: rgba(138,138,138,0.10); }
+  .badge.not-started .dot { background: #8a8a8a; }
+  .badge.in-progress { color: #2a4a7a; background: rgba(88,99,168,0.10); }
+  .badge.in-progress .dot { background: #5863a8; }
+  .badge.validated   { color: #556555; background: rgba(106,122,106,0.08); opacity: 0.72; }
+  .badge.validated .dot   { background: #6a7a6a; }
+  .badge.blocked     { color: #7a4020; background: rgba(168,90,42,0.10); }
+  .badge.blocked .dot     { background: #a85a2a; }
+  .dark .badge.working     { color: #8fd1a9; background: rgba(62,122,90,0.18); }
+  .dark .badge.partial     { color: #e6c07a; background: rgba(168,131,40,0.18); }
+  .dark .badge.not-started { color: rgba(240,238,233,0.72); background: rgba(240,238,233,0.07); }
+  .dark .badge.in-progress { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .dark .badge.validated   { color: rgba(192,200,188,0.85); background: rgba(106,122,106,0.14); }
+  .dark .badge.blocked     { color: #e0a07a; background: rgba(168,90,42,0.18); }
+
+  .gap-flag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px 1px 5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; color: var(--gap);
+    border-radius: 3px;
+  }
+  .gap-flag.prominent { background: var(--gapSoft); border: 1px solid rgba(168,90,42,0.18); }
+  .dark .gap-flag.prominent { background: rgba(168,90,42,0.16); border-color: rgba(168,90,42,0.30); }
+
+  .frac { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--inkMuted); }
+  .dark .frac { color: var(--inkOnDarkMuted); }
+  .frac .slash { color: var(--inkFaint); } .dark .frac .slash { color: var(--inkOnDarkFaint); }
+
+  /* Dashboard sections */
+  .dash-section {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dark .dash-section { border-bottom-color: var(--ruleDark); }
+  .dash-lens-hdr { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+  .dash-lens-hdr .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+  }
+  .dark .dash-lens-hdr .tag { color: var(--inkOnDarkQuiet); }
+  .dash-lens-hdr .rule { flex: 1; height: 1px; background: var(--rule); align-self: center; }
+  .dark .dash-lens-hdr .rule { background: var(--ruleDark); }
+  .dash-lens-hdr .count {
+    font-family: "JetBrains Mono", monospace; font-size: 9.5px; color: var(--inkFaint);
+  }
+  .dark .dash-lens-hdr .count { color: var(--inkOnDarkFaint); }
+
+  .feat-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    align-items: center; gap: 8px;
+    padding: 3.5px 0; border-bottom: 1px dashed var(--rule);
+  }
+  .dark .feat-row { border-bottom-color: var(--ruleDark); }
+  .feat-row.last { border-bottom: none; }
+  .feat-row .name {
+    font-family: "Inter", sans-serif; font-size: 11px;
+    color: var(--ink); line-height: 1.35;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .dark .feat-row .name { color: var(--inkOnDark); }
+  .feat-row .name.click { color: var(--accent); cursor: pointer; font-weight: 500; }
+  .dark .feat-row .name.click { color: #a4b0e0; }
+
+  /* Sprint card mini */
+  .sprint-card-mini {
+    padding: 9px 12px;
+    background: rgba(88,99,168,0.05);
+    border-left: 2px solid var(--accent);
+  }
+  .dark .sprint-card-mini { background: rgba(88,99,168,0.12); }
+  .sprint-card-mini .key {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px; font-weight: 500; letter-spacing: -0.2px;
+  }
+  .dark .sprint-card-mini .key { color: var(--inkOnDark); }
+  .sprint-card-mini .goal {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 11.5px; line-height: 1.45; color: var(--inkMuted);
+    margin-top: 4px; max-width: 50ch;
+  }
+  .dark .sprint-card-mini .goal { color: var(--inkOnDarkMuted); }
+  .sprint-card-mini .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+
+  /* ─────────── Cycle timeline (the new lens) ─────────── */
+  .cycle-strip { padding: 6px 0 4px; }
+  .cycle-line {
+    position: relative;
+    margin: 12px 14px 6px;
+    height: 56px;
+  }
+  .cycle-line::before {
+    content: ""; position: absolute;
+    left: 0; right: 0; top: 8px; height: 1px;
+    background: var(--rule);
+  }
+  .dark .cycle-line::before { background: var(--ruleDark); }
+  .cycle-nodes {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0;
+  }
+  .cycle-node {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 4px;
+    padding-top: 0;
+  }
+  .cycle-node .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 1.5px solid var(--ruleStrong);
+    background: var(--paper);
+    margin-top: 2.5px;
+    z-index: 1;
+  }
+  .dark .cycle-node .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+  .cycle-node .lbl {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8.5px; letter-spacing: 0.4px;
+    color: var(--inkQuiet);
+    margin-top: 4px;
+    line-height: 1.2;
+  }
+  .dark .cycle-node .lbl { color: var(--inkOnDarkQuiet); }
+  .cycle-node .ts {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8px; color: var(--inkFaint);
+    line-height: 1.2;
+  }
+  .dark .cycle-node .ts { color: var(--inkOnDarkFaint); }
+
+  /* states */
+  /* done — solid indigo (filled) */
+  .cycle-node.done .dot { background: var(--accent); border-color: var(--accent); }
+  .cycle-node.done .lbl { color: var(--ink); }
+  .dark .cycle-node.done .lbl { color: var(--inkOnDark); }
+  /* skipped — neutral gray, no cross-out (optional steps that didn't run this cycle) */
+  .cycle-node.skipped .dot { background: var(--paper); border-color: var(--ruleStrong); }
+  .dark .cycle-node.skipped .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+  .cycle-node.skipped .lbl { color: var(--inkFaint); }
+  .dark .cycle-node.skipped .lbl { color: var(--inkOnDarkFaint); }
+  /* next — the next required phase, blue outline (current attention target) */
+  .cycle-node.next .dot {
+    background: var(--paper); border-color: var(--accent); border-width: 2px;
+    box-shadow: 0 0 0 3px rgba(88,99,168,0.18);
+  }
+  .dark .cycle-node.next .dot { background: var(--paperDark); }
+  .cycle-node.next .lbl { color: var(--accent); font-weight: 500; }
+  /* pending — required but not yet up; quiet gray */
+  .cycle-node.pending .dot { background: var(--paper); border-color: var(--ruleStrong); }
+  .dark .cycle-node.pending .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+  .cycle-node.pending .lbl { color: var(--inkFaint); }
+  .dark .cycle-node.pending .lbl { color: var(--inkOnDarkFaint); }
+
+  /* Cycle summary */
+  .cycle-summary {
+    margin: 4px 14px 8px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; color: var(--inkMuted); letter-spacing: 0.3px;
+  }
+  .dark .cycle-summary { color: var(--inkOnDarkMuted); }
+  .cycle-summary .tag {
+    color: var(--inkFaint); letter-spacing: 1.2px; text-transform: uppercase; font-size: 9px;
+  }
+  .dark .cycle-summary .tag { color: var(--inkOnDarkFaint); }
+  .cycle-summary .v { color: var(--ink); }
+  .dark .cycle-summary .v { color: var(--inkOnDark); }
+  .cycle-summary .now { color: var(--accent); font-weight: 500; }
+
+  .cycle-legend {
+    margin: 10px 14px 0;
+    padding-top: 8px;
+    border-top: 1px dashed var(--rule);
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; color: var(--inkFaint); letter-spacing: 0.3px;
+  }
+  .dark .cycle-legend { border-top-color: var(--ruleDark); color: var(--inkOnDarkFaint); }
+  .cycle-legend .swatch {
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .cycle-legend .swatch .dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid; }
+  .cycle-legend .swatch.done .dot { background: var(--accent); border-color: var(--accent); }
+  .cycle-legend .swatch.next .dot { background: var(--paper); border-color: var(--accent); border-width: 2px; box-shadow: 0 0 0 2px rgba(88,99,168,0.18); }
+  .dark .cycle-legend .swatch.next .dot { background: var(--paperDark); }
+  .cycle-legend .swatch.skipped .dot { background: var(--paper); border-color: var(--ruleStrong); }
+  .dark .cycle-legend .swatch.skipped .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+  .cycle-legend .swatch.pending .dot { background: var(--paper); border-color: var(--ruleStrong); }
+  .dark .cycle-legend .swatch.pending .dot { background: var(--paperDark); border-color: var(--ruleDarkStrong); }
+  .cycle-legend .req {
+    color: var(--accent); font-size: 10px; vertical-align: -1px;
+  }
+
+  /* Sprint detail (drilldown) */
+  .sprint-detail { padding: 14px 16px; }
+  .sprint-detail .key {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px; font-weight: 500; letter-spacing: -0.2px;
+  }
+  .dark .sprint-detail .key { color: var(--inkOnDark); }
+  .sprint-detail .lifecycle {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 1px 7px 1px 6px; margin-top: 5px;
+    font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+    color: #2a4a7a; background: rgba(88,99,168,0.10);
+    border-radius: 3px;
+  }
+  .dark .sprint-detail .lifecycle { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .sprint-detail .lifecycle .sd { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .sprint-detail .goal {
+    margin-top: 8px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12px; line-height: 1.5;
+    max-width: 50ch;
+  }
+  .dark .sprint-detail .goal { color: var(--inkOnDark); }
+
+  .band { margin-top: 14px; }
+  .band-hdr {
+    display: flex; align-items: baseline; gap: 8px;
+    padding-bottom: 4px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dark .band-hdr { border-bottom-color: var(--ruleDark); }
+  .band-hdr .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    letter-spacing: 1.2px; text-transform: uppercase;
+  }
+  .band.attention .lbl { color: var(--gap); }
+  .band.active .lbl { color: var(--accent); }
+  .dark .band.active .lbl { color: #a4b0e0; }
+  .band.terminal .lbl { color: var(--inkQuiet); }
+  .dark .band.terminal .lbl { color: var(--inkOnDarkQuiet); }
+  .band-hdr .n {
+    font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--inkFaint);
+  }
+  .dark .band-hdr .n { color: var(--inkOnDarkFaint); }
+
+  .story-row {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 8px;
+    padding: 5px 0; border-bottom: 1px solid var(--rule);
+  }
+  .dark .story-row { border-bottom-color: var(--ruleDark); }
+  .story-row.terminal { opacity: 0.62; }
+  .story-row .title {
+    font-family: "Inter", sans-serif; font-size: 11px;
+    line-height: 1.35;
+  }
+  .dark .story-row .title { color: var(--inkOnDark); }
+  .story-row.click .title { color: var(--accent); cursor: pointer; font-weight: 500; }
+  .dark .story-row.click .title { color: #a4b0e0; }
+
+  /* Click hint */
+  .click-hint {
+    position: absolute;
+    background: rgba(88,99,168,0.92); color: white;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; letter-spacing: 0.4px;
+    padding: 3px 8px; border-radius: 2px;
+    z-index: 10; pointer-events: none; white-space: nowrap;
+    box-shadow: 0 4px 10px -2px rgba(0,0,0,0.3);
+  }
+  .click-hint::before {
+    content: ""; position: absolute;
+    left: -5px; top: 50%; transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: rgba(88,99,168,0.92);
+  }
+
+  /* Level-3 reading (compact) */
+  .l3 { padding: 14px 18px 18px; }
+  .l3-fm {
+    padding: 7px 10px;
+    background: var(--readingPaperAlt);
+    border: 1px solid var(--readingRule);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8.5px; color: var(--inkMuted);
+  }
+  .l3-fm .fk { color: var(--inkFaint); margin-right: 3px; }
+  .l3-fm .fv { color: var(--ink); }
+  .l3-fm .midot { color: var(--inkFaint); }
+  .l3-title {
+    margin: 12px 0 4px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px; line-height: 1.2; font-weight: 500; letter-spacing: -0.3px;
+  }
+  .l3-subtitle {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic; font-size: 13px; line-height: 1.4;
+    color: var(--inkMuted); margin-bottom: 12px; max-width: 50ch;
+  }
+  .l3 p.body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px; line-height: 1.7;
+    max-width: 56ch; margin: 0 0 9px;
+  }
+  .l3 p.body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    background: var(--readingPaperAlt);
+    padding: 1px 4px; border-radius: 2px;
+  }
+  .l3 h3.sec {
+    margin: 14px 0 7px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--readingRule);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .l3 h3.sec .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 8.5px;
+    letter-spacing: 1.3px; text-transform: uppercase;
+    color: var(--inkQuiet); font-weight: 400;
+  }
+  .l3 ol.num { list-style: none; padding: 0; margin: 0; counter-reset: acn; }
+  .l3 ol.num > li {
+    counter-increment: acn;
+    display: grid; grid-template-columns: 24px 1fr;
+    column-gap: 10px;
+    padding: 6px 0 7px;
+    border-bottom: 1px solid var(--readingRule);
+  }
+  .l3 ol.num > li::before {
+    content: counter(acn, decimal-leading-zero);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px; color: var(--inkFaint);
+    padding-top: 3px;
+  }
+  .l3 ol.num .num-body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12px; line-height: 1.55; max-width: 50ch;
+  }
+  .l3 ol.num .num-body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    background: var(--readingPaperAlt);
+    padding: 1px 4px; border-radius: 2px;
+  }
+
+  /* Post-its */
+  .strip-postits {
+    display: flex; gap: 18px; margin-top: 24px; flex-wrap: wrap;
+    max-width: 1300px;
+  }
+  .postit {
+    width: 252px;
+    background: #fef6d0;
+    padding: 16px 18px 18px;
+    font-family: "Caveat", "Source Serif 4", cursive;
+    font-size: 16px; line-height: 1.42;
+    color: #3d2f1a;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05),
+                0 12px 26px -12px rgba(0,0,0,0.22),
+                0 4px 8px -4px rgba(0,0,0,0.10);
+    transform: rotate(-1deg);
+  }
+  .postit.r { transform: rotate(0.7deg); }
+  .postit.b { background: #dfe7ef; transform: rotate(-0.5deg); }
+  .postit.g { background: #e0eadf; transform: rotate(0.9deg); }
+  .postit .h {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(61,47,26,0.6);
+    margin-bottom: 8px; display: block;
+  }
+  .postit code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px; background: rgba(0,0,0,0.05);
+    padding: 0 3px; border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+  <div class="canvas-title">Feature Status — Pass 9</div>
+  <div class="canvas-sub">cycle lens · sprint drill-down · clean rail</div>
+  <p class="canvas-intro">
+    Three corrections from Pass 8: the third lens is now <strong>Cycle</strong>,
+    rendered as a horizontal phase timeline showing where we are in the
+    triage → intake → grooming → planning → dev → retro flow. Sprints get a
+    proper drill-down frame (sprint card → sprint detail → story L3). The
+    rail drops its 01/02/03 numerals — labels alone, since Cycle is a
+    sequence by definition and ordering the lenses themselves was redundant.
+  </p>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       STRIP — Dashboard → Sprint detail → Story (dark → reading)
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="strip-header">
+    <span class="n">strip</span>
+    <span class="t">Dashboard → Sprint → Story</span>
+    <span class="s">cycle lens up top, sprint drill explicit, polarity flips on the doc</span>
+  </div>
+
+  <div class="strip">
+
+    <!-- Frame 1: Dashboard with Cycle lens -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">01</span><span>dashboard</span>
+        <span class="mode-tag dark">dark</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner dark">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item active"><span class="lbl">features</span></div>
+            <div class="item"><span class="lbl">sprint</span></div>
+            <div class="item"><span class="lbl">cycle</span></div>
+            <div class="mode-toggle"></div>
+          </div>
+          <div class="pane-body">
+            <div class="pane-header">
+              <span class="t">Feature Status</span>
+              <span class="m">2026-05-03 · hash 7f3a</span>
+            </div>
+
+            <!-- Cycle lens (timeline) -->
+            <div class="dash-section cycle-strip">
+              <div class="dash-lens-hdr" style="margin-left:14px;margin-right:14px;">
+                <span class="tag">cycle</span>
+                <span class="rule"></span>
+                <span class="count">3 of 7 · planning up next</span>
+              </div>
+
+              <div class="cycle-line">
+                <div class="cycle-nodes" style="grid-template-columns: repeat(7, 1fr);">
+                  <div class="cycle-node done">
+                    <div class="dot"></div>
+                    <div class="lbl">triage</div>
+                    <div class="ts">apr 22</div>
+                  </div>
+                  <div class="cycle-node done">
+                    <div class="dot"></div>
+                    <div class="lbl">feat<br>groom</div>
+                    <div class="ts">apr 24</div>
+                  </div>
+                  <div class="cycle-node skipped">
+                    <div class="dot"></div>
+                    <div class="lbl">epic<br>groom</div>
+                    <div class="ts">—</div>
+                  </div>
+                  <div class="cycle-node done">
+                    <div class="dot"></div>
+                    <div class="lbl">refine</div>
+                    <div class="ts">apr 28</div>
+                  </div>
+                  <div class="cycle-node next">
+                    <div class="dot"></div>
+                    <div class="lbl">planning</div>
+                    <div class="ts">next</div>
+                  </div>
+                  <div class="cycle-node pending">
+                    <div class="dot"></div>
+                    <div class="lbl">sprint<br>dev</div>
+                    <div class="ts">—</div>
+                  </div>
+                  <div class="cycle-node pending">
+                    <div class="dot"></div>
+                    <div class="lbl">retro</div>
+                    <div class="ts">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cycle-summary">
+                <span><span class="tag">cycle started</span> <span class="v">apr 22</span></span>
+                <span><span class="tag">next required</span> <span class="now">planning</span></span>
+                <span><span class="tag">last sprint</span> <span class="v">2026-04-08</span></span>
+              </div>
+
+              <div class="cycle-legend">
+                <span class="swatch done"><span class="dot"></span>done</span>
+                <span class="swatch next"><span class="dot"></span>next required</span>
+                <span class="swatch pending"><span class="dot"></span>pending</span>
+                <span class="swatch skipped"><span class="dot"></span>not run</span>
+                <span style="color:var(--inkFaint);font-style:italic;">intake — sub of triage; can occur anytime</span>
+              </div>
+            </div>
+
+            <!-- Sprint card (peer drill) -->
+            <div class="dash-section">
+              <div class="dash-lens-hdr">
+                <span class="tag">sprint</span>
+                <span class="rule"></span>
+                <span class="count">active</span>
+              </div>
+              <div class="sprint-card-mini">
+                <div class="key">sprint-2026-04-22</div>
+                <div class="goal">Close the flywheel loop — make retro findings compound across sprints.</div>
+                <div class="row">
+                  <span class="badge in-progress"><span class="dot"></span>active</span>
+                  <span class="frac">3<span class="slash">/</span>6 in progress</span>
+                  <span class="gap-flag prominent">1 blocked</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Features lens (compressed) -->
+            <div class="dash-section" style="border-bottom:none;">
+              <div class="dash-lens-hdr">
+                <span class="tag">features</span>
+                <span class="rule"></span>
+                <span class="count">14 · 2 gaps</span>
+              </div>
+              <div class="feat-row"><span class="name">Feature Status Dashboard</span><span class="frac">5<span class="slash">/</span>5</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Sprint Planning to Ready</span><span class="frac">4<span class="slash">/</span>4</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Feature Grooming Skill</span><span class="frac">3<span class="slash">/</span>3</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Sprint Dev Workflow</span><span class="frac">6<span class="slash">/</span>6</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Decision Log</span><span class="frac">3<span class="slash">/</span>3</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">AVFL Scan Profile</span><span class="frac">3<span class="slash">/</span>3</span><span class="badge working"><span class="dot"></span>working</span></div>
+              <div class="feat-row"><span class="name">Sprint Retro + Improvement</span><span class="frac">4<span class="slash">/</span>7</span><span class="badge partial"><span class="dot"></span>partial</span></div>
+              <div class="feat-row"><span class="name">AVFL Required Gate</span><span class="frac">2<span class="slash">/</span>3</span><span class="badge in-progress"><span class="dot"></span>in progress</span></div>
+              <div class="feat-row"><span class="name">Practice Distillation</span><span class="frac">1<span class="slash">/</span>3</span><span class="badge in-progress"><span class="dot"></span>in progress</span></div>
+              <div class="feat-row"><span class="name">Findings Ledger</span><span class="frac">0<span class="slash">/</span>2</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+              <div class="feat-row"><span class="name">Cross-Sprint Patterns</span><span class="frac">0<span class="slash">/</span>3</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+              <div class="feat-row"><span class="name">Architecture Refresh</span><span class="frac">2<span class="slash">/</span>4</span><span class="gap-flag prominent">gap</span></div>
+              <div class="feat-row last"><span class="name">Multi-Project Index</span><span class="frac">0<span class="slash">/</span>5</span><span class="gap-flag prominent">gap</span></div>
+            </div>
+
+            <div class="click-hint" style="top: 244px; left: 280px;">click sprint → drill</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="arrow"></div>
+      <div class="label">click sprint card<span class="same">same polarity</span></div>
+    </div>
+
+    <!-- Frame 2: Sprint detail (drill-down) -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">02</span><span>sprint detail</span>
+        <span class="mode-tag dark">dark</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner dark">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item"><span class="lbl">features</span></div>
+            <div class="item active"><span class="lbl">sprint</span></div>
+            <div class="item"><span class="lbl">cycle</span></div>
+            <div class="mode-toggle"></div>
+          </div>
+          <div class="pane-body">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">sprint</a>
+                <span class="sep">›</span>
+                <span class="seg here">2026-04-22</span>
+              </span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--inkOnDarkFaint);">apr 22 → may 5</span>
+            </div>
+            <div class="sprint-detail">
+              <div class="key">sprint-2026-04-22</div>
+              <span class="lifecycle"><span class="sd"></span>active · day 11 of ~14</span>
+              <div class="goal">
+                Close the flywheel loop — make retro findings compound across
+                sprints instead of dying in a markdown file.
+              </div>
+
+              <div class="band attention">
+                <div class="band-hdr">
+                  <span class="lbl">blocked</span>
+                  <span class="n">1</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">Flywheel Workflow Explains Issues</span>
+                  <span class="gap-flag prominent">blocked</span>
+                </div>
+              </div>
+
+              <div class="band active">
+                <div class="band-hdr">
+                  <span class="lbl">in progress</span>
+                  <span class="n">3</span>
+                </div>
+                <div class="story-row click">
+                  <span class="title">Cross-Story Pattern Detection</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">Findings Ledger Accumulates</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">AVFL Fixer Required Gate</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+              </div>
+
+              <div class="band terminal">
+                <div class="band-hdr">
+                  <span class="lbl">validated</span>
+                  <span class="n">2</span>
+                </div>
+                <div class="story-row terminal">
+                  <span class="title">Retro → Triage Handoff</span>
+                  <span class="badge validated"><span class="dot"></span>validated</span>
+                </div>
+                <div class="story-row terminal">
+                  <span class="title">Sprint Boundary Compression</span>
+                  <span class="badge validated"><span class="dot"></span>validated</span>
+                </div>
+              </div>
+            </div>
+            <div class="click-hint" style="top: 332px; left: 280px;">click story → L3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector">
+      <div class="arrow"></div>
+      <div class="label">click story<span class="flip">polarity flip · 140ms</span></div>
+    </div>
+
+    <!-- Frame 3: Story L3 reading -->
+    <div class="frame">
+      <div class="frame-cap">
+        <span class="step-num">03</span><span>level-3 · story</span>
+        <span class="mode-tag reading">reading</span>
+      </div>
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:8px">cmux · feature-status</span>
+        </div>
+        <div class="pane-inner reading">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item"><span class="lbl">features</span></div>
+            <div class="item active"><span class="lbl">sprint</span></div>
+            <div class="item"><span class="lbl">cycle</span></div>
+            <div class="mode-toggle"></div>
+          </div>
+          <div class="pane-body">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">sprint</a>
+                <span class="sep">›</span>
+                <a class="seg">2026-04-22</a>
+                <span class="sep">›</span>
+                <span class="seg here">cross-story-pattern-detection</span>
+              </span>
+              <span class="reading-pill"><span class="rd"></span>reading mode</span>
+            </div>
+            <div class="l3">
+              <div class="l3-fm">
+                <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                <span><span class="fk">epic</span><span class="fv">flywheel-mechanics</span></span>
+                <span class="midot">·</span>
+                <span><span class="fk">change</span><span class="fv">code</span></span>
+              </div>
+              <h1 class="l3-title">Cross-Story Pattern Detection</h1>
+              <div class="l3-subtitle">
+                Surface recurring shapes across stories so practice improves over time
+              </div>
+              <p class="body">
+                The flywheel hinges on noticing that the same kind of mistake or
+                ambiguity has shown up before. This story builds the detection
+                layer that reads <code>findings-ledger.jsonl</code> and emits
+                cluster signals to the next sprint's planning surface.
+              </p>
+              <h3 class="sec">
+                Acceptance Criteria
+                <span class="tag">6 ACs</span>
+              </h3>
+              <ol class="num">
+                <li><div class="num-body">Reads <code>findings-ledger.jsonl</code> across the last N sprints (default 5).</div></li>
+                <li><div class="num-body">Clusters findings by <code>category</code> + tokenized <code>summary</code>; minimum cluster size 2.</div></li>
+                <li><div class="num-body">Emits <code>cross-sprint-patterns.md</code> per planning cycle.</div></li>
+                <li><div class="num-body">Surfaces top 3 clusters in the planning workflow's intake.</div></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- post-its -->
+  <div class="strip-postits">
+    <div class="postit">
+      <span class="h">cycle · the timeline</span>
+      Eight phases across the cycle, in canonical order:
+      <code>triage → intake → feat-groom → epic-groom → refine →
+      planning* → dev* → retro*</code>. Asterisk = required. Done is
+      filled indigo, active glows, skipped is dashed/struck, pending
+      is empty.
+    </div>
+    <div class="postit r">
+      <span class="h">why "cycle"</span>
+      Spans sprint boundaries — when retro closes, the next cycle begins
+      even before planning runs. "Sprint" was too narrow; "flywheel" was
+      a concept inside it, not the whole. <strong>Cycle</strong> reads
+      neutrally and composes: "current cycle," "last cycle."
+    </div>
+    <div class="postit b">
+      <span class="h">rail · labels only</span>
+      Dropped <code>01/02/03</code>. Cycle is a sequence by definition;
+      numbering the lens itself was redundant. Labels alone, brand glyph
+      up top, mode toggle at the foot.
+    </div>
+    <div class="postit g">
+      <span class="h">sprint drills</span>
+      Frame 02 — explicitly. The dashboard sprint card is the entry;
+      sprint detail shows outcome bands; clicking any story row goes
+      to L3 reading. Sprint is a peer drill-down, not a leaf.
+    </div>
+    <div class="postit">
+      <span class="h">distill lives inside retro</span>
+      Per your decision: distillation runs as Phase 5 of the retro skill,
+      not as a separate cycle node. The timeline reflects that — no
+      "distill" node. <strong>upstream-fix</strong> is also omitted
+      (planned capability, not a live cycle step).
+    </div>
+    <div class="postit r">
+      <span class="h">required marker</span>
+      A small <code>*</code> after the label marks the three required
+      phases (planning, dev, retro). Hover/legend explains. The visual
+      hierarchy makes it scannable: "did the required ones run?" first,
+      then the optional context fills in.
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

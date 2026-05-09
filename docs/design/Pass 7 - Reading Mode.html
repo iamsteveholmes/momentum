@@ -1,0 +1,1605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 7 · Reading Mode</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    /* Light / reading (existing) */
+    --paper:       #fbfaf7;
+    --paperAlt:    #f5f3ed;
+    --rule:        #e7e3d9;
+    --ruleStrong:  #d4cfc2;
+    --ink:         #1e1d1a;
+    --inkMuted:    #5a574f;
+    --inkQuiet:    #8a8678;
+    --inkFaint:    #b5b0a2;
+    /* Reading mode tuned (Option β) */
+    --readingPaper:    #faf6ec;
+    --readingPaperAlt: #f3eedf;
+    --readingRule:     #e5dfce;
+    /* Accent */
+    --accent:      #5863a8;
+    --accentSoft:  rgba(88,99,168,0.08);
+    --accentRule:  rgba(88,99,168,0.22);
+    /* Gap */
+    --gap:         #a85a2a;
+    --gapSoft:     rgba(168,90,42,0.09);
+    /* Dark */
+    --paperDark:      #16140f;
+    --paperDarkAlt:   #1e1b15;
+    --paperDarkCode:  #201d16;
+    --ruleDark:       rgba(255,252,245,0.10);
+    --ruleDarkStrong: rgba(255,252,245,0.18);
+    --inkOnDark:      #f0eee9;
+    --inkOnDarkMuted: rgba(240,238,233,0.70);
+    --inkOnDarkQuiet: rgba(240,238,233,0.48);
+    --inkOnDarkFaint: rgba(240,238,233,0.36);
+  }
+
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #e9e6df;
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+
+  .canvas { min-width: 2900px; padding: 64px 80px 240px; }
+  .canvas-title {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 34px; font-weight: 400; letter-spacing: -0.4px;
+  }
+  .canvas-sub {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.4px;
+    color: var(--inkQuiet); text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .canvas-intro {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.65; color: var(--inkMuted);
+    max-width: 68ch; margin-top: 20px;
+  }
+  .row {
+    display: flex; align-items: flex-start; gap: 60px;
+    margin-top: 96px;
+  }
+  .stack { display: flex; flex-direction: column; gap: 18px; }
+  .artboard-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 1.2px;
+    color: var(--inkQuiet); text-transform: uppercase;
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 2px;
+  }
+  .artboard-label .num { color: var(--accent); font-weight: 500; }
+  .artboard-title {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px; font-weight: 400; letter-spacing: -0.3px;
+    color: var(--ink);
+  }
+  .artboard-caption {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px; line-height: 1.55; color: var(--inkMuted);
+    max-width: 60ch;
+  }
+
+  /* ─────────────── Pane shell ─────────────── */
+  .pane-outer {
+    width: 712px; background: #2a2824;
+    border-radius: 8px; padding: 6px;
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.35),
+                0 6px 18px -6px rgba(0,0,0,0.2);
+  }
+  .pane-outer.small { width: 472px; }
+  .pane-chrome {
+    height: 26px; display: flex; align-items: center; gap: 8px;
+    padding: 0 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: rgba(240,238,233,0.5);
+    letter-spacing: 0.3px;
+  }
+  .pane-chrome .tl { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .pane-inner {
+    width: 700px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pane-outer.small .pane-inner { width: 460px; }
+  .pane-inner.dark {
+    background: var(--paperDark);
+    color: var(--inkOnDark);
+    border-color: var(--ruleDark);
+  }
+  .pane-inner.reading {
+    background: var(--readingPaper);
+    border-color: var(--readingRule);
+  }
+
+  .rail {
+    position: absolute; top: 0; left: 0; width: 52px; height: 100%;
+    background: var(--paperAlt);
+    border-right: 1px solid var(--rule);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 18px 0; z-index: 3;
+  }
+  .dark .rail { background: var(--paperDarkAlt); border-right-color: var(--ruleDark); }
+  .reading .rail { background: var(--readingPaperAlt); border-right-color: var(--readingRule); }
+  .rail .brand {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.5px; margin-bottom: 18px;
+    color: var(--ink);
+  }
+  .dark .rail .brand { color: var(--inkOnDark); }
+  .rail .divider { width: 1px; height: 28px; background: var(--rule); margin-bottom: 10px; }
+  .dark .rail .divider { background: var(--ruleDark); }
+  .reading .rail .divider { background: var(--readingRule); }
+  .rail .item {
+    padding: 10px 0; width: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    border-left: 2px solid transparent;
+  }
+  .rail .item.active { border-left-color: var(--accent); }
+  .rail .item .n {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: var(--inkFaint); letter-spacing: 0.4px;
+  }
+  .dark .rail .item .n { color: var(--inkOnDarkFaint); }
+  .rail .item.active .n { color: var(--accent); }
+  .rail .item .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--inkMuted);
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.5px;
+  }
+  .dark .rail .item .lbl { color: var(--inkOnDarkMuted); }
+  .rail .item.active .lbl { color: var(--accent); font-weight: 500; }
+
+  .pane-body { padding-left: 52px; }
+
+  /* ─────────────── Crumb header ─────────────── */
+  .crumb-bar {
+    padding: 14px 24px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--inkQuiet);
+    letter-spacing: 0.3px;
+  }
+  .reading .crumb-bar { border-bottom-color: var(--readingRule); }
+  .dark .crumb-bar { border-bottom-color: var(--ruleDark); color: var(--inkOnDarkQuiet); }
+  .crumb-bar .crumbs { display: inline-flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .crumb-bar a.seg { color: var(--inkQuiet); cursor: pointer; text-decoration: none; }
+  .dark .crumb-bar a.seg { color: var(--inkOnDarkQuiet); }
+  .crumb-bar .seg.here { color: var(--ink); }
+  .dark .crumb-bar .seg.here { color: var(--inkOnDark); }
+  .crumb-bar .sep { color: var(--inkFaint); }
+  .dark .crumb-bar .sep { color: var(--inkOnDarkFaint); }
+
+  /* Reading-mode meta + why? affordance */
+  .reading-meta {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.3px;
+    color: var(--inkQuiet);
+    white-space: nowrap;
+    position: relative;
+  }
+  .reading-meta .rmdot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--inkFaint);
+  }
+  .reading-meta .why {
+    cursor: help;
+    color: var(--accent);
+    border-bottom: 1px dotted var(--accentRule);
+    padding-bottom: 1px;
+  }
+  .reading-meta .why:hover { border-bottom-color: var(--accent); }
+
+  /* Tooltip — rendered as a static disclosure for the close-up frames */
+  .why-pop {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 280px;
+    background: var(--paper);
+    border: 1px solid var(--ruleStrong);
+    border-left: 2px solid var(--accent);
+    padding: 12px 14px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    box-shadow: 0 8px 20px -8px rgba(0,0,0,0.18);
+    z-index: 10;
+  }
+  .why-pop::before {
+    content: '';
+    position: absolute;
+    top: -5px; right: 12px;
+    width: 8px; height: 8px;
+    background: var(--paper);
+    border-top: 1px solid var(--ruleStrong);
+    border-left: 1px solid var(--ruleStrong);
+    transform: rotate(45deg);
+  }
+
+  /* ─────────────── Badges ─────────────── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px 2px 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.2px;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge.partial     { color: #7a5e1a; background: rgba(168,131,40,0.11); }
+  .badge.partial .dot     { background: #a88328; }
+  .badge.not-started { color: #5a5a5a; background: rgba(138,138,138,0.10); }
+  .badge.not-started .dot { background: #8a8a8a; }
+  .badge.ready-for-dev { color: #2a4a7a; background: rgba(88,99,168,0.10); }
+  .badge.ready-for-dev .dot { background: #5863a8; }
+  .badge.in-progress { color: #2a4a7a; background: rgba(88,99,168,0.10); }
+  .badge.in-progress .dot { background: #5863a8; }
+  .badge.working     { color: #2a5a42; background: rgba(62,122,90,0.10); }
+  .badge.working .dot     { background: #3e7a5a; }
+  .badge.validated   { color: #556555; background: rgba(106,122,106,0.08); opacity: 0.72; }
+  .badge.validated .dot   { background: #6a7a6a; }
+  .badge.blocked     { color: #7a4020; background: rgba(168,90,42,0.10); }
+  .badge.blocked .dot     { background: #a85a2a; }
+
+  .dark .badge.partial     { color: #e6c07a; background: rgba(168,131,40,0.18); }
+  .dark .badge.not-started { color: rgba(240,238,233,0.72); background: rgba(240,238,233,0.07); }
+  .dark .badge.ready-for-dev { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .dark .badge.in-progress { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .dark .badge.working     { color: #8fd1a9; background: rgba(62,122,90,0.18); }
+  .dark .badge.validated   { color: rgba(192,200,188,0.85); background: rgba(106,122,106,0.14); }
+  .dark .badge.blocked     { color: #e0a07a; background: rgba(168,90,42,0.18); }
+
+  .gap-flag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 7px 2px 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; font-weight: 500;
+    color: var(--gap); letter-spacing: 0.2px;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .gap-flag.prominent {
+    background: var(--gapSoft);
+    border: 1px solid rgba(168,90,42,0.18);
+  }
+
+  .frac {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px; color: var(--inkMuted); letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .frac .slash { color: var(--inkFaint); margin: 0 1px; }
+  .frac .lbl { color: var(--inkFaint); margin-left: 4px; }
+
+  /* ─────────────── Sprint lens (dark) — minimal version for sequence ─────────────── */
+  .pane-header {
+    border-bottom: 1px solid var(--rule);
+    padding: 12px 24px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .dark .pane-header { border-bottom-color: var(--ruleDark); }
+  .pane-header .t {
+    font-family: "Source Serif 4", Georgia, serif; font-size: 15px;
+    color: var(--ink); letter-spacing: -0.1px;
+  }
+  .dark .pane-header .t { color: var(--inkOnDark); }
+  .pane-header .m {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--inkFaint); letter-spacing: 0.3px;
+  }
+  .dark .pane-header .m { color: var(--inkOnDarkFaint); }
+
+  .lens-section { padding: 24px 24px 36px; }
+  .lens-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .lens-header .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    letter-spacing: 1.4px; text-transform: uppercase;
+    color: rgba(40,30,20,0.45);
+  }
+  .dark .lens-header .tag { color: var(--inkOnDarkQuiet); }
+  .lens-header .rule { flex: 1; height: 1px; background: var(--rule); }
+  .dark .lens-header .rule { background: var(--ruleDark); }
+
+  .sprint-key {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px; letter-spacing: -0.25px; font-weight: 400;
+    color: var(--ink);
+  }
+  .dark .sprint-key { color: var(--inkOnDark); }
+  .lifecycle-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px 2px 7px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.2px;
+    color: #2a4a7a; background: rgba(88,99,168,0.10);
+    border-radius: 3px;
+  }
+  .dark .lifecycle-chip { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+  .lifecycle-chip .sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .sprint-meta-mono {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--inkFaint); letter-spacing: 0.3px;
+  }
+  .dark .sprint-meta-mono { color: var(--inkOnDarkFaint); }
+  .sprint-goal {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.6; color: var(--ink);
+    margin-top: 10px; max-width: 58ch;
+  }
+  .dark .sprint-goal { color: var(--inkOnDark); }
+
+  .outcome-band { margin-top: 22px; }
+  .band-hdr {
+    display: flex; align-items: baseline; gap: 10px;
+    padding-bottom: 6px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dark .band-hdr { border-bottom-color: var(--ruleDark); }
+  .band-hdr .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase;
+  }
+  .band-hdr.active .lbl { color: var(--accent); }
+  .dark .band-hdr.active .lbl { color: #a4b0e0; }
+  .band-hdr.terminal .lbl { color: var(--inkQuiet); }
+  .dark .band-hdr.terminal .lbl { color: var(--inkOnDarkQuiet); }
+  .band-hdr .n {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--inkFaint); letter-spacing: 0.3px;
+  }
+  .dark .band-hdr .n { color: var(--inkOnDarkFaint); }
+
+  .story-row {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--rule);
+  }
+  .dark .story-row { border-bottom-color: var(--ruleDark); }
+  .story-row.terminal { opacity: 0.62; }
+  .story-row .title {
+    font-family: "Inter", sans-serif; font-size: 13px;
+    color: var(--ink); line-height: 1.35;
+  }
+  .dark .story-row .title { color: var(--inkOnDark); }
+  .story-row.terminal .title { color: var(--inkMuted); }
+  .dark .story-row.terminal .title { color: var(--inkOnDarkMuted); }
+  .story-row.linked .title { color: var(--accent); }
+  .dark .story-row.linked .title { color: #a4b0e0; }
+  .story-row.linked { background: rgba(88,99,168,0.06); margin: 0 -8px; padding: 9px 8px; }
+  .dark .story-row.linked { background: rgba(88,99,168,0.10); }
+
+  /* ─────────────── Level-2 (reading mode) ─────────────── */
+  .l2-body { padding: 22px 28px 40px; }
+  .l2-meta {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .l2-meta .type-tag {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+  }
+  .l2-name {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 26px; line-height: 1.2; font-weight: 500;
+    letter-spacing: -0.3px; color: var(--ink);
+    margin: 4px 0 10px;
+  }
+  .l2-desc {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 16px; line-height: 1.55;
+    color: var(--inkMuted);
+    font-style: italic;
+    max-width: 60ch;
+  }
+  .l2-accept {
+    margin-top: 26px;
+    border: 1px solid var(--ruleStrong);
+    padding: 16px 18px;
+    background: var(--readingPaperAlt);
+  }
+  .reading .l2-accept { border-color: #d6cfb8; }
+  .l2-accept .cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+    margin-bottom: 8px;
+  }
+  .l2-accept .body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15.5px; line-height: 1.6; color: var(--ink);
+    padding-left: 8px; border-left: 2px solid var(--readingRule);
+    max-width: 60ch;
+  }
+  .l2-accept code {
+    font-family: "JetBrains Mono", monospace; font-size: 12.5px;
+    background: var(--readingPaper); padding: 1px 5px; border-radius: 2px;
+    border: 1px solid var(--readingRule);
+  }
+
+  .l2-narrative-cap {
+    margin-top: 30px; margin-bottom: 12px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase;
+    color: var(--inkQuiet);
+  }
+  .l2-narrative p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px; line-height: 1.7; color: var(--ink);
+    max-width: 65ch; margin: 0 0 1.1em; text-wrap: pretty;
+  }
+
+  .l2-stories { margin-top: 32px; }
+  .l2-stories .cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+    margin-bottom: 10px;
+  }
+  .l2-story {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--readingRule);
+    cursor: pointer;
+  }
+  .l2-story .t {
+    font-family: "Inter", sans-serif; font-size: 13.5px; color: var(--ink);
+    line-height: 1.4;
+  }
+  .l2-story.linked { background: rgba(88,99,168,0.06); margin: 0 -8px; padding: 10px 8px; }
+  .l2-story.linked .t { color: var(--accent); }
+
+  /* ─────────────── Level-3 reading mode ─────────────── */
+  .l3 { padding: 22px 28px 40px; }
+  .l3-fm {
+    margin-top: 2px; padding: 10px 12px;
+    background: var(--readingPaperAlt);
+    border: 1px solid var(--readingRule);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.3px;
+    color: var(--inkMuted);
+  }
+  .l3-fm .fk { color: var(--inkFaint); margin-right: 5px; }
+  .l3-fm .fv { color: var(--ink); }
+  .l3-fm .dot {
+    display: inline-block;
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--inkFaint);
+    margin: 0 4px;
+    vertical-align: middle;
+  }
+
+  .l3-title {
+    margin: 20px 0 6px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 30px; line-height: 1.2; font-weight: 500;
+    letter-spacing: -0.3px; color: var(--ink);
+    text-wrap: pretty;
+  }
+  .l3-subtitle {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic; font-size: 18px; line-height: 1.4;
+    color: var(--inkMuted); margin-bottom: 22px;
+    max-width: 60ch;
+  }
+
+  /* Reading mode body — Option β tuning */
+  .l3 p.body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px; line-height: 1.7;
+    color: var(--ink);
+    max-width: 65ch;
+    margin: 0 0 1.1em;
+    text-wrap: pretty;
+  }
+  .l3 p.body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    background: var(--readingPaperAlt);
+    color: var(--ink);
+    padding: 1px 5px; border-radius: 2px;
+    border: 1px solid var(--readingRule);
+  }
+
+  .l3 h3.sec {
+    margin: 36px 0 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--readingRule);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.1px; color: var(--ink);
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .l3 h3.sec .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--inkQuiet); font-weight: 400;
+  }
+
+  .l3 h4.sub {
+    margin: 26px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--readingRule);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; font-weight: 500;
+    color: var(--ink); letter-spacing: -0.1px;
+  }
+
+  .l3 ol.num {
+    list-style: none; padding: 0; margin: 0 0 14px;
+    counter-reset: acnum;
+  }
+  .l3 ol.num > li {
+    counter-increment: acnum;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    column-gap: 16px;
+    padding: 12px 0 14px;
+    border-bottom: 1px solid var(--readingRule);
+  }
+  .l3 ol.num > li::before {
+    content: counter(acnum, decimal-leading-zero);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--inkFaint);
+    letter-spacing: 0.3px;
+    padding-top: 5px;
+  }
+  .l3 ol.num .num-body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.6;
+    color: var(--ink);
+    max-width: 60ch;
+  }
+  .l3 ol.num .num-body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    background: var(--readingPaperAlt);
+    color: var(--ink);
+    padding: 1px 5px; border-radius: 2px;
+    border: 1px solid var(--readingRule);
+  }
+  .l3 ol.num .num-body .phase-title {
+    font-weight: 600;
+    display: block; margin-bottom: 4px; letter-spacing: -0.1px;
+    color: var(--ink);
+  }
+  .l3 ol.num .num-body ul {
+    margin: 8px 0 0; padding: 0 0 0 16px;
+  }
+  .l3 ol.num .num-body ul li {
+    font-size: 14px; line-height: 1.55;
+    color: var(--inkMuted); margin-bottom: 5px;
+  }
+  .l3 ol.num .num-body ul li strong {
+    color: var(--ink); font-weight: 600;
+  }
+
+  .jump-bar {
+    margin: 8px 0 22px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.3px;
+    color: var(--inkQuiet);
+    padding: 10px 12px;
+    background: var(--readingPaperAlt);
+    border-left: 2px solid var(--accentRule);
+  }
+  .jump-bar .jump-label {
+    text-transform: uppercase;
+    letter-spacing: 1.3px; font-size: 9.5px;
+    color: var(--inkFaint);
+    margin-right: 2px;
+  }
+  .jump-bar a { color: var(--accent); text-decoration: none; cursor: pointer; }
+  .jump-bar .dotsep { color: var(--inkFaint); }
+
+  .code-card {
+    margin: 14px 0 18px;
+    background: var(--readingPaperAlt);
+    border-left: 2px solid var(--accentRule);
+    padding: 14px 16px 14px 18px;
+    overflow-x: auto;
+  }
+  .code-card pre {
+    margin: 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px; line-height: 1.6;
+    color: var(--ink);
+    white-space: pre;
+  }
+  .code-card .yk { color: var(--accent); }
+  .code-card .ys { color: var(--inkMuted); }
+  .code-card .caption {
+    display: block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--inkFaint);
+    margin-bottom: 8px;
+  }
+
+  .file-list {
+    margin: 10px 0 16px;
+    padding: 10px 14px;
+    background: var(--readingPaperAlt);
+    border: 1px solid var(--readingRule);
+  }
+  .file-list .cap {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--inkFaint);
+    margin-bottom: 7px;
+    display: block;
+  }
+  .file-list .fp {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px; line-height: 1.9;
+    color: var(--inkMuted);
+    display: block;
+  }
+  .file-list .fp .fn { color: var(--ink); }
+
+  .l3 ul.tight { margin: 8px 0 16px; padding: 0 0 0 18px; }
+  .l3 ul.tight li {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.6;
+    color: var(--ink); margin-bottom: 5px;
+  }
+  .l3 ul.tight li code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    background: var(--readingPaperAlt);
+    color: var(--ink);
+    padding: 1px 5px; border-radius: 2px;
+    border: 1px solid var(--readingRule);
+  }
+
+  .touches {
+    margin-top: 32px;
+    padding: 14px 16px;
+    border: 1px solid var(--readingRule);
+    border-left: 2px solid var(--ruleStrong);
+    background: var(--readingPaper);
+  }
+  .touches .cap {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--inkQuiet);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .touches .fp {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px; line-height: 1.9;
+    color: var(--inkMuted);
+    display: block;
+  }
+  .touches .fp .fn { color: var(--ink); }
+
+  .l3-foot {
+    margin-top: 40px; padding-top: 22px;
+    border-top: 1px solid var(--readingRule);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px; letter-spacing: 0.3px;
+  }
+  .l3-foot .back { color: var(--accent); cursor: pointer; }
+  .l3-foot .src { color: var(--inkQuiet); }
+
+  /* ─────────────── Sequence connectors ─────────────── */
+  .sequence-row {
+    display: flex; align-items: flex-start; gap: 26px;
+    margin-top: 32px;
+    flex-wrap: nowrap;
+  }
+  .seq-arrow {
+    align-self: center;
+    margin-top: 200px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    width: 80px; flex-shrink: 0;
+  }
+  .seq-arrow svg { display: block; }
+  .seq-arrow .label { white-space: nowrap; text-align: center; }
+
+  .frame-cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: var(--inkQuiet);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .frame-cap .state-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .frame-cap .state-dot.dark-mode { background: var(--paperDark); border: 1px solid #44423c; }
+  .frame-cap .state-dot.reading { background: var(--readingPaper); border: 1px solid var(--readingRule); }
+
+  /* ─────────────── α/β Comparison ─────────────── */
+  .compare-grid {
+    display: grid; grid-template-columns: 460px 460px;
+    gap: 32px; align-items: flex-start;
+  }
+  .compare-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 28px 32px 32px;
+  }
+  .compare-card.beta {
+    background: var(--readingPaper);
+    border-color: var(--readingRule);
+  }
+  .compare-card .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase;
+    color: var(--inkQuiet); margin-bottom: 4px;
+    display: flex; gap: 10px; align-items: baseline;
+  }
+  .compare-card .label .pick {
+    color: var(--accent); font-weight: 500;
+  }
+  .compare-card .specs {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; line-height: 1.7;
+    color: var(--inkMuted); margin: 8px 0 18px;
+  }
+  .compare-card .specs .k { color: var(--inkFaint); }
+  .compare-card.alpha p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px; line-height: 1.65;
+    color: var(--ink); max-width: 68ch; margin: 0;
+    text-wrap: pretty;
+  }
+  .compare-card.beta p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px; line-height: 1.7;
+    color: var(--ink); max-width: 65ch; margin: 0;
+    text-wrap: pretty;
+  }
+
+  /* ─────────────── Affordance close-up ─────────────── */
+  .closeup-grid {
+    display: grid; grid-template-columns: 480px 480px;
+    gap: 40px; align-items: flex-start;
+  }
+  .closeup-card {
+    background: var(--readingPaper);
+    border: 1px solid var(--readingRule);
+    padding: 0;
+    box-shadow: 0 14px 32px -16px rgba(0,0,0,0.18);
+    position: relative;
+    overflow: visible;
+  }
+  .closeup-card .crumb-bar {
+    border-bottom-color: var(--readingRule);
+  }
+  .closeup-card .body-cap {
+    padding: 30px 28px 32px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px; color: var(--inkFaint); font-style: italic;
+    text-align: center;
+  }
+  .closeup-state {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--inkQuiet);
+    margin-bottom: 10px; display: block;
+  }
+
+  /* ─────────────── Post-its ─────────────── */
+  .postit {
+    width: 300px;
+    background: #fef6d0;
+    padding: 20px 22px 22px;
+    font-family: "Caveat", "Source Serif 4", cursive;
+    font-size: 17px; line-height: 1.45;
+    color: #3d2f1a;
+    box-shadow:
+      0 1px 1px rgba(0,0,0,0.05),
+      0 14px 30px -14px rgba(0,0,0,0.25),
+      0 4px 8px -4px rgba(0,0,0,0.12);
+    transform: rotate(-1.1deg);
+    position: relative;
+  }
+  .postit.r { transform: rotate(0.8deg); }
+  .postit.b { background: #dfe7ef; transform: rotate(-0.6deg); }
+  .postit.g { background: #e0eadf; transform: rotate(1deg); }
+  .postit.p { background: #ecdfe9; transform: rotate(-1.4deg); }
+  .postit .h {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(61,47,26,0.6);
+    margin-bottom: 10px; display: block;
+  }
+  .postit .bullet { display: block; margin-top: 8px; }
+  .postit strong { font-weight: 500; }
+  .postit code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px; background: rgba(0,0,0,0.05);
+    padding: 0 3px; border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+  <div class="canvas-title">Feature Status — Pass 7</div>
+  <div class="canvas-sub">reading-mode override · L2 + L3 always render light</div>
+  <p class="canvas-intro">
+    Dashboard scanning rewards dark; sustained reading rewards light. Pass 7
+    splits the surfaces honestly. The mode toggle continues to drive Features /
+    Sprints / Flywheel; Level-2 and Level-3 ignore it and always render in
+    reading mode (a tuned variant of light — Option β, justified below). A
+    small <code style="font-family:'JetBrains Mono',monospace; font-size:12px; background:#f5f3ed; padding:1px 4px;">reading mode · why?</code>
+    affordance in the page chrome explains the choice without offering an escape hatch.
+  </p>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 1 — MODE-SWITCH SEQUENCE
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row" style="margin-top:64px;">
+    <div class="stack">
+      <div>
+        <div class="artboard-label"><span class="num">01</span><span>mode-switch sequence · 700px</span></div>
+        <div class="artboard-title">Sprints (dark) → Level-2 (reading) → Level-3 (reading)</div>
+        <div class="artboard-caption">
+          Three frames at 700px showing the polarity flip on drill-down. The
+          dashboard stays in dark; the reading surfaces switch on entry and
+          flip back on return. A 140ms cross-fade between background colors
+          covers the transition without flash.
+        </div>
+      </div>
+
+      <div class="sequence-row">
+        <!-- Frame A — Sprints lens, dark -->
+        <div>
+          <div class="frame-cap">
+            <span class="state-dot dark-mode"></span>
+            frame A · sprints · dark mode
+          </div>
+          <div class="pane-outer small">
+            <div class="pane-chrome">
+              <span class="tl" style="background:#d96c5a"></span>
+              <span class="tl" style="background:#d9b15a"></span>
+              <span class="tl" style="background:#6ca86e"></span>
+              <span style="margin-left:10px">cmux · pane</span>
+            </div>
+            <div class="pane-inner dark">
+              <div class="rail">
+                <div class="brand">Momentum</div>
+                <div class="divider"></div>
+                <div class="item"><span class="n">01</span><span class="lbl">features</span></div>
+                <div class="item active"><span class="n">02</span><span class="lbl">sprints</span></div>
+                <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+              </div>
+              <div class="pane-body dark">
+                <div class="pane-header">
+                  <span class="t">Feature Status</span>
+                  <span class="m">2026-04-22 09:14</span>
+                </div>
+                <section class="lens-section">
+                  <div class="lens-header">
+                    <span class="tag">02 · Sprints</span>
+                    <span class="rule"></span>
+                  </div>
+                  <div class="sprint-key">sprint-2026-04-22</div>
+                  <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+                    <span class="lifecycle-chip"><span class="sdot"></span>active</span>
+                    <span class="sprint-meta-mono">~2 weeks</span>
+                  </div>
+                  <div class="sprint-goal">
+                    Close the flywheel loop — make retro findings compound across sprints.
+                  </div>
+
+                  <div class="outcome-band">
+                    <div class="band-hdr active">
+                      <span class="lbl">in progress</span>
+                      <span class="n">3</span>
+                    </div>
+                    <div class="story-row">
+                      <span class="title">Cross-Story Pattern Detection</span>
+                      <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                    </div>
+                    <div class="story-row">
+                      <span class="title">Findings Ledger</span>
+                      <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                    </div>
+                    <div class="story-row linked">
+                      <span class="title">↗ Retro Skill</span>
+                      <span class="badge ready-for-dev"><span class="dot"></span>ready for dev</span>
+                    </div>
+                  </div>
+
+                  <div class="outcome-band">
+                    <div class="band-hdr terminal">
+                      <span class="lbl">validated</span>
+                      <span class="n">2</span>
+                    </div>
+                    <div class="story-row terminal">
+                      <span class="title">Retro → Triage Handoff</span>
+                      <span class="badge validated"><span class="dot"></span>validated</span>
+                    </div>
+                    <div class="story-row terminal">
+                      <span class="title">Sprint Boundary Compression</span>
+                      <span class="badge validated"><span class="dot"></span>validated</span>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow A→B -->
+        <div class="seq-arrow">
+          <span class="label">click<br>retro skill</span>
+          <svg width="60" height="20" viewBox="0 0 60 20"><line x1="2" y1="10" x2="52" y2="10" stroke="#5863a8" stroke-width="1.4"/><polyline points="46,5 53,10 46,15" fill="none" stroke="#5863a8" stroke-width="1.4"/></svg>
+          <span class="label" style="color:var(--inkFaint); letter-spacing:0.4px;">140ms<br>cross-fade</span>
+        </div>
+
+        <!-- Frame B — Level-2, reading -->
+        <div>
+          <div class="frame-cap">
+            <span class="state-dot reading"></span>
+            frame B · level-2 · reading mode
+          </div>
+          <div class="pane-outer small">
+            <div class="pane-chrome">
+              <span class="tl" style="background:#d96c5a"></span>
+              <span class="tl" style="background:#d9b15a"></span>
+              <span class="tl" style="background:#6ca86e"></span>
+              <span style="margin-left:10px">cmux · pane</span>
+            </div>
+            <div class="pane-inner reading">
+              <div class="rail">
+                <div class="brand">Momentum</div>
+                <div class="divider"></div>
+                <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+                <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+                <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+              </div>
+              <div class="pane-body">
+                <div class="crumb-bar">
+                  <span class="crumbs">
+                    <a class="seg">features</a>
+                    <span class="sep">›</span>
+                    <span class="seg here">sprint-retro-and-flywheel</span>
+                  </span>
+                  <span class="reading-meta">
+                    reading mode<span class="rmdot"></span><span class="why">why?</span>
+                  </span>
+                </div>
+
+                <div class="l2-body" style="padding: 18px 22px 32px;">
+                  <div class="l2-meta">
+                    <span class="badge partial"><span class="dot"></span>partial</span>
+                    <span class="frac">4<span class="slash">/</span>7<span class="lbl">stories</span></span>
+                    <span class="gap-flag prominent">gap</span>
+                  </div>
+                  <h1 class="l2-name" style="font-size:22px;">Sprint Retro + Practice Improvement Flywheel</h1>
+                  <div class="l2-desc" style="font-size:15px;">
+                    Retro ceremony plus the flywheel that feeds findings forward.
+                  </div>
+
+                  <div class="l2-accept" style="padding: 12px 14px;">
+                    <div class="cap">acceptance</div>
+                    <div class="body" style="font-size:14.5px;">
+                      A developer can run <code>momentum:retro</code> and at least
+                      one finding generates a story stub added to the backlog.
+                    </div>
+                  </div>
+
+                  <div class="l2-stories">
+                    <div class="cap">stories · 7</div>
+                    <div class="l2-story linked"><span class="t">↗ Retro Skill</span><span class="badge ready-for-dev"><span class="dot"></span>ready for dev</span></div>
+                    <div class="l2-story"><span class="t">Retro Workflow Rewrite</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Sprint Boundary Compression</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Cross-Story Pattern Detection</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow B→C -->
+        <div class="seq-arrow">
+          <span class="label">click<br>story title</span>
+          <svg width="60" height="20" viewBox="0 0 60 20"><line x1="2" y1="10" x2="52" y2="10" stroke="#5863a8" stroke-width="1.4"/><polyline points="46,5 53,10 46,15" fill="none" stroke="#5863a8" stroke-width="1.4"/></svg>
+          <span class="label" style="color:var(--inkFaint); letter-spacing:0.4px;">no<br>fade</span>
+        </div>
+
+        <!-- Frame C — Level-3, reading -->
+        <div>
+          <div class="frame-cap">
+            <span class="state-dot reading"></span>
+            frame C · level-3 · reading mode
+          </div>
+          <div class="pane-outer small">
+            <div class="pane-chrome">
+              <span class="tl" style="background:#d96c5a"></span>
+              <span class="tl" style="background:#d9b15a"></span>
+              <span class="tl" style="background:#6ca86e"></span>
+              <span style="margin-left:10px">cmux · pane</span>
+            </div>
+            <div class="pane-inner reading">
+              <div class="rail">
+                <div class="brand">Momentum</div>
+                <div class="divider"></div>
+                <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+                <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+                <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+              </div>
+              <div class="pane-body">
+                <div class="crumb-bar">
+                  <span class="crumbs">
+                    <a class="seg">features</a>
+                    <span class="sep">›</span>
+                    <a class="seg">sprint-retro-and-flywheel</a>
+                    <span class="sep">›</span>
+                    <span class="seg here">retro-skill</span>
+                  </span>
+                  <span class="reading-meta">
+                    reading mode<span class="rmdot"></span><span class="why">why?</span>
+                  </span>
+                </div>
+
+                <div class="l3" style="padding: 18px 22px 32px;">
+                  <div class="l3-fm">
+                    <span class="badge ready-for-dev"><span class="dot"></span>ready for dev</span>
+                    <span><span class="fk">epic</span><span class="fv">impetus-core</span></span>
+                  </div>
+                  <h1 class="l3-title" style="font-size:24px;">Retro Skill</h1>
+                  <div class="l3-subtitle" style="font-size:15px;">
+                    Sprint retrospective with cross-log discovery and sprint closure
+                  </div>
+                  <p class="body" style="font-size:15px; line-height:1.65;">
+                    The sprint lifecycle is planning → dev → retro → next cycle.
+                    Planning and dev are implemented; retro is the missing piece
+                    that closes the loop.
+                  </p>
+                  <p class="body" style="font-size:15px; line-height:1.65;">
+                    Per Decision 34, retro owns sprint closure. It performs holistic
+                    cross-log discovery, verifies story completion, produces two triage
+                    outputs, and calls <code>momentum-tools sprint complete</code>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Post-its for sequence -->
+  <div class="row" style="margin-top:32px;">
+    <div class="postit">
+      <span class="h">01 · transition behavior</span>
+      Dashboard → reading: 140ms cross-fade between background colors only.
+      Layout doesn't reflow (rail + chrome positions are identical), so the
+      eye lands on the new paper without a flash.
+      <span class="bullet">
+        Reading → reading (L2 → L3): no fade. Same paper, new content. Treat it
+        like a normal navigation.
+      </span>
+    </div>
+    <div class="postit r">
+      <span class="h">linked-row affordance</span>
+      The <strong>↗ Retro Skill</strong> row in Sprints (dark) and Level-2
+      uses the same indigo-tinted hover treatment. The arrow glyph signals
+      "this navigates," which doubles as the polarity-flip cue.
+    </div>
+    <div class="postit b">
+      <span class="h">assumption · what about back?</span>
+      Hitting "back" from L2/L3 returns the dashboard to its <em>last</em>
+      mode (dark if you were in dark). Persistent across the session via
+      a single <code>mode</code> key. The dashboard remembers; reading
+      surfaces don't argue.
+    </div>
+    <div class="postit g">
+      <span class="h">why?</span>
+      Pupils contract on light paper, focus sharpens, you read faster. Same
+      reason the IDE is dark and the PDF you're actually reading is white.
+      Pass 7 stops pretending those should match.
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 2 — LEVEL-3 IN READING MODE (FULL)
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row">
+    <div class="stack">
+      <div>
+        <div class="artboard-label"><span class="num">02</span><span>level-3 · reading mode · full</span></div>
+        <div class="artboard-title">retro-skill, tuned for sustained reading</div>
+        <div class="artboard-caption">
+          Same retro-skill content from Pass 6, on tuned reading paper.
+          Body 18/1.7/65ch; ACs and phases now in Source Serif (was Inter)
+          to match the reading column's voice. Code chips pick up a 1px
+          rule against the warmer paper to maintain edge.
+        </div>
+      </div>
+
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:10px">cmux · feature-status</span>
+          <span style="margin-left:auto">pane · 700px · reading mode</span>
+        </div>
+        <div class="pane-inner reading">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+          </div>
+
+          <div class="pane-body">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">features</a>
+                <span class="sep">›</span>
+                <a class="seg">sprint-retro-and-flywheel</a>
+                <span class="sep">›</span>
+                <span class="seg here">retro-skill</span>
+              </span>
+              <span class="reading-meta">
+                reading mode<span class="rmdot"></span><span class="why">why?</span>
+              </span>
+            </div>
+
+            <div class="l3">
+              <div class="l3-fm">
+                <span class="badge ready-for-dev"><span class="dot"></span>ready for dev</span>
+                <span><span class="fk">story</span><span class="fv">retro-skill</span></span>
+                <span class="dot"></span>
+                <span><span class="fk">epic</span><span class="fv">impetus-core</span></span>
+                <span class="dot"></span>
+                <span><span class="fk">change</span><span class="fv">skill-instruction + code</span></span>
+                <span class="dot"></span>
+                <span><span class="fk">depends on</span><span class="fv">—</span></span>
+              </div>
+
+              <h1 class="l3-title">Retro Skill</h1>
+              <div class="l3-subtitle">
+                Sprint retrospective with cross-log discovery and sprint closure
+              </div>
+
+              <p class="body">
+                The sprint lifecycle is planning → dev → retro → next cycle. Planning and
+                dev are implemented; retro is the missing piece that closes the loop.
+                Without it, sprints "complete" but learnings don't feed back into the
+                practice.
+              </p>
+              <p class="body">
+                Per Decision 34, retro owns sprint closure. It performs holistic cross-log
+                discovery across all agent JSONL logs, verifies story completion, produces
+                two triage outputs (Decision 27: Momentum triage + Project triage), creates
+                story stubs from findings, calls <code>momentum-tools sprint complete</code>,
+                and archives sprint artifacts.
+              </p>
+              <p class="body">
+                This story creates the <code>momentum:retro</code> skill as a proper
+                SKILL.md + workflow pair in the plugin structure, plus any
+                <code>momentum-tools.py</code> subcommands needed to support it.
+              </p>
+
+              <h3 class="sec">
+                Acceptance Criteria
+                <span class="tag">plain english · 9</span>
+              </h3>
+              <ol class="num">
+                <li><div class="num-body">
+                  A skill exists at <code>skills/momentum/skills/retro/SKILL.md</code>
+                  that is independently invocable via <code>/momentum:retro</code>.
+                </div></li>
+                <li><div class="num-body">
+                  The skill reads all agent JSONL log files from
+                  <code>.claude/momentum/sprint-logs/{sprint-slug}/</code> for the most
+                  recently completed sprint, correlating events across agent logs to build
+                  a holistic timeline.
+                </div></li>
+                <li><div class="num-body">
+                  The skill verifies that every story in the sprint reached
+                  <code>done</code> status. Stories that did not reach <code>done</code>
+                  are flagged as <code>closed-incomplete</code> via
+                  <code>momentum-tools sprint status-transition --story SLUG --target closed-incomplete</code>.
+                </div></li>
+                <li><div class="num-body">
+                  The skill produces two structured outputs per Decision 27: a Momentum
+                  triage covering practice improvements and a Project triage covering
+                  project-specific findings, written to the sprint's implementation-artifacts
+                  directory.
+                </div></li>
+                <li><div class="num-body">
+                  For actionable findings in either triage output, the skill creates story
+                  stub entries in <code>stories/index.json</code> with status
+                  <code>backlog</code>. The developer approves each stub before creation.
+                </div></li>
+                <li><div class="num-body">
+                  The skill calls <code>momentum-tools sprint complete</code> followed by
+                  <code>momentum-tools sprint retro-complete</code> to set the terminal
+                  sprint state and record the retro completion timestamp.
+                </div></li>
+                <li><div class="num-body">
+                  The skill presents a summary to the developer showing: stories verified,
+                  findings count by category, story stubs created, and sprint closure
+                  confirmation.
+                </div></li>
+                <li><div class="num-body">
+                  The SKILL.md follows plugin conventions: <code>name: retro</code>,
+                  description under 150 chars, <code>model:</code> and <code>effort:</code>
+                  frontmatter present, body delegates to <code>./workflow.md</code>.
+                </div></li>
+                <li><div class="num-body">
+                  The workflow uses task tracking (TaskCreate/TaskUpdate) for its phases
+                  and logs decisions via <code>momentum-tools log</code>.
+                </div></li>
+              </ol>
+
+              <h3 class="sec">
+                Dev Notes
+                <span class="tag">4 subsections</span>
+              </h3>
+
+              <div class="jump-bar">
+                <span class="jump-label">jump</span>
+                <a>workflow phases</a>
+                <span class="dotsep">·</span>
+                <a>momentum-tools.py changes</a>
+                <span class="dotsep">·</span>
+                <a>skill.md frontmatter</a>
+                <span class="dotsep">·</span>
+                <a>files</a>
+              </div>
+
+              <h4 class="sub">Workflow phases</h4>
+              <ol class="num">
+                <li><div class="num-body">
+                  <span class="phase-title">Sprint identification</span>
+                  Find the most recently completed sprint in
+                  <code>_bmad-output/implementation-artifacts/sprints/index.json</code>
+                  (status: <code>done</code>, <code>retro_run_at: null</code>). If none,
+                  error with clear message. Confirm with developer which sprint to retro.
+                </div></li>
+                <li><div class="num-body">
+                  <span class="phase-title">Log collection and correlation</span>
+                  Read all <code>.jsonl</code> files from
+                  <code>.claude/momentum/sprint-logs/{sprint-slug}/</code>. Parse each
+                  line as JSON. Sort all events by timestamp across all agent files. Build
+                  a unified timeline showing which agents acted when and how they responded
+                  to each other's outputs.
+                </div></li>
+                <li><div class="num-body">
+                  <span class="phase-title">Story verification</span>
+                  For each story in the sprint's story list, check status in
+                  <code>stories/index.json</code>. Stories at <code>done</code> pass.
+                  Stories at any other status get flagged. Ask developer whether to
+                  force-close (<code>closed-incomplete</code>) or investigate.
+                </div></li>
+                <li><div class="num-body">
+                  <span class="phase-title">Cross-log discovery</span>
+                  Analyze the correlated timeline for patterns of errors or retries
+                  (repeated failures suggest process gaps), assumptions that turned out
+                  wrong, ambiguities that blocked progress, decisions with downstream
+                  consequences, and quality findings that weren't addressed during
+                  the sprint.
+                </div></li>
+                <li><div class="num-body">
+                  <span class="phase-title">Triage output generation</span>
+                  Classify discoveries into two buckets: Momentum triage covering
+                  process and practice improvements, and Project triage covering
+                  code and spec findings.
+                </div></li>
+                <li><div class="num-body">
+                  <span class="phase-title">Story stub creation</span>
+                  For actionable items, propose story stubs. Present each to the developer
+                  for approval before adding to <code>stories/index.json</code>.
+                </div></li>
+                <li><div class="num-body">
+                  <span class="phase-title">Sprint closure</span>
+                  Call <code>momentum-tools sprint complete</code>. Call
+                  <code>momentum-tools sprint retro-complete</code>. Present final summary.
+                </div></li>
+              </ol>
+
+              <h4 class="sub">momentum-tools.py changes</h4>
+              <p class="body">
+                No new subcommands needed — existing commands cover the lifecycle:
+              </p>
+              <ul class="tight">
+                <li><code>sprint complete</code> — already exists</li>
+                <li><code>sprint retro-complete</code> — already exists</li>
+                <li><code>sprint status-transition --target closed-incomplete</code> — already exists</li>
+                <li><code>log</code> — already exists</li>
+              </ul>
+
+              <h4 class="sub">SKILL.md frontmatter</h4>
+              <div class="code-card">
+                <span class="caption">yaml · skills/momentum/skills/retro/SKILL.md</span>
+<pre><span class="yk">name</span>: retro
+<span class="yk">description</span>: <span class="ys">"Sprint retrospective — cross-log discovery, story</span>
+  <span class="ys">verification, triage outputs, and sprint closure."</span>
+<span class="yk">model</span>: claude-sonnet-4-6
+<span class="yk">effort</span>: high</pre>
+              </div>
+
+              <h4 class="sub">Files</h4>
+              <div class="file-list">
+                <span class="cap">2 files</span>
+                <span class="fp">skills/momentum/skills/retro/<span class="fn">SKILL.md</span> — skill definition</span>
+                <span class="fp">skills/momentum/skills/retro/<span class="fn">workflow.md</span> — full workflow instructions</span>
+              </div>
+
+              <div class="touches">
+                <span class="cap">touches · 3 files</span>
+                <span class="fp">skills/momentum/skills/retro/<span class="fn">SKILL.md</span></span>
+                <span class="fp">skills/momentum/skills/retro/<span class="fn">workflow.md</span></span>
+                <span class="fp">skills/momentum/scripts/<span class="fn">momentum-tools.py</span></span>
+              </div>
+
+              <div class="l3-foot">
+                <span class="back">← back to sprint-retro-and-flywheel</span>
+                <span class="src">view source · stories/retro-skill.md</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack" style="padding-top: 80px;">
+      <div class="postit p">
+        <span class="h">02 · option β · picked</span>
+        <strong>Justification:</strong> a Level-3 page is the only surface in the
+        artifact that gets read for <em>minutes</em>, not seconds. Dashboard
+        density and reading density are different design problems. Treating
+        them with the same paper means one of them is wrong.
+      </div>
+      <div class="postit r">
+        <span class="h">tuning · paper</span>
+        <code>#fbfaf7</code> → <code>#faf6ec</code>. ~2% warmer hue, identical
+        L*. Reads as paper rather than as a screen-default off-white.
+        Coordinated <code>readingPaperAlt</code> (<code>#f3eedf</code>) and
+        <code>readingRule</code> (<code>#e5dfce</code>) so callouts inherit
+        the warmth instead of fighting it.
+      </div>
+      <div class="postit b">
+        <span class="h">tuning · body</span>
+        17 → 18px. 1.65 → 1.70 line-height. 68ch → 65ch measure. Each step is
+        small; together they shift the page from "clean light UI" to
+        "document I'm willing to read end-to-end."
+      </div>
+      <div class="postit g">
+        <span class="h">tuning · ACs in serif</span>
+        Pass 6 used Inter for AC bodies. In reading mode they switch to
+        Source Serif 4 (15/1.6/60ch) so the whole document reads in one
+        voice. The mono numerals stay — they're scan anchors, not body.
+        <span class="bullet">
+          <strong>Open question:</strong> the Inter ACs were intentionally
+          tighter to signal "spec, not prose." Worth re-checking that the
+          serif version doesn't lose that scannability.
+        </span>
+      </div>
+      <div class="postit">
+        <span class="h">callouts as restful</span>
+        Acceptance, jump-bar, file-list, code, and touches all use
+        <code>readingPaperAlt</code> with the warmer rule. They sit
+        <em>quietly</em> in the page rather than punching through. The
+        accent color (jump-bar left rule, code-card left rule) is the only
+        carry-over from the dashboard system.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 3 — AFFORDANCE CLOSE-UP
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row">
+    <div class="stack" style="width: 1080px;">
+      <div>
+        <div class="artboard-label"><span class="num">03</span><span>affordance · close-up</span></div>
+        <div class="artboard-title">reading mode · why?</div>
+        <div class="artboard-caption">
+          Top-right of the crumb-bar. Mono label, dotted-underline trigger
+          on <code style="font-family:'JetBrains Mono',monospace; font-size:13px;">why?</code>,
+          accent-color tooltip on hover. Shown at rest and disclosed.
+        </div>
+      </div>
+
+      <div class="closeup-grid">
+        <!-- At rest -->
+        <div>
+          <span class="closeup-state">state · at rest</span>
+          <div class="closeup-card">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">features</a>
+                <span class="sep">›</span>
+                <a class="seg">sprint-retro-and-flywheel</a>
+                <span class="sep">›</span>
+                <span class="seg here">retro-skill</span>
+              </span>
+              <span class="reading-meta">
+                reading mode<span class="rmdot"></span><span class="why">why?</span>
+              </span>
+            </div>
+            <div class="body-cap">
+              the chrome at rest — meta sits in the same mono register as the
+              breadcrumb, the accent cue is the dotted underline only.
+            </div>
+          </div>
+        </div>
+
+        <!-- Hover/disclosed -->
+        <div>
+          <span class="closeup-state">state · hover · disclosed</span>
+          <div class="closeup-card">
+            <div class="crumb-bar">
+              <span class="crumbs">
+                <a class="seg">features</a>
+                <span class="sep">›</span>
+                <a class="seg">sprint-retro-and-flywheel</a>
+                <span class="sep">›</span>
+                <span class="seg here">retro-skill</span>
+              </span>
+              <span class="reading-meta">
+                reading mode<span class="rmdot"></span><span class="why">why?</span>
+                <span class="why-pop">
+                  Reading surfaces stay light — pupils contract on light
+                  paper, focus sharpens, you read faster.
+                </span>
+              </span>
+            </div>
+            <div class="body-cap" style="padding-top:80px;">
+              tooltip — italic Source Serif at 13.5px, indigo left rule,
+              one sentence, no dismiss button. Disappears on mouse-out.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack" style="padding-top: 80px;">
+      <div class="postit b">
+        <span class="h">03 · interaction model</span>
+        Hover to disclose, mouse-out to dismiss. No click-to-pin, no
+        dismiss button, no keyboard shortcut.
+        <span class="bullet">
+          <strong>Why no pin:</strong> a static one-sentence tooltip doesn't
+          earn a pin. The copy is short enough to read in a glance.
+        </span>
+      </div>
+      <div class="postit r">
+        <span class="h">copy · final</span>
+        "Reading surfaces stay light — pupils contract on light paper,
+        focus sharpens, you read faster." 17 words. Source Serif italic.
+        First half states the rule; second half cites the mechanism.
+      </div>
+      <div class="postit g">
+        <span class="h">no escape hatch</span>
+        Deliberately no "switch anyway" link. The brief was clear: the
+        affordance explains, it doesn't offer an out. If the developer
+        truly hates it, the dark-mode toggle (which has no effect on these
+        surfaces) is the conversation to have — not an in-page override.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 4 — α vs β COMPARISON
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row">
+    <div class="stack" style="width: 1000px;">
+      <div>
+        <div class="artboard-label"><span class="num">04</span><span>α vs β · paragraph comparison</span></div>
+        <div class="artboard-title">Why the tuning is worth it</div>
+        <div class="artboard-caption">
+          Same paragraph, both modes, side by side. The β card is the picked
+          option. Differences are deliberately small — together they shift
+          the perceived register from UI surface to document.
+        </div>
+      </div>
+
+      <div class="compare-grid">
+        <!-- Alpha -->
+        <div class="compare-card alpha">
+          <div class="label">option α<span style="color:var(--inkFaint);">· identical to current light</span></div>
+          <div class="specs">
+            <span class="k">paper</span> #fbfaf7 &nbsp;
+            <span class="k">body</span> 17/1.65 &nbsp;
+            <span class="k">measure</span> 68ch
+          </div>
+          <p>
+            Per Decision 34, retro owns sprint closure. It performs holistic
+            cross-log discovery across all agent JSONL logs, verifies story
+            completion, produces two triage outputs (Decision 27: Momentum
+            triage + Project triage), creates story stubs from findings,
+            calls <code style="font-family:'JetBrains Mono',monospace; font-size:13.5px; background:#f5f3ed; padding:1px 5px;">momentum-tools sprint complete</code>,
+            and archives sprint artifacts.
+          </p>
+        </div>
+
+        <!-- Beta -->
+        <div class="compare-card beta">
+          <div class="label"><span class="pick">option β · picked</span><span style="color:var(--inkFaint);">· tuned for reading</span></div>
+          <div class="specs">
+            <span class="k">paper</span> #faf6ec &nbsp;
+            <span class="k">body</span> 18/1.70 &nbsp;
+            <span class="k">measure</span> 65ch
+          </div>
+          <p>
+            Per Decision 34, retro owns sprint closure. It performs holistic
+            cross-log discovery across all agent JSONL logs, verifies story
+            completion, produces two triage outputs (Decision 27: Momentum
+            triage + Project triage), creates story stubs from findings,
+            calls <code style="font-family:'JetBrains Mono',monospace; font-size:14px; background:#f3eedf; padding:1px 5px; border:1px solid #e5dfce;">momentum-tools sprint complete</code>,
+            and archives sprint artifacts.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack" style="padding-top: 80px;">
+      <div class="postit p">
+        <span class="h">04 · the difference is real</span>
+        Each delta is small enough to be deniable on its own. Together they
+        push the surface across a perceptual threshold: the α card looks
+        like a UI; the β card looks like a document.
+      </div>
+      <div class="postit b">
+        <span class="h">cost · 3 tokens</span>
+        <code>readingPaper</code>, <code>readingPaperAlt</code>,
+        <code>readingRule</code>. That's the entire token additions. No
+        new typeface, no new weights, no new accents.
+        <span class="bullet">
+          The dark surfaces don't need a parallel "reading dark" — by
+          design, dark <em>is</em> the dashboard mode.
+        </span>
+      </div>
+      <div class="postit r">
+        <span class="h">scope · honored</span>
+        No emoji. No percentages. No cheerleader copy. One accent. Reading
+        mode is light, not optional. The <code>why?</code> explains it; it
+        doesn't offer an escape hatch.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

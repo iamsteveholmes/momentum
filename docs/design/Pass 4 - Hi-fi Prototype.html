@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 4 · Hi-fi prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body { background: #e9e6df; font-family: 'Inter', system-ui; }
+  * { box-sizing: border-box; }
+  .pane-scroll { scrollbar-width: thin; }
+  .pane-scroll::-webkit-scrollbar { width: 6px; }
+  .pane-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+  .pane-scroll.dark::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="pass3-data.jsx"></script>
+<script type="text/babel" src="gate-chips.jsx"></script>
+<script type="text/babel" src="features-lens.jsx"></script>
+<script type="text/babel" src="sprints-flywheel-lens.jsx"></script>
+
+<script type="text/babel">
+  const { T, FeaturesLens, SprintsLens, FlywheelLens, SUMMARY } = window;
+
+  const TWEAK_DEFAULS = /*EDITMODE-BEGIN*/{
+    "dark": true,
+    "hideTerminal": false,
+    "density": "comfortable",
+    "showGateChips": true
+  }/*EDITMODE-END*/;
+
+  const PANE_W = 700;
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Scroll-spy — track which lens section is under the rail.
+  // ───────────────────────────────────────────────────────────────────────
+  function useScrollSpy(scrollRef) {
+    const [active, setActive] = React.useState("features");
+    React.useEffect(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const handle = () => {
+        const sections = el.querySelectorAll("[data-lens-id]");
+        const top = el.scrollTop + 120; // rail offset
+        let current = "features";
+        for (const s of sections) {
+          if (s.offsetTop <= top) current = s.dataset.lensId;
+        }
+        setActive(current);
+      };
+      handle();
+      el.addEventListener("scroll", handle, { passive: true });
+      return () => el.removeEventListener("scroll", handle);
+    }, []);
+    return active;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Main app
+  // ───────────────────────────────────────────────────────────────────────
+  function Pass4() {
+    const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULS);
+    const [editMode, setEditMode] = React.useState(false);
+
+    // edit-mode protocol
+    React.useEffect(() => {
+      const onMsg = (e) => {
+        if (!e.data || !e.data.type) return;
+        if (e.data.type === "__activate_edit_mode") setEditMode(true);
+        if (e.data.type === "__deactivate_edit_mode") setEditMode(false);
+      };
+      window.addEventListener("message", onMsg);
+      window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+      return () => window.removeEventListener("message", onMsg);
+    }, []);
+
+    const updateTweak = (k, v) => {
+      setTweaks(t => {
+        const next = { ...t, [k]: v };
+        window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [k]: v } }, "*");
+        return next;
+      });
+    };
+
+    // Pane scroll ref + spy
+    const paneRef = React.useRef(null);
+    const active = useScrollSpy(paneRef);
+
+    const jumpTo = (lensId) => {
+      const el = paneRef.current?.querySelector(`[data-lens-id="${lensId}"]`);
+      if (!el) return;
+      paneRef.current.scrollTo({ top: el.offsetTop - 2, behavior: "smooth" });
+    };
+
+    // Cross-view hooks
+    const onOpenFeature = (ref) => jumpTo("features");
+    const onOpenSprint = () => jumpTo("sprints");
+
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex", alignItems: "flex-start", justifyContent: "center",
+        padding: "32px 24px 60px",
+      }}>
+        <PaneFrame>
+          <div
+            ref={paneRef}
+            className={"pane-scroll " + (tweaks.dark ? "dark" : "")}
+            style={{
+              width: PANE_W, height: 820,
+              background: tweaks.dark ? T.paperDark : T.paper,
+              overflow: "auto", position: "relative",
+              border: `1px solid ${tweaks.dark ? T.ruleDark : T.rule}`,
+              borderRadius: 4,
+              transition: "background 160ms",
+            }}>
+            <Rail active={active} onJump={jumpTo} tweaks={tweaks} />
+            <div style={{ paddingLeft: 52 }}>
+              <PaneHeader tweaks={tweaks} />
+              <FeaturesLens tweaks={tweaks} onOpenFeature={onOpenFeature} />
+              <SprintsLens tweaks={tweaks} onOpenFeature={onOpenFeature} />
+              <FlywheelLens tweaks={tweaks} onOpenSprint={onOpenSprint} />
+            </div>
+          </div>
+        </PaneFrame>
+
+        {editMode && <TweaksPanel tweaks={tweaks} onChange={updateTweak} />}
+      </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Pane shell — frames the 700px lens like a real cmux pane.
+  // ───────────────────────────────────────────────────────────────────────
+  function PaneFrame({ children }) {
+    return (
+      <div style={{
+        width: PANE_W + 12, background: "#2a2824",
+        borderRadius: 8, padding: 6,
+        boxShadow: "0 30px 80px -30px rgba(0,0,0,0.35), 0 6px 18px -6px rgba(0,0,0,0.2)",
+      }}>
+        {/* Terminal chrome strip */}
+        <div style={{
+          height: 26, display: "flex", alignItems: "center", gap: 8,
+          padding: "0 10px",
+          fontFamily: T.fontMono, fontSize: 10, color: "rgba(240,238,233,0.5)",
+          letterSpacing: 0.3,
+        }}>
+          <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#d96c5a" }} />
+          <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#d9b15a" }} />
+          <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#6ca86e" }} />
+          <span style={{ marginLeft: 10 }}>cmux · feature-status</span>
+          <span style={{ marginLeft: "auto" }}>pane · 700px</span>
+        </div>
+        {children}
+      </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Rail — sticky vertical anchor, 52px wide.
+  // ───────────────────────────────────────────────────────────────────────
+  function Rail({ active, onJump, tweaks }) {
+    const d = tweaks.dark;
+    const items = [
+      { id: "features", n: "01", label: "features" },
+      { id: "sprints",  n: "02", label: "sprints" },
+      { id: "flywheel", n: "03", label: "flywheel" },
+    ];
+    return (
+      <div style={{
+        position: "sticky", top: 0, left: 0, float: "left",
+        width: 52, height: 820, marginLeft: -52,
+        background: d ? T.paperDarkAlt : T.paperAlt,
+        borderRight: `1px solid ${d ? T.ruleDark : T.rule}`,
+        display: "flex", flexDirection: "column", alignItems: "center",
+        padding: "18px 0", zIndex: 3,
+      }}>
+        <div style={{
+          fontFamily: T.fontSerif, fontSize: 13, fontWeight: 400,
+          color: d ? T.inkOnDark : T.ink,
+          writingMode: "vertical-rl", transform: "rotate(180deg)",
+          letterSpacing: 0.5, marginBottom: 18,
+        }}>
+          Momentum
+        </div>
+        <div style={{
+          width: 1, height: 28,
+          background: d ? T.ruleDark : T.rule, marginBottom: 10,
+        }} />
+        {items.map(it => (
+          <div key={it.id}
+            onClick={() => onJump(it.id)}
+            style={{
+              cursor: "pointer",
+              padding: "10px 0",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+              width: "100%",
+              borderLeft: active === it.id ? `2px solid ${T.accent}` : "2px solid transparent",
+            }}>
+            <span style={{
+              fontFamily: T.fontMono, fontSize: 9,
+              color: active === it.id ? T.accent : (d ? T.inkOnDarkQuiet : T.inkFaint),
+              letterSpacing: 0.4,
+            }}>{it.n}</span>
+            <span style={{
+              fontFamily: T.fontMono, fontSize: 10,
+              color: active === it.id ? T.accent : (d ? T.inkOnDarkMuted : T.inkMuted),
+              writingMode: "vertical-rl", transform: "rotate(180deg)",
+              letterSpacing: 0.5, fontWeight: active === it.id ? 500 : 400,
+            }}>{it.label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function PaneHeader({ tweaks }) {
+    const d = tweaks.dark;
+    const rule = d ? T.ruleDark : T.rule;
+    return (
+      <div style={{
+        position: "sticky", top: 0, zIndex: 2,
+        background: (d ? T.paperDark : T.paper) + "ee",
+        backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${rule}`,
+        padding: "12px 24px",
+        display: "flex", alignItems: "baseline", justifyContent: "space-between",
+      }}>
+        <div style={{
+          fontFamily: T.fontSerif, fontSize: 15, fontWeight: 400,
+          color: d ? T.inkOnDark : T.ink, letterSpacing: -0.1,
+        }}>
+          Feature Status
+        </div>
+        <div style={{
+          fontFamily: T.fontMono, fontSize: 10,
+          color: d ? T.inkOnDarkQuiet : T.inkFaint, letterSpacing: 0.3,
+        }}>
+          generated · {SUMMARY.generated} · hash {SUMMARY.hash}
+        </div>
+      </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Tweaks panel
+  // ───────────────────────────────────────────────────────────────────────
+  function TweaksPanel({ tweaks, onChange }) {
+    return (
+      <div style={{
+        position: "fixed", bottom: 24, right: 24, width: 280,
+        background: "#fbfaf7",
+        border: "1px solid rgba(0,0,0,0.15)",
+        borderRadius: 6, padding: "16px 18px",
+        boxShadow: "0 20px 60px -20px rgba(0,0,0,0.35)",
+        fontFamily: T.fontSans, zIndex: 100,
+      }}>
+        <div style={{
+          fontFamily: T.fontSerif, fontSize: 16, fontWeight: 500,
+          color: T.ink, marginBottom: 12, letterSpacing: -0.1,
+        }}>
+          Tweaks
+        </div>
+        <Toggle label="Dark mode" value={tweaks.dark}
+                onChange={v => onChange("dark", v)} />
+        <Toggle label="Hide terminal features" value={tweaks.hideTerminal}
+                onChange={v => onChange("hideTerminal", v)}
+                hint="done + won't-do collapse" />
+        <Toggle label="Show gate chips" value={tweaks.showGateChips}
+                onChange={v => onChange("showGateChips", v)}
+                hint="avfl / cr / e2e per story row" />
+      </div>
+    );
+  }
+
+  function Toggle({ label, value, onChange, hint }) {
+    return (
+      <div style={{
+        display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+        padding: "8px 0", borderTop: "1px solid rgba(0,0,0,0.06)", gap: 10,
+      }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{
+            fontFamily: T.fontSans, fontSize: 12.5, color: T.ink, fontWeight: 500,
+          }}>{label}</div>
+          {hint && <div style={{
+            fontFamily: T.fontMono, fontSize: 10, color: T.inkQuiet,
+            marginTop: 2, letterSpacing: 0.3,
+          }}>{hint}</div>}
+        </div>
+        <button
+          onClick={() => onChange(!value)}
+          style={{
+            width: 32, height: 18, borderRadius: 9,
+            background: value ? T.accent : "#d4cfc2",
+            border: "none", cursor: "pointer", padding: 0,
+            position: "relative", transition: "background 140ms",
+            flexShrink: 0, marginTop: 2,
+          }}>
+          <span style={{
+            position: "absolute", top: 2, left: value ? 16 : 2,
+            width: 14, height: 14, borderRadius: "50%",
+            background: "#fbfaf7", transition: "left 140ms",
+          }} />
+        </button>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<Pass4 />);
+</script>
+</body>
+</html>
