@@ -205,7 +205,7 @@ function renderFeaturesTable(rows: FeatureRow[]): string {
 
       return `<a class="feat-row${lastClass}" href="/features/${row.feature_slug}"${gapBg}>
   <span class="feat-name">${row.name}</span>
-  <span class="frac">${done}<span class="slash">/</span>${total}<span class="lbl">done</span></span>
+  <span class="frac">${done}<span class="slash">/</span>${total}</span>
   ${rightCol}
 </a>`;
     })
@@ -635,23 +635,18 @@ export function buildFeatureStoryRows(
 }
 
 function FeatureStoryRow({ slug, title, status, featureSlug }: { slug: string; title: string; status: string; featureSlug: string }) {
-  const color = storyBadgeColor(status);
-  const icon = storyStatusIcon(status);
   const storyUrl = `/stories/${slug}?from=feature&feature=${featureSlug}`;
   return html`
     <a
-      class="reading-story-row"
+      class="story click"
       href="${storyUrl}"
       hx-get="${storyUrl}"
       hx-target="#main-content"
       hx-swap="innerHTML"
       hx-push-url="${storyUrl}"
     >
-      <span class="reading-story-title">
-        <span class="status-icon" style="color:${color};">${icon}</span>
-        ${title}
-      </span>
-      <span class="reading-story-badge" style="color:${color}; border-color:${color};">${status}</span>
+      <span class="t">${title}</span>
+      <span class="badge ${badgeClass(status)}"><span class="dot"></span>${status}</span>
     </a>
   `;
 }
@@ -676,54 +671,62 @@ export function FeatureDetailView({
     ? `<ul class="reading-deps-list">${deps.map((d) => `<li>${escapeHtml(d)}</li>`).join("")}</ul>`
     : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No dependencies</div>`;
 
+  const typeTag = (feature as any).type ? `<span class="type-tag">${escapeHtml((feature as any).type)}</span>` : "";
+  const hasGap = feature.stories_done === 0 && feature.status !== "working";
+
   return html`
     <!-- Breadcrumb OOB swap — light mode crumb bar -->
     <nav id="breadcrumb" class="crumb-bar reading-crumb-bar" hx-swap-oob="true">
       <div class="crumbs">
         <a class="seg" href="/">dashboard</a>
-        <span class="sep">/</span>
-        <span class="seg here">${feature.name}</span>
+        <span class="sep">›</span>
+        <span class="seg here">feature</span>
       </div>
+      <span class="reading-pill"><span class="rd"></span>reading mode</span>
     </nav>
 
-    <!-- Feature detail content (primary payload → goes into #main-content) -->
+    <!-- Feature detail content -->
     <div class="reading-surface">
-      <div class="reading-col">
+      <div class="l2-body">
 
-        <!-- Feature heading -->
-        <h1 class="feature-heading">${feature.name}</h1>
-
-        <!-- Meta strip -->
-        <div class="feature-meta-strip">
-          <span class="feature-meta-badge" style="${badgeStyle}">${feature.status}</span>
-          <span class="feature-meta-fraction">${done} / ${total} stories done</span>
-          <span class="feature-reading-label">reading mode</span>
+        <!-- l2-meta strip -->
+        <div class="l2-meta">
+          <span class="badge ${badgeClass(feature.status)}"><span class="dot"></span>${feature.status}</span>
+          <span class="frac">${done}<span class="slash">/</span>${total}<span class="lbl">stories</span></span>
+          ${raw(typeTag)}
+          ${hasGap ? html`<span class="gap-flag prominent">gap</span>` : ""}
         </div>
+
+        <!-- Title -->
+        <h1 class="l2-name">${feature.name}</h1>
+
+        <!-- Short description -->
+        ${feature.description ? html`<div class="l2-desc">${feature.description}</div>` : ""}
 
         <!-- Value narrative -->
         ${feature.value_analysis ? html`
-          <div class="reading-section-label">Value Narrative</div>
-          <div class="reading-prose">${feature.value_analysis}</div>
+          <div class="l2-section-cap">value narrative</div>
+          <div class="l2-narrative"><p>${feature.value_analysis}</p></div>
         ` : ""}
 
         <!-- Acceptance condition -->
         ${feature.acceptance_condition ? html`
-          <div class="reading-section-label">Acceptance Condition</div>
+          <div class="l2-section-cap">acceptance condition</div>
           <div class="reading-ac-box">${feature.acceptance_condition}</div>
         ` : ""}
 
         <!-- System context -->
         ${feature.system_context ? html`
-          <div class="reading-section-label">System Context</div>
+          <div class="l2-section-cap">system context</div>
           <div class="reading-callout">${feature.system_context}</div>
         ` : ""}
 
         <!-- Stories list -->
-        <div class="reading-section-label">Stories</div>
-        ${raw(storyRowsHtml)}
+        <div class="l2-section-cap">stories · ${total} · click to open</div>
+        <div class="l2-stories">${raw(storyRowsHtml)}</div>
 
         ${deps.length > 0 ? html`
-          <div class="reading-section-label">Dependencies</div>
+          <div class="l2-section-cap">dependencies</div>
           ${raw(depsHtml)}
         ` : ""}
 
@@ -736,40 +739,35 @@ export function FeatureDetailView({
 // Sprint detail components
 // ---------------------------------------------------------------------------
 
-const BAND_CONFIG: Record<BandName, { label: string; borderColor: string; badgeColor: string; emptyLabel: string }> = {
+const BAND_CONFIG: Record<BandName, { label: string; borderColor: string; emptyLabel: string }> = {
   blocked: {
-    label: "Blocked",
-    borderColor: "#ef4444",
-    badgeColor: "#ef4444",
+    label: "blocked",
+    borderColor: "rgba(168,90,42,0.6)",
     emptyLabel: "No blocked stories",
   },
   "in-progress": {
-    label: "In Progress",
-    borderColor: "#f59e0b",
-    badgeColor: "#f59e0b",
+    label: "in progress",
+    borderColor: "var(--accent)",
     emptyLabel: "No in-progress stories",
   },
   validated: {
-    label: "Validated",
-    borderColor: "#4ade80",
-    badgeColor: "#4ade80",
+    label: "validated",
+    borderColor: "rgba(106,122,106,0.7)",
     emptyLabel: "No validated stories",
   },
 };
 
-function SprintStoryRow({ slug, title, status, band }: { slug: string; title: string; status: string; band: BandName }) {
-  const badgeColor = BAND_CONFIG[band].badgeColor;
+function SprintStoryRow({ slug, title, status }: { slug: string; title: string; status: string; band: BandName }) {
   return html`
     <a
-      class="story-row"
+      class="story-row click"
       href="/stories/${slug}?from=sprint"
       hx-get="/stories/${slug}?from=sprint"
       hx-target="#main-content"
       hx-push-url="/stories/${slug}?from=sprint"
-      style="cursor:pointer;"
     >
       <span class="story-row-title">${title}</span>
-      <span class="story-row-badge" style="color:${badgeColor}; border-color:${badgeColor};">${status}</span>
+      <span class="badge ${badgeClass(status)}"><span class="dot"></span>${status}</span>
     </a>
   `;
 }
@@ -792,7 +790,10 @@ function SprintDetailBand({
       class="sprint-band"
       style="border-left:3px solid ${cfg.borderColor}; padding-left:12px; margin-bottom:16px;"
     >
-      <div class="band-label">${cfg.label}</div>
+      <div class="band-hdr">
+        <span class="lbl">${cfg.label}</span>
+        ${stories.length > 0 ? html`<span class="n">${stories.length}</span>` : ""}
+      </div>
       ${rows}
     </div>
   `;
@@ -809,25 +810,20 @@ function SprintDetailView({
   // OOB breadcrumb is a sibling to the primary content; HTMX extracts it before swapping.
   // Primary content is placed into #main-content (innerHTML swap).
   return html`
-    <!-- Breadcrumb OOB swap — HTMX processes this before inserting into target -->
+    <!-- Breadcrumb OOB swap -->
     <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
       <div class="crumbs">
         <a class="seg" href="/">dashboard</a>
-        <span class="sep">/</span>
+        <span class="sep">›</span>
         <span class="seg here">sprint</span>
       </div>
+      <span class="sprint-crumb-date">started ${startDate}</span>
     </nav>
 
-    <!-- Sprint detail content (primary payload → goes into #main-content) -->
-    <div class="dash-section">
-      <div class="dash-lens-hdr">
-        <span class="tag">Sprint</span>
-        <div class="rule"></div>
-      </div>
-      <div class="sprint-detail-hdr">
-        <span class="sprint-detail-slug">${sprint.slug}</span>
-        <span class="sprint-detail-date">started ${startDate}</span>
-      </div>
+    <!-- Sprint detail content -->
+    <div class="dash-section dark-surface">
+      <div class="sprint-detail-key">${sprint.slug}</div>
+      <span class="sprint-lifecycle"><span class="sd"></span>active · started ${startDate}</span>
       ${SprintDetailBand({ band: "blocked", stories: bands.blocked })}
       ${SprintDetailBand({ band: "in-progress", stories: bands["in-progress"] })}
       ${SprintDetailBand({ band: "validated", stories: bands.validated })}
@@ -1060,29 +1056,38 @@ function DashboardShell({
     }
     .htmx-request .ph-note::after { content: " ⋯"; }
 
-    /* ── Badges (reference design) ── */
+    /* ── Badges — light mode (default), dark mode via .dark-surface prefix ── */
     .badge {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 1px 7px 1px 5px;
       font-family: "JetBrains Mono", monospace;
-      font-size: 13px; font-weight: 500; letter-spacing: 0.2px;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.2px;
       border-radius: 3px; white-space: nowrap;
     }
     .badge .dot { width: 5px; height: 5px; border-radius: 50%; }
-    .badge.working { color: #8fd1a9; background: rgba(62,122,90,0.18); }
+    /* Light-mode badge palette (reading surfaces) */
+    .badge.working { color: #2a5a42; background: rgba(62,122,90,0.10); }
     .badge.working .dot { background: #3e7a5a; }
-    .badge.partial { color: #e6c07a; background: rgba(168,131,40,0.18); }
+    .badge.partial { color: #7a5e1a; background: rgba(168,131,40,0.11); }
     .badge.partial .dot { background: #a88328; }
-    .badge.not-started { color: rgba(240,238,233,0.72); background: rgba(240,238,233,0.07); }
+    .badge.not-started { color: #5a5a5a; background: rgba(138,138,138,0.10); }
     .badge.not-started .dot { background: #8a8a8a; }
-    .badge.in-progress { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+    .badge.in-progress { color: #2a4a7a; background: rgba(88,99,168,0.10); }
     .badge.in-progress .dot { background: #5863a8; }
-    .badge.validated { color: rgba(192,200,188,0.85); background: rgba(106,122,106,0.14); }
+    .badge.validated { color: #556555; background: rgba(106,122,106,0.08); }
     .badge.validated .dot { background: #6a7a6a; }
-    .badge.blocked { color: #e0a07a; background: rgba(168,90,42,0.18); }
+    .badge.blocked { color: #7a4020; background: rgba(168,90,42,0.10); }
     .badge.blocked .dot { background: #a85a2a; }
-    .badge.ready-for-dev { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+    .badge.ready-for-dev { color: #2a4a7a; background: rgba(88,99,168,0.10); }
     .badge.ready-for-dev .dot { background: #5863a8; }
+    /* Dark-mode badge palette (dark scanning surfaces) */
+    .dark-surface .badge.working { color: #8fd1a9; background: rgba(62,122,90,0.18); }
+    .dark-surface .badge.partial { color: #e6c07a; background: rgba(168,131,40,0.18); }
+    .dark-surface .badge.not-started { color: rgba(240,238,233,0.72); background: rgba(240,238,233,0.07); }
+    .dark-surface .badge.in-progress { color: #a4b0e0; background: rgba(88,99,168,0.22); }
+    .dark-surface .badge.validated { color: rgba(192,200,188,0.85); background: rgba(106,122,106,0.14); }
+    .dark-surface .badge.blocked { color: #e0a07a; background: rgba(168,90,42,0.18); }
+    .dark-surface .badge.ready-for-dev { color: #a4b0e0; background: rgba(88,99,168,0.22); }
 
     /* ── Gap flag ── */
     .gap-flag {
@@ -1209,6 +1214,36 @@ function DashboardShell({
     .cycle-summary .now { color: var(--accent); font-weight: 500; }
 
     /* ── Sprint detail view ── */
+    .sprint-crumb-date {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px; color: var(--inkOnDarkFaint); margin-left: auto;
+    }
+    .sprint-detail-key {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 20px; font-weight: 500; letter-spacing: -0.2px;
+      color: var(--inkOnDark); margin-bottom: 6px;
+    }
+    .sprint-lifecycle {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 1px 7px 1px 6px; margin-bottom: 14px;
+      font-family: "JetBrains Mono", monospace; font-size: 11px;
+      color: #a4b0e0; background: rgba(88,99,168,0.22);
+      border-radius: 3px;
+    }
+    .sprint-lifecycle .sd { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+    .band-hdr {
+      display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;
+    }
+    .band-hdr .lbl {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; letter-spacing: 1.2px;
+      color: var(--inkOnDarkMuted);
+    }
+    .band-hdr .n {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; color: var(--inkOnDarkFaint);
+    }
+    .story-row.click .story-row-title { color: #a4b0e0; }
     .sprint-detail-hdr {
       display: flex; align-items: baseline; gap: 16px;
       padding: 8px 0 16px;
@@ -1303,10 +1338,18 @@ function DashboardShell({
       font-size: 13.5px; line-height: 1.65; color: var(--ink);
       margin: 0 0 8px; max-width: 60ch;
     }
-    .l2-stories .story {
+    .l2-body { padding: 16px 20px 40px; }
+    .type-tag {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--inkQuiet); background: var(--readingPaperAlt);
+      padding: 1px 6px; border-radius: 2px;
+    }
+    .l2-stories .story, .l2-stories a.story {
       display: grid; grid-template-columns: 1fr auto;
       align-items: center; gap: 8px;
       padding: 5px 0; border-bottom: 1px solid var(--readingRule);
+      text-decoration: none; color: inherit;
     }
     .l2-stories .story .t {
       font-family: "Inter", sans-serif; font-size: 15px; color: var(--ink);
@@ -1314,6 +1357,7 @@ function DashboardShell({
     .l2-stories .story.click .t {
       color: var(--accent); font-weight: 500; cursor: pointer;
     }
+    .l2-stories .story:last-child { border-bottom: none; }
 
     /* Feature heading */
     .feature-heading {
@@ -1587,7 +1631,7 @@ app.get("/lenses/features", async (c) => {
       <div class="dash-lens-hdr">
         <span class="tag">Features</span>
         <div class="rule"></div>
-        <span class="count">${rows.length}</span>
+        <span class="count">${rows.length}${rows.filter(r => r.has_gap).length > 0 ? ` · ${rows.filter(r => r.has_gap).length} gap${rows.filter(r => r.has_gap).length > 1 ? 's' : ''}` : ''}</span>
       </div>
       <div class="feat-list">
         ${tableBody}
@@ -1622,7 +1666,7 @@ app.get("/sprints/:slug", async (c) => {
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
           <a class="seg" href="/">dashboard</a>
-          <span class="sep">/</span>
+          <span class="sep">›</span>
           <span class="seg here">sprint</span>
         </div>
       </nav>
@@ -1653,7 +1697,7 @@ app.get("/sprints/:slug", async (c) => {
 
   // Direct browser navigation — wrap in full shell
   const sprintContent = fragmentHtml.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
-  const sprintNavHtml = `<nav id="breadcrumb" class="crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">/</span><span class="seg here">sprint</span></div></nav>`;
+  const sprintNavHtml = `<nav id="breadcrumb" class="crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">›</span><span class="seg here">sprint</span></div><span class="sprint-crumb-date">started ${activeSprint.started ?? activeSprint.planned ?? "—"}</span></nav>`;
   return c.html(DashboardShell({ hash: shortHash(), date: isoDate(), mainContent: sprintContent, navHtml: sprintNavHtml }) as string);
 });
 
@@ -2108,7 +2152,7 @@ app.get("/features/:slug", async (c) => {
   // Direct browser navigation — wrap in full shell with ONLY the feature content in #main-content
   // Strip OOB nav tag (contains hx-swap-oob="true") from fragment before injecting
   const featureContent = fragmentHtml.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
-  const featureNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">/</span><span class="seg here">${escapeHtml(feature.name)}</span></div></nav>`;
+  const featureNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">›</span><span class="seg here">feature</span></div><span class="reading-pill"><span class="rd"></span>reading mode</span></nav>`;
   return c.html(DashboardShell({
     hash: shortHash(),
     date: isoDate(),

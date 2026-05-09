@@ -532,20 +532,21 @@ describe("FeatureDetailView", () => {
   it("renders feature heading with feature name", () => {
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
     expect(html).toContain("Momentum Canvas");
-    expect(html).toContain("feature-heading");
+    expect(html).toContain("l2-name");
   });
 
   it("renders meta strip with status badge, story fraction, and reading mode label", () => {
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("feature-meta-badge");
+    expect(html).toContain("l2-meta");
     expect(html).toContain("partial");
-    expect(html).toContain("3 / 5 stories done");
+    expect(html).toContain("3");
+    expect(html).toContain("stories");
     expect(html).toContain("reading mode");
   });
 
   it("renders value narrative section when value_analysis is present", () => {
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("Value Narrative");
+    expect(html).toContain("value narrative");
     expect(html).toContain("This provides significant value.");
   });
 
@@ -567,7 +568,7 @@ describe("FeatureDetailView", () => {
     expect(html).toContain("Lives within the canvas skill.");
   });
 
-  it("renders stories list with status icon and title", () => {
+  it("renders stories list with status badge and title", () => {
     const storyRows = [
       { slug: "story-a", title: "Story Alpha", status: "done", featureSlug: "test-feature" },
       { slug: "story-b", title: "Story Beta", status: "in-progress", featureSlug: "test-feature" },
@@ -575,9 +576,7 @@ describe("FeatureDetailView", () => {
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows }));
     expect(html).toContain("Story Alpha");
     expect(html).toContain("Story Beta");
-    expect(html).toContain("reading-story-row");
-    // clicking a story row should navigate to /stories/:slug?from=feature&feature=slug
-    // & is HTML-encoded to &amp; in html`` template
+    expect(html).toContain("l2-stories");
     expect(html).toContain('href="/stories/story-a?from=feature&amp;feature=test-feature"');
     expect(html).toContain('href="/stories/story-b?from=feature&amp;feature=test-feature"');
   });
@@ -597,9 +596,9 @@ describe("FeatureDetailView", () => {
     expect(html).not.toContain('hx-push-url="/"');
   });
 
-  it("reads 65ch measure column via reading-col class", () => {
+  it("renders l2-body content container", () => {
     const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("reading-col");
+    expect(html).toContain("l2-body");
   });
 
   it("does not render dependencies section when no dependencies", () => {
@@ -610,7 +609,7 @@ describe("FeatureDetailView", () => {
   it("renders dependencies as plain list when present", () => {
     const feature = { ...baseFeature, dependencies: ["dep-feature-a", "dep-feature-b"] };
     const html = String(FeatureDetailView({ feature, storyRows: [] }));
-    expect(html).toContain("Dependencies");
+    expect(html).toContain("dependencies");
     expect(html).toContain("reading-deps-list");
     expect(html).toContain("dep-feature-a");
     expect(html).toContain("dep-feature-b");
