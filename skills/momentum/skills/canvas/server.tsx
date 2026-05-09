@@ -524,6 +524,18 @@ async function readStoriesIndexRaw(): Promise<StoriesIndex | null> {
 
 type BandName = "blocked" | "in-progress" | "validated";
 
+async function sprintStoryCounts(sprint: SprintEntry): Promise<{ inProgress: number; blocked: number }> {
+  const index = await readStoriesIndexRaw();
+  if (!index) return { inProgress: 0, blocked: 0 };
+  let inProgress = 0, blocked = 0;
+  for (const slug of sprint.stories) {
+    const band = getStoryBand(index[slug]?.status ?? "");
+    if (band === "in-progress") inProgress++;
+    else if (band === "blocked") blocked++;
+  }
+  return { inProgress, blocked };
+}
+
 function getStoryBand(status: string): BandName | null {
   if (status === "blocked" || status === "closed-incomplete") return "blocked";
   if (status === "in-progress" || status === "review" || status === "verify") return "in-progress";
@@ -535,11 +547,9 @@ function getStoryBand(status: string): BandName | null {
 // Sprint lens components
 // ---------------------------------------------------------------------------
 
-function SprintCard({ sprint }: { sprint: SprintEntry }) {
+function SprintCard({ sprint, inProgress, blocked }: { sprint: SprintEntry; inProgress: number; blocked: number }) {
+  const total = sprint.stories.length;
   const retroDone = sprint.retro_run_at != null;
-  const closureColor = retroDone ? "#4ade80" : "#f59e0b";
-  const closureLabel = retroDone ? "Retro done" : "Retro pending";
-  const startDate = sprint.started ?? sprint.planned ?? "—";
 
   return html`
     <a
@@ -548,20 +558,19 @@ function SprintCard({ sprint }: { sprint: SprintEntry }) {
       style="cursor:pointer;text-decoration:none;color:inherit;display:block;"
     >
       <div class="sprint-card-slug">${sprint.slug}</div>
-      <div class="sprint-card-meta">
-        <span class="sprint-card-date">started ${startDate}</span>
-        <span
-          class="sprint-closure-badge"
-          style="color:${closureColor};"
-        >${closureLabel}</span>
+      <div class="sprint-card-row">
+        <span class="badge in-progress"><span class="dot"></span>active</span>
+        <span class="frac">${inProgress}<span class="slash">/</span>${total}<span class="lbl">in progress</span></span>
+        ${blocked > 0 ? html`<span class="gap-flag prominent">${blocked} blocked</span>` : ""}
+        ${retroDone ? html`<span class="badge validated"><span class="dot"></span>retro done</span>` : ""}
       </div>
     </a>
   `;
 }
 
-function SprintLensSection({ sprint }: { sprint: SprintEntry | null }) {
+function SprintLensSection({ sprint, inProgress, blocked }: { sprint: SprintEntry | null; inProgress?: number; blocked?: number }) {
   const body = sprint
-    ? SprintCard({ sprint })
+    ? SprintCard({ sprint, inProgress: inProgress ?? 0, blocked: blocked ?? 0 })
     : html`<div class="sprint-empty">No active sprint — run /momentum:sprint-planning to start one.</div>`;
 
   return html`
@@ -1101,13 +1110,19 @@ function DashboardShell({
       border: 1px solid rgba(168,90,42,0.50);
     }
 
-    /* ── Fraction (story count) ── */
+    /* ── Fraction (story count) — dark surface default, light override ── */
     .frac {
       font-family: "JetBrains Mono", monospace;
-      font-size: 14px; color: var(--inkOnDarkMuted);
+      font-size: 11px; color: var(--inkOnDarkMuted);
     }
     .frac .slash { color: var(--inkOnDarkFaint); }
-    .frac .lbl { color: var(--inkOnDarkFaint); margin-left: 4px; font-size: 13px; }
+    .frac .lbl { color: var(--inkOnDarkFaint); margin-left: 4px; font-size: 10px; }
+    .reading-surface .frac { color: var(--inkMuted); }
+    .reading-surface .frac .slash { color: var(--inkFaint); }
+    .reading-surface .frac .lbl { color: var(--inkFaint); }
+    .l2-body .frac { color: var(--inkMuted); }
+    .l2-body .frac .slash { color: var(--inkFaint); }
+    .l2-body .frac .lbl { color: var(--inkFaint); }
 
     /* ── Features list — grid rows ── */
     .feat-list { padding: 4px 0 2px; }
@@ -1124,6 +1139,7 @@ function DashboardShell({
       font-family: "Inter", sans-serif; font-size: 15px;
       color: var(--inkOnDark); line-height: 1.35;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      min-width: 0;
     }
 
     /* ── Sprint lens card ── */
@@ -1139,16 +1155,12 @@ function DashboardShell({
       font-size: 14px; font-weight: 500; color: var(--inkOnDark);
       letter-spacing: -0.2px;
     }
-    .sprint-card-meta {
-      display: flex; align-items: center; gap: 16px; margin-top: 6px;
+    .sprint-card-row {
+      display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap;
     }
     .sprint-card-date {
       font-family: "JetBrains Mono", monospace;
       font-size: 12px; color: var(--inkOnDarkQuiet);
-    }
-    .sprint-closure-badge {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12px; font-weight: 500;
     }
     .sprint-empty {
       padding: 16px 0 8px;
@@ -1588,7 +1600,8 @@ const app = new Hono();
 app.get("/", async (c) => {
   const sprintsIndex = await readSprintsIndex();
   const activeSprint = sprintsIndex?.active ?? null;
-  const sprintSection = SprintLensSection({ sprint: activeSprint });
+  const counts = activeSprint ? await sprintStoryCounts(activeSprint) : { inProgress: 0, blocked: 0 };
+  const sprintSection = SprintLensSection({ sprint: activeSprint, ...counts });
   const cycleState = computeCycleState(sprintsIndex);
   const cycleSection = CycleLensSection({ cycleState });
 
@@ -1651,7 +1664,8 @@ app.get("/lenses/cycle", async (c) => {
 app.get("/lenses/sprint", async (c) => {
   const sprintsIndex = await readSprintsIndex();
   const activeSprint = sprintsIndex?.active ?? null;
-  return c.html(SprintLensSection({ sprint: activeSprint }) as string);
+  const counts = activeSprint ? await sprintStoryCounts(activeSprint) : { inProgress: 0, blocked: 0 };
+  return c.html(SprintLensSection({ sprint: activeSprint, ...counts }) as string);
 });
 
 // Sprint detail drill-down
