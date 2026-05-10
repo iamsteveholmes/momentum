@@ -3756,40 +3756,53 @@
     "feature_slug": "momentum-practice-knowledge-base"
   },
   "momentum-cycle-dashboard-shell-hono-bun-server": {
-    "status": "backlog",
+    "status": "done",
     "title": "Momentum Cycle — Dashboard Shell (Hono+Bun Server)",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/canvas/",
+      "skills/momentum/skills/feature-status/",
+      "skills/momentum/.claude-plugin/plugin.json"
+    ],
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-features-lens": {
-    "status": "backlog",
+    "status": "done",
     "title": "Momentum Cycle — Features Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "momentum-cycle-dashboard-shell-hono-bun-server"
+    ],
+    "touches": [
+      "skills/momentum/skills/canvas/server.tsx",
+      "skills/momentum/skills/canvas/server.test.ts"
+    ],
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-cycle-timeline-lens": {
-    "status": "backlog",
+    "status": "done",
     "title": "Momentum Cycle — Cycle Timeline Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "momentum-cycle-dashboard-shell-hono-bun-server"
+    ],
+    "touches": [
+      "skills/momentum/skills/canvas/server.tsx"
+    ],
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
-    "status": "backlog",
+    "status": "done",
     "title": "Momentum Cycle — Sprint Lens + Sprint Detail Drill-Down",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3800,23 +3813,32 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-story-l3-drill-down-reading-mode": {
-    "status": "backlog",
+    "status": "done",
     "title": "Momentum Cycle — Story L3 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "momentum-cycle-feature-l2-drill-down-reading-mode",
+      "momentum-cycle-sprint-lens-sprint-detail-drill-down"
+    ],
+    "touches": [
+      "skills/momentum/skills/canvas/server.tsx"
+    ],
     "priority": "low",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-feature-l2-drill-down-reading-mode": {
-    "status": "backlog",
+    "status": "done",
     "title": "Momentum Cycle — Feature L2 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "momentum-cycle-features-lens"
+    ],
+    "touches": [
+      "skills/momentum/skills/canvas/server.tsx"
+    ],
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
@@ -3843,5 +3865,33 @@
       "skills/momentum/.claude-plugin/plugin.json"
     ],
     "priority": "medium"
+  },
+  "markdown-formatting-skill-output-templates": {
+    "status": "done",
+    "title": "Markdown Formatting for Skill Output Templates",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/quick-fix/workflow.md",
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/skills/create-story/workflow.md",
+      "skills/momentum/skills/research/workflow.md",
+      "skills/momentum/skills/assessment/workflow.md",
+      "skills/momentum/skills/decision/workflow.md",
+      "skills/momentum/skills/distill/workflow.md",
+      "skills/momentum/skills/refine/workflow.md",
+      "skills/momentum/skills/feature-breakdown/workflow.md",
+      "skills/momentum/skills/feature-grooming/workflow.md",
+      "skills/momentum/skills/epic-grooming/workflow.md",
+      "skills/momentum/skills/plan-audit/workflow.md",
+      "skills/momentum/skills/intake/workflow.md",
+      "skills/momentum/skills/triage/workflow.md",
+      "skills/momentum/skills/agent-guidelines/workflow.md",
+      "skills/momentum/skills/dev/workflow.md"
+    ],
+    "priority": "low"
   }
 }

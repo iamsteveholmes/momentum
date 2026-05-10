@@ -1,0 +1,14 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-new-skill-no-coverage",
+  "prompt": "Build the constitution for a compose+kotest skill I'm creating. It covers Kotlin coroutines in tests, Kotest assertion styles (shouldBe, shouldThrow, etc.), and Compose UI testing with composeTestRule.",
+  "assertions": [
+    {"text": "Output contains a '## Quick Routing' header"},
+    {"text": "Routing entries use wiki-query invocations (not static file paths)"},
+    {"text": "Output contains thematic subsections (H3 headers)"},
+    {"text": "Output surfaces KB gap for Kotest or notes limited coverage"},
+    {"text": "Routing entries use bold symptom format (**symptom** →)"},
+    {"text": "No advisory routing language ('if needed', 'you may want to')"},
+    {"text": "Output has at least 8 routing entries"}
+  ]
+}

@@ -1,0 +1,91 @@
+name: sprint-planning-model-benchmark
+description: Benchmark different models for momentum sprint planning workflows
+version: 1.0
+
+parameters:
+  model_variant:
+    type: string
+    description: Which model to test
+    default: qwen
+    enum: [qwen, llama, nemotron, opus]
+  repository_path:
+    type: string
+    description: Path to momentum repository
+    default: .
+  benchmark_session:
+    type: string
+    description: Which benchmark session to replicate
+    default: cdb7de2f
+    enum: [cdb7de2f, 621fb06b, 6d6ec9b2]
+
+variables:
+  model_configs:
+    qwen:
+      provider: custom_open_router_custom
+      model: qwen/qwen3-coder:free
+    llama:
+      provider: custom_open_router_custom
+      model: meta-llama/llama-3.3-70b-instruct:free
+    nemotron:
+      provider: custom_open_router_custom
+      model: nvidia/nemotron-3-super-120b-a12b:free
+    opus:
+      provider: custom_open_router_custom
+      model: anthropic/claude-opus-4-7
+
+workflow:
+  - name: setup_benchmark
+    description: Prepare repository state for benchmark
+    steps:
+      - shell: |
+          cd {{ repository_path }}
+          # Check current state
+          git status
+          echo "Setting up benchmark for session {{ benchmark_session }}"
+          
+  - name: execute_sprint_planning
+    description: Run momentum:sprint-planning with specified model
+    steps:
+      - delegate:
+          source: momentum:sprint-planning
+          provider: "{{ model_configs[model_variant].provider }}"
+          model: "{{ model_configs[model_variant].model }}"
+          instructions: |
+            Execute momentum sprint planning workflow. 
+            Model: {{ model_variant }}
+            Session target: {{ benchmark_session }}
+            
+            Key metrics to track:
+            - Tool call count and types
+            - Execution time
+            - Subagent spawn patterns
+            - Artifact quality
+
+  - name: capture_metrics
+    description: Capture execution metrics
+    steps:
+      - shell: |
+          echo "Capturing metrics for {{ model_variant }}"
+          # This would be expanded to capture actual metrics
+          date > results/{{ model_variant }}/execution_time.txt
+          
+  - name: validate_output
+    description: Validate output against benchmarks
+    steps:
+      - shell: |
+          echo "Validating output quality"
+          # Compare against expected outputs
+          
+  - name: generate_report
+    description: Generate comparative analysis
+    steps:
+      - delegate:
+          source: analyze
+          provider: "{{ model_configs[model_variant].provider }}"
+          model: "{{ model_configs[model_variant].model }}"
+          instructions: |
+            Analyze the execution results and generate a report comparing:
+            1. Tool call efficiency
+            2. Execution time
+            3. Output quality
+            4. Resource utilization

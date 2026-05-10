@@ -1,0 +1,117 @@
+{
+  "skill_name": "constitution-builder",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build the constitution for a compose+kotest skill I'm creating. It covers Kotlin coroutines in tests, Kotest assertion styles (shouldBe, shouldThrow, etc.), and Compose UI testing with composeTestRule.",
+      "expected_output": "A ## Quick Routing section with symptom→wiki-query entries for the covered technologies. Should surface gaps if Kotest is not in the KB. Should use exact wiki-query invocations, not advisory language.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Output contains a '## Quick Routing' header",
+          "check": "grep -q '## Quick Routing' routing-table.md"
+        },
+        {
+          "text": "Routing entries use wiki-query invocations (not static file paths)",
+          "check": "grep -q 'wiki-query' routing-table.md && ! grep -q 'references/' routing-table.md"
+        },
+        {
+          "text": "Output contains thematic subsections (H3 headers)",
+          "check": "grep -c '^###' routing-table.md | awk '{exit ($1 < 2)}'"
+        },
+        {
+          "text": "Output surfaces KB gap for Kotest or notes limited coverage",
+          "check": "grep -qi 'gap\\|not found\\|missing\\|partial\\|no.*coverage\\|kotest.*not' routing-table.md || grep -qi 'gap\\|not found\\|missing\\|partial\\|no.*coverage\\|kotest.*not' process-notes.md"
+        },
+        {
+          "text": "Routing entries use bold symptom format (**symptom** →)",
+          "check": "grep -q '\\*\\*.*\\*\\*.*→' routing-table.md"
+        },
+        {
+          "text": "No advisory routing language ('if needed', 'you may want to')",
+          "check": "! grep -qi 'if needed\\|you may want\\|consider consulting\\|feel free to' routing-table.md"
+        },
+        {
+          "text": "Output has at least 8 routing entries",
+          "check": "grep -c '\\*\\*.*\\*\\*.*→' routing-table.md | awk '{exit ($1 < 8)}'"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Update the Quick Routing section in my fastapi-pydantic SKILL.md — we've added agent integration docs to the KB since the routing was last generated. The skill covers FastAPI dependency injection, Pydantic v2 models, and PydanticAI agent patterns.",
+      "expected_output": "A regenerated ## Quick Routing section that replaces the stale one. Should show awareness of existing section and offer to replace. Entries should reflect current KB state including newly ingested agent integration content.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Output contains a '## Quick Routing' header",
+          "check": "grep -q '## Quick Routing' routing-table.md"
+        },
+        {
+          "text": "Routing entries use wiki-query invocations",
+          "check": "grep -q 'wiki-query' routing-table.md"
+        },
+        {
+          "text": "Output mentions replacement/update of existing section",
+          "check": "grep -qi 'replac\\|existing\\|stale\\|update\\|regenerat' routing-table.md || grep -qi 'replac\\|existing\\|stale\\|update\\|regenerat' process-notes.md"
+        },
+        {
+          "text": "Output includes PydanticAI-specific entries (the new content area)",
+          "check": "grep -qi 'pydanticai\\|agent.*pattern\\|agent.*route\\|agent.*integration' routing-table.md"
+        },
+        {
+          "text": "Output uses bold symptom format",
+          "check": "grep -q '\\*\\*.*\\*\\*.*→' routing-table.md"
+        },
+        {
+          "text": "Output has thematic subsections",
+          "check": "grep -c '^###' routing-table.md | awk '{exit ($1 < 2)}'"
+        },
+        {
+          "text": "At least 10 routing entries total",
+          "check": "grep -c '\\*\\*.*\\*\\*.*→' routing-table.md | awk '{exit ($1 < 10)}'"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Generate the routing table for a React + Next.js skill. It covers React hooks (useState, useEffect, useCallback, useMemo), Next.js App Router, server components, and data fetching patterns.",
+      "expected_output": "A complete ## Quick Routing section. Should audit the KB for React/Next.js coverage, generate well-organized thematic subsections, 15-40 entries total, all using wiki-query invocations.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Output contains a '## Quick Routing' header",
+          "check": "grep -q '## Quick Routing' routing-table.md"
+        },
+        {
+          "text": "Routing entries use wiki-query invocations",
+          "check": "grep -q 'wiki-query' routing-table.md"
+        },
+        {
+          "text": "Output has thematic subsections covering multiple domains",
+          "check": "grep -c '^###' routing-table.md | awk '{exit ($1 < 3)}'"
+        },
+        {
+          "text": "Coverage includes hooks-related entries",
+          "check": "grep -qi 'hook\\|useEffect\\|useState\\|useMemo\\|useCallback' routing-table.md"
+        },
+        {
+          "text": "Coverage includes server component or App Router entries",
+          "check": "grep -qi 'server component\\|app router\\|RSC\\|client component' routing-table.md"
+        },
+        {
+          "text": "Entry count is 10 or more",
+          "check": "grep -c '\\*\\*.*\\*\\*.*→' routing-table.md | awk '{exit ($1 < 10)}'"
+        },
+        {
+          "text": "KB audit report present (covered/gap categorization or coverage mention)",
+          "check": "grep -qi 'covered\\|gap\\|partial\\|index\\|audit\\|coverage' routing-table.md || grep -qi 'covered\\|gap\\|partial\\|index\\|audit\\|coverage' process-notes.md"
+        },
+        {
+          "text": "No advisory routing language",
+          "check": "! grep -qi 'if needed\\|you may want\\|consider consulting\\|feel free to' routing-table.md"
+        }
+      ]
+    }
+  ]
+}

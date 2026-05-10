@@ -1,0 +1,58 @@
+name: benchmark-results-analysis
+description: Analyze and compare results from different model benchmarks
+version: 1.0
+
+workflow:
+  - name: collect_results
+    description: Gather all benchmark results
+    steps:
+      - shell: |
+          echo "Collecting benchmark results..."
+          ls -la results/
+          
+  - name: analyze_performance
+    description: Compare execution performance
+    steps:
+      - delegate:
+          source: analyze
+          instructions: |
+            Analyze the performance metrics across all model benchmarks:
+            
+            1. Execution Time Comparison:
+               - Qwen3-Coder: Fast execution, optimized for coding tasks
+               - Llama 3.3: Balanced speed/capability
+               - Nemotron: Thorough but slower validation
+               
+            2. Tool Call Efficiency:
+               - Count and types of tool calls per model
+               - Bash vs Read vs Edit operations
+               - TaskCreate/TaskUpdate patterns
+               
+            3. Output Quality Metrics:
+               - Story breakdown completeness
+               - Gherkin spec quality
+               - Validation depth (AVFL findings)
+               
+            4. Cost Analysis:
+               - Free vs paid model comparison
+               - Token usage estimation
+               
+            Based on the benchmark sessions you've provided, create a detailed comparison report.
+
+  - name: generate_recommendations
+    description: Provide model selection recommendations
+    steps:
+      - delegate:
+          source: momentum:create-story
+          instructions: |
+            Based on the benchmark analysis, provide specific recommendations for:
+            
+            1. Sprint Planning Phase - Which model to use
+            2. AVFL Validation Phase - Which model to use
+            3. Verification Phase - Which model to use
+            
+            Consider:
+            - Speed requirements
+            - Quality requirements
+            - Cost considerations
+            - Workflow-specific needs

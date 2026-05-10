@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 3 · Canvas Expansion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { background: #f0eee9; }
+  * { box-sizing: border-box; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="pass3-data.jsx"></script>
+<script type="text/babel" src="gate-chips.jsx"></script>
+<script type="text/babel" src="nav-chrome.jsx"></script>
+<script type="text/babel" src="sprints-view.jsx"></script>
+<script type="text/babel" src="flywheel-timeline.jsx"></script>
+<script type="text/babel" src="flywheel-graph.jsx"></script>
+<script type="text/babel" src="cross-view-notes.jsx"></script>
+
+<script type="text/babel">
+  const {
+    DesignCanvas, DCSection, DCArtboard, DCPostIt, T,
+    NavTabs, NavSidebar, NavLongScroll,
+    SprintsView, FlywheelTimeline, FlywheelGraph, CrossViewNotes,
+    Badge, GateTrio, GateChip,
+  } = window;
+
+  // The real target viewport — half-width cmux pane.
+  const PANE = 700;
+
+  function PassThree() {
+    return (
+      <DesignCanvas>
+        {/* ── Banner header ───────────────────────────────────────── */}
+        <div style={{ padding: "0 60px 48px", maxWidth: 1200 }}>
+          <div style={{
+            fontFamily: T.fontMono, fontSize: 11, letterSpacing: 1.6,
+            color: "rgba(40,30,20,0.5)", textTransform: "uppercase",
+            marginBottom: 10,
+          }}>
+            Feature Status Redesign · Pass 3 · Canvas Expansion
+          </div>
+          <div style={{
+            fontFamily: T.fontSerif, fontSize: 38, lineHeight: 1.2,
+            color: "#1e1d1a", letterSpacing: -0.6, fontWeight: 400,
+            maxWidth: "28ch",
+          }}>
+            Three lenses, one canvas. Designed for 700px.
+          </div>
+          <div style={{
+            fontFamily: T.fontSans, fontSize: 14, lineHeight: 1.6,
+            color: "rgba(40,30,20,0.65)", marginTop: 16, maxWidth: "72ch",
+          }}>
+            Features stays on its Pass 1 / Pass 2 track, unchanged. This pass adds the Sprints and
+            Flywheel lenses and the nav chrome that ties them together. Every rendered lens is drawn
+            at the real half-width cmux pane target (700px) — widths are not negotiable.
+          </div>
+          <div style={{
+            marginTop: 22,
+            display: "inline-flex", alignItems: "center", gap: 14,
+            padding: "8px 14px",
+            background: "rgba(88,99,168,0.06)",
+            border: "1px solid rgba(88,99,168,0.18)",
+            borderRadius: 3,
+            fontFamily: T.fontMono, fontSize: 11, color: "#4a538f",
+            letterSpacing: 0.3,
+          }}>
+            <span>pinch / cmd+wheel to zoom · drag to pan · hi-fi prototype arrives after you pick winners</span>
+          </div>
+        </div>
+
+        {/* ── 01 · Nav chrome comparison ──────────────────────────── */}
+        <DCSection
+          title="01 · Nav chrome · three candidates at 700px"
+          subtitle="Each lens renders the same Features-snippet inside so chrome weight is the only axis."
+        >
+          <DCArtboard label="A · Tabs" width={PANE} height={540}>
+            <NavTabs />
+          </DCArtboard>
+          <DCArtboard label="B · Sidebar" width={PANE} height={540}>
+            <NavSidebar />
+          </DCArtboard>
+          <DCArtboard label="C · Long-scroll anchors" width={PANE} height={540}>
+            <NavLongScroll />
+          </DCArtboard>
+
+          <div style={{ position: "relative", width: 300, paddingTop: 8 }}>
+            <DCPostIt top={20} left={0} width={280} rotate={-1.5}>
+              Tabs are the cheapest chrome but encourage lens-switching context loss — every hop resets mental state. At 700px the tab row fits cleanly, which is a point in favor.
+            </DCPostIt>
+            <DCPostIt top={220} left={20} width={270} rotate={2}>
+              Sidebar wins on "persistent sprint banner" — the in-flight block is always visible. But 168px of chrome is ~24% of a 700px pane. Expensive rent for a banner.
+            </DCPostIt>
+            <DCPostIt top={430} left={0} width={280} rotate={-2}>
+              Long-scroll reads best at narrow widths. The sticky anchor rail keeps the three lenses in peripheral view without costing column width. Matches the brief's slight lean.
+            </DCPostIt>
+            <DCPostIt top={640} left={20} width={280} rotate={1.2}>
+              <strong>Recommendation: long-scroll.</strong> Tabs hide context; sidebar taxes width; long-scroll keeps all three lenses in one reading motion. Vote before Pass 4.
+            </DCPostIt>
+          </div>
+        </DCSection>
+
+        {/* ── 02 · Gate-chip primitive ────────────────────────────── */}
+        <DCSection
+          title="02 · New primitive · the gate trio"
+          subtitle="Justified once, inherited by Sprints and anywhere gates appear."
+        >
+          <DCArtboard label="Gate chips" width={620} height={340}>
+            <div style={{
+              padding: "28px 32px", fontFamily: T.fontSans, color: T.ink,
+              background: T.paper, height: "100%", boxSizing: "border-box",
+            }}>
+              <div style={{
+                fontFamily: T.fontMono, fontSize: 10, letterSpacing: 1.4,
+                color: T.inkQuiet, textTransform: "uppercase", marginBottom: 8,
+              }}>
+                Gate trio · AVFL · code review · E2E
+              </div>
+              <div style={{
+                fontFamily: T.fontSerif, fontSize: 16, color: T.ink,
+                marginBottom: 20, maxWidth: "50ch", lineHeight: 1.5,
+              }}>
+                State badges answer one question per thing. Gates answer three per thing. New shape required.
+              </div>
+              <div style={{ display: "grid", gap: 14 }}>
+                <Row label="all pass">
+                  <GateTrio gates={{ avfl: "pass", cr: "pass", e2e: "pass" }} />
+                </Row>
+                <Row label="in flight">
+                  <GateTrio gates={{ avfl: "pass", cr: "pending", e2e: "pending" }} />
+                </Row>
+                <Row label="one fail">
+                  <GateTrio gates={{ avfl: "fail", cr: "pass", e2e: "pending" }} />
+                </Row>
+                <Row label="not applicable">
+                  <GateTrio gates={{ avfl: "n/a", cr: "n/a", e2e: "n/a" }} />
+                </Row>
+                <Row label="beside a state badge">
+                  <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
+                    <Badge state="partial" />
+                    <GateTrio gates={{ avfl: "pass", cr: "pending", e2e: "pending" }} />
+                  </span>
+                </Row>
+              </div>
+            </div>
+          </DCArtboard>
+
+          <div style={{ position: "relative", width: 300, paddingTop: 8 }}>
+            <DCPostIt top={30} left={0} width={280} rotate={-2}>
+              Family resemblance: same mono voice, same muted chroma pulled from the state palette, same terminal-opacity pattern (pending / n/a at ~75%).
+            </DCPostIt>
+            <DCPostIt top={230} left={10} width={275} rotate={1.8}>
+              Distinct shape: three cells in a row, not one capsule. At a glance you can tell "that's gates, not state" without reading labels.
+            </DCPostIt>
+            <DCPostIt top={420} left={0} width={280} rotate={-1}>
+              Compact variant is 3 dots (used inline in story rows). Full variant labels each gate. Both live in gate-chips.jsx, both share the same palette.
+            </DCPostIt>
+          </div>
+        </DCSection>
+
+        {/* ── 03 · Sprints view Level-1 ───────────────────────────── */}
+        <DCSection
+          title="03 · Sprints view · Level-1 at 700px"
+          subtitle="Active sprint header, story bands, gate signal, cross-cut to features, recent strip."
+        >
+          <DCArtboard label="Sprints · light · 700px" width={PANE} height={1100}>
+            <SprintsView />
+          </DCArtboard>
+
+          <div style={{ position: "relative", width: 320, paddingTop: 8 }}>
+            <DCPostIt top={30} left={0} width={300} rotate={-2}>
+              Active-sprint goal is one serif sentence, not a field label. Reading this first should feel like reading a note, not parsing a dashboard.
+            </DCPostIt>
+            <DCPostIt top={200} left={20} width={290} rotate={1.5}>
+              Gate-health strip gives the whole sprint's quality signal in one glance. Pass / ran / pending — not percentages. Pending greyed to ~50%.
+            </DCPostIt>
+            <DCPostIt top={400} left={0} width={300} rotate={-1}>
+              Story bands: in-wave, merged, blocked. Merged is faded (~68%) — it's terminal. Blocked borrows the gap flag's warm tone because a block is advisory, not a failure.
+            </DCPostIt>
+            <DCPostIt top={620} left={20} width={295} rotate={2}>
+              "advances ↗ features" is the Sprint → Features link. Each row is jumpable and carries the story-count so you know how deep the sprint is into that feature.
+            </DCPostIt>
+            <DCPostIt top={830} left={0} width={290} rotate={-1.5}>
+              Recent sprints strip uses the Variant B card pattern, dimmed. Gate-health text goes terracotta if defect escapes exist — otherwise just ink-muted.
+            </DCPostIt>
+          </div>
+        </DCSection>
+
+        {/* ── 04 · Flywheel · two divergent directions ────────────── */}
+        <DCSection
+          title="04 · Flywheel · two directions · not variants"
+          subtitle="A · Timeline (chronology). B · Provenance graph (chain of encoding). Pick one for hi-fi."
+        >
+          <DCArtboard label="A · Timeline · sprints as spine" width={PANE} height={1300}>
+            <FlywheelTimeline />
+          </DCArtboard>
+          <DCArtboard label="B · Provenance · nodes & edges" width={PANE} height={1100}>
+            <FlywheelGraph />
+          </DCArtboard>
+
+          <div style={{ position: "relative", width: 340, paddingTop: 8 }}>
+            <DCPostIt top={20} left={0} width={310} rotate={-1.8}>
+              <strong>A — Timeline.</strong> Sprints are the spine. Findings attach at the sprint they were produced. Each finding carries its chain inline (↳ story, ↳ skill). Story is the chronology.
+            </DCPostIt>
+            <DCPostIt top={230} left={20} width={310} rotate={1.5}>
+              A reads like a logbook. The developer opens it to ask "what have we learned lately?" — answer is top-to-bottom, recency first. Recurring findings get a warm left-border so they stand out from one-shots.
+            </DCPostIt>
+            <DCPostIt top={460} left={0} width={315} rotate={-1}>
+              <strong>B — Provenance graph.</strong> Three columns: finding → story → skill. Click any node, its whole chain highlights; the rest fades. Horizontal-scrolls at 700px — the only place in the canvas that does.
+            </DCPostIt>
+            <DCPostIt top={700} left={20} width={310} rotate={2}>
+              B reads like a ledger of encoding. The developer opens it to ask "which findings turned into durable practice, and which died?" — answer is a chain you can walk either direction.
+            </DCPostIt>
+            <DCPostIt top={940} left={0} width={320} rotate={-1.2}>
+              Not a variation debate: these answer different questions. <em>A favors recency and sprint-context. B favors the chain of encoding itself.</em> Pick the question first.
+            </DCPostIt>
+          </div>
+        </DCSection>
+
+        {/* ── 05 · Cross-view interactions ────────────────────────── */}
+        <DCSection
+          title="05 · Cross-view interactions"
+          subtitle="Written notes plus one annotated triangle diagram. No working prototype yet."
+        >
+          <DCArtboard label="Cross-view notes" width={760} height={820}>
+            <CrossViewNotes />
+          </DCArtboard>
+        </DCSection>
+
+        {/* ── 06 · Where we land · questions ──────────────────────── */}
+        <DCSection
+          title="06 · Where we land · questions for you"
+          subtitle="React to these to unlock the hi-fi prototype."
+        >
+          <DCArtboard label="Open questions" width={820} height={520} style={{ background: T.paperAlt }}>
+            <div style={{
+              padding: "44px 48px",
+              fontFamily: T.fontSans, color: T.ink,
+              height: "100%", boxSizing: "border-box",
+              display: "flex", flexDirection: "column", gap: 18,
+            }}>
+              <Q n="1" title="Nav model">
+                Recommending long-scroll. Sidebar's persistent sprint banner is tempting —
+                would a compact version (top strip, 32px, all lenses) recover that benefit
+                without the width tax? If yes, I'd build a hybrid for Pass 4.
+              </Q>
+              <Q n="2" title="Flywheel direction">
+                Timeline or Provenance? They answer different questions. Pick the question
+                you ask the flywheel most often. (If unsure: Timeline is easier to scan
+                cold; Provenance rewards repeat use.)
+              </Q>
+              <Q n="3" title="Gate-chip density in story rows">
+                Sprints currently uses the compact labeled trio inside each story row.
+                An alternative is three dots only (no labels), with labels hoisted to the
+                gate-health header. Saves ~60px per row — big win at 700px. Try it?
+              </Q>
+              <Q n="4" title="Blocked band tone">
+                Blocked rows use the warm terracotta (gap flag family). They visually pair
+                with feature-gap rows. If you want "blocked" to feel like a real stop, I can
+                give it its own muted red — but that invites traffic-light semantics we've
+                avoided so far.
+              </Q>
+              <Q n="5" title="Recent sprints count">
+                Three recent sprints at the bottom of Sprints view. At four or more the
+                strip starts to compete with the active sprint visually. Happy with 3?
+              </Q>
+            </div>
+          </DCArtboard>
+
+          <DCArtboard label="Next passes" width={540} height={520} style={{ background: T.paperAlt }}>
+            <div style={{
+              padding: "44px 48px",
+              fontFamily: T.fontSans, color: T.ink,
+              height: "100%", boxSizing: "border-box",
+              display: "flex", flexDirection: "column", gap: 16,
+            }}>
+              <Pass label="Pass 4">
+                Hi-fi prototype: chosen nav + chosen Flywheel direction, wired Tweaks
+                (flywheel A/B · terminal visibility · density), real transitions between
+                lenses. All three lenses populated from real data.
+              </Pass>
+              <Pass label="Pass 5">
+                Dark-mode variant across all three lenses. Level-2 drill-downs for Sprint
+                (per-sprint detail) and Finding (per-finding context + provenance detail).
+              </Pass>
+              <Pass label="Pass 6">
+                Full wiring of cross-view jumps with breadcrumb history. Empty states for
+                "no sprints yet", "no findings yet", feature-without-sprint-activity.
+              </Pass>
+              <Pass label="out of scope for this pass">
+                Dark mode. Merge queue drilldown. Historical sprint comparison. KPI tiles
+                (won't happen). Velocity charts (won't happen).
+              </Pass>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <div style={{ height: 60 }} />
+      </DesignCanvas>
+    );
+  }
+
+  function Row({ label, children }) {
+    return (
+      <div style={{
+        display: "grid", gridTemplateColumns: "130px 1fr", alignItems: "center", gap: 14,
+      }}>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 11, color: T.inkQuiet, letterSpacing: 0.3,
+        }}>{label}</span>
+        <div>{children}</div>
+      </div>
+    );
+  }
+  function Q({ n, title, children }) {
+    return (
+      <div style={{
+        display: "grid", gridTemplateColumns: "28px 1fr", gap: 16,
+        fontFamily: T.fontSans, fontSize: 13, lineHeight: 1.55, color: T.inkMuted,
+      }}>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 11, color: T.accent, letterSpacing: 0.3,
+          paddingTop: 2,
+        }}>Q{n}</span>
+        <div>
+          <strong style={{ fontWeight: 600, color: T.ink }}>{title}.</strong> {children}
+        </div>
+      </div>
+    );
+  }
+  function Pass({ label, children }) {
+    return (
+      <div style={{
+        display: "grid", gridTemplateColumns: "100px 1fr", gap: 14,
+        fontFamily: T.fontSans, fontSize: 12.5, lineHeight: 1.55, color: T.inkMuted,
+      }}>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 11, color: T.accent, letterSpacing: 0.3,
+        }}>{label}</span>
+        <div>{children}</div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<PassThree />);
+</script>
+</body>
+</html>

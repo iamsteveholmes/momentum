@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "Output contains a '## Quick Routing' header",
+      "passed": true,
+      "evidence": "Found: '## Quick Routing'"
+    },
+    {
+      "text": "Routing entries use wiki-query invocations (not static file paths)",
+      "passed": true,
+      "evidence": "wiki-query present: True; no 'references/' paths: True"
+    },
+    {
+      "text": "Output contains thematic subsections (H3 headers)",
+      "passed": true,
+      "evidence": "Found 8 matches (need >=2)"
+    },
+    {
+      "text": "Output surfaces KB gap for Kotest or notes limited coverage",
+      "passed": true,
+      "evidence": "In routing-table: False (Pattern 'gap|not found|missing|partial|no.*coverage|kotest.*); in process-notes: True"
+    },
+    {
+      "text": "Routing entries use bold symptom format (**symptom** \u2192)",
+      "passed": true,
+      "evidence": "Found: '**Using `shouldBe` / `shouldNotBe` and unsure of the full matcher set available*'"
+    },
+    {
+      "text": "No advisory routing language ('if needed', 'you may want to')",
+      "passed": true,
+      "evidence": "Pattern 'if needed|you may want|consider consulting|feel free to' not found (correct)"
+    },
+    {
+      "text": "Output has at least 8 routing entries",
+      "passed": true,
+      "evidence": "Bold-arrow: 39, table-row: 0, total usable: 39 (need >=8)"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "total_tokens": 72336,
+    "duration_ms": 186905,
+    "total_duration_seconds": 186.9
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Programmatic grep-based grading"
+  }
+}

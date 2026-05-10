@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-stale-routing-update",
+  "prompt": "Update the Quick Routing section in my fastapi-pydantic SKILL.md — we've added agent integration docs to the KB since the routing was last generated. The skill covers FastAPI dependency injection, Pydantic v2 models, and PydanticAI agent patterns.",
+  "assertions": [
+    {"text": "Output contains a '## Quick Routing' header"},
+    {"text": "Routing entries use wiki-query invocations"},
+    {"text": "Output mentions replacement/update of existing section"},
+    {"text": "Output includes PydanticAI-specific entries (the new content area)"},
+    {"text": "Output uses bold symptom format"},
+    {"text": "Output has thematic subsections"},
+    {"text": "At least 10 routing entries total"}
+  ]
+}

@@ -1,8 +1,9 @@
 ---
 name: feature-status
-description: "Generates an HTML planning artifact showing feature coverage gaps, story assignments, and status. Opens in a browser pane."
-model: claude-sonnet-4-6
-effort: medium
+description: "Deprecated. Use /momentum:canvas instead. This stub outputs a deprecation message and halts."
+model: claude-haiku-4-5
+effort: low
+allowed-tools: Bash
 ---
 
 Follow the instructions in ./workflow.md

@@ -1,0 +1,32 @@
+name: run-all-model-benchmarks
+description: Run benchmarks for all models and generate comparative analysis
+version: 1.0
+
+workflow:
+  - name: run_qwen_benchmark
+    description: Run Qwen3-Coder benchmark
+    steps:
+      - delegate:
+          source: benchmarks/recipes/model-comparison-qwen.yaml
+          instructions: "Run the Qwen3-Coder benchmark and capture results"
+
+  - name: run_llama_benchmark
+    description: Run Llama 3.3 benchmark
+    steps:
+      - delegate:
+          source: benchmarks/recipes/model-comparison-llama.yaml
+          instructions: "Run the Llama 3.3 benchmark and capture results"
+
+  - name: run_nemotron_benchmark
+    description: Run Nemotron benchmark
+    steps:
+      - delegate:
+          source: benchmarks/recipes/model-comparison-nemotron.yaml
+          instructions: "Run the Nemotron benchmark and capture results"
+
+  - name: collect_and_analyze_results
+    description: Collect results from all benchmarks and analyze
+    steps:
+      - delegate:
+          source: benchmarks/recipes/analysis/compare-results.yaml
+          instructions: "Collect results from all model benchmarks and provide comparative analysis"

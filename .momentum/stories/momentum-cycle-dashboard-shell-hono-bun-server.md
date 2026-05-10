@@ -1,22 +1,18 @@
 ---
 title: Momentum Cycle — Dashboard Shell (Hono+Bun Server)
 story_key: momentum-cycle-dashboard-shell-hono-bun-server
-status: backlog
+status: ready-for-dev
 epic_slug: feature-orientation
 feature_slug: momentum-canvas
 story_type: feature
 depends_on: []
-touches: []
+touches:
+  - skills/momentum/skills/canvas/
+  - skills/momentum/skills/feature-status/
+  - skills/momentum/.claude-plugin/plugin.json
 ---
 
 # Momentum Cycle — Dashboard Shell (Hono+Bun Server)
-
-<!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
-     stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
-     by create-story before any development begins. -->
-
-_This story is a backlog stub. Run `momentum:create-story` on it when ready to make it
-dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
@@ -26,93 +22,269 @@ so that I have a persistent, always-on dashboard pane in cmux that replaces the 
 
 ## Description
 
-Create the Hono+Bun server entry point (server.tsx) for the Momentum Cycle dashboard. The server runs on port 3456 with `bun --hot`. Implements: warm dark paper shell (--paperDark: #16140f background, --paper: #fbfaf7, --accent: #5863a8), "Momentum Cycle" brand header with JetBrains Mono meta hash/date, breadcrumb-only nav component (no rail — rightmost segment blue, ancestors gray+clickable, only ancestors to the left of current appear), HTMX CDN wiring, and the three empty lens sections (Features, Sprint, Cycle) as placeholder divs. The lightweight skill invoker (replacing feature-status skill entirely) must: check if port 3456 is already listening, start the server in the services pane via cmux respawn-pane if not running, then open http://localhost:3456 in the viewer pane. Design tokens: --paper: #fbfaf7, --paperDark: #16140f, --accent: #5863a8, --gap: #a85a2a. Fonts: Inter (UI), Source Serif 4 (reading), JetBrains Mono (meta). Reference design: /tmp/momentum-design/feature-status/project/Momentum Cycle - Final.html
+Create the Hono+Bun server entry point (`server.tsx`) for the Momentum Cycle dashboard (Phase 1 of the momentum-canvas feature, superseding the canvas-vite-scaffold story which is now orphaned by DEC-019). The server runs on port 3456 via `bun --hot server.tsx` — no compile step, hot-reload in dev.
 
-**Pain context:** The current feature-status skill generates a stale static HTML file. The new server provides live data polling and drill-down navigation in a single persistent cmux pane.
+This story delivers:
+
+1. **`skills/momentum/skills/canvas/server.tsx`** — the complete Hono+Bun server implementing the dashboard shell: warm dark paper background (`--paperDark: #16140f`), "Momentum Cycle" brand header, JetBrains Mono meta line (git hash + date), breadcrumb-only nav component, HTMX CDN wiring, and three empty lens placeholder divs (Features, Sprint, Cycle).
+
+2. **`skills/momentum/skills/canvas/SKILL.md` and `workflow.md`** — the canvas skill, replacing the `feature-status` skill entirely. The skill invoker is lightweight: port-check → cmux respawn-pane (services pane, bun --hot) → cmux browser open (viewer pane).
+
+3. **Removal of the old feature-status static-HTML flow** — the existing `feature-status` skill directory (`skills/momentum/skills/feature-status/`) is superseded. The canvas skill becomes the new entry point; old skill is decommissioned.
+
+**Architecture source:** DEC-019 (Hono+HTMX+Bun stack, supersedes DEC-011 D2 Vite approach). DEC-011 D1 (rename to `momentum:canvas`) and D3 (state source paths under `.momentum/`) remain in force.
+
+**Pain context:** The current `feature-status` skill generates a stale static HTML file opened via `file://`. It cannot serve navigable routes or push live data fragments. The new Hono server is the foundation for drill-down navigation (Phase 2–5) and live HTMX polling.
 
 ## Acceptance Criteria
 
-<!-- DRAFT: These are rough acceptance criteria captured from conversation. They have NOT
-     been refined, validated against architecture, or verified for completeness. This
-     section MUST be fully rewritten by create-story before development. -->
+1. `skills/momentum/skills/canvas/server.tsx` exists and starts cleanly with `bun --hot server.tsx` on port 3456 with no compile errors.
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+2. The dashboard shell renders at `http://localhost:3456/` with the warm dark paper theme: `--paperDark: #16140f` as the body background, design tokens `--paper: #fbfaf7`, `--accent: #5863a8`, `--gap: #a85a2a` present in the CSS.
 
-The following are rough draft ACs captured from conversation:
+3. The "Momentum Cycle" brand header is visible in the rendered page, accompanied by a JetBrains Mono meta line showing a git hash and date.
 
-- `server.tsx` exists at the project root (or agreed location) and starts with `bun --hot` on port 3456
-- Shell renders with warm dark paper theme: `--paperDark: #16140f` background, `--paper: #fbfaf7`, `--accent: #5863a8`, `--gap: #a85a2a`
-- "Momentum Cycle" brand header appears with JetBrains Mono meta hash and date
-- Breadcrumb nav component renders: rightmost segment in accent blue, ancestors in gray and clickable, no left-of-root ancestors shown, no rail present
-- HTMX CDN script tag wired in the document head
-- Three empty lens sections render as placeholder divs: Features, Sprint, Cycle
-- Fonts loaded: Inter (UI), Source Serif 4 (reading), JetBrains Mono (meta)
-- Skill invoker checks `lsof -i :3456` (or equivalent) before starting; if already running, skips server start and only opens browser
-- Skill invoker starts server in services pane via `cmux respawn-pane` if port is not listening
-- Skill invoker opens `http://localhost:3456` in the viewer pane via `cmux browser open`
-- feature-status skill is fully replaced by the new skill invoker (old static-HTML flow is removed)
-- Reference design at `/tmp/momentum-design/feature-status/project/Momentum Cycle - Final.html` is visually matched for shell structure
+4. The breadcrumb nav component renders: the rightmost (current) segment is displayed in accent blue (`--accent`), ancestor segments are gray and clickable, no rail or sidebar is present, no ancestors to the left of the root appear.
 
-> Note: The ACs above are rough captures from conversation. They are starting points
-> only. Create-story will replace them with validated, testable acceptance criteria.
+5. The document `<head>` includes a `<script>` tag loading HTMX from CDN.
+
+6. Three empty lens placeholder `<div>` elements render with labels Features, Sprint, and Cycle — no data is populated (data wiring is Phase 2+).
+
+7. Google Fonts are loaded for all three typefaces: Inter (UI), Source Serif 4 (reading), JetBrains Mono (meta).
+
+8. `skills/momentum/skills/canvas/SKILL.md` and `workflow.md` exist and register the skill as `momentum:canvas`.
+
+9. The canvas skill invoker runs a port check (equivalent to `lsof -i :3456`) before starting. If port 3456 is already listening, the invoker skips the server start and goes directly to opening the browser.
+
+10. If port 3456 is not listening, the invoker starts the server in the cmux services pane using `cmux respawn-pane --command "bun --hot server.tsx"` (from the `skills/momentum/skills/canvas/` directory).
+
+11. The invoker opens `http://localhost:3456` in the cmux viewer pane using `cmux browser open`.
+
+12. The old `skills/momentum/skills/feature-status/` skill is decommissioned — its SKILL.md and workflow.md are replaced with deprecation redirect stubs. When `/momentum:feature-status` is invoked, it outputs "This skill is deprecated — use `/momentum:canvas` instead." and halts. The skill remains in plugin.json with a deprecated description but the redirect stub is the enforcement mechanism.
+
+13. Gate 1 from DEC-019 passes: `bun --hot server.tsx` starts, port-check is idempotent, cmux opens `http://localhost:3456` in the viewer pane.
 
 ## Tasks / Subtasks
 
-<!-- DRAFT: No tasks have been analyzed or planned. This section MUST be populated by
-     create-story, which will break down the work based on architecture analysis and
-     implementation guidance. -->
+- [ ] Task 1: Create `skills/momentum/skills/canvas/` directory and `server.tsx`
+  - [ ] 1.1: Implement Hono+Bun server boilerplate — import Hono, set up root route, export default with port 3456
+  - [ ] 1.2: Implement warm dark paper HTML shell — design tokens as CSS custom properties, body background `--paperDark`, Inter/Source Serif 4/JetBrains Mono font loads via Google Fonts CDN
+  - [ ] 1.3: Implement "Momentum Cycle" brand header with JetBrains Mono meta line (git hash + current date via Bun shell)
+  - [ ] 1.4: Implement breadcrumb nav component — rightmost segment accent blue, ancestors gray+clickable, no rail, no left-of-root ancestors
+  - [ ] 1.5: Wire HTMX CDN `<script>` tag in `<head>`
+  - [ ] 1.6: Implement three empty lens placeholder divs (Features, Sprint, Cycle) with appropriate IDs for future HTMX wiring
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+- [ ] Task 2: Create `skills/momentum/skills/canvas/SKILL.md` and `workflow.md` (skill invoker)
+  - [ ] 2.1: Write `SKILL.md` — name `canvas`, description ≤150 chars, `model: claude-sonnet-4-6`, `effort: low`, body with `Follow the instructions in ./workflow.md`
+  - [ ] 2.2: Write `workflow.md` — port-check step → conditional respawn-pane step → browser open step (see Dev Notes for exact cmux commands)
 
-- [ ] Tasks not yet defined — run create-story to analyze and plan implementation
+- [ ] Task 3: Write EDD evals for the canvas skill
+  - [ ] 3.1: Write `skills/momentum/skills/canvas/evals/eval-canvas-opens-server-when-not-running.md`
+  - [ ] 3.2: Write `skills/momentum/skills/canvas/evals/eval-canvas-skips-start-when-already-running.md`
+
+- [ ] Task 4: Decommission `feature-status` skill
+  - [ ] 4.1: Remove or stub out `skills/momentum/skills/feature-status/SKILL.md` so the skill is no longer invokable (or add a deprecation redirect pointing to `momentum:canvas`)
+  - [ ] 4.2: Update `skills/momentum/.claude-plugin/plugin.json` — remove `feature-status` from the skills registry, add `canvas`
+  - [ ] 4.3: Bump plugin version (patch)
+
+- [ ] Task 5: Verify Gate 1 (DEC-019)
+  - [ ] 5.1: Run `bun --hot server.tsx` from `skills/momentum/skills/canvas/` — confirm server starts, no errors, responds at port 3456
+  - [ ] 5.2: Run port-check twice — confirm idempotency (second run skips start)
+  - [ ] 5.3: Confirm visual match to reference design shell structure (dark background, header, breadcrumb, three lens placeholders)
 
 ## Dev Notes
 
-<!-- DRAFT: Not yet populated. Run create-story to enrich with architecture analysis,
-     implementation guide, technical requirements, and Momentum-specific guidance. -->
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-No technical analysis has been performed. The following sub-sections are all stubs.
-
 ### Architecture Compliance
 
-<!-- DRAFT: Architecture compliance has not been assessed for this story. -->
+**Governing decisions:**
+- **DEC-019** (Hono+HTMX+Bun stack): server.tsx lives at `skills/momentum/skills/canvas/server.tsx`. Started via `bun --hot server.tsx` from that directory. Port 3456 is the canonical port. This decision supersedes DEC-011 D2 (Vite + singlefile) entirely.
+- **DEC-011 D1** (skill rename `feature-status` → `momentum:canvas`): skill directory is `skills/momentum/skills/canvas/`, command is `/momentum:canvas`. Hard rename — no backward-compat shim.
+- **DEC-011 D3** (state source paths under `.momentum/`): future lens phases read from `.momentum/sprints/index.json`, `.momentum/stories/index.json`, `.momentum/signals/`. This story does not wire live data (Phase 2+), but server.tsx should include the path constants as comments for Phase 2 implementors.
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**What this story is NOT:**
+- Live data polling — placeholder divs only; HTMX `hx-get` attributes are NOT added in this phase
+- Drill-down navigation — breadcrumb is static in Phase 1 (shows "Momentum Cycle" as root only)
+- Feature / Sprint / Cycle lens content — empty placeholders only
+
+**canvas-vite-scaffold obsolescence:** The `canvas-vite-scaffold` story (backlog) was written against DEC-011 D2 (Vite approach). DEC-019 supersedes that approach. The canvas-vite-scaffold story is now orphaned. Do not implement or depend on canvas-vite-scaffold. The momentum-cycle-dashboard-shell-hono-bun-server story IS the new Phase 1.
+
+### Skill Directory Layout
+
+```
+skills/momentum/skills/canvas/
+  SKILL.md          ← skill registration, ≤150 char description
+  workflow.md       ← invoker workflow (port-check, respawn-pane, browser open)
+  server.tsx        ← Hono+Bun server (the dashboard itself)
+  evals/
+    eval-canvas-opens-server-when-not-running.md
+    eval-canvas-skips-start-when-already-running.md
+```
+
+No `scripts/` subdirectory needed — the server is `server.tsx` run directly by Bun.
+
+### Skill Invoker Workflow (workflow.md implementation guide)
+
+The invoker workflow is intentionally lightweight. Steps:
+
+```
+Step 1 — Port check
+  Run: lsof -i :3456 | grep LISTEN
+  If output is non-empty → port 3456 is already listening. Skip to Step 3.
+  If output is empty → proceed to Step 2.
+
+Step 2 — Start server
+  Locate the canvas skill directory: resolve the absolute path at invocation time using
+  Bash `pwd` to get the project root, then append `skills/momentum/skills/canvas/`.
+  Example: if pwd = /Users/steve/projects/momentum, then abs-path = /Users/steve/projects/momentum/skills/momentum/skills/canvas
+  Run:
+    cmux respawn-pane --surface <services-pane> --command "cd <abs-path-to-canvas> && bun --hot server.tsx"
+  Poll port readiness: retry lsof check up to 10 times with 1s delay.
+  If server does not come up within 10s → output error and halt.
+
+Step 3 — Open browser
+  Run:
+    cmux browser open "http://localhost:3456"
+  If cmux is unavailable → output: "Server running at http://localhost:3456 — open in browser manually."
+```
+
+For finding the services pane surface ID: the workflow should run `cmux list-panes` and find the pane named "services". If not found, create a new split down from the current pane and rename it "services". The invoker must not hardcode a surface ID.
+
+### server.tsx Implementation Notes
+
+- Use Hono's JSX renderer (`hono/jsx`) for all HTML — no template strings
+- Design tokens are CSS custom properties on `:root`; no inline styles
+- The meta hash line: run `git rev-parse --short HEAD` via Bun's `$` shell tag — handle the case where git is unavailable (use "no-git" fallback)
+- The current date: use `new Date().toISOString().slice(0,10)` (YYYY-MM-DD)
+- Google Fonts CDN preconnect + stylesheet `<link>` tags for Inter, Source Serif 4, JetBrains Mono
+- HTMX CDN: `<script src="https://unpkg.com/htmx.org@2" defer></script>` in `<head>`
+- Lens placeholder divs: use `id="lens-features"`, `id="lens-sprint"`, `id="lens-cycle"` — these are the hook points for Phase 2 HTMX attributes
+- No external CSS files — all styles inline in the Hono JSX response
+
+**Reference design:** `/tmp/momentum-design/feature-status/project/Momentum Cycle - Final.html` (Pass 10 prototype). Match the shell structure: dark background, header strip, breadcrumb bar, three lens column layout. Exact pixel fidelity is not required for Phase 1 — structural and color fidelity is.
+
+### Feature-Status Decommission Notes
+
+The `feature-status` skill currently:
+- Generates a static HTML file at `.claude/momentum/feature-status.html`
+- Writes a cache file at `.claude/momentum/feature-status.md`
+- Opens the file via `cmux browser open "file://..."`
+
+Decommission strategy:
+- Replace `skills/momentum/skills/feature-status/SKILL.md` with a one-line redirect: the description becomes "Deprecated — use momentum:canvas instead." The workflow.md body becomes a single instruction: "This skill is deprecated. Run `/momentum:canvas` instead. Output that message and halt."
+- Do NOT delete the directory — the evals and workflow may be referenced in git history and other stories.
+- In `plugin.json`: change the `feature-status` entry description to "(deprecated — use canvas)" and add the `canvas` entry.
 
 ### Testing Requirements
 
-<!-- DRAFT: Testing requirements have not been defined for this story. -->
+This story produces two change types: `skill-instruction` (SKILL.md, workflow.md, server.tsx) and `script-code` (server.tsx is a Bun/TypeScript file). The primary verification is EDD for the skill invoker and functional verification for Gate 1.
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**For the skill invoker (workflow.md):**
+- EDD evals (Task 3) are the primary test. Run each eval as described in the Momentum Implementation Guide below.
+- Two eval scenarios: server not running (port closed) → skill starts server then opens browser; server already running (port open) → skill skips start and goes directly to browser open.
 
-### Implementation Guide
+**For server.tsx:**
+- No unit tests — this is a Bun server rendered in a browser. Verification is visual (Gate 1 check, Task 5).
+- Confirm: `curl -s http://localhost:3456/ | grep "Momentum Cycle"` returns a match after start.
+- Confirm: `curl -s http://localhost:3456/ | grep "hx-"` returns empty (no HTMX attributes in Phase 1).
+- Confirm: page source includes all four CDN resource loads (Google Fonts for 3 families + HTMX).
 
-<!-- DRAFT: No implementation guide has been generated. Create-story will inject
-     Momentum-specific guidance based on change-type classification. -->
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**For the decommission (Task 4):**
+- After plugin.json update, confirm `canvas` is registered and `feature-status` is marked deprecated.
+- Confirm `bun` is available on the developer's PATH before attempting server start; if not, output a clear error with install instruction.
 
 ### Project Structure Notes
 
-<!-- DRAFT: File paths, skill directories, and structural alignment have not been
-     analyzed. Create-story will populate this based on the relevant epic and
-     existing codebase structure. -->
+The `canvas` skill is a new skill under `skills/momentum/skills/`. It follows the standard Momentum skill structure (`SKILL.md`, `workflow.md`, `evals/`). The `server.tsx` file is a non-standard addition — it lives alongside SKILL.md and workflow.md, not in a `scripts/` subdirectory, because it is run directly by Bun as a top-level entry point (not invoked by another script).
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+The `feature-status` skill directory remains at `skills/momentum/skills/feature-status/` but its SKILL.md and workflow.md are replaced with deprecation stubs. The `evals/` subdirectory and the original workflow.md are preserved for reference.
 
 ### References
 
-- Reference design: `/tmp/momentum-design/feature-status/project/Momentum Cycle - Final.html`
+- DEC-019: `_bmad-output/planning-artifacts/decisions/dec-019-hono-htmx-bun-canvas-runtime-stack-2026-05-03.md`
+- DEC-011 (D1, D3 still in force): `_bmad-output/planning-artifacts/decisions/dec-011-project-canvas-implementation-foundations-2026-04-24.md`
+- Reference design (Pass 10): `/tmp/momentum-design/feature-status/project/Momentum Cycle - Final.html`
+- Feature record: `_bmad-output/planning-artifacts/features.json` → key `momentum-canvas`
 - Source: triage — conversation (design review session, 10-pass claude.ai/design prototype approved)
 
+## Momentum Implementation Guide
+
+**Change Types in This Story:**
+- Tasks 1 (SKILL.md/workflow.md portions), 3, 4.1 → `skill-instruction` (SKILL.md, workflow.md, evals, deprecation stubs in existing skill)
+- Task 1 (server.tsx only), Task 5 → `script-code` (Bun/TypeScript server file, verification scripts)
+  *(Task 1 splits by file type: the SKILL.md/workflow.md portions are skill-instruction; server.tsx is script-code)*
+- Task 4.2, 4.3 → `config-structure` (plugin.json registry update and version bump)
+
+---
+
+### skill-instruction Tasks: Eval-Driven Development (EDD)
+
+**Do NOT use TDD for SKILL.md or workflow.md files.** Skill instructions are non-deterministic LLM prompts — unit tests do not apply. Use EDD:
+
+**Before writing SKILL.md and workflow.md:**
+1. Write 2 behavioral evals in `skills/momentum/skills/canvas/evals/`:
+   - `eval-canvas-opens-server-when-not-running.md`: Scenario — port 3456 is not listening when the developer runs `/momentum:canvas`. Expected: the skill performs a port check (lsof or equivalent), starts the server in the cmux services pane via respawn-pane with `bun --hot server.tsx`, then opens `http://localhost:3456` in the cmux viewer pane.
+   - `eval-canvas-skips-start-when-already-running.md`: Scenario — port 3456 is already listening when the developer runs `/momentum:canvas`. Expected: the skill performs a port check (lsof or equivalent), determines the server is already running, skips the respawn-pane step entirely, and opens `http://localhost:3456` in the cmux viewer pane directly.
+
+**Then implement:**
+2. Write SKILL.md and workflow.md per the Skill Invoker Workflow notes above.
+
+**Then verify:**
+3. Run evals: spawn a subagent per eval, provide the eval scenario + SKILL.md + workflow.md content as context. Observe whether the subagent's behavior matches the expected outcome.
+4. All evals pass → task complete. Any failure → diagnose, revise, re-run (max 3 cycles; surface to user if still failing).
+
+**NFR compliance — mandatory:**
+- SKILL.md `description` field must be ≤150 characters (NFR1)
+- `model: claude-sonnet-4-6` and `effort: low` frontmatter fields must be present (FR23)
+- SKILL.md body must stay under 500 lines / 5000 tokens; overflow goes in `references/` with load instructions (NFR3)
+- Skill name uses `momentum:` namespace prefix — `canvas` (NFR12)
+
+**Additional DoD items for skill-instruction tasks:**
+- [ ] 2+ behavioral evals written in `skills/momentum/skills/canvas/evals/`
+- [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
+- [ ] SKILL.md description ≤150 characters confirmed (count the actual characters)
+- [ ] `model:` and `effort:` frontmatter present and correct
+- [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed
+
+**Gherkin separation reminder:** Gherkin `.feature` files may exist in the sprint's `specs/` directory. The dev agent implements against the plain English ACs in this story file only — never against `.feature` files (Decision 30 black-box separation). The `.feature` files are for acceptance test verification after implementation, not as a coding guide.
+
+---
+
+### script-code Tasks: TDD via bmad-dev-story
+
+`server.tsx` is a Bun/TypeScript file — standard code, not an LLM instruction. TDD applies:
+
+1. **Red:** Before writing server.tsx, write a functional check: `curl -s http://localhost:3456/ | grep "Momentum Cycle"` should fail (server not yet running).
+2. **Green:** Implement server.tsx. Start with `bun --hot server.tsx`. Confirm the curl check now passes.
+3. **Refactor:** Ensure all design tokens, font loads, HTMX wiring, and lens placeholders are present per the ACs.
+
+Additional script-code checks (run after server is up):
+- `curl -s http://localhost:3456/ | grep "htmx"` — confirms HTMX CDN tag is present
+- `curl -s http://localhost:3456/ | grep "lens-features"` — confirms placeholder div IDs
+- `curl -s http://localhost:3456/ | grep "JetBrains"` — confirms font load
+
+**DoD items for script-code tasks:**
+- [ ] Server starts cleanly with `bun --hot server.tsx` (no compile errors)
+- [ ] curl smoke tests pass: Momentum Cycle header, HTMX CDN, lens placeholder IDs, JetBrains Mono font
+- [ ] Gate 1 (DEC-019) verified: port-check idempotent, server opens in cmux viewer pane
+
+---
+
+### config-structure Tasks: Direct Implementation
+
+Plugin.json changes need no tests or evals. Implement directly and verify by inspection:
+
+1. Add `canvas` entry to the skills registry in `plugin.json`.
+2. Update (do not remove) `feature-status` entry — change description to "(deprecated — use /momentum:canvas)".
+3. Bump version (patch increment).
+4. Validate: `jq . skills/momentum/.claude-plugin/plugin.json` must exit 0.
+
+**DoD items for config-structure tasks:**
+- [ ] `plugin.json` parses without error (validated with jq)
+- [ ] `canvas` skill registered in plugin.json
+- [ ] `feature-status` entry updated to deprecated state (not removed)
+- [ ] Plugin version bumped
+
 ## Dev Agent Record
-
-<!-- DRAFT: This section is populated only during and after development. It is empty
-     because this story has not been through create-story or development yet. -->
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
 
 ### Agent Model Used
 

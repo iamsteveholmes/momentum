@@ -1,0 +1,1706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 5 · Sprint + Navigation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #e9e6df;
+    font-family: "Inter", system-ui, sans-serif;
+    color: #1e1d1a;
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+  .canvas { min-width: 2600px; padding: 64px 80px 240px; }
+  .canvas-title {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 34px; font-weight: 400; letter-spacing: -0.4px;
+  }
+  .canvas-sub {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px; letter-spacing: 0.4px;
+    color: #8a8678; text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .canvas-intro {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.65; color: #5a574f;
+    max-width: 68ch; margin-top: 20px;
+  }
+  .row {
+    display: flex; align-items: flex-start; gap: 60px;
+    margin-top: 72px;
+  }
+  .stack { display: flex; flex-direction: column; gap: 18px; }
+  .artboard-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 1.2px;
+    color: #8a8678; text-transform: uppercase;
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 2px;
+  }
+  .artboard-label .num { color: #5863a8; font-weight: 500; }
+  .artboard-title {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px; font-weight: 400; letter-spacing: -0.3px;
+    color: #1e1d1a;
+  }
+  .artboard-caption {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px; line-height: 1.55; color: #5a574f;
+    max-width: 60ch;
+  }
+
+  /* ─────────────── Pane shell ─────────────── */
+  .pane-outer {
+    width: 712px; background: #2a2824;
+    border-radius: 8px; padding: 6px;
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.35),
+                0 6px 18px -6px rgba(0,0,0,0.2);
+  }
+  .pane-chrome {
+    height: 26px; display: flex; align-items: center; gap: 8px;
+    padding: 0 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: rgba(240,238,233,0.5);
+    letter-spacing: 0.3px;
+  }
+  .pane-chrome .tl { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .pane-inner {
+    width: 700px; background: #fbfaf7;
+    border: 1px solid #e7e3d9;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pane-inner.dark { background: #16140f; border-color: rgba(255,252,245,0.10); }
+
+  .rail {
+    position: absolute; top: 0; left: 0; width: 52px; height: 100%;
+    background: #f5f3ed;
+    border-right: 1px solid #e7e3d9;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 18px 0; z-index: 3;
+  }
+  .rail.dark { background: #1e1b15; border-right-color: rgba(255,252,245,0.10); }
+  .rail .brand {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.5px; margin-bottom: 18px;
+    color: #1e1d1a;
+  }
+  .rail.dark .brand { color: #f0eee9; }
+  .rail .divider { width: 1px; height: 28px; background: #e7e3d9; margin-bottom: 10px; }
+  .rail.dark .divider { background: rgba(255,252,245,0.10); }
+  .rail .item {
+    padding: 10px 0; width: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    border-left: 2px solid transparent;
+  }
+  .rail .item.active { border-left-color: #5863a8; }
+  .rail .item .n {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: #b5b0a2; letter-spacing: 0.4px;
+  }
+  .rail.dark .item .n { color: rgba(240,238,233,0.48); }
+  .rail .item.active .n { color: #5863a8; }
+  .rail .item .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #5a574f;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    letter-spacing: 0.5px;
+  }
+  .rail.dark .item .lbl { color: rgba(240,238,233,0.70); }
+  .rail .item.active .lbl { color: #5863a8; font-weight: 500; }
+
+  .pane-body { padding-left: 52px; }
+  .pane-header {
+    border-bottom: 1px solid #e7e3d9;
+    padding: 12px 24px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .dark .pane-header { border-bottom-color: rgba(255,252,245,0.10); }
+  .pane-header .t {
+    font-family: "Source Serif 4", Georgia, serif; font-size: 15px;
+    color: #1e1d1a; letter-spacing: -0.1px;
+  }
+  .dark .pane-header .t { color: #f0eee9; }
+  .pane-header .m {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #b5b0a2; letter-spacing: 0.3px;
+  }
+  .dark .pane-header .m { color: rgba(240,238,233,0.48); }
+
+  .lens-section { padding: 32px 24px 48px; }
+  .lens-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .lens-header .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    letter-spacing: 1.4px; text-transform: uppercase;
+    color: rgba(40,30,20,0.45);
+  }
+  .dark .lens-header .tag { color: rgba(240,238,233,0.48); }
+  .lens-header .rule { flex: 1; height: 1px; background: #e7e3d9; }
+  .dark .lens-header .rule { background: rgba(255,252,245,0.10); }
+
+  /* ─────────────── Post-its ─────────────── */
+  .postit {
+    width: 300px;
+    background: #fef6d0;
+    padding: 20px 22px 22px;
+    font-family: "Caveat", "Source Serif 4", cursive;
+    font-size: 17px; line-height: 1.45;
+    color: #3d2f1a;
+    box-shadow:
+      0 1px 1px rgba(0,0,0,0.05),
+      0 14px 30px -14px rgba(0,0,0,0.25),
+      0 4px 8px -4px rgba(0,0,0,0.12);
+    transform: rotate(-1.2deg);
+    position: relative;
+  }
+  .postit.r { transform: rotate(0.8deg); }
+  .postit.b { background: #dfe7ef; transform: rotate(-0.6deg); }
+  .postit.g { background: #e0eadf; transform: rotate(1deg); }
+  .postit .h {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(61,47,26,0.6);
+    margin-bottom: 10px;
+    display: block;
+  }
+  .postit .bullet { display: block; margin-top: 8px; }
+  .postit strong { font-weight: 500; }
+
+  /* ─────────────── Badges & primitives ─────────────── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px 2px 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.2px;
+    border-radius: 3px; white-space: nowrap;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge.working     { color: #2a5a42; background: rgba(62,122,90,0.08); }
+  .badge.working .dot     { background: #3e7a5a; box-shadow: 0 0 0 2px rgba(62,122,90,0.08); }
+  .badge.partial     { color: #7a5e1a; background: rgba(168,131,40,0.09); }
+  .badge.partial .dot     { background: #a88328; box-shadow: 0 0 0 2px rgba(168,131,40,0.09); }
+  .badge.not-working { color: #7a3a3a; background: rgba(168,82,82,0.09); }
+  .badge.not-working .dot { background: #a85252; box-shadow: 0 0 0 2px rgba(168,82,82,0.09); }
+  .badge.not-started { color: #5a5a5a; background: rgba(138,138,138,0.09); }
+  .badge.not-started .dot { background: #8a8a8a; box-shadow: 0 0 0 2px rgba(138,138,138,0.09); }
+  .badge.done        { color: #556555; background: rgba(106,122,106,0.06); opacity: 0.75; border-color: transparent; }
+  .badge.done .dot        { background: #6a7a6a; opacity: 0.7; }
+
+  /* Outcome-specific badges (not in original palette, but same chroma family) */
+  .badge.validated   { color: #556555; background: rgba(106,122,106,0.06); opacity: 0.72; border-color: transparent; }
+  .badge.validated .dot   { background: #6a7a6a; opacity: 0.7; }
+  .badge.failed      { color: #7a3a3a; background: rgba(168,82,82,0.09); }
+  .badge.failed .dot      { background: #a85252; box-shadow: 0 0 0 2px rgba(168,82,82,0.09); }
+  .badge.blocked     { color: #7a5e1a; background: rgba(168,131,40,0.09); }
+  .badge.blocked .dot     { background: #a88328; box-shadow: 0 0 0 2px rgba(168,131,40,0.09); }
+  .badge.in-progress { color: #2a4a7a; background: rgba(88,99,168,0.09); }
+  .badge.in-progress .dot { background: #5863a8; box-shadow: 0 0 0 2px rgba(88,99,168,0.09); }
+
+  .gap-flag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 7px 2px 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; font-weight: 500;
+    color: #a85a2a; letter-spacing: 0.2px;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .gap-flag.prominent { background: rgba(168,90,42,0.09); border: 1px solid rgba(168,90,42,0.18); }
+  .gap-flag svg { display: inline-block; }
+
+  .frac {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px; color: #5a574f; letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .frac .slash { color: #b5b0a2; margin: 0 1px; }
+  .frac .lbl { color: #b5b0a2; margin-left: 4px; }
+
+  /* ─────────────── Sprint lens redesign ─────────────── */
+  .sprint-head-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-top: 8px; gap: 12px;
+  }
+  .sprint-key {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px; letter-spacing: -0.25px; font-weight: 400;
+    color: #1e1d1a;
+  }
+  .sprint-meta-mono {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #b5b0a2; letter-spacing: 0.3px; white-space: nowrap;
+  }
+  .sprint-goal {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.6; color: #1e1d1a;
+    margin-top: 10px; max-width: 58ch;
+  }
+
+  /* Lifecycle + closure strip */
+  .closure-strip {
+    margin-top: 20px;
+    border: 1px solid #e7e3d9;
+    padding: 14px 16px;
+    background: #fbfaf7;
+  }
+  .closure-strip.active {
+    border-left: 2px solid #5863a8;
+  }
+  .closure-strip.needs-action {
+    border-left: 2px solid #a85a2a;
+  }
+  .closure-row {
+    display: flex; align-items: center; gap: 8px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    letter-spacing: 0.3px; color: #5a574f;
+    flex-wrap: wrap;
+  }
+  .closure-step {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px 2px 7px;
+    border-radius: 3px;
+    font-size: 10.5px;
+  }
+  .closure-step .sdot { width: 6px; height: 6px; border-radius: 50%; }
+  .closure-step.done { color: #556555; background: rgba(106,122,106,0.06); }
+  .closure-step.done .sdot { background: #6a7a6a; opacity: 0.75; }
+  .closure-step.active { color: #2a4a7a; background: rgba(88,99,168,0.09); }
+  .closure-step.active .sdot { background: #5863a8; }
+  .closure-step.pending { color: #a85a2a; background: rgba(168,90,42,0.09); border: 1px solid rgba(168,90,42,0.18); }
+  .closure-step.pending .sdot { background: #a85a2a; }
+  .closure-step.na { color: #8a8678; background: transparent; }
+  .closure-step.na .sdot { background: #b5b0a2; }
+  .closure-arrow { color: #b5b0a2; margin: 0 2px; }
+  .closure-label {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    color: #8a8678; margin-right: 10px;
+  }
+
+  /* Lifecycle chip (state) */
+  .lifecycle-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px 2px 7px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.2px;
+    color: #2a4a7a; background: rgba(88,99,168,0.09);
+    border-radius: 3px;
+  }
+  .lifecycle-chip .sdot { width: 6px; height: 6px; border-radius: 50%; background: #5863a8; }
+
+  /* Outcome bands */
+  .outcome-band { margin-top: 22px; }
+  .band-hdr {
+    display: flex; align-items: baseline; gap: 10px;
+    padding-bottom: 6px; margin-bottom: 4px;
+    border-bottom: 1px solid #e7e3d9;
+  }
+  .band-hdr .lbl {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase;
+  }
+  .band-hdr.attention .lbl { color: #a85a2a; }
+  .band-hdr.active .lbl { color: #5863a8; }
+  .band-hdr.terminal .lbl { color: #8a8678; }
+  .band-hdr .n {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #b5b0a2; letter-spacing: 0.3px;
+  }
+  .band-hdr .hint {
+    margin-left: auto;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic; font-size: 12px; color: #8a8678;
+  }
+
+  .story-row {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid #e7e3d9;
+  }
+  .story-row.terminal { opacity: 0.62; }
+  .story-row .title {
+    font-family: "Inter", sans-serif; font-size: 13px;
+    color: #1e1d1a; line-height: 1.35;
+  }
+  .story-row.terminal .title { color: #5a574f; }
+  .story-row.partial-row .title {
+    display: flex; align-items: baseline; gap: 8px;
+  }
+
+  .blocked-row {
+    padding: 10px 0; border-bottom: 1px solid #e7e3d9;
+  }
+  .blocked-row .top {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 10px;
+  }
+  .blocked-row .title {
+    font-family: "Inter", sans-serif; font-size: 13px; color: #1e1d1a;
+  }
+  .blocked-row .reason {
+    margin-top: 6px;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12.5px; line-height: 1.55; color: #5a574f;
+    max-width: 56ch;
+  }
+
+  /* Recent sprints strip */
+  .recent-strip {
+    margin-top: 28px;
+    border: 1px solid #e7e3d9;
+  }
+  .recent-row {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e7e3d9;
+    display: grid; grid-template-columns: 1fr auto; gap: 12px;
+    opacity: 0.86;
+  }
+  .recent-row:last-child { border-bottom: none; }
+  .recent-row .key {
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    font-weight: 500; color: #1e1d1a; letter-spacing: 0.3px;
+  }
+  .recent-row .goal {
+    font-family: "Inter", sans-serif; font-size: 12px;
+    color: #5a574f; margin-top: 2px; line-height: 1.4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .recent-row .meta {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #8a8678; letter-spacing: 0.3px;
+    text-align: right; line-height: 1.55; white-space: nowrap;
+  }
+
+  /* ─────────────── Flywheel ─────────────── */
+  .fly-hero {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px; letter-spacing: -0.25px; font-weight: 400;
+    line-height: 1.25; margin-top: 6px; color: #1e1d1a;
+  }
+  .fly-sub {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14.5px; line-height: 1.6; color: #5a574f;
+    margin-top: 8px; max-width: 58ch;
+  }
+  .fly-counts {
+    display: flex; gap: 18px; margin-top: 14px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    letter-spacing: 0.3px; color: #5a574f;
+  }
+  .fly-counts .awaiting { color: #a85a2a; }
+  .fly-counts .sep { color: #b5b0a2; }
+
+  .spine {
+    display: grid; grid-template-columns: 72px 1fr;
+    column-gap: 14px;
+  }
+  .spine-col {
+    position: relative; padding-top: 18px;
+  }
+  .spine-col .line {
+    position: absolute; left: 10px; width: 1px;
+    background: #d4cfc2; top: 0; bottom: 0;
+  }
+  .spine-col.first .line { top: 28px; }
+  .spine-col.last .line { bottom: 30px; }
+  .spine-col .node {
+    position: absolute; left: 4px; top: 24px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #fbfaf7;
+    border: 2px solid #d4cfc2;
+  }
+  .spine-col .node.active { background: #5863a8; border-color: #5863a8; }
+  .spine-col .meta { padding-left: 24px; padding-top: 16px; }
+  .spine-col .meta .k {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #5a574f; letter-spacing: 0.3px; font-weight: 500;
+  }
+  .spine-col .meta.active .k { color: #5863a8; }
+  .spine-col .meta .d {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: #b5b0a2; letter-spacing: 0.3px; margin-top: 2px; line-height: 1.3;
+  }
+
+  .findings-col { padding-top: 18px; padding-bottom: 16px; }
+
+  .finding-card {
+    margin-bottom: 16px; padding: 12px 14px;
+    background: #fbfaf7;
+    border: 1px solid #e7e3d9;
+    border-left: 3px solid rgba(88,99,168,0.22);
+  }
+  .finding-card.recurring { border-left-color: #a85a2a; }
+  .finding-card .hdr {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 8px; margin-bottom: 6px;
+  }
+  .finding-card .tag {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #8a8678;
+  }
+  .finding-card .meta {
+    font-family: "JetBrains Mono", monospace; font-size: 9.5px;
+    color: #8a8678; letter-spacing: 0.3px;
+  }
+  .finding-card .meta.recurring { color: #a85a2a; }
+  .finding-card .label {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; font-weight: 500; color: #1e1d1a;
+    line-height: 1.35; margin-bottom: 8px;
+  }
+  .finding-card .chain {
+    display: grid; row-gap: 3px;
+  }
+  .chain-link {
+    display: grid; grid-template-columns: 14px 48px 1fr auto;
+    align-items: baseline; column-gap: 8px; padding: 3px 0;
+  }
+  .chain-link .arr { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #b5b0a2; }
+  .chain-link .t {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 0.4px; text-transform: uppercase; color: #8a8678;
+  }
+  .chain-link .t.skill { color: #5863a8; }
+  .chain-link .lbl {
+    font-family: "Inter", sans-serif; font-size: 12.5px; color: #1e1d1a;
+    line-height: 1.4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .chain-link .met {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #b5b0a2; letter-spacing: 0.3px;
+  }
+
+  .triage-line {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #e7e3d9;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.3px;
+    color: #5a574f;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .triage-line .sdot { width: 6px; height: 6px; border-radius: 50%; }
+  .triage-line.awaiting { color: #a85a2a; }
+  .triage-line.awaiting .sdot { background: #a85a2a; }
+  .triage-line.done .sdot { background: #6a7a6a; opacity: 0.8; }
+  .triage-line.distilled .sdot { background: #5863a8; }
+  .triage-line .triage-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase;
+    color: #8a8678; margin-right: 4px;
+  }
+  .triage-line.awaiting .triage-tag { color: #a85a2a; }
+
+  /* ─────────────── Drill-down nav diagram ─────────────── */
+  .nav-pair {
+    display: flex; gap: 40px; align-items: flex-start;
+    position: relative;
+  }
+  .nav-pair .arrow {
+    position: absolute;
+    top: 340px; left: 720px; width: 40px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace; font-size: 18px; color: #5863a8;
+  }
+  .frame-cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #8a8678;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .frame-cap .state-dot { width: 7px; height: 7px; border-radius: 50%; background: #5863a8; }
+
+  /* Features list for drill-down */
+  .feat-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center; gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e7e3d9;
+  }
+  .feat-row.hover {
+    background: rgba(88,99,168,0.04);
+    margin: 0 -12px; padding: 14px 12px;
+  }
+  .feat-row .name {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15.5px; color: #1e1d1a;
+    line-height: 1.3;
+  }
+  .feat-row .desc {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px; color: #5a574f; margin-top: 3px;
+    line-height: 1.45;
+  }
+  .feat-row .open {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #5863a8; letter-spacing: 0.4px;
+  }
+  .type-band {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #8a8678;
+    padding: 12px 0 6px;
+  }
+
+  /* ─────────────── Level-2 detail ─────────────── */
+  .l2-crumb {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: #8a8678; letter-spacing: 0.3px;
+    padding: 14px 24px 8px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #e7e3d9;
+  }
+  .l2-crumb .back {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: #5863a8; cursor: pointer;
+  }
+  .l2-crumb .sep { color: #b5b0a2; }
+  .l2-crumb .here { color: #5a574f; }
+
+  .l2-body { padding: 24px 28px 48px; }
+  .l2-meta {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .l2-meta .type-tag {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #8a8678;
+  }
+  .l2-name {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 26px; line-height: 1.2; font-weight: 400;
+    letter-spacing: -0.3px; color: #1e1d1a;
+    margin: 4px 0 10px;
+  }
+  .l2-desc {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15.5px; line-height: 1.55; color: #5a574f;
+    font-style: italic;
+    max-width: 62ch;
+  }
+
+  .l2-accept {
+    margin-top: 26px;
+    border: 1px solid #d4cfc2;
+    padding: 16px 18px;
+    background: #fbfaf7;
+    position: relative;
+  }
+  .l2-accept .cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #8a8678;
+    margin-bottom: 8px;
+  }
+  .l2-accept .body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px; line-height: 1.55; color: #1e1d1a;
+    padding-left: 8px;
+    border-left: 2px solid #e7e3d9;
+  }
+  .l2-accept .body code {
+    font-family: "JetBrains Mono", monospace; font-size: 12.5px;
+    background: #f5f3ed; padding: 1px 5px; border-radius: 2px;
+  }
+
+  .l2-narrative-cap {
+    margin-top: 36px; margin-bottom: 12px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #8a8678;
+  }
+  .l2-narrative p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px; line-height: 1.65; color: #1e1d1a;
+    max-width: 68ch; margin: 0 0 18px;
+    text-wrap: pretty;
+  }
+
+  .l2-context {
+    margin-top: 32px; padding: 14px 16px 14px 18px;
+    background: rgba(88,99,168,0.04);
+    border-left: 2px solid rgba(88,99,168,0.35);
+  }
+  .l2-context .cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #5863a8;
+    margin-bottom: 6px;
+  }
+  .l2-context p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14.5px; line-height: 1.6; color: #1e1d1a;
+    margin: 0; max-width: 62ch;
+  }
+
+  .l2-stories {
+    margin-top: 36px;
+  }
+  .l2-stories .cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #8a8678;
+    margin-bottom: 10px;
+  }
+  .l2-story {
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid #e7e3d9;
+    cursor: pointer;
+  }
+  .l2-story:hover { background: rgba(88,99,168,0.03); margin: 0 -8px; padding: 10px 8px; }
+  .l2-story .t {
+    font-family: "Inter", sans-serif; font-size: 13.5px; color: #1e1d1a;
+    line-height: 1.4;
+  }
+
+  .l2-gap {
+    margin-top: 36px;
+    padding: 18px 20px;
+    background: rgba(168,90,42,0.06);
+    border-left: 2px solid #a85a2a;
+  }
+  .l2-gap .hdr {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .l2-gap .cap {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    letter-spacing: 1.3px; text-transform: uppercase; color: #a85a2a;
+  }
+  .l2-gap p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14.5px; line-height: 1.6; color: #3d2a1a;
+    margin: 0; max-width: 62ch;
+  }
+
+  .l2-drift {
+    margin-top: 28px;
+    padding: 10px 14px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    letter-spacing: 0.3px; color: #5a574f;
+    background: #f5f3ed; border-left: 2px solid #d4cfc2;
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas">
+  <div class="canvas-title">Feature Status — Pass 5</div>
+  <div class="canvas-sub">sprint lens redesign · flywheel triage · drill-down nav · level-2 detail</div>
+  <p class="canvas-intro">
+    Pass 4 put three lenses in a single 700px cmux pane. Pass 5 fixes the Sprint lens
+    (lifecycle + outcome, not activity), adds triage status to Flywheel findings,
+    and designs the drill-down navigation and Level-2 feature detail view.
+    Features lens is not re-shown — it's locked.
+  </p>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 1 — SPRINT LENS REDESIGN
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row">
+    <div class="stack">
+      <div>
+        <div class="artboard-label"><span class="num">01</span><span>sprint lens — redesign</span></div>
+        <div class="artboard-title">Lifecycle + outcome, not activity</div>
+        <div class="artboard-caption">
+          Two questions only: where is the sprint in its lifecycle, and did each story
+          land cleanly. Gate chips, health bar, and activity bands are gone.
+          The retro → triage closure signal lives up top where it belongs.
+        </div>
+      </div>
+
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:10px">cmux · feature-status</span>
+          <span style="margin-left:auto">pane · 700px</span>
+        </div>
+        <div class="pane-inner">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item active"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+          </div>
+
+          <div class="pane-body">
+            <div class="pane-header">
+              <span class="t">Feature Status</span>
+              <span class="m">generated · 2026-04-22 09:14 · hash 7f3a·c8e1</span>
+            </div>
+
+            <section class="lens-section">
+              <div class="lens-header">
+                <span class="tag">02 · Sprints</span>
+                <span class="rule"></span>
+              </div>
+
+              <div class="sprint-head-row">
+                <div>
+                  <div class="sprint-key">sprint-2026-04-22</div>
+                  <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+                    <span class="lifecycle-chip"><span class="sdot"></span>active</span>
+                    <span class="sprint-meta-mono">started 2026-04-22 · ~2 weeks horizon</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sprint-goal">
+                Close the flywheel loop — make retro findings compound across sprints
+                instead of dying in a markdown file.
+              </div>
+
+              <!-- Closure signal — top of lens -->
+              <div class="closure-strip active">
+                <div class="closure-row">
+                  <span class="closure-label">closure</span>
+                  <span class="closure-step na"><span class="sdot"></span>retro · not yet due</span>
+                  <span class="closure-arrow">→</span>
+                  <span class="closure-step na"><span class="sdot"></span>triage · not yet due</span>
+                  <span style="margin-left:auto; font-family:'Source Serif 4',serif; font-style:italic; font-size:12px; color:#8a8678;">
+                    sprint still active
+                  </span>
+                </div>
+              </div>
+
+              <!-- Outcome bands -->
+              <div class="outcome-band">
+                <div class="band-hdr attention">
+                  <span class="lbl">blocked</span>
+                  <span class="n">1</span>
+                  <span class="hint">waiting on something</span>
+                </div>
+                <div class="blocked-row">
+                  <div class="top">
+                    <span class="title">Flywheel Workflow Explains Issues and Guides Upstream Trace</span>
+                    <span class="gap-flag prominent">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M5 1.2L9 8.4H1L5 1.2z" stroke="#a85a2a" stroke-width="1.1" stroke-linejoin="round"/><circle cx="5" cy="6.6" r="0.6" fill="#a85a2a"/></svg>
+                      blocked
+                    </span>
+                  </div>
+                  <div class="reason">
+                    Waits on ledger store schema — can't wire upstream trace without a place
+                    to read findings from.
+                  </div>
+                </div>
+              </div>
+
+              <div class="outcome-band">
+                <div class="band-hdr active">
+                  <span class="lbl">in progress</span>
+                  <span class="n">3</span>
+                  <span class="hint">work happening now</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">Cross-Story Pattern Detection</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">Findings Ledger Accumulates Quality Findings</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+                <div class="story-row">
+                  <span class="title">AVFL Fixer Required Gate</span>
+                  <span class="badge in-progress"><span class="dot"></span>in progress</span>
+                </div>
+              </div>
+
+              <div class="outcome-band">
+                <div class="band-hdr terminal">
+                  <span class="lbl">validated</span>
+                  <span class="n">2</span>
+                  <span class="hint">merged · gates passed</span>
+                </div>
+                <div class="story-row terminal">
+                  <span class="title">Retro → Triage Handoff</span>
+                  <span class="badge validated"><span class="dot"></span>validated</span>
+                </div>
+                <div class="story-row terminal">
+                  <span class="title">Sprint Boundary Compression</span>
+                  <span class="badge validated"><span class="dot"></span>validated</span>
+                </div>
+              </div>
+
+              <!-- Recent sprints strip -->
+              <div style="margin-top: 36px;">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.3px; text-transform:uppercase; color:#8a8678; margin-bottom:10px;">
+                  recent · last 3
+                </div>
+                <div class="recent-strip">
+                  <div class="recent-row">
+                    <div>
+                      <div class="key">sprint-2026-04-08</div>
+                      <div class="goal">Tighten sprint-boundary compression and retro triage.</div>
+                    </div>
+                    <div class="meta">
+                      Apr 8 – Apr 21 · 5 merged<br>
+                      3 findings<br>
+                      <span style="color:#a85a2a;">retro done · triage pending</span>
+                    </div>
+                  </div>
+                  <div class="recent-row">
+                    <div>
+                      <div class="key">sprint-2026-03-25</div>
+                      <div class="goal">Feature grooming skill + status visibility.</div>
+                    </div>
+                    <div class="meta">
+                      Mar 25 – Apr 7 · 4 merged<br>
+                      5 findings<br>
+                      <span style="color:#556555;">closed</span>
+                    </div>
+                  </div>
+                  <div class="recent-row">
+                    <div>
+                      <div class="key">sprint-2026-03-11</div>
+                      <div class="goal">AVFL scan profile lands as required gate.</div>
+                    </div>
+                    <div class="meta">
+                      Mar 11 – Mar 24 · 6 merged<br>
+                      2 findings<br>
+                      <span style="color:#556555;">closed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack" style="padding-top: 80px;">
+      <div class="postit">
+        <span class="h">01 · sprint lens</span>
+        What was cut: gate health bar, per-story gate chips, in-wave/merged/blocked
+        activity bands, "advances ↗ features." All activity noise.
+        <span class="bullet">
+          What replaced it: <strong>outcome bands</strong> (blocked, in&nbsp;progress,
+          validated) and a <strong>closure strip</strong> up top.
+        </span>
+      </div>
+      <div class="postit r">
+        <span class="h">closure — chosen shape</span>
+        Two-step indicator: <strong>retro → triage</strong>. Each step is done,
+        active, pending (terracotta), or not-yet-due.
+        <span class="bullet">
+          Picked this over a single "closure" badge because the two steps have
+          distinct states and the developer needs to see which one is outstanding.
+        </span>
+      </div>
+      <div class="postit b">
+        <span class="h">outcome band order</span>
+        Top-down: <strong>blocked → in&nbsp;progress → validated</strong>.
+        Most actionable at the top. Terminal validated sinks to the bottom at
+        62% opacity.
+        <span class="bullet">
+          <strong>Assumption:</strong> "partial" and "failed" outcomes render as
+          their own bands between blocked and in-progress when they exist. Not
+          present in this sprint's data.
+        </span>
+      </div>
+      <div class="postit g">
+        <span class="h">recent strip</span>
+        Closure state is the only colored meta. "retro done · triage pending"
+        renders terracotta — it's the open loop. "closed" renders the quiet
+        terminal green-gray.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 2 — FLYWHEEL + TRIAGE
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row">
+    <div class="stack">
+      <div>
+        <div class="artboard-label"><span class="num">02</span><span>flywheel — triage additions</span></div>
+        <div class="artboard-title">The open-loop signal</div>
+        <div class="artboard-caption">
+          Structure unchanged. Each finding card gets a triage status line below
+          its chain. The header counts extend: <em>findings · triaged · awaiting triage</em>.
+          Terracotta marks the findings that haven't been resolved yet.
+        </div>
+      </div>
+
+      <div class="pane-outer">
+        <div class="pane-chrome">
+          <span class="tl" style="background:#d96c5a"></span>
+          <span class="tl" style="background:#d9b15a"></span>
+          <span class="tl" style="background:#6ca86e"></span>
+          <span style="margin-left:10px">cmux · feature-status</span>
+          <span style="margin-left:auto">pane · 700px</span>
+        </div>
+        <div class="pane-inner">
+          <div class="rail">
+            <div class="brand">Momentum</div>
+            <div class="divider"></div>
+            <div class="item"><span class="n">01</span><span class="lbl">features</span></div>
+            <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+            <div class="item active"><span class="n">03</span><span class="lbl">flywheel</span></div>
+          </div>
+
+          <div class="pane-body">
+            <div class="pane-header">
+              <span class="t">Feature Status</span>
+              <span class="m">generated · 2026-04-22 09:14 · hash 7f3a·c8e1</span>
+            </div>
+
+            <section class="lens-section">
+              <div class="lens-header">
+                <span class="tag">03 · Flywheel</span>
+                <span class="rule"></span>
+              </div>
+
+              <div class="fly-hero">How the practice moved forward.</div>
+              <div class="fly-sub">
+                Retro findings attach to the sprint that produced them. Each carries
+                the story it generated and the skill or rule it distilled into.
+                Newest first.
+              </div>
+
+              <div class="fly-counts">
+                <span>6 findings</span>
+                <span class="sep">·</span>
+                <span>4 triaged</span>
+                <span class="sep">·</span>
+                <span class="awaiting">2 awaiting triage</span>
+              </div>
+
+              <!-- Timeline -->
+              <div style="margin-top: 26px;">
+                <!-- Sprint 2026-04-22 (active, no findings yet) -->
+                <div class="spine">
+                  <div class="spine-col first">
+                    <div class="line"></div>
+                    <div class="node active"></div>
+                    <div class="meta active">
+                      <div class="k">sprint-2026-04-22</div>
+                      <div class="d">apr 22 →<br>active</div>
+                    </div>
+                  </div>
+                  <div class="findings-col">
+                    <div style="padding: 16px 0 4px; font-family: Inter, sans-serif; font-size: 12px; color: #b5b0a2; font-style: italic;">
+                      no findings yet.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sprint 2026-04-08 -->
+                <div class="spine">
+                  <div class="spine-col">
+                    <div class="line"></div>
+                    <div class="node"></div>
+                    <div class="meta">
+                      <div class="k">sprint-2026-04-08</div>
+                      <div class="d">apr 8 – apr 21</div>
+                    </div>
+                  </div>
+                  <div class="findings-col">
+                    <!-- finding-reread-loop · triaged · created story -->
+                    <div class="finding-card recurring">
+                      <div class="hdr">
+                        <span class="tag">finding · reread-loop</span>
+                        <span class="meta recurring">recurring · apr 21</span>
+                      </div>
+                      <div class="label">dev agents re-read already-read files inside a single task</div>
+                      <div class="chain">
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t">story</span>
+                          <span class="lbl">Agent Working-Memory Receipts</span>
+                          <span class="met">not-started</span>
+                        </div>
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t skill">skill</span>
+                          <span class="lbl">Track file reads as explicit receipts</span>
+                          <span class="met">rule</span>
+                        </div>
+                      </div>
+                      <div class="triage-line done">
+                        <span class="triage-tag">triage</span>
+                        <span class="sdot"></span>triaged · created story
+                      </div>
+                    </div>
+
+                    <!-- finding-gate-failure-vagueness -->
+                    <div class="finding-card">
+                      <div class="hdr">
+                        <span class="tag">finding · gate-failure-vagueness</span>
+                        <span class="meta">one-shot · apr 21</span>
+                      </div>
+                      <div class="label">AVFL failure messages don't name the offending file</div>
+                      <div class="chain">
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t">story</span>
+                          <span class="lbl">AVFL Failure Messages Name the File</span>
+                          <span class="met">working</span>
+                        </div>
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t skill">skill</span>
+                          <span class="lbl">Gate failures name the file and the failing rule</span>
+                          <span class="met">rule</span>
+                        </div>
+                      </div>
+                      <div class="triage-line done">
+                        <span class="triage-tag">triage</span>
+                        <span class="sdot"></span>triaged · created story
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sprint 2026-03-25 -->
+                <div class="spine">
+                  <div class="spine-col">
+                    <div class="line"></div>
+                    <div class="node"></div>
+                    <div class="meta">
+                      <div class="k">sprint-2026-03-25</div>
+                      <div class="d">mar 25 – apr 7</div>
+                    </div>
+                  </div>
+                  <div class="findings-col">
+                    <div class="finding-card recurring">
+                      <div class="hdr">
+                        <span class="tag">finding · premature-retro</span>
+                        <span class="meta recurring">recurring · apr 7</span>
+                      </div>
+                      <div class="label">retro runs before all merge-queue stories land</div>
+                      <div class="chain">
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t">story</span>
+                          <span class="lbl">Retro Precondition: Quiet Merge Queue</span>
+                          <span class="met">working</span>
+                        </div>
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t skill">skill</span>
+                          <span class="lbl">Retro refuses to run while merge queue non-empty</span>
+                          <span class="met">rule</span>
+                        </div>
+                      </div>
+                      <div class="triage-line distilled">
+                        <span class="triage-tag">triage</span>
+                        <span class="sdot"></span>triaged · distilled
+                      </div>
+                    </div>
+
+                    <!-- AWAITING TRIAGE -->
+                    <div class="finding-card">
+                      <div class="hdr">
+                        <span class="tag">finding · status-drift</span>
+                        <span class="meta">one-shot · apr 7</span>
+                      </div>
+                      <div class="label">features stay partial after last story done</div>
+                      <div class="chain">
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t">story</span>
+                          <span class="lbl">Surface Status Drift as First-Class Signal</span>
+                          <span class="met">working</span>
+                        </div>
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t skill">skill</span>
+                          <span class="lbl">Status drift is a first-class signal, not a bug</span>
+                          <span class="met">rule</span>
+                        </div>
+                      </div>
+                      <div class="triage-line awaiting">
+                        <span class="triage-tag">triage</span>
+                        <span class="sdot"></span>awaiting triage
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sprint 2026-03-11 -->
+                <div class="spine">
+                  <div class="spine-col last">
+                    <div class="line"></div>
+                    <div class="node"></div>
+                    <div class="meta">
+                      <div class="k">sprint-2026-03-11</div>
+                      <div class="d">mar 11 – mar 24</div>
+                    </div>
+                  </div>
+                  <div class="findings-col">
+                    <div class="finding-card recurring">
+                      <div class="hdr">
+                        <span class="tag">finding · avfl-thrash</span>
+                        <span class="meta recurring">recurring · mar 24</span>
+                      </div>
+                      <div class="label">AVFL fixer not yet present — thrash on repetitive defects</div>
+                      <div class="chain">
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t">story</span>
+                          <span class="lbl">AVFL Fixer Required Gate</span>
+                          <span class="met">partial</span>
+                        </div>
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t skill">skill</span>
+                          <span class="lbl">AVFL fixer with bounded autonomy</span>
+                          <span class="met">rule</span>
+                        </div>
+                      </div>
+                      <div class="triage-line done">
+                        <span class="triage-tag">triage</span>
+                        <span class="sdot"></span>triaged · created story
+                      </div>
+                    </div>
+
+                    <!-- AWAITING TRIAGE -->
+                    <div class="finding-card recurring">
+                      <div class="hdr">
+                        <span class="tag">finding · planning-preamble</span>
+                        <span class="meta recurring">recurring · mar 24</span>
+                      </div>
+                      <div class="label">planning preamble swamps execution context</div>
+                      <div class="chain">
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t">story</span>
+                          <span class="lbl">Planning Artifact Offload</span>
+                          <span class="met">partial</span>
+                        </div>
+                        <div class="chain-link">
+                          <span class="arr">↳</span>
+                          <span class="t skill">skill</span>
+                          <span class="lbl">Offload planning docs outside the transcript</span>
+                          <span class="met">rule</span>
+                        </div>
+                      </div>
+                      <div class="triage-line awaiting">
+                        <span class="triage-tag">triage</span>
+                        <span class="sdot"></span>awaiting triage
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack" style="padding-top: 80px;">
+      <div class="postit">
+        <span class="h">02 · flywheel triage</span>
+        Triage line sits <strong>below the chain</strong>, separated by a dashed
+        rule. Mono voice, dot-first, lowercase — matches badge grammar exactly.
+      </div>
+      <div class="postit r">
+        <span class="h">the open-loop signal</span>
+        <strong>awaiting triage</strong> is the only triage state that renders
+        terracotta. Matches the gap flag's semantic — "this needs attention,"
+        not alarm.
+        <span class="bullet">
+          Header count puts the same number in the same color so a glance at
+          the top of the lens answers "anything open?"
+        </span>
+      </div>
+      <div class="postit b">
+        <span class="h">assumption flagged</span>
+        <strong>deferred</strong> and <strong>dismissed</strong> render as muted
+        (like triaged·done, ink-quiet). Spec didn't specify color; I treat them
+        as closed states that don't need chasing.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 3 — DRILL-DOWN NAV MODEL
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row">
+    <div class="stack">
+      <div>
+        <div class="artboard-label"><span class="num">03</span><span>drill-down navigation</span></div>
+        <div class="artboard-title">Chosen model — C, replace view</div>
+        <div class="artboard-caption">
+          At 700px the typographic narrative is the point. Slide-in panels steal
+          half the width; inline expansion cramps the serif column mid-scroll.
+          Replacing the pane gives the prose its 68ch and treats the feature
+          detail as a destination, which is what it is.
+        </div>
+      </div>
+
+      <div style="display:flex; gap:28px; align-items:flex-start;">
+        <!-- List state -->
+        <div>
+          <div class="frame-cap"><span class="state-dot"></span>state a · list</div>
+          <div class="pane-outer">
+            <div class="pane-chrome">
+              <span class="tl" style="background:#d96c5a"></span>
+              <span class="tl" style="background:#d9b15a"></span>
+              <span class="tl" style="background:#6ca86e"></span>
+              <span style="margin-left:10px">cmux · feature-status</span>
+              <span style="margin-left:auto">pane · 700px</span>
+            </div>
+            <div class="pane-inner">
+              <div class="rail">
+                <div class="brand">Momentum</div>
+                <div class="divider"></div>
+                <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+                <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+                <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+              </div>
+              <div class="pane-body">
+                <div class="pane-header">
+                  <span class="t">Feature Status</span>
+                  <span class="m">6 features · 2 with gaps</span>
+                </div>
+                <section class="lens-section">
+                  <div class="lens-header">
+                    <span class="tag">01 · Features</span>
+                    <span class="rule"></span>
+                  </div>
+                  <div class="type-band">flow</div>
+
+                  <div class="feat-row">
+                    <span class="badge working"><span class="dot"></span>working</span>
+                    <div>
+                      <div class="name">Sprint Planning to Ready Sprint</div>
+                      <div class="desc">End-to-end sprint planning: backlog in, activated ready-for-dev sprint out.</div>
+                    </div>
+                    <span class="frac">6<span class="slash">/</span>6<span class="lbl">stories</span></span>
+                    <span class="open">open →</span>
+                  </div>
+
+                  <div class="feat-row hover">
+                    <span class="badge partial"><span class="dot"></span>partial</span>
+                    <div>
+                      <div class="name">Sprint Retro + Practice Improvement Flywheel
+                        <span style="margin-left:8px;" class="gap-flag">
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M5 1.2L9 8.4H1L5 1.2z" stroke="#a85a2a" stroke-width="1.1" stroke-linejoin="round"/><circle cx="5" cy="6.6" r="0.6" fill="#a85a2a"/></svg>
+                          gap
+                        </span>
+                      </div>
+                      <div class="desc">Retro ceremony plus the flywheel — cross-story pattern detection that feeds improvements forward.</div>
+                    </div>
+                    <span class="frac">4<span class="slash">/</span>7<span class="lbl">stories</span></span>
+                    <span class="open">open →</span>
+                  </div>
+
+                  <div class="type-band">connection</div>
+                  <div class="feat-row">
+                    <span class="badge working"><span class="dot"></span>working</span>
+                    <div>
+                      <div class="name">Impetus Session Orientation</div>
+                      <div class="desc">Session-start handoff — sprint state, in-flight stories, feature summary.</div>
+                    </div>
+                    <span class="frac">4<span class="slash">/</span>4<span class="lbl">stories</span></span>
+                    <span class="open">open →</span>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transition arrow -->
+        <div style="padding-top: 260px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5863a8;">⟶</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.3px; color:#8a8678;">click row</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#8a8678; margin-top:14px;">⟵</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.3px; color:#8a8678;">← back · esc</span>
+        </div>
+
+        <!-- Detail state (preview of level-2, showing rail update) -->
+        <div>
+          <div class="frame-cap"><span class="state-dot"></span>state b · detail (replaces view)</div>
+          <div class="pane-outer">
+            <div class="pane-chrome">
+              <span class="tl" style="background:#d96c5a"></span>
+              <span class="tl" style="background:#d9b15a"></span>
+              <span class="tl" style="background:#6ca86e"></span>
+              <span style="margin-left:10px">cmux · feature-status</span>
+              <span style="margin-left:auto">pane · 700px</span>
+            </div>
+            <div class="pane-inner">
+              <div class="rail">
+                <div class="brand">Momentum</div>
+                <div class="divider"></div>
+                <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+                <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+                <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+              </div>
+              <div class="pane-body">
+                <div class="l2-crumb">
+                  <span class="back">← back</span>
+                  <span class="sep">·</span>
+                  <span>features</span>
+                  <span class="sep">›</span>
+                  <span class="here">retro-and-flywheel</span>
+                </div>
+                <div class="l2-body" style="padding: 18px 28px 32px;">
+                  <div class="l2-meta">
+                    <span class="badge partial"><span class="dot"></span>partial</span>
+                    <span class="frac">4<span class="slash">/</span>7<span class="lbl">stories</span></span>
+                    <span class="type-tag">flow</span>
+                    <span class="gap-flag prominent">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M5 1.2L9 8.4H1L5 1.2z" stroke="#a85a2a" stroke-width="1.1" stroke-linejoin="round"/><circle cx="5" cy="6.6" r="0.6" fill="#a85a2a"/></svg>
+                      gap
+                    </span>
+                  </div>
+                  <div class="l2-name" style="font-size:22px; margin-bottom:6px;">Sprint Retro + Practice Improvement Flywheel</div>
+                  <div class="l2-desc" style="font-size:14px;">
+                    Retro ceremony plus the flywheel — cross-story pattern detection
+                    that feeds improvements forward into the practice.
+                  </div>
+                  <div class="l2-accept" style="margin-top:18px; padding:12px 14px;">
+                    <div class="cap">acceptance</div>
+                    <div class="body" style="font-size:13.5px;">
+                      A developer can run <code>momentum:retro</code> after a sprint and
+                      receive a findings document produced from transcript audit…
+                    </div>
+                  </div>
+                  <div style="margin-top:20px; font-family:'Source Serif 4',serif; font-size:14px; line-height:1.55; color:#1e1d1a; max-width:62ch;">
+                    The retro skill closes the sprint loop: findings documented, sprint
+                    marked complete, summary written. This works and delivers value…
+                  </div>
+                  <div style="margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#b5b0a2; letter-spacing:0.3px;">
+                    ↓ 2 more paragraphs · system context · stories (7) · gap note
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack" style="padding-top: 80px;">
+      <div class="postit">
+        <span class="h">03 · nav choice</span>
+        <strong>Option C — replace view.</strong> At 700px the prose is the
+        product. 68ch of Source Serif 4 @ 17/1.65 barely fits as it is; halving
+        the column with a slide-in panel wrecks the reading rhythm.
+      </div>
+      <div class="postit r">
+        <span class="h">tradeoff · named</span>
+        You lose peripheral context — the list scroll position and the sibling
+        feature rows.
+        <span class="bullet">
+          Mitigation: <strong>the rail stays</strong>. "01 features" is still
+          active; clicking it (or <kbd>← back</kbd> / <kbd>esc</kbd>)
+          returns to the list <em>and</em> restores its scroll.
+        </span>
+      </div>
+      <div class="postit b">
+        <span class="h">breadcrumb is the anchor</span>
+        The only new chrome element: a breadcrumb row above the lens header,
+        mono, 11px. <code>← back · features › retro-and-flywheel</code>.
+        No other nav additions.
+      </div>
+      <div class="postit g">
+        <span class="h">open question</span>
+        Does the browser back button restore scroll position? I'd say yes — use
+        <code>history.pushState</code> + <code>scrollRestoration = "auto"</code>
+        on the list. Parking until Pass 6 implementation.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════
+       ARTBOARD 4 — LEVEL-2 FEATURE DETAIL
+       ═════════════════════════════════════════════════════════════════════ -->
+  <div class="row">
+    <div class="stack">
+      <div>
+        <div class="artboard-label"><span class="num">04</span><span>level-2 — feature detail</span></div>
+        <div class="artboard-title">The typographic hero</div>
+        <div class="artboard-caption">
+          Primary example: <code>sprint-planning-to-ready</code> (clean, working).
+          Secondary on the right: <code>retro-and-flywheel</code> (partial, exercises
+          the gap callout). Source Serif 4 narrative prose at 17/1.65/68ch is
+          the center of the surface — everything else frames it.
+        </div>
+      </div>
+
+      <div style="display:flex; gap:40px; align-items:flex-start;">
+        <!-- Example 1: sprint-planning-to-ready -->
+        <div>
+          <div class="frame-cap"><span class="state-dot" style="background:#3e7a5a;"></span>example 1 · working · no gap</div>
+          <div class="pane-outer">
+            <div class="pane-chrome">
+              <span class="tl" style="background:#d96c5a"></span>
+              <span class="tl" style="background:#d9b15a"></span>
+              <span class="tl" style="background:#6ca86e"></span>
+              <span style="margin-left:10px">cmux · feature-status</span>
+              <span style="margin-left:auto">pane · 700px</span>
+            </div>
+            <div class="pane-inner">
+              <div class="rail">
+                <div class="brand">Momentum</div>
+                <div class="divider"></div>
+                <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+                <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+                <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+              </div>
+
+              <div class="pane-body">
+                <div class="l2-crumb">
+                  <span class="back">← back</span>
+                  <span class="sep">·</span>
+                  <span>features</span>
+                  <span class="sep">›</span>
+                  <span class="here">sprint-planning-to-ready</span>
+                </div>
+
+                <div class="l2-body">
+                  <div class="l2-meta">
+                    <span class="badge working"><span class="dot"></span>working</span>
+                    <span class="frac">6<span class="slash">/</span>6<span class="lbl">stories</span></span>
+                    <span class="type-tag">flow</span>
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#b5b0a2; letter-spacing:0.3px; margin-left:auto;">last verified · 2026-04-11</span>
+                  </div>
+
+                  <div class="l2-name">Sprint Planning to Ready Sprint</div>
+                  <div class="l2-desc">
+                    End-to-end sprint planning: backlog in, activated ready-for-dev sprint out.
+                  </div>
+
+                  <div class="l2-accept">
+                    <div class="cap">acceptance</div>
+                    <div class="body">
+                      A developer with populated backlog stubs can invoke
+                      <code>momentum:sprint-planning</code> and receive an activated sprint with
+                      validated, Gherkin-specced, ready-for-dev stories — without
+                      manually specifying story selection criteria or review flow.
+                    </div>
+                  </div>
+
+                  <div class="l2-narrative-cap">value narrative</div>
+                  <div class="l2-narrative">
+                    <p>
+                      Sprint planning works. A developer with a backlog can run this skill and
+                      emerge with a sprint plan — stories selected, assigned to waves, ready for
+                      sprint-dev. The immediate value is real: structure and sequence that would
+                      otherwise require manual deliberation across epics, story sizes, and
+                      dependencies.
+                    </p>
+                    <p>
+                      But the full vision goes beyond convenience. The skill synthesizes across
+                      the PRD, epics, and story history to produce a plan that reflects strategy,
+                      not just logistics. A developer who has been heads-down in implementation
+                      can step back, run sprint-planning, and get an outside-in view of what the
+                      next highest-leverage work is. That is augmented strategic judgment — not
+                      just time savings.
+                    </p>
+                    <p>
+                      Currently working and actively used. All 6 foundation stories are done.
+                    </p>
+                  </div>
+
+                  <div class="l2-context">
+                    <div class="cap">system context</div>
+                    <p>
+                      The ignition for every sprint cycle. All other sprint execution features
+                      (orchestration, quality gates, retro) have no starting state without this.
+                      Depends on backlog-refinement having kept the backlog clean.
+                    </p>
+                  </div>
+
+                  <div class="l2-stories">
+                    <div class="cap">stories · 6</div>
+                    <div class="l2-story"><span class="t">Sprint Planning Skill</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Sprint Planning Workflow Module</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Sprint Workflow Alignment</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Sprint Planning Synthesis-First</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Mandatory Task Tracking</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Gherkin ACs and ATDD Workflow Active</span><span class="badge working"><span class="dot"></span>working</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 2: retro-and-flywheel (with gap callout) -->
+        <div>
+          <div class="frame-cap"><span class="state-dot" style="background:#a88328;"></span>example 2 · partial · with gap callout</div>
+          <div class="pane-outer">
+            <div class="pane-chrome">
+              <span class="tl" style="background:#d96c5a"></span>
+              <span class="tl" style="background:#d9b15a"></span>
+              <span class="tl" style="background:#6ca86e"></span>
+              <span style="margin-left:10px">cmux · feature-status</span>
+              <span style="margin-left:auto">pane · 700px</span>
+            </div>
+            <div class="pane-inner">
+              <div class="rail">
+                <div class="brand">Momentum</div>
+                <div class="divider"></div>
+                <div class="item active"><span class="n">01</span><span class="lbl">features</span></div>
+                <div class="item"><span class="n">02</span><span class="lbl">sprints</span></div>
+                <div class="item"><span class="n">03</span><span class="lbl">flywheel</span></div>
+              </div>
+
+              <div class="pane-body">
+                <div class="l2-crumb">
+                  <span class="back">← back</span>
+                  <span class="sep">·</span>
+                  <span>features</span>
+                  <span class="sep">›</span>
+                  <span class="here">retro-and-flywheel</span>
+                </div>
+
+                <div class="l2-body">
+                  <div class="l2-meta">
+                    <span class="badge partial"><span class="dot"></span>partial</span>
+                    <span class="frac">4<span class="slash">/</span>7<span class="lbl">stories</span></span>
+                    <span class="type-tag">flow</span>
+                    <span class="gap-flag prominent">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M5 1.2L9 8.4H1L5 1.2z" stroke="#a85a2a" stroke-width="1.1" stroke-linejoin="round"/><circle cx="5" cy="6.6" r="0.6" fill="#a85a2a"/></svg>
+                      gap
+                    </span>
+                  </div>
+
+                  <div class="l2-name">Sprint Retro + Practice Improvement Flywheel</div>
+                  <div class="l2-desc">
+                    Retro ceremony plus the flywheel — cross-story pattern detection
+                    that feeds improvements forward into the practice.
+                  </div>
+
+                  <div class="l2-accept">
+                    <div class="cap">acceptance</div>
+                    <div class="body">
+                      A developer can run <code>momentum:retro</code> after a sprint
+                      and receive a findings document produced from transcript audit
+                      (not just milestone logs); at least one retro finding generates
+                      a story stub added to the backlog; cross-sprint patterns
+                      accumulate in the findings ledger.
+                    </div>
+                  </div>
+
+                  <div class="l2-narrative-cap">value narrative</div>
+                  <div class="l2-narrative">
+                    <p>
+                      The retro skill closes the sprint loop: findings documented, sprint marked
+                      complete, summary written. This works and delivers value — a developer who
+                      skips retros loses the reflection that improves future work.
+                    </p>
+                    <p>
+                      But the larger vision — the flywheel — is where this feature becomes
+                      transformative. A developer running sprints without the flywheel is like a
+                      craftsperson who never sharpens their tools. The flywheel means that
+                      patterns from this sprint feed into better story quality in the next, that
+                      recurring mistakes stop recurring, and that the practice accumulates wisdom
+                      over time. A developer who runs 10 sprints with the flywheel should be
+                      dramatically more effective in sprint 10 than sprint 1 — not because
+                      they're personally smarter but because the system they're working within is
+                      smarter.
+                    </p>
+                    <p>
+                      Currently, the retro executes and sprint-summary writes are working. The
+                      flywheel accumulation (cross-story pattern detection, findings ledger,
+                      practice feedback loop) is not yet implemented.
+                    </p>
+                  </div>
+
+                  <div class="l2-context">
+                    <div class="cap">system context</div>
+                    <p>
+                      Closes the sprint loop and feeds forward. Sprint-planning benefits from
+                      flywheel accumulation; practice-distillation encodes the patterns the
+                      flywheel surfaces. Without retro, each sprint is isolated. With the full
+                      flywheel, sprints compound.
+                    </p>
+                  </div>
+
+                  <div class="l2-stories">
+                    <div class="cap">stories · 7</div>
+                    <div class="l2-story"><span class="t">Retro Skill</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Retro Workflow Rewrite</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Sprint Boundary Compression</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Retro → Triage Handoff</span><span class="badge working"><span class="dot"></span>working</span></div>
+                    <div class="l2-story"><span class="t">Cross-Story Pattern Detection</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+                    <div class="l2-story"><span class="t">Findings Ledger Accumulates Quality Findings</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+                    <div class="l2-story"><span class="t">Flywheel Workflow Explains Issues and Guides Upstream Trace</span><span class="badge not-started"><span class="dot"></span>not started</span></div>
+                  </div>
+
+                  <div class="l2-gap">
+                    <div class="hdr">
+                      <span class="gap-flag">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M5 1.2L9 8.4H1L5 1.2z" stroke="#a85a2a" stroke-width="1.1" stroke-linejoin="round"/><circle cx="5" cy="6.6" r="0.6" fill="#a85a2a"/></svg>
+                        gap
+                      </span>
+                      <span class="cap">needs attention</span>
+                    </div>
+                    <p>
+                      Acceptance condition requires transcript-audit findings with cross-sprint
+                      pattern accumulation. Assigned stories cover the retro ceremony (done) but
+                      not the flywheel mechanics (3 backlog stories). Retro currently produces
+                      findings but they don't yet compound across sprints. The practice-compounds
+                      epic — the soul of this feature — is still ahead.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack" style="padding-top: 80px;">
+      <div class="postit">
+        <span class="h">04 · level-2 content order</span>
+        breadcrumb → meta strip → name → one-liner (italic serif) → acceptance
+        callout → value narrative → system context → stories → gap note.
+        Drift note would sit between gap and the bottom rule when present.
+      </div>
+      <div class="postit r">
+        <span class="h">acceptance treatment</span>
+        A framed box, mono cap label "acceptance", body inset with a left rule.
+        Code spans render on a warm paper tint, not a dark chip. Reads as an
+        annotated contract, not a UI field.
+      </div>
+      <div class="postit b">
+        <span class="h">system context · tint not box</span>
+        Brief specified "subtle background tint or left rule, not a heavy box."
+        I used <strong>both</strong>: 4% indigo wash + 2px indigo rule. The
+        heavier box is reserved for acceptance, which is the binding statement.
+      </div>
+      <div class="postit g">
+        <span class="h">stories rows</span>
+        Cursor:pointer, subtle indigo hover wash. No open-affordance arrow —
+        the row itself is the affordance. Click does nothing in Pass 5
+        (flagged as Pass 6 work in the spec).
+        <span class="bullet">
+          <strong>Assumption:</strong> story order matches data-file order, not
+          re-sorted by state. Preserves the narrative sequence the developer
+          wrote.
+        </span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

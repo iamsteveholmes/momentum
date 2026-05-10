@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Feature Status — Pass 1 · Density + Badges</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { background: #f0eee9; }
+  * { box-sizing: border-box; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="badge-system.jsx"></script>
+<script type="text/babel" src="variant-a-table.jsx"></script>
+<script type="text/babel" src="variant-b-cards.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard, DCPostIt,
+          BadgeSystemArtboard, IndexVariantA, IndexVariantB, T } = window;
+
+  function PassOne() {
+    return (
+      <DesignCanvas>
+        {/* ── Banner header ───────────────────────────────────────── */}
+        <div style={{
+          padding: "0 60px 48px", maxWidth: 1200,
+        }}>
+          <div style={{
+            fontFamily: T.fontMono, fontSize: 11, letterSpacing: 1.6,
+            color: "rgba(40,30,20,0.5)", textTransform: "uppercase",
+            marginBottom: 10,
+          }}>
+            Feature Status Redesign · Pass 1
+          </div>
+          <div style={{
+            fontFamily: T.fontSerif, fontSize: 38, lineHeight: 1.2,
+            color: "#1e1d1a", letterSpacing: -0.6, fontWeight: 400,
+            maxWidth: "28ch",
+          }}>
+            Density exploration and the state-badge system.
+          </div>
+          <div style={{
+            fontFamily: T.fontSans, fontSize: 14, lineHeight: 1.6,
+            color: "rgba(40,30,20,0.65)", marginTop: 16,
+            maxWidth: "72ch",
+          }}>
+            Two Level-1 index treatments against the same data, plus the badge
+            system they share. Low-fi wireframes — typography is real, interactions are not.
+            Deferred to later passes: Level 2/3, Journey layer, dependency graph, dark mode.
+          </div>
+
+          {/* scale / interaction hint */}
+          <div style={{
+            marginTop: 22,
+            display: "inline-flex", alignItems: "center", gap: 14,
+            padding: "8px 14px",
+            background: "rgba(88,99,168,0.06)",
+            border: "1px solid rgba(88,99,168,0.18)",
+            borderRadius: 3,
+            fontFamily: T.fontMono, fontSize: 11, color: "#4a538f",
+            letterSpacing: 0.3,
+          }}>
+            <span>pinch / cmd+wheel to zoom · drag to pan</span>
+          </div>
+        </div>
+
+        {/* ── Section 1: Badge system ─────────────────────────────── */}
+        <DCSection
+          title="01 · Badge System"
+          subtitle="Shared vocabulary for feature state. Used by both index variants below."
+        >
+          <DCArtboard label="Badge system · light" width={920} height={620}>
+            <BadgeSystemArtboard />
+          </DCArtboard>
+
+          <div style={{ position: "relative", width: 280, paddingTop: 8 }}>
+            <DCPostIt top={30} left={0} width={260} rotate={-1.5}>
+              Indigo accent is reserved for navigation and the "active" column header. Status colors stay in their own lane so they never compete.
+            </DCPostIt>
+            <DCPostIt top={260} left={20} width={240} rotate={2}>
+              Terminal states fade to ~75% with a drained dot — they read as filed, not as failures.
+            </DCPostIt>
+            <DCPostIt top={470} left={0} width={250} rotate={-2}>
+              Gap flag is warm terracotta — distinct hue from `not-working` red so the two don't collide in one row.
+            </DCPostIt>
+          </div>
+        </DCSection>
+
+        {/* ── Section 2: Density A + B ────────────────────────────── */}
+        <DCSection
+          title="02 · Level-1 Index · Two Density Treatments"
+          subtitle="Same data, same sort order, same badge system. A reads like a document; B reads like a board."
+        >
+          <DCArtboard label="A · Compact table" width={1180} height={860}>
+            <IndexVariantA />
+          </DCArtboard>
+
+          <DCArtboard label="B · Card grid" width={1180} height={860}>
+            <IndexVariantB />
+          </DCArtboard>
+
+          <div style={{ position: "relative", width: 280, paddingTop: 8 }}>
+            <DCPostIt top={40} left={0} width={260} rotate={-2}>
+              A: typographic list, one row per feature, description on the same row clipped to one line. ~24 features fit on screen without scrolling in the terminal pane.
+            </DCPostIt>
+            <DCPostIt top={260} left={20} width={250} rotate={1.5}>
+              B: cards give the description 2 lines of breathing room and footer meta. Halves the feature count visible at once. Better for "reading," worse for "scanning."
+            </DCPostIt>
+            <DCPostIt top={490} left={0} width={260} rotate={-1}>
+              Both use the same sort: gaps first → state band → alpha. Terminal states drift to the bottom of each type band, dimmed.
+            </DCPostIt>
+            <DCPostIt top={720} left={20} width={250} rotate={2}>
+              Recommendation: A as default. The developer's use ("30-60 second bursts, terminal pane") wants scan, not skim. B is the right shape for the Level-2 feature page.
+            </DCPostIt>
+          </div>
+        </DCSection>
+
+        {/* ── Section 3: Comparison notes ─────────────────────────── */}
+        <DCSection
+          title="03 · Where we land · questions for you"
+          subtitle="React to these before Pass 2."
+        >
+          <DCArtboard label="Open questions" width={780} height={420} style={{ background: T.paperAlt }}>
+            <div style={{
+              padding: "44px 48px",
+              fontFamily: T.fontSans, color: T.ink,
+              height: "100%", boxSizing: "border-box",
+              display: "flex", flexDirection: "column", gap: 22,
+            }}>
+              <QRow n="1">
+                <strong style={{ fontWeight: 600 }}>Density default.</strong> Is A the right
+                starting point, or do you want B as the primary and A as a "compact" tweak?
+              </QRow>
+              <QRow n="2">
+                <strong style={{ fontWeight: 600 }}>Terminal-state visibility.</strong> Today
+                they fade to 55% in-place. An alternative is to collapse them under a
+                "3 settled" disclosure at the bottom of each band. Which reads better?
+              </QRow>
+              <QRow n="3">
+                <strong style={{ fontWeight: 600 }}>Type label position.</strong> Currently as
+                a colored header above each band. Alternative: inline mono tag per row, no band
+                separation. Pros: flat sort across all types. Cons: loses the type-as-chapter
+                metaphor from DEC-005.
+              </QRow>
+              <QRow n="4">
+                <strong style={{ fontWeight: 600 }}>Gap flag prominence.</strong> Default is
+                subtle (outlined). The Tweaks list includes a "prominent" mode. Is subtle the
+                right default, or should gaps always render prominent in the index?
+              </QRow>
+              <QRow n="5">
+                <strong style={{ fontWeight: 600 }}>Row affordance.</strong> A uses an arrow
+                glyph and underline on the name. B uses "open →" in the footer. Either
+                signal the click-through — which feels quieter in practice?
+              </QRow>
+            </div>
+          </DCArtboard>
+
+          <DCArtboard label="Next passes" width={520} height={420} style={{ background: T.paperAlt }}>
+            <div style={{
+              padding: "44px 48px",
+              fontFamily: T.fontSans, color: T.ink,
+              height: "100%", boxSizing: "border-box",
+              display: "flex", flexDirection: "column", gap: 16,
+            }}>
+              <PassRow label="Pass 2">
+                Level 2 (feature drill-down) with value narrative, acceptance, stories list, gap prose.
+                One fully-populated mockup using real feature data.
+              </PassRow>
+              <PassRow label="Pass 3">
+                Level 3 (story drill-down) — populated human section + stub empty state.
+                Dark-mode variant of a key screen.
+              </PassRow>
+              <PassRow label="Pass 4">
+                Dependency graph with explicit scale-bound decision. Journey/Workflow
+                layer variant (Design Question 1).
+              </PassRow>
+              <PassRow label="Pass 5">
+                Clickable prototype across all three levels with the locked direction.
+                Tweaks wired: density, theme, terminal-state visibility, group-by-type,
+                gap emphasis, story-count visibility.
+              </PassRow>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <div style={{ height: 40 }} />
+      </DesignCanvas>
+    );
+  }
+
+  function QRow({ n, children }) {
+    return (
+      <div style={{
+        display: "grid", gridTemplateColumns: "28px 1fr", gap: 16,
+        fontFamily: T.fontSans, fontSize: 13, lineHeight: 1.55,
+        color: T.inkMuted,
+      }}>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 11, color: T.accent,
+          letterSpacing: 0.3, paddingTop: 2,
+        }}>Q{n}</span>
+        <div>{children}</div>
+      </div>
+    );
+  }
+  function PassRow({ label, children }) {
+    return (
+      <div style={{
+        display: "grid", gridTemplateColumns: "72px 1fr", gap: 14,
+        fontFamily: T.fontSans, fontSize: 12.5, lineHeight: 1.55,
+        color: T.inkMuted,
+      }}>
+        <span style={{
+          fontFamily: T.fontMono, fontSize: 11, color: T.accent,
+          letterSpacing: 0.3,
+        }}>{label}</span>
+        <div>{children}</div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<PassOne />);
+</script>
+</body>
+</html>

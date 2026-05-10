@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "Output contains a '## Quick Routing' header",
+      "passed": true,
+      "evidence": "Found: '## Quick Routing'"
+    },
+    {
+      "text": "Routing entries use wiki-query invocations",
+      "passed": true,
+      "evidence": "Found: 'wiki-query'"
+    },
+    {
+      "text": "Output mentions replacement/update of existing section",
+      "passed": true,
+      "evidence": "In routing-table: Pattern 'replac|existing|stale|update|regenerat' not found; in process-notes: Found: 'Stale'"
+    },
+    {
+      "text": "Output includes PydanticAI-specific entries (the new content area)",
+      "passed": true,
+      "evidence": "Found: 'PydanticAI'"
+    },
+    {
+      "text": "Output uses bold symptom format",
+      "passed": true,
+      "evidence": "Found: '**Route depends on database session, auth token, or shared service and you need '"
+    },
+    {
+      "text": "Output has thematic subsections",
+      "passed": true,
+      "evidence": "Found 8 matches (need >=2)"
+    },
+    {
+      "text": "At least 10 routing entries total",
+      "passed": true,
+      "evidence": "Bold-arrow: 38, table-row: 0, total: 38 (need >=10)"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "total_tokens": 76376,
+    "duration_ms": 198173,
+    "total_duration_seconds": 198.2
+  },
+  "claims": [],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Programmatic grep-based grading"
+  }
+}
