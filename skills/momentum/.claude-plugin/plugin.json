@@ -1,7 +1,7 @@
 {
   "name": "momentum",
-  "version": "0.18.3",
-  "description": "Agentic engineering practice — rules, agents, quality gates, and workflow automation across projects",
+  "version": "0.19.0",
+  "description": "Agentic engineering practice \u2014 rules, agents, quality gates, and workflow automation across projects",
   "author": {
     "name": "Steve Holmes",
     "email": "steve@iamsteveholmes.com"
@@ -16,7 +16,7 @@
     {
       "name": "feature-status",
       "path": "skills/feature-status",
-      "description": "(deprecated — use /momentum:canvas)",
+      "description": "(deprecated \u2014 use /momentum:canvas)",
       "user-invocable": true
     }
   ]
