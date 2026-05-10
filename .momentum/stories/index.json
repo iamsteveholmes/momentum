@@ -1,7 +1,7 @@
 {
   "8-1-avfl-corpus-mode": {
     "status": "done",
-    "title": "AVFL Corpus Mode — Multi-Document Cross-Validation for momentum-avfl",
+    "title": "AVFL Corpus Mode \u2014 Multi-Document Cross-Validation for momentum-avfl",
     "epic_slug": "research-knowledge",
     "story_file": true,
     "depends_on": [],
@@ -14,7 +14,7 @@
   },
   "8-2-momentum-research-skill": {
     "status": "done",
-    "title": "momentum-research Skill — 6-Phase Deep Research Pipeline with Provenance",
+    "title": "momentum-research Skill \u2014 6-Phase Deep Research Pipeline with Provenance",
     "epic_slug": "research-knowledge",
     "story_file": true,
     "depends_on": [],
@@ -28,7 +28,7 @@
   },
   "8-3-gemini-deep-research-automation": {
     "status": "done",
-    "title": "Gemini Deep Research Automation — cmux-browser Integration for momentum-research",
+    "title": "Gemini Deep Research Automation \u2014 cmux-browser Integration for momentum-research",
     "epic_slug": "research-knowledge",
     "story_file": true,
     "depends_on": [
@@ -67,17 +67,17 @@
   },
   "agent-collaboration-pattern-evaluation": {
     "status": "backlog",
-    "title": "Agent Collaboration Pattern Evaluation — Fan-Out vs Task-Gated TeamCreate (Spike)",
+    "title": "Agent Collaboration Pattern Evaluation \u2014 Fan-Out vs Task-Gated TeamCreate (Spike)",
     "epic_slug": "agent-team-model",
     "depends_on": [],
     "priority": "medium",
-    "description": "Retro finding (sprint-2026-04-06-2): Fan-out and TeamCreate produced equivalent retro audit results. Documenter never iterated with auditors despite SendMessage being available. Research finding: genuine collaboration requires task-gated evaluator-optimizer loops (produce → challenge → revise), not just SendMessage availability. Three missing ingredients identified: (1) tasks with dependencies forcing sync points, (2) adversarial/skeptic positioning of the synthesizer agent, (3) structural enforcement ('MUST ask follow-up') vs soft language ('may request'). Spike should evaluate whether retro auditor team benefits from task-gated iteration or whether fan-out with orchestrator relay is sufficient. Compare: retro-transcript-audit.md (fan-out) vs retro-transcript-audit-teamcreate.md (TeamCreate) in sprints/sprint-2026-04-06-2/ for empirical baseline. Global rule added: ~/.claude/rules/spawning-patterns.md defines fan-out vs TeamCreate decision heuristic.",
+    "description": "Retro finding (sprint-2026-04-06-2): Fan-out and TeamCreate produced equivalent retro audit results. Documenter never iterated with auditors despite SendMessage being available. Research finding: genuine collaboration requires task-gated evaluator-optimizer loops (produce \u2192 challenge \u2192 revise), not just SendMessage availability. Three missing ingredients identified: (1) tasks with dependencies forcing sync points, (2) adversarial/skeptic positioning of the synthesizer agent, (3) structural enforcement ('MUST ask follow-up') vs soft language ('may request'). Spike should evaluate whether retro auditor team benefits from task-gated iteration or whether fan-out with orchestrator relay is sufficient. Compare: retro-transcript-audit.md (fan-out) vs retro-transcript-audit-teamcreate.md (TeamCreate) in sprints/sprint-2026-04-06-2/ for empirical baseline. Global rule added: ~/.claude/rules/spawning-patterns.md defines fan-out vs TeamCreate decision heuristic.",
     "retro_source": "sprint-2026-04-06-2",
     "feature_slug": "momentum-sprint-orchestration"
   },
   "agent-guidelines-skill": {
     "status": "done",
-    "title": "Agent Guidelines Skill — Guided Technology Guidelines Generation for Projects",
+    "title": "Agent Guidelines Skill \u2014 Guided Technology Guidelines Generation for Projects",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -92,7 +92,7 @@
   },
   "agent-logging-tool": {
     "status": "done",
-    "title": "Agent Logging Tool — momentum-tools log subcommand",
+    "title": "Agent Logging Tool \u2014 momentum-tools log subcommand",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -104,7 +104,7 @@
   },
   "agent-observability-system": {
     "status": "done",
-    "title": "Agent Observability System — Hook-Based Logging for Retro Flywheel",
+    "title": "Agent Observability System \u2014 Hook-Based Logging for Retro Flywheel",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high",
@@ -113,7 +113,7 @@
   },
   "agent-prompt-large-file-guidance": {
     "status": "done",
-    "title": "Agent Prompt Large-File Guidance — Standard Instructions for Context-Exceeding Files",
+    "title": "Agent Prompt Large-File Guidance \u2014 Standard Instructions for Context-Exceeding Files",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -134,7 +134,7 @@
   },
   "agent-role-simplification": {
     "status": "dropped",
-    "title": "Agent Role Simplification — Dev + Prompt Engineer with Directory-Scoped Guidelines",
+    "title": "Agent Role Simplification \u2014 Dev + Prompt Engineer with Directory-Scoped Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -153,7 +153,7 @@
   },
   "agent-spawn-observability-metric": {
     "status": "backlog",
-    "title": "Agent Spawn Observability Metric — Track Zero-Turn Agents as Waste Signal",
+    "title": "Agent Spawn Observability Metric \u2014 Track Zero-Turn Agents as Waste Signal",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -163,7 +163,7 @@
   },
   "agent-spawn-preflight-check": {
     "status": "backlog",
-    "title": "Agent Spawn Pre-Flight Check — Validate Before Spawning",
+    "title": "Agent Spawn Pre-Flight Check \u2014 Validate Before Spawning",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -173,7 +173,7 @@
   },
   "agent-state-verification-hook": {
     "status": "backlog",
-    "title": "Agent State Verification — Require Post-Action System State Check Before Claiming Changes Live",
+    "title": "Agent State Verification \u2014 Require Post-Action System State Check Before Claiming Changes Live",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -216,7 +216,7 @@
   },
   "architecture-guard-implementation": {
     "status": "done",
-    "title": "Architecture Guard Implementation — Replace Stub with Real Agent Definition",
+    "title": "Architecture Guard Implementation \u2014 Replace Stub with Real Agent Definition",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -232,7 +232,7 @@
   },
   "assessment-skill": {
     "status": "done",
-    "title": "Assessment Skill — Guided Product State Evaluation",
+    "title": "Assessment Skill \u2014 Guided Product State Evaluation",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [],
@@ -256,7 +256,7 @@
   },
   "avfl-checkpoint-preview-integration": {
     "status": "backlog",
-    "title": "AVFL Phase 4c — Structured Human Review via bmad-checkpoint-preview",
+    "title": "AVFL Phase 4c \u2014 Structured Human Review via bmad-checkpoint-preview",
     "epic_slug": "story-cycles",
     "story_file": true,
     "depends_on": [],
@@ -267,7 +267,7 @@
   },
   "avfl-cross-story-integration-lens": {
     "status": "backlog",
-    "title": "AVFL Cross-Story Integration Lens — Validate Stories Don't Break Each Other",
+    "title": "AVFL Cross-Story Integration Lens \u2014 Validate Stories Don't Break Each Other",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -276,7 +276,7 @@
   },
   "avfl-default-agent-composition": {
     "status": "backlog",
-    "title": "AVFL Default Agent Composition — Preconfigured Teams by Profile",
+    "title": "AVFL Default Agent Composition \u2014 Preconfigured Teams by Profile",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -285,7 +285,7 @@
   },
   "avfl-fixer-required-gate": {
     "status": "backlog",
-    "title": "AVFL Fixer Agent Required Alongside Validators — No Validation Without Fix Capability",
+    "title": "AVFL Fixer Agent Required Alongside Validators \u2014 No Validation Without Fix Capability",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -316,7 +316,7 @@
   },
   "avfl-invoke-code-reviewer-via-skill-not-task": {
     "status": "backlog",
-    "title": "AVFL — invoke code-reviewer via Skill not Task",
+    "title": "AVFL \u2014 invoke code-reviewer via Skill not Task",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -326,7 +326,7 @@
   },
   "avfl-migration-story-exhaustive-call-site-audit": {
     "status": "backlog",
-    "title": "AVFL migration-story finding template — exhaustive call-site audit",
+    "title": "AVFL migration-story finding template \u2014 exhaustive call-site audit",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -336,7 +336,7 @@
   },
   "avfl-scan-profile": {
     "status": "done",
-    "title": "AVFL Scan Profile — Discovery-Only Validation for Team Handoff",
+    "title": "AVFL Scan Profile \u2014 Discovery-Only Validation for Team Handoff",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -359,7 +359,7 @@
   },
   "backend-dev-systematic-error-guidance": {
     "status": "backlog",
-    "title": "Backend Dev Pre-Work Diagnostic Step — Baseline Error Categorization Before Implementing",
+    "title": "Backend Dev Pre-Work Diagnostic Step \u2014 Baseline Error Categorization Before Implementing",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
     "depends_on": [],
@@ -381,7 +381,7 @@
   },
   "backlog-add-command": {
     "status": "dropped",
-    "title": "Backlog Add Command — Lightweight Story Stub Creation with Design Intent",
+    "title": "Backlog Add Command \u2014 Lightweight Story Stub Creation with Design Intent",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -394,7 +394,7 @@
   },
   "backlog-priority-field": {
     "status": "done",
-    "title": "Backlog Priority Field — Add Priority to All Story Index Entries",
+    "title": "Backlog Priority Field \u2014 Add Priority to All Story Index Entries",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -463,7 +463,7 @@
   },
   "build-guidelines-skill": {
     "status": "backlog",
-    "title": "Build-Guidelines Skill — Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files",
+    "title": "Build-Guidelines Skill \u2014 Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -484,7 +484,7 @@
   },
   "canvas-features-lens": {
     "status": "backlog",
-    "title": "Canvas Phase 2 — Features Lens with Real Data Plumbing",
+    "title": "Canvas Phase 2 \u2014 Features Lens with Real Data Plumbing",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -495,7 +495,7 @@
   },
   "canvas-flywheel-lens": {
     "status": "backlog",
-    "title": "Canvas Phase 4 — Flywheel Lens with Timeline and Triage Chain",
+    "title": "Canvas Phase 4 \u2014 Flywheel Lens with Timeline and Triage Chain",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -506,7 +506,7 @@
   },
   "canvas-level-2-feature-detail": {
     "status": "backlog",
-    "title": "Canvas Phase 5 — Level-2 Feature Detail with Replace-View Nav",
+    "title": "Canvas Phase 5 \u2014 Level-2 Feature Detail with Replace-View Nav",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -517,7 +517,7 @@
   },
   "canvas-level-3-story-detail": {
     "status": "backlog",
-    "title": "Canvas Phase 6 — Level-3 Story Detail Typographic Document",
+    "title": "Canvas Phase 6 \u2014 Level-3 Story Detail Typographic Document",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -528,7 +528,7 @@
   },
   "canvas-reading-mode-polish": {
     "status": "backlog",
-    "title": "Canvas Phase 7 — Reading-Mode Override and Dark-Mode Persistence",
+    "title": "Canvas Phase 7 \u2014 Reading-Mode Override and Dark-Mode Persistence",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -539,7 +539,7 @@
   },
   "canvas-sprints-lens": {
     "status": "backlog",
-    "title": "Canvas Phase 3 — Sprints Lens with Closure Strip and Outcome Bands",
+    "title": "Canvas Phase 3 \u2014 Sprints Lens with Closure Strip and Outcome Bands",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -550,7 +550,7 @@
   },
   "canvas-vite-scaffold": {
     "status": "backlog",
-    "title": "Canvas Phase 1 — Vite Scaffold, Design Tokens, Pane Shell, Skill Rename",
+    "title": "Canvas Phase 1 \u2014 Vite Scaffold, Design Tokens, Pane Shell, Skill Rename",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -606,7 +606,7 @@
   },
   "commit-summary-template-enumerates-in-scope-out-of-scope-by-ac": {
     "status": "backlog",
-    "title": "Commit summary template — enumerate in-scope and out-of-scope by AC",
+    "title": "Commit summary template \u2014 enumerate in-scope and out-of-scope by AC",
     "epic_slug": "story-cycles",
     "story_file": true,
     "depends_on": [],
@@ -646,7 +646,7 @@
   },
   "coverage-analysis-deduplication": {
     "status": "backlog",
-    "title": "Coverage Analysis Deduplication — Cache Results, Never Re-Spawn for Same Target",
+    "title": "Coverage Analysis Deduplication \u2014 Cache Results, Never Re-Spawn for Same Target",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [],
@@ -655,7 +655,7 @@
   },
   "create-story-advanced-elicitation": {
     "status": "backlog",
-    "title": "momentum:create-story — Optional Advanced Elicitation Step",
+    "title": "momentum:create-story \u2014 Optional Advanced Elicitation Step",
     "epic_slug": "story-cycles",
     "story_file": true,
     "depends_on": [],
@@ -686,7 +686,7 @@
   },
   "create-story-update": {
     "status": "backlog",
-    "title": "Create Story Update — Remove AVFL Checkpoint, Add Gherkin Generation",
+    "title": "Create Story Update \u2014 Remove AVFL Checkpoint, Add Gherkin Generation",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -707,7 +707,7 @@
   },
   "dashboard-ux-wireframes": {
     "status": "dropped",
-    "title": "Feature Dashboard UX Wireframes — Hierarchical Drill-Down",
+    "title": "Feature Dashboard UX Wireframes \u2014 Hierarchical Drill-Down",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -727,7 +727,7 @@
   },
   "decision-registry-skill": {
     "status": "dropped",
-    "title": "Decision Registry Skill — Capture Strategic Decisions in SDR Format",
+    "title": "Decision Registry Skill \u2014 Capture Strategic Decisions in SDR Format",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -741,7 +741,7 @@
   },
   "decision-skill": {
     "status": "done",
-    "title": "Decision Skill — Capture Strategic Decisions from Assessments",
+    "title": "Decision Skill \u2014 Capture Strategic Decisions from Assessments",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -758,7 +758,7 @@
   },
   "decision-workflow-retire-state-file-checklist": {
     "status": "ready-for-dev",
-    "title": "Decision Workflow — Retired-State-File Cleanup Checklist",
+    "title": "Decision Workflow \u2014 Retired-State-File Cleanup Checklist",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -779,7 +779,7 @@
   },
   "dev-agent-definition-files": {
     "status": "done",
-    "title": "Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawning",
+    "title": "Dev Agent Definition Files \u2014 Lightweight Agent for Sprint-Dev Spawning",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -792,7 +792,7 @@
   },
   "dev-agent-executor-not-decider": {
     "status": "backlog",
-    "title": "Dev Agent Executor Not Decider — Orchestrator Decides, Agent Implements",
+    "title": "Dev Agent Executor Not Decider \u2014 Orchestrator Decides, Agent Implements",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -802,7 +802,7 @@
   },
   "dev-agent-hook-self-check": {
     "status": "backlog",
-    "title": "Dev Agent Self-Check for Hook Stories — Pre-Completion Validation",
+    "title": "Dev Agent Self-Check for Hook Stories \u2014 Pre-Completion Validation",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -813,7 +813,7 @@
   },
   "dev-previous-story-continuity": {
     "status": "backlog",
-    "title": "momentum:dev — Previous Story Context Injection for depends_on Stories",
+    "title": "momentum:dev \u2014 Previous Story Context Injection for depends_on Stories",
     "epic_slug": "story-cycles",
     "story_file": true,
     "depends_on": [],
@@ -835,11 +835,11 @@
   },
   "dev-skills-guidelines": {
     "status": "backlog",
-    "title": "Dev-Skills Guidelines — EDD, Frontmatter, Workflow XML, 500-Line Limit",
+    "title": "Dev-Skills Guidelines \u2014 EDD, Frontmatter, Workflow XML, 500-Line Limit",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
-    "description": "dev-skills specialist agent ran without guidelines for 3 of 4 sprint stories. Sprint planning noted \"dev-skills missing, proceeding with defaults (P)\". ACs: (1) Guidelines file exists at references/guidelines/dev-skills.md, (2) Covers EDD eval-first methodology, (3) Covers SKILL.md frontmatter constraints (description ≤150 chars, model/effort fields), (4) Covers workflow.md XML structure, (5) Covers 500-line skill body limit, (6) Sprint-planning guidelines check resolves present for dev-skills."
+    "description": "dev-skills specialist agent ran without guidelines for 3 of 4 sprint stories. Sprint planning noted \"dev-skills missing, proceeding with defaults (P)\". ACs: (1) Guidelines file exists at references/guidelines/dev-skills.md, (2) Covers EDD eval-first methodology, (3) Covers SKILL.md frontmatter constraints (description \u2264150 chars, model/effort fields), (4) Covers workflow.md XML structure, (5) Covers 500-line skill body limit, (6) Sprint-planning guidelines check resolves present for dev-skills."
   },
   "develop-epic-command": {
     "status": "dropped",
@@ -872,7 +872,7 @@
   },
   "distill-jargon-definition-fix": {
     "status": "backlog",
-    "title": "Distill Output Defines Its Own Terms — Path Classification Messages Inline Behavior",
+    "title": "Distill Output Defines Its Own Terms \u2014 Path Classification Messages Inline Behavior",
     "epic_slug": "practice-compounds",
     "story_file": false,
     "depends_on": [],
@@ -882,14 +882,14 @@
   },
   "distill-path-classification-redesign": {
     "status": "backlog",
-    "title": "Distill Path Classification Redesign — Detect Plugin vs Personal Rule, Remove Defer Option, Handle Local Plugin Install",
+    "title": "Distill Path Classification Redesign \u2014 Detect Plugin vs Personal Rule, Remove Defer Option, Handle Local Plugin Install",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high"
   },
   "distill-worktree-isolation": {
     "status": "backlog",
-    "title": "Distill Worktree Isolation — Spawn Write Subagent in Isolated Branch, Merge to Main Only After AVFL Clean",
+    "title": "Distill Worktree Isolation \u2014 Spawn Write Subagent in Isolated Branch, Merge to Main Only After AVFL Clean",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high"
@@ -905,7 +905,7 @@
   },
   "e2e-and-qa-validator-prompts-branch-standalone-vs-team": {
     "status": "backlog",
-    "title": "e2e-validator and qa-reviewer — branch standalone vs teammate mode",
+    "title": "e2e-validator and qa-reviewer \u2014 branch standalone vs teammate mode",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -916,7 +916,7 @@
   },
   "e2e-client-side-coverage": {
     "status": "backlog",
-    "title": "E2E Client-Side Coverage — Layer 2 UI Interaction Validation",
+    "title": "E2E Client-Side Coverage \u2014 Layer 2 UI Interaction Validation",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -926,7 +926,7 @@
   },
   "e2e-validator-black-box-hardening": {
     "status": "backlog",
-    "title": "E2E Validator Black-Box Hardening — Mandatory cmux Execution, Zero Escape Hatches",
+    "title": "E2E Validator Black-Box Hardening \u2014 Mandatory cmux Execution, Zero Escape Hatches",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -947,7 +947,7 @@
   },
   "e2e-validator-orchestrator-framing-hardening": {
     "status": "backlog",
-    "title": "E2E Validator Orchestrator-Framing Hardening — Environment Prerequisites + Spawn-Block Constraints",
+    "title": "E2E Validator Orchestrator-Framing Hardening \u2014 Environment Prerequisites + Spawn-Block Constraints",
     "epic_slug": "quality-enforcement",
     "story_file": false,
     "depends_on": [],
@@ -957,7 +957,7 @@
   },
   "e2e-validator-toolsearch-fix": {
     "status": "done",
-    "title": "E2E Validator ToolSearch Fix — Pre-load SendMessage Schema",
+    "title": "E2E Validator ToolSearch Fix \u2014 Pre-load SendMessage Schema",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
@@ -966,7 +966,7 @@
   },
   "e2e-validator-turn-budget": {
     "status": "backlog",
-    "title": "E2E Validator Turn Budget — Guard Against Unbounded Validation Runs",
+    "title": "E2E Validator Turn Budget \u2014 Guard Against Unbounded Validation Runs",
     "epic_slug": "agent-team-model",
     "depends_on": [],
     "priority": "low",
@@ -975,7 +975,7 @@
   },
   "encode-epic-semantic-model": {
     "status": "backlog",
-    "title": "Encode Epic Semantic Model — Grooming and Refine Skills Know Epic Scope Boundaries",
+    "title": "Encode Epic Semantic Model \u2014 Grooming and Refine Skills Know Epic Scope Boundaries",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [],
@@ -1006,7 +1006,7 @@
   },
   "epic-grooming": {
     "status": "done",
-    "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
+    "title": "Epic Grooming \u2014 Holistic Epic Taxonomy and Story Organization",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -1023,7 +1023,7 @@
   },
   "error-extraction-filtering": {
     "status": "backlog",
-    "title": "Error Extraction Filtering — Exclude Informational Non-Zero Exits from Error Reports",
+    "title": "Error Extraction Filtering \u2014 Exclude Informational Non-Zero Exits from Error Reports",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1032,7 +1032,7 @@
   },
   "explore-agent-directory-hints": {
     "status": "backlog",
-    "title": "Explore Agent Directory Hints — Pre-Computed Directory Snapshot in Spawn Prompts",
+    "title": "Explore Agent Directory Hints \u2014 Pre-Computed Directory Snapshot in Spawn Prompts",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1052,7 +1052,7 @@
   },
   "fan-out-agent-prompt-fix": {
     "status": "backlog",
-    "title": "Fan-Out Agent Prompt Fix — Return Report as Final Response, Not SendMessage",
+    "title": "Fan-Out Agent Prompt Fix \u2014 Return Report as Final Response, Not SendMessage",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1062,7 +1062,7 @@
   },
   "feature-artifact-schema": {
     "status": "done",
-    "title": "Feature Artifact Schema — Define features.json and Populate Initial Instances",
+    "title": "Feature Artifact Schema \u2014 Define features.json and Populate Initial Instances",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -1085,7 +1085,7 @@
   },
   "feature-breakdown-skill": {
     "status": "done",
-    "title": "Build the /momentum:feature-breakdown Skill — Feature → Gap List → Triage",
+    "title": "Build the /momentum:feature-breakdown Skill \u2014 Feature \u2192 Gap List \u2192 Triage",
     "epic_slug": "ad-hoc",
     "story_file": true,
     "depends_on": [],
@@ -1104,7 +1104,7 @@
   },
   "feature-grooming": {
     "status": "done",
-    "title": "Feature Grooming Skill — Holistic Feature Taxonomy Discovery and Refinement",
+    "title": "Feature Grooming Skill \u2014 Holistic Feature Taxonomy Discovery and Refinement",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [],
@@ -1121,7 +1121,7 @@
   },
   "feature-status-html-directory-dashboard": {
     "status": "backlog",
-    "title": "Feature-Status HTML-Directory Dashboard — Per-Feature Drill-Down, Kill Project-Level Dep Graph",
+    "title": "Feature-Status HTML-Directory Dashboard \u2014 Per-Feature Drill-Down, Kill Project-Level Dep Graph",
     "epic_slug": "feature-orientation",
     "story_file": false,
     "depends_on": [],
@@ -1131,7 +1131,7 @@
   },
   "feature-status-practice-path": {
     "status": "done",
-    "title": "Feature Status Practice Path — Skill Topology and SDLC Coverage Map for Momentum",
+    "title": "Feature Status Practice Path \u2014 Skill Topology and SDLC Coverage Map for Momentum",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -1145,7 +1145,7 @@
   },
   "feature-status-skill": {
     "status": "done",
-    "title": "Feature Status Skill — Coverage Gap Analysis with Per-Project-Type Rendering",
+    "title": "Feature Status Skill \u2014 Coverage Gap Analysis with Per-Project-Type Rendering",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -1189,7 +1189,7 @@
   },
   "findings-ledger-duckdb": {
     "status": "backlog",
-    "title": "Findings Ledger DuckDB Integration — Cross-Project Trend Analysis",
+    "title": "Findings Ledger DuckDB Integration \u2014 Cross-Project Trend Analysis",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "low",
@@ -1313,7 +1313,7 @@
   },
   "guidelines-research-recency-gate": {
     "status": "dropped",
-    "title": "Guidelines Research Recency Gate — Date-Anchor Web Search Results",
+    "title": "Guidelines Research Recency Gate \u2014 Date-Anchor Web Search Results",
     "epic_slug": "quality-enforcement",
     "story_file": false,
     "depends_on": [],
@@ -1324,7 +1324,7 @@
   },
   "guidelines-verification-gate": {
     "status": "done",
-    "title": "Guidelines Verification Gate — Sprint Planning Checks for Missing Guidelines",
+    "title": "Guidelines Verification Gate \u2014 Sprint Planning Checks for Missing Guidelines",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -1358,7 +1358,7 @@
     "depends_on": [],
     "touches": [],
     "priority": "low",
-    "description": " RETRO ADDITION (sprint-2026-04-06-2): Architecture doc has specific drift items — TeamCreate reference in retro (should say individual agents), scan vs checkpoint profile for Phase 4, parallel vs sequential concurrency in Phase 2. Include architecture.md as priority target for staleness detection."
+    "description": " RETRO ADDITION (sprint-2026-04-06-2): Architecture doc has specific drift items \u2014 TeamCreate reference in retro (should say individual agents), scan vs checkpoint profile for Phase 4, parallel vs sequential concurrency in Phase 2. Include architecture.md as priority target for staleness detection."
   },
   "hash-drift-plain-language-message": {
     "status": "done",
@@ -1371,7 +1371,7 @@
   },
   "hooks-global-distribution": {
     "status": "done",
-    "title": "Hooks Global Distribution — Move Hook Scripts to Global Path",
+    "title": "Hooks Global Distribution \u2014 Move Hook Scripts to Global Path",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1387,7 +1387,7 @@
   },
   "hygiene-signal-prioritization": {
     "status": "backlog",
-    "title": "Hygiene Signal Prioritization — Lead with Safety, Gate Low-Priority Suggestions",
+    "title": "Hygiene Signal Prioritization \u2014 Lead with Safety, Gate Low-Priority Suggestions",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1396,7 +1396,7 @@
   },
   "impetus-allowed-tools-restriction": {
     "status": "done",
-    "title": "Impetus Allowed-Tools Restriction — Enforce Orchestrator Read-Only",
+    "title": "Impetus Allowed-Tools Restriction \u2014 Enforce Orchestrator Read-Only",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1410,7 +1410,7 @@
   },
   "impetus-evals-legacy-triage": {
     "status": "backlog",
-    "title": "Impetus evals — triage legacy markdown evals against new memory agent",
+    "title": "Impetus evals \u2014 triage legacy markdown evals against new memory agent",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1420,7 +1420,7 @@
   },
   "impetus-feature-status-cache": {
     "status": "done",
-    "title": "Impetus Feature Status Cache — Hash-Based Staleness Detection in Greeting",
+    "title": "Impetus Feature Status Cache \u2014 Hash-Based Staleness Detection in Greeting",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -1470,7 +1470,7 @@
   },
   "impetus-greeting-rewrite": {
     "status": "done",
-    "title": "Impetus Greeting Rewrite — 9-State Narrative Orientation",
+    "title": "Impetus Greeting Rewrite \u2014 9-State Narrative Orientation",
     "epic_slug": "impetus-ux-redesign",
     "story_file": true,
     "depends_on": [
@@ -1484,7 +1484,7 @@
   },
   "impetus-identity-redesign": {
     "status": "done",
-    "title": "Impetus Identity Redesign — BMAD-Informed Character",
+    "title": "Impetus Identity Redesign \u2014 BMAD-Informed Character",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1495,7 +1495,7 @@
   },
   "impetus-journal-hygiene-script": {
     "status": "done",
-    "title": "Impetus Journal Hygiene Script — Move Deterministic Thread Computations to momentum-tools",
+    "title": "Impetus Journal Hygiene Script \u2014 Move Deterministic Thread Computations to momentum-tools",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -1508,11 +1508,11 @@
     ],
     "change_type": "code + skill-instruction",
     "priority": "high",
-    "description": "Workflow Step 11 instructs the LLM to perform timestamp arithmetic, elapsed-time computation, concurrent-tab detection (30-min window), dormant-thread flagging (3-day threshold), dependency-satisfaction checks, context-hash matching for No-Re-Offer suppression, and unwieldy-journal triage (>5 threads). Every one of these operations is deterministic. The LLM currently reads the journal schema, parses JSONL, and evaluates multiple conditional branches — costing 800-1200 tokens per session on the open-threads path. Create a `momentum-tools session journal-hygiene` command that returns structured JSON with: sorted threads (by last_active descending), elapsed-time labels, warnings (concurrent, dormant, dependency-satisfied, unwieldy), suppressed offers (via declined_offers + context_hash matching), and suggested prompts. Also add a `momentum-tools session journal-append` command for safe JSONL writes with corruption resilience (malformed line handling) and concurrent-session safety. Rewrite workflow.md Step 11 to consume the structured JSON output — the LLM only formats and presents, no computation. RETRO ADDITION (sprint-2026-04-06-2): Strengthen with measurable startup performance budget — target <15s wall-clock, <10 tool calls. NFR20 exists but is qualitative; this adds concrete metrics."
+    "description": "Workflow Step 11 instructs the LLM to perform timestamp arithmetic, elapsed-time computation, concurrent-tab detection (30-min window), dormant-thread flagging (3-day threshold), dependency-satisfaction checks, context-hash matching for No-Re-Offer suppression, and unwieldy-journal triage (>5 threads). Every one of these operations is deterministic. The LLM currently reads the journal schema, parses JSONL, and evaluates multiple conditional branches \u2014 costing 800-1200 tokens per session on the open-threads path. Create a `momentum-tools session journal-hygiene` command that returns structured JSON with: sorted threads (by last_active descending), elapsed-time labels, warnings (concurrent, dormant, dependency-satisfied, unwieldy), suppressed offers (via declined_offers + context_hash matching), and suggested prompts. Also add a `momentum-tools session journal-append` command for safe JSONL writes with corruption resilience (malformed line handling) and concurrent-session safety. Rewrite workflow.md Step 11 to consume the structured JSON output \u2014 the LLM only formats and presents, no computation. RETRO ADDITION (sprint-2026-04-06-2): Strengthen with measurable startup performance budget \u2014 target <15s wall-clock, <10 tool calls. NFR20 exists but is qualitative; this adds concrete metrics."
   },
   "impetus-lifecycle-and-handoff-fix": {
     "status": "backlog",
-    "title": "Impetus Lifecycle and Handoff Fix — Planning State Active, Return to Menu After Ad-Hoc",
+    "title": "Impetus Lifecycle and Handoff Fix \u2014 Planning State Active, Return to Menu After Ad-Hoc",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1560,7 +1560,7 @@
   },
   "impetus-orientation-active-sprint-and-cross-repo-git-state": {
     "status": "backlog",
-    "title": "Impetus orientation — active-sprint detection and cross-repo git state",
+    "title": "Impetus orientation \u2014 active-sprint detection and cross-repo git state",
     "epic_slug": "stay-oriented-impetus",
     "story_file": true,
     "depends_on": [],
@@ -1570,7 +1570,7 @@
   },
   "impetus-path-standardization": {
     "status": "backlog",
-    "title": "Impetus Path Standardization — Replace Home Directory Paths with $HOME",
+    "title": "Impetus Path Standardization \u2014 Replace Home Directory Paths with $HOME",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -1608,7 +1608,7 @@
   },
   "impetus-ux-fallback-help-onboarding": {
     "status": "backlog",
-    "title": "Impetus UX Gaps — Fallback Route, Help Command, Post-Install Onboarding, and Hash-Drift Accept",
+    "title": "Impetus UX Gaps \u2014 Fallback Route, Help Command, Post-Install Onboarding, and Hash-Drift Accept",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -1618,18 +1618,18 @@
     ],
     "change_type": "skill-instruction",
     "priority": "medium",
-    "description": "Four user-journey gaps identified in quality analysis: (1) No fallback route in SKILL.md startup routing for unexpected preflight results — if preflight.route is not one of the five handled values, behavior is undefined. Add a catch-all check that surfaces the unexpected route and asks the developer what to do. (2) No help command — the input interpretation system handles numbers, letter commands, fuzzy continue, natural language, and ambiguous input, but 'help' and '?' have no dedicated handler. Add a brief self-description and menu explanation response. (3) Post-install onboarding cliff — after first-install completes (Steps 2-5 into Step 7), a brand-new user faces a sprint-aware menu with no mental model of Momentum's concepts. Add a fork after install offering a quick walkthrough or jump-to-planning. (4) Hash-drift warning has no permanent accept — the [K] keep option in Step 10 creates a recurring warning every session with no escape. Add an [A] accept option that updates the stored hash to match current, suppressing future warnings."
+    "description": "Four user-journey gaps identified in quality analysis: (1) No fallback route in SKILL.md startup routing for unexpected preflight results \u2014 if preflight.route is not one of the five handled values, behavior is undefined. Add a catch-all check that surfaces the unexpected route and asks the developer what to do. (2) No help command \u2014 the input interpretation system handles numbers, letter commands, fuzzy continue, natural language, and ambiguous input, but 'help' and '?' have no dedicated handler. Add a brief self-description and menu explanation response. (3) Post-install onboarding cliff \u2014 after first-install completes (Steps 2-5 into Step 7), a brand-new user faces a sprint-aware menu with no mental model of Momentum's concepts. Add a fork after install offering a quick walkthrough or jump-to-planning. (4) Hash-drift warning has no permanent accept \u2014 the [K] keep option in Step 10 creates a recurring warning every session with no escape. Add an [A] accept option that updates the stored hash to match current, suppressing future warnings."
   },
   "impetus-workflow-state-anchor": {
     "status": "backlog",
-    "title": "Impetus Workflow State Anchor — TaskCreate/TaskList Anchors at Sub-Skill Boundaries to Prevent Context Drift",
+    "title": "Impetus Workflow State Anchor \u2014 TaskCreate/TaskList Anchors at Sub-Skill Boundaries to Prevent Context Drift",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium"
   },
   "install-upgrade-io-consolidation": {
     "status": "backlog",
-    "title": "Install/Upgrade I/O Consolidation — Batch Sequential Bash Calls into Single Script Command",
+    "title": "Install/Upgrade I/O Consolidation \u2014 Batch Sequential Bash Calls into Single Script Command",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1649,7 +1649,7 @@
   },
   "intake-skill": {
     "status": "done",
-    "title": "Intake Skill — Lightweight Story Capture from Conversation",
+    "title": "Intake Skill \u2014 Lightweight Story Capture from Conversation",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -1663,11 +1663,11 @@
   },
   "journal-duckdb-queries": {
     "status": "backlog",
-    "title": "Journal DuckDB Queries — Replace Manual Journal Parsing with SQL",
+    "title": "Journal DuckDB Queries \u2014 Replace Manual Journal Parsing with SQL",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
-    "description": "Impetus journal append uses Bash echo >> and regenerates journal-view.md from scratch on each write. DuckDB can query journal.jsonl state directly via SQL — thread status, open/closed counts, session history — without regenerating markdown. ACs: (1) Journal state queryable via DuckDB SQL, (2) Thread analytics (open vs closed, counts by type) available as queries, (3) journal-view.md regeneration replaced or supplemented with SQL-driven approach, (4) No change to journal append pattern (echo >> is fine for writes)."
+    "description": "Impetus journal append uses Bash echo >> and regenerates journal-view.md from scratch on each write. DuckDB can query journal.jsonl state directly via SQL \u2014 thread status, open/closed counts, session history \u2014 without regenerating markdown. ACs: (1) Journal state queryable via DuckDB SQL, (2) Thread analytics (open vs closed, counts by type) available as queries, (3) journal-view.md regeneration replaced or supplemented with SQL-driven approach, (4) No change to journal append pattern (echo >> is fine for writes)."
   },
   "journal-json-jsonl-migration-evaluation": {
     "status": "done",
@@ -1683,7 +1683,7 @@
   },
   "journal-status-tool": {
     "status": "done",
-    "title": "Journal Status Tool — Deterministic Open Thread Detection",
+    "title": "Journal Status Tool \u2014 Deterministic Open Thread Detection",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -1697,7 +1697,7 @@
   },
   "kb-ingest": {
     "status": "backlog",
-    "title": "KB Ingest — Ingest Documents into Project Knowledge Vault",
+    "title": "KB Ingest \u2014 Ingest Documents into Project Knowledge Vault",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1706,7 +1706,7 @@
   },
   "kb-init": {
     "status": "backlog",
-    "title": "KB Init — Scaffold Cold Knowledge Base Repo for a Project",
+    "title": "KB Init \u2014 Scaffold Cold Knowledge Base Repo for a Project",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1715,7 +1715,7 @@
   },
   "kb-raw-ingest-spike": {
     "status": "backlog",
-    "title": "Spike — KB Raw Source Ingestion: Obsidian, Document Trees, llms.txt, Research",
+    "title": "Spike \u2014 KB Raw Source Ingestion: Obsidian, Document Trees, llms.txt, Research",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1752,7 +1752,7 @@
   },
   "maestro-ux-spec-sync-guidance": {
     "status": "backlog",
-    "title": "Maestro UX Spec Sync Guidance — Scan Test Fixtures After UX Story Completions",
+    "title": "Maestro UX Spec Sync Guidance \u2014 Scan Test Fixtures After UX Story Completions",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -1762,7 +1762,7 @@
   },
   "mandatory-task-tracking": {
     "status": "done",
-    "title": "Mandatory Task Tracking — Enforce TaskCreate in Long Sessions",
+    "title": "Mandatory Task Tracking \u2014 Enforce TaskCreate in Long Sessions",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
@@ -1823,7 +1823,7 @@
   },
   "module-upgrade-change-preview": {
     "status": "backlog",
-    "title": "Module Upgrade Change Preview — Diff Before Apply",
+    "title": "Module Upgrade Change Preview \u2014 Diff Before Apply",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [],
@@ -1832,7 +1832,7 @@
   },
   "momentum-analyze-spike": {
     "status": "backlog",
-    "title": "Spike: momentum:analyze — Generalize Enumerator/Adversary Beyond AVFL",
+    "title": "Spike: momentum:analyze \u2014 Generalize Enumerator/Adversary Beyond AVFL",
     "epic_slug": "practice-compounds",
     "story_file": false,
     "depends_on": [],
@@ -1862,7 +1862,7 @@
   },
   "momentum-dev-simplify": {
     "status": "done",
-    "title": "Momentum Dev Simplify — Pure Executor",
+    "title": "Momentum Dev Simplify \u2014 Pure Executor",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -1875,7 +1875,7 @@
   },
   "momentum-fixture-investigate-skill-suspect-state-workflow": {
     "status": "backlog",
-    "title": "momentum:fixture-investigate skill — Suspect state workflow",
+    "title": "momentum:fixture-investigate skill \u2014 Suspect state workflow",
     "epic_slug": "performance-validation",
     "story_file": true,
     "depends_on": [],
@@ -1899,7 +1899,7 @@
   },
   "momentum-retro-phase-4b-4f-fixture-generation": {
     "status": "backlog",
-    "title": "momentum:retro Phase 4b-4f extension — fixture generation from findings",
+    "title": "momentum:retro Phase 4b-4f extension \u2014 fixture generation from findings",
     "epic_slug": "practice-compounds",
     "story_file": true,
     "depends_on": [],
@@ -1939,7 +1939,7 @@
   },
   "momentum-tooling": {
     "status": "done",
-    "title": "Momentum Tooling — Python CLI for Deterministic Operations",
+    "title": "Momentum Tooling \u2014 Python CLI for Deterministic Operations",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [
@@ -1977,11 +1977,11 @@
   },
   "orchestrator-deduplication-guard": {
     "status": "done",
-    "title": "Orchestrator Deduplication Guard — Track Spawned Agents by (Story, Role)",
+    "title": "Orchestrator Deduplication Guard \u2014 Track Spawned Agents by (Story, Role)",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
-    "description": "Sprint-dev orchestrator spawns duplicate agents for the same (story, role) — 47.8% compute waste (12,981KB, 1,662 turns). refine-skill had 7 identical dev agents when 1 was needed. Duplication cascades into review layer (7 prompt-engineers, 17 QA reviewers). ACs: (1) Orchestrator tracks spawned agents by (story, role) tuple, (2) Re-spawn of existing (story, role) is blocked with warning, (3) Duplicate detection works across waves, (4) Sprint metrics show 0 redundant agents.",
+    "description": "Sprint-dev orchestrator spawns duplicate agents for the same (story, role) \u2014 47.8% compute waste (12,981KB, 1,662 turns). refine-skill had 7 identical dev agents when 1 was needed. Duplication cascades into review layer (7 prompt-engineers, 17 QA reviewers). ACs: (1) Orchestrator tracks spawned agents by (story, role) tuple, (2) Re-spawn of existing (story, role) is blocked with warning, (3) Duplicate detection works across waves, (4) Sprint metrics show 0 redundant agents.",
     "story_file": true
   },
   "orchestrator-purity-principle": {
@@ -1999,7 +1999,7 @@
   },
   "orientation-auto-query-prior-transcripts-on-context-gap": {
     "status": "backlog",
-    "title": "Impetus orientation — auto-query prior transcripts on context gap",
+    "title": "Impetus orientation \u2014 auto-query prior transcripts on context gap",
     "epic_slug": "stay-oriented-impetus",
     "story_file": true,
     "depends_on": [],
@@ -2029,7 +2029,7 @@
   },
   "plugin-cache-staleness-detection": {
     "status": "closed-incomplete",
-    "title": "Impetus Session-Start Staleness Check — Detect Plugin Cache Skew and Prompt Update+Restart",
+    "title": "Impetus Session-Start Staleness Check \u2014 Detect Plugin Cache Skew and Prompt Update+Restart",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2046,7 +2046,7 @@
   },
   "plugin-cross-references": {
     "status": "done",
-    "title": "Plugin Cross-References — Update All Internal References",
+    "title": "Plugin Cross-References \u2014 Update All Internal References",
     "epic_slug": "foundation-bootstrap",
     "story_file": true,
     "depends_on": [
@@ -2060,7 +2060,7 @@
   },
   "plugin-dev-e2e-validation-workflow": {
     "status": "backlog",
-    "title": "Plugin Dev E2E Validation Workflow — Mandatory CMUX Smoke Test Before Release",
+    "title": "Plugin Dev E2E Validation Workflow \u2014 Mandatory CMUX Smoke Test Before Release",
     "epic_slug": "quality-enforcement",
     "depends_on": [],
     "priority": "high",
@@ -2069,7 +2069,7 @@
   },
   "plugin-migrate-skills": {
     "status": "done",
-    "title": "Plugin Migrate Skills — Move Satellite Skills into Plugin Structure",
+    "title": "Plugin Migrate Skills \u2014 Move Satellite Skills into Plugin Structure",
     "epic_slug": "foundation-bootstrap",
     "story_file": true,
     "depends_on": [
@@ -2082,7 +2082,7 @@
   },
   "plugin-scripts-hooks-refs": {
     "status": "done",
-    "title": "Plugin Scripts, Hooks, and References — Consolidate at Plugin Root",
+    "title": "Plugin Scripts, Hooks, and References \u2014 Consolidate at Plugin Root",
     "epic_slug": "foundation-bootstrap",
     "story_file": true,
     "depends_on": [
@@ -2097,7 +2097,7 @@
   },
   "plugin-skeleton": {
     "status": "done",
-    "title": "Plugin Skeleton — Create Plugin Root and Manifest",
+    "title": "Plugin Skeleton \u2014 Create Plugin Root and Manifest",
     "epic_slug": "foundation-bootstrap",
     "story_file": true,
     "depends_on": [],
@@ -2174,7 +2174,7 @@
   },
   "proactive-scope-recommendations": {
     "status": "backlog",
-    "title": "Proactive Scope Recommendations — Validators Surface Scope Expansion Opportunities",
+    "title": "Proactive Scope Recommendations \u2014 Validators Surface Scope Expansion Opportunities",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -2212,7 +2212,7 @@
   },
   "propagate-decision-skill-vocabulary": {
     "status": "backlog",
-    "title": "Propagate Decision Skill Vocabulary — Adopt/Adapt/Reject Framing in Feature-Grooming and Epic-Grooming",
+    "title": "Propagate Decision Skill Vocabulary \u2014 Adopt/Adapt/Reject Framing in Feature-Grooming and Epic-Grooming",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium"
@@ -2255,7 +2255,7 @@
   },
   "quality-gate-parity-across-workflows": {
     "status": "done",
-    "title": "Quality Gate Parity Across Workflows — Ensure sprint-dev, quick-fix, and dev Apply Equivalent Gates",
+    "title": "Quality Gate Parity Across Workflows \u2014 Ensure sprint-dev, quick-fix, and dev Apply Equivalent Gates",
     "epic_slug": "quality-enforcement",
     "depends_on": [],
     "touches": [
@@ -2281,7 +2281,7 @@
   },
   "quick-fix-skill": {
     "status": "done",
-    "title": "Quick Fix Skill — Single-Story Tactical Workflow",
+    "title": "Quick Fix Skill \u2014 Single-Story Tactical Workflow",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2295,7 +2295,7 @@
   },
   "quick-fix-spec-placement-rules": {
     "status": "backlog",
-    "title": "Quick-Fix Spec Placement Rules — Gherkin in Separate Files, Not Inline",
+    "title": "Quick-Fix Spec Placement Rules \u2014 Gherkin in Separate Files, Not Inline",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2304,7 +2304,7 @@
   },
   "read-only-investigation-agents": {
     "status": "backlog",
-    "title": "Read-Only Investigation Agents — Investigate First, Fix Second",
+    "title": "Read-Only Investigation Agents \u2014 Investigate First, Fix Second",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -2314,7 +2314,7 @@
   },
   "refine-assessment-decision-review": {
     "status": "done",
-    "title": "Refine Workflow — Assessment & Decision Review Step",
+    "title": "Refine Workflow \u2014 Assessment & Decision Review Step",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -2329,7 +2329,7 @@
   },
   "refine-decision-review-step": {
     "status": "dropped",
-    "title": "Refine Workflow — Decision Review Step",
+    "title": "Refine Workflow \u2014 Decision Review Step",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -2354,7 +2354,7 @@
   },
   "refine-reprioritization": {
     "status": "done",
-    "title": "Refine Reprioritization — Add Priority Change Phase to Backlog Refinement",
+    "title": "Refine Reprioritization \u2014 Add Priority Change Phase to Backlog Refinement",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -2368,7 +2368,7 @@
   },
   "refine-skill": {
     "status": "done",
-    "title": "Refine Skill — Backlog Grooming with PM and Architect",
+    "title": "Refine Skill \u2014 Backlog Grooming with PM and Architect",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -2383,7 +2383,7 @@
   },
   "refine-skill-rewrite": {
     "status": "done",
-    "title": "Refine Skill Rewrite — Practical Backlog Hygiene over Gap Analysis",
+    "title": "Refine Skill Rewrite \u2014 Practical Backlog Hygiene over Gap Analysis",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [],
@@ -2396,7 +2396,7 @@
   },
   "remove-agent-journals": {
     "status": "done",
-    "title": "Remove Agent Journals — Delete Sprint-Log Write Infrastructure",
+    "title": "Remove Agent Journals \u2014 Delete Sprint-Log Write Infrastructure",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2503,7 +2503,7 @@
   },
   "research-skill-parallel-phase2-framing-confirm": {
     "status": "backlog",
-    "title": "Research Skill — Parallel Phase-2 Subagents by Default + Framing Confirmation",
+    "title": "Research Skill \u2014 Parallel Phase-2 Subagents by Default + Framing Confirmation",
     "epic_slug": "research-knowledge",
     "story_file": false,
     "depends_on": [],
@@ -2523,7 +2523,7 @@
   },
   "retire-sprint-log-final-cleanup": {
     "status": "closed-incomplete",
-    "title": "Retire Sprint-Log Infrastructure — PRD Drift Fix, Stub Cleanup, Filesystem Removal, Retro Phase 2 Hard-Fail",
+    "title": "Retire Sprint-Log Infrastructure \u2014 PRD Drift Fix, Stub Cleanup, Filesystem Removal, Retro Phase 2 Hard-Fail",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2540,7 +2540,7 @@
   },
   "retro-and-planning-ux-defaults": {
     "status": "backlog",
-    "title": "Retro and Planning UX Defaults — Apply Established Workflow Patterns Without Asking",
+    "title": "Retro and Planning UX Defaults \u2014 Apply Established Workflow Patterns Without Asking",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2549,11 +2549,11 @@
   },
   "retro-extract-preflight-validation": {
     "status": "dropped",
-    "title": "Retro Extract Preflight Validation — Hard-Fail on Missing Sprint-Log Directory and Zero Sprint-Story Matches",
+    "title": "Retro Extract Preflight Validation \u2014 Hard-Fail on Missing Sprint-Log Directory and Zero Sprint-Story Matches",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
-    "notes": "Dropped per ARCH-5 — sprint-logs retired; superseded by retire-sprint-log-final-cleanup."
+    "notes": "Dropped per ARCH-5 \u2014 sprint-logs retired; superseded by retire-sprint-log-final-cleanup."
   },
   "retro-fixture-documenter-no-replication-without-verification": {
     "status": "backlog",
@@ -2579,7 +2579,7 @@
   },
   "retro-pipeline-idempotency": {
     "status": "backlog",
-    "title": "Retro Pipeline Idempotency — Detect Prior Attempt and Resume or Restart",
+    "title": "Retro Pipeline Idempotency \u2014 Detect Prior Attempt and Resume or Restart",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2588,14 +2588,14 @@
   },
   "retro-prior-action-item-cross-ref": {
     "status": "backlog",
-    "title": "Retro Prior Action Item Cross-Reference — Flag Recurrences From Previous Sprint Retros Before Writing Findings",
+    "title": "Retro Prior Action Item Cross-Reference \u2014 Flag Recurrences From Previous Sprint Retros Before Writing Findings",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium"
   },
   "retro-session-analytics-phase-0": {
     "status": "backlog",
-    "title": "Retro Phase 0 — Session Analytics and Regression Detection",
+    "title": "Retro Phase 0 \u2014 Session Analytics and Regression Detection",
     "epic_slug": "ad-hoc",
     "story_file": true,
     "depends_on": [],
@@ -2604,7 +2604,7 @@
   },
   "retro-skill": {
     "status": "done",
-    "title": "Retro Skill — Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
+    "title": "Retro Skill \u2014 Sprint Retrospective with Cross-Log Discovery and Sprint Closure",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2617,7 +2617,7 @@
   },
   "retro-team-singleton-guard": {
     "status": "closed-incomplete",
-    "title": "Retro Team Singleton Guard — Enforce Exactly-One Spawning for Documenter and Auditor Roles",
+    "title": "Retro Team Singleton Guard \u2014 Enforce Exactly-One Spawning for Documenter and Auditor Roles",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2630,7 +2630,7 @@
   },
   "retro-transcript-extraction-hardening": {
     "status": "closed-incomplete",
-    "title": "Retro Transcript Extraction Hardening — Worktree Path Resolution and UTC Boundary Fix",
+    "title": "Retro Transcript Extraction Hardening \u2014 Worktree Path Resolution and UTC Boundary Fix",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2645,7 +2645,7 @@
   },
   "retro-triage-handoff": {
     "status": "done",
-    "title": "Retro → Triage Handoff — Retro Findings Feed Planning via Unified Intake Queue",
+    "title": "Retro \u2192 Triage Handoff \u2014 Retro Findings Feed Planning via Unified Intake Queue",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [
@@ -2660,7 +2660,7 @@
   },
   "retro-upstream-classifier": {
     "status": "backlog",
-    "title": "Retro Upstream Classifier — Route Project vs Upstream Findings to Correct Backlog",
+    "title": "Retro Upstream Classifier \u2014 Route Project vs Upstream Findings to Correct Backlog",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2669,22 +2669,22 @@
   },
   "retro-workflow-rewrite": {
     "status": "done",
-    "title": "Retro Workflow Rewrite — Replace Milestone Logs with Transcript Audit",
+    "title": "Retro Workflow Rewrite \u2014 Replace Milestone Logs with Transcript Audit",
     "epic_slug": "impetus-core",
     "depends_on": [
       "transcript-query-calibration"
     ],
     "priority": "critical",
-    "description": "The existing retro workflow (Phases 2-4: log collection, story verification, cross-log discovery) found 2 findings from 24 milestone log events. The ad-hoc transcript audit using DuckDB and a 3-auditor team found 10 struggle items, 7 success patterns, 13 user interventions, and 7 cross-cutting patterns — an order of magnitude more signal. The retro workflow must be rebuilt around session transcript analysis. Key changes: (1) Replace milestone-log Phases 2-4 with DuckDB-powered preprocessing step that extracts user-messages, agent-summaries, errors, and team-messages from session JSONL files, (2) Integrate transcript-query.py (or evolved successor) as standard retro tooling, (3) Add auditor team phase with 3 specialized roles: auditor-human (user interaction analysis), auditor-execution (agent efficiency), auditor-review (quality gate effectiveness), plus 1 documenter, (4) User-messages are first-class audit input — human prompts tell the real story, (5) Two-wave architecture: preprocessing then audit team, (6) Findings document replaces dual triage outputs as primary retro artifact. ACs: (1) Retro workflow includes DuckDB preprocessing step, (2) transcript-query.py available as standard retro tool, (3) User messages extracted and analyzed, (4) Auditor team spawned with specialized roles, (5) Findings document covers successes AND struggles, (6) Milestone log analysis removed or demoted to supplementary, (7) Retro produces actionable story stubs from transcript findings.",
+    "description": "The existing retro workflow (Phases 2-4: log collection, story verification, cross-log discovery) found 2 findings from 24 milestone log events. The ad-hoc transcript audit using DuckDB and a 3-auditor team found 10 struggle items, 7 success patterns, 13 user interventions, and 7 cross-cutting patterns \u2014 an order of magnitude more signal. The retro workflow must be rebuilt around session transcript analysis. Key changes: (1) Replace milestone-log Phases 2-4 with DuckDB-powered preprocessing step that extracts user-messages, agent-summaries, errors, and team-messages from session JSONL files, (2) Integrate transcript-query.py (or evolved successor) as standard retro tooling, (3) Add auditor team phase with 3 specialized roles: auditor-human (user interaction analysis), auditor-execution (agent efficiency), auditor-review (quality gate effectiveness), plus 1 documenter, (4) User-messages are first-class audit input \u2014 human prompts tell the real story, (5) Two-wave architecture: preprocessing then audit team, (6) Findings document replaces dual triage outputs as primary retro artifact. ACs: (1) Retro workflow includes DuckDB preprocessing step, (2) transcript-query.py available as standard retro tool, (3) User messages extracted and analyzed, (4) Auditor team spawned with specialized roles, (5) Findings document covers successes AND struggles, (6) Milestone log analysis removed or demoted to supplementary, (7) Retro produces actionable story stubs from transcript findings.",
     "story_file": true
   },
   "review-orchestration-codification": {
     "status": "done",
-    "title": "Review Orchestration Codification — Automate AVFL + Code Review Flow",
+    "title": "Review Orchestration Codification \u2014 Automate AVFL + Code Review Flow",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high",
-    "description": "User had to micromanage review flow that should be automated — specifying exact AVFL + code-review + team composition. ACs: (1) Sprint-dev review phase codifies: AVFL (no-fix mode) + concurrent code-reviews then results fed to review team, (2) No user specification of review flow needed, (3) Flow documented as explicit workflow steps.",
+    "description": "User had to micromanage review flow that should be automated \u2014 specifying exact AVFL + code-review + team composition. ACs: (1) Sprint-dev review phase codifies: AVFL (no-fix mode) + concurrent code-reviews then results fed to review team, (2) No user specification of review flow needed, (3) Flow documented as explicit workflow steps.",
     "story_file": true
   },
   "semver-v2-version-release-skill": {
@@ -2699,7 +2699,7 @@
   },
   "sendmessage-self-routing-filter": {
     "status": "backlog",
-    "title": "SendMessage Self-Routing Filter — Prevent Agents Messaging Themselves",
+    "title": "SendMessage Self-Routing Filter \u2014 Prevent Agents Messaging Themselves",
     "epic_slug": "agent-team-model",
     "depends_on": [],
     "priority": "low",
@@ -2718,7 +2718,7 @@
   },
   "session-open-sprint-view": {
     "status": "done",
-    "title": "Session-Open Sprint View — Mode Detection and Fill Bars",
+    "title": "Session-Open Sprint View \u2014 Mode Detection and Fill Bars",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [
@@ -2754,7 +2754,7 @@
   },
   "shared-file-contention-fix": {
     "status": "backlog",
-    "title": "Shared File Contention Fix — Serialize Access During Parallel Dev",
+    "title": "Shared File Contention Fix \u2014 Serialize Access During Parallel Dev",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -2803,7 +2803,7 @@
   },
   "spawning-mode-markers": {
     "status": "backlog",
-    "title": "Spawning Mode Markers — Workflow Steps Declare Individual vs TeamCreate Mode",
+    "title": "Spawning Mode Markers \u2014 Workflow Steps Declare Individual vs TeamCreate Mode",
     "epic_slug": "impetus-epic-orchestrator",
     "story_file": true,
     "depends_on": [],
@@ -2832,7 +2832,7 @@
   },
   "specialist-dev-agents": {
     "status": "done",
-    "title": "Specialist Dev Agents — Domain-Specific Agent Definitions",
+    "title": "Specialist Dev Agents \u2014 Domain-Specific Agent Definitions",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [
@@ -2848,7 +2848,7 @@
   },
   "sprint-boundary-compression": {
     "status": "done",
-    "title": "Sprint-Boundary Context Compression — Structured Sprint Summary at Retro Close",
+    "title": "Sprint-Boundary Context Compression \u2014 Structured Sprint Summary at Retro Close",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -2896,7 +2896,7 @@
   },
   "sprint-dev-phase-7-gate": {
     "status": "backlog",
-    "title": "Sprint-Dev Phase 7 Gate — Block Completion Until MANUAL Scenarios Are Developer-Signed-Off",
+    "title": "Sprint-Dev Phase 7 Gate \u2014 Block Completion Until MANUAL Scenarios Are Developer-Signed-Off",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
     "depends_on": [],
@@ -2905,7 +2905,7 @@
   },
   "sprint-dev-skill": {
     "status": "done",
-    "title": "Sprint Dev Skill — Create SKILL.md for Sprint Execution Workflow",
+    "title": "Sprint Dev Skill \u2014 Create SKILL.md for Sprint Execution Workflow",
     "epic_slug": "foundation-bootstrap",
     "story_file": true,
     "depends_on": [],
@@ -2926,7 +2926,7 @@
   },
   "sprint-index-schema-migration": {
     "status": "done",
-    "title": "Sprint Index Schema Migration — Add Status and Retro Fields",
+    "title": "Sprint Index Schema Migration \u2014 Add Status and Retro Fields",
     "epic_slug": "impetus-ux-redesign",
     "story_file": true,
     "depends_on": [],
@@ -2937,7 +2937,7 @@
   },
   "sprint-lifecycle-tools": {
     "status": "done",
-    "title": "Sprint Lifecycle Tools — Status Fields, New Commands, and Unit Tests",
+    "title": "Sprint Lifecycle Tools \u2014 Status Fields, New Commands, and Unit Tests",
     "epic_slug": "impetus-ux-redesign",
     "story_file": true,
     "depends_on": [],
@@ -2949,11 +2949,11 @@
   },
   "sprint-log-directory-enforcement": {
     "status": "dropped",
-    "title": "Sprint Log Directory Enforcement — Create sprint-logs/{{sprint_slug}}/ in Sprint-Planning Preflight",
+    "title": "Sprint Log Directory Enforcement \u2014 Create sprint-logs/{{sprint_slug}}/ in Sprint-Planning Preflight",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
-    "notes": "Dropped per ARCH-5 — sprint-logs retired; superseded by retire-sprint-log-final-cleanup."
+    "notes": "Dropped per ARCH-5 \u2014 sprint-logs retired; superseded by retire-sprint-log-final-cleanup."
   },
   "sprint-manager-fixture-exclusive-write-authority": {
     "status": "backlog",
@@ -3035,7 +3035,7 @@
   },
   "sprint-planning-investigate-first": {
     "status": "backlog",
-    "title": "Sprint Planning Investigate-First — Look Before Asking Diagnostic Questions",
+    "title": "Sprint Planning Investigate-First \u2014 Look Before Asking Diagnostic Questions",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -3044,7 +3044,7 @@
   },
   "sprint-planning-skill": {
     "status": "done",
-    "title": "Sprint Planning Skill — Create SKILL.md for Sprint Planning Workflow",
+    "title": "Sprint Planning Skill \u2014 Create SKILL.md for Sprint Planning Workflow",
     "epic_slug": "foundation-bootstrap",
     "story_file": true,
     "depends_on": [],
@@ -3055,7 +3055,7 @@
   },
   "sprint-planning-synthesis-first": {
     "status": "done",
-    "title": "Sprint Planning Synthesis-First — Lead with Recommendations Not Data Dumps",
+    "title": "Sprint Planning Synthesis-First \u2014 Lead with Recommendations Not Data Dumps",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high",
@@ -3064,7 +3064,7 @@
   },
   "sprint-scope-tracking": {
     "status": "backlog",
-    "title": "Sprint Scope Tracking — Planned vs Unplanned Work Log",
+    "title": "Sprint Scope Tracking \u2014 Planned vs Unplanned Work Log",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
     "depends_on": [],
@@ -3073,7 +3073,7 @@
   },
   "sprint-slug-backfill": {
     "status": "backlog",
-    "title": "Sprint Slug Backfill — Fix Missing Slug Field in Sprint Index",
+    "title": "Sprint Slug Backfill \u2014 Fix Missing Slug Field in Sprint Index",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
@@ -3102,7 +3102,7 @@
   },
   "sprint-workflow-alignment": {
     "status": "done",
-    "title": "Sprint Workflow Alignment — Fix Slug Extraction and Status Transitions",
+    "title": "Sprint Workflow Alignment \u2014 Fix Slug Extraction and Status Transitions",
     "epic_slug": "impetus-ux-redesign",
     "story_file": true,
     "depends_on": [
@@ -3127,7 +3127,7 @@
   },
   "status-transition-walk-mode": {
     "status": "backlog",
-    "title": "Status Transition Walk Mode — Auto-Step Through Intermediate States",
+    "title": "Status Transition Walk Mode \u2014 Auto-Step Through Intermediate States",
     "epic_slug": "impetus-core",
     "story_file": false,
     "depends_on": [],
@@ -3164,7 +3164,7 @@
   },
   "story-spec-completeness-checklist": {
     "status": "backlog",
-    "title": "Story Spec Completeness Checklist — Templates, DRAFT Markers, and Lifecycle Validation",
+    "title": "Story Spec Completeness Checklist \u2014 Templates, DRAFT Markers, and Lifecycle Validation",
     "epic_slug": "story-cycles",
     "story_file": true,
     "depends_on": [],
@@ -3173,7 +3173,7 @@
   },
   "story-template-judgment-frame": {
     "status": "backlog",
-    "title": "Story Template Judgment Frame — Human-Review Section + LLM-Optimized Split",
+    "title": "Story Template Judgment Frame \u2014 Human-Review Section + LLM-Optimized Split",
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
@@ -3183,7 +3183,7 @@
   },
   "subtractive-story-consumer-audit": {
     "status": "backlog",
-    "title": "Subtractive Story Consumer Audit — Grep All References Before Removing Code",
+    "title": "Subtractive Story Consumer Audit \u2014 Grep All References Before Removing Code",
     "epic_slug": "story-cycles",
     "story_file": true,
     "depends_on": [],
@@ -3192,14 +3192,14 @@
   },
   "team-config-name-resolution-fix": {
     "status": "backlog",
-    "title": "Team Config Name Resolution Fix — SendMessage Must Resolve Names of Members That Joined After Sender",
+    "title": "Team Config Name Resolution Fix \u2014 SendMessage Must Resolve Names of Members That Joined After Sender",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high"
   },
   "team-message-deduplication": {
     "status": "backlog",
-    "title": "Team Message Deduplication — Reduce 3:1 Duplication Ratio in Team Logs",
+    "title": "Team Message Deduplication \u2014 Reduce 3:1 Duplication Ratio in Team Logs",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -3208,7 +3208,7 @@
   },
   "team-review-with-teamcreate": {
     "status": "backlog",
-    "title": "Team Review with TeamCreate — Implement Decision 34 Hybrid Agent Team",
+    "title": "Team Review with TeamCreate \u2014 Implement Decision 34 Hybrid Agent Team",
     "epic_slug": "agent-team-model",
     "story_file": false,
     "depends_on": [],
@@ -3224,7 +3224,7 @@
   },
   "tier-classification-heuristic-redesign": {
     "status": "backlog",
-    "title": "Tier Classification Heuristic Redesign — Well-Understood+Reversible vs Novel+Load-Bearing",
+    "title": "Tier Classification Heuristic Redesign \u2014 Well-Understood+Reversible vs Novel+Load-Bearing",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -3242,7 +3242,7 @@
   },
   "transcript-query-calibration": {
     "status": "done",
-    "title": "Transcript Query Calibration — Fix Error False Positives and Schema Variants",
+    "title": "Transcript Query Calibration \u2014 Fix Error False Positives and Schema Variants",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
@@ -3251,7 +3251,7 @@
   },
   "transcript-query-python-repr-parser": {
     "status": "backlog",
-    "title": "transcript-query.py Parses Python-Repr Dicts — Documenter Agents Become Auditable",
+    "title": "transcript-query.py Parses Python-Repr Dicts \u2014 Documenter Agents Become Auditable",
     "epic_slug": "quality-enforcement",
     "story_file": false,
     "depends_on": [],
@@ -3281,7 +3281,7 @@
   },
   "two-phase-coverage-validation": {
     "status": "backlog",
-    "title": "Two-Phase Coverage Validation — Enumerate Then Adversary in Single Agent",
+    "title": "Two-Phase Coverage Validation \u2014 Enumerate Then Adversary in Single Agent",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -3310,7 +3310,7 @@
   },
   "user-context-aware-explanations": {
     "status": "backlog",
-    "title": "Context-Aware Explanations — Calibrate to User Role, Not System Architecture",
+    "title": "Context-Aware Explanations \u2014 Calibrate to User Role, Not System Architecture",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3320,7 +3320,7 @@
   },
   "validator-targeted-recheck-pattern": {
     "status": "backlog",
-    "title": "Validator Targeted Recheck Pattern — Re-Run Specific Scenarios Not Full Suite",
+    "title": "Validator Targeted Recheck Pattern \u2014 Re-Run Specific Scenarios Not Full Suite",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3352,7 +3352,7 @@
   },
   "verify-orchestrator-dedup-guard-coverage": {
     "status": "backlog",
-    "title": "Verify Orchestrator Dedup Guard — Confirm Review Teams Covered, Not Just Dev Wave",
+    "title": "Verify Orchestrator Dedup Guard \u2014 Confirm Review Teams Covered, Not Just Dev Wave",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
@@ -3361,7 +3361,7 @@
   },
   "verify-shell-before-fix": {
     "status": "backlog",
-    "title": "Verify Shell Before Fix — Check Shell Type Before Suggesting Shell-Specific Commands",
+    "title": "Verify Shell Before Fix \u2014 Check Shell Type Before Suggesting Shell-Specific Commands",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3371,7 +3371,7 @@
   },
   "verify-skill": {
     "status": "dropped",
-    "title": "Verify Skill — Automated Behavioral Verification",
+    "title": "Verify Skill \u2014 Automated Behavioral Verification",
     "epic_slug": "story-cycles",
     "story_file": false,
     "depends_on": [],
@@ -3405,7 +3405,7 @@
   },
   "workflow-delegation-enforcement": {
     "status": "backlog",
-    "title": "Workflow Delegation Enforcement — Runtime Detection When Spawn Steps Are Bypassed",
+    "title": "Workflow Delegation Enforcement \u2014 Runtime Detection When Spawn Steps Are Bypassed",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -3414,7 +3414,7 @@
   },
   "workflow-fidelity-rule": {
     "status": "done",
-    "title": "Workflow Fidelity Rule — Delegation Steps Are Binding",
+    "title": "Workflow Fidelity Rule \u2014 Delegation Steps Are Binding",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -3426,7 +3426,7 @@
   },
   "workflow-modularization-strategy": {
     "status": "backlog",
-    "title": "Workflow Modularization Strategy — Decompose 800+ Line Workflows (Spike)",
+    "title": "Workflow Modularization Strategy \u2014 Decompose 800+ Line Workflows (Spike)",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "medium",
@@ -3444,7 +3444,7 @@
   },
   "workflow-team-composition-spec": {
     "status": "done",
-    "title": "Workflow Team Composition Spec — Codify Required Roles and Spawning Modes",
+    "title": "Workflow Team Composition Spec \u2014 Codify Required Roles and Spawning Modes",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "critical",
@@ -3453,85 +3453,85 @@
   },
   "consolidate-state-model-and-cross-skill-contract-tests": {
     "status": "backlog",
-    "title": "Consolidate State-Model Contract — Unified Architectural Decision + Cross-Skill Schema Validation Tests",
+    "title": "Consolidate State-Model Contract \u2014 Unified Architectural Decision + Cross-Skill Schema Validation Tests",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "research-q-a-digest-first-rebuild": {
     "status": "backlog",
-    "title": "Rebuild momentum:research Q/A as Digest-First — Structured Findings + Open Redirect Questions",
+    "title": "Rebuild momentum:research Q/A as Digest-First \u2014 Structured Findings + Open Redirect Questions",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "specialist-agents-avfl-and-quickfix-phase2a": {
     "status": "backlog",
-    "title": "Specialist Agents for AVFL and Quick-Fix Phase 2a — 8 Typed Agent Roles",
+    "title": "Specialist Agents for AVFL and Quick-Fix Phase 2a \u2014 8 Typed Agent Roles",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "transcript-query-helper-stable-schema": {
     "status": "backlog",
-    "title": "Transcript-Query Helper — Typed DuckDB Accessors with Stable content-string-vs-array Handling",
+    "title": "Transcript-Query Helper \u2014 Typed DuckDB Accessors with Stable content-string-vs-array Handling",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "architecture-guard-cross-section-check": {
     "status": "backlog",
-    "title": "Architecture Guard Cross-Section Coherence Check — Catch editHistory Contradictions",
+    "title": "Architecture Guard Cross-Section Coherence Check \u2014 Catch editHistory Contradictions",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "momentum-tools-sprint-verify-evals": {
     "status": "backlog",
-    "title": "momentum-tools sprint verify-evals — Pre-Merge Eval Presence Check",
+    "title": "momentum-tools sprint verify-evals \u2014 Pre-Merge Eval Presence Check",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "sprint-planning-story-size-heuristic": {
     "status": "backlog",
-    "title": "Sprint-Planning Story-Size Heuristic — Detect Migration-Class Stories, Force Split or Annotate Permissions",
+    "title": "Sprint-Planning Story-Size Heuristic \u2014 Detect Migration-Class Stories, Force Split or Annotate Permissions",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "audit-extract-first-prompt-full-capture": {
     "status": "backlog",
-    "title": "Audit-Extract First-Prompt Full Capture — Store Complete First Prompt in agent-summary Output",
+    "title": "Audit-Extract First-Prompt Full Capture \u2014 Store Complete First Prompt in agent-summary Output",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "avfl-consolidator-stylistic-filter": {
     "status": "backlog",
-    "title": "AVFL Consolidator Stylistic Filter — Drop Style-Only and Past-Tense-Claim Findings",
+    "title": "AVFL Consolidator Stylistic Filter \u2014 Drop Style-Only and Past-Tense-Claim Findings",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "session-rule-read-before-edit": {
     "status": "backlog",
-    "title": "Session Rule: Read Before Edit — Agent Must Read File Before Any Edit Tool Call",
+    "title": "Session Rule: Read Before Edit \u2014 Agent Must Read File Before Any Edit Tool Call",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "dev-prompt-git-revert-guidance": {
     "status": "backlog",
-    "title": "Dev/Fixer Prompt Git-Revert Guidance — Prefer git revert Over git reset --hard",
+    "title": "Dev/Fixer Prompt Git-Revert Guidance \u2014 Prefer git revert Over git reset --hard",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "session-handoff-prompt-as-artifact": {
     "status": "backlog",
-    "title": "Session-Handoff Prompt as Artifact — First-Class Next-Session Context Capture",
+    "title": "Session-Handoff Prompt as Artifact \u2014 First-Class Next-Session Context Capture",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "benchmark-capture-from-session-transcripts": {
     "status": "backlog",
-    "title": "Benchmark Capture from Session Transcripts — Extract Pre/Post State + Inputs/Outputs as Benchmark Recipes",
+    "title": "Benchmark Capture from Session Transcripts \u2014 Extract Pre/Post State + Inputs/Outputs as Benchmark Recipes",
     "epic_slug": "impetus-core",
     "depends_on": []
   },
   "retro-phase-1-resilience-audited-but-unclosed-sprint": {
     "status": "backlog",
-    "title": "Retro Phase 1 resilience — detect audited-but-unclosed sprint",
+    "title": "Retro Phase 1 resilience \u2014 detect audited-but-unclosed sprint",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -3541,7 +3541,7 @@
   },
   "code-reviewer-withmartian-replay-fixture": {
     "status": "backlog",
-    "title": "Code-Reviewer Withmartian Replay Fixture — Investigate Dataset Access",
+    "title": "Code-Reviewer Withmartian Replay Fixture \u2014 Investigate Dataset Access",
     "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
@@ -3561,7 +3561,7 @@
   },
   "skills-kb-query-injection-audit": {
     "status": "backlog",
-    "title": "Skills KB Query Injection Audit — Enumerate Injection Points Across All Momentum Skills",
+    "title": "Skills KB Query Injection Audit \u2014 Enumerate Injection Points Across All Momentum Skills",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3572,7 +3572,7 @@
   },
   "validator-agent-definition": {
     "status": "backlog",
-    "title": "Validator Agent Definition — Abstract Base Role for AVFL/Distill Validation",
+    "title": "Validator Agent Definition \u2014 Abstract Base Role for AVFL/Distill Validation",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3583,7 +3583,7 @@
   },
   "enumerator-agent-definition": {
     "status": "backlog",
-    "title": "Enumerator Agent Definition — Shipped AVFL/Distill Validation Custom",
+    "title": "Enumerator Agent Definition \u2014 Shipped AVFL/Distill Validation Custom",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3594,7 +3594,7 @@
   },
   "adversary-agent-definition": {
     "status": "backlog",
-    "title": "Adversary Agent Definition — Shipped AVFL/Distill Validation Custom",
+    "title": "Adversary Agent Definition \u2014 Shipped AVFL/Distill Validation Custom",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3605,7 +3605,7 @@
   },
   "retro-auditor-agent-definition": {
     "status": "backlog",
-    "title": "Retro Auditor Agent Definition — Abstract Base Role for Sprint Retrospective Auditors",
+    "title": "Retro Auditor Agent Definition \u2014 Abstract Base Role for Sprint Retrospective Auditors",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3616,7 +3616,7 @@
   },
   "auditor-human-agent-definition": {
     "status": "backlog",
-    "title": "Auditor Human Agent Definition — Shipped Retro Auditor for User Messages",
+    "title": "Auditor Human Agent Definition \u2014 Shipped Retro Auditor for User Messages",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3627,7 +3627,7 @@
   },
   "auditor-execution-agent-definition": {
     "status": "backlog",
-    "title": "Auditor Execution Agent Definition — Shipped Retro Auditor for Agent Summaries",
+    "title": "Auditor Execution Agent Definition \u2014 Shipped Retro Auditor for Agent Summaries",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3638,7 +3638,7 @@
   },
   "auditor-review-agent-definition": {
     "status": "backlog",
-    "title": "Auditor Review Agent Definition — Shipped Retro Auditor for Team Review Messages",
+    "title": "Auditor Review Agent Definition \u2014 Shipped Retro Auditor for Team Review Messages",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3649,7 +3649,7 @@
   },
   "documenter-agent-definition": {
     "status": "backlog",
-    "title": "Documenter Agent Definition — Retro Synthesis Coordinator Base Body",
+    "title": "Documenter Agent Definition \u2014 Retro Synthesis Coordinator Base Body",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3660,7 +3660,7 @@
   },
   "code-reviewer-agent-definition": {
     "status": "backlog",
-    "title": "Code Reviewer Agent Definition — Sprint-Dev Team Review Base Body",
+    "title": "Code Reviewer Agent Definition \u2014 Sprint-Dev Team Review Base Body",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3671,7 +3671,7 @@
   },
   "architect-guard-agent-definition": {
     "status": "backlog",
-    "title": "Architect Guard Agent Definition — Sprint-Dev Team Review Architecture Body",
+    "title": "Architect Guard Agent Definition \u2014 Sprint-Dev Team Review Architecture Body",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3682,7 +3682,7 @@
   },
   "dev-fixer-agent-definition": {
     "status": "backlog",
-    "title": "Dev Fixer Agent Definition — Sprint-Dev Fix Phase Base Body",
+    "title": "Dev Fixer Agent Definition \u2014 Sprint-Dev Fix Phase Base Body",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3693,7 +3693,7 @@
   },
   "agents-md-manifest-format": {
     "status": "backlog",
-    "title": "Agents.md Manifest Format — Per-Skill Agent Role Configuration Spec",
+    "title": "Agents.md Manifest Format \u2014 Per-Skill Agent Role Configuration Spec",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3704,7 +3704,7 @@
   },
   "missing-base-bodies-audit": {
     "status": "backlog",
-    "title": "Missing Base Bodies Audit — Verify Universal Agent Model Coverage Post-DEC-013",
+    "title": "Missing Base Bodies Audit \u2014 Verify Universal Agent Model Coverage Post-DEC-013",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3715,7 +3715,7 @@
   },
   "retro-remove-teamcreate-documenter": {
     "status": "backlog",
-    "title": "Remove TeamCreate from Retro Documenter — Refactor to Fan-Out + Orchestrator Handoff",
+    "title": "Remove TeamCreate from Retro Documenter \u2014 Refactor to Fan-Out + Orchestrator Handoff",
     "epic_slug": "impetus-core",
     "story_file": true,
     "depends_on": [],
@@ -3746,7 +3746,7 @@
   },
   "drop-superseded-kb-stories-dec-018": {
     "status": "backlog",
-    "title": "Drop Superseded KB Stories — DEC-018 Wiki Skills Replace KB/Vault Story Suite",
+    "title": "Drop Superseded KB Stories \u2014 DEC-018 Wiki Skills Replace KB/Vault Story Suite",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
@@ -3757,7 +3757,7 @@
   },
   "momentum-cycle-dashboard-shell-hono-bun-server": {
     "status": "done",
-    "title": "Momentum Cycle — Dashboard Shell (Hono+Bun Server)",
+    "title": "Momentum Cycle \u2014 Dashboard Shell (Hono+Bun Server)",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -3772,7 +3772,7 @@
   },
   "momentum-cycle-features-lens": {
     "status": "done",
-    "title": "Momentum Cycle — Features Lens",
+    "title": "Momentum Cycle \u2014 Features Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -3788,7 +3788,7 @@
   },
   "momentum-cycle-cycle-timeline-lens": {
     "status": "done",
-    "title": "Momentum Cycle — Cycle Timeline Lens",
+    "title": "Momentum Cycle \u2014 Cycle Timeline Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -3803,7 +3803,7 @@
   },
   "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
     "status": "done",
-    "title": "Momentum Cycle — Sprint Lens + Sprint Detail Drill-Down",
+    "title": "Momentum Cycle \u2014 Sprint Lens + Sprint Detail Drill-Down",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [],
@@ -3814,7 +3814,7 @@
   },
   "momentum-cycle-story-l3-drill-down-reading-mode": {
     "status": "done",
-    "title": "Momentum Cycle — Story L3 Drill-Down (Reading Mode)",
+    "title": "Momentum Cycle \u2014 Story L3 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -3830,7 +3830,7 @@
   },
   "momentum-cycle-feature-l2-drill-down-reading-mode": {
     "status": "done",
-    "title": "Momentum Cycle — Feature L2 Drill-Down (Reading Mode)",
+    "title": "Momentum Cycle \u2014 Feature L2 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
     "depends_on": [
@@ -3903,5 +3903,93 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "fix-e2e-validator-jsonl-serialization": {
+    "status": "backlog",
+    "title": "Fix E2E Validator JSONL Serialization \u2014 Replace repr() with json.dumps(default=str)",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "critical",
+    "story_type": "defect"
+  },
+  "enforce-ui-design-verification-before-done": {
+    "status": "backlog",
+    "title": "Enforce UI Design Verification Before Done \u2014 Design-Comparison Step in Canvas Dev Workflow",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "enforce-migration-ingest-coverage-reports": {
+    "status": "backlog",
+    "title": "Enforce Migration/Ingest Coverage Reports \u2014 Source vs Ingested Diff Before Done",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "wiki-ingest-batch-mode": {
+    "status": "backlog",
+    "title": "Wiki Ingest Batch Mode \u2014 One Agent Processes URL List, Deprecate One-Agent-Per-URL",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "refresh-cmux-skill-docs-and-preflight": {
+    "status": "backlog",
+    "title": "Refresh cmux Skill Docs and Add Preflight Tab-vs-Pane Check",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "story_type": "defect"
+  },
+  "consolidate-intake-invocation-and-fix-error": {
+    "status": "backlog",
+    "title": "Consolidate momentum:intake Invocation Template and Fix Uniform errors=1",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "story_type": "defect"
+  },
+  "enforce-large-file-read-protocol": {
+    "status": "backlog",
+    "title": "Enforce Large-File Read Protocol in Dev/Explore Agent Prompts \u2014 wc -l + Chunked Read",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "fix-worktree-absolute-path-errors": {
+    "status": "backlog",
+    "title": "Fix Worktree Absolute Path Errors \u2014 Audit Dev/Dev-Skills Agent Prompts for Repo-Relative Paths",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium",
+    "story_type": "defect"
+  },
+  "turn-count-circuit-breaker": {
+    "status": "backlog",
+    "title": "Turn-Count Circuit Breaker \u2014 Dev Agents Checkpoint at ~100 Turns, Refine Flags Cross-File Stories",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "require-git-state-in-completion-reports": {
+    "status": "backlog",
+    "title": "Require Git State in Completion Reports \u2014 Commit SHA, Push Status, Branch in Every Dev Report",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "reviewer-verify-before-flag": {
+    "status": "backlog",
+    "title": "Reviewer Verify Before Flag \u2014 Mandatory Source-File Check Before Raising H-Tier Findings",
+    "epic_slug": "impetus-core",
+    "depends_on": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }
