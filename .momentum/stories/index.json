@@ -3893,5 +3893,15 @@
       "skills/momentum/skills/dev/workflow.md"
     ],
     "priority": "low"
+  },
+  "constitution-builder-evals-phases-2-and-3": {
+    "status": "backlog",
+    "title": "Add Evals for constitution-builder Phases 2 and 3",
+    "epic_slug": "practice-compounds",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
   }
 }
