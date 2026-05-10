@@ -1,190 +1,5 @@
 {
-  "active": {
-    "slug": "sprint-2026-05-03",
-    "planned": "2026-05-03",
-    "locked": true,
-    "status": "active",
-    "merge_hotspots": [
-      "skills/momentum/skills/canvas/server.tsx"
-    ],
-    "stories": [
-      "momentum-cycle-dashboard-shell-hono-bun-server",
-      "momentum-cycle-features-lens",
-      "momentum-cycle-cycle-timeline-lens",
-      "momentum-cycle-feature-l2-drill-down-reading-mode",
-      "momentum-cycle-sprint-lens-sprint-detail-drill-down",
-      "momentum-cycle-story-l3-drill-down-reading-mode"
-    ],
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "momentum-cycle-dashboard-shell-hono-bun-server"
-        ]
-      },
-      {
-        "wave": 2,
-        "stories": [
-          "momentum-cycle-features-lens",
-          "momentum-cycle-sprint-lens-sprint-detail-drill-down",
-          "momentum-cycle-cycle-timeline-lens"
-        ]
-      },
-      {
-        "wave": 3,
-        "stories": [
-          "momentum-cycle-feature-l2-drill-down-reading-mode"
-        ]
-      },
-      {
-        "wave": 4,
-        "stories": [
-          "momentum-cycle-story-l3-drill-down-reading-mode"
-        ]
-      }
-    ],
-    "team_composition": {
-      "momentum-cycle-dashboard-shell-hono-bun-server": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator",
-          "architect-guard"
-        ],
-        "specialist": "dev-skills",
-        "guidelines": ".claude/rules/dev-skills.md",
-        "test_approach": "EDD for skill-instruction tasks, TDD for script-code tasks, inspection for config-structure tasks",
-        "wave": 1,
-        "dependencies": []
-      },
-      "momentum-cycle-features-lens": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "specialist": "dev",
-        "guidelines": null,
-        "test_approach": "TDD via bmad-dev-story (bun test runner)",
-        "wave": 2,
-        "dependencies": [
-          "momentum-cycle-dashboard-shell-hono-bun-server"
-        ]
-      },
-      "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "specialist": "dev",
-        "guidelines": null,
-        "test_approach": "manual integration verification (frontend-feature)",
-        "wave": 2,
-        "dependencies": [
-          "momentum-cycle-dashboard-shell-hono-bun-server"
-        ]
-      },
-      "momentum-cycle-cycle-timeline-lens": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "specialist": "dev",
-        "guidelines": null,
-        "test_approach": "TDD for computeCycleState() pure function, manual visual verification for UI",
-        "wave": 2,
-        "dependencies": [
-          "momentum-cycle-dashboard-shell-hono-bun-server"
-        ]
-      },
-      "momentum-cycle-feature-l2-drill-down-reading-mode": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "specialist": "dev",
-        "guidelines": null,
-        "test_approach": "functional inspection (Hono route + HTML template, no automated tests)",
-        "wave": 3,
-        "dependencies": [
-          "momentum-cycle-features-lens"
-        ]
-      },
-      "momentum-cycle-story-l3-drill-down-reading-mode": {
-        "roles": [
-          "dev",
-          "qa",
-          "e2e-validator"
-        ],
-        "specialist": "dev",
-        "guidelines": null,
-        "test_approach": "TDD for markdown parser, manual integration for Hono route and HTML template",
-        "wave": 4,
-        "dependencies": [
-          "momentum-cycle-feature-l2-drill-down-reading-mode",
-          "momentum-cycle-sprint-lens-sprint-detail-drill-down"
-        ]
-      }
-    },
-    "review_roles": {
-      "qa_reviewer": {
-        "agent": "qa-reviewer",
-        "guidelines": "skills/momentum/agents/qa-reviewer.md"
-      },
-      "e2e_validator": {
-        "agent": "e2e-validator",
-        "guidelines": "skills/momentum/agents/e2e-validator.md"
-      },
-      "architect_guard": {
-        "skill": "architecture-guard",
-        "stories": [
-          "momentum-cycle-dashboard-shell-hono-bun-server"
-        ]
-      }
-    },
-    "approvals": [
-      {
-        "story_slug": "momentum-cycle-dashboard-shell-hono-bun-server",
-        "decision": "approved",
-        "approved_at": "2026-05-04T01:40:11Z",
-        "story_file_sha": "46edb944397f060c250a0716c16d3394d511394637fad37fb7e6a8181586fbf8"
-      },
-      {
-        "story_slug": "momentum-cycle-features-lens",
-        "decision": "approved",
-        "approved_at": "2026-05-04T01:40:11Z",
-        "story_file_sha": "21549e2d6d5c42a7a1f173c7ea4bc758f9c94b7a2cd7aef9dafd8b3122281ea7"
-      },
-      {
-        "story_slug": "momentum-cycle-sprint-lens-sprint-detail-drill-down",
-        "decision": "approved",
-        "approved_at": "2026-05-04T01:40:12Z",
-        "story_file_sha": "1e4253f285e5eca9eb5fab371e4ff49952186e11d0df931dcb48072480709b41"
-      },
-      {
-        "story_slug": "momentum-cycle-cycle-timeline-lens",
-        "decision": "approved",
-        "approved_at": "2026-05-04T01:40:12Z",
-        "story_file_sha": "8f919fbf0b2ba6c859f5d76445d0daff3f3ea31a4d957a821b665bdbccc9c670"
-      },
-      {
-        "story_slug": "momentum-cycle-feature-l2-drill-down-reading-mode",
-        "decision": "approved",
-        "approved_at": "2026-05-04T00:22:39Z",
-        "story_file_sha": "de2fff157a25e4c6017aaac058eae7f60ad2840fd34f852e05ba0d95596bd256"
-      },
-      {
-        "story_slug": "momentum-cycle-story-l3-drill-down-reading-mode",
-        "decision": "approved",
-        "approved_at": "2026-05-04T00:26:52Z",
-        "story_file_sha": "a34e8e585e014d16d873b5393f79d185df17f0b476cf3aa2d2026760f615d499"
-      }
-    ],
-    "started": "2026-05-03"
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -1349,6 +1164,194 @@
           "story_file_sha": "b50f7e864cb2bbc90e320a42dd8ed8da9d8ca68ece7f533ebc31ac29b17c37a1"
         }
       ]
+    },
+    {
+      "slug": "sprint-2026-05-03",
+      "planned": "2026-05-03",
+      "locked": true,
+      "status": "done",
+      "merge_hotspots": [
+        "skills/momentum/skills/canvas/server.tsx"
+      ],
+      "stories": [
+        "momentum-cycle-dashboard-shell-hono-bun-server",
+        "momentum-cycle-features-lens",
+        "momentum-cycle-cycle-timeline-lens",
+        "momentum-cycle-feature-l2-drill-down-reading-mode",
+        "momentum-cycle-sprint-lens-sprint-detail-drill-down",
+        "momentum-cycle-story-l3-drill-down-reading-mode"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "momentum-cycle-dashboard-shell-hono-bun-server"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "momentum-cycle-features-lens",
+            "momentum-cycle-sprint-lens-sprint-detail-drill-down",
+            "momentum-cycle-cycle-timeline-lens"
+          ]
+        },
+        {
+          "wave": 3,
+          "stories": [
+            "momentum-cycle-feature-l2-drill-down-reading-mode"
+          ]
+        },
+        {
+          "wave": 4,
+          "stories": [
+            "momentum-cycle-story-l3-drill-down-reading-mode"
+          ]
+        }
+      ],
+      "team_composition": {
+        "momentum-cycle-dashboard-shell-hono-bun-server": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator",
+            "architect-guard"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "test_approach": "EDD for skill-instruction tasks, TDD for script-code tasks, inspection for config-structure tasks",
+          "wave": 1,
+          "dependencies": []
+        },
+        "momentum-cycle-features-lens": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "specialist": "dev",
+          "guidelines": null,
+          "test_approach": "TDD via bmad-dev-story (bun test runner)",
+          "wave": 2,
+          "dependencies": [
+            "momentum-cycle-dashboard-shell-hono-bun-server"
+          ]
+        },
+        "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "specialist": "dev",
+          "guidelines": null,
+          "test_approach": "manual integration verification (frontend-feature)",
+          "wave": 2,
+          "dependencies": [
+            "momentum-cycle-dashboard-shell-hono-bun-server"
+          ]
+        },
+        "momentum-cycle-cycle-timeline-lens": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "specialist": "dev",
+          "guidelines": null,
+          "test_approach": "TDD for computeCycleState() pure function, manual visual verification for UI",
+          "wave": 2,
+          "dependencies": [
+            "momentum-cycle-dashboard-shell-hono-bun-server"
+          ]
+        },
+        "momentum-cycle-feature-l2-drill-down-reading-mode": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "specialist": "dev",
+          "guidelines": null,
+          "test_approach": "functional inspection (Hono route + HTML template, no automated tests)",
+          "wave": 3,
+          "dependencies": [
+            "momentum-cycle-features-lens"
+          ]
+        },
+        "momentum-cycle-story-l3-drill-down-reading-mode": {
+          "roles": [
+            "dev",
+            "qa",
+            "e2e-validator"
+          ],
+          "specialist": "dev",
+          "guidelines": null,
+          "test_approach": "TDD for markdown parser, manual integration for Hono route and HTML template",
+          "wave": 4,
+          "dependencies": [
+            "momentum-cycle-feature-l2-drill-down-reading-mode",
+            "momentum-cycle-sprint-lens-sprint-detail-drill-down"
+          ]
+        }
+      },
+      "review_roles": {
+        "qa_reviewer": {
+          "agent": "qa-reviewer",
+          "guidelines": "skills/momentum/agents/qa-reviewer.md"
+        },
+        "e2e_validator": {
+          "agent": "e2e-validator",
+          "guidelines": "skills/momentum/agents/e2e-validator.md"
+        },
+        "architect_guard": {
+          "skill": "architecture-guard",
+          "stories": [
+            "momentum-cycle-dashboard-shell-hono-bun-server"
+          ]
+        }
+      },
+      "approvals": [
+        {
+          "story_slug": "momentum-cycle-dashboard-shell-hono-bun-server",
+          "decision": "approved",
+          "approved_at": "2026-05-04T01:40:11Z",
+          "story_file_sha": "46edb944397f060c250a0716c16d3394d511394637fad37fb7e6a8181586fbf8"
+        },
+        {
+          "story_slug": "momentum-cycle-features-lens",
+          "decision": "approved",
+          "approved_at": "2026-05-04T01:40:11Z",
+          "story_file_sha": "21549e2d6d5c42a7a1f173c7ea4bc758f9c94b7a2cd7aef9dafd8b3122281ea7"
+        },
+        {
+          "story_slug": "momentum-cycle-sprint-lens-sprint-detail-drill-down",
+          "decision": "approved",
+          "approved_at": "2026-05-04T01:40:12Z",
+          "story_file_sha": "1e4253f285e5eca9eb5fab371e4ff49952186e11d0df931dcb48072480709b41"
+        },
+        {
+          "story_slug": "momentum-cycle-cycle-timeline-lens",
+          "decision": "approved",
+          "approved_at": "2026-05-04T01:40:12Z",
+          "story_file_sha": "8f919fbf0b2ba6c859f5d76445d0daff3f3ea31a4d957a821b665bdbccc9c670"
+        },
+        {
+          "story_slug": "momentum-cycle-feature-l2-drill-down-reading-mode",
+          "decision": "approved",
+          "approved_at": "2026-05-04T00:22:39Z",
+          "story_file_sha": "de2fff157a25e4c6017aaac058eae7f60ad2840fd34f852e05ba0d95596bd256"
+        },
+        {
+          "story_slug": "momentum-cycle-story-l3-drill-down-reading-mode",
+          "decision": "approved",
+          "approved_at": "2026-05-04T00:26:52Z",
+          "story_file_sha": "a34e8e585e014d16d873b5393f79d185df17f0b476cf3aa2d2026760f615d499"
+        }
+      ],
+      "started": "2026-05-03",
+      "completed": "2026-05-09",
+      "retro_run_at": null
     }
   ],
   "quickfixes": [

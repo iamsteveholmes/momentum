@@ -3756,7 +3756,7 @@
     "feature_slug": "momentum-practice-knowledge-base"
   },
   "momentum-cycle-dashboard-shell-hono-bun-server": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum Cycle — Dashboard Shell (Hono+Bun Server)",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3771,7 +3771,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-features-lens": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum Cycle — Features Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3787,7 +3787,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-cycle-timeline-lens": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum Cycle — Cycle Timeline Lens",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3802,7 +3802,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-sprint-lens-sprint-detail-drill-down": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum Cycle — Sprint Lens + Sprint Detail Drill-Down",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3813,7 +3813,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-story-l3-drill-down-reading-mode": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum Cycle — Story L3 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -3829,7 +3829,7 @@
     "feature_slug": "momentum-canvas"
   },
   "momentum-cycle-feature-l2-drill-down-reading-mode": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum Cycle — Feature L2 Drill-Down (Reading Mode)",
     "epic_slug": "feature-orientation",
     "story_file": true,
