@@ -1,7 +1,7 @@
 ---
 title: Guidelines Verification Gate — Sprint Planning Checks for Missing Guidelines
 story_key: guidelines-verification-gate
-status: ready-for-dev
+status: done
 epic_slug: agent-team-model
 depends_on:
   - specialist-dev-agents

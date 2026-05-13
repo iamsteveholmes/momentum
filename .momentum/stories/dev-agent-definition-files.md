@@ -1,7 +1,7 @@
 ---
 title: Dev Agent Definition Files — Lightweight Agent for Sprint-Dev Spawning
 story_key: dev-agent-definition-files
-status: ready-for-dev
+status: done
 epic_slug: agent-team-model
 depends_on: []
 touches:

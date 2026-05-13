@@ -1,7 +1,7 @@
 ---
 title: Architecture Guard Implementation — Replace Stub with Real Agent Definition
 story_key: architecture-guard-implementation
-status: ready-for-dev
+status: done
 epic_slug: agent-team-model
 depends_on:
   - dev-agent-definition-files
@@ -13,6 +13,8 @@ change_type: config-structure + skill-instruction
 ---
 
 # Architecture Guard Implementation — Replace Stub with Real Agent Definition
+
+> **Grooming note (2026-05-12):** Marked done — the SKILL at `skills/momentum/skills/architecture-guard/` shipped and is invokable. AC1 (the standalone `skills/momentum/agents/architecture-guard.md` agent base body file) was NOT delivered and was superseded post-DEC-013 by a separate story: see `architect-guard-agent-definition` (deliberately named `architect-guard.md` to avoid collision with the skill). The agent-body work moved out of this story's scope; this story records what the original sprint shipped.
 
 ## Goal
 

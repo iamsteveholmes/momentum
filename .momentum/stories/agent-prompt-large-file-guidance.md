@@ -1,7 +1,7 @@
 ---
 title: Agent Prompt Large-File Guidance — Standard Instructions for Context-Exceeding Files
 story_key: agent-prompt-large-file-guidance
-status: review
+status: done
 epic_slug: agent-team-model
 depends_on: []
 touches:

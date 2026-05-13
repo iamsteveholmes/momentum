@@ -11,6 +11,8 @@ touches: []
 
 # Architect Guard Agent Definition — Sprint-Dev Team Review Architecture Body
 
+> **Grooming note (2026-05-12):** The filename is deliberately `agents/architect-guard.md` — distinct from `skills/momentum/skills/architecture-guard/` (the SKILL). The original `architecture-guard-implementation` story (now done) shipped the SKILL but not the agent base body; this story creates that base body. Do not rename to `architecture-guard.md` — the disambiguation is intentional.
+
 <!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
      stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
      by create-story before any development begins. -->
