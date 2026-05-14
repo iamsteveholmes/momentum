@@ -2,7 +2,7 @@
 name: warn-asking-to-commit
 enabled: true
 event: stop
-pattern: (want me to commit|should I commit|shall I commit|ready to commit\?|do you want me to commit)
+pattern: (want me to commit|should I commit|shall I commit|ready to commit|do you want me to commit|i'll commit|let me commit|going to commit|about to commit)
 action: warn
 ---
 
