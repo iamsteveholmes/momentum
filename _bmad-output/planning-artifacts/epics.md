@@ -25,8 +25,10 @@ derives_from:
   - id: UX-MOMENTUM-001
     path: _bmad-output/planning-artifacts/ux-design-specification.md
     relationship: derives_from
-lastEdited: '2026-04-11'
+lastEdited: '2026-05-14'
 editHistory:
+  - date: '2026-05-14'
+    changes: 'Epic grooming: renamed Epic 2b slug from impetus-epic-orchestrator to impetus-sprint-orchestrator — slug was left stale after April 2026 rename of Epic 2b from "Impetus as Epic Orchestrator" to "Impetus as Sprint Orchestrator"; added **Slug:** `impetus-sprint-orchestrator` declaration to Epic 2b body; reassigned 17 stories via momentum-tools sprint epic-membership.'
   - date: '2026-04-11'
     changes: 'Sprint planning: registered new Epic 13 (feature-orientation) — Feature Visualization and Developer Orientation from DEC-002; added 5 story stubs to stories/index.json: feature-artifact-schema, feature-status-skill, sprint-boundary-compression, impetus-feature-status-cache, feature-status-practice-path.'
   - date: '2026-04-11'
@@ -539,6 +541,7 @@ The session-open experience communicates what Impetus is and shows real project 
 
 Impetus orchestrates work at the sprint level. The developer uses triage to plan, momentum:create-story to add individual stories, momentum:epic-grooming to manage epic taxonomy, and sprint-planning + sprint-dev to execute. The sprint is the primary unit of execution; the epic is the primary unit for grouping and scoping work.
 
+**Slug:** `impetus-sprint-orchestrator`
 **FRs covered:** FR49, FR52, FR53
 **Note:** FR50 (/momentum:create-epic) and FR51 (/momentum:develop-epic) removed — superseded by this model (developer decision 2026-04-11).
 

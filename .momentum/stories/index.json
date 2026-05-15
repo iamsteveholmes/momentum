@@ -233,7 +233,7 @@
   "assessment-skill": {
     "status": "done",
     "title": "Assessment Skill — Guided Product State Evaluation",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [],
     "touches": [
@@ -647,7 +647,7 @@
   "coverage-analysis-deduplication": {
     "status": "backlog",
     "title": "Coverage Analysis Deduplication — Cache Results, Never Re-Spawn for Same Target",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -742,7 +742,7 @@
   "decision-skill": {
     "status": "done",
     "title": "Decision Skill — Capture Strategic Decisions from Assessments",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [
       "assessment-skill"
@@ -844,7 +844,7 @@
   "develop-epic-command": {
     "status": "dropped",
     "title": "Develop Epic Command",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": false,
     "depends_on": [],
     "touches": [],
@@ -976,7 +976,7 @@
   "encode-epic-semantic-model": {
     "status": "backlog",
     "title": "Encode Epic Semantic Model — Grooming and Refine Skills Know Epic Scope Boundaries",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -1007,7 +1007,7 @@
   "epic-grooming": {
     "status": "done",
     "title": "Epic Grooming — Holistic Epic Taxonomy and Story Organization",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [
       "backlog-priority-field"
@@ -1105,7 +1105,7 @@
   "feature-grooming": {
     "status": "done",
     "title": "Feature Grooming Skill — Holistic Feature Taxonomy Discovery and Refinement",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [],
     "touches": [
@@ -1797,7 +1797,7 @@
   "module-upgrade-change-preview": {
     "status": "backlog",
     "title": "Module Upgrade Change Preview — Diff Before Apply",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -1827,7 +1827,7 @@
   "momentum-dev-auto-variant": {
     "status": "dropped",
     "title": "Momentum Dev Auto Variant",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": false,
     "depends_on": [],
     "touches": [],
@@ -2288,7 +2288,7 @@
   "refine-assessment-decision-review": {
     "status": "done",
     "title": "Refine Workflow — Assessment & Decision Review Step",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [
       "assessment-skill",
@@ -2303,7 +2303,7 @@
   "refine-decision-review-step": {
     "status": "dropped",
     "title": "Refine Workflow — Decision Review Step",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [
       "decision-registry-skill"
@@ -2328,7 +2328,7 @@
   "refine-reprioritization": {
     "status": "done",
     "title": "Refine Reprioritization — Add Priority Change Phase to Backlog Refinement",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [
       "refine-skill-rewrite"
@@ -2342,7 +2342,7 @@
   "refine-skill": {
     "status": "done",
     "title": "Refine Skill — Backlog Grooming with PM and Architect",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [
       "backlog-priority-field"
@@ -2357,7 +2357,7 @@
   "refine-skill-rewrite": {
     "status": "done",
     "title": "Refine Skill Rewrite — Practical Backlog Hygiene over Gap Analysis",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [],
     "touches": [
@@ -2619,7 +2619,7 @@
   "retro-triage-handoff": {
     "status": "done",
     "title": "Retro → Triage Handoff — Retro Findings Feed Planning via Unified Intake Queue",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [
       "triage-skill"
@@ -2777,7 +2777,7 @@
   "spawning-mode-markers": {
     "status": "backlog",
     "title": "Spawning Mode Markers — Workflow Steps Declare Individual vs TeamCreate Mode",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3246,7 +3246,7 @@
   "triage-skill": {
     "status": "done",
     "title": "Triage Skill",
-    "epic_slug": "impetus-epic-orchestrator",
+    "epic_slug": "impetus-sprint-orchestrator",
     "story_file": false,
     "depends_on": [],
     "touches": [],
