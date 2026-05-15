@@ -45,7 +45,7 @@ This is a coarse "load this doc for this technology" pointer, not a symptom-grai
 **[OFFICIAL]** The story file at `.momentum/stories/build-guidelines-skill.md` describes a gen-2 replacement for agent-guidelines. Key architectural concepts:
 
 - **Tier 1 (Hot constitution):** `.claude/guidelines/constitution.md` — ~660 lines, always loaded
-- **Tier 2 (Composed specialist agent files):** `.claude/guidelines/agents/{role}-{domain}.md` — base agent body + project manifest merged
+- **Tier 2 (Composed specialist agent files):** `.claude/guidelines/agents/{role}-{domain}.md` — base agent body + agent manifesto merged
 
 The constitution concept is the closest analogue to a "hot layer" in momentum's vocabulary. However, `build-guidelines` is a **backlog story with status: `backlog`** — the skill does not exist in `skills/momentum/skills/`. The file `skills/momentum/skills/build-guidelines/` does not exist. **[OFFICIAL]**
 

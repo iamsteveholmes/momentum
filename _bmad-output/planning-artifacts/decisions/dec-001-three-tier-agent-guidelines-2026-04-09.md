@@ -44,7 +44,7 @@ composed specialist agent files before the sprint starts.
 .claude/guidelines/agents/{role}-{domain}.md
 ```
 
-Example: `dev-kotlin-compose.md` = `dev.md` body + Kotlin Compose project manifest
+Example: `dev-kotlin-compose.md` = `dev.md` body + Kotlin Compose agent manifesto
 merged into one file. The system prompt IS the guidelines — they are not injected at
 spawn time.
 

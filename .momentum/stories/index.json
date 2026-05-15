@@ -2163,9 +2163,9 @@
     "touches": [],
     "priority": "low"
   },
-  "project-manifest-format-specification": {
+  "agent-manifesto-format-specification": {
     "status": "backlog",
-    "title": "Project manifest format specification",
+    "title": "Agent manifesto format specification",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],

@@ -39,7 +39,7 @@ This story documents the migration:
 1. Identify all project-local SKILL.md files that are gen-2 precursors
 2. Run `build-guidelines` against each affected project to produce the equivalent composed agent file
 3. Diff the generated composed body against the hand-rolled SKILL.md content
-4. Reconcile any drift (the hand-rolled version may have improvements that need to be folded into the project manifest or KB)
+4. Reconcile any drift (the hand-rolled version may have improvements that need to be folded into the agent manifesto or KB)
 5. Retire the project-local SKILL.md (or convert it into a thin pointer that says "see .claude/guidelines/agents/...")
 6. Update any callers (slash-command users, sprint-dev wiring) to point to the composed file
 

@@ -16,7 +16,7 @@ stories_affected:
   - base-body-collapse-rollback
   - rename-base-body-files-to-canonical-naming
   - architecture-decision-26-update-for-base-body-collapse
-  - project-manifest-format-specification
+  - agent-manifesto-format-specification
   - constitutionmd-generation-acceptance-criteria
   - sprint-dev-composed-file-spawn-wiring
   - sprint-planning-composed-file-preference-update
