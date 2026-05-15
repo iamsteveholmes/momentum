@@ -1,0 +1,119 @@
+{
+  "metadata": {
+    "skill_name": "frontend-dev",
+    "skill_path": "/Users/steve/projects/momentum/.claude/skills/frontend-dev",
+    "executor_model": "claude-opus-4-7[1m]",
+    "timestamp": "2026-05-12T22:10:00Z",
+    "evals_run": ["launchedeffect-recomposition", "turbine-stateflow-timeout", "sqldelight-reactive-entity", "nav3-typesafe-backstack"],
+    "runs_per_configuration": 1,
+    "notes": "Single-config validation pass; no baseline. Question under test: does the agent actually invoke wiki-query as the routing table prescribes?"
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "launchedeffect-recomposition",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.50,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 170.2,
+        "tokens": 48477,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": false, "evidence": "wiki-query was loaded but the agent did NOT proceed through the retrieval pipeline. Quote: 'I did not proceed through its grep/read pipeline because the failure mode is unambiguous Compose semantics already encoded in the frontend-dev skill standing rules.'"},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query phrasing matched the routing table."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": false, "evidence": "No wiki page cited; answer comes from training knowledge + frontend-dev standing rules."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "Correctly diagnosed key-changing-on-recomposition and offered LaunchedEffect(Unit) + MVI-correct fix."}
+      ],
+      "notes": ["Skill loaded but wiki retrieval was skipped — agent decided answer was obvious enough."]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "turbine-stateflow-timeout",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.00,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 204.6,
+        "tokens": 57760,
+        "tool_calls": 10,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": true, "evidence": "Full retrieval pipeline: vault config read, index grep, full page read, section grep."},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query 'Turbine awaitItem awaitComplete testIn turbineScope StateFlow timeout' matched routing entry."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": true, "evidence": "Cites 'ViewModel StateFlow Testing Patterns.md' and 'MVI ViewModel Testing with Turbine and Kotest.md' by name."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "Diagnoses logs-but-no-emissions as dispatcher mismatch + conflation; gives Kotest setMain pattern."}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "sqldelight-reactive-entity",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.00,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 235.5,
+        "tokens": 60934,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": true, "evidence": "Full retrieval: vault config, sqldelight enum, read two concept pages, plus grounded against existing Conversations.sq in repo."},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query 'SQLDelight asFlow mapToList coroutines dispatcher requirements' matches routing verbatim."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": true, "evidence": "Cites 'SQLDelight Coroutines and Flow Integration.md' and 'SQLDelight .sq Schema Files and Code Generation.md'."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "End-to-end walkthrough schema → repo → VM → composable; flags 2.x dispatcher gotcha."}
+      ],
+      "notes": ["Best-in-class run: grounded answer against existing Conversations.sq to match project conventions."]
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "nav3-typesafe-backstack",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.00,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 203.5,
+        "tokens": 56343,
+        "tool_calls": 9,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": true, "evidence": "Vault config read, index grep, full-page read of 'Navigation 3 CMP.md', confirmation grep."},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query 'Navigation 3 CMP NavDisplay back stack type-safe SavedStateConfiguration' matches routing."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": true, "evidence": "Cites 'concepts/Navigation 3 CMP.md' and uses its specifics (NavKey sealed interface, polymorphic serializers, alpha05 deps)."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "Covers both type-safety and process-death survival via rememberSaveable mechanism."}
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 0.875, "stddev": 0.217, "min": 0.50, "max": 1.00},
+      "time_seconds": {"mean": 203.5, "stddev": 23.2, "min": 170.2, "max": 235.5},
+      "tokens": {"mean": 55879, "stddev": 4630, "min": 48477, "max": 60934}
+    }
+  },
+  "notes": [
+    "3 of 4 evals pass cleanly with full wiki retrieval and citations.",
+    "Eval 1 (LaunchedEffect) is the failure mode: agent loaded wiki-query but bailed out before retrieval, deciding the answer was obvious from frontend-dev standing rules + training knowledge.",
+    "Pattern: 'easy' scenarios where the model is confident bypass wiki-query entirely. The skill's routing instruction 'run the wiki-query before answering' is not strong enough to override the model's own self-assessment of certainty.",
+    "When wiki-query IS executed, it uses the routing-table phrasing verbatim — the routing table itself is working well.",
+    "Suggested fix: tighten the routing-table preamble to make wiki-query non-optional, OR explain WHY the wiki may contain version pins / project-specific guidance that overrides training knowledge."
+  ]
+}

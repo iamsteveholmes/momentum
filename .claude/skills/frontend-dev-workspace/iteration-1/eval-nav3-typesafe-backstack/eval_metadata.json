@@ -1,0 +1,27 @@
+{
+  "eval_id": "nav3-typesafe-backstack",
+  "eval_name": "nav3-typesafe-backstack",
+  "prompt": "Setting up navigation in nornspun-client. Two screens: Home and WorkoutDetail(workoutId: Long). I want type-safe routes and the back stack to survive process death. What's the right Nav 3 setup?",
+  "assertions": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": null,
+      "evidence": ""
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "eval_id": "turbine-stateflow-timeout",
+  "expectations": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": true,
+      "evidence": "Full retrieval pipeline: hot.md pre-check found direct hit, grep for Turbine/awaitItem identified 4 candidate pages, all 4 read in full."
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": true,
+      "evidence": "Query 'Turbine awaitItem awaitComplete testIn turbineScope StateFlow' matches routing table entry verbatim."
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": true,
+      "evidence": "Cites 'Research: Turbine × Kotest × MVI ViewModel Testing', 'MVI ViewModel Testing with Turbine and Kotest', 'Turbine', 'ViewModel StateFlow Testing Patterns' by name. Incorporates wiki's '#1 gotcha' framing, dispatcher details, and Kotest BehaviorSpec bug (#3577)."
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": true,
+      "evidence": "Diagnoses all three root causes: Dispatchers.Main not replaced, stateIn not activated without subscriber, StateFlow conflation with StandardTestDispatcher. Gives canonical LoginViewModelTest fix pattern."
+    }
+  ]
+}

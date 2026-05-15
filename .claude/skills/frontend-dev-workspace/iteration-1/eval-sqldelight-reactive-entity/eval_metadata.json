@@ -1,0 +1,27 @@
+{
+  "eval_id": "sqldelight-reactive-entity",
+  "eval_name": "sqldelight-reactive-entity",
+  "prompt": "Adding a new entity (Workout) to nornspun-client with SQLDelight. I need the workout list screen to update reactively when rows are inserted. Walk me through the schema + query setup and how the UI observes it.",
+  "assertions": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": null,
+      "evidence": ""
+    }
+  ]
+}

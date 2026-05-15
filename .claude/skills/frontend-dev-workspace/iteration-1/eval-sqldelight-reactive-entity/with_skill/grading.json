@@ -1,0 +1,25 @@
+{
+  "eval_id": "sqldelight-reactive-entity",
+  "expectations": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": true,
+      "evidence": "Full retrieval pipeline executed; resolved vault path, enumerated SQLDelight pages, read two concept pages, also grounded against existing Conversations.sq in the repo."
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": true,
+      "evidence": "Query 'SQLDelight asFlow mapToList coroutines dispatcher requirements' matches routing table verbatim."
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": true,
+      "evidence": "Cites 'SQLDelight Coroutines and Flow Integration.md' and 'SQLDelight .sq Schema Files and Code Generation.md'. Incorporates 2.x dispatcher requirement and table-listener mechanism from those pages."
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": true,
+      "evidence": "End-to-end walkthrough covering schema (.sq), repository asFlow().mapToList(IO), ViewModel stateIn, and Composable collectAsStateWithLifecycle. Also flags 2.x gotcha and write-through-same-driver requirement."
+    }
+  ]
+}

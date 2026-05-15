@@ -1,0 +1,25 @@
+{
+  "eval_id": "launchedeffect-recomposition",
+  "expectations": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": true,
+      "evidence": "Skill tool invoked with args 'Compose LaunchedEffect key recomposition side effects' — full retrieval pipeline: hot.md scan, index pass, 3 full page reads."
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": true,
+      "evidence": "Query 'Compose LaunchedEffect key recomposition side effects' matches routing table entry verbatim."
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": true,
+      "evidence": "Cites [[Compose Side Effects]], [[Coroutines in Compose]], [[Compose Recomposition and Stability]] by name. Quotes key rules directly from page content (e.g., 'LaunchedEffect(true) or LaunchedEffect(Unit) = runs once for composable's lifetime')."
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": true,
+      "evidence": "Correctly diagnoses wrong key (password state object changes on every keystroke → new key → LaunchedEffect restart), provides Unit fix, explains why passwordValue must not be a key."
+    }
+  ]
+}

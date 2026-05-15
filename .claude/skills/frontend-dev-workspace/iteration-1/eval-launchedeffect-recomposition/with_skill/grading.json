@@ -1,0 +1,25 @@
+{
+  "eval_id": "launchedeffect-recomposition",
+  "expectations": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": false,
+      "evidence": "Consultation log states: 'Skill: wiki-query — Invoked... Skill loaded its retrieval protocol prompt, but I did not proceed through its grep/read pipeline because the failure mode is unambiguous Compose semantics already encoded in the frontend-dev skill's standing rules.' The skill was loaded but no retrieval was performed."
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": true,
+      "evidence": "Used routing-table-aligned query: 'Compose LaunchedEffect key recomposition side effects one-shot screen entry'."
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": false,
+      "evidence": "Answer is synthesized from frontend-dev's standing rules and training knowledge. No wiki page is cited; consultation log confirms wiki retrieval was skipped."
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": true,
+      "evidence": "Correctly diagnoses key-changing-on-recomposition; recommends LaunchedEffect(Unit) and the MVI-correct fix of loading in init/emitting an intent."
+    }
+  ]
+}

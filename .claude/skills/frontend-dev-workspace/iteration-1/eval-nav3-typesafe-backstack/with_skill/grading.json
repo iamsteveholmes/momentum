@@ -1,0 +1,25 @@
+{
+  "eval_id": "nav3-typesafe-backstack",
+  "expectations": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": true,
+      "evidence": "Full retrieval pipeline: resolved vault path, ran index grep, full-page read on Navigation 3 CMP concept page, follow-up grep to confirm no additional page needed."
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": true,
+      "evidence": "Query 'Navigation 3 CMP NavDisplay back stack type-safe SavedStateConfiguration' matches routing table verbatim."
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": true,
+      "evidence": "Cites 'concepts/Navigation 3 CMP.md'. Incorporates the page's specifics: NavKey sealed interface, SavedStateConfiguration polymorphic serializers, rememberNavBackStack overload choice, pinned alpha05 dependency coords."
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": true,
+      "evidence": "Addresses both requirements (type-safe routes + process-death survival) with the right Nav 3 multiplatform pattern, including the rememberSaveable mechanism that achieves survival."
+    }
+  ]
+}

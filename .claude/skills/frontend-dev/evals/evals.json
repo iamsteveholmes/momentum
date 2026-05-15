@@ -1,0 +1,29 @@
+{
+  "skill_name": "frontend-dev",
+  "evals": [
+    {
+      "id": "launchedeffect-recomposition",
+      "prompt": "I'm building a login screen in nornspun-client and my LaunchedEffect that calls viewModel.loadProfile() keeps firing every time the user types into the password field. It's spamming our API. What am I doing wrong and how do I fix it?",
+      "expected_output": "Agent should consult wiki-query for Compose LaunchedEffect key recomposition guidance and explain key parameter / Unit usage. Should not be generic training-data answer.",
+      "files": []
+    },
+    {
+      "id": "turbine-stateflow-timeout",
+      "prompt": "Writing a Kotest test for my LoginViewModel in nornspun-client. I'm using Turbine to assert on uiState (a StateFlow<LoginUiState>), but awaitItem() times out even though I can see the state changing in logs. Help.",
+      "expected_output": "Agent should consult wiki-query for Turbine StateFlow / testIn / turbineScope guidance. Should mention StateFlow's replay/conflation behavior and the need for testIn or hot-flow handling.",
+      "files": []
+    },
+    {
+      "id": "sqldelight-reactive-entity",
+      "prompt": "Adding a new entity (Workout) to nornspun-client with SQLDelight. I need the workout list screen to update reactively when rows are inserted. Walk me through the schema + query setup and how the UI observes it.",
+      "expected_output": "Agent should consult wiki-query for SQLDelight asFlow / mapToList / dispatcher requirements. Should mention coroutine dispatcher binding and mapToList operators.",
+      "files": []
+    },
+    {
+      "id": "nav3-typesafe-backstack",
+      "prompt": "Setting up navigation in nornspun-client. Two screens: Home and WorkoutDetail(workoutId: Long). I want type-safe routes and the back stack to survive process death. What's the right Nav 3 setup?",
+      "expected_output": "Agent should consult wiki-query for Navigation 3 / NavDisplay / SavedStateConfiguration. Should mention NavDisplay, type-safe routes, and saved state restoration.",
+      "files": []
+    }
+  ]
+}

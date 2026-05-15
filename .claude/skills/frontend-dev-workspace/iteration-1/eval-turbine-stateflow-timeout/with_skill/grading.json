@@ -1,0 +1,25 @@
+{
+  "eval_id": "turbine-stateflow-timeout",
+  "expectations": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": true,
+      "evidence": "Full retrieval pipeline executed: read ~/.obsidian-wiki/config, ran grep index pass, read concept page, ran section grep on second page."
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": true,
+      "evidence": "Query terms 'Turbine awaitItem awaitComplete testIn turbineScope StateFlow timeout' match routing table 'Turbine awaitItem awaitComplete testIn turbineScope StateFlow'."
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": true,
+      "evidence": "Cites 'concepts/ViewModel StateFlow Testing Patterns.md' and 'concepts/MVI ViewModel Testing with Turbine and Kotest.md' by name and incorporates project-specific guidance (UnconfinedTestDispatcher rule, conflation behavior)."
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": true,
+      "evidence": "Directly diagnoses 'logs appear but Turbine times out' as the dispatcher mismatch + conflation fingerprint. Provides Kotest beforeTest/afterTest fix."
+    }
+  ]
+}

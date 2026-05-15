@@ -1,0 +1,130 @@
+{
+  "metadata": {
+    "skill_name": "cmp-dev (agent)",
+    "skill_path": "/Users/steve/projects/nornspun-client/.claude/agents/cmp-dev.md",
+    "executor_model": "claude-sonnet-4-6",
+    "timestamp": "2026-05-14T00:00:00Z",
+    "evals_run": ["launchedeffect-recomposition", "turbine-stateflow-timeout", "sqldelight-reactive-entity", "nav3-typesafe-backstack"],
+    "runs_per_configuration": 1,
+    "notes": "Iteration-2: cmp-dev agent (nornspun-client) vs iteration-1 frontend-dev skill. Key question: does the agent format enforce wiki-query where the skill allowed bail-out?"
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "launchedeffect-recomposition",
+      "configuration": "with_agent",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.00,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 232.7,
+        "tokens": 75373,
+        "tool_calls": 15,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": true, "evidence": "Full retrieval pipeline: hot.md scan, index pass, 3 full page reads — [[Compose Side Effects]], [[Coroutines in Compose]], [[Compose Recomposition and Stability]]."},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query 'Compose LaunchedEffect key recomposition side effects' matches routing table entry verbatim."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": true, "evidence": "Cites 3 wiki pages by name. Quotes rules directly from page content."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "Diagnoses key-changes-on-keystroke root cause; provides Unit fix; explains why passwordValue must not be a key."}
+      ],
+      "notes": ["KEY DIFFERENCE from iteration-1: iteration-1 (skill) bailed out before retrieval (0.50 pass rate). Iteration-2 (agent) executed the full pipeline (1.00). The agent definition's Two-Mode framing and explicit 'run wiki-query before answering' instruction enforced the retrieval."]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "turbine-stateflow-timeout",
+      "configuration": "with_agent",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.00,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 178.4,
+        "tokens": 67881,
+        "tool_calls": 17,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": true, "evidence": "Full retrieval: hot.md pre-check found direct hit, grep identified 4 candidate pages, all 4 read in full."},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query 'Turbine awaitItem awaitComplete testIn turbineScope StateFlow' matches routing table entry verbatim."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": true, "evidence": "Cites all 4 wiki pages by name including wiki's '#1 gotcha' framing and Kotest BehaviorSpec bug (#3577)."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "Diagnoses all 3 root causes: Dispatchers.Main not replaced, stateIn not activated, StateFlow conflation. Gives canonical fix."}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "sqldelight-reactive-entity",
+      "configuration": "with_agent",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.00,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 287.3,
+        "tokens": 67700,
+        "tool_calls": 18,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": true, "evidence": "Full retrieval: index pass identified 4 candidates, all 4 read including project-specific Nornspun conventions page."},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query 'SQLDelight asFlow mapToList coroutines dispatcher requirements' matches routing table entry verbatim."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": true, "evidence": "Cites 4 pages including project page [[Nornspun Kotlin KMP Conventions]] with version pin (2.3.2) and project convention (asFlow().mapToList(Dispatchers.IO))."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "End-to-end walkthrough: schema → repository → ViewModel → composable. Explains table-listener reactive update path."}
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "nav3-typesafe-backstack",
+      "configuration": "with_agent",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.00,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 291.4,
+        "tokens": 76978,
+        "tool_calls": 19,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "Agent invokes wiki-query at least once", "passed": true, "evidence": "Full retrieval: hot.md pre-check, index pass, 3 full page reads + grep pass on MVI Pattern page — 5 pages total."},
+        {"text": "Agent uses routing-table terms (not freeform query)", "passed": true, "evidence": "Query 'Navigation 3 CMP NavDisplay back stack type-safe SavedStateConfiguration' matches routing table entry verbatim."},
+        {"text": "Answer cites or paraphrases wiki content (not generic)", "passed": true, "evidence": "Cites 5 pages by name. Incorporates alpha05 dependency coords, SavedStateConfiguration polymorphic serializer requirement, wiki-documented open question on MVI+Nav3."},
+        {"text": "Answer addresses the specific symptom in the prompt", "passed": true, "evidence": "Covers both requirements: type-safe NavKey sealed interface and process-death survival via SavedStateConfiguration (not JVM-only reflection overload)."}
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_agent": {
+      "pass_rate": {"mean": 1.000, "stddev": 0.000, "min": 1.00, "max": 1.00},
+      "time_seconds": {"mean": 247.5, "stddev": 46.1, "min": 178.4, "max": 291.4},
+      "tokens": {"mean": 71983, "stddev": 4231, "min": 67700, "max": 76978}
+    },
+    "vs_iteration_1_with_skill": {
+      "pass_rate": {"mean": 0.875, "stddev": 0.217, "min": 0.50, "max": 1.00},
+      "time_seconds": {"mean": 203.5, "stddev": 23.2, "min": 170.2, "max": 235.5},
+      "tokens": {"mean": 55879, "stddev": 4630, "min": 48477, "max": 60934}
+    },
+    "delta": {
+      "pass_rate": "+0.125",
+      "time_seconds": "+44.0s",
+      "tokens": "+16104"
+    }
+  },
+  "notes": [
+    "Iteration-2 achieves 16/16 (100%) vs iteration-1's 14/16 (87.5%). The +0.125 delta is entirely from eval-1 (LaunchedEffect).",
+    "The agent format fixed the bail-out failure mode: iteration-1 skill loaded wiki-query but decided the answer was obvious from standing rules and skipped retrieval. The agent's explicit Two-Mode framing + 'Do not skip it' instruction enforced full pipeline execution.",
+    "Cost of the fix: +44s mean latency (247.5s vs 203.5s), +16k tokens (71983 vs 55879). The extra work is the retrieval pipeline that was previously skipped.",
+    "Evals 2-4 were already 4/4 in iteration-1; they remain 4/4 in iteration-2 — no regression.",
+    "The agent also ran deeper in eval-4 (Nav3): 5 pages vs 4 in iteration-1, including a grep pass on the MVI Pattern page to address the open integration question. Extra thoroughness at minimal cost.",
+    "Routing table phrasing continues to work well — all 4 evals used verbatim routing table terms."
+  ]
+}

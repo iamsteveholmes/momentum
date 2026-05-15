@@ -1,0 +1,27 @@
+{
+  "eval_id": "turbine-stateflow-timeout",
+  "eval_name": "turbine-stateflow-timeout",
+  "prompt": "Writing a Kotest test for my LoginViewModel in nornspun-client. I'm using Turbine to assert on uiState (a StateFlow<LoginUiState>), but awaitItem() times out even though I can see the state changing in logs. Help.",
+  "assertions": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": null,
+      "evidence": ""
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": null,
+      "evidence": ""
+    }
+  ]
+}

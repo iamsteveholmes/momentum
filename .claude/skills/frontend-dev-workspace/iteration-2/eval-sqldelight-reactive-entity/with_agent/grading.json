@@ -1,0 +1,25 @@
+{
+  "eval_id": "sqldelight-reactive-entity",
+  "expectations": [
+    {
+      "text": "Agent invokes wiki-query at least once",
+      "passed": true,
+      "evidence": "Full retrieval pipeline: index pass identified 4 candidate pages, all 4 read in full including a project-specific conventions page."
+    },
+    {
+      "text": "Agent uses routing-table terms (not freeform query)",
+      "passed": true,
+      "evidence": "Query 'SQLDelight asFlow mapToList coroutines dispatcher requirements' matches routing table entry verbatim."
+    },
+    {
+      "text": "Answer cites or paraphrases wiki content (not generic)",
+      "passed": true,
+      "evidence": "Cites 'SQLDelight Coroutines and Flow Integration', 'SQLDelight .sq Schema Files and Code Generation', 'SQLDelight Platform Drivers', 'Nornspun Kotlin KMP Conventions' by name. Incorporates 2.x dispatcher requirement, project convention (asFlow().mapToList(Dispatchers.IO)), and version pin (2.3.2)."
+    },
+    {
+      "text": "Answer addresses the specific symptom in the prompt",
+      "passed": true,
+      "evidence": "End-to-end walkthrough: schema (.sq), repository (asFlow().mapToList), ViewModel (stateIn), composable (collectAsStateWithLifecycle). Explains full reactive update path including table-listener mechanism."
+    }
+  ]
+}
