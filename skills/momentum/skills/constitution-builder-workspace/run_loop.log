@@ -1,0 +1,1545 @@
+Split: 12 train, 8 test (holdout=0.4)
+
+============================================================
+Iteration 1/5
+Description: Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill. Covers what the agent owns, what it can't touch, always-on behavioral constraints, and symptom→wiki-query routing. Use when: creating a new KB-backed skill, the wiki KB has grown and routing entries are stale, or you hear 'build constitution', 'generate routing table', 'update quick routing', 'add routing to this skill', 'add standing rules', 'define agent permissions', or 'momentum:constitution-builder'. Also invoke proactively after wiki-ingest adds a major new technology area to the KB.
+============================================================
+Train: 18/36 correct, precision=100% recall=0% accuracy=50% (93.3s)
+  [FAIL] rate=0/3 expected=True: add routing to this skill
+  [FAIL] rate=0/3 expected=True: momentum:constitution-builder for the backend-dev skill at n
+  [FAIL] rate=0/3 expected=True: build the constitution for my analytics-agent skill — it cov
+  [FAIL] rate=0/3 expected=True: what paths should my retro-facilitator skill be allowed to w
+  [FAIL] rate=0/3 expected=True: the quick routing in my data-pipeline skill is totally stale
+  [FAIL] rate=0/3 expected=True: I'm building a new sprint-planner skill for the nornspun pro
+  [PASS] rate=0/3 expected=False: I want to create a skill that helps me write commit messages
+  [PASS] rate=0/3 expected=False: I need to update the allow/deny lists in my project's .claud
+  [PASS] rate=0/3 expected=False: add a new wiki page about Ktor client timeout configuration 
+  [PASS] rate=0/3 expected=False: my skill's description isn't triggering reliably — claude ke
+  [PASS] rate=0/3 expected=False: ingest the entire jetbrains compose-multiplatform-core docum
+  [PASS] rate=0/3 expected=False: write a system prompt for a new AI assistant that helps juni
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: my compose-ui skill has standing rules from 3 months ago and
+  [FAIL] rate=0/3 expected=True: just ran wiki-ingest on a big dump of terraform provider doc
+  [FAIL] rate=0/3 expected=True: I need to add a permissions block to my db-migrations skill.
+  [PASS] rate=0/3 expected=False: do deep research on PydanticAI agent patterns and streaming 
+  [FAIL] rate=0/3 expected=True: I'm setting up a research-agent skill for my nornspun projec
+  [PASS] rate=0/3 expected=False: can you explain how the two-store KB architecture works? lik
+  [PASS] rate=0/3 expected=False: update CLAUDE.md with a new rule: before every sprint planni
+  [PASS] rate=0/3 expected=False: what's the exact syntax for Claude Code path-pattern permiss
+
+Improving description...
+Proposed (62.6s): Use when defining or regenerating the Permissions, Standing Rules, or Quick Routing sections of a Claude Code SKILL.md. These three sections form a skill's "constitution": what file paths and shell commands the skill may access, behavioral constraints that always apply, and a routing table mapping developer situations to knowledge-base queries. Invoke for new skills needing a full build, or existing skills where routing is stale after KB growth, permissions need clarification, or behavioral rules need to be added. Also use when a developer asks what a skill should or shouldn't be allowed to write to, or wants to map their KB's contents to routing entries.
+
+============================================================
+Iteration 2/5
+Description: Use when defining or regenerating the Permissions, Standing Rules, or Quick Routing sections of a Claude Code SKILL.md. These three sections form a skill's "constitution": what file paths and shell commands the skill may access, behavioral constraints that always apply, and a routing table mapping developer situations to knowledge-base queries. Invoke for new skills needing a full build, or existing skills where routing is stale after KB growth, permissions need clarification, or behavioral rules need to be added. Also use when a developer asks what a skill should or shouldn't be allowed to write to, or wants to map their KB's contents to routing entries.
+============================================================
+Train: 18/36 correct, precision=100% recall=0% accuracy=50% (98.6s)
+  [FAIL] rate=0/3 expected=True: build the constitution for my analytics-agent skill — it cov
+  [FAIL] rate=0/3 expected=True: add routing to this skill
+  [FAIL] rate=0/3 expected=True: what paths should my retro-facilitator skill be allowed to w
+  [FAIL] rate=0/3 expected=True: momentum:constitution-builder for the backend-dev skill at n
+  [FAIL] rate=0/3 expected=True: I'm building a new sprint-planner skill for the nornspun pro
+  [FAIL] rate=0/3 expected=True: the quick routing in my data-pipeline skill is totally stale
+  [PASS] rate=0/3 expected=False: I need to update the allow/deny lists in my project's .claud
+  [PASS] rate=0/3 expected=False: I want to create a skill that helps me write commit messages
+  [PASS] rate=0/3 expected=False: add a new wiki page about Ktor client timeout configuration 
+  [PASS] rate=0/3 expected=False: my skill's description isn't triggering reliably — claude ke
+  [PASS] rate=0/3 expected=False: ingest the entire jetbrains compose-multiplatform-core docum
+  [PASS] rate=0/3 expected=False: write a system prompt for a new AI assistant that helps juni
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: my compose-ui skill has standing rules from 3 months ago and
+  [FAIL] rate=0/3 expected=True: just ran wiki-ingest on a big dump of terraform provider doc
+  [FAIL] rate=0/3 expected=True: I need to add a permissions block to my db-migrations skill.
+  [PASS] rate=0/3 expected=False: do deep research on PydanticAI agent patterns and streaming 
+  [FAIL] rate=0/3 expected=True: I'm setting up a research-agent skill for my nornspun projec
+  [PASS] rate=0/3 expected=False: can you explain how the two-store KB architecture works? lik
+  [PASS] rate=0/3 expected=False: what's the exact syntax for Claude Code path-pattern permiss
+  [PASS] rate=0/3 expected=False: update CLAUDE.md with a new rule: before every sprint planni
+
+Improving description...
+Proposed (78.8s): Invoke to build or regenerate a skill's constitution — the three sections in SKILL.md that define what the skill agent may read/write/run (Permissions), what behavioral rules always apply (Standing Rules), and which KB queries to run for common developer scenarios (Quick Routing). Use for new skills needing a full constitution build, existing skills with stale routing after wiki pages were ingested, or when a developer asks what file paths or shell commands a skill should be allowed to use. Not skill-creator (full skill authoring) and not update-config (settings.json changes) — this is specifically the governance layer inside SKILL.md.
+
+============================================================
+Iteration 3/5
+Description: Invoke to build or regenerate a skill's constitution — the three sections in SKILL.md that define what the skill agent may read/write/run (Permissions), what behavioral rules always apply (Standing Rules), and which KB queries to run for common developer scenarios (Quick Routing). Use for new skills needing a full constitution build, existing skills with stale routing after wiki pages were ingested, or when a developer asks what file paths or shell commands a skill should be allowed to use. Not skill-creator (full skill authoring) and not update-config (settings.json changes) — this is specifically the governance layer inside SKILL.md.
+============================================================
+Train: 18/36 correct, precision=100% recall=0% accuracy=50% (94.5s)
+  [FAIL] rate=0/3 expected=True: build the constitution for my analytics-agent skill — it cov
+  [FAIL] rate=0/3 expected=True: momentum:constitution-builder for the backend-dev skill at n
+  [FAIL] rate=0/3 expected=True: add routing to this skill
+  [FAIL] rate=0/3 expected=True: what paths should my retro-facilitator skill be allowed to w
+  [FAIL] rate=0/3 expected=True: the quick routing in my data-pipeline skill is totally stale
+  [FAIL] rate=0/3 expected=True: I'm building a new sprint-planner skill for the nornspun pro
+  [PASS] rate=0/3 expected=False: I want to create a skill that helps me write commit messages
+  [PASS] rate=0/3 expected=False: I need to update the allow/deny lists in my project's .claud
+  [PASS] rate=0/3 expected=False: add a new wiki page about Ktor client timeout configuration 
+  [PASS] rate=0/3 expected=False: my skill's description isn't triggering reliably — claude ke
+  [PASS] rate=0/3 expected=False: ingest the entire jetbrains compose-multiplatform-core docum
+  [PASS] rate=0/3 expected=False: write a system prompt for a new AI assistant that helps juni
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: my compose-ui skill has standing rules from 3 months ago and
+  [FAIL] rate=0/3 expected=True: just ran wiki-ingest on a big dump of terraform provider doc
+  [FAIL] rate=0/3 expected=True: I need to add a permissions block to my db-migrations skill.
+  [FAIL] rate=0/3 expected=True: I'm setting up a research-agent skill for my nornspun projec
+  [PASS] rate=0/3 expected=False: do deep research on PydanticAI agent patterns and streaming 
+  [PASS] rate=0/3 expected=False: can you explain how the two-store KB architecture works? lik
+  [PASS] rate=0/3 expected=False: what's the exact syntax for Claude Code path-pattern permiss
+  [PASS] rate=0/3 expected=False: update CLAUDE.md with a new rule: before every sprint planni
+
+Improving description...
+Proposed (66.5s): For defining or updating the internal governance of a Claude Code skill: scoping which files and commands it may access (Permissions), adding always-on behavioral constraints (Standing Rules), or building the routing table that maps developer scenarios to knowledge-base queries (Quick Routing). Use when a developer wants to scope what a skill can touch, add behavioral rules, generate routing entries, or refresh a stale routing table after the KB has grown. Not for creating a whole new skill from scratch, and not for editing project settings files.
+
+============================================================
+Iteration 4/5
+Description: For defining or updating the internal governance of a Claude Code skill: scoping which files and commands it may access (Permissions), adding always-on behavioral constraints (Standing Rules), or building the routing table that maps developer scenarios to knowledge-base queries (Quick Routing). Use when a developer wants to scope what a skill can touch, add behavioral rules, generate routing entries, or refresh a stale routing table after the KB has grown. Not for creating a whole new skill from scratch, and not for editing project settings files.
+============================================================
+Train: 18/36 correct, precision=100% recall=0% accuracy=50% (90.4s)
+  [FAIL] rate=0/3 expected=True: momentum:constitution-builder for the backend-dev skill at n
+  [FAIL] rate=0/3 expected=True: build the constitution for my analytics-agent skill — it cov
+  [FAIL] rate=0/3 expected=True: add routing to this skill
+  [FAIL] rate=0/3 expected=True: what paths should my retro-facilitator skill be allowed to w
+  [FAIL] rate=0/3 expected=True: I'm building a new sprint-planner skill for the nornspun pro
+  [FAIL] rate=0/3 expected=True: the quick routing in my data-pipeline skill is totally stale
+  [PASS] rate=0/3 expected=False: I want to create a skill that helps me write commit messages
+  [PASS] rate=0/3 expected=False: I need to update the allow/deny lists in my project's .claud
+  [PASS] rate=0/3 expected=False: add a new wiki page about Ktor client timeout configuration 
+  [PASS] rate=0/3 expected=False: my skill's description isn't triggering reliably — claude ke
+  [PASS] rate=0/3 expected=False: ingest the entire jetbrains compose-multiplatform-core docum
+  [PASS] rate=0/3 expected=False: write a system prompt for a new AI assistant that helps juni
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: my compose-ui skill has standing rules from 3 months ago and
+  [FAIL] rate=0/3 expected=True: just ran wiki-ingest on a big dump of terraform provider doc
+  [FAIL] rate=0/3 expected=True: I need to add a permissions block to my db-migrations skill.
+  [FAIL] rate=0/3 expected=True: I'm setting up a research-agent skill for my nornspun projec
+  [PASS] rate=0/3 expected=False: do deep research on PydanticAI agent patterns and streaming 
+  [PASS] rate=0/3 expected=False: can you explain how the two-store KB architecture works? lik
+  [PASS] rate=0/3 expected=False: what's the exact syntax for Claude Code path-pattern permiss
+  [PASS] rate=0/3 expected=False: update CLAUDE.md with a new rule: before every sprint planni
+
+Improving description...
+Proposed (53.4s): Add routing entries to a skill, define what a skill may and may not read/write/run (Permissions), or add always-on behavioral constraints (Standing Rules). Also invoke to "build the constitution" for any SKILL.md — the full governance setup covering an agent's access scope and a routing table that maps developer scenarios to knowledge-base queries. Use for first-time constitution builds and for refreshing stale routing after the KB has grown. Not for project settings.json changes, and not for authoring a new skill from scratch.
+
+============================================================
+Iteration 5/5
+Description: Add routing entries to a skill, define what a skill may and may not read/write/run (Permissions), or add always-on behavioral constraints (Standing Rules). Also invoke to "build the constitution" for any SKILL.md — the full governance setup covering an agent's access scope and a routing table that maps developer scenarios to knowledge-base queries. Use for first-time constitution builds and for refreshing stale routing after the KB has grown. Not for project settings.json changes, and not for authoring a new skill from scratch.
+============================================================
+Train: 18/36 correct, precision=100% recall=0% accuracy=50% (95.6s)
+  [FAIL] rate=0/3 expected=True: momentum:constitution-builder for the backend-dev skill at n
+  [FAIL] rate=0/3 expected=True: add routing to this skill
+  [FAIL] rate=0/3 expected=True: build the constitution for my analytics-agent skill — it cov
+  [FAIL] rate=0/3 expected=True: what paths should my retro-facilitator skill be allowed to w
+  [FAIL] rate=0/3 expected=True: I'm building a new sprint-planner skill for the nornspun pro
+  [FAIL] rate=0/3 expected=True: the quick routing in my data-pipeline skill is totally stale
+  [PASS] rate=0/3 expected=False: I want to create a skill that helps me write commit messages
+  [PASS] rate=0/3 expected=False: I need to update the allow/deny lists in my project's .claud
+  [PASS] rate=0/3 expected=False: add a new wiki page about Ktor client timeout configuration 
+  [PASS] rate=0/3 expected=False: my skill's description isn't triggering reliably — claude ke
+  [PASS] rate=0/3 expected=False: ingest the entire jetbrains compose-multiplatform-core docum
+  [PASS] rate=0/3 expected=False: write a system prompt for a new AI assistant that helps juni
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: my compose-ui skill has standing rules from 3 months ago and
+  [FAIL] rate=0/3 expected=True: just ran wiki-ingest on a big dump of terraform provider doc
+  [FAIL] rate=0/3 expected=True: I need to add a permissions block to my db-migrations skill.
+  [PASS] rate=0/3 expected=False: do deep research on PydanticAI agent patterns and streaming 
+  [FAIL] rate=0/3 expected=True: I'm setting up a research-agent skill for my nornspun projec
+  [PASS] rate=0/3 expected=False: can you explain how the two-store KB architecture works? lik
+  [PASS] rate=0/3 expected=False: what's the exact syntax for Claude Code path-pattern permiss
+  [PASS] rate=0/3 expected=False: update CLAUDE.md with a new rule: before every sprint planni
+
+Max iterations reached (5).
+
+Exit reason: max_iterations (5)
+Best score: 4/8 (iteration 1)
+{
+  "exit_reason": "max_iterations (5)",
+  "original_description": "Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill. Covers what the agent owns, what it can't touch, always-on behavioral constraints, and symptom\u2192wiki-query routing. Use when: creating a new KB-backed skill, the wiki KB has grown and routing entries are stale, or you hear 'build constitution', 'generate routing table', 'update quick routing', 'add routing to this skill', 'add standing rules', 'define agent permissions', or 'momentum:constitution-builder'. Also invoke proactively after wiki-ingest adds a major new technology area to the KB.",
+  "best_description": "Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill. Covers what the agent owns, what it can't touch, always-on behavioral constraints, and symptom\u2192wiki-query routing. Use when: creating a new KB-backed skill, the wiki KB has grown and routing entries are stale, or you hear 'build constitution', 'generate routing table', 'update quick routing', 'add routing to this skill', 'add standing rules', 'define agent permissions', or 'momentum:constitution-builder'. Also invoke proactively after wiki-ingest adds a major new technology area to the KB.",
+  "best_score": "4/8",
+  "best_train_score": "6/12",
+  "best_test_score": "4/8",
+  "final_description": "Add routing entries to a skill, define what a skill may and may not read/write/run (Permissions), or add always-on behavioral constraints (Standing Rules). Also invoke to \"build the constitution\" for any SKILL.md \u2014 the full governance setup covering an agent's access scope and a routing table that maps developer scenarios to knowledge-base queries. Use for first-time constitution builds and for refreshing stale routing after the KB has grown. Not for project settings.json changes, and not for authoring a new skill from scratch.",
+  "iterations_run": 5,
+  "holdout": 0.4,
+  "train_size": 12,
+  "test_size": 8,
+  "history": [
+    {
+      "iteration": 1,
+      "description": "Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill. Covers what the agent owns, what it can't touch, always-on behavioral constraints, and symptom\u2192wiki-query routing. Use when: creating a new KB-backed skill, the wiki KB has grown and routing entries are stale, or you hear 'build constitution', 'generate routing table', 'update quick routing', 'add routing to this skill', 'add standing rules', 'define agent permissions', or 'momentum:constitution-builder'. Also invoke proactively after wiki-ingest adds a major new technology area to the KB.",
+      "train_passed": 6,
+      "train_failed": 6,
+      "train_total": 12,
+      "train_results": [
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "test_passed": 4,
+      "test_failed": 4,
+      "test_total": 8,
+      "test_results": [
+        {
+          "query": "my compose-ui skill has standing rules from 3 months ago and we've completely revamped how we do state testing in the KB. i want to regenerate the standing rules section from the current KB principle pages \u2014 just that section, not the routing",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "just ran wiki-ingest on a big dump of terraform provider docs and kubernetes networking guides. now i want to update the routing table in my infra skill so agents can actually find that content when they hit deployment questions",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I need to add a permissions block to my db-migrations skill. It should own the migrations/ directory and schema files, never touch .env or any secrets file, and only be allowed to run psql and flyway commands. Nothing else needs updating \u2014 just the permissions section.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "do deep research on PydanticAI agent patterns and streaming responses \u2014 I want comprehensive coverage of the async streaming API, tool use in agents, and testing patterns. Add everything to the KB.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I'm setting up a research-agent skill for my nornspun project. It's going to be KB-backed \u2014 reads from the wiki vault, uses wiki-query for lookups. I need the full three-section constitution: what it owns, the behavioral rules, and the routing table.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "can you explain how the two-store KB architecture works? like what's the difference between the hot constitution and the cold KB, and when does a routing entry fire versus when does the standing rule just apply directly?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "update CLAUDE.md with a new rule: before every sprint planning session, always check the .momentum/epics directory for any epics marked status: draft and flag them to the developer",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "what's the exact syntax for Claude Code path-pattern permissions? like if I want to allow Edit on everything under src/ but deny on src/secrets/ how do I write that in settings.json?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "passed": 6,
+      "failed": 6,
+      "total": 12,
+      "results": [
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "description": "Use when defining or regenerating the Permissions, Standing Rules, or Quick Routing sections of a Claude Code SKILL.md. These three sections form a skill's \"constitution\": what file paths and shell commands the skill may access, behavioral constraints that always apply, and a routing table mapping developer situations to knowledge-base queries. Invoke for new skills needing a full build, or existing skills where routing is stale after KB growth, permissions need clarification, or behavioral rules need to be added. Also use when a developer asks what a skill should or shouldn't be allowed to write to, or wants to map their KB's contents to routing entries.",
+      "train_passed": 6,
+      "train_failed": 6,
+      "train_total": 12,
+      "train_results": [
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "test_passed": 4,
+      "test_failed": 4,
+      "test_total": 8,
+      "test_results": [
+        {
+          "query": "my compose-ui skill has standing rules from 3 months ago and we've completely revamped how we do state testing in the KB. i want to regenerate the standing rules section from the current KB principle pages \u2014 just that section, not the routing",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "just ran wiki-ingest on a big dump of terraform provider docs and kubernetes networking guides. now i want to update the routing table in my infra skill so agents can actually find that content when they hit deployment questions",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I need to add a permissions block to my db-migrations skill. It should own the migrations/ directory and schema files, never touch .env or any secrets file, and only be allowed to run psql and flyway commands. Nothing else needs updating \u2014 just the permissions section.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "do deep research on PydanticAI agent patterns and streaming responses \u2014 I want comprehensive coverage of the async streaming API, tool use in agents, and testing patterns. Add everything to the KB.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I'm setting up a research-agent skill for my nornspun project. It's going to be KB-backed \u2014 reads from the wiki vault, uses wiki-query for lookups. I need the full three-section constitution: what it owns, the behavioral rules, and the routing table.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "can you explain how the two-store KB architecture works? like what's the difference between the hot constitution and the cold KB, and when does a routing entry fire versus when does the standing rule just apply directly?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "what's the exact syntax for Claude Code path-pattern permissions? like if I want to allow Edit on everything under src/ but deny on src/secrets/ how do I write that in settings.json?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "update CLAUDE.md with a new rule: before every sprint planning session, always check the .momentum/epics directory for any epics marked status: draft and flag them to the developer",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "passed": 6,
+      "failed": 6,
+      "total": 12,
+      "results": [
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "iteration": 3,
+      "description": "Invoke to build or regenerate a skill's constitution \u2014 the three sections in SKILL.md that define what the skill agent may read/write/run (Permissions), what behavioral rules always apply (Standing Rules), and which KB queries to run for common developer scenarios (Quick Routing). Use for new skills needing a full constitution build, existing skills with stale routing after wiki pages were ingested, or when a developer asks what file paths or shell commands a skill should be allowed to use. Not skill-creator (full skill authoring) and not update-config (settings.json changes) \u2014 this is specifically the governance layer inside SKILL.md.",
+      "train_passed": 6,
+      "train_failed": 6,
+      "train_total": 12,
+      "train_results": [
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "test_passed": 4,
+      "test_failed": 4,
+      "test_total": 8,
+      "test_results": [
+        {
+          "query": "my compose-ui skill has standing rules from 3 months ago and we've completely revamped how we do state testing in the KB. i want to regenerate the standing rules section from the current KB principle pages \u2014 just that section, not the routing",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "just ran wiki-ingest on a big dump of terraform provider docs and kubernetes networking guides. now i want to update the routing table in my infra skill so agents can actually find that content when they hit deployment questions",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I need to add a permissions block to my db-migrations skill. It should own the migrations/ directory and schema files, never touch .env or any secrets file, and only be allowed to run psql and flyway commands. Nothing else needs updating \u2014 just the permissions section.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm setting up a research-agent skill for my nornspun project. It's going to be KB-backed \u2014 reads from the wiki vault, uses wiki-query for lookups. I need the full three-section constitution: what it owns, the behavioral rules, and the routing table.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "do deep research on PydanticAI agent patterns and streaming responses \u2014 I want comprehensive coverage of the async streaming API, tool use in agents, and testing patterns. Add everything to the KB.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "can you explain how the two-store KB architecture works? like what's the difference between the hot constitution and the cold KB, and when does a routing entry fire versus when does the standing rule just apply directly?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "what's the exact syntax for Claude Code path-pattern permissions? like if I want to allow Edit on everything under src/ but deny on src/secrets/ how do I write that in settings.json?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "update CLAUDE.md with a new rule: before every sprint planning session, always check the .momentum/epics directory for any epics marked status: draft and flag them to the developer",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "passed": 6,
+      "failed": 6,
+      "total": 12,
+      "results": [
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "iteration": 4,
+      "description": "For defining or updating the internal governance of a Claude Code skill: scoping which files and commands it may access (Permissions), adding always-on behavioral constraints (Standing Rules), or building the routing table that maps developer scenarios to knowledge-base queries (Quick Routing). Use when a developer wants to scope what a skill can touch, add behavioral rules, generate routing entries, or refresh a stale routing table after the KB has grown. Not for creating a whole new skill from scratch, and not for editing project settings files.",
+      "train_passed": 6,
+      "train_failed": 6,
+      "train_total": 12,
+      "train_results": [
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "test_passed": 4,
+      "test_failed": 4,
+      "test_total": 8,
+      "test_results": [
+        {
+          "query": "my compose-ui skill has standing rules from 3 months ago and we've completely revamped how we do state testing in the KB. i want to regenerate the standing rules section from the current KB principle pages \u2014 just that section, not the routing",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "just ran wiki-ingest on a big dump of terraform provider docs and kubernetes networking guides. now i want to update the routing table in my infra skill so agents can actually find that content when they hit deployment questions",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I need to add a permissions block to my db-migrations skill. It should own the migrations/ directory and schema files, never touch .env or any secrets file, and only be allowed to run psql and flyway commands. Nothing else needs updating \u2014 just the permissions section.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm setting up a research-agent skill for my nornspun project. It's going to be KB-backed \u2014 reads from the wiki vault, uses wiki-query for lookups. I need the full three-section constitution: what it owns, the behavioral rules, and the routing table.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "do deep research on PydanticAI agent patterns and streaming responses \u2014 I want comprehensive coverage of the async streaming API, tool use in agents, and testing patterns. Add everything to the KB.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "can you explain how the two-store KB architecture works? like what's the difference between the hot constitution and the cold KB, and when does a routing entry fire versus when does the standing rule just apply directly?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "what's the exact syntax for Claude Code path-pattern permissions? like if I want to allow Edit on everything under src/ but deny on src/secrets/ how do I write that in settings.json?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "update CLAUDE.md with a new rule: before every sprint planning session, always check the .momentum/epics directory for any epics marked status: draft and flag them to the developer",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "passed": 6,
+      "failed": 6,
+      "total": 12,
+      "results": [
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "iteration": 5,
+      "description": "Add routing entries to a skill, define what a skill may and may not read/write/run (Permissions), or add always-on behavioral constraints (Standing Rules). Also invoke to \"build the constitution\" for any SKILL.md \u2014 the full governance setup covering an agent's access scope and a routing table that maps developer scenarios to knowledge-base queries. Use for first-time constitution builds and for refreshing stale routing after the KB has grown. Not for project settings.json changes, and not for authoring a new skill from scratch.",
+      "train_passed": 6,
+      "train_failed": 6,
+      "train_total": 12,
+      "train_results": [
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "test_passed": 4,
+      "test_failed": 4,
+      "test_total": 8,
+      "test_results": [
+        {
+          "query": "my compose-ui skill has standing rules from 3 months ago and we've completely revamped how we do state testing in the KB. i want to regenerate the standing rules section from the current KB principle pages \u2014 just that section, not the routing",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "just ran wiki-ingest on a big dump of terraform provider docs and kubernetes networking guides. now i want to update the routing table in my infra skill so agents can actually find that content when they hit deployment questions",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I need to add a permissions block to my db-migrations skill. It should own the migrations/ directory and schema files, never touch .env or any secrets file, and only be allowed to run psql and flyway commands. Nothing else needs updating \u2014 just the permissions section.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "do deep research on PydanticAI agent patterns and streaming responses \u2014 I want comprehensive coverage of the async streaming API, tool use in agents, and testing patterns. Add everything to the KB.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I'm setting up a research-agent skill for my nornspun project. It's going to be KB-backed \u2014 reads from the wiki vault, uses wiki-query for lookups. I need the full three-section constitution: what it owns, the behavioral rules, and the routing table.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "can you explain how the two-store KB architecture works? like what's the difference between the hot constitution and the cold KB, and when does a routing entry fire versus when does the standing rule just apply directly?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "what's the exact syntax for Claude Code path-pattern permissions? like if I want to allow Edit on everything under src/ but deny on src/secrets/ how do I write that in settings.json?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "update CLAUDE.md with a new rule: before every sprint planning session, always check the .momentum/epics directory for any epics marked status: draft and flag them to the developer",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ],
+      "passed": 6,
+      "failed": 6,
+      "total": 12,
+      "results": [
+        {
+          "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "add routing to this skill",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "build the constitution for my analytics-agent skill \u2014 it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution \u2014 permissions, standing rules, and routing.",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "the quick routing in my data-pipeline skill is totally stale \u2014 we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+          "should_trigger": true,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": false
+        },
+        {
+          "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "I need to update the allow/deny lists in my project's .claude/settings.json \u2014 the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "add a new wiki page about Ktor client timeout configuration \u2014 specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "my skill's description isn't triggering reliably \u2014 claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        },
+        {
+          "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+          "should_trigger": false,
+          "trigger_rate": 0.0,
+          "triggers": 0,
+          "runs": 3,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}
+Report: /var/folders/gx/dywvxy4132z6zx6gh4wwby2w0000gn/T/skill_description_report_constitution-builder_20260509_165705.html
+

@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Momentum — Skill &amp; Agent Landscape (2026-05-14)</title>
+<style>
+  :root {
+    --ink:        #1f2330;
+    --ink-soft:   #4a5060;
+    --ink-faint:  #80869a;
+    --paper:      #f8f6f1;
+    --paper-2:    #efece4;
+    --rule:       #d8d4c8;
+    --skill:      #294b6d;
+    --skill-2:    #3d6f9a;
+    --agent:      #fbf8f1;
+    --agent-stk:  #9a9486;
+    --fork:       #5a8a3e;
+    --external:   #b88a2a;
+    --writes:     #2f6b2f;
+    --reads:      #6b3c8a;
+    --warn:       #a8541c;
+  }
+
+  * { box-sizing: border-box; }
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.65 "Source Serif 4","Charter","Iowan Old Style","Cambria",Georgia,serif;
+    padding: 0 1.5rem;
+  }
+  .page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 3.5rem 0 6rem;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.4rem;
+    font-weight: 600;
+  }
+  h1 small {
+    display: block;
+    font-size: 1rem;
+    color: var(--ink-faint);
+    font-weight: 400;
+    letter-spacing: 0;
+    margin-top: 0.4rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+    margin: 3rem 0 0.4rem;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.4rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  h2 .label {
+    display: inline-block;
+    font-size: 0.7em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 0.6rem;
+    vertical-align: middle;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 500;
+  }
+  h3 {
+    font-size: 1.15rem;
+    margin: 2.2rem 0 0.3rem;
+    font-weight: 600;
+  }
+  h3 .meta {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    font-weight: 400;
+    margin-left: 0.6rem;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  p { margin: 0.6rem 0; }
+  .lede { color: var(--ink-soft); }
+
+  code, .mono {
+    font-family: "JetBrains Mono","SF Mono","Menlo",ui-monospace,monospace;
+    font-size: 0.85em;
+    background: var(--paper-2);
+    padding: 0.05em 0.32em;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* ===== Table of contents ===== */
+  nav.toc {
+    background: var(--paper-2);
+    border-left: 3px solid var(--skill-2);
+    padding: 0.8rem 1.2rem;
+    margin: 1.5rem 0 2rem;
+    font-size: 0.92rem;
+  }
+  nav.toc ol { margin: 0.3rem 0 0; padding-left: 1.4rem; }
+  nav.toc li { margin: 0.15rem 0; }
+  nav.toc a { color: var(--skill); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  /* ===== Landscape (Component A) ===== */
+  .landscape {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem;
+    margin: 1rem 0 1.5rem;
+  }
+  .land-card {
+    background: var(--paper-2);
+    border-left: 4px solid var(--rule);
+    padding: 0.5rem 0.7rem;
+    font-size: 0.88rem;
+  }
+  .land-card .name {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+  .land-card .role {
+    color: var(--ink-faint);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.1rem;
+  }
+  .land-card .blurb { color: var(--ink-soft); font-size: 0.82rem; line-height: 1.45; }
+
+  .land-card.spawner   { border-left-color: var(--skill-2); }
+  .land-card.orchestrator { border-left-color: #c79347; }
+  .land-card.agent     { border-left-color: var(--fork); }
+  .land-card.writer    { border-left-color: #8a6cb4; }
+  .land-card.cli       { border-left-color: #9a9486; }
+  .land-card.stub      { border-left-color: #b8442a; opacity: 0.65; }
+
+  /* ===== Per-skill diagram (Component B) ===== */
+  .skill-section { margin-top: 2rem; }
+  .skill-blurb {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    margin: 0.2rem 0 0.8rem;
+  }
+  .diagram-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0.4rem 0 0.6rem;
+    background: var(--paper-2);
+    border-radius: 6px;
+  }
+
+  /* SVG classes (inline below) */
+  .svg-skill-rect    { fill: var(--skill); }
+  .svg-skill-rect-2  { fill: var(--skill-2); }
+  .svg-skill-text    { fill: white; font: 600 15px/1 "JetBrains Mono", ui-monospace, monospace; }
+  .svg-skill-tag     { fill: rgba(255,255,255,0.85); font: 11px/1 "JetBrains Mono", ui-monospace, monospace; }
+  .svg-agent-rect    { fill: var(--agent); stroke: var(--agent-stk); stroke-width: 1; }
+  .svg-agent-rect.fork     { stroke: var(--fork); stroke-width: 1.5; }
+  .svg-agent-rect.external { fill: #fff4d6; stroke: var(--external); stroke-width: 1.5; }
+  .svg-agent-rect.delegate { fill: #ece9df; stroke: #aaa; stroke-dasharray: 4 3; }
+  .svg-agent-name    { fill: var(--ink); font: 600 12px/1 "JetBrains Mono", ui-monospace, monospace; }
+  .svg-meta          { fill: var(--ink-faint); font: 10px/1 "JetBrains Mono", ui-monospace, monospace; }
+  .svg-meta-em       { fill: var(--ink-soft); font: 10px/1 "JetBrains Mono", ui-monospace, monospace; }
+  .svg-owns          { fill: var(--writes); font: 10px/1.3 "JetBrains Mono", ui-monospace, monospace; }
+  .svg-reads         { fill: var(--reads); font: 10px/1.3 "JetBrains Mono", ui-monospace, monospace; }
+  .svg-connector     { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+  .svg-connector-dashed { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; stroke-dasharray: 4 3; }
+  .svg-pattern-label { fill: var(--ink-soft); font: italic 11px/1 "Source Serif 4", serif; }
+  .svg-side-label    { fill: var(--ink-faint); font: 10px/1.2 "JetBrains Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.08em; }
+  .svg-arrowhead     { fill: var(--ink-faint); }
+
+  /* ===== Tables (Components C, D) ===== */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.6rem 0 1.5rem;
+    font-size: 0.88rem;
+  }
+  .data-table th, .data-table td {
+    text-align: left;
+    padding: 0.45rem 0.7rem;
+    vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+  }
+  .data-table th {
+    background: var(--paper-2);
+    font-weight: 600;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+  }
+  .data-table td:first-child {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .data-table .tag {
+    display: inline-block;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    background: var(--paper-2);
+    padding: 0.05rem 0.35rem;
+    border-radius: 3px;
+    margin: 0 0.2rem 0.2rem 0;
+    color: var(--ink-soft);
+  }
+  .data-table .tag.kb        { background: #ede4f4; color: #5e3a8e; }
+  .data-table .tag.state     { background: #e4ecf4; color: #2b5d8f; }
+  .data-table .tag.planning  { background: #f0ead8; color: #856332; }
+  .data-table .tag.template  { background: #e6efe2; color: #3d6b30; }
+  .data-table .tag.transcript{ background: #f4e4e4; color: #8a3838; }
+  .data-table .tag.framework { background: #ece4e4; color: #6b2f2f; }
+  .data-table .tag.none      { background: #eeeae0; color: #7a7464; }
+
+  /* ===== Open questions (Component E) ===== */
+  .oq {
+    background: #fff7e8;
+    border-left: 3px solid #c79347;
+    padding: 0.7rem 1rem;
+    margin: 0.5rem 0;
+  }
+  .oq .q { font-weight: 600; color: var(--ink); }
+  .oq .need { color: var(--ink-soft); font-size: 0.88rem; margin-top: 0.2rem; }
+  .oq .need::before { content: "→ to decide we need: "; color: var(--ink-faint); font-style: italic; }
+
+  /* ===== Legend ===== */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem 1.4rem;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    background: var(--paper-2);
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    margin: 0.7rem 0 1.4rem;
+  }
+  .legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend-swatch {
+    display: inline-block;
+    width: 14px; height: 10px;
+    border: 1px solid var(--agent-stk);
+    background: var(--agent);
+    border-radius: 2px;
+  }
+  .legend-swatch.fork     { border-color: var(--fork); border-width: 1.5px; }
+  .legend-swatch.external { border-color: var(--external); background: #fff4d6; border-width: 1.5px; }
+  .legend-swatch.delegate { border-style: dashed; background: #ece9df; }
+  .legend-swatch.skill    { background: var(--skill); border-color: var(--skill); width: 22px; }
+  .legend-line {
+    display: inline-block;
+    width: 18px; height: 2px;
+    background: var(--ink-faint);
+  }
+
+  hr.section-rule {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: 2.5rem 0 0;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>
+  Momentum — Skill &amp; Agent Landscape
+  <small>An analysis of how every Momentum skill composes work · 2026-05-14</small>
+</h1>
+
+<p class="lede">
+  This document maps every skill in the Momentum plugin and shows — for the ones that spawn subagents — what they spawn, what each agent owns, and which knowledge sources each agent actually reads. It exists so that grooming the <code>composable-specialist-agents</code> feature stops being a guessing game.
+</p>
+
+<nav class="toc" aria-label="Contents">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#landscape">A. Skill landscape</a> — all 28 skills, one-line each</li>
+    <li><a href="#diagrams">B. Per-skill diagrams</a> — 16 spawners and orchestrators</li>
+    <li><a href="#agents">C. Agent inventory</a> — every distinct agent role, what it owns, what it reads</li>
+    <li><a href="#artifacts">D. Document &amp; template inventory</a> — every significant artifact, who writes/reads it</li>
+    <li><a href="#open-questions">E. Open questions</a> — what's unclear after this discovery pass</li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<!-- COMPONENT A: LANDSCAPE                                      -->
+<!-- ============================================================ -->
+
+<h2 id="landscape"><span class="label">A</span>Skill landscape</h2>
+
+<p>
+  Every Momentum skill, tagged by its primary structural role. <strong>Spawner</strong> = invokes subagents via the <code>Agent</code> tool. <strong>Orchestrator</strong> = sequences other skills/CLI calls; mostly no direct subagent spawns. <strong>Agent</strong> = the skill itself is the subagent body (<code>context:fork</code>, <code>allowed-tools: Read</code>). <strong>Writer</strong> = writes documents directly (no spawn). <strong>CLI</strong> = pure shell/state plumbing. <strong>Stub/Deprecated</strong> = not implemented or retired.
+</p>
+
+<div class="landscape">
+
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">sprint-dev</div><div class="blurb">Dev wave, code-review wave, post-merge AVFL, Team Review. 6 distinct roles.</div></div>
+  <div class="land-card spawner"><div class="role">Spawner · Orch.</div><div class="name">quick-fix</div><div class="blurb">Single-story full-cycle. Delegates to create-story; spawns architect-writer, prd-writer, specialist-dev, qa, e2e.</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">retro</div><div class="blurb">3 transcript auditors (fan-out parallel) + synthesizer (sequential) + feature-status + distill.</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">avfl</div><div class="blurb">Validator-enum + validator-adv (parallel), consolidator (sequential), fixer (sequential). All via sub-skills.</div></div>
+  <div class="land-card spawner"><div class="role">Spawner · Orch.</div><div class="name">distill</div><div class="blurb">Enumerator + Adversary discovery; then write subagent (Tier 1) OR create-story (Tier 2).</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">assessment</div><div class="blurb">N ad-hoc discovery agents (count + composition agreed with developer); writes ASR.</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">research</div><div class="blurb">N parallel research subagents per sub-question, Gemini browser triangulation, single Opus synthesizer.</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">feature-grooming</div><div class="blurb">Agent A (FR clustering from PRD/epics) + Agent B (arch + stories scan).</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">feature-breakdown</div><div class="blurb">Agent A (acceptance-first) + Agent B (value-gap-first); then delegates to triage.</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">refine</div><div class="blurb">Wave 1: PRD-coverage + Architecture-coverage. Wave 2: PRD-update + Architecture-update (sole writers).</div></div>
+  <div class="land-card spawner"><div class="role">Spawner</div><div class="name">agent-guidelines</div><div class="blurb">4 scanner sub-skills + N research subs + N generation subs. Gen-1 stack-rules generator.</div></div>
+  <div class="land-card orchestrator"><div class="role">Orchestrator</div><div class="name">create-story</div><div class="blurb">Delegates to bmad-create-story; injects MIG; invokes AVFL checkpoint.</div></div>
+  <div class="land-card orchestrator"><div class="role">Orchestrator</div><div class="name">dev</div><div class="blurb">Pure executor. Worktree + delegate to bmad-dev-story. No analysis logic.</div></div>
+  <div class="land-card orchestrator"><div class="role">Orchestrator</div><div class="name">triage</div><div class="blurb">Delegates to intake / distill / decision per classified item. Writes intake-queue events.</div></div>
+  <div class="land-card orchestrator"><div class="role">Orchestrator · Spawner</div><div class="name">sprint-planning</div><div class="blurb">Delegates to create-story per story; spawns Gherkin-writer per story; invokes AVFL.</div></div>
+  <div class="land-card orchestrator"><div class="role">Orchestrator</div><div class="name">impetus</div><div class="blurb">Top-level. Reads sanctum + state; dispatches to any momentum:* skill. Owns the session voice.</div></div>
+  <div class="land-card writer"><div class="role">Writer</div><div class="name">decision</div><div class="blurb">Walks findings, captures choices, writes SDR document. Optional bmad-technical-research spawn.</div></div>
+  <div class="land-card writer"><div class="role">Writer</div><div class="name">plan-audit</div><div class="blurb">Writes process story + ## Spec Impact section; invokes AVFL for targeted spec audit.</div></div>
+  <div class="land-card writer"><div class="role">Writer</div><div class="name">intake</div><div class="blurb">1 read, 1 write (stub file), 1 CLI call. No subagents. Explicit "no spawns" contract.</div></div>
+  <div class="land-card writer"><div class="role">Writer</div><div class="name">constitution-builder</div><div class="blurb">Builds Permissions + Standing Rules + Quick Routing into a target SKILL.md. No subagents.</div></div>
+  <div class="land-card agent"><div class="role">Agent (fork)</div><div class="name">code-reviewer</div><div class="blurb">context:fork · opus · Read-only. Adversarial review of code. <em>Stub — "full impl in Story 4.X"</em>.</div></div>
+  <div class="land-card agent"><div class="role">Agent (fork)</div><div class="name">architecture-guard</div><div class="blurb">context:fork · sonnet · Read+Grep+Bash. Detects pattern drift vs architecture decisions.</div></div>
+  <div class="land-card cli"><div class="role">CLI / State</div><div class="name">sprint-manager</div><div class="blurb">Sole writer of stories/index.json and sprints/index.json via momentum-tools. No spawns.</div></div>
+  <div class="land-card cli"><div class="role">CLI / State</div><div class="name">epic-grooming</div><div class="blurb">Reads index + epics.md; reassigns via momentum-tools sprint epic-membership. No spawns.</div></div>
+  <div class="land-card cli"><div class="role">CLI</div><div class="name">canvas</div><div class="blurb">Launches Hono+Bun dashboard on :3456. Pure CLI; the server reads state independently.</div></div>
+  <div class="land-card stub"><div class="role">Stub</div><div class="name">upstream-fix</div><div class="blurb">SKILL.md says "full implementation in Story 4.X." Not built.</div></div>
+  <div class="land-card stub"><div class="role">Deprecated</div><div class="name">feature-status</div><div class="blurb">Deprecated. Stubs out with a deprecation message. Use /momentum:canvas.</div></div>
+  <div class="land-card stub"><div class="role">Workspace</div><div class="name">constitution-builder-workspace</div><div class="blurb">Eval workspace folder, not a real skill (no SKILL.md). Used for benchmarking.</div></div>
+
+</div>
+
+<div class="legend">
+  <strong>Diagram legend:</strong>
+  <span class="legend-item"><span class="legend-swatch skill"></span>skill</span>
+  <span class="legend-item"><span class="legend-swatch"></span>standard agent</span>
+  <span class="legend-item"><span class="legend-swatch fork"></span><code>context:fork</code> · read-only</span>
+  <span class="legend-item"><span class="legend-swatch external"></span>external skill (BMAD, etc.)</span>
+  <span class="legend-item"><span class="legend-swatch delegate"></span>delegated momentum:skill</span>
+  <span class="legend-item"><span class="legend-line"></span>spawn / invoke</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- COMPONENT B: PER-SKILL DIAGRAMS                              -->
+<!-- ============================================================ -->
+
+<h2 id="diagrams"><span class="label">B</span>Per-skill diagrams</h2>
+
+<p>
+  One diagram per skill that spawns at least one subagent or invokes a downstream skill. Each diagram shows: the skill node at top; the agents or sub-skills it spawns; what each agent owns (the <span style="color: var(--writes)">green</span> "writes" line); what each agent reads (the <span style="color: var(--reads)">purple</span> "reads" line). Spawn pattern (parallel · sequential · single) is labelled below the skill.
+</p>
+
+<!-- ---------- sprint-dev ---------- -->
+<section class="skill-section" id="s-sprint-dev">
+<h3><code>sprint-dev</code> <span class="meta">opus · effort high · 6 roles · 2 waves</span></h3>
+<p class="skill-blurb">Executes the active sprint. Dev wave runs unblocked stories in parallel; post-merge AVFL runs once across the bundle; Team Review fans out code-review + qa + e2e + architect-guard.</p>
+<svg class="diagram-svg" viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="sprint-dev spawn diagram">
+  <!-- skill node -->
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">sprint-dev</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">orch · opus · 2 waves</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">fan-out parallel (per story) · sequential between phases</text>
+  <!-- Wave 1 label -->
+  <text x="40" y="108" class="svg-side-label">Wave 1 — Dev (Phase 2)</text>
+  <line x1="40" y1="114" x2="840" y2="114" class="svg-connector-dashed"/>
+  <!-- dev agent box -->
+  <g transform="translate(330,128)">
+    <rect width="220" height="110" rx="6" class="svg-agent-rect"/>
+    <text x="14" y="20" class="svg-agent-name">dev</text>
+    <text x="14" y="36" class="svg-meta">opus · individual-agent · parallel</text>
+    <text x="14" y="56" class="svg-owns">owns: implementation in worktree</text>
+    <text x="14" y="70" class="svg-owns">           + stories/index.json status</text>
+    <text x="14" y="86" class="svg-reads">reads: .momentum/stories/&lt;slug&gt;.md</text>
+    <text x="14" y="100" class="svg-reads">           project rules · base body</text>
+  </g>
+  <line x1="440" y1="60" x2="440" y2="128" class="svg-connector"/>
+  <!-- Wave 2 label -->
+  <text x="40" y="262" class="svg-side-label">Wave 2 — Team Review (Phase 5) · fan-out parallel · post-merge</text>
+  <line x1="40" y1="268" x2="840" y2="268" class="svg-connector-dashed"/>
+  <!-- 5 agents in row -->
+  <g transform="translate(20,282)">
+    <!-- code-reviewer -->
+    <g transform="translate(0,0)">
+      <rect width="160" height="86" rx="6" class="svg-agent-rect fork"/>
+      <text x="12" y="18" class="svg-agent-name">code-reviewer</text>
+      <text x="12" y="32" class="svg-meta">opus · fork · Read-only</text>
+      <text x="12" y="50" class="svg-owns">owns: review-findings JSON</text>
+      <text x="12" y="66" class="svg-reads">reads: merged code</text>
+      <text x="12" y="78" class="svg-reads">           + architecture.md</text>
+    </g>
+    <!-- dev-fixer -->
+    <g transform="translate(172,0)">
+      <rect width="160" height="86" rx="6" class="svg-agent-rect"/>
+      <text x="12" y="18" class="svg-agent-name">dev-fixer</text>
+      <text x="12" y="32" class="svg-meta">sequential per finding</text>
+      <text x="12" y="50" class="svg-owns">owns: applied fix</text>
+      <text x="12" y="66" class="svg-reads">reads: finding + code</text>
+      <text x="12" y="78" class="svg-meta-em">(scoped dev variant)</text>
+    </g>
+    <!-- qa-reviewer -->
+    <g transform="translate(344,0)">
+      <rect width="160" height="86" rx="6" class="svg-agent-rect"/>
+      <text x="12" y="18" class="svg-agent-name">qa-reviewer</text>
+      <text x="12" y="32" class="svg-meta">individual · parallel</text>
+      <text x="12" y="50" class="svg-owns">owns: QA findings + verdict</text>
+      <text x="12" y="66" class="svg-reads">reads: .feature spec</text>
+      <text x="12" y="78" class="svg-reads">           + ATDD output</text>
+    </g>
+    <!-- e2e-validator -->
+    <g transform="translate(516,0)">
+      <rect width="160" height="86" rx="6" class="svg-agent-rect"/>
+      <text x="12" y="18" class="svg-agent-name">e2e-validator</text>
+      <text x="12" y="32" class="svg-meta">individual · parallel</text>
+      <text x="12" y="50" class="svg-owns">owns: e2e verdict + evidence</text>
+      <text x="12" y="66" class="svg-reads">reads: .feature spec</text>
+      <text x="12" y="78" class="svg-reads">           + running app</text>
+    </g>
+    <!-- architect-guard -->
+    <g transform="translate(688,0)">
+      <rect width="160" height="86" rx="6" class="svg-agent-rect fork"/>
+      <text x="12" y="18" class="svg-agent-name">architect-guard</text>
+      <text x="12" y="32" class="svg-meta">sonnet · fork · Read+Grep+Bash</text>
+      <text x="12" y="50" class="svg-owns">owns: arch-guard report</text>
+      <text x="12" y="66" class="svg-reads">reads: architecture.md</text>
+      <text x="12" y="78" class="svg-reads">           + git diff sprint↔main</text>
+    </g>
+  </g>
+  <!-- lines to each -->
+  <line x1="440" y1="60" x2="100" y2="282" class="svg-connector"/>
+  <line x1="440" y1="60" x2="272" y2="282" class="svg-connector"/>
+  <line x1="440" y1="60" x2="444" y2="282" class="svg-connector"/>
+  <line x1="440" y1="60" x2="616" y2="282" class="svg-connector"/>
+  <line x1="440" y1="60" x2="788" y2="282" class="svg-connector"/>
+</svg>
+<p class="skill-blurb">Also invokes <code>momentum:avfl</code> once after all stories merge (Phase 4 — read-only gate). Reads sprints/index.json + stories/index.json + .feature specs for verifier prompts.</p>
+</section>
+
+<!-- ---------- quick-fix ---------- -->
+<section class="skill-section" id="s-quick-fix">
+<h3><code>quick-fix</code> <span class="meta">opus · effort high · 5 phases · orchestrator + spawner</span></h3>
+<p class="skill-blurb">Single-story full-cycle workflow. Delegates story creation; spawns sole-writer agents for spec impact; selects a stack-specific dev via specialist-classify CLI; runs Team Review.</p>
+<svg class="diagram-svg" viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">quick-fix</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">orchestrator + spawner</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">sequential phases · per-phase spawning</text>
+
+  <!-- Row 1: Phase 1+2 -->
+  <text x="40" y="108" class="svg-side-label">Phase 1 — Define</text>
+  <text x="320" y="108" class="svg-side-label">Phase 2 — Specify (sole writers)</text>
+  <g transform="translate(40,118)">
+    <rect width="200" height="60" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:create-story</text>
+    <text x="12" y="36" class="svg-meta">delegates story creation</text>
+    <text x="12" y="52" class="svg-owns">owns: the story file</text>
+  </g>
+  <g transform="translate(260,118)">
+    <rect width="200" height="60" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">architect-writer</text>
+    <text x="12" y="36" class="svg-meta">sole writer of architecture.md</text>
+    <text x="12" y="52" class="svg-owns">owns: architecture.md edits</text>
+  </g>
+  <g transform="translate(480,118)">
+    <rect width="200" height="60" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">prd-writer</text>
+    <text x="12" y="36" class="svg-meta">sole writer of prd.md</text>
+    <text x="12" y="52" class="svg-owns">owns: prd.md edits</text>
+  </g>
+  <g transform="translate(700,118)">
+    <rect width="160" height="60" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ avfl (checkpoint)</text>
+    <text x="12" y="36" class="svg-meta">spec validation</text>
+    <text x="12" y="52" class="svg-owns">owns: findings JSON</text>
+  </g>
+
+  <!-- Row 2: Phase 3 -->
+  <text x="40" y="208" class="svg-side-label">Phase 3 — Implement · stack-resolved via momentum-tools specialist-classify</text>
+  <g transform="translate(280,218)">
+    <rect width="320" height="60" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">specialist-dev (one of)</text>
+    <text x="12" y="36" class="svg-meta">dev · dev-build · dev-frontend · dev-skills</text>
+    <text x="12" y="52" class="svg-reads">reads: agents/&lt;specialist&gt;.md + project rules</text>
+  </g>
+
+  <!-- Row 3: Phase 4 -->
+  <text x="40" y="298" class="svg-side-label">Phase 4 — Validate (parallel)</text>
+  <g transform="translate(180,308)">
+    <rect width="160" height="28" rx="4" class="svg-agent-rect"/>
+    <text x="80" y="19" text-anchor="middle" class="svg-agent-name">e2e-validator</text>
+  </g>
+  <g transform="translate(360,308)">
+    <rect width="160" height="28" rx="4" class="svg-agent-rect"/>
+    <text x="80" y="19" text-anchor="middle" class="svg-agent-name">qa-reviewer</text>
+  </g>
+  <g transform="translate(540,308)">
+    <rect width="160" height="28" rx="4" class="svg-agent-rect delegate"/>
+    <text x="80" y="19" text-anchor="middle" class="svg-agent-name">→ avfl + code-reviewer</text>
+  </g>
+
+  <!-- connectors -->
+  <line x1="440" y1="60" x2="140" y2="118" class="svg-connector"/>
+  <line x1="440" y1="60" x2="360" y2="118" class="svg-connector"/>
+  <line x1="440" y1="60" x2="580" y2="118" class="svg-connector"/>
+  <line x1="440" y1="60" x2="780" y2="118" class="svg-connector-dashed"/>
+  <line x1="440" y1="60" x2="440" y2="218" class="svg-connector"/>
+  <line x1="440" y1="60" x2="260" y2="308" class="svg-connector"/>
+  <line x1="440" y1="60" x2="440" y2="308" class="svg-connector"/>
+  <line x1="440" y1="60" x2="620" y2="308" class="svg-connector-dashed"/>
+</svg>
+</section>
+
+<!-- ---------- retro ---------- -->
+<section class="skill-section" id="s-retro">
+<h3><code>retro</code> <span class="meta">sonnet · effort high · auditor team + synthesizer</span></h3>
+<p class="skill-blurb">DuckDB transcript audit, then a 3-auditor fan-out (Phase 4), then a synthesizer writes the findings doc. Phase 5 routes Tier 1 findings to distill; Phase 6 writes sprint-summary.md and handoffs.</p>
+<svg class="diagram-svg" viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">retro</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">Phase 4: fan-out parallel (3) → sequential synth · NO TeamCreate · NO SendMessage</text>
+
+  <text x="40" y="108" class="svg-side-label">Phase 4 — Auditor team (parallel)</text>
+  <g transform="translate(60,120)">
+    <rect width="240" height="92" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">auditor-human</text>
+    <text x="12" y="36" class="svg-meta">individual · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: human_findings JSON</text>
+    <text x="12" y="72" class="svg-reads">reads: user-messages.jsonl</text>
+    <text x="12" y="86" class="svg-meta-em">(DuckDB-extracted transcript slice)</text>
+  </g>
+  <g transform="translate(320,120)">
+    <rect width="240" height="92" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">auditor-execution</text>
+    <text x="12" y="36" class="svg-meta">individual · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: execution_findings JSON</text>
+    <text x="12" y="72" class="svg-reads">reads: agent-summaries.jsonl</text>
+    <text x="12" y="86" class="svg-reads">           + errors.jsonl</text>
+  </g>
+  <g transform="translate(580,120)">
+    <rect width="240" height="92" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">auditor-review</text>
+    <text x="12" y="36" class="svg-meta">individual · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: review_findings JSON</text>
+    <text x="12" y="72" class="svg-reads">reads: team-messages.jsonl</text>
+  </g>
+
+  <text x="40" y="240" class="svg-side-label">Phase 4c — Synthesizer (sequential, single)</text>
+  <g transform="translate(220,250)">
+    <rect width="440" height="64" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">synthesizer</text>
+    <text x="12" y="36" class="svg-meta">individual · sequential · receives 3 findings blocks in prompt</text>
+    <text x="12" y="54" class="svg-owns">writes: .momentum/sprints/&lt;slug&gt;/retro-transcript-audit.md</text>
+  </g>
+
+  <line x1="440" y1="60" x2="180" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="440" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="700" y2="120" class="svg-connector"/>
+  <line x1="180" y1="212" x2="320" y2="250" class="svg-connector"/>
+  <line x1="440" y1="212" x2="440" y2="250" class="svg-connector"/>
+  <line x1="700" y1="212" x2="560" y2="250" class="svg-connector"/>
+</svg>
+<p class="skill-blurb">Phase 5 spawns <code>momentum:distill</code> per Tier 1 finding (inline subagent spawn). Phase 6 spawns <code>momentum:feature-status</code> (now deprecated → moving to canvas) and writes sprint-summary.md + handoff events to intake-queue.jsonl.</p>
+</section>
+
+<!-- ---------- avfl ---------- -->
+<section class="skill-section" id="s-avfl">
+<h3><code>avfl</code> <span class="meta">opus · effort high · 4 sub-skill roles · model/effort fixed by benchmark</span></h3>
+<p class="skill-blurb">The Adversarial Validate-Fix Loop. Validators run in parallel; consolidator scores and dedupes; fixer applies. All four roles live as internal sub-skills, spawned via the <code>Agent</code> tool pointed at the sub-skill path.</p>
+<svg class="diagram-svg" viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">avfl</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">orchestration layer</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">fan-out parallel (validators) → sequential (consolidator → fixer) · per lens × 4 lenses</text>
+
+  <text x="40" y="108" class="svg-side-label">Phase 3 — EVALUATE (parallel, up to 8 in one turn)</text>
+  <g transform="translate(60,120)">
+    <rect width="340" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">validator-enum</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/validator-enum · sonnet · medium</text>
+    <text x="12" y="56" class="svg-meta-em">"Enumerator": systematic, section-by-section</text>
+    <text x="12" y="74" class="svg-owns">owns: enumerator findings (per lens)</text>
+    <text x="12" y="88" class="svg-reads">reads: target doc/corpus + framework.json</text>
+  </g>
+  <g transform="translate(420,120)">
+    <rect width="340" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">validator-adv</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/validator-adv · opus · high</text>
+    <text x="12" y="56" class="svg-meta-em">"Adversary": intuitive, pattern-aware, holistic</text>
+    <text x="12" y="74" class="svg-owns">owns: adversary findings (per lens)</text>
+    <text x="12" y="88" class="svg-reads">reads: target doc/corpus + framework.json</text>
+  </g>
+
+  <text x="40" y="240" class="svg-side-label">Phase 3 (after all validators) → Phase 4 (if fix loop)</text>
+  <g transform="translate(60,250)">
+    <rect width="340" height="60" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">consolidator</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/consolidator · haiku · low · sequential</text>
+    <text x="12" y="52" class="svg-owns">owns: scored deduped findings list</text>
+  </g>
+  <g transform="translate(420,250)">
+    <rect width="340" height="60" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">fixer</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/fixer · sonnet · medium · sequential</text>
+    <text x="12" y="52" class="svg-owns">owns: fixed artifact (complete output)</text>
+  </g>
+
+  <line x1="440" y1="60" x2="230" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="590" y2="120" class="svg-connector"/>
+  <line x1="230" y1="220" x2="230" y2="250" class="svg-connector"/>
+  <line x1="590" y1="220" x2="590" y2="250" class="svg-connector"/>
+  <line x1="400" y1="280" x2="420" y2="280" class="svg-connector"/>
+</svg>
+<p class="skill-blurb">Profiles control fan-out: <strong>gate</strong> = 1 enumerator/structural lens only · <strong>checkpoint</strong> = 1 per active lens · <strong>full</strong> = 8 total (1 enum + 1 adv per lens × 4 lenses) · <strong>scan</strong> = identical to full but no fix loop. Skepticism level passed to each validator; floor=2 enforced by benchmark.</p>
+</section>
+
+<!-- ---------- distill ---------- -->
+<section class="skill-section" id="s-distill">
+<h3><code>distill</code> <span class="meta">sonnet · effort medium · discovery → tier-routed write</span></h3>
+<p class="skill-blurb">Practice-artifact distillation. Discovery pass classifies into Tier 1 (apply now) vs Tier 2 (create story); apply phase delegates accordingly. Orchestrator never writes; every change goes through a spawned writer.</p>
+<svg class="diagram-svg" viewBox="0 0 880 360" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">distill</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort medium</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">Phase 1: fan-out parallel (2) · Phase 3: tier-routed sequential</text>
+
+  <text x="40" y="108" class="svg-side-label">Phase 1 — Discovery (parallel · inline prompts)</text>
+  <g transform="translate(120,120)">
+    <rect width="280" height="92" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Enumerator</text>
+    <text x="12" y="36" class="svg-meta">inline prompt · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: tier classification + change proposal</text>
+    <text x="12" y="72" class="svg-reads">reads: candidate artifact + neighbors</text>
+    <text x="12" y="86" class="svg-meta-em">(rule / reference / skill prompt)</text>
+  </g>
+  <g transform="translate(480,120)">
+    <rect width="280" height="92" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Adversary</text>
+    <text x="12" y="36" class="svg-meta">inline prompt · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: tier challenge + escalation</text>
+    <text x="12" y="72" class="svg-reads">reads: same artifact + Enumerator output</text>
+    <text x="12" y="86" class="svg-meta-em">(adversary escalates only — Tier 2 wins)</text>
+  </g>
+
+  <text x="40" y="240" class="svg-side-label">Phase 3 — Apply (one of three paths)</text>
+  <g transform="translate(20,252)">
+    <rect width="270" height="76" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">write subagent (Tier 1)</text>
+    <text x="12" y="36" class="svg-meta">sonnet · medium · sequential · ad-hoc</text>
+    <text x="12" y="54" class="svg-owns">owns: in-place edit to target file</text>
+    <text x="12" y="68" class="svg-reads">reads: target file (read-then-write)</text>
+  </g>
+  <g transform="translate(304,252)">
+    <rect width="270" height="76" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:create-story (Tier 2)</text>
+    <text x="12" y="36" class="svg-meta">delegated for backlog stub</text>
+    <text x="12" y="54" class="svg-owns">owns: new story file + index entry</text>
+  </g>
+  <g transform="translate(588,252)">
+    <rect width="270" height="76" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">ledger-write subagent</text>
+    <text x="12" y="36" class="svg-meta">sonnet · medium · Phase 6 · always</text>
+    <text x="12" y="54" class="svg-owns">writes: ~/.claude/momentum/findings-ledger.jsonl</text>
+  </g>
+
+  <line x1="440" y1="60" x2="260" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="620" y2="120" class="svg-connector"/>
+  <line x1="440" y1="220" x2="155" y2="252" class="svg-connector"/>
+  <line x1="440" y1="220" x2="439" y2="252" class="svg-connector"/>
+  <line x1="440" y1="220" x2="723" y2="252" class="svg-connector"/>
+</svg>
+</section>
+
+<!-- ---------- assessment ---------- -->
+<section class="skill-section" id="s-assessment">
+<h3><code>assessment</code> <span class="meta">sonnet · effort high · roster agreed with developer</span></h3>
+<p class="skill-blurb">Produces an Assessment Record (ASR). Roster of discovery agents is proposed, the developer approves it, then they fan out in parallel. Findings are validated with the developer before they enter the ASR.</p>
+<svg class="diagram-svg" viewBox="0 0 880 280" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">assessment</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">fan-out parallel (background) · count + composition agreed with developer first</text>
+
+  <text x="40" y="108" class="svg-side-label">Step 2 — N discovery agents (parallel, background)</text>
+  <g transform="translate(40,120)">
+    <rect width="200" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">discovery agent #1</text>
+    <text x="12" y="36" class="svg-meta">ad-hoc named per scope</text>
+    <text x="12" y="54" class="svg-owns">owns: scoped audit findings</text>
+    <text x="12" y="72" class="svg-reads">reads: scope-specific artifacts</text>
+    <text x="12" y="88" class="svg-meta-em">(LOC counts, status, evidence)</text>
+  </g>
+  <g transform="translate(260,120)">
+    <rect width="200" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">discovery agent #2</text>
+    <text x="12" y="36" class="svg-meta">ad-hoc named per scope</text>
+    <text x="12" y="54" class="svg-owns">owns: scoped audit findings</text>
+    <text x="12" y="72" class="svg-reads">reads: scope-specific artifacts</text>
+  </g>
+  <g transform="translate(480,120)">
+    <rect width="200" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">discovery agent #N</text>
+    <text x="12" y="36" class="svg-meta">…</text>
+    <text x="12" y="54" class="svg-meta-em">count agreed with developer</text>
+  </g>
+  <g transform="translate(700,120)">
+    <rect width="160" height="100" rx="6" class="svg-agent-rect" style="opacity:0.6"/>
+    <text x="12" y="20" class="svg-agent-name">(follow-up agent)</text>
+    <text x="12" y="36" class="svg-meta">spawned only if developer</text>
+    <text x="12" y="48" class="svg-meta">requests deeper investigation</text>
+  </g>
+
+  <line x1="440" y1="60" x2="140" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="360" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="580" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="780" y2="120" class="svg-connector-dashed"/>
+</svg>
+<p class="skill-blurb">Step 5 writes the ASR to <code>_bmad-output/planning-artifacts/assessments/aes-NNN-&lt;slug&gt;-&lt;date&gt;.md</code> using <code>references/asr-template.md</code>. Step 6 updates the assessments index.md.</p>
+</section>
+
+<!-- ---------- research ---------- -->
+<section class="skill-section" id="s-research">
+<h3><code>research</code> <span class="meta">opus · effort high · web + Gemini + AVFL corpus</span></h3>
+<p class="skill-blurb">Deep-research pipeline. Sub-question decomposition spawns N parallel research subagents; a single Opus synthesizer produces the briefing; Gemini Deep Research triangulates via cmux-browser; AVFL corpus mode validates the body of evidence.</p>
+<svg class="diagram-svg" viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">research</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">opus · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">parallel sub-question agents → Gemini triangulation → Opus synthesizer → AVFL corpus</text>
+
+  <text x="40" y="108" class="svg-side-label">Step 2 — Sub-question fan-out (parallel, background)</text>
+  <g transform="translate(40,120)">
+    <rect width="200" height="80" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">research subagent #i</text>
+    <text x="12" y="36" class="svg-meta">general-purpose · WebSearch</text>
+    <text x="12" y="54" class="svg-owns">owns: raw/research-&lt;i&gt;.md</text>
+    <text x="12" y="68" class="svg-reads">reads: web results</text>
+  </g>
+  <g transform="translate(260,120)">
+    <rect width="220" height="80" rx="6" class="svg-agent-rect external"/>
+    <text x="12" y="20" class="svg-agent-name">Gemini Deep Research</text>
+    <text x="12" y="36" class="svg-meta">cmux-browser surface · or gemini -p</text>
+    <text x="12" y="54" class="svg-owns">owns: raw/gemini-deep-research-output.md</text>
+    <text x="12" y="68" class="svg-reads">reads: gemini-prompt.md</text>
+  </g>
+  <g transform="translate(500,120)">
+    <rect width="180" height="80" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Opus synthesizer</text>
+    <text x="12" y="36" class="svg-meta">single · foreground · clean 200K ctx</text>
+    <text x="12" y="54" class="svg-owns">owns: synthesis briefing</text>
+    <text x="12" y="68" class="svg-reads">reads: ALL raw/*.md (paths only)</text>
+  </g>
+  <g transform="translate(700,120)">
+    <rect width="160" height="80" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ avfl (corpus)</text>
+    <text x="12" y="36" class="svg-meta">validates the body of evidence</text>
+    <text x="12" y="54" class="svg-owns">owns: corpus findings</text>
+  </g>
+  <text x="40" y="232" class="svg-side-label">Outputs (provenance-tracked)</text>
+  <text x="40" y="252" class="svg-owns">writes: {project_dir}/raw/*.md · scope.md · gemini-prompt.md · final synthesis · ledger entry</text>
+  <text x="40" y="270" class="svg-reads">reads: ./references/output-structure.md · synthesis-briefing-template.md · gemini-prompt-template.md</text>
+
+  <line x1="440" y1="60" x2="140" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="370" y2="120" class="svg-connector-dashed"/>
+  <line x1="440" y1="60" x2="590" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="780" y2="120" class="svg-connector-dashed"/>
+</svg>
+</section>
+
+<!-- ---------- feature-grooming ---------- -->
+<section class="skill-section" id="s-feature-grooming">
+<h3><code>feature-grooming</code> <span class="meta">sonnet · effort high · features.json maintenance</span></h3>
+<p class="skill-blurb">Bootstrap or refine the feature taxonomy. Two parallel discovery agents map FR clusters against existing capability clusters; the orchestrator synthesizes; the developer approves; features.json is written under a strict gate.</p>
+<svg class="diagram-svg" viewBox="0 0 880 240" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">feature-grooming</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">fan-out parallel (exactly 2 · fan-out · NOT TeamCreate)</text>
+
+  <text x="40" y="108" class="svg-side-label">Step 2 — Parallel discovery</text>
+  <g transform="translate(140,120)">
+    <rect width="280" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Agent A — FR clustering</text>
+    <text x="12" y="36" class="svg-meta">haiku · quick · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: FR-clustered candidate list</text>
+    <text x="12" y="72" class="svg-reads">reads: prd.md · epics.md</text>
+    <text x="12" y="86" class="svg-meta-em">(group by user-facing theme)</text>
+  </g>
+  <g transform="translate(460,120)">
+    <rect width="280" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Agent B — Arch + stories</text>
+    <text x="12" y="36" class="svg-meta">haiku · quick · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: capability clusters · refine signals</text>
+    <text x="12" y="72" class="svg-reads">reads: architecture.md · stories/index.json</text>
+    <text x="12" y="86" class="svg-reads">           + existing features.json</text>
+  </g>
+  <line x1="440" y1="60" x2="280" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="600" y2="120" class="svg-connector"/>
+</svg>
+<p class="skill-blurb">Orchestrator handles synthesis, value-analysis, developer interaction, and writing directly (no extra subagents). Writes <code>features.json</code> after approval gate; in bootstrap mode also writes <code>aes-NNN-feature-value-gap.md</code> and <code>dec-NNN-feature-value-first.md</code>.</p>
+</section>
+
+<!-- ---------- feature-breakdown ---------- -->
+<section class="skill-section" id="s-feature-breakdown">
+<h3><code>feature-breakdown</code> <span class="meta">sonnet · effort high · enumerate stories per feature</span></h3>
+<p class="skill-blurb">Given a feature slug, produce the story enumeration that ships it end-to-end. Two perspectives in parallel (acceptance-first and value-gap-first); the orchestrator merges; triage routes the result.</p>
+<svg class="diagram-svg" viewBox="0 0 880 260" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">feature-breakdown</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">fan-out parallel (exactly 2) → triage delegation</text>
+
+  <g transform="translate(40,120)">
+    <rect width="290" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Agent A — Acceptance-first</text>
+    <text x="12" y="36" class="svg-meta">sonnet · medium · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: capability decomposition</text>
+    <text x="12" y="72" class="svg-reads">reads: feature record + acceptance_condition</text>
+    <text x="12" y="86" class="svg-reads">           + prd/epics/architecture sections</text>
+  </g>
+  <g transform="translate(350,120)">
+    <rect width="290" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Agent B — Value-gap-first</text>
+    <text x="12" y="36" class="svg-meta">sonnet · medium · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: value-driven gap list</text>
+    <text x="12" y="72" class="svg-reads">reads: feature.value_analysis · system_context</text>
+    <text x="12" y="86" class="svg-reads">           + stories/index.json (existing coverage)</text>
+  </g>
+  <g transform="translate(660,120)">
+    <rect width="180" height="100" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:triage</text>
+    <text x="12" y="36" class="svg-meta">routes intake/distill/decision</text>
+    <text x="12" y="54" class="svg-owns">owns: per-item routing</text>
+    <text x="12" y="72" class="svg-reads">reads: orchestrator-merged list</text>
+  </g>
+  <line x1="440" y1="60" x2="185" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="495" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="750" y2="120" class="svg-connector-dashed"/>
+</svg>
+</section>
+
+<!-- ---------- refine ---------- -->
+<section class="skill-section" id="s-refine">
+<h3><code>refine</code> <span class="meta">sonnet · effort high · 2-wave planning artifact drift detection</span></h3>
+<p class="skill-blurb">Wave 1 detects drift between backlog and planning artifacts. If drift is found and the developer approves, Wave 2 fans out sole-writer agents that update the planning artifacts. Orchestrator never writes prd.md or architecture.md.</p>
+<svg class="diagram-svg" viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">refine</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">Wave 1: parallel discovery (2) · Wave 2: parallel sole-writers (0–2, conditional)</text>
+
+  <text x="40" y="108" class="svg-side-label">Wave 1 — Discovery (parallel)</text>
+  <g transform="translate(40,120)">
+    <rect width="380" height="92" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">PRD coverage agent</text>
+    <text x="12" y="36" class="svg-meta">discovery · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: prd_findings list</text>
+    <text x="12" y="72" class="svg-reads">reads: prd.md · stories/index.json</text>
+  </g>
+  <g transform="translate(440,120)">
+    <rect width="380" height="92" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Architecture coverage agent</text>
+    <text x="12" y="36" class="svg-meta">discovery · parallel</text>
+    <text x="12" y="54" class="svg-owns">owns: arch_findings list</text>
+    <text x="12" y="72" class="svg-reads">reads: architecture.md · stories/index.json</text>
+  </g>
+
+  <text x="40" y="240" class="svg-side-label">Wave 2 — Updates (parallel · conditional on approval)</text>
+  <g transform="translate(40,252)">
+    <rect width="380" height="74" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">PRD update agent</text>
+    <text x="12" y="36" class="svg-meta">sole writer of prd.md · parallel</text>
+    <text x="12" y="54" class="svg-owns">writes: prd.md</text>
+    <text x="12" y="68" class="svg-reads">reads: prd.md + approved findings</text>
+  </g>
+  <g transform="translate(440,252)">
+    <rect width="380" height="74" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Architecture update agent</text>
+    <text x="12" y="36" class="svg-meta">sole writer of architecture.md · parallel</text>
+    <text x="12" y="54" class="svg-owns">writes: architecture.md</text>
+    <text x="12" y="68" class="svg-reads">reads: architecture.md + approved findings</text>
+  </g>
+
+  <line x1="440" y1="60" x2="230" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="630" y2="120" class="svg-connector"/>
+  <line x1="230" y1="212" x2="230" y2="252" class="svg-connector"/>
+  <line x1="630" y1="212" x2="630" y2="252" class="svg-connector"/>
+</svg>
+</section>
+
+<!-- ---------- agent-guidelines ---------- -->
+<section class="skill-section" id="s-agent-guidelines">
+<h3><code>agent-guidelines</code> <span class="meta">opus · effort high · Gen-1 stack-rule generator</span></h3>
+<p class="skill-blurb">Discovers project stack via 4 scanner sub-skills, optionally researches breaking changes, then generates path-scoped rules and reference docs. The Gen-1 predecessor to constitution-builder.</p>
+<svg class="diagram-svg" viewBox="0 0 880 360" xmlns="http://www.w3.org/2000/svg">
+  <rect x="320" y="14" width="240" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">agent-guidelines</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">opus · effort high · Gen-1</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">parallel scanners (4) · then parallel research (N per tech) · then parallel generation (N)</text>
+
+  <text x="40" y="108" class="svg-side-label">Step 1 — Stack discovery (4 scanners, parallel sub-skills)</text>
+  <g transform="translate(20,120)">
+    <rect width="200" height="76" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">build-scanner</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/build-scanner</text>
+    <text x="12" y="54" class="svg-reads">reads: build files (gradle/etc.)</text>
+    <text x="12" y="68" class="svg-owns">owns: language/framework/version inventory</text>
+  </g>
+  <g transform="translate(232,120)">
+    <rect width="200" height="76" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">rules-auditor</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/rules-auditor</text>
+    <text x="12" y="54" class="svg-reads">reads: .claude/rules/ · CLAUDE.md</text>
+    <text x="12" y="68" class="svg-owns">owns: coverage map of existing rules</text>
+  </g>
+  <g transform="translate(444,120)">
+    <rect width="200" height="76" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">test-config-scanner</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/test-config-scanner</text>
+    <text x="12" y="54" class="svg-reads">reads: test files / config</text>
+    <text x="12" y="68" class="svg-owns">owns: test framework + pattern inventory</text>
+  </g>
+  <g transform="translate(656,120)">
+    <rect width="200" height="76" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">source-pattern-scanner</text>
+    <text x="12" y="36" class="svg-meta">sub-skills/source-pattern-scanner</text>
+    <text x="12" y="54" class="svg-reads">reads: source code · imports</text>
+    <text x="12" y="68" class="svg-owns">owns: framework + convention inventory</text>
+  </g>
+
+  <text x="40" y="220" class="svg-side-label">Step 3 — Per-tech research (parallel · MEDIUM/HIGH-staleness only)</text>
+  <g transform="translate(140,232)">
+    <rect width="280" height="60" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">research subagent (per tech)</text>
+    <text x="12" y="36" class="svg-meta">sonnet · medium · WebSearch</text>
+    <text x="12" y="52" class="svg-owns">owns: current-state + breaking-change brief</text>
+  </g>
+  <text x="40" y="312" class="svg-side-label">Step 5 — Generation (parallel per approved tech)</text>
+  <g transform="translate(440,300)">
+    <rect width="400" height="46" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">generation subagent (per tech)</text>
+    <text x="12" y="36" class="svg-meta">sonnet · high · writes rules + reference doc</text>
+  </g>
+
+  <line x1="440" y1="60" x2="120" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="332" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="544" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="756" y2="120" class="svg-connector"/>
+  <line x1="440" y1="60" x2="280" y2="232" class="svg-connector"/>
+  <line x1="440" y1="60" x2="640" y2="300" class="svg-connector"/>
+</svg>
+<p class="skill-blurb">Generation writes to <code>.claude/rules/&lt;tech&gt;.md</code> (Layer 1, path-scoped) and optionally <code>docs/references/&lt;tech&gt;-patterns.md</code> (Layer 2, reference). May also update CLAUDE.md with pointers. Templates: <code>references/rule-template.md</code>, <code>references/reference-doc-template.md</code>.</p>
+</section>
+
+<!-- ---------- create-story ---------- -->
+<section class="skill-section" id="s-create-story">
+<h3><code>create-story</code> <span class="meta">sonnet · effort medium · delegates to bmad-create-story</span></h3>
+<p class="skill-blurb">The story file's owner is <strong>bmad-create-story</strong> (external BMAD skill). Momentum's <code>create-story</code> orchestrates around it: delegates the heavy lifting, injects a Momentum Implementation Guide section, records metadata, and runs an AVFL checkpoint over the result.</p>
+<svg class="diagram-svg" viewBox="0 0 880 260" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">create-story</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort medium</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">sequential pipeline · all logic delegated</text>
+
+  <g transform="translate(20,108)">
+    <rect width="240" height="100" rx="6" class="svg-agent-rect external"/>
+    <text x="12" y="20" class="svg-agent-name">bmad-create-story</text>
+    <text x="12" y="36" class="svg-meta">external skill (BMAD)</text>
+    <text x="12" y="54" class="svg-owns">owns: the story file</text>
+    <text x="12" y="68" class="svg-meta-em">+ epic/arch extraction, web research,</text>
+    <text x="12" y="80" class="svg-meta-em">  git analysis, Dev Notes, ready-for-dev</text>
+    <text x="12" y="94" class="svg-reads">reads: epics.md · architecture.md</text>
+  </g>
+  <g transform="translate(280,108)">
+    <rect width="280" height="100" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">MIG injector (in orchestrator)</text>
+    <text x="12" y="36" class="svg-meta">writes Momentum Implementation Guide</text>
+    <text x="12" y="54" class="svg-owns">writes: &lt;story_file&gt; Dev Notes section</text>
+    <text x="12" y="72" class="svg-reads">reads: classification + template guidance</text>
+    <text x="12" y="86" class="svg-meta-em">(EDD/TDD specific guidance per change-type)</text>
+  </g>
+  <g transform="translate(580,108)">
+    <rect width="280" height="100" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:avfl (checkpoint)</text>
+    <text x="12" y="36" class="svg-meta">profile: checkpoint · validates story</text>
+    <text x="12" y="54" class="svg-owns">owns: findings JSON</text>
+    <text x="12" y="72" class="svg-reads">reads: story file + epic section as source</text>
+  </g>
+  <line x1="440" y1="60" x2="140" y2="108" class="svg-connector"/>
+  <line x1="440" y1="60" x2="420" y2="108" class="svg-connector"/>
+  <line x1="440" y1="60" x2="720" y2="108" class="svg-connector-dashed"/>
+  <text x="40" y="232" class="svg-side-label">Also writes to stories/index.json with status: ready-for-dev</text>
+</svg>
+</section>
+
+<!-- ---------- dev ---------- -->
+<section class="skill-section" id="s-dev">
+<h3><code>dev</code> <span class="meta">sonnet · effort medium · user-invocable: false · pure executor</span></h3>
+<p class="skill-blurb">Pure executor. Resolves the next unblocked story, creates a worktree, delegates implementation to <strong>bmad-dev-story</strong>, manages merge gate. Never reads <code>.feature</code> specs (Decision 30 black-box separation).</p>
+<svg class="diagram-svg" viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">dev</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · pure executor</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">single delegation · worktree-bounded</text>
+
+  <g transform="translate(280,108)">
+    <rect width="320" height="80" rx="6" class="svg-agent-rect external"/>
+    <text x="12" y="20" class="svg-agent-name">bmad-dev-story</text>
+    <text x="12" y="36" class="svg-meta">external skill (BMAD)</text>
+    <text x="12" y="54" class="svg-owns">owns: implementation in worktree</text>
+    <text x="12" y="68" class="svg-reads">reads: .momentum/stories/&lt;slug&gt;.md (incl. MIG)</text>
+  </g>
+  <line x1="440" y1="60" x2="440" y2="108" class="svg-connector"/>
+</svg>
+</section>
+
+<!-- ---------- triage ---------- -->
+<section class="skill-section" id="s-triage">
+<h3><code>triage</code> <span class="meta">sonnet · effort high · 6-class delegator</span></h3>
+<p class="skill-blurb">Batch-classifies observations into six classes, then delegates by class. ARTIFACT → intake; DISTILL → distill; DECISION → decision (sequential, interactive). SHAPING/DEFER/REJECT → direct write to intake-queue.jsonl.</p>
+<svg class="diagram-svg" viewBox="0 0 880 240" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">triage</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">batch classification → per-class delegation (parallel ARTIFACT/DISTILL · sequential DECISION)</text>
+
+  <g transform="translate(20,108)">
+    <rect width="200" height="60" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:intake</text>
+    <text x="12" y="36" class="svg-meta">per ARTIFACT · parallel</text>
+    <text x="12" y="52" class="svg-owns">owns: stub story files</text>
+  </g>
+  <g transform="translate(232,108)">
+    <rect width="200" height="60" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:distill</text>
+    <text x="12" y="36" class="svg-meta">per DISTILL · parallel</text>
+    <text x="12" y="52" class="svg-owns">owns: rule/skill edits</text>
+  </g>
+  <g transform="translate(444,108)">
+    <rect width="200" height="60" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:decision</text>
+    <text x="12" y="36" class="svg-meta">per DECISION · sequential</text>
+    <text x="12" y="52" class="svg-owns">owns: SDR documents</text>
+  </g>
+  <g transform="translate(656,108)">
+    <rect width="200" height="60" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">intake-queue writer</text>
+    <text x="12" y="36" class="svg-meta">orchestrator-direct · CLI only</text>
+    <text x="12" y="52" class="svg-owns">writes: intake-queue.jsonl events</text>
+  </g>
+  <line x1="440" y1="60" x2="120" y2="108" class="svg-connector-dashed"/>
+  <line x1="440" y1="60" x2="332" y2="108" class="svg-connector-dashed"/>
+  <line x1="440" y1="60" x2="544" y2="108" class="svg-connector-dashed"/>
+  <line x1="440" y1="60" x2="756" y2="108" class="svg-connector"/>
+  <text x="40" y="200" class="svg-side-label">Reads: intake-queue.jsonl · features.json · epics.md · stories/index.json (for enrichment)</text>
+</svg>
+</section>
+
+<!-- ---------- sprint-planning ---------- -->
+<section class="skill-section" id="s-sprint-planning">
+<h3><code>sprint-planning</code> <span class="meta">sonnet · effort high · story selection + activation</span></h3>
+<p class="skill-blurb">Curates the next sprint: reads master plan, picks unblocked stories, fleshes stubs, generates Gherkin specs, runs AVFL per story, activates. Per-story create-story spawns happen in sequence; AVFL checkpoint per story is delegated.</p>
+<svg class="diagram-svg" viewBox="0 0 880 240" xmlns="http://www.w3.org/2000/svg">
+  <rect x="320" y="14" width="240" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">sprint-planning</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">sequential per story · delegated heavy lifts</text>
+
+  <g transform="translate(20,108)">
+    <rect width="220" height="80" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:create-story</text>
+    <text x="12" y="36" class="svg-meta">per approved stub · sequential</text>
+    <text x="12" y="54" class="svg-owns">owns: ready-for-dev story</text>
+  </g>
+  <g transform="translate(252,108)">
+    <rect width="220" height="80" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">Gherkin writer (in-orch)</text>
+    <text x="12" y="36" class="svg-meta">writes .feature per story</text>
+    <text x="12" y="54" class="svg-owns">writes: sprints/&lt;slug&gt;/specs/&lt;story&gt;.feature</text>
+    <text x="12" y="68" class="svg-reads">reads: story ACs · gherkin-template.md</text>
+  </g>
+  <g transform="translate(484,108)">
+    <rect width="200" height="80" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:agent-guidelines</text>
+    <text x="12" y="36" class="svg-meta">optional · per missing domain</text>
+    <text x="12" y="54" class="svg-owns">owns: rules + reference docs</text>
+  </g>
+  <g transform="translate(696,108)">
+    <rect width="160" height="80" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:avfl</text>
+    <text x="12" y="36" class="svg-meta">per-story checkpoint</text>
+    <text x="12" y="54" class="svg-owns">owns: findings JSON</text>
+  </g>
+  <line x1="440" y1="60" x2="130" y2="108" class="svg-connector-dashed"/>
+  <line x1="440" y1="60" x2="362" y2="108" class="svg-connector"/>
+  <line x1="440" y1="60" x2="584" y2="108" class="svg-connector-dashed"/>
+  <line x1="440" y1="60" x2="776" y2="108" class="svg-connector-dashed"/>
+  <text x="40" y="220" class="svg-side-label">Reads: prd.md · product-brief.md · sprints/index.json · stories/index.json · architecture.md</text>
+</svg>
+</section>
+
+<!-- ---------- plan-audit ---------- -->
+<section class="skill-section" id="s-plan-audit">
+<h3><code>plan-audit</code> <span class="meta">sonnet · effort medium · gates ExitPlanMode</span></h3>
+<p class="skill-blurb">Audits the active plan for spec impact, classifies trivial vs substantive, creates a process story for substantive plans, runs an AVFL spec audit, and writes <code>## Spec Impact</code> back into the plan file.</p>
+<svg class="diagram-svg" viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">plan-audit</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort medium</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">sequential · trivial path skips spawn entirely</text>
+
+  <g transform="translate(80,108)">
+    <rect width="300" height="80" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">process-story writer (in-orch)</text>
+    <text x="12" y="36" class="svg-meta">substantive plans only</text>
+    <text x="12" y="54" class="svg-owns">writes: process story file</text>
+    <text x="12" y="68" class="svg-owns">           + ## Spec Impact section in plan</text>
+  </g>
+  <g transform="translate(440,108)">
+    <rect width="360" height="80" rx="6" class="svg-agent-rect delegate"/>
+    <text x="12" y="20" class="svg-agent-name">→ momentum:avfl (targeted spec audit)</text>
+    <text x="12" y="36" class="svg-meta">checkpoint · only relevant spec sections</text>
+    <text x="12" y="54" class="svg-owns">owns: audit findings</text>
+    <text x="12" y="68" class="svg-reads">reads: only sections the plan touches</text>
+  </g>
+  <line x1="440" y1="60" x2="230" y2="108" class="svg-connector"/>
+  <line x1="440" y1="60" x2="620" y2="108" class="svg-connector-dashed"/>
+</svg>
+</section>
+
+<!-- ---------- decision ---------- -->
+<section class="skill-section" id="s-decision">
+<h3><code>decision</code> <span class="meta">sonnet · effort high · SDR writer · optional research spawn</span></h3>
+<p class="skill-blurb">Walks an assessment or research source, captures adopt/reject/defer decisions per finding, writes a linked SDR document. Optional <code>bmad-technical-research</code> spawn if the developer requests deeper investigation.</p>
+<svg class="diagram-svg" viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">decision</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort high</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">interactive sequential · optional research spawn</text>
+
+  <g transform="translate(60,108)">
+    <rect width="320" height="80" rx="6" class="svg-agent-rect"/>
+    <text x="12" y="20" class="svg-agent-name">SDR writer (in-orch)</text>
+    <text x="12" y="36" class="svg-meta">writes decision document</text>
+    <text x="12" y="54" class="svg-owns">writes: decisions/sdr-NNN-&lt;slug&gt;-&lt;date&gt;.md</text>
+    <text x="12" y="68" class="svg-owns">           + decisions/index.md · updates source ASR</text>
+  </g>
+  <g transform="translate(440,108)">
+    <rect width="360" height="80" rx="6" class="svg-agent-rect external" style="opacity:0.8"/>
+    <text x="12" y="20" class="svg-agent-name">bmad-technical-research (optional)</text>
+    <text x="12" y="36" class="svg-meta">spawned only on developer request</text>
+    <text x="12" y="54" class="svg-owns">owns: technical research findings</text>
+    <text x="12" y="68" class="svg-reads">reads: developer-defined scope</text>
+  </g>
+  <line x1="440" y1="60" x2="220" y2="108" class="svg-connector"/>
+  <line x1="440" y1="60" x2="620" y2="108" class="svg-connector-dashed"/>
+</svg>
+</section>
+
+<!-- ---------- impetus ---------- -->
+<section class="skill-section" id="s-impetus">
+<h3><code>impetus</code> <span class="meta">sonnet · effort low · top-level orchestrator</span></h3>
+<p class="skill-blurb">The voice of the practice. Reads the sanctum + sprint state; greets the developer; dispatches to whichever <code>momentum:*</code> skill the moment calls for. Owns no work artifact — owns the session-level orientation and dispatch.</p>
+<svg class="diagram-svg" viewBox="0 0 880 240" xmlns="http://www.w3.org/2000/svg">
+  <rect x="340" y="14" width="200" height="46" rx="6" class="svg-skill-rect"/>
+  <text x="440" y="40" text-anchor="middle" class="svg-skill-text">impetus</text>
+  <text x="440" y="54" text-anchor="middle" class="svg-skill-tag">sonnet · effort low</text>
+  <text x="440" y="78" text-anchor="middle" class="svg-pattern-label">orientation → dispatch (any momentum:* skill)</text>
+
+  <text x="40" y="108" class="svg-side-label">Reads (silent on happy path)</text>
+  <text x="40" y="128" class="svg-reads">_bmad/memory/impetus/* sanctum · sprints/index.json · stories/index.json · journal.jsonl</text>
+  <text x="40" y="144" class="svg-reads">plugin cache version (preflight) · intake-queue.jsonl signals · .momentum/signals/ ledger</text>
+
+  <text x="40" y="180" class="svg-side-label">Dispatches to (developer-confirmed)</text>
+  <text x="40" y="200" class="svg-meta">sprint-planning · sprint-dev · retro · quick-fix · feature-grooming · refine · assessment · decision ·</text>
+  <text x="40" y="216" class="svg-meta">research · triage · intake · distill · plan-audit · create-story · feature-breakdown · canvas · …</text>
+</svg>
+</section>
+
+<hr class="section-rule">
+
+<!-- ============================================================ -->
+<!-- COMPONENT C: AGENT INVENTORY                                 -->
+<!-- ============================================================ -->
+
+<h2 id="agents"><span class="label">C</span>Agent inventory</h2>
+
+<p>
+  Every distinct agent role surfaced across all skill diagrams. <strong>Knowledge sources</strong> uses categorical tags: <code>KB</code> = Obsidian wiki via <code>wiki-query</code>; <code>state</code> = .momentum/ state files; <code>planning</code> = _bmad-output/planning-artifacts/; <code>template</code> = skills/momentum/references/ templates; <code>transcript</code> = DuckDB-extracted session transcripts; <code>framework</code> = framework.json or sub-skill internal references; <code>code</code> = source tree at HEAD or in a worktree; <code>web</code> = WebSearch.
+</p>
+
+<table class="data-table">
+<thead><tr>
+<th>Agent</th><th>Used by</th><th>Owns (artifact)</th><th>Specialty</th><th>Knowledge sources</th>
+</tr></thead>
+<tbody>
+
+<tr>
+  <td>dev<br><span class="tag">stack-specific</span></td>
+  <td>sprint-dev · quick-fix</td>
+  <td>Implementation in worktree + <code>stories/index.json</code> status</td>
+  <td>Project's stack rules, TDD discipline, MVI/architecture patterns. The hand-rolled <code>frontend-dev</code> skill is the existence proof: a dev + stack constitution composed into one skill.</td>
+  <td><span class="tag state">state</span><span class="tag planning">planning</span><span class="tag code">code</span><span class="tag template">project rules</span></td>
+</tr>
+
+<tr>
+  <td>dev-fixer</td>
+  <td>sprint-dev (Phase 4d)</td>
+  <td>Applied fix for one code-review finding</td>
+  <td>Same role contract as <code>dev</code> with a "fix this finding" prompt. <em>Open question: is it a distinct role or just dev with scoped input?</em></td>
+  <td><span class="tag state">finding</span><span class="tag code">code</span></td>
+</tr>
+
+<tr>
+  <td>code-reviewer<br><span class="tag">context:fork</span></td>
+  <td>sprint-dev · quick-fix (invoked as skill)</td>
+  <td>Code review findings JSON per story changeset</td>
+  <td>Adversarial framing. Read-only enforcement (allowed-tools: Read). Stub today — full implementation deferred. To be valuable it needs project rules.</td>
+  <td><span class="tag code">code</span><span class="tag planning">arch</span><span class="tag template">project rules</span></td>
+</tr>
+
+<tr>
+  <td>architect-guard<br><span class="tag">context:fork</span></td>
+  <td>sprint-dev (Phase 5)</td>
+  <td>Architecture Guard Report (pattern-drift findings)</td>
+  <td>Reads numbered decisions from architecture.md; greps git diff vs sprint branch; classifies by severity. Highly project-specific — has no value without architecture decisions to enforce.</td>
+  <td><span class="tag planning">architecture.md</span><span class="tag code">git diff</span></td>
+</tr>
+
+<tr>
+  <td>qa-reviewer</td>
+  <td>sprint-dev · quick-fix</td>
+  <td>QA verdict + evidence per story</td>
+  <td>Reads the .feature spec (Gherkin) and verifies ATDD output. Project-specific — needs to know the project's test runner conventions.</td>
+  <td><span class="tag state">.feature</span><span class="tag code">ATDD output</span><span class="tag template">project rules</span></td>
+</tr>
+
+<tr>
+  <td>e2e-validator</td>
+  <td>sprint-dev · quick-fix</td>
+  <td>E2E verdict + evidence per story</td>
+  <td>Black-box validator. Runs e2e tests against the live app; ABSOLUTELY MUST report BLOCKED (not MISSING) on missing infrastructure. Project-specific runner knowledge.</td>
+  <td><span class="tag state">.feature</span><span class="tag code">running app</span><span class="tag template">project rules</span></td>
+</tr>
+
+<tr>
+  <td>architect-writer</td>
+  <td>quick-fix Phase 2 · refine Wave 2</td>
+  <td>Edits to <code>architecture.md</code> (sole writer)</td>
+  <td>Reads architecture.md and the spec-impact items, writes the updated file. Single-purpose write agent — exists to enforce orchestrator purity.</td>
+  <td><span class="tag planning">architecture.md</span></td>
+</tr>
+
+<tr>
+  <td>prd-writer</td>
+  <td>quick-fix Phase 2 · refine Wave 2</td>
+  <td>Edits to <code>prd.md</code> (sole writer)</td>
+  <td>Same pattern as architect-writer for PRD. Sole-writer contract enforces orchestrator purity.</td>
+  <td><span class="tag planning">prd.md</span></td>
+</tr>
+
+<tr>
+  <td>auditor-human<br><span class="tag">retro</span></td>
+  <td>retro (Phase 4)</td>
+  <td><code>human_findings</code> JSON array</td>
+  <td>Reads the human-side of the transcript. Looks for friction, confusion, course-corrections from the developer. Transcript shape is fixed (DuckDB extract).</td>
+  <td><span class="tag transcript">user-messages.jsonl</span></td>
+</tr>
+
+<tr>
+  <td>auditor-execution<br><span class="tag">retro</span></td>
+  <td>retro (Phase 4)</td>
+  <td><code>execution_findings</code> JSON array</td>
+  <td>Reads agent execution + errors. Looks for tool failures, retries, mis-spawned agents, broken workflows.</td>
+  <td><span class="tag transcript">agent-summaries.jsonl</span><span class="tag transcript">errors.jsonl</span></td>
+</tr>
+
+<tr>
+  <td>auditor-review<br><span class="tag">retro</span></td>
+  <td>retro (Phase 4)</td>
+  <td><code>review_findings</code> JSON array</td>
+  <td>Reads team-message exchanges (validator/reviewer interactions). Looks for review-process quality issues.</td>
+  <td><span class="tag transcript">team-messages.jsonl</span></td>
+</tr>
+
+<tr>
+  <td>synthesizer<br><span class="tag">retro</span></td>
+  <td>retro (Phase 4c)</td>
+  <td><code>retro-transcript-audit.md</code></td>
+  <td>Receives the 3 findings blocks inline in its prompt; performs cross-cutting synthesis; writes the findings doc. Sequentially after auditors. <em>Open question: is this a typed role or just an inline write-with-synthesis subagent?</em></td>
+  <td><span class="tag none">prompt-only</span></td>
+</tr>
+
+<tr>
+  <td>validator-enum<br><span class="tag">avfl sub-skill</span></td>
+  <td>avfl</td>
+  <td>Enumerator findings (per lens)</td>
+  <td>"Enumerator" framing — systematic, section-by-section. Derives explicit checks from dimensions. Sonnet/medium fixed by benchmark.</td>
+  <td><span class="tag framework">framework.json</span><span class="tag none">target doc</span></td>
+</tr>
+
+<tr>
+  <td>validator-adv<br><span class="tag">avfl sub-skill</span></td>
+  <td>avfl</td>
+  <td>Adversary findings (per lens)</td>
+  <td>"Adversary" framing — intuitive, pattern-aware, holistic. Opus/high fixed by benchmark (Sonnet adversary downgrades severity).</td>
+  <td><span class="tag framework">framework.json</span><span class="tag none">target doc</span></td>
+</tr>
+
+<tr>
+  <td>consolidator<br><span class="tag">avfl sub-skill</span></td>
+  <td>avfl</td>
+  <td>Scored, deduped findings list</td>
+  <td>Merges enumerator + adversary outputs. Single-finding investigation against source on low-confidence dedupes. Haiku/low (invariant).</td>
+  <td><span class="tag framework">framework.json</span><span class="tag none">validator outputs</span></td>
+</tr>
+
+<tr>
+  <td>fixer<br><span class="tag">avfl sub-skill</span></td>
+  <td>avfl (Phase 4 only)</td>
+  <td>Complete fixed artifact</td>
+  <td>Applies validated findings. Handles mechanical and generative fixes. Sonnet/medium.</td>
+  <td><span class="tag framework">framework.json</span><span class="tag none">target + findings</span></td>
+</tr>
+
+<tr>
+  <td>Enumerator<br><span class="tag">distill</span></td>
+  <td>distill (Phase 1)</td>
+  <td>Tier classification + proposed change</td>
+  <td>Maps an artifact + its neighbors to determine where a learning belongs. <em>Same name as AVFL's role; different specialization.</em></td>
+  <td><span class="tag template">target artifact</span><span class="tag template">neighbors</span></td>
+</tr>
+
+<tr>
+  <td>Adversary<br><span class="tag">distill</span></td>
+  <td>distill (Phase 1)</td>
+  <td>Tier challenge + escalation</td>
+  <td>Challenges Enumerator's tier; escalations only (Tier 2 takes precedence). <em>Same name as AVFL's role; different specialization.</em></td>
+  <td><span class="tag template">target artifact</span><span class="tag none">Enumerator output</span></td>
+</tr>
+
+<tr>
+  <td>write subagent<br><span class="tag">distill</span></td>
+  <td>distill (Phase 3 Tier 1)</td>
+  <td>In-place edit to target rule/skill/reference</td>
+  <td>Read-then-write subagent. No special role contract — exists to enforce orchestrator purity.</td>
+  <td><span class="tag template">target file</span></td>
+</tr>
+
+<tr>
+  <td>ledger-write subagent<br><span class="tag">distill</span></td>
+  <td>distill (Phase 6)</td>
+  <td>Appended entry in findings-ledger.jsonl</td>
+  <td>Append-only write. Same purity rationale.</td>
+  <td><span class="tag state">ledger path</span></td>
+</tr>
+
+<tr>
+  <td>PRD coverage agent<br><span class="tag">refine wave 1</span></td>
+  <td>refine</td>
+  <td>PRD drift findings list</td>
+  <td>Compares prd.md against the active backlog; surfaces missing/extra/stale items.</td>
+  <td><span class="tag planning">prd.md</span><span class="tag state">stories/index.json</span></td>
+</tr>
+
+<tr>
+  <td>Architecture coverage agent<br><span class="tag">refine wave 1</span></td>
+  <td>refine</td>
+  <td>Architecture drift findings list</td>
+  <td>Compares architecture.md decisions vs current backlog.</td>
+  <td><span class="tag planning">architecture.md</span><span class="tag state">stories/index.json</span></td>
+</tr>
+
+<tr>
+  <td>PRD update agent<br><span class="tag">refine wave 2</span></td>
+  <td>refine (conditional)</td>
+  <td>Updated prd.md (sole writer)</td>
+  <td>Sole writer of prd.md, equivalent to quick-fix's prd-writer. Could likely be unified.</td>
+  <td><span class="tag planning">prd.md</span></td>
+</tr>
+
+<tr>
+  <td>Architecture update agent<br><span class="tag">refine wave 2</span></td>
+  <td>refine (conditional)</td>
+  <td>Updated architecture.md (sole writer)</td>
+  <td>Sole writer of architecture.md. Could likely be unified with quick-fix's architect-writer.</td>
+  <td><span class="tag planning">architecture.md</span></td>
+</tr>
+
+<tr>
+  <td>Agent A — FR-cluster<br><span class="tag">feature-grooming</span></td>
+  <td>feature-grooming</td>
+  <td>FR-clustered feature candidates</td>
+  <td>PRD/epics cluster discovery. Haiku/quick.</td>
+  <td><span class="tag planning">prd.md</span><span class="tag planning">epics.md</span></td>
+</tr>
+
+<tr>
+  <td>Agent B — Arch + stories<br><span class="tag">feature-grooming</span></td>
+  <td>feature-grooming</td>
+  <td>Capability clusters · refine signals</td>
+  <td>Architecture/state scan with signal detection (MERGE/SPLIT/DEDUP/NEW/RETIRE/UPDATE).</td>
+  <td><span class="tag planning">architecture.md</span><span class="tag state">stories/index.json</span><span class="tag planning">features.json</span></td>
+</tr>
+
+<tr>
+  <td>Agent A — Acceptance-first<br><span class="tag">feature-breakdown</span></td>
+  <td>feature-breakdown</td>
+  <td>Acceptance-driven capability decomposition</td>
+  <td>Decomposes the feature's acceptance_condition into testable capabilities.</td>
+  <td><span class="tag planning">features.json</span><span class="tag planning">prd/epics/arch</span></td>
+</tr>
+
+<tr>
+  <td>Agent B — Value-gap-first<br><span class="tag">feature-breakdown</span></td>
+  <td>feature-breakdown</td>
+  <td>Value-driven gap list</td>
+  <td>Inspects value_analysis + existing coverage; lists what's missing for the full vision.</td>
+  <td><span class="tag planning">features.json</span><span class="tag state">stories/index.json</span></td>
+</tr>
+
+<tr>
+  <td>build-scanner<br><span class="tag">agent-guidelines sub</span></td>
+  <td>agent-guidelines</td>
+  <td>Language/framework/version inventory</td>
+  <td>Scans build files (gradle, pom, package.json, etc.). Pattern-recognition over project trees.</td>
+  <td><span class="tag code">build files</span></td>
+</tr>
+
+<tr>
+  <td>rules-auditor<br><span class="tag">agent-guidelines sub</span></td>
+  <td>agent-guidelines</td>
+  <td>Coverage map of existing rules</td>
+  <td>Audits .claude/rules/ and CLAUDE.md against detected stack.</td>
+  <td><span class="tag template">.claude/rules</span><span class="tag planning">CLAUDE.md</span></td>
+</tr>
+
+<tr>
+  <td>test-config-scanner<br><span class="tag">agent-guidelines sub</span></td>
+  <td>agent-guidelines</td>
+  <td>Test framework + pattern inventory</td>
+  <td>Detects test runners, conventions, naming.</td>
+  <td><span class="tag code">test files</span></td>
+</tr>
+
+<tr>
+  <td>source-pattern-scanner<br><span class="tag">agent-guidelines sub</span></td>
+  <td>agent-guidelines</td>
+  <td>Framework + convention inventory</td>
+  <td>Reads source for framework usage and architectural conventions.</td>
+  <td><span class="tag code">source tree</span></td>
+</tr>
+
+<tr>
+  <td>research subagent (per tech)<br><span class="tag">agent-guidelines</span></td>
+  <td>agent-guidelines</td>
+  <td>Current-state + breaking-change brief</td>
+  <td>2–3 focused web searches per technology with MEDIUM/HIGH staleness risk.</td>
+  <td><span class="tag web">web</span></td>
+</tr>
+
+<tr>
+  <td>generation subagent (per tech)<br><span class="tag">agent-guidelines</span></td>
+  <td>agent-guidelines</td>
+  <td>.claude/rules/&lt;tech&gt;.md + docs/references/&lt;tech&gt;-patterns.md</td>
+  <td>Applies rule-template + reference-doc-template. Generates the deliverables.</td>
+  <td><span class="tag template">rule/reference templates</span><span class="tag none">research brief</span></td>
+</tr>
+
+<tr>
+  <td>research subagent (per sub-question)<br><span class="tag">research</span></td>
+  <td>research</td>
+  <td>raw/research-&lt;i&gt;.md</td>
+  <td>Single sub-question, free WebSearch. General-purpose agent type.</td>
+  <td><span class="tag web">web</span></td>
+</tr>
+
+<tr>
+  <td>Opus synthesizer<br><span class="tag">research</span></td>
+  <td>research</td>
+  <td>Synthesis briefing</td>
+  <td>Single foreground spawn with clean 200K context. Reads file paths (not inline content) for token efficiency.</td>
+  <td><span class="tag none">raw file paths</span><span class="tag template">synthesis-briefing-template.md</span></td>
+</tr>
+
+<tr>
+  <td>Gemini Deep Research<br><span class="tag">external</span></td>
+  <td>research</td>
+  <td>raw/gemini-deep-research-output.md</td>
+  <td>Browser-driven (cmux-browser) external research session. Falls back to <code>gemini -p</code> CLI on failure.</td>
+  <td><span class="tag web">gemini surface</span></td>
+</tr>
+
+<tr>
+  <td>discovery agent (per scope)<br><span class="tag">assessment</span></td>
+  <td>assessment</td>
+  <td>Scoped audit findings</td>
+  <td>Ad-hoc; named per scope by developer agreement. Audits actual codebase/artifact state — evidence means file paths, LOC counts, status assessments.</td>
+  <td><span class="tag code">scope-specific</span></td>
+</tr>
+
+<tr>
+  <td>specialist-dev<br><span class="tag">quick-fix</span></td>
+  <td>quick-fix Phase 3</td>
+  <td>Implementation in worktree</td>
+  <td>One of: <code>dev</code>, <code>dev-build</code>, <code>dev-frontend</code>, <code>dev-skills</code>. Selected by <code>momentum-tools specialist-classify</code> from the story's touches list. Same role contract as <code>dev</code> above.</td>
+  <td><span class="tag template">agents/&lt;specialist&gt;.md</span><span class="tag template">project rules</span></td>
+</tr>
+
+<tr>
+  <td>bmad-create-story<br><span class="tag">external skill</span></td>
+  <td>create-story · sprint-planning · distill · quick-fix</td>
+  <td>The story file</td>
+  <td>External (BMAD) skill. Handles epic analysis, architecture extraction, web research, previous-story intelligence, git analysis, Dev Notes population. <strong>Owns the story artifact.</strong></td>
+  <td><span class="tag planning">epics.md</span><span class="tag planning">architecture.md</span><span class="tag web">web</span><span class="tag code">git</span></td>
+</tr>
+
+<tr>
+  <td>bmad-dev-story<br><span class="tag">external skill</span></td>
+  <td>dev (the Momentum skill)</td>
+  <td>Implementation against the story's plain-English ACs</td>
+  <td>External (BMAD) skill. Executes implementation in the worktree. Never reads .feature specs.</td>
+  <td><span class="tag state">story file (incl. MIG)</span><span class="tag code">worktree</span></td>
+</tr>
+
+<tr>
+  <td>bmad-technical-research<br><span class="tag">external skill</span></td>
+  <td>decision (optional)</td>
+  <td>Technical research brief</td>
+  <td>Spawned only on developer request during decision walking. Same shape as the general research pipeline but scoped.</td>
+  <td><span class="tag web">web</span></td>
+</tr>
+
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<!-- COMPONENT D: DOCUMENT INVENTORY                              -->
+<!-- ============================================================ -->
+
+<h2 id="artifacts"><span class="label">D</span>Document &amp; template inventory</h2>
+
+<p>
+  Every significant artifact named in component C, plus the templates and reference docs the system reads. Helps answer: who is authorized to write this, and what reads it?
+</p>
+
+<table class="data-table">
+<thead><tr>
+<th>Artifact</th><th>Written by</th><th>Read by</th><th>Template / spec source</th>
+</tr></thead>
+<tbody>
+
+<tr>
+  <td>story file<br><code>.momentum/stories/&lt;slug&gt;.md</code></td>
+  <td>bmad-create-story (body) · create-story (MIG injection) · intake (stub)</td>
+  <td>dev · bmad-dev-story · qa-reviewer · sprint-planning</td>
+  <td>BMAD story template · <code>references/stub-template.md</code> (intake) · MIG guidance for change types</td>
+</tr>
+<tr>
+  <td>Gherkin spec<br><code>.momentum/sprints/&lt;slug&gt;/specs/&lt;story&gt;.feature</code></td>
+  <td>sprint-planning (Gherkin writer)</td>
+  <td>qa-reviewer · e2e-validator (verifiers only — Decision 30 black-box separation)</td>
+  <td><code>skills/momentum/references/gherkin-template.md</code></td>
+</tr>
+<tr>
+  <td><code>prd.md</code></td>
+  <td>prd-writer (quick-fix Phase 2) · PRD update agent (refine wave 2)</td>
+  <td>sprint-planning · feature-grooming Agent A · feature-breakdown · refine PRD coverage agent · plan-audit</td>
+  <td>BMAD PRD template</td>
+</tr>
+<tr>
+  <td><code>architecture.md</code></td>
+  <td>architect-writer (quick-fix) · Architecture update agent (refine wave 2)</td>
+  <td>code-reviewer · architect-guard · feature-grooming Agent B · feature-breakdown · refine arch coverage · plan-audit · bmad-create-story</td>
+  <td>BMAD architecture template</td>
+</tr>
+<tr>
+  <td><code>features.json</code></td>
+  <td>feature-grooming (orchestrator-direct, gated)</td>
+  <td>feature-breakdown · canvas · feature-grooming refine scan</td>
+  <td>Feature schema in feature-grooming workflow (DEC-004 value-first)</td>
+</tr>
+<tr>
+  <td><code>epics.md</code></td>
+  <td>epic-grooming (direct writes via momentum-tools)</td>
+  <td>create-story · bmad-create-story · intake · sprint-planning · feature-grooming · refine</td>
+  <td><code>skills/momentum/references/templates/epic-template.md</code></td>
+</tr>
+<tr>
+  <td><code>stories/index.json</code></td>
+  <td>sprint-manager (sole writer · CLI only) · dev (status updates · MAIN tree)</td>
+  <td>Almost every skill — read for state, never edited directly</td>
+  <td>Schema enforced by momentum-tools sprint commands</td>
+</tr>
+<tr>
+  <td><code>sprints/index.json</code></td>
+  <td>sprint-manager (sole writer · CLI only)</td>
+  <td>sprint-dev · sprint-planning · retro · impetus</td>
+  <td>Schema enforced by momentum-tools sprint commands</td>
+</tr>
+<tr>
+  <td><code>retro-transcript-audit.md</code><br><span class="mono">.momentum/sprints/&lt;slug&gt;/</span></td>
+  <td>synthesizer (retro Phase 4c)</td>
+  <td>retro Phase 5 (Tier 1 routing to distill) · developer review</td>
+  <td>(no fixed template; sequence of synthesized findings)</td>
+</tr>
+<tr>
+  <td><code>sprint-summary.md</code><br><span class="mono">.momentum/sprints/&lt;slug&gt;/</span></td>
+  <td>retro Phase 6 (orchestrator-direct)</td>
+  <td>impetus orientation · canvas</td>
+  <td>(retro workflow defines structure inline)</td>
+</tr>
+<tr>
+  <td>assessment record<br><code>assessments/aes-NNN-&lt;slug&gt;-&lt;date&gt;.md</code></td>
+  <td>assessment (orchestrator-direct, after developer approval)</td>
+  <td>decision skill (source for SDR writing) · feature-grooming (bootstrap mode)</td>
+  <td><code>skills/momentum/skills/assessment/references/asr-template.md</code></td>
+</tr>
+<tr>
+  <td>decision record<br><code>decisions/sdr-NNN-&lt;slug&gt;-&lt;date&gt;.md</code></td>
+  <td>decision (SDR writer, orchestrator-direct)</td>
+  <td>Subsequent decision walks · feature-grooming bootstrap · retro Tier 1 routing</td>
+  <td><code>skills/momentum/skills/decision/references/sdr-template.md</code></td>
+</tr>
+<tr>
+  <td><code>intake-queue.jsonl</code></td>
+  <td>triage (direct · shape/watch/rejected events) · retro Phase 5 (handoff events) · intake (story-creation events via CLI)</td>
+  <td>impetus orientation · sprint-planning (open handoffs)</td>
+  <td>Event schema: <code>{source, kind, status, payload, feature_state_transition?, failure_diagnosis?}</code></td>
+</tr>
+<tr>
+  <td><code>findings-ledger.jsonl</code><br><span class="mono">~/.claude/momentum/</span></td>
+  <td>ledger-write subagent (distill Phase 6) · upstream-fix (planned)</td>
+  <td>Practice-flywheel pattern detection · retro</td>
+  <td>(append-only; schema in distill workflow)</td>
+</tr>
+<tr>
+  <td>Gherkin template</td>
+  <td>—</td>
+  <td>sprint-planning Gherkin writer · qa-reviewer · e2e-validator</td>
+  <td><code>skills/momentum/references/gherkin-template.md</code> (authoritative)</td>
+</tr>
+<tr>
+  <td>rule + reference-doc templates</td>
+  <td>—</td>
+  <td>agent-guidelines generation subagents</td>
+  <td><code>skills/momentum/skills/agent-guidelines/references/rule-template.md</code> · <code>reference-doc-template.md</code></td>
+</tr>
+<tr>
+  <td>AVFL <code>framework.json</code></td>
+  <td>—</td>
+  <td>validator-enum · validator-adv · consolidator · fixer</td>
+  <td>Source of truth for dimensions, prompt templates, scoring weights</td>
+</tr>
+<tr>
+  <td>session journal<br><code>.claude/momentum/journal.jsonl</code></td>
+  <td>impetus (on session close + key milestones)</td>
+  <td>impetus orientation · retro DuckDB extracts</td>
+  <td>(append-only)</td>
+</tr>
+<tr>
+  <td>impetus sanctum<br><code>_bmad/memory/impetus/*</code></td>
+  <td>impetus First Breath + Session Close</td>
+  <td>impetus rebirth</td>
+  <td><code>references/first-breath.md</code> · <code>references/memory-guidance.md</code></td>
+</tr>
+<tr>
+  <td>plugin agent files<br><code>skills/momentum/agents/*.md</code></td>
+  <td>(plugin authors)</td>
+  <td>sprint-dev · quick-fix (read as system prompt content when spawning)</td>
+  <td>Today: dev.md, dev-build.md, dev-frontend.md, dev-skills.md, qa-reviewer.md, e2e-validator.md</td>
+</tr>
+
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<!-- COMPONENT E: OPEN QUESTIONS                                  -->
+<!-- ============================================================ -->
+
+<h2 id="open-questions"><span class="label">E</span>Open questions</h2>
+
+<p>Each question pairs with "what would let us answer it." These are the cells where the discovery pass left genuine ambiguity.</p>
+
+<div class="oq">
+  <div class="q">Is <code>dev-fixer</code> a distinct role, or just <code>dev</code> spawned with a "fix this finding" prompt?</div>
+  <div class="need">A decision. Sprint-dev Phase 4d uses sequential per-finding spawns and reuses the dev role contract. If we declare them unified, the dev-fixer-agent-definition story collapses into the dev base body.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Does <code>dev-skills</code> survive given the "skills are built with <code>/skill-creator</code>" direction?</div>
+  <div class="need">Audit: when does <code>momentum-tools specialist-classify</code> return <code>dev-skills</code>? If only for SKILL.md / agent file changes, and those are now built by <code>/skill-creator</code> + <code>constitution-builder</code>, dev-skills becomes vestigial. The classification table itself (in quick-fix Phase 3) is the lookup to change.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Is there a "PM" agent? Quick-fix's orchestrator-purity comment lists it but no live spawn site appears to use it.</div>
+  <div class="need">Grep + verification: search every workflow for an actual PM spawn. If none exists, remove the reference from the comment and the planned pm-base-body story.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Is retro's <code>synthesizer</code> a typed role or just an inline write-with-synthesis subagent?</div>
+  <div class="need">A decision on whether <code>documenter-agent-definition</code> (story) creates a real plugin agent file or is closed as "no typed role — orchestrator spawns a generic writer when needed."</div>
+</div>
+
+<div class="oq">
+  <div class="q">Distill's <code>Enumerator</code> and <code>Adversary</code> share names with AVFL's roles but specialize differently. One role with two prompts, or two roles with naming overlap?</div>
+  <div class="need">A taxonomy decision. The pattern is "enumerator framing" vs "adversary framing" applied to different domains. If the framings are stable contracts, write base bodies; if each use site already specializes inline (as today), no plugin agent file is needed.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Do project state files (<code>.momentum/stories/index.json</code>, <code>sprints/index.json</code>, etc.) belong in the KB, or are they the canonical "not-in-KB" exception?</div>
+  <div class="need">An explicit decision. State files are append-mutating live records; the KB is curated knowledge. The architecture seems to treat them as the only category that bypasses the KB. Confirming this in writing would let several Open Questions resolve cleanly.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Does <code>code-reviewer</code> get value from a project constitution, or is generic adversarial review enough?</div>
+  <div class="need">Compare two trial runs of code-reviewer — one with the project's TDD/architecture rules injected, one without — on the same diff. If the deltas are material, code-reviewer joins <code>frontend-dev</code>-style per-project skills. If not, it stays a generic agent.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Could <code>architect-writer</code> (quick-fix) and "Architecture update agent" (refine wave 2) be unified? Same role contract: sole writer of architecture.md.</div>
+  <div class="need">A naming + reuse decision. Same applies to <code>prd-writer</code> vs "PRD update agent." Sole-writer agents look like one role with two callers.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Are the 11 planned <code>*-agent-definition</code> stories (AVFL validator/enumerator/adversary/consolidator/fixer; retro auditors × 4 + documenter; code-reviewer; architect-guard; dev-fixer) the right unit of work?</div>
+  <div class="need">Per-row verdicts from this document. The AVFL five already exist as sub-skills in <code>avfl/sub-skills/</code>. The retro three auditors and synthesizer are real roles. The dev-fixer question is above. Plugin code-reviewer and architect-guard agents exist but are stubs.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Is <code>agent-guidelines</code> superseded by <code>constitution-builder</code> + <code>frontend-dev</code>-style per-stack skills, or do its 4 scanners survive as a discovery primitive?</div>
+  <div class="need">A direction. If skills like <code>frontend-dev</code> are the unit of project conditioning, agent-guidelines' generation step is replaced; its scanner sub-skills could still serve as standalone stack-inventory primitives or be folded into <code>/skill-creator</code>.</div>
+</div>
+
+<div class="oq">
+  <div class="q">Does <code>upstream-fix</code> get built next, or get culled?</div>
+  <div class="need">A decision. Today it's a stub deferred to "Story 4.X." Its conceptual home is the practice flywheel; the findings-ledger is in place. The question is whether the workflow is needed as a standalone skill or whether retro Phase 5 + distill already do this.</div>
+</div>
+
+<hr class="section-rule">
+
+<p style="color: var(--ink-faint); font-size: 0.85rem; margin-top: 2rem;">
+  Read-only analysis. Generated 2026-05-14. No spec artifacts were modified. Source files consulted: every <code>workflow.md</code> and <code>SKILL.md</code> in <code>skills/momentum/skills/</code>, plus <code>avfl/sub-skills/*</code>, <code>agent-guidelines/sub-skills/*</code>, and the decisions index in <code>_bmad-output/planning-artifacts/decisions/</code>.
+</p>
+
+</div>
+</body>
+</html>

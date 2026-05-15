@@ -1,0 +1,82 @@
+[
+  {
+    "query": "I'm building a new sprint-planner skill for the nornspun project. It'll sit at nornspun/.claude/skills/sprint-planner/SKILL.md and needs to cover story prioritization, epic grooming, and capacity planning. The KB already has pages on those topics. I want the full constitution — permissions, standing rules, and routing.",
+    "should_trigger": true
+  },
+  {
+    "query": "the quick routing in my data-pipeline skill is totally stale — we've ingested like 15 new pages into the KB since it was written, covering dbt, Airflow DAG patterns, and BigQuery optimization. The skill is at .claude/skills/data-pipeline/SKILL.md. Can we regenerate the routing entries to reflect what's actually in the KB now?",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to add a permissions block to my db-migrations skill. It should own the migrations/ directory and schema files, never touch .env or any secrets file, and only be allowed to run psql and flyway commands. Nothing else needs updating — just the permissions section.",
+    "should_trigger": true
+  },
+  {
+    "query": "just ran wiki-ingest on a big dump of terraform provider docs and kubernetes networking guides. now i want to update the routing table in my infra skill so agents can actually find that content when they hit deployment questions",
+    "should_trigger": true
+  },
+  {
+    "query": "build the constitution for my analytics-agent skill — it covers dbt transformations, BigQuery SQL patterns, and Looker dashboard specs. The skill is at analytics/.claude/skills/analytics-agent/SKILL.md. I want it to have standing rules around never running DROP or DELETE statements, and routing entries for everything in the KB.",
+    "should_trigger": true
+  },
+  {
+    "query": "what paths should my retro-facilitator skill be allowed to write to? it needs to write sprint retro docs, update the .momentum/sprints index, but definitely not touch story files or any source code",
+    "should_trigger": true
+  },
+  {
+    "query": "add routing to this skill",
+    "should_trigger": true
+  },
+  {
+    "query": "my compose-ui skill has standing rules from 3 months ago and we've completely revamped how we do state testing in the KB. i want to regenerate the standing rules section from the current KB principle pages — just that section, not the routing",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm setting up a research-agent skill for my nornspun project. It's going to be KB-backed — reads from the wiki vault, uses wiki-query for lookups. I need the full three-section constitution: what it owns, the behavioral rules, and the routing table.",
+    "should_trigger": true
+  },
+  {
+    "query": "momentum:constitution-builder for the backend-dev skill at nornspun-backend/.claude/skills/backend-dev/SKILL.md",
+    "should_trigger": true
+  },
+  {
+    "query": "ingest the entire jetbrains compose-multiplatform-core documentation into the wiki, specifically the animation and layout sections",
+    "should_trigger": false
+  },
+  {
+    "query": "I want to create a skill that helps me write commit messages. It should look at the diff and suggest a conventional commit message. Nothing fancy, just a simple helper skill.",
+    "should_trigger": false
+  },
+  {
+    "query": "what's the exact syntax for Claude Code path-pattern permissions? like if I want to allow Edit on everything under src/ but deny on src/secrets/ how do I write that in settings.json?",
+    "should_trigger": false
+  },
+  {
+    "query": "do deep research on PydanticAI agent patterns and streaming responses — I want comprehensive coverage of the async streaming API, tool use in agents, and testing patterns. Add everything to the KB.",
+    "should_trigger": false
+  },
+  {
+    "query": "update CLAUDE.md with a new rule: before every sprint planning session, always check the .momentum/epics directory for any epics marked status: draft and flag them to the developer",
+    "should_trigger": false
+  },
+  {
+    "query": "can you explain how the two-store KB architecture works? like what's the difference between the hot constitution and the cold KB, and when does a routing entry fire versus when does the standing rule just apply directly?",
+    "should_trigger": false
+  },
+  {
+    "query": "my skill's description isn't triggering reliably — claude keeps not invoking it when the user asks about fastapi validation errors. help me optimize the description field so it triggers more accurately",
+    "should_trigger": false
+  },
+  {
+    "query": "add a new wiki page about Ktor client timeout configuration — specifically how to set per-request timeouts vs global timeouts, and the interaction with the HttpRequestRetry plugin",
+    "should_trigger": false
+  },
+  {
+    "query": "I need to update the allow/deny lists in my project's .claude/settings.json — the CI agent keeps trying to run git push and I want to block that at the harness level. how do I add a Bash deny rule?",
+    "should_trigger": false
+  },
+  {
+    "query": "write a system prompt for a new AI assistant that helps junior devs understand our codebase. it should be friendly, focus on explaining architecture decisions, and always link to relevant docs",
+    "should_trigger": false
+  }
+]
