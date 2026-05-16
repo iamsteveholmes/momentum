@@ -35,3 +35,11 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-017 | [Momentum Practice Cycle — Formal Step Sequence Definition](dec-017-momentum-cycle-step-sequence-definition-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
 | DEC-018 | [Obsidian Wiki Skills Replace Planned KB Stories — wiki-query as Cold KB Interface](dec-018-wiki-skills-replace-kb-stories-query-interface-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
 | DEC-019 | [Momentum Canvas Runtime Stack — Hono+HTMX+Bun Supersedes DEC-011 Vite Approach](dec-019-hono-htmx-bun-canvas-runtime-stack-2026-05-03.md) | 2026-05-03 | (developer-conversation) | decided |
+| DEC-020 | [Universal Agent Role Taxonomy — BMAD-Aligned Base Bodies](dec-020-universal-agent-role-taxonomy-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
+| DEC-021 | [Document Ownership Map — Role-to-Document Pattern Registry](dec-021-document-ownership-map-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
+| DEC-022 | [`momentum/` Pipeline Artifact Directory Structure](dec-022-momentum-pipeline-directory-structure-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
+| DEC-023 | [Agent Routing Table — Machine-Readable Registry with 1..N Fan-Out](dec-023-agent-routing-table-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
+| DEC-024 | [Read-Only Skill Constraint — Context:Fork Replaces Separate Role Bodies](dec-024-read-only-skill-constraint-context-fork-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
+| DEC-025 | [Fixer Role Resolution — Document Owner + Fix Constraint, No dev-fixer Base Body](dec-025-fixer-role-resolution-document-owner-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
+| DEC-026 | [Build Pipeline Redesign — build-agents, agent-builder, constitution-builder Rework](dec-026-build-pipeline-redesign-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
+| DEC-027 | [Skill/Agent Development — Skill-Creator Pipeline + Change-Type Routing in Sprint-Dev](dec-027-skill-agent-development-skill-creator-pipeline-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
