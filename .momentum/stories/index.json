@@ -3953,5 +3953,71 @@
     "priority": "medium",
     "story_type": "maintenance",
     "feature_slug": "momentum-composable-specialist-agents"
+  },
+  "analyst-base-body": {
+    "status": "backlog",
+    "title": "analyst-base-body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-agent-role-contracts"
+  },
+  "track-errors-per-turn-as-decomposition-signal": {
+    "status": "backlog",
+    "title": "track-errors-per-turn-as-decomposition-signal",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature",
+    "feature_slug": "momentum-sprint-retro"
+  },
+  "audit-skill-descriptions-routing-distinctiveness": {
+    "status": "backlog",
+    "title": "audit-skill-descriptions-routing-distinctiveness",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-impetus-session-orientation"
+  },
+  "momentum-directory-migration": {
+    "status": "backlog",
+    "title": "momentum-directory-migration",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-agent-composition-pipeline"
+  },
+  "tag-agent-runs-by-purpose": {
+    "status": "backlog",
+    "title": "tag-agent-runs-by-purpose",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-agent-spawn-orchestration"
+  },
+  "agent-builder-skill": {
+    "status": "backlog",
+    "title": "agent-builder-skill",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-agent-composition-pipeline"
   }
 }
