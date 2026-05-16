@@ -1,8 +1,132 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
-    "status": "planning",
+  "active": {
+    "locked": true,
+    "status": "active",
+    "slug": "sprint-2026-05-16",
+    "planned": "2026-05-16",
+    "team_composition": {
+      "beads-dual-write-spike": {
+        "roles": [
+          "dev",
+          "qa",
+          "e2e",
+          "architect-guard"
+        ],
+        "specialist": "dev-skills",
+        "change_type": [
+          "skill-instruction",
+          "config-structure",
+          "rule-hook"
+        ],
+        "guidelines": {
+          "dev": ".claude/rules/dev-skills.md"
+        },
+        "guidelines_status": "present",
+        "wave": 1,
+        "dependencies": []
+      },
+      "missing-base-bodies-audit": {
+        "roles": [
+          "dev",
+          "qa",
+          "e2e",
+          "architect-guard"
+        ],
+        "specialist": "dev-skills",
+        "change_type": "specification",
+        "guidelines": {
+          "dev": ".claude/rules/dev-skills.md"
+        },
+        "guidelines_status": "present",
+        "wave": 1,
+        "dependencies": []
+      },
+      "ux-base-body": {
+        "roles": [
+          "dev",
+          "qa",
+          "e2e",
+          "architect-guard"
+        ],
+        "specialist": "dev-skills",
+        "change_type": "agent",
+        "guidelines": {
+          "dev": ".claude/rules/dev-skills.md"
+        },
+        "guidelines_status": "present",
+        "wave": 1,
+        "dependencies": []
+      },
+      "analyst-base-body": {
+        "roles": [
+          "dev",
+          "qa",
+          "e2e",
+          "architect-guard"
+        ],
+        "specialist": "dev-skills",
+        "change_type": "agent",
+        "guidelines": {
+          "dev": ".claude/rules/dev-skills.md"
+        },
+        "guidelines_status": "present",
+        "wave": 1,
+        "dependencies": []
+      },
+      "researcher-base-body": {
+        "roles": [
+          "dev",
+          "qa",
+          "e2e",
+          "architect-guard"
+        ],
+        "specialist": "dev-skills",
+        "change_type": "agent",
+        "guidelines": {
+          "dev": ".claude/rules/dev-skills.md"
+        },
+        "guidelines_status": "present",
+        "wave": 1,
+        "dependencies": []
+      },
+      "agent-builder-skill": {
+        "roles": [
+          "dev",
+          "qa",
+          "e2e",
+          "architect-guard"
+        ],
+        "specialist": "dev-skills",
+        "change_type": "skill-instruction",
+        "guidelines": {
+          "dev": ".claude/rules/dev-skills.md"
+        },
+        "guidelines_status": "present",
+        "wave": 1,
+        "dependencies": []
+      },
+      "routing-table-schema-and-implementation": {
+        "roles": [
+          "dev",
+          "qa",
+          "e2e",
+          "architect-guard"
+        ],
+        "specialist": "dev-skills",
+        "change_type": [
+          "config-structure",
+          "skill-instruction"
+        ],
+        "guidelines": {
+          "dev": ".claude/rules/dev-skills.md"
+        },
+        "guidelines_status": "present",
+        "wave": 2,
+        "dependencies": [
+          "agent-builder-skill"
+        ]
+      }
+    },
     "stories": [
       "beads-dual-write-spike",
       "missing-base-bodies-audit",
@@ -35,20 +159,20 @@
       {
         "story_slug": "beads-dual-write-spike",
         "decision": "approved",
-        "approved_at": "2026-05-16T19:33:34Z",
-        "story_file_sha": "31eeb24755632eab91b38643a9f69f05e6773d7fe70388962d83de31f08851a2"
+        "approved_at": "2026-05-16T23:50:26Z",
+        "story_file_sha": "a97ce78ff7af1d558c56498a5ea694a2a9e7999eaeeda687da267898991a350a"
       },
       {
         "story_slug": "missing-base-bodies-audit",
         "decision": "approved",
-        "approved_at": "2026-05-16T19:38:10Z",
-        "story_file_sha": "f4c034a081147c8b2c40fff0c543d2b74863b31081bcebf5360f4fcf052562dc"
+        "approved_at": "2026-05-16T23:50:26Z",
+        "story_file_sha": "a643449fa6185fc70ac83b00d004336a3a87f4ca6c8103b0e3e5a33fede88c78"
       },
       {
         "story_slug": "ux-base-body",
         "decision": "approved",
-        "approved_at": "2026-05-16T19:48:39Z",
-        "story_file_sha": "4a54fe279eed4df3cc4361322a985021a2938e3f5380e9014b37b28841bd5d65"
+        "approved_at": "2026-05-16T23:51:05Z",
+        "story_file_sha": "36bf78b326144dfc4c53d12c92d8a72ceaa403c4af0a7c8a2684d0d49cd61090"
       },
       {
         "story_slug": "analyst-base-body",
@@ -65,8 +189,8 @@
       {
         "story_slug": "agent-builder-skill",
         "decision": "approved",
-        "approved_at": "2026-05-16T22:46:00Z",
-        "story_file_sha": "7966705d479a2de36e5ed52325ab5148882770b394dc1813017a930a3d506470"
+        "approved_at": "2026-05-16T23:50:26Z",
+        "story_file_sha": "f2e7aa3cee12a6daf86ccf0e72986c78bc1c365f48c5a2b5e8aca85e0b7206d1"
       },
       {
         "story_slug": "routing-table-schema-and-implementation",
@@ -74,8 +198,10 @@
         "approved_at": "2026-05-16T22:51:20Z",
         "story_file_sha": "f18f47a1666d82e01d803bbffef07fbbc56d1664f6613b8a140c71a7bc524d7d"
       }
-    ]
+    ],
+    "started": "2026-05-16"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
