@@ -41,6 +41,10 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 - Dev agents wait for lock rather than failing on contention
 - Parallel implementation work unaffected — only shared-file writes are serialized
 - Unit test demonstrates concurrent write safety
+- Sprint-planning detects co-touch collisions: stories in the planned sprint that modify the same shared file are flagged
+- When co-touch collisions are detected, sprint-planning surfaces a reconciliation warning listing the conflicting stories and the shared file(s)
+- The reconciliation warning is advisory — the developer can proceed with awareness; sprint activation is not blocked
+- The reconciliation warning appears before the sprint is activated (during sprint-planning review phase, not during dev)
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
