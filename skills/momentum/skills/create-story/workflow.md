@@ -33,13 +33,15 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <note>{{story_file}} is parsed from bmad-create-story's completion message. If it cannot be parsed (e.g., non-standard output format), derive it as `{{implementation_artifacts}}/{{story_key}}.md` and continue.</note>
   </step>
 
-  <step n="2" goal="Verify story file was written">
+  <step n="2" goal="Verify story file was written and relocate to .momentum/stories/">
     <action>Confirm {{story_file}} exists and is non-empty</action>
     <check if="bmad-create-story halted or story file missing">
       <action>Set {{reason}} = "story file was not produced by bmad-create-story"</action>
       <output>Story creation did not complete — {{reason}}. No further action taken.</output>
       <action>HALT</action>
     </check>
+    <action>If {{story_file}} is not already under `.momentum/stories/`, move it: set {{target}} = `.momentum/stories/{{story_key}}.md`, move the file to {{target}}, update {{story_file}} = {{target}}</action>
+    <note>Momentum stories live in `.momentum/stories/` regardless of what `implementation_artifacts` is set to in config. bmad-create-story writes to the config-derived path; we own the relocation.</note>
   </step>
 
   <step n="3" goal="Classify change types from story tasks">

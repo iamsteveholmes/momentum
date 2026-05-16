@@ -1,3 +1,18 @@
+---
+title: Spike — Beads Dual-Write Proof of Concept
+story_key: beads-dual-write-spike
+status: ready-for-dev
+epic_slug: sprint-dev-workflow
+story_type: spike
+depends_on: []
+touches:
+  - skills/momentum/skills/sprint-manager/workflow.md
+  - skills/momentum/skills/sprint-dev/workflow.md
+  - skills/momentum/skills/intake/workflow.md
+  - .claude/settings.json
+  - .momentum/beads-id-map.json
+---
+
 # Spike: Beads Dual-Write Proof of Concept
 
 Status: ready-for-dev
@@ -13,7 +28,7 @@ a full migration.
 ## Context / Decision Reference
 
 **Source decision:** DEC-028 — Beads as Tracker/Dependency/Memory Substrate — Adoption Under Momentum via Dual-Write Spike
-**Decision document:** `_bmad-output/planning-artifacts/decisions/dec-028-beads-tracker-memory-substrate-adoption-2026-05-16.md`
+**Decision document:** `momentum/decisions/dec-028-beads-tracker-memory-substrate-adoption-2026-05-16.md`
 
 This is a time-boxed spike (one sprint). The deliverable is a committed research artifact that
 evaluates all four gate criteria from DEC-028 and records the go/no-go recommendation. `index.json`
@@ -147,7 +162,7 @@ Evaluated against beads v1.0.4 (Dolt-powered). Older JSONL-backed versions of be
 
 ### References
 
-- [Source: _bmad-output/planning-artifacts/decisions/dec-028-beads-tracker-memory-substrate-adoption-2026-05-16.md]
+- [Source: momentum/decisions/dec-028-beads-tracker-memory-substrate-adoption-2026-05-16.md]
 - [Source: docs/research/beads-vs-momentum-tracker-evaluation-2026-05-16.md]
 - [Source: skills/momentum/skills/sprint-manager/workflow.md — Actions: status_transition, sprint_plan]
 - [Source: skills/momentum/skills/sprint-dev/workflow.md — Phase 1: Initialization (dependency graph construction)]
