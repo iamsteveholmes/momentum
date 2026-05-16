@@ -27,32 +27,54 @@ so that the same KB-synthesis logic powers both direct-invoke skills (frontend-d
 
 ## Description
 
-`momentum:constitution-builder` today writes its output (`## Permissions` + `## Standing Rules` + `## Quick Routing`) **into** an existing SKILL.md at a target path. That is one of three write contexts the system needs:
+Per **DEC-026 D4**, `momentum:constitution-builder` is reworked to generate **domain knowledge only**: project-specific embedded facts (stack, conventions, architectural patterns) and KB-sourced context (wiki lookups via DEC-018 wiki-query interface). It no longer generates Permissions, Standing Rules, or Quick Routing — those responsibilities move to `agent-builder-skill` (see story `agent-builder-skill`).
 
-1. **`in_place_skill`** (current behavior) — write the constitution sections into an existing `SKILL.md`. Used when the agent IS a skill invoked by name (e.g., the project-local `frontend-dev` SKILL.md we hand-rolled).
-2. **`composed_agent_file`** (new) — write a standalone agent file at `.claude/guidelines/agents/{role}-{domain}.md` whose body = the constitution sections + an imported base body from `skills/momentum/agents/{role}.md`. Used when the agent is spawned as a subagent by sprint-dev / retro / AVFL.
-3. **`standalone_constitution`** (new) — write the universal Tier 1 constitution at `.claude/guidelines/constitution.md` — universal trigger tables, wiki-query interface block, critical rules. Loaded as hot context for every spawned agent.
+The constitution's output is scoped to:
+- **Embedded facts** — stack identity, key conventions, architectural constraints that every agent in this project needs
+- **KB-sourced context** — wiki-query lookups that surface project-specific knowledge at agent spawn time
+- **Wiki-query interface block** (DEC-018) — shared infrastructure available to all agents; stays in constitution as a cross-cutting concern
 
-The workflow phases (Elicit → Permission Scoping → Standing Rules → KB Audit → Routing Generation → Review → Write) stay the same. Only the **write target and the final assembly step** differ. The synthesis work is shared across all three modes.
+**What moves out of constitution-builder:**
+- `## Quick Routing` — moves to `agent-builder-skill` (agent-specific routing per role × domain)
+- Agent-specific `## Permissions` — moves to `agent-builder-skill`
+- Agent-specific `## Standing Rules` — moves to `agent-builder-skill`
 
-**Pain context:** Without this parameterization, `build-guidelines-skill` would have to re-implement the KB-synthesis logic that already lives in `constitution-builder`. That's textbook duplication. Parameterization is the cheap fix.
+Cross-cutting permissions and standing rules that apply to every agent (e.g., "never commit secrets", "always use conventional commits") remain in the constitution.
+
+The `write_mode` parameter still governs where the output is written (`in_place_skill`, `composed_agent_file`, `standalone_constitution`), but the content written is now domain knowledge only rather than the full agent configuration.
+
+**Pain context:** Per DEC-026 D5, the canonical pipeline is constitution-builder (Tier 1, once) → agent-builder × N (Tier 2, per role × domain). Constitution-builder must be narrowed to domain knowledge so it stays stable and slow-changing; per-agent routing is fast-changing and belongs in agent-builder.
+
+> **Scope note:** Routing generation moves to `agent-builder-skill` (story: `agent-builder-skill`). That story must be activated before or alongside this one.
 
 ## Acceptance Criteria
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+_DRAFT — requires rewrite via create-story before this story is dev-ready. ACs below reflect DEC-026 D4 scope (domain knowledge only); prior ACs assuming Permissions + Standing Rules + Quick Routing generation have been superseded._
 
-Rough draft ACs captured from grooming conversation:
+Rough draft ACs (updated per DEC-026 D4, source: triage handoff 2026-05-16):
 
+**write_mode parameter**
 - `constitution-builder` accepts a `write_mode` argument with values: `in_place_skill`, `composed_agent_file`, `standalone_constitution`
-- `in_place_skill` mode preserves the current behavior — no regression
-- `composed_agent_file` mode produces a file at the specified path whose body includes:
-  - A `## Project Guidelines — {Stack} ({Date})` block with critical rules and reference-doc pointers
-  - The full unchanged base body content from `skills/momentum/agents/{role}.md`
-  - Proper frontmatter (`name`, `model`, `effort`, `tools`)
-- `standalone_constitution` mode produces a universal Tier 1 constitution including the wiki-query interface block (per `wiki-query-interface-block-for-hot-constitution` story)
 - The write target path is provided as an argument; the skill does not infer the path from the mode
-- The Elicit phase asks "where should this constitution be written?" only when the developer hasn't supplied the path
-- Workflow phases that are identical across all three modes (KB audit, routing generation) are not duplicated in the workflow.md
+- The Elicit phase asks "where should this constitution be written?" only when the developer has not supplied the path
+
+**Domain knowledge output (all modes)**
+- The constitution output contains an embedded facts section covering stack identity, key conventions, and architectural constraints for the project
+- The constitution output contains a KB-sourced context section populated via wiki-query lookups (DEC-018 interface) at generation time
+- The constitution output includes the wiki-query interface block (DEC-018) as shared infrastructure for all agents
+- The constitution output does NOT contain `## Quick Routing` — routing is not generated by constitution-builder
+- The constitution output does NOT contain agent-specific `## Permissions` sections — agent-specific permissions are not generated by constitution-builder
+- The constitution output does NOT contain agent-specific `## Standing Rules` — agent-specific standing rules are not generated by constitution-builder
+- Cross-cutting permissions and standing rules that apply to every agent in the project MAY appear in the constitution
+
+**write_mode behavior**
+- `in_place_skill` mode writes the domain knowledge sections into an existing `SKILL.md` at the specified path
+- `composed_agent_file` mode writes the domain knowledge sections into a standalone agent file at the specified path (agent-specific configuration is supplied by `agent-builder-skill`, not constitution-builder)
+- `standalone_constitution` mode writes the universal Tier 1 constitution at `.claude/guidelines/constitution.md`
+
+**Routing delegation**
+- The workflow contains no phase that generates routing tables or agent-specific routing entries — these have been removed
+- A note or comment in the workflow.md explicitly states that routing generation is handled by `agent-builder-skill`
 
 ## Tasks / Subtasks
 
@@ -66,9 +88,12 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 ### References
 
-- `momentum:constitution-builder` SKILL.md and workflow.md (current behavior)
-- `build-guidelines-skill` story (the primary consumer of new modes)
+- `momentum:constitution-builder` SKILL.md and workflow.md (current behavior to be narrowed)
+- `agent-builder-skill` story (receives routing + agent-specific permissions; must coordinate with this story)
+- `build-guidelines-skill` story (primary consumer of new write modes)
 - `wiki-query-interface-block-for-hot-constitution` (defines what `standalone_constitution` mode must include)
+- DEC-026 D4 — constitution-builder rework, domain knowledge only (authoritative scope source)
+- DEC-026 D5 — three-skill pipeline: constitution-builder → agent-builder × N → routing table
 - DEC-018 — wiki-query as Tier 3 cold KB interface
 - DEC-013 — universal agent model
 - DEC-001 — three-tier agent guidelines architecture
