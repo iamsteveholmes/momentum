@@ -40,7 +40,7 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 The following are rough draft ACs captured from conversation:
 - guidelines-verification-gate checks for composed files in .claude/guidelines/agents/ (not rules/ entries)
-- When composed files are absent, the gate fires and surfaces a prompt to run build-guidelines
+- When composed files are absent, the gate fires and surfaces a prompt to run build-agents
 - Specialist-assignment logic routes to the composed file path (.claude/guidelines/agents/{role}-{domain}.md)
 - Pre-shipped plugin agent files are NOT used as the specialist source during planning
 - Sprint-planning workflow.md documents the updated gate and assignment logic
