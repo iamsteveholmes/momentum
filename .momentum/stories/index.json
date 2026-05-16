@@ -4107,5 +4107,16 @@
     "priority": "medium",
     "story_type": "exploration",
     "feature_slug": "momentum-agent-spawn-orchestration"
+  },
+  "routing-table-schema-and-implementation": {
+    "status": "backlog",
+    "title": "routing-table-schema-and-implementation",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-agent-composition-pipeline"
   }
 }
