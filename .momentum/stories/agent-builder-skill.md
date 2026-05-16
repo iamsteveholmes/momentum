@@ -35,6 +35,8 @@ build-agents orchestrates both tiers; agent-builder is the composition unit — 
 
 **Pain context (DEC-026 D2/D3):** Constitution-builder previously carried composition responsibilities it should not own. Without agent-builder, build-agents has no clean delegation target, and composition logic lives ad hoc across multiple callers. The separation keeps the constitution stable and slow-changing while agent-specific routing changes as domains evolve.
 
+**Sprint scope note:** constitution-builder (Tier 1, DEC-026) is out of scope for this sprint. agent-builder accepts `constitution_excerpt` as a direct input parameter — the caller (or developer) provides the excerpt manually. constitution-builder (the skill that extracts and maintains that excerpt automatically) is a future story.
+
 ## Acceptance Criteria
 
 1. `/momentum:agent-builder` can be invoked with three required inputs: `base_body_path` (path to a plugin agent body file, e.g. `skills/momentum/agents/dev.md`), `constitution_excerpt` (relevant section of `momentum/architecture/constitution.md`), and `manifesto_inputs` (role × domain specifics: role name, domain slug, file patterns, write permissions scope).
