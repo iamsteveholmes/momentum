@@ -1,6 +1,81 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "beads-dual-write-spike",
+      "missing-base-bodies-audit",
+      "ux-base-body",
+      "analyst-base-body",
+      "researcher-base-body",
+      "agent-builder-skill",
+      "routing-table-schema-and-implementation"
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "beads-dual-write-spike",
+          "missing-base-bodies-audit",
+          "ux-base-body",
+          "analyst-base-body",
+          "researcher-base-body",
+          "agent-builder-skill"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "routing-table-schema-and-implementation"
+        ]
+      }
+    ],
+    "approvals": [
+      {
+        "story_slug": "beads-dual-write-spike",
+        "decision": "approved",
+        "approved_at": "2026-05-16T19:33:34Z",
+        "story_file_sha": "31eeb24755632eab91b38643a9f69f05e6773d7fe70388962d83de31f08851a2"
+      },
+      {
+        "story_slug": "missing-base-bodies-audit",
+        "decision": "approved",
+        "approved_at": "2026-05-16T19:38:10Z",
+        "story_file_sha": "f4c034a081147c8b2c40fff0c543d2b74863b31081bcebf5360f4fcf052562dc"
+      },
+      {
+        "story_slug": "ux-base-body",
+        "decision": "approved",
+        "approved_at": "2026-05-16T19:48:39Z",
+        "story_file_sha": "4a54fe279eed4df3cc4361322a985021a2938e3f5380e9014b37b28841bd5d65"
+      },
+      {
+        "story_slug": "analyst-base-body",
+        "decision": "approved",
+        "approved_at": "2026-05-16T22:09:57Z",
+        "story_file_sha": "396cc633b2ecfc74a352cf7e21f7c37f23a73f1497a0177bc4895f4f75832561"
+      },
+      {
+        "story_slug": "researcher-base-body",
+        "decision": "approved",
+        "approved_at": "2026-05-16T22:10:18Z",
+        "story_file_sha": "582bb79519933b25e42f3eb69dccc85b330749d75e6bee9e64e732425d82638a"
+      },
+      {
+        "story_slug": "agent-builder-skill",
+        "decision": "approved",
+        "approved_at": "2026-05-16T22:46:00Z",
+        "story_file_sha": "7966705d479a2de36e5ed52325ab5148882770b394dc1813017a930a3d506470"
+      },
+      {
+        "story_slug": "routing-table-schema-and-implementation",
+        "decision": "approved",
+        "approved_at": "2026-05-16T22:51:20Z",
+        "story_file_sha": "f18f47a1666d82e01d803bbffef07fbbc56d1664f6613b8a140c71a7bc524d7d"
+      }
+    ]
+  },
   "completed": [
     {
       "locked": true,
