@@ -4019,5 +4019,49 @@
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-agent-composition-pipeline"
+  },
+  "specialist-classify-multi-result": {
+    "status": "backlog",
+    "title": "specialist-classify-multi-result",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-agent-composition-pipeline"
+  },
+  "decision-skill-auto-creates-backlog-stubs": {
+    "status": "backlog",
+    "title": "decision-skill-auto-creates-backlog-stubs",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-assessment-decision-pipeline"
+  },
+  "researcher-base-body": {
+    "status": "backlog",
+    "title": "researcher-base-body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-agent-role-contracts"
+  },
+  "ux-base-body": {
+    "status": "backlog",
+    "title": "ux-base-body",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-agent-role-contracts"
   }
 }
