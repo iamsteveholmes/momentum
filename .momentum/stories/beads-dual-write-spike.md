@@ -4,6 +4,7 @@ story_key: beads-dual-write-spike
 status: ready-for-dev
 epic_slug: sprint-dev-workflow
 story_type: spike
+change_type: [skill-instruction, config-structure, rule-hook]
 depends_on: []
 touches:
   - skills/momentum/skills/sprint-manager/workflow.md

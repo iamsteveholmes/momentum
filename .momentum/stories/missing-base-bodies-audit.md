@@ -5,6 +5,7 @@ status: ready-for-dev
 epic_slug: agent-team-model
 feature_slug: momentum-composable-specialist-agents
 story_type: exploration
+change_type: specification
 depends_on: []
 touches:
   - skills/momentum/agents/
