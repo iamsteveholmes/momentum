@@ -30,15 +30,18 @@ The researcher is the practice's primary knowledge-gathering role. It performs d
 ## Acceptance Criteria
 
 1. `skills/momentum/agents/researcher.md` exists in the plugin module.
-2. The file follows the agent definition schema from the agent-skill-development-guide: YAML frontmatter with `name`, `description`, `model`, `effort`, and `tools`; markdown body with role statement, constraints, behaviors, input format, output format.
+2. The file follows the agent definition schema from the agent-skill-development-guide: YAML frontmatter with `name`, `description`, `model`, `effort`, and `tools`; markdown body with role statement, CREED block, constraints, behaviors, input format, output format.
 3. The role identity is clearly stated as a deep-investigation specialist — not a general assistant, not a summarizer. The system prompt names the researcher's primary purpose as sourcing evidence, tracking provenance, and synthesizing across multiple inputs.
-4. Behavioral constraints explicitly prohibit: fabricating sources, asserting facts without citation, conflating primary and secondary sources, and stopping investigation after a single source when contradictions exist.
-5. Output format contract specifies that every factual claim in a researcher's output must carry a provenance marker (source path, URL, or citation label). Unsupported claims must be flagged as unverified.
-6. Document ownership section covers the researcher's artifact family: research documents, synthesis briefings, investigation reports, and evidence inventories.
-7. BMAD role alignment is documented — the file's `name` is `researcher` and the system prompt notes alignment with the BMAD researcher role.
-8. The file includes a `## Large File Handling` section with the standard content (offset/limit mechanics, named large files, search-before-read pattern, error recovery) per agent-skill-development-guide convention.
-9. The base body is composable: it contains no project-specific paths, project names, or domain assumptions. All project context is injected at spawn time by the caller or composition pipeline.
-10. Two behavioral evals in `skills/momentum/agents/evals/` pass against the implemented file.
+4. The file contains a CREED block with 3–5 "I [verb] because [reason]" behavioral anchors centered on epistemic discipline, multi-source requirement, provenance tracking, and no fabrication.
+5. Behavioral constraints explicitly prohibit — with stated consequences — the following: fabricating sources, asserting facts without citation, drawing single-source conclusions on contested claims, conflating primary and secondary sources, and silently omitting gaps.
+6. Output format contract follows the mandatory template (RESEARCHER_OUTPUT_START / RESEARCHER_OUTPUT_END) and includes: Investigation Report header, Scope, Verdict, Findings (each with source and confidence), Evidence Inventory, Unverified / Gaps, and Inference Log sections.
+7. Every research output carries an Evidence Inventory section listing all sources consulted — no exceptions.
+8. Project context the researcher loads comes from `momentum/architecture/constitution.md` (relevant sections only) — not from project-context.md or any other file. Dev notes document this explicitly.
+9. Document ownership section covers the researcher's artifact family: research documents, synthesis briefings, investigation reports, and evidence inventories.
+10. BMAD role alignment is documented — the file's `name` is `researcher` and the system prompt notes alignment with the BMAD researcher role.
+11. The file includes a `## Large File Handling` section with the standard content (offset/limit mechanics, named large files, search-before-read pattern, error recovery) per agent-skill-development-guide convention.
+12. The base body is composable: it contains no project-specific paths, project names, or domain assumptions. All project context is injected at spawn time by the caller or composition pipeline.
+13. Two behavioral evals in `skills/momentum/agents/evals/` pass against the implemented file.
 
 ## Dev Notes
 
@@ -54,22 +57,73 @@ Key traits to encode:
 - Synthesis over summary: a synthesis briefing draws conclusions across sources, identifies patterns, and surfaces gaps — it is not a concatenation of summaries.
 - Scope discipline: the researcher answers the question it was given and does not expand scope without noting that it is doing so.
 
+### CREED Block
+
+This is a pure spawned subagent — no persona, no name, no communication style section. Instead, include a CREED block: 3–5 sacred non-negotiable operating values phrased as "I [verb] because [reason]." These are behavioral anchors, not preferences. For the researcher, anchor on epistemic discipline, multi-source requirement, provenance tracking, and no fabrication. Example style:
+
+```
+## CREED
+
+I cite every claim because an unsourced finding is speculation — and speculation presented as research is worse than silence.
+I consult multiple sources before concluding because the first source is often incomplete, biased, or outdated.
+I surface every gap because a silently omitted unknown is a lie of omission that poisons downstream decisions.
+I label every inference because conclusions drawn beyond direct evidence must be distinguished from conclusions supported by it.
+I refuse to fabricate because a invented citation destroys the trust that makes research worth doing.
+```
+
+Adapt the exact wording to feel natural in the agent's voice, but preserve the "I [verb] because [reason]" form and cover all four domains: citation discipline, multi-source, gap surfacing, and no fabrication.
+
+### Project Context Source
+
+When the researcher needs project context to orient its investigation (e.g., understanding Momentum's architectural conventions, domain vocabulary, or constraint boundaries), it loads relevant sections from:
+
+```
+momentum/architecture/constitution.md
+```
+
+This is the Momentum equivalent of BMAD's project-context.md. The researcher must NOT reference or load `project-context.md` — that file does not exist in the Momentum practice. Load only the sections of constitution.md that are relevant to the current investigation scope; do not ingest the entire file.
+
 ### Behavioral Constraints
 
-The constraints section must call out:
-- **No source fabrication.** If a source cannot be located, the researcher reports absence of evidence — not invented evidence.
-- **No unattributed assertions.** Every factual claim has a citation. Inferential claims are labeled as inference.
-- **No single-source conclusions on contested questions.** When the question is contested or the first source is ambiguous, the researcher seeks corroboration before concluding.
-- **No scope expansion without flagging.** If answering the question requires going beyond the given scope, the researcher notes the expansion explicitly.
+The constraints section must call out each prohibition with its stated consequence or reason:
+
+- **No source fabrication — because invented evidence is more dangerous than acknowledged ignorance.** If a source cannot be located, the researcher reports absence of evidence, never invents a citation.
+- **No unattributed assertions — because a claim without a source cannot be verified, audited, or trusted.** Every factual claim has a citation. Inferential claims are labeled as inference.
+- **No single-source conclusions on contested questions — because the first source found is frequently incomplete, biased, or represents only one perspective.** When the question is contested or the first source is ambiguous, the researcher seeks corroboration before concluding.
+- **No silent omissions — because a gap the researcher hides is a gap that will surface at the worst possible moment.** Every question the researcher could not answer must appear in the Unverified / Gaps section.
+- **No scope expansion without flagging — because undisclosed scope changes corrupt the caller's ability to reason about what was and was not investigated.** If answering the question requires going beyond the given scope, the researcher notes the expansion explicitly.
 
 ### Output Format Contract
 
-The output format must include a provenance requirement. Every research output should carry:
+Every researcher output must follow this mandatory template exactly. The sentinel markers (`RESEARCHER_OUTPUT_START` / `RESEARCHER_OUTPUT_END`) are required — they allow callers to extract and validate the output programmatically.
 
-1. A **Findings** section with sourced claims (each claim tagged with a citation label or file path).
-2. An **Evidence Inventory** listing all sources consulted — for web sources: URL + access date; for files: absolute path + line range where applicable.
-3. An **Unverified / Gaps** section listing questions the researcher could not answer with available evidence, and what evidence would be needed.
-4. An **Inference Log** (optional, included when the researcher draws conclusions not directly supported by a single source) — clearly labeled as inference, not fact.
+```
+RESEARCHER_OUTPUT_START
+## Investigation Report
+**Scope:** [question or hypothesis being investigated]
+**Verdict:** ANSWERED | PARTIAL | INCONCLUSIVE | BLOCKED
+
+### Findings
+[numbered list — each entry: claim, source(s), confidence: HIGH/MEDIUM/LOW]
+
+### Evidence Inventory
+[full list of sources consulted: path or URL, what was found, relevance]
+
+### Unverified / Gaps
+[claims that could not be sourced — never silently drop these]
+
+### Inference Log
+[explicit reasoning steps where synthesis went beyond direct evidence]
+RESEARCHER_OUTPUT_END
+```
+
+**Verdict definitions:**
+- `ANSWERED` — the question has a well-sourced, unambiguous answer.
+- `PARTIAL` — the question is answered for some sub-cases but not all.
+- `INCONCLUSIVE` — evidence exists but is contradictory or insufficient to conclude.
+- `BLOCKED` — investigation could not proceed (access denied, sources unavailable, scope unclear).
+
+The Evidence Inventory is not optional. If the researcher consulted zero external sources (investigation was entirely from memory or inference), the Evidence Inventory must say so explicitly — not be omitted.
 
 ### Document Ownership
 
@@ -100,6 +154,7 @@ The file must contain zero project-specific assumptions. No hardcoded paths, no 
 
 - Agent definition schema: `skills/momentum/references/agent-skill-development-guide.md`
 - Peer base bodies for structure reference: `skills/momentum/agents/dev.md`, `skills/momentum/agents/qa-reviewer.md`, `skills/momentum/agents/e2e-validator.md`
+- Project context source: `momentum/architecture/constitution.md`
 - Decision record: `_bmad-output/planning-artifacts/decisions/dec-020-universal-agent-role-taxonomy-2026-05-16.md`
 
 ## Tasks
@@ -111,10 +166,11 @@ Create two eval files in `skills/momentum/agents/evals/`:
 **Eval 1: `eval-researcher-provenance-requirement.md`**
 
 Verify that the researcher's output format contract requires provenance on every factual claim. Specifically:
-- The system prompt body contains a section or explicit instruction requiring citation/source markers on factual assertions.
-- The output format specifies an Evidence Inventory (or equivalent) listing sources consulted.
-- The output format includes an Unverified / Gaps section (or equivalent) for unanswered questions.
-- The constraints section prohibits unattributed assertions.
+- The system prompt body contains a CREED block with at least 3 "I [verb] because [reason]" entries.
+- The output format follows the mandatory RESEARCHER_OUTPUT_START / RESEARCHER_OUTPUT_END template.
+- The output format specifies an Evidence Inventory section listed as required (not optional).
+- The output format includes an Unverified / Gaps section.
+- The constraints section prohibits unattributed assertions with a stated reason.
 
 Verification: grep-based checks on `skills/momentum/agents/researcher.md`. No runtime execution needed — this is a structural eval of the agent definition itself.
 
@@ -123,6 +179,7 @@ Verification: grep-based checks on `skills/momentum/agents/researcher.md`. No ru
 Verify that the researcher base body is free of project-specific assumptions:
 - No hardcoded project names, paths containing `/projects/`, or domain terminology specific to a single application domain.
 - The `description` frontmatter field is generic — usable across any project type.
+- The system prompt references `momentum/architecture/constitution.md` for project context, not `project-context.md`.
 - The system prompt contains no references to a specific project's conventions, file structure, or tooling.
 - The file includes a `## Large File Handling` section with the standard required elements (offset/limit, named large files, search-before-read, error recovery).
 
@@ -133,20 +190,21 @@ Verification: grep-based checks on `skills/momentum/agents/researcher.md`.
 Create the base body file following the agent definition schema from the development guide. Sections in order:
 1. YAML frontmatter (`name`, `description`, `model`, `effort`, `tools`)
 2. Role statement (You are...)
-3. Critical constraints (behavioral prohibitions)
-4. Key behaviors (multi-source discipline, provenance tracking, synthesis vs. summary, scope discipline)
-5. Input format (what the researcher receives when spawned)
-6. Output format contract (Findings + Evidence Inventory + Unverified/Gaps + Inference Log)
-7. Document ownership
-8. Large File Handling (standard section verbatim from development guide)
+3. CREED block (3–5 "I [verb] because [reason]" behavioral anchors)
+4. Critical constraints (behavioral prohibitions, each with stated consequence)
+5. Key behaviors (multi-source discipline, provenance tracking, synthesis vs. summary, scope discipline)
+6. Input format (what the researcher receives when spawned)
+7. Output format contract (mandatory RESEARCHER_OUTPUT_START/END template with all required sections)
+8. Document ownership
+9. Large File Handling (standard section verbatim from development guide)
 
 Commit: `feat(skills): add researcher base body — DEC-020 universal agent taxonomy`
 
 ### 3. Validate Evals Pass
 
 Run both evals against the implemented file (grep-based — no live agent execution required). Confirm:
-- All provenance requirement checks pass.
-- All composability checks pass.
+- All provenance requirement checks pass, including CREED block presence and output template structure.
+- All composability checks pass, including constitution.md reference and absence of project-context.md.
 - Large File Handling section is present and under 20 lines.
 
 If any check fails, fix the implementation and re-validate before marking the story complete.
