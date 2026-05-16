@@ -4063,5 +4063,49 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-agent-role-contracts"
+  },
+  "change-type-routing-in-sprint-dev": {
+    "status": "backlog",
+    "title": "change-type-routing-in-sprint-dev",
+    "epic_slug": "sprint-dev-workflow",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-sprint-orchestration"
+  },
+  "audit-skills-for-teamcreate-misuse": {
+    "status": "backlog",
+    "title": "audit-skills-for-teamcreate-misuse",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-agent-spawn-orchestration"
+  },
+  "bulk-approve-ux-split-prompt": {
+    "status": "backlog",
+    "title": "bulk-approve-ux-split-prompt",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-backlog-refinement"
+  },
+  "investigate-zero-turn-dev-fixer-anomaly": {
+    "status": "backlog",
+    "title": "investigate-zero-turn-dev-fixer-anomaly",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "exploration",
+    "feature_slug": "momentum-agent-spawn-orchestration"
   }
 }
