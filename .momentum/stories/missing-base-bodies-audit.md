@@ -1,88 +1,114 @@
 ---
-title: Missing Base Bodies Audit — Verify Universal Agent Model Coverage Post-DEC-013
+title: Missing Base Bodies Audit — Verify DEC-020 Universal Agent Role Coverage
 story_key: missing-base-bodies-audit
-status: backlog
+status: ready-for-dev
 epic_slug: agent-team-model
 feature_slug: momentum-composable-specialist-agents
 story_type: exploration
 depends_on: []
-touches: []
+touches:
+  - skills/momentum/agents/
+  - .momentum/stories/
 ---
 
-# Missing Base Bodies Audit — Verify Universal Agent Model Coverage Post-DEC-013
-
-<!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
-     stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
-     by create-story before any development begins. -->
-
-_This story is a backlog stub. Run `momentum:create-story` on it when ready to make it
-dev-ready. Do NOT assign to a developer until create-story has enriched it._
+# Missing Base Bodies Audit — Verify DEC-020 Universal Agent Role Coverage
 
 ## Story
 
 As a developer,
-I want a one-time audit that enumerates every agent role spawned across all Momentum skills and confirms each has an agent definition file in the plugin,
-so that I can verify DEC-013 universal agent model compliance with zero untracked gaps.
+I want a one-time audit that confirms all 9 DEC-020 base body roles either have a file in `skills/momentum/agents/` or have a tracked story with a known slug,
+so that I can verify universal agent model compliance with zero untracked gaps.
 
 ## Description
 
-Run a systematic audit of all Momentum workflow.md files to enumerate every named agent role spawn point. Cross-reference against the agents/ directory to identify missing definition files. Produce a gap report. This story closes when all gaps are either resolved (definition file exists) or tracked as open stories with known slugs. This is an exploration/audit story — it produces a report, not a file. It can be run before or after `agents-md-manifest-format` ships, but benefits from that story's machine-parseable manifest if available.
+DEC-020 (2026-05-16) established nine canonical base body roles: architect, pm, ux, analyst, researcher, dev, sm, qa, e2e. This audit cross-references those nine roles against (a) files that exist in `skills/momentum/agents/` and (b) open stories in `.momentum/stories/`. It produces a gap report and closes when the gap count of untracked roles reaches zero.
 
-**Pain context:** DEC-013 mandates universal agent definition coverage but was adopted 2026-05-02, mid-sprint, after the last grooming pass. The grooming pass on 2026-05-02/2026-05-03 identified the known gaps and created stories for them. This audit confirms no gaps were missed and closes the loop — it's the verification step after all the agent-definition stories have been implemented.
+This is a verification story, not an implementation story. It produces a gap report (written inline in the Dev Agent Record), not a new file. The audit can be completed without running any builds — it is a read-and-compare operation.
+
+**Pre-run findings (as of 2026-05-16):**
+
+Files in `skills/momentum/agents/` (excluding `evals/`):
+
+| File | Role |
+|---|---|
+| dev.md | dev |
+| dev-build.md | dev (specialization) |
+| dev-frontend.md | dev (specialization) |
+| dev-skills.md | dev (specialization) |
+| e2e-validator.md | e2e |
+| qa-reviewer.md | qa |
+
+Roles with no file:
+
+| Role | Tracked Story | Status |
+|---|---|---|
+| architect | architect-base-body | backlog |
+| pm | pm-base-body | backlog |
+| sm | sm-base-body | backlog |
+| ux | ux-base-body | backlog |
+| analyst | analyst-base-body | backlog |
+| researcher | researcher-base-body | backlog |
+
+All 6 missing roles have tracked backlog stories. Untracked gap count: **0**.
+
+The roles closed by DEC-020 (code-reviewer, architect-guard, documenter, dev-fixer) have no files and no open stories, which is correct — they were explicitly closed by DEC-020 D2–D4.
 
 ## Acceptance Criteria
 
-<!-- DRAFT: These are rough acceptance criteria captured from conversation. They have NOT
-     been refined, validated against architecture, or verified for completeness. This
-     section MUST be fully rewritten by create-story before development. -->
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-The following are rough draft ACs captured from conversation:
-- Every workflow.md in skills/momentum/skills/ has been read and all named spawn roles enumerated
-- Each role is cross-referenced against skills/momentum/agents/
-- A gap report is produced listing covered vs. missing roles
-- All missing roles are either: (a) now covered (file exists), or (b) tracked as a backlog story
-- The audit story closes once the gap count reaches zero untracked gaps
-
-> Note: The ACs above are rough captures from conversation. They are starting points
-> only. Create-story will replace them with validated, testable acceptance criteria.
+1. The dev agent reads `skills/momentum/agents/` and enumerates all `.md` files present (excluding `evals/`).
+2. The dev agent reads all 9 required roles from DEC-020 (architect, pm, ux, analyst, researcher, dev, sm, qa, e2e) and compares against the files found.
+3. For each role with no file, the dev agent confirms a tracked story exists in `.momentum/stories/index.json`.
+4. The gap report is written to the Dev Agent Record below, listing covered roles, missing roles, and their story slug (or flagging any untracked gaps).
+5. The story closes with a confirmed untracked gap count of 0. If any untracked gap is found, the dev agent creates an intake stub before closing.
 
 ## Tasks / Subtasks
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-- [ ] Tasks not yet defined — run create-story to analyze and plan implementation
+- [ ] Read `skills/momentum/agents/` — enumerate all `.md` files excluding `evals/`
+- [ ] Compare against the 9 DEC-020 required roles and produce a covered/missing table
+- [ ] For each missing role, confirm a tracked story exists in `.momentum/stories/index.json`; flag any without a story
+- [ ] Write the gap report to the Dev Agent Record
+- [ ] If untracked gaps exist, call `momentum:intake` to stub a story before closing
 
 ## Dev Notes
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+### Audit Methodology
 
-No technical analysis has been performed. The following sub-sections are all stubs.
+1. `ls skills/momentum/agents/*.md` — collect present files
+2. Map filenames to canonical role names using this table:
+
+   | Filename prefix | Canonical role |
+   |---|---|
+   | dev.md, dev-*.md | dev |
+   | e2e-*.md | e2e |
+   | qa-*.md | qa |
+   | architect*.md | architect |
+   | pm*.md | pm |
+   | sm*.md | sm |
+   | ux*.md | ux |
+   | analyst*.md | analyst |
+   | researcher*.md | researcher |
+
+3. Compare against the 9 canonical roles from DEC-020.
+4. For each missing role, `grep <story_key> .momentum/stories/index.json` to confirm tracked.
 
 ### Architecture Compliance
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+DEC-020 is the authoritative source of truth for the 9 required roles. Do not consult DEC-013 or DEC-016 directly — DEC-020 supersedes the taxonomy portions of those decisions.
+
+The four closed roles (code-reviewer, architect-guard, documenter/retro-synthesizer, dev-fixer) should have no files and no open stories. If files exist for these roles, flag them as cleanup candidates — do not delete them in this story.
 
 ### Testing Requirements
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-### Implementation Guide
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-### Project Structure Notes
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+This is a read-only audit story. No tests required. The gap report in the Dev Agent Record is the deliverable.
 
 ### References
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+- DEC-020: `_bmad-output/planning-artifacts/decisions/dec-020-universal-agent-role-taxonomy-2026-05-16.md`
+- Agents directory: `skills/momentum/agents/`
+- Stories index: `.momentum/stories/index.json`
+- Handoff with prior findings: `.momentum/handoffs/agent-architecture-triage-2026-05-16.md`
 
 ## Dev Agent Record
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
 
 ### Agent Model Used
 
@@ -90,4 +116,10 @@ _DRAFT — this section is populated by the dev agent after create-story enrichm
 
 ### Completion Notes List
 
+### Gap Report
+
+_Populated by dev agent during execution._
+
 ### File List
+
+_No files created or modified by this story — read-only audit._
