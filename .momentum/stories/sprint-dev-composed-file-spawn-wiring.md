@@ -5,7 +5,7 @@ status: backlog
 epic_slug: agent-team-model
 feature_slug: momentum-composable-specialist-agents
 story_type: feature
-depends_on: []
+depends_on: [routing-table-schema-and-implementation]
 touches: []
 ---
 
@@ -38,12 +38,12 @@ Update sprint-dev Phase 2 to spawn subagents from .claude/guidelines/agents/{rol
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-The following are rough draft ACs captured from conversation:
-- sprint-dev Phase 2 resolves subagent bodies from .claude/guidelines/agents/{role}-{domain}.md
-- When a composed file exists, it is used as the subagent body for that role+domain
-- When a composed file is absent, fallback behavior is documented and implemented (e.g., fall back to plugin base body or warn and skip)
-- The fallback behavior is logged/surfaced so the developer knows composition is incomplete
-- sprint-dev workflow.md documents the gen-2 spawn path and fallback
+The following are rough draft ACs captured from conversation and updated per DEC-023 / DEC-027 D3:
+- sprint-dev resolves agent path via routing table (momentum/agents.json) for each story — no hardcoded agent paths
+- sprint-dev reads change_type and applies routing rules: skill/agent → skill-creator subagent, rule/hook → direct edit, docs → writer agent, feature/bug → unchanged (normal path)
+- When an agent entry is absent from the routing table, fallback behavior is documented and implemented (e.g., warn and skip or fall back to plugin base body)
+- The fallback behavior is logged/surfaced so the developer knows routing is incomplete
+- sprint-dev workflow.md documents the routing-table spawn path, change_type dispatch rules, and fallback
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
