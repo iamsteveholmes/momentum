@@ -12,9 +12,11 @@ Builds the hot constitution for KB-backed agent skills — three always-loaded s
 ## Architecture
 
 Three tiers:
-- **Cold KB** — full wiki vault (vault path from `~/.obsidian-wiki/config`). Not in context. Everything.
-- **Hot Constitution** — `## Permissions` + `## Standing Rules` + `## Quick Routing` in SKILL.md. Always loaded.
-- **Hot Selective** — wiki pages pulled into context when a symptom fires.
+- **Tier 1 — Hot Constitution** — `## Permissions` + `## Standing Rules` + `## Quick Routing` in SKILL.md. Project-wide, shared by every agent, always loaded.
+- **Tier 2 — Composed Agent File** — per-agent system prompt assembled from `base_body` + constitution + manifesto. Built at agent-spawn time.
+- **Tier 3 — Cold KB** — full wiki vault (vault path from `~/.obsidian-wiki/config`). Not in context. Accessed on-demand via `wiki-query`.
+
+The **runtime retrieval pattern** — symptom fires → `wiki-query` pull-in from Tier 3 — is a usage pattern, not a tier.
 
 **Three distinct jobs:**
 
