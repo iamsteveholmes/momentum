@@ -4120,5 +4120,21 @@
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-agent-composition-pipeline"
+  },
+  "beads-dual-write-spike": {
+    "status": "ready-for-dev",
+    "title": "Spike: Beads Dual-Write Proof of Concept",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/sprint-manager/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/intake/workflow.md",
+      ".claude/settings.json",
+      ".beads/PRIME.md",
+      ".momentum/beads-id-map.json"
+    ],
+    "source": "DEC-028"
   }
 }
