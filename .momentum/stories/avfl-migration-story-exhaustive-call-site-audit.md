@@ -40,10 +40,12 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 The following are rough draft ACs captured from conversation:
 
-- When AVFL generates a finding for a migration-type story (rename/move/delete of a symbol), the finding template includes an explicit checklist item: "Grep all production source trees for references to `<symbol>` and enumerate every call site."
+- When AVFL generates a finding for a migration-type story (rename/move/delete of a symbol), the finding template includes an explicit checklist item: "Grep all production source trees and all file types for references to `<symbol>` and enumerate every call site."
 - The call-site checklist item must be satisfied (checked) before the finding can be marked resolved/complete.
 - The audit covers all production source trees (e.g., androidMain, commonMain, iosMain) — not just the primary source set.
-- framework.json updated to encode the call-site audit requirement for migration finding types.
+- **Zero-residual verification (sprint-2026-04-27 retro):** Any claim of "all N consumers updated" must be backed by a grep (or equivalent exhaustive search) that returns zero matches for the old pattern. The verification must include: (1) the exact grep command used, (2) output showing zero matches (or explicit confirmation of empty result), and (3) both the command and output included in the PR description. An AC cannot be marked complete on the basis of a count claim alone — the zero-result proof is required.
+- **Pre-proceed gate (sprint-2026-04-08 retro, subtractive-story-consumer-audit):** Audit results (enumerated call sites and zero-result verification) must be documented and visible before the dev agent proceeds with any removal, rename, or replacement step. The dev agent must not proceed if any residual reference is found.
+- framework.json updated to encode the call-site audit requirement and zero-result verification gate for migration finding types.
 - SKILL.md updated (if needed) to document the new template requirement for auditors.
 
 > Note: The ACs above are rough captures from conversation. They are starting points
