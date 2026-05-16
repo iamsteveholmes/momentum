@@ -9,9 +9,12 @@
     "system_context": "The project-knowledge layer. Pairs with agent-role-contracts (the role contracts that get conditioned) and practice-knowledge-base (the wiki KB that wiki-query reads). Without this pipeline, every spawned subagent operates with generic role-contract knowledge only \u2014 wrong stack, wrong testing framework, wrong architecture decisions.",
     "status": "partial",
     "stories": [
-      "build-guidelines-skill",
       "agent-guidelines-skill",
-      "build-guidelines-invocation-surface-in-sprint-planning",
+      "agent-builder-skill",
+      "routing-table-schema-and-implementation",
+      "specialist-classify-multi-result",
+      "momentum-directory-migration",
+      "build-agents-invocation-surface-in-sprint-planning",
       "specialist-classify-update-for-gen-2-paths",
       "constitutionmd-generation-acceptance-criteria",
       "constitution-builder-write-mode-parameterization",
@@ -26,7 +29,7 @@
     "last_verified": "2026-05-14",
     "notes": "Split out from momentum-composable-specialist-agents on 2026-05-14. Renamed from momentum-agent-constitution-integration after architecture clarification: composition formula is agent = base_body + constitution + manifesto, where constitution is project-wide (one) and manifesto is per role \u00d7 domain (many). Three intake-queue stubs (iq-20260514-*) await create-story promotion before joining this feature's stories list.",
     "stories_done": 1,
-    "stories_remaining": 12
+    "stories_remaining": 15
   },
   "momentum-assessment-decision-pipeline": {
     "feature_slug": "momentum-assessment-decision-pipeline",
@@ -193,10 +196,12 @@
       "sprint-scope-tracking",
       "team-review-with-teamcreate",
       "agent-collaboration-pattern-evaluation",
-      "create-story-fixture-change-type-classification"
+      "create-story-fixture-change-type-classification",
+      "change-type-routing-in-sprint-dev",
+      "skill-agent-story-spec-mig-template"
     ],
     "stories_done": 2,
-    "stories_remaining": 5,
+    "stories_remaining": 7,
     "last_verified": "2026-05-03",
     "notes": "Core orchestration working. Agent team composition, scope tracking, and team-review improvements in backlog. team-review-with-teamcreate, agent-collaboration-pattern-evaluation, and create-story-fixture-change-type-classification reassigned here from momentum-composable-specialist-agents (grooming 2026-05-02) \u2014 these are orchestration/spawn patterns and quality fixtures, not composable agent architecture."
   },
@@ -389,14 +394,13 @@
       "dev-agent-definition-files",
       "architecture-guard-implementation",
       "adversary-agent-definition",
-      "architect-guard-agent-definition",
       "auditor-execution-agent-definition",
       "auditor-human-agent-definition",
       "auditor-review-agent-definition",
-      "code-reviewer-agent-definition",
-      "dev-fixer-agent-definition",
-      "documenter-agent-definition",
       "enumerator-agent-definition",
+      "ux-base-body",
+      "analyst-base-body",
+      "researcher-base-body",
       "retro-auditor-agent-definition",
       "validator-agent-definition",
       "architect-base-body",
@@ -410,7 +414,7 @@
     "last_verified": "2026-05-14",
     "notes": "Split out from momentum-composable-specialist-agents on 2026-05-14. Several agent-definition stories may be culled in epic-grooming (AVFL roles superseded by sub-skills; dev-fixer may unify with dev).",
     "stories_done": 2,
-    "stories_remaining": 18
+    "stories_remaining": 17
   },
   "momentum-agent-spawn-orchestration": {
     "feature_slug": "momentum-agent-spawn-orchestration",
