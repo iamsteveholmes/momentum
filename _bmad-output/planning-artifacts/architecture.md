@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-05-03'
+lastEdited: '2026-05-16'
 editHistory:
+  - date: '2026-05-16'
+    changes: 'Sprint-2026-05-16 spec impact (DEC-023, DEC-026, DEC-028): Added momentum/agents.json to plugin root layout table (defaults block + project block, agent-builder sole writer). Added .momentum/beads-id-map.json (git-tracked slug→bead hash map) and .beads/ (gitignored Dolt DB) to Installed Structure tree. Added three rows to Read/Write Authority table: momentum/agents.json (sole writer: agent-builder), momentum-tools agent-resolve (pure resolver, no writes), agents/ux.md + analyst.md + researcher.md (structured output only). Added ux.md, analyst.md, researcher.md to agents/ directory listing in Repository Structure (preview + full) and Decision 35 plugin structure. Added base body conventions note to Decision 35: CREED block (3-5 I-verb-because anchors), constitution.md as project context source, mandatory output templates with AGENT_OUTPUT_START/END sentinel markers, prohibitions with consequence clauses. Added routing-table-driven specialist resolution note to Sprint Execution Flow Phase 2 (momentum-tools agent-resolve --role dev --touches). Added routing-table-driven reviewer resolution note to Sprint Execution Flow Phase 5 (momentum-tools agent-resolve --role qa-reviewer/e2e-validator). Added Decision 55 (DEC-023: Agent Routing Table — agents.json schema, defaults 9 roles + project block, glob-match resolution algorithm, 1..N fan-out, write_permissions enforcement). Added Decision 56 (DEC-026 D3/D5: Agent Builder Three-Skill Pipeline — constitution-builder Tier 1 once, agent-builder Tier 2 per role×domain, build-agents orchestrates, constitution.md as context source, agent-builder writes .claude/guidelines/agents/{role}-{domain}.md + routing entry). Added Decision 57 (DEC-028: Beads Dual-Write Spike — index.json authoritative, sprint-manager mirrors to beads best-effort, bd ready --json --claim as Phase 1 dependency source, bd prime --no-git-ops via SessionStart hook, .beads/ gitignored, .momentum/beads-id-map.json git-tracked, four gate criteria).'
   - date: '2026-05-03'
     changes: 'Canvas skill spec impact (sprint-2026-05-03): Added momentum:canvas to Skills Deployment Classification table (flat skill, invoker with SKILL.md + workflow.md + server.tsx; supersedes momentum:feature-status per DEC-019). Added canvas/ directory to Repository Structure tree (both preview and full). Deprecated momentum:feature-status in Skills Deployment Classification table, Read/Write Authority table, and all Integration Points mentioning feature-status (deprecated — use momentum:canvas per DEC-019). Added canvas server read authority row to Read/Write Authority table (reads: features.json, stories/index.json, sprints/index.json, stories/{slug}.md; no writes). Extended Decision 44 features.json schema: added note to stories field (also story_slugs alias), added depends_on field (feature-to-feature dependency list, optional). Added Decision 53 (DEC-017: Canonical Momentum Cycle Step Sequence — triage → intake → feature-grooming → epic-grooming → refine → sprint-planning → sprint-dev → retro; 7-node canvas timeline; required/optional phase classification; cycle boundary rule). Added Decision 54 (DEC-019: Hono+HTMX+Bun Canvas Runtime Stack — single-file server.tsx, port 3456, bun --hot; HTMX navigation protocol for lens/L2/L3 routes; dark/light polarity model with 140ms CSS cross-fade; supersedes DEC-011 D2 Vite approach).'
   - date: '2026-04-30'
@@ -350,7 +352,10 @@ momentum/                              ← Plugin root
 │   ├── dev.md                        ← Base dev agent for sprint-dev spawning
 │   ├── dev-skills.md                ← Specialist: SKILL.md, workflow.md, agent definitions
 │   ├── dev-build.md                 ← Specialist: Gradle and build system work
-│   └── dev-frontend.md              ← Specialist: Kotlin Compose and frontend UI work
+│   ├── dev-frontend.md              ← Specialist: Kotlin Compose and frontend UI work
+│   ├── ux.md                         ← Specialist: UX design and UI specification work
+│   ├── analyst.md                    ← Specialist: business analysis and requirements work
+│   └── researcher.md                 ← Specialist: technical research and discovery work
 ├── hooks/
 │   └── hooks.json                    ← Always-on hooks (Tier 1 enforcement)
 ├── scripts/
@@ -393,7 +398,7 @@ The `name` field determines the namespace prefix for all skills. With `"name": "
 
 **Plugin root layout:**
 
-| Directory | Purpose | Delivered by |
+| Directory / File | Purpose | Delivered by |
 |---|---|---|
 | `.claude-plugin/` | Plugin manifest | Plugin install |
 | `skills/` | All SKILL.md files (flat + context:fork) | Plugin install |
@@ -401,6 +406,7 @@ The `name` field determines the namespace prefix for all skills. With `"name": "
 | `scripts/` | CLI tools (`momentum-tools.py`) | Plugin install |
 | `references/` | Rules, practice docs, version manifest | Plugin install |
 | `agents/` | Custom agent definitions for teams | Plugin install |
+| `momentum/agents.json` | Agent routing table — `defaults` block (9 roles, plugin-shipped) + `project` block (per-role×domain entries, written by agent-builder) | Plugin ships defaults; agent-builder writes project entries |
 | `mcp/` | Custom MCP server source (Epic 6) | Plugin install |
 
 Hooks in `hooks/hooks.json` are active immediately after plugin install — no Impetus invocation required. Rules in `references/rules/` require Impetus to write them to `~/.claude/rules/` and `.claude/rules/` because the plugin cannot write outside its own directory.
@@ -1224,7 +1230,10 @@ momentum/                                    ← Plugin root
 │   ├── dev.md                               ← Base dev agent for sprint-dev spawning
 │   ├── dev-skills.md                        ← Specialist: SKILL.md, workflow.md, agent definitions
 │   ├── dev-build.md                         ← Specialist: Gradle and build system work
-│   └── dev-frontend.md                      ← Specialist: Kotlin Compose and frontend UI work
+│   ├── dev-frontend.md                      ← Specialist: Kotlin Compose and frontend UI work
+│   ├── ux.md                                ← Specialist: UX design and UI specification work
+│   ├── analyst.md                           ← Specialist: business analysis and requirements work
+│   └── researcher.md                        ← Specialist: technical research and discovery work
 │
 ├── hooks/
 │   └── hooks.json                           ← Always-on hooks (Tier 1 enforcement; delivered by plugin)
@@ -1313,7 +1322,11 @@ momentum/                                    ← Plugin root
     │   ├── index.json                          ← Story status index
     │   └── {slug}.md                           ← Story files (written by momentum:create-story)
     ├── signals/                                ← Read-only signal ledger (see `.momentum/` State Layout section)
-    └── intake-queue.jsonl                      ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes via momentum-tools intake-queue)
+    ├── intake-queue.jsonl                      ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes via momentum-tools intake-queue)
+    └── beads-id-map.json                       ← Git-tracked slug → bead hash ID map (DEC-028 — maintained by sprint-manager dual-write; maps story_slug to Beads bead ID)
+
+[project-root]/
+└── .beads/                                     ← Gitignored Dolt DB (DEC-028 — Beads tracker local store; never committed)
 ```
 
 > _Planning artifacts (PRD, architecture, features.json, decisions, assessments) intentionally remain under `_bmad-output/planning-artifacts/` — they are spec/source, not operational state. See `.momentum/` State Layout section for the carve-out rationale._
@@ -1352,6 +1365,9 @@ momentum/                                    ← Plugin root
 | Hooks (Stop) | `session-modified-files.txt`, git status | `gate-findings.txt` (overwrite); deletes `session-modified-files.txt` after gate runs |
 | ATDD workflow | Gherkin spec | `tests/acceptance/` only |
 | Coding agents (dev-story) | Specs, rules, existing code | Source code, unit tests |
+| `momentum/agents.json` | Read by all skills at spawn time (routing resolution) | Sole writers: agent-builder (writes `project` array entries per role×domain); plugin ships `defaults` block — agent-builder never overwrites defaults |
+| `momentum-tools agent-resolve` | `momentum/agents.json` (reads `defaults` + `project` blocks, glob-matches paths against `project` entries, falls back to `defaults.dev`) | _(none — pure resolver, no writes)_ |
+| `agents/ux.md`, `agents/analyst.md`, `agents/researcher.md` | Spawned by skills during specialized phases; read story files, research inputs, planning artifacts | Structured findings output only; no direct file writes |
 
 **Protection boundaries (PreToolUse blocks writes to — sourced from `references/protected-paths.json`):**
 - `tests/acceptance/` — acceptance test immutability
@@ -1816,6 +1832,7 @@ sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked 
 **Phase 2: Team Spawn**
 - Identify unblocked stories
 - Transition each to `in-progress` via `momentum-tools sprint status-transition`
+- **Specialist agent resolution (sprint-2026-05-16):** For each unblocked story, resolve the specialist agent via `momentum-tools agent-resolve --role dev --touches {story.touches}`. Resolution is routing-table-driven (Decision 55 / DEC-023): glob-match the story's `touches` paths against `momentum/agents.json` `project` entries, fall back to `defaults.dev` if no match. Multi-domain stories (multiple result groups) spawn one agent per result group. Never hardcode agent paths in skill prompts — always use `momentum-tools agent-resolve`.
 - Before spawning any agent, check the spawn registry for an existing `{story_slug}::{role}` entry. If the entry exists, skip the spawn (suppressed duplicate). If no entry exists, spawn the agent and register the `{story_slug}::{role}` tuple.
 - Within the team, execute the first unblocked story sequentially; subsequent unblocked stories execute one at a time after each commit-as-sync-point (see Agent Teams model). Parallel execution of independent stories requires separate terminal sessions, not within a single team session.
 - Each agent produces structured completion output
@@ -1850,6 +1867,7 @@ sprint-dev is a dedicated skill (`/momentum:sprint-dev`) with 6 phases. Invoked 
 
 **Phase 5: Hybrid Agent Team Resolution (Decision 34)**
 - Agent Team operates concurrently on main branch (no worktrees) — receives any remaining unresolved items plus full-codebase verification scope
+- **Reviewer agent resolution (sprint-2026-05-16):** qa-reviewer and e2e-validator agent paths are resolved via `momentum-tools agent-resolve --role qa-reviewer` and `momentum-tools agent-resolve --role e2e-validator` respectively, using the `defaults` block of `momentum/agents.json` (Decision 55). Project-specific overrides in the `project` block take precedence when present. Never hardcode agent paths — always use `momentum-tools agent-resolve`.
 - **Dev Agent** — fixes any remaining findings from Phases 4-4d
 - **QA Agent** — reviews merged code against all sprint story ACs. Produces findings per story.
 - **E2E Validator** — tests running behavior with external tools against Gherkin specs in `sprints/{sprint-slug}/specs/`. Black-box: fundamentally different from AVFL's file-content validation — tests live system behavior, not static content.
@@ -2239,14 +2257,29 @@ skills/momentum/                     ← Plugin root
 ├── .claude-plugin/plugin.json
 ├── skills/                          ← SKILL.md files (user-facing + context:fork)
 ├── agents/                          ← Agent definition files (pure spawned workers)
-│   ├── qa-reviewer.md
-│   └── e2e-validator.md
+│   ├── qa-reviewer.md               ← Team Review: story AC review
+│   ├── e2e-validator.md             ← Team Review: behavioral validation (Gherkin)
+│   ├── dev.md                       ← Base dev agent for sprint-dev spawning
+│   ├── dev-skills.md                ← Specialist: SKILL.md, workflow.md, agent definitions
+│   ├── dev-build.md                 ← Specialist: Gradle and build system work
+│   ├── dev-frontend.md              ← Specialist: Kotlin Compose and frontend UI work
+│   ├── ux.md                        ← Specialist: UX design and UI specification work
+│   ├── analyst.md                   ← Specialist: business analysis and requirements work
+│   └── researcher.md                ← Specialist: technical research and discovery work
 ├── hooks/
 ├── scripts/
 └── references/
 ```
 
 Agent definition files are discovered by Claude Code from the plugin's `agents/` directory (resolution priority 4: plugin agents). The `name` field in YAML frontmatter determines the `subagent_type` used in Agent tool calls.
+
+**Base body conventions for agent definition files (added sprint-2026-05-16):**
+
+Every shipped agent definition follows a standard body structure:
+- **CREED block** — 3–5 statements in the form "I [verb] because [reason]" that anchor the agent's identity and decision-making orientation (e.g., "I validate because correctness is cheaper to catch early than to fix late").
+- **Constitution source** — agents reference `constitution.md` as the project context source (not `project-context.md`). `constitution.md` is produced by constitution-builder (Tier 1, once per project).
+- **Mandatory output templates with sentinel markers** — every agent definition includes a concrete output template using `AGENT_OUTPUT_START` / `AGENT_OUTPUT_END` sentinel markers. Orchestrators detect structured output by scanning for these sentinels; freeform prose between them is not parsed.
+- **Prohibitions with consequence clauses** — each Critical Constraints section pairs every prohibition with an explicit consequence: "Do not X — doing so causes Y and violates the [contract name] contract." Bare prohibitions without consequence clauses are disallowed in shipped definitions.
 
 **What does NOT change type:**
 
@@ -2908,3 +2941,91 @@ URL sync: all navigations use `hx-push-url` to keep the browser address bar in s
 **Rationale:** Bun's `bun --hot` mode provides instant server reloads during development without a separate watcher process. HTMX's fragment-swap model keeps the server as the authoritative renderer with no client-side state synchronization. Single-file server keeps the canvas skill self-contained and reviewable without build tooling.
 
 **Traceability:** Introduced by canvas-skill story (sprint-2026-05-03). Supersedes DEC-011 D2. Motivated by DEC-019 adoption decision (2026-04-26) to replace the static HTML approach of momentum:feature-status with a live, navigable dashboard.
+
+---
+
+### Sprint 2026-05-16 Decisions
+
+**Decision 55 — Agent Routing Table (DEC-023, sprint-2026-05-16)**
+
+Formalizes the agent routing table schema and resolution algorithm for `momentum/agents.json`. Supersedes ad-hoc specialist selection in sprint-dev Phase 2.
+
+**Schema:**
+
+`momentum/agents.json` has two top-level blocks:
+
+- **`defaults`** — 9 roles shipped with the plugin (dev, qa-reviewer, e2e-validator, architect-guard, ux, analyst, researcher, constitution-builder, agent-builder). Each role entry specifies `agent_path` (relative to plugin `agents/`) and `write_permissions` (array of glob patterns the agent is authorized to write). Defaults are immutable at runtime — agent-builder never overwrites them.
+- **`project`** — per-role×domain entries written by agent-builder. Each entry adds a domain-specific override (e.g., `dev/android`, `qa-reviewer/canvas`). Resolution prefers `project` entries over `defaults`.
+
+**Resolution algorithm (`momentum-tools agent-resolve`):**
+
+1. Accept `--role <role>` and `--touches <path,...>` (story `touches` array).
+2. Glob-match each path in `touches` against `project` entries. Group matches by `slug` (role+domain).
+3. If matches exist: return one agent path per result group (1..N fan-out). Multiple domains in one story → one agent spawned per matched group.
+4. If no matches: fall back to `defaults.<role>`. For untyped stories, fall back to `defaults.dev`.
+5. `write_permissions` from the matched entry are enforced by the orchestrator at spawn time — passed as `disallowedTools` overrides.
+
+**Invariants:**
+- Every skill spawning a typed role must use `momentum-tools agent-resolve` — no hardcoded agent paths in skill prompts.
+- 1..N fan-out: multi-domain stories spawn one agent per result group (not one aggregate agent).
+- `defaults` block is plugin-shipped and read-only at runtime.
+
+**Traceability:** Introduced by agent-routing-table story (sprint-2026-05-16). Implements DEC-023. Consumed by sprint-dev Phase 2 and Phase 5 reviewer spawns.
+
+---
+
+**Decision 56 — Agent Builder Three-Skill Pipeline (DEC-026 D3/D5, sprint-2026-05-16)**
+
+Formalizes the two-tier build pipeline for project-specific agent definitions.
+
+**Pipeline:**
+
+| Tier | Skill | When | Output |
+|---|---|---|---|
+| Tier 1 | constitution-builder | Once per project | `constitution.md` — project identity, values, constraints, and domain glossary |
+| Tier 2 | agent-builder × N | Once per role×domain | `.claude/guidelines/agents/{role}-{domain}.md` + routing entry in `momentum/agents.json` `project` block |
+
+**Orchestration:** `build-agents` skill orchestrates both tiers. It runs constitution-builder first (blocking), then fans out agent-builder calls for each requested role×domain combination (parallel after Tier 1 completes).
+
+**agent-builder inputs:**
+- `base_body_path` — path to the plugin-shipped base agent body for this role (from `agents/{role}.md`)
+- `constitution_excerpt` — relevant sections from `constitution.md` for this role's domain
+- `manifesto_inputs` — project-specific values, vocabulary, and behavioral anchors for the CREED block
+
+**agent-builder output:**
+- `{role}-{domain}.md` at `.claude/guidelines/agents/` — the full agent definition merging base body + constitution excerpt + domain manifesto
+- A routing entry written to `momentum/agents.json` `project` block: `{ "role": "{role}", "domain": "{domain}", "touches": [...glob patterns...], "agent_path": ".claude/guidelines/agents/{role}-{domain}.md", "write_permissions": [...] }`
+
+**Constraint:** agent-builder is the sole authorized writer to `momentum/agents.json` `project` block. constitution-builder writes only `constitution.md`. No other skill writes to either target.
+
+**Traceability:** Introduced by agent-builder story (sprint-2026-05-16). Implements DEC-026 D3 (constitution-builder) and D5 (agent-builder pipeline). build-agents orchestrates both.
+
+---
+
+**Decision 57 — Beads Dual-Write Spike (DEC-028, sprint-2026-05-16)**
+
+Formalizes the Beads tracker integration via a dual-write spike. `index.json` remains the authoritative source of truth; Beads is a best-effort secondary.
+
+**Architecture:**
+
+- **Authoritative source:** `.momentum/stories/index.json` and `.momentum/sprints/index.json` — unchanged.
+- **Secondary write:** sprint-manager mirrors story status transitions to Beads as best-effort. If the Beads write fails, the primary index.json write succeeds and the error is logged but not surfaced as a blocking error.
+- **Dependency source for sprint-dev Phase 1:** `bd ready --json --claim` is the primary dependency-ready source. Falls back to `depends_on` fields in `stories/index.json` when Beads is unavailable or returns inconsistent state.
+- **Session prime:** `bd prime --no-git-ops` runs via SessionStart hook to keep the local Beads DB in sync without triggering git operations.
+
+**Storage:**
+- `.beads/` — gitignored Dolt DB; the Beads local store. Never committed.
+- `.momentum/beads-id-map.json` — git-tracked map of `story_slug → bead_hash_id`. Written by sprint-manager at each dual-write. Enables offline reconstruction of the slug↔ID mapping without querying Beads.
+
+**Gate criteria for full adoption (four gates):**
+
+| Gate | Criteria |
+|---|---|
+| G1 — Round-trip fidelity | `bd ready --json --claim` returns the same story set as `depends_on` resolution from index.json for 3 consecutive sprints |
+| G2 — Failure resilience | Beads write failures leave index.json in correct state and produce a recoverable error in beads-id-map.json without data loss |
+| G3 — Session prime latency | `bd prime --no-git-ops` completes within 5 seconds on a warm local DB (P95 across 10 sessions) |
+| G4 — Sprint-dev correctness | sprint-dev Phase 1 using `bd ready` produces no incorrect wave ordering vs. the index.json fallback path across 2 sprints |
+
+Full adoption decision (replace index.json dependency tracking with Beads as primary) is deferred until all four gates pass.
+
+**Traceability:** Introduced by beads-dual-write-spike story (sprint-2026-05-16). Implements DEC-028. Spike scope: dual-write only — no UI changes, no retro changes, no planning artifact changes.
