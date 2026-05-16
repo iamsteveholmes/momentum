@@ -46,18 +46,27 @@ The constitution for nornspun is intentionally narrow — ~100-150 lines, not th
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-The following are rough draft ACs captured from conversation:
+The following are rough draft ACs captured from conversation, narrowed per DEC-026 D4:
+
+**Scope: project domain knowledge only (embedded facts + KB lookups). The constitution is
+project-wide shared knowledge — identical for every agent. It does NOT contain agent-specific
+routing entries; those belong in each agent's manifesto (agent-builder's concern).**
 
 - Constitution file exists at `nornspun/.claude/guidelines/constitution.md` (or equivalent agreed path)
 - File is ≤150 lines
-- Routing table covers: `*.kts`/`build.gradle.kts` → dev-build specialist; `*.kt` in `composeApp/` → dev-frontend; `*.kt` in `shared/` → dev-frontend; `*.py` in `src/` → Python backend dev; Maestro YAML → QA specialist; `*.sql`/Alembic → DB specialist
 - Project invariants section covers: async-first (no blocking calls in async routes), all DB access via repository layer, SSE contract (message.delta/message.complete per Decision 20), snake_case wire format, per-session cost cap enforcement
-- Cold KB pointer section: vault path, when to query (unfamiliar API, pattern uncertainty, library version questions), how to query (wiki-query skill or grep vault)
+- Cold KB pointer section: vault path, when to query (unfamiliar API, pattern uncertainty, library version questions), wiki-query interface block (how to invoke wiki-query skill or grep vault) — this block stays in the constitution as shared infrastructure
 - Constitution is validated against nornspun architecture docs for accuracy before merge
 - Tier 2 specialist files (Python backend dev, Kotlin/Compose dev, QA) are out of scope for this story — tracked separately
 
-> Note: The ACs above are rough captures from conversation. They are starting points
-> only. Create-story will replace them with validated, testable acceptance criteria.
+> **Not in scope (moved per DEC-026 D4):** File-pattern → agent-role routing entries
+> (e.g., `*.kts` → dev-build, `*.kt` in `composeApp/` → dev-frontend) are agent-specific
+> and belong in the agent manifesto. Generating those entries is agent-builder's concern,
+> not the constitution's.
+
+> Note: The ACs above are rough captures from conversation, narrowed by DEC-026 D4 scope
+> decision. They are starting points only. Create-story will replace them with validated,
+> testable acceptance criteria.
 
 ## Tasks / Subtasks
 
