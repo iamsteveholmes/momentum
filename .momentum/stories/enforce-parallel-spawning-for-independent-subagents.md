@@ -48,6 +48,9 @@ The following are rough draft ACs captured from conversation:
 - Relevant workflow files updated: `skills/momentum/skills/research/workflow.md`, `skills/momentum/skills/avfl/SKILL.md`, `skills/momentum/skills/dev/workflow.md`.
 - `skills/momentum/rules/spawning-patterns.md` updated if enforcement language needs to tighten from "expected" to "required with check".
 - Retro auditor pattern of requesting "ALL AT ONCE IN PARALLEL" for 9+ subagents no longer recurs in subsequent sprint retros.
+- The three highest-volume spawn prompts — `sprint-dev` (dev-wave step), `retro` (auditor fan-out step), and `avfl` (validator spawn step) — each contain an **inline parallel-call example** showing multiple independent Agent tool calls issued in a single response turn. The example must appear in the spawn prompt body itself, not merely referenced from `rules/spawning-patterns.md` or any external file.
+- Inline examples are concrete and structurally identical to real spawn calls: they show N tool calls co-present in one message (e.g., three `Agent` invocations for the three AVFL lenses), making the required pattern immediately legible to the executing agent without requiring it to look up a rules file.
+- Post-implementation metric: p50 tool-results/assistant-turns ratio improves above the sprint-2026-04-27 baseline of 0.72. Measurement method: same DuckDB transcript query used in retro Phase 3. Target: ratio ≥ 1.0 at p50 within the first sprint after implementation.
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
