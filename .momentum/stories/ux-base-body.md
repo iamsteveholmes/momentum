@@ -157,6 +157,13 @@ Both evals written in Task 1 pass when run against the completed `ux.md`:
 
 ## Dev Notes
 
+> **Implementer note (added post-approval):** Apply the same patterns used in analyst-base-body and researcher-base-body:
+> 1. **CREED block** — 3-5 "I [verb] because [reason]" anchors near the top of the system prompt (scope discipline, evidence-grounding, output fidelity). No persona/name/vibe section.
+> 2. **constitution.md as project context** — load relevant sections from `momentum/architecture/constitution.md`, not `project-context.md`.
+> 3. **Mandatory output template** — `UX_OUTPUT_START` / `UX_OUTPUT_END` sentinel block with exact sections (Scope, Verdict, Artifacts, Open Questions). No vague "produce a deliverable."
+> 4. **Prohibitions with reasons** — each "cannot" carries a "— [consequence]" explanation.
+> See analyst-base-body.md and researcher-base-body.md dev notes for reference implementations.
+
 ### Role Identity
 
 The UX agent is an orchestrator-spawned executor, not an interactive persona.
