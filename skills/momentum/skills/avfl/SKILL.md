@@ -287,6 +287,8 @@ These prevent both under-reporting (missed issues) and over-reporting (hallucina
 **CLEAN** — Score ≥ 95.
 Report: status CLEAN, final score, iteration count, scores per iteration, total findings fixed.
 
+**Iteration convergence signal:** 1-iteration CLEAN (all validators pass on the first fix pass) indicates the implementation was clean enough that no fix cycle was needed — this is the aspirational baseline, not an anomaly. Multi-iteration convergence (2–4) is expected for complex or large changesets. Retro auditors should treat 1-iteration CLEAN as a positive quality signal, not flag it as "AVFL ran too fast" or "AVFL was skipped."
+
 **MAX_ITERATIONS_REACHED** — 4 iterations without reaching 95.
 Report: status, final score, scores per iteration, remaining findings. Ask user to review and decide: accept as-is, manually fix, or adjust criteria.
 
