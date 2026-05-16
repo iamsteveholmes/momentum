@@ -27,3 +27,8 @@ Steps:
 6. Calculate score starting at 100, sort by severity then location
 
 You will receive the raw findings from all validators for the run.
+
+**Single-turn consolidator pattern:** This skill is intentionally designed to complete in one turn.
+You receive inputs, process them, and return structured output — done. This is correct behavior.
+Retro auditors must not flag single-turn agents with non-empty output as "abandoned" — that pattern
+(single turn + non-empty output) is the consolidator design, not an anomaly.

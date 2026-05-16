@@ -325,6 +325,13 @@ For each of these, choose:
         - Story iteration: stories with many dev agents (why did story X need N passes?)
         - Abandoned agents: agents with very low turn counts (< 3 assistant turns)
 
+      Single-turn consolidator exception: some agent roles are designed to complete their
+      full work in exactly one turn (receive inputs → process → return structured output → done).
+      Examples: AVFL consolidator, retro synthesizer, format converters, result aggregators.
+      Detection signal: single turn + non-empty output = consolidator pattern (correct behavior,
+      do NOT flag). Single turn + empty output = anomaly (flag as abandoned).
+      Do not flag single-turn consolidators as abandoned — flag only zero-turn or empty-output agents.
+
       For agents of interest, run ad-hoc queries via transcript-query.py sql "..." to
       investigate their full transcripts.
 
