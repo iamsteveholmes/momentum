@@ -126,6 +126,25 @@ stub file, add index entry. No analysis, no research, no subagents.
       <output>Failed to write index entry: {{cli_error}}</output>
       <action>HALT — report the error to the user</action>
     </check>
+
+    <!-- SPIKE: beads dual-write — route discovered work via discovered-from edge -->
+    <action>[SPIKE: beads] If `.beads/` directory exists:
+      1. Determine the origin bead ID:
+         - If a source story slug is known from context (the story that prompted this discovery):
+           Load `.momentum/beads-id-map.json` and look up the source slug.
+           If found: set {{origin_bead_id}} = the mapped bead ID.
+         - If no source slug or not found in map: set {{origin_bead_id}} = `bd-discovery-root`
+           (a sentinel bead; create it if it does not yet exist: `bd create "Discovery Root" --type epic`)
+      2. Call: `bd create "{{title}}" --deps discovered-from:{{origin_bead_id}}`
+         Note: `discovered-from` is semantically distinct from `blocks` — it means "this work
+         was surfaced while working on the origin bead", not "this blocks the origin bead".
+      3. If `bd create` succeeds: store the new bead ID in `.momentum/beads-id-map.json`
+         as `{ "{{slug}}": "<new-bead-id>" }` (merge, don't overwrite other entries).
+      4. If `bd create` fails: log to `.momentum/beads-errors.log` — do NOT abort.
+         The `intake-queue.jsonl` append above remains the source of record.
+      5. Verify: `bd show <new-bead-id>` should show `discovered-from: {{origin_bead_id}}`
+         (not `blocks:`) — this confirms the correct edge type.
+    </action>
   </step>
 
   <step n="5" goal="Report what was captured and what still needs enrichment">
