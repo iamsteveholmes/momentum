@@ -1,4 +1,4 @@
-# Missing Base Bodies Audit — DEC-013 Universal Agent Model Coverage
+# Missing Base Bodies Audit — DEC-020 Universal Agent Role Coverage
 
 **Date:** 2026-05-16
 **Sprint:** sprint-2026-05-16
@@ -9,9 +9,9 @@
 
 ## Summary
 
-DEC-013 mandates universal agent definition coverage — every spawned role must have a base body in `skills/momentum/agents/`. This audit enumerates all named agent roles across all Momentum workflow.md files and cross-references against the agents directory.
+DEC-020 mandates universal agent role coverage — every spawned role must have a base body in `skills/momentum/agents/`. This audit enumerates all named agent roles across all Momentum workflow.md files and cross-references against the agents directory.
 
-**Result: 1 untracked gap (dev-fixer). 4 intentional inline roles. 0 unresolved untracked gaps.**
+**Result: 1 tracked gap (dev-fixer — backlog story exists). 4 intentional inline roles. 0 untracked gaps.**
 
 ---
 
