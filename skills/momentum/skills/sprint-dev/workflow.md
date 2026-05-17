@@ -28,13 +28,14 @@
     Default is individual-agent. TeamCreate is NEVER used in sprint-dev.
 
     Phase 2 — Dev Wave:
-      role: dev (specialist variant per story assignment)
+      role: dev (routing-table-resolved per story.touches)
       spawning: individual-agent  (one Agent tool call per story — NEVER TeamCreate)
       concurrency: parallel       (all unblocked stories in a single message turn)
-      agent-definition: skills/momentum/agents/{specialist}.md
-        fallback: skills/momentum/agents/dev.md
+      agent-definition: resolved via `momentum-tools agent resolve --touches {story.touches}`
+        fallback: skills/momentum/agents/dev.md (when no project entry matches or touches is empty)
       note: Each story gets its own isolated agent with its own worktree.
-            The specialist resolution logic (steps 2.3a–2.3d) selects the agent definition.
+            The routing table resolution (steps 2.3a–2.3f) selects the agent definition(s).
+            Multi-domain stories may spawn N agents per story (one per matched routing group).
 
     Phase 4b — Per-Story Code Review:
       role: code-reviewer
@@ -62,8 +63,10 @@
   <team-composition>
     <phase name="dev-wave" step="2">
       <role name="dev" spawning="individual-agent" concurrency="parallel">
-        One agent per unblocked story. Specialist agent definition resolved per
-        team.story_assignments[slug].specialist — fallback to skills/momentum/agents/dev.md.
+        One agent per routing group per unblocked story. Agent definition resolved via
+        `momentum-tools agent resolve --touches {story.touches}` — fallback to
+        skills/momentum/agents/dev.md when no project entry matches.
+        Multi-domain stories spawn N agents (one per routing group, each scoped to its file_scope).
         Never use TeamCreate. Each story runs in its own worktree.
       </role>
     </phase>
@@ -84,10 +87,10 @@
     </phase>
     <phase name="team-review" step="5">
       <role name="qa-reviewer" spawning="individual-agent" concurrency="parallel">
-        Agent definition: skills/momentum/agents/qa-reviewer.md
+        Agent definition: resolved from routing table defaults — `momentum-tools agent resolve --role qa-reviewer`
       </role>
       <role name="e2e-validator" spawning="individual-agent" concurrency="parallel">
-        Agent definition: skills/momentum/agents/e2e-validator.md
+        Agent definition: resolved from routing table defaults — `momentum-tools agent resolve --role e2e-validator`
       </role>
       <role name="architect-guard" spawning="individual-agent" concurrency="parallel">
         Invoked as: momentum:architecture-guard (context: fork, read-only)
@@ -192,9 +195,9 @@ Resume these stories, or reset them to ready-for-dev?</output>
       Status: pending
     </action>
     <action>Store {{task_map}} = map of story slug → task ID</action>
-    <action>Store {{spawn_registry}} = {} (empty map — tracks every spawned agent by key "{story_slug}::{specialist}" for dev agents, "sprint::{role}" for team review agents; never reset between phases)</action>
+    <action>Store {{spawn_registry}} = {} (empty map — tracks every spawned agent by key "{story_slug}::{agent_slug}" for dev agents, "sprint::{role}" for team review agents; never reset between phases)</action>
     <action>Store {{pending_worktree_cleanup}} = [] (empty list — accumulates story slugs whose worktrees and branches have been merged but not yet removed; worktrees are cleaned up in Phase 4d after all quality gates complete)</action>
-    <note>spawn_registry is an in-memory deduplication guard. It survives the Phase 2 → Phase 3 → Phase 2 loop. Keys use format "{story_slug}::{specialist}" for dev agents and "sprint::{reviewer_role}" for team review agents. A key's presence means an agent was already spawned — do not spawn again.</note>
+    <note>spawn_registry is an in-memory deduplication guard. It survives the Phase 2 → Phase 3 → Phase 2 loop. Keys use format "{story_slug}::{agent_slug}" for dev agents (where agent_slug comes from the routing table result) and "sprint::{reviewer_role}" for team review agents. A key's presence means an agent was already spawned — do not spawn again.</note>
 
     <output>## Sprint `{{sprint_slug}}` Initialized
 
@@ -221,31 +224,37 @@ Task list created for progress tracking.</output>
     </check>
 
     <action>For each unblocked story:
-      0. Compute dedup key: `{slug}::{specialist}` where specialist = {{team}}.story_assignments[slug].specialist
-         Check {{spawn_registry}}[key]:
-         - If key EXISTS: skip this story entirely — continue to next story.
+      0. Resolve agent(s) via routing table:
+         a. Collect {{story_touches}} = the story's `touches` array (from stories/index.json or story file frontmatter)
+         b. Run: `momentum-tools agent resolve --touches "{{story_touches | join(',')}}"` (pass empty string if touches is empty)
+         c. Parse the returned `results` array — each entry is {slug, agent_path, write_permissions, file_scope}
+         d. If the routing table returns a single result: one agent spawn for this story
+         e. If the routing table returns multiple results (multi-domain story): N agent spawns per story,
+            each scoped to its file_scope and carrying its write_permissions
+         f. If agent_path does not exist on disk: log a warning and substitute `skills/momentum/agents/dev.md`
+         Compute dedup key per result: `{slug}::{agent_slug}` where agent_slug = routing result's `slug` field.
+         For each result entry:
+         - If key EXISTS in {{spawn_registry}}: skip this agent — continue to next result.
          - If key ABSENT: proceed with steps 1-6 below.
       1. Transition to in-progress: `momentum-tools sprint status-transition --story {slug} --target in-progress`
+         (run once per story, not once per agent — skip if already in-progress)
       2. Look up role assignment from {{team}}.story_assignments[slug]
-      3. Resolve specialist agent:
-         a. Read {{team}}.story_assignments[slug].specialist (e.g., "dev-skills", "dev-build", "dev-frontend", or "dev")
-         b. Resolve agent definition file: `skills/momentum/agents/{specialist}.md`
-         c. If the specialist file exists, use it as the agent definition
-         d. If the specialist file does NOT exist, log a warning and fall back to `skills/momentum/agents/dev.md`
-      4. Spawn the resolved agent via the Agent tool (individual-agent mode — one Agent tool call per story,
-         all in a single message turn for parallel execution). NEVER use TeamCreate for dev agents.
+      3. For each routing result entry (agent_slug, agent_path, write_permissions, file_scope):
+         Spawn the agent via the Agent tool (individual-agent mode — one Agent tool call per routing group,
+         all unblocked stories in a single message turn for parallel execution). NEVER use TeamCreate for dev agents.
          Provide:
          - Story key: {slug}
          - Story file: `.momentum/stories/{slug}.md`
          - Sprint context: {{sprint_slug}}
          - Role: {{team}}.story_assignments[slug].role
-         - Specialist: {{team}}.story_assignments[slug].specialist
          - Guidelines: look up guidelines path from {{team}}.roles matching the assigned role (pass null if none)
-         - Agent definition: the resolved specialist agent file (or base dev.md fallback)
-         - If the story's `touches` array includes paths under `skills/` or `agents/`, also pass:
+         - Agent definition: agent_path from routing result (or base dev.md fallback per step 0f)
+         - File scope: file_scope from routing result (the subset of story.touches this agent handles)
+         - Write permissions: write_permissions from routing result
+         - If agent_path includes paths under `skills/` or `agents/`, also pass:
            reference: `skills/momentum/references/agent-skill-development-guide.md`
-      5. Register in spawn registry: `{{spawn_registry}}[key] = { spawned: true }`
-      6. Update task {{task_map}}[slug] to in_progress
+      4. Register in spawn registry: `{{spawn_registry}}["{slug}::{agent_slug}"] = { spawned: true }`
+      5. Update task {{task_map}}[slug] to in_progress
     </action>
 
     <output>**Spawned dev agents** for **{{unblocked_count}} unblocked stories:**
@@ -274,10 +283,11 @@ Options:
   H — Halt: stop sprint execution to investigate</output>
       <ask>Retry, Skip, or Halt?</ask>
       <check if="Retry">
-        <action>Compute dedup key for failed story: `{slug}::{specialist}` where specialist = {{team}}.story_assignments[slug].specialist
-          Remove existing registry entry: delete `{{spawn_registry}}[key]` (this allows the retry to be registered as a fresh spawn)
-          Spawn a new dev agent (using `skills/momentum/agents/dev.md`) for the failed story (same parameters as Phase 2).
-          Register the retry: `{{spawn_registry}}[key] = { spawned: true }`
+        <action>Re-run routing table resolution for the failed story: `momentum-tools agent resolve --touches "{{story_touches | join(',')}}"`
+          For each result entry, compute dedup key: `{slug}::{agent_slug}`.
+          Remove existing registry entries for this story (allows retry to be registered as a fresh spawn).
+          Spawn a new dev agent (using agent_path from routing result, fallback `skills/momentum/agents/dev.md`) for the failed story (same parameters as Phase 2 step 3).
+          Register the retry entry: `{{spawn_registry}}[key] = { spawned: true }`
           Do not auto-retry — this is the single manual retry.</action>
       </check>
       <check if="Skip">
@@ -532,7 +542,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
     <action>Spawn eligible reviewers in parallel using individual Agent tool calls in a single message.
       NEVER use TeamCreate — each reviewer is always an individual agent spawn:
 
-    **QA Agent** — spawn via Agent tool with `skills/momentum/agents/qa-reviewer.md` definition:
+    **QA Agent** — spawn via Agent tool; resolve agent path from routing table: `momentum-tools agent resolve --role qa-reviewer` (returns defaults.qa-reviewer path, typically `skills/momentum/agents/qa-reviewer.md`):
       - Provide: sprint slug, list of sprint stories, AVFL findings list
       - Agent reads each story's AC section from `.momentum/stories/{slug}.md`
       - Produces structured QA Review Report with per-story AC verification
@@ -545,7 +555,7 @@ Accept these as-is, fix them now, or defer to follow-up stories?</output>
            succeeded but no evidence of the AC was found. If `.claude/rules/e2e-validation.md` is
            absent, report Verdict: BLOCKED — do not fall back to static inspection.
 
-    **E2E Validator** — spawn via Agent tool with `skills/momentum/agents/e2e-validator.md` definition:
+    **E2E Validator** — spawn via Agent tool; resolve agent path from routing table: `momentum-tools agent resolve --role e2e-validator` (returns defaults.e2e-validator path, typically `skills/momentum/agents/e2e-validator.md`):
       - Provide: sprint slug, path to Gherkin specs `.momentum/sprints/{{sprint_slug}}/specs/`, AVFL findings list
       - Agent validates running behavior against Gherkin scenarios
       - Produces structured E2E Validation Report with per-scenario results

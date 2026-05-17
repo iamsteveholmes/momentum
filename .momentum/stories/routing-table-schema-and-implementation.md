@@ -322,8 +322,27 @@ Add a `--role <role>` flag to `cmd_agent_resolve` that bypasses pattern matching
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — implementation was direct from story spec and DEC-023.
 
 ### Completion Notes List
 
+- `momentum/agents.json` created with all 9 defaults and empty project array
+- `momentum-tools agent resolve` added as `agent` subcommand group with `resolve` subcommand; supports `--touches` (CSV paths) and `--role` (direct defaults lookup) flags
+- `sprint-dev/workflow.md` Phase 2 steps 2.3a-2.3d replaced with routing-table-driven resolution (steps 0a-0f + updated steps 1-5)
+- `sprint-dev/workflow.md` Phase 5 QA Agent and E2E Validator updated to use `--role` routing table lookup
+- Phase 3 retry block updated to use routing table resolution
+- `<team-composition>` comments updated to reflect routing-table model
+- 2 evals created in `skills/momentum/agents/evals/`
+- `specialist-classify` left in place — still referenced by sprint-planning
+
 ### File List
+
+- `momentum/agents.json` — new
+- `skills/momentum/scripts/momentum-tools.py` — modified (cmd_agent_resolve + build_parser agent group)
+- `skills/momentum/skills/sprint-dev/workflow.md` — modified (Phase 2, Phase 3, Phase 5, team-composition)
+- `skills/momentum/agents/evals/eval-agent-resolve-project-entry-match.md` — new
+- `skills/momentum/agents/evals/eval-agent-resolve-defaults-fallback.md` — new

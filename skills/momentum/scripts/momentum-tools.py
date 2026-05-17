@@ -16,6 +16,8 @@ Usage:
     momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N]
     momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY]
     momentum-tools.py specialist-classify --touches "path1,path2,..."
+    momentum-tools.py agent resolve --touches "path1,path2,..."
+    momentum-tools.py agent resolve --role qa-reviewer
     momentum-tools.py quickfix register --slug SLUG --story STORY_KEY
     momentum-tools.py quickfix complete --slug SLUG
     momentum-tools.py intake-queue append --source SOURCE --kind KIND --title TITLE [--description DESC] [--sprint-slug SLUG] [--feature-slug SLUG] [--story-type TYPE] [--feature-state-transition JSON] [--failure-diagnosis JSON]
@@ -1763,6 +1765,112 @@ def cmd_specialist_classify(args: argparse.Namespace) -> None:
            fallback=fallback)
 
 
+# --- Agent Commands ---
+
+def cmd_agent_resolve(args: argparse.Namespace) -> None:
+    """Resolve 1..N agents for a given set of file paths via the routing table.
+
+    --touches: comma-separated file paths (pattern matching against project entries)
+    --role:    role slug (bypass pattern matching, return defaults entry for this role)
+    """
+    from fnmatch import fnmatch
+
+    project_dir = resolve_project_dir()
+    agents_json_path = project_dir / "momentum" / "agents.json"
+
+    # Load routing table (graceful fallback if missing)
+    if agents_json_path.exists():
+        try:
+            agents_json = read_json(agents_json_path)
+        except Exception:
+            agents_json = {"defaults": {}, "project": []}
+    else:
+        agents_json = {"defaults": {}, "project": []}
+
+    defaults: dict = agents_json.get("defaults", {})
+    project_entries: list = agents_json.get("project", [])
+
+    # --role mode: bypass pattern matching, return defaults entry for the named role
+    if getattr(args, "role", None):
+        role = args.role
+        if role not in defaults:
+            error_result("agent_resolve", f"Role '{role}' not found in defaults block", role=role)
+        result("agent_resolve", success=True,
+               results=[{
+                   "slug": role,
+                   "agent_path": defaults[role],
+                   "write_permissions": [],
+                   "file_scope": [],
+               }])
+        return
+
+    # --touches mode: pattern match against project entries, fall back to defaults
+    touches_raw = getattr(args, "touches", None) or ""
+    touches = [p.strip() for p in touches_raw.split(",") if p.strip()]
+
+    if not touches:
+        # No file paths — return base dev default
+        result("agent_resolve", success=True,
+               results=[{
+                   "slug": "dev",
+                   "agent_path": defaults.get("dev", "skills/momentum/agents/dev.md"),
+                   "write_permissions": [],
+                   "file_scope": [],
+               }])
+        return
+
+    # Group paths by matching project entry (first-match wins)
+    claimed: dict[str, dict] = {}   # slug -> {entry, file_scope}
+    unclaimed: list[str] = []
+
+    for path in touches:
+        matched = None
+        for entry in project_entries:
+            patterns = entry.get("patterns", [])
+            if any(fnmatch(path, pat) for pat in patterns):
+                matched = entry
+                break
+        if matched:
+            slug = matched["slug"]
+            if slug not in claimed:
+                claimed[slug] = {"entry": matched, "file_scope": []}
+            claimed[slug]["file_scope"].append(path)
+        else:
+            unclaimed.append(path)
+
+    results = []
+
+    # One result per matched project entry
+    for slug, group in claimed.items():
+        entry = group["entry"]
+        results.append({
+            "slug": slug,
+            "agent_path": entry.get("agent", ""),
+            "write_permissions": entry.get("write_permissions", []),
+            "file_scope": group["file_scope"],
+        })
+
+    # Unclaimed paths fall back to defaults dev entry
+    if unclaimed:
+        results.append({
+            "slug": "dev",
+            "agent_path": defaults.get("dev", "skills/momentum/agents/dev.md"),
+            "write_permissions": [],
+            "file_scope": unclaimed,
+        })
+
+    # Empty touches that somehow got here — shouldn't happen, but guard
+    if not results:
+        results.append({
+            "slug": "dev",
+            "agent_path": defaults.get("dev", "skills/momentum/agents/dev.md"),
+            "write_permissions": [],
+            "file_scope": [],
+        })
+
+    result("agent_resolve", success=True, results=results)
+
+
 # --- Quickfix Commands ---
 
 def cmd_quickfix_register(args: argparse.Namespace) -> None:
@@ -2184,6 +2292,16 @@ def build_parser() -> argparse.ArgumentParser:
     sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")
     sc_parser.add_argument("--touches", required=True, help="Comma-separated file paths")
     sc_parser.set_defaults(func=cmd_specialist_classify)
+
+    # agent command group
+    agent = subparsers.add_parser("agent", help="Agent routing table operations")
+    agent_sub = agent.add_subparsers(dest="agent_action", required=True)
+
+    # agent resolve
+    ar = agent_sub.add_parser("resolve", help="Resolve 1..N agents for given file paths via routing table")
+    ar.add_argument("--touches", default=None, help="Comma-separated file paths to match against project entries")
+    ar.add_argument("--role", default=None, help="Role slug — return defaults entry for this role (bypasses pattern matching)")
+    ar.set_defaults(func=cmd_agent_resolve)
 
     # quickfix command group
     quickfix = subparsers.add_parser("quickfix", help="Quickfix tracking operations")
