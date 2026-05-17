@@ -2,7 +2,7 @@
 
 **Goal:** Compose one Tier 2 agent file from a base body + constitution excerpt + manifesto inputs, and register a routing entry in `momentum/agents.json`.
 
-**Role:** Per-agent composer in the Momentum build pipeline. Runs once per role × domain pair. Orchestrated by `build-agents` or invoked directly by sprint-dev for `change_type: agent` stories.
+**Role:** Per-agent composer in the Momentum build pipeline. Runs once per role × domain pair. Orchestrated by sprint-dev or invoked directly via momentum:agent-builder.
 
 **Pipeline position:**
 ```
@@ -87,7 +87,7 @@ The skill accepts these inputs (via invocation arguments or interactive elicitat
 ```markdown
 ---
 name: {{agent_slug}}
-description: {{role_description}} — specialized for {{domain}} domain. Spawned by sprint-dev and build-agents for {{domain}}-related work.
+description: {{role_description}} — specialized for {{domain}} domain. Spawned by sprint-dev for {{domain}}-related work.
 model: sonnet
 effort: medium
 tools: [Read, Grep, Glob, Bash, Edit, Write]
@@ -124,7 +124,7 @@ these strategies:
       1. Base body content is injected verbatim — do not paraphrase or abbreviate
       2. Domain Specialization section describes: what this agent owns, what conventions apply, what it must always/never do in this domain
       3. Constitution excerpt is trimmed to only include knowledge relevant to this role × domain — do not paste the full constitution
-      4. Large File Handling section is always present, always last before the output format section
+      4. Large File Handling section is always present. When composing, place it immediately BEFORE the base body's `## Output Format` section. If the base body's Output Format appears at the end of `{{base_body_content}}`, strip it from the injected content and re-append it AFTER the Large File Handling section so the final order is: ... Domain Specialization → Constitution excerpt → Large File Handling → Output Format.
       5. Total file length target: 200–400 lines. If base body + manifesto pushes past 400, extract domain conventions to a reference file and link it
     </action>
 
@@ -189,6 +189,7 @@ these strategies:
 ```json
 {
   "role": "{{role}}",
+  "domain": "{{domain}}",
   "slug": "{{agent_slug}}",
   "agent": "{{output_path}}",
   "patterns": {{permissions_scope}},
@@ -211,7 +212,7 @@ these strategies:
 - File patterns: {{permissions_scope}}
 
 **Next steps:**
-- Run `/momentum:build-agents` to build remaining role × domain pairs
+- Invoke `momentum:agent-builder` directly for remaining role × domain pairs
 - Verify the composed file in `{{output_path}}` before deploying
 - If this agent story came from sprint-dev, the approval gate is next
     </output>

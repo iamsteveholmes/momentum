@@ -1,6 +1,6 @@
 ---
 name: agent-builder
-description: Per-agent composer for Tier 2 agents. Accepts base_body_path, constitution excerpt, and manifesto inputs (role × domain) to produce a composed agent file and a matching routing entry in momentum/agents.json. Use when building a composed agent for a specific role × domain pair. Called by build-agents once per pair. For change_type:agent stories, sprint-dev routes here. Also user-invocable as momentum:agent-builder.
+description: Tier 2 agent composer: base body + constitution + manifesto → composed agent + routing entry in momentum/agents.json. Invoked by sprint-dev for change_type:agent stories. Also user-invocable.
 model: sonnet
 effort: medium
 user-invocable: true
