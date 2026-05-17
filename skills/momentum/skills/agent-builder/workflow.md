@@ -117,6 +117,8 @@ these strategies:
    read of these files.
 4. **On error, narrow scope** — If a Read fails with a token-limit error, do not
    retry the same read. Instead, Grep for what you need and read only that section.
+
+[inject base body ## Output Format section here — per Rule 4, strip from {{base_body_content}} and re-append after Large File Handling]
 ```
 </action>
 
