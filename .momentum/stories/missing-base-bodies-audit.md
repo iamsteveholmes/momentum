@@ -82,12 +82,25 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 ## Dev Agent Record
 
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
-
 ### Agent Model Used
+
+claude-sonnet-4-6 (dev-skills specialist)
 
 ### Debug Log References
 
+None — exploration story, no code execution.
+
 ### Completion Notes List
 
+- Enumerated all named agent roles across all 21 workflow.md files in `skills/momentum/skills/`
+- Cross-referenced against `skills/momentum/agents/` directory (6 agent files: dev, dev-build, dev-frontend, dev-skills, e2e-validator, qa-reviewer)
+- `code-reviewer` and `architect-guard` are invoked as momentum skills (SKILL.md), not agent files — DEC-013 compliant
+- 4 retro roles (auditor-human, auditor-execution, auditor-review, synthesizer) are intentionally inline-prompted ephemeral roles — excluded from gap counting
+- 1 untracked gap found: `dev-fixer` — tracked as backlog story `dev-fixer-agent-definition`
+- Zero untracked gaps — audit closure condition satisfied
+- Full report written to `.momentum/handoffs/missing-base-bodies-audit-2026-05-16.md`
+
 ### File List
+
+- `.momentum/handoffs/missing-base-bodies-audit-2026-05-16.md` — gap report (created)
+- `.momentum/stories/missing-base-bodies-audit.md` — Dev Agent Record updated (this file)
