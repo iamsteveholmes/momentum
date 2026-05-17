@@ -103,15 +103,24 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 ## Dev Agent Record
 
-<!-- DRAFT: This section is populated only during and after development. It is empty
-     because this story has not been through create-story or development yet. -->
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
-
 ### Agent Model Used
+
+claude-sonnet-4-6 (dev-skills specialist)
 
 ### Debug Log References
 
+None — straightforward agent definition creation.
+
 ### Completion Notes List
 
+- Created `skills/momentum/agents/researcher.md` as universal base body per DEC-020
+- File defines unconditioned researcher role — no project-specific context
+- Document ownership declared: research docs, synthesis briefings, investigation reports
+- BMAD role alignment documented (researcher persona)
+- Standard Large File Handling section included per agent-skill-development-guide.md convention
+- Output structure section provides a canonical template for research artifact format
+- SendMessage pattern documented for team context spawning
+
 ### File List
+
+- `skills/momentum/agents/researcher.md` (created)
