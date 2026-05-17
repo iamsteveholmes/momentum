@@ -100,15 +100,25 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 ## Dev Agent Record
 
-<!-- DRAFT: This section is populated only during and after development. It is empty
-     because this story has not been through create-story or development yet. -->
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
-
 ### Agent Model Used
+
+claude-sonnet-4-6 (dev-skills specialist)
 
 ### Debug Log References
 
+None — implementation proceeded directly from DEC-026 D3 and DEC-027 D3 decision documents.
+
 ### Completion Notes List
 
+- Story was an intake stub; enriched in-place from DEC-026 D3 (agent-builder decision) and agent-architecture-triage-2026-05-16.md
+- Created SKILL.md with correct frontmatter: user-invocable, allowed-tools, model=sonnet, effort=medium
+- Created workflow.md with 4-phase execution: Elicit → Compose → Validate via skill-creator → Write outputs
+- Workflow follows DEC-026 D3 inputs (base_body_path, constitution excerpt, manifesto_context, permissions_scope)
+- Workflow outputs composed Tier 2 agent file at `.claude/guidelines/agents/{role}-{domain}.md` and routing entry in `momentum/agents.json`
+- Large File Handling section mandated in all composed agent files (per agent-skill-development-guide.md convention)
+- skill-creator validation gate included in Phase 3 with fallback manual checklist
+
 ### File List
+
+- `skills/momentum/skills/agent-builder/SKILL.md` (created)
+- `skills/momentum/skills/agent-builder/workflow.md` (created)
