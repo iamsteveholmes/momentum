@@ -186,6 +186,27 @@ Resume these stories, or reset them to ready-for-dev?</output>
 
     <action>Build dependency graph from {{sprint_waves}} (primary — wave N stories are blocked until every wave N-1 story reaches `done`) reconciled with {{story_depends_on_map}} for any cross-wave or intra-wave story-level dependencies (secondary). There is no `dependencies` field on the sprint record — ordering is derived entirely from these two sources.</action>
 
+    <!-- SPIKE: beads dual-write — bd ready --json --claim as primary ready-queue source -->
+    <action>[SPIKE: beads] If `.beads/` directory exists:
+      1. Call `bd ready --json --claim` and store the result as {{bd_ready_result}}.
+         The `--claim` flag atomically marks the returned beads as claimed — concurrent sprint-dev instances cannot race on the same story.
+      2. If `bd ready` exits non-zero or returns `[]`:
+         Log: "[beads-shadow] bd ready returned empty/error — falling back to wave/depends_on graph"
+         Set {{bd_ready_result}} = null
+         <!-- SPIKE: falls back to wave/depends_on if bd ready --claim unavailable -->
+      3. If {{bd_ready_result}} is non-null (non-empty array):
+         Load `.momentum/beads-id-map.json` and invert it (bead_id → slug map).
+         For each entry in {{bd_ready_result}}: resolve the bead ID to a story slug via the inverted map.
+         Store {{bd_ready_slugs}} = list of resolved story slugs.
+         Log any bead IDs that could not be resolved to slugs (mapping gap — investigate).
+         Compare {{bd_ready_slugs}} against stories unblocked by the wave/depends_on graph:
+           - Stories in bd_ready_slugs but NOT in wave graph: log as "beads-ahead" discrepancy.
+           - Stories in wave graph but NOT in bd_ready_slugs: log as "wave-ahead" discrepancy.
+         Store {{discrepancy_log}} for the research artifact.
+      4. Use {{bd_ready_slugs}} as the primary unblocked list for Phase 2 agent spawning.
+         If {{bd_ready_result}} was null/empty, use the wave/depends_on graph result instead.
+    </action>
+
     <action>Create a task per story via TaskCreate:
       - Title: story title
       - Description: "depends_on: [list]"
