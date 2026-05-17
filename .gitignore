@@ -82,3 +82,6 @@ _bmad/_memory/
 
 # Bun dependencies
 node_modules/
+
+# Beads Dolt DB — gitignored per beads-dual-write-spike (beads-id-map.json is tracked)
+.beads/

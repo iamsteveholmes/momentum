@@ -1,55 +1,77 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "ExitPlanMode",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/skills/momentum/skills/plan-audit/scripts/check-plan-audited.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-version-bump.sh",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/momentum/hooks/file-protection.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
           {
-            "type": "command",
             "command": "echo '[momentum-lint] \u2713 checked file edit \u2014 lint/format hook placeholder (Story 3.1 implements)'",
-            "timeout": 5
+            "timeout": 5,
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": "Edit|Write|NotebookEdit"
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime --no-git-ops",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "bash $CLAUDE_PROJECT_DIR/skills/momentum/skills/plan-audit/scripts/check-plan-audited.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "ExitPlanMode"
+      },
+      {
+        "hooks": [
+          {
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-version-bump.sh",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/momentum/hooks/file-protection.sh",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|NotebookEdit"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime --no-git-ops",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
       }
     ],
     "Stop": [
       {
         "hooks": [
           {
-            "type": "command",
             "command": "echo '[momentum-gate] \u2713 checked stop conditions \u2014 quality gate placeholder (Story 3.3 implements)'",
-            "timeout": 10
+            "timeout": 10,
+            "type": "command"
           }
         ]
       }

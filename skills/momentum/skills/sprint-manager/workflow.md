@@ -1,6 +1,43 @@
 # momentum:sprint-manager Workflow
 
 <!-- DEC-012: Per-sprint sprints/{slug}.json retired — sprints/index.json is the sole state file. Steps that formerly instructed writing sprints/{slug}.json have been removed from all procedures. -->
+<!-- SPIKE (beads-dual-write-spike): Beads shadow layer dual-writes. index.json is ALWAYS written first and is authoritative. Beads writes are best-effort — log failure, never abort. Bead IDs stored in .momentum/beads-id-map.json. -->
+
+## Beads Dual-Write Helper
+
+When the beads layer is active (`.beads/` directory exists), sprint-manager performs shadow
+writes to beads after every primary JSON write. Use this pattern for all beads calls:
+
+```bash
+# Beads write pattern (always after index.json write succeeds):
+bd_result=$(bd create "<title>" --type task --spec-id ".momentum/stories/{slug}.md" 2>&1)
+if [ $? -ne 0 ]; then
+  echo "[beads-shadow] WARNING: bd create failed for {slug}: $bd_result" >> .momentum/beads-errors.log
+else
+  bead_id=$(echo "$bd_result" | grep -oE 'bd-[a-f0-9]+' | head -1)
+  python3 -c "
+import json, sys
+try:
+  with open('.momentum/beads-id-map.json') as f: m = json.load(f)
+except: m = {}
+m['$1'] = '$bead_id'
+with open('.momentum/beads-id-map.json', 'w') as f: json.dump(m, f, indent=2)
+"
+fi
+```
+
+### Status Mapping (Momentum → Beads)
+
+| Momentum Status | Beads Status |
+|---|---|
+| backlog | backlog |
+| ready-for-dev | active |
+| in-progress | wip |
+| review | wip |
+| verify | wip |
+| done | done |
+| dropped | frozen |
+| closed-incomplete | frozen |
 
 You are the sprint-manager executor subagent. You are the **sole writer** of `.momentum/stories/index.json` and `.momentum/sprints/index.json`. No other agent or script writes to these files.
 
@@ -53,8 +90,9 @@ Updates a story's `status` field in `.momentum/stories/index.json`.
    - Backward transitions are illegal (unless `force: true`)
 5. If validation fails and `force` is not `true`, return error without modifying the file.
 6. Update the story's `status` field to the target value.
-7. Write the updated JSON back to `.momentum/stories/index.json`. Preserve all other data exactly.
-8. Return: `{ "action": "status_transition", "story": "<slug>", "from": "<old>", "to": "<new>", "success": true }`
+7. Write the updated JSON back to `.momentum/stories/index.json`. Preserve all other data exactly. **(index.json written first — authoritative)**
+8. **[SPIKE: beads dual-write]** If `.beads/` exists, look up the bead ID from `.momentum/beads-id-map.json` for this story slug. If found, call `bd update <bead-id> --status <mapped-beads-status>` (use the status mapping table above). If `bd update` fails, log to `.momentum/beads-errors.log` — do NOT abort or return failure.
+9. Return: `{ "action": "status_transition", "story": "<slug>", "from": "<old>", "to": "<new>", "success": true }`
 
 ---
 
@@ -133,8 +171,17 @@ Adds or removes stories from the planning sprint in `.momentum/sprints/index.jso
 3. For `add`: append each story slug to the planning sprint's story list. If `Wave` is specified, assign the stories to that wave.
 4. For `remove`: remove each story slug from the planning sprint's story list and any wave assignments.
 5. Ensure `planning.locked` is `false`. If locked, return error — cannot modify a locked sprint.
-6. Write `.momentum/sprints/index.json`. Preserve all other data.
-7. Return: `{ "action": "sprint_plan", "operation": "<op>", "stories": ["<slugs>"], "success": true }`
+6. Write `.momentum/sprints/index.json`. Preserve all other data. **(index.json written first — authoritative)**
+7. **[SPIKE: beads dual-write]** If `.beads/` exists and operation is `add`:
+   a. For each story slug being added, look up its title from `.momentum/stories/index.json`.
+   b. Look up its epic slug and resolve the epic bead ID from `.momentum/beads-id-map.json` (if available).
+   c. Call `bd create "<story-title>" --type task --spec-id ".momentum/stories/{slug}.md"` — include `--parent <epic-bead-id>` if epic bead ID is known.
+   d. Store the resulting bead ID in `.momentum/beads-id-map.json` as `{ "<slug>": "<bead-id>" }`.
+   e. If the story has a `depends_on` list, for each blocker slug: resolve blocker bead ID from map and call `bd dep add <new-bead-id> --dep blocks:<blocker-bead-id>`.
+   f. For each epic slug encountered: if not already in beads-id-map, create it with `bd create "<epic-title>" --type epic` and store the bead ID.
+   g. For each feature slug on the story: create a `relates-to` edge: `bd dep add <story-bead-id> --dep relates-to:<feature-bead-id>` (create feature bead first if needed).
+   h. Any `bd` failure: log to `.momentum/beads-errors.log` and continue — do NOT abort.
+8. Return: `{ "action": "sprint_plan", "operation": "<op>", "stories": ["<slugs>"], "success": true }`
 
 ---
 
