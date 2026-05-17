@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-05-16'
+lastEdited: '2026-05-17'
 
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
@@ -44,3 +44,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-026 | [Build Pipeline Redesign — build-agents, agent-builder, constitution-builder Rework](dec-026-build-pipeline-redesign-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
 | DEC-027 | [Skill/Agent Development — Skill-Creator Pipeline + Change-Type Routing in Sprint-Dev](dec-027-skill-agent-development-skill-creator-pipeline-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
 | DEC-028 | [Beads as Tracker/Dependency/Memory Substrate — Adoption Under Momentum via Dual-Write Spike](dec-028-beads-tracker-memory-substrate-adoption-2026-05-16.md) | 2026-05-16 | beads-vs-momentum-tracker-evaluation-2026-05-16 | decided |
+| DEC-029 | [Method-Routed Acceptance Validation — Harness Profile, Per-Sprint E2E Coverage, and the Unified Validate-Fix Loop](dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md) | 2026-05-17 | (developer-conversation) | decided |
