@@ -5,7 +5,8 @@ date: 2026-05-18
 research_profile: heavy
 verdict: DONT_ADOPT_HERMES
 confidence: high
-avfl_score: 62/100
+avfl_score: 68/100
+followup_date: 2026-05-18
 files_synthesized: 9
 ---
 
@@ -70,7 +71,7 @@ Five structural incompatibilities, each independently sufficient to disqualify H
 
 **The inverted topology** (file 5). The Claude-plans/Hermes-delegates/Hermes-signals-back contract *is* feasible — but only inverted: Hermes owns operational state, and Claude is a Hermes **orchestrator-profile lane backed by `claude -p`**. Ingress is strong (idempotent `POST /api/plugins/kanban/tasks` with deterministic `--idempotency-key=momentum-<story-id>`, better than a filesystem watcher). 24/7 delegation is strong (literally what Hermes Kanban is built for).
 
-**The parent-task-wakeup callback `[UNVERIFIED]`.** The "decisive new fact" that would make the contract work: the originating task stays alive as the parent of every leaf, and *"when a watched task transitions to `done` or `blocked`, it injects a synthetic system message back into the orchestrator's ACP session."* This is the native Hermes→planner callback both prior docs assumed had to be hand-built. **It is `[UNVERIFIED]`** — search-surfaced from Hermes docs, *not confirmed against pinned source* (AVFL H-005). Per the AVFL report and file 8: **the DON'T ADOPT verdict does not depend on this mechanism being absent** — the split-brain (4.1) and worker-lane gap (4.3) are independently disqualifying. If verified real, Hermes-as-delegate becomes *technically feasible while remaining the wrong fit for Momentum.*
+**The parent-task-wakeup callback `[INVESTIGATED — does not exist as described]`.** The "decisive new fact" that would make the contract work: the originating task stays alive as the parent of every leaf, and *"when a watched task transitions to `done` or `blocked`, it injects a synthetic system message back into the orchestrator's ACP session."* This mechanism was investigated in a Gemini follow-up pass (2026-05-18). **ACP is not mentioned anywhere in 35k words of Hermes documentation. No "parent-task-wakeup" or orchestrator-session injection exists.** The actual callback path described is EXTERNAL: Hermes workers post to Claude Code Channels (`fakechat → http://localhost:8787`) after calling `kanban_complete`. This pushes a `<channel source="fakechat">` block into the Claude Code session — a custom integration requirement, not a native wakeup. Per the AVFL report and file 8: **the DON'T ADOPT verdict does not depend on this mechanism being absent** — the split-brain (4.1) and worker-lane gap (4.3) are independently disqualifying. This finding confirms the protocol requires a custom Channels integration rather than a native one.
 
 **Why it's still wrong even if feasible.** Choosing it means (a) surrendering state ownership to Hermes's SQLite DB, (b) re-platforming execution off Claude skills onto Hermes profiles, (c) running two always-on daemons where one Agent-SDK-daemon-over-beads achieves the same loop natively. The valuable artifact is Hermes's *protocol*, not its engine.
 
@@ -92,8 +93,8 @@ Five structural incompatibilities, each independently sufficient to disqualify H
 
 Carried forward verbatim from the AVFL report — these gate any future reconsideration:
 
-1. **parent-task-wakeup `[UNVERIFIED]`** — not pinned-source-confirmed. The DON'T ADOPT verdict does not depend on its absence, but a **source-code spike of the Hermes repo is required before any Hermes-adoption scenario** is reconsidered.
-2. **Serial-vs-parallel per assignee `[UNVERIFIED]`** — whether the Hermes dispatcher serializes per assignee or spawns multiple same-assignee workers is decision-critical for Momentum's wide same-role dev waves. **Must be spike-tested before any Hermes adoption.** If it serializes, Hermes cannot natively reproduce Momentum's wide dev waves without splitting one role into N synthetic profiles.
+1. **parent-task-wakeup `[RESOLVED — does NOT exist as described]`** — Gemini follow-up (2026-05-18) found no ACP mechanism in 35k words of Hermes documentation. The actual callback is via Claude Code Channels external integration (`fakechat → localhost:8787`). This is a custom integration requirement, not a native wakeup. The DON'T ADOPT verdict does not depend on its absence; the split-brain (4.1) and worker-lane gap (4.3) remain independently disqualifying.
+2. **Serial-vs-parallel per assignee `[RESOLVED — confirmed fan-out]`** — Gemini follow-up (2026-05-18) directly quotes the Hermes documentation: *"Independent, unlinked lanes are processed concurrently by the dispatcher, fanning out across multiple OS worker processes to maximize execution speed."* Multiple same-assignee tasks with no parent-child dependency run concurrently. Serial behavior requires explicit parent→child links. Hermes CAN run multiple same-assignee workers concurrently — this partially addresses one concern but does not change the overall DON'T ADOPT verdict.
 3. **Circuit-breaker defaults — unresolved 3-way contradiction (2 vs 3 vs 5)** across official docs. Do not rely on any specific default without verifying against `docs/hermes-kanban-v1-spec.pdf` or current Hermes source. (Operator-overridable via `kanban.failure_limit` regardless.)
 4. **beads SoT state** — `index.json` is currently authoritative; beads is the designated post-spike target (DEC-028 dual-write spike). The split-brain analysis and the Hermes-as-delegate verdict **apply in both the current and post-spike states**; beads SoT gates depend on the dual-write spike passing.
 5. **Gemini file is an outlier** — all 8 factual fabrications and 4 structural defects are documented. Do not use Gemini-specific claims as decision evidence unless independently corroborated by the 8 specialist files.
