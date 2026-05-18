@@ -7,6 +7,7 @@ feature_slug: momentum-agent-role-contracts
 story_type: practice
 depends_on:
   - momentum-harnessjson-schema-and-plugin-shipped-defaults
+change_type: [agent-definition]
 touches:
   - skills/momentum/agents/e2e-validator.md
   - skills/momentum/agents/evals/

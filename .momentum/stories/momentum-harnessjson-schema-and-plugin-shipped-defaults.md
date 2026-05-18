@@ -6,6 +6,7 @@ epic_slug: bring-your-own-tools
 feature_slug: momentum-protocol-based-integration
 story_type: practice
 depends_on: []
+change_type: [config-structure, skill-instruction]
 touches:
   - momentum/verification-harness.json
   - skills/momentum/skills/agent-builder/workflow.md
