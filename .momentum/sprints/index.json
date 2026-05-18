@@ -1,6 +1,17 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
+      "momentum-harnessjson-schema-and-plugin-shipped-defaults",
+      "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven",
+      "create-story-method-selection-step",
+      "sprint-planning-frozen-per-story-contract-holistic-coverage"
+    ],
+    "waves": []
+  },
   "completed": [
     {
       "locked": true,

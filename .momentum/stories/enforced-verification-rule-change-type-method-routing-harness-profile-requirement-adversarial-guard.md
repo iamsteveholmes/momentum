@@ -1,112 +1,240 @@
 ---
 title: "Enforced verification rule — change-type method-routing, harness-profile requirement, adversarial guard"
 story_key: enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard
-status: backlog
+status: ready-for-dev
 epic_slug: quality-enforcement
 feature_slug: momentum-quality-gates-enforced
 story_type: practice
+change_type: [rule-hook, specification]
 depends_on: []
-touches: []
+touches:
+  - skills/momentum/references/rules/verification-standard.md
+  - docs/process/acceptance-testing-standard.md
 ---
 
 # Enforced verification rule — change-type method-routing, harness-profile requirement, adversarial guard
 
-<!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
-     stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
-     by create-story before any development begins. -->
-
-_This story is a backlog stub. Run `momentum:create-story` on it when ready to make it
-dev-ready. Do NOT assign to a developer until create-story has enriched it._
-
 ## Story
 
-As a developer,
-I want a single enforced verification rule that routes verification method by change-type and requires a harness profile,
-so that every change is verified by the right method with no insider-knowledge shortcut, and the retired standard is no longer an inert document.
+As a Momentum developer,
+I want a single enforced verification rule that routes verification method by change-type, requires every verified change to declare a harness profile, and blocks insider-knowledge shortcuts,
+so that the retired acceptance-testing-standard.md is replaced by an actively enforced constraint that the validator and sprint-dev cannot ignore.
 
 ## Description
 
-Create the enforced verification rule that replaces the retired acceptance-testing-standard.md. It defines: change-type-driven verification method routing (DEC-029 D1); a hard requirement that every verified change declare a harness profile (D3); and an adversarial anti-insider-knowledge guard so verification cannot pass by reading implementation details (D6). The rule cascades global → project → path-scoped (D7). This replaces the 'process document' artifact class with an enforced rule (DEC-029 D7).
+DEC-029 Decision D7 dissolves the "process document" artifact class. `acceptance-testing-standard.md` is the evidence: it specified a five-method routing matrix that the `e2e-validator` agent entirely ignored, because the standard had no enforcement teeth. A document that governs agents without being loaded by those agents is dead documentation.
 
-**Pain context:** Source: DEC-029 (_bmad-output/planning-artifacts/decisions/dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md), decisions D1/D3/D6/D7. Phase 1 build is gated on routing-table-schema-and-implementation landing momentum/agents.json (DEC-029 Gate 1). create-story method-selection (separate stub) routes off this rule.
+This story delivers the replacement: a **concise, enforced rule** at `skills/momentum/references/rules/verification-standard.md` that gets written by Impetus to `~/.claude/rules/` (global) and `.claude/rules/` (project) on first run. Four decisions compile into this rule:
+
+- **D1** — Method routing: every story's change-type maps to a required verification method. The validator reads the table and applies the method; it cannot substitute a different method without a written justification in the frozen contract.
+- **D3** — Harness profile: every verified change must declare which entry in `momentum/harness.json` it uses. A verification that runs without a harness profile declaration fails the gate.
+- **D6** — Adversarial anti-insider-knowledge guard: any frozen contract whose verification requires insider/application knowledge is rejected. Contracts must be verifiable with no more knowledge than an ordinary user of the system has.
+- **D7** — Cascade: the rule cascades global → project → path-scoped, per the established authority hierarchy. `acceptance-testing-standard.md` is retired: its rationale now lives in DEC-029; its enforceable content lives in this rule.
+
+The retired `acceptance-testing-standard.md` is not deleted — it is marked retired with a forwarding pointer to DEC-029 and the new rule.
+
+Gate 1 is already cleared: `routing-table-schema-and-implementation` is done and `momentum/agents.json` exists.
 
 ## Acceptance Criteria
 
-<!-- DRAFT: These are rough acceptance criteria captured from conversation. They have NOT
-     been refined, validated against architecture, or verified for completeness. This
-     section MUST be fully rewritten by create-story before development. -->
+**AC-1: Rule file exists at the correct plugin-bundled path**
+The file `skills/momentum/references/rules/verification-standard.md` exists in the Momentum plugin source tree and is non-empty.
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**AC-2: Rule defines the change-type → verification-method routing table**
+When `verification-standard.md` is read, it contains a routing table mapping each of the following change types to its required verification method: `skill-instruction` → EDD eval; `agent-definition` → run-once behavioral check; `rule-hook` → behavioral trigger test; `script-code` and `script-cli` → execution test; `app-ui` → smoke (build + launch + drive); `research-spike` → document review. The table is complete — no change type is listed without a required method.
 
-The following are rough draft ACs captured from conversation:
-- method routing table keyed by change-type
-- harness-profile declaration is mandatory and validated
-- adversarial anti-insider-knowledge guard defined
-- cascade order global→project→path-scoped documented
-- replaces acceptance-testing-standard.md (retired by D7)
+**AC-3: Rule prohibits method substitution without written justification**
+When `verification-standard.md` is read, it contains an explicit statement that a story may override its default method only when a written justification appears in the story's frozen contract, and that the validator reads the justification but cannot author it.
 
-> Note: The ACs above are rough captures from conversation. They are starting points
-> only. Create-story will replace them with validated, testable acceptance criteria.
+**AC-4: Rule mandates harness-profile declaration**
+When `verification-standard.md` is read, it contains an explicit requirement that every verified change must declare a harness-profile reference — naming the entry in `momentum/harness.json` that governs execution environment, driver binding, and readiness probes. A verification that proceeds without a declared harness profile is non-compliant.
+
+**AC-5: Rule defines the adversarial anti-insider-knowledge guard**
+When `verification-standard.md` is read, it contains a guard clause stating that any frozen contract whose verification steps require insider or application knowledge is rejected. The rule defines "insider knowledge" as any fact not available to an ordinary user of the system — implementation details, source code internals, test fixture values, internal API names. The guard applies at contract-authoring time and at validation time.
+
+**AC-6: Rule states the cascade order**
+When `verification-standard.md` is read, it explicitly states the cascade order: global (`~/.claude/rules/verification-standard.md`) → project (`.claude/rules/verification-standard.md`) → path-scoped (per `.claude/rules/` path-scoped overrides). Lower-scope overrides are permitted only for the harness-profile reference and method justification fields — not for the routing table or the adversarial guard.
+
+**AC-7: `acceptance-testing-standard.md` is retired with a forwarding pointer**
+When `docs/process/acceptance-testing-standard.md` is read, its Status field reads `Retired` (previously `Active`), and it contains a forwarding note directing readers to DEC-029 for rationale and to `skills/momentum/references/rules/verification-standard.md` for the enforceable content. No substantive content is deleted from the file — the forwarding note is prepended.
+
+**AC-8: Impetus rule-write path includes the new rule**
+When `skills/momentum/references/momentum-versions.json` (or the Impetus rule-write manifest, wherever the rule-write targets are listed) is read, it includes `verification-standard.md` in the list of rules that Impetus writes to `~/.claude/rules/` and `.claude/rules/` on first invocation. The source path and target path are both present.
+
+**AC-9: Rule is self-sufficient — no cross-file lookup required to apply it**
+When `verification-standard.md` is read in isolation (without loading DEC-029, `acceptance-testing-standard.md`, or `momentum/harness.json`), the routing table, harness-profile requirement, adversarial guard, and cascade order are all fully stated. Agents loading only this rule file have complete enforcement guidance.
+
+**AC-10: Rule is concise — under 150 lines**
+The body of `verification-standard.md` (excluding YAML frontmatter) is 150 lines or fewer. If the full routing rationale and historical context cannot fit, deep-rationale content is extracted to a `references/verification-rationale.md` companion and `verification-standard.md` references it with a load instruction.
 
 ## Tasks / Subtasks
 
-<!-- DRAFT: No tasks have been analyzed or planned. This section MUST be populated by
-     create-story, which will break down the work based on architecture analysis and
-     implementation guidance. -->
+- [ ] **Task 1: Author `skills/momentum/references/rules/verification-standard.md`** (`rule-hook`)
+  - Write the complete, self-sufficient rule file
+  - Include: routing table (D1), method-override prohibition with written-justification escape, harness-profile mandate (D3), adversarial anti-insider-knowledge guard (D6), cascade order statement (D7)
+  - Verify conciseness: body ≤150 lines; extract to companion reference if needed
+  - Verify self-sufficiency: rule is complete without loading sibling documents
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+- [ ] **Task 2: Retire `docs/process/acceptance-testing-standard.md`** (`specification`)
+  - Prepend retirement notice and forwarding pointer to DEC-029 + new rule
+  - Update Status field from `Active` to `Retired`
+  - Do not delete existing content
 
-- [ ] Tasks not yet defined — run create-story to analyze and plan implementation
+- [ ] **Task 3: Register rule in Impetus rule-write manifest** (`specification`)
+  - Locate the list of rule files Impetus writes on first invocation (in `momentum-versions.json` or the Impetus workflow rule-write section)
+  - Add `verification-standard.md` with source path `skills/momentum/references/rules/verification-standard.md` and both write targets: `~/.claude/rules/verification-standard.md` and `.claude/rules/verification-standard.md`
+  - Verify no duplicate entries
 
 ## Dev Notes
 
-<!-- DRAFT: Not yet populated. Run create-story to enrich with architecture analysis,
-     implementation guide, technical requirements, and Momentum-specific guidance. -->
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-No technical analysis has been performed. The following sub-sections are all stubs.
-
 ### Architecture Compliance
 
-<!-- DRAFT: Architecture compliance has not been assessed for this story. -->
+**Rules architecture (from architecture.md Decision 5 + plugin model):**
+Rules live at `skills/momentum/references/rules/` in the plugin source. The plugin install cannot write to `~/.claude/rules/` or `.claude/rules/` directly — Impetus writes those targets using the Write tool on first `/momentum:impetus` invocation. The existing rule-write manifest is the canonical list of what Impetus writes. This story adds one entry to that list.
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+The authority hierarchy cascade (global → project → path-scoped) is already established by `skills/momentum/references/rules/authority-hierarchy.md`. The new rule must explicitly state that it follows this cascade — it doesn't invent a new mechanism.
+
+**No new enforcement hook is required.** The rule enforces through the authority hierarchy: agents that load `~/.claude/rules/verification-standard.md` are bound by its content. The downstream stories (`e2e-validator-agent-body-rewrite`, `create-story-method-selection-step`) will wire their workflows to read and obey this rule. This story only writes the authoritative rule text.
+
+**Harness profile reference vs. harness.json schema:** This story's rule mandates that verified changes declare a harness profile name. The `momentum/harness.json` schema and defaults are defined by the `momentum-harnessjson-schema-and-plugin-shipped-defaults` story (sibling in this sprint). The rule references harness profiles by name only — it does not define the schema. This story does not depend on the harness story; both can proceed in parallel.
+
+**Cascade override scope:** Per D7, the rule cascades global → project → path-scoped. Only harness-profile references and method justifications are overridable at lower scope. The routing table and adversarial guard are global-only and cannot be overridden at project or path scope. State this explicitly in the rule.
 
 ### Testing Requirements
 
-<!-- DRAFT: Testing requirements have not been defined for this story. -->
+This story has two change types: `rule-hook` (Task 1, the rule file itself) and `specification` (Tasks 2 and 3, the retirement notice and manifest update). Each requires its own verification approach:
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**Task 1 (rule-hook): Functional Verification**
+State the expected behavior as a testable condition before writing:
+- "Given an agent loads `~/.claude/rules/verification-standard.md`, when it evaluates a `skill-instruction` story, it must apply EDD eval as the verification method."
+- "Given a frozen contract requires reading source code internals to verify, when the adversarial guard is applied, the contract is rejected."
+Verify by inspection: confirm all required sections are present, the routing table is complete, and the rule is internally consistent. Confirm body ≤150 lines.
+
+**Tasks 2–3 (specification): Direct Authoring with Cross-Reference Verification**
+After writing, verify:
+- `acceptance-testing-standard.md` Status field is `Retired`
+- Forwarding pointer references both DEC-029 path and the new rule path — both paths must exist on disk after Task 1 completes
+- Momentum-versions.json or the rule-write manifest contains the new entry with correct source and both target paths
+- No existing entries in the manifest are disturbed
 
 ### Implementation Guide
 
-<!-- DRAFT: No implementation guide has been generated. Create-story will inject
-     Momentum-specific guidance based on change-type classification. -->
+**Order of operations:**
+1. Write `verification-standard.md` (Task 1) first — Tasks 2 and 3 reference its path.
+2. Retire `acceptance-testing-standard.md` (Task 2) after Task 1 exists so the forwarding pointer resolves.
+3. Register in manifest (Task 3) last.
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**Rule file structure (suggested skeleton):**
+```
+---
+title: Verification Standard
+applies_to: All Momentum stories
+status: Active
+cascade: global → project → path-scoped
+---
+
+# Verification Standard
+
+## 1. Method Routing Table
+[routing table by change-type]
+
+## 2. Method Override
+[written justification requirement]
+
+## 3. Harness Profile Requirement
+[mandatory declaration]
+
+## 4. Adversarial Anti-Insider-Knowledge Guard
+[guard definition + what counts as insider knowledge]
+
+## 5. Cascade Order
+[global → project → path-scoped; what can/cannot be overridden]
+```
+
+**Finding the rule-write manifest:** Search for where existing rules are registered. The architecture references `momentum-versions.json` and a write-targets list in Impetus. Run `grep -r "authority-hierarchy" skills/momentum/` to find the canonical reference — the new rule registration follows the same pattern.
+
+**What counts as insider knowledge (for the rule text):** implementation details not in the story spec, source code internals, test fixture values, internal API names, any fact about how the code is structured rather than what it does. Ordinary-user knowledge is: what the skill/agent does, what inputs it accepts, what observable outputs it produces, what the story's Acceptance Criteria state.
 
 ### Project Structure Notes
 
-<!-- DRAFT: File paths, skill directories, and structural alignment have not been
-     analyzed. Create-story will populate this based on the relevant epic and
-     existing codebase structure. -->
+Files touched by this story:
+- `skills/momentum/references/rules/verification-standard.md` — **new file** (Task 1)
+- `docs/process/acceptance-testing-standard.md` — **modified** (Task 2; prepend retirement notice, update Status)
+- The rule-write manifest (location: search for existing rule registrations in `skills/momentum/references/momentum-versions.json` or Impetus workflow) — **modified** (Task 3; add one entry)
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+Files **not** touched by this story:
+- `momentum/harness.json` — owned by `momentum-harnessjson-schema-and-plugin-shipped-defaults`
+- `skills/momentum/agents/e2e-validator.md` — owned by `e2e-validator-agent-body-rewrite-de-gherkin-harness-driven`
+- `skills/momentum/skills/create-story/workflow.md` — owned by `create-story-method-selection-step`
+- `skills/momentum/skills/sprint-planning/workflow.md` — owned by `sprint-planning-frozen-per-story-contract-holistic-coverage`
+
+No new directories. No new JSON config files. No new scripts.
 
 ### References
 
-<!-- DRAFT: No references have been identified. Create-story will add source citations
-     from architecture docs, PRD, and relevant code. -->
+- `_bmad-output/planning-artifacts/decisions/dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md` — D1 (method routing), D3 (harness profile), D6 (adversarial guard), D7 (dissolve process-doc class, retire acceptance-testing-standard.md)
+- `docs/process/acceptance-testing-standard.md` — retired predecessor; its five-method matrix and role-separation content are the foundation for the new routing table
+- `skills/momentum/references/rules/authority-hierarchy.md` — establishes the cascade mechanism this rule follows
+- `_bmad-output/planning-artifacts/architecture.md` — Rules Architecture section (Decision 5 / plugin model); rule-write manifest location and Impetus write sequence
+- `.momentum/stories/index.json` — confirm `routing-table-schema-and-implementation` status is `done` (Gate 1 cleared) before starting
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+---
+
+## Momentum Implementation Guide
+
+**Change Types in This Story:**
+- Task 1 → rule-hook (functional verification)
+- Tasks 2, 3 → specification (direct authoring with cross-reference verification)
+
+---
+
+### rule-hook Tasks: Functional Verification
+
+Rules and hook configurations are declarative — they don't have unit tests. Use functional verification:
+
+1. **Write the rule** per the established format in existing `.claude/rules/` files. Use the skeleton structure from the Implementation Guide above.
+2. **State the expected behavior** as testable conditions before writing:
+   - "Given an agent loads `verification-standard.md`, when evaluating a `skill-instruction` story, it applies EDD eval — not Gherkin, not execution test."
+   - "Given a frozen contract requires reading source code to verify, when the adversarial guard is applied, the contract is rejected as insider-knowledge."
+   - "Given a story proceeds to validation without a declared harness-profile, the rule marks the verification non-compliant."
+3. **Verify by inspection after writing:**
+   - All five required sections present (routing table, override prohibition, harness mandate, adversarial guard, cascade order)
+   - Routing table covers all change types listed in AC-2 — no gaps
+   - Body ≤150 lines (count precisely)
+   - Rule is internally consistent — no section contradicts another
+4. **Document** the verification result and expected behaviors in the Dev Agent Record
+
+**Format requirements:**
+- Rules files in `.claude/rules/` must follow the established markdown format (see `authority-hierarchy.md` for style reference)
+- No duplicate rule files — confirm no existing `verification-standard.md` at any level before creating
+
+**Additional DoD items for rule-hook tasks:**
+- [ ] Expected behaviors stated as testable conditions (documented in Dev Agent Record before writing)
+- [ ] Functional verification performed and result documented (all AC checks passed by inspection)
+- [ ] Format matches established rule file patterns
+- [ ] Body ≤150 lines confirmed (count the actual lines)
+
+---
+
+### specification Tasks: Direct Authoring with Cross-Reference Verification
+
+Specification and documentation changes are validated by AVFL against their upstream source — not by tests or evals. Write directly and verify by inspection:
+
+1. **Write or update the spec** per the story's acceptance criteria (Tasks 2 and 3)
+2. **Verify cross-references after writing:**
+   - `acceptance-testing-standard.md`: forwarding pointer references DEC-029 path — confirm file exists; references `verification-standard.md` path — confirm Task 1 completed first
+   - Rule-write manifest: new entry's source path resolves to the file written in Task 1; both target paths follow the established `~/.claude/rules/` and `.claude/rules/` pattern
+3. **Verify format compliance:**
+   - Retirement notice follows the established Momentum documentation convention (Status field update + forwarding section)
+   - Manifest entry matches the schema of existing entries (same fields, same format)
+4. **Document** what was written or updated in the Dev Agent Record
+
+**Additional DoD items for specification tasks:**
+- [ ] All cross-references resolve correctly (both paths in forwarding pointer, both manifest targets)
+- [ ] Document follows project template/format conventions
+- [ ] AVFL checkpoint result documented (momentum-dev runs this automatically)
 
 ## Dev Agent Record
-
-<!-- DRAFT: This section is populated only during and after development. It is empty
-     because this story has not been through create-story or development yet. -->
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
 
 ### Agent Model Used
 
