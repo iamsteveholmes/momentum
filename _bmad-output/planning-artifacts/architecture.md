@@ -39,8 +39,10 @@ workflowType: 'architecture'
 project_name: 'momentum'
 user_name: 'Steve'
 date: '2026-03-17'
-lastEdited: '2026-05-16'
+lastEdited: '2026-05-18'
 editHistory:
+  - date: '2026-05-18'
+    changes: 'Sprint-2026-05-17 spec impact (DEC-029 Phase 1): Added momentum/verification-harness.json to plugin root layout table (defaults block + project block; sole writers: agent-builder, agent-guidelines). Added momentum/verification-harness.json row to Read/Write Authority table (readers: e2e-validator, sprint-planning; writers: agent-builder, agent-guidelines; plugin ships defaults with all surfaces "skip"). Updated Rules Architecture subsystem (4) to note verification-standard.md as a new plugin-shipped rule written by Impetus to ~/.claude/rules/ on first run, replacing retired docs/process/acceptance-testing-standard.md. Updated E2E Validator role description in Skills Deployment Classification and Decision 35 Application table: now method-polymorphic and harness-driven, dispatches by contract file extension (.eval.yaml, .trigger.md, .smoke.sh, .review.md, .feature), reads momentum/verification-harness.json at startup. Added verification_method as story file YAML frontmatter field (written by momentum:create-story at story creation time; derived from verification-standard.md routing table). Added coverage-plan.md to per-sprint folder structure tree (DEC-029; post-activation immutable). Updated .momentum/ State Layout tree and Installed Structure tree to reflect all 5 contract types in specs/ directory plus coverage-plan.md. Updated Protection Boundaries: specs/ now covers all 5 contract types (not Gherkin-only); added coverage-plan.md as post-activation immutable path. Updated sprint-planning Read/Write Authority row to include verification-harness.json as read, multi-extension contracts and coverage-plan.md as writes. Extended Decision 30 to cover all 5 contract types (not Gherkin-only). Added Decision 58 (DEC-029 D3: verification-harness.json Validation Harness Profile).'
   - date: '2026-05-16'
     changes: 'Sprint-2026-05-16 spec impact (DEC-023, DEC-026, DEC-028): Added momentum/agents.json to plugin root layout table (defaults block + project block, agent-builder sole writer). Added .momentum/beads-id-map.json (git-tracked slug→bead hash map) and .beads/ (gitignored Dolt DB) to Installed Structure tree. Added three rows to Read/Write Authority table: momentum/agents.json (sole writer: agent-builder), momentum-tools agent-resolve (pure resolver, no writes), agents/ux.md + analyst.md + researcher.md (structured output only). Added ux.md, analyst.md, researcher.md to agents/ directory listing in Repository Structure (preview + full) and Decision 35 plugin structure. Added base body conventions note to Decision 35: CREED block (3-5 I-verb-because anchors), constitution.md as project context source, mandatory output templates with AGENT_OUTPUT_START/END sentinel markers, prohibitions with consequence clauses. Added routing-table-driven specialist resolution note to Sprint Execution Flow Phase 2 (momentum-tools agent-resolve --role dev --touches). Added routing-table-driven reviewer resolution note to Sprint Execution Flow Phase 5 (momentum-tools agent-resolve --role qa-reviewer/e2e-validator). Added Decision 55 (DEC-023: Agent Routing Table — agents.json schema, defaults 9 roles + project block, glob-match resolution algorithm, 1..N fan-out, write_permissions enforcement). Added Decision 56 (DEC-026 D3/D5: Agent Builder Three-Skill Pipeline — constitution-builder Tier 1 once, agent-builder Tier 2 per role×domain, build-agents orchestrates, constitution.md as context source, agent-builder writes .claude/guidelines/agents/{role}-{domain}.md + routing entry). Added Decision 57 (DEC-028: Beads Dual-Write Spike — index.json authoritative, sprint-manager mirrors to beads best-effort, bd ready --json --claim as Phase 1 dependency source, bd prime --no-git-ops via SessionStart hook, .beads/ gitignored, .momentum/beads-id-map.json git-tracked, four gate criteria).'
   - date: '2026-05-03'
@@ -113,7 +115,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 3. **Hook Infrastructure (Tier 1 Deterministic)** — PostToolUse auto-lint/format, PreToolUse acceptance test directory protection, PreToolUse file protection, PreToolUse git-commit quality gate, PreToolUse plan audit gate (ExitPlanMode), Stop conditional quality gate. Two hook deployment mechanisms: (1) **Always-on hooks** — defined in `hooks/hooks.json` at the plugin root; delivered automatically by the plugin install mechanism; these fire on every matching tool event in every session regardless of which skill is active. Hook scripts are distributed globally to `~/.claude/momentum/hooks/` as the primary path; the plugin's `hooks/` directory serves as an override fallback for project-local scripts. The `hooks-config.json` in `references/` defines the path resolution logic — global scripts are preferred, with project-local scripts taking precedence when both exist. (2) **Skill-lifecycle hooks** — defined in SKILL.md `hooks:` frontmatter; scoped to the skill's lifetime; only fire while that skill is active; automatically cleaned up when the skill completes. Complemented by standard git hooks (Husky/pre-commit framework) at the repository level.
 
-4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `references/rules/` at the plugin root. The plugin install mechanism does not write to `~/.claude/rules/` or `.claude/rules/` directly — Impetus writes rules to both targets on first `/momentum:impetus` invocation using the Write tool. No separate setup step.
+4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `references/rules/` at the plugin root. The plugin install mechanism does not write to `~/.claude/rules/` or `.claude/rules/` directly — Impetus writes rules to both targets on first `/momentum:impetus` invocation using the Write tool. No separate setup step. **`skills/momentum/references/rules/verification-standard.md` is a plugin-shipped rule (added sprint-2026-05-17, `enforced-verification-rule` story): Impetus writes it to `~/.claude/rules/` on first run. It establishes the enforcement-tier taxonomy, change-type → verification-method routing table, and the mandatory `verification_method` frontmatter field for story files. It replaces `docs/process/acceptance-testing-standard.md`, which is now retired.**
 
 5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection), momentum:dev (story executor, spawned by sprint-dev skill). code-reviewer and architecture-guard use `context: fork` for producer-verifier isolation. momentum:dev runs as a flat subagent (main context) for story execution. Two-layer agent model (Decision 26): Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard); projects provide role-specific stack guidelines wired together during sprint planning. Agent Teams share a working directory with commit-as-sync-point. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
 
@@ -204,8 +206,13 @@ Momentum's operational runtime state lives under a single hidden top-level direc
 │   └── {sprint-slug}/                           ← Per-sprint subtree
 │       ├── sprint-summary.md                    ← Decision 47 — written by retro at Phase 6 close
 │       ├── retro-transcript-audit.md            ← Decision 27 — written by retro documenter
-│       ├── specs/                               ← Decision 30 — Gherkin .feature files (sprint-planning writes; verifier-only reads)
-│       │   └── {story-slug}.feature
+│       ├── specs/                               ← Contract files (sprint-planning writes; verifier-only reads)
+│       │   ├── {story-slug}.feature             ← Gherkin (Decision 30)
+│       │   ├── {story-slug}.eval.yaml           ← LLM eval
+│       │   ├── {story-slug}.trigger.md          ← Trigger-based
+│       │   ├── {story-slug}.smoke.sh            ← Smoke test
+│       │   └── {story-slug}.review.md          ← Manual review
+│       ├── coverage-plan.md                     ← Per-sprint verification coverage plan (DEC-029; post-activation immutable)
 │       └── audit-extracts/                      ← Decision 27 — DuckDB preprocessing output
 │           ├── user-messages.jsonl
 │           ├── agent-summaries.jsonl
@@ -315,7 +322,7 @@ The defining question for each component: *does this need main-context persona p
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure spawned worker — reviews code against story ACs during Team Review (Decision 34). Never user-invoked (Decision 35). |
-| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure spawned worker — tests running behavior against Gherkin specs during Team Review (Decision 34). Never user-invoked (Decision 35). |
+| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure spawned worker — method-polymorphic and harness-driven (sprint-2026-05-17, `e2e-validator-agent-body-rewrite` story). Reads `momentum/verification-harness.json` at startup; dispatches by contract file extension: `.eval.yaml` (LLM eval), `.trigger.md` (trigger-based), `.smoke.sh` (smoke test), `.review.md` (manual review prompt), `.feature` (Gherkin). Never user-invoked (Decision 35). Used in sprint Team Review (Decision 34) and quick-fix Phase 4 validation (Decision 40). |
 | Always-on hooks | `hooks/hooks.json` (plugin root) | Delivered by plugin install; fire every session regardless of active skill |
 | Global rules | `~/.claude/rules/` | Bundled in `references/rules/` at plugin root; Impetus writes on first run |
 | Project rules | `.claude/rules/` | Bundled in `references/rules/` at plugin root; Impetus writes on first run |
@@ -407,6 +414,7 @@ The `name` field determines the namespace prefix for all skills. With `"name": "
 | `references/` | Rules, practice docs, version manifest | Plugin install |
 | `agents/` | Custom agent definitions for teams | Plugin install |
 | `momentum/agents.json` | Agent routing table — `defaults` block (9 roles, plugin-shipped) + `project` block (per-role×domain entries, written by agent-builder) | Plugin ships defaults; agent-builder writes project entries |
+| `momentum/verification-harness.json` | Validation harness profile — `defaults` block (plugin-shipped) + `project` block (per-project overrides written by agent-builder/agent-guidelines) | Plugin ships defaults block; agent-builder/agent-guidelines write project block |
 | `mcp/` | Custom MCP server source (Epic 6) | Plugin install |
 
 Hooks in `hooks/hooks.json` are active immediately after plugin install — no Impetus invocation required. Rules in `references/rules/` require Impetus to write them to `~/.claude/rules/` and `.claude/rules/` because the plugin cannot write outside its own directory.
@@ -1314,7 +1322,13 @@ momentum/                                    ← Plugin root
     ├── sprints/
     │   ├── index.json                          ← Sprint registry (Decision 36)
     │   └── {sprint-slug}/                      ← Per-sprint runtime artifacts (see Sprint Tracking Schema)
-    │       ├── specs/*.feature                 ← Gherkin specs (Decision 30, written by sprint-planning)
+    │       ├── specs/                          ← Contract files (Decision 30 + DEC-029, written by sprint-planning)
+    │       │   ├── *.feature                   ← Gherkin contracts
+    │       │   ├── *.eval.yaml                 ← LLM eval contracts
+    │       │   ├── *.trigger.md                ← Trigger contracts
+    │       │   ├── *.smoke.sh                  ← Smoke test contracts
+    │       │   └── *.review.md                 ← Manual review contracts
+    │       ├── coverage-plan.md                ← Per-sprint verification coverage plan (DEC-029; post-activation immutable)
     │       ├── retro-transcript-audit.md       ← Retro findings document (Decision 27, written by retro)
     │       ├── sprint-summary.md               ← Sprint summary (Decision 47, written by retro at Phase 6 close)
     │       └── audit-extracts/                 ← DuckDB preprocessing output (Decision 27)
@@ -1350,7 +1364,7 @@ momentum/                                    ← Plugin root
 | momentum:refine | prd.md, architecture.md, `.momentum/stories/index.json`, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); `.momentum/stories/index.json` mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
 | momentum:feature-status **(deprecated — use momentum:canvas)** | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json` | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
 | canvas server (Bun process, port 3456) | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/stories/{slug}.md` | _(none — read-only server)_ |
-| momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files | `.momentum/sprints/{sprint-slug}/specs/*.feature` (Gherkin specs); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
+| momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files, `momentum/verification-harness.json` (for per-story contract-type selection) | `.momentum/sprints/{sprint-slug}/specs/` (multi-extension contract files: `.feature`, `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md` per story `verification_method`); `.momentum/sprints/{sprint-slug}/coverage-plan.md` (written at activation, then immutable); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
 | momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
 | momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md, `.claude/momentum/feature-status.md` | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`); spawns `/momentum:feature-status` to refresh cache before summary write |
 | momentum:triage | `.momentum/stories/index.json`, `.momentum/intake-queue.jsonl` | `.momentum/intake-queue.jsonl` (SHAPING/DEFER/REJECT entries via `momentum-tools intake-queue`); `.momentum/signals/*.json` (e.g., `triage-uncleared-*` when observations remain unresolved) |
@@ -1366,6 +1380,7 @@ momentum/                                    ← Plugin root
 | ATDD workflow | Gherkin spec | `tests/acceptance/` only |
 | Coding agents (dev-story) | Specs, rules, existing code | Source code, unit tests |
 | `momentum/agents.json` | Read by all skills at spawn time (routing resolution) | Sole writers: agent-builder (writes `project` array entries per role×domain); plugin ships `defaults` block — agent-builder never overwrites defaults |
+| `momentum/verification-harness.json` | Read by e2e-validator at startup (harness profile) and sprint-planning (contract-type selection per story) | Sole writers: agent-builder (writes `project` block overrides); agent-guidelines (writes `project` block overrides); plugin ships `defaults` block (all surfaces default to `"skip"`) — neither skill overwrites the `defaults` block |
 | `momentum-tools agent-resolve` | `momentum/agents.json` (reads `defaults` + `project` blocks, glob-matches paths against `project` entries, falls back to `defaults.dev`) | _(none — pure resolver, no writes)_ |
 | `agents/ux.md`, `agents/analyst.md`, `agents/researcher.md` | Spawned by skills during specialized phases; read story files, research inputs, planning artifacts | Structured findings output only; no direct file writes |
 
@@ -1374,7 +1389,8 @@ momentum/                                    ← Plugin root
 - `_bmad-output/planning-artifacts/` — spec authority. Exception: momentum:refine wave-2 update subagents may write to prd.md and architecture.md as sole authorized writers, following developer approval gate.
 - `.claude/rules/` — enforcement rule integrity
 - `~/.claude/momentum/findings-ledger.jsonl` — Ledger integrity (authority-enforced; global path is outside project PreToolUse scope)
-- `.momentum/sprints/{sprint-slug}/specs/` — Gherkin spec integrity (Decision 30: dev agents must never write to this path; only sprint-planning writes, only verifiers read)
+- `.momentum/sprints/{sprint-slug}/specs/` — Contract file integrity (Decision 30 + DEC-029: dev agents must never write to this path; only sprint-planning writes, only verifiers read; covers all five contract types: `.feature`, `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md`)
+- `.momentum/sprints/{sprint-slug}/coverage-plan.md` — Post-activation immutable (DEC-029, `sprint-planning-frozen-per-story-contract` story: coverage-plan.md is written by sprint-planning at activation time and must not be modified after sprint activation)
 - `.momentum/stories/index.json`, `.momentum/sprints/index.json` — sole writer is `momentum-tools.py sprint`. Direct edits by any other agent are blocked. (Per-sprint `.momentum/sprints/{slug}.json` retired per DEC-012 — no longer a protected path because it is no longer written.)
 - `.momentum/intake-queue.jsonl` — append-only via `momentum-tools intake-queue`. Direct edits blocked.
 - `.momentum/signals/` — read-only ledger pattern. Writers go through skill-defined paths (e.g., retro/triage/avfl signal writers); manual edits blocked.
@@ -1519,7 +1535,7 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 > _Revised 2026-04-01: sprint-status.yaml is deprecated. Story and sprint state is now decomposed into a `stories/` folder and a `sprints/` folder. All status writes via momentum-tools.py sprint CLI (formerly momentum:sprint-manager subagent)._
 > _Revised 2026-04-28: Folder root migrated to `.momentum/` per `.momentum/` State Layout section (DEC-011 Gate G1). All paths below resolve under `.momentum/`._
 
-**`.momentum/stories/` folder** — one file per story (`.momentum/stories/{slug}.md`). Created early at backlog stage as a stub (slug, title, epic, status). Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum:create-story`. Story file content (ACs, dev notes) is written by `momentum:create-story`.
+**`.momentum/stories/` folder** — one file per story (`.momentum/stories/{slug}.md`). Created early at backlog stage as a stub (slug, title, epic, status). Fleshed out with full ACs, dev notes, and tasks during sprint planning via `momentum:create-story`. Story file content (ACs, dev notes) is written by `momentum:create-story`. Story file YAML frontmatter fields include: `title`, `story_key`, `status`, `epic_slug`, `feature_slug`, `story_type`, `change_type` (array), `depends_on` (array), `touches` (array), and `verification_method` (string — added sprint-2026-05-17, `create-story-method-selection-step` story; written by `momentum:create-story` at story creation time; derived from the change-type routing table in `verification-standard.md`; valid values: `eval`, `trigger`, `smoke`, `review`, `gherkin`, `skip`).
 
 **`.momentum/stories/index.json`** — lightweight lookup index. Each entry: slug, status, title, epic slug, story_file (boolean — whether fleshed out), depends_on, touches, priority (optional — `critical | high | medium | low`, default: `low`). Epic membership lives here, not in epics.md.
 
@@ -1560,8 +1576,13 @@ Collision resolution: add short qualifier suffix (`auth-refresh-api` vs `auth-re
 
 ```
 .momentum/sprints/{sprint-slug}/
-├── specs/                                ← Gherkin feature files (Decision 30, sprint-planning writes; verifier-only reads)
-│   └── {story-slug}.feature
+├── specs/                                ← Contract files (sprint-planning writes; verifier-only reads)
+│   ├── {story-slug}.feature             ← Gherkin contract (Decision 30)
+│   ├── {story-slug}.eval.yaml           ← LLM eval contract
+│   ├── {story-slug}.trigger.md          ← Trigger-based contract
+│   ├── {story-slug}.smoke.sh            ← Smoke test contract
+│   └── {story-slug}.review.md          ← Manual review contract
+├── coverage-plan.md                     ← Per-sprint verification coverage plan (DEC-029, written by sprint-planning; post-activation immutable)
 ├── retro-transcript-audit.md             ← Retro findings document (Decision 27, written by retro documenter)
 ├── sprint-summary.md                     ← Sprint summary (Decision 47 — sole writer: retro orchestrator at Phase 6 close)
 └── audit-extracts/                       ← DuckDB preprocessing output (Decision 27)
@@ -2186,8 +2207,8 @@ Sprint planning (`/momentum:sprint-planning`) encompasses story selection, creat
 
 Step 1 (Backlog Presentation) is synthesis-first: before presenting any backlog data, read the master plan documents (`prd.md`, product brief) to understand strategic priorities. Read the most recent sprint summary (`.momentum/sprints/{last-sprint-slug}/sprint-summary.md`) for "what just happened" context — non-blocking if absent (Decision 47). **Phase A.5 additionally reads `.momentum/intake-queue.jsonl` filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` — open handoff events from recent retros are folded into the synthesis context alongside the previous sprint summary (per DEC-007, 2026-04-14). If the queue file does not yet exist, treat as empty and continue silently.** Run a staleness check via `git log` for each `ready-for-dev`/`in-progress` story — check commits touching the story's `touches` paths. Lead with 3-5 prioritized recommendations with rationale (informed by master plan priorities, sprint summary findings, open retro handoff items, dependency readiness, backlog state), followed by the full sorted backlog as secondary reference. Potentially stale stories are surfaced separately with commit evidence. **Phase C output gains a labeled "Open handoff items from recent retros" section** that lists each open `source: "retro", kind: "handoff"` entry by title, source sprint, and (when present) its feature-state transition or failure-diagnosis framing. If master plan documents are missing, fall back to sorted backlog with a warning.
 
-**Decision 30 — Gherkin Separation (Extended 2026-04-08: Spec-Quality Feedback Loop)**
-Story files retain plain English ACs (dev sees intent). Sprint-scoped specs directory holds detailed Gherkin `.feature` files (verifiers only). Black-box behavioral validation: specs written pre-implementation, validated post-implementation, by different agents. See Gherkin Specification Separation section.
+**Decision 30 — Gherkin Separation (Extended 2026-04-08: Spec-Quality Feedback Loop; Extended sprint-2026-05-17: All Contract Types)**
+Story files retain plain English ACs (dev sees intent). Sprint-scoped specs directory holds contract files (verifiers only). As of sprint-2026-05-17 (`sprint-planning-frozen-per-story-contract` story), the specs directory covers all five contract types driven by each story's `verification_method` field — not Gherkin-only: `.feature` (Gherkin), `.eval.yaml` (LLM eval), `.trigger.md` (trigger-based), `.smoke.sh` (smoke test), `.review.md` (manual review). Black-box behavioral validation: contracts written pre-implementation, validated post-implementation, by different agents. See Gherkin Specification Separation section.
 
 **Spec-quality feedback loop:** When E2E Validator encounters untestable Gherkin scenarios (ambiguous steps, missing preconditions, implementation-coupled assertions), findings are tagged with `spec-quality` metadata. These findings are surfaced in a dedicated "Spec Quality" section of the retrospective output, separate from implementation findings. This closes the loop between validation and specification: spec authoring issues are traced back to the sprint planning Gherkin generation step (Decision 29, Step 4) rather than treated as implementation failures.
 
@@ -2245,7 +2266,7 @@ The hybrid Agent Team in Phase 5 spawns four concurrent roles. Their deployment:
 |---|---|---|
 | Dev (fix agent) | General-purpose agent via Agent tool | No custom definition needed — receives AVFL findings list and fix instructions in spawn prompt. Uses project's dev guidelines from sprint record. |
 | QA reviewer | Agent definition file (`agents/qa-reviewer.md`) | Pure worker: reviews code against story ACs, produces per-story findings. Read-only tools. Never user-invoked. |
-| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure worker: tests running behavior against Gherkin specs with external tools. Needs Bash for test execution. Never user-invoked. Used in sprint Team Review (Decision 34) and quick-fix Phase 4 validation (Decision 40). |
+| E2E Validator | Agent definition file (`agents/e2e-validator.md`) | Pure worker: method-polymorphic and harness-driven (sprint-2026-05-17). Reads `momentum/verification-harness.json` at startup; dispatches by contract file extension (`.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md`, `.feature`). Needs Bash for test execution. Never user-invoked. Used in sprint Team Review (Decision 34) and quick-fix Phase 4 validation (Decision 40). |
 | Architect Guard | SKILL.md with `context: fork` (existing) | Already implemented as standalone verifier skill. Also useful outside Team Review (ad-hoc drift checks). Retains SKILL.md deployment. |
 
 **Plugin structure addition:**
@@ -3029,3 +3050,28 @@ Formalizes the Beads tracker integration via a dual-write spike. `index.json` re
 Full adoption decision (replace index.json dependency tracking with Beads as primary) is deferred until all four gates pass.
 
 **Traceability:** Introduced by beads-dual-write-spike story (sprint-2026-05-16). Implements DEC-028. Spike scope: dual-write only — no UI changes, no retro changes, no planning artifact changes.
+
+---
+
+**Decision 58 — verification-harness.json Validation Harness Profile (DEC-029 D3, sprint-2026-05-17)**
+
+`momentum/verification-harness.json` is the plugin-shipped validation harness profile. It sits at the plugin root as a sibling to `momentum/agents.json` and uses the same two-block schema pattern:
+
+```json
+{
+  "defaults": { ... },   // Plugin-shipped safe defaults — never overwritten by project tooling
+  "project": [...]       // Per-project overrides — written by agent-builder or agent-guidelines
+}
+```
+
+**`defaults` block:** Contains an `env` object (`startup`, `readiness_probe` keys), an `execution_surfaces` object keyed by change-type slug (`"skill-instruction"`, `"script-code"`, `"rule-hook"`, `"config-structure"`, `"specification"`), and a `contract_extensions` object mapping `verification_method` values to file extensions. All surface values default to `"skip"` — safe for projects with no running environment. Projects override via the `project` block.
+
+**`project` block:** An array of override objects keyed by project context. Written by `momentum:agent-builder` (during agent customization for a project) and `momentum:agent-guidelines` (during guidelines generation). Neither skill overwrites the `defaults` block.
+
+**Consumers:**
+- `e2e-validator` — reads at startup to determine dispatch method per contract file extension
+- `momentum:sprint-planning` — reads during Step 4 (contract generation) to determine which contract type to write per story `verification_method`
+
+**Schema parallels `momentum/agents.json`:** defaults block is plugin-shipped and authoritative; project block is the per-project extension surface; neither consumer merges blocks — consumers check `project` entries first, fall back to `defaults`.
+
+**Traceability:** Introduced by `momentum-harnessjson-schema-and-plugin-shipped-defaults` story (sprint-2026-05-17). Implements DEC-029 D3.
