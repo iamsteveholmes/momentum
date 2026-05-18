@@ -4409,5 +4409,16 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-backlog-refinement"
+  },
+  "feature-status-class-1-deterministic-projection": {
+    "status": "backlog",
+    "title": "feature-status dashboard — Class-1 deterministic-projection sprint/feature render",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-canvas"
   }
 }
