@@ -9,15 +9,15 @@ source_research:
     date: '2026-05-17'
 prior_decisions_reviewed:
   - DEC-020 (Universal Agent Role Taxonomy — e2e-validator is one of the nine roles; its body is rewritten here)
-  - DEC-021 (Document Ownership Map — extended: harness.json, frozen contracts, and the sprint E2E coverage plan gain owners)
-  - DEC-023 (Agent Routing Table — harness.json co-locates as a sibling using the same defaults/project pattern; agent-resolve is reused for fixer routing)
+  - DEC-021 (Document Ownership Map — extended: verification-harness.json, frozen contracts, and the sprint E2E coverage plan gain owners)
+  - DEC-023 (Agent Routing Table — verification-harness.json co-locates as a sibling using the same defaults/project pattern; agent-resolve is reused for fixer routing)
   - DEC-025 (Fixer Role Resolution — the validate-fix loop's fixer routing builds on document-owner resolution)
   - DEC-027 (Skill/Agent Development + Change-Type Routing in Sprint-Dev — extended from agent selection to verification-method selection)
   - DEC-028 (Beads Substrate Adoption — reviewed; the loop must not hard-depend on beads pre-verdict; beads is ledger, not trigger)
 architecture_decisions_affected:
   - DEC-020 — e2e-validator role body is de-Gherkin'd, de-stack-leaked, and made harness-driven
-  - DEC-021 — ownership map gains momentum/harness.json (agent-builder/agent-guidelines), the per-story frozen contract and the sprint E2E coverage plan (sprint-planning)
-  - DEC-023 — harness.json adopts the same defaults/project schema shape; the agent-resolve helper is reused for failure-to-fixer routing
+  - DEC-021 — ownership map gains momentum/verification-harness.json (agent-builder/agent-guidelines), the per-story frozen contract and the sprint E2E coverage plan (sprint-planning)
+  - DEC-023 — verification-harness.json adopts the same defaults/project schema shape; the agent-resolve helper is reused for failure-to-fixer routing
   - DEC-027 — change-type routing extended from agent selection to verification-method selection at create-story time
   - acceptance-testing-standard.md — retired; the "process document" artifact class is dissolved
 stories_affected:
@@ -35,7 +35,7 @@ stories_affected:
 
 ## Summary
 
-A working session reconsidered how Momentum performs acceptance/E2E validation, prompted by the observation that Gherkin is the wrong universal format and that validation is wildly project-dependent (Momentum validates skills/rules/hooks; a Compose app validates Android/iOS/desktop runtime; a web app uses Selenium/Playwright; some stories just need to run once). Three discovery agents audited the corpus and the existing design: Gherkin meaningfully fits under 5% of the 312-story corpus, the `e2e-validator` agent is hardwired to Gherkin in direct contradiction of `acceptance-testing-standard.md`'s own five-method matrix, a consumer project's stack (`finch`/PostgreSQL/FastAPI) is hardcoded into the supposedly-generic agent, no per-project harness abstraction exists, and no automated pre-human fix loop exists. The net direction: acceptance validation becomes **method-routed by story change-type** (Gherkin demoted to one rare method); the per-story verification contract is a **frozen spec of done**, not necessarily a per-story execution unit; project specifics move into a **per-project `momentum/harness.json`** mirroring the `agents.json` defaults/project pattern; E2E is **per-sprint, post-merge, and holistic** with transitive coverage credited; and code-review, AVFL, and E2E are recognized as **configured instances of one unified validate-fix loop**. The "process document" artifact class is dissolved — a governing standard with no enforcement is dead documentation, contrary to Momentum's thesis — so outputs compile into an enforced rule plus agent/workflow edits, with this decision carrying the rationale. The full sprint-dev rewrite the new pipeline implies is deliberately sequenced as a separate downstream decision/epic, not scoped here.
+A working session reconsidered how Momentum performs acceptance/E2E validation, prompted by the observation that Gherkin is the wrong universal format and that validation is wildly project-dependent (Momentum validates skills/rules/hooks; a Compose app validates Android/iOS/desktop runtime; a web app uses Selenium/Playwright; some stories just need to run once). Three discovery agents audited the corpus and the existing design: Gherkin meaningfully fits under 5% of the 312-story corpus, the `e2e-validator` agent is hardwired to Gherkin in direct contradiction of `acceptance-testing-standard.md`'s own five-method matrix, a consumer project's stack (`finch`/PostgreSQL/FastAPI) is hardcoded into the supposedly-generic agent, no per-project harness abstraction exists, and no automated pre-human fix loop exists. The net direction: acceptance validation becomes **method-routed by story change-type** (Gherkin demoted to one rare method); the per-story verification contract is a **frozen spec of done**, not necessarily a per-story execution unit; project specifics move into a **per-project `momentum/verification-harness.json`** mirroring the `agents.json` defaults/project pattern; E2E is **per-sprint, post-merge, and holistic** with transitive coverage credited; and code-review, AVFL, and E2E are recognized as **configured instances of one unified validate-fix loop**. The "process document" artifact class is dissolved — a governing standard with no enforcement is dead documentation, contrary to Momentum's thesis — so outputs compile into an enforced rule plus agent/workflow edits, with this decision carrying the rationale. The full sprint-dev rewrite the new pipeline implies is deliberately sequenced as a separate downstream decision/epic, not scoped here.
 
 ---
 
@@ -63,11 +63,11 @@ The author must be neither the dev agent nor the validator (anti-gaming). But "e
 
 ---
 
-### D3: Per-project harness profile = sibling `momentum/harness.json` — ADOPTED
+### D3: Per-project harness profile = sibling `momentum/verification-harness.json` — ADOPTED
 
 **Developer framing:** Project specifics shouldn't live in the generic agent. Co-locate a per-project harness with the agent-mapping document, in the format normal for `.momentum`-style config.
 
-**Decision:** Per-project harness lives in `momentum/harness.json`, a sibling to `momentum/agents.json`, JSON, with the same `defaults` (plugin-shipped) / `project` (per-project) split, written by `agent-builder`/`agent-guidelines`. It declares environment startup + readiness probes, execution surface per change-type, driver binding (cmux / Skill-invoke / Maestro / Playwright / curl), platform/target matrix, human-review carve-outs, and a trivial-smoke escape.
+**Decision:** Per-project harness lives in `momentum/verification-harness.json`, a sibling to `momentum/agents.json`, JSON, with the same `defaults` (plugin-shipped) / `project` (per-project) split, written by `agent-builder`/`agent-guidelines`. It declares environment startup + readiness probes, execution surface per change-type, driver binding (cmux / Skill-invoke / Maestro / Playwright / curl), platform/target matrix, human-review carve-outs, and a trivial-smoke escape.
 
 **Rationale:**
 A separate file keeps routing and validation-harness concerns each focused while reusing the proven `agents.json` schema pattern and writer. This removes the hardcoded `finch`/PostgreSQL/FastAPI leak from the generic agent and gives every consumer project (Momentum, Nornspun, web, REST) a first-class way to declare how it is driven.
@@ -166,7 +166,7 @@ This matches the DEC-028 boundary exactly — beads as substrate under Momentum,
 
 | Phase | Focus | Timing | Key Stories |
 |-------|-------|--------|-------------|
-| 1 | Enforced verification rule (replacing `acceptance-testing-standard.md`) with method-routing, harness-profile requirement, and the anti-insider-knowledge guard; `momentum/harness.json` schema + defaults block; `e2e-validator` body rewrite (de-Gherkin, de-stack-leak, harness-driven); create-story method-selection step; sprint-planning contract + coverage-plan authoring | After `routing-table-schema-and-implementation` lands `agents.json` | routing-table-schema-and-implementation, acceptance-testing-process-and-standards, change-type-routing-in-sprint-dev |
+| 1 | Enforced verification rule (replacing `acceptance-testing-standard.md`) with method-routing, harness-profile requirement, and the anti-insider-knowledge guard; `momentum/verification-harness.json` schema + defaults block; `e2e-validator` body rewrite (de-Gherkin, de-stack-leak, harness-driven); create-story method-selection step; sprint-planning contract + coverage-plan authoring | After `routing-table-schema-and-implementation` lands `agents.json` | routing-table-schema-and-implementation, acceptance-testing-process-and-standards, change-type-routing-in-sprint-dev |
 | 2 | Full sprint-dev rewrite — four-step flow, three-tier pipeline, unified validate-fix loop primitive, PASS-sticky post-merge batch, abstracted state ledger (separate downstream decision/epic) | After Phase 1 stable | (new epic — to be defined) |
 | 3 | Bind the state ledger to beads as substrate | Gated on DEC-028 spike verdict | (per DEC-028) |
 
