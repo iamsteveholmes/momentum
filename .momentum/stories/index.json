@@ -4169,5 +4169,38 @@
     "touches": [],
     "priority": "low",
     "story_type": "maintenance"
+  },
+  "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven": {
+    "status": "backlog",
+    "title": "e2e-validator agent body rewrite — de-Gherkin, harness-driven",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-agent-role-contracts"
+  },
+  "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard": {
+    "status": "backlog",
+    "title": "Enforced verification rule — change-type method-routing, harness-profile requirement, adversarial guard",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "create-story-method-selection-step": {
+    "status": "backlog",
+    "title": "create-story method-selection step",
+    "epic_slug": "story-cycles",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice",
+    "feature_slug": "momentum-quality-gates-enforced"
   }
 }
