@@ -20,7 +20,11 @@ prior_decisions_reviewed:
   - DEC-028 (Beads as Tracker/Dependency/Memory Substrate — this decision sharpens its §3 epic/feature consolidation, reframed through the category-vs-finishable distinction, and leans on `bd ready` + atomic `--claim` as the deterministic DAG state engine)
   - DEC-029 (Method-Routed Acceptance Validation — DEC-029 explicitly sequenced "the full sprint-dev rewrite" as a downstream decision/epic; this decision is the planning-side execution model that rewrite realizes, composing with DEC-029 D9/D10/D11)
 architecture_decisions_affected:
-  - UNDETERMINED — story-level and architecture-decision (AD-N) impact is explicitly not assessed; the developer's instruction was that determining blast radius requires a dedicated discovery effort (see "Required Discovery Before Implementation")
+  - AD-25 (Teams Over Waves) — AMENDED: runtime dependency ordering replaces wave assignment; wave fields become informational
+  - AD-36 (Sprint Lifecycle State Machine) — AMENDED: asymmetric subtract-only freeze added as a hard invariant within the active state; pre-activation vetting becomes a hard gate
+  - AD-44 (Feature Artifact Layer) — AMENDED: epic/feature taxonomy collapses from two orthogonal dimensions to one closeable grouping; value_analysis/system_context/acceptance_conditions fields survive
+  - AD-57 / DEC-028 (Beads dual-write spike) — AMENDED (contingent): D1 is gated on the beads verdict (Gate 3); bd ready if go, depends_on fallback if no-go
+  - DEC-005, DEC-006, DEC-029 — COMPOSES-WITH (not superseded); DEC-004, DEC-012, DEC-017, AD-26/29/31/34/45/51/55 — UNAFFECTED. Full reconciliation: docs/research/dec-030-blast-radius-discovery-2026-05-17.md §2
 ---
 
 # DEC-030: Dependency-Driven Execution Model — DAG Dispatch, Closeable Value-Groupings, Frozen-Scope Sprints, and the Dual-Format Integrity Split
@@ -214,6 +218,14 @@ priority is.
 ---
 
 ## Required Discovery Before Implementation
+
+> **DISCOVERY COMPLETE (2026-05-17).** Conducted as internal blast-radius discovery (no spike
+> story, per developer instruction) across four parallel streams. Findings committed at
+> `docs/research/dec-030-blast-radius-discovery-2026-05-17.md`: story blast radius (~20 existing
+> affected + ~8 new stories), full decision/architecture reconciliation (now reflected in
+> frontmatter), and **recommendations** for Gate 1 (in-session orchestrator loop) and Gate 2
+> (`scope_guard` deterministic policy) — awaiting developer ratification. Gates 3 and 4 remain
+> open by design.
 
 The developer explicitly stated that the story-level and architecture-decision (AD-N) blast
 radius of this model is **unknown and requires a dedicated discovery effort** — it must not be
