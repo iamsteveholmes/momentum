@@ -14,6 +14,10 @@ derives_from:
     relationship: synthesized_from
   - path: raw/research-local-dispatcher-patterns.md
     relationship: synthesized_from
+  - path: raw/cost-max-coverage-billing.md
+    relationship: synthesized_from
+  - path: raw/cost-automation-usage-policy.md
+    relationship: synthesized_from
 ---
 
 # Claude Code background dispatcher — can it handle or generate events to fire off agents/skills? — Research Report
@@ -141,6 +145,8 @@ Momentum already has an `intake-queue.jsonl` event log, which makes the choice s
 
 **A single long-lived Python (or TypeScript) daemon hosting `ClaudeSDKClient` in streaming-input mode, blocked on `intake-queue.jsonl`.**
 
+> **Cost revision:** This long-lived Agent SDK daemon must authenticate with a **dedicated Anthropic API key on pay-as-you-go billing** — *not* subscription/Max OAuth. Anthropic explicitly prohibits subscription auth with the Agent SDK libraries, and from 2026-06-15 meters all `claude -p`/SDK subscription use against a small fixed monthly credit at full API rates, so the subscription confers no price advantage for a sustained dispatcher. The primary cost lever is **model-tier routing** (Haiku/Sonnet for event routing and light steps, Opus only for heavy reasoning); the top operational hazard is a stray `ANTHROPIC_API_KEY` in the daemon environment silently diverting billing — see the **Cost & Licensing** section for the full economics and mitigation.
+
 1. **Event source — the existing queue.** The daemon's async generator blocks on the queue: tail-from-stored-offset, or a `watchdog`/`fswatch` wake that triggers an idempotent re-scan. Treat any filesystem wake purely as a signal; the queue file is the source of truth.
 2. **Claim semantics.** Mark each consumed event with a status (`pending`→`in_progress`→`done`) — either in-line in the JSONL or in a sidecar SQLite cursor table. The status field is the lock; an idempotent re-scan claims only unclaimed rows, so a duplicate/spurious wake finds nothing to do.
 3. **Dispatch.** Per event, route to the matching agent/skill via SDK `agents={...}` and `.claude/skills/*/SKILL.md` discovery — *not* `/slash` strings (see contradiction note below).
@@ -185,6 +191,46 @@ Momentum already has an `intake-queue.jsonl` event log, which makes the choice s
 - **FIFO/Unix-socket framing details** are inference from standard Unix behavior (flagged as unverified in the raw source), not Claude-Code-specific documentation.
 - **Out of scope:** No Gemini, AVFL, or practitioner-notes corpus for this topic; cloud Routines/RemoteTrigger documented only as the official remote alternative, not evaluated for the local goal. Long-term durability of session-restore semantics across Claude Code versions was not exhaustively tested.
 
+## Cost & Licensing
+
+**Decision up front: for a sustained *local* dispatcher, authenticate with a dedicated Anthropic API key on pay-as-you-go billing — not your Max subscription.** A single-user local dispatcher running Anthropic's first-party Claude Code on your own Max subscription *is within terms*, but the economics and the Agent SDK auth rules make subscription auth the wrong choice for anything beyond low-volume or cloud-tolerant use. Subscription/Routines fits only narrow cases; everything else is API-key territory.
+
+### Is a local unattended dispatcher on the Max subscription within Anthropic's terms?
+
+Yes, conditionally — and the boundary is precise. The Anthropic Consumer Terms (eff. 2025-10-08) prohibit accessing the Services "through automated or non-human means … *except when you are accessing our Services via an Anthropic API Key or where we otherwise explicitly permit it*" ([Consumer Terms](https://www.anthropic.com/legal/consumer-terms)) — VERIFIED. The carve-out is decisive: Anthropic's own Claude Code docs explicitly permit scripted/headless use on subscription auth, shipping `claude setup-token` to mint a one-year `CLAUDE_CODE_OAUTH_TOKEN` "for CI pipelines, scripts, or other environments where interactive browser login isn't available" ([Authentication docs](https://code.claude.com/docs/en/authentication)) — VERIFIED. A long-lived daemon / scheduled `claude -p` / hook loop running *first-party Claude Code* on *your own* Max subscription falls under that carve-out.
+
+What **is** unambiguously prohibited: reusing a subscription-derived OAuth token *inside any other product, tool, or service — including the Agent SDK packages and third-party harnesses*. Anthropic's February 2026 compliance clarification names the Agent SDK directly: subscription OAuth tokens "in any other product, tool, or service — including the Agent SDK — is not permitted" ([The Register, 2026-02-20](https://www.theregister.com/2026/02/20/anthropic_clarifies_ban_third_party_claude_access/)) — VERIFIED for the prohibition (Anthropic compliance page quoted), CITED for the reporting. Enforcement — active blocking of OAuth tokens in third-party clients — began **January 9, 2026** ([Winbuzzer, 2026-02-19](https://winbuzzer.com/2026/02/19/anthropic-bans-claude-subscription-oauth-in-third-party-apps-xcxwbn/)) — CITED. The two raw sources **agree** here: first-party `claude -p` on subscription is permitted (metered); the Agent SDK *libraries* on subscription OAuth are prohibited. This directly constrains the recommended architecture — the long-lived SDK daemon cannot legitimately run on subscription auth and must use an API key. There are no dated reports of bans for first-party self-scheduling on one's own account; absence of such reports is suggestive, not proof — confidence here is medium (INFERRED on the long-term residual risk, which the raw research flagged explicitly).
+
+### The economics that make subscription auth pointless for sustained automation
+
+**Today (until June 14, 2026):** headless `claude -p` on subscription OAuth draws from the *same* interactive Max meter as claude.ai and Desktop — a rolling 5-hour session window plus weekly caps (Max has an all-model weekly cap and a separate Sonnet-only one) ([How usage and length limits work](https://support.claude.com/en/articles/11647753-how-do-usage-and-length-limits-work)) — VERIFIED. An agentic loop consumes 10×–100× the tokens of chat, so it exhausts those caps fast. Behavior at the cap with extra usage disabled is a **hard stop** ("limit reached, resets at *time*"), no throttle, no auto-resume (a requested, unshipped feature) ([The New Stack](https://thenewstack.io/claude-code-usage-limits/)) — CITED; with extra usage enabled it spills to metered API-rate overage ([Manage extra usage](https://support.claude.com/en/articles/12429409-manage-extra-usage-for-paid-claude-plans)) — VERIFIED.
+
+**From June 15, 2026 (official, in-docs):** all Agent SDK and `claude -p` use on a subscription stops drawing from the interactive pool and instead draws from a *separate, fixed, non-rollover monthly Agent SDK credit billed at full API rates* — **Pro $20/mo · Max 5x $100/mo · Max 20x $200/mo**, per-user, non-poolable, no rollover ([Use the Claude Agent SDK with your Claude plan](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan)) — VERIFIED, corroborated by [InfoWorld](https://www.infoworld.com/article/4171274/anthropic-puts-claude-agents-on-a-meter-across-its-subscriptions.html) and [The Decoder](https://the-decoder.com/claude-subscriptions-get-separate-budgets-for-programmatic-use-billed-at-full-api-prices/) — CITED. On exhaustion: hard-stop, or pay-as-you-go overage only if extra usage is enabled. At standard API token rates a Max 20x's $200 credit buys roughly **300–600 Opus turns/month (~10–20/day)** — a modest fixed ceiling, not the generous interactive allowance. After June 15 the subscription confers **no price advantage** for a background dispatcher over a plain API key: same API rates, just a small prepaid bucket. (This is a post-dated policy — confidence is high because both raw sources cite the official effective-dated Help Center article, but it has not yet taken effect as of this report's 2026-05-17 date.)
+
+### The SDK auth landmine (top operational hazard)
+
+The Agent SDK docs prohibit subscription/claude.ai auth for SDK-built products and direct developers to API keys ([Agent SDK overview](https://code.claude.com/docs/en/agent-sdk/overview)) — VERIFIED. The trap: Anthropic's auth precedence places `ANTHROPIC_API_KEY` *above* `CLAUDE_CODE_OAUTH_TOKEN`, and in non-interactive `-p` mode "the key is always used when present" — so a stray exported API key in the daemon's environment **silently** overrides subscription OAuth and bills pay-as-you-go with no warning ([Authentication docs](https://code.claude.com/docs/en/authentication)) — VERIFIED. This is not theoretical: a Max 20x subscriber scheduled `claude -p` via cron with a stray `ANTHROPIC_API_KEY` set and was charged **$1,800+ in two days**; the issue was closed "not planned" with no maintainer fix ([anthropics/claude-code #43333 / #37686](https://github.com/anthropics/claude-code/issues/43333)) — CITED. **Mitigation (mandatory for any unattended loop):** strict env hygiene — the dispatcher exports exactly one dedicated API key and nothing else; interactive shells `unset ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` and verify auth source via `/status` before any subscription-billed session; set billing alerts / spend limits on the dedicated key's Console org; and budget against `total_cost_usd` per event. Treat a stray key as the single highest-severity failure mode of the whole design.
+
+### The Cloud Routines exception
+
+Routines / scheduled remote agents are the one programmatic surface that genuinely stays subscription-covered: they draw the *interactive* subscription pool ("Routines draw down subscription usage the same way interactive sessions do"), a **different meter than the post-June-15 Agent SDK credit**, and run on **Anthropic-hosted compute** you don't pay for separately ([Automate work with routines](https://code.claude.com/docs/en/routines)) — VERIFIED. So Routines *are* covered by the Max subscription. The unavoidable tradeoff: Routines run cloud-hosted with **no local file access** (fresh clone), which directly conflicts with this dispatcher's local-only requirement and the verdict's local-only architecture. Routines are subscription-covered but cannot be the local dispatcher; they remain a low-volume / cloud-tolerant alternative only.
+
+### Current API pricing (as of 2026-05)
+
+First-party per-million-token (MTok) rates ([Pricing — Claude API Docs](https://platform.claude.com/docs/en/about-claude/pricing)) — VERIFIED:
+
+| Model | Input | Output | Cache read |
+|---|---|---|---|
+| **Opus 4.7** | $5 | $25 | $0.50 |
+| **Sonnet 4.6** | $3 | $15 | $0.30 |
+| **Haiku 4.5** | $1 | $5 | $0.10 |
+
+Opus 4.7 ships a **new tokenizer that can consume up to ~35% more tokens** for the same text — materially worse than the nominal rate. A substantive Opus agent turn with accumulated context (~30–60K in / ~5–15K out) runs ≈ **$0.30–$0.70 per turn** before tool/search costs; a dispatcher firing ~100 such turns/day is **≈ $1,000–2,000/month** on Opus — the order-of-magnitude reality, and exactly consistent with the $1,800-in-two-days incident. Per-turn token figures are illustrative (INFERRED — depend on context size and routing), but the order of magnitude is robust.
+
+### Bottom line
+
+For a sustained **local** dispatcher, the compliant and economically honest path is a **dedicated Anthropic API key on pay-as-you-go billing** — not subscription/Max auth. This is unambiguously within the Commercial Terms (the automated-access ban explicitly exempts API-key access), removes the cap-exhaustion failure mode, is what Anthropic's own docs direct for production automation, and is *required* for the recommended Agent SDK daemon (subscription OAuth with the SDK libraries is prohibited). Keep the Max subscription for *interactive* Claude Code. The primary cost lever is **model-tier routing** — Haiku/Sonnet for event routing and light steps (3×–25× cheaper than Opus), Opus reserved for heavy reasoning — plus aggressive prompt caching (0.1× input on cache hits) and Batch API (−50%) for non-interactive work. Subscription auth fits only **low-volume** use (staying under the post-June-15 fixed credit) or **cloud-tolerant** use (Routines, which forgo local file access). Confidence is high on the compliant path and the post-June-15 economics (official, effective-dated); medium on the residual terms risk of very-high-volume first-party self-scheduling, which the raw research flagged as permitted by the letter of the docs but with no published volume guarantee and a surface Anthropic has been actively tightening through 2026.
+
 ## Sources
 
 **Official (VERIFIED):**
@@ -204,6 +250,17 @@ Momentum already has an `intake-queue.jsonl` event log, which makes the choice s
 - [Keep Claude working toward a goal (/goal)](https://code.claude.com/docs/en/goal)
 - [Plugins reference — monitors](https://code.claude.com/docs/en/plugins-reference#monitors)
 - [Boris Cherny on async hooks (Threads)](https://www.threads.com/@boris_cherny/post/DT8obEVkiRI/)
+- [Authentication — Claude Code Docs (setup-token, OAuth precedence, June 15 note, bare mode, Remote Control scope)](https://code.claude.com/docs/en/authentication)
+- [What is the Max plan? — Claude Help Center](https://support.claude.com/en/articles/11049741-what-is-the-max-plan)
+- [Use Claude Code with your Pro or Max plan — Claude Help Center](https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan)
+- [Use the Claude Agent SDK with your Claude plan — Claude Help Center (June 15 2026 Agent SDK credit, per-tier amounts)](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan)
+- [How do usage and length limits work? — Claude Help Center](https://support.claude.com/en/articles/11647753-how-do-usage-and-length-limits-work)
+- [Usage limit best practices — Claude Help Center](https://support.claude.com/en/articles/9797557-usage-limit-best-practices)
+- [Manage extra usage for paid Claude plans — Claude Help Center](https://support.claude.com/en/articles/12429409-manage-extra-usage-for-paid-claude-plans)
+- [Models, usage, and limits in Claude Code — Claude Help Center](https://support.claude.com/en/articles/14552983-models-usage-and-limits-in-claude-code)
+- [Pricing — Claude API Docs (Opus/Sonnet/Haiku rates, caching, batch, worked example)](https://platform.claude.com/docs/en/about-claude/pricing)
+- [Anthropic Consumer Terms of Service (eff. 2025-10-08)](https://www.anthropic.com/legal/consumer-terms)
+- [Anthropic Usage Policy (eff. 2025-09-15)](https://www.anthropic.com/legal/aup)
 
 **Community / practitioner (CITED):**
 - [Claude Code async hooks (ai.sulat.com mirror)](https://ai.sulat.com/claude-code-async-hooks-what-they-are-and-when-to-use-them-61b21cd71aad)
@@ -230,3 +287,20 @@ Momentum already has an `intake-queue.jsonl` event log, which makes the choice s
 - [hoangsonww/Claude-Code-Agent-Monitor](https://github.com/hoangsonww/Claude-Code-Agent-Monitor)
 - [disler/claude-code-hooks-multi-agent-observability](https://github.com/disler/claude-code-hooks-multi-agent-observability)
 - [Push notifications via ntfy + hooks (tonydehnke.com)](https://tonydehnke.com/blog/claude-code-notifications-ntfy-hooks/)
+- [anthropics/claude-code #43333 — `claude -p` with OAuth bills as API usage (incl. #37686 $1,800/2-day report)](https://github.com/anthropics/claude-code/issues/43333)
+- [anthropics/claude-code #37686 — `claude -p` on Max → $1,800 unintended API billing](https://github.com/anthropics/claude-code/issues/37686)
+- [anthropics/claude-code #36320 — Auto-resume after usage limit reset (requested, not shipped)](https://github.com/anthropics/claude-code/issues/36320)
+- [The Register — Anthropic clarifies ban on third-party Claude access (2026-02-20)](https://www.theregister.com/2026/02/20/anthropic_clarifies_ban_third_party_claude_access/)
+- [Winbuzzer — Anthropic bans Claude subscription OAuth in third-party apps (2026-02-19, Jan 9 enforcement)](https://winbuzzer.com/2026/02/19/anthropic-bans-claude-subscription-oauth-in-third-party-apps-xcxwbn/)
+- [InfoWorld — Anthropic puts Claude agents on a meter across its subscriptions](https://www.infoworld.com/article/4171274/anthropic-puts-claude-agents-on-a-meter-across-its-subscriptions.html)
+- [The Decoder — Claude subscriptions get separate budgets for programmatic use, billed at full API prices](https://the-decoder.com/claude-subscriptions-get-separate-budgets-for-programmatic-use-billed-at-full-api-prices/)
+- [The New Stack — Claude Code users hitting usage limits faster](https://thenewstack.io/claude-code-usage-limits/)
+- [apidog — Claude Code weekly limits +50% through July 13, 2026](https://apidog.com/blog/claude-code-weekly-limits-50-percent-increase-july-2026/)
+- [MindStudio — Claude Code Routines scheduled agents (~15 runs/day cap)](https://www.mindstudio.ai/blog/claude-code-routines-scheduled-agents)
+- [claudefa.st — Claude Code Remote Control guide (Pro/Max gating)](https://claudefa.st/blog/guide/development/remote-control-guide)
+- [amux — Claude Code Headless Mode: Complete Self-Hosting Guide (2026)](https://amux.io/guides/claude-code-headless/)
+- [TokenMix — Complete Claude Limits Guide 2026 (5-hour + weekly caps)](https://tokenmix.ai/blog/complete-claude-limits-guide-2026-tokens-uploads-5-hour)
+- [Pasquale Pillitteri — Claude Code weekly limits +50% May 13–July 13 2026](https://pasqualepillitteri.it/en/news/2494/claude-code-weekly-limits-50-percent-anti-codex-anthropic-2026)
+- [Hypereal — Claude Pro & Max Weekly Rate Limits Guide (2026)](https://hypereal.cloud/a/weekly-rate-limits-claude-pro-max-guide)
+- [autonomee.ai — Is This Allowed? Claude Code Terms of Service Explained](https://autonomee.ai/blog/claude-code-terms-of-service-explained/)
+- [VentureBeat — Anthropic cracks down on unauthorized Claude usage by third-party harnesses](https://venturebeat.com/technology/anthropic-cracks-down-on-unauthorized-claude-usage-by-third-party-harnesses)
