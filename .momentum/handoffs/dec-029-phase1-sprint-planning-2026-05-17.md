@@ -6,6 +6,14 @@
 
 ---
 
+**Status: COMPLETED — 2026-05-18**
+Sprint `sprint-2026-05-17` is now **active**. 5 stories, 2 waves. Commit `9a40d1e`.
+AVFL: CHECKPOINT_WARNING (score 65/100) — critical finding (missing `change_type` on stories 2+3) fixed at commit `3dec275`. Sprint activation proceeded.
+
+---
+
+---
+
 ## Before starting the new session
 
 Major Momentum workflow → refresh the plugin cache and restart, per practice:
