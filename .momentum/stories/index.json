@@ -4171,12 +4171,17 @@
     "story_type": "maintenance"
   },
   "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "e2e-validator agent body rewrite \u2014 de-Gherkin, harness-driven",
     "epic_slug": "agent-team-model",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "momentum-harnessjson-schema-and-plugin-shipped-defaults"
+    ],
+    "touches": [
+      "skills/momentum/agents/e2e-validator.md",
+      "skills/momentum/agents/evals/"
+    ],
     "priority": "medium",
     "story_type": "practice",
     "feature_slug": "momentum-agent-role-contracts"
@@ -4224,15 +4229,25 @@
     "feature_slug": "momentum-protocol-based-integration"
   },
   "sprint-planning-frozen-per-story-contract-holistic-coverage": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "sprint-planning: frozen per-story contract, holistic coverage plan, adversarial guard",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
+      "momentum-harnessjson-schema-and-plugin-shipped-defaults"
+    ],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-planning/SKILL.md",
+      "skills/momentum/skills/sprint-planning/references/"
+    ],
     "priority": "high",
     "story_type": "practice",
-    "feature_slug": "momentum-sprint-planning-to-ready"
+    "feature_slug": "momentum-sprint-planning-to-ready",
+    "change_type": [
+      "skill-instruction"
+    ]
   },
   "remove-hardcoded-sonnet-model-pins-from-skill-frontmatter": {
     "status": "backlog",
