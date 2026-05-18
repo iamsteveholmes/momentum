@@ -224,8 +224,10 @@ priority is.
 > `docs/research/dec-030-blast-radius-discovery-2026-05-17.md`: story blast radius (~20 existing
 > affected + ~8 new stories), full decision/architecture reconciliation (now reflected in
 > frontmatter), and **recommendations** for Gate 1 (in-session orchestrator loop) and Gate 2
-> (`scope_guard` deterministic policy) — awaiting developer ratification. Gates 3 and 4 remain
-> open by design.
+> (`scope_guard` deterministic policy) — **both RATIFIED 2026-05-17**. Gate 1: in-session
+> orchestrator loop. Gate 2: ratified **as amended** — the scope_guard is fully deterministic
+> with **no mid-sprint human escalation** (the recommendation's ask-the-developer ladder is
+> removed; it violated D5's two-touchpoint model). Gates 3 and 4 remain open by design.
 
 The developer explicitly stated that the story-level and architecture-decision (AD-N) blast
 radius of this model is **unknown and requires a dedicated discovery effort** — it must not be
@@ -268,3 +270,25 @@ the validate-fix pipeline and state-ledger abstraction this dispatch model runs 
 | Gate 2 | Phase 0 | How is "modification vs. new story" adjudicated? | The how-vs-what boundary specified as a change-type-classification policy enforced at `sprint-manager` (the one specified-but-tight sub-policy of D3) |
 | Gate 3 | Before Phase 1 | Did the DEC-028 beads spike return go? | DEC-028 gate criteria met; the dispatcher leans on `bd ready` + `--claim`, but per the DEC-029 D11 boundary must not hard-depend on beads before the spike verdict — beads-backed if it lands, ledger-abstracted otherwise |
 | Gate 4 | Phase 1 | Does subtract-only + DAG-reentry actually prevent sprint stalls on a real sprint? | One real sprint runs with continuous dispatch and a failed/blocked story drops and re-enters without stalling the sprint or growing its frozen scope |
+
+### Gate Resolutions (2026-05-17)
+
+- **Gate 1 — RESOLVED (ratified):** In-session orchestrator loop. The dispatch loop runs
+  inside the sprint-dev session; it is restartable/killable, and on crash sprint-dev is
+  re-invoked and resumes from beads + worktree state (idempotent atomic claim ⇒ no
+  double-dispatch). Decisive constraint: agent spawning is a session-bound tool call, which
+  disqualifies an external-process dispatcher and breaks a harness-loop at the in-sprint human
+  gates. The four residual risks (context budget, crash-restart idempotency, bd↔story
+  atomicity, concurrency cap) carry into Phase 1. Full analysis:
+  `docs/research/dec-030-blast-radius-discovery-2026-05-17.md` §3.
+- **Gate 2 — RESOLVED (ratified, amended):** Deterministic `scope_guard` at sprint-manager,
+  anchored on the hook-immutable frozen contract — clean perturbation (how it is built) →
+  stays; behavior change, `change_type` change, or any non-clean/borderline case →
+  story **drops and re-enters the next planning cycle**. **Amendment:** the recommendation's
+  human-escalation ladder and developer-override token are **removed** — there is **no
+  mid-sprint human-in-the-loop**. This enforces D5 (human only at pre-sprint planning and
+  verification): an under-specified/ambiguous story is not adjudicated mid-sprint; it drops
+  and the human decision relocates to the next pre-sprint planning. Simpler than the
+  recommendation (no ladder, no override). Full analysis: discovery doc §4.
+- **Gate 3 / Gate 4 — OPEN by design** (DEC-028 beads verdict; real-sprint subtract-only
+  validation) — not resolvable in discovery.

@@ -103,16 +103,29 @@ The execution-model change is systemic — no story touching sprint-dev, the epi
 
 **Enforcement:** gate fires at two transitions — (1) `sprint_plan add` to an active sprint is unconditionally rejected ("add forbidden" arm, no adjudication); (2) any `status_transition` advancing/re-opening a member story runs `scope_guard` first, comparing recomputed AC hash / change_type / touches against the manifest. sprint-manager rejects the **transition**, never edits the story file (preserves its no-story-content-writes rule). Fail-closed: AC-hash change defaults to "scope-addition."
 
-**Escalation (human, never agent):** sprint-manager is mechanical and never adjudicates ambiguity — it returns `success:false` + three remedies. The orchestrator escalates the AC diff (human-optimized projection, not raw hashes — DEC-030 D4/D5) to the developer, who chooses: (a) revert to behavior-equivalent wording → re-passes deterministically; (b) drop + `create-story` successor linked `discovered-from` → DAG re-entry; (c) explicit, logged, developer-attributed override (counted as a frozen-scope breach for retro / Gate 4).
+**Resolution on ambiguity (RATIFIED AMENDMENT 2026-05-17 — no mid-sprint human-in-the-loop):**
+the recommendation's escalation ladder and developer-override token are **removed**. sprint-manager
+is mechanical and never asks the developer mid-sprint. Any case that is not a clean perturbation —
+including the ambiguous/borderline AC-reword — is treated deterministically as a scope change:
+the story **drops from the sprint** (subtract is always allowed) and **re-enters the next planning
+cycle** via the DAG, carrying its `discovered-from` lineage. The "human decision" is not deleted —
+it relocates to the next pre-sprint planning, an existing sanctioned touchpoint, enforcing DEC-030
+D5's two-touchpoint model (human only at pre-sprint planning and verification). An under-specified
+story self-heals: it drops and gets re-planned ("if the plan wasn't good enough it goes into the
+next plan").
 
-**Net residual:** deterministic on 3 of 4 arms + the dominant AC arm; the one soft spot (synonymic AC rewrites / AC under-specification) is bounded by fail-closed defaults, developer escalation, and a retro planning-quality signal. No path admits a silent scope change into a certified sprint.
+**Net residual:** fully deterministic — fail-closed with no human escalation. The one soft spot
+(synonymic AC rewrites / AC under-specification) no longer needs adjudication: it conservatively
+drops and is re-planned, surfaced to retro as a planning-quality signal. The accepted cost is
+slightly more conservative drop-and-replan churn in exchange for zero mid-sprint interruption and
+zero silent scope leak.
 
 ---
 
-## 5. What Remains for Developer Ratification
+## 5. Ratification Status (2026-05-17)
 
-1. **Gate 1:** ratify Option 1 (in-session orchestrator loop) — or direct otherwise.
-2. **Gate 2:** ratify the `scope_guard` / frozen-manifest policy — or amend.
-3. Gate 3 (DEC-028 beads verdict) and Gate 4 (real-sprint subtract-only validation) remain genuinely open by design — not resolvable in discovery.
+1. **Gate 1 — RATIFIED:** in-session orchestrator loop (restartable; resumes from beads + worktree state on crash).
+2. **Gate 2 — RATIFIED, AMENDED:** deterministic `scope_guard`; the human-escalation ladder and override token are removed — no mid-sprint human-in-the-loop; ambiguous/non-perturbation cases drop and re-enter the next planning cycle (§4, amended).
+3. **Gate 3 / Gate 4 — OPEN by design** (DEC-028 beads verdict; real-sprint subtract-only validation) — not resolvable in discovery.
 
-On ratification, the new-story list (§1) is ready for `create-story`/sprint-planning; DEC-030's `architecture_decisions_affected` is updated (§2) and its Required-Discovery section closed.
+DEC-030's `architecture_decisions_affected` is updated (§2) and its Required-Discovery section closed. The new-story list (§1) is ready to hand to sprint-planning when the developer chooses to proceed.
