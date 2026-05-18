@@ -4189,14 +4189,16 @@
     "depends_on": [],
     "touches": [
       "skills/momentum/references/rules/verification-standard.md",
-      "docs/process/acceptance-testing-standard.md"
+      "docs/process/acceptance-testing-standard.md",
+      "skills/momentum/references/momentum-versions.json"
     ],
     "priority": "high",
     "story_type": "practice",
     "feature_slug": "momentum-quality-gates-enforced",
     "change_type": [
       "rule-hook",
-      "specification"
+      "specification",
+      "config-structure"
     ]
   },
   "create-story-method-selection-step": {
