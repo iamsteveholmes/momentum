@@ -4442,5 +4442,27 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "remove-hardcoded-model-pins-skill-frontmatter": {
+    "status": "backlog",
+    "title": "remove hardcoded model pins from 23+ skill frontmatter files",
+    "epic_slug": "automatic-quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "defect",
+    "feature_slug": "momentum-model-routing-strategy"
+  },
+  "sprint-planning-continuous-execution-and-cli-fixes": {
+    "status": "backlog",
+    "title": "sprint-planning: fix continuous execution breaks and stale CLI namespace bugs",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "defect",
+    "feature_slug": "momentum-sprint-planning-to-ready"
   }
 }
