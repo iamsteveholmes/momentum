@@ -16,7 +16,7 @@
       {
         "hooks": [
           {
-            "command": "bd prime --no-git-ops",
+            "command": "bd prime --stealth",
             "type": "command"
           }
         ],
@@ -58,7 +58,7 @@
       {
         "hooks": [
           {
-            "command": "bd prime --no-git-ops",
+            "command": "bd prime --stealth",
             "type": "command"
           }
         ],
