@@ -4207,15 +4207,23 @@
     ]
   },
   "create-story-method-selection-step": {
-    "status": "backlog",
-    "title": "create-story method-selection step",
+    "status": "ready-for-dev",
+    "title": "create-story: method-selection step",
     "epic_slug": "story-cycles",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard"
+    ],
+    "touches": [
+      "skills/momentum/skills/create-story/workflow.md",
+      "skills/momentum/skills/create-story/evals/"
+    ],
     "priority": "medium",
     "story_type": "practice",
-    "feature_slug": "momentum-quality-gates-enforced"
+    "feature_slug": "momentum-quality-gates-enforced",
+    "change_type": [
+      "skill-instruction"
+    ]
   },
   "momentum-harnessjson-schema-and-plugin-shipped-defaults": {
     "status": "ready-for-dev",
