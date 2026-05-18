@@ -3645,7 +3645,7 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "missing-base-bodies-audit": {
-    "status": "review",
+    "status": "done",
     "title": "Missing Base Bodies Audit — Verify Universal Agent Model Coverage Post-DEC-013",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -3957,7 +3957,7 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "analyst-base-body": {
-    "status": "review",
+    "status": "done",
     "title": "analyst-base-body",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -4012,7 +4012,7 @@
     "feature_slug": "momentum-agent-spawn-orchestration"
   },
   "agent-builder-skill": {
-    "status": "review",
+    "status": "done",
     "title": "agent-builder-skill",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -4045,7 +4045,7 @@
     "feature_slug": "momentum-assessment-decision-pipeline"
   },
   "researcher-base-body": {
-    "status": "review",
+    "status": "done",
     "title": "researcher-base-body",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -4056,7 +4056,7 @@
     "feature_slug": "momentum-agent-role-contracts"
   },
   "ux-base-body": {
-    "status": "review",
+    "status": "done",
     "title": "ux-base-body",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -4111,7 +4111,7 @@
     "feature_slug": "momentum-agent-spawn-orchestration"
   },
   "routing-table-schema-and-implementation": {
-    "status": "review",
+    "status": "done",
     "title": "routing-table-schema-and-implementation",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -4124,7 +4124,7 @@
     "feature_slug": "momentum-agent-composition-pipeline"
   },
   "beads-dual-write-spike": {
-    "status": "review",
+    "status": "done",
     "title": "Spike: Beads Dual-Write Proof of Concept",
     "epic_slug": "ad-hoc",
     "story_file": true,
