@@ -4202,5 +4202,16 @@
     "priority": "medium",
     "story_type": "practice",
     "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "momentum-harnessjson-schema-and-plugin-shipped-defaults": {
+    "status": "backlog",
+    "title": "momentum/harness.json schema and plugin-shipped defaults",
+    "epic_slug": "bring-your-own-tools",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice",
+    "feature_slug": "momentum-protocol-based-integration"
   }
 }
