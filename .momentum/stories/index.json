@@ -4431,5 +4431,16 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-sprint-planning-to-ready"
+  },
+  "design-fidelity-validator-dom-skeleton-extractor": {
+    "status": "backlog",
+    "title": "design-fidelity validator — DOM-skeleton extraction + design mismatch report",
+    "epic_slug": "complete-story-cycles",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-quality-gates-enforced"
   }
 }
