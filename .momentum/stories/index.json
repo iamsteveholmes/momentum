@@ -4398,5 +4398,16 @@
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-feature-taxonomy-maintenance"
+  },
+  "intake-discovered-from-lineage-capture": {
+    "status": "backlog",
+    "title": "intake: discovered-from lineage capture for mid-sprint discovered work",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-backlog-refinement"
   }
 }
