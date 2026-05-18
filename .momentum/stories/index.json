@@ -4376,5 +4376,16 @@
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-sprint-orchestration"
+  },
+  "sprint-manager-frozen-scope-enforcement": {
+    "status": "backlog",
+    "title": "sprint-manager frozen-scope enforcement — subtract-only + scope_guard",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-sprint-orchestration"
   }
 }
