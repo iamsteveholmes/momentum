@@ -4387,5 +4387,16 @@
     "priority": "high",
     "story_type": "feature",
     "feature_slug": "momentum-sprint-orchestration"
+  },
+  "epic-feature-collapse-closeable-grouping": {
+    "status": "backlog",
+    "title": "Epic+feature collapse — one closeable M:N value-grouping with acceptance_condition + discovered-from",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature",
+    "feature_slug": "momentum-feature-taxonomy-maintenance"
   }
 }
