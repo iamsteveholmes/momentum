@@ -4139,5 +4139,35 @@
     ],
     "source": "DEC-028",
     "priority": "low"
+  },
+  "agent-builder-approval-gate": {
+    "status": "backlog",
+    "title": "agent-builder: Add developer approval gate before routing entry write",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "beads-verification-with-sprint-data": {
+    "status": "backlog",
+    "title": "Beads dual-write: verify activation scenarios with real sprint execution",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "exploration"
+  },
+  "creed-blocks-for-new-base-bodies": {
+    "status": "backlog",
+    "title": "Add CREED behavioral anchors to ux, analyst, and researcher base bodies",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
   }
 }
