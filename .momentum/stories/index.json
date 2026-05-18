@@ -4227,7 +4227,7 @@
   },
   "momentum-harnessjson-schema-and-plugin-shipped-defaults": {
     "status": "ready-for-dev",
-    "title": "momentum/harness.json schema and plugin-shipped defaults",
+    "title": "momentum/verification-harness.json schema and plugin-shipped defaults",
     "epic_slug": "bring-your-own-tools",
     "story_file": true,
     "depends_on": [],

@@ -26,13 +26,13 @@ The current `e2e-validator.md` agent body has three concrete defects that this s
 
 1. **Gherkin hardwiring.** The agent's "Load Gherkin Specs" step assumes all contracts are `.feature` files. DEC-029 D1 demotes Gherkin to one of six verification methods, routed by story change-type. The agent must accept any contract format — `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md`, or `.feature` — and dispatch the right execution strategy per file extension / declared method.
 
-2. **Stack leak.** The "Environment Prerequisites" section names `finch`, `PostgreSQL`, and `FastAPI` directly in the generic agent body. These are a consumer project's stack (Nornspun). They must be removed; environment startup is now declared in `momentum/harness.json` per DEC-029 D3.
+2. **Stack leak.** The "Environment Prerequisites" section names `finch`, `PostgreSQL`, and `FastAPI` directly in the generic agent body. These are a consumer project's stack (Nornspun). They must be removed; environment startup is now declared in `momentum/verification-harness.json` per DEC-029 D3.
 
-3. **Absent harness integration.** The agent has no mechanism for reading per-project env/driver/target declarations. After this story, the agent must load `momentum/harness.json` at startup and use it to determine: environment startup + readiness probes, execution surface per change-type, driver binding (cmux / Skill-invoke / Maestro / Playwright / curl), platform/target matrix, and human-review carve-outs.
+3. **Absent harness integration.** The agent has no mechanism for reading per-project env/driver/target declarations. After this story, the agent must load `momentum/verification-harness.json` at startup and use it to determine: environment startup + readiness probes, execution surface per change-type, driver binding (cmux / Skill-invoke / Maestro / Playwright / curl), platform/target matrix, and human-review carve-outs.
 
 **Source decisions:** DEC-029 D1/D3 (primary); DEC-020 D1 (agent taxonomy — e2e role is one of nine universal base bodies; its rewrite must remain consistent with the nine-role ownership model).
 
-**Intra-sprint dependency:** This story consumes `momentum/harness.json`. The schema stub story (`momentum-harnessjson-schema-and-plugin-shipped-defaults`) must land before this story's implementation begins. The dependency is declared in `depends_on`.
+**Intra-sprint dependency:** This story consumes `momentum/verification-harness.json`. The schema stub story (`momentum-harnessjson-schema-and-plugin-shipped-defaults`) must land before this story's implementation begins. The dependency is declared in `depends_on`.
 
 **Out of scope:** The full sprint-dev rewrite (four-step flow, three-tier pipeline, PASS-sticky loop) is a downstream epic sequenced in DEC-029 Phase 2. This story is Phase 1 only: rewrite the validator body. Sprint-dev wiring is not touched here.
 
@@ -40,11 +40,11 @@ The current `e2e-validator.md` agent body has three concrete defects that this s
 
 ### AC1 — Harness file loaded at startup
 
-When the e2e-validator agent is spawned with a sprint slug and a project root, it reads `momentum/harness.json` from the project root. If the file is absent, the agent reports BLOCKED with the message "momentum/harness.json not found — cannot determine environment startup or execution drivers. Create harness.json per the plugin defaults schema." It does not fall back to hardcoded environment assumptions.
+When the e2e-validator agent is spawned with a sprint slug and a project root, it reads `momentum/verification-harness.json` from the project root. If the file is absent, the agent reports BLOCKED with the message "momentum/verification-harness.json not found — cannot determine environment startup or execution drivers. Create verification-harness.json per the plugin defaults schema." It does not fall back to hardcoded environment assumptions.
 
 ### AC2 — No stack-specific references in the agent body
 
-The rewritten `e2e-validator.md` contains no references to `finch`, `PostgreSQL`, `FastAPI`, or any other consumer-project technology. Environment startup and readiness probes are described generically, as "follow the steps declared in harness.json under `environment.startup` and poll `environment.readiness_probe` until it passes."
+The rewritten `e2e-validator.md` contains no references to `finch`, `PostgreSQL`, `FastAPI`, or any other consumer-project technology. Environment startup and readiness probes are described generically, as "follow the steps declared in verification-harness.json under `environment.startup` and poll `environment.readiness_probe` until it passes."
 
 ### AC3 — Method-polymorphic contract dispatch
 
@@ -60,19 +60,19 @@ Unknown extensions are reported as ERROR with: "Unrecognized contract type: {ext
 
 ### AC4 — Harness-driven execution surface
 
-For each scenario, the execution driver (cmux, Skill-invoke, Maestro, Playwright, or curl) is resolved from `harness.json` under the `change_types.{change_type}.driver` field. If the harness declares `driver: cmux` for a scenario's change-type, the existing cmux procedure is used. If it declares `driver: maestro`, the agent invokes Maestro. If the field is absent for a given change-type, the agent falls back to its own heuristic and notes the fallback in the scenario's evidence field.
+For each scenario, the execution driver (cmux, Skill-invoke, Maestro, Playwright, or curl) is resolved from `verification-harness.json` under the `change_types.{change_type}.driver` field. If the harness declares `driver: cmux` for a scenario's change-type, the existing cmux procedure is used. If it declares `driver: maestro`, the agent invokes Maestro. If the field is absent for a given change-type, the agent falls back to its own heuristic and notes the fallback in the scenario's evidence field.
 
 ### AC5 — Harness-driven environment startup
 
-The agent follows `harness.json`'s `environment.startup` steps (a list of commands or Skill invocations) in sequence before executing any scenario. After each startup command, it polls `environment.readiness_probe` (a command whose exit code 0 means ready) with a configurable timeout. If the readiness probe does not pass within the timeout, the agent reports BLOCKED and halts — it does not proceed to scenario execution with an unverified environment.
+The agent follows `verification-harness.json`'s `environment.startup` steps (a list of commands or Skill invocations) in sequence before executing any scenario. After each startup command, it polls `environment.readiness_probe` (a command whose exit code 0 means ready) with a configurable timeout. If the readiness probe does not pass within the timeout, the agent reports BLOCKED and halts — it does not proceed to scenario execution with an unverified environment.
 
 ### AC6 — Human-review carve-outs from harness
 
-Scenarios whose change-type appears in `harness.json`'s `human_review_carveouts` list are marked MANUAL automatically, without the agent attempting execution. The evidence field records: "Marked MANUAL per harness.json human_review_carveouts for change-type: {change_type}."
+Scenarios whose change-type appears in `verification-harness.json`'s `human_review_carveouts` list are marked MANUAL automatically, without the agent attempting execution. The evidence field records: "Marked MANUAL per verification-harness.json human_review_carveouts for change-type: {change_type}."
 
 ### AC7 — Trivial-smoke escape hatch
 
-If `harness.json` declares `trivial_smoke_escape: true` for a change-type, the agent runs only the minimal smoke check declared in the contract (e.g., the first Given/Then of a `.feature` or the first step of a `.smoke.sh`) and marks the scenario PASS-with-smoke. Full execution is not performed. The evidence field records: "Trivial smoke escape applied per harness.json."
+If `verification-harness.json` declares `trivial_smoke_escape: true` for a change-type, the agent runs only the minimal smoke check declared in the contract (e.g., the first Given/Then of a `.feature` or the first step of a `.smoke.sh`) and marks the scenario PASS-with-smoke. Full execution is not performed. The evidence field records: "Trivial smoke escape applied per verification-harness.json."
 
 ### AC8 — DEC-020 taxonomy compliance
 
@@ -80,7 +80,7 @@ The rewritten agent frontmatter declares `name: e2e-validator` (matching DEC-020
 
 ### AC9 — Backward compatibility for Gherkin-only harnesses
 
-A project whose `harness.json` does not declare any change-type–specific drivers (uses only plugin defaults) and whose sprint specs contain only `.feature` files must validate identically to the behavior before this story — no regressions for existing Gherkin-only workflows.
+A project whose `verification-harness.json` does not declare any change-type–specific drivers (uses only plugin defaults) and whose sprint specs contain only `.feature` files must validate identically to the behavior before this story — no regressions for existing Gherkin-only workflows.
 
 ### AC10 — Spec quality classification preserved
 
@@ -91,28 +91,28 @@ The spec quality classification logic (untestable-scenario, outsider-test-failur
 > **EDD ORDER REQUIRED:** This story uses Eval-Driven Development. Write evals (Tasks 1–3) BEFORE beginning implementation (Tasks 4–11). A dev agent that implements first has violated EDD.
 
 - [ ] **Task 1 — Write eval: harness absent reports BLOCKED**
-  Create `skills/momentum/agents/evals/eval-e2e-validator-harness-absent-reports-blocked.md` (create `evals/` directory if absent). Format: "Given a sprint with spec files in `.momentum/sprints/{slug}/specs/` but no `momentum/harness.json` in the project root, the e2e-validator agent should report BLOCKED with an explanation about the missing harness file and halt without attempting scenario execution."
+  Create `skills/momentum/agents/evals/eval-e2e-validator-harness-absent-reports-blocked.md` (create `evals/` directory if absent). Format: "Given a sprint with spec files in `.momentum/sprints/{slug}/specs/` but no `momentum/verification-harness.json` in the project root, the e2e-validator agent should report BLOCKED with an explanation about the missing harness file and halt without attempting scenario execution."
 
 - [ ] **Task 2 — Write eval: .eval.yaml contract dispatched correctly**
   Create `skills/momentum/agents/evals/eval-e2e-validator-eval-yaml-contract-dispatched.md`. Format: "Given a sprint spec directory containing a `.eval.yaml` contract file (not a `.feature` file), the e2e-validator agent should dispatch the EDD eval execution strategy — spawning a subagent with the scenario as task — and not attempt Gherkin parsing."
 
 - [ ] **Task 3 — Write eval: no stack-specific references in agent body**
-  Create `skills/momentum/agents/evals/eval-e2e-validator-no-stack-references.md`. Format: "Given the rewritten `e2e-validator.md` agent body, a search for 'finch', 'PostgreSQL', and 'FastAPI' should return zero matches. Environment startup instructions should reference `harness.json` fields generically, not name specific technologies."
+  Create `skills/momentum/agents/evals/eval-e2e-validator-no-stack-references.md`. Format: "Given the rewritten `e2e-validator.md` agent body, a search for 'finch', 'PostgreSQL', and 'FastAPI' should return zero matches. Environment startup instructions should reference `verification-harness.json` fields generically, not name specific technologies."
 
 - [ ] **Task 4 — Audit and annotate current agent body**
-  Read `skills/momentum/agents/e2e-validator.md` in full. Annotate (in a scratch note, not in the file) every section that contains: (a) hardcoded stack references (finch, PostgreSQL, FastAPI), (b) Gherkin-only assumptions, (c) places where harness.json integration will slot in. This produces the diff map for the rewrite.
+  Read `skills/momentum/agents/e2e-validator.md` in full. Annotate (in a scratch note, not in the file) every section that contains: (a) hardcoded stack references (finch, PostgreSQL, FastAPI), (b) Gherkin-only assumptions, (c) places where verification-harness.json integration will slot in. This produces the diff map for the rewrite.
 
 - [ ] **Task 5 — Rewrite Environment Prerequisites section**
-  Remove the hardcoded `finch`, `PostgreSQL`, `FastAPI` startup steps. Replace with a generic section: "Before executing any scenario, load `momentum/harness.json`. Follow the steps in `environment.startup` in sequence. Poll `environment.readiness_probe` until exit 0 or timeout. Report BLOCKED if the probe does not pass." Add the BLOCKED-on-absent-harness guard (AC1).
+  Remove the hardcoded `finch`, `PostgreSQL`, `FastAPI` startup steps. Replace with a generic section: "Before executing any scenario, load `momentum/verification-harness.json`. Follow the steps in `environment.startup` in sequence. Poll `environment.readiness_probe` until exit 0 or timeout. Report BLOCKED if the probe does not pass." Add the BLOCKED-on-absent-harness guard (AC1).
 
 - [ ] **Task 6 — Rewrite Input section to accept harness context**
-  Update the `## Input` section to list three inputs: sprint slug, path to sprint specs directory, and (new) path to `momentum/harness.json`. The AVFL findings list remains optional context as before.
+  Update the `## Input` section to list three inputs: sprint slug, path to sprint specs directory, and (new) path to `momentum/verification-harness.json`. The AVFL findings list remains optional context as before.
 
 - [ ] **Task 7 — Rewrite validation process Step 1: Load Contracts (replaces Load Gherkin Specs)**
   Replace "Load Gherkin Specs" with "Load Contracts." The new step reads all files from the sprint specs directory regardless of extension, classifies each by extension to determine contract type, and maps each to the dispatch table in AC3.
 
 - [ ] **Task 8 — Rewrite validation process Step 2: Determine Execution Strategy (harness-driven)**
-  Replace the static execution strategy decision table with harness-driven resolution: resolve driver from `harness.json change_types.{change_type}.driver`; check `human_review_carveouts` for MANUAL classification; check `trivial_smoke_escape` for abbreviated execution. Add the `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md` execution strategies alongside the preserved Gherkin strategy (AC3, AC4, AC6, AC7). Before implementing, read the harness schema from the dependency story to confirm field names.
+  Replace the static execution strategy decision table with harness-driven resolution: resolve driver from `verification-harness.json change_types.{change_type}.driver`; check `human_review_carveouts` for MANUAL classification; check `trivial_smoke_escape` for abbreviated execution. Add the `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md` execution strategies alongside the preserved Gherkin strategy (AC3, AC4, AC6, AC7). Before implementing, read the harness schema from the dependency story to confirm field names.
 
 - [ ] **Task 9 — Update frontmatter and role statement**
   Confirm frontmatter has `name: e2e-validator`, `model: sonnet`, `effort: medium`. Rewrite the role statement opening line to: "You are an E2E Validator in Momentum's three-tier quality pipeline." Update the description field to reflect method-polymorphic, harness-driven behavior without naming Gherkin as the exclusive format. Verify description ≤ 250 characters.
@@ -132,11 +132,11 @@ The spec quality classification logic (untestable-scenario, outsider-test-failur
 
 **DEC-029 D1 — Method-routed verification:** The rewrite makes the agent method-polymorphic by dispatching on contract file extension. `.feature` files continue to use the existing Gherkin strategy unchanged. The new contract types (`.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md`) each get a distinct execution strategy. The dispatch table lives in the agent body's "Determine Execution Strategy" step.
 
-**DEC-029 D3 — Per-project harness profile:** `momentum/harness.json` is the sole source for: environment startup steps, readiness probes, per-change-type driver bindings, human-review carve-outs, and trivial-smoke escapes. The agent body contains no project-specific values. If a field is absent from harness.json, the agent falls back to its own heuristic and notes the fallback — it never hard-errors on a missing optional field.
+**DEC-029 D3 — Per-project harness profile:** `momentum/verification-harness.json` is the sole source for: environment startup steps, readiness probes, per-change-type driver bindings, human-review carve-outs, and trivial-smoke escapes. The agent body contains no project-specific values. If a field is absent from verification-harness.json, the agent falls back to its own heuristic and notes the fallback — it never hard-errors on a missing optional field.
 
 **DEC-020 D1 — Nine universal base bodies:** The e2e role is one of nine. Its file (`skills/momentum/agents/e2e-validator.md`) is plugin-shipped. The rewrite must not add new files to `skills/momentum/agents/` — the existing single file is the canonical base body. Role identity statement, behavioral constraints, output format contract, and file ownership scope must remain coherent with the nine-role taxonomy.
 
-**Intra-sprint dependency:** This story depends on `momentum-harnessjson-schema-and-plugin-shipped-defaults` — specifically the `harness.json` schema (field names, structure for `environment.startup`, `environment.readiness_probe`, `change_types.*.driver`, `human_review_carveouts`, `trivial_smoke_escape`). The rewrite must use the schema as specified in that story. Do not invent field names; read the produced schema before writing harness.json access code in the agent body.
+**Intra-sprint dependency:** This story depends on `momentum-harnessjson-schema-and-plugin-shipped-defaults` — specifically the `verification-harness.json` schema (field names, structure for `environment.startup`, `environment.readiness_probe`, `change_types.*.driver`, `human_review_carveouts`, `trivial_smoke_escape`). The rewrite must use the schema as specified in that story. Do not invent field names; read the produced schema before writing verification-harness.json access code in the agent body.
 
 ### Testing Requirements
 
@@ -200,7 +200,7 @@ This is a `skill-instruction` (agent definition) story. Use EDD — not TDD.
 
 **Evals directory:** `skills/momentum/agents/evals/` — create if absent. Three eval files go here. This directory is not shipped as part of the plugin; it is local practice tooling.
 
-**harness.json schema source:** `.momentum/stories/momentum-harnessjson-schema-and-plugin-shipped-defaults.md` — read its Task and Dev Notes sections before implementing harness.json field access in the agent body. The field names used in the agent body must exactly match the schema defined there.
+**verification-harness.json schema source:** `.momentum/stories/momentum-harnessjson-schema-and-plugin-shipped-defaults.md` — read its Task and Dev Notes sections before implementing verification-harness.json field access in the agent body. The field names used in the agent body must exactly match the schema defined there.
 
 **Agent definition conventions:** `skills/momentum/references/agent-skill-development-guide.md` — authoritative source for frontmatter schema, system prompt structure, and the mandatory Large File Handling section. The existing agent body already includes this section; preserve it unchanged.
 

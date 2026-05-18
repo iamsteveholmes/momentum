@@ -28,7 +28,7 @@ DEC-029 Decision D7 dissolves the "process document" artifact class. `acceptance
 This story delivers the replacement: a **concise, enforced rule** at `skills/momentum/references/rules/verification-standard.md` that gets written by Impetus to `~/.claude/rules/` (global) and `.claude/rules/` (project) on first run. Four decisions compile into this rule:
 
 - **D1** — Method routing: every story's change-type maps to a required verification method. The validator reads the table and applies the method; it cannot substitute a different method without a written justification in the frozen contract.
-- **D3** — Harness profile location: D3 establishes that the per-project harness lives at `momentum/harness.json`. Derived from D3's intent: every verified change must declare a harness-profile reference — naming the entry in `momentum/harness.json` that governs execution environment and driver binding. A verification that runs without a declared harness profile is non-compliant.
+- **D3** — Harness profile location: D3 establishes that the per-project harness lives at `momentum/verification-harness.json`. Derived from D3's intent: every verified change must declare a harness-profile reference — naming the entry in `momentum/verification-harness.json` that governs execution environment and driver binding. A verification that runs without a declared harness profile is non-compliant.
 - **D6** — Adversarial anti-insider-knowledge guard: any frozen contract whose verification requires insider/application knowledge is rejected. Contracts must be verifiable with no more knowledge than an ordinary user of the system has.
 - **D7** — Cascade: the rule cascades global → project → path-scoped, per the established authority hierarchy. `acceptance-testing-standard.md` is retired: its rationale now lives in DEC-029; its enforceable content lives in this rule.
 
@@ -48,7 +48,7 @@ When `verification-standard.md` is read, it contains a routing table mapping eac
 When `verification-standard.md` is read, it contains an explicit statement that a story may override its default method only when a written justification appears in the story's frozen contract, and that the validator reads the justification but cannot author it.
 
 **AC-4: Rule mandates harness-profile declaration**
-When `verification-standard.md` is read, it contains an explicit requirement that every verified change must declare a harness-profile reference — naming the entry in `momentum/harness.json` that governs execution environment, driver binding, and readiness probes. A verification that proceeds without a declared harness profile is non-compliant.
+When `verification-standard.md` is read, it contains an explicit requirement that every verified change must declare a harness-profile reference — naming the entry in `momentum/verification-harness.json` that governs execution environment, driver binding, and readiness probes. A verification that proceeds without a declared harness profile is non-compliant.
 
 **AC-5: Rule defines the adversarial anti-insider-knowledge guard**
 When `verification-standard.md` is read, it contains a guard clause stating that any frozen contract whose verification steps require insider or application knowledge is rejected. The rule defines "insider knowledge" as any fact not available to an ordinary user of the system — implementation details, source code internals, test fixture values, internal API names. The guard applies at contract-authoring time and at validation time.
@@ -63,7 +63,7 @@ When `docs/process/acceptance-testing-standard.md` is read, its Status field rea
 When `skills/momentum/references/momentum-versions.json` is read, it includes `verification-standard.md` in the list of rules that Impetus writes on first invocation. Specifically: an entry with `"source": "references/rules/verification-standard.md"` and `"target": "~/.claude/rules/verification-standard.md"` exists in the versions manifest, following the same schema as the existing `authority-hierarchy.md` and `anti-patterns.md` entries.
 
 **AC-9: Rule is self-sufficient — no cross-file lookup required to apply it**
-When `verification-standard.md` is read in isolation (without loading DEC-029, `acceptance-testing-standard.md`, or `momentum/harness.json`), the routing table, harness-profile requirement, adversarial guard, and cascade order are all fully stated. Agents loading only this rule file have complete enforcement guidance.
+When `verification-standard.md` is read in isolation (without loading DEC-029, `acceptance-testing-standard.md`, or `momentum/verification-harness.json`), the routing table, harness-profile requirement, adversarial guard, and cascade order are all fully stated. Agents loading only this rule file have complete enforcement guidance.
 
 **AC-10: Rule is concise — under 150 lines**
 The body of `verification-standard.md` (excluding YAML frontmatter) is 150 lines or fewer. If the full routing rationale and historical context cannot fit, deep-rationale content is extracted to a `references/verification-rationale.md` companion and `verification-standard.md` references it with a load instruction.
@@ -101,7 +101,7 @@ The authority hierarchy cascade (global → project → path-scoped) is already 
 
 **No new enforcement hook is required.** The rule enforces through the authority hierarchy: agents that load `~/.claude/rules/verification-standard.md` are bound by its content. The downstream stories (`e2e-validator-agent-body-rewrite`, `create-story-method-selection-step`) will wire their workflows to read and obey this rule. This story only writes the authoritative rule text.
 
-**Harness profile reference vs. harness.json schema:** This story's rule mandates that verified changes declare a harness profile name. The `momentum/harness.json` schema and defaults are defined by the `momentum-harnessjson-schema-and-plugin-shipped-defaults` story (sibling in this sprint). The rule references harness profiles by name only — it does not define the schema. This story does not depend on the harness story; both can proceed in parallel.
+**Harness profile reference vs. verification-harness.json schema:** This story's rule mandates that verified changes declare a harness profile name. The `momentum/verification-harness.json` schema and defaults are defined by the `momentum-harnessjson-schema-and-plugin-shipped-defaults` story (sibling in this sprint). The rule references harness profiles by name only — it does not define the schema. This story does not depend on the harness story; both can proceed in parallel.
 
 **Cascade override scope:** Per D7, the rule cascades global → project → path-scoped. Only harness-profile references and method justifications are overridable at lower scope. The routing table and adversarial guard are global-only and cannot be overridden at project or path scope. State this explicitly in the rule.
 
@@ -181,7 +181,7 @@ Files touched by this story:
 - `skills/momentum/references/verification-rationale.md` — **conditionally new** (Task 1 only, if rule body exceeds 150 lines; rationale extracted here and referenced from main rule with a load instruction)
 
 Files **not** touched by this story:
-- `momentum/harness.json` — owned by `momentum-harnessjson-schema-and-plugin-shipped-defaults`
+- `momentum/verification-harness.json` — owned by `momentum-harnessjson-schema-and-plugin-shipped-defaults`
 - `skills/momentum/agents/e2e-validator.md` — owned by `e2e-validator-agent-body-rewrite-de-gherkin-harness-driven`
 - `skills/momentum/skills/create-story/workflow.md` — owned by `create-story-method-selection-step`
 - `skills/momentum/skills/sprint-planning/workflow.md` — owned by `sprint-planning-frozen-per-story-contract-holistic-coverage`
