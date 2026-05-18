@@ -4420,5 +4420,16 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-canvas"
+  },
+  "sprint-planning-pre-sprint-class-1-render-gate": {
+    "status": "backlog",
+    "title": "sprint-planning pre-sprint activation — Class-1 deterministic pre-sprint render gate",
+    "epic_slug": "impetus-sprint-orchestrator",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-sprint-planning-to-ready"
   }
 }
