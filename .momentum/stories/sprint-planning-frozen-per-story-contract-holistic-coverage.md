@@ -1,7 +1,7 @@
 ---
 title: "sprint-planning: frozen per-story contract, holistic coverage plan, adversarial guard"
 story_key: sprint-planning-frozen-per-story-contract-holistic-coverage
-status: review
+status: ready-for-dev
 epic_slug: sprint-dev-workflow
 feature_slug: momentum-sprint-planning-to-ready
 story_type: practice
@@ -233,29 +233,8 @@ The harness defaults consumed by contract authoring live at:
 
 ### Agent Model Used
 
-claude-sonnet-4-6
-
 ### Debug Log References
-
-None — no implementation failures.
 
 ### Completion Notes List
 
-- Inserted Step 3.5 "Author frozen contracts + coverage plan + adversarial guard" into `workflow.md` between Steps 3 and 4.
-- Step 3.5 has three phases: (A) contract authoring per story using verification-standard.md routing table and contract-format-guide.md formats, (B) coverage-plan.md with anti-redundancy principle and covered-by-composition/dedicated-run classification, (C) decorrelated adversarial agent guard with max-2 rewrite passes and developer escalation on residual failure.
-- Step 4 updated to skip app-ui stories with existing `.feature` contracts (written by Step 3.5 Phase A).
-- Step 8 updated with pre-activation gate that checks for per-story contract files and coverage-plan.md before calling `momentum-tools sprint activate`.
-- Authored `references/contract-format-guide.md` with per-change-type format templates, extension mapping table, multi-type precedence ordering, and anti-insider checklist.
-- Wrote 4 behavioral evals covering: contract-per-story authoring, coverage plan completeness, adversarial guard rejection and rewrite cycle, and activation gate enforcement.
-- EDD cycle ran — all 4 evals verified against implemented workflow instructions.
-- Gap noted: `momentum/verification-harness.json` was not present in the worktree (dependent story not yet merged); harness reference is used in contract-format-guide.md and the workflow reads it, but the workflow gracefully operates when the file has already been written by the dependency story before this sprint-planning step runs at runtime.
-- SKILL.md description unchanged (85 chars, under 150 limit). model and effort frontmatter present.
-
 ### File List
-
-- `skills/momentum/skills/sprint-planning/workflow.md` — inserted Step 3.5, updated Step 0 task list, updated Step 4 app-ui skip logic, updated Step 7 review output, updated Step 8 activation gate
-- `skills/momentum/skills/sprint-planning/references/contract-format-guide.md` — new file: per-change-type contract authoring guide
-- `skills/momentum/skills/sprint-planning/evals/eval-contract-authored-per-story.md` — new eval
-- `skills/momentum/skills/sprint-planning/evals/eval-coverage-plan-covers-all-stories.md` — new eval
-- `skills/momentum/skills/sprint-planning/evals/eval-adversarial-guard-rejects-insider-clause.md` — new eval
-- `skills/momentum/skills/sprint-planning/evals/eval-activation-blocked-without-contracts.md` — new eval

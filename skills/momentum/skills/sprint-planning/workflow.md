@@ -15,11 +15,10 @@
   <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
 
   <step n="0" goal="Initialize task tracking">
-    <action>Create tasks for the 11 workflow steps:
+    <action>Create tasks for the 10 workflow steps:
       1. Synthesize recommendations from master plan and backlog
       2. Story selection
       3. Flesh out stories
-      3.5. Author frozen contracts + coverage plan
       4. Generate Gherkin specs
       4.5. Spec impact analysis — update architecture and PRD
       5. Build team composition
@@ -317,191 +316,16 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
     </for-each>
 
     <action>After all stories have been approved:</action>
-    <output>> All **{{count}} stories** approved. Proceeding to contract authoring.</output>
+    <output>> All **{{count}} stories** approved. Proceeding to Gherkin spec generation.</output>
     <action>Update task 3 (Flesh out stories) to completed</action>
-  </step>
-
-  <step n="3.5" goal="Author frozen contracts + coverage plan + adversarial guard">
-    <action>Update task 3.5 (Author frozen contracts + coverage plan) to in_progress</action>
-
-    <!-- Load method-routing table and harness defaults -->
-    <action>Read `skills/momentum/references/rules/verification-standard.md` — extract the method-routing table (Section 1) and the anti-insider-knowledge guard rules (Section 4). This table is authoritative for all contract format decisions below.</action>
-    <action>Read `skills/momentum/skills/sprint-planning/references/contract-format-guide.md` — load per-change-type authoring rules, file extension mapping, multi-type precedence ordering, and the anti-insider checklist.</action>
-
-    <!-- Phase A: Contract authoring -->
-    <action>Create the sprint specs directory: `.momentum/sprints/{{sprint_slug}}/specs/`</action>
-
-    <action>For each approved story in {{selected_stories}}:
-      1. Read the story's `change_type` field from `.momentum/stories/index.json`
-      2. Determine the contract file extension using the precedence table in contract-format-guide.md
-         (for multi-change-type stories: app-ui > script-code > script-cli > backend > agent-definition
-          > skill-instruction > rule-hook > config-structure > specification > research-spike)
-      3. Read the story's plain English Acceptance Criteria from its story file
-         · Do NOT read any `.feature` files — they do not exist yet at this point
-         · Do NOT read SKILL.md files or workflow.md files for the implementation being specified
-      4. Author the contract body:
-         · State what must be observably true about the story's behavior
-         · Every clause must pass the Outsider Test: a person with no source code access
-           must be able to verify it by invoking skills, running commands, or reading outputs
-         · Include `harness_profile` referencing a driver declared in `momentum/verification-harness.json`
-         · Follow the per-change-type format in contract-format-guide.md
-      5. Write to `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}`
-
-      Special case — app-ui stories:
-        · Write the `.feature` contract here in Phase A
-        · This `.feature` is the canonical spec-of-done; Step 4 must NOT overwrite it
-    </action>
-
-    <output>## Contracts Authored
-
-{{for each story: · {{story_slug}}.{{ext}} — {{change_type}}}}
-
-Contracts written to `sprints/{{sprint_slug}}/specs/`. Proceeding to coverage plan.</output>
-
-    <!-- Phase B: Coverage plan -->
-    <action>Read all authored contract bodies together</action>
-    <action>Identify stories whose observable behaviors overlap at the integration level:
-      · An integration scenario exists when Story A's verification invocation exercises the same system boundary that Story B's trigger condition monitors
-      · Mark these stories as candidates for "covered-by-composition"
-    </action>
-
-    <action>Author `coverage-plan.md`:
-      Open with the anti-redundancy principle note:
-        "Never validate in isolation what an integrated scenario already exercises."
-
-      For each integration scenario:
-        · Name: [scenario name]
-        · Description: [brief behavioral description — what the user does and what they observe]
-        · Discharges: [list of story slugs this scenario verifies] · [file/span paths exercised]
-        · Mark each listed story as "covered-by-composition" with a rationale sentence
-
-      For each story NOT covered by any integration scenario:
-        · List as "dedicated-run" — a standalone verification target
-
-      Validation: every approved story must appear exactly once (either covered-by-composition
-      or dedicated-run). Every scenario must name at least one story it discharges.
-    </action>
-
-    <action>Write coverage plan to: `.momentum/sprints/{{sprint_slug}}/coverage-plan.md`</action>
-
-    <output>## Coverage Plan Authored
-
-`.momentum/sprints/{{sprint_slug}}/coverage-plan.md`
-
-  Covered-by-composition: {{composition_count}} stories
-  Dedicated-run: {{dedicated_count}} stories
-
-Proceeding to adversarial guard.</output>
-
-    <!-- Phase C: Adversarial guard -->
-    <action>Spawn a decorrelated adversarial agent:
-      · This agent is NOT the same agent that authored the contracts
-      · Pass it ALL contract bodies as input (paste the full text of each contract file)
-      · Do NOT give the adversarial agent access to story .md files, SKILL.md files,
-        workflow.md files, or any Momentum source code — only the contract text
-
-      Adversarial agent system prompt:
-        You are an adversarial contract reviewer. Your sole task is to apply the Outsider Test
-        to every clause in every contract provided to you.
-
-        The Outsider Test: Could a person who has never seen the source code verify this clause
-        by ONLY invoking skills, running commands, or reading their observable outputs?
-
-        A clause FAILS the Outsider Test if it:
-          · Names which internal skill or agent is called (e.g., "delegates to X", "spawned via X")
-          · Names which tool is used internally (e.g., "uses the Write tool")
-          · Names which file is read internally (e.g., "reads stories/index.json")
-          · Names a function, variable, or internal data structure
-          · Describes internal agent decision-making rather than observable outcomes
-          · References implementation details not available to an ordinary user
-
-        For EVERY failing clause, produce a structured finding:
-          - story_slug: [the story this contract belongs to]
-          - clause: [the exact failing clause text]
-          - reason: [one sentence explaining why this clause fails the Outsider Test]
-
-        If no clauses fail, output: "GUARD_CLEAN — all clauses pass the Outsider Test."
-    </action>
-
-    <check if="adversarial agent reports GUARD_CLEAN">
-      <output>> ✓ Adversarial guard clean — all contracts pass the Outsider Test.</output>
-      <action>Set {{guard_status}} = "clean". Proceed to Step 4.</action>
-    </check>
-
-    <check if="adversarial agent reports one or more findings">
-      <action>Set {{guard_status}} = "findings". Store {{guard_findings}} = list of findings.</action>
-      <action>Store {{rewrite_pass_count}} = 0</action>
-
-      <!-- Rewrite loop — maximum 2 passes -->
-      <action>For each finding in {{guard_findings}}:
-        · Locate the failing clause in the contract for {{finding.story_slug}}
-        · Rewrite ONLY that clause to describe observable outcomes
-          (do NOT rewrite the whole contract — change only the flagged clause)
-        · Apply the Outsider Test self-check before saving: every clause in the rewritten contract
-          must describe observable inputs, outputs, or state — not internal mechanisms
-        · Save the updated contract file
-      </action>
-      <action>Increment {{rewrite_pass_count}} by 1</action>
-
-      <action>Re-spawn the decorrelated adversarial agent with the rewritten contract bodies.
-        Apply the same system prompt as the first run.</action>
-
-      <check if="second run reports GUARD_CLEAN">
-        <output>> ✓ Adversarial guard clean after {{rewrite_pass_count}} rewrite pass(es).</output>
-        <action>Set {{guard_status}} = "clean". Proceed to Step 4.</action>
-      </check>
-
-      <check if="second run still has findings AND rewrite_pass_count < 2">
-        <action>Repeat the rewrite loop once more (maximum 2 total rewrite passes)</action>
-        <action>Increment {{rewrite_pass_count}} by 1</action>
-        <action>Re-spawn the adversarial agent a third time</action>
-
-        <check if="third run reports GUARD_CLEAN">
-          <output>> ✓ Adversarial guard clean after {{rewrite_pass_count}} rewrite pass(es).</output>
-          <action>Set {{guard_status}} = "clean". Proceed to Step 4.</action>
-        </check>
-
-        <check if="third run still has findings">
-          <action>Set {{guard_status}} = "residual_failures"</action>
-          <output>! Adversarial guard: residual failures after 2 rewrite passes.
-
-The following contract clauses could not be rewritten to pass the Outsider Test:
-
-{{for each residual finding:
-  · [{{story_slug}}] "{{clause}}"
-    Reason: {{reason}}
-}}
-
-These contracts contain insider-knowledge contamination that may bias verification.
-The sprint CANNOT activate silently with known guard failures.</output>
-
-          <ask>Proceed with known contaminated contracts (P), or halt planning until contracts are manually fixed (H)?</ask>
-
-          <check if="developer selects H (Halt)">
-            <action>HALT — fix the flagged contract clauses manually and re-run sprint-planning from Step 3.5 Phase C</action>
-          </check>
-
-          <check if="developer selects P (Proceed)">
-            <output>! Proceeding with {{residual_count}} known guard failure(s) noted. These will be visible in the coverage plan.</output>
-            <action>Append a "## Known Guard Failures" section to coverage-plan.md listing the residual findings</action>
-            <action>Set {{guard_status}} = "accepted_with_failures". Proceed to Step 4.</action>
-          </check>
-        </check>
-      </check>
-    </check>
-
-    <action>Update task 3.5 (Author frozen contracts + coverage plan) to completed</action>
   </step>
 
   <step n="4" goal="Generate Gherkin specs">
     <action>Update task 4 (Generate Gherkin specs) to in_progress</action>
-    <action>Create the sprint specs directory (if not already created by Step 3.5):
+    <action>Create the sprint specs directory:
       `.momentum/sprints/{{sprint_slug}}/specs/`</action>
 
-    <action>For each approved story in {{selected_stories}}:
-      · SKIP any story that already has a `.feature` file in `specs/` (written by Step 3.5 for app-ui stories) — that file is the canonical spec-of-done and must NOT be overwritten
-    </action>
-    <action>For each approved story WITHOUT an existing `.feature` contract in `specs/`:</action>
+    <action>For each approved story in {{selected_stories}}:</action>
     <action>Read the story's acceptance criteria from its story file — read ALL ACs
       holistically to understand the system's intended behavior, then write Gherkin
       scenarios that describe that behavior end-to-end.</action>
@@ -926,10 +750,7 @@ Dependency Graph:
     Wave N: {{story_slugs}} ({{concurrency note}})
   }}
 
-Verification Contracts: {{contract_count}} files in sprints/{{sprint_slug}}/specs/
-Gherkin Specs: {{gherkin_spec_count}} .feature files in sprints/{{sprint_slug}}/specs/
-Coverage Plan: sprints/{{sprint_slug}}/coverage-plan.md ({{composition_count}} covered-by-composition, {{dedicated_count}} dedicated-run)
-Guard Status: {{guard_status}}
+Gherkin Specs: {{spec_count}} feature files in sprints/{{sprint_slug}}/specs/
 
 AVFL: {{avfl_result}}
     </output>
@@ -962,39 +783,6 @@ AVFL: {{avfl_result}}
 
   <step n="8" goal="Activate the sprint">
     <action>Update task 8 (Activate sprint) to in_progress</action>
-
-    <!-- Activation gate: verify contracts and coverage plan are present -->
-    <action>Pre-activation gate — verify all artifacts required by DEC-029/DEC-030 are present:
-
-      1. For each story in {{selected_stories}}:
-         · Check that `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.*` exists
-           (any extension — eval.yaml, trigger.md, smoke.sh, review.md, or feature)
-         · Build list {{missing_contracts}} of stories with no contract file
-
-      2. Check that `.momentum/sprints/{{sprint_slug}}/coverage-plan.md` exists
-         · Set {{coverage_plan_missing}} = true if absent
-    </action>
-
-    <check if="{{missing_contracts}} is non-empty OR {{coverage_plan_missing}} is true">
-      <output>✗ Sprint activation blocked — verification artifacts are missing:
-
-{{#if missing_contracts.length}}
-  Missing contracts ({{missing_contracts.length}} stories):
-  {{for each slug in missing_contracts: · .momentum/sprints/{{sprint_slug}}/specs/{{slug}}.*}}
-
-  Return to Step 3.5 to author the missing contracts before activating.
-{{/if}}
-
-{{#if coverage_plan_missing}}
-  Missing coverage plan:
-  · .momentum/sprints/{{sprint_slug}}/coverage-plan.md
-
-  Return to Step 3.5 to author the coverage plan before activating.
-{{/if}}</output>
-      <action>HALT — do NOT call `momentum-tools sprint activate` until all artifacts are present</action>
-    </check>
-
-    <!-- Gate passed — proceed with activation -->
     <action>Store team composition, guidelines status, and dependency graph in the sprint record:
       · Update `.momentum/sprints/index.json` planning section with:
         - slug: {{sprint_slug}}
