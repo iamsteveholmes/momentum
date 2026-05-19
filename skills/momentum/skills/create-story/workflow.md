@@ -5,6 +5,7 @@
 **Role:** Story creation orchestrator for the Momentum project.
 - Invoke `bmad-create-story` for all context extraction — do not re-implement its logic
 - Classify change types from the story's tasks and inject Momentum-specific implementation guidance
+- Run design-fidelity pass for UI stories before AVFL validation
 - Run AVFL checkpoint before handing to developer
 
 ---
@@ -44,13 +45,75 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <note>Momentum stories live in `.momentum/stories/` regardless of what `implementation_artifacts` is set to in config. bmad-create-story writes to the config-derived path; we own the relocation.</note>
   </step>
 
-  <step n="3" goal="Classify change types from story tasks">
+  <step n="3" goal="Detect UI story and run design-fidelity pass">
+    <action>Scan the story's Title, Description, Acceptance Criteria, and Tasks sections for UI signals:
+      - Canvas names, screen names, or screen layout references
+      - Component names, UI element descriptions, design system mentions
+      - Keywords: "canvas", "screen", "layout", "composable", "@Composable", "compose", "UI component", "design token", "hifi", "DESIGN.md"
+      - File paths containing ui/, screen/, composable/, or Compose/Android frontend directories
+    </action>
+    <check if="no UI signals detected">
+      <action>Store {{ui_story}} = false. No design-fidelity pass needed — skip the rest of this step.</action>
+    </check>
+    <check if="UI signals detected">
+      <action>Store {{ui_story}} = true</action>
+      <action>Identify {{touched_canvases}}: the specific canvases or screen areas this story modifies. Derive from story content — look for named canvases, journey references, or screen descriptions.</action>
+      <action>Derive {{journey_slug}} from {{touched_canvases}}: e.g. "campaign-init canvas" or "campaign-init journey" → journey_slug = "campaign-init". If no journey is identifiable, store {{journey_slug}} = null.</action>
+
+      <action>Locate DESIGN.md — try paths in order:
+        1. `docs/ux/design-system/journeys/{{journey_slug}}/DESIGN.md` (journey-specific, primary — skip if {{journey_slug}} is null)
+        2. `docs/ux/design-system/DESIGN.md` (global design system)
+        3. `docs/ux/DESIGN.md` (fallback)
+        Store the first path that exists as {{design_md_path}}. If none found, store null.
+      </action>
+
+      <check if="{{design_md_path}} is null">
+        <action>Store {{ui_story}} = true, {{design_fidelity_status}} = "skipped — no DESIGN.md found"</action>
+        <output>**Design-fidelity pass skipped** — no DESIGN.md found at expected paths. Developer must manually cross-reference design artifacts for this UI story.</output>
+      </check>
+
+      <check if="{{design_md_path}} is not null">
+        <action>Read {{design_md_path}} in full</action>
+        <action>Locate hifi fallback sources — check if these exist and read any that do:
+          - `docs/ux/design-system/journeys/{{journey_slug}}/hifi.html` (if {{journey_slug}} is not null)
+          - Most recent `docs/ux/design-system/handoff/*/project/components.css` (sort by date directory name, take the latest)
+          Store found paths as {{hifi_sources}}.
+        </action>
+
+        <action>For each canvas or component in {{touched_canvases}}, extract from DESIGN.md (using hifi sources to resolve gaps or ambiguities DESIGN.md doesn't cover):
+          - Typography: font family, weight, and size per text element (eyebrow, header, body, footer, label, hint text)
+          - Copy and vocabulary: exact text strings per canvas state — footer phrases, CTA labels, empty-state copy, error messages
+          - Layout and rhythm: component type choices (e.g. FieldNote vs Field), hierarchy, isLoose rhythm setting per state, spacing
+          - Design tokens: color, opacity, spacing, corner radius values referenced
+          - Text-transform approach: CSS-based (letterSpacing, textDecoration) vs string mutation (.uppercase()) — note which the design uses per element
+          - State variations: how each of empty, filled, error, loading, disabled states differs visually
+          Note the DESIGN.md section or hifi element that is the source for each extracted detail.
+        </action>
+
+        <action>Compose a `## Design Fidelity Acceptance Criteria` section:
+          - Open with: "These ACs are generated from DESIGN.md and hifi sources. Each AC is implementation-level and requires visual review in a running build — behavioral tests alone are insufficient to verify these."
+          - One sub-section per touched canvas/component: `### <Canvas Name> — Design Fidelity ACs`
+          - Group ACs within each sub-section by: Typography, Copy & Vocabulary, Layout & Rhythm, Design Tokens, State Variations
+          - Each AC is a specific, testable implementation-level statement
+          - Every AC ends with an explicit source reference: `(Source: DESIGN.md §<section heading>)` or `(Source: hifi.html #<element-id>)`
+          - If a detail was ambiguous in DESIGN.md and resolved via hifi, mark it: `(Source: hifi.html — DESIGN.md ambiguous)`
+        </action>
+
+        <action>Read {{story_file}} and inject the `## Design Fidelity Acceptance Criteria` section immediately after the `## Acceptance Criteria` section (or after the `## Story` section if no AC section exists yet). Save {{story_file}}.</action>
+        <action>Count the individual ACs generated. Store {{design_fidelity_ac_count}}.</action>
+        <action>Store {{design_fidelity_status}} = "{{design_fidelity_ac_count}} ACs injected across {{touched_canvases}} from {{design_md_path}}"</action>
+        <output>**Design-fidelity ACs injected** — {{design_fidelity_status}}</output>
+      </check>
+    </check>
+  </step>
+
+  <step n="4" goal="Classify change types from story tasks">
     <action>Read the Tasks/Subtasks section of {{story_file}}</action>
-    <action>Load ./references/change-types.md (used for both detection heuristics here and injection templates in Step 5)</action>
-    <action>For each task, classify it as one of: `skill-instruction`, `script-code`, `rule-hook`, `config-structure`, or `specification` — per the signals in change-types.md. If a task matches none of the five detection signals, tag it as `unclassified` and note "No Momentum-specific guidance for this task — standard bmad-dev-story DoD applies."</action>
+    <action>Load ./references/change-types.md (used for both detection heuristics here and injection templates in Step 6)</action>
+    <action>For each task, classify it as one of: `skill-instruction`, `script-code`, `rule-hook`, `config-structure`, `app-ui`, `agent-definition`, `script-cli`, `research-spike`, or `specification` — per the signals in change-types.md. If a task matches none of the detection signals, tag it as `unclassified` and note "No Momentum-specific guidance for this task — standard bmad-dev-story DoD applies."</action>
     <action>Produce a classification list: each task tagged with its change type (or `unclassified`). A story may contain multiple types.</action>
     <action>Store {{classification_list}}: the classification list produced above, with each task number/name and its assigned change type</action>
-    <action>Store {{change_types_summary}}: e.g., "3 skill-instruction tasks, 1 config-structure task"</action>
+    <action>Store {{change_types_summary}}: e.g., "2 ui-component tasks, 1 config-structure task"</action>
 
     <output>## Change Type Classification
 
@@ -58,7 +121,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     </output>
   </step>
 
-  <step n="4" goal="Select verification method from change-type routing">
+  <step n="5" goal="Select verification method from change-type routing">
     <action>Check whether `skills/momentum/references/rules/verification-standard.md` exists on disk</action>
     <check if="verification-standard.md does not exist on disk">
       <output>Cannot select verification method — verification-standard.md not found.
@@ -104,19 +167,22 @@ Which method should govern this story's verification? Select the method for the 
     <output>**Verification method selected:** `{{verification_method}}`</output>
   </step>
 
-  <step n="5" goal="Inject Momentum Implementation Guide into story Dev Notes">
+  <step n="6" goal="Inject Momentum Implementation Guide into story Dev Notes">
     <action>Read the current content of {{story_file}}</action>
     <action>Locate the Dev Notes section (or Developer Context section — may vary by bmad-create-story template version)</action>
-    <action>Using {{classification_list}} from Step 3, determine which change types are present and select only the corresponding templates from ./references/change-types.md.</action>
+    <action>Using {{classification_list}} from Step 4, determine which change types are present and select only the corresponding templates from ./references/change-types.md.</action>
     <check if="skill-instruction tasks are present in {{classification_list}}">
       <action>Identify `{{SKILL_DIR}}` from the story's skill-instruction tasks — this is the directory name of the skill being created (e.g., if creating `skills/momentum/skills/foo/`, then `{{SKILL_DIR}}` = `foo`). Substitute this value in the skill-instruction template before injecting.</action>
+    </check>
+    <check if="app-ui tasks are present in {{classification_list}}">
+      <action>Note that design-fidelity ACs were injected in Step 3 (if DESIGN.md was found). The app-ui template in Dev Notes should cross-reference those ACs as the authoritative implementation target for visual fidelity.</action>
     </check>
     <action>Compose the Momentum Implementation Guide section using the templates for all detected types in this story (from ./references/change-types.md)</action>
     <action>Inject the section at the END of the Dev Notes / Developer Context section, immediately before the Dev Agent Record section. If no Dev Agent Record section exists, inject at the end of the Dev Notes / Developer Context section.</action>
 
     <critical>The injected section MUST include:
       - Change type classification per task (exact task numbers and names)
-      - Implementation approach per type (EDD steps for skill-instruction; TDD delegation for script-code; functional verification for rule-hook; direct+inspect for config-structure; direct authoring with cross-reference verification for specification)
+      - Implementation approach per type (EDD steps for skill-instruction; TDD delegation for script-code; functional verification for rule-hook; direct+inspect for config-structure; visual verification + design-fidelity AC compliance for app-ui; direct authoring with cross-reference verification for specification)
       - NFR compliance requirements for any skill-instruction tasks
       - DoD additions specific to this story's change types
       - A reminder that Gherkin specs exist for this sprint (in sprints/{sprint-slug}/specs/) but are off-limits to the dev agent — the dev agent implements against plain English ACs in the story file only, never against .feature files (Decision 30 black-box separation)
@@ -126,7 +192,7 @@ Which method should govern this story's verification? Select the method for the 
     <output>**Momentum Implementation Guide** injected into `{{story_file}}`</output>
   </step>
 
-  <step n="6" goal="Write story metadata to stories/index.json">
+  <step n="7" goal="Write story metadata to stories/index.json">
     <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
       - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. Find the matching story slug in `stories/index.json`. Store as {{depends_on}} list of story slugs. If none found, use [].
       - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum/skills/dev/", ".claude/settings.json"]); if none found, use []
@@ -144,7 +210,7 @@ Which method should govern this story's verification? Select the method for the 
     <output>**Story metadata written** to `stories/index.json` — `depends_on`: {{depends_on}}, `touches`: {{touches}}</output>
   </step>
 
-  <step n="7" goal="Run AVFL checkpoint on the story file">
+  <step n="8" goal="Run AVFL checkpoint on the story file">
     <action>Invoke the `avfl` skill with these parameters:
       - domain_expert: "story author"
       - task_context: "Momentum story — {{story_key}}"
@@ -193,12 +259,13 @@ You may proceed to development with known issues, or halt to address them first.
     </check>
   </step>
 
-  <step n="8" goal="Completion signal">
+  <step n="9" goal="Completion signal">
     <output>## Story `{{story_key}}` — Ready for Review
 
 **Produced:** `{{story_file}}`
 **Sprint tracking:** `stories/index.json` (status: `ready-for-dev`, metadata: written)
 **Change types:** {{change_types_summary}}
+**Design fidelity:** {{ui_story == true ? design_fidelity_status : "N/A (non-UI story)"}}
 **Verification method:** {{verification_method}}
 **AVFL checkpoint:** {{avfl_result}}
 {{avfl_findings}}

@@ -170,6 +170,38 @@ Config and structure changes need no tests or evals. Implement directly and veri
 
 ---
 
+### app-ui Template
+
+Include when any task involves Android/iOS/web UI components, Compose screens, or canvas layouts.
+
+```markdown
+### app-ui Tasks: Visual Verification + Design-Fidelity AC Compliance
+
+UI component changes require visual review against design specs in addition to any functional verification. Code that compiles and runs correctly can still diverge from the design spec on typography, copy, rhythm, and token usage — none of which functional tests catch.
+
+**Implementation approach:**
+1. Read the `## Design Fidelity Acceptance Criteria` section at the top of this story — those ACs are the authoritative specification for what to implement visually. If that section is absent, manually read `docs/ux/design-system/journeys/<journey>/DESIGN.md` before implementing.
+2. Implement the Compose component or screen per the story's ACs and design-fidelity ACs
+3. For each design-fidelity AC, verify compliance by running the app, navigating to the canvas, and checking the specific element:
+   - Typography: read the actual style attribute in code — do not eyeball it. Confirm font family, weight, and size match the AC exactly
+   - Copy and vocabulary: compare exact strings to the design-fidelity ACs character by character for footer phrases and CTA labels
+   - Design tokens: trace the value from implementation back to its source (token name or hardcoded value) and confirm it matches the AC's cited reference
+   - Text-transform: confirm the approach matches the AC (CSS `letterSpacing`/`textDecoration` vs string `.uppercase()`) — do not substitute one for the other
+   - Rhythm: confirm isLoose setting matches the AC per canvas state
+4. Verify all canvas states specified in the design-fidelity ACs: empty, filled, error, loading, disabled
+
+**Additional DoD items for app-ui tasks:**
+- [ ] All design-fidelity ACs verified in running app (not just static code review)
+- [ ] No hardcoded strings where design tokens should be used (unless AC explicitly permits)
+- [ ] Footer phrases and CTA text match design-fidelity ACs exactly (character-level match)
+- [ ] Rhythm setting (isLoose) matches AC requirement per canvas state
+- [ ] Text-transform approach matches AC (CSS vs string mutation — never substitute)
+- [ ] All canvas states verified: empty, filled, error, loading (as applicable per ACs)
+- [ ] AVFL checkpoint on produced UI file documented (momentum:dev runs this automatically)
+```
+
+---
+
 ### specification Template
 
 Include when any task involves writing or updating documentation, planning artifacts, or specification files.
