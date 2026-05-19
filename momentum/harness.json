@@ -1,0 +1,62 @@
+{
+  "defaults": {
+    "env": {
+      "startup": [],
+      "readiness_probes": []
+    },
+    "execution_surfaces": {
+      "skill-instruction": "skill-invoke",
+      "agent-definition": "skill-invoke",
+      "rule": "behavioral-trigger",
+      "hook": "behavioral-trigger",
+      "script": "bash",
+      "cli": "bash",
+      "backend": "bash",
+      "app-ui": "smoke",
+      "research": "document-review",
+      "spike": "document-review"
+    },
+    "driver_bindings": {
+      "skill-invoke": {
+        "driver": "Skill",
+        "description": "Invoke a skill directly in the agent context"
+      },
+      "behavioral-trigger": {
+        "driver": "cmux",
+        "description": "Trigger and observe rule/hook behavior via cmux terminal surface"
+      },
+      "bash": {
+        "driver": "cmux",
+        "description": "Execute scripts/CLI via cmux terminal surface"
+      },
+      "smoke": {
+        "driver": "Maestro",
+        "description": "UI smoke test via Maestro (mobile/web); falls back to Playwright for web-only targets",
+        "fallback": "Playwright"
+      },
+      "document-review": {
+        "driver": null,
+        "description": "Human document review — no automated driver"
+      },
+      "curl": {
+        "driver": "curl",
+        "description": "HTTP endpoint verification via curl"
+      }
+    },
+    "platform_matrix": {
+      "default": ["host"],
+      "notes": "Project harness.json may override to declare specific platforms (android, ios, web, desktop)"
+    },
+    "human_review_carveouts": [
+      "research",
+      "spike",
+      "document-review"
+    ],
+    "trivial_smoke_escape": {
+      "enabled": false,
+      "change_types": [],
+      "notes": "Set enabled=true and list change_types to bypass smoke validation for trivial stories of those types"
+    }
+  },
+  "project": []
+}
