@@ -60,34 +60,34 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       <action>Identify {{touched_canvases}}: the specific canvases or screen areas this story modifies. Derive from story content — look for named canvases, journey references, or screen descriptions.</action>
       <action>Derive {{journey_slug}} from {{touched_canvases}}: e.g. "campaign-init canvas" or "campaign-init journey" → journey_slug = "campaign-init". If no journey is identifiable, store {{journey_slug}} = null.</action>
 
-      <action>Locate DESIGN.md — try paths in order:
-        1. `docs/ux/design-system/journeys/{{journey_slug}}/DESIGN.md` (journey-specific, primary — skip if {{journey_slug}} is null)
-        2. `docs/ux/design-system/DESIGN.md` (global design system)
-        3. `docs/ux/DESIGN.md` (fallback)
-        Store the first path that exists as {{design_md_path}}. If none found, store null.
+      <action>Load design sources — the system DESIGN.md is always in scope for any UI story, regardless of journey:
+        1. ALWAYS read `docs/ux/design-system/DESIGN.md` if it exists — this is the base layer. Store as {{system_design_md}}.
+        2. If {{journey_slug}} is not null, ALSO read `docs/ux/design-system/journeys/{{journey_slug}}/DESIGN.md` if it exists — this is a journey-specific supplement to the system doc, not a replacement. Store as {{journey_design_md}}.
+        3. If neither exists, try `docs/ux/DESIGN.md` as a last fallback. Store as {{system_design_md}}.
+        If no DESIGN.md was found at any path, store {{design_md_found}} = false. Otherwise {{design_md_found}} = true.
+        Treat {{journey_design_md}} as an override layer: where it specifies values, those take precedence over {{system_design_md}}; for everything not covered by the journey doc, the system doc applies.
       </action>
 
-      <check if="{{design_md_path}} is null">
+      <check if="{{design_md_found}} is false">
         <action>Store {{ui_story}} = true, {{design_fidelity_status}} = "skipped — no DESIGN.md found"</action>
         <output>**Design-fidelity pass skipped** — no DESIGN.md found at expected paths. Developer must manually cross-reference design artifacts for this UI story.</output>
       </check>
 
-      <check if="{{design_md_path}} is not null">
-        <action>Read {{design_md_path}} in full</action>
+      <check if="{{design_md_found}} is true">
         <action>Locate hifi fallback sources — check if these exist and read any that do:
           - `docs/ux/design-system/journeys/{{journey_slug}}/hifi.html` (if {{journey_slug}} is not null)
           - Most recent `docs/ux/design-system/handoff/*/project/components.css` (sort by date directory name, take the latest)
           Store found paths as {{hifi_sources}}.
         </action>
 
-        <action>For each canvas or component in {{touched_canvases}}, extract from DESIGN.md (using hifi sources to resolve gaps or ambiguities DESIGN.md doesn't cover):
+        <action>For each canvas or component in {{touched_canvases}}, extract from DESIGN.md sources (using hifi sources to resolve gaps or ambiguities):
           - Typography: font family, weight, and size per text element (eyebrow, header, body, footer, label, hint text)
           - Copy and vocabulary: exact text strings per canvas state — footer phrases, CTA labels, empty-state copy, error messages
           - Layout and rhythm: component type choices (e.g. FieldNote vs Field), hierarchy, isLoose rhythm setting per state, spacing
           - Design tokens: color, opacity, spacing, corner radius values referenced
           - Text-transform approach: CSS-based (letterSpacing, textDecoration) vs string mutation (.uppercase()) — note which the design uses per element
-          - State variations: how each of empty, filled, error, loading, disabled states differs visually
-          Note the DESIGN.md section or hifi element that is the source for each extracted detail.
+          - State machines: for every documented state transition, identify ALL states and ALL transitions between them — both directions. A state machine documented as "A → B when condition" implies "B → A when condition reversed" and BOTH directions require explicit ACs.
+          Note the DESIGN.md section (system or journey) or hifi element that is the source for each extracted detail.
         </action>
 
         <action>Compose a `## Design Fidelity Acceptance Criteria` section:
@@ -97,11 +97,12 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
           - Each AC is a specific, testable implementation-level statement
           - Every AC ends with an explicit source reference: `(Source: DESIGN.md §<section heading>)` or `(Source: hifi.html #<element-id>)`
           - If a detail was ambiguous in DESIGN.md and resolved via hifi, mark it: `(Source: hifi.html — DESIGN.md ambiguous)`
+          - For any AC that references a specific implementation symbol name (Composable name, enum value, class name), append: `⚠ Symbol name from story — verify against Compose source before implementing`
         </action>
 
         <action>Read {{story_file}} and inject the `## Design Fidelity Acceptance Criteria` section immediately after the `## Acceptance Criteria` section (or after the `## Story` section if no AC section exists yet). Save {{story_file}}.</action>
         <action>Count the individual ACs generated. Store {{design_fidelity_ac_count}}.</action>
-        <action>Store {{design_fidelity_status}} = "{{design_fidelity_ac_count}} ACs injected across {{touched_canvases}} from {{design_md_path}}"</action>
+        <action>Store {{design_fidelity_status}} = "{{design_fidelity_ac_count}} ACs injected across {{touched_canvases}} (sources: system DESIGN.md{{journey_design_md ? ' + journey DESIGN.md' : ''}}{{hifi_sources ? ' + hifi' : ''}})"</action>
         <output>**Design-fidelity ACs injected** — {{design_fidelity_status}}</output>
       </check>
     </check>
