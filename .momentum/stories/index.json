@@ -4501,5 +4501,16 @@
     "priority": "high",
     "story_type": "defect",
     "feature_slug": "momentum-sprint-planning-to-ready"
+  },
+  "fix-architecture-md-decision-58-execution-surfaces-schema": {
+    "status": "backlog",
+    "title": "Fix architecture.md Decision 58 — execution_surfaces schema lists 5 entries but implementation ships 10",
+    "epic_slug": "quality-enforcement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "maintenance",
+    "feature_slug": "momentum-quality-gates-enforced"
   }
 }
