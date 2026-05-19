@@ -4512,5 +4512,16 @@
     "priority": "critical",
     "story_type": "maintenance",
     "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "dec-029-phase-2-design-note-context-bundles-scoped-per-agent": {
+    "status": "backlog",
+    "title": "DEC-029 Phase 2 design note — context bundles scoped per agent role, assembled independently",
+    "epic_slug": "sprint-dev-workflow",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice",
+    "feature_slug": "momentum-sprint-planning-to-ready"
   }
 }
