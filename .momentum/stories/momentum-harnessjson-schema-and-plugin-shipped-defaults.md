@@ -1,7 +1,7 @@
 ---
 title: momentum/harness.json schema and plugin-shipped defaults
 story_key: momentum-harnessjson-schema-and-plugin-shipped-defaults
-status: backlog
+status: review
 epic_slug: bring-your-own-tools
 feature_slug: momentum-protocol-based-integration
 story_type: practice
@@ -59,7 +59,15 @@ The following are rough draft ACs captured from conversation:
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- [ ] Tasks not yet defined — run create-story to analyze and plan implementation
+- [x] Create momentum/harness.json with defaults/project split (mirroring agents.json schema pattern)
+- [x] Declare env startup + readiness probes in defaults block
+- [x] Declare execution surface per change-type in defaults block
+- [x] Declare driver bindings (cmux/Skill/Maestro/Playwright/curl) in defaults block
+- [x] Declare platform/target matrix in defaults block
+- [x] Declare human-review carve-outs in defaults block
+- [x] Declare trivial-smoke escape hatch in defaults block
+- [x] Update agent-builder/workflow.md to write/maintain momentum/harness.json project block
+- [x] Update agent-guidelines/workflow.md to author momentum/harness.json project block from detected stack
 
 ## Dev Notes
 
@@ -106,15 +114,25 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 ## Dev Agent Record
 
-<!-- DRAFT: This section is populated only during and after development. It is empty
-     because this story has not been through create-story or development yet. -->
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
-
 ### Agent Model Used
+
+claude-sonnet-4-6
 
 ### Debug Log References
 
+None — implementation was straightforward, following DEC-029 D3 spec directly.
+
 ### Completion Notes List
 
+- Created `momentum/harness.json` as a sibling to `momentum/agents.json` with identical defaults/project split schema pattern
+- The `defaults` block covers all 6 required fields: env (startup + readiness_probes), execution_surfaces (per change-type routing), driver_bindings (Skill/cmux/Maestro/Playwright/curl/null), platform_matrix, human_review_carveouts, trivial_smoke_escape
+- The `execution_surfaces` map routes all 10 Momentum change-types (skill-instruction, agent-definition, rule, hook, script, cli, backend, app-ui, research, spike) to their default verification method
+- Updated `agent-builder/workflow.md` Step 4 to write project-level harness.json overrides when composing a new agent (only writes when the agent's domain requires non-default drivers)
+- Updated `agent-guidelines/workflow.md` Phase 4 to author the harness.json `project` block from the detected technology stack — mobile → Maestro, web → Playwright, backend → env startup+readiness probes, desktop → Maestro
+- Both workflow updates are minimal and non-breaking — they add new actions that only fire when relevant
+
 ### File List
+
+- `momentum/harness.json` (created)
+- `skills/momentum/skills/agent-builder/workflow.md` (modified — Step 4 gains harness.json write action)
+- `skills/momentum/skills/agent-guidelines/workflow.md` (modified — Phase 4 gains harness.json authoring action; Phase 5 AVFL includes harness.json)
