@@ -1,7 +1,7 @@
 ---
 title: e2e-validator agent body rewrite — de-Gherkin, harness-driven
 story_key: e2e-validator-agent-body-rewrite-de-gherkin-harness-driven
-status: backlog
+status: review
 epic_slug: agent-team-model
 feature_slug: momentum-agent-role-contracts
 story_type: practice
@@ -57,7 +57,12 @@ The following are rough draft ACs captured from conversation:
 
 _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
-- [ ] Tasks not yet defined — run create-story to analyze and plan implementation
+- [x] Rewrite e2e-validator.md agent body — remove Gherkin-only language, add harness-driven routing
+- [x] Add verification routing table (change_type → method → driver) driven by harness.json
+- [x] Remove hardcoded finch/PostgreSQL/FastAPI references from Environment Prerequisites
+- [x] Add harness.json Environment Setup section (reads startup, readiness_probes, execution_surfaces, driver_bindings)
+- [x] Update description to reflect method-polymorphic, harness-driven behavior
+- [x] Add evals: harness-driven driver selection, BLOCKED when harness absent, document review for research-spike
 
 ## Dev Notes
 
@@ -104,15 +109,30 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 ## Dev Agent Record
 
-<!-- DRAFT: This section is populated only during and after development. It is empty
-     because this story has not been through create-story or development yet. -->
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
-
 ### Agent Model Used
+
+claude-sonnet-4-6
 
 ### Debug Log References
 
+None — implementation was direct rewrite with clear source (harness.json schema + verification-standard.md routing table).
+
 ### Completion Notes List
 
+- Rewrote e2e-validator.md agent body from scratch per DEC-029 D1/D3
+- Removed all Gherkin-specific language: description, input section, process steps, output format
+- Removed hardcoded finch/PostgreSQL/FastAPI environment prerequisites
+- Added "Environment Setup" section: reads momentum/harness.json for startup, readiness_probes, execution_surfaces, driver_bindings, human_review_carveouts
+- Added "Verification Routing" section: change_type → method → driver table aligned with verification-standard.md
+- Added method-specific sections: skill-invoke, behavioral-trigger, bash/curl, document-review
+- Updated description frontmatter: now describes method-polymorphic, harness-driven behavior
+- Output format updated: per-story results include change_type, method, driver fields
+- Verdict rule for BLOCKED now explicitly covers harness.json absent case
+- Added 3 evals covering: harness-driven driver selection, BLOCKED when harness absent, document review routing for research-spike
+
 ### File List
+
+- skills/momentum/agents/e2e-validator.md
+- skills/momentum/agents/evals/eval-e2e-validator-reads-harness-for-driver.md
+- skills/momentum/agents/evals/eval-e2e-validator-blocked-when-harness-absent.md
+- skills/momentum/agents/evals/eval-e2e-validator-document-review-for-research-spike.md
