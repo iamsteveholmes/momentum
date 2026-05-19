@@ -202,6 +202,36 @@ these strategies:
     Write the updated momentum/agents.json.
     </action>
 
+    <action>Update the project harness profile in momentum/verification-harness.json.
+
+    If momentum/verification-harness.json does not exist, create it with only the project stub — do NOT write a `defaults` block, since plugin-shipped defaults apply automatically:
+```json
+{
+  "project": []
+}
+```
+
+    Read the existing file. Check if the "project" array already contains an entry for this agent's domain (keyed by "domain": "{{domain}}").
+
+    If this agent introduces a new execution surface or driver binding for its domain that differs from the defaults, append or update a project-level entry:
+```json
+{
+  "domain": "{{domain}}",
+  "env": {
+    "startup": [],
+    "readiness_probe": []
+  },
+  "execution_surfaces": {},
+  "driver_bindings": {},
+  "platform_matrix": []
+}
+```
+
+    Only add fields that differ from the plugin defaults. Skip this step entirely if the agent's domain requires no harness overrides (e.g., a pure skill-instruction agent using the default Skill driver).
+
+    Write the updated momentum/verification-harness.json only if changes were made.
+    </action>
+
     <output>
 ## Agent Built: {{agent_slug}}
 

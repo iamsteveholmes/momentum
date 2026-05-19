@@ -1,11 +1,12 @@
 ---
 title: "Enforced verification rule — change-type method-routing, harness-profile requirement, adversarial guard"
 story_key: enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard
-status: ready-for-dev
+status: review
 epic_slug: quality-enforcement
 feature_slug: momentum-quality-gates-enforced
 story_type: practice
 change_type: [rule-hook, specification, config-structure]
+verification_method: [trigger, review]
 depends_on: []
 touches:
   - skills/momentum/references/rules/verification-standard.md
@@ -70,18 +71,18 @@ The body of `verification-standard.md` (excluding YAML frontmatter) is 150 lines
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Author `skills/momentum/references/rules/verification-standard.md`** (`rule-hook`)
+- [x] **Task 1: Author `skills/momentum/references/rules/verification-standard.md`** (`rule-hook`)
   - Write the complete, self-sufficient rule file
   - Include: routing table (D1), method-override prohibition with written-justification escape, harness-profile mandate (D3), adversarial anti-insider-knowledge guard (D6), cascade order statement (D7)
   - Verify conciseness: body ≤150 lines; extract to companion reference if needed
   - Verify self-sufficiency: rule is complete without loading sibling documents
 
-- [ ] **Task 2: Retire `docs/process/acceptance-testing-standard.md`** (`specification`)
+- [x] **Task 2: Retire `docs/process/acceptance-testing-standard.md`** (`specification`)
   - Prepend retirement notice and forwarding pointer to DEC-029 + new rule
   - Update Status field from `Active` to `Retired`
   - Do not delete existing content
 
-- [ ] **Task 3: Register rule in Impetus rule-write manifest** (`config-structure`)
+- [x] **Task 3: Register rule in Impetus rule-write manifest** (`config-structure`)
   - File: `skills/momentum/references/momentum-versions.json` (confirmed location)
   - Add a new entry in the rules group following the existing pattern (see `authority-hierarchy.md` and `anti-patterns.md` entries for schema reference):
     - `"source": "references/rules/verification-standard.md"`
@@ -276,8 +277,20 @@ Config and structure changes need no tests or evals. Implement directly and veri
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+N/A — all three tasks completed without errors.
 
 ### Completion Notes List
 
+- Task 1 (rule-hook): Authored `skills/momentum/references/rules/verification-standard.md`. Body is 119 lines (under 150 limit). Rule is self-sufficient — all five required sections present (routing table, method override, harness profile requirement, adversarial guard, cascade order). Routing table covers all 8 change types from AC-2 plus specification and config-structure for completeness. Behavioral conditions verified by inspection: skill-instruction maps to EDD eval, insider-knowledge contracts are rejected, harness-profile-less verification is non-compliant.
+- Task 2 (specification): Retired `docs/process/acceptance-testing-standard.md`. Status field updated from Active to Retired. Forwarding notice prepended referencing DEC-029 path and new rule path. No substantive content deleted.
+- Task 3 (config-structure): Added verification-standard.md entry to `skills/momentum/references/momentum-versions.json` in a new version 1.3.0 block (moved out of 1.0.0 so existing users receive the rule on upgrade). current_version bumped to 1.3.0. JSON validates without error. Existing entries unchanged. New entry: source=references/rules/verification-standard.md, target=~/.claude/rules/verification-standard.md.
+
 ### File List
+
+- `skills/momentum/references/rules/verification-standard.md` — new file (Task 1)
+- `docs/process/acceptance-testing-standard.md` — modified: Status=Retired, forwarding notice prepended (Task 2)
+- `skills/momentum/references/momentum-versions.json` — modified: new rules entry added to 1.0.0 block (Task 3)

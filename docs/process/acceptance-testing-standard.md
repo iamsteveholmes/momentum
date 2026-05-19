@@ -1,8 +1,27 @@
 # Acceptance Testing Standard
 
 **Applies to:** All Momentum stories
-**Status:** Active
+**Status:** Retired
 **Source:** Epic 1 Retrospective — Action Items #2 and #3, Team Agreements 1–3
+
+---
+
+> **RETIRED — 2026-05-18**
+>
+> This document has been retired by DEC-029 Decision D7, which dissolves the "process document"
+> artifact class. Documents that govern agents without being loaded by those agents are dead
+> documentation — enforcement requires the rule to be an actively-loaded constraint.
+>
+> **Rationale:** See `_bmad-output/planning-artifacts/decisions/dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md` (D7)
+>
+> **Enforceable replacement:** `skills/momentum/references/rules/verification-standard.md`
+> — a concise, enforced rule that Impetus writes to `~/.claude/rules/` on first invocation.
+> The routing table, harness-profile requirement, adversarial guard, and cascade order from
+> this document are fully stated in the replacement rule.
+>
+> The content below is preserved for historical reference only.
+
+---
 
 ---
 

@@ -202,6 +202,17 @@ if [[ "$NORM_PATH" == .momentum/sprints/index.json ]] || \
   block_write "index-files" "index files are managed by sprint-manager only"
 fi
 
+# 6. Sprint frozen contracts — specs/ dir and coverage-plan.md are post-activation immutable
+if [[ "$NORM_PATH" == .momentum/sprints/*/specs/* ]] || \
+   [[ "$NORM_PATH" == */.momentum/sprints/*/specs/* ]]; then
+  block_write "sprint-specs" "frozen at sprint activation — modify via sprint-planning only"
+fi
+
+if [[ "$NORM_PATH" == .momentum/sprints/*/coverage-plan.md ]] || \
+   [[ "$NORM_PATH" == */.momentum/sprints/*/coverage-plan.md ]]; then
+  block_write "sprint-coverage-plan" "frozen at sprint activation — modify via sprint-planning only"
+fi
+
 # ---------------------------------------------------------------------------
 # Check project-specific protected paths
 # ---------------------------------------------------------------------------
@@ -219,6 +230,12 @@ for pattern in "${PROJECT_PROTECTED_PATHS[@]:-}"; do
     block_write "project-protected" "path protected by project configuration"
   fi
 done
+
+# 7. momentum/verification-harness.json — exact path match (project root harness)
+if [[ "$NORM_PATH" == momentum/verification-harness.json ]] || \
+   [[ "$NORM_PATH" == *"/momentum/verification-harness.json" ]]; then
+  block_write "verification-harness" "root harness is managed by agent-builder and plugin install only"
+fi
 
 # ---------------------------------------------------------------------------
 # Allow — silent pass-through

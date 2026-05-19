@@ -1,0 +1,68 @@
+{
+  "defaults": {
+    "env": {
+      "startup": [],
+      "readiness_probe": []
+    },
+    "execution_surfaces": {
+      "skill-instruction": "skip",
+      "agent-definition": "skip",
+      "rule-hook": "skip",
+      "script-code": "skip",
+      "script-cli": "skip",
+      "backend": "skip",
+      "app-ui": "skip",
+      "research-spike": "skip",
+      "specification": "skip",
+      "config-structure": "skip"
+    },
+    "contract_extensions": {
+      "eval": ".eval.yaml",
+      "trigger": ".trigger.md",
+      "smoke": ".smoke.sh",
+      "review": ".review.md",
+      "gherkin": ".feature"
+    },
+    "driver_bindings": {
+      "skill-invoke": {
+        "driver": "Skill",
+        "description": "Invoke a skill directly in the agent context"
+      },
+      "behavioral-trigger": {
+        "driver": "cmux",
+        "description": "Trigger and observe rule/hook behavior via cmux terminal surface"
+      },
+      "bash": {
+        "driver": "cmux",
+        "description": "Execute scripts/CLI via cmux terminal surface"
+      },
+      "smoke": {
+        "driver": "Maestro",
+        "description": "UI smoke test via Maestro (mobile/web); falls back to Playwright for web-only targets",
+        "fallback": "Playwright"
+      },
+      "document-review": {
+        "driver": null,
+        "description": "Human document review — no automated driver"
+      },
+      "curl": {
+        "driver": "curl",
+        "description": "HTTP endpoint verification via curl"
+      }
+    },
+    "platform_matrix": {
+      "default": ["host"],
+      "notes": "Project verification-harness.json may override to declare specific platforms (android, ios, web, desktop)"
+    },
+    "human_review_carveouts": [
+      "research-spike",
+      "specification"
+    ],
+    "trivial_smoke_escape": {
+      "enabled": false,
+      "change_types": [],
+      "notes": "Set enabled=true and list change_types to bypass smoke validation for trivial stories of those types"
+    }
+  },
+  "project": []
+}
