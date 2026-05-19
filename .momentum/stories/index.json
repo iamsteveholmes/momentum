@@ -4187,7 +4187,7 @@
     "feature_slug": "momentum-agent-role-contracts"
   },
   "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Enforced verification rule — change-type method-routing, harness-profile requirement, adversarial guard",
     "epic_slug": "quality-enforcement",
     "story_file": ".momentum/stories/enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard.md",
@@ -4226,7 +4226,7 @@
     ]
   },
   "momentum-harnessjson-schema-and-plugin-shipped-defaults": {
-    "status": "in-progress",
+    "status": "review",
     "title": "momentum/verification-harness.json schema and plugin-shipped defaults",
     "epic_slug": "bring-your-own-tools",
     "story_file": true,
