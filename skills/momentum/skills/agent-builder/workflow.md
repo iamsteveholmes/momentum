@@ -202,6 +202,44 @@ these strategies:
     Write the updated momentum/agents.json.
     </action>
 
+    <action>Update the project harness profile in momentum/harness.json.
+
+    If momentum/harness.json does not exist, create it with this structure (matching the agents.json defaults/project split):
+```json
+{
+  "defaults": {
+    "env": { "startup": [], "readiness_probes": [] },
+    "execution_surfaces": {},
+    "driver_bindings": {},
+    "platform_matrix": { "default": ["host"] },
+    "human_review_carveouts": [],
+    "trivial_smoke_escape": { "enabled": false, "change_types": [] }
+  },
+  "project": []
+}
+```
+
+    Read the existing file. Check if the "project" array already contains an entry for this agent's domain (keyed by "domain": "{{domain}}").
+
+    If this agent introduces a new execution surface or driver binding for its domain that differs from the defaults, append or update a project-level entry:
+```json
+{
+  "domain": "{{domain}}",
+  "env": {
+    "startup": [],
+    "readiness_probes": []
+  },
+  "execution_surfaces": {},
+  "driver_bindings": {},
+  "platform_matrix": []
+}
+```
+
+    Only add fields that differ from the plugin defaults. Skip this step entirely if the agent's domain requires no harness overrides (e.g., a pure skill-instruction agent using the default Skill driver).
+
+    Write the updated momentum/harness.json only if changes were made.
+    </action>
+
     <output>
 ## Agent Built: {{agent_slug}}
 
