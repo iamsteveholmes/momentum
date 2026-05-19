@@ -26,19 +26,26 @@ stack unless declared in `harness.json`.
   "defaults": {
     "env": {
       "startup": [],
-      "readiness_probes": []
+      "readiness_probe": []
     },
     "execution_surfaces": {
-      "skill-instruction": "skill-invoke",
-      "agent-definition": "skill-invoke",
-      "rule": "behavioral-trigger",
-      "hook": "behavioral-trigger",
-      "script": "bash",
-      "cli": "bash",
-      "backend": "bash",
-      "app-ui": "smoke",
-      "research": "document-review",
-      "spike": "document-review"
+      "skill-instruction": "skip",
+      "agent-definition": "skip",
+      "rule-hook": "skip",
+      "script-code": "skip",
+      "script-cli": "skip",
+      "backend": "skip",
+      "app-ui": "skip",
+      "research-spike": "skip",
+      "specification": "skip",
+      "config-structure": "skip"
+    },
+    "contract_extensions": {
+      "eval": ".eval.yaml",
+      "trigger": ".trigger.md",
+      "smoke": ".smoke.sh",
+      "review": ".review.md",
+      "gherkin": ".feature"
     },
     "driver_bindings": {
       "skill-invoke": {
@@ -63,7 +70,7 @@ stack unless declared in `harness.json`.
         "description": "Human document review — no automated driver"
       }
     },
-    "human_review_carveouts": ["research", "spike"],
+    "human_review_carveouts": ["research-spike", "specification"],
     "trivial_smoke_escape": {
       "enabled": false,
       "change_types": []

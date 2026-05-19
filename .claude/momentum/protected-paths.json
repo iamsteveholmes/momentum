@@ -30,6 +30,16 @@
       "pattern": ".momentum/sprints/index.json",
       "policy": "index-files",
       "reason": "index files are managed by sprint-manager only"
+    },
+    {
+      "pattern": ".momentum/sprints/*/specs/*",
+      "policy": "sprint-specs",
+      "reason": "frozen at sprint activation — modify via sprint-planning only"
+    },
+    {
+      "pattern": ".momentum/sprints/*/coverage-plan.md",
+      "policy": "sprint-coverage-plan",
+      "reason": "frozen at sprint activation — modify via sprint-planning only"
     }
   ]
 }

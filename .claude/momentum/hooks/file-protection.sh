@@ -202,6 +202,17 @@ if [[ "$NORM_PATH" == .momentum/sprints/index.json ]] || \
   block_write "index-files" "index files are managed by sprint-manager only"
 fi
 
+# 6. Sprint frozen contracts — specs/ dir and coverage-plan.md are post-activation immutable
+if [[ "$NORM_PATH" == .momentum/sprints/*/specs/* ]] || \
+   [[ "$NORM_PATH" == */.momentum/sprints/*/specs/* ]]; then
+  block_write "sprint-specs" "frozen at sprint activation — modify via sprint-planning only"
+fi
+
+if [[ "$NORM_PATH" == .momentum/sprints/*/coverage-plan.md ]] || \
+   [[ "$NORM_PATH" == */.momentum/sprints/*/coverage-plan.md ]]; then
+  block_write "sprint-coverage-plan" "frozen at sprint activation — modify via sprint-planning only"
+fi
+
 # ---------------------------------------------------------------------------
 # Check project-specific protected paths
 # ---------------------------------------------------------------------------

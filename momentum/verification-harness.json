@@ -2,19 +2,26 @@
   "defaults": {
     "env": {
       "startup": [],
-      "readiness_probes": []
+      "readiness_probe": []
     },
     "execution_surfaces": {
-      "skill-instruction": "skill-invoke",
-      "agent-definition": "skill-invoke",
-      "rule-hook": "behavioral-trigger",
-      "script-code": "bash",
-      "script-cli": "bash",
-      "backend": "bash",
-      "app-ui": "smoke",
-      "research-spike": "document-review",
-      "specification": "document-review",
-      "config-structure": "bash"
+      "skill-instruction": "skip",
+      "agent-definition": "skip",
+      "rule-hook": "skip",
+      "script-code": "skip",
+      "script-cli": "skip",
+      "backend": "skip",
+      "app-ui": "skip",
+      "research-spike": "skip",
+      "specification": "skip",
+      "config-structure": "skip"
+    },
+    "contract_extensions": {
+      "eval": ".eval.yaml",
+      "trigger": ".trigger.md",
+      "smoke": ".smoke.sh",
+      "review": ".review.md",
+      "gherkin": ".feature"
     },
     "driver_bindings": {
       "skill-invoke": {
