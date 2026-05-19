@@ -210,8 +210,8 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
         ```
       - Append to existing CLAUDE.md — never overwrite existing content
 
-    **momentum/harness.json update:**
-      - Read momentum/harness.json. If it does not exist, create it from the plugin-shipped defaults structure (see schema in momentum/harness.json).
+    **momentum/verification-harness.json update:**
+      - Read momentum/verification-harness.json. If it does not exist, create it from the plugin-shipped defaults structure (see schema in momentum/verification-harness.json).
       - For each detected technology with a non-default execution surface or driver binding, propose project-level overrides in the "project" array.
       - Common overrides to generate based on detected stack:
         - Mobile/Android/iOS: set `"platform_matrix": ["android", "ios"]` and `"driver_bindings": {"smoke": {"driver": "Maestro"}}`
@@ -236,7 +236,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 ### CLAUDE.md Updates
 [show what will be added]
 
-### momentum/harness.json Updates
+### momentum/verification-harness.json Updates
 [show proposed project-level overrides, or "no overrides needed — defaults apply" if stack uses default drivers]
     </output>
 
@@ -257,7 +257,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
       - stage: final
       - domain_expert: "technology guidelines author"
       - task_context: "Generated path-scoped rules, reference docs, and harness.json project overrides for [technologies]"
-      - output_to_validate: [paths to all generated files, including momentum/harness.json if modified]
+      - output_to_validate: [paths to all generated files, including momentum/verification-harness.json if modified]
       - source_material: null (research findings are the ground truth, already embedded in the output)
     </action>
 
@@ -269,7 +269,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 **Rules files generated:** [count] in `.claude/rules/`
 **Reference docs generated:** [count] in `docs/references/`
 **CLAUDE.md updated:** [yes/no]
-**momentum/harness.json updated:** [yes/no — project overrides added or defaults sufficient]
+**momentum/verification-harness.json updated:** [yes/no — project overrides added or defaults sufficient]
 **AVFL score:** [score]/100
 
 Your project now has technology-specific guidelines that will auto-load when agents work with matching files. Generic Momentum agents (Dev, QA, Validator) will automatically receive these corrections via path-scoped rules — no additional configuration needed.

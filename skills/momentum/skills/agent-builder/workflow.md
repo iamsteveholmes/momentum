@@ -202,9 +202,9 @@ these strategies:
     Write the updated momentum/agents.json.
     </action>
 
-    <action>Update the project harness profile in momentum/harness.json.
+    <action>Update the project harness profile in momentum/verification-harness.json.
 
-    If momentum/harness.json does not exist, create it with this structure (matching the agents.json defaults/project split):
+    If momentum/verification-harness.json does not exist, create it with this structure (matching the agents.json defaults/project split):
 ```json
 {
   "defaults": {
@@ -237,7 +237,7 @@ these strategies:
 
     Only add fields that differ from the plugin defaults. Skip this step entirely if the agent's domain requires no harness overrides (e.g., a pure skill-instruction agent using the default Skill driver).
 
-    Write the updated momentum/harness.json only if changes were made.
+    Write the updated momentum/verification-harness.json only if changes were made.
     </action>
 
     <output>

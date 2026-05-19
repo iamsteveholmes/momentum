@@ -11,6 +11,11 @@ Read each task in the story's Tasks/Subtasks section. Apply the signals below to
 | `.claude/rules/`, `settings.json`, `hooks`, hook configuration, frontmatter config | `rule-hook` |
 | JSON config, directory structure, `momentum-versions.json`, `installed.json`, `mcp-config.json`, `hooks-config.json`, `version.md` | `config-structure` |
 | `docs/`, `_bmad-output/`, PRD, architecture, epics, stories, UX design, research, README, `*.md` in planning/output directories | `specification` |
+| `skills/momentum/agents/*.md`, `agents/*.md` (agent definition files — distinct from SKILL.md/workflow.md) | `agent-definition` |
+| Android/iOS source (`.kt`, `.swift`, `@Composable`), web UI components, `app/`, `ui/`, `frontend/` directories | `app-ui` |
+| API server code, database migrations, `api/`, `server/`, `services/` directories, `.py`/`.go`/`.ts` server-side code | `backend` |
+| CLI entry points, `cli/` directory, shell scripts intended as user-facing tools (distinct from `script-code` which is internal automation) | `script-cli` |
+| `docs/research/`, `_bmad-output/research/`, `docs/spikes/`, research/spike story artifacts | `research-spike` |
 
 When a task mentions creating a new skill package (e.g., "Create `skills/momentum/skills/foo/`"), classify all of the following within that task:
 - The SKILL.md and workflow.md files → `skill-instruction`

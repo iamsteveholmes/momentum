@@ -26,9 +26,9 @@ so that the validator works across projects/stacks without prompt edits and stay
 
 ## Description
 
-Rewrite the e2e-validator agent body to: consume method-polymorphic contracts (not only .feature/Gherkin files); remove the hardcoded finch / PostgreSQL / FastAPI tooling leak from the prompt; and drive entirely from momentum/harness.json. (DEC-029 D1/D3; affects DEC-020.)
+Rewrite the e2e-validator agent body to: consume method-polymorphic contracts (not only .feature/Gherkin files); remove the hardcoded finch / PostgreSQL / FastAPI tooling leak from the prompt; and drive entirely from momentum/verification-harness.json. (DEC-029 D1/D3; affects DEC-020.)
 
-**Pain context:** Source: DEC-029 (_bmad-output/planning-artifacts/decisions/dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md), decisions D1/D3; affects DEC-020. Depends on the momentum/harness.json schema stub (consumes it). Phase 1 gated on routing-table-schema-and-implementation landing momentum/agents.json (DEC-029 Gate 1).
+**Pain context:** Source: DEC-029 (_bmad-output/planning-artifacts/decisions/dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md), decisions D1/D3; affects DEC-020. Depends on the momentum/verification-harness.json schema stub (consumes it). Phase 1 gated on routing-table-schema-and-implementation landing momentum/agents.json (DEC-029 Gate 1).
 
 ## Acceptance Criteria
 
@@ -42,7 +42,7 @@ The following are rough draft ACs captured from conversation:
 
 - Consumes method-polymorphic contract not only .feature
 - No hardcoded finch/PostgreSQL/FastAPI references
-- Reads momentum/harness.json for env/drivers/targets
+- Reads momentum/verification-harness.json for env/drivers/targets
 - Behavior consistent with DEC-029 D1/D3
 - Reconciles with DEC-020 agent taxonomy
 
@@ -122,7 +122,7 @@ None — implementation was direct rewrite with clear source (harness.json schem
 - Rewrote e2e-validator.md agent body from scratch per DEC-029 D1/D3
 - Removed all Gherkin-specific language: description, input section, process steps, output format
 - Removed hardcoded finch/PostgreSQL/FastAPI environment prerequisites
-- Added "Environment Setup" section: reads momentum/harness.json for startup, readiness_probes, execution_surfaces, driver_bindings, human_review_carveouts
+- Added "Environment Setup" section: reads momentum/verification-harness.json for startup, readiness_probes, execution_surfaces, driver_bindings, human_review_carveouts
 - Added "Verification Routing" section: change_type → method → driver table aligned with verification-standard.md
 - Added method-specific sections: skill-invoke, behavioral-trigger, bash/curl, document-review
 - Updated description frontmatter: now describes method-polymorphic, harness-driven behavior

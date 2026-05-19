@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Verify that when `momentum/harness.json` is absent from the project, the e2e-validator
+Verify that when `momentum/verification-harness.json` is absent from the project, the e2e-validator
 agent reports BLOCKED and halts instead of proceeding with assumed stack defaults or
 Gherkin-based validation.
 
 ## Expected Behavior
 
-When `momentum/harness.json` does not exist in the project root, the agent must:
+When `momentum/verification-harness.json` does not exist in the project root, the agent must:
 1. Attempt to read the file
 2. Detect its absence
 3. Report `Verdict: BLOCKED` with a clear explanation that harness.json is required
@@ -21,7 +21,7 @@ harness file is absent.
 
 ### Setup condition
 
-No `momentum/harness.json` file exists in the project.
+No `momentum/verification-harness.json` file exists in the project.
 
 ### Test story (placed at `.momentum/stories/test-story.md`)
 
@@ -45,7 +45,7 @@ AVFL findings: []
 
 ## Verification Steps
 
-1. Observe that the agent attempts to read `momentum/harness.json`
+1. Observe that the agent attempts to read `momentum/verification-harness.json`
 2. Observe that the agent detects the file is absent
 3. Observe that the agent's validation report contains `Verdict: BLOCKED`
 4. Observe that the report explains harness.json is missing
@@ -53,9 +53,9 @@ AVFL findings: []
 
 ## Expected Pass Criteria
 
-- Agent attempts to read `momentum/harness.json`
+- Agent attempts to read `momentum/verification-harness.json`
 - Agent reports `Verdict: BLOCKED` when the file is absent
-- Report clearly states that `momentum/harness.json` is required and was not found
+- Report clearly states that `momentum/verification-harness.json` is required and was not found
 - No story ACs are executed or marked PASS/FAIL/ERROR (only BLOCKED)
 
 ## Expected Fail Criteria

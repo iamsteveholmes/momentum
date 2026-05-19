@@ -2,14 +2,14 @@
 
 ## Purpose
 
-Verify that the e2e-validator agent reads `momentum/harness.json` before executing any
+Verify that the e2e-validator agent reads `momentum/verification-harness.json` before executing any
 validation, and uses the harness-defined driver binding and execution surface rather than
 hard-coding any tool, runtime, or stack assumption.
 
 ## Expected Behavior
 
 When spawned with a sprint slug, the agent must:
-1. Read `momentum/harness.json` before executing any story validation
+1. Read `momentum/verification-harness.json` before executing any story validation
 2. Look up the `change_type` in `defaults.execution_surfaces` to get the surface name
 3. Look up the surface name in `defaults.driver_bindings` to get the driver
 4. Use that driver to execute the verification
@@ -19,7 +19,7 @@ stack unless declared in `harness.json`.
 
 ## Inputs
 
-### Test harness.json (placed at `momentum/harness.json`)
+### Test harness.json (placed at `momentum/verification-harness.json`)
 
 ```json
 {
@@ -95,21 +95,21 @@ AVFL findings: []
 
 ## Verification Steps
 
-1. Observe that the agent's first or second action reads `momentum/harness.json`
+1. Observe that the agent's first or second action reads `momentum/verification-harness.json`
 2. Observe that the agent identifies `change_type: skill-instruction` → surface `skill-invoke` → driver `Skill`
 3. Observe that the agent invokes the skill (or attempts to invoke it) using the Skill tool or cmux, NOT by reading the skill file and inspecting its contents
 4. Observe that the report labels the method as `skill-invoke` or equivalent
 
 ## Expected Pass Criteria
 
-- Agent reads `momentum/harness.json` before executing any story contract
+- Agent reads `momentum/verification-harness.json` before executing any story contract
 - Agent correctly maps `skill-instruction` → `skill-invoke` surface → `Skill` driver
 - Agent does not open the skill's SKILL.md file and call it PASS based on file content
 - Validation report includes `change_type: skill-instruction` and `method: skill-invoke` or similar
 
 ## Expected Fail Criteria
 
-- Agent never reads `momentum/harness.json`
+- Agent never reads `momentum/verification-harness.json`
 - Agent invokes the skill by reading its SKILL.md and asserting strings found in the file
 - Agent assumes Gherkin `.feature` files and reports BLOCKED because none exist
 - Agent hardcodes finch, PostgreSQL, FastAPI, or any specific backend stack in its execution plan

@@ -127,12 +127,12 @@ None — implementation was straightforward, following DEC-029 D3 spec directly.
 - Created `momentum/harness.json` as a sibling to `momentum/agents.json` with identical defaults/project split schema pattern
 - The `defaults` block covers all 6 required fields: env (startup + readiness_probes), execution_surfaces (per change-type routing), driver_bindings (Skill/cmux/Maestro/Playwright/curl/null), platform_matrix, human_review_carveouts, trivial_smoke_escape
 - The `execution_surfaces` map routes all 10 Momentum change-types (skill-instruction, agent-definition, rule, hook, script, cli, backend, app-ui, research, spike) to their default verification method
-- Updated `agent-builder/workflow.md` Step 4 to write project-level harness.json overrides when composing a new agent (only writes when the agent's domain requires non-default drivers)
-- Updated `agent-guidelines/workflow.md` Phase 4 to author the harness.json `project` block from the detected technology stack — mobile → Maestro, web → Playwright, backend → env startup+readiness probes, desktop → Maestro
+- Updated `agent-builder/workflow.md` Step 4 to write project-level verification-harness.json overrides when composing a new agent (only writes when the agent's domain requires non-default drivers)
+- Updated `agent-guidelines/workflow.md` Step 4 to author the verification-harness.json `project` block from the detected technology stack — mobile → Maestro, web → Playwright, backend → env startup+readiness probes, desktop → Maestro
 - Both workflow updates are minimal and non-breaking — they add new actions that only fire when relevant
 
 ### File List
 
-- `momentum/harness.json` (created)
-- `skills/momentum/skills/agent-builder/workflow.md` (modified — Step 4 gains harness.json write action)
-- `skills/momentum/skills/agent-guidelines/workflow.md` (modified — Phase 4 gains harness.json authoring action; Phase 5 AVFL includes harness.json)
+- `momentum/verification-harness.json` (created)
+- `skills/momentum/skills/agent-builder/workflow.md` (modified — Step 4 gains verification-harness.json write action)
+- `skills/momentum/skills/agent-guidelines/workflow.md` (modified — Step 4 gains verification-harness.json authoring action; Step 5 AVFL includes verification-harness.json)

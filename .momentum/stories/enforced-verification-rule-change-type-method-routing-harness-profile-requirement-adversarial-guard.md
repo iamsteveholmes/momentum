@@ -284,9 +284,9 @@ N/A — all three tasks completed without errors.
 
 ### Completion Notes List
 
-- Task 1 (rule-hook): Authored `skills/momentum/references/rules/verification-standard.md`. Body is 119 lines (under 150 limit). Rule is self-sufficient — all five required sections present (routing table, method override, harness profile requirement, adversarial guard, cascade order). Routing table covers all 10 change types from AC-2. Behavioral conditions verified by inspection: skill-instruction maps to EDD eval, insider-knowledge contracts are rejected, harness-profile-less verification is non-compliant.
+- Task 1 (rule-hook): Authored `skills/momentum/references/rules/verification-standard.md`. Body is 119 lines (under 150 limit). Rule is self-sufficient — all five required sections present (routing table, method override, harness profile requirement, adversarial guard, cascade order). Routing table covers all 8 change types from AC-2 plus specification and config-structure for completeness. Behavioral conditions verified by inspection: skill-instruction maps to EDD eval, insider-knowledge contracts are rejected, harness-profile-less verification is non-compliant.
 - Task 2 (specification): Retired `docs/process/acceptance-testing-standard.md`. Status field updated from Active to Retired. Forwarding notice prepended referencing DEC-029 path and new rule path. No substantive content deleted.
-- Task 3 (config-structure): Added verification-standard.md entry to `skills/momentum/references/momentum-versions.json` in version 1.0.0 rules group. JSON validates without error. Existing entries unchanged. New entry: source=references/rules/verification-standard.md, target=~/.claude/rules/verification-standard.md.
+- Task 3 (config-structure): Added verification-standard.md entry to `skills/momentum/references/momentum-versions.json` in a new version 1.3.0 block (moved out of 1.0.0 so existing users receive the rule on upgrade). current_version bumped to 1.3.0. JSON validates without error. Existing entries unchanged. New entry: source=references/rules/verification-standard.md, target=~/.claude/rules/verification-standard.md.
 
 ### File List
 

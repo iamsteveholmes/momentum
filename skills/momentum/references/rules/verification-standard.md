@@ -54,7 +54,7 @@ and cannot be substituted.
 ## 3. Harness Profile Requirement
 
 Every verified change **must** declare a harness-profile reference before verification
-begins. The harness-profile reference names the entry in `momentum/harness.json` that
+begins. The harness-profile reference names the entry in `momentum/verification-harness.json` that
 governs:
 
 - Execution environment (runtime, OS, tool versions)
@@ -66,7 +66,7 @@ harness-profile is non-compliant. The validator must reject it and request a
 harness-profile declaration before continuing.
 
 The harness-profile reference is declared in the story file or in the frozen contract.
-It is a name (string key) — `momentum/harness.json` defines the schema and defaults.
+It is a name (string key) — `momentum/verification-harness.json` defines the schema and defaults.
 
 ---
 

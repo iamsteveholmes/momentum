@@ -8,14 +8,14 @@ Per-change-type authoring rules for frozen verification contracts written during
 
 | change_type | Extension | Harness driver |
 |---|---|---|
-| `skill-instruction` | `.eval.yaml` | eval-runner |
+| `skill-instruction` | `.eval.yaml` | skill-invoke |
 | `rule-hook` | `.trigger.md` | hook-trigger |
 | `script-code` | `.smoke.sh` | shell-executor |
 | `script-cli` | `.smoke.sh` | shell-executor |
 | `specification` | `.review.md` | document-reviewer |
 | `research-spike` | `.review.md` | document-reviewer |
-| `app-ui` | `.feature` | e2e-driver |
-| `agent-definition` | `.eval.yaml` | eval-runner |
+| `app-ui` | `.feature` | smoke |
+| `agent-definition` | `.eval.yaml` | skill-invoke |
 | `backend` | `.smoke.sh` | shell-executor |
 | `config-structure` | `.review.md` | document-reviewer |
 
@@ -51,7 +51,7 @@ Rationale: verification weight scales with change-type (DEC-029 D1). The highest
 
 ```yaml
 # {story-slug}.eval.yaml
-harness_profile: eval-runner-default
+harness_profile: skill-invoke
 
 scenarios:
   - name: "Descriptive scenario name"
@@ -83,7 +83,7 @@ scenarios:
 ```markdown
 # {story-slug} — Hook Trigger Contract
 
-**Harness Profile:** hook-trigger-default
+**Harness Profile:** behavioral-trigger
 
 ## Trigger Condition
 
@@ -116,7 +116,7 @@ scenarios:
 ```bash
 #!/usr/bin/env bash
 # {story-slug} smoke contract
-# Harness profile: shell-executor-default
+# Harness profile: bash
 #
 # Invocation:
 #   [full command the black-box tester runs]
@@ -150,7 +150,7 @@ echo "PASS"
 ```markdown
 # {story-slug} — Document Review Contract
 
-**Harness Profile:** document-reviewer-default
+**Harness Profile:** document-review
 
 ## Document Under Review
 

@@ -20,7 +20,7 @@ reported separately as human follow-up.
 
 ## Inputs
 
-### Test harness.json (placed at `momentum/harness.json`)
+### Test harness.json (placed at `momentum/verification-harness.json`)
 
 ```json
 {
