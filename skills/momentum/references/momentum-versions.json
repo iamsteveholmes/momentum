@@ -63,6 +63,13 @@
           "action": "add",
           "group": "rules",
           "scope": "global",
+          "source": "references/rules/verification-standard.md",
+          "target": "~/.claude/rules/verification-standard.md"
+        },
+        {
+          "action": "add",
+          "group": "rules",
+          "scope": "global",
           "source": "references/rules/anti-patterns.md",
           "target": "~/.claude/rules/anti-patterns.md"
         },
