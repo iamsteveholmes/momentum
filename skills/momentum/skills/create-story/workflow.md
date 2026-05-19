@@ -46,7 +46,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
 
   <step n="3" goal="Classify change types from story tasks">
     <action>Read the Tasks/Subtasks section of {{story_file}}</action>
-    <action>Load ./references/change-types.md (used for both detection heuristics here and injection templates in Step 4)</action>
+    <action>Load ./references/change-types.md (used for both detection heuristics here and injection templates in Step 5)</action>
     <action>For each task, classify it as one of: `skill-instruction`, `script-code`, `rule-hook`, `config-structure`, or `specification` — per the signals in change-types.md. If a task matches none of the five detection signals, tag it as `unclassified` and note "No Momentum-specific guidance for this task — standard bmad-dev-story DoD applies."</action>
     <action>Produce a classification list: each task tagged with its change type (or `unclassified`). A story may contain multiple types.</action>
     <action>Store {{classification_list}}: the classification list produced above, with each task number/name and its assigned change type</action>
@@ -58,7 +58,53 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     </output>
   </step>
 
-  <step n="4" goal="Inject Momentum Implementation Guide into story Dev Notes">
+  <step n="4" goal="Select verification method from change-type routing">
+    <action>Check whether `skills/momentum/references/rules/verification-standard.md` exists on disk</action>
+    <check if="verification-standard.md does not exist on disk">
+      <output>Cannot select verification method — verification-standard.md not found.
+This story depends on `enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard` being implemented first.</output>
+      <action>HALT</action>
+    </check>
+    <action>Load `skills/momentum/references/rules/verification-standard.md`</action>
+    <action>Read the change-type → verification-method routing table from Section 1 of verification-standard.md</action>
+    <action>For each entry in {{classification_list}}, look up its change type in the routing table. Produce {{method_candidates}}: a list of (change-type, method) pairs. Skip any entries tagged `unclassified`.</action>
+
+    <check if="all entries in {{classification_list}} are unclassified (no classified change types)">
+      <ask>All tasks in this story are unclassified — no change type matched. What verification method should govern this story? (Refer to the routing table in `skills/momentum/references/rules/verification-standard.md` for available methods.)</ask>
+      <action>Set {{verification_method}} = developer's selection</action>
+      <goto anchor="write_method" />
+    </check>
+
+    <action>Filter {{method_candidates}}: remove any entries where change-type is `specification`. Specification tasks (document review) are always subsumed by the dominant method of the story's primary deliverable — a story with `skill-instruction` + `specification` tasks selects the `skill-instruction` method without escalation.</action>
+    <action>Store {{resolved_methods}}: the distinct verification methods from the filtered {{method_candidates}} (deduplicated set of method values)</action>
+
+    <check if="{{resolved_methods}} contains exactly one distinct method OR is empty after filtering (only specification tasks remained)">
+      <check if="{{resolved_methods}} is empty">
+        <action>Set {{verification_method}} = "document review"</action>
+        <note>All non-unclassified tasks were specification type. Document review is the method for pure specification stories.</note>
+      </check>
+      <check if="{{resolved_methods}} contains one method">
+        <action>Set {{verification_method}} = that single method</action>
+      </check>
+      <note>No developer prompt — routing is unambiguous.</note>
+    </check>
+
+    <check if="{{resolved_methods}} contains two or more distinct methods">
+      <ask>The change types in this story map to multiple verification methods:
+{{method_candidates}}
+Which method should govern this story's verification? Select the method for the story's primary deliverable.</ask>
+      <action>Set {{verification_method}} = developer's selection</action>
+    </check>
+
+    <anchor id="write_method" />
+    <action>Read the current content of {{story_file}}</action>
+    <action>Locate the YAML frontmatter block (the `---` delimited header at the top of the file)</action>
+    <action>Add or update the `verification_method:` field in the frontmatter with the value `{{verification_method}}`</action>
+    <action>Write the updated content back to {{story_file}}</action>
+    <output>**Verification method selected:** `{{verification_method}}`</output>
+  </step>
+
+  <step n="5" goal="Inject Momentum Implementation Guide into story Dev Notes">
     <action>Read the current content of {{story_file}}</action>
     <action>Locate the Dev Notes section (or Developer Context section — may vary by bmad-create-story template version)</action>
     <action>Using {{classification_list}} from Step 3, determine which change types are present and select only the corresponding templates from ./references/change-types.md.</action>
@@ -80,7 +126,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <output>**Momentum Implementation Guide** injected into `{{story_file}}`</output>
   </step>
 
-  <step n="5" goal="Write story metadata to stories/index.json">
+  <step n="6" goal="Write story metadata to stories/index.json">
     <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
       - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. Find the matching story slug in `stories/index.json`. Store as {{depends_on}} list of story slugs. If none found, use [].
       - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum/skills/dev/", ".claude/settings.json"]); if none found, use []
@@ -98,7 +144,7 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <output>**Story metadata written** to `stories/index.json` — `depends_on`: {{depends_on}}, `touches`: {{touches}}</output>
   </step>
 
-  <step n="6" goal="Run AVFL checkpoint on the story file">
+  <step n="7" goal="Run AVFL checkpoint on the story file">
     <action>Invoke the `avfl` skill with these parameters:
       - domain_expert: "story author"
       - task_context: "Momentum story — {{story_key}}"
@@ -147,12 +193,13 @@ You may proceed to development with known issues, or halt to address them first.
     </check>
   </step>
 
-  <step n="7" goal="Completion signal">
+  <step n="8" goal="Completion signal">
     <output>## Story `{{story_key}}` — Ready for Review
 
 **Produced:** `{{story_file}}`
 **Sprint tracking:** `stories/index.json` (status: `ready-for-dev`, metadata: written)
 **Change types:** {{change_types_summary}}
+**Verification method:** {{verification_method}}
 **AVFL checkpoint:** {{avfl_result}}
 {{avfl_findings}}
 
