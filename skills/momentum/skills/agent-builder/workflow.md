@@ -204,17 +204,9 @@ these strategies:
 
     <action>Update the project harness profile in momentum/verification-harness.json.
 
-    If momentum/verification-harness.json does not exist, create it with this structure (matching the agents.json defaults/project split):
+    If momentum/verification-harness.json does not exist, create it with only the project stub — do NOT write a `defaults` block, since plugin-shipped defaults apply automatically:
 ```json
 {
-  "defaults": {
-    "env": { "startup": [], "readiness_probes": [] },
-    "execution_surfaces": {},
-    "driver_bindings": {},
-    "platform_matrix": { "default": ["host"] },
-    "human_review_carveouts": [],
-    "trivial_smoke_escape": { "enabled": false, "change_types": [] }
-  },
   "project": []
 }
 ```
@@ -227,7 +219,7 @@ these strategies:
   "domain": "{{domain}}",
   "env": {
     "startup": [],
-    "readiness_probes": []
+    "readiness_probe": []
   },
   "execution_surfaces": {},
   "driver_bindings": {},

@@ -5,6 +5,8 @@ status: review
 epic_slug: agent-team-model
 feature_slug: momentum-agent-role-contracts
 story_type: practice
+change_type: agent-definition
+verification_method: trigger
 depends_on: []
 touches: []
 ---

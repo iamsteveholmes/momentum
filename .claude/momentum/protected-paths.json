@@ -40,6 +40,11 @@
       "pattern": ".momentum/sprints/*/coverage-plan.md",
       "policy": "sprint-coverage-plan",
       "reason": "frozen at sprint activation — modify via sprint-planning only"
+    },
+    {
+      "pattern": "momentum/verification-harness.json",
+      "policy": "verification-harness",
+      "reason": "root harness is managed by agent-builder and plugin install only"
     }
   ]
 }

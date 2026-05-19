@@ -25,11 +25,11 @@ reported separately as human follow-up.
 ```json
 {
   "defaults": {
-    "env": { "startup": [], "readiness_probes": [] },
+    "env": { "startup": [], "readiness_probe": [] },
     "execution_surfaces": {
       "skill-instruction": "skill-invoke",
       "agent-definition": "skill-invoke",
-      "rule": "behavioral-trigger",
+      "rule-hook": "behavioral-trigger",
       "research-spike": "document-review",
       "specification": "document-review"
     },

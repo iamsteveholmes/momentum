@@ -5,6 +5,8 @@ status: review
 epic_slug: bring-your-own-tools
 feature_slug: momentum-protocol-based-integration
 story_type: practice
+change_type: [config-structure, specification]
+verification_method: review
 depends_on: []
 touches: []
 ---

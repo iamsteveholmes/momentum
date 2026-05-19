@@ -500,8 +500,9 @@ The sprint CANNOT activate silently with known guard failures.</output>
 
     <action>For each approved story in {{selected_stories}}:
       · SKIP any story that already has a `.feature` file in `specs/` (written by Step 3.5 for app-ui stories) — that file is the canonical spec-of-done and must NOT be overwritten
+      · SKIP any story whose `verification_method` frontmatter field is set to a value other than `gherkin` (e.g., eval, trigger, review, smoke) — those stories use their own contract format, not Gherkin
     </action>
-    <action>For each approved story WITHOUT an existing `.feature` contract in `specs/`:</action>
+    <action>For each approved story WITHOUT an existing `.feature` contract in `specs/` AND without a non-Gherkin `verification_method`:</action>
     <action>Read the story's acceptance criteria from its story file — read ALL ACs
       holistically to understand the system's intended behavior, then write Gherkin
       scenarios that describe that behavior end-to-end.</action>

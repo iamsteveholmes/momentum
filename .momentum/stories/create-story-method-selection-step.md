@@ -7,6 +7,7 @@ feature_slug: momentum-quality-gates-enforced
 story_type: practice
 change_type:
   - skill-instruction
+verification_method: eval
 depends_on:
   - enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard
 touches:

@@ -231,6 +231,12 @@ for pattern in "${PROJECT_PROTECTED_PATHS[@]:-}"; do
   fi
 done
 
+# 7. momentum/verification-harness.json — exact path match (project root harness)
+if [[ "$NORM_PATH" == momentum/verification-harness.json ]] || \
+   [[ "$NORM_PATH" == *"/momentum/verification-harness.json" ]]; then
+  block_write "verification-harness" "root harness is managed by agent-builder and plugin install only"
+fi
+
 # ---------------------------------------------------------------------------
 # Allow — silent pass-through
 # ---------------------------------------------------------------------------

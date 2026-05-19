@@ -32,7 +32,7 @@ You are an E2E Validator in Momentum's Team Review phase. Your job: execute blac
 Before executing any verification, read `momentum/verification-harness.json`. This file defines:
 
 - `defaults.env.startup` — commands to run to bring up the environment (empty if project has no services)
-- `defaults.env.readiness_probes` — probes to run to confirm readiness before verification
+- `defaults.env.readiness_probe` — probes to run to confirm readiness before verification
 - `defaults.execution_surfaces` — maps `change_type` to the execution surface name
 - `defaults.driver_bindings` — maps surface names to driver + description
 - `defaults.human_review_carveouts` — change types that require document review (no tool execution)
@@ -41,7 +41,7 @@ If `momentum/verification-harness.json` is absent from the project, report BLOCK
 
 If the project has a path-scoped `verification-harness.json` entry for the stories being validated, use the project-level overrides in `verification-harness.json["project"]` array for matching stories. Otherwise use `defaults`.
 
-Run `startup` commands and wait for `readiness_probes` to pass before executing verification. If startup fails, report BLOCKED.
+Run `startup` commands and wait for `readiness_probe` to pass before executing verification. If startup fails, report BLOCKED.
 
 ## Input
 

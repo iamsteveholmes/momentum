@@ -6,6 +6,7 @@ epic_slug: quality-enforcement
 feature_slug: momentum-quality-gates-enforced
 story_type: practice
 change_type: [rule-hook, specification, config-structure]
+verification_method: [trigger, review]
 depends_on: []
 touches:
   - skills/momentum/references/rules/verification-standard.md
