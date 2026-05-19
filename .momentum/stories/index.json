@@ -4171,7 +4171,7 @@
     "story_type": "maintenance"
   },
   "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven": {
-    "status": "in-progress",
+    "status": "review",
     "title": "e2e-validator agent body rewrite — de-Gherkin, harness-driven",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -4207,7 +4207,7 @@
     ]
   },
   "create-story-method-selection-step": {
-    "status": "in-progress",
+    "status": "review",
     "title": "create-story: method-selection step",
     "epic_slug": "story-cycles",
     "story_file": true,
@@ -4242,7 +4242,7 @@
     "feature_slug": "momentum-protocol-based-integration"
   },
   "sprint-planning-frozen-per-story-contract-holistic-coverage": {
-    "status": "in-progress",
+    "status": "review",
     "title": "sprint-planning: frozen per-story contract, holistic coverage plan, adversarial guard",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
