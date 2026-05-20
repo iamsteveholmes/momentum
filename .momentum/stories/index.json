@@ -4406,7 +4406,7 @@
   "dag-dispatcher-loop": {
     "status": "backlog",
     "title": "DAG dispatcher loop — continuous claim from bd ready-set",
-    "epic_slug": "sprint-execution-workflow",
+    "epic_slug": "sprint-dev-workflow",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -4472,7 +4472,7 @@
   "design-fidelity-validator-dom-skeleton-extractor": {
     "status": "backlog",
     "title": "design-fidelity validator — DOM-skeleton extraction + design mismatch report",
-    "epic_slug": "complete-story-cycles",
+    "epic_slug": "story-cycles",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -4483,7 +4483,7 @@
   "remove-hardcoded-model-pins-skill-frontmatter": {
     "status": "backlog",
     "title": "remove hardcoded model pins from 23+ skill frontmatter files",
-    "epic_slug": "automatic-quality-enforcement",
+    "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -4527,7 +4527,7 @@
   "avfl-default-fix-all-legit-findings": {
     "status": "backlog",
     "title": "AVFL default: always fix all legit findings, retire fix/defer gate",
-    "epic_slug": "epic-3",
+    "epic_slug": "quality-enforcement",
     "story_file": true,
     "depends_on": [],
     "touches": [],
