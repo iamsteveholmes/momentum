@@ -1,148 +1,5 @@
 {
-  "active": {
-    "locked": true,
-    "status": "active",
-    "stories": [
-      "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
-      "momentum-harnessjson-schema-and-plugin-shipped-defaults",
-      "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven",
-      "create-story-method-selection-step",
-      "sprint-planning-frozen-per-story-contract-holistic-coverage"
-    ],
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
-          "momentum-harnessjson-schema-and-plugin-shipped-defaults"
-        ]
-      },
-      {
-        "wave": 2,
-        "stories": [
-          "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven",
-          "create-story-method-selection-step",
-          "sprint-planning-frozen-per-story-contract-holistic-coverage"
-        ]
-      }
-    ],
-    "approvals": [
-      {
-        "story_slug": "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
-        "decision": "approved",
-        "approved_at": "2026-05-18T19:00:00Z",
-        "story_file_sha": "7c89da9c3c0a4fac65ce2c44c4402b85151a46541f9f395c35a9f9633fdbfb8d"
-      },
-      {
-        "story_slug": "momentum-harnessjson-schema-and-plugin-shipped-defaults",
-        "decision": "approved",
-        "approved_at": "2026-05-18T18:31:47Z",
-        "story_file_sha": "e468e6a73332900909fb97b6abe14210522ae07bff79c73d0715454e50570df7"
-      },
-      {
-        "story_slug": "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven",
-        "decision": "approved",
-        "approved_at": "2026-05-18T18:33:41Z",
-        "story_file_sha": "dbc00f1bc1ae6dedc0bb43a75d18c6e66e0cad1da72ac2b53d9599392b015093"
-      },
-      {
-        "story_slug": "create-story-method-selection-step",
-        "decision": "approved",
-        "approved_at": "2026-05-18T18:34:13Z",
-        "story_file_sha": "1cc3e13b53052d0f136933e678e92bdf158fa97e90fb1eceaa32b53867e0ac49"
-      },
-      {
-        "story_slug": "sprint-planning-frozen-per-story-contract-holistic-coverage",
-        "decision": "approved",
-        "approved_at": "2026-05-18T18:37:51Z",
-        "story_file_sha": "3bf854b748013a959b9eb70ac1e7f4f515be9db0fa763a307a4b9dab0f6d6984"
-      }
-    ],
-    "slug": "sprint-2026-05-17",
-    "planned": "2026-05-18",
-    "team": {
-      "story_assignments": {
-        "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard": {
-          "specialist": "dev",
-          "guidelines": null,
-          "guidelines_status": "n/a",
-          "roles": [
-            "dev",
-            "qa",
-            "e2e-validator",
-            "architect-guard"
-          ],
-          "wave": 1,
-          "dependencies": []
-        },
-        "momentum-harnessjson-schema-and-plugin-shipped-defaults": {
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present",
-          "roles": [
-            "dev",
-            "qa",
-            "e2e-validator",
-            "architect-guard"
-          ],
-          "wave": 1,
-          "dependencies": []
-        },
-        "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven": {
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present",
-          "roles": [
-            "dev",
-            "qa",
-            "e2e-validator",
-            "architect-guard"
-          ],
-          "wave": 2,
-          "dependencies": [
-            "momentum-harnessjson-schema-and-plugin-shipped-defaults"
-          ]
-        },
-        "create-story-method-selection-step": {
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present",
-          "roles": [
-            "dev",
-            "qa",
-            "e2e-validator",
-            "architect-guard"
-          ],
-          "wave": 2,
-          "dependencies": [
-            "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard"
-          ]
-        },
-        "sprint-planning-frozen-per-story-contract-holistic-coverage": {
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present",
-          "roles": [
-            "dev",
-            "qa",
-            "e2e-validator",
-            "architect-guard"
-          ],
-          "wave": 2,
-          "dependencies": [
-            "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
-            "momentum-harnessjson-schema-and-plugin-shipped-defaults"
-          ]
-        }
-      },
-      "review_roles": {
-        "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
-        "e2e-validator": "skills/momentum/agents/e2e-validator.md",
-        "architect-guard": "skills/momentum/skills/architecture-guard/SKILL.md"
-      }
-    },
-    "started": "2026-05-18"
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -160,10 +17,10 @@
           ],
           "change_type": "skill-instruction + config-structure",
           "guidelines": {
-            "dev": "EDD \u2014 write 3 behavioral evals before touching skill files. NFR: SKILL.md description \u2264150 chars, model/effort frontmatter, body \u2264500 lines. Scan profile adds to framework.json validation_profiles \u2014 do not modify existing profiles.",
+            "dev": "EDD — write 3 behavioral evals before touching skill files. NFR: SKILL.md description ≤150 chars, model/effort frontmatter, body ≤500 lines. Scan profile adds to framework.json validation_profiles — do not modify existing profiles.",
             "qa": "Validate against 11 ACs. Verify framework.json schema consistency with existing profiles. Verify scan composes with corpus mode. Verify backward compatibility of gate/checkpoint/full."
           },
-          "test_approach": "EDD \u2014 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
+          "test_approach": "EDD — 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
           "wave": 1,
           "dependencies": []
         }
@@ -227,10 +84,10 @@
           ],
           "change_type": "config-structure",
           "guidelines": {
-            "dev": "Direct implementation \u2014 create plugin.json manifest, move Impetus to nested skills/impetus/. Verify with jq. No tests needed.",
+            "dev": "Direct implementation — create plugin.json manifest, move Impetus to nested skills/impetus/. Verify with jq. No tests needed.",
             "qa": "Validate 8 ACs. Verify plugin.json schema, Impetus SKILL.md name field, old files removed, non-Impetus files untouched."
           },
-          "test_approach": "Inspection \u2014 JSON validation, path existence checks",
+          "test_approach": "Inspection — JSON validation, path existence checks",
           "wave": 1,
           "dependencies": []
         },
@@ -241,10 +98,10 @@
           ],
           "change_type": "skill-instruction",
           "guidelines": {
-            "dev": "EDD \u2014 write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description \u2264150 chars, model/effort frontmatter.",
+            "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
             "qa": "Validate 7 ACs. Verify independent invocability, all 9 steps reachable, workflow moved from old location."
           },
-          "test_approach": "EDD \u2014 2 evals: invocability, step coverage",
+          "test_approach": "EDD — 2 evals: invocability, step coverage",
           "wave": 1,
           "dependencies": []
         },
@@ -255,10 +112,10 @@
           ],
           "change_type": "skill-instruction",
           "guidelines": {
-            "dev": "EDD \u2014 write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description \u2264150 chars, model/effort frontmatter.",
+            "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
             "qa": "Validate 7 ACs. Verify independent invocability, all 7 phases reachable, workflow moved from old location."
           },
-          "test_approach": "EDD \u2014 2 evals: invocability, phase coverage",
+          "test_approach": "EDD — 2 evals: invocability, phase coverage",
           "wave": 1,
           "dependencies": []
         },
@@ -272,7 +129,7 @@
             "dev": "Use git mv for history preservation. Update name field only. Verify subdirectories intact after each move.",
             "qa": "Validate 6 ACs. Verify all 10 skills moved, name fields updated, old dirs removed, plugin discovers 11 skills."
           },
-          "test_approach": "Inspection \u2014 path checks, glob verification",
+          "test_approach": "Inspection — path checks, glob verification",
           "wave": 2,
           "dependencies": [
             "plugin-skeleton"
@@ -302,7 +159,7 @@
           ],
           "change_type": "skill-instruction + specification",
           "guidelines": {
-            "dev": "EDD \u2014 write 2 evals for spawn names and dead references. Grep-driven audit then targeted updates.",
+            "dev": "EDD — write 2 evals for spawn names and dead references. Grep-driven audit then targeted updates.",
             "qa": "Validate 9 ACs. Zero dead references, correct spawn names, spec docs consistent.",
             "architect-guard": "Verify plugin model section in architecture.md matches actual directory structure. Check Decision 32 consistency."
           },
@@ -358,7 +215,7 @@
             "dev": "Create agents/dev.md agent definition following qa-reviewer.md pattern. Update sprint-dev Phase 2 to spawn agent instead of skill. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
             "qa": "Validate 7 ACs. Verify agent definition schema, sprint-dev spawning, momentum:dev non-regression."
           },
-          "test_approach": "EDD \u2014 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
+          "test_approach": "EDD — 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
           "wave": 1,
           "dependencies": []
         },
@@ -374,7 +231,7 @@
             "qa": "Validate 7 ACs. Verify classification, specialist agents, fallback to base dev, sprint record schema.",
             "architect-guard": "Verify specialist model extends Decision 26 two-layer agent model without breaking existing patterns."
           },
-          "test_approach": "EDD \u2014 evals for classification, specialist spawning, fallback behavior",
+          "test_approach": "EDD — evals for classification, specialist spawning, fallback behavior",
           "wave": 2,
           "dependencies": [
             "dev-agent-definition-files"
@@ -387,10 +244,10 @@
           ],
           "change_type": "skill-instruction",
           "guidelines": {
-            "dev": "EDD \u2014 add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
+            "dev": "EDD — add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
             "qa": "Validate 9 ACs. Verify detection, warnings, developer options, non-blocking behavior, sprint record tracking."
           },
-          "test_approach": "EDD \u2014 3 evals: missing detection, developer options, sprint record status",
+          "test_approach": "EDD — 3 evals: missing detection, developer options, sprint record status",
           "wave": 3,
           "dependencies": [
             "specialist-dev-agents"
@@ -406,7 +263,7 @@
             "dev": "Create agents/architecture-guard.md following qa-reviewer.md pattern. Update SKILL.md stub. Update sprint-dev Phase 5. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
             "qa": "Validate 9 ACs. Verify agent definition, decision extraction, findings format, Phase 5 spawning."
           },
-          "test_approach": "EDD \u2014 evals: decision extraction, findings format, read-only constraint",
+          "test_approach": "EDD — evals: decision extraction, findings format, read-only constraint",
           "wave": 2,
           "dependencies": [
             "dev-agent-definition-files"
@@ -458,7 +315,7 @@
             "dev": "Modify 3 existing functions + add 3 new commands in momentum-tools.py. ALL changes must have unit tests in test-momentum-tools.py following existing subprocess pattern.",
             "qa": "Validate 10 ACs. Run full test suite. Verify status fields written on all lifecycle transitions."
           },
-          "test_approach": "Unit tests \u2014 12 new tests in test-momentum-tools.py",
+          "test_approach": "Unit tests — 12 new tests in test-momentum-tools.py",
           "wave": 1,
           "dependencies": []
         },
@@ -469,10 +326,10 @@
           ],
           "change_type": "config-structure",
           "guidelines": {
-            "dev": "Additive JSON edit \u2014 add status/slug/retro_run_at fields. No existing fields changed.",
+            "dev": "Additive JSON edit — add status/slug/retro_run_at fields. No existing fields changed.",
             "qa": "Validate 5 ACs. Verify JSON parses, new fields present, existing fields unchanged."
           },
-          "test_approach": "Inspection \u2014 JSON validation",
+          "test_approach": "Inspection — JSON validation",
           "wave": 1,
           "dependencies": []
         },
@@ -535,10 +392,10 @@
           ],
           "change_type": "skill-instruction + code",
           "guidelines": {
-            "dev": "EDD \u2014 write 2+ behavioral evals before creating skill files. SKILL.md: name=retro, description \u2264150 chars, model/effort frontmatter, body delegates to workflow.md. workflow.md: XML step structure, <critical> invariants, momentum-tools log calls. 7-phase retro: sprint ID \u2192 log correlation \u2192 story verification \u2192 cross-log discovery \u2192 triage output \u2192 story stubs \u2192 sprint closure.",
+            "dev": "EDD — write 2+ behavioral evals before creating skill files. SKILL.md: name=retro, description ≤150 chars, model/effort frontmatter, body delegates to workflow.md. workflow.md: XML step structure, <critical> invariants, momentum-tools log calls. 7-phase retro: sprint ID → log correlation → story verification → cross-log discovery → triage output → story stubs → sprint closure.",
             "qa": "Validate 9 ACs. Verify cross-log correlation reads all agent files. Verify two triage outputs written. Verify sprint-complete and retro-complete both called. Verify closed-incomplete transitions for unfinished stories."
           },
-          "test_approach": "EDD \u2014 evals for log correlation, triage output format, sprint closure",
+          "test_approach": "EDD — evals for log correlation, triage output format, sprint closure",
           "wave": 1,
           "dependencies": [],
           "specialist": "dev-skills",
@@ -552,7 +409,7 @@
           ],
           "change_type": "rule-hook + code",
           "guidelines": {
-            "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-lint.sh: extract file_path from TOOL_INPUT JSON, run linter by extension (.py\u2192ruff, .json\u2192json.tool, .sh\u2192shellcheck, .md\u2192structural), output only on failure, track modified files.",
+            "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-lint.sh: extract file_path from TOOL_INPUT JSON, run linter by extension (.py→ruff, .json→json.tool, .sh→shellcheck, .md→structural), output only on failure, track modified files.",
             "qa": "Validate 7 ACs. Verify hook fires on Edit/Write/NotebookEdit. Verify clean files produce no output. Verify session-modified-files.txt tracks and dedupes paths."
           },
           "test_approach": "Behavioral verification of hook output",
@@ -608,7 +465,7 @@
             "dev": "Add session journal-status subcommand to momentum-tools.py under existing session command group. Scan .claude/momentum/journal.jsonl: group by thread_id, detect open vs closed threads, handle malformed lines. All new code must have unit tests in test-momentum-tools.py.",
             "qa": "Validate 6 ACs. Run full test suite. Verify no-file returns exists:false. Verify open thread counting. Verify malformed line handling. Verify performance on large journals."
           },
-          "test_approach": "Unit tests \u2014 6 new tests in test-momentum-tools.py",
+          "test_approach": "Unit tests — 6 new tests in test-momentum-tools.py",
           "wave": 1,
           "dependencies": [],
           "specialist": "dev",
@@ -1006,7 +863,7 @@
             "guidelines": ".claude/rules/dev-skills.md",
             "guidelines_status": "present",
             "wave": 3,
-            "note": "Tasks 1/2/5 are script-code TDD \u2014 use momentum:dev (bmad-dev-story) for those tasks; Tasks 3/4 are EDD for dev-skills"
+            "note": "Tasks 1/2/5 are script-code TDD — use momentum:dev (bmad-dev-story) for those tasks; Tasks 3/4 are EDD for dev-skills"
           },
           "feature-status-practice-path": {
             "specialist": "dev-skills",
@@ -1699,6 +1556,152 @@
       "started": "2026-05-16",
       "completed": "2026-05-17",
       "retro_run_at": "2026-05-17"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "stories": [
+        "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
+        "momentum-harnessjson-schema-and-plugin-shipped-defaults",
+        "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven",
+        "create-story-method-selection-step",
+        "sprint-planning-frozen-per-story-contract-holistic-coverage"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
+            "momentum-harnessjson-schema-and-plugin-shipped-defaults"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven",
+            "create-story-method-selection-step",
+            "sprint-planning-frozen-per-story-contract-holistic-coverage"
+          ]
+        }
+      ],
+      "approvals": [
+        {
+          "story_slug": "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
+          "decision": "approved",
+          "approved_at": "2026-05-18T19:00:00Z",
+          "story_file_sha": "7c89da9c3c0a4fac65ce2c44c4402b85151a46541f9f395c35a9f9633fdbfb8d"
+        },
+        {
+          "story_slug": "momentum-harnessjson-schema-and-plugin-shipped-defaults",
+          "decision": "approved",
+          "approved_at": "2026-05-18T18:31:47Z",
+          "story_file_sha": "e468e6a73332900909fb97b6abe14210522ae07bff79c73d0715454e50570df7"
+        },
+        {
+          "story_slug": "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven",
+          "decision": "approved",
+          "approved_at": "2026-05-18T18:33:41Z",
+          "story_file_sha": "dbc00f1bc1ae6dedc0bb43a75d18c6e66e0cad1da72ac2b53d9599392b015093"
+        },
+        {
+          "story_slug": "create-story-method-selection-step",
+          "decision": "approved",
+          "approved_at": "2026-05-18T18:34:13Z",
+          "story_file_sha": "1cc3e13b53052d0f136933e678e92bdf158fa97e90fb1eceaa32b53867e0ac49"
+        },
+        {
+          "story_slug": "sprint-planning-frozen-per-story-contract-holistic-coverage",
+          "decision": "approved",
+          "approved_at": "2026-05-18T18:37:51Z",
+          "story_file_sha": "3bf854b748013a959b9eb70ac1e7f4f515be9db0fa763a307a4b9dab0f6d6984"
+        }
+      ],
+      "slug": "sprint-2026-05-17",
+      "planned": "2026-05-18",
+      "team": {
+        "story_assignments": {
+          "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard": {
+            "specialist": "dev",
+            "guidelines": null,
+            "guidelines_status": "n/a",
+            "roles": [
+              "dev",
+              "qa",
+              "e2e-validator",
+              "architect-guard"
+            ],
+            "wave": 1,
+            "dependencies": []
+          },
+          "momentum-harnessjson-schema-and-plugin-shipped-defaults": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "roles": [
+              "dev",
+              "qa",
+              "e2e-validator",
+              "architect-guard"
+            ],
+            "wave": 1,
+            "dependencies": []
+          },
+          "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "roles": [
+              "dev",
+              "qa",
+              "e2e-validator",
+              "architect-guard"
+            ],
+            "wave": 2,
+            "dependencies": [
+              "momentum-harnessjson-schema-and-plugin-shipped-defaults"
+            ]
+          },
+          "create-story-method-selection-step": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "roles": [
+              "dev",
+              "qa",
+              "e2e-validator",
+              "architect-guard"
+            ],
+            "wave": 2,
+            "dependencies": [
+              "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard"
+            ]
+          },
+          "sprint-planning-frozen-per-story-contract-holistic-coverage": {
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "roles": [
+              "dev",
+              "qa",
+              "e2e-validator",
+              "architect-guard"
+            ],
+            "wave": 2,
+            "dependencies": [
+              "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard",
+              "momentum-harnessjson-schema-and-plugin-shipped-defaults"
+            ]
+          }
+        },
+        "review_roles": {
+          "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
+          "e2e-validator": "skills/momentum/agents/e2e-validator.md",
+          "architect-guard": "skills/momentum/skills/architecture-guard/SKILL.md"
+        }
+      },
+      "started": "2026-05-18",
+      "completed": "2026-05-19",
+      "retro_run_at": null
     }
   ],
   "quickfixes": [

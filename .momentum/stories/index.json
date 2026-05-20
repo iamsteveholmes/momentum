@@ -4171,7 +4171,7 @@
     "story_type": "maintenance"
   },
   "e2e-validator-agent-body-rewrite-de-gherkin-harness-driven": {
-    "status": "review",
+    "status": "done",
     "title": "e2e-validator agent body rewrite — de-Gherkin, harness-driven",
     "epic_slug": "agent-team-model",
     "story_file": true,
@@ -4187,7 +4187,7 @@
     "feature_slug": "momentum-agent-role-contracts"
   },
   "enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard": {
-    "status": "review",
+    "status": "done",
     "title": "Enforced verification rule — change-type method-routing, harness-profile requirement, adversarial guard",
     "epic_slug": "quality-enforcement",
     "story_file": ".momentum/stories/enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard.md",
@@ -4207,7 +4207,7 @@
     ]
   },
   "create-story-method-selection-step": {
-    "status": "review",
+    "status": "done",
     "title": "create-story: method-selection step",
     "epic_slug": "story-cycles",
     "story_file": true,
@@ -4226,7 +4226,7 @@
     ]
   },
   "momentum-harnessjson-schema-and-plugin-shipped-defaults": {
-    "status": "review",
+    "status": "done",
     "title": "momentum/verification-harness.json schema and plugin-shipped defaults",
     "epic_slug": "bring-your-own-tools",
     "story_file": true,
@@ -4242,7 +4242,7 @@
     "feature_slug": "momentum-protocol-based-integration"
   },
   "sprint-planning-frozen-per-story-contract-holistic-coverage": {
-    "status": "review",
+    "status": "done",
     "title": "sprint-planning: frozen per-story contract, holistic coverage plan, adversarial guard",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
@@ -4523,5 +4523,16 @@
     "priority": "high",
     "story_type": "practice",
     "feature_slug": "momentum-sprint-planning-to-ready"
+  },
+  "avfl-default-fix-all-legit-findings": {
+    "status": "backlog",
+    "title": "AVFL default: always fix all legit findings, retire fix/defer gate",
+    "epic_slug": "epic-3",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature",
+    "feature_slug": "momentum-quality-gates-enforced"
   }
 }
