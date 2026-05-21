@@ -483,7 +483,7 @@
     "feature_slug": "momentum-practice-knowledge-base"
   },
   "canvas-features-lens": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Canvas Phase 2 — Features Lens with Real Data Plumbing",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -494,7 +494,7 @@
     "feature_slug": "momentum-canvas"
   },
   "canvas-flywheel-lens": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Canvas Phase 4 — Flywheel Lens with Timeline and Triage Chain",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -505,7 +505,7 @@
     "feature_slug": "momentum-canvas"
   },
   "canvas-level-2-feature-detail": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Canvas Phase 5 — Level-2 Feature Detail with Replace-View Nav",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -516,7 +516,7 @@
     "feature_slug": "momentum-canvas"
   },
   "canvas-level-3-story-detail": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Canvas Phase 6 — Level-3 Story Detail Typographic Document",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -527,7 +527,7 @@
     "feature_slug": "momentum-canvas"
   },
   "canvas-reading-mode-polish": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Canvas Phase 7 — Reading-Mode Override and Dark-Mode Persistence",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -538,7 +538,7 @@
     "feature_slug": "momentum-canvas"
   },
   "canvas-sprints-lens": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Canvas Phase 3 — Sprints Lens with Closure Strip and Outcome Bands",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -549,7 +549,7 @@
     "feature_slug": "momentum-canvas"
   },
   "canvas-vite-scaffold": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Canvas Phase 1 — Vite Scaffold, Design Tokens, Pane Shell, Skill Rename",
     "epic_slug": "feature-orientation",
     "story_file": true,
@@ -1235,7 +1235,7 @@
     "story_type": "defect"
   },
   "fix-retro-documenter-replication-defect": {
-    "status": "closed-incomplete",
+    "status": "done",
     "title": "Fix retro documenter replication defect (AC4 regression)",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -1337,7 +1337,7 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "harden-sprint-dev-phase5-spawn-prompts": {
-    "status": "closed-incomplete",
+    "status": "done",
     "title": "Harden sprint-dev Phase 5 spawn prompts (systemic)",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
@@ -2001,7 +2001,7 @@
     "feature_slug": "momentum-quality-gates-enforced"
   },
   "plugin-cache-staleness-detection": {
-    "status": "closed-incomplete",
+    "status": "done",
     "title": "Impetus Session-Start Staleness Check — Detect Plugin Cache Skew and Prompt Update+Restart",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2495,7 +2495,7 @@
     "story_type": "maintenance"
   },
   "retire-sprint-log-final-cleanup": {
-    "status": "closed-incomplete",
+    "status": "done",
     "title": "Retire Sprint-Log Infrastructure — PRD Drift Fix, Stub Cleanup, Filesystem Removal, Retro Phase 2 Hard-Fail",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2589,7 +2589,7 @@
     "priority": "low"
   },
   "retro-team-singleton-guard": {
-    "status": "closed-incomplete",
+    "status": "done",
     "title": "Retro Team Singleton Guard — Enforce Exactly-One Spawning for Documenter and Auditor Roles",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2602,7 +2602,7 @@
     "priority": "critical"
   },
   "retro-transcript-extraction-hardening": {
-    "status": "closed-incomplete",
+    "status": "done",
     "title": "Retro Transcript Extraction Hardening — Worktree Path Resolution and UTC Boundary Fix",
     "epic_slug": "impetus-core",
     "story_file": true,
@@ -2961,7 +2961,7 @@
     "priority": "low"
   },
   "sprint-planning-adds-per-story-approval-gate": {
-    "status": "closed-incomplete",
+    "status": "done",
     "title": "Sprint-planning adds per-story approval gate",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
