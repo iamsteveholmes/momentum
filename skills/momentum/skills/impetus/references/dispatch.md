@@ -26,7 +26,8 @@ When the owner decides to act, the right skill is summoned with confidence and p
 | Do deep research on a topic | `momentum:research` |
 | Evaluate the current project state | `momentum:assessment` |
 | Record a strategic decision | `momentum:decision` |
-| Apply a retro finding to rules, skills, or refs | `momentum:distill` |
+| Apply a practice fix urgently (single story) | `momentum:quick-fix` |
+| Apply a practice fix as a backlog story | `momentum:create-story` |
 | Trace a quality failure to its root cause | `momentum:upstream-fix` |
 | View feature coverage and story gaps | `momentum:feature-status` |
 

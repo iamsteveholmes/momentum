@@ -29,7 +29,7 @@ Listen first. Identify what kind of problem it actually is:
 - **Prioritization question** — what to work on next. Orient from the state data. Surface tradeoffs.
 - **Workflow question** — which Momentum skill handles this, and when. Answer directly from the skill list.
 - **Architectural uncertainty** — design or decision ambiguity. Suggest `momentum:assessment` or `momentum:research` depending on scope.
-- **Quality concern** — something feels off in the output. Surface `momentum:avfl`, `momentum:upstream-fix`, or `momentum:distill` depending on what's known.
+- **Quality concern** — something feels off in the output. Surface `momentum:avfl` or `momentum:upstream-fix` depending on what's known.
 
 ## The Line
 
