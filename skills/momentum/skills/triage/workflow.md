@@ -6,9 +6,9 @@ developer, then delegate to the appropriate downstream executor or write capture
 events to `intake-queue.jsonl`.
 
 **Role:** Orchestrator between upstream sources (retro output, conversation, assessment
-findings) and the per-item executors (`momentum:intake`, `momentum:distill`,
-`momentum:decision`). Does NOT perform gap-check (DEC-005 D10). Does NOT write story
-files directly — that is delegated to `momentum:intake`.
+findings) and the per-item executors (`momentum:intake`, `momentum:decision`). Does NOT
+perform gap-check (DEC-005 D10). Does NOT write story files directly — that is delegated
+to `momentum:intake`.
 
 **Voice:** Impetus voice — dry, confident, forward-moving. Symbol vocabulary:
 ✓ completed, → current, ◦ upcoming, ! warning, ✗ failed, ? proactive offer, · list item.
@@ -20,7 +20,6 @@ files directly — that is delegated to `momentum:intake`.
 | Class | Meaning | Downstream action |
 |-------|---------|-------------------|
 | ARTIFACT | A story that should enter the backlog | Delegate to `momentum:intake` with enriched context |
-| DISTILL | A practice learning ready to apply | Delegate to `momentum:distill` |
 | DECISION | A strategic decision to record | Delegate to `momentum:decision` |
 | SHAPING | Needs more thinking before classification | Write `kind: shape` event to `intake-queue.jsonl` |
 | DEFER | Valid but not now — park it | Write `kind: watch` event to `intake-queue.jsonl` |
@@ -33,9 +32,8 @@ files directly — that is delegated to `momentum:intake`.
   <critical>Do NOT perform gap-check on any item. Classification only — per DEC-005 D10.</critical>
 
   <critical>Never write story files, story index entries, or planning artifacts directly.
-  ARTIFACT delegation goes to momentum:intake. DISTILL delegation goes to momentum:distill.
-  DECISION delegation goes to momentum:decision. Only intake-queue.jsonl is written directly
-  (for SHAPING, DEFER, REJECT classes).</critical>
+  ARTIFACT delegation goes to momentum:intake. DECISION delegation goes to momentum:decision.
+  Only intake-queue.jsonl is written directly (for SHAPING, DEFER, REJECT classes).</critical>
 
   <critical>All mutations to stories/index.json go through momentum-tools CLI only via
   momentum:intake. Triage never calls momentum-tools story-add directly.</critical>
@@ -145,11 +143,6 @@ Triage — {{total_count}} items classified:
 }}
   → Approve all? (A=all / R=all / pick individually by number)
 
-{{if DISTILL items:}}
-[DISTILL] — {{count}} items  →  will be sent to momentum:distill
-{{for each: [N] {{description}} → target: {{candidate_artifact|"auto-detect"}}}}
-  → Approve all? (A=all / R=all / pick individually by number)
-
 {{if DECISION items:}}
 [DECISION] — {{count}} items  →  will be sent to momentum:decision
 {{for each: [N] {{description}}}}
@@ -208,14 +201,6 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
       Wait for all intake spawns to complete before proceeding.
       Store {{intake_results}} = list of {title, slug, stub_path} returned by intake.
 
-    **DISTILL items** — spawn momentum:distill per item (in parallel if multiple):
-      Pass:
-        - learning_description: item description + any recommended change captured
-        - candidate_artifact: target practice file if identifiable
-        - source: "triage — {{source_label}}"
-      Wait for all distill spawns to complete.
-      Store {{distill_results}} = list of {title, outcome} returned by distill.
-
     **DECISION items** — spawn momentum:decision per item (sequentially — decision is interactive):
       Pass context from item. Wait for each decision to complete before next.
       Store {{decision_results}} = list of {title, outcome}.
@@ -268,9 +253,6 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
 
 **Stubbed to backlog ({{intake_count}}):**
 {{for each intake result: · `{{slug}}` — `{{stub_path}}`}}
-
-**Distilled ({{distill_count}}):**
-{{for each distill result: · {{title}} → {{outcome}}}}
 
 **Decisions recorded ({{decision_count}}):**
 {{for each decision result: · {{title}} → {{outcome}}}}

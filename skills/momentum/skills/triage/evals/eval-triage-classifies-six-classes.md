@@ -3,8 +3,9 @@
 ## Purpose
 
 Verify that `momentum:triage` classifies a mixed list of observations into the correct
-six classes — ARTIFACT, DISTILL, DECISION, SHAPING, DEFER, REJECT — before executing
-any actions.
+five classes — ARTIFACT, DECISION, SHAPING, DEFER, REJECT — before executing any actions.
+The DISTILL class has been removed (DEC-031 D6); practice learnings now route as ARTIFACT
+(backlog story) or DECISION depending on their nature.
 
 ## Scenario
 
@@ -24,7 +25,7 @@ A developer invokes `/momentum:triage` and provides the following list of observ
 Each item is classified correctly before any execution:
 
 - Item 1 → ARTIFACT (a bounded backlog item with clear deliverable)
-- Item 2 → DISTILL (a practice learning — a rule to apply to a specific file)
+- Item 2 → ARTIFACT (a practice learning — now routes as a backlog story, not DISTILL)
 - Item 3 → DECISION (a strategic adoption question requiring a recorded decision)
 - Item 4 → SHAPING (vague intent, needs thinking)
 - Item 5 → DEFER (valid but explicitly not now)
@@ -32,7 +33,7 @@ Each item is classified correctly before any execution:
 
 ### B2: ARTIFACT Enrichment
 
-For item 1 (ARTIFACT), the classification output includes:
+For items 1 and 2 (ARTIFACT), the classification output includes:
 
 - `story_type`: suggested (likely "maintenance" or "feature")
 - `feature_slug`: suggested from features.json or flagged as "no feature match"
@@ -41,9 +42,9 @@ For item 1 (ARTIFACT), the classification output includes:
 
 ### B3: Batch Approval Presented Before Execution
 
-All six items are presented in a single batch-approval display grouped by class. No
-downstream executor (intake, distill, decision, append) is invoked until after the
-developer approves.
+All five items are presented in a single batch-approval display grouped by class. No
+downstream executor (intake, decision, append) is invoked until after the developer approves.
+No DISTILL group appears in the batch display.
 
 ### B4: No Gap-Check Performed
 
@@ -52,7 +53,7 @@ backlog coverage, or North Star alignment. Classification only — per DEC-005 D
 
 ### B5: Queue Items Distinguished
 
-SHAPING, DEFER, REJECT items are displayed distinctly from ARTIFACT/DISTILL/DECISION
+SHAPING, DEFER, REJECT items are displayed distinctly from ARTIFACT/DECISION
 items in the batch approval output, with their target noted as "intake-queue.jsonl".
 
 ## Pass Criteria
