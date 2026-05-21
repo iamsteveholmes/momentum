@@ -3397,79 +3397,92 @@
     "status": "backlog",
     "title": "Consolidate State-Model Contract — Unified Architectural Decision + Cross-Skill Schema Validation Tests",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "medium"
   },
   "research-q-a-digest-first-rebuild": {
     "status": "backlog",
     "title": "Rebuild momentum:research Q/A as Digest-First — Structured Findings + Open Redirect Questions",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "low"
   },
   "specialist-agents-avfl-and-quickfix-phase2a": {
     "status": "backlog",
     "title": "Specialist Agents for AVFL and Quick-Fix Phase 2a — 8 Typed Agent Roles",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "high"
   },
   "transcript-query-helper-stable-schema": {
     "status": "backlog",
     "title": "Transcript-Query Helper — Typed DuckDB Accessors with Stable content-string-vs-array Handling",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "medium"
   },
   "architecture-guard-cross-section-check": {
     "status": "backlog",
     "title": "Architecture Guard Cross-Section Coherence Check — Catch editHistory Contradictions",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "high"
   },
   "momentum-tools-sprint-verify-evals": {
     "status": "backlog",
     "title": "momentum-tools sprint verify-evals — Pre-Merge Eval Presence Check",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "medium"
   },
   "sprint-planning-story-size-heuristic": {
     "status": "backlog",
     "title": "Sprint-Planning Story-Size Heuristic — Detect Migration-Class Stories, Force Split or Annotate Permissions",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "medium"
   },
   "audit-extract-first-prompt-full-capture": {
     "status": "backlog",
     "title": "Audit-Extract First-Prompt Full Capture — Store Complete First Prompt in agent-summary Output",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "low"
   },
   "avfl-consolidator-stylistic-filter": {
     "status": "backlog",
     "title": "AVFL Consolidator Stylistic Filter — Drop Style-Only and Past-Tense-Claim Findings",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "low"
   },
   "session-rule-read-before-edit": {
     "status": "backlog",
     "title": "Session Rule: Read Before Edit — Agent Must Read File Before Any Edit Tool Call",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "medium"
   },
   "dev-prompt-git-revert-guidance": {
     "status": "backlog",
     "title": "Dev/Fixer Prompt Git-Revert Guidance — Prefer git revert Over git reset --hard",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "medium"
   },
   "session-handoff-prompt-as-artifact": {
     "status": "backlog",
     "title": "Session-Handoff Prompt as Artifact — First-Class Next-Session Context Capture",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "medium"
   },
   "benchmark-capture-from-session-transcripts": {
     "status": "backlog",
     "title": "Benchmark Capture from Session Transcripts — Extract Pre/Post State + Inputs/Outputs as Benchmark Recipes",
     "epic_slug": "impetus-core",
-    "depends_on": []
+    "depends_on": [],
+    "priority": "low"
   },
   "retro-phase-1-resilience-audited-but-unclosed-sprint": {
     "status": "backlog",
@@ -4401,7 +4414,8 @@
       "/Users/steve/.claude/rules/spawning-patterns.md",
       "skills/momentum/references/agent-skill-development-guide.md",
       "/Users/steve/.claude/rules/model-routing.md"
-    ]
+    ],
+    "priority": "medium"
   },
   "dag-dispatcher-loop": {
     "status": "backlog",
@@ -4503,7 +4517,7 @@
     "feature_slug": "momentum-sprint-planning-to-ready"
   },
   "fix-architecture-md-decision-58-execution-surfaces-schema": {
-    "status": "backlog",
+    "status": "done",
     "title": "Fix architecture.md Decision 58 — execution_surfaces schema lists 5 entries but implementation ships 10",
     "epic_slug": "quality-enforcement",
     "story_file": true,
