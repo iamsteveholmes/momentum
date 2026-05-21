@@ -165,7 +165,7 @@ When a task must be executed in another rig, two options exist:
 
 ## Workflow Templates: Formulas, Molecules, Wisps
 
-Gas Town's dispatch goes beyond "run this task" — it supports multi-step, recoverable workflow execution via the MEOW stack (Molecules, Epics, Orders, Wisps). [PRAC - Augusteo]
+Gas Town's dispatch goes beyond "run this task" — it supports multi-step, recoverable workflow execution via the MEOW stack ("Molecular Expression of Work" — the encoding format for multi-step agentic workflows). [PRAC - Augusteo] *[AVFL fix: corrected MEOW expansion from spurious "Molecules, Epics, Orders, Wisps"]*
 
 ### Formulas (Workflow Source Templates)
 

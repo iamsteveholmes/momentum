@@ -115,10 +115,12 @@ Yegge's recommendation in the "Welcome to Gas City" post: "Should you switch fro
 ## Community Activity
 
 **GitHub activity (as of assessment date):**
-- `gastownhall/gastown`: 15.5k stars, 1.4k forks, 51 open PRs, 155 open issues, v1.1.0 released May 7
-- `gastownhall/gascity`: 789 stars (newer repo), 249 forks, 262 open issues, v1.1.0 released May 6, 3,443 commits on main
+- `gastownhall/gastown`: 1.4k forks, 51 open PRs, 155 open issues, v1.1.0 released May 7
+- `gastownhall/gascity`: 249 forks, 262 open issues, v1.1.0 released May 6, 3,443 commits on main
 
-**Note on stars:** Per research methodology, stars are discarded as a maturity signal. The commit count (3,443 on main for a project launched in early 2026), contributor count (450+), and PR volume (2,400 submitted) are the meaningful signals. [OFFICIAL]
+*[AVFL fix: star counts removed per research methodology — gameable metric discarded. Meaningful signals follow.]*
+
+**Meaningful activity signals:** commit count (3,443 on main for a project launched in early 2026), contributor count (450+), and PR volume (2,400 submitted). [OFFICIAL]
 
 **Discord:** 2,000+ members, actively moderated. [OFFICIAL]
 

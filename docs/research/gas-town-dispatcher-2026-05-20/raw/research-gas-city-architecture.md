@@ -7,7 +7,7 @@ topic: "Gas Town as dispatcher/coordinator for Momentum agentic engineering"
 
 ## What Is Gas Town?
 
-Gas Town is a multi-agent workspace manager built on top of AI coding agents (primarily Claude Code) that coordinates colonies of 20–30 parallel agents on shared software projects. It was created by Steve Yegge and released publicly in early January 2026, reaching stable v1.0.0 in April 2026. [OFFICIAL] The core source of truth is the official documentation at https://docs.gastownhall.ai/ and the GitHub organization at https://github.com/gastownhall.
+Gas Town is a multi-agent workspace manager built on top of AI coding agents (primarily Claude Code) that coordinates colonies of 20–30 parallel agents on shared software projects. It was created by Steve Yegge alongside a core team (Matt Beane, Chris Sells, Julian Knutsen, Tim Sehn, Brendan Hopper) and released publicly in early January 2026, reaching stable v1.0.0 in April 2026. [OFFICIAL] The core source of truth is the official documentation at https://docs.gastownhall.ai/ and the GitHub organization at https://github.com/gastownhall.
 
 Gas Town is not a framework in the traditional sense—it is an orchestration layer that treats agent work as structured, durable data. Where most multi-agent systems manage conversations or reasoning chains, Gas Town's central innovation is inverting the persistence model: **make the work durable, not the agent**. Sessions are disposable; agents have persistent identities; work survives crashes by living in git. [PRAC: https://www.augusteo.com/blog/inside-gas-town]
 

@@ -104,7 +104,7 @@ These advantages compound at Momentum's scale. A solo developer running 4–8 st
 
 ### Gas Town's Infrastructure Requirements
 
-[OFFICIAL] Running Gas Town requires: tmux 3.0+, Git 2.25+, Go 1.23+, Beads 0.44.0+ (or Dolt for full cell-level merge semantics), and optionally additional AI provider CLIs. [[Gas City SDK docs](https://github.com/gastownhall/gascity)]
+[OFFICIAL] Running Gas Town requires: tmux 3.0+, Git 2.25+, Go ≥1.25 (corrected from 1.23 — see research-gas-city-architecture.md for authoritative version floor), Beads 0.44.0+ (or Dolt for full cell-level merge semantics), and optionally additional AI provider CLIs. [[Gas City SDK docs](https://github.com/gastownhall/gascity)]
 
 Beyond toolchain, the operational costs are substantial:
 
