@@ -4548,5 +4548,25 @@
     "priority": "medium",
     "story_type": "feature",
     "feature_slug": "momentum-quality-gates-enforced"
+  },
+  "remove-momentum-distill": {
+    "status": "ready-for-dev",
+    "title": "Remove momentum:distill Skill",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/distill/",
+      "skills/momentum/.claude-plugin/plugin.json",
+      "skills/momentum/skills/retro/workflow.md",
+      "skills/momentum/skills/triage/workflow.md",
+      "skills/momentum/skills/triage/SKILL.md",
+      "skills/momentum/skills/impetus/references/dispatch.md",
+      "skills/momentum/skills/impetus/references/partner.md",
+      "skills/momentum/skills/feature-status/evals/eval-practice-path-topology-shows-handoffs.md",
+      ".claude/settings.local.json"
+    ],
+    "priority": "high",
+    "story_type": "maintenance"
   }
 }
