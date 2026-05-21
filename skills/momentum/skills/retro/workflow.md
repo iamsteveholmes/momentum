@@ -485,7 +485,7 @@ For each of these, choose:
   <!-- PHASE 5: STORY STUB CREATION                           -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Propose and approve story stubs from audit findings; route Tier 1 findings to distill">
+  <step n="5" goal="Propose and approve story stubs from audit findings">
     <action>Update task 5 to in_progress</action>
 
     <action>Read `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
@@ -497,67 +497,17 @@ For each of these, choose:
 
     <check if="priority action items found">
 
-      <note>Tier classification: Before creating story stubs, each action item is classified
-      as Tier 1 or Tier 2. Tier 1 findings with signal_type set route to momentum:distill for
-      immediate application. Tier 2 findings (and Tier 1 without signal_type) continue through
-      the existing stub creation path.
-
-      Tier 1 heuristic: single-sentence rule addition, one reference entry update, or a prompt
-      clarification. One file, minimal change, immediately expressible in a sentence or two.
-      Tier 2 heuristic: multi-file coordination, new skill creation, workflow redesign, or any
-      change requiring spec-level deliberation.
-
-      signal_type values (from Phase 4 classification): Context | Instruction | Workflow | Failure
-      Tier 1 applies only when signal_type is set AND the finding meets Tier 1 heuristics above.</note>
-
-      <action>For each priority action item, classify before routing:
-        1. Check if signal_type is set on the finding (from Phase 4 audit output)
-        2. Apply Tier heuristics:
-           - Tier 1 candidates: signal_type is set AND change is a single-sentence rule, reference
-             entry, or prompt clarification affecting one file
-           - Tier 2: signal_type not set OR change is multi-file, new skill, workflow redesign,
-             or any structural change
-
-        Store {{distill_candidates}} = items classified as Tier 1 with signal_type set
-        Store {{stub_candidates}} = remaining items (Tier 2, or Tier 1 without signal_type)
+      <action>For each priority action item, derive a story stub:
+        {
+          title: recommended story stub title from findings,
+          epic_slug: "impetus-core" (for Momentum/practice findings) or appropriate project epic,
+          status: "backlog",
+          description: one-sentence summary of the finding,
+          suggested_ac: bulleted acceptance criteria derived from the finding's recommendation
+        }
       </action>
 
-      <check if="distill_candidates is not empty">
-        <output>Tier 1 findings identified for immediate distillation ({{distill_candidates | length}} items):
-
-{{#each distill_candidates}}
-  · **{{loop.index}}.** {{title}} [signal_type: {{signal_type}}]
-    Finding: {{source_detail}}
-    Proposed change: {{recommended_change}}
-{{/each}}
-
-These will be routed to momentum:distill for immediate application instead of stub creation.</output>
-
-        <action>For each Tier 1 finding in {{distill_candidates}}:
-          1. Invoke `momentum:distill` as an inline subagent spawn with:
-             - learning_description: the finding description + recommended change
-             - candidate_artifact: the target practice file identified in the finding
-             - source: "retro Phase 5 — Tier 1 routing"
-             (Do not ask the developer to describe the learning — it is provided from the finding)
-          2. Wait for distill to complete and return its outcome (applied | deferred | stubbed)
-          3. Record disposition for this finding: "distilled" if applied, or distill's own outcome
-        </action>
-
-        <action>Store {{distilled_dispositions}} = map of finding → distill outcome for each Tier 1 item</action>
-      </check>
-
-      <check if="stub_candidates is not empty">
-        <action>For each item in {{stub_candidates}}, derive a story stub:
-          {
-            title: recommended story stub title from findings,
-            epic_slug: "impetus-core" (for Momentum/practice findings) or appropriate project epic,
-            status: "backlog",
-            description: one-sentence summary of the finding,
-            suggested_ac: bulleted acceptance criteria derived from the finding's recommendation
-          }
-        </action>
-
-        <output>Proposed story stubs (Tier 2 / no-signal-type findings):
+      <output>Proposed story stubs:
 
 {{#each proposed_stubs}}
 **{{loop.index}}.** {{title}}
@@ -572,21 +522,17 @@ These will be routed to momentum:distill for immediate application instead of st
 Approve this stub? (Y/N)
 {{/each}}</output>
 
-        <ask>For each stub, enter Y or N:</ask>
+      <ask>For each stub, enter Y or N:</ask>
 
-        <action>For each approved stub:
-          - Read `.momentum/stories/index.json`
-          - Generate a slug from the title (kebab-case)
-          - Add entry: { "title": ..., "status": "backlog", "epic_slug": ..., "depends_on": [] }
-          - Write updated stories/index.json
-        </action>
-      </check>
+      <action>For each approved stub:
+        - Read `.momentum/stories/index.json`
+        - Generate a slug from the title (kebab-case)
+        - Add entry: { "title": ..., "status": "backlog", "epic_slug": ..., "depends_on": [] }
+        - Write updated stories/index.json
+      </action>
 
       <output>Phase 5 complete — action item dispositions:
 
-{{#each distill_candidates}}
-  · {{title}} → **distilled** ({{distilled_dispositions[title]}})
-{{/each}}
 {{#each approved_stubs}}
   · {{title}} → **stubbed** (added to backlog)
 {{/each}}
@@ -594,7 +540,7 @@ Approve this stub? (Y/N)
   · {{title}} → skipped (developer declined)
 {{/each}}
 
-Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
+Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
 
     </check>
 
@@ -616,7 +562,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
     Write CLI: `python3 skills/momentum/scripts/momentum-tools.py intake-queue append --source retro --kind handoff ...`
 
     What goes into the queue:
-      - Findings from the "Priority Action Items" section that were NOT stubbed AND NOT distilled
+      - Findings from the "Priority Action Items" section that were NOT stubbed
         (i.e., developer declined during Phase 5, or were low-priority observations worth watching)
       - Feature-state transitions observed during this retro (feature X regressed, feature Y ready
         for Done) — these carry `feature_state_transition` JSON
@@ -626,7 +572,6 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
 
     What DOES NOT go into the queue:
       - Stubs already approved and added to stories/index.json (Phase 5) — those are tracked there
-      - Findings already routed to distill (Phase 5 Tier 1) — those are applied or staged
       - The sprint-summary content — that stays in sprint-summary.md
 
     One event per finding. Use `python3 skills/momentum/scripts/momentum-tools.py intake-queue append` for each.</note>
@@ -643,7 +588,7 @@ Distilled: {{distill_candidates | length}} | Stubbed: {{approved_count}} | Skipp
     </action>
 
     <check if="{{handoff_items}} is empty">
-      <output>No un-actioned findings to hand off — all Priority Action Items were either stubbed or distilled.</output>
+      <output>No un-actioned findings to hand off — all Priority Action Items were stubbed.</output>
       <action>Update task 5.5 to completed</action>
     </check>
 
