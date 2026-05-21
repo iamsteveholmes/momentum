@@ -32,7 +32,6 @@ at least one position.
 - code-reviewer — "Adversarial code reviewer"
 - avfl — "Adversarial Validate-Fix Loop"
 - architecture-guard — "Detects pattern drift against architecture"
-- distill — "Practice artifact distillation"
 - refine — "Backlog hygiene"
 
 ---
