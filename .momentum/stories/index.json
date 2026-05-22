@@ -881,14 +881,14 @@
     "source": "retro sprint-2026-04-14 action item #5"
   },
   "distill-path-classification-redesign": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Distill Path Classification Redesign — Detect Plugin vs Personal Rule, Remove Defer Option, Handle Local Plugin Install",
     "epic_slug": "impetus-core",
     "depends_on": [],
     "priority": "high"
   },
   "distill-worktree-isolation": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Distill Worktree Isolation — Spawn Write Subagent in Isolated Branch, Merge to Main Only After AVFL Clean",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -4296,7 +4296,7 @@
     "feature_slug": "momentum-agent-spawn-orchestration"
   },
   "propagate-batch-approval-context-from-triage-to-distill-subagents": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Propagate batch-approval context from triage to distill subagents",
     "epic_slug": "impetus-core",
     "depends_on": [],
@@ -4366,7 +4366,7 @@
     "feature_slug": "momentum-agent-composition-pipeline"
   },
   "add-claude-rules-write-permission-to-distill-skill": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Add .claude/rules/ write permission to distill skill for rule file targets",
     "epic_slug": "impetus-core",
     "depends_on": [],
