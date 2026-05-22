@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-05-20'
+lastEdited: '2026-05-22'
 
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
@@ -47,3 +47,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-029 | [Method-Routed Acceptance Validation — Harness Profile, Per-Sprint E2E Coverage, and the Unified Validate-Fix Loop](dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md) | 2026-05-17 | (developer-conversation) | decided |
 | DEC-030 | [Dependency-Driven Execution Model — DAG Dispatch, Closeable Value-Groupings, Frozen-Scope Sprints, and the Dual-Format Integrity Split](dec-030-dag-dispatch-frozen-sprints-dual-format-2026-05-17.md) | 2026-05-17 | (developer-conversation) | decided |
 | DEC-031 | [Legibility-Before-Automation — Canvas Gate Surface, Pipeline Restructure, and Dispatcher Sequencing](dec-031-legibility-before-automation-canvas-gate-surface-2026-05-20.md) | 2026-05-20 | (developer-conversation) | decided |
+| DEC-032 | [Gas City as Momentum's Dispatcher — Adoption Decision](dec-032-gas-city-dispatcher-adoption-2026-05-22.md) | 2026-05-22 | gas-town-dispatcher-2026-05-20 research corpus | decided |
