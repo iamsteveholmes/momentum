@@ -4568,5 +4568,25 @@
     ],
     "priority": "high",
     "story_type": "maintenance"
+  },
+  "dag-dispatch-blast-radius-discovery": {
+    "status": "backlog",
+    "title": "DAG Dispatch Blast-Radius Discovery — Enumerate Story/Arch Impact, Resolve Dispatch-Host Question",
+    "epic_slug": "impetus-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "exploration"
+  },
+  "canvas-gate-review-surface-epic": {
+    "status": "backlog",
+    "title": "Canvas Gate-Review Surface — Planner/Reviewer Tabs, Attestation Strip, Planning-Sprint Rendering",
+    "epic_slug": "feature-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
   }
 }
