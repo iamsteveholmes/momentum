@@ -1,7 +1,7 @@
 ---
 title: Remove momentum:distill Skill
 story_key: remove-momentum-distill
-status: ready-for-dev
+status: done
 epic_slug: ad-hoc
 feature_slug:
 story_type: maintenance
