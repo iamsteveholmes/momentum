@@ -32,7 +32,7 @@ Each item is classified correctly before any execution. No DISTILL class is prod
 
 ### B2: No DISTILL Class in Output
 
-The batch-approval display does not show a `[DISTILL]` section. The six-class table in the
+The batch-approval display does not show a `[DISTILL]` section. The classification table in the
 workflow preamble does not include DISTILL. The triage summary output does not show a
 "Distilled" count.
 

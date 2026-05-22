@@ -88,17 +88,14 @@ These will be included alongside new items for re-classification.
   </step>
 
   <step n="3" goal="Classify and enrich all items">
-    <action>For each item in {{all_items}}, classify it into exactly one of six classes:
-    ARTIFACT, DISTILL, DECISION, SHAPING, DEFER, REJECT.
+    <action>For each item in {{all_items}}, classify it into exactly one of five classes:
+    ARTIFACT, DECISION, SHAPING, DEFER, REJECT.
 
     Classification heuristics:
     · ARTIFACT — a bounded piece of work that belongs in the story backlog. Signals:
         "we should build X", "X is missing", "add Y to Z", "story: ...", a feature request,
         a bug report, a task with a clear deliverable. DEC-005 D5 story types: feature /
         maintenance / defect / exploration / practice.
-    · DISTILL — a practice insight, a rule to update, a pattern to capture, a workflow
-        clarification. Signals: "we learned X", "rule: always Y", "update the skill to Z",
-        "finding: ...", a retro Tier 1 finding.
     · DECISION — a strategic question that needs a recorded decision document. Signals:
         "we need to decide X", "should we adopt Y?", "the architecture question is Z".
     · SHAPING — interesting but needs thinking before it can be classified. Signals:

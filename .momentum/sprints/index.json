@@ -1746,6 +1746,11 @@
       "story": "markdown-formatting-skill-output-templates",
       "started": "2026-05-03",
       "completed": "2026-05-03"
+    },
+    {
+      "slug": "quickfix-2026-05-21",
+      "story": "remove-momentum-distill",
+      "started": "2026-05-21"
     }
   ]
 }

@@ -9,7 +9,10 @@ priority: high
 change_type:
   - skill-instruction
   - config-structure
-verification_method: EDD eval
+verification_method:
+  - EDD eval (skill-instruction tasks — retro, triage, impetus)
+  - inspection (config-structure tasks — plugin.json, settings.local.json)
+harness_profile: default
 depends_on: []
 touches:
   - skills/momentum/skills/distill/
@@ -17,11 +20,11 @@ touches:
   - skills/momentum/skills/retro/workflow.md
   - skills/momentum/skills/triage/workflow.md
   - skills/momentum/skills/triage/SKILL.md
+  - skills/momentum/skills/triage/evals/eval-triage-classifies-six-classes.md
   - skills/momentum/skills/impetus/references/dispatch.md
   - skills/momentum/skills/impetus/references/partner.md
   - skills/momentum/skills/feature-status/evals/eval-practice-path-topology-shows-handoffs.md
   - .claude/settings.local.json
-verification_method: EDD eval
 ---
 
 # Remove momentum:distill Skill
@@ -44,11 +47,11 @@ so that the two-lane model (ordinary sprint stories built with skill-creator / a
 
 1. **Delete `skills/momentum/skills/distill/`** — the entire directory including SKILL.md, workflow.md, and the `evals/` subdirectory (3 eval files).
 
-2. **Remove distill from `skills/momentum/.claude-plugin/plugin.json`** — remove the distill entry from the skills registration. Bump version to next minor (0.22.0 → 0.23.0) per version-on-release rule.
+2. **Update `skills/momentum/.claude-plugin/plugin.json`** — there is no distill skill registration entry in plugin.json (the file contains only name, version, description, author). The only real work here is bumping the version from 0.22.0 → 0.23.0 per version-on-release rule.
 
-3. **Remove distill invocation from `skills/momentum/skills/retro/workflow.md` Phase 5** — Phase 5 (lines 488–601) has substantial distill-specific logic: Tier classification, `{{distill_candidates}}`, inline `momentum:distill` spawn, `{{distilled_dispositions}}`, output referencing distill counts. Remove this routing entirely. All findings route to stub creation (the existing Tier 2 path). Phase 5's step goal should be simplified to "Propose and approve story stubs from audit findings". Phase 5.5 (handoff to intake-queue) has a minor reference at line 629 ("Findings already routed to distill (Phase 5 Tier 1) — those are applied or staged") — remove that note.
+3. **Remove distill invocation from `skills/momentum/skills/retro/workflow.md` Phase 5** — Phase 5 (lines 488–601) has substantial distill-specific logic: Tier classification, `{{distill_candidates}}`, inline `momentum:distill` spawn, `{{distilled_dispositions}}`, output referencing distill counts. Remove this routing entirely. All findings route to stub creation (the existing Tier 2 path). Phase 5's step goal should be simplified to "Propose and approve story stubs from audit findings". Phase 5.5 (handoff to intake-queue) has a minor reference at line 629 ("Findings already routed to distill (Phase 5 Tier 1) — those are applied or staged") — remove that note. Phase 5.5 line 646 contains "either stubbed or distilled" — remove "or distilled", leaving only "stubbed".
 
-4. **Clean up distill references in `skills/momentum/skills/triage/`** — `triage/SKILL.md` description mentions `distill`. `triage/workflow.md` has ~11 distill references: the DISTILL class in the six-class table, delegation logic, result tracking. Remove DISTILL as a routing class — triage now routes: ARTIFACT → `momentum:intake`, DECISION → `momentum:decision`, queue → intake-queue append. Remove DISTILL entirely.
+4. **Clean up distill references in `skills/momentum/skills/triage/`** — `triage/SKILL.md` description mentions `distill`. `triage/workflow.md` has 9 distill references at lines 9, 23, 36, 149, 211, 216, 217, 272, 273: the DISTILL class in the six-class table, delegation logic, result tracking. Remove DISTILL as a routing class — triage now routes: ARTIFACT → `momentum:intake`, DECISION → `momentum:decision`, queue → intake-queue append. Remove DISTILL entirely.
 
 5. **Clean up distill references in impetus references** — `dispatch.md` line 29 routes "Apply a retro finding to rules, skills, or refs" to `momentum:distill`. Replace with the two-lane alternative (quick-fix or sprint story). `partner.md` line 32 mentions distill as an option for quality concerns — remove it (leave avfl and upstream-fix).
 
@@ -65,15 +68,14 @@ so that the two-lane model (ordinary sprint stories built with skill-creator / a
 - `_bmad-output/planning-artifacts/` decision documents — historical. Do not edit.
 - `.claude/skills/bmad-*/` — these are BMAD framework skills, not momentum plugin. References to "distill" there are within the BMAD distillator skill context, not momentum:distill. Do not edit.
 - MEMORY.md files under `~/.claude/projects/` — memory entries mentioning distill work are historical context, not live routing. Do not edit.
-- `skills/momentum/skills/triage/evals/eval-triage-classifies-six-classes.md` — the eval tests six classes including DISTILL. After DISTILL is removed from triage, this eval should be updated to reflect five classes (or the DISTILL class removal). Include this in the cleanup.
 
 ## Acceptance Criteria
 
 1. **`skills/momentum/skills/distill/` does not exist.** After this story, `ls skills/momentum/skills/distill/` returns a "not found" error. All files within — SKILL.md, workflow.md, evals/eval-discovery-before-write.md, evals/eval-three-path-routing.md, evals/eval-tier-classification.md — are deleted.
 
-2. **`skills/momentum/.claude-plugin/plugin.json` no longer contains a distill skill entry.** A grep for `"distill"` in plugin.json returns zero matches. The version field reads `"0.23.0"`.
+2. **`skills/momentum/.claude-plugin/plugin.json` version field reads `"0.23.0"` and file is valid JSON.** The version is bumped from 0.22.0 to 0.23.0. The file parses without error (`python3 -c "import json; json.load(open('skills/momentum/.claude-plugin/plugin.json'))"` exits 0). Note: plugin.json contains no distill skill registration entry — none existed before implementation.
 
-3. **`skills/momentum/skills/retro/workflow.md` Phase 5 contains no distill references.** Grep for `distill` in retro/workflow.md returns zero matches. Phase 5 step goal is updated (no "route Tier 1 findings to distill" language). All priority action items route to stub creation. The Tier 1 / Tier 2 classification block, `{{distill_candidates}}`, distill invocation, and `{{distilled_dispositions}}` are removed. Phase 5 output summary no longer references "Distilled" count. Phase 5.5 note about "findings already routed to distill" is removed. The retro workflow is still structurally valid XML (`<workflow>`, `<step>` tags well-formed) after the edit.
+3. **`skills/momentum/skills/retro/workflow.md` Phase 5 contains no distill references.** Grep for `distill` in retro/workflow.md returns zero matches. Phase 5 step goal is updated (no "route Tier 1 findings to distill" language). All priority action items route to stub creation. The Tier 1 / Tier 2 classification block, `{{distill_candidates}}`, distill invocation, and `{{distilled_dispositions}}` are removed. Phase 5 output summary no longer references "Distilled" count. Phase 5.5 note about "findings already routed to distill" is removed. Phase 5.5 line 646 no longer contains "or distilled". The retro workflow is still structurally valid XML (`<workflow>`, `<step>` tags well-formed) after the edit.
 
 4. **`skills/momentum/skills/triage/workflow.md` contains no distill references.** Grep for `distill` in triage/workflow.md returns zero matches. The DISTILL class is removed from the six-class routing table. Triage routes: ARTIFACT → intake, DECISION → decision, queue → intake-queue append. DISTILL class handling (spawn, result tracking, output count) removed. Triage workflow is still structurally valid and routes the remaining classes.
 
@@ -97,6 +99,8 @@ so that the two-lane model (ordinary sprint stories built with skill-creator / a
 
 14. **Two behavioral evals written in `skills/momentum/skills/retro/evals/` confirm Phase 5 routes all findings to stubs.** Both evals confirm the absence of distill invocation paths in retro Phase 5.
 
+15. **Three behavioral evals written for triage and impetus confirm the two-lane routing model.** Two evals in `skills/momentum/skills/triage/evals/` confirm triage routes five classes and never delegates to momentum:distill. One eval in `skills/momentum/skills/impetus/evals/` confirms dispatch routes urgent practice fixes to momentum:quick-fix and non-urgent to sprint story creation — no momentum:distill routing exists.
+
 ## Tasks / Subtasks
 
 - [ ] **Task 1 — Delete `skills/momentum/skills/distill/` directory** (AC: 1, 11, 12)
@@ -105,11 +109,10 @@ so that the two-lane model (ordinary sprint stories built with skill-creator / a
   - [ ] Subtask 1.3: Confirm directory no longer exists
 
 - [ ] **Task 2 — Update `skills/momentum/.claude-plugin/plugin.json`** (AC: 2, 13) — `config-structure`
-  - [ ] Subtask 2.1: Read plugin.json and locate the distill skill registration entry
-  - [ ] Subtask 2.2: Remove the distill entry from the skills list
-  - [ ] Subtask 2.3: Bump version from `"0.22.0"` to `"0.23.0"` (minor bump per version-on-release rule)
-  - [ ] Subtask 2.4: Validate JSON parses without error
-  - [ ] Subtask 2.5: Write updated plugin.json
+  - [ ] Subtask 2.1: Read plugin.json to confirm its structure (name, version, description, author — no skill registration list exists)
+  - [ ] Subtask 2.2: Bump version from `"0.22.0"` to `"0.23.0"` (minor bump per version-on-release rule)
+  - [ ] Subtask 2.3: Validate JSON parses without error
+  - [ ] Subtask 2.4: Write updated plugin.json
 
 - [ ] **Task 3 — Remove distill logic from `skills/momentum/skills/retro/workflow.md` Phase 5** (AC: 3, 11, 12) — `skill-instruction`
   - [ ] Subtask 3.1: Write 2 behavioral evals in `skills/momentum/skills/retro/evals/` before modifying (EDD protocol):
@@ -123,12 +126,16 @@ so that the two-lane model (ordinary sprint stories built with skill-creator / a
   - [ ] Subtask 3.7: Simplify the `<check if="stub_candidates is not empty">` to use plain `{{action_items}}` — all priority items route to stubs
   - [ ] Subtask 3.8: Remove distill count from Phase 5 completion output (line ~597): `Distilled: {{distill_candidates | length}} | ...`
   - [ ] Subtask 3.9: In Phase 5.5 (line ~629), remove the note "Findings already routed to distill (Phase 5 Tier 1) — those are applied or staged"
-  - [ ] Subtask 3.10: Verify retro/workflow.md XML is well-formed after edits (all `<step>` tags closed, no dangling template vars)
-  - [ ] Subtask 3.11: Grep retro/workflow.md for "distill" — confirm zero matches
+  - [ ] Subtask 3.10: In Phase 5.5 (line 646), remove "or distilled" from "either stubbed or distilled" — leave only "stubbed"
+  - [ ] Subtask 3.11: Verify retro/workflow.md XML is well-formed after edits (all `<step>` tags closed, no dangling template vars)
+  - [ ] Subtask 3.12: Grep retro/workflow.md for "distill" — confirm zero matches
 
 - [ ] **Task 4 — Remove distill from `skills/momentum/skills/triage/`** (AC: 4, 5, 10, 11, 12) — `skill-instruction`
+  - [ ] Subtask 4.0: Write 2 behavioral evals in `skills/momentum/skills/triage/evals/` before modifying triage files (EDD protocol):
+    - `eval-triage-routes-five-classes.md`: Given a set of observations, all route to ARTIFACT / DECISION / queue — no DISTILL class exists in triage output
+    - `eval-triage-no-distill-delegation.md`: Given any triage execution, triage never spawns momentum:distill
   - [ ] Subtask 4.1: Read triage/SKILL.md description field; rewrite to remove "distill" reference (≤150 chars)
-  - [ ] Subtask 4.2: Read triage/workflow.md; identify all ~11 distill references
+  - [ ] Subtask 4.2: Read triage/workflow.md; identify all 9 distill references at lines 9, 23, 36, 149, 211, 216, 217, 272, 273
   - [ ] Subtask 4.3: Remove DISTILL from the six-class routing table (now five classes)
   - [ ] Subtask 4.4: Remove DISTILL delegation logic (spawn momentum:distill per item, parallel spawns, wait for completion)
   - [ ] Subtask 4.5: Remove `{{distill_results}}` / `{{distill_count}}` tracking and output references
@@ -136,6 +143,8 @@ so that the two-lane model (ordinary sprint stories built with skill-creator / a
   - [ ] Subtask 4.7: Grep triage/ for "distill" — confirm zero matches
 
 - [ ] **Task 5 — Clean up impetus references** (AC: 6, 7, 11, 12) — `skill-instruction`
+  - [ ] Subtask 5.0: Write 1 behavioral eval in `skills/momentum/skills/impetus/evals/` (create directory if needed) before modifying impetus files (EDD protocol):
+    - `eval-impetus-dispatch-two-lane-routing.md`: Given a developer intent to apply a practice fix, urgent fixes route to momentum:quick-fix and non-urgent to sprint story creation — no momentum:distill routing exists
   - [ ] Subtask 5.1: Read impetus/references/dispatch.md; replace the `momentum:distill` routing row with two-lane guidance (quick-fix for urgent practice fixes, sprint story for non-urgent)
   - [ ] Subtask 5.2: Read impetus/references/partner.md; remove `momentum:distill` from the quality concern entry (preserve avfl and upstream-fix references)
   - [ ] Subtask 5.3: Grep both files for "distill" — confirm zero matches
@@ -151,7 +160,8 @@ so that the two-lane model (ordinary sprint stories built with skill-creator / a
   - [ ] Subtask 7.2: Run `python3 -c "import json; json.load(open('skills/momentum/.claude-plugin/plugin.json'))"` — confirm exits 0
   - [ ] Subtask 7.3: Confirm plugin.json version is 0.23.0
   - [ ] Subtask 7.4: Run EDD evals on retro Phase 5 (from Task 3 evals) — confirm both pass
-  - [ ] Subtask 7.5: Document results in Dev Agent Record
+  - [ ] Subtask 7.5: Run EDD evals on triage (from Task 4 evals) and impetus (from Task 5 eval) — confirm all three pass
+  - [ ] Subtask 7.6: Document results in Dev Agent Record
 
 ## Dev Notes
 
@@ -171,17 +181,18 @@ The key rationale: distill is redundant with the two-lane model (skill-creator /
 
 **`skills/momentum/.claude-plugin/plugin.json`:**
 - Current version: `"0.22.0"`
-- Contains a distill skill registration (exact key/path TBD — read the file to locate it)
+- Structure: name, version, description, author only — no skill registration list or distill entry exists
 - Target version after bump: `"0.23.0"`
 
 **`skills/momentum/skills/retro/workflow.md`:**
 - Total: 835 lines
-- Phase 5 (lines 484–601): distill-specific logic spans ~70 lines including Tier 1 classification note, distill_candidates extraction, momentum:distill invocation, distilled_dispositions tracking, and distill count in output summary
+- Phase 5 (lines 484–601): distill-specific logic spans ~60 lines including Tier 1 classification note, distill_candidates extraction, momentum:distill invocation, distilled_dispositions tracking, and distill count in output summary
 - Phase 5.5 (line 629): one-line note about findings "already routed to distill"
+- Phase 5.5 (line 646): "either stubbed or distilled" — remove "or distilled", leave "stubbed"
 - Preserve: Phase 5 stub creation path (Tier 2 logic, lines 549–582), Phase 5 output for approved/rejected stubs, Phase 5.5 handoff logic, all other phases
 
 **`skills/momentum/skills/triage/workflow.md`:**
-- DISTILL appears in: 6-class table (~line 23), description text (~line 9, 36), delegation block (~line 211), result tracking (~lines 217, 272–273, 377, 394, 409), count (~line 149)
+- DISTILL appears in exactly 9 references at lines: 9, 23, 36, 149, 211, 216, 217, 272, 273
 - Preserve: ARTIFACT, DECISION, and queue routing classes; all non-DISTILL logic
 
 **`skills/momentum/skills/triage/SKILL.md`:**
@@ -219,6 +230,8 @@ The key rationale: distill is redundant with the two-lane model (skill-creator /
 
 - EDD (Eval-Driven Development) applies to all skill-instruction tasks (retro/workflow.md, triage/workflow.md, impetus references, feature-status eval).
 - Write 2 behavioral evals for retro Phase 5 BEFORE modifying the workflow (Task 3 Subtask 3.1).
+- Write 2 behavioral evals for triage BEFORE modifying triage files (Task 4 Subtask 4.0).
+- Write 1 behavioral eval for impetus BEFORE modifying impetus references (Task 5 Subtask 5.0).
 - No evals required for config-structure tasks (plugin.json, settings.local.json) — direct implementation + JSON validation is sufficient.
 - The distill skill itself is deleted, so no evals are written for it.
 
@@ -261,9 +274,7 @@ claude-sonnet-4-6
 **Do NOT use TDD for SKILL.md or workflow.md files.** Skill instructions are non-deterministic LLM prompts — unit tests do not apply. Use EDD:
 
 **Before writing a single line of the skill:**
-1. Write 2 behavioral evals in `skills/momentum/skills/retro/evals/` (create `evals/` if it doesn't exist):
-   - `eval-retro-phase5-routes-all-findings-to-stubs.md`
-   - `eval-retro-phase5-no-distill-invocation.md`
+1. Write behavioral evals (see Task 3 Subtask 3.1, Task 4 Subtask 4.0, Task 5 Subtask 5.0 for specific eval files):
    - Format each eval as: "Given [describe the input and context], the skill should [observable behavior — what Claude does or produces]"
    - Test behaviors and decisions, not exact output text
 
@@ -282,6 +293,8 @@ claude-sonnet-4-6
 
 **Additional DoD items for skill-instruction tasks:**
 - [ ] 2 behavioral evals written in `skills/momentum/skills/retro/evals/`
+- [ ] 2 behavioral evals written in `skills/momentum/skills/triage/evals/`
+- [ ] 1 behavioral eval written in `skills/momentum/skills/impetus/evals/`
 - [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
 - [ ] triage/SKILL.md description ≤150 characters confirmed
 - [ ] AVFL checkpoint on produced artifacts documented (momentum:dev runs this automatically)
@@ -302,7 +315,6 @@ Config and structure changes need no tests or evals. Implement directly and veri
 **DoD items for config-structure tasks:**
 - [ ] All JSON files parse without error (validated with python3)
 - [ ] plugin.json version field reads "0.23.0"
-- [ ] No distill entry in plugin.json skills list
 - [ ] No `Skill(momentum:distill)` in settings.local.json allowed tools
 - [ ] Changes documented in Dev Agent Record
 
