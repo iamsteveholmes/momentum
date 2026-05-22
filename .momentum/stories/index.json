@@ -2123,7 +2123,7 @@
     "story_type": "feature"
   },
   "premature-action-pattern-investigation": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Investigate Premature-Action Pattern Across Two Mid-Tool Interrupts",
     "epic_slug": "ad-hoc",
     "story_file": false,
