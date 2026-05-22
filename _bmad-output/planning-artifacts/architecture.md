@@ -117,7 +117,7 @@ Momentum's FRs organize into 10 architectural subsystems:
 
 4. **Rules Architecture (Tier 3 Advisory)** — Global `~/.claude/rules/` (authority hierarchy, anti-patterns, model routing) + project `.claude/rules/` (architecture conventions, stack-specific standards). Project-scoped rules auto-load in every session including subagents. Rules are bundled in `references/rules/` at the plugin root. The plugin install mechanism does not write to `~/.claude/rules/` or `.claude/rules/` directly — Impetus writes rules to both targets on first `/momentum:impetus` invocation using the Write tool. No separate setup step. **`skills/momentum/references/rules/verification-standard.md` is a plugin-shipped rule (added sprint-2026-05-17, `enforced-verification-rule` story): Impetus writes it to `~/.claude/rules/` on first run. It establishes the enforcement-tier taxonomy, change-type → verification-method routing table, and the mandatory `verification_method` frontmatter field for story files. It replaces `docs/process/acceptance-testing-standard.md`, which is now retired.**
 
-5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection), momentum:dev (story executor, spawned by sprint-dev skill). code-reviewer and architecture-guard use `context: fork` for producer-verifier isolation. momentum:dev runs as a flat subagent (main context) for story execution. Two-layer agent model (Decision 26): Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard); projects provide role-specific stack guidelines wired together during sprint planning. Agent Teams share a working directory with commit-as-sync-point. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
+5. **Subagent Composition** — code-reviewer (read-only tools, pure verifier, never modifies code), architecture-guard (pattern drift detection), momentum:dev (story executor, spawned by sprint-dev skill). code-reviewer and architecture-guard use `context: fork` for producer-verifier isolation. momentum:dev runs as a flat subagent (main context) for story execution. Three-layer agent model (Decisions 26, 55, 56): (1) Base roles — generic agent definitions (Dev, QA, E2E Validator, Architect Guard) shipped with the plugin; (2) Routing table resolution — `momentum/agents.json` maps story `change_type` / `touches` paths to specialist agent files via glob-match (Decision 55 / DEC-023); (3) Project-composed specialist files — constitution + base body + project guidelines, assembled by the agent-builder pipeline (Decision 56 / DEC-026). The old two-layer description ("Momentum provides generic roles; projects provide role-specific stack guidelines wired together during sprint planning") is superseded by this three-layer model where the routing table is the resolution mechanism between generic roles and project-specific specialists. Agent Teams share a working directory with commit-as-sync-point. Hub-and-spoke: Impetus is the sole user-facing voice; subagents return structured output to Impetus for synthesis. Subagents cannot spawn subagents — chains route through main conversation.
 
 6. **Validate-Fix Loop (VFL) Skill** — Three profiles: Gate (1 agent, pass/fail), Checkpoint (2-4 agents, 1 fix attempt), Full (dual-reviewer per lens, up to 4 fix iterations). Four lenses: Structural Integrity, Factual Accuracy, Coherence & Craft, Domain Fitness. Consolidation handles deduplication, cross-check confidence tagging, and scoring. Invocable standalone, inline from workflows, or declared as a rule.
 
@@ -269,7 +269,7 @@ Examples:
 - `triage-uncleared` — produced by `momentum:retro` or `momentum:triage` when triage-class observations remain after a session and the developer has not yet classified or rejected them
 - `avfl-finding-pending-upstream-fix` — produced by `momentum:avfl` when a finding is traced to a spec/rule/workflow root cause that requires upstream work before re-validation
 
-**Initial intended writers:** `momentum:retro`, `momentum:triage`, `momentum:avfl`. The `impetus-momentum-state-migration` story does **not** implement writers — it establishes the directory, the schema contract, and the reader contract. Writers are added by the skills that need them in subsequent stories.
+**Initial intended writers:** `momentum:retro`, `momentum:triage`, `momentum:avfl`. The `impetus-momentum-state-migration` story does **not** implement writers — it establishes the directory, the schema contract, and the reader contract. Writers are added by the skills that need them in subsequent stories. **ARCH-8: As of 2026-05-22, no done stories actually implement signal write calls in retro or triage. The signals/ directory and schema contract are established, but the producers (retro signal writes, triage signal writes) are pending — not yet shipped. Do not treat signals/ as a fully live system with active producers.**
 
 **Reader contract:** Impetus iterates `.momentum/signals/*.json` at session start (Session-open sequence below) and surfaces a "Pending signals present" situational state when at least one signal has no `cleared` field. An empty `.momentum/signals/` directory (zero files) is a valid state — readers must not error on it.
 
@@ -309,9 +309,9 @@ The defining question for each component: *does this need main-context persona p
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; **single-item capture only** — one idea → one story stub, feature-slug and story-type aware per DEC-005 D1/D5. No batching (that is `momentum:triage`'s job). Writes `stories/{slug}.md` + `stories/index.json` entry via `momentum-tools sprint story-add`. |
-| triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into six classes (ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT) per DEC-007. Delegates ARTIFACT → `momentum:intake`, DISTILL → `momentum:distill`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `intake-queue.jsonl` via `momentum-tools` CLI. Classification inline in main context (no subagent); optional Explore subagents for duplicate detection and feature-assignment suggestion when N ≥ 5. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
+| triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into five active classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT) per DEC-007. The DISTILL class is removed post-removal of the distill skill (ARCH-1/ARCH-5). Delegates ARTIFACT → `momentum:intake`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `intake-queue.jsonl` via `momentum-tools` CLI. Classification inline in main context (no subagent); optional Explore subagents for duplicate detection and feature-assignment suggestion when N ≥ 5. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
 | feature-breakdown | Flat skill (`/momentum:feature-breakdown`) | Pure orchestrator; takes a feature slug as input, enumerates story gaps end-to-end, passes pre-enumerated candidate list to `momentum:triage` with `source_label = "feature-breakdown:{feature_slug}"`. NEVER writes to features.json or stories/index.json — all classification and write authority belongs to triage (Decision 50). |
-| distill | Flat skill (`/momentum:distill`) | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. User-invokable mid-session or from retro Phase 5 for Tier 1 findings. Third execution path alongside sprint orchestration and quick-fix (Decision 42). Story: not yet in backlog — handled via quick-fix workflow. |
+| distill | Flat skill (`/momentum:distill`) — **(removed — `remove-momentum-distill` story ready-for-dev)** | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. Previously listed as third execution path alongside sprint orchestration and quick-fix (Decision 42). **ARCH-1: This skill is being removed. The `remove-momentum-distill` story is ready-for-dev. Decision 42 references to distill as an active execution path are deprecated; see Decision 42 note below.** |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
 | sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
 | decision | Flat skill (`/momentum:decision`) | User-invokable; facilitates architectural or product decision capture (ADR/trade-off analysis); no fork needed |
@@ -347,7 +347,10 @@ momentum/                              ← Plugin root
 │   ├── plan-audit/SKILL.md
 │   ├── quick-fix/SKILL.md          ← /momentum:quick-fix (Decision 39)
 │   ├── research/SKILL.md           ← /momentum:research
-│   ├── status/SKILL.md             ← /momentum:status (not planned as standalone skill — absorbed into Impetus and momentum-tools CLI)
+│   ├── canvas/                     ← /momentum:canvas (DEC-019; supersedes feature-status — ARCH-6)
+│   │   ├── SKILL.md
+│   │   ├── workflow.md
+│   │   └── server.tsx               ← Bun+Hono+HTMX server (port 3456, bun --hot)
 │   ├── intake/SKILL.md             ← /momentum:intake
 │   ├── assessment/SKILL.md         ← /momentum:assessment
 │   ├── decision/SKILL.md           ← /momentum:decision
@@ -413,7 +416,7 @@ The `name` field determines the namespace prefix for all skills. With `"name": "
 | `scripts/` | CLI tools (`momentum-tools.py`) | Plugin install |
 | `references/` | Rules, practice docs, version manifest | Plugin install |
 | `agents/` | Custom agent definitions for teams | Plugin install |
-| `momentum/agents.json` | Agent routing table — `defaults` block (9 roles, plugin-shipped) + `project` block (per-role×domain entries, written by agent-builder) | Plugin ships defaults; agent-builder writes project entries |
+| `momentum/agents.json` | Agent routing table — `defaults` block (9 roles defined; not all shipped — see ARCH-3 note in Decision 55) + `project` block (per-role×domain entries, written by agent-builder) | Plugin ships defaults; agent-builder writes project entries |
 | `momentum/verification-harness.json` | Validation harness profile — `defaults` block (plugin-shipped) + `project` block (per-project overrides written by agent-builder/agent-guidelines) | Plugin ships defaults block; agent-builder/agent-guidelines write project block |
 | `mcp/` | Custom MCP server source (Epic 6) | Plugin install |
 
@@ -465,17 +468,17 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - Format: JSONL — one JSON object per line, append-only. No wrapping array.
 - Structured findings with fields: `id` (globally unique, format `F-{unix_ms}-{random_4hex}`), `project` (string, project identifier), `story_ref`, `phase`, `severity`, `pattern_tags`, `description`, `evidence`, `provenance_status`, `upstream_fix_applied`, `upstream_fix_level`, `upstream_fix_ref` (reference to the fix artifact), `momentum_version` (installed plugin version at write time, populated by all writers per Decision 43), `timestamp` (ISO 8601 when finding was recorded)
 - `upstream_fix_level` — null until a fix is applied; then one of: `spec-generating-workflow | specification | rules-or-CLAUDE.md | tooling | one-off-code-fix`
-- `momentum_version` — populated by every ledger writer (`momentum:distill`, `momentum:retro`, flywheel) at write time per Decision 43 (Findings-Ledger Versioning, Option A). Enables regression detection by mapping findings to the practice version that produced them. Entries written before the field's introduction are backfilled via Decision 43 Option B (git log timestamps).
+- `momentum_version` — populated by every ledger writer (`momentum:retro`, flywheel) at write time per Decision 43 (Findings-Ledger Versioning, Option A). Enables regression detection by mapping findings to the practice version that produced them. Entries written before the field's introduction are backfilled via Decision 43 Option B (git log timestamps). Note: `momentum:distill` was previously listed as an authorized writer; it is removed with the distill skill (see Decision 42 — removed).
 - Queryable for cross-project and cross-story pattern detection
 - JSONL enables concurrent append from multiple Claude Code sessions without file locking (POSIX atomic append for lines under pipe buffer size)
-- Authorized writers: flywheel workflow (`origin: flywheel`) and `momentum:distill` (`origin: distill`). The `origin` field distinguishes code-review-origin findings from practice-distillation-origin findings for FR33 ratio tracking. All other components are read-only.
+- Authorized writers: flywheel workflow (`origin: flywheel`) only. `momentum:distill` is removed as an authorized writer (ARCH-7: distill skill removed — see Decision 42). The `origin` field distinguishes code-review-origin findings for FR33 ratio tracking. All other components are read-only.
 - Rationale: Global scope enables cross-project pattern detection — the same anti-pattern appearing in projects A and B becomes visible. Per-project scope would miss these systemic patterns.
 
 **Decision 1e — Session State Storage (Ephemeral + Inter-Session)**
 - `.claude/momentum/session-modified-files.txt` — Ephemeral session-scoped file. Written by PostToolUse lint hook (appends file paths of modified files, one per line, deduped). Read by Stop gate hook as the set of files to check. Cleaned up after the Stop gate runs. Not committed to git.
 - `.claude/momentum/gate-findings.txt` — Inter-session findings file. Written by the Stop gate hook when it detects lint issues or uncommitted changes among session-modified files. Read by Impetus at the next session open to surface unresolved quality issues from the previous session. Overwritten each time the Stop gate runs (not append-only).
 
-**Decision 1f — Feature Status Cache: YAML-Frontmatter MD**
+**Decision 1f — Feature Status Cache: YAML-Frontmatter MD** _(deprecated — ARCH-6: canvas supersedes feature-status; cache files removed from installed structure)_
 - Location: `.claude/momentum/feature-status.md`
 - Written by `momentum:feature-status` after generating the HTML dashboard
 - YAML frontmatter fields: `input_hash` (SHA-256 of features_content + ":" + stories_content), `summary` (one-line feature status string, e.g., "3/5 features working, 1 partial, 1 not-started"), `generated_at` (ISO 8601)
@@ -511,7 +514,7 @@ Enforcement is implemented as a three-hook quality system, each hook serving a d
 | `tests/acceptance/` and `**/*.feature` | Acceptance tests are immutable — agents never modify to make code pass |
 | `_bmad-output/planning-artifacts/*.md` | Spec authority — coding agents read, never write |
 | `.claude/rules/` | Global enforcement rules — protected from coding agent modification |
-| `~/.claude/momentum/findings-ledger.jsonl` | Ledger integrity — authorized writers: flywheel workflow and `momentum:distill` only (Decision 1c). Note: global path is outside project PreToolUse scope; protection enforced by authority rule. |
+| `~/.claude/momentum/findings-ledger.jsonl` | Ledger integrity — authorized writer: flywheel workflow only (Decision 1c; `momentum:distill` removed as authorized writer — ARCH-7). Note: global path is outside project PreToolUse scope; protection enforced by authority rule. |
 
 Protected paths are externalized to `skills/momentum/references/protected-paths.json` for declarative management — the PreToolUse hook reads this file at invocation rather than hardcoding paths in the hook script. This enables project-specific path additions without hook modification.
 
@@ -622,7 +625,7 @@ Impetus has a voice that blends Optimus Prime's gravitas with KITT's loyalty —
 
 **Delegation rule:**
 All non-orchestration work is dispatched to purpose-specific subagents:
-- Implementation → `bmad-dev-story` (dispatched per story, returns structured completion signal)
+- Implementation → `momentum:dev` (dispatched per story by sprint-dev; `momentum:dev` resolves the specialist agent via agents.json routing-table, then delegates to the specialist agent file — path: sprint-dev → `momentum:dev` → agents.json routing-table resolution → specialist agent files; returns structured completion signal)
 - Quality validation → `/momentum:avfl` (dispatched with artifact + source material, returns pass/fail signal)
 - Code review → `/momentum:code-reviewer` (context:fork subagent, returns findings JSON)
 - Architecture drift → `/momentum:architecture-guard` (context:fork subagent, returns drift report JSON)
@@ -1030,7 +1033,7 @@ Agents NEVER address the user directly. All output goes through Impetus.
   "behavioral_type": null,        // null until classified; then: correction | redirection | frustration | praise | decision (what the developer did)
   "signal_type": null,            // null until classified; then: Context | Instruction | Workflow | Failure (Fowler causal taxonomy — what artifact category needs updating)
   "destination": null,            // null until classified; then: CLAUDE.md | skill-reference | workflow-step | anti-pattern-rule
-  "origin": "flywheel",           // flywheel | distill — which path wrote this finding (enables FR33 ratio tracking across origin types)
+  "origin": "flywheel",           // flywheel — sole authorized writer (distill removed — ARCH-7); origin field retained for schema compatibility
   "momentum_version": "1.4.2",    // installed plugin version at write time — populated by all ledger writers per Decision 43 (regression detection)
   "timestamp": "2026-03-17T00:00:00Z"
 }
@@ -1215,15 +1218,11 @@ momentum/                                    ← Plugin root
 │   │   └── SKILL.md
 │   ├── quick-fix/                           ← /momentum:quick-fix (Decision 39)
 │   │   └── SKILL.md
-│   ├── distill/                             ← /momentum:distill (Decision 42)
+│   ├── distill/                             ← /momentum:distill (removed — ARCH-1; `remove-momentum-distill` story ready-for-dev)
 │   │   └── SKILL.md
 │   ├── research/                            ← /momentum:research
 │   │   └── SKILL.md
-│   ├── status/                              ← /momentum:status (superseded — see Decision 45 and feature-status entry below)
-│   │   └── SKILL.md
-│   ├── feature-status/                      ← /momentum:feature-status (Decision 45; deprecated — use canvas)
-│   │   └── SKILL.md
-│   ├── canvas/                              ← /momentum:canvas (DEC-019; supersedes feature-status)
+│   ├── canvas/                              ← /momentum:canvas (DEC-019; supersedes feature-status — ARCH-6)
 │   │   ├── SKILL.md
 │   │   ├── workflow.md
 │   │   └── server.tsx                       ← Bun+Hono+HTMX server (port 3456, bun --hot)
@@ -1315,9 +1314,7 @@ momentum/                                    ← Plugin root
 │       ├── journal-view.md                   ← Human-readable view (auto-generated)
 │       ├── installed.json                   ← Install/upgrade state (version + per-component hashes)
 │       ├── session-modified-files.txt       ← Ephemeral: PostToolUse writes, Stop reads + deletes (Decision 1e)
-│       ├── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
-│       ├── feature-status.html              ← Self-contained HTML dashboard (Decision 45, written by momentum:feature-status)
-│       └── feature-status.md               ← YAML-frontmatter cache (Decision 46, written by momentum:feature-status)
+│       └── gate-findings.txt                ← Inter-session: Stop writes, Impetus reads at next session (Decision 1e)
 └── .momentum/                                  ← Operational runtime state (added 2026-04-28; see `.momentum/` State Layout section)
     ├── sprints/
     │   ├── index.json                          ← Sprint registry (Decision 36)
@@ -1366,13 +1363,13 @@ momentum/                                    ← Plugin root
 | canvas server (Bun process, port 3456) | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/stories/{slug}.md` | _(none — read-only server)_ |
 | momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files, `momentum/verification-harness.json` (for per-story contract-type selection) | `.momentum/sprints/{sprint-slug}/specs/` (multi-extension contract files: `.feature`, `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md` per story `verification_method`); `.momentum/sprints/{sprint-slug}/coverage-plan.md` (written at activation, then immutable); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
 | momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
-| momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md, `.claude/momentum/feature-status.md` | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`); spawns `/momentum:feature-status` to refresh cache before summary write |
-| momentum:triage | `.momentum/stories/index.json`, `.momentum/intake-queue.jsonl` | `.momentum/intake-queue.jsonl` (SHAPING/DEFER/REJECT entries via `momentum-tools intake-queue`); `.momentum/signals/*.json` (e.g., `triage-uncleared-*` when observations remain unresolved) |
+| momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`) — **ARCH-8: signal write calls are pending, not yet shipped**. Note: feature-status cache read and `/momentum:feature-status` spawn removed — **ARCH-6: feature-status deprecated, canvas supersedes** |
+| momentum:triage | `.momentum/stories/index.json`, `.momentum/intake-queue.jsonl` | `.momentum/intake-queue.jsonl` (SHAPING/DEFER/REJECT entries via `momentum-tools intake-queue`); `.momentum/signals/*.json` (e.g., `triage-uncleared-*` when observations remain unresolved) — **ARCH-8: signal write calls are pending, not yet shipped** |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
-| VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report; `.momentum/signals/*.json` (avfl-finding-pending-upstream-fix signals when findings trace to spec/rule root cause) |
+| VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report; `.momentum/signals/*.json` (avfl-finding-pending-upstream-fix signals when findings trace to spec/rule root cause) — **ARCH-8: signal write calls are pending, not yet shipped** |
 | Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
-| momentum:distill | Session observation / retro findings, relevant spec/skill/rules files | rules/, references/, skill prompts (Tier 1 direct commit); stories/index.json stubs (Tier 2); findings-ledger.jsonl (`origin: distill`); plugin version + push (Momentum-level fixes in Momentum project only) |
+| momentum:distill | **(removed — ARCH-1/ARCH-7)** Session observation / retro findings, relevant spec/skill/rules files | ~~rules/, references/, skill prompts (Tier 1 direct commit); stories/index.json stubs (Tier 2); findings-ledger.jsonl (`origin: distill`); plugin version + push (Momentum-level fixes in Momentum project only)~~ — all write authority removed; flywheel is the sole findings-ledger writer |
 | Upstream-fix skill (Epic 4, standalone) | session journal, specs, rules | session journal only (not findings-ledger.jsonl) |
 | Hooks (PreToolUse) | Filesystem (reads), `references/protected-paths.json` | Terminal output only (blocks or allows) |
 | Hooks (PostToolUse) | Filesystem (reads) | `session-modified-files.txt` (append, deduped); terminal output (lint results) |
@@ -1415,17 +1412,18 @@ momentum/                                    ← Plugin root
 | Hook infrastructure (always-on) | `hooks/hooks.json` | Delivered by plugin install (active immediately) |
 | Plan audit gate hook | `skills/plan-audit/` | Plugin skill: `/momentum:plan-audit` |
 | Quick-fix | `skills/quick-fix/` | Plugin skill: `/momentum:quick-fix` |
-| Distill | `skills/distill/` | Plugin skill: `/momentum:distill` |
+| Distill | `skills/distill/` | ~~Plugin skill: `/momentum:distill`~~ — **removed (ARCH-1)** |
 | Research | `skills/research/` | Plugin skill: `/momentum:research` |
 | Status | `skills/status/` | Superseded — see Feature Status below (Decision 45) |
-| Feature Status | `skills/feature-status/` | Plugin skill: `/momentum:feature-status`; HTML output: `.claude/momentum/feature-status.html`; cache: `.claude/momentum/feature-status.md` |
+| Feature Status | `skills/feature-status/` | ~~Plugin skill: `/momentum:feature-status`; HTML output: `.claude/momentum/feature-status.html`; cache: `.claude/momentum/feature-status.md`~~ — **deprecated (ARCH-6); canvas supersedes feature-status per DEC-019** |
+| Canvas | `skills/canvas/` | Plugin skill: `/momentum:canvas`; Bun+Hono+HTMX server at port 3456; SKILL.md + workflow.md + server.tsx (DEC-019, supersedes feature-status — ARCH-6) |
 | Agent Guidelines | `skills/agent-guidelines/` | Plugin skill: `/momentum:agent-guidelines` (FR61a — 5-phase guided workflow generating path-scoped rules and reference docs) |
 | Feature artifact (features.json) | (runtime / planning artifact) | `_bmad-output/planning-artifacts/features.json` (written by developer or planning workflow) |
 | Sprint summary | (runtime, per-sprint) | `.momentum/sprints/{sprint-slug}/sprint-summary.md` (written by retro orchestrator at Phase 6 close) |
 | Intake queue | (runtime, per-project) | `.momentum/intake-queue.jsonl` (DEC-007 / Decision 52 — written by momentum:triage and momentum:retro via `momentum-tools intake-queue` CLI; append-only) |
 | Sprint registry | (runtime, per-project) | `.momentum/sprints/index.json` (sole writer: `momentum-tools sprint`) |
 | Story registry | (runtime, per-project) | `.momentum/stories/index.json` (sole writer: `momentum-tools sprint`) |
-| Signal ledger | (runtime, per-project) | `.momentum/signals/{signal_type}-{slug-or-timestamp}.json` (read-only ledger; writers per-skill — retro/triage/avfl) |
+| Signal ledger | (runtime, per-project) | `.momentum/signals/{signal_type}-{slug-or-timestamp}.json` (read-only ledger; writers per-skill — retro/triage/avfl) — **ARCH-8: directory and schema established; producers (retro/triage/avfl write calls) pending, not yet shipped** |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
@@ -2071,7 +2069,7 @@ Both producers write exclusively through the `momentum-tools` CLI. Skills never 
 
 **Entry point:** Impetus dispatches from the `[3] Triage` menu item (replaces the placeholder in `skills/momentum/skills/impetus/workflow.md:403` and `skills/momentum/skills/impetus/SKILL.md:63`). Also independently invocable as `/momentum:triage` and programmatically callable from retro Phase 5 or sprint-planning backlog synthesis with an explicit observation list.
 
-**Classification taxonomy (six classes):** ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT. Classification runs **inline in main context** — no subagent spawn for the classification judgment itself (it is context-dependent and cheap, and the orchestrator holds session context triage needs).
+**Classification taxonomy:** Originally six classes (ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT). **ARCH-5: The DISTILL class is removed with the removal of the distill skill (`remove-momentum-distill` story ready-for-dev). Post-removal: five active classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT).** Classification runs **inline in main context** — no subagent spawn for the classification judgment itself (it is context-dependent and cheap, and the orchestrator holds session context triage needs).
 
 **Enrichment for ARTIFACT items:** each ARTIFACT is enriched with `feature_slug` (read from `features.json` — DEC-005 D1), `story_type` (DEC-005 D5 — default `feature`), suggested epic (DEC-005 D2 — DDD sub-domain aware), priority, and proposed dependencies. Enrichment is also inline by default.
 
@@ -2084,7 +2082,7 @@ Both producers write exclusively through the `momentum-tools` CLI. Skills never 
 | Class | Action | Target |
 |---|---|---|
 | ARTIFACT | Delegates to `momentum:intake` (per item) | `stories/{slug}.md` + `stories/index.json` |
-| DISTILL | Delegates to `momentum:distill` (per item) | Target practice file (rule / skill / reference) |
+| DISTILL | ~~Delegates to `momentum:distill` (per item)~~ — **removed** (ARCH-5: distill skill removed; this class is no longer active) | ~~Target practice file (rule / skill / reference)~~ |
 | DECISION | Delegates to `momentum:decision` (per item) | `planning-artifacts/decisions/dec-NNN-*.md` |
 | SHAPING | Direct CLI write to `intake-queue.jsonl` | `kind: "shape"` |
 | DEFER | Direct CLI write to `intake-queue.jsonl` | `kind: "watch"` |
@@ -2392,7 +2390,7 @@ Quick-fix introduces a third execution path alongside sprint orchestration and t
 |---|---|---|---|
 | Sprint orchestration | Single sprint, multiple stories | Decision 36 state machine | `/momentum:sprint-planning` → `/momentum:sprint-dev` |
 | Quick-fix | Single story, single session | Register → execute → validate → complete | `/momentum:quick-fix` |
-| Distill | Single practice artifact, single session | Discover → classify → apply → validate → commit | `/momentum:distill` (Decision 42) |
+| ~~Distill~~ | ~~Single practice artifact, single session~~ | ~~Discover → classify → apply → validate → commit~~ | ~~`/momentum:distill` (Decision 42)~~ — **removed (ARCH-1)** |
 
 **momentum:dev is internal-only:** momentum:dev is called by sprint-dev and quick-fix as a story executor — it is not user-invocable from Impetus menus or directly by the developer. It has no standalone entry point; it always runs within the context of a calling workflow (sprint-dev or quick-fix).
 
@@ -2455,9 +2453,11 @@ momentum:refine uses a two-wave conditional spawning pattern as a documented ins
 - **Wave 2:** Zero, one, or two update agents spawn based on Wave 1 findings and the developer's approval decision. Each approved document gets its own sole-writer update agent; no update agent spawns for a rejected document. Agents run in parallel when both are approved.
 This pattern is distinct from the per-finding Add/Modify/Remove triage used in other workflows — approval is per-document, not per-finding, enabling batch UX at the document level.
 
-**Decision 42 — Distill Execution Path and AVFL Profile (2026-04-11)**
+**Decision 42 — Distill Execution Path and AVFL Profile (2026-04-11) — REMOVED**
 
-`/momentum:distill` is a third execution path alongside sprint orchestration and quick-fix (Decision 39). It is the practice-artifact analogue of quick-fix: where quick-fix handles code stories, distill handles practice artifacts (rules, references, skill prompts, spec additions).
+> _[ARCH-1: `momentum:distill` is being removed. The `remove-momentum-distill` story is ready-for-dev. All references to distill as an active system component — including findings-ledger write authority, triage DISTILL class, and the "third execution path" framing — are deprecated. After the story ships, distill will no longer exist as an execution path. The content below is preserved for historical context only.]_
+
+~~`/momentum:distill` is a third execution path alongside sprint orchestration and quick-fix (Decision 39).~~ It was the practice-artifact analogue of quick-fix: where quick-fix handles code stories, distill handled practice artifacts (rules, references, skill prompts, spec additions). **This execution path is removed.**
 
 **Distill AVFL profile:** A lightweight single-pass validation mode designated for distill's post-change validation step. Runs two subagents (Enumerator + Adversary) on only the changed files. No multi-lens parallelism — a single validation pass, not separate structural/accuracy/coherence passes. Model: Sonnet at medium-low effort. No fix iterations — output informs a developer-prompted correction or a clean commit. Implemented as a named profile in `skills/avfl/references/framework.json`.
 
@@ -2468,7 +2468,7 @@ This pattern is distinct from the per-finding Add/Modify/Remove triage used in o
 - Momentum-level (in Momentum project): applies to Momentum practice files; bumps plugin patch version; commits and pushes
 - Momentum-level (in external project): defer to retro queue OR generate remote distill prompt for developer to apply in a Momentum session
 
-**Findings-ledger write authority:** `momentum:distill` is an authorized writer to `~/.claude/momentum/findings-ledger.jsonl` (extending Decision 1c). Distill writes with `origin: distill`; the flywheel workflow writes with `origin: flywheel`. The `origin` field enables FR33 ratio tracking to count distillation-origin fixes separately from code-review-origin fixes. Every distill-written entry also includes `momentum_version` (installed plugin version at write time) per Decision 43 — this enables regression attribution across practice versions.
+**Findings-ledger write authority:** ~~`momentum:distill` is an authorized writer to `~/.claude/momentum/findings-ledger.jsonl` (extending Decision 1c).~~ **ARCH-7: With the removal of the distill skill, `momentum:distill` is no longer an authorized findings-ledger writer. The sole authorized writer shrinks to the flywheel workflow only (`origin: flywheel`).** Decision 1c is updated accordingly — the `origin: distill` write path is removed.
 
 **Traceability:** Distill entries are registered in the findings-ledger with `origin: distill` for audit trail and retrospective input. They bypass sprint lifecycle but not traceability. Motivated by research finding (2026-04-10): Momentum lacks a mechanism for immediate artifact updates from session learnings — all findings must survive sprint planning before landing in practice files, creating multi-week lag.
 
@@ -2492,7 +2492,7 @@ This pattern is distinct from the per-finding Add/Modify/Remove triage used in o
 - Git commit type distribution (regex on `Bash` `git commit` inputs) — `fix` spike signals quality regression
 
 **Findings-ledger versioning — Option A + Option B:**
-- **Option A (primary):** Every findings-ledger write includes a `momentum_version` field populated from the installed plugin version at write time. Applies to all ledger writers: `momentum:distill`, `momentum:retro` (Phase 0 brief + Phase 5 stubs), and any future writers.
+- **Option A (primary):** Every findings-ledger write includes a `momentum_version` field populated from the installed plugin version at write time. Applies to all ledger writers: `momentum:retro` (Phase 0 brief + Phase 5 stubs), and any future writers. Note: `momentum:distill` was previously listed here; it is removed as an authorized writer — see ARCH-7 / Decision 42.
 - **Option B (validation):** Git log timestamps map sessions to Momentum version bumps for cross-checking. Used to validate Option A data and to backfill version attribution for ledger entries that predate the `momentum_version` field.
 
 **Phase 0 output:** A structured session-analytics brief written to the retro working directory. Contains: sprint window, sessions analyzed, metric table with sprint-over-sprint delta, and flagged regressions. Phase 1 auditors receive this brief before qualitative review begins.
@@ -2963,6 +2963,8 @@ URL sync: all navigations use `hx-push-url` to keep the browser address bar in s
 
 **Traceability:** Introduced by canvas-skill story (sprint-2026-05-03). Supersedes DEC-011 D2. Motivated by DEC-019 adoption decision (2026-04-26) to replace the static HTML approach of momentum:feature-status with a live, navigable dashboard.
 
+**Naming convention note:** The implementation used a `momentum-cycle-*` story naming convention rather than the original `canvas-*` naming from early backlog stubs. All `momentum-cycle-*` stories are done. The old `canvas-*` backlog stubs were superseded by the `momentum-cycle-*` stories and will be dropped.
+
 ---
 
 ### Sprint 2026-05-16 Decisions
@@ -2975,7 +2977,7 @@ Formalizes the agent routing table schema and resolution algorithm for `momentum
 
 `momentum/agents.json` has two top-level blocks:
 
-- **`defaults`** — 9 roles shipped with the plugin (dev, qa-reviewer, e2e-validator, architect-guard, ux, analyst, researcher, constitution-builder, agent-builder). Each role entry specifies `agent_path` (relative to plugin `agents/`) and `write_permissions` (array of glob patterns the agent is authorized to write). Defaults are immutable at runtime — agent-builder never overwrites them.
+- **`defaults`** — 9 roles defined in the schema (dev, qa-reviewer, e2e-validator, architect-guard, ux, analyst, researcher, constitution-builder, agent-builder). **ARCH-3: Not all 9 are currently shipped. Roles actually shipped as base bodies: dev, qa-reviewer, e2e-validator, e2e-validator (method-polymorphic rewrite), ux, analyst, researcher. Roles still backlog (base body not yet shipped): architect-guard (pending `base-body-collapse-rollback` and `architecture-decision-26-update` stories), constitution-builder, agent-builder.** Each role entry specifies `agent_path` (relative to plugin `agents/`) and `write_permissions` (array of glob patterns the agent is authorized to write). Defaults are immutable at runtime — agent-builder never overwrites them.
 - **`project`** — per-role×domain entries written by agent-builder. Each entry adds a domain-specific override (e.g., `dev/android`, `qa-reviewer/canvas`). Resolution prefers `project` entries over `defaults`.
 
 **Resolution algorithm (`momentum-tools agent-resolve`):**
@@ -3023,22 +3025,26 @@ Formalizes the two-tier build pipeline for project-specific agent definitions.
 
 ---
 
-**Decision 57 — Beads Dual-Write Spike (DEC-028, sprint-2026-05-16)**
+**Decision 57 — Beads Dual-Write Adoption (DEC-028, sprint-2026-05-16)**
 
-Formalizes the Beads tracker integration via a dual-write spike. `index.json` remains the authoritative source of truth; Beads is a best-effort secondary.
+Formalizes the Beads tracker integration. The `beads-dual-write-spike` story is complete and the Beads infrastructure is **adopted**. `index.json` remains the authoritative source of truth; Beads is a best-effort secondary.
 
 **Architecture:**
 
 - **Authoritative source:** `.momentum/stories/index.json` and `.momentum/sprints/index.json` — unchanged.
 - **Secondary write:** sprint-manager mirrors story status transitions to Beads as best-effort. If the Beads write fails, the primary index.json write succeeds and the error is logged but not surfaced as a blocking error.
-- **Dependency source for sprint-dev Phase 1:** `bd ready --json --claim` is the primary dependency-ready source. Falls back to `depends_on` fields in `stories/index.json` when Beads is unavailable or returns inconsistent state.
+- **Dependency source for sprint-dev Phase 1:** `bd ready --json --claim` is the **intended** primary dependency-ready source. **ARCH-4: The `dag-dispatcher-loop` story that wires this end-to-end is still backlog. Current state: the dual-write infrastructure is adopted, but `bd ready` as the live dependency source for sprint-dev Phase 1 is not yet wired end-to-end.** Falls back to `depends_on` fields in `stories/index.json` — this remains the actual primary source until the dag-dispatcher-loop story ships.
 - **Session prime:** `bd prime --no-git-ops` runs via SessionStart hook to keep the local Beads DB in sync without triggering git operations.
 
 **Storage:**
 - `.beads/` — gitignored Dolt DB; the Beads local store. Never committed.
 - `.momentum/beads-id-map.json` — git-tracked map of `story_slug → bead_hash_id`. Written by sprint-manager at each dual-write. Enables offline reconstruction of the slug↔ID mapping without querying Beads.
 
-**Gate criteria for full adoption (four gates):**
+**Adoption status:** The `.beads/` directory, `.momentum/beads-id-map.json`, and `bd prime --no-git-ops` via SessionStart hook are **adopted infrastructure** — not experimental or provisional. The `beads-verification-with-sprint-data` story is a verification and hardening item; it is not a gate for adoption. **ARCH-4: `bd ready --json --claim` as the primary dependency source for sprint-dev Phase 1 is not yet wired end-to-end — the `dag-dispatcher-loop` story (which completes this wiring) is still backlog. The dual-write infrastructure is adopted; the sprint-dev dependency integration is in-progress/pending.**
+
+**Gate criteria for full promotion (four gates):**
+
+The four gates below govern the future decision to replace `index.json` dependency tracking with Beads as the primary source — a separate promotion step beyond the current adopted dual-write:
 
 | Gate | Criteria |
 |---|---|
@@ -3047,9 +3053,9 @@ Formalizes the Beads tracker integration via a dual-write spike. `index.json` re
 | G3 — Session prime latency | `bd prime --no-git-ops` completes within 5 seconds on a warm local DB (P95 across 10 sessions) |
 | G4 — Sprint-dev correctness | sprint-dev Phase 1 using `bd ready` produces no incorrect wave ordering vs. the index.json fallback path across 2 sprints |
 
-Full adoption decision (replace index.json dependency tracking with Beads as primary) is deferred until all four gates pass.
+Full promotion (Beads as primary dependency source) is deferred until all four gates pass.
 
-**Traceability:** Introduced by beads-dual-write-spike story (sprint-2026-05-16). Implements DEC-028. Spike scope: dual-write only — no UI changes, no retro changes, no planning artifact changes.
+**Traceability:** Introduced by beads-dual-write-spike story (sprint-2026-05-16). Implements DEC-028. Adopted sprint-2026-05-16.
 
 ---
 
@@ -3064,7 +3070,7 @@ Full adoption decision (replace index.json dependency tracking with Beads as pri
 }
 ```
 
-**`defaults` block:** Contains an `env` object (`startup`, `readiness_probe` keys), an `execution_surfaces` object keyed by change-type slug (`"skill-instruction"`, `"script-code"`, `"rule-hook"`, `"config-structure"`, `"specification"`), and a `contract_extensions` object mapping `verification_method` values to file extensions. All surface values default to `"skip"` — safe for projects with no running environment. Projects override via the `project` block.
+**`defaults` block:** Contains an `env` object (`startup`, `readiness_probe` keys), an `execution_surfaces` object keyed by change-type slug (10 surfaces: `"skill-instruction"`, `"agent-definition"`, `"rule-hook"`, `"script-code"`, `"script-cli"`, `"backend"`, `"app-ui"`, `"research-spike"`, `"specification"`, `"config-structure"` — full list in `momentum/verification-harness.json`), and a `contract_extensions` object mapping `verification_method` values to file extensions. All surface values default to `"skip"` — safe for projects with no running environment. Projects override via the `project` block.
 
 **`project` block:** An array of override objects keyed by project context. Written by `momentum:agent-builder` (during agent customization for a project) and `momentum:agent-guidelines` (during guidelines generation). Neither skill overwrites the `defaults` block.
 
