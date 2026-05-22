@@ -4418,7 +4418,7 @@
     "priority": "medium"
   },
   "dag-dispatcher-loop": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "DAG dispatcher loop — continuous claim from bd ready-set",
     "epic_slug": "sprint-dev-workflow",
     "story_file": true,
