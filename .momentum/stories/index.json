@@ -1192,7 +1192,7 @@
     "title": "Findings Ledger DuckDB Integration — Cross-Project Trend Analysis",
     "epic_slug": "impetus-core",
     "depends_on": [],
-    "priority": "low",
+    "priority": "medium",
     "description": "The findings ledger (~/.claude/momentum/findings-ledger.jsonl) is designed as a cross-project append-only log for pattern detection. DuckDB enables trend analysis and severity aggregation across projects via SQL joins on severity/tags. ACs: (1) Findings ledger queryable via DuckDB SQL, (2) Cross-project aggregation by severity and tag, (3) Trend analysis across sprints available as standard queries."
   },
   "first-momentum-invocation-completes-setup": {
@@ -1810,7 +1810,7 @@
     "story_file": false,
     "depends_on": [],
     "touches": [],
-    "priority": "low",
+    "priority": "medium",
     "source": "retro sprint-2026-04-14 action item #16"
   },
   "momentum-detects-and-applies-upgrades": {
