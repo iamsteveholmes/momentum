@@ -4588,5 +4588,45 @@
     "touches": [],
     "priority": "high",
     "story_type": "feature"
+  },
+  "practice-ledger-features-epics-cascade-sequenced-plan": {
+    "status": "ready-for-dev",
+    "title": "Practice-Ledger + Features→Epics Cascade — Sequenced Plan",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
+  },
+  "triage-dedup-phase": {
+    "status": "backlog",
+    "title": "Triage dedup phase — deterministic prefilter + cluster fan-out + per-theme findings",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "triage-consolidation-phase": {
+    "status": "backlog",
+    "title": "Triage consolidation phase — fan-out cluster analysis + merged-spec generation",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "triage-caller-integration": {
+    "status": "backlog",
+    "title": "Triage caller integration — wire retro, assessment, and decision through triage",
+    "epic_slug": "agent-team-model",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
   }
 }
