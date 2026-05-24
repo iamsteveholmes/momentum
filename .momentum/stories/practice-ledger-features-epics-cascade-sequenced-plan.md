@@ -9,7 +9,8 @@ change_type:
   - skill-instruction
   - script-code
   - rule-hook
-verification_method: review
+verification_method: document review
+harness_profile: default
 depends_on: []
 touches:
   - .momentum/intake-queue.jsonl
@@ -27,7 +28,6 @@ touches:
   - skills/momentum/skills/intake/workflow.md
   - skills/momentum/skills/decision/workflow.md
   - skills/momentum/skills/assessment/workflow.md
-  - skills/momentum/skills/feature-breakdown/workflow.md
   - skills/momentum/skills/create-story/workflow.md
   - skills/momentum/skills/canvas/server.tsx
   - skills/momentum/skills/canvas/workflow.md
@@ -35,6 +35,10 @@ touches:
   - skills/momentum/skills/feature-breakdown/
   - skills/momentum/skills/epic-grooming/workflow.md
 plan_ref: ~/.claude/plans/i-like-sequencing-the-optimized-lagoon.md
+note: |
+  This is a coordination/orchestration tracker, NOT an implementation unit.
+  Do not hand to momentum:dev. The cascade leaf stories (A1–A4, B1–B4) are
+  the implementable units; this story tracks their orchestration.
 ---
 
 # Practice-Ledger + Features→Epics Cascade — Sequenced Plan
@@ -102,7 +106,7 @@ The full plan is preserved at `~/.claude/plans/i-like-sequencing-the-optimized-l
 
 **Change type classification:**
 - `specification` — assessment + decisions + architecture.md updates + PRD updates + epics.md restructure
-- `skill-instruction` — workflow.md updates across 7+ skills (retro, triage, sprint-planning, intake, decision, assessment, feature-breakdown, create-story, canvas, feature-grooming, feature-breakdown, epic-grooming)
+- `skill-instruction` — workflow.md updates across 7+ skills (retro, triage, sprint-planning, intake, decision, assessment, feature-breakdown, create-story, canvas, feature-grooming, epic-grooming)
 - `script-code` — momentum-tools.py CLI rewrite + test-momentum-tools.py updates
 - `rule-hook` — `.claude/rules/impetus.md` update
 
