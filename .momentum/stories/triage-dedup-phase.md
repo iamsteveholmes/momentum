@@ -1,22 +1,25 @@
 ---
 title: Triage dedup phase — deterministic prefilter + cluster fan-out + per-theme findings
 story_key: triage-dedup-phase
-status: backlog
+status: ready-for-dev
 epic_slug: agent-team-model
-feature_slug: 
+feature_slug: momentum-sprint-orchestration
 story_type: practice
+change_type:
+  - script-code
+  - skill-instruction
 depends_on: []
-touches: []
+touches:
+  - skills/momentum/scripts/momentum-tools.py
+  - skills/momentum/scripts/test-momentum-tools.py
+  - skills/momentum/skills/triage/workflow.md
+  - skills/momentum/skills/triage/SKILL.md
+verification_method:
+  script-code: "Execution test — run triage prefilter with representative inputs; observe that output (shortlists, score breakdowns, intra-batch matrix) matches spec"
+  skill-instruction: "EDD eval — adversarial eval scenarios authored by acceptance tester independent of implementation"
 ---
 
 # Triage dedup phase — deterministic prefilter + cluster fan-out + per-theme findings
-
-<!-- INTAKE STUB: This story was captured by momentum:intake. It is a conversational
-     stub, NOT a dev-ready story. All sections below marked DRAFT require full rewrite
-     by create-story before any development begins. -->
-
-_This story is a backlog stub. Run `momentum:create-story` on it when ready to make it
-dev-ready. Do NOT assign to a developer until create-story has enriched it._
 
 ## Story
 
@@ -31,9 +34,9 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
 **Scope:**
 
 - **Phase 0 (new)** — `momentum-tools triage prefilter` subcommand. Pure-Python TF-IDF cosine on title + description, `touches`-path Jaccard overlap, epic/feature_slug boost, status filter (skip `done | dropped | closed-incomplete`). Output per item: top-K=10 candidate stories with score breakdowns, plus an intra-batch similarity matrix. Tuning target: recall ≥95% on real duplicates with K=10.
-- **Phase 1 (new)** — inline batch clustering using Phase 0 similarity matrix (3–7 items/cluster; batches ≤5 skip clustering).
-- **Phase 2 (new)** — dedup fan-out: one subagent per cluster, parallel single message, prefiltered shortlist only (~15–30 candidates, not full backlog). Returns per-theme JSON findings: `{source_item_id, theme, match_type: duplicate|supersedes|extends|unique, matched_story_slug, evidence, recommended_action, consolidation_hint}`.
-- **Phase 3 (new)** — inline consolidation-candidate identification: orchestrator groups `consolidation_hint` fields by `target_slug_or_theme`; hint groups with 2+ members become merge candidates flagged for Story B.
+- **Phase 1 (new)** — inline batch clustering using Phase 0 similarity matrix (3–7 items/cluster; batches ≤5 skip clustering, single dedup agent).
+- **Phase 2 (new)** — dedup fan-out: one subagent per cluster, parallel single message (mirrors retro Phase 4 pattern, no TeamCreate, no SendMessage). Each agent receives only the prefiltered shortlist (~15–30 candidates). Returns per-theme JSON findings: `{source_item_id, theme, match_type: duplicate|supersedes|extends|unique, matched_story_slug, evidence, recommended_action, consolidation_hint}`.
+- **Phase 3 (new)** — inline consolidation-candidate identification: orchestrator groups `consolidation_hint` fields by `target_slug_or_theme`; hint groups with 2+ members become merge candidates flagged for Story B. Pure inline, no subagent.
 - **Phase 5 (updated)** — approval UX gains three new sections: dedup actions, split candidates (multi-theme items), merge candidates flagged. Existing five-class classification reused for survivors.
 - **Unit tests** for prefilter (recall on synthetic duplicates, status filter correctness, edge cases: empty backlog, single-item batch, all-identical batch).
 
@@ -45,90 +48,193 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
 
 ## Acceptance Criteria
 
-<!-- DRAFT: These are rough acceptance criteria captured from conversation. They have NOT
-     been refined, validated against architecture, or verified for completeness. This
-     section MUST be fully rewritten by create-story before development. -->
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-The following are rough draft ACs captured from conversation:
-
-- `momentum-tools triage prefilter` subcommand exists and produces top-K=10 candidate shortlists per incoming item, with score breakdowns inspectable per (item, story) pair.
-- Prefilter applies TF-IDF cosine on title + description, `touches` Jaccard, epic/feature_slug boost, and a status filter that excludes `done | dropped | closed-incomplete`.
-- Prefilter outputs an intra-batch similarity matrix usable by Phase 1 clustering.
-- Prefilter recall ≥95% on a synthetic duplicate fixture (validated by unit tests).
-- Triage workflow.md adds Phase 0 (prefilter call), Phase 1 (cluster), Phase 2 (dedup fan-out), Phase 3 (consolidation candidate grouping) before existing classification.
-- Phase 2 spawns one subagent per cluster in parallel via single-message fan-out (mirrors retro Phase 4 pattern, no TeamCreate).
-- Each dedup agent receives only the prefiltered shortlist (not the full backlog snapshot).
-- Each dedup agent returns per-theme JSON findings with the documented schema (`source_item_id`, `theme`, `match_type`, `matched_story_slug`, `evidence`, `recommended_action`, `consolidation_hint`).
-- Multi-theme incoming items return multiple findings, surfacing a split candidate in the approval UX.
-- Approval UX presents three new sections (dedup actions, split candidates, merge candidates) plus the existing classification of survivors.
-- On approval, executor consumes duplicates, marks supersedes, and routes survivors to the existing five-class classification + executor paths.
-- Unit tests cover prefilter recall, status filter correctness, empty-backlog edge case, single-item batch edge case.
-- Run against the 33 open handoffs produces sensible dedup findings (at minimum: handoff-2 e2e service assumptions matched against `e2e-validator-black-box-hardening`; handoff-5 subagent context-tier matched against `agent-spawn-preflight-check`).
-
-> Note: The ACs above are rough captures from conversation. They are starting points
-> only. Create-story will replace them with validated, testable acceptance criteria.
+1. `momentum-tools triage prefilter` subcommand exists and is invocable from the triage workflow.
+2. Given a batch of incoming items and a populated stories index, the prefilter outputs a ranked top-K=10 shortlist per item with score breakdown fields: `tfidf_score`, `jaccard_score`, `epic_boost`, `combined_score`.
+3. The prefilter applies a status filter: stories with status `done`, `dropped`, or `closed-incomplete` are excluded from scoring entirely; only `backlog`, `ready-for-dev`, and `in-progress` stories are candidates.
+4. The prefilter outputs an intra-batch similarity matrix (NxN, where N = number of incoming items) suitable for Phase 1 clustering.
+5. A unit test fixture with ≥5 synthetic duplicate pairs achieves ≥95% recall at K=10 (i.e., the true duplicate appears in the top-10 candidates for ≥95% of pairs).
+6. The triage workflow adds Phase 0 (prefilter invocation) before the existing classification step, passing incoming item titles and descriptions to `momentum-tools triage prefilter`.
+7. The triage workflow adds Phase 1 inline clustering: batches of ≤5 items skip clustering and use a single dedup agent; larger batches use the intra-batch similarity matrix to form clusters of 3–7 items (greedy threshold).
+8. The triage workflow adds Phase 2 dedup fan-out: spawns one subagent per cluster in parallel via single-message fan-out (no TeamCreate, no SendMessage — mirrors retro/workflow.md Phase 4 pattern).
+9. Each dedup subagent receives only the prefiltered shortlist for its cluster members (union of top-K candidates, deduped — not the full backlog).
+10. Each dedup subagent returns a JSON array of per-theme findings conforming to the schema: `{ "source_item_id": "iq-...", "theme": "string", "match_type": "duplicate | supersedes | extends | unique", "matched_story_slug": "slug | null", "evidence": "1-2 sentence justification", "recommended_action": "consume | merge | replace | continue", "consolidation_hint": { "target_slug_or_theme": "...", "rationale": "..." } | null }`.
+11. A multi-theme incoming item (e.g., one covering two distinct concerns) returns two separate findings, surfacing it as a split candidate in the approval UX.
+12. The triage workflow adds Phase 3 inline consolidation-candidate grouping: the orchestrator groups `consolidation_hint` fields by `target_slug_or_theme`; groups with 2+ members are flagged as merge candidates (not analyzed further in this story — Story B scope).
+13. The Phase 5 approval UX in `triage/workflow.md` gains three new sections before the existing classification section: (a) **Dedup actions** — per-theme findings grouped by `recommended_action`; (b) **Split candidates** — items with 2+ per-theme findings; (c) **Merge candidates** — consolidation groups flagged for Story B.
+14. On approval of dedup actions, the executor consumes queue items marked as duplicates and routes survivors to the existing five-class classification flow.
+15. Running triage against the 33 open handoffs produces sensible dedup findings: at minimum, the handoff matching `e2e-validator-black-box-hardening` themes is flagged as a duplicate/extends candidate, and the handoff matching `agent-spawn-preflight-check` themes is flagged as a duplicate/extends candidate.
+16. Unit tests cover: prefilter recall on synthetic duplicates, status filter exclusion, empty-backlog edge case (returns empty shortlists, no error), single-item batch edge case (no clustering, single dedup agent), all-identical batch edge case.
+17. `triage/SKILL.md` description is updated to reflect the new dedup gate behavior (≤150 characters, per NFR1).
 
 ## Tasks / Subtasks
 
-<!-- DRAFT: No tasks have been analyzed or planned. This section MUST be populated by
-     create-story, which will break down the work based on architecture analysis and
-     implementation guidance. -->
+1. **Add `triage prefilter` subcommand to `momentum-tools.py`**
+   - Implement `collections.Counter`-based TF-IDF (no sklearn, no external dependencies)
+   - Implement Jaccard coefficient on tokenized `touches` paths
+   - Implement epic/feature_slug exact-match boost (+0.2 to combined score)
+   - Implement status filter: exclude terminal states before scoring
+   - Output top-K=10 candidates per item sorted by combined score, with score breakdowns
+   - Output intra-batch similarity matrix (NxN, TF-IDF cosine on item pairs)
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+2. **Write unit tests for prefilter in `test-momentum-tools.py`**
+   - Synthetic duplicate recall fixture (≥5 pairs, assert recall ≥95% at K=10)
+   - Status filter test: terminal-status stories excluded from candidates
+   - Empty backlog edge case: no candidates returned, no error raised
+   - Single-item batch: produces 1x1 similarity matrix, no clustering skips
+   - All-identical batch: clustering skips (≤5 items), single dedup agent path
 
-- [ ] Tasks not yet defined — run create-story to analyze and plan implementation
+3. **Add Phases 0–3 inline orchestration to `triage/workflow.md`**
+   - Phase 0: call `momentum-tools triage prefilter`, capture shortlists and similarity matrix
+   - Phase 1: inline cluster logic using similarity matrix (≤5 skip, else greedy threshold clusters of 3–7)
+   - Phase 2: fan-out dedup subagent spawns per cluster (single-message parallel, no TeamCreate)
+   - Phase 3: inline `consolidation_hint` grouping pass, flag 2+ member groups as merge candidates
+
+4. **Update Phase 5 approval UX in `triage/workflow.md`**
+   - Add dedup actions section before existing classification
+   - Add split candidates section (items with multiple per-theme findings)
+   - Add merge candidates section (flagged groups, no analysis — Story B deferred)
+   - Preserve all existing five-class classification sections for survivors
+
+5. **Update `triage/SKILL.md` description**
+   - Update the `description` field to reflect the dedup gate addition
+   - Confirm description ≤150 characters
+   - Confirm `model:` and `effort:` frontmatter fields remain present
 
 ## Dev Notes
 
-<!-- DRAFT: Not yet populated. Run create-story to enrich with architecture analysis,
-     implementation guide, technical requirements, and Momentum-specific guidance. -->
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
-
-No technical analysis has been performed. The following sub-sections are all stubs.
-
 ### Architecture Compliance
 
-<!-- DRAFT: Architecture compliance has not been assessed for this story. -->
+This story implements **DEC-031 D5** — dedup and consolidation as mandatory triage gates. The decision's rationale is explicit: *"Making dedup + consolidation mandatory in triage itself ensures every caller gets the same backlog hygiene, which is what stops the backlog accreting duplicates."*
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+Triage remains standalone and anytime-callable (DEC-031 D5 requirement preserved). This story does not wire caller integration (retro/assessment/decision → triage) — that is Story C scope.
+
+The dedup fan-out pattern (Phase 2) is architecturally identical to the retro Phase 4 auditor fan-out: pure fan-out, no TeamCreate, no SendMessage, parallel in a single message, structured findings collected by the orchestrator. Read `skills/momentum/skills/retro/workflow.md` Step 4 as the canonical pattern reference before implementing.
 
 ### Testing Requirements
 
-<!-- DRAFT: Testing requirements have not been defined for this story. -->
+**Unit tests (script-code tasks):**
+- All prefilter tests go in `skills/momentum/scripts/test-momentum-tools.py`
+- Run with: `python3 -m pytest skills/momentum/scripts/test-momentum-tools.py -v -k "prefilter"`
+- Recall fixture: build ≥5 item/story pairs where the story is a known paraphrase of the item; assert the true story appears in top-K=10 for ≥95% of pairs
+- Status filter test: populate a mock index with terminal-status stories; assert none appear as candidates
+- Edge case tests: empty index, single-item batch (1x1 matrix output), all-identical batch (clustering path)
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**Behavioral verification (skill-instruction tasks):**
+- Run triage against the 33 open handoffs as the acceptance fixture
+- Expect: handoff items thematically related to `e2e-validator-black-box-hardening` appear in dedup findings; handoff items related to `agent-spawn-preflight-check` appear in dedup findings
+- Run triage on a 1-item batch: confirm single dedup agent spawned (no clustering), correct routing on completion
+- Run triage on a synthetic 30-item batch with 3 intentional intra-batch duplicates: confirm per-theme findings surface the overlap and approval UX asks to merge
 
 ### Implementation Guide
 
-<!-- DRAFT: No implementation guide has been generated. Create-story will inject
-     Momentum-specific guidance based on change-type classification. -->
+**Phase 0 — TF-IDF prefilter implementation:**
+- Use `collections.Counter` for term frequency. Compute IDF from the stories index at runtime (no cache needed — fast on 250 stories, auto-fresh).
+- Tokenize: lowercase, split on whitespace + punctuation, remove stopwords (minimal list: "the", "a", "an", "is", "in", "of", "to", "for", "and", "with", "by").
+- Combine scores: `combined = 0.6 * tfidf_cosine + 0.3 * jaccard_touches + 0.1 * epic_boost`. Epic/feature_slug boost is 0.2 additive when both item and story share the same slug (capped to 1.0 total).
+- Status filter: apply before scoring. Read `status` from stories index; skip if status in `{"done", "dropped", "closed-incomplete"}`.
+- Output: per item, a sorted list of `{slug, title, tfidf_score, jaccard_score, epic_boost, combined_score}` (top K=10). Also output the NxN intra-batch matrix as `{item_i, item_j, cosine_similarity}` triples.
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+**Phase 1 — Clustering:**
+- Inline orchestrator logic in `workflow.md` — no subagent needed.
+- Greedy threshold: sort all (i, j) intra-batch pairs by cosine similarity descending; greedily assign i and j to the same cluster if both are unassigned and similarity ≥ 0.4. Cluster size target: 3–7; if a cluster would exceed 7, start a new one.
+- For batches ≤5 items: skip clustering entirely, assign all items to one cluster, spawn one dedup agent.
+
+**Phase 2 — Fan-out:**
+- All dedup agent spawns go in a **single message** (parallel foreground agents). This is the critical correctness requirement — sequential spawning violates the pattern.
+- Each agent prompt: (1) cluster items with full text, (2) union of prefiltered shortlists for cluster members (deduped by slug), (3) full metadata for each candidate story, (4) instructions to return per-theme JSON findings.
+- Agents return their JSON array as their final response. Orchestrator collects all arrays.
+
+**Phase 3 — Consolidation candidate grouping:**
+- Inline in workflow.md after collecting Phase 2 findings.
+- Group all findings where `consolidation_hint` is non-null by `consolidation_hint.target_slug_or_theme`.
+- Groups with 2+ members → merge candidate. Flag for Story B, do not analyze further.
+
+**Phase 5 — Approval UX additions:**
+- Three new sections added before the existing classification block in the batch approval output.
+- Dedup actions section: grouped by `recommended_action` (consume, merge, replace, continue). Each finding shows: theme, match_type, matched_story_slug, evidence, recommended_action.
+- Split candidates section: items where ≥2 per-theme findings exist. Show item summary + themes.
+- Merge candidates section: consolidation groups. Show group members + rationale. Label as "flagged for Story B — no analysis yet."
 
 ### Project Structure Notes
 
-<!-- DRAFT: File paths, skill directories, and structural alignment have not been
-     analyzed. Create-story will populate this based on the relevant epic and
-     existing codebase structure. -->
-
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+- `momentum-tools.py` — main script at `skills/momentum/scripts/momentum-tools.py`. Add new subcommand under the `triage` command group (see existing `intake-queue` command group as the structural pattern).
+- `test-momentum-tools.py` — companion test file at `skills/momentum/scripts/test-momentum-tools.py`. Add new test class `TestTriagePrefilter` following the existing test class conventions.
+- `triage/workflow.md` — rewrite target at `skills/momentum/skills/triage/workflow.md`. Phases 0–3 are inserted before the existing Step 2 (context reads); Phase 5 approval UX additions go into the existing Step 4 output block.
+- `triage/SKILL.md` — description-only update at `skills/momentum/skills/triage/SKILL.md`.
+- No new files or directories needed. Do not create a `triage/references/` directory in this story (Story B may need it for the consolidation schema).
 
 ### References
 
-<!-- DRAFT: No references have been identified. Create-story will add source citations
-     from architecture docs, PRD, and relevant code. -->
+- Authoritative plan: `~/.claude/plans/i-want-us-to-delightful-spindle.md`
+- Governing decision: DEC-031 D5 (dedup + consolidation as mandatory triage gates)
+- Fan-out pattern: `skills/momentum/skills/retro/workflow.md` Step 4 (Phase 4 auditor fan-out)
+- Current triage workflow: `skills/momentum/skills/triage/workflow.md`
+- momentum-tools.py structure: `skills/momentum/scripts/momentum-tools.py` (read first 100 lines for command group patterns)
+- Change type templates: `skills/momentum/skills/create-story/references/change-types.md`
+- Verification standard: `skills/momentum/references/rules/verification-standard.md`
 
-_DRAFT — requires rewrite via create-story before this story is dev-ready._
+---
+
+## Momentum Implementation Guide
+
+**Change Types in This Story:**
+- Tasks 1, 2 → script-code (TDD)
+- Tasks 3, 4, 5 → skill-instruction (EDD)
+
+---
+
+### script-code Tasks: TDD via bmad-dev-story
+
+Script and code changes use standard TDD (red-green-refactor). bmad-dev-story handles TDD natively — the implementation guidance below matches its standard approach:
+
+1. **Red:** Write failing tests for the task's functionality first. Confirm they fail before implementing.
+2. **Green:** Implement the minimum code to make tests pass. Run tests to confirm.
+3. **Refactor:** Improve code structure while keeping tests green.
+
+**Note:** Scripts in Momentum live under `skills/momentum/skills/[name]/scripts/` or `skills/momentum/scripts/`. Follow the pattern in existing Momentum scripts for language choice and structure.
+
+**DoD items for script-code tasks (bmad-dev-story standard DoD applies — listed here for reference):**
+- Tests written and passing
+- No regressions in existing test suite
+- Code quality checks pass if configured
+
+---
+
+### skill-instruction Tasks: Eval-Driven Development (EDD)
+
+**Do NOT use TDD for SKILL.md or workflow.md files.** Skill instructions are non-deterministic LLM prompts — unit tests do not apply. Use EDD:
+
+**Before writing a single line of the skill:**
+1. Write 2–3 behavioral evals in `skills/momentum/skills/triage/evals/` (create `evals/` if it doesn't exist):
+   - One `.md` file per eval, named descriptively (e.g., `eval-dedup-phase2-fan-out-parallel.md`)
+   - Format each eval as: "Given [describe the input and context], the skill should [observable behavior — what Claude does or produces]"
+   - Test behaviors and decisions, not exact output text
+
+**Then implement:**
+2. Write/modify the workflow.md and SKILL.md
+
+**Then verify:**
+3. Run evals: for each eval file, spawn a subagent. Give it: (1) the eval's scenario as its task, and (2) load the skill by passing the workflow.md contents as context. Observe whether the subagent's behavior matches the eval's expected outcome.
+4. If all evals match → task complete
+5. If any eval fails → diagnose the gap in the skill instructions, revise, re-run (max 3 cycles; surface to user if still failing)
+
+**NFR compliance — mandatory for every skill-instruction task:**
+- SKILL.md `description` field must be ≤150 characters (NFR1) — count precisely
+- `model:` and `effort:` frontmatter fields must be present (model routing per FR23)
+- SKILL.md body must stay under 500 lines / 5000 tokens; overflow content goes in `references/` with clear load instructions (NFR3)
+- Skill names use `momentum:` namespace prefix (NFR12 — no naming collision with BMAD skills)
+
+**Additional DoD items for skill-instruction tasks (added to standard bmad-dev-story DoD):**
+- [ ] 2+ behavioral evals written in `skills/momentum/skills/triage/evals/`
+- [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
+- [ ] SKILL.md description ≤150 characters confirmed (count the actual characters)
+- [ ] `model:` and `effort:` frontmatter present and correct
+- [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed (overflow in `references/` if needed)
+- [ ] AVFL checkpoint on produced artifact documented (momentum:dev runs this automatically — validates the implemented workflow.md against story ACs)
+
+---
 
 ## Dev Agent Record
-
-<!-- DRAFT: This section is populated only during and after development. It is empty
-     because this story has not been through create-story or development yet. -->
-
-_DRAFT — this section is populated by the dev agent after create-story enrichment._
 
 ### Agent Model Used
 

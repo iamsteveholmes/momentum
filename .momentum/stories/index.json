@@ -4600,12 +4600,18 @@
     "story_type": "practice"
   },
   "triage-dedup-phase": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Triage dedup phase — deterministic prefilter + cluster fan-out + per-theme findings",
     "epic_slug": "agent-team-model",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "skills/momentum/skills/triage/workflow.md",
+      "skills/momentum/skills/triage/SKILL.md"
+    ],
+    "change_type": ["script-code", "skill-instruction"],
     "priority": "high",
     "story_type": "practice"
   },
