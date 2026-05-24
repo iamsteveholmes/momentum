@@ -60,10 +60,10 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
 10. Each dedup subagent returns a JSON array of per-theme findings conforming to the schema: `{ "source_item_id": "iq-...", "theme": "string", "match_type": "duplicate | supersedes | extends | unique", "matched_story_slug": "slug | null", "evidence": "1-2 sentence justification", "recommended_action": "consume | merge | replace | continue", "consolidation_hint": { "target_slug_or_theme": "...", "rationale": "..." } | null }`.
 11. A multi-theme incoming item (e.g., one covering two distinct concerns) returns two separate findings, surfacing it as a split candidate in the approval UX.
 12. The triage workflow adds Phase 3 inline consolidation-candidate grouping: the orchestrator groups `consolidation_hint` fields by `target_slug_or_theme`; groups with 2+ members are flagged as merge candidates (not analyzed further in this story — Story B scope).
-13. The Phase 5 approval UX in `triage/workflow.md` gains three new sections before the existing classification section: (a) **Dedup actions** — per-theme findings grouped by `recommended_action`; (b) **Split candidates** — items with 2+ per-theme findings; (c) **Merge candidates** — consolidation groups flagged for Story B.
+13. The Phase 5 approval UX in `triage/workflow.md` gains three new sections before the existing classification section: (a) **Dedup actions** — per-theme findings grouped by `recommended_action`; (b) **Split candidates** — items with 2+ per-theme findings; (c) **Merge candidates** — consolidation groups from Phase 3, shown as display-only with label "flagged for Story B — no action available yet." No executor path for merge candidates exists in Story A.
 14. On approval of dedup actions, the executor consumes queue items marked as duplicates and routes survivors to the existing five-class classification flow.
-15. Running triage against the 33 open handoffs produces sensible dedup findings: at minimum, the handoff matching `e2e-validator-black-box-hardening` themes is flagged as a duplicate/extends candidate, and the handoff matching `agent-spawn-preflight-check` themes is flagged as a duplicate/extends candidate.
-16. Unit tests cover: prefilter recall on synthetic duplicates, status filter exclusion, empty-backlog edge case (returns empty shortlists, no error), single-item batch edge case (no clustering, single dedup agent), all-identical batch edge case.
+15. Running triage against the 33 open handoffs produces sensible dedup findings: at minimum, handoff-2 (e2e service assumptions) is flagged as a duplicate/extends candidate against `e2e-validator-black-box-hardening`, and handoff-5 (subagent context-tier) is flagged as a duplicate/extends candidate against `agent-spawn-preflight-check`.
+16. Unit tests cover: prefilter recall on synthetic duplicates, status filter exclusion, empty-backlog edge case (returns empty shortlists, no error), single-item batch edge case (1x1 similarity matrix produced, no error), all-identical batch edge case (all inter-item cosine similarities ≥0.4 in matrix output).
 17. `triage/SKILL.md` description is updated to reflect the new dedup gate behavior (≤150 characters, per NFR1).
 
 ## Tasks / Subtasks
@@ -80,8 +80,8 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
    - Synthetic duplicate recall fixture (≥5 pairs, assert recall ≥95% at K=10)
    - Status filter test: terminal-status stories excluded from candidates
    - Empty backlog edge case: no candidates returned, no error raised
-   - Single-item batch: produces 1x1 similarity matrix, no clustering skips
-   - All-identical batch: clustering skips (≤5 items), single dedup agent path
+   - Single-item batch: produces 1x1 similarity matrix (single self-entry)
+   - All-identical batch: all inter-item cosine similarities ≥0.4 (verifies matrix values)
 
 3. **Add Phases 0–3 inline orchestration to `triage/workflow.md`**
    - Phase 0: call `momentum-tools triage prefilter`, capture shortlists and similarity matrix
@@ -121,7 +121,7 @@ The dedup fan-out pattern (Phase 2) is architecturally identical to the retro Ph
 
 **Behavioral verification (skill-instruction tasks):**
 - Run triage against the 33 open handoffs as the acceptance fixture
-- Expect: handoff items thematically related to `e2e-validator-black-box-hardening` appear in dedup findings; handoff items related to `agent-spawn-preflight-check` appear in dedup findings
+- Expect: handoff-2 (e2e service assumptions) flagged against `e2e-validator-black-box-hardening`; handoff-5 (subagent context-tier) flagged against `agent-spawn-preflight-check`
 - Run triage on a 1-item batch: confirm single dedup agent spawned (no clustering), correct routing on completion
 - Run triage on a synthetic 30-item batch with 3 intentional intra-batch duplicates: confirm per-theme findings surface the overlap and approval UX asks to merge
 
@@ -130,7 +130,7 @@ The dedup fan-out pattern (Phase 2) is architecturally identical to the retro Ph
 **Phase 0 — TF-IDF prefilter implementation:**
 - Use `collections.Counter` for term frequency. Compute IDF from the stories index at runtime (no cache needed — fast on 250 stories, auto-fresh).
 - Tokenize: lowercase, split on whitespace + punctuation, remove stopwords (minimal list: "the", "a", "an", "is", "in", "of", "to", "for", "and", "with", "by").
-- Combine scores: `combined = 0.6 * tfidf_cosine + 0.3 * jaccard_touches + 0.1 * epic_boost`. Epic/feature_slug boost is 0.2 additive when both item and story share the same slug (capped to 1.0 total).
+- Combine scores: `combined = 0.6 * tfidf_cosine + 0.3 * jaccard_touches + (0.1 if epic_match else 0.0)`. `epic_match` is True when both item and story share the same `epic_slug` or `feature_slug`. Maximum combined score is 1.0.
 - Status filter: apply before scoring. Read `status` from stories index; skip if status in `{"done", "dropped", "closed-incomplete"}`.
 - Output: per item, a sorted list of `{slug, title, tfidf_score, jaccard_score, epic_boost, combined_score}` (top K=10). Also output the NxN intra-batch matrix as `{item_i, item_j, cosine_similarity}` triples.
 
