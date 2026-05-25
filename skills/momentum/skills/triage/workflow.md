@@ -429,8 +429,11 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
     · "R" or "reject all [class]" → mark all in class as rejected (no action taken)
     · "[N]" → re-classify or edit that item interactively
     · Ranges "2-5" → batch approve/reject that range
-    · "consume N" → confirm item N as duplicate (remove from classification survivors)
-    · "skip N" → override dedup finding for item N, keep in classification
+    · "consume N" → confirm item N as duplicate (remove from queue on execution)
+    · "skip N" → override dedup finding for item N, keep in classification.
+        If item N was fully consumed (excluded from Step 3 classification):
+          prompt "What class should item N be? [ARTIFACT/DECISION/SHAPING/DEFER/REJECT]"
+          default to SHAPING. Add it to {{classified_items}} with the chosen class.
     · "done" → finalize with current approvals
     </action>
 
