@@ -1,9 +1,8 @@
 # momentum:triage Workflow
 
-**Goal:** Process multiple observations in one pass. Classify each into the correct
-class, enrich ARTIFACT items with feature/story metadata, batch-approve with the
-developer, then delegate to the appropriate downstream executor or write capture
-events to `intake-queue.jsonl`.
+**Goal:** Process multiple observations in one pass. Run dedup gate (Phases 0–3), present
+dedup + classification approval (Phase 5), then delegate to the appropriate downstream
+executor or write capture events to `intake-queue.jsonl`.
 
 **Role:** Orchestrator between upstream sources (retro output, conversation, assessment
 findings) and the per-item executors (`momentum:intake`, `momentum:decision`). Does NOT
@@ -41,6 +40,12 @@ to `momentum:intake`.
   <critical>Batch approval (Step 4) is required before any execution. Never skip it, even
   for a single-item triage session.</critical>
 
+  <critical>Phase 0 (prefilter) ALWAYS runs before classification, even for single-item
+  batches. Never skip Phase 0.</critical>
+
+  <critical>Phase 2 dedup subagents MUST be spawned in a single message (parallel foreground).
+  Never spawn dedup agents sequentially. Never use TeamCreate or SendMessage.</critical>
+
   <step n="1" goal="Surface source items and re-surface open queue items">
     <action>Read `.momentum/intake-queue.jsonl` if it exists.
     Filter for open items: kind in {shape, watch, handoff} with `status == "open"`.
@@ -73,7 +78,9 @@ These will be included alongside new items for re-classification.
     </check>
 
     <action>Merge {{open_queue_items}} and {{raw_items}} into {{all_items}}.
-    Tag open queue items with `[QUEUED]` prefix for display distinction.</action>
+    Tag open queue items with `[QUEUED]` prefix for display distinction.
+    Assign a stable local ID to each item (e.g., iq-temp-001, iq-temp-002 …) for matrix
+    indexing when items do not already carry an `id` field.</action>
   </step>
 
   <step n="2" goal="Read context artifacts for enrichment">
@@ -87,8 +94,209 @@ These will be included alongside new items for re-classification.
     typically under the token limit but may grow.</note>
   </step>
 
-  <step n="3" goal="Classify and enrich all items">
-    <action>For each item in {{all_items}}, classify it into exactly one of five classes:
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 0: DETERMINISTIC PREFILTER                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="2.1" goal="Phase 0 — run prefilter to build shortlists and similarity matrix">
+    <note>Phase 0 always runs. Even for a single-item batch the similarity matrix is needed
+    for Phase 1 branching logic.</note>
+
+    <action>Serialize {{all_items}} as a JSON array. Each element must have at minimum:
+      { "id": "...", "title": "...", "description": "...",
+        "touches": [...], "epic_slug": "...", "feature_slug": "..." }
+    Items from {{open_queue_items}} use their existing `id` field.
+    Items from {{raw_items}} without an `id` use the temp IDs assigned in Step 1.
+    </action>
+
+    <action>Run prefilter CLI:
+```
+python3 skills/momentum/scripts/momentum-tools.py triage prefilter \
+  --items-json '{{serialized_items_json}}' \
+  --stories-index .momentum/stories/index.json
+```
+    </action>
+
+    <action>Parse the JSON output.
+    Store {{shortlists}} = output.shortlists  (map of item_id → top-K=10 candidates).
+    Store {{similarity_matrix}} = output.similarity_matrix  (list of {item_i, item_j, cosine_similarity}).
+    Store {{candidate_count}} = output.candidate_count.
+    </action>
+
+    <check if="prefilter command fails (non-zero exit or error field in output)">
+      <output>! Phase 0 prefilter failed: {{error}}
+Falling back to classification without dedup gate. Backlog hygiene note: dedup skipped this run.</output>
+      <action>Store {{shortlists}} = {} (empty). Store {{similarity_matrix}} = [].
+      Continue to Step 2.2 with empty prefilter output — Phase 1 will assign all items to
+      one cluster, Phase 2 will spawn one dedup agent with no candidates.</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 1: INLINE CLUSTERING                              -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="2.2" goal="Phase 1 — cluster incoming items using similarity matrix">
+    <action>Count N = total items in {{all_items}}.</action>
+
+    <check if="N ≤ 5">
+      <action>Skip clustering. Assign all items to a single cluster: {{clusters}} = [{{all_items}}].
+      One dedup agent will process the whole batch.</action>
+    </check>
+
+    <check if="N > 5">
+      <action>Greedy threshold clustering using {{similarity_matrix}}:
+      1. Extract all (item_i, item_j, cosine_similarity) pairs where item_i ≠ item_j.
+      2. Sort pairs by cosine_similarity descending.
+      3. Initialize each item as unassigned. Maintain {{clusters}} = [].
+      4. For each pair (i, j) in sorted order:
+           a. Skip if both i and j are already in the SAME cluster.
+           b. If both unassigned: create a new cluster containing {i, j}.
+           c. If one is assigned and the other is unassigned AND the assigned cluster has
+              fewer than 7 members: add the unassigned item to that cluster.
+           d. If both are in different clusters AND merging would not exceed 7 members:
+              merge the two clusters.
+           e. If a cluster would exceed 7 members: start a new cluster for the unassigned item.
+      5. Any item still unassigned after processing all pairs gets its own singleton cluster.
+      Target cluster size: 3–7. Clusters of 1–2 are acceptable for tail items.
+      </action>
+    </check>
+
+    <action>Store {{clusters}} = final list of clusters. Each cluster is a list of items.</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 2: DEDUP FAN-OUT (PARALLEL SUBAGENT SPAWN)        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="2.3" goal="Phase 2 — spawn dedup subagent per cluster in parallel">
+    <note>CRITICAL: all dedup agent spawns go in ONE message (parallel foreground agents).
+    Do not loop and spawn sequentially. Do not use TeamCreate or SendMessage.
+    This mirrors retro/workflow.md Phase 4 auditor fan-out exactly.</note>
+
+    <action>For each cluster in {{clusters}}, build the dedup agent prompt:
+
+      Compute union_shortlist for this cluster:
+        union = {} (keyed by slug)
+        for each item in cluster:
+          for each candidate in {{shortlists}}[item.id]:
+            if candidate.slug not in union OR candidate.combined_score > union[candidate.slug].combined_score:
+              union[candidate.slug] = candidate
+        union_shortlist = list(union.values()), sorted by combined_score descending
+
+      For each candidate slug in union_shortlist, load full story metadata from
+      `.momentum/stories/index.json` (title, description, status, epic_slug,
+      feature_slug, touches, depends_on).
+
+      PROMPT:
+      ---
+      You are a dedup specialist reviewing incoming work items against an existing story backlog.
+
+      ## Cluster items ({{cluster_size}} items — analyze each one)
+
+      {{for each item in cluster:
+        ---
+        Item ID: {{item.id}}
+        Title: {{item.title}}
+        Description: {{item.description}}
+        Touches: {{item.touches | join(", ")}}
+        Epic: {{item.epic_slug}}
+        ---
+      }}
+
+      ## Prefiltered candidate stories (union shortlist for this cluster — {{union_count}} candidates)
+
+      {{for each candidate in union_shortlist:
+        Slug: {{slug}}
+        Title: {{title}}
+        Status: {{status}} · Epic: {{epic_slug}}
+        Score: combined={{combined_score}} (tfidf={{tfidf_score}}, jaccard={{jaccard_score}})
+        Description: {{description}}
+        ---
+      }}
+
+      ## Task
+
+      For EACH item in the cluster, produce one or more per-theme findings.
+      If an item covers multiple distinct concerns, produce a separate finding per theme
+      (this surfaces it as a split candidate).
+
+      Return a JSON array as your FINAL RESPONSE. Each element must conform exactly to:
+      {
+        "source_item_id": "the item id from above",
+        "theme": "short label for this theme (≤10 words)",
+        "match_type": "duplicate | supersedes | extends | unique",
+        "matched_story_slug": "slug-of-matched-story OR null if unique",
+        "evidence": "1-2 sentence justification",
+        "recommended_action": "consume | merge | replace | continue",
+        "consolidation_hint": {
+          "target_slug_or_theme": "slug or theme label",
+          "rationale": "why these should be consolidated"
+        } or null
+      }
+
+      Rules:
+      - match_type "duplicate" → recommended_action "consume"
+      - match_type "supersedes" → recommended_action "replace"
+      - match_type "extends" → recommended_action "merge" or "continue"
+      - match_type "unique" → recommended_action "continue", matched_story_slug null
+      - Only recommend "consume" if the incoming item adds nothing beyond what the existing
+        story already covers.
+
+      Return ONLY the JSON array. No preamble, no explanation, no markdown code fence.
+      ---
+    </action>
+
+    <action>Spawn ALL dedup subagents in a SINGLE message (parallel foreground agents).
+    Collect all JSON array responses.
+    Flatten into {{dedup_findings}} = single list of all per-theme finding objects.
+    </action>
+
+    <check if="any agent returns malformed JSON or non-array response">
+      <output>! Dedup agent for cluster {{cluster_index}} returned malformed output — findings skipped for that cluster.</output>
+      <action>Continue with findings from other clusters. Record the gap for summary.</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 3: CONSOLIDATION CANDIDATE GROUPING               -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="2.4" goal="Phase 3 — inline consolidation-candidate grouping">
+    <note>Pure inline pass — no subagent. Flags groups for Story B; no merge execution here.</note>
+
+    <action>Group {{dedup_findings}} by consolidation_hint.target_slug_or_theme:
+    For each finding where consolidation_hint is non-null:
+      Add finding to group keyed by consolidation_hint.target_slug_or_theme.
+    Groups with 2+ members → merge candidate.
+    Store {{merge_candidates}} = list of {target, members: [findings...], rationale}.
+    </action>
+
+    <action>Also scan {{similarity_matrix}} for cross-cluster consolidation signals:
+    For any (item_i, item_j) pair with cosine_similarity ≥ 0.4 where item_i and item_j
+    were NOT in the same cluster in Phase 1 — append a merge candidate:
+      { target: "cross-cluster-pair", members: [item_i, item_j],
+        rationale: "high intra-batch similarity (cosine {{score}})" }
+    </action>
+
+    <action>Store {{split_candidates}} = items where {{dedup_findings}} contains
+    2+ findings with the same source_item_id.
+    Each: { item_id: "...", themes: [list of theme strings] }
+    </action>
+
+    <action>Store {{survivor_items}}:
+    For each item in {{all_items}}:
+      findings_for_item = [f for f in {{dedup_findings}} where f.source_item_id == item.id]
+      if all(f.recommended_action == "consume" for f in findings_for_item):
+        → consumed (excluded from classification)
+      else:
+        → survivor (proceed to Step 3 classification)
+    Items with no findings at all → survivors (treated as unique).
+    </action>
+  </step>
+
+  <step n="3" goal="Classify and enrich survivor items">
+    <action>For each item in {{survivor_items}}, classify it into exactly one of five classes:
     ARTIFACT, DECISION, SHAPING, DEFER, REJECT.
 
     Classification heuristics:
@@ -120,16 +328,66 @@ These will be included alongside new items for re-classification.
     <action>Store {{classified_items}} = list of {original_text, class, enrichment (if ARTIFACT), suggested_action}</action>
   </step>
 
-  <step n="4" goal="Batch approval — present classification for developer review">
-    <action>Present all classified items grouped by class with numbered IDs.
-    Use batch-approval UX (same pattern as momentum:refine Step 9):
-    · For each class group with items: show class name, count, and all items
-    · Offer batch operation: "Approve all [CLASS]?" or individual overrides
-    · Developer can re-classify any item, update enrichment fields, or split/merge items
-    </action>
-
+  <step n="4" goal="Batch approval — present dedup findings + classification for developer review">
     <output>
-Triage — {{total_count}} items classified:
+Triage — {{total_count}} items · {{dedup_findings | length}} dedup findings · {{survivor_count}} survivors proceeding to classification
+
+<!-- ── SECTION A: DEDUP ACTIONS ─────────────────────────── -->
+{{if dedup_findings is non-empty:}}
+## Dedup Actions
+
+{{if consume group (recommended_action == "consume"):}}
+**consume** ({{count}} — confirmed duplicates — will be removed from classification):
+{{for each finding:
+  · [{{source_item_id}}] {{theme}}
+    match: {{match_type}} → `{{matched_story_slug}}`
+    evidence: {{evidence}}
+    → 'consume {{N}}' to confirm · 'skip {{N}}' to override
+}}
+
+{{if merge group (recommended_action == "merge"):}}
+**merge** ({{count}} — should be combined with existing story):
+{{for each finding:
+  · [{{source_item_id}}] {{theme}}
+    match: {{match_type}} → `{{matched_story_slug}}`
+    evidence: {{evidence}}
+}}
+
+{{if replace group (recommended_action == "replace"):}}
+**replace** ({{count}} — supersedes existing story):
+{{for each finding:
+  · [{{source_item_id}}] {{theme}}
+    match: {{match_type}} → `{{matched_story_slug}}`
+    evidence: {{evidence}}
+}}
+
+{{if continue group (recommended_action == "continue"):}}
+**continue** ({{count}} — unique, proceeding to classification):
+{{for each finding:
+  · [{{source_item_id}}] {{theme}} — no backlog match
+}}
+
+<!-- ── SECTION B: SPLIT CANDIDATES ─────────────────────── -->
+{{if split_candidates is non-empty:}}
+## Split Candidates (multi-theme items — consider splitting before intake)
+
+{{for each split candidate:
+  · [{{item_id}}] covers {{theme_count}} themes:
+    {{for each theme: - {{theme}}}}
+}}
+
+<!-- ── SECTION C: MERGE CANDIDATES ─────────────────────── -->
+{{if merge_candidates is non-empty:}}
+## Merge Candidates — flagged for Story B (display only, no action available)
+
+{{for each group:
+  · target: {{target_slug_or_theme}}  ({{member_count}} items)
+    members: {{member_item_ids | join(", ")}}
+    rationale: {{rationale}}
+}}
+
+<!-- ── SECTION D: FIVE-CLASS CLASSIFICATION ─────────────── -->
+## Classification — {{survivor_count}} survivors
 
 {{if ARTIFACT items:}}
 [ARTIFACT] — {{count}} items  →  will be sent to momentum:intake
@@ -168,10 +426,13 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
     · "R" or "reject all [class]" → mark all in class as rejected (no action taken)
     · "[N]" → re-classify or edit that item interactively
     · Ranges "2-5" → batch approve/reject that range
+    · "consume N" → confirm item N as duplicate (remove from classification survivors)
+    · "skip N" → override dedup finding for item N, keep in classification
     · "done" → finalize with current approvals
     </action>
 
-    <action>Store {{approved_items}} = all approved classified items</action>
+    <action>Store {{approved_items}} = all approved classified survivors</action>
+    <action>Store {{consumed_items}} = all items confirmed as duplicates</action>
     <action>Store {{rejected_count}} = count of items rejected in approval step (not REJECT-class items)</action>
 
     <check if="{{open_queue_items}} contains items with no new action">
@@ -183,6 +444,12 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
 
   <step n="5" goal="Execute approved actions">
     <action>Process approved items in this order:
+
+    **Consumed duplicate items** — mark as consumed in intake-queue.jsonl (if from queue):
+      For each item in {{consumed_items}} that originated from {{open_queue_items}}:
+        python3 skills/momentum/scripts/momentum-tools.py intake-queue consume \
+          --id "{{queue_id}}"
+      Raw items (not from queue) with consume action: no further action needed.
 
     **ARTIFACT items** — spawn momentum:intake per item (in parallel if multiple):
       Pass enriched context to intake:
@@ -247,6 +514,11 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
 
   <step n="6" goal="Summary">
     <output>## ✓ Triage Complete — {{total_processed}} Items Processed
+
+**Dedup gate:**
+  · {{consumed_count}} consumed (confirmed duplicates)
+  · {{split_count}} split candidates surfaced
+  · {{merge_candidate_count}} merge candidate groups flagged for Story B
 
 **Stubbed to backlog ({{intake_count}}):**
 {{for each intake result: · `{{slug}}` — `{{stub_path}}`}}

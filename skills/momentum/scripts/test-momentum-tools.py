@@ -3268,383 +3268,316 @@ def main():
     test_activate_approvals_carried_to_active()
     test_activate_no_approvals_when_no_stories()
 
+    # Triage prefilter tests
+    test_prefilter_recall_duplicate_pairs()
+    test_prefilter_status_filter_excludes_terminal()
+    test_prefilter_empty_backlog()
+    test_prefilter_single_item_batch()
+    test_prefilter_all_identical_batch()
+    test_prefilter_score_fields_present()
+    test_prefilter_epic_boost_applied()
+    test_prefilter_intra_batch_matrix_dimensions()
+    test_prefilter_known_duplicates_from_ac15()
+    test_prefilter_runs_triage_group()
+
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
 
     sys.exit(1 if FAIL_COUNT > 0 else 0)
 
 
-# --- Story Approval Tests ---
+# --- Triage Prefilter Tests ---
 
-def setup_story_file(project_dir: Path, slug: str, content: str) -> Path:
-    """Create a story file in .momentum/stories/<slug>.md."""
-    stories_dir = project_dir / ".momentum" / "stories"
-    stories_dir.mkdir(parents=True, exist_ok=True)
-    story_path = stories_dir / f"{slug}.md"
-    story_path.write_text(content)
-    return story_path
+def setup_prefilter_project(stories: dict) -> Path:
+    """Create a temp project with stories/index.json for prefilter tests."""
+    return setup_project(stories=stories)
 
 
-def compute_file_sha(path: Path) -> str:
-    """Compute SHA-256 of a file's contents (matching tool logic)."""
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def run_prefilter(project_dir: Path, items: list, stories: dict | None = None) -> tuple[int, dict]:
+    """Run triage prefilter subcommand. stories arg overrides what's in project_dir if provided."""
+    import tempfile
+    index_path = project_dir / ".momentum" / "stories" / "index.json"
+    if stories is not None:
+        index_path.write_text(json.dumps(stories, indent=2))
+    return run_tool(project_dir, "triage", "prefilter",
+                    "--items-json", json.dumps(items),
+                    "--stories-index", str(index_path))
 
 
-def test_story_approve_writes_approved_entry():
-    """story-approve writes an approved entry to planning.approvals."""
-    print("\n[sprint story-approve] Writes approved entry")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [slug]},
-                 "completed": []}
-    )
-    story_path = setup_story_file(proj, slug, "# My Story\n\nSome content.\n")
-    expected_sha = compute_file_sha(story_path)
+def _make_story(title: str, description: str = "", epic_slug: str = "test-epic",
+                feature_slug: str = "", status: str = "backlog",
+                touches: list | None = None) -> dict:
+    """Build a minimal story index entry."""
+    entry: dict = {
+        "status": status, "title": title, "description": description,
+        "epic_slug": epic_slug, "story_file": False,
+        "depends_on": [], "touches": touches or []
+    }
+    if feature_slug:
+        entry["feature_slug"] = feature_slug
+    return entry
 
-    code, out = run_tool(proj, "sprint", "story-approve",
-                         "--slug", slug, "--decision", "approved")
+
+def _make_item(item_id: str, title: str, description: str = "", epic_slug: str = "",
+               feature_slug: str = "", touches: list | None = None) -> dict:
+    """Build a minimal incoming item for prefilter input."""
+    return {
+        "id": item_id, "title": title, "description": description,
+        "epic_slug": epic_slug, "feature_slug": feature_slug,
+        "touches": touches or []
+    }
+
+
+def test_prefilter_recall_duplicate_pairs():
+    """Recall fixture: ≥5 synthetic duplicate pairs, recall ≥95% at K=10."""
+    print("\n[triage prefilter] Recall fixture (≥5 pairs, ≥95% recall at K=10)")
+    # Build 6 duplicate pairs: each item is a paraphrase of its matching story
+    pairs = [
+        ("iq-p1", "add e2e validator service URL configuration",
+         "e2e-validator-hardened", "e2e validator should read service URLs from config not hardcode them",
+         "validator hardcoded URLs need to be configurable via environment variable"),
+        ("iq-p2", "agent spawn preflight context tier check",
+         "agent-preflight-check", "preflight check before spawning subagents validates context tier",
+         "add preflight validation step to verify context level before agent spawn"),
+        ("iq-p3", "triage dedup gate for backlog hygiene",
+         "triage-dedup-gate", "dedup gate in triage prevents duplicate stories from entering backlog",
+         "implement deduplication step in triage workflow to catch backlog duplicates"),
+        ("iq-p4", "intake queue status filter removes terminal stories",
+         "intake-queue-status-filter", "status filter in intake queue excludes done and dropped stories",
+         "filter terminal status stories from intake queue processing"),
+        ("iq-p5", "retro auditor fan-out parallel spawn",
+         "retro-auditor-fanout", "retro spawns three auditors in parallel using fan-out pattern",
+         "retro Phase 4 spawns auditors as parallel subagents not sequential"),
+        ("iq-p6", "sprint planning wave ordering dependencies",
+         "sprint-wave-order", "sprint planning groups stories into waves respecting dependency order",
+         "wave-based story ordering in sprint planning respects depends_on fields"),
+    ]
+
+    # Build stories index with true matches (high similarity) plus distractors
+    stories: dict = {}
+    true_slugs: dict[str, str] = {}
+    for item_id, item_title, story_slug, story_title, story_desc in pairs:
+        stories[story_slug] = _make_story(story_title, story_desc)
+        true_slugs[item_id] = story_slug
+
+    # Add distractor stories with unrelated topics
+    for i in range(20):
+        stories[f"distractor-{i}"] = _make_story(
+            f"unrelated topic {i} completely different domain",
+            f"nothing to do with the query items, domain {i}"
+        )
+
+    items = [_make_item(item_id, item_title)
+             for item_id, item_title, _, _, _, in pairs]
+
+    proj = setup_prefilter_project(stories)
+    code, out = run_prefilter(proj, items)
     assert_eq("exit code 0", code, 0)
     assert_eq("success true", out.get("success"), True)
 
-    data = read_sprints(proj)
-    approvals = data["planning"].get("approvals", [])
-    assert_eq("one approval entry", len(approvals), 1)
-    entry = approvals[0]
-    assert_eq("slug correct", entry.get("story_slug"), slug)
-    assert_eq("decision approved", entry.get("decision"), "approved")
-    assert_eq("sha matches", entry.get("story_file_sha"), expected_sha)
-    assert_eq("approved_at present", "approved_at" in entry, True)
+    shortlists = out.get("shortlists", {})
+    hits = 0
+    total = len(pairs)
+    for item_id, _, true_slug, _, _ in pairs:
+        candidates = shortlists.get(item_id, [])
+        candidate_slugs = [c["slug"] for c in candidates]
+        if true_slug in candidate_slugs:
+            hits += 1
+        else:
+            print(f"    MISS: item={item_id} expected={true_slug} got top3={candidate_slugs[:3]}")
+
+    recall = hits / total if total > 0 else 0.0
+    assert_eq(f"recall ≥95% at K=10 ({hits}/{total} = {recall:.2%})", recall >= 0.95, True)
 
 
-def test_story_approve_writes_rejected_entry():
-    """story-approve with decision=rejected writes a rejection entry."""
-    print("\n[sprint story-approve] Writes rejected entry")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [slug]},
-                 "completed": []}
-    )
-    setup_story_file(proj, slug, "# My Story\n\nContent.\n")
+def test_prefilter_status_filter_excludes_terminal():
+    """Terminal-status stories must not appear in any shortlist."""
+    print("\n[triage prefilter] Status filter excludes terminal stories")
+    terminal_slug = "done-story"
+    non_terminal_slug = "active-story"
+    stories = {
+        terminal_slug: _make_story("add authentication flow to login page",
+                                   "implement user login with JWT tokens",
+                                   status="done"),
+        non_terminal_slug: _make_story("add authentication flow to login page",
+                                       "implement user login with JWT tokens",
+                                       status="backlog"),
+    }
+    # Also test dropped and closed-incomplete
+    stories["dropped-story"] = _make_story("add authentication flow to login page",
+                                           "implement user login with JWT tokens",
+                                           status="dropped")
+    stories["closed-story"] = _make_story("add authentication flow to login page",
+                                          "implement user login with JWT tokens",
+                                          status="closed-incomplete")
 
-    code, out = run_tool(proj, "sprint", "story-approve",
-                         "--slug", slug, "--decision", "rejected")
+    items = [_make_item("iq-001", "add authentication flow to login page",
+                        "implement user login with JWT tokens")]
+    proj = setup_prefilter_project(stories)
+    code, out = run_prefilter(proj, items)
     assert_eq("exit code 0", code, 0)
 
-    data = read_sprints(proj)
-    approvals = data["planning"].get("approvals", [])
-    assert_eq("one approval entry", len(approvals), 1)
-    assert_eq("decision rejected", approvals[0].get("decision"), "rejected")
+    candidates = out.get("shortlists", {}).get("iq-001", [])
+    slugs = [c["slug"] for c in candidates]
+    assert_eq("done story excluded", terminal_slug not in slugs, True)
+    assert_eq("dropped story excluded", "dropped-story" not in slugs, True)
+    assert_eq("closed-incomplete story excluded", "closed-story" not in slugs, True)
+    assert_eq("backlog story included", non_terminal_slug in slugs, True)
 
 
-def test_story_approve_replaces_prior_entry():
-    """Re-approving a story replaces the prior entry (idempotent overwrite)."""
-    print("\n[sprint story-approve] Replaces prior entry (idempotent)")
-    slug = "my-story"
-    old_sha = "deadbeef" * 8
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [slug],
-                              "approvals": [{"story_slug": slug, "decision": "approved",
-                                             "approved_at": "2026-01-01T00:00:00Z",
-                                             "story_file_sha": old_sha}]},
-                 "completed": []}
-    )
-    story_path = setup_story_file(proj, slug, "# Updated content.\n")
-    new_sha = compute_file_sha(story_path)
-
-    code, out = run_tool(proj, "sprint", "story-approve",
-                         "--slug", slug, "--decision", "approved")
-    assert_eq("exit code 0", code, 0)
-
-    data = read_sprints(proj)
-    approvals = data["planning"].get("approvals", [])
-    assert_eq("still one entry after re-approve", len(approvals), 1)
-    assert_eq("sha updated to new", approvals[0].get("story_file_sha"), new_sha)
-
-
-def test_story_approve_no_planning_sprint():
-    """story-approve fails when no planning sprint exists."""
-    print("\n[sprint story-approve] No planning sprint")
-    proj = setup_project(sprints={"active": None, "planning": None, "completed": []})
-    setup_story_file(proj, "ghost", "content")
-    code, out = run_tool(proj, "sprint", "story-approve",
-                         "--slug", "ghost", "--decision", "approved")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-
-
-def test_story_approve_slug_not_in_sprint():
-    """story-approve fails when slug is not in planning.stories."""
-    print("\n[sprint story-approve] Slug not in sprint")
-    proj = setup_project(
-        sprints={"active": None,
-                 "planning": {"slug": "s", "locked": False, "status": "planning",
-                              "stories": ["other-story"]},
-                 "completed": []}
-    )
-    setup_story_file(proj, "my-story", "content")
-    code, out = run_tool(proj, "sprint", "story-approve",
-                         "--slug", "my-story", "--decision", "approved")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-
-
-def test_story_approve_initializes_approvals_array():
-    """story-approve initializes planning.approvals array when absent."""
-    print("\n[sprint story-approve] Initializes approvals array if absent")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "s", "locked": False, "status": "planning",
-                              "stories": [slug]},
-                 "completed": []}
-    )
-    setup_story_file(proj, slug, "# Content\n")
-    # No approvals key initially
-    data = read_sprints(proj)
-    assert_eq("no approvals key yet", "approvals" not in data["planning"], True)
-
-    code, out = run_tool(proj, "sprint", "story-approve",
-                         "--slug", slug, "--decision", "approved")
-    assert_eq("exit code 0", code, 0)
-
-    data = read_sprints(proj)
-    assert_eq("approvals key created", "approvals" in data["planning"], True)
-    assert_eq("one entry", len(data["planning"]["approvals"]), 1)
-
-
-def test_verify_approvals_all_approved():
-    """verify-approvals returns success when all stories have matching approved entries."""
-    print("\n[sprint verify-approvals] All approved — success")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "s", "locked": False, "status": "planning",
-                              "stories": [slug]},
-                 "completed": []}
-    )
-    story_path = setup_story_file(proj, slug, "# Content\n")
-    sha = compute_file_sha(story_path)
-
-    # Set up the approval entry manually
-    sprints_file = proj / ".momentum" / "sprints" / "index.json"
-    data = json.loads(sprints_file.read_text())
-    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
-                                       "approved_at": "2026-04-30T00:00:00Z",
-                                       "story_file_sha": sha}]
-    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
-
-    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
+def test_prefilter_empty_backlog():
+    """Empty stories index returns empty shortlists and no error."""
+    print("\n[triage prefilter] Empty backlog edge case")
+    proj = setup_prefilter_project({})
+    items = [_make_item("iq-001", "some incoming item title")]
+    # Point to a non-existent index to trigger the empty-backlog path
+    index_path = proj / ".momentum" / "stories" / "index.json"
+    # Overwrite with empty object
+    index_path.write_text("{}\n")
+    code, out = run_prefilter(proj, items)
     assert_eq("exit code 0", code, 0)
     assert_eq("success true", out.get("success"), True)
-    assert_eq("missing empty", out.get("missing", []), [])
+    shortlists = out.get("shortlists", {})
+    assert_eq("iq-001 has empty shortlist", shortlists.get("iq-001"), [])
 
 
-def test_verify_approvals_missing_approval():
-    """verify-approvals fails when a story has no approval entry."""
-    print("\n[sprint verify-approvals] Missing approval — fails")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "s", "locked": False, "status": "planning",
-                              "stories": [slug],
-                              "approvals": []},
-                 "completed": []}
-    )
-    setup_story_file(proj, slug, "# Content\n")
-
-    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-    assert_eq("missing contains slug", slug in out.get("missing", []), True)
-
-
-def test_verify_approvals_sha_mismatch():
-    """verify-approvals fails when story file was edited after approval (SHA mismatch)."""
-    print("\n[sprint verify-approvals] SHA mismatch — fails")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "s", "locked": False, "status": "planning",
-                              "stories": [slug],
-                              "approvals": [{"story_slug": slug, "decision": "approved",
-                                             "approved_at": "2026-04-30T00:00:00Z",
-                                             "story_file_sha": "old-sha-value"}]},
-                 "completed": []}
-    )
-    setup_story_file(proj, slug, "# Updated content after approval\n")
-
-    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "planning")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-    assert_eq("slug in missing", slug in out.get("missing", []), True)
-
-
-def test_verify_approvals_active_scope():
-    """verify-approvals --scope active reads from active sprint."""
-    print("\n[sprint verify-approvals] Active scope")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "in-progress", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": {"slug": "s", "locked": True, "status": "active",
-                            "stories": [slug],
-                            "approvals": [{"story_slug": slug, "decision": "approved",
-                                           "approved_at": "2026-04-30T00:00:00Z",
-                                           "story_file_sha": "placeholder-sha"}]},
-                 "planning": None, "completed": []}
-    )
-    story_path = setup_story_file(proj, slug, "# Content\n")
-    real_sha = compute_file_sha(story_path)
-
-    # Update approval to have the real SHA
-    sprints_file = proj / ".momentum" / "sprints" / "index.json"
-    data = json.loads(sprints_file.read_text())
-    data["active"]["approvals"][0]["story_file_sha"] = real_sha
-    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
-
-    code, out = run_tool(proj, "sprint", "verify-approvals", "--scope", "active")
+def test_prefilter_single_item_batch():
+    """Single-item batch produces a 1x1 similarity matrix (self-entry)."""
+    print("\n[triage prefilter] Single-item batch produces 1x1 matrix")
+    stories = {"s1": _make_story("some story title", "some story description")}
+    items = [_make_item("iq-001", "something something")]
+    proj = setup_prefilter_project(stories)
+    code, out = run_prefilter(proj, items)
     assert_eq("exit code 0", code, 0)
-    assert_eq("success true", out.get("success"), True)
+    matrix = out.get("similarity_matrix", [])
+    assert_eq("matrix has exactly 1 entry (1x1)", len(matrix), 1)
+    entry = matrix[0]
+    assert_eq("item_i == item_j (self)", entry.get("item_i"), entry.get("item_j"))
+    assert_eq("self-similarity == 1.0", entry.get("cosine_similarity"), 1.0)
 
 
-def test_activate_blocked_missing_approval():
-    """sprint activate fails when approvals are missing."""
-    print("\n[sprint activate] Blocked — missing approval")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [slug],
-                              "approvals": []},
-                 "completed": []}
-    )
-    setup_story_file(proj, slug, "# Content\n")
-
-    code, out = run_tool(proj, "sprint", "activate")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-    assert_eq("error mentions missing", "missing" in out.get("error", "").lower()
-              or len(out.get("missing", [])) > 0, True)
-
-
-def test_activate_blocked_sha_mismatch():
-    """sprint activate fails when story file SHA mismatches approval record."""
-    print("\n[sprint activate] Blocked — SHA mismatch")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [slug],
-                              "approvals": [{"story_slug": slug, "decision": "approved",
-                                             "approved_at": "2026-04-30T00:00:00Z",
-                                             "story_file_sha": "stale-sha"}]},
-                 "completed": []}
-    )
-    setup_story_file(proj, slug, "# Content changed after approval\n")
-
-    code, out = run_tool(proj, "sprint", "activate")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-
-
-def test_activate_succeeds_all_approved():
-    """sprint activate succeeds when all stories have matching approved SHAs."""
-    print("\n[sprint activate] Succeeds when all approved")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [slug]},
-                 "completed": []}
-    )
-    story_path = setup_story_file(proj, slug, "# Approved story content.\n")
-    sha = compute_file_sha(story_path)
-
-    # Write approval with correct SHA
-    sprints_file = proj / ".momentum" / "sprints" / "index.json"
-    data = json.loads(sprints_file.read_text())
-    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
-                                       "approved_at": "2026-04-30T00:00:00Z",
-                                       "story_file_sha": sha}]
-    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
-
-    code, out = run_tool(proj, "sprint", "activate")
+def test_prefilter_all_identical_batch():
+    """All-identical items produce inter-item cosine similarities ≥0.4 in matrix."""
+    print("\n[triage prefilter] All-identical batch edge case")
+    text = "refactor intake queue deduplication logic to improve performance"
+    stories = {"dummy-s": _make_story("some unrelated story")}
+    # 3 identical incoming items
+    items = [_make_item(f"iq-00{i}", text, text) for i in range(1, 4)]
+    proj = setup_prefilter_project(stories)
+    code, out = run_prefilter(proj, items)
     assert_eq("exit code 0", code, 0)
-    assert_eq("success true", out.get("success"), True)
-
-    sprints_data = json.loads(sprints_file.read_text())
-    assert_eq("sprint activated", sprints_data["active"]["slug"], "test-sprint")
-    assert_eq("approvals carried over", len(sprints_data["active"].get("approvals", [])), 1)
-
-
-def test_activate_approvals_carried_to_active():
-    """Approvals array is carried verbatim from planning to active on activation."""
-    print("\n[sprint activate] Approvals carried to active sprint")
-    slug = "my-story"
-    proj = setup_project(
-        stories={slug: {"status": "ready-for-dev", "title": "My Story", "epic_slug": "e",
-                        "story_file": True, "depends_on": [], "touches": []}},
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [slug]},
-                 "completed": []}
-    )
-    story_path = setup_story_file(proj, slug, "# Content\n")
-    sha = compute_file_sha(story_path)
-
-    sprints_file = proj / ".momentum" / "sprints" / "index.json"
-    data = json.loads(sprints_file.read_text())
-    data["planning"]["approvals"] = [{"story_slug": slug, "decision": "approved",
-                                       "approved_at": "2026-04-30T12:00:00Z",
-                                       "story_file_sha": sha}]
-    sprints_file.write_text(json.dumps(data, indent=2) + "\n")
-
-    run_tool(proj, "sprint", "activate")
-    result_data = json.loads(sprints_file.read_text())
-    approvals = result_data["active"].get("approvals", [])
-    assert_eq("one approval on active", len(approvals), 1)
-    assert_eq("sha preserved", approvals[0].get("story_file_sha"), sha)
-    assert_eq("timestamp preserved", approvals[0].get("approved_at"), "2026-04-30T12:00:00Z")
+    matrix = out.get("similarity_matrix", [])
+    # Check all non-self pairs
+    off_diag = [e for e in matrix if e["item_i"] != e["item_j"]]
+    assert_eq(f"matrix has {len(items)**2 - len(items)} off-diagonal entries",
+              len(off_diag), len(items) * len(items) - len(items))
+    low_pairs = [e for e in off_diag if e["cosine_similarity"] < 0.4]
+    assert_eq("all inter-item similarities ≥0.4 for identical items",
+              len(low_pairs), 0)
 
 
-def test_activate_no_approvals_when_no_stories():
-    """sprint activate with no stories in planning still succeeds (empty approvals OK)."""
-    print("\n[sprint activate] No stories — succeeds (no approvals needed)")
-    proj = setup_project(
-        sprints={"active": None,
-                 "planning": {"slug": "test-sprint", "locked": False, "status": "planning",
-                              "stories": [],
-                              "approvals": []},
-                 "completed": []}
-    )
-    code, out = run_tool(proj, "sprint", "activate")
+def test_prefilter_score_fields_present():
+    """Each shortlist entry contains all required score breakdown fields."""
+    print("\n[triage prefilter] Score fields present in shortlist entries")
+    stories = {
+        "story-a": _make_story("add dedup logic to triage workflow", "dedup prevents backlog duplicates"),
+    }
+    items = [_make_item("iq-001", "add dedup logic to triage", "prevents duplicate backlog entries")]
+    proj = setup_prefilter_project(stories)
+    code, out = run_prefilter(proj, items)
     assert_eq("exit code 0", code, 0)
+    candidates = out.get("shortlists", {}).get("iq-001", [])
+    assert_eq("at least one candidate returned", len(candidates) >= 1, True)
+    entry = candidates[0]
+    for field in ("slug", "title", "tfidf_score", "jaccard_score", "epic_boost", "combined_score"):
+        assert_eq(f"field '{field}' present", field in entry, True)
+
+
+def test_prefilter_epic_boost_applied():
+    """Epic/feature_slug match gives +0.1 boost to combined_score."""
+    print("\n[triage prefilter] Epic boost applied on slug match")
+    stories = {
+        "matching-epic-story": _make_story("configure service endpoint override", status="backlog",
+                                            epic_slug="agent-team-model"),
+        "different-epic-story": _make_story("configure service endpoint override", status="backlog",
+                                             epic_slug="other-epic"),
+    }
+    items = [_make_item("iq-001", "configure service endpoint override",
+                        epic_slug="agent-team-model")]
+    proj = setup_prefilter_project(stories)
+    code, out = run_prefilter(proj, items)
+    assert_eq("exit code 0", code, 0)
+    candidates = out.get("shortlists", {}).get("iq-001", [])
+    by_slug = {c["slug"]: c for c in candidates}
+    match = by_slug.get("matching-epic-story")
+    other = by_slug.get("different-epic-story")
+    if match and other:
+        assert_eq("matching epic has epic_boost=0.1", match["epic_boost"], 0.1)
+        assert_eq("different epic has epic_boost=0.0", other["epic_boost"], 0.0)
+        assert_eq("matching epic combined > different epic combined",
+                  match["combined_score"] > other["combined_score"], True)
+    else:
+        assert_eq("both candidates in shortlist", len(candidates) >= 2, True)
+
+
+def test_prefilter_intra_batch_matrix_dimensions():
+    """NxN similarity matrix has exactly N*N entries for N items."""
+    print("\n[triage prefilter] Intra-batch matrix is NxN")
+    N = 4
+    stories = {"s1": _make_story("story title")}
+    items = [_make_item(f"iq-{i}", f"incoming item number {i} about topic {i}") for i in range(N)]
+    proj = setup_prefilter_project(stories)
+    code, out = run_prefilter(proj, items)
+    assert_eq("exit code 0", code, 0)
+    matrix = out.get("similarity_matrix", [])
+    assert_eq(f"matrix has {N*N} entries for N={N} items", len(matrix), N * N)
+
+
+def test_prefilter_known_duplicates_from_ac15():
+    """AC 15: known duplicate items from real intake queue appear in shortlists."""
+    print("\n[triage prefilter] Known duplicates from AC 15 appear in top-10")
+    # Use the real stories index which contains both target stories
+    real_index = Path("/Users/steve/projects/momentum/.momentum/stories/index.json")
+    if not real_index.exists():
+        print("  SKIP: real stories index not found")
+        return
+
+    items = [
+        _make_item("iq-20260521002617-b66bc747",
+                   "e2e-validator hardcoded service assumptions",
+                   "e2e validator hardcodes service URLs and assumptions"),
+        _make_item("iq-20260521002732-9cde80f6",
+                   "subagent spawn pre-flight context tier check",
+                   "preflight validation of context tier before spawning subagents"),
+    ]
+    proj = setup_prefilter_project({})
+    index_path = proj / ".momentum" / "stories" / "index.json"
+    index_path.write_text(real_index.read_text())
+
+    code, out = run_prefilter(proj, items)
+    assert_eq("exit code 0", code, 0)
+
+    s1 = out.get("shortlists", {}).get("iq-20260521002617-b66bc747", [])
+    s1_slugs = [c["slug"] for c in s1]
+    assert_eq("e2e-validator-black-box-hardening in top-10",
+              "e2e-validator-black-box-hardening" in s1_slugs, True)
+
+    s2 = out.get("shortlists", {}).get("iq-20260521002732-9cde80f6", [])
+    s2_slugs = [c["slug"] for c in s2]
+    assert_eq("agent-spawn-preflight-check in top-10",
+              "agent-spawn-preflight-check" in s2_slugs, True)
+
+
+def test_prefilter_runs_triage_group():
+    """Smoke test: 'triage prefilter' subcommand is registered and reachable."""
+    print("\n[triage prefilter] Subcommand registered and reachable")
+    import subprocess
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "triage", "prefilter", "--help"],
+        capture_output=True, text=True
+    )
+    assert_eq("--help exits 0", proc.returncode, 0)
+    assert_eq("'prefilter' in help text", "prefilter" in proc.stdout.lower(), True)
 
 
 if __name__ == "__main__":

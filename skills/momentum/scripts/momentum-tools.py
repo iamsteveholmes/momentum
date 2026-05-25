@@ -32,6 +32,7 @@ import json
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import NoReturn
 
 # --- State Machine ---
 
@@ -98,14 +99,14 @@ def write_json(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def result(action: str, success: bool, **kwargs) -> None:
+def result(action: str, success: bool, **kwargs) -> NoReturn:
     """Print JSON result and exit."""
     output = {"action": action, "success": success, **kwargs}
     print(json.dumps(output, indent=2))
     sys.exit(0 if success else 1)
 
 
-def error_result(action: str, message: str, **kwargs) -> None:
+def error_result(action: str, message: str, **kwargs) -> NoReturn:
     """Print error JSON result and exit with code 1."""
     result(action, success=False, error=message, **kwargs)
 
@@ -1978,6 +1979,226 @@ def cmd_story_add(args: argparse.Namespace) -> None:
     result("story_add", success=True, slug=slug, **entry)
 
 
+# --- Triage Commands ---
+
+TRIAGE_STOPWORDS = {
+    "the", "a", "an", "is", "in", "of", "to", "for", "and", "with", "by",
+    "this", "that", "it", "as", "on", "at", "be", "are", "was", "were",
+    "from", "or", "not", "but", "has", "have", "had", "its", "our", "we",
+}
+
+TRIAGE_TERMINAL_STATES = {"done", "dropped", "closed-incomplete"}
+
+
+def _tokenize(text: str) -> list[str]:
+    """Lowercase, split on whitespace/punctuation, remove stopwords."""
+    import re
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    return [t for t in tokens if t not in TRIAGE_STOPWORDS and len(t) > 1]
+
+
+def _tf_vector(tokens: list[str]) -> dict[str, int]:
+    """Return raw term-frequency Counter for a token list."""
+    from collections import Counter
+    return Counter(tokens)
+
+
+def _compute_idf(documents: list[list[str]]) -> dict[str, float]:
+    """Compute IDF weights from a corpus of token lists."""
+    import math
+    from collections import Counter
+    N = len(documents)
+    if N == 0:
+        return {}
+    df: Counter = Counter()
+    for doc in documents:
+        for term in set(doc):
+            df[term] += 1
+    return {term: math.log((N + 1) / (count + 1)) + 1.0 for term, count in df.items()}
+
+
+def _tfidf_vector(tokens: list[str], idf: dict[str, float]) -> dict[str, float]:
+    """Compute TF-IDF vector for tokens given a precomputed IDF table."""
+    from collections import Counter
+    tf = Counter(tokens)
+    total = sum(tf.values()) or 1
+    return {term: (count / total) * idf.get(term, 1.0) for term, count in tf.items()}
+
+
+def _cosine_similarity(vec_a: dict[str, float], vec_b: dict[str, float]) -> float:
+    """Cosine similarity between two sparse TF-IDF vectors."""
+    import math
+    shared = set(vec_a) & set(vec_b)
+    if not shared:
+        return 0.0
+    dot = sum(vec_a[t] * vec_b[t] for t in shared)
+    norm_a = math.sqrt(sum(v * v for v in vec_a.values()))
+    norm_b = math.sqrt(sum(v * v for v in vec_b.values()))
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def _jaccard_touches(touches_a: list[str], touches_b: list[str]) -> float:
+    """Jaccard coefficient on tokenized touches path sets."""
+    set_a = set(touches_a)
+    set_b = set(touches_b)
+    if not set_a and not set_b:
+        return 0.0
+    intersection = len(set_a & set_b)
+    union = len(set_a | set_b)
+    return intersection / union if union > 0 else 0.0
+
+
+def cmd_triage_prefilter(args: argparse.Namespace) -> None:
+    """
+    TF-IDF cosine + Jaccard touches prefilter for dedup gate.
+
+    Reads incoming items as JSON array (--items-json) and the stories index
+    (--stories-index). For each item, outputs top-K=10 candidate stories ranked
+    by combined score. Also outputs NxN intra-batch similarity matrix.
+
+    Output JSON:
+    {
+      "action": "triage_prefilter",
+      "success": true,
+      "shortlists": {
+        "<item_id>": [
+          {"slug": "...", "title": "...", "tfidf_score": 0.0, "jaccard_score": 0.0,
+           "epic_boost": 0.0, "combined_score": 0.0},
+          ...  (top K=10)
+        ]
+      },
+      "similarity_matrix": [
+        {"item_i": "<id>", "item_j": "<id>", "cosine_similarity": 0.0},
+        ...
+      ]
+    }
+    """
+    # Parse incoming items
+    try:
+        _raw = json.loads(args.items_json)
+        if not isinstance(_raw, list):
+            error_result("triage_prefilter", "--items-json must be a JSON array")
+        items: list = _raw
+    except (json.JSONDecodeError, TypeError) as e:
+        error_result("triage_prefilter", f"Invalid --items-json: {e}")
+
+    # Load stories index
+    index_path = Path(args.stories_index)
+    if not index_path.exists():
+        # Empty backlog — return empty shortlists and matrix
+        shortlists = {item.get("id", str(i)): [] for i, item in enumerate(items)}
+        matrix: list[dict] = []
+        # Build 1x1 or NxN of zeros
+        item_ids = [item.get("id", str(i)) for i, item in enumerate(items)]
+        for ii, id_i in enumerate(item_ids):
+            for jj, id_j in enumerate(item_ids):
+                if ii != jj:
+                    matrix.append({"item_i": id_i, "item_j": id_j, "cosine_similarity": 0.0})
+                else:
+                    matrix.append({"item_i": id_i, "item_j": id_j, "cosine_similarity": 1.0})
+        result("triage_prefilter", success=True, shortlists=shortlists,
+               similarity_matrix=matrix, candidate_count=0, item_count=len(items))
+        return
+
+    try:
+        stories_index = json.loads(index_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        error_result("triage_prefilter", f"Cannot read stories index: {e}")
+
+    K = 10
+
+    # Filter terminal-status stories
+    candidate_stories = {
+        slug: meta for slug, meta in stories_index.items()
+        if meta.get("status", "backlog") not in TRIAGE_TERMINAL_STATES
+    }
+
+    # Build text corpus for IDF: combine item texts + candidate story texts
+    def story_text(meta: dict) -> str:
+        return (meta.get("title", "") + " " + meta.get("description", "")).strip()
+
+    def item_text(item: dict) -> str:
+        return (item.get("title", "") + " " + item.get("description", "")).strip()
+
+    story_token_map: dict[str, list[str]] = {
+        slug: _tokenize(story_text(meta)) for slug, meta in candidate_stories.items()
+    }
+
+    item_ids = [item.get("id", str(i)) for i, item in enumerate(items)]
+    item_token_map: dict[str, list[str]] = {
+        iid: _tokenize(item_text(item)) for iid, item in zip(item_ids, items)
+    }
+    item_meta_map: dict[str, dict] = {
+        iid: item for iid, item in zip(item_ids, items)
+    }
+
+    # Build IDF from all documents (items + stories)
+    all_docs = list(story_token_map.values()) + list(item_token_map.values())
+    idf = _compute_idf(all_docs)
+
+    # Compute TF-IDF vectors
+    story_tfidf: dict[str, dict[str, float]] = {
+        slug: _tfidf_vector(tokens, idf) for slug, tokens in story_token_map.items()
+    }
+    item_tfidf: dict[str, dict[str, float]] = {
+        iid: _tfidf_vector(tokens, idf) for iid, tokens in item_token_map.items()
+    }
+
+    # Build shortlists: for each item, score all candidate stories
+    shortlists: dict[str, list[dict]] = {}
+    for iid, item in item_meta_map.items():
+        item_vec = item_tfidf[iid]
+        item_touches = item.get("touches", [])
+        item_epic = item.get("epic_slug", "")
+        item_feature = item.get("feature_slug", "")
+        scores = []
+        for slug, meta in candidate_stories.items():
+            tfidf_score = _cosine_similarity(item_vec, story_tfidf[slug])
+            jaccard_score = _jaccard_touches(item_touches, meta.get("touches", []))
+            # Epic/feature boost: +0.1 if either epic_slug or feature_slug matches
+            story_epic = meta.get("epic_slug", "")
+            story_feature = meta.get("feature_slug", "")
+            epic_match = (
+                (item_epic and item_epic == story_epic) or
+                (item_feature and item_feature == story_feature)
+            )
+            epic_boost = 0.1 if epic_match else 0.0
+            combined = min(1.0, 0.6 * tfidf_score + 0.3 * jaccard_score + epic_boost)
+            scores.append({
+                "slug": slug,
+                "title": meta.get("title", ""),
+                "tfidf_score": round(tfidf_score, 4),
+                "jaccard_score": round(jaccard_score, 4),
+                "epic_boost": round(epic_boost, 4),
+                "combined_score": round(combined, 4),
+            })
+        # Sort by combined_score descending, take top K
+        scores.sort(key=lambda x: x["combined_score"], reverse=True)
+        shortlists[iid] = scores[:K]
+
+    # Build intra-batch similarity matrix (NxN TF-IDF cosine on item pairs)
+    matrix: list[dict] = []
+    for ii, id_i in enumerate(item_ids):
+        for jj, id_j in enumerate(item_ids):
+            if ii == jj:
+                sim = 1.0
+            else:
+                sim = _cosine_similarity(item_tfidf[id_i], item_tfidf[id_j])
+            matrix.append({
+                "item_i": id_i,
+                "item_j": id_j,
+                "cosine_similarity": round(sim, 4),
+            })
+
+    result("triage_prefilter", success=True,
+           shortlists=shortlists,
+           similarity_matrix=matrix,
+           candidate_count=len(candidate_stories),
+           item_count=len(items))
+
+
 # --- Intake Queue Commands ---
 
 INTAKE_QUEUE_KINDS = {"shape", "watch", "rejected", "handoff"}
@@ -2355,6 +2576,18 @@ def build_parser() -> argparse.ArgumentParser:
     iqc.add_argument("--outcome-ref", default=None,
                      help="Reference to the outcome (story slug, decision ID, etc.)")
     iqc.set_defaults(func=cmd_intake_queue_consume)
+
+    # triage command group
+    triage = subparsers.add_parser("triage", help="Triage dedup prefilter operations")
+    triage_sub = triage.add_subparsers(dest="triage_action", required=True)
+
+    # triage prefilter
+    tp = triage_sub.add_parser("prefilter", help="TF-IDF cosine + Jaccard prefilter for dedup gate")
+    tp.add_argument("--items-json", required=True,
+                    help="JSON array of incoming items: [{id, title, description, touches, epic_slug, feature_slug}, ...]")
+    tp.add_argument("--stories-index", required=True,
+                    help="Path to .momentum/stories/index.json")
+    tp.set_defaults(func=cmd_triage_prefilter)
 
     # version command group
     version = subparsers.add_parser("version", help="Version management")
