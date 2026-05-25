@@ -1,7 +1,7 @@
 # momentum:triage Workflow
 
 **Goal:** Process multiple observations in one pass. Run dedup gate (Phases 0–3), present
-dedup + classification approval (Phase 5), then delegate to the appropriate downstream
+dedup + classification approval (Step 4), then delegate to the appropriate downstream
 executor or write capture events to `intake-queue.jsonl`.
 
 **Role:** Orchestrator between upstream sources (retro output, conversation, assessment
@@ -80,7 +80,8 @@ These will be included alongside new items for re-classification.
     <action>Merge {{open_queue_items}} and {{raw_items}} into {{all_items}}.
     Tag open queue items with `[QUEUED]` prefix for display distinction.
     Assign a stable local ID to each item (e.g., iq-temp-001, iq-temp-002 …) for matrix
-    indexing when items do not already carry an `id` field.</action>
+    indexing when items do not already carry an `id` field.
+    Store {{total_count}} = len({{all_items}}).</action>
   </step>
 
   <step n="2" goal="Read context artifacts for enrichment">
@@ -127,8 +128,9 @@ python3 skills/momentum/scripts/momentum-tools.py triage prefilter \
       <output>! Phase 0 prefilter failed: {{error}}
 Falling back to classification without dedup gate. Backlog hygiene note: dedup skipped this run.</output>
       <action>Store {{shortlists}} = {} (empty). Store {{similarity_matrix}} = [].
-      Continue to Step 2.2 with empty prefilter output — Phase 1 will assign all items to
-      one cluster, Phase 2 will spawn one dedup agent with no candidates.</action>
+      Continue to Step 2.2 with empty prefilter output — empty matrix forces all items into
+      one cluster (see Step 2.2 empty-matrix check), Phase 2 spawns one dedup agent with no
+      candidates.</action>
     </check>
   </step>
 
@@ -139,24 +141,30 @@ Falling back to classification without dedup gate. Backlog hygiene note: dedup s
   <step n="2.2" goal="Phase 1 — cluster incoming items using similarity matrix">
     <action>Count N = total items in {{all_items}}.</action>
 
-    <check if="N ≤ 5">
+    <check if="{{similarity_matrix}} is empty (prefilter fallback)">
+      <action>Force single cluster: {{clusters}} = [{{all_items}}].
+      One dedup agent will process the whole batch with no prefiltered candidates.</action>
+    </check>
+
+    <check if="N ≤ 5 AND similarity_matrix is non-empty">
       <action>Skip clustering. Assign all items to a single cluster: {{clusters}} = [{{all_items}}].
       One dedup agent will process the whole batch.</action>
     </check>
 
-    <check if="N > 5">
+    <check if="N > 5 AND similarity_matrix is non-empty">
       <action>Greedy threshold clustering using {{similarity_matrix}}:
       1. Extract all (item_i, item_j, cosine_similarity) pairs where item_i ≠ item_j.
       2. Sort pairs by cosine_similarity descending.
       3. Initialize each item as unassigned. Maintain {{clusters}} = [].
       4. For each pair (i, j) in sorted order:
-           a. Skip if both i and j are already in the SAME cluster.
-           b. If both unassigned: create a new cluster containing {i, j}.
-           c. If one is assigned and the other is unassigned AND the assigned cluster has
+           a. Skip this pair if cosine_similarity < 0.4 — pairs below threshold are unrelated.
+           b. Skip if both i and j are already in the SAME cluster.
+           c. If both unassigned: create a new cluster containing {i, j}.
+           d. If one is assigned and the other is unassigned AND the assigned cluster has
               fewer than 7 members: add the unassigned item to that cluster.
-           d. If both are in different clusters AND merging would not exceed 7 members:
+           e. If both are in different clusters AND merging would not exceed 7 members:
               merge the two clusters.
-           e. If a cluster would exceed 7 members: start a new cluster for the unassigned item.
+           f. If a cluster would exceed 7 members: start a new cluster for the unassigned item.
       5. Any item still unassigned after processing all pairs gets its own singleton cluster.
       Target cluster size: 3–7. Clusters of 1–2 are acceptable for tail items.
       </action>
@@ -263,20 +271,15 @@ Falling back to classification without dedup gate. Backlog hygiene note: dedup s
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="2.4" goal="Phase 3 — inline consolidation-candidate grouping">
-    <note>Pure inline pass — no subagent. Flags groups for Story B; no merge execution here.</note>
+    <note>Pure inline pass — no subagent. Groups consolidation_hint signals from dedup findings
+    for display only. No merge execution here (consolidation analysis is Phase 4 scope —
+    not yet implemented).</note>
 
     <action>Group {{dedup_findings}} by consolidation_hint.target_slug_or_theme:
     For each finding where consolidation_hint is non-null:
       Add finding to group keyed by consolidation_hint.target_slug_or_theme.
     Groups with 2+ members → merge candidate.
     Store {{merge_candidates}} = list of {target, members: [findings...], rationale}.
-    </action>
-
-    <action>Also scan {{similarity_matrix}} for cross-cluster consolidation signals:
-    For any (item_i, item_j) pair with cosine_similarity ≥ 0.4 where item_i and item_j
-    were NOT in the same cluster in Phase 1 — append a merge candidate:
-      { target: "cross-cluster-pair", members: [item_i, item_j],
-        rationale: "high intra-batch similarity (cosine {{score}})" }
     </action>
 
     <action>Store {{split_candidates}} = items where {{dedup_findings}} contains
@@ -330,14 +333,14 @@ Falling back to classification without dedup gate. Backlog hygiene note: dedup s
 
   <step n="4" goal="Batch approval — present dedup findings + classification for developer review">
     <output>
-Triage — {{total_count}} items · {{dedup_findings | length}} dedup findings · {{survivor_count}} survivors proceeding to classification
+Triage — {{total_count}} items · {{dedup_findings | length}} dedup findings · {{survivor_count}} survivors classified
 
 <!-- ── SECTION A: DEDUP ACTIONS ─────────────────────────── -->
 {{if dedup_findings is non-empty:}}
 ## Dedup Actions
 
 {{if consume group (recommended_action == "consume"):}}
-**consume** ({{count}} — confirmed duplicates — will be removed from classification):
+**consume** ({{count}} — confirmed duplicates — will be removed from queue):
 {{for each finding:
   · [{{source_item_id}}] {{theme}}
     match: {{match_type}} → `{{matched_story_slug}}`
@@ -378,7 +381,7 @@ Triage — {{total_count}} items · {{dedup_findings | length}} dedup findings �
 
 <!-- ── SECTION C: MERGE CANDIDATES ─────────────────────── -->
 {{if merge_candidates is non-empty:}}
-## Merge Candidates — flagged for Story B (display only, no action available)
+## Merge Candidates — flagged for consolidation analysis (Phase 4 scope — no action available yet)
 
 {{for each group:
   · target: {{target_slug_or_theme}}  ({{member_count}} items)
@@ -510,15 +513,30 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
         python3 skills/momentum/scripts/momentum-tools.py intake-queue consume \
           --id "{{queue_id}}"
     </action>
+
+    <action>Compute summary variables:
+    Store {{consumed_count}} = len({{consumed_items}})
+    Store {{split_count}} = len({{split_candidates}})
+    Store {{merge_candidate_count}} = len({{merge_candidates}})
+    Store {{intake_count}} = count of ARTIFACT items successfully delegated to momentum:intake
+    Store {{decision_count}} = count of DECISION items successfully delegated to momentum:decision
+    Store {{shaping_count}} = count of SHAPING items written to intake-queue.jsonl
+    Store {{defer_count}} = count of DEFER items written to intake-queue.jsonl
+    Store {{reject_count}} = count of REJECT items written to intake-queue.jsonl
+    Store {{resolved_count}} = len({{resolved_queue_ids}})
+    Store {{failure_count}} = count of failed momentum:intake or intake-queue append calls
+    Store {{remaining_open_count}} = re-read .momentum/intake-queue.jsonl, count items with
+      status == "open" and kind in {shape, watch, handoff}
+    </action>
   </step>
 
   <step n="6" goal="Summary">
-    <output>## ✓ Triage Complete — {{total_processed}} Items Processed
+    <output>## ✓ Triage Complete — {{total_count}} Items Processed
 
 **Dedup gate:**
   · {{consumed_count}} consumed (confirmed duplicates)
   · {{split_count}} split candidates surfaced
-  · {{merge_candidate_count}} merge candidate groups flagged for Story B
+  · {{merge_candidate_count}} merge candidate groups flagged for consolidation analysis (Phase 4)
 
 **Stubbed to backlog ({{intake_count}}):**
 {{for each intake result: · `{{slug}}` — `{{stub_path}}`}}
@@ -532,7 +550,7 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
   · {{reject_count}} rejected (kind: rejected)
 
 {{if resolved_count > 0: > ✓ {{resolved_count}} open queue items marked resolved.}}
-{{if rejected_count_approval > 0: · {{rejected_count_approval}} items declined at approval — no action taken.}}
+{{if rejected_count > 0: · {{rejected_count}} items declined at approval — no action taken.}}
 {{if failures: > ! {{failure_count}} execution failures — see above for details.}}
 
 **Queue:** {{remaining_open_count}} open items (shape + watch) awaiting future triage.

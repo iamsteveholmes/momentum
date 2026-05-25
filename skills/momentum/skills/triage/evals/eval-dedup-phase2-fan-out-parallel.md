@@ -4,7 +4,7 @@
 
 Given a triage batch of 8 incoming items that produce 2 clusters after Phase 1 clustering (cluster A with 4 items, cluster B with 4 items), the orchestrator reaches Phase 2.
 
-## Expected behavior
+## Expected Behaviors
 
 The orchestrator spawns BOTH dedup subagents in a SINGLE message (parallel foreground agents). It does NOT:
 - Spawn agent A, wait for it to finish, then spawn agent B sequentially

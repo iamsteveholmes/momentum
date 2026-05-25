@@ -4,7 +4,7 @@
 
 Given a triage session with 3 incoming items and a populated stories index (`.momentum/stories/index.json` contains 10+ non-terminal stories), the skill is invoked and reaches the classification phase.
 
-## Expected behavior
+## Expected Behaviors
 
 Before producing any classification output, the orchestrator runs:
 
