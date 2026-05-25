@@ -1,6 +1,6 @@
 ---
 name: triage
-description: "Batch-classify observations into five classes, enrich ARTIFACTs, batch-approve, then delegate to intake/decision or queue."
+description: "Dedup gate + batch-classify observations into five classes, enrich ARTIFACTs, batch-approve, delegate to intake/decision or queue."
 model: claude-opus-4-7
 effort: high
 ---
