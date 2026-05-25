@@ -3272,6 +3272,7 @@ def main():
     test_prefilter_recall_duplicate_pairs()
     test_prefilter_status_filter_excludes_terminal()
     test_prefilter_empty_backlog()
+    test_prefilter_index_not_found()
     test_prefilter_single_item_batch()
     test_prefilter_all_identical_batch()
     test_prefilter_score_fields_present()
@@ -3426,19 +3427,41 @@ def test_prefilter_status_filter_excludes_terminal():
 
 
 def test_prefilter_empty_backlog():
-    """Empty stories index returns empty shortlists and no error."""
+    """Empty stories index (file exists, zero stories) returns empty shortlists."""
     print("\n[triage prefilter] Empty backlog edge case")
     proj = setup_prefilter_project({})
     items = [_make_item("iq-001", "some incoming item title")]
-    # Point to a non-existent index to trigger the empty-backlog path
     index_path = proj / ".momentum" / "stories" / "index.json"
-    # Overwrite with empty object
     index_path.write_text("{}\n")
     code, out = run_prefilter(proj, items)
     assert_eq("exit code 0", code, 0)
     assert_eq("success true", out.get("success"), True)
     shortlists = out.get("shortlists", {})
     assert_eq("iq-001 has empty shortlist", shortlists.get("iq-001"), [])
+
+
+def test_prefilter_index_not_found():
+    """Missing index file computes real item-item cosines, not hardcoded zeros."""
+    print("\n[triage prefilter] Missing index file produces real cosines")
+    proj = setup_prefilter_project({})
+    text = "intake queue deduplication logic refactor performance"
+    items = [
+        _make_item("iq-001", text),
+        _make_item("iq-002", text),
+    ]
+    # Delete the index file to exercise the if-not-exists early-exit branch
+    index_path = proj / ".momentum" / "stories" / "index.json"
+    index_path.unlink()
+    code, out = run_prefilter(proj, items)
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    matrix = out.get("similarity_matrix", [])
+    off_diag = [e for e in matrix if e["item_i"] != e["item_j"]]
+    assert_eq("matrix has off-diagonal entries", len(off_diag) > 0, True)
+    # Identical items must have real cosine > 0, not hardcoded zero
+    for entry in off_diag:
+        assert_eq("off-diagonal cosine is real (>0 for identical items)",
+                  entry.get("cosine_similarity", 0.0) > 0.0, True)
 
 
 def test_prefilter_single_item_batch():

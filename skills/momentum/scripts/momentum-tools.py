@@ -2087,17 +2087,29 @@ def cmd_triage_prefilter(args: argparse.Namespace) -> None:
     # Load stories index
     index_path = Path(args.stories_index)
     if not index_path.exists():
-        # Empty backlog — return empty shortlists and matrix
-        shortlists = {item.get("id", str(i)): [] for i, item in enumerate(items)}
+        # No backlog — compute item-item cosines from items only; shortlists are empty
+        def _item_text_early(item: dict) -> str:
+            return (item.get("title", "") + " " + item.get("description", "")).strip()
+
+        item_ids_early = [item.get("id", str(i)) for i, item in enumerate(items)]
+        item_token_map_early: dict[str, list[str]] = {
+            iid: _tokenize(_item_text_early(item))
+            for iid, item in zip(item_ids_early, items)
+        }
+        idf_early = _compute_idf(list(item_token_map_early.values()))
+        item_tfidf_early: dict[str, dict[str, float]] = {
+            iid: _tfidf_vector(tokens, idf_early)
+            for iid, tokens in item_token_map_early.items()
+        }
+        shortlists = {iid: [] for iid in item_ids_early}
         matrix: list[dict] = []
-        # Build 1x1 or NxN of zeros
-        item_ids = [item.get("id", str(i)) for i, item in enumerate(items)]
-        for ii, id_i in enumerate(item_ids):
-            for jj, id_j in enumerate(item_ids):
-                if ii != jj:
-                    matrix.append({"item_i": id_i, "item_j": id_j, "cosine_similarity": 0.0})
-                else:
-                    matrix.append({"item_i": id_i, "item_j": id_j, "cosine_similarity": 1.0})
+        for ii, id_i in enumerate(item_ids_early):
+            for jj, id_j in enumerate(item_ids_early):
+                sim = 1.0 if ii == jj else _cosine_similarity(
+                    item_tfidf_early[id_i], item_tfidf_early[id_j]
+                )
+                matrix.append({"item_i": id_i, "item_j": id_j,
+                                "cosine_similarity": round(sim, 4)})
         result("triage_prefilter", success=True, shortlists=shortlists,
                similarity_matrix=matrix, candidate_count=0, item_count=len(items))
         return
