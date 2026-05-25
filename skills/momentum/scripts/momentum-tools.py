@@ -32,6 +32,7 @@ import json
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import NoReturn
 
 # --- State Machine ---
 
@@ -98,14 +99,14 @@ def write_json(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def result(action: str, success: bool, **kwargs) -> None:
+def result(action: str, success: bool, **kwargs) -> NoReturn:
     """Print JSON result and exit."""
     output = {"action": action, "success": success, **kwargs}
     print(json.dumps(output, indent=2))
     sys.exit(0 if success else 1)
 
 
-def error_result(action: str, message: str, **kwargs) -> None:
+def error_result(action: str, message: str, **kwargs) -> NoReturn:
     """Print error JSON result and exit with code 1."""
     result(action, success=False, error=message, **kwargs)
 
@@ -1996,7 +1997,7 @@ def _tokenize(text: str) -> list[str]:
     return [t for t in tokens if t not in TRIAGE_STOPWORDS and len(t) > 1]
 
 
-def _tf_vector(tokens: list[str]) -> "Counter":
+def _tf_vector(tokens: list[str]) -> dict[str, int]:
     """Return raw term-frequency Counter for a token list."""
     from collections import Counter
     return Counter(tokens)
@@ -2076,12 +2077,12 @@ def cmd_triage_prefilter(args: argparse.Namespace) -> None:
     """
     # Parse incoming items
     try:
-        items = json.loads(args.items_json)
+        _raw = json.loads(args.items_json)
+        if not isinstance(_raw, list):
+            error_result("triage_prefilter", "--items-json must be a JSON array")
+        items: list = _raw
     except (json.JSONDecodeError, TypeError) as e:
         error_result("triage_prefilter", f"Invalid --items-json: {e}")
-
-    if not isinstance(items, list):
-        error_result("triage_prefilter", "--items-json must be a JSON array")
 
     # Load stories index
     index_path = Path(args.stories_index)
