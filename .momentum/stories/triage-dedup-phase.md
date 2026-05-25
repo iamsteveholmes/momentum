@@ -1,7 +1,7 @@
 ---
 title: Triage dedup phase — deterministic prefilter + cluster fan-out + per-theme findings
 story_key: triage-dedup-phase
-status: ready-for-dev
+status: review
 epic_slug: agent-team-model
 feature_slug: momentum-sprint-orchestration
 story_type: practice
@@ -70,36 +70,36 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
 ## Tasks / Subtasks
 
 1. **Add `triage prefilter` subcommand to `momentum-tools.py`**
-   - Implement `collections.Counter`-based TF-IDF (no sklearn, no external dependencies)
-   - Implement Jaccard coefficient on tokenized `touches` paths
-   - Implement epic/feature_slug exact-match boost (+0.1 to combined score)
-   - Implement status filter: exclude terminal states before scoring
-   - Output top-K=10 candidates per item sorted by combined score, with score breakdowns
-   - Output intra-batch similarity matrix (NxN, TF-IDF cosine on item pairs)
+   - [x] Implement `collections.Counter`-based TF-IDF (no sklearn, no external dependencies)
+   - [x] Implement Jaccard coefficient on tokenized `touches` paths
+   - [x] Implement epic/feature_slug exact-match boost (+0.1 to combined score)
+   - [x] Implement status filter: exclude terminal states before scoring
+   - [x] Output top-K=10 candidates per item sorted by combined score, with score breakdowns
+   - [x] Output intra-batch similarity matrix (NxN, TF-IDF cosine on item pairs)
 
 2. **Write unit tests for prefilter in `test-momentum-tools.py`**
-   - Synthetic duplicate recall fixture (≥5 pairs, assert recall ≥95% at K=10)
-   - Status filter test: terminal-status stories excluded from candidates
-   - Empty backlog edge case: no candidates returned, no error raised
-   - Single-item batch: produces 1x1 similarity matrix (single self-entry)
-   - All-identical batch: all inter-item cosine similarities ≥0.4 (verifies matrix values)
+   - [x] Synthetic duplicate recall fixture (≥5 pairs, assert recall ≥95% at K=10)
+   - [x] Status filter test: terminal-status stories excluded from candidates
+   - [x] Empty backlog edge case: no candidates returned, no error raised
+   - [x] Single-item batch: produces 1x1 similarity matrix (single self-entry)
+   - [x] All-identical batch: all inter-item cosine similarities ≥0.4 (verifies matrix values)
 
 3. **Add Phases 0–3 inline orchestration to `triage/workflow.md`** *(Phase 4 — consolidation analysis fan-out — is Story B scope, not in this task)*
-   - Phase 0: call `momentum-tools triage prefilter`, capture shortlists and similarity matrix
-   - Phase 1: inline cluster logic using similarity matrix (≤5 skip, else greedy threshold clusters of 3–7)
-   - Phase 2: fan-out dedup subagent spawns per cluster (single-message parallel, no TeamCreate)
-   - Phase 3: inline `consolidation_hint` grouping pass, flag 2+ member groups as merge candidates
+   - [x] Phase 0: call `momentum-tools triage prefilter`, capture shortlists and similarity matrix
+   - [x] Phase 1: inline cluster logic using similarity matrix (≤5 skip, else greedy threshold clusters of 3–7)
+   - [x] Phase 2: fan-out dedup subagent spawns per cluster (single-message parallel, no TeamCreate)
+   - [x] Phase 3: inline `consolidation_hint` grouping pass, flag 2+ member groups as merge candidates
 
 4. **Update Phase 5 approval UX in `triage/workflow.md`**
-   - Add dedup actions section before existing classification
-   - Add split candidates section (items with multiple per-theme findings)
-   - Add merge candidates section (flagged groups, no analysis — Story B deferred)
-   - Preserve all existing five-class classification sections for survivors
+   - [x] Add dedup actions section before existing classification
+   - [x] Add split candidates section (items with multiple per-theme findings)
+   - [x] Add merge candidates section (flagged groups, no analysis — Story B deferred)
+   - [x] Preserve all existing five-class classification sections for survivors
 
 5. **Update `triage/SKILL.md` description**
-   - Update the `description` field to reflect the dedup gate addition
-   - Confirm description ≤150 characters
-   - Confirm `model:` and `effort:` frontmatter fields remain present
+   - [x] Update the `description` field to reflect the dedup gate addition
+   - [x] Confirm description ≤150 characters
+   - [x] Confirm `model:` and `effort:` frontmatter fields remain present
 
 ## Dev Notes
 
@@ -242,8 +242,27 @@ Script and code changes use standard TDD (red-green-refactor). bmad-dev-story ha
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None — all tasks completed without debug cycles.
 
 ### Completion Notes List
 
+- Task 1: Added `cmd_triage_prefilter()` to momentum-tools.py with Counter-based TF-IDF, Jaccard touches, epic/feature boost, status filter, top-K=10 shortlists, NxN similarity matrix. No external dependencies. Parser group `triage` with subcommand `prefilter` registered.
+- Task 2: Added `TestTriagePrefilter` tests (10 tests) to test-momentum-tools.py. Recall fixture uses 6 synthetic pairs achieving 100% recall at K=10. All 548 tests pass (538 existing + 10 new).
+- Task 3+4: Rewrote triage/workflow.md. Added Steps 2.1–2.4 (Phases 0–3) before existing Step 3 classification. Added Phase 0 prefilter CLI invocation with graceful fallback. Phase 1 greedy clustering (≤5 skip, else threshold). Phase 2 parallel fan-out mirrors retro Phase 4 pattern — single-message spawn, no TeamCreate, no SendMessage. Phase 3 inline consolidation grouping with cross-cluster matrix scan. Updated Step 4 approval UX with 3 new sections (dedup actions, split candidates, merge candidates) before five-class classification. Updated Step 5 to handle consumed duplicates.
+- Task 5: Updated SKILL.md description to "Dedup gate + batch-classify observations into five classes, enrich ARTIFACTs, batch-approve, delegate to intake/decision or queue." (130 chars, ≤150). model: and effort: remain.
+- EDD: 3 behavioral evals written in skills/momentum/skills/triage/evals/ — Phase 0 invocation, Phase 2 fan-out parallel, Phase 5 approval UX sections.
+- AC 15 verification: Real stories index confirmed — iq-20260521002617-b66bc747 → e2e-validator-black-box-hardening (rank 3, combined 0.2164), iq-20260521002732-9cde80f6 → agent-spawn-preflight-check (in top-10).
+
 ### File List
+
+- skills/momentum/scripts/momentum-tools.py
+- skills/momentum/scripts/test-momentum-tools.py
+- skills/momentum/skills/triage/workflow.md
+- skills/momentum/skills/triage/SKILL.md
+- skills/momentum/skills/triage/evals/eval-dedup-phase0-prefilter-invocation.md
+- skills/momentum/skills/triage/evals/eval-dedup-phase2-fan-out-parallel.md
+- skills/momentum/skills/triage/evals/eval-dedup-phase5-approval-ux-sections.md
