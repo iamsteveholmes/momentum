@@ -49,3 +49,4 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-031 | [Legibility-Before-Automation — Canvas Gate Surface, Pipeline Restructure, and Dispatcher Sequencing](dec-031-legibility-before-automation-canvas-gate-surface-2026-05-20.md) | 2026-05-20 | (developer-conversation) | decided |
 | DEC-032 | [Gas City as Momentum's Dispatcher — Adoption Decision](dec-032-gas-city-dispatcher-adoption-2026-05-22.md) | 2026-05-22 | gas-town-dispatcher-2026-05-20 research corpus | decided |
 | DEC-033 | [Practice-Ledger Event-Log Redesign](dec-033-practice-ledger-event-log-redesign-2026-05-25.md) | 2026-05-25 | AES-003 | decided |
+| DEC-034 | [Epic-Layer Consolidation — Unify Features and Categorical Epics Into One Concept](dec-034-epic-layer-consolidation-2026-05-25.md) | 2026-05-25 | AES-003 | decided |

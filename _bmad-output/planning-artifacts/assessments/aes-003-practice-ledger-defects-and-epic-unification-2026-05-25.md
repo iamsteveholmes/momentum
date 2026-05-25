@@ -6,6 +6,7 @@ status: current
 method: 5 parallel discovery agents (arch+code, data+hygiene, features↔epics state, signals/ infrastructure, skill ecosystem touchpoints) + extensive developer-driven planning conversation across two sessions (2026-05-23 + 2026-05-25) + AVFL checkpoint validation against architecture.md/prd.md/epics.md
 decisions_produced:
   - DEC-033
+  - DEC-034
 supersedes: []
 ---
 
