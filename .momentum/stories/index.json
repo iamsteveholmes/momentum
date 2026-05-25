@@ -4603,6 +4603,7 @@
     "status": "ready-for-dev",
     "title": "Triage dedup phase — deterministic prefilter + cluster fan-out + per-theme findings",
     "epic_slug": "agent-team-model",
+    "feature_slug": "momentum-sprint-orchestration",
     "story_file": true,
     "depends_on": [],
     "touches": [

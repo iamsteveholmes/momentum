@@ -1751,6 +1751,12 @@
       "slug": "quickfix-2026-05-21",
       "story": "remove-momentum-distill",
       "started": "2026-05-21"
+    },
+    {
+      "slug": "quickfix-2026-05-24",
+      "story": "triage-dedup-phase",
+      "spec_dir": "quickfix-triage-dedup-phase",
+      "started": "2026-05-24"
     }
   ]
 }

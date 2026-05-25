@@ -2,10 +2,10 @@ Feature: Triage dedup phase — deterministic prefilter + cluster fan-out + per-
 
   Background:
     Given the momentum project has a populated stories backlog with at least 10 active stories
-    And at least 5 open items are waiting in the intake queue
 
-  Scenario: Prefilter tool produces ranked candidates and similarity matrix for a batch of items
+  Scenario: Prefilter produces ranked candidates and similarity matrix for a batch
     Given a batch of 3 incoming items with titles and descriptions covering distinct topics
+    And at least 5 open items are waiting in the intake queue
     When the developer runs the triage prefilter command against the stories index
     Then each incoming item receives a ranked list of up to 10 candidate stories
     And each candidate entry includes a combined score and individual score components
@@ -20,6 +20,7 @@ Feature: Triage dedup phase — deterministic prefilter + cluster fan-out + per-
 
   Scenario: Developer sees dedup findings and approves actions before classifying survivors
     Given the developer invokes momentum:triage with a batch of items
+    And at least 5 open items are waiting in the intake queue
     And at least one incoming item closely resembles an existing backlog story
     When triage presents its approval output
     Then the output includes a dedup actions section grouping findings by recommended action
@@ -29,12 +30,14 @@ Feature: Triage dedup phase — deterministic prefilter + cluster fan-out + per-
 
   Scenario: Duplicate items are consumed from the queue after developer approves dedup actions
     Given the developer invokes momentum:triage with a batch that includes a known duplicate item
+    And at least 5 open items are waiting in the intake queue
     When the developer approves the duplicate finding in the dedup actions section
     Then the duplicate item is marked as consumed in the intake queue
     And the remaining non-duplicate items proceed to the five-class classification step
 
   Scenario: A multi-theme item surfaces as a split candidate with two separate findings
     Given an incoming item whose description covers two clearly distinct concerns
+    And at least 5 open items are waiting in the intake queue
     When the developer invokes momentum:triage with that item in the batch
     Then the dedup output shows two separate findings for that item, one per theme
     And the item appears in the split candidates section of the approval output
@@ -43,10 +46,16 @@ Feature: Triage dedup phase — deterministic prefilter + cluster fan-out + per-
     Given only one open item is present in the intake queue
     When the developer invokes momentum:triage for that single item
     Then triage completes successfully and presents dedup findings for the item
-    And the approval output contains the dedup actions section with at least one finding
-    And the item proceeds to classification after the developer reviews findings
+    And the item proceeds to classification after the developer reviews the dedup output
 
-  Scenario: Prefilter correctly identifies known near-duplicate items in its top candidates
-    Given the stories index contains a story whose title and description closely paraphrase an incoming item
-    When the developer runs the triage prefilter command for that incoming item
-    Then the closely matching story appears in the top 10 candidates for that item
+  Scenario: Prefilter achieves high recall across multiple known near-duplicate pairs
+    Given the stories index contains at least 5 stories each closely paraphrasing a distinct incoming item
+    When the developer runs the triage prefilter command for that batch of items
+    Then at least 95 percent of the known near-duplicate stories appear in the top 10 candidates for their corresponding item
+
+  Scenario: Triage flags known handoff items against their matching backlog stories
+    Given the intake queue contains item iq-20260521002617-b66bc747 and item iq-20260521002732-9cde80f6
+    And the backlog contains stories e2e-validator-black-box-hardening and agent-spawn-preflight-check
+    When the developer runs momentum:triage against the queue
+    Then item iq-20260521002617-b66bc747 is surfaced as a dedup candidate against e2e-validator-black-box-hardening
+    And item iq-20260521002732-9cde80f6 is surfaced as a dedup candidate against agent-spawn-preflight-check

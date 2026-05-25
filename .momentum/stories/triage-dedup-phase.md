@@ -5,6 +5,7 @@ status: ready-for-dev
 epic_slug: agent-team-model
 feature_slug: momentum-sprint-orchestration
 story_type: practice
+harness_profile: defaults
 change_type:
   - script-code
   - skill-instruction
@@ -29,15 +30,15 @@ so that every triage invocation (regardless of caller) deduplicates new items ag
 
 ## Description
 
-Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`~/.claude/plans/i-want-us-to-delightful-spindle.md`). Adds the dedup gate to `momentum:triage` as mandated by **DEC-031 D5**. Standalone value — ships backlog-hygiene gate even before consolidation analysis (Story B) lands.
+Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`~/.claude/plans/i-want-us-to-delightful-spindle.md`). (Phase 4 — consolidation analysis fan-out — is Story B scope, not implemented here.) Adds the dedup gate to `momentum:triage` as mandated by **DEC-031 D5**. Standalone value — ships backlog-hygiene gate even before consolidation analysis (Story B) lands.
 
 **Scope:**
 
 - **Phase 0 (new)** — `momentum-tools triage prefilter` subcommand. Pure-Python TF-IDF cosine on title + description, `touches`-path Jaccard overlap, epic/feature_slug boost, status filter (skip `done | dropped | closed-incomplete`). Output per item: top-K=10 candidate stories with score breakdowns, plus an intra-batch similarity matrix. Tuning target: recall ≥95% on real duplicates with K=10.
 - **Phase 1 (new)** — inline batch clustering using Phase 0 similarity matrix (3–7 items/cluster; batches ≤5 skip clustering, single dedup agent).
-- **Phase 2 (new)** — dedup fan-out: one subagent per cluster, parallel single message (mirrors retro Phase 4 pattern, no TeamCreate, no SendMessage). Each agent receives only the prefiltered shortlist (~15–30 candidates). Returns per-theme JSON findings: `{source_item_id, theme, match_type: duplicate|supersedes|extends|unique, matched_story_slug, evidence, recommended_action, consolidation_hint}`.
-- **Phase 3 (new)** — inline consolidation-candidate identification: orchestrator groups `consolidation_hint` fields by `target_slug_or_theme`; hint groups with 2+ members become merge candidates flagged for Story B. Pure inline, no subagent.
-- **Phase 5 (updated)** — approval UX gains three new sections: dedup actions, split candidates (multi-theme items), merge candidates flagged. Existing five-class classification reused for survivors.
+- **Phase 2 (new)** — dedup fan-out: one subagent per cluster, parallel single message (mirrors retro Phase 4 pattern, no TeamCreate, no SendMessage). Each agent receives its cluster's items (full text) + prefiltered shortlist (~15–30 candidates) + full metadata for each candidate story. Returns per-theme JSON findings: `{source_item_id, theme, match_type: duplicate|supersedes|extends|unique, matched_story_slug, evidence, recommended_action, consolidation_hint}`.
+- **Phase 3 (new)** — inline consolidation-candidate identification: orchestrator groups `consolidation_hint` fields by `target_slug_or_theme`; hint groups with 2+ members become merge candidates flagged for Story B. Also uses Phase 0's intra-batch similarity matrix to surface items that scored as related but weren't in the same cluster. Pure inline, no subagent.
+- **Phase 5 (updated)** — approval UX gains three new sections **before** the existing classification block: dedup actions, split candidates (multi-theme items), merge candidates flagged. Existing five-class classification reused for survivors.
 - **Unit tests** for prefilter (recall on synthetic duplicates, status filter correctness, edge cases: empty backlog, single-item batch, all-identical batch).
 
 **Pattern reused:** `retro/workflow.md` Phase 4 — pure fan-out (no TeamCreate, no SendMessage), parallel spawn in a single message, structured findings.
@@ -62,7 +63,7 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
 12. The triage workflow adds Phase 3 inline consolidation-candidate grouping: the orchestrator groups `consolidation_hint` fields by `target_slug_or_theme`; groups with 2+ members are flagged as merge candidates (not analyzed further in this story — Story B scope).
 13. The Phase 5 approval UX in `triage/workflow.md` gains three new sections before the existing classification section: (a) **Dedup actions** — per-theme findings grouped by `recommended_action`; (b) **Split candidates** — items with 2+ per-theme findings; (c) **Merge candidates** — consolidation groups from Phase 3, shown as display-only with label "flagged for Story B — no action available yet." No executor path for merge candidates exists in Story A.
 14. On approval of dedup actions, the executor consumes queue items marked as duplicates and routes survivors to the existing five-class classification flow.
-15. Running triage against the 33 open handoffs produces sensible dedup findings: at minimum, handoff-2 (e2e service assumptions) is flagged as a duplicate/extends candidate against `e2e-validator-black-box-hardening`, and handoff-5 (subagent context-tier) is flagged as a duplicate/extends candidate against `agent-spawn-preflight-check`.
+15. Running triage against the 33 open handoffs produces sensible dedup findings: at minimum, item `iq-20260521002617-b66bc747` ('e2e-validator hardcoded service assumptions') is flagged against `e2e-validator-black-box-hardening`, and item `iq-20260521002732-9cde80f6` ('subagent spawn pre-flight context tier check') is flagged against `agent-spawn-preflight-check`.
 16. Unit tests cover: prefilter recall on synthetic duplicates, status filter exclusion, empty-backlog edge case (returns empty shortlists, no error), single-item batch edge case (1x1 similarity matrix produced, no error), all-identical batch edge case (all inter-item cosine similarities ≥0.4 in matrix output).
 17. `triage/SKILL.md` description is updated to reflect the new dedup gate behavior (≤150 characters, per NFR1).
 
@@ -71,7 +72,7 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
 1. **Add `triage prefilter` subcommand to `momentum-tools.py`**
    - Implement `collections.Counter`-based TF-IDF (no sklearn, no external dependencies)
    - Implement Jaccard coefficient on tokenized `touches` paths
-   - Implement epic/feature_slug exact-match boost (+0.2 to combined score)
+   - Implement epic/feature_slug exact-match boost (+0.1 to combined score)
    - Implement status filter: exclude terminal states before scoring
    - Output top-K=10 candidates per item sorted by combined score, with score breakdowns
    - Output intra-batch similarity matrix (NxN, TF-IDF cosine on item pairs)
@@ -83,7 +84,7 @@ Implements Phases 0–3 and 5 of the triage redesign plan approved 2026-05-24 (`
    - Single-item batch: produces 1x1 similarity matrix (single self-entry)
    - All-identical batch: all inter-item cosine similarities ≥0.4 (verifies matrix values)
 
-3. **Add Phases 0–3 inline orchestration to `triage/workflow.md`**
+3. **Add Phases 0–3 inline orchestration to `triage/workflow.md`** *(Phase 4 — consolidation analysis fan-out — is Story B scope, not in this task)*
    - Phase 0: call `momentum-tools triage prefilter`, capture shortlists and similarity matrix
    - Phase 1: inline cluster logic using similarity matrix (≤5 skip, else greedy threshold clusters of 3–7)
    - Phase 2: fan-out dedup subagent spawns per cluster (single-message parallel, no TeamCreate)
@@ -121,7 +122,7 @@ The dedup fan-out pattern (Phase 2) is architecturally identical to the retro Ph
 
 **Behavioral verification (skill-instruction tasks):**
 - Run triage against the 33 open handoffs as the acceptance fixture
-- Expect: handoff-2 (e2e service assumptions) flagged against `e2e-validator-black-box-hardening`; handoff-5 (subagent context-tier) flagged against `agent-spawn-preflight-check`
+- Expect: item `iq-20260521002617-b66bc747` ('e2e-validator hardcoded service assumptions') flagged against `e2e-validator-black-box-hardening`; item `iq-20260521002732-9cde80f6` ('subagent spawn pre-flight context tier check') flagged against `agent-spawn-preflight-check`
 - Run triage on a 1-item batch: confirm single dedup agent spawned (no clustering), correct routing on completion
 - Run triage on a synthetic 30-item batch with 3 intentional intra-batch duplicates: confirm per-theme findings surface the overlap and approval UX asks to merge
 
@@ -148,6 +149,7 @@ The dedup fan-out pattern (Phase 2) is architecturally identical to the retro Ph
 - Inline in workflow.md after collecting Phase 2 findings.
 - Group all findings where `consolidation_hint` is non-null by `consolidation_hint.target_slug_or_theme`.
 - Groups with 2+ members → merge candidate. Flag for Story B, do not analyze further.
+- Also use Phase 0's intra-batch similarity matrix to surface item pairs that scored as related but were not assigned to the same cluster (e.g., similarity ≥ 0.4 but cluster boundary fell between them). Surface these as additional consolidation hints.
 
 **Phase 5 — Approval UX additions:**
 - Three new sections added before the existing classification block in the batch approval output.
@@ -157,7 +159,7 @@ The dedup fan-out pattern (Phase 2) is architecturally identical to the retro Ph
 
 ### Project Structure Notes
 
-- `momentum-tools.py` — main script at `skills/momentum/scripts/momentum-tools.py`. Add new subcommand under the `triage` command group (see existing `intake-queue` command group as the structural pattern).
+- `momentum-tools.py` — main script at `skills/momentum/scripts/momentum-tools.py`. Create a new `triage` command group — no such group exists yet. Use the `intake-queue` group as the structural pattern. The first subcommand in the new `triage` group is `prefilter`.
 - `test-momentum-tools.py` — companion test file at `skills/momentum/scripts/test-momentum-tools.py`. Add new test class `TestTriagePrefilter` following the existing test class conventions.
 - `triage/workflow.md` — rewrite target at `skills/momentum/skills/triage/workflow.md`. Phases 0–3 are inserted before the existing Step 2 (context reads); Phase 5 approval UX additions go into the existing Step 4 output block.
 - `triage/SKILL.md` — description-only update at `skills/momentum/skills/triage/SKILL.md`.
@@ -217,6 +219,8 @@ Script and code changes use standard TDD (red-green-refactor). bmad-dev-story ha
 3. Run evals: for each eval file, spawn a subagent. Give it: (1) the eval's scenario as its task, and (2) load the skill by passing the workflow.md contents as context. Observe whether the subagent's behavior matches the eval's expected outcome.
 4. If all evals match → task complete
 5. If any eval fails → diagnose the gap in the skill instructions, revise, re-run (max 3 cycles; surface to user if still failing)
+
+**Regression evals (mandatory):** The 5 existing evals in `skills/momentum/skills/triage/evals/` must also pass after implementing workflow changes — run them as regression evals. New dedup-phase evals are additive; do not remove or modify existing evals.
 
 **NFR compliance — mandatory for every skill-instruction task:**
 - SKILL.md `description` field must be ≤150 characters (NFR1) — count precisely

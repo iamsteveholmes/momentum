@@ -664,6 +664,8 @@ The engine room — continuous improvement of the Impetus orchestrator itself: w
 
 ## Epic 11: Agent Team Model
 
+**Slug:** `agent-team-model`
+
 Sprint-dev assembles the right execution team for each development and review phase — agent roles, spawning modes, communication patterns, deduplication guards, and quality gate coordination.
 
 **Category:** Sprint execution team composition
