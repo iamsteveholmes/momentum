@@ -4730,5 +4730,15 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "momentumintake-remove-worktree-isolation-story-add-is-safe": {
+    "status": "backlog",
+    "title": "momentum:intake — remove worktree isolation, story-add is safe to run concurrently",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
   }
 }

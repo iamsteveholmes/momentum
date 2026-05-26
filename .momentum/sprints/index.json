@@ -1756,7 +1756,8 @@
       "slug": "quickfix-2026-05-24",
       "story": "triage-dedup-phase",
       "spec_dir": "quickfix-triage-dedup-phase",
-      "started": "2026-05-24"
+      "started": "2026-05-24",
+      "completed": "2026-05-24"
     }
   ]
 }
