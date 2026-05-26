@@ -14,7 +14,7 @@ Usage:
     momentum-tools.py sprint complete
     momentum-tools.py sprint epic-membership --story SLUG --epic SLUG
     momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N]
-    momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY]
+    momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY] [--depends-on SLUG[,SLUG,...]]
     momentum-tools.py specialist-classify --touches "path1,path2,..."
     momentum-tools.py agent resolve --touches "path1,path2,..."
     momentum-tools.py agent resolve --role qa-reviewer
@@ -1958,12 +1958,15 @@ def cmd_story_add(args: argparse.Namespace) -> None:
     if story_type not in VALID_STORY_TYPES:
         error_result("story_add", f"Invalid story_type '{story_type}'. Must be one of: {', '.join(sorted(VALID_STORY_TYPES))}", slug=slug)
 
+    raw_deps = (args.depends_on or "").strip()
+    depends_on = [d.strip() for d in raw_deps.split(",") if d.strip()] if raw_deps else []
+
     entry = {
         "status": "backlog",
         "title": args.title.strip(),
         "epic_slug": args.epic.strip(),
         "story_file": True,
-        "depends_on": [],
+        "depends_on": depends_on,
         "touches": [],
         "priority": priority,
         "story_type": story_type,
@@ -2467,6 +2470,7 @@ def build_parser() -> argparse.ArgumentParser:
     sta.add_argument("--priority", default="low", help="Priority: critical, high, medium, low (default: low)")
     sta.add_argument("--feature-slug", default="", help="Feature slug this story belongs to (optional)")
     sta.add_argument("--story-type", default="feature", help="Story type: feature, maintenance, defect, exploration, practice (default: feature)")
+    sta.add_argument("--depends-on", default="", help="Comma-separated list of story slugs this story depends on")
     sta.set_defaults(func=cmd_story_add)
 
     # sprint story-approve

@@ -4590,7 +4590,7 @@
     "story_type": "feature"
   },
   "practice-ledger-features-epics-cascade-sequenced-plan": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Practice-Ledger + Features→Epics Cascade — Sequenced Plan",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4600,7 +4600,7 @@
     "story_type": "practice"
   },
   "triage-dedup-phase": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Triage dedup phase — deterministic prefilter + cluster fan-out + per-theme findings",
     "epic_slug": "agent-team-model",
     "feature_slug": "momentum-sprint-orchestration",
@@ -4612,7 +4612,10 @@
       "skills/momentum/skills/triage/workflow.md",
       "skills/momentum/skills/triage/SKILL.md"
     ],
-    "change_type": ["script-code", "skill-instruction"],
+    "change_type": [
+      "script-code",
+      "skill-instruction"
+    ],
     "priority": "high",
     "story_type": "practice"
   },
@@ -4634,6 +4637,98 @@
     "depends_on": [],
     "touches": [],
     "priority": "high",
+    "story_type": "practice"
+  },
+  "a2-practice-ledger-hygiene-cleanup-close-12-stale-entries": {
+    "status": "backlog",
+    "title": "A2: Practice-ledger hygiene cleanup — close 12 stale entries",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "a1-practice-ledger-schema-cli-redesign-true-append-only"
+    ],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
+  },
+  "a3-impetus-rule-update-honest-counts-new-ledger-retired": {
+    "status": "backlog",
+    "title": "A3: Impetus rule update — honest counts, new ledger, retired signals",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "a1-practice-ledger-schema-cli-redesign-true-append-only"
+    ],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "b1-epic-schema-migration-define-epicsjson-migrate-features": {
+    "status": "backlog",
+    "title": "B1: Epic schema migration — define epics.json, migrate features and categorical epics, re-home unhomed stories",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "a4-skill-workflow-updates-point-retro-triage-sprint": {
+    "status": "backlog",
+    "title": "A4: Skill workflow updates — point retro/triage/sprint-planning/intake/decision/assessment/feature-breakdown at the new CLI",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "a1-practice-ledger-schema-cli-redesign-true-append-only"
+    ],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
+  },
+  "a1-practice-ledger-schema-cli-redesign-true-append-only": {
+    "status": "backlog",
+    "title": "A1: Practice-ledger schema + CLI redesign — true append-only event log",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "b2-create-story-input-routing-read-epic-context-instead-of": {
+    "status": "backlog",
+    "title": "B2: create-story input-routing — read epic context instead of feature context",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "b1-epic-schema-migration-define-epicsjson-migrate-features"
+    ],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
+  },
+  "b3-canvas-update-render-epics-instead-of-features": {
+    "status": "backlog",
+    "title": "B3: Canvas update — render epics instead of features",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "b1-epic-schema-migration-define-epicsjson-migrate-features"
+    ],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "b4-grooming-breakdown-skill-restructure": {
+    "status": "backlog",
+    "title": "B4: feature-grooming + feature-breakdown → epic-grooming + epic-breakdown restructure",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "b1-epic-schema-migration-define-epicsjson-migrate-features"
+    ],
+    "touches": [],
+    "priority": "medium",
     "story_type": "practice"
   }
 }
