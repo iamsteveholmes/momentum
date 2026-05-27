@@ -1,6 +1,21 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "a1-practice-ledger-schema-cli-redesign-true-append-only",
+      "a2-practice-ledger-hygiene-cleanup-close-12-stale-entries",
+      "a3-impetus-rule-update-honest-counts-new-ledger-retired",
+      "a4-skill-workflow-updates-point-retro-triage-sprint",
+      "b1-epic-schema-migration-define-epicsjson-migrate-features",
+      "b2-create-story-input-routing-read-epic-context-instead-of",
+      "b3-canvas-update-render-epics-instead-of-features",
+      "b4-grooming-breakdown-skill-restructure",
+      "momentumintake-remove-worktree-isolation-story-add-is-safe"
+    ],
+    "waves": []
+  },
   "completed": [
     {
       "locked": true,
