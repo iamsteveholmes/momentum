@@ -1,0 +1,44 @@
+# momentumintake-remove-worktree-isolation-story-add-is-safe.eval.yaml
+# Frozen verification contract — adversarial eval scenarios for the
+# intake non-isolation contract.
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Intake captures a stub directly on the main working tree"
+    invocation: "momentum:intake with a single conversational observation worth capturing as a story stub"
+    given: |
+      The developer is on the main working tree (no worktree active).
+      A baseline snapshot of `git status --porcelain` is captured before
+      invocation. The developer presents one conversational observation
+      to capture.
+    when: "The developer invokes momentum:intake and approves the captured stub."
+    then:
+      - "After the skill completes, a file at `.momentum/stories/<slug>.md` exists on the main working tree (visible via `ls` from the project root without checking out any other branch)."
+      - "An index entry for that slug appears in `.momentum/stories/index.json` on the main working tree."
+      - "After the intake invocation, `git worktree list` shows the same worktrees as before — no new worktrees were created under `.claude/worktrees/agent-*`."
+      - "The stub file lands on the current branch: `git log -1 --format=%H -- .momentum/stories/<stub-slug>.md` returns a commit reachable from the current branch (the stub is not orphaned in a detached worktree)."
+      - "No manual recovery step (copy, move, re-register) was required after the run."
+    pass_criteria: "Reviewer locates the stub file at the expected path on main, confirms the index entry, and confirms `git worktree list | wc -l` returns the same count after the intake invocation as before."
+    fail_criteria: "The stub file is absent from main (orphaned in a branch), or the index entry is missing, or any new worktree appears under `.claude/worktrees/agent-*` after the intake invocation, OR the stub does not appear under `.momentum/stories/` on the current branch."
+
+  - name: "Concurrent intake invocations all land safely on main"
+    invocation: "Three momentum:intake invocations run in parallel (e.g., spawned via fan-out)"
+    given: "Three distinct conversational observations are ready for capture. All three callers run concurrently against the main working tree. None wraps intake in a worktree."
+    when: "All three invocations execute to completion."
+    then:
+      - "Three distinct slug files appear at `.momentum/stories/<slug-a>.md`, `<slug-b>.md`, `<slug-c>.md` on the main working tree."
+      - "Three corresponding entries appear in `.momentum/stories/index.json` — none collide, none overwrite, none are lost."
+      - "No invocation reports a write conflict or requires retry."
+    pass_criteria: "All three stub files and all three index entries are present on the main working tree after the parallel run. The index file parses as valid JSON with all three entries."
+    fail_criteria: "Any stub file is missing; or the index lost an entry due to a concurrent-write collision; or any invocation reported a worktree-related error."
+
+  - name: "Intake capture appends a created event to the practice-ledger"
+    invocation: "momentum:intake with a single conversational observation worth capturing"
+    given: "Fresh practice-ledger state at .momentum/practice-ledger.jsonl. The developer is on the main working tree."
+    when: "The developer invokes momentum:intake and approves the captured stub."
+    then:
+      - "After the run, `momentum-tools practice-ledger by-source momentum-intake` returns at least one event whose `event_type` is `created`."
+      - "The returned event's `entity_id` matches the slug of the newly captured stub visible in `.momentum/stories/index.json`."
+    pass_criteria: "Reviewer runs the CLI query after the intake run and confirms a `created` event whose `entity_id` corresponds to the new stub."
+    fail_criteria: "The by-source query returns no event for `momentum-intake`; or the returned event's `entity_id` does not match the captured stub's slug; or the event_type is something other than `created`."

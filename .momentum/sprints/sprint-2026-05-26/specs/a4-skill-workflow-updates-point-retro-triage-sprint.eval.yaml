@@ -1,0 +1,54 @@
+# a4-skill-workflow-updates-point-retro-triage-sprint.eval.yaml
+# Frozen verification contract — adversarial eval scenarios for the
+# producer-side ledger-CLI sweep across retro / triage / sprint-planning /
+# intake / feature-breakdown workflows.
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Retro writes handoff via the new CLI vocabulary"
+    invocation: "Invoke `momentum:retro` on a sprint that has at least one finished story; respond to elicitation prompts to drive the workflow to its handoff-capture point."
+    given: "A practice-ledger file exists at .momentum/practice-ledger.jsonl and is readable via the practice-ledger CLI. The retro skill has at least one finding to hand off."
+    when: "The developer invokes momentum:retro and walks through to the handoff capture step."
+    then:
+      - "After the run completes, `momentum-tools practice-ledger by-source momentum-retro` returns at least one event whose `event_type` is `created` and whose payload encodes the handoff semantic (e.g., `kind: handoff` inside the payload)."
+      - "The returned event's `payload` field contains an `intent` of `handoff` (or semantically equivalent payload structure that captures the legacy handoff semantic)."
+      - "No event returned by `practice-ledger by-source retro` carries a `kind` field — that legacy field name does not appear in the JSON output."
+      - "`momentum-tools practice-ledger by-source momentum-retro` returns no events written to the legacy `.momentum/intake-queue.jsonl` path (the legacy file either does not exist or is unchanged in mtime since before the run)."
+    pass_criteria: "The reviewer runs `momentum-tools practice-ledger by-source retro` after the run and observes a `created` event with the handoff payload pattern; the legacy `.momentum/intake-queue.jsonl` file has no new entries appended (mtime stable or file absent)."
+    fail_criteria: "Any of: the appended event has `event_type` other than `created`/`custom`; the event carries a `kind` field instead of payload-encoded class; the legacy `.momentum/intake-queue.jsonl` file gained new entries; the by-source query returns nothing for `retro`."
+
+  - name: "Triage shaping capture writes a non-terminal event via the new CLI"
+    invocation: "Invoke `momentum:triage` on at least one observation that the developer classifies as a shaping concern; respond to elicitation to drive the workflow to ledger-write."
+    given: "A fresh ledger state; the developer presents one observation that triage classifies as shaping."
+    when: "The developer invokes `momentum:triage` on the observation and responds to elicitation prompts; the workflow runs to completion. Observable end-state: a new event with `event_type: created` (encoding `kind: shape` in its payload) appears in `momentum-tools practice-ledger by-source momentum-triage`."
+    then:
+      - "`momentum-tools practice-ledger by-source momentum-triage` returns the new entity."
+      - "The new event's `event_type` is `created` (not `consumed`, not `rejected`)."
+      - "The new event's `payload` contains a `triage_class` of `shaping` (or semantically equivalent class label carried in payload)."
+      - "The same entity_id appears in the output of `momentum-tools practice-ledger open` — derived state classifies it as non-terminal."
+    pass_criteria: "Black-box reviewer queries the CLI after triage runs and observes the entity in both `by-source triage` and `open`, with the payload-encoded class label and no `kind` field."
+    fail_criteria: "Any of: the entity carries `event_type: consumed` (would make a SHAPING entry vanish from `open`); the payload does not carry the triage class; the entity is missing from `practice-ledger open`; the legacy `.momentum/intake-queue.jsonl` file gained new entries during the run."
+
+  - name: "Triage REJECT capture writes a terminal rejected event"
+    invocation: "momentum:triage with a single observation that classifies as REJECT"
+    given: "A fresh ledger state; the developer presents one observation that triage classifies as REJECT with a rationale."
+    when: "The triage workflow reaches the capture step for the REJECT class and executes it."
+    then:
+      - "`momentum-tools practice-ledger by-source triage` returns the new entity."
+      - "The new event's `event_type` is `rejected`."
+      - "The new event's `payload` contains a `reason` string populated from the triage rationale."
+      - "The entity does NOT appear in `momentum-tools practice-ledger open` — derived state classifies it as terminal."
+    pass_criteria: "Reviewer confirms the rejected event lands with a populated `reason` payload and the entity is excluded from `practice-ledger open`."
+    fail_criteria: "The rejected event has empty payload, or the entity remains visible in `practice-ledger open`, or the workflow uses the legacy `--kind rejected` flag."
+
+  - name: "Intake capture step writes via the new CLI"
+    invocation: "momentum:intake with a single conversational observation worth capturing"
+    given: "Fresh ledger state; the developer asks intake to capture a discovered observation."
+    when: "Intake's capture step executes."
+    then:
+      - "`momentum-tools practice-ledger by-source intake` returns the new entity."
+      - "The entity has `event_type: created` and a payload carrying the captured observation (no `kind` field)."
+      - "The legacy `.momentum/intake-queue.jsonl` file has no new entries after the run (mtime stable or file absent)."
+    pass_criteria: "Reviewer confirms the new entity is queryable via the new CLI and the legacy file received no append."
+    fail_criteria: "The new entity is missing from `practice-ledger by-source intake`; or the appended event carries a `kind` field; or the legacy `.momentum/intake-queue.jsonl` file gained new entries during the run."

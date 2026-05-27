@@ -1,0 +1,56 @@
+# b4-grooming-breakdown-skill-restructure.eval.yaml
+# Frozen verification contract — adversarial eval scenarios for the
+# feature-grooming/feature-breakdown → epic-grooming/epic-breakdown
+# restructure.
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "momentum:epic-grooming is invocable and is the sole writer of epics.json"
+    invocation: "momentum:epic-grooming on a minimal scenario that proposes an epics.json edit"
+    given: |
+      epics.json exists at _bmad-output/planning-artifacts/epics.json
+      (produced by B1). The developer presents a minimal scenario where
+      a categorical-style edit (orphan re-homing) and a value-analysis-style
+      edit (description update) are both needed.
+    when: "The developer invokes momentum:epic-grooming and walks through the proposed-change approval step."
+    then:
+      - "The skill emits proposed changes covering both the orphan-resolution edit and the value-analysis edit (one unified workflow handles both legacy concerns)."
+      - "When the developer approves, the skill writes the changes to epics.json. The diff is observable in the working tree."
+      - "When the developer rejects, no mutation to epics.json occurs (the file is byte-identical to its pre-invocation state)."
+    pass_criteria: "Reviewer confirms (a) both edit types are surfaced in a single skill run, (b) approval writes the diff, (c) rejection leaves epics.json unchanged."
+    fail_criteria: "Either edit type is missing from the proposed-change surface (suggesting only one of the two retired skills' scopes was absorbed); or rejection still mutates epics.json; or the skill writes before approval."
+
+  - name: "momentum:epic-breakdown accepts an epic_slug and delegates to triage"
+    invocation: "momentum:epic-breakdown with a concrete epic_slug input"
+    given: "epics.json contains a record for the chosen epic_slug. momentum:triage is available."
+    when: "The developer invokes momentum:epic-breakdown for that epic_slug."
+    then:
+      - "The workflow accepts the epic_slug input without error (exit 0)."
+      - "After invoking `momentum:epic-breakdown` on the chosen epic, `momentum-tools practice-ledger by-source momentum-epic-breakdown` returns one or more events with `event_type: created` whose `entity_id` values match the newly enumerated story stubs."
+      - "`git diff _bmad-output/planning-artifacts/` after `momentum:epic-breakdown` returns no changes EXCEPT possibly newly-created story stub files referenced from epics.json."
+    pass_criteria: "Reviewer confirms (a) `momentum:epic-breakdown --slug <epic-slug>` accepts the input without erroring, and (b) `git diff _bmad-output/planning-artifacts/epics.json` after the run shows no changes (or only the additions of newly enumerated story slugs)."
+    fail_criteria: "The skill rejects an epic_slug input; or the post-run diff of epics.json shows mutations beyond newly-added story slug entries; or the practice-ledger by-source query returns no `created` events for the new stubs."
+
+  - name: "Legacy skill paths no longer load"
+    invocation: "Attempts to invoke momentum:feature-grooming or momentum:feature-breakdown"
+    given: "The project has been updated per this story; the legacy skill directories should be absent."
+    when: "A developer attempts to invoke `momentum:feature-grooming` or `momentum:feature-breakdown`."
+    then:
+      - "`test ! -d skills/momentum/skills/feature-grooming` succeeds (exit 0)."
+      - "`test ! -d skills/momentum/skills/feature-breakdown` succeeds (exit 0)."
+      - "Filesystem inspection of skills/momentum/skills/ shows no feature-grooming/ and no feature-breakdown/ directories."
+    pass_criteria: "Both `test ! -d` commands return exit 0; both directory paths are absent on disk."
+    fail_criteria: "Either `test ! -d` returns non-zero; or either directory remains on disk."
+
+  - name: "Architecture and command surfaces converge on the new names"
+    invocation: "Static review of architecture.md, prd.md, and skills/momentum/commands/"
+    given: "The story is merged."
+    when: "A reviewer runs the verification commands stated in the story's plain-English ACs."
+    then:
+      - "`grep -rn 'feature-grooming\\|feature-breakdown\\|momentum:feature-grooming\\|momentum:feature-breakdown' _bmad-output/planning-artifacts/architecture.md _bmad-output/planning-artifacts/prd.md` returns matches only in historical/migration callouts that explicitly cite DEC-034 or the rename event."
+      - "skills/momentum/commands/feature-grooming.md does not exist."
+      - "skills/momentum/commands/epic-grooming.md exists and invokes `momentum:epic-grooming`."
+      - "skills/momentum/commands/epic-breakdown.md exists and invokes `momentum:epic-breakdown`."
+    pass_criteria: "Reviewer reproduces each command and confirms each outcome. Every surviving match for the legacy substrings in architecture.md/prd.md has DEC-034 or 'historical' in its immediate context."
+    fail_criteria: "Any legacy match in architecture.md or prd.md exists without a DEC-034/historical context; or any of the three command-file assertions fails."

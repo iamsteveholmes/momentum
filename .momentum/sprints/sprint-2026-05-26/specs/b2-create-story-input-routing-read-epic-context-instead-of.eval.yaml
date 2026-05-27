@@ -1,0 +1,69 @@
+# b2-create-story-input-routing-read-epic-context-instead-of.eval.yaml
+# Frozen verification contract — adversarial eval scenarios for create-story
+# input routing migrating from epics.md / features.json to epics.json.
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Touches paths derive from the matched epic record"
+    invocation: "momentum:create-story for a new story whose epic_slug matches an existing epics.json record"
+    given: |
+      epics.json contains an epic record whose system_context names two
+      skill directories (paths) — for example:
+      "skills/momentum/skills/foo/" and "skills/momentum/skills/bar/".
+      A pre-drafted story file is provided to create-story with
+      epic_slug set to that record's epic_slug.
+    when: "The developer invokes momentum:create-story on that draft."
+    then:
+      - "After the skill completes, the entry for the new story in .momentum/stories/index.json has a `touches` array."
+      - "The `touches` array contains both skill directories named in the epic record's system_context."
+    pass_criteria: "Reviewer opens .momentum/stories/index.json, locates the new story entry by story_key, and confirms both directories appear in `touches`."
+    fail_criteria: "Either skill directory is absent from `touches`, or `touches` is empty, or the new story entry references content drawn from the legacy features.json or from a markdown narrative file rather than the JSON epic record."
+
+  - name: "Missing-epic error halts before mutating the index"
+    invocation: "momentum:create-story for a story whose epic_slug does NOT appear in epics.json"
+    given: |
+      A pre-drafted story file with epic_slug set to a value that does
+      not exist as a key in epics.json (e.g., epic_slug:
+      definitely-not-a-real-epic-xyz). The current contents of
+      .momentum/stories/index.json are captured as a baseline before
+      invocation.
+    when: "The developer invokes momentum:create-story on that draft."
+    then:
+      - "The skill emits an error message naming the missing epic_slug."
+      - "The skill halts — control returns to the developer without successful completion."
+      - "The post-invocation contents of .momentum/stories/index.json are byte-identical to the baseline captured before invocation."
+    pass_criteria: "Reviewer confirms the error text names the offending epic_slug AND that a diff of stories/index.json before vs. after invocation shows zero changes."
+    fail_criteria: "The skill creates the index entry silently with empty touches/depends_on; or the error message does not name the missing slug; or stories/index.json mutates despite the missing epic."
+
+  - name: "Missing epic_slug frontmatter is caught with an actionable error"
+    invocation: "momentum:create-story for a story whose frontmatter has no epic_slug field"
+    given: |
+      A pre-drafted story file whose YAML frontmatter omits the
+      epic_slug field entirely (or sets it to an empty string).
+    when: "The developer invokes momentum:create-story on that draft."
+    then:
+      - "The skill emits an error message that names the missing field and instructs the developer to set epic_slug."
+      - "The error message mentions `ad-hoc` as the catch-all residue option."
+      - "The skill halts before writing to stories/index.json."
+    pass_criteria: "Reviewer reads the error output and confirms the named field, the actionable instruction, and the `ad-hoc` mention. stories/index.json is unchanged."
+    fail_criteria: "The skill proceeds with an empty epic_slug, or the error is generic with no field name, or the `ad-hoc` option is not surfaced."
+
+  - name: "features.json sentinel does not leak into the new story entry"
+    invocation: "momentum:create-story for any well-formed input story"
+    given: "A representative draft story with a valid epic_slug. A features.json decoy file is placed at the legacy path containing a sentinel string (e.g., `SENTINEL_FEATURES_JSON_LEAK_TOKEN`) NOT present anywhere in epics.json."
+    when: "create-story runs to completion."
+    then:
+      - "The sentinel string does not appear in the new story's entry in `.momentum/stories/index.json` (in any field: title, touches, depends_on, etc.)."
+      - "The sentinel string does not appear anywhere in the new generated story file under `.momentum/stories/<slug>.md`."
+    pass_criteria: "`grep -F SENTINEL_FEATURES_JSON_LEAK_TOKEN .momentum/stories/index.json .momentum/stories/<slug>.md` returns zero matches (exit 1)."
+    fail_criteria: "The sentinel string appears in either the index entry or the generated story file — proving create-story still reads features.json."
+
+  - name: "New story file cites the epic from epics.json"
+    invocation: "momentum:create-story for a draft whose epic_slug references an existing entry in _bmad-output/planning-artifacts/epics.json"
+    given: "A valid draft story with epic_slug pointing at a populated epics.json record."
+    when: "create-story runs to completion."
+    then:
+      - "The generated story file under .momentum/stories/ contains a References section that includes a line citing the epic_slug."
+    pass_criteria: "Reviewer opens the new story file and finds a References section citing the epic_slug."
+    fail_criteria: "The story file has no reference to the epic_slug, or the create-story invocation errors despite a valid epics.json record."
