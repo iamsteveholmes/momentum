@@ -4801,7 +4801,7 @@
     "priority": "low"
   },
   "b4-grooming-breakdown-skill-restructure": {
-    "status": "in-progress",
+    "status": "review",
     "title": "B4: feature-grooming + feature-breakdown → epic-grooming + epic-breakdown restructure",
     "epic_slug": "ad-hoc",
     "story_file": true,
