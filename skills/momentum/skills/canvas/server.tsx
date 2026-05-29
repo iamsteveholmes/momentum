@@ -356,7 +356,6 @@ export interface CycleState {
 
 const PHASES: Array<{ slug: string; label: string; required: boolean }> = [
   { slug: "triage",          label: "triage",          required: false },
-  { slug: "feature-grooming", label: "feat\ngroom",    required: false },
   { slug: "epic-grooming",   label: "epic\ngroom",     required: false },
   { slug: "refine",          label: "refine",          required: false },
   { slug: "sprint-planning", label: "planning",        required: true  },

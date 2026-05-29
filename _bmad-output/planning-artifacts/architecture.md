@@ -281,11 +281,11 @@ The defining question for each component: *does this need main-context persona p
 | dev | Flat skill (`/momentum:dev`) — internal-only | Pure story executor; called by sprint-dev and quick-fix, not user-invocable from Impetus (Decision 39) |
 | quick-fix | Flat skill (`/momentum:quick-fix`) | Single-story bypass-sprint lifecycle path (Decision 39); register, execute, validate, complete in one session |
 | research | Flat skill (`/momentum:research`) | Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking |
-| epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
+| epic-grooming | Flat skill (`/momentum:epic-grooming`) | Unified grooming skill (DEC-034 D6): sole writer of `epics.json`; bootstrap/refine mode detection; value analysis + system_context + acceptance_condition on every epic; taxonomy orphan resolution and story reassignment via momentum-tools; absorbs former momentum:feature-grooming (retired B4) and former categorical epic-grooming scope. |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; **single-item capture only** — one idea → one story stub, feature-slug and story-type aware per DEC-005 D1/D5. No batching (that is `momentum:triage`'s job). Writes `stories/{slug}.md` + `stories/index.json` entry via `momentum-tools sprint story-add`. |
 | triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into five active classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT) per DEC-005. The DISTILL class is removed post-removal of the distill skill (ARCH-1/ARCH-5). Delegates ARTIFACT → `momentum:intake`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `practice-ledger.jsonl` as `created` events via `momentum-tools practice-ledger append` CLI (DEC-033 supersedes DEC-007 intake-queue writes). Deterministic prefilter via `momentum-tools triage prefilter` (TF-IDF + Jaccard + epic boost, status-filtered, top-K=10 shortlist); inline batch clustering; parallel per-cluster dedup fan-out subagents returning per-theme JSON findings; inline consolidation-candidate grouping; five-class classification for unique survivors. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
-| feature-breakdown | Flat skill (`/momentum:feature-breakdown`) — **pending rename to `momentum:epic-breakdown` (B4, DEC-034 D6)** | Pure orchestrator; takes a feature/epic slug as input, enumerates story gaps end-to-end, passes pre-enumerated candidate list to `momentum:triage`. NEVER writes to epics.json or stories/index.json. Will read `epics.json` instead of `features.json` after B2 update (Decision 50). |
+| epic-breakdown | Flat skill (`/momentum:epic-breakdown`) — **renamed from feature-breakdown (B4, DEC-034 D6)** | Pure orchestrator; takes an `epic_slug` as input, enumerates story gaps end-to-end, passes pre-enumerated candidate list to `momentum:triage` with `source_label = "epic-breakdown:{epic_slug}"`. NEVER writes to epics.json or stories/index.json. Reads `epics.json` (not features.json). |
 | distill | Flat skill (`/momentum:distill`) — **(removed — `remove-momentum-distill` story ready-for-dev)** | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. Previously listed as third execution path alongside sprint orchestration and quick-fix (Decision 42). **ARCH-1: This skill is being removed. The `remove-momentum-distill` story is ready-for-dev. Decision 42 references to distill as an active execution path are deprecated; see Decision 42 note below.** |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
 | sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
@@ -1342,7 +1342,7 @@ momentum/                                    ← Plugin root
 | momentum:refine | prd.md, architecture.md, `.momentum/stories/index.json`, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); `.momentum/stories/index.json` mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
 | momentum:feature-status **(deprecated — use momentum:canvas)** | ~~`_bmad-output/planning-artifacts/features.json`~~ `_bmad-output/planning-artifacts/epics.json` **(DEC-034)**, `.momentum/stories/index.json` | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
 | canvas server (Bun process, port 3456) | `_bmad-output/planning-artifacts/epics.json` **(DEC-034 — replaces features.json)**, `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/stories/{slug}.md` | _(none — read-only server)_ |
-| `_bmad-output/planning-artifacts/epics.json` **(DEC-034)** | _(read by canvas server, momentum:feature-grooming (pending B4 rename to momentum:epic-grooming), momentum:feature-breakdown (pending B4 rename), momentum:create-story (pending B2 update))_ | TBD by B4 — currently: migration script in story B1 (sprint-2026-05-26); future sole writer: momentum:epic-grooming once B4 ships |
+| `_bmad-output/planning-artifacts/epics.json` **(DEC-034)** | _(read by: canvas server, momentum:epic-grooming, momentum:epic-breakdown, momentum:create-story)_ | **Sole writer: `momentum:epic-grooming`** (DEC-034 D6, B4). No other skill or tool writes epics.json. |
 | momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files, `momentum/verification-harness.json` (for per-story contract-type selection) | `.momentum/sprints/{sprint-slug}/specs/` (multi-extension contract files: `.feature`, `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md` per story `verification_method`); `.momentum/sprints/{sprint-slug}/coverage-plan.md` (written at activation, then immutable); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
 | momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
 | momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/practice-ledger.jsonl` (handoff `created` events via `momentum-tools practice-ledger append`; replaces prior `signals/*.json` writes — DEC-033 D6). Note: feature-status cache read and `/momentum:feature-status` spawn removed — **ARCH-6: feature-status deprecated, canvas supersedes** |
@@ -1441,7 +1441,7 @@ momentum/                                    ← Plugin root
 
 **momentum:feature-status ↔ momentum:retro (deprecated — use momentum:canvas):** Retro orchestrator spawns `/momentum:feature-status` at Phase 6 close (after verification, before sprint summary write) to refresh the feature cache for the next session. This is a sequential dependency: feature-status runs first, its cache output is read by the retro orchestrator to populate the "Features Advanced" section of the sprint summary (Decision 47). **Deprecated by DEC-019.**
 
-**momentum:feature-grooming ↔ momentum:feature-status (deprecated — use momentum:canvas):** `momentum:feature-grooming` writes features.json and calls `momentum-tools feature-status-hash` post-write to invalidate the feature-status cache. `momentum:feature-status` reads features.json for display. This ensures the HTML dashboard and YAML cache are always considered stale after a grooming session, triggering a refresh on the next Impetus startup-preflight check. **Deprecated by DEC-019 — canvas reads features.json directly via its live Bun server; no cache invalidation step needed.**
+**momentum:epic-grooming ↔ momentum:canvas:** `momentum:epic-grooming` is the sole writer of `epics.json` (DEC-034 D6, B4). After a grooming session, the canvas server (Bun, port 3456) reads the updated `epics.json` live — no cache invalidation step needed. _Historical note: The prior `momentum:feature-grooming ↔ momentum:feature-status` integration (features.json + cache invalidation via feature-status-hash) is retired. Both `momentum:feature-grooming` and `momentum:feature-status` are superseded by DEC-034 and DEC-019 respectively._
 
 ---
 
@@ -2765,7 +2765,7 @@ Redundancy flags: phases with 0 skills are flagged as uncovered; phases with 4+ 
 
 ---
 
-**Decision 49 — Feature Grooming Skill: Orchestrator Pattern and Write Authority (sprint-2026-04-11)** — **HISTORICAL — superseded by DEC-034 (2026-05-25); momentum:feature-grooming pending rename to momentum:epic-grooming (B4)**
+**Decision 49 — Feature Grooming Skill: Orchestrator Pattern and Write Authority (sprint-2026-04-11)** — **HISTORICAL — superseded by DEC-034 (2026-05-25); momentum:feature-grooming retired and absorbed into momentum:epic-grooming (B4, sprint-2026-05-26). Successor: `momentum:epic-grooming` is now the sole authorized writer of `epics.json` with the same orchestrator pattern and mode detection described here, retargeted at `epics.json`.**
 
 The `momentum:feature-grooming` skill is a flat orchestrator. It spawns exactly 2 discovery subagents in a single message (model: haiku, effort: quick):
 
@@ -2784,23 +2784,23 @@ The orchestrator handles all synthesis, value analysis, developer interaction, a
 
 ---
 
-**Decision 50 — Feature Breakdown Skill: Canonical Feature-to-Story Gap Enumerator (sprint-2026-04-18)**
+**Decision 50 — Epic Breakdown Skill: Canonical Epic-to-Story Gap Enumerator (sprint-2026-04-18, updated B4 sprint-2026-05-26)** — _Renamed from feature-breakdown to epic-breakdown per DEC-034 D6 (B4). Now takes `epic_slug` as input and reads `epics.json` instead of `features.json`. `source_label` updated to `"epic-breakdown:{epic_slug}"`._
 
-The `momentum:feature-breakdown` skill is the canonical entry point for converting a feature slug into a prioritized list of story gaps required to ship that feature end to end. No other skill in the practice takes a feature slug as primary input and produces a gap enumeration as output.
+The `momentum:epic-breakdown` skill is the canonical entry point for converting an epic slug into a prioritized list of story gaps required to ship that epic end to end. No other skill in the practice takes an epic slug as primary input and produces a gap enumeration as output.
 
-**Role boundary:** `feature-breakdown` is a pure orchestrator. It NEVER writes to `features.json`, `stories/index.json`, or any planning artifact. Its sole output is a ranked candidate list passed to `momentum:triage` for disposition. All classification and routing authority belongs to triage.
+**Role boundary:** `epic-breakdown` is a pure orchestrator. It NEVER writes to `epics.json`, `stories/index.json`, or any planning artifact. Its sole output is a ranked candidate list passed to `momentum:triage` for disposition. All classification and routing authority belongs to triage.
 
-**Delegation contract:** `feature-breakdown` passes `source_label = "feature-breakdown:{feature_slug}"` to `momentum:triage`, satisfying the pre-enumerated-list contract. Triage classifies each candidate into the standard six classes (ARTIFACT / DISTILL / DECISION / SHAPING / DEFER / REJECT) and handles all writes.
+**Delegation contract:** `epic-breakdown` passes `source_label = "epic-breakdown:{epic_slug}"` to `momentum:triage`, satisfying the pre-enumerated-list contract. Triage classifies each candidate into the standard classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT) and handles all writes.
 
-**Why this skill exists:** The practice has no prior skill that takes a feature slug and authors the missing work.
-- `momentum:feature-grooming` catalogs features (Decision 49) — does not enumerate story gaps
-- `momentum:feature-status` reports health — read-only, no gap authoring
+**Why this skill exists:** The practice has no other skill that takes an epic slug and authors the missing work.
+- `momentum:epic-grooming` catalogs epics (successor to Decision 49) — does not enumerate story gaps
+- `momentum:canvas` reports health — read-only, no gap authoring
 - `momentum:sprint-planning` assumes the backlog is already ready — does not create stories
 - `momentum:triage` classifies pre-formed observations — does not enumerate what is missing
 
-`feature-breakdown` fills this gap: given a feature, find what stories are required but do not yet exist.
+`epic-breakdown` fills this gap: given an epic, find what stories are required but do not yet exist.
 
-**Non-responsibility:** `feature-breakdown` does NOT decide sufficiency. It identifies candidates. The developer and triage decide what becomes a story.
+**Non-responsibility:** `epic-breakdown` does NOT decide sufficiency. It identifies candidates. The developer and triage decide what becomes a story.
 
 **Pattern references:** Fan-out spawning from Decision 41 / `spawning-patterns.md`; orchestrator purity from existing decisions; triage delegation contract from the triage row in the Skills Deployment Classification table.
 
@@ -2888,10 +2888,12 @@ Formalizes the canonical step sequence for a Momentum practice cycle, establishi
 **Canonical step sequence:**
 
 ```
-triage → intake → feature-grooming → epic-grooming → refine → sprint-planning → sprint-dev → retro
+triage → intake → epic-grooming → refine → sprint-planning → sprint-dev → retro
 ```
 
-The canvas timeline collapses `intake` into the `triage` node for visual compactness, rendering **7 nodes** (not 8).
+_Note: The prior sequence included separate `feature-grooming` and `epic-grooming` nodes. Per DEC-034 D6 (B4, sprint-2026-05-26), these are collapsed into a single `epic-grooming` node. The canvas timeline renders **6 nodes** (not 7) after B3 updates the L1 view._
+
+The canvas timeline collapses `intake` into the `triage` node for visual compactness.
 
 **Phase classification:**
 
@@ -2901,7 +2903,6 @@ The canvas timeline collapses `intake` into the `triage` node for visual compact
 | `sprint-dev` | Required |
 | `retro` | Required |
 | `triage` | Optional |
-| `feature-grooming` | Optional |
 | `epic-grooming` | Optional |
 | `refine` | Optional |
 

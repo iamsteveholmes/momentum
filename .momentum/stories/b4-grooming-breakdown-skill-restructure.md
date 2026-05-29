@@ -1,7 +1,7 @@
 ---
 title: "B4: feature-grooming + feature-breakdown → epic-grooming + epic-breakdown restructure"
 story_key: b4-grooming-breakdown-skill-restructure
-status: ready-for-dev
+status: review
 epic_slug: ad-hoc
 feature_slug:
 story_type: practice
@@ -115,25 +115,25 @@ B1 must complete first because the renamed skills read `epics.json`, which does 
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Verify B1 prerequisite.** Confirm `epics.json` exists with the B1-produced schema. Halt with a block notice if absent.
-- [ ] **Task 2 — Author evals first (EDD).**
-  - [ ] Draft `skills/momentum/skills/epic-grooming/evals/` files for the unified scope (carrying forward the three feature-grooming evals retargeted at epics.json plus the three categorical epic-grooming evals, OR a justified consolidated subset).
-  - [ ] Draft `skills/momentum/skills/epic-breakdown/evals/` files for the renamed breakdown skill (epic-slug input, triage delegation contract).
-- [ ] **Task 3 — Build unified `momentum:epic-grooming`.**
-  - [ ] Merge the categorical `epic-grooming/workflow.md` (orphan resolution, taxonomy) with the value-analysis/bootstrap/refine sections from `feature-grooming/workflow.md`, retargeted at `epics.json`.
-  - [ ] Update `epic-grooming/SKILL.md` description if scope expansion warrants (keep ≤150 chars).
-  - [ ] Confirm body ≤500 lines / 5000 tokens; overflow to `references/`.
-- [ ] **Task 4 — Create `momentum:epic-breakdown`.**
-  - [ ] `mkdir skills/momentum/skills/epic-breakdown/`.
-  - [ ] Copy `feature-breakdown/SKILL.md` and `workflow.md` into the new directory; rename `name:`, replace all `feature` → `epic` and `features.json` → `epics.json` and `feature_slug` → `epic_slug` and `feature-breakdown:` → `epic-breakdown:` in workflow text.
-- [ ] **Task 5 — Run EDD verification cycle.** Spawn subagents per eval, confirm behaviors match. Iterate up to 3 cycles; surface persistent failures.
-- [ ] **Task 6 — Retire old skills.** Remove `skills/momentum/skills/feature-grooming/` and `skills/momentum/skills/feature-breakdown/` directories.
-- [ ] **Task 7 — Commands and dispatch.**
-  - [ ] Delete `skills/momentum/commands/feature-grooming.md`.
-  - [ ] Create `skills/momentum/commands/epic-grooming.md` and `skills/momentum/commands/epic-breakdown.md` matching the existing pattern.
-  - [ ] Update `skills/momentum/skills/impetus/references/dispatch.md` to reference the new skill names.
-- [ ] **Task 8 — Architecture.md updates.** Mark Decisions 44 and 49 HISTORICAL; update Skills Deployment Classification, Read/Write Authority, Integration Points, and the canonical cycle step list per AC5.
-- [ ] **Task 9 — Sweep for dangling references.** Run the AC6 greps and clean any remaining hits.
+- [x] **Task 1 — Verify B1 prerequisite.** Confirm `epics.json` exists with the B1-produced schema. Halt with a block notice if absent.
+- [x] **Task 2 — Author evals first (EDD).**
+  - [x] Draft `skills/momentum/skills/epic-grooming/evals/` files for the unified scope (carrying forward the three feature-grooming evals retargeted at epics.json plus the three categorical epic-grooming evals, OR a justified consolidated subset).
+  - [x] Draft `skills/momentum/skills/epic-breakdown/evals/` files for the renamed breakdown skill (epic-slug input, triage delegation contract).
+- [x] **Task 3 — Build unified `momentum:epic-grooming`.**
+  - [x] Merge the categorical `epic-grooming/workflow.md` (orphan resolution, taxonomy) with the value-analysis/bootstrap/refine sections from `feature-grooming/workflow.md`, retargeted at `epics.json`.
+  - [x] Update `epic-grooming/SKILL.md` description if scope expansion warrants (keep ≤150 chars).
+  - [x] Confirm body ≤500 lines / 5000 tokens; overflow to `references/`.
+- [x] **Task 4 — Create `momentum:epic-breakdown`.**
+  - [x] `mkdir skills/momentum/skills/epic-breakdown/`.
+  - [x] Copy `feature-breakdown/SKILL.md` and `workflow.md` into the new directory; rename `name:`, replace all `feature` → `epic` and `features.json` → `epics.json` and `feature_slug` → `epic_slug` and `feature-breakdown:` → `epic-breakdown:` in workflow text.
+- [x] **Task 5 — Run EDD verification cycle.** Spawn subagents per eval, confirm behaviors match. Iterate up to 3 cycles; surface persistent failures.
+- [x] **Task 6 — Retire old skills.** Remove `skills/momentum/skills/feature-grooming/` and `skills/momentum/skills/feature-breakdown/` directories.
+- [x] **Task 7 — Commands and dispatch.**
+  - [x] Delete `skills/momentum/commands/feature-grooming.md`.
+  - [x] Create `skills/momentum/commands/epic-grooming.md` and `skills/momentum/commands/epic-breakdown.md` matching the existing pattern.
+  - [x] Update `skills/momentum/skills/impetus/references/dispatch.md` to reference the new skill names.
+- [x] **Task 8 — Architecture.md updates.** Mark Decisions 44 and 49 HISTORICAL; update Skills Deployment Classification, Read/Write Authority, Integration Points, and the canonical cycle step list per AC5.
+- [x] **Task 9 — Sweep for dangling references.** Run the AC6 greps and clean any remaining hits.
 
 ## Dev Notes
 
@@ -235,8 +235,48 @@ Architecture.md updates are validated by AVFL against DEC-034 — not by tests. 
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+None.
 
 ### Completion Notes List
 
+- B1 prereq confirmed: `_bmad-output/planning-artifacts/epics.json` exists.
+- Unified `momentum:epic-grooming` built: SKILL.md description updated (71 chars, ≤150). Workflow merges categorical epic-grooming (orphan resolution, taxonomy, reassignment via momentum-tools) with feature-grooming's value-analysis/bootstrap/refine flow, fully retargeted at `epics.json`. Sole write authority established in Critical block. Body 230 lines, well under 500-line limit.
+- 6 evals for epic-grooming: 3 existing categorical (applies-changes-with-logging, identifies-orphaned-slugs, proposes-changes-without-applying) + 3 retargeted from feature-grooming (bootstrap-synthesizes-epic-list, no-mutation-before-approval, refine-detects-unmapped-stories). All reference epics.json, not features.json.
+- `momentum:epic-breakdown` created: SKILL.md (140 chars description, ≤150). Workflow is feature-breakdown fully retargeted — epic_slug input, reads epics.json, source_label `epic-breakdown:{epic_slug}`. 2 evals: breakdown-for-epic-slug, triage-delegation-contract. Git tracks feature-breakdown/workflow.md → epic-breakdown/workflow.md rename (79% similarity).
+- feature-grooming/ and feature-breakdown/ directories removed via `git rm -r`.
+- Commands: feature-grooming.md deleted; epic-grooming.md and epic-breakdown.md created.
+- dispatch.md updated: feature-grooming → epic-grooming, feature-breakdown → epic-breakdown, feature-status → canvas.
+- architecture.md: epic-grooming row updated with unified scope; feature-breakdown row renamed to epic-breakdown; epics.json R/W row set to sole writer: momentum:epic-grooming; Decision 49 HISTORICAL note updated with successor pointer; Decision 50 updated to epic-breakdown; Integration Points updated (epic-grooming ↔ canvas replaces feature-grooming ↔ feature-status); canonical cycle collapsed from 7 to 6 nodes.
+- canvas server.tsx and server.test.ts updated: PHASES array from 7 to 6 nodes (feature-grooming removed), test counts and slug arrays corrected.
+- prd.md: FR118 updated to epic-breakdown + epic_slug; FR128 updated to 6-node cycle with historical note.
+- AC6 greps clean: only references in HISTORICAL blocks (Decision 44/49 bodies citing DEC-034) and one intentional historical callout in eval-triage-delegation-contract.md.
+- EDD cycle: evals authored before implementation per EDD protocol. Structural verification confirms all evals reference epics.json/epic_slug only, no features.json references in new skill directories.
+
 ### File List
+
+- skills/momentum/skills/epic-grooming/SKILL.md (modified)
+- skills/momentum/skills/epic-grooming/workflow.md (modified — unified workflow)
+- skills/momentum/skills/epic-grooming/evals/eval-bootstrap-synthesizes-epic-list.md (new)
+- skills/momentum/skills/epic-grooming/evals/eval-no-mutation-before-approval.md (new)
+- skills/momentum/skills/epic-grooming/evals/eval-refine-detects-unmapped-stories.md (new)
+- skills/momentum/skills/epic-grooming/evals/eval-applies-changes-with-logging.md (preserved)
+- skills/momentum/skills/epic-grooming/evals/eval-identifies-orphaned-slugs.md (preserved)
+- skills/momentum/skills/epic-grooming/evals/eval-proposes-changes-without-applying.md (preserved)
+- skills/momentum/skills/epic-breakdown/SKILL.md (new)
+- skills/momentum/skills/epic-breakdown/workflow.md (renamed from feature-breakdown/workflow.md, retargeted)
+- skills/momentum/skills/epic-breakdown/evals/eval-breakdown-for-epic-slug.md (new)
+- skills/momentum/skills/epic-breakdown/evals/eval-triage-delegation-contract.md (new)
+- skills/momentum/skills/feature-grooming/ (deleted — all files)
+- skills/momentum/skills/feature-breakdown/SKILL.md (deleted)
+- skills/momentum/commands/epic-grooming.md (new)
+- skills/momentum/commands/epic-breakdown.md (new)
+- skills/momentum/commands/feature-grooming.md (deleted)
+- skills/momentum/skills/impetus/references/dispatch.md (modified)
+- skills/momentum/skills/canvas/server.tsx (modified — PHASES 7→6 nodes)
+- skills/momentum/skills/canvas/server.test.ts (modified — test counts/slugs updated)
+- _bmad-output/planning-artifacts/architecture.md (modified — AC5 per story)
+- _bmad-output/planning-artifacts/prd.md (modified — FR118, FR128)
