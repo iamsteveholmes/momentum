@@ -2339,8 +2339,18 @@ def cmd_practice_ledger_consume(args: argparse.Namespace) -> None:
            entity_id=entity_id, ledger_path=str(ledger_path))
 
 
-def _load_duckdb_events(project_dir: Path) -> tuple:
-    """Load new-schema events via DuckDB glob and count archive entries.
+def _load_ledger_events(project_dir: Path) -> tuple:
+    """Load new-schema ledger events with a pure-Python fold; count archive entries.
+
+    Implementation: glob the .momentum/practice-ledger*.jsonl files, parse each
+    line as JSON one at a time, and fold by entity. No DuckDB is involved — this
+    is plain stdlib (glob + json + a defaultdict fold downstream). The function
+    name historically implied DuckDB; it does not.
+
+    The five fixed reader subcommands (summary/open/history/since/by-source) are
+    served entirely by this fold. An arbitrary-SQL-query interface (the actual
+    value DuckDB would add) is intentionally DEFERRED to the follow-up story
+    `practice-ledger-duckdb-sql-query-command`.
 
     Returns (new_events_list, archive_count).
     New-schema events have 'event_id' field. Lines missing it are archive entries.
@@ -2419,7 +2429,7 @@ def cmd_practice_ledger_summary(args: argparse.Namespace) -> None:
     """summary — counts by event_type, source, age buckets, archive_entries."""
     from collections import defaultdict
     project_dir = resolve_project_dir()
-    new_events, archive_count = _load_duckdb_events(project_dir)
+    new_events, archive_count = _load_ledger_events(project_dir)
 
     by_event_type: dict = defaultdict(int)
     by_source: dict = defaultdict(int)
@@ -2484,7 +2494,7 @@ def cmd_practice_ledger_summary(args: argparse.Namespace) -> None:
 def cmd_practice_ledger_open(args: argparse.Namespace) -> None:
     """open — entities whose last event is non-terminal."""
     project_dir = resolve_project_dir()
-    new_events, _ = _load_duckdb_events(project_dir)
+    new_events, _ = _load_ledger_events(project_dir)
     current = _derive_current_state(new_events)
 
     open_entities = [
@@ -2499,7 +2509,7 @@ def cmd_practice_ledger_history(args: argparse.Namespace) -> None:
     """history --entity <id> — all events for entity, sorted by ts ascending."""
     project_dir = resolve_project_dir()
     entity_id = args.entity
-    new_events, _ = _load_duckdb_events(project_dir)
+    new_events, _ = _load_ledger_events(project_dir)
     entity_events = [ev for ev in new_events if ev.get("entity_id") == entity_id]
     entity_events.sort(key=_event_order_key)
     result("practice_ledger_history", success=True, entity_id=entity_id,
@@ -2517,7 +2527,7 @@ def cmd_practice_ledger_since(args: argparse.Namespace) -> None:
                      f"(e.g. 2026-05-28T12:00:00Z)",
                      since=since_ts)
         return
-    new_events, _ = _load_duckdb_events(project_dir)
+    new_events, _ = _load_ledger_events(project_dir)
     filtered = []
     for ev in new_events:
         ev_dt = _parse_iso_ts(ev.get("ts", ""))
@@ -2535,7 +2545,7 @@ def cmd_practice_ledger_by_source(args: argparse.Namespace) -> None:
     """by-source <source> — events whose source matches exactly."""
     project_dir = resolve_project_dir()
     source = args.source
-    new_events, _ = _load_duckdb_events(project_dir)
+    new_events, _ = _load_ledger_events(project_dir)
     filtered = [ev for ev in new_events if ev.get("source") == source]
     result("practice_ledger_by_source", success=True, source=source,
            events=filtered, count=len(filtered))
@@ -2546,7 +2556,7 @@ def cmd_practice_ledger_close_stale(args: argparse.Namespace) -> None:
     project_dir = resolve_project_dir()
     age_days = int(getattr(args, "age_days", PRACTICE_LEDGER_STALE_TTL_DAYS))
 
-    new_events, _ = _load_duckdb_events(project_dir)
+    new_events, _ = _load_ledger_events(project_dir)
     current = _derive_current_state(new_events)
 
     now = datetime.now(timezone.utc)
