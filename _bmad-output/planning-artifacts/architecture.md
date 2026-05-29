@@ -221,13 +221,16 @@ Momentum's operational runtime state lives under a single hidden top-level direc
 ├── stories/
 │   ├── index.json                               ← Lightweight story index (slug → status, epic, depends_on, touches, priority)
 │   └── {slug}.md                                ← Story files (written by momentum:create-story)
-├── signals/                                     ← Read-only ledger (see Signals schema below). Empty directory is valid.
-└── intake-queue.jsonl                           ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes)
+├── signals/                                     ← RETIRED — absorbed into practice-ledger (DEC-033 D6; see note below)
+├── practice-ledger.jsonl                        ← Append-only event log (DEC-033 / Decision 52 superseded — true append-only, CLI-only writes via momentum-tools practice-ledger)
+└── practice-ledger-pre-2026-05.jsonl            ← Hard-cut archive of the prior intake-queue.jsonl (88 entries; legacy schema; read-only; DEC-033 D8)
 ```
 
 ### Single-source-of-truth invariant
 
 `.momentum/` is the **only** location for these artifacts. There is no fallback to a legacy path, no symlink to `_bmad-output/implementation-artifacts/`, no dual-write. Skills resolve paths to `.momentum/` directly. Migration of pre-existing state is handled once by the `impetus-momentum-state-migration` story; after migration, `_bmad-output/implementation-artifacts/{sprints,stories,intake-queue.jsonl}` is gone.
+
+**entity_id semantics (DEC-033):** The practice-ledger uses two identifiers per event row. `event_id` identifies the immutable event row (unique, never reused). `entity_id` identifies the logical thing the event is about — it repeats across rows for the same logical entity. "Open" is a derived state: fold all events by `entity_id`, take the last by `ts`; if that last event is non-terminal (`consumed`, `rejected`, `closed_stale` are terminal; all others are non-terminal), the entity is open. State is never stored — derivation is the source of truth.
 
 ### Hidden-prefix rationale
 
@@ -237,43 +240,15 @@ The leading `.` distinguishes operational state (Momentum's working memory) from
 
 `_bmad-output/planning-artifacts/features.json` (and the rest of `_bmad-output/planning-artifacts/`) intentionally stays where it is. Planning artifacts are spec/source — they describe the product, are committed to the repo as primary content, and are produced by planning workflows (PRD, architecture, feature grooming). They are not Momentum's operational state.
 
-### `.momentum/signals/` schema
+### `.momentum/signals/` — RETIRED (DEC-033 D6)
 
-`.momentum/signals/` is a directory of read-only JSON signal files. It is a **ledger** pattern: writers append signal files, readers iterate the directory, and signals are typically resolved by a future workflow rather than mutated in place.
+> _[Retired 2026-05-28 by story a1-practice-ledger-schema-cli-redesign-true-append-only (DEC-033 D6): The `signals/` subsection and its directory are absorbed into the unified practice-ledger. The two signal use cases — `triage-uncleared` and `avfl-finding-pending-upstream-fix` — are now entries in `.momentum/practice-ledger.jsonl` with `source: triage` / `source: avfl` and appropriate `payload`. Every open entry in the ledger IS the attention surface; no separate attention-filter mechanism is needed. ARCH-8 is resolved by this retirement — since no producers were ever shipped, there is no migration burden. Impetus session-start drops the `signals/*.json` read and replaces it with `momentum-tools practice-ledger summary`. See DEC-033 D6 for full rationale and the DEC-033 D9 Impetus surfacing model update.]_
 
-**Filename pattern:** `{signal_type}-{slug-or-timestamp}.json`
+The schema documentation is preserved below for historical traceability only. **This subsection is no longer active. Do not implement new writers for `.momentum/signals/`.**
 
-Examples:
-```
-.momentum/signals/triage-uncleared-2026-04-28T14-30-00Z.json
-.momentum/signals/avfl-finding-pending-upstream-fix-retro-team-singleton-guard.json
-```
-
-**Required fields (every signal file):**
-
-| Field | Type | Notes |
-|---|---|---|
-| `signal_type` | string | Recognized type (see below) |
-| `origin` | string | Skill or workflow that produced the signal (e.g., `momentum:retro`, `momentum:triage`, `momentum:avfl`) |
-| `created` | string | ISO-8601 UTC timestamp |
-| `payload` | object | Signal-type-specific structured content |
-
-**Optional fields:**
-
-| Field | Notes |
-|---|---|
-| `cleared` | ISO-8601 UTC timestamp; presence indicates the signal has been resolved by a downstream workflow. Absent means open. |
-
-**Recognized signal types (initial set):**
-
-- `triage-uncleared` — produced by `momentum:retro` or `momentum:triage` when triage-class observations remain after a session and the developer has not yet classified or rejected them
-- `avfl-finding-pending-upstream-fix` — produced by `momentum:avfl` when a finding is traced to a spec/rule/workflow root cause that requires upstream work before re-validation
-
-**Initial intended writers:** `momentum:retro`, `momentum:triage`, `momentum:avfl`. The `impetus-momentum-state-migration` story does **not** implement writers — it establishes the directory, the schema contract, and the reader contract. Writers are added by the skills that need them in subsequent stories. **ARCH-8: As of 2026-05-22, no done stories actually implement signal write calls in retro or triage. The signals/ directory and schema contract are established, but the producers (retro signal writes, triage signal writes) are pending — not yet shipped. Do not treat signals/ as a fully live system with active producers.**
-
-**Reader contract:** Impetus iterates `.momentum/signals/*.json` at session start (Session-open sequence below) and surfaces a "Pending signals present" situational state when at least one signal has no `cleared` field. An empty `.momentum/signals/` directory (zero files) is a valid state — readers must not error on it.
-
-**Why a directory of files (not a single JSONL):** Signals are infrequent, structured, and resolved individually. File-per-signal makes resolution a delete-or-mark operation rather than a JSONL rewrite, and lets git surface signal lifecycle in commits.
+**Retired signal types (use practice-ledger entries instead):**
+- `triage-uncleared` → practice-ledger entry with `source: "triage"` and `event_type: "created"` / `payload: {kind: "triage-uncleared", ...}`
+- `avfl-finding-pending-upstream-fix` → practice-ledger entry with `source: "avfl"` and appropriate `payload`
 
 ### Cross-references
 
@@ -282,7 +257,7 @@ Examples:
 - **Decision 30** — Gherkin specs subtree under `.momentum/sprints/{slug}/specs/`
 - **Decision 36** — sprint lifecycle state machine; `.momentum/sprints/index.json` is its store
 - **Decision 47** — sprint-summary.md path; written under `.momentum/sprints/{slug}/`
-- **Decision 52 (DEC-007)** — `.momentum/intake-queue.jsonl` is the unified triage/retro capture artifact
+- **Decision 52 (DEC-007) — SUPERSEDED by DEC-033** — see rewritten Decision 52 section below; `.momentum/practice-ledger.jsonl` is the current unified event log
 
 ---
 
@@ -309,7 +284,7 @@ The defining question for each component: *does this need main-context persona p
 | epic-grooming | Flat skill (`/momentum:epic-grooming`) | Reads stories/PRD/architecture/epics.md, proposes taxonomy changes, reassigns stories via momentum-tools |
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; **single-item capture only** — one idea → one story stub, feature-slug and story-type aware per DEC-005 D1/D5. No batching (that is `momentum:triage`'s job). Writes `stories/{slug}.md` + `stories/index.json` entry via `momentum-tools sprint story-add`. |
-| triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into five active classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT) per DEC-007. The DISTILL class is removed post-removal of the distill skill (ARCH-1/ARCH-5). Delegates ARTIFACT → `momentum:intake`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `intake-queue.jsonl` via `momentum-tools` CLI. Deterministic prefilter via `momentum-tools triage prefilter` (TF-IDF + Jaccard + epic boost, status-filtered, top-K=10 shortlist); inline batch clustering; parallel per-cluster dedup fan-out subagents returning per-theme JSON findings; inline consolidation-candidate grouping; five-class classification for unique survivors. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
+| triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into five active classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT) per DEC-005. The DISTILL class is removed post-removal of the distill skill (ARCH-1/ARCH-5). Delegates ARTIFACT → `momentum:intake`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `practice-ledger.jsonl` as `created` events via `momentum-tools practice-ledger append` CLI (DEC-033 supersedes DEC-007 intake-queue writes). Deterministic prefilter via `momentum-tools triage prefilter` (TF-IDF + Jaccard + epic boost, status-filtered, top-K=10 shortlist); inline batch clustering; parallel per-cluster dedup fan-out subagents returning per-theme JSON findings; inline consolidation-candidate grouping; five-class classification for unique survivors. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
 | feature-breakdown | Flat skill (`/momentum:feature-breakdown`) | Pure orchestrator; takes a feature slug as input, enumerates story gaps end-to-end, passes pre-enumerated candidate list to `momentum:triage` with `source_label = "feature-breakdown:{feature_slug}"`. NEVER writes to features.json or stories/index.json — all classification and write authority belongs to triage (Decision 50). |
 | distill | Flat skill (`/momentum:distill`) — **(removed — `remove-momentum-distill` story ready-for-dev)** | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. Previously listed as third execution path alongside sprint orchestration and quick-fix (Decision 42). **ARCH-1: This skill is being removed. The `remove-momentum-distill` story is ready-for-dev. Decision 42 references to distill as an active execution path are deprecated; see Decision 42 note below.** |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
@@ -473,6 +448,8 @@ All skills share a single `version.md` at repo root. A standard git pre-commit h
 - JSONL enables concurrent append from multiple Claude Code sessions without file locking (POSIX atomic append for lines under pipe buffer size)
 - Authorized writers: flywheel workflow (`origin: flywheel`) only. `momentum:distill` is removed as an authorized writer (ARCH-7: distill skill removed — see Decision 42). The `origin` field distinguishes code-review-origin findings for FR33 ratio tracking. All other components are read-only.
 - Rationale: Global scope enables cross-project pattern detection — the same anti-pattern appearing in projects A and B becomes visible. Per-project scope would miss these systemic patterns.
+
+> **DEC-033 D10 — Forward pointer (AMENDED 2026-05-28):** When Epic 6 flywheel work eventually activates the Findings Ledger, the implementation MUST inherit the event-log shape established by DEC-033 (Decision 52 superseded): `event_id` (immutable per row, unique) + `entity_id` (repeats for the same logical entity), append-only writes with no whole-file rewrites, and closure as appended events not field mutations. The current schema above (with `id` as a single unique identifier) should be updated at activation time to adopt the `event_id` / `entity_id` distinction. This forward pointer exists because the latent defect class — JSONL whole-file-rewrite on consume — was the root cause of the intake-queue.jsonl production defects resolved by DEC-033. Do not reproduce the defect when activating this ledger. See `_bmad-output/planning-artifacts/decisions/dec-033-practice-ledger-event-log-redesign-2026-05-25.md` for the full event-log design rationale.
 
 **Decision 1e — Session State Storage (Ephemeral + Inter-Session)**
 - `.claude/momentum/session-modified-files.txt` — Ephemeral session-scoped file. Written by PostToolUse lint hook (appends file paths of modified files, one per line, deduped). Read by Stop gate hook as the set of files to check. Cleaned up after the Stop gate runs. Not committed to git.
@@ -690,9 +667,9 @@ Never `Step N/M`. Always narrative. Every phase transition in every Impetus-orch
 
 At every session start via `/momentum:impetus`, Impetus detects the current greeting state (Decision 37) and renders a single-exchange orientation: narrative context paragraph, optional planning sprint note, and an adaptive 3-4 item numbered menu. User never hunts for context. Direct skill invocation (e.g., `/momentum:sprint-planning`) skips session orientation — the user's choice.
 
-**Session open sequence (updated 2026-04-28):** At session start, Impetus reads `.momentum/sprints/index.json` (sprint lifecycle state per Decision 36), `.momentum/stories/index.json` (story statuses), iterates `.momentum/signals/*.json` (open signal files — see `.momentum/` State Layout), and reads `~/.claude/momentum/global-installed.json` (completion count for first-session detection). It also runs `momentum-tools session plugin-cache-check` to detect plugin-cache-vs-source version skew (see Impetus session-start preflight component below). From these inputs, Impetus determines one of 9 greeting states (Decision 37), renders the corresponding narrative and menu, then writes session stats to `global-installed.json`. The stats write is invisible to the user — no visible diff during the greeting. Stats write is deferred until after the menu is displayed.
+**Session open sequence (updated 2026-04-28; amended 2026-05-28 per DEC-033):** At session start, Impetus reads `.momentum/sprints/index.json` (sprint lifecycle state per Decision 36), `.momentum/stories/index.json` (story statuses), runs `momentum-tools practice-ledger summary` (honest ledger counts — DEC-033 D9; replaces the prior `signals/*.json` iteration which is retired per DEC-033 D6), and reads `~/.claude/momentum/global-installed.json` (completion count for first-session detection). It also runs `momentum-tools session plugin-cache-check` to detect plugin-cache-vs-source version skew (see Impetus session-start preflight component below). From these inputs, Impetus determines one of 9 greeting states (Decision 37), renders the corresponding narrative and menu, then writes session stats to `global-installed.json`. The stats write is invisible to the user — no visible diff during the greeting. Stats write is deferred until after the menu is displayed.
 
-**Situational State — Pending signals present (added 2026-04-28):** When `.momentum/signals/` contains at least one signal file without a `cleared` field, Impetus surfaces a "Pending signals" line in the situational-state band of the greeting (e.g., "2 open signals — `triage-uncleared`, `avfl-finding-pending-upstream-fix`"). The signal types and counts are surfaced; full payloads are not — those belong to the workflows that resolve them. Empty `.momentum/signals/` produces no signal-related output and is not an error.
+**Situational State — Practice ledger summary (updated 2026-05-28 per DEC-033 D9):** The prior "Pending signals present" state (which read `.momentum/signals/*.json`) is **retired** alongside the signals/ directory (DEC-033 D6). Impetus instead reads `momentum-tools practice-ledger summary` and surfaces honest counts: "N open entries (X this week, Y older than 30 days, Z near auto-close)". Recurring `closed_stale` patterns for the same entity shape are surfaced as meta-signals (e.g., "'X' has been closed_stale 4 times in 60 days"). Developer drills in via `momentum-tools practice-ledger open` when curious. No inline enumeration of entries — counts only (DEC-033 D9 anti-pattern guard against the prior "last 5" defect). An empty ledger or zero open entries produces no ledger-related output in the situational band and is not an error.
 
 **Adaptive Menu Construction:**
 
@@ -1246,7 +1223,7 @@ momentum/                                    ← Plugin root
 │   └── hooks.json                           ← Always-on hooks (Tier 1 enforcement; delivered by plugin)
 │
 ├── scripts/
-│   └── momentum-tools.py                    ← CLI tool: sprint, triage, intake-queue, quickfix, version, log subcommands
+│   └── momentum-tools.py                    ← CLI tool: sprint, triage, practice-ledger, quickfix, version subcommands (intake-queue deprecated → practice-ledger per DEC-033)
 │
 ├── references/                              ← Plugin-level references
 │   ├── rules/                               ← Bundled rules (written to ~/.claude/rules/ by Impetus)
@@ -1332,8 +1309,9 @@ momentum/                                    ← Plugin root
     ├── stories/
     │   ├── index.json                          ← Story status index
     │   └── {slug}.md                           ← Story files (written by momentum:create-story)
-    ├── signals/                                ← Read-only signal ledger (see `.momentum/` State Layout section)
-    ├── intake-queue.jsonl                      ← Unified triage/retro capture event log (DEC-007 / Decision 52 — append-only, CLI-only writes via momentum-tools intake-queue)
+    ├── signals/                                ← RETIRED (DEC-033 D6) — preserved on disk; no new writes; former use cases flow through practice-ledger
+    ├── practice-ledger.jsonl                   ← Append-only event log (DEC-033 / Decision 52 superseded — true append-only, CLI-only writes via momentum-tools practice-ledger)
+    ├── practice-ledger-pre-2026-05.jsonl       ← Hard-cut archive of prior intake-queue.jsonl (DEC-033 D8; 88 legacy entries; read-only)
     └── beads-id-map.json                       ← Git-tracked slug → bead hash ID map (DEC-028 — maintained by sprint-manager dual-write; maps story_slug to Beads bead ID)
 
 [project-root]/
@@ -1353,7 +1331,7 @@ momentum/                                    ← Plugin root
 
 | Component | Reads | Writes |
 |---|---|---|
-| Impetus | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/signals/*.json`, journal.jsonl, specs, findings-ledger.jsonl, gate-findings.txt | journal.jsonl, journal-view.md |
+| Impetus | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, journal.jsonl, specs, findings-ledger.jsonl, gate-findings.txt; `.momentum/practice-ledger*.jsonl` (via `momentum-tools practice-ledger summary` at session start — DEC-033 D9; replaces prior `signals/*.json` read per DEC-033 D6 retirement) | journal.jsonl, journal-view.md |
 | momentum-tools sprint | `.momentum/stories/index.json`, `.momentum/sprints/index.json` | `.momentum/stories/index.json` (status fields), `.momentum/sprints/index.json` (sole writer; per-sprint `.momentum/sprints/{slug}.json` retired per DEC-012) |
 | momentum-tools quickfix | `.momentum/sprints/index.json` | `.momentum/sprints/index.json` (register: adds quick-fix entry; complete: marks done) |
 | momentum-tools triage | `.momentum/stories/index.json` (read-only scoring: `triage prefilter` subcommand — TF-IDF + Jaccard + epic boost, status-filtered, top-K=10 shortlist) | _(none — pure scorer, no writes)_ |
@@ -1364,11 +1342,11 @@ momentum/                                    ← Plugin root
 | canvas server (Bun process, port 3456) | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/stories/{slug}.md` | _(none — read-only server)_ |
 | momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files, `momentum/verification-harness.json` (for per-story contract-type selection) | `.momentum/sprints/{sprint-slug}/specs/` (multi-extension contract files: `.feature`, `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md` per story `verification_method`); `.momentum/sprints/{sprint-slug}/coverage-plan.md` (written at activation, then immutable); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
 | momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
-| momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`) — **ARCH-8: signal write calls are pending, not yet shipped**. Note: feature-status cache read and `/momentum:feature-status` spawn removed — **ARCH-6: feature-status deprecated, canvas supersedes** |
-| momentum:triage | `.momentum/stories/index.json`, `.momentum/intake-queue.jsonl` | `.momentum/intake-queue.jsonl` (SHAPING/DEFER/REJECT entries via `momentum-tools intake-queue`); `.momentum/signals/*.json` (e.g., `triage-uncleared-*` when observations remain unresolved) — **ARCH-8: signal write calls are pending, not yet shipped** |
+| momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/practice-ledger.jsonl` (handoff `created` events via `momentum-tools practice-ledger append`; replaces prior `signals/*.json` writes — DEC-033 D6). Note: feature-status cache read and `/momentum:feature-status` spawn removed — **ARCH-6: feature-status deprecated, canvas supersedes** |
+| momentum:triage | `.momentum/stories/index.json`, `.momentum/practice-ledger*.jsonl` (reads `open` + `summary` for session-start re-surfacing — DEC-033 D9) | `.momentum/practice-ledger.jsonl` (SHAPING/DEFER/REJECT entries as `created` events via `momentum-tools practice-ledger append`; triage-uncleared attention signal also flows here as a `created` event with `source: triage`; replaces prior `momentum-tools intake-queue` + `signals/` writes — DEC-033 D6) |
 | code-reviewer | Source code, specs, acceptance tests | findings (via structured output → flywheel) |
 | architecture-guard | Source code, rules, architecture doc | pattern drift report (via structured output) |
-| VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report; `.momentum/signals/*.json` (avfl-finding-pending-upstream-fix signals when findings trace to spec/rule root cause) — **ARCH-8: signal write calls are pending, not yet shipped** |
+| VFL / AVFL | Any artifact being validated, source material | consolidated findings / validation report; `.momentum/practice-ledger.jsonl` (avfl-finding-pending-upstream-fix entries as `created` events with `source: avfl` via `momentum-tools practice-ledger append`; replaces prior `signals/*.json` writes — DEC-033 D6) |
 | Flywheel workflow (Epic 6) | findings-ledger.jsonl, rules, specs | findings-ledger.jsonl, rules/, specs |
 | momentum:distill | **(removed — ARCH-1/ARCH-7)** Session observation / retro findings, relevant spec/skill/rules files | ~~rules/, references/, skill prompts (Tier 1 direct commit); stories/index.json stubs (Tier 2); findings-ledger.jsonl (`origin: distill`); plugin version + push (Momentum-level fixes in Momentum project only)~~ — all write authority removed; flywheel is the sole findings-ledger writer |
 | Upstream-fix skill (Epic 4, standalone) | session journal, specs, rules | session journal only (not findings-ledger.jsonl) |
@@ -1390,8 +1368,8 @@ momentum/                                    ← Plugin root
 - `.momentum/sprints/{sprint-slug}/specs/` — Contract file integrity (Decision 30 + DEC-029: dev agents must never write to this path; only sprint-planning writes, only verifiers read; covers all five contract types: `.feature`, `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md`)
 - `.momentum/sprints/{sprint-slug}/coverage-plan.md` — Post-activation immutable (DEC-029, `sprint-planning-frozen-per-story-contract` story: coverage-plan.md is written by sprint-planning at activation time and must not be modified after sprint activation)
 - `.momentum/stories/index.json`, `.momentum/sprints/index.json` — sole writer is `momentum-tools.py sprint`. Direct edits by any other agent are blocked. (Per-sprint `.momentum/sprints/{slug}.json` retired per DEC-012 — no longer a protected path because it is no longer written.)
-- `.momentum/intake-queue.jsonl` — append-only via `momentum-tools intake-queue`. Direct edits blocked.
-- `.momentum/signals/` — read-only ledger pattern. Writers go through skill-defined paths (e.g., retro/triage/avfl signal writers); manual edits blocked.
+- `.momentum/practice-ledger.jsonl` — append-only via `momentum-tools practice-ledger`. Direct edits blocked (replaces prior `.momentum/intake-queue.jsonl` protection per DEC-033).
+- `.momentum/signals/` — RETIRED (DEC-033 D6). Directory preserved on disk for git history; no new writes. Former signal use cases flow through practice-ledger.
 
 ---
 
@@ -1421,10 +1399,10 @@ momentum/                                    ← Plugin root
 | Agent Guidelines | `skills/agent-guidelines/` | Plugin skill: `/momentum:agent-guidelines` (FR61a — 5-phase guided workflow generating path-scoped rules and reference docs) |
 | Feature artifact (features.json) | (runtime / planning artifact) | `_bmad-output/planning-artifacts/features.json` (written by developer or planning workflow) |
 | Sprint summary | (runtime, per-sprint) | `.momentum/sprints/{sprint-slug}/sprint-summary.md` (written by retro orchestrator at Phase 6 close) |
-| Intake queue | (runtime, per-project) | `.momentum/intake-queue.jsonl` (DEC-007 / Decision 52 — written by momentum:triage and momentum:retro via `momentum-tools intake-queue` CLI; append-only) |
+| Practice ledger | (runtime, per-project) | `.momentum/practice-ledger.jsonl` (DEC-033 / Decision 52 superseded — true append-only event log; written by momentum:triage, momentum:retro, momentum:avfl, and automation routine via `momentum-tools practice-ledger` CLI); `.momentum/practice-ledger-pre-2026-05.jsonl` (frozen archive; 88 legacy entries; read-only) |
 | Sprint registry | (runtime, per-project) | `.momentum/sprints/index.json` (sole writer: `momentum-tools sprint`) |
 | Story registry | (runtime, per-project) | `.momentum/stories/index.json` (sole writer: `momentum-tools sprint`) |
-| Signal ledger | (runtime, per-project) | `.momentum/signals/{signal_type}-{slug-or-timestamp}.json` (read-only ledger; writers per-skill — retro/triage/avfl) — **ARCH-8: directory and schema established; producers (retro/triage/avfl write calls) pending, not yet shipped** |
+| Signal ledger | (runtime, per-project) | **RETIRED (DEC-033 D6)** — `.momentum/signals/` absorbed into practice-ledger; signal use cases flow as practice-ledger entries with appropriate `source` + `payload` |
 | Global rules | `references/rules/*.md` | `~/.claude/rules/` (written by Impetus on first run) |
 | Project rules | `references/rules/*.md` | `.claude/rules/` (written by Impetus on first run) |
 | MCP servers | `mcp/` source (Epic 6) | `.mcp.json` (written by Impetus when MCP servers are available — Epic 6) |
@@ -1944,121 +1922,121 @@ momentum:dev does NOT invoke bmad-dev-story as an indirection layer — the curr
 
 ---
 
-### Retro → Planning Handoff via Unified Intake Queue
+### Retro → Planning Handoff via Practice Ledger
 
-> _[Updated 2026-04-14 (DEC-007, story: retro-triage-handoff): The prior `triage-inbox.md` contract is **retired**. Retro now writes handoff events directly to the unified `.momentum/intake-queue.jsonl` (path migrated 2026-04-28; previously `_bmad-output/implementation-artifacts/intake-queue.jsonl`). Sprint-planning Step 1 reads open handoff entries from the same file. No manual re-injection of retro findings into planning is required.]_
+> _[Updated 2026-04-14 (DEC-007, story: retro-triage-handoff): The prior `triage-inbox.md` contract was retired. Retro writes handoff events to the unified event log. No manual re-injection of retro findings into planning is required.]_
+>
+> _[Updated 2026-05-28 (DEC-033, story: a1-practice-ledger-schema-cli-redesign-true-append-only): Renamed from "Retro → Planning Handoff via Unified Intake Queue". The artifact is now `.momentum/practice-ledger.jsonl` with the DEC-033 schema. CLI paths updated to `momentum-tools practice-ledger`. The prior `intake-queue.jsonl` contract (DEC-007) is superseded in full.]_
 
-After each sprint retro (Phase 5.5), un-actioned findings are written to `intake-queue.jsonl` as JSONL events. Sprint-planning Step 1 reads these open entries and surfaces them alongside the backlog — closing the retro → planning loop without developer re-injection.
+After each sprint retro (Phase 5.5), un-actioned findings are appended to `practice-ledger.jsonl` as `created` events. Sprint-planning Step 1 reads open entries with `source: "retro"` and surfaces them alongside the backlog — closing the retro → planning loop without developer re-injection.
 
-**Artifact:** `.momentum/intake-queue.jsonl` (per DEC-007; path migrated 2026-04-28)
+**Artifact:** `.momentum/practice-ledger.jsonl` (per DEC-033; supersedes prior `intake-queue.jsonl` / DEC-007)
 
-**Write path:** `momentum-tools intake-queue append --source retro --kind handoff ...`
-**Read path:** `momentum-tools intake-queue list --source retro --kind handoff --status open`
-**Consume path:** `momentum-tools intake-queue consume --id ID --outcome-ref STORY_SLUG`
+**Write path:** `momentum-tools practice-ledger append --entity-id <ENTITY_ID> --event-type created --source retro --actor <ACTOR> --payload '<JSON>'`
+**Read path:** `momentum-tools practice-ledger open` or `momentum-tools practice-ledger by-source retro`
+**Consume path:** `momentum-tools practice-ledger consume --entity-id <ENTITY_ID> --actor <ACTOR> --outcome-ref STORY_SLUG`
 
-**Event schema:**
+**Event schema (DEC-033 D2):**
 ```jsonl
 {
-  "id": "iq-YYYYMMDDHHMMSS-XXXXXXXX",
-  "timestamp": "2026-04-15T17:34:00Z",
+  "event_id": "pl-20260415T173400000000-a1b2c3d4",
+  "entity_id": "retro-finding-sprint-2026-04-08-1",
+  "ts": "2026-04-15T17:34:00Z",
+  "event_type": "created",
   "source": "retro",
-  "kind": "handoff",
-  "status": "open",
-  "title": "Short title of the finding",
-  "description": "Full description of the finding",
-  "sprint_slug": "sprint-2026-04-08",
-  "feature_slug": "material-3-design-system",
-  "story_type": "defect",
-  "feature_state_transition": {
-    "feature_slug": "...",
-    "prior_state": "partial",
-    "observed_state": "partial",
-    "evidence": "..."
-  },
-  "failure_diagnosis": {
-    "attempted": "...",
-    "didnt_work": "...",
-    "learned": "..."
+  "actor": "momentum:retro",
+  "payload": {
+    "title": "Short title of the finding",
+    "description": "Full description of the finding",
+    "sprint_slug": "sprint-2026-04-08",
+    "feature_slug": "material-3-design-system",
+    "story_type": "defect",
+    "feature_state_transition": {
+      "feature_slug": "...",
+      "prior_state": "partial",
+      "observed_state": "partial",
+      "evidence": "..."
+    },
+    "failure_diagnosis": {
+      "attempted": "...",
+      "didnt_work": "...",
+      "learned": "..."
+    }
   }
 }
 ```
 
 **Field semantics:**
-- `source: "retro"` — written by `momentum:retro` Phase 5.5
-- `kind: "handoff"` — un-actioned retro finding intended for next planning cycle
-- `status` — `open` (awaiting planning review) | `consumed` (promoted to story or explicitly rejected)
-- `sprint_slug` — provenance: which retro produced this finding
-- `feature_slug` — associated feature, if the finding is feature-bound (per DEC-005 D1)
-- `story_type` — suggested story type for downstream stub creation (per DEC-005 D5)
-- `feature_state_transition` — present when the finding involves a feature-state hygiene event (per DEC-005 D8): feature X asserted Done but retro observed regression
-- `failure_diagnosis` — present when the finding names a specific failure (per DEC-005 D7): what was attempted, what didn't work, what was learned
+- `event_id` — immutable unique row identifier
+- `entity_id` — logical finding; repeats across event rows for the same finding's lifecycle
+- `event_type: "created"` — initial event written by `momentum:retro` Phase 5.5
+- `source: "retro"` — producer identity
+- `payload.sprint_slug` — provenance: which retro produced this finding
+- `payload.story_type` — suggested story type for downstream stub creation (DEC-005 D5)
+- `payload.feature_state_transition` — present when the finding involves a feature-state hygiene event (DEC-005 D8)
+- `payload.failure_diagnosis` — present when the finding names a specific failure (DEC-005 D7)
 
-**Consumption:** When a handoff item is promoted to a story stub during sprint-planning Step 2, `momentum-tools intake-queue consume --id ID --outcome-ref STORY_SLUG` marks it consumed. Items remain in the file (append-only); consumed items are skipped by `--status open` queries.
+**Consumption:** When a handoff item is promoted to a story stub during sprint-planning Step 2, `momentum-tools practice-ledger consume --entity-id <ENTITY_ID>` appends a `consumed` event. The original row is never modified — state is derived.
 
-**DEC-005 alignment (D7, D8):**
-- D8 — Retro gains feature-state hygienist role: `feature_state_transition` carries the observed state transition for any feature touched by the sprint
-- D7 — Failure as legitimate diagnostic category: `failure_diagnosis` names what was attempted, what failed, and what was learned — not softened into generic "learnings"
+**DEC-005 alignment (D7, D8):** Retro-specific enrichment fields are carried in the `payload` object, unchanged from the DEC-007 contract.
 
-**Retired:** The prior `triage-inbox.md` contract (YAML entries, `source: "epic-N-retro"`, `type: action-item | incomplete-story | blocker-resolution`) is superseded. The `triage-inbox.md` file was never created; its design is replaced by this unified JSONL contract per DEC-007.
+**Retired:** The prior `triage-inbox.md` contract is superseded. The `intake-queue.jsonl` DEC-007 schema contract is superseded by DEC-033.
 
 ---
 
-### `intake-queue.jsonl` Schema Contract (DEC-007)
+### `practice-ledger.jsonl` Schema Contract (DEC-033)
 
-<!-- Added 2026-04-14: Unified triage/retro capture artifact per DEC-007. Supersedes the retired triage-inbox.md contract above. -->
+<!-- Added 2026-05-28: Supersedes the prior `intake-queue.jsonl` Schema Contract (DEC-007). True append-only event log per DEC-033 D1–D3. -->
 
-Single source of truth for triage-adjacent items that don't become stories immediately — SHAPING / DEFER / REJECT outcomes from `momentum:triage` and handoff events from `momentum:retro`. Per **DEC-007 (2026-04-14)**.
+Single source of truth for non-story practice outcomes — SHAPING / DEFER / REJECT outcomes from `momentum:triage`, handoff events from `momentum:retro`, and attention signals from `momentum:avfl`. Per **DEC-033 (2026-05-25)**.
 
-**Path:** `.momentum/intake-queue.jsonl` (per-project, not global; path migrated 2026-04-28)
+**Path:** `.momentum/practice-ledger.jsonl` (active log); `.momentum/practice-ledger-pre-2026-05.jsonl` (archive — read-only)
 
-**Format:** Append-only JSONL event log. One JSON object per line. Never truncated.
+**Format:** True append-only JSONL event log. One JSON object per line. Never truncated, never rewritten. O_APPEND semantics enforced at the writer level.
 
-**Base schema fields (all entries):**
+**Schema fields (every row):**
 
 | Field | Type | Values / Notes |
 |---|---|---|
-| `id` | string | Unique event id (ULID or timestamped slug) |
-| `source` | string | `triage` \| `retro` \| `assessment` (future upstreams welcome) |
-| `kind` | string | `shape` \| `watch` \| `rejected` \| `handoff` |
-| `title` | string | Short human-readable title |
-| `description` | string | One-to-three-sentence summary |
-| `status` | string | `open` \| `consumed` (initial write is always `open`) |
-| `timestamp` | string | ISO-8601 UTC timestamp |
+| `event_id` | string | Immutable unique row identifier (format: `pl-{timestamp}-{hex8}`; never reused) |
+| `entity_id` | string | Identifies the logical entity this event is about; repeats across rows for the same entity |
+| `ts` | string | ISO-8601 UTC timestamp ending in `Z` |
+| `event_type` | string | One of seven values — see enum below |
+| `source` | string | Originating skill/workflow (e.g., `triage`, `retro`, `avfl`, `momentum-tools-close-stale`) |
+| `actor` | string | Human or agent identity that produced this event |
+| `payload` | object | Event-type-specific structured data (may be `{}`) |
+| `custom_event_type` | string | Present only when `event_type == "custom"` — names the actual event type |
 
-**Optional fields (present when applicable):**
+**Event type enum:**
 
-| Field | Used by | Notes |
+| Value | Terminal? | Semantics |
 |---|---|---|
-| `sprint_slug` | retro handoffs | Provenance — the sprint the handoff originated from |
-| `feature_slug` | any | Existing feature the item relates to |
-| `story_slug` | any | Existing story the item relates to |
+| `created` | No | Entity born; sets the TTL clock |
+| `updated` | No | Non-status field changed |
+| `consumed` | **Yes** | Actively resolved with outcome reference |
+| `rejected` | **Yes** | Explicitly won't-do |
+| `closed_stale` | **Yes** | Auto-emitted when TTL elapses without resolution |
+| `reopened` | No | Previously closed entity brought back (reuses same `entity_id`) |
+| `custom` | No | Escape hatch; `custom_event_type` carries the actual name |
 
-**Retro-specific optional fields (DEC-005 framing):**
-
-| Field | Shape | When present |
-|---|---|---|
-| `feature_state_transition` | `{ feature_slug, prior_state, observed_state, evidence }` | Retro observed a D8 feature-state change (e.g., Done → Partial) |
-| `failure_diagnosis` | `{ attempted, didnt_work, learned }` | Retro named a D7 diagnosed failure |
-| `suggested_feature_slug` | string | Retro finding implies new feature-bearing work (DEC-005 D1) |
-| `story_type` | string | `feature` \| `maintenance` \| `defect` \| `exploration` \| `practice` (DEC-005 D5) |
-| `evidence_refs` | array of strings | Pointers back to the findings document (e.g., section anchor or line range of `retro-transcript-audit.md`) |
+**Derived current state:** Fold all events for an `entity_id` by `ts` ascending; the last event's `event_type` is the current state. Terminal = consumed, rejected, or closed_stale. Non-terminal = all others. State is NEVER stored — derivation is the source of truth.
 
 **Writers (CLI-only; never direct file edits):**
 
-- `momentum:triage` — appends `shape` / `watch` / `rejected` entries via `momentum-tools intake-queue append`.
-- `momentum:retro` — appends `handoff` entries via `momentum-tools intake-queue append` (Phase 5.5 — Handoff to Intake Queue).
-
-Both producers write exclusively through the `momentum-tools` CLI. Skills never open this file for direct mutation — matches the orchestrator-purity pattern used elsewhere in the practice.
+- `momentum:triage` — appends `created` events for SHAPING/DEFER/REJECT outcomes via `momentum-tools practice-ledger append`.
+- `momentum:retro` — appends `created` events for handoff items via `momentum-tools practice-ledger append` (Phase 5.5).
+- `momentum:avfl` — appends `created` events for pending-upstream-fix findings via `momentum-tools practice-ledger append`.
+- Daily routine (CronCreate) — appends `closed_stale` events via `momentum-tools practice-ledger close-stale --age-days 15`.
 
 **Readers:**
 
-- `momentum:triage` — reads on start to re-surface open `shape` / `watch` / `handoff` entries for re-classification or promotion.
-- `momentum:sprint-planning` — Phase A.6 reads entries filtered to `source: "retro"`, `kind: "handoff"`, `status: "open"` during backlog synthesis; Phase C surfaces them in a labeled "Open handoff items from recent retros" section (see Decision 29 update below).
-- Potentially `momentum:refine` in a future hygiene pass — TBD.
+- `momentum:triage` — reads `open` + `summary` on start to re-surface open entries (DEC-033 D9).
+- `momentum:sprint-planning` — Phase A.6 reads open entries filtered to `source: "retro"` during backlog synthesis.
+- Impetus session-start — reads `summary` for honest counts in situational report.
 
-**Consumption semantics:** When an entry is acted on (promoted to a story via intake, distilled, decided, or explicitly rejected), its `status` is updated to `consumed` or `rejected` with an outcome reference (e.g., `outcome: "story:slug-name"` or `outcome: "dec-NNN"`) via the CLI update path. Entries are never deleted — full history preserved.
+**TTL closure discipline:** 15-day default. Entities without terminal events after TTL automatically receive a `closed_stale` event from the daily routine. The `close-stale` command is idempotent.
 
-**Replaces:** the retired `triage-inbox.md` contract above; a never-built `retro-summary.json` handoff artifact.
+**Replaces:** `.momentum/intake-queue.jsonl` (DEC-007, now archived as `practice-ledger-pre-2026-05.jsonl`); the retired `triage-inbox.md` contract; the retired `.momentum/signals/` directory (DEC-033 D6).
 
 ---
 
@@ -2085,13 +2063,13 @@ Both producers write exclusively through the `momentum-tools` CLI. Skills never 
 | ARTIFACT | Delegates to `momentum:intake` (per item) | `stories/{slug}.md` + `stories/index.json` |
 | DISTILL | ~~Delegates to `momentum:distill` (per item)~~ — **removed** (ARCH-5: distill skill removed; this class is no longer active) | ~~Target practice file (rule / skill / reference)~~ |
 | DECISION | Delegates to `momentum:decision` (per item) | `planning-artifacts/decisions/dec-NNN-*.md` |
-| SHAPING | Direct CLI write to `intake-queue.jsonl` | `kind: "shape"` |
-| DEFER | Direct CLI write to `intake-queue.jsonl` | `kind: "watch"` |
-| REJECT | Direct CLI write to `intake-queue.jsonl` | `kind: "rejected"` + reason |
+| SHAPING | Appends `created` event to `practice-ledger.jsonl` via `momentum-tools practice-ledger append` (DEC-033 supersedes DEC-007) | `source: "triage"`, payload carries title/description |
+| DEFER | Appends `created` event to `practice-ledger.jsonl` via `momentum-tools practice-ledger append` | `source: "triage"`, payload carries title/description |
+| REJECT | Appends `created` event to `practice-ledger.jsonl` via `momentum-tools practice-ledger append` | `source: "triage"`, `event_type: "rejected"` + reason in payload |
 
-Executor skills (`intake`, `distill`, `decision`) retain their existing model and effort settings. Triage does not bypass them.
+Executor skills (`intake`, `decision`) retain their existing model and effort settings. Triage does not bypass them.
 
-**Re-surfacing on start:** triage reads `intake-queue.jsonl` on session start to re-surface open `shape` / `watch` / `handoff` entries — items the developer captured previously but has not yet promoted, distilled, decided, or rejected. Handoff-kind entries (produced by retro — see `retro-triage-handoff` story) flow through the same classify / promote / continue-watching / reject UX as shape/watch entries.
+**Re-surfacing on start:** triage reads `momentum-tools practice-ledger open` on session start to re-surface open entries — items the developer captured previously but has not yet promoted, decided, or rejected. Retro handoff entries (source: `retro`) flow through the same classify / promote / continue-watching / reject UX as triage-originated entries. **No enumeration** — counts and entity_ids only (DEC-033 D9). Developer drills in via `practice-ledger history --entity <id>` for detail.
 
 **No gap-check (DEC-005 D10):** triage performs no value-floor analysis. Classification only. Gap-check lives at refinement, sprint-planning, and retro.
 
@@ -2855,33 +2833,40 @@ Formalizes the cycle redesign captured in `_bmad-output/planning-artifacts/decis
 
 ---
 
-**Decision 52 — Unified Triage/Retro Capture Artifact (DEC-007, 2026-04-14)**
+**Decision 52 — Practice-Ledger Event-Log Redesign (DEC-033, 2026-05-25) — SUPERSEDES DEC-007**
 
-Formalizes the capture-artifact decision recorded in `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`. DEC-007 establishes a single append-only event log as the source of truth for triage-adjacent items that don't become stories immediately, replacing the never-built `triage-inbox.md` and an unrealized `retro-summary.json` artifact.
+> _[Rewritten 2026-05-28 by story a1-practice-ledger-schema-cli-redesign-true-append-only. DEC-007 / the prior intake-queue.jsonl contract is superseded in full by DEC-033. The original DEC-007 text is preserved in the decision document at `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md` for historical traceability.]_
 
-**What was decided:**
+Formalizes the practice-ledger redesign recorded in `_bmad-output/planning-artifacts/decisions/dec-033-practice-ledger-event-log-redesign-2026-05-25.md`. DEC-033 resolves four production defects in the prior `intake-queue.jsonl` design (architecture-vs-code drift; lost-update concurrency unsafety; backlog rot; "last 5" surfacing defect) and pre-empts a latent fifth in Decision 1c. The `.momentum/signals/` directory is simultaneously retired (DEC-033 D6) — its two signal use cases flow through the unified ledger.
 
-- **Single artifact:** `.momentum/intake-queue.jsonl` is the per-project, append-only JSONL event log for all SHAPING / DEFER / REJECT outcomes from `momentum:triage` and all `handoff` events from `momentum:retro`. Path migrated 2026-04-28 from `_bmad-output/implementation-artifacts/intake-queue.jsonl`. One JSON object per line. Never truncated. Entries are never deleted — `status` flips from `open` to `consumed` (or `rejected`) with an outcome reference.
-- **CLI-only writes:** All writers go through `momentum-tools intake-queue append` / `update`. Skills never open the file for direct mutation — preserves the orchestrator-purity pattern used elsewhere in the practice.
-- **Producer/consumer matrix:**
-  - Producers: `momentum:triage` (`shape`/`watch`/`rejected` kinds), `momentum:retro` Phase 5.5 (`handoff` kind)
-  - Consumers: `momentum:triage` (re-surfaces open entries on session start), `momentum:sprint-planning` Phase A.5/A.6 (folds open `source: "retro", kind: "handoff"` entries into backlog synthesis), future `momentum:refine` hygiene pass
-- **Schema:** Base fields (`id`, `source`, `kind`, `title`, `description`, `status`, `timestamp`) plus optional fields (`sprint_slug`, `feature_slug`, `story_slug`) and DEC-005-aligned retro-specific fields (`feature_state_transition`, `failure_diagnosis`, `suggested_feature_slug`, `story_type`, `evidence_refs`). See the `intake-queue.jsonl` Schema Contract section for the full field table.
+**What was decided (DEC-033 D1–D8 + D10):**
 
-**Retired by DEC-007:** the `triage-inbox.md` YAML contract (described in earlier architecture revisions) and a never-built `retro-summary.json` handoff artifact. Both are superseded by the unified JSONL event log.
+- **Filename:** `.momentum/intake-queue.jsonl` → `.momentum/practice-ledger.jsonl`. The prior file is frozen as `.momentum/practice-ledger-pre-2026-05.jsonl` (hard-cut migration, DEC-033 D8). No schema transformation of the 88 archived entries — they are readable for archeology.
+- **True append-only (DEC-033 D1):** Every write uses POSIX `open(path, 'a')` with O_APPEND semantics. "Consume" appends a new `consumed` event referencing the original `entity_id` — the whole-file-rewrite consume path is eliminated. The file is never truncated or rewritten.
+- **Schema — first-class event_id / entity_id distinction (DEC-033 D2):** Every row carries: `event_id` (unique per row, immutable), `entity_id` (repeats for the same logical entity), `ts` (ISO-8601 UTC ending in Z), `event_type` (fixed enum, see D3), `source` (originating skill/workflow), `actor` (human or agent identity), `payload` (JSON object). `custom_event_type` present only when `event_type == "custom"`. `status` is not a stored field — current state is derived by folding events.
+- **Seven event types (DEC-033 D3):** `created`, `updated`, `consumed`, `rejected`, `closed_stale`, `reopened`, `custom`. Terminal types: `consumed`, `rejected`, `closed_stale`. Non-terminal: `created`, `updated`, `reopened`, `custom`.
+- **Closure discipline + 15-day TTL (DEC-033 D4, D5):** `momentum-tools practice-ledger close-stale --age-days 15` appends `closed_stale` events for every non-terminal entity whose `created` event is older than the TTL. A daily Claude Code Routine runs this command. The command is idempotent. Impetus session-start invokes close-stale as a safety net if the last routine run is older than 24h.
+- **Signals/ retired (DEC-033 D6):** `.momentum/signals/` directory is retired. The two signal use cases (`triage-uncleared`, `avfl-finding-pending-upstream-fix`) are entries in practice-ledger with appropriate `source` + `payload`. Every open entry IS the attention surface.
+- **DuckDB-backed reader CLI (DEC-033 D7):** `momentum-tools practice-ledger` subcommands — `summary`, `open`, `history --entity <id>`, `since <iso-ts>`, `by-source <source>`. State is derived via SQL fold on `entity_id`; never stored. `summary` distinguishes new-schema entries from legacy archive entries (`archive_entries` count).
+- **CLI-only writes:** All writers go through `momentum-tools practice-ledger`. Skills never open the file for direct mutation.
 
-**Where DEC-007 surfaces in the architecture:**
-- Skills Deployment Classification — `triage` row references DEC-007 explicitly
-- Retro → Planning Handoff via Unified Intake Queue — describes the new producer/consumer flow
-- `intake-queue.jsonl` Schema Contract — full schema documentation
-- `momentum:triage` Architecture — entry-point and topology
-- Decision 27 Phase 5 extension and Decision 29 Phase A.5/A.6 extension — wire retro and sprint-planning into the queue
+**Producer/consumer matrix:**
 
-**Motivating stories:**
-- `triage-skill` — implements DEC-007 D1 alongside DEC-005 sub-decisions in a single sprint
-- `retro-triage-handoff` — implements the retro producer side once triage ships
+| Direction | Component | Operation |
+|---|---|---|
+| Writer | `momentum:triage` | `created` events for SHAPING/DEFER/REJECT outcomes via `momentum-tools practice-ledger append` |
+| Writer | `momentum:retro` Phase 5.5 | `created` events for handoff items via `momentum-tools practice-ledger append` |
+| Writer | `momentum:avfl` | `created` events for pending-upstream-fix findings (source: `avfl`) |
+| Writer | Routine (daily) | `closed_stale` events via `momentum-tools practice-ledger close-stale` |
+| Reader | `momentum:triage` | `summary` + `open` to re-surface open entries on session start |
+| Reader | `momentum:sprint-planning` Phase A.5/A.6 | `open` filtered to `source: retro` entries for backlog synthesis |
+| Reader | Impetus session-start | `summary` for honest counts in situational report |
 
-**Source decision document:** `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`
+**Glob-ready reader path:** `.momentum/practice-ledger*.jsonl` — covers both active file and pre-2026-05 archive. Legacy archive entries that lack `event_id` are reported as `archive_entries` (not crashes) by the reader.
+
+**Source decision document:** `_bmad-output/planning-artifacts/decisions/dec-033-practice-ledger-event-log-redesign-2026-05-25.md`
+
+**Prior DEC-007 decision document (historical):** `_bmad-output/planning-artifacts/decisions/dec-007-triage-capture-artifact-2026-04-14.md`
 
 ---
 
