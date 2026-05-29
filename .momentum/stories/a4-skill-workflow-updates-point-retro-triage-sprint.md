@@ -1,7 +1,7 @@
 ---
 title: "A4: Skill workflow updates — point retro/triage/sprint-planning/intake/feature-breakdown at the new practice-ledger CLI"
 story_key: a4-skill-workflow-updates-point-retro-triage-sprint
-status: ready-for-dev
+status: review
 epic_slug: ad-hoc
 feature_slug:
 story_type: practice
@@ -213,9 +213,29 @@ If A1's actual CLI surface diverges from this cheat sheet, A1's surface wins —
 ## Dev Agent Record
 
 ### Agent Model Used
+claude-sonnet-4-6
 
 ### Debug Log References
+- Discovered actual A1 CLI uses `--event-type` (hyphen), `--entity-id`, `--actor`, and `--payload` (not the cheat-sheet's `--event_type`/`--payload-json`). Updated all workflow invocations accordingly per dev notes ("A1's surface wins").
+- Smoke pass confirmed correct CLI invocations against live A1 CLI in worktree.
 
 ### Completion Notes List
+- AC14 (intake-queue grep): 0 matches in all 10 touched files — PASS
+- AC15 (kind:<enum> grep): 0 matches in all 10 touched files — PASS
+- Smoke pass (AC17): all four paths verified against live A1 CLI:
+  - retro Phase 5.5: appended created event, verified via by-source retro
+  - triage SHAPING: appended created event, appears in practice-ledger open
+  - sprint-planning read: by-source retro returns handoff entity correctly
+  - consume verification: consumed event removes entity from practice-ledger open
 
 ### File List
+- skills/momentum/skills/retro/workflow.md
+- skills/momentum/skills/triage/workflow.md
+- skills/momentum/skills/sprint-planning/workflow.md
+- skills/momentum/skills/intake/workflow.md
+- skills/momentum/skills/feature-breakdown/workflow.md
+- skills/momentum/skills/triage/evals/eval-triage-queue-items-written-via-cli.md
+- skills/momentum/skills/triage/evals/eval-triage-resurfaces-open-queue-items.md
+- skills/momentum/skills/triage/evals/eval-triage-no-distill-delegation.md
+- skills/momentum/skills/intake/evals/eval-intake-routes-discovered-work-with-discovered-from.md
+- skills/momentum/skills/retro/evals/eval-retro-phase5-no-distill-invocation.md
