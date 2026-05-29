@@ -4640,7 +4640,7 @@
     "story_type": "practice"
   },
   "a2-practice-ledger-hygiene-cleanup-close-12-stale-entries": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "A2: Practice-ledger hygiene cleanup — close 12 stale entries",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4660,7 +4660,7 @@
     "priority": "medium"
   },
   "a3-impetus-rule-update-honest-counts-new-ledger-retired": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "A3: Impetus rule update — honest counts, new ledger, retired signals",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4679,7 +4679,7 @@
     "harness_profile": "default"
   },
   "b1-epic-schema-migration-define-epicsjson-migrate-features": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "B1: Epic schema migration — define epics.json, migrate features and categorical epics, re-home unhomed stories",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4734,7 +4734,7 @@
     "harness_profile": "default"
   },
   "a1-practice-ledger-schema-cli-redesign-true-append-only": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "A1: Practice-ledger schema + CLI redesign — true append-only event log",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4759,7 +4759,7 @@
     "verification_method": "execution test"
   },
   "b2-create-story-input-routing-read-epic-context-instead-of": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "B2: create-story input-routing — read epic context from epics.json",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4780,7 +4780,7 @@
     "harness_profile": "default"
   },
   "b3-canvas-update-render-epics-instead-of-features": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "B3: Canvas update — render epics instead of features",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4797,7 +4797,8 @@
     "change_type": [
       "script-code",
       "skill-instruction"
-    ]
+    ],
+    "priority": "low"
   },
   "b4-grooming-breakdown-skill-restructure": {
     "status": "ready-for-dev",
@@ -4832,7 +4833,7 @@
     "harness_profile": "default"
   },
   "momentumintake-remove-worktree-isolation-story-add-is-safe": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "momentum:intake — remove worktree isolation, story-add is safe to run concurrently",
     "epic_slug": "ad-hoc",
     "story_file": true,
