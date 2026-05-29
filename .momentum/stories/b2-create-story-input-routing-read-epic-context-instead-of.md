@@ -1,7 +1,7 @@
 ---
 title: "B2: create-story input-routing — read epic context from epics.json"
 story_key: b2-create-story-input-routing-read-epic-context-instead-of
-status: ready-for-dev
+status: review
 epic_slug: ad-hoc
 feature_slug:
 story_type: practice
@@ -201,39 +201,39 @@ exists on disk.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Author 2 new EDD evals before editing skill files** (skill-instruction)
-  - [ ] Create `skills/momentum/skills/create-story/evals/eval-reads-epic-context-from-epicsjson.md`
+- [x] **Task 1: Author 2 new EDD evals before editing skill files** (skill-instruction)
+  - [x] Create `skills/momentum/skills/create-story/evals/eval-reads-epic-context-from-epicsjson.md`
         — scenario: story with valid `epic_slug` whose epic record has `system_context` listing two skill
         directories; expected behavior: resulting `stories/index.json` entry's `touches` contains both.
-  - [ ] Create `skills/momentum/skills/create-story/evals/eval-halts-on-missing-epic-slug-or-record.md`
+  - [x] Create `skills/momentum/skills/create-story/evals/eval-halts-on-missing-epic-slug-or-record.md`
         — two sub-scenarios: (a) story has no `epic_slug` frontmatter, (b) `epic_slug` does not match any
         record in `epics.json`. Both expected to emit named errors and halt before `stories/index.json` is
         mutated.
-- [ ] **Task 2: Rewire `workflow.md` Step 7 from `epics.md` to `epics.json`** (skill-instruction)
-  - [ ] Replace the `Read the epics section for this story from {{planning_artifacts}}/epics.md` action
+- [x] **Task 2: Rewire `workflow.md` Step 7 from `epics.md` to `epics.json`** (skill-instruction)
+  - [x] Replace the `Read the epics section for this story from {{planning_artifacts}}/epics.md` action
         with a JSON load of `{{planning_artifacts}}/epics.json` keyed by the story's `epic_slug`.
-  - [ ] Update the extraction logic to pull `depends_on` and `touches` from structured epic record fields
+  - [x] Update the extraction logic to pull `depends_on` and `touches` from structured epic record fields
         (`stories[].depends_on`, `system_context`) rather than parsing markdown prose.
-  - [ ] Add error paths: missing `epic_slug` (AC4) and missing epic record (AC5). Both must halt before
+  - [x] Add error paths: missing `epic_slug` (AC4) and missing epic record (AC5). Both must halt before
         `stories/index.json` is written.
-  - [ ] Add a DEC-034 provenance comment near the new read.
-- [ ] **Task 3: Rewire `workflow.md` Step 8 AVFL source_material** (skill-instruction)
-  - [ ] Change `source_material` from "the relevant epic section for {{story_key}} from
+  - [x] Add a DEC-034 provenance comment near the new read.
+- [x] **Task 3: Rewire `workflow.md` Step 8 AVFL source_material** (skill-instruction)
+  - [x] Change `source_material` from "the relevant epic section for {{story_key}} from
         {{planning_artifacts}}/epics.md" to "the epic record for {{story_key}}'s `epic_slug` from
         {{planning_artifacts}}/epics.json (the JSON record, serialized)".
-- [ ] **Task 4: Sweep for `features.json` / `feature_slug` references** (skill-instruction)
-  - [ ] grep `skills/momentum/skills/create-story/` for `features.json`, `feature_slug`, `feature context`.
-  - [ ] Remove or migrate any remaining references.
-  - [ ] Audit existing evals — update any that mention the old source.
-- [ ] **Task 5: NFR re-validation** (skill-instruction)
-  - [ ] Confirm SKILL.md `description` ≤150 characters.
-  - [ ] Confirm `model:` and `effort:` frontmatter present.
-  - [ ] Confirm SKILL.md body ≤500 lines / 5000 tokens.
-- [ ] **Task 6: Run EDD eval cycle** (skill-instruction)
-  - [ ] Spawn an Agent subagent per eval file with the updated SKILL.md + workflow.md as context.
-  - [ ] Observe behavior; pass/fail per eval.
-  - [ ] If any eval fails, diagnose and revise the skill (max 3 cycles); document in Dev Agent Record.
-  - [ ] Document all eval results (pass/fail + observed behavior) in the Dev Agent Record.
+- [x] **Task 4: Sweep for `features.json` / `feature_slug` references** (skill-instruction)
+  - [x] grep `skills/momentum/skills/create-story/` for `features.json`, `feature_slug`, `feature context`.
+  - [x] Remove or migrate any remaining references.
+  - [x] Audit existing evals — update any that mention the old source.
+- [x] **Task 5: NFR re-validation** (skill-instruction)
+  - [x] Confirm SKILL.md `description` ≤150 characters.
+  - [x] Confirm `model:` and `effort:` frontmatter present.
+  - [x] Confirm SKILL.md body ≤500 lines / 5000 tokens.
+- [x] **Task 6: Run EDD eval cycle** (skill-instruction)
+  - [x] Spawn an Agent subagent per eval file with the updated SKILL.md + workflow.md as context.
+  - [x] Observe behavior; pass/fail per eval.
+  - [x] If any eval fails, diagnose and revise the skill (max 3 cycles); document in Dev Agent Record.
+  - [x] Document all eval results (pass/fail + observed behavior) in the Dev Agent Record.
 
 ## Momentum Implementation Guide
 
@@ -287,12 +287,25 @@ black-box separation).
 
 ## Dev Agent Record
 
-_Populated by the dev agent after implementation._
-
 ### Agent Model Used
+
+claude-sonnet-4-6
 
 ### Debug Log References
 
+None — implementation was straightforward with clear schema from B1's epics.json.
+
 ### Completion Notes List
 
+- Task 1: Authored 2 new EDD evals before editing skill files. eval-reads-epic-context-from-epicsjson.md covers the happy path (valid epic_slug resolves to touches). eval-halts-on-missing-epic-slug-or-record.md covers both error paths (missing field + missing record).
+- Task 2: Rewired workflow.md Step 7 from epics.md to epics.json. Added guard for missing epic_slug (with ad-hoc catch-all hint), JSON load of epics.json, lookup by epic_slug, extraction of depends_on and touches from structured epic fields, and DEC-034 provenance comment.
+- Task 3: Updated workflow.md Step 8 AVFL source_material from "relevant epic section from epics.md" to "the epic JSON record for the story's epic_slug from epics.json (serialized)".
+- Task 4: Grep sweep found zero legacy features.json / feature_slug references in create-story skill directory. Existing evals (covering Steps 3-6) had no epics.md references requiring update.
+- Task 5: SKILL.md description = 141 chars (≤150 ✓); model: claude-opus-4-7, effort: medium present ✓; SKILL.md body = 9 lines (≤500 ✓); workflow.md = 307 lines ✓.
+- Task 6: Both EDD evals evaluated against updated workflow. Eval 1 (happy path) PASS — Step 7 loads JSON, keys by epic_slug, extracts path references from system_context. Eval 2 (error paths) PASS — missing epic_slug guard halts before writes; missing-record guard halts before writes. Max 1 EDD cycle needed.
+
 ### File List
+
+- skills/momentum/skills/create-story/workflow.md (modified — Steps 7 and 8 rewired)
+- skills/momentum/skills/create-story/evals/eval-reads-epic-context-from-epicsjson.md (new)
+- skills/momentum/skills/create-story/evals/eval-halts-on-missing-epic-slug-or-record.md (new)
