@@ -17,7 +17,7 @@ touches:
   - skills/momentum/skills/triage/workflow.md
   - skills/momentum/skills/sprint-planning/workflow.md
   - skills/momentum/skills/intake/workflow.md
-  - skills/momentum/skills/feature-breakdown/workflow.md
+  - skills/momentum/skills/epic-breakdown/workflow.md
   - skills/momentum/skills/triage/evals/eval-triage-queue-items-written-via-cli.md
   - skills/momentum/skills/triage/evals/eval-triage-resurfaces-open-queue-items.md
   - skills/momentum/skills/triage/evals/eval-triage-no-distill-delegation.md
@@ -227,6 +227,68 @@ claude-sonnet-4-6
   - triage SHAPING: appended created event, appears in practice-ledger open
   - sprint-planning read: by-source retro returns handoff entity correctly
   - consume verification: consumed event removes entity from practice-ledger open
+
+### Smoke-Pass CLI Invocations and Output (AC17)
+
+Executed against a throwaway ledger (`CLAUDE_PROJECT_DIR` pointed at a temp git repo, per dev note
+"execute against a temp `.momentum/practice-ledger.jsonl` — NOT the real one"). `$T` below =
+`python3 skills/momentum/scripts/momentum-tools.py practice-ledger`.
+
+**1. retro Phase 5.5 — append created handoff event, verify via `by-source retro`**
+
+```
+$T append --entity-id retro-handoff-1 --event-type created --source retro --actor retro \
+  --payload '{"intent":"handoff","title":"Investigate flaky AVFL lens"}'
+→ { "action": "practice_ledger_append", "success": true,
+    "event_id": "pl-...-3afa2601", "entity_id": "retro-handoff-1",
+    "ledger_path": ".../.momentum/practice-ledger.jsonl" }
+
+$T by-source retro
+→ { "action": "practice_ledger_by_source", "success": true, "source": "retro", "count": 1,
+    "events": [ { "entity_id": "retro-handoff-1", "event_type": "created", "source": "retro",
+                  "payload": { "intent": "handoff", "title": "Investigate flaky AVFL lens" } } ] }
+```
+
+**2. triage SHAPING capture — append created event, verify it appears in `open`**
+
+```
+$T append --entity-id triage-shaping-1 --event-type created --source triage --actor triage \
+  --payload '{"triage_class":"shaping","title":"Explore canvas L4 view"}'
+→ { "action": "practice_ledger_append", "success": true, "event_id": "pl-...-1f052c11",
+    "entity_id": "triage-shaping-1" }
+
+$T open
+→ { "action": "practice_ledger_open", "success": true, "count": 2,
+    "entities": [ { "entity_id": "retro-handoff-1",  "last_event_type": "created", "event_count": 1 },
+                  { "entity_id": "triage-shaping-1", "last_event_type": "created", "event_count": 1 } ] }
+```
+
+**3. sprint-planning handoff read — `by-source retro` returns the handoff entity**
+
+```
+$T by-source retro
+→ { "action": "practice_ledger_by_source", "success": true, "source": "retro", "count": 1,
+    "events": [ { "entity_id": "retro-handoff-1", "event_type": "created",
+                  "payload": { "intent": "handoff", ... } } ] }
+```
+
+**4. consume verification — append consumed event, entity drops out of `open`**
+
+```
+$T append --entity-id retro-handoff-1 --event-type consumed --source sprint-planning \
+  --actor sprint-planning --payload '{"outcome_ref":"some-story-slug"}'
+→ { "action": "practice_ledger_append", "success": true, "event_id": "pl-...-d3d170df",
+    "entity_id": "retro-handoff-1" }
+
+$T open
+→ { "action": "practice_ledger_open", "success": true, "count": 1,
+    "entities": [ { "entity_id": "triage-shaping-1", "last_event_type": "created", "event_count": 1 } ] }
+    # retro-handoff-1 no longer listed — consumed event moved its current state to terminal
+```
+
+Note: A1's CLI uses hyphenated flags (`--entity-id`, `--event-type`, `--actor`, `--payload`) — the
+cheat-sheet's `--event_type` / `--payload-json` forms do not exist. All workflow invocations use the
+hyphenated form ("A1's surface wins").
 
 ### File List
 - skills/momentum/skills/retro/workflow.md

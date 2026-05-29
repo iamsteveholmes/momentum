@@ -15,9 +15,10 @@ import { join } from "path";
 export type Epic = {
   epic_slug: string;
   name: string;
+  /** @deprecated Removed in the b1 epic-schema migration — real epics no longer carry status. Kept optional only for legacy callers/tests. */
   status?: string;
-  lifecycle?: "finite-lived" | "long-lived";
-  audience?: "user" | "internal";
+  lifecycle: "finite-lived" | "long-lived";
+  audience: "user" | "internal";
   stories_done: number;
   stories_remaining: number;
   stories?: string[];
@@ -43,21 +44,30 @@ export type EpicRow = Epic & {
 // ---------------------------------------------------------------------------
 
 /**
- * Structural gap heuristic: an epic has a gap when stories_done === 0
- * and status is not 'working'. Epics with status 'working' are never
- * flagged regardless of story counts.
+ * Structural gap heuristic.
+ *
+ * The b1 epic-schema migration removed the `status` field from epics, so the
+ * heuristic is based on the story counts that real epics actually carry:
+ * an epic has a gap when it has outstanding work (stories_remaining > 0) but
+ * nothing has been completed yet (stories_done === 0) — i.e. planned work that
+ * has not even started. Epics with at least one done story, or with no
+ * remaining work at all, are never flagged.
+ *
+ * Legacy `status: "working"` is still honoured as an explicit non-gap override
+ * for any caller that supplies it, but absence of status is NOT treated as a gap.
  */
 export function analyzeGap(
   epic: Epic,
   _storyMap: StoryMap
 ): { has_gap: boolean; reason: string } {
+  // Legacy explicit override — pre-migration callers may still set status.
   if (epic.status === "working") {
     return { has_gap: false, reason: "" };
   }
-  if (epic.stories_done === 0) {
+  if (epic.stories_remaining > 0 && epic.stories_done === 0) {
     return {
       has_gap: true,
-      reason: "zero stories done and status is not working",
+      reason: "outstanding stories but none completed yet",
     };
   }
   return { has_gap: false, reason: "" };
@@ -116,8 +126,14 @@ export async function readEpicsJson(): Promise<Epic[]> {
     if (!(await file.exists())) return [];
     const data = await file.json();
     if (!data || typeof data !== "object") return [];
-    // epics.json is an object keyed by epic_slug
-    return Object.values(data) as Epic[];
+    // epics.json is an object keyed by epic_slug, but may also carry non-epic
+    // metadata keys (e.g. `_migration`). Keep only real epic records.
+    return (Object.values(data) as unknown[]).filter(
+      (v): v is Epic =>
+        v != null &&
+        typeof v === "object" &&
+        typeof (v as Epic).epic_slug === "string"
+    );
   } catch {
     return [];
   }
@@ -179,7 +195,7 @@ function badgeClass(status: string): string {
 // Epics lens — HTML renderer
 // ---------------------------------------------------------------------------
 
-function renderEpicsTable(rows: EpicRow[]): string {
+export function renderEpicsTable(rows: EpicRow[]): string {
   if (rows.length === 0) {
     return `<div class="feat-row" style="padding:12px 0;">
   <span class="feat-name" style="font-style:italic;color:var(--inkOnDarkMuted);">No epics found — run momentum:epic-grooming first</span>
@@ -193,15 +209,19 @@ function renderEpicsTable(rows: EpicRow[]): string {
       const isLast = idx === rows.length - 1;
       const lastClass = isLast ? " last" : "";
       const gapBg = row.has_gap ? ` style="background:rgba(168,90,42,0.16);"` : "";
-      // Third column: gap-flag for gap rows, badge for non-gap
+      // Third column: gap-flag for gap rows, status badge if a (legacy) status
+      // is present, otherwise a lifecycle label on its own dimension-specific
+      // class — never conflated into a status badge.
       const rightCol = row.has_gap
         ? `<span class="gap-flag prominent">⚠ gap</span>`
         : row.status
-          ? `<span class="badge ${badgeClass(row.status)}"><span class="dot"></span>${row.status}</span>`
-          : `<span class="badge not-started"><span class="dot"></span>${row.lifecycle ?? "—"}</span>`;
+          ? `<span class="badge ${badgeClass(row.status)}"><span class="dot"></span>${escapeHtml(row.status)}</span>`
+          : row.lifecycle
+            ? `<span class="lifecycle-tag">${escapeHtml(row.lifecycle)}</span>`
+            : "";
 
-      return `<a class="feat-row${lastClass}" href="/epics/${row.epic_slug}"${gapBg}>
-  <span class="feat-name">${row.name}</span>
+      return `<a class="feat-row${lastClass}" href="/epics/${escapeHtml(row.epic_slug)}"${gapBg}>
+  <span class="feat-name">${escapeHtml(row.name)}</span>
   <span class="frac">${done}<span class="slash">/</span>${total}</span>
   ${rightCol}
 </a>`;
@@ -1102,6 +1122,18 @@ function DashboardShell({
     .dark-surface .badge.blocked { color: #e0a07a; background: rgba(168,90,42,0.18); }
     .dark-surface .badge.ready-for-dev { color: #a4b0e0; background: rgba(88,99,168,0.22); }
 
+    /* ── Lifecycle tag (own dimension — NOT a status badge) ── */
+    .lifecycle-tag {
+      display: inline-flex; align-items: center;
+      padding: 1px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--inkOnDarkQuiet);
+      background: rgba(240,238,233,0.06);
+      border: 1px solid var(--ruleDark);
+      border-radius: 3px; white-space: nowrap;
+    }
+
     /* ── Gap flag ── */
     .gap-flag {
       display: inline-flex; align-items: center; gap: 4px;
@@ -1913,14 +1945,11 @@ export function StoryDetailView({
   from,
   activeSprintSlug,
   epicSlugOverride,
-  featureSlugOverride,
 }: {
   story: ParsedStory;
-  from: "epic" | "feature" | "sprint" | null;
+  from: "epic" | "sprint" | null;
   activeSprintSlug?: string | null;
   epicSlugOverride?: string | null;
-  /** @deprecated Use epicSlugOverride — kept for backward compatibility */
-  featureSlugOverride?: string | null;
 }) {
   const { meta, storyNarrative, acceptanceCriteria, devNotes, workflowSection, touches } = story;
 
@@ -1932,9 +1961,9 @@ export function StoryDetailView({
     } else {
       breadcrumbMiddle = `<a class="seg" href="/">sprint</a><span class="sep">›</span>`;
     }
-  } else if (from === "epic" || from === "feature") {
-    // Use URL-passed epic slug first, then frontmatter epic_slug, then feature_slug (legacy), then fallback
-    const epicSlug = epicSlugOverride || featureSlugOverride || meta.epic_slug || meta.feature_slug;
+  } else if (from === "epic") {
+    // URL-passed epic slug wins; fall back to frontmatter epic_slug.
+    const epicSlug = epicSlugOverride || meta.epic_slug;
     if (epicSlug) {
       breadcrumbMiddle = `<a class="seg" href="/epics/${epicSlug}">epic</a><span class="sep">›</span>`;
     } else {
@@ -2059,9 +2088,11 @@ export function StoryDetailView({
 
 /**
  * Escape HTML special characters to prevent XSS in story content.
+ * Coerces non-string input to a string first so missing/optional fields
+ * (e.g. a malformed artifact row) cannot crash the renderer.
  */
 function escapeHtml(str: string): string {
-  return str
+  return String(str ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -2074,10 +2105,8 @@ app.get("/stories/:slug", async (c) => {
   const slug = c.req.param("slug");
   const fromParam = c.req.query("from");
   const epicParam = c.req.query("epic"); // epic slug passed when coming from Epic L2
-  const featureParam = c.req.query("feature"); // legacy: feature slug for backward compat
-  const from: "epic" | "feature" | "sprint" | null =
+  const from: "epic" | "sprint" | null =
     fromParam === "epic" ? "epic"
-    : fromParam === "feature" ? "feature"
     : fromParam === "sprint" ? "sprint"
     : null;
 
@@ -2114,16 +2143,16 @@ app.get("/stories/:slug", async (c) => {
     activeSprintSlug = sprintsData?.active?.slug ?? null;
   }
 
-  const storyFragment = StoryDetailView({ story, from, activeSprintSlug, epicSlugOverride: epicParam ?? featureParam ?? null }) as string;
+  const storyFragment = StoryDetailView({ story, from, activeSprintSlug, epicSlugOverride: epicParam ?? null }) as string;
   const isHtmx = !!c.req.header("HX-Request");
   if (isHtmx) return c.html(storyFragment);
 
   // Direct browser navigation — wrap in full shell with reading mode
   const storyContent = storyFragment.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
   // Build breadcrumb with correct back-links based on entry point
-  const epicSlug = epicParam || featureParam || story.meta.epic_slug || story.meta.feature_slug;
+  const epicSlug = epicParam || story.meta.epic_slug;
   let crumbs = `<a class="seg" href="/">dashboard</a>`;
-  if ((from === "epic" || from === "feature") && epicSlug) {
+  if (from === "epic" && epicSlug) {
     crumbs += `<span class="sep">›</span><a class="seg" href="/epics/${epicSlug}">epic</a>`;
   } else if (from === "sprint" && activeSprintSlug) {
     crumbs += `<span class="sep">›</span><a class="seg" href="/sprints/${activeSprintSlug}">sprint</a>`;

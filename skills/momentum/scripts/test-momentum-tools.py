@@ -3159,9 +3159,13 @@ def main():
     test_practice_ledger_summary_archive_entries()
     test_practice_ledger_open_returns_nonterminal()
     test_practice_ledger_open_terminal_types()
+    test_practice_ledger_open_same_second_tiebreak()
+    test_practice_ledger_history_same_second_tiebreak()
+    test_practice_ledger_open_missing_entity_id_no_crash()
     test_practice_ledger_history_returns_ordered_events()
     test_practice_ledger_history_unknown_entity_empty()
     test_practice_ledger_since_filters_by_ts()
+    test_practice_ledger_since_invalid_ts_errors()
     test_practice_ledger_by_source_filters()
     test_practice_ledger_summary_text_format()
     test_practice_ledger_help_subcommands_registered()
@@ -3741,9 +3745,13 @@ def setup_seeded_ledger(proj: Path, events: list) -> None:
     from datetime import datetime, timezone, timedelta
     path = proj / ".momentum" / "practice-ledger.jsonl"
     lines = []
-    for ev in events:
+    for i, ev in enumerate(events):
         if "event_id" not in ev:
-            ev["event_id"] = f"evt-{uuid.uuid4().hex[:8]}"
+            # Mirror production's monotonic event_id (pl-<microsecond>-<hex>): the
+            # zero-padded insertion index makes seeded event_ids sort in insertion
+            # order, so the reader's (ts, event_id) tie-break is deterministic for
+            # same-second events (matches real CLI-appended ordering).
+            ev["event_id"] = f"evt-{i:06d}-{uuid.uuid4().hex[:8]}"
         if "ts" not in ev:
             ev["ts"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         if "payload" not in ev:
@@ -3907,6 +3915,101 @@ def test_practice_ledger_by_source_filters():
     events = out.get("events", [])
     assert_eq("two triage events", len(events), 2)
     assert_eq("all source triage", all(e.get("source") == "triage" for e in events), True)
+
+
+def test_practice_ledger_open_same_second_tiebreak():
+    """open: same-second events for one entity fold deterministically by event_id.
+
+    All three events share an identical ts (1-second resolution). The terminal
+    'consumed' event has the largest event_id (latest microsecond), so it must
+    win the fold regardless of file insertion order. The events are written to
+    the file in an order that does NOT match event_id ascending, so a sort on ts
+    alone (stable → insertion order) would pick the wrong last event.
+    """
+    print("\n[practice-ledger open] Same-second events tie-break by event_id (deterministic)")
+    ts = "2026-05-28T12:00:00Z"
+    # Written in a deliberately scrambled insertion order. By event_id order the
+    # last event is 'consumed' (id ...030000), which is terminal → entity closed.
+    for insertion in (
+        # case A: terminal event written FIRST in the file
+        [
+            {"entity_id": "tie-entity", "event_type": "consumed", "source": "triage",
+             "actor": "a", "ts": ts, "event_id": "pl-20260528T120000030000-aaaaaaaa"},
+            {"entity_id": "tie-entity", "event_type": "created", "source": "triage",
+             "actor": "a", "ts": ts, "event_id": "pl-20260528T120000010000-aaaaaaaa"},
+            {"entity_id": "tie-entity", "event_type": "updated", "source": "triage",
+             "actor": "a", "ts": ts, "event_id": "pl-20260528T120000020000-aaaaaaaa"},
+        ],
+        # case B: terminal event written LAST in the file
+        [
+            {"entity_id": "tie-entity", "event_type": "created", "source": "triage",
+             "actor": "a", "ts": ts, "event_id": "pl-20260528T120000010000-aaaaaaaa"},
+            {"entity_id": "tie-entity", "event_type": "updated", "source": "triage",
+             "actor": "a", "ts": ts, "event_id": "pl-20260528T120000020000-aaaaaaaa"},
+            {"entity_id": "tie-entity", "event_type": "consumed", "source": "triage",
+             "actor": "a", "ts": ts, "event_id": "pl-20260528T120000030000-aaaaaaaa"},
+        ],
+    ):
+        proj = setup_ledger_project()
+        setup_seeded_ledger(proj, insertion)
+        code, out = run_tool(proj, "practice-ledger", "open")
+        assert_eq("exit code 0", code, 0)
+        entity_ids = [e.get("entity_id") for e in out.get("entities", [])]
+        # consumed is terminal and has the largest event_id → entity is NOT open,
+        # independent of file insertion order.
+        assert_eq("tie-entity closed regardless of insertion order",
+                  "tie-entity" not in entity_ids, True)
+
+
+def test_practice_ledger_history_same_second_tiebreak():
+    """history: same-second events are ordered deterministically by event_id."""
+    print("\n[practice-ledger history] Same-second events ordered by event_id (deterministic)")
+    ts = "2026-05-28T12:00:00Z"
+    # Insertion order is scrambled relative to event_id; expected output order is
+    # always event_id ascending: created → updated → consumed.
+    proj = setup_ledger_project()
+    setup_seeded_ledger(proj, [
+        {"entity_id": "hist-tie", "event_type": "updated", "source": "triage",
+         "actor": "a", "ts": ts, "event_id": "pl-20260528T120000020000-bbbbbbbb"},
+        {"entity_id": "hist-tie", "event_type": "consumed", "source": "triage",
+         "actor": "a", "ts": ts, "event_id": "pl-20260528T120000030000-bbbbbbbb"},
+        {"entity_id": "hist-tie", "event_type": "created", "source": "triage",
+         "actor": "a", "ts": ts, "event_id": "pl-20260528T120000010000-bbbbbbbb"},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "history", "--entity", "hist-tie")
+    assert_eq("exit code 0", code, 0)
+    types = [e["event_type"] for e in out.get("events", [])]
+    assert_eq("ordered by event_id within same second",
+              types, ["created", "updated", "consumed"])
+
+
+def test_practice_ledger_open_missing_entity_id_no_crash():
+    """open: a new-schema line missing entity_id must not crash (no KeyError traceback)."""
+    print("\n[practice-ledger open] Line missing entity_id is skipped, no crash")
+    proj = setup_ledger_project()
+    # First a well-formed event, then a malformed new-schema line with no entity_id.
+    setup_seeded_ledger(proj, [
+        {"entity_id": "good-entity", "event_type": "created", "source": "triage", "actor": "a"},
+        {"event_type": "created", "source": "triage", "actor": "a"},  # no entity_id
+    ])
+    code, out = run_tool(proj, "practice-ledger", "open")
+    assert_eq("exit code 0 (no crash)", code, 0)
+    assert_eq("success true (valid JSON contract)", out.get("success"), True)
+    entity_ids = [e.get("entity_id") for e in out.get("entities", [])]
+    assert_eq("good-entity still derived", "good-entity" in entity_ids, True)
+
+
+def test_practice_ledger_since_invalid_ts_errors():
+    """since: a malformed --ts argument returns a structured error, not empty results."""
+    print("\n[practice-ledger since] Malformed timestamp errors instead of silent empty")
+    proj = setup_ledger_project()
+    setup_seeded_ledger(proj, [
+        {"entity_id": "e1", "event_type": "created", "source": "triage", "actor": "a"},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "since", "not-a-timestamp")
+    assert_eq("non-zero exit code", code != 0, True)
+    assert_eq("success false", out.get("success"), False)
+    assert_eq("error mentions ISO", "ISO" in (out.get("error") or ""), True)
 
 
 def test_practice_ledger_summary_text_format():

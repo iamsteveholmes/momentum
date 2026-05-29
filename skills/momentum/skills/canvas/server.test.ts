@@ -10,6 +10,7 @@ import {
   computeCycleState,
   analyzeGap,
   buildSortedRows,
+  renderEpicsTable,
   buildEpicStoryRows,
   EpicDetailView,
   parseFrontmatter,
@@ -317,32 +318,77 @@ describe("analyzeGap", () => {
     expect(result.has_gap).toBe(true);
   });
 
-  it("returns has_gap=true for not-started status with zero done stories", () => {
-    const epic: Epic = {
-      epic_slug: "test-epic",
-      name: "Test Epic",
-      status: "not-started",
-      stories_done: 0,
-      stories_remaining: 0,
-      stories: [],
-    };
-    const storyMap: StoryMap = {};
-    const result = analyzeGap(epic, storyMap);
-    expect(result.has_gap).toBe(true);
-  });
-
-  it("returns has_gap=true when status is absent and stories_done is 0", () => {
+  it("returns has_gap=false when no stories done AND no stories remaining (empty epic, nothing planned)", () => {
     const epic: Epic = {
       epic_slug: "test-epic",
       name: "Test Epic",
       lifecycle: "finite-lived",
       audience: "user",
       stories_done: 0,
-      stories_remaining: 2,
+      stories_remaining: 0,
+      stories: [],
     };
     const storyMap: StoryMap = {};
     const result = analyzeGap(epic, storyMap);
+    // No remaining work to start on → not a gap. (Was incorrectly flagged
+    // pre-migration when the heuristic keyed on the now-deleted status field.)
+    expect(result.has_gap).toBe(false);
+  });
+
+  // --- post-b1-migration: real epics carry NO status field ---
+  it("returns has_gap=true for a status-less epic with remaining stories and none done", () => {
+    const epic: Epic = {
+      epic_slug: "momentum-startup-performance",
+      name: "Startup Performance",
+      lifecycle: "finite-lived",
+      audience: "internal",
+      stories_done: 0,
+      stories_remaining: 21,
+      stories: ["s1", "s2"],
+    };
+    const result = analyzeGap(epic, {});
     expect(result.has_gap).toBe(true);
+    expect(result.reason).toBe("outstanding stories but none completed yet");
+  });
+
+  it("returns has_gap=false for a status-less epic with at least one story done", () => {
+    const epic: Epic = {
+      epic_slug: "momentum-canvas",
+      name: "Momentum Canvas",
+      lifecycle: "finite-lived",
+      audience: "user",
+      stories_done: 3,
+      stories_remaining: 2,
+      stories: ["s1", "s2", "s3", "s4", "s5"],
+    };
+    const result = analyzeGap(epic, {});
+    expect(result.has_gap).toBe(false);
+  });
+
+  it("returns has_gap=false for a status-less epic with all stories done (remaining 0)", () => {
+    const epic: Epic = {
+      epic_slug: "momentum-done",
+      name: "Done Epic",
+      lifecycle: "long-lived",
+      audience: "internal",
+      stories_done: 4,
+      stories_remaining: 0,
+      stories: ["s1", "s2", "s3", "s4"],
+    };
+    const result = analyzeGap(epic, {});
+    expect(result.has_gap).toBe(false);
+  });
+
+  it("does NOT mass-flag status-less epics: only zero-done-with-remaining are gaps", () => {
+    // Mirrors the real epics.json shape after the b1 migration (no status).
+    const epics: Epic[] = [
+      { epic_slug: "a", name: "A", lifecycle: "finite-lived", audience: "user", stories_done: 5, stories_remaining: 0 },
+      { epic_slug: "b", name: "B", lifecycle: "finite-lived", audience: "user", stories_done: 2, stories_remaining: 3 },
+      { epic_slug: "c", name: "C", lifecycle: "long-lived", audience: "internal", stories_done: 0, stories_remaining: 0 },
+      { epic_slug: "d", name: "D", lifecycle: "finite-lived", audience: "internal", stories_done: 0, stories_remaining: 7 },
+    ];
+    const flagged = epics.filter((e) => analyzeGap(e, {}).has_gap).map((e) => e.epic_slug);
+    expect(flagged).toEqual(["d"]);
   });
 });
 
@@ -396,16 +442,19 @@ describe("buildSortedRows", () => {
     const storyMap: StoryMap = {};
     const rows = buildSortedRows(epics, storyMap);
 
+    // Gap rows first, alphabetically. Under the corrected heuristic a gap is
+    // stories_remaining > 0 && stories_done === 0, so D Not Started (0/0) is NOT a gap.
     expect(rows[0].name).toBe("A Partial");
     expect(rows[0].has_gap).toBe(true);
     expect(rows[1].name).toBe("B Not Working");
     expect(rows[1].has_gap).toBe(true);
-    expect(rows[2].name).toBe("D Not Started");
-    expect(rows[2].has_gap).toBe(true);
 
-    expect(rows[3].name).toBe("C Partial Done");
+    // Non-gap rows sorted by status severity (partial < working < not-started), then alpha.
+    expect(rows[2].name).toBe("C Partial Done");
+    expect(rows[2].has_gap).toBe(false);
+    expect(rows[3].name).toBe("Z Working");
     expect(rows[3].has_gap).toBe(false);
-    expect(rows[4].name).toBe("Z Working");
+    expect(rows[4].name).toBe("D Not Started");
     expect(rows[4].has_gap).toBe(false);
   });
 
@@ -437,6 +486,102 @@ describe("buildSortedRows", () => {
   it("returns empty array for empty epics input", () => {
     const rows = buildSortedRows([], {});
     expect(rows).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// renderEpicsTable — HTML escaping + status-less rendering
+// ---------------------------------------------------------------------------
+describe("renderEpicsTable", () => {
+  it("escapes HTML in epic name, slug, and status to prevent injection", () => {
+    // epics.json is a writable artifact — these fields are an injection sink.
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: "evil-epic",
+          name: `<img src=x onerror="alert(1)">`,
+          status: `working"><script>alert('xss')</script>`,
+          lifecycle: "finite-lived",
+          audience: "user",
+          stories_done: 1,
+          stories_remaining: 0,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    // Raw injection markup must NOT survive unescaped.
+    expect(html).not.toContain("<img src=x");
+    expect(html).not.toContain("<script>alert('xss')</script>");
+    // It must appear in escaped form instead.
+    expect(html).toContain("&lt;img src=x");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("escapes a malicious epic_slug inside the href", () => {
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: `x"><script>boom()</script>`,
+          name: "Slug Attack",
+          lifecycle: "long-lived",
+          audience: "internal",
+          stories_done: 2,
+          stories_remaining: 0,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    expect(html).not.toContain("<script>boom()</script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("renders a status-less epic's lifecycle as a lifecycle-tag, NOT a status badge", () => {
+    // Real post-migration epics have no status. Lifecycle must not be
+    // conflated into a not-started status badge.
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: "no-status",
+          name: "No Status Epic",
+          lifecycle: "long-lived",
+          audience: "internal",
+          stories_done: 2,
+          stories_remaining: 1,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    expect(html).toContain("lifecycle-tag");
+    expect(html).toContain("long-lived");
+    // The lifecycle value must NOT be wrapped in a status badge.
+    expect(html).not.toContain('class="badge not-started"><span class="dot"></span>long-lived');
+  });
+
+  it("renders a gap flag (not a badge) for a status-less epic with remaining work and none done", () => {
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: "gappy",
+          name: "Gappy Epic",
+          lifecycle: "finite-lived",
+          audience: "user",
+          stories_done: 0,
+          stories_remaining: 5,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    expect(html).toContain("gap-flag");
+    expect(html).toContain("gap");
+  });
+
+  it("renders empty-state message when there are no rows", () => {
+    const html = renderEpicsTable([]);
+    expect(html).toContain("No epics found");
   });
 });
 
@@ -979,10 +1124,9 @@ describe("StoryDetailView", () => {
     expect(h).toContain("epic");
   });
 
-  it("breadcrumb includes epic link when from=feature (legacy backward compat)", () => {
-    const h = String(StoryDetailView({ story: baseStory, from: "feature" }));
-    expect(h).toContain('href="/epics/');
-    expect(h).toContain("epic");
+  it("breadcrumb uses epicSlugOverride when provided, overriding frontmatter", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: "epic", epicSlugOverride: "override-epic" }));
+    expect(h).toContain('href="/epics/override-epic"');
   });
 
   it("breadcrumb includes sprint link when from=sprint with activeSprintSlug", () => {

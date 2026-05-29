@@ -284,6 +284,27 @@ class TestComputeStoryCounts(unittest.TestCase):
         self.assertEqual(done, 0)
         self.assertEqual(remaining, 0)
 
+    def test_review_not_counted_as_remaining(self):
+        """QA AC4: review status is NOT remaining (only backlog/ready-for-dev/in-progress)."""
+        stories = {
+            "a": {"status": "review", "epic_slug": "e1"},
+            "b": {"status": "review", "epic_slug": "e1"},
+            "c": {"status": "in-progress", "epic_slug": "e1"},
+            "d": {"status": "ready-for-dev", "epic_slug": "e1"},
+            "e": {"status": "backlog", "epic_slug": "e1"},
+            "f": {"status": "done", "epic_slug": "e1"},
+        }
+        done, remaining = compute_story_counts(["a", "b", "c", "d", "e", "f"], stories)
+        self.assertEqual(done, 1)
+        # 9-review analogue: only in-progress + ready-for-dev + backlog count = 3
+        self.assertEqual(remaining, 3)
+
+    def test_closed_incomplete_not_counted_as_remaining(self):
+        stories = {"a": {"status": "closed-incomplete", "epic_slug": "e1"}}
+        done, remaining = compute_story_counts(["a"], stories)
+        self.assertEqual(done, 0)
+        self.assertEqual(remaining, 0)
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Test: Archive path creation

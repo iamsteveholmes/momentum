@@ -854,12 +854,12 @@
       "momentumintake-remove-worktree-isolation-story-add-is-safe"
     ],
     "stories_done": 25,
-    "stories_remaining": 14,
+    "stories_remaining": 5,
     "last_verified": "2026-05-28",
     "notes": "Kept as long-lived per DEC-034 D2 and D5 explicit language. The canonical residue catcher: every sprint produces some ad-hoc work that doesn't fit a deliverable shape. Forcing it into a finite-lived epic would create artificial epics. Long-lived with no closure expectation.\n"
   },
   "_migration": {
-    "migrated_at": "2026-05-28",
+    "migrated_at": "2026-05-29",
     "source": "features.json (archived to archive/features-pre-2026-05.json)",
     "decision": "DEC-034 (Epic-Layer Consolidation)",
     "dissolved": {
@@ -885,6 +885,7 @@
       "ad-hoc"
     ],
     "rehomed_story_count": 401,
-    "notes": "This _migration key is reserved provenance metadata. It is not an epic entry. Tooling that iterates epics.json must skip this key."
+    "epics_md_restructure": "epics.md restructure choice: retire-and-stub (per QA AC7). The legacy feature-organized epics.md is retired and replaced with a stub pointing at epics.json as the source of truth. Rationale: epics.json is now the canonical, machine-maintained epic registry (DEC-034); keeping a parallel hand-edited epics.md narrative would drift and create two competing sources of truth. The stub preserves the human entry point without duplicating mutable state.",
+    "notes": "This _migration key is reserved provenance metadata. It is not an epic entry. Tooling that iterates epics.json must skip this key. epics.md restructure choice: retire-and-stub (per QA AC7). The legacy feature-organized epics.md is retired and replaced with a stub pointing at epics.json as the source of truth. Rationale: epics.json is now the canonical, machine-maintained epic registry (DEC-034); keeping a parallel hand-edited epics.md narrative would drift and create two competing sources of truth. The stub preserves the human entry point without duplicating mutable state."
   }
 }

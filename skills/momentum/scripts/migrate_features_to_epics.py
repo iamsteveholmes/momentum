@@ -161,9 +161,10 @@ def compute_story_counts(
     """
     Given a list of story_keys and the full stories index, return (done, remaining).
     - done: status == "done"
-    - remaining: status in {backlog, ready-for-dev, in-progress, review, verify}
-    - dropped: excluded from both counts
+    - remaining: status in {backlog, ready-for-dev, in-progress} ONLY (per QA AC4)
+    - everything else (done, dropped, closed-incomplete, review) is NOT remaining
     """
+    REMAINING_STATUSES = {"backlog", "ready-for-dev", "in-progress"}
     done = 0
     remaining = 0
     for sk in story_keys:
@@ -171,9 +172,19 @@ def compute_story_counts(
         status = sv.get("status", "backlog")
         if status == "done":
             done += 1
-        elif status not in ("dropped", "closed-incomplete"):
+        elif status in REMAINING_STATUSES:
             remaining += 1
     return done, remaining
+
+
+EPICS_MD_RESTRUCTURE_NOTE = (
+    "epics.md restructure choice: retire-and-stub (per QA AC7). The legacy "
+    "feature-organized epics.md is retired and replaced with a stub pointing at "
+    "epics.json as the source of truth. Rationale: epics.json is now the canonical, "
+    "machine-maintained epic registry (DEC-034); keeping a parallel hand-edited "
+    "epics.md narrative would drift and create two competing sources of truth. The "
+    "stub preserves the human entry point without duplicating mutable state."
+)
 
 
 def build_migration_log(
@@ -196,9 +207,11 @@ def build_migration_log(
         "dissolved": {slug: f"→ {target}" for slug, target in dissolved.items()},
         "long_lived": sorted(long_lived),
         "rehomed_story_count": rehomed_count,
+        "epics_md_restructure": EPICS_MD_RESTRUCTURE_NOTE,
         "notes": (
             "This _migration key is reserved provenance metadata. "
-            "It is not an epic entry. Tooling that iterates epics.json must skip this key."
+            "It is not an epic entry. Tooling that iterates epics.json must skip this key. "
+            + EPICS_MD_RESTRUCTURE_NOTE
         ),
     }
 
@@ -206,6 +219,21 @@ def build_migration_log(
 # ──────────────────────────────────────────────────────────────────────────────
 # Disposition loader
 # ──────────────────────────────────────────────────────────────────────────────
+
+
+def _load_json_or_die(path: Path, label: str) -> Any:
+    """
+    Parse a JSON file, exiting with a clear message and code 1 on failure.
+    Used to guard all external JSON inputs (features.json, stories index, epics.json).
+    """
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        print(
+            f"ERROR: failed to parse {label} at {path}: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 def load_dispositions(root: Path) -> dict[str, Any]:
@@ -254,15 +282,17 @@ def run_migration(root: Path | str = ".") -> None:
 
     # ── Load or derive epics from features ──────────────────────────────────
 
+    existing_rehomed_count = 0
+
     if features_path.exists():
-        # First run: archive features.json (byte-identical copy), then remove
+        # First run: validate-parse features.json BEFORE writing the archive, so a
+        # corrupt input fails loudly without producing a junk byte-identical archive.
+        features_raw = _load_json_or_die(features_path, "features.json")
+
+        # Archive is byte-identical (only after a successful parse)
         archive_dir.mkdir(parents=True, exist_ok=True)
         archive_path = archive_dir / "features-pre-2026-05.json"
-
-        # Archive is byte-identical
         archive_path.write_bytes(features_path.read_bytes())
-
-        features_raw = json.loads(features_path.read_text())
 
         # Build initial epics from features
         epics: dict[str, Any] = {}
@@ -275,7 +305,7 @@ def run_migration(root: Path | str = ".") -> None:
 
     elif epics_path.exists():
         # Already migrated — load existing epics for re-sync
-        epics_raw = json.loads(epics_path.read_text())
+        epics_raw = _load_json_or_die(epics_path, "epics.json")
         epics = {k: v for k, v in epics_raw.items() if k != "_migration"}
         # Preserve original rehomed_count from prior migration run (idempotency)
         existing_migration = epics_raw.get("_migration", {})
@@ -287,7 +317,7 @@ def run_migration(root: Path | str = ".") -> None:
     # ── Load stories index ───────────────────────────────────────────────────
 
     if stories_path.exists():
-        stories: dict[str, Any] = json.loads(stories_path.read_text())
+        stories: dict[str, Any] = _load_json_or_die(stories_path, "stories/index.json")
     else:
         stories = {}
 
@@ -340,6 +370,13 @@ def run_migration(root: Path | str = ".") -> None:
                 sv["epic_slug"] = target
                 rehomed_count += 1
 
+    # ── Delete dissolved categorical epics still lingering in epics ──────────
+    # A dissolved cat_slug that also happens to be a feature/epic key would
+    # otherwise survive the re-home loop as an empty zombie entry (code-review F1).
+    for cat_slug in dissolved:
+        if cat_slug in epics:
+            del epics[cat_slug]
+
     # ── Ensure ad-hoc exists as long-lived ──────────────────────────────────
 
     if "ad-hoc" not in epics:
@@ -373,13 +410,14 @@ def run_migration(root: Path | str = ".") -> None:
         epics[epic_slug]["stories"] = []
 
     for sk, sv in stories.items():
-        epic_slug = sv.get("epic_slug", "ad-hoc")
+        original = sv.get("epic_slug", "ad-hoc")
+        epic_slug = original
         if epic_slug not in epics:
             # Unknown epic_slug — re-home to ad-hoc
             sv["epic_slug"] = "ad-hoc"
             epic_slug = "ad-hoc"
             # Only count if this was a real change (not already ad-hoc)
-            if epic_slug != "ad-hoc":
+            if original != "ad-hoc":
                 rehomed_count += 1
         if sk not in epics[epic_slug]["stories"]:
             epics[epic_slug]["stories"].append(sk)
@@ -407,10 +445,15 @@ def run_migration(root: Path | str = ".") -> None:
 
     # ── Build migration log ──────────────────────────────────────────────────
 
+    # On a re-sync run, features.json is gone so no stories actually move and
+    # rehomed_count is 0 — carry forward the original count to preserve provenance
+    # (code-review F3: existing_rehomed_count was read but never used).
+    effective_rehomed_count = max(rehomed_count, existing_rehomed_count)
+
     migration_log = build_migration_log(
         dissolved=dissolved,
         long_lived=long_lived_slugs | {"ad-hoc"},
-        rehomed_count=rehomed_count,
+        rehomed_count=effective_rehomed_count,
     )
 
     # ── Write outputs ────────────────────────────────────────────────────────

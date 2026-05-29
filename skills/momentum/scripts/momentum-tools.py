@@ -2352,15 +2352,31 @@ def _load_duckdb_events(project_dir: Path) -> tuple:
     return new_events, archive_count
 
 
+def _event_order_key(ev: dict) -> tuple:
+    """Deterministic ordering key for folding/history.
+
+    ts is written at 1-second resolution, so same-second events for one entity
+    tie on ts alone and the stable sort then falls back to file insertion order.
+    event_id embeds a microsecond timestamp (pl-YYYYMMDDTHHMMSSffffff-<hex>), so
+    appending it as a secondary key gives a stable monotonic tiebreak.
+    """
+    return (ev.get("ts", ""), ev.get("event_id", ""))
+
+
 def _derive_current_state(events: list) -> dict:
     """Fold events by entity_id to derive current state (last event wins by ts)."""
     from collections import defaultdict
     by_entity: dict = defaultdict(list)
     for ev in events:
-        by_entity[ev["entity_id"]].append(ev)
+        entity_id = ev.get("entity_id")
+        if entity_id is None:
+            # New-schema lines without entity_id can't be folded; skip defensively
+            # rather than crashing the JSON contract with a KeyError traceback.
+            continue
+        by_entity[entity_id].append(ev)
     current: dict = {}
     for entity_id, evlist in by_entity.items():
-        sorted_evs = sorted(evlist, key=lambda e: e.get("ts", ""))
+        sorted_evs = sorted(evlist, key=_event_order_key)
         last = sorted_evs[-1]
         current[entity_id] = {
             "entity_id": entity_id,
@@ -2463,7 +2479,7 @@ def cmd_practice_ledger_history(args: argparse.Namespace) -> None:
     entity_id = args.entity
     new_events, _ = _load_duckdb_events(project_dir)
     entity_events = [ev for ev in new_events if ev.get("entity_id") == entity_id]
-    entity_events.sort(key=lambda e: e.get("ts", ""))
+    entity_events.sort(key=_event_order_key)
     result("practice_ledger_history", success=True, entity_id=entity_id,
            events=entity_events, count=len(entity_events))
 
@@ -2472,8 +2488,25 @@ def cmd_practice_ledger_since(args: argparse.Namespace) -> None:
     """since <iso-ts> — events strictly after the given timestamp."""
     project_dir = resolve_project_dir()
     since_ts = args.ts
+    try:
+        since_dt = datetime.fromisoformat(since_ts.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        error_result("practice_ledger_since",
+                     f"Invalid --ts '{since_ts}': must be an ISO-8601 timestamp "
+                     f"(e.g. 2026-05-28T12:00:00Z)",
+                     since=since_ts)
     new_events, _ = _load_duckdb_events(project_dir)
-    filtered = [ev for ev in new_events if ev.get("ts", "") > since_ts]
+    filtered = []
+    for ev in new_events:
+        ev_ts = ev.get("ts", "")
+        try:
+            ev_dt = datetime.fromisoformat(ev_ts.replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            # Skip events whose ts can't be parsed rather than including/dropping
+            # them via lexical comparison against a parsed bound.
+            continue
+        if ev_dt > since_dt:
+            filtered.append(ev)
     result("practice_ledger_since", success=True, since=since_ts,
            events=filtered, count=len(filtered))
 

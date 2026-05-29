@@ -76,16 +76,19 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
     </check>
 
     <action>Extract from epics.json[{{epic_slug}}] and store:
-      - {{acceptance_condition}} — the epic's acceptance condition string
+      - {{acceptance_conditions}} — the epic's acceptance_conditions array (list of condition strings)
       - {{value_analysis}} — the full value_analysis block (including any "known gaps" paragraph)
       - {{system_context}} — the system_context field
       - {{epic_stories}} — the current stories array (list of story slugs)
-      - {{epic_status}} — the status field
+      - {{stories_done}} — the stories_done count
+      - {{stories_remaining}} — the stories_remaining count
+      - {{lifecycle}} — the lifecycle field
     </action>
 
     <output>## Epic Loaded: `{{epic_slug}}`
 
-**Status:** {{epic_status}}
+**Lifecycle:** {{lifecycle}}
+**Progress:** {{stories_done}} done / {{stories_remaining}} remaining
 **Stories on epic:** {{epic_stories | length}} ({{epic_stories | join ", "}})
 {{#if focus_hint}}**Focus hint:** {{focus_hint}}{{/if}}</output>
 
@@ -114,7 +117,7 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
     </action>
 
     <action>Read `{{planning_artifacts}}/architecture.md`:
-      - Use Grep to find sections related to the epic's system_context or acceptance_condition.
+      - Use Grep to find sections related to the epic's system_context or acceptance_conditions.
       - Read those sections with offset/limit.
       - Store {{architecture_context}} = relevant architectural components and constraints.
     </action>
@@ -155,7 +158,7 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
       You are an acceptance-first gap analyst for a Momentum epic breakdown.
 
       Epic slug: {{epic_slug}}
-      Acceptance condition: {{acceptance_condition}}
+      Acceptance conditions: {{acceptance_conditions}}
       System context: {{system_context}}
       Existing stories on epic: {{epic_stories}}
       Related stories (from this epic): {{related_stories}}
@@ -164,8 +167,8 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
       {{#if focus_hint}}Focus hint (narrow your analysis to this scope): {{focus_hint}}{{/if}}
 
       Your job — Acceptance-first analysis:
-      1. Decompose the acceptance_condition into concrete, testable capabilities that must exist
-         for the condition to be satisfied.
+      1. Decompose each entry in the acceptance_conditions array into concrete, testable
+         capabilities that must exist for those conditions to be satisfied.
       2. For each capability, check whether it is already covered by a story in {{epic_stories}}
          or {{related_stories}} (match by title, description, or obvious intent).
       3. Flag capabilities that are NOT covered — these are your gap findings.
@@ -180,7 +183,7 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
 
       Return ONLY the structured findings list. Do not explain your process.
       Suggested class must be one of: ARTIFACT, DECISION, SHAPING.
-      Do not suggest DISTILL, DEFER, or REJECT — those are triage's routing decisions.
+      Do not suggest DEFER or REJECT — those are triage's routing decisions.
       ```
     </action>
 
@@ -217,7 +220,7 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
 
       Return ONLY the structured findings list. Do not explain your process.
       Suggested class must be one of: ARTIFACT, DECISION, SHAPING.
-      Do not suggest DISTILL, DEFER, or REJECT — those are triage's routing decisions.
+      Do not suggest DEFER or REJECT — those are triage's routing decisions.
       ```
     </action>
 
@@ -265,7 +268,7 @@ Run /momentum:epic-grooming to view the full epic list or add new epics.</output
 
     <note>The suggested_class is a suggestion only — triage makes the binding classification.
     epic-breakdown emits only ARTIFACT / DECISION / SHAPING suggestions. The additional
-    outcomes triage may assign (DISTILL, DEFER, REJECT) are triage's own routing decisions
+    outcomes triage may assign (DEFER, REJECT) are triage's own routing decisions
     and appear only in the final report (Step 7), never in the gap list handed to triage.</note>
 
     <output>→ Gap list synthesized — {{gap_list | length}} items (after deduplication):
