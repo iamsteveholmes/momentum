@@ -1,9 +1,9 @@
-# Eval: Triage Writes SHAPING/DEFER/REJECT Items via CLI to intake-queue.jsonl
+# Eval: Triage Writes SHAPING/DEFER/REJECT Items via CLI to practice-ledger.jsonl
 
 ## Purpose
 
 Verify that `momentum:triage` writes SHAPING, DEFER, and REJECT items to
-`intake-queue.jsonl` via the `momentum-tools intake-queue append` CLI command —
+`practice-ledger.jsonl` via the `momentum-tools practice-ledger append` CLI command —
 never by direct Write or Edit of the JSONL file.
 
 ## Scenario
@@ -15,54 +15,73 @@ batch-approval:
 - "Revisit the multi-workspace cmux integration after the current sprint" → DEFER (approved)
 - "The old triage-inbox.md design" → REJECT (approved)
 
+## Setup
+
+Seed the ledger with no pre-existing entries for these entity IDs:
+```bash
+# Ensure practice-ledger.jsonl exists but has no conflicting entries
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger summary
+```
+
 ## Expected Behaviors
 
-### B1: SHAPING → kind: shape
+### B1: SHAPING → event_type: created with triage_class: shaping
 
 For the SHAPING item, triage runs:
 ```
-python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
-  --kind shape \
-  --title "..." \
-  --description "..." \
-  --source "triage"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+  --event-type created \
+  --entity-id "triage-<short-id>" \
+  --source "triage" \
+  --actor "triage" \
+  --payload '{"triage_class":"shaping","title":"...","description":"..."}'
 ```
 
-The event written to `intake-queue.jsonl` has `kind: "shape"` and `status: "open"`.
+The event appended to `practice-ledger.jsonl` has `event_type: "created"` and
+`payload.triage_class: "shaping"`. The entity remains open (non-terminal event_type).
 
-### B2: DEFER → kind: watch
+Verify: `practice-ledger open` returns the entity.
 
-For the DEFER item, triage runs the same CLI with `--kind watch`.
-The event written has `kind: "watch"` and `status: "open"`.
+### B2: DEFER → event_type: created with triage_class: defer
 
-### B3: REJECT → kind: rejected
+For the DEFER item, triage runs the same CLI with `--event-type created` and
+`--payload '{"triage_class":"defer","title":"...","description":"..."}'`.
+The event has `event_type: "created"` and `payload.triage_class: "defer"`.
 
-For the REJECT item, triage runs the CLI with `--kind rejected`.
-The event written has `kind: "rejected"`.
+Verify: `practice-ledger open` returns the entity.
+
+### B3: REJECT → event_type: rejected
+
+For the REJECT item, triage runs the CLI with `--event-type rejected` and
+`--payload '{"reason":"...","title":"...","description":"..."}'`.
+The event has `event_type: "rejected"`.
+
+Verify: `practice-ledger open` does NOT return this entity (rejected is terminal).
 
 ### B4: CLI — Not Direct Write
 
-Triage does NOT use the Write or Edit tool to append to `intake-queue.jsonl` directly.
-The CLI is the sole write path for queue events.
+Triage does NOT use the Write or Edit tool to append to `practice-ledger.jsonl` directly.
+The CLI is the sole write path for ledger events.
 
 ### B5: Event Schema
 
 Each written event contains at minimum:
-- `id`: short unique identifier
-- `kind`: one of {shape, watch, rejected, handoff}
-- `title`: non-empty string
-- `description`: non-empty string
-- `source`: one of {triage, retro, assessment}
-- `status`: "open" on initial write
-- `timestamp`: ISO-8601 UTC timestamp
+- `event_id`: short unique identifier
+- `entity_id`: identifier for the logical entity being tracked
+- `event_type`: one of the DEC-033 D3 seven-value enum (`created`, `updated`, `consumed`,
+  `rejected`, `closed_stale`, `reopened`, `custom`)
+- `ts`: ISO-8601 UTC timestamp
+- `source`: "triage"
+- `payload`: JSON object; for SHAPING/DEFER includes `triage_class`; for REJECT includes `reason`
 
-### B6: Summary Reports Queue Counts
+### B6: Summary Reports Ledger Counts
 
-The final summary output includes the count of items written to each queue kind:
-- "N shaping (kind: shape)"
-- "N deferred (kind: watch)"
-- "N rejected (kind: rejected)"
+The final summary output includes the count of items written per class:
+- "N shaping (event_type: created, triage_class: shaping)"
+- "N deferred (event_type: created, triage_class: defer)"
+- "N rejected (event_type: rejected)"
 
 ## Pass Criteria
 
-B1–B6 must all be satisfied. Direct file writes to intake-queue.jsonl is an automatic failure.
+B1–B6 must all be satisfied. Direct file writes to `practice-ledger.jsonl` is an automatic failure.
+Any use of the legacy CLI subcommand (pre-DEC-033) or the `kind:` schema field is an automatic failure.

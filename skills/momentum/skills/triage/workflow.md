@@ -2,7 +2,7 @@
 
 **Goal:** Process multiple observations in one pass. Run dedup gate (Phases 0–3), present
 dedup + classification approval (Step 4), then delegate to the appropriate downstream
-executor or write capture events to `intake-queue.jsonl`.
+executor or write capture events to `practice-ledger.jsonl`.
 
 **Role:** Orchestrator between upstream sources (retro output, conversation, assessment
 findings) and the per-item executors (`momentum:intake`, `momentum:decision`). Does NOT
@@ -20,9 +20,9 @@ to `momentum:intake`.
 |-------|---------|-------------------|
 | ARTIFACT | A story that should enter the backlog | Delegate to `momentum:intake` with enriched context |
 | DECISION | A strategic decision to record | Delegate to `momentum:decision` |
-| SHAPING | Needs more thinking before classification | Write `kind: shape` event to `intake-queue.jsonl` |
-| DEFER | Valid but not now — park it | Write `kind: watch` event to `intake-queue.jsonl` |
-| REJECT | Not worth pursuing | Write `kind: rejected` event to `intake-queue.jsonl` |
+| SHAPING | Needs more thinking before classification | Append `event_type: created` event to `practice-ledger.jsonl` with `payload: {"triage_class":"shaping"}` |
+| DEFER | Valid but not now — park it | Append `event_type: created` event to `practice-ledger.jsonl` with `payload: {"triage_class":"defer"}` |
+| REJECT | Not worth pursuing | Append `event_type: rejected` event to `practice-ledger.jsonl` with `payload: {"reason":"…"}` |
 
 ---
 
@@ -32,7 +32,7 @@ to `momentum:intake`.
 
   <critical>Never write story files, story index entries, or planning artifacts directly.
   ARTIFACT delegation goes to momentum:intake. DECISION delegation goes to momentum:decision.
-  Only intake-queue.jsonl is written directly (for SHAPING, DEFER, REJECT classes).</critical>
+  Only practice-ledger.jsonl is written directly (for SHAPING, DEFER, REJECT classes).</critical>
 
   <critical>All mutations to stories/index.json go through momentum-tools CLI only via
   momentum:intake. Triage never calls momentum-tools story-add directly.</critical>
@@ -47,18 +47,19 @@ to `momentum:intake`.
   Never spawn dedup agents sequentially. Never use TeamCreate or SendMessage.</critical>
 
   <step n="1" goal="Surface source items and re-surface open queue items">
-    <action>Read `.momentum/intake-queue.jsonl` if it exists.
-    Filter for open items: kind in {shape, watch, handoff} with `status == "open"`.
-    Store {{open_queue_items}} = list of open shape/watch events.
+    <action>Run: `python3 skills/momentum/scripts/momentum-tools.py practice-ledger open`
+    Store {{open_queue_items}} = list of open entities (entity_id + last event) returned.
+    Open entities are those whose last event has a non-terminal event_type
+    (i.e., not `consumed`, `rejected`, or `closed_stale`).
     </action>
 
     <check if="{{open_queue_items}} is non-empty">
       <output>
-Open queue items from previous sessions ({{count}} pending):
+Open ledger items from previous sessions ({{count}} pending):
 
 {{for each item:
-  · [{{kind|upper}}] {{item.title}} — {{item.description}} (captured: {{item.timestamp}})
-    Source: {{item.source}} · id: {{item.id}}
+  · [{{item.last_event_type|upper}}] {{item.entity_id}} — {{item.payload.title}} (captured: {{item.ts}})
+    Source: {{item.source}} · triage_class: {{item.payload.triage_class}}
 }}
 
 These will be included alongside new items for re-classification.
@@ -407,17 +408,17 @@ Triage — {{total_count}} items · {{dedup_findings | length}} dedup findings �
   → Approve all? (A=all / R=all / pick individually by number)
 
 {{if SHAPING items:}}
-[SHAPING] — {{count}} items  →  will be written to intake-queue.jsonl (kind: shape)
+[SHAPING] — {{count}} items  →  will be written to practice-ledger.jsonl (event_type: created, triage_class: shaping)
 {{for each: [N] {{description}}}}
   → Approve all? (A=all / R=all / pick individually by number)
 
 {{if DEFER items:}}
-[DEFER] — {{count}} items  →  will be written to intake-queue.jsonl (kind: watch)
+[DEFER] — {{count}} items  →  will be written to practice-ledger.jsonl (event_type: created, triage_class: defer)
 {{for each: [N] {{description}}}}
   → Approve all? (A=all / R=all / pick individually by number)
 
 {{if REJECT items:}}
-[REJECT] — {{count}} items  →  will be written to intake-queue.jsonl (kind: rejected)
+[REJECT] — {{count}} items  →  will be written to practice-ledger.jsonl (event_type: rejected)
 {{for each: [N] {{description}}}}
   → Approve all? (A=all / R=all / pick individually by number)
 
@@ -451,10 +452,14 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
   <step n="5" goal="Execute approved actions">
     <action>Process approved items in this order:
 
-    **Consumed duplicate items** — mark as consumed in intake-queue.jsonl (if from queue):
+    **Consumed duplicate items** — mark as consumed in practice-ledger.jsonl (if from queue):
       For each item in {{consumed_items}} that originated from {{open_queue_items}}:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue consume \
-          --id "{{queue_id}}"
+        python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+          --event-type consumed \
+          --entity-id "{{item.entity_id}}" \
+          --source "triage" \
+          --actor "triage" \
+          --payload '{"reason":"duplicate"}'
       Raw items (not from queue) with consume action: no further action needed.
 
     **ARTIFACT items** — spawn momentum:intake per item (in parallel if multiple):
@@ -475,29 +480,39 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
       Pass context from item. Wait for each decision to complete before next.
       Store {{decision_results}} = list of {title, outcome}.
 
-    **SHAPING items** — write to intake-queue.jsonl via CLI:
+    <!-- Migration note (DEC-033): legacy --kind shape/watch/rejected flags replaced by:
+         SHAPING  → --event-type created --payload '{"triage_class":"shaping"}'
+         DEFER    → --event-type created --payload '{"triage_class":"defer"}'
+         REJECT   → --event-type rejected --payload '{"reason":"..."}'
+         SHAPING/DEFER use non-terminal event_type:created so they remain visible
+         via `practice-ledger open`. REJECT maps natively to a terminal event_type. -->
+
+    **SHAPING items** — write to practice-ledger.jsonl via CLI:
       For each approved SHAPING item:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
-          --kind shape \
-          --title "{{title}}" \
-          --description "{{description}}" \
-          --source "triage"
+        python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+          --event-type created \
+          --entity-id "triage-{{entity_id_short}}" \
+          --source "triage" \
+          --actor "triage" \
+          --payload '{"triage_class":"shaping","title":"{{title}}","description":"{{description}}"}'
 
-    **DEFER items** — write to intake-queue.jsonl via CLI:
+    **DEFER items** — write to practice-ledger.jsonl via CLI:
       For each approved DEFER item:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
-          --kind watch \
-          --title "{{title}}" \
-          --description "{{description}}" \
-          --source "triage"
+        python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+          --event-type created \
+          --entity-id "triage-{{entity_id_short}}" \
+          --source "triage" \
+          --actor "triage" \
+          --payload '{"triage_class":"defer","title":"{{title}}","description":"{{description}}"}'
 
-    **REJECT items** — write to intake-queue.jsonl via CLI:
+    **REJECT items** — write to practice-ledger.jsonl via CLI:
       For each approved REJECT item:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
-          --kind rejected \
-          --title "{{title}}" \
-          --description "{{description}}" \
-          --source "triage"
+        python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+          --event-type rejected \
+          --entity-id "triage-{{entity_id_short}}" \
+          --source "triage" \
+          --actor "triage" \
+          --payload '{"reason":"{{reason}}","title":"{{title}}","description":"{{description}}"}'
     </action>
 
     <check if="any intake invocation returns an error">
@@ -505,16 +520,20 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
       <action>Continue processing remaining items. Record failure for summary.</action>
     </check>
 
-    <check if="any intake-queue append call fails">
+    <check if="any practice-ledger append call fails">
       <output>! append failed: {{error}} — item recorded here for manual capture:
-        kind: {{kind}} · title: {{title}} · description: {{description}}</output>
+        event-type: {{event_type}} · title: {{title}} · description: {{description}}</output>
       <action>Continue processing remaining items.</action>
     </check>
 
     <action>Mark resolved queue items:
-      For each ID in {{resolved_queue_ids}}:
-        python3 skills/momentum/scripts/momentum-tools.py intake-queue consume \
-          --id "{{queue_id}}"
+      For each entity_id in {{resolved_queue_ids}}:
+        python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+          --event-type consumed \
+          --entity-id "{{entity_id}}" \
+          --source "triage" \
+          --actor "triage" \
+          --payload '{"reason":"manually resolved"}'
     </action>
 
     <action>Compute summary variables:
@@ -523,13 +542,12 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
     Store {{merge_candidate_count}} = len({{merge_candidates}})
     Store {{intake_count}} = count of ARTIFACT items successfully delegated to momentum:intake
     Store {{decision_count}} = count of DECISION items successfully delegated to momentum:decision
-    Store {{shaping_count}} = count of SHAPING items written to intake-queue.jsonl
-    Store {{defer_count}} = count of DEFER items written to intake-queue.jsonl
-    Store {{reject_count}} = count of REJECT items written to intake-queue.jsonl
+    Store {{shaping_count}} = count of SHAPING items written to practice-ledger.jsonl
+    Store {{defer_count}} = count of DEFER items written to practice-ledger.jsonl
+    Store {{reject_count}} = count of REJECT items written to practice-ledger.jsonl
     Store {{resolved_count}} = len({{resolved_queue_ids}})
-    Store {{failure_count}} = count of failed momentum:intake or intake-queue append calls
-    Store {{remaining_open_count}} = re-read .momentum/intake-queue.jsonl, count items with
-      status == "open" and kind in {shape, watch, handoff}
+    Store {{failure_count}} = count of failed momentum:intake or practice-ledger append calls
+    Store {{remaining_open_count}} = re-run `practice-ledger open`, count returned entities
     </action>
   </step>
 
@@ -547,16 +565,16 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
 **Decisions recorded ({{decision_count}}):**
 {{for each decision result: · {{title}} → {{outcome}}}}
 
-**Parked to `intake-queue.jsonl`:**
-  · {{shaping_count}} shaping (kind: shape)
-  · {{defer_count}} deferred (kind: watch)
-  · {{reject_count}} rejected (kind: rejected)
+**Parked to `practice-ledger.jsonl`:**
+  · {{shaping_count}} shaping (event_type: created, triage_class: shaping)
+  · {{defer_count}} deferred (event_type: created, triage_class: defer)
+  · {{reject_count}} rejected (event_type: rejected)
 
-{{if resolved_count > 0: > ✓ {{resolved_count}} open queue items marked resolved.}}
+{{if resolved_count > 0: > ✓ {{resolved_count}} open ledger items marked consumed.}}
 {{if rejected_count > 0: · {{rejected_count}} items declined at approval — no action taken.}}
 {{if failures: > ! {{failure_count}} execution failures — see above for details.}}
 
-**Queue:** {{remaining_open_count}} open items (shape + watch) awaiting future triage.
+**Ledger:** {{remaining_open_count}} open entities (non-terminal) awaiting future triage.
     </output>
   </step>
 
