@@ -194,15 +194,59 @@ Which method should govern this story's verification? Select the method for the 
   </step>
 
   <step n="7" goal="Write story metadata to stories/index.json">
-    <action>Read the epics section for this story from {{planning_artifacts}}/epics.md. Extract:
-      - Any explicit "depends on Story X.Y" or "requires Story X.Y" notes. Find the matching story slug in `stories/index.json`. Store as {{depends_on}} list of story slugs. If none found, use [].
-      - The implementation scope (skill directories, shared config files, paths mentioned in tasks) → {{touches}} list (e.g., ["skills/momentum/skills/dev/", ".claude/settings.json"]); if none found, use []
+    <!-- DEC-034 D6: read epic context from epics.json keyed by epic_slug, not from epics.md narrative -->
+
+    <!-- Guard: epic_slug must be present in story frontmatter -->
+    <check if="{{story_file}} frontmatter has no epic_slug field OR epic_slug is blank">
+      <output>**Error:** Story `{{story_key}}` has no `epic_slug` in its frontmatter.
+Set `epic_slug:` in the story's YAML header before indexing. Use `ad-hoc` as the catch-all
+value for stories that do not belong to a named epic.</output>
+      <action>HALT</action>
+    </check>
+    <action>Store {{epic_slug}} = the `epic_slug` value from {{story_file}} frontmatter</action>
+
+    <!-- Load epics.json and resolve the epic record for this story -->
+    <action>Load `{{planning_artifacts}}/epics.json` as JSON</action>
+    <check if="epics.json does not contain a record keyed by {{epic_slug}}">
+      <output>**Error:** Epic `{{epic_slug}}` was not found in `{{planning_artifacts}}/epics.json`.
+Either add the epic record to `epics.json` (run `momentum:epic-grooming`) or correct the
+`epic_slug` value in the story frontmatter.</output>
+      <action>HALT</action>
+    </check>
+    <action>Store {{epic_record}} = the JSON record at `epics.json["{{epic_slug}}"]`</action>
+
+    <!-- Write epic provenance into the story file BODY (not just index.json/frontmatter) so the
+         generated story cites the epic it was routed under. Eval contract b2 Scenario 5 requires
+         the story body's References subsection to name the source epic. -->
+    <action>Read the current content of {{story_file}}</action>
+    <action>Locate the `### References` subsection within the Dev Notes section. If a `### References`
+    subsection does not exist, create one at the end of the Dev Notes section (add the `### References`
+    heading immediately before the next `##`-level heading, or at end of file if Dev Notes is the last section).</action>
+    <action>Append this citation bullet to the `### References` subsection (do not duplicate if an identical
+    line already exists):
+      `- Epic context: \`{{epic_slug}}\` (from _bmad-output/planning-artifacts/epics.json)`
     </action>
+    <action>Write the updated content back to {{story_file}}</action>
+    <output>**Epic provenance** cited in `{{story_file}}` body — References → `{{epic_slug}}`</output>
+
+    <!-- Extract depends_on: check epic stories array for cross-references, fall back to [] -->
+    <action>Scan {{epic_record}}.stories array for any story object with a non-empty `depends_on`
+field whose slugs match other entries in `stories/index.json`. Also scan
+{{epic_record}}.system_context and {{epic_record}}.acceptance_conditions for explicit
+"depends on Story X" or "requires Story X" language. Collect matching story slugs as
+{{depends_on}}. If none found, set {{depends_on}} = [].</action>
+
+    <!-- Extract touches: derive skill directories and config paths from system_context -->
+    <action>Scan {{epic_record}}.system_context for skill directory paths
+(e.g., `skills/momentum/skills/foo/`), shared config files, or other path references.
+Collect these as {{touches}} (e.g., ["skills/momentum/skills/dev/", ".claude/settings.json"]).
+If no paths are identifiable, set {{touches}} = [].</action>
+
     <action>Read `.momentum/stories/index.json`</action>
     <action>Add or update the entry keyed by {{story_key}} with:
       - status: "ready-for-dev"
       - title: human-readable title derived from story key
-      - epic_slug: derived from the epic this story belongs to
+      - epic_slug: {{epic_slug}}
       - story_file: true
       - depends_on: {{depends_on}}
       - touches: {{touches}}
@@ -216,11 +260,11 @@ Which method should govern this story's verification? Select the method for the 
       - domain_expert: "story author"
       - task_context: "Momentum story — {{story_key}}"
       - output_to_validate: full content of {{story_file}}
-      - source_material: the relevant epic section for {{story_key}} from {{planning_artifacts}}/epics.md
+      - source_material: the epic record for {{story_key}}'s `epic_slug` from {{planning_artifacts}}/epics.json (the JSON record for {{epic_slug}}, serialized as pretty-printed JSON)
       - profile: checkpoint
       - stage: checkpoint
     </action>
-    <note>We use the epic section (not the story ACs) as source_material because AVFL checks whether the story spec correctly captures epic intent — the ACs are what we're validating and cannot be their own ground truth.</note>
+    <note>We use the epic JSON record (not the story ACs) as source_material because AVFL checks whether the story spec correctly captures epic intent — the ACs are what we're validating and cannot be their own ground truth. The structured epic record from epics.json (DEC-034 D6) provides richer context than narrative prose from epics.md.</note>
 
     <check if="AVFL returns CLEAN">
       <action>Store {{avfl_result}} = "CLEAN"</action>

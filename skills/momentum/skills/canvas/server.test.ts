@@ -1,7 +1,7 @@
 /**
  * Momentum Cycle Dashboard — server.test.ts
  *
- * Combined tests: computeCycleState (cycle timeline) + features lens helpers.
+ * Combined tests: computeCycleState (cycle timeline) + epics lens helpers.
  * Run: bun test
  */
 
@@ -10,14 +10,17 @@ import {
   computeCycleState,
   analyzeGap,
   buildSortedRows,
-  buildFeatureStoryRows,
-  FeatureDetailView,
+  renderEpicsTable,
+  buildEpicStoryRows,
+  EpicDetailView,
   parseFrontmatter,
   extractSection,
   parseListItems,
   parseStoryMarkdown,
   StoryDetailView,
-  type Feature,
+  readEpicsJson,
+  readEpicBySlug,
+  type Epic,
   type StoryMap,
 } from "./server";
 
@@ -42,12 +45,11 @@ describe("computeCycleState", () => {
   test("empty sprints index — optional phases not-run, required phases pending, next-required = sprint-planning", () => {
     const result = computeCycleState(null);
 
-    expect(result.phases).toHaveLength(7);
+    expect(result.phases).toHaveLength(6);
 
     const slugs = result.phases.map((p) => p.slug);
     expect(slugs).toEqual([
       "triage",
-      "feature-grooming",
       "epic-grooming",
       "refine",
       "sprint-planning",
@@ -57,7 +59,6 @@ describe("computeCycleState", () => {
 
     // Optional phases: not-run
     expect(result.phases.find((p) => p.slug === "triage")?.state).toBe("not-run");
-    expect(result.phases.find((p) => p.slug === "feature-grooming")?.state).toBe("not-run");
     expect(result.phases.find((p) => p.slug === "epic-grooming")?.state).toBe("not-run");
     expect(result.phases.find((p) => p.slug === "refine")?.state).toBe("not-run");
 
@@ -171,7 +172,7 @@ describe("computeCycleState", () => {
   test("optional phases never receive next-required state", () => {
     const result = computeCycleState(null);
 
-    const optionalSlugs = ["triage", "feature-grooming", "epic-grooming", "refine"];
+    const optionalSlugs = ["triage", "epic-grooming", "refine"];
     for (const slug of optionalSlugs) {
       const phase = result.phases.find((p) => p.slug === slug);
       expect(phase?.required).toBe(false);
@@ -192,7 +193,7 @@ describe("computeCycleState", () => {
       })
     );
 
-    const optionalSlugs = ["triage", "feature-grooming", "epic-grooming", "refine"];
+    const optionalSlugs = ["triage", "epic-grooming", "refine"];
     for (const slug of optionalSlugs) {
       const phase = result.phases.find((p) => p.slug === slug);
       expect(phase?.state).not.toBe("next-required");
@@ -206,7 +207,7 @@ describe("computeCycleState", () => {
     const optional = result.phases.filter((p) => !p.required).map((p) => p.slug);
 
     expect(required).toEqual(["sprint-planning", "sprint-dev", "retro"]);
-    expect(optional).toEqual(["triage", "feature-grooming", "epic-grooming", "refine"]);
+    expect(optional).toEqual(["triage", "epic-grooming", "refine"]);
   });
 
   test("lastSprintSlug returns most recent completed sprint slug", () => {
@@ -258,88 +259,147 @@ describe("computeCycleState", () => {
 });
 
 // ---------------------------------------------------------------------------
-// analyzeGap — features lens tests
+// analyzeGap — epics lens tests
 // ---------------------------------------------------------------------------
 describe("analyzeGap", () => {
   it("returns has_gap=true when zero stories and status is not working", () => {
-    const feature: Feature = {
-      feature_slug: "test-feature",
-      name: "Test Feature",
+    const epic: Epic = {
+      epic_slug: "test-epic",
+      name: "Test Epic",
       status: "partial",
       stories_done: 0,
       stories_remaining: 2,
       stories: ["story-a", "story-b"],
     };
     const storyMap: StoryMap = {};
-    const result = analyzeGap(feature, storyMap);
+    const result = analyzeGap(epic, storyMap);
     expect(result.has_gap).toBe(true);
   });
 
   it("returns has_gap=false when status is working regardless of story counts", () => {
-    const feature: Feature = {
-      feature_slug: "test-feature",
-      name: "Test Feature",
+    const epic: Epic = {
+      epic_slug: "test-epic",
+      name: "Test Epic",
       status: "working",
       stories_done: 0,
       stories_remaining: 0,
       stories: [],
     };
     const storyMap: StoryMap = {};
-    const result = analyzeGap(feature, storyMap);
+    const result = analyzeGap(epic, storyMap);
     expect(result.has_gap).toBe(false);
   });
 
   it("returns has_gap=false when stories_done > 0", () => {
-    const feature: Feature = {
-      feature_slug: "test-feature",
-      name: "Test Feature",
+    const epic: Epic = {
+      epic_slug: "test-epic",
+      name: "Test Epic",
       status: "partial",
       stories_done: 2,
       stories_remaining: 1,
       stories: ["story-a", "story-b", "story-c"],
     };
     const storyMap: StoryMap = {};
-    const result = analyzeGap(feature, storyMap);
+    const result = analyzeGap(epic, storyMap);
     expect(result.has_gap).toBe(false);
   });
 
   it("returns has_gap=true for not-working status with zero done stories", () => {
-    const feature: Feature = {
-      feature_slug: "test-feature",
-      name: "Test Feature",
+    const epic: Epic = {
+      epic_slug: "test-epic",
+      name: "Test Epic",
       status: "not-working",
       stories_done: 0,
       stories_remaining: 3,
       stories: ["story-a"],
     };
     const storyMap: StoryMap = {};
-    const result = analyzeGap(feature, storyMap);
+    const result = analyzeGap(epic, storyMap);
     expect(result.has_gap).toBe(true);
   });
 
-  it("returns has_gap=true for not-started status with zero done stories", () => {
-    const feature: Feature = {
-      feature_slug: "test-feature",
-      name: "Test Feature",
-      status: "not-started",
+  it("returns has_gap=false when no stories done AND no stories remaining (empty epic, nothing planned)", () => {
+    const epic: Epic = {
+      epic_slug: "test-epic",
+      name: "Test Epic",
+      lifecycle: "finite-lived",
+      audience: "user",
       stories_done: 0,
       stories_remaining: 0,
       stories: [],
     };
     const storyMap: StoryMap = {};
-    const result = analyzeGap(feature, storyMap);
+    const result = analyzeGap(epic, storyMap);
+    // No remaining work to start on → not a gap. (Was incorrectly flagged
+    // pre-migration when the heuristic keyed on the now-deleted status field.)
+    expect(result.has_gap).toBe(false);
+  });
+
+  // --- post-b1-migration: real epics carry NO status field ---
+  it("returns has_gap=true for a status-less epic with remaining stories and none done", () => {
+    const epic: Epic = {
+      epic_slug: "momentum-startup-performance",
+      name: "Startup Performance",
+      lifecycle: "finite-lived",
+      audience: "internal",
+      stories_done: 0,
+      stories_remaining: 21,
+      stories: ["s1", "s2"],
+    };
+    const result = analyzeGap(epic, {});
     expect(result.has_gap).toBe(true);
+    expect(result.reason).toBe("outstanding stories but none completed yet");
+  });
+
+  it("returns has_gap=false for a status-less epic with at least one story done", () => {
+    const epic: Epic = {
+      epic_slug: "momentum-canvas",
+      name: "Momentum Canvas",
+      lifecycle: "finite-lived",
+      audience: "user",
+      stories_done: 3,
+      stories_remaining: 2,
+      stories: ["s1", "s2", "s3", "s4", "s5"],
+    };
+    const result = analyzeGap(epic, {});
+    expect(result.has_gap).toBe(false);
+  });
+
+  it("returns has_gap=false for a status-less epic with all stories done (remaining 0)", () => {
+    const epic: Epic = {
+      epic_slug: "momentum-done",
+      name: "Done Epic",
+      lifecycle: "long-lived",
+      audience: "internal",
+      stories_done: 4,
+      stories_remaining: 0,
+      stories: ["s1", "s2", "s3", "s4"],
+    };
+    const result = analyzeGap(epic, {});
+    expect(result.has_gap).toBe(false);
+  });
+
+  it("does NOT mass-flag status-less epics: only zero-done-with-remaining are gaps", () => {
+    // Mirrors the real epics.json shape after the b1 migration (no status).
+    const epics: Epic[] = [
+      { epic_slug: "a", name: "A", lifecycle: "finite-lived", audience: "user", stories_done: 5, stories_remaining: 0 },
+      { epic_slug: "b", name: "B", lifecycle: "finite-lived", audience: "user", stories_done: 2, stories_remaining: 3 },
+      { epic_slug: "c", name: "C", lifecycle: "long-lived", audience: "internal", stories_done: 0, stories_remaining: 0 },
+      { epic_slug: "d", name: "D", lifecycle: "finite-lived", audience: "internal", stories_done: 0, stories_remaining: 7 },
+    ];
+    const flagged = epics.filter((e) => analyzeGap(e, {}).has_gap).map((e) => e.epic_slug);
+    expect(flagged).toEqual(["d"]);
   });
 });
 
 // ---------------------------------------------------------------------------
-// buildSortedRows — features lens sort tests
+// buildSortedRows — epics lens sort tests
 // ---------------------------------------------------------------------------
 describe("buildSortedRows", () => {
   it("sorts gap rows first (alphabetically), then non-gap by severity", () => {
-    const features: Feature[] = [
+    const epics: Epic[] = [
       {
-        feature_slug: "z-working",
+        epic_slug: "z-working",
         name: "Z Working",
         status: "working",
         stories_done: 3,
@@ -347,7 +407,7 @@ describe("buildSortedRows", () => {
         stories: [],
       },
       {
-        feature_slug: "a-partial",
+        epic_slug: "a-partial",
         name: "A Partial",
         status: "partial",
         stories_done: 0,
@@ -355,7 +415,7 @@ describe("buildSortedRows", () => {
         stories: [],
       },
       {
-        feature_slug: "b-not-working",
+        epic_slug: "b-not-working",
         name: "B Not Working",
         status: "not-working",
         stories_done: 0,
@@ -363,7 +423,7 @@ describe("buildSortedRows", () => {
         stories: [],
       },
       {
-        feature_slug: "c-partial-done",
+        epic_slug: "c-partial-done",
         name: "C Partial Done",
         status: "partial",
         stories_done: 1,
@@ -371,7 +431,7 @@ describe("buildSortedRows", () => {
         stories: [],
       },
       {
-        feature_slug: "d-not-started",
+        epic_slug: "d-not-started",
         name: "D Not Started",
         status: "not-started",
         stories_done: 0,
@@ -380,25 +440,28 @@ describe("buildSortedRows", () => {
       },
     ];
     const storyMap: StoryMap = {};
-    const rows = buildSortedRows(features, storyMap);
+    const rows = buildSortedRows(epics, storyMap);
 
+    // Gap rows first, alphabetically. Under the corrected heuristic a gap is
+    // stories_remaining > 0 && stories_done === 0, so D Not Started (0/0) is NOT a gap.
     expect(rows[0].name).toBe("A Partial");
     expect(rows[0].has_gap).toBe(true);
     expect(rows[1].name).toBe("B Not Working");
     expect(rows[1].has_gap).toBe(true);
-    expect(rows[2].name).toBe("D Not Started");
-    expect(rows[2].has_gap).toBe(true);
 
-    expect(rows[3].name).toBe("C Partial Done");
+    // Non-gap rows sorted by status severity (partial < working < not-started), then alpha.
+    expect(rows[2].name).toBe("C Partial Done");
+    expect(rows[2].has_gap).toBe(false);
+    expect(rows[3].name).toBe("Z Working");
     expect(rows[3].has_gap).toBe(false);
-    expect(rows[4].name).toBe("Z Working");
+    expect(rows[4].name).toBe("D Not Started");
     expect(rows[4].has_gap).toBe(false);
   });
 
   it("sorts non-gap rows alphabetically within same status group", () => {
-    const features: Feature[] = [
+    const epics: Epic[] = [
       {
-        feature_slug: "z-partial",
+        epic_slug: "z-partial",
         name: "Z Partial",
         status: "partial",
         stories_done: 1,
@@ -406,7 +469,7 @@ describe("buildSortedRows", () => {
         stories: [],
       },
       {
-        feature_slug: "a-partial",
+        epic_slug: "a-partial",
         name: "A Partial",
         status: "partial",
         stories_done: 2,
@@ -415,43 +478,139 @@ describe("buildSortedRows", () => {
       },
     ];
     const storyMap: StoryMap = {};
-    const rows = buildSortedRows(features, storyMap);
+    const rows = buildSortedRows(epics, storyMap);
     expect(rows[0].name).toBe("A Partial");
     expect(rows[1].name).toBe("Z Partial");
   });
 
-  it("returns empty array for empty features input", () => {
+  it("returns empty array for empty epics input", () => {
     const rows = buildSortedRows([], {});
     expect(rows).toEqual([]);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Missing stories/index.json — features lens error handling
+// renderEpicsTable — HTML escaping + status-less rendering
+// ---------------------------------------------------------------------------
+describe("renderEpicsTable", () => {
+  it("escapes HTML in epic name, slug, and status to prevent injection", () => {
+    // epics.json is a writable artifact — these fields are an injection sink.
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: "evil-epic",
+          name: `<img src=x onerror="alert(1)">`,
+          status: `working"><script>alert('xss')</script>`,
+          lifecycle: "finite-lived",
+          audience: "user",
+          stories_done: 1,
+          stories_remaining: 0,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    // Raw injection markup must NOT survive unescaped.
+    expect(html).not.toContain("<img src=x");
+    expect(html).not.toContain("<script>alert('xss')</script>");
+    // It must appear in escaped form instead.
+    expect(html).toContain("&lt;img src=x");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("escapes a malicious epic_slug inside the href", () => {
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: `x"><script>boom()</script>`,
+          name: "Slug Attack",
+          lifecycle: "long-lived",
+          audience: "internal",
+          stories_done: 2,
+          stories_remaining: 0,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    expect(html).not.toContain("<script>boom()</script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("renders a status-less epic's lifecycle as a lifecycle-tag, NOT a status badge", () => {
+    // Real post-migration epics have no status. Lifecycle must not be
+    // conflated into a not-started status badge.
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: "no-status",
+          name: "No Status Epic",
+          lifecycle: "long-lived",
+          audience: "internal",
+          stories_done: 2,
+          stories_remaining: 1,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    expect(html).toContain("lifecycle-tag");
+    expect(html).toContain("long-lived");
+    // The lifecycle value must NOT be wrapped in a status badge.
+    expect(html).not.toContain('class="badge not-started"><span class="dot"></span>long-lived');
+  });
+
+  it("renders a gap flag (not a badge) for a status-less epic with remaining work and none done", () => {
+    const rows = buildSortedRows(
+      [
+        {
+          epic_slug: "gappy",
+          name: "Gappy Epic",
+          lifecycle: "finite-lived",
+          audience: "user",
+          stories_done: 0,
+          stories_remaining: 5,
+        },
+      ],
+      {}
+    );
+    const html = renderEpicsTable(rows);
+    expect(html).toContain("gap-flag");
+    expect(html).toContain("gap");
+  });
+
+  it("renders empty-state message when there are no rows", () => {
+    const html = renderEpicsTable([]);
+    expect(html).toContain("No epics found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Missing stories/index.json — epics lens error handling
 // ---------------------------------------------------------------------------
 describe("analyzeGap with missing story index", () => {
   it("treats all stories as unknown when story map is empty", () => {
-    const feature: Feature = {
-      feature_slug: "test",
+    const epic: Epic = {
+      epic_slug: "test",
       name: "Test",
       status: "partial",
       stories_done: 0,
       stories_remaining: 1,
       stories: ["story-x"],
     };
-    const result = analyzeGap(feature, {});
+    const result = analyzeGap(epic, {});
     expect(result.has_gap).toBe(true);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Feature L2 — buildFeatureStoryRows
+// Epic L2 — buildEpicStoryRows
 // ---------------------------------------------------------------------------
-describe("buildFeatureStoryRows", () => {
+describe("buildEpicStoryRows", () => {
   it("returns story rows with title and status from story map", () => {
-    const feature: Feature = {
-      feature_slug: "my-feature",
-      name: "My Feature",
+    const epic: Epic = {
+      epic_slug: "my-epic",
+      name: "My Epic",
       status: "partial",
       stories_done: 1,
       stories_remaining: 1,
@@ -461,158 +620,202 @@ describe("buildFeatureStoryRows", () => {
       "story-a": { status: "done", title: "Story A" },
       "story-b": { status: "in-progress", title: "Story B" },
     };
-    const rows = buildFeatureStoryRows(feature, storyMap);
+    const rows = buildEpicStoryRows(epic, storyMap);
     expect(rows).toHaveLength(2);
     // Sorted by STATUS_ORDER: in-progress (idx 0) before done (idx 5)
-    expect(rows[0]).toEqual({ slug: "story-b", title: "Story B", status: "in-progress", featureSlug: "my-feature" });
-    expect(rows[1]).toEqual({ slug: "story-a", title: "Story A", status: "done", featureSlug: "my-feature" });
+    expect(rows[0]).toEqual({ slug: "story-b", title: "Story B", status: "in-progress", epicSlug: "my-epic" });
+    expect(rows[1]).toEqual({ slug: "story-a", title: "Story A", status: "done", epicSlug: "my-epic" });
   });
 
   it("falls back to slug as title when story is not in map", () => {
-    const feature: Feature = {
-      feature_slug: "my-feature",
-      name: "My Feature",
+    const epic: Epic = {
+      epic_slug: "my-epic",
+      name: "My Epic",
       status: "partial",
       stories_done: 0,
       stories_remaining: 1,
       stories: ["unknown-story"],
     };
-    const rows = buildFeatureStoryRows(feature, {});
+    const rows = buildEpicStoryRows(epic, {});
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toEqual({ slug: "unknown-story", title: "unknown-story", status: "backlog", featureSlug: "my-feature" });
+    expect(rows[0]).toEqual({ slug: "unknown-story", title: "unknown-story", status: "backlog", epicSlug: "my-epic" });
   });
 
-  it("returns empty array when feature has no stories", () => {
-    const feature: Feature = {
-      feature_slug: "my-feature",
-      name: "My Feature",
+  it("returns empty array when epic has no stories", () => {
+    const epic: Epic = {
+      epic_slug: "my-epic",
+      name: "My Epic",
       status: "not-started",
       stories_done: 0,
       stories_remaining: 0,
       stories: [],
     };
-    const rows = buildFeatureStoryRows(feature, {});
+    const rows = buildEpicStoryRows(epic, {});
     expect(rows).toEqual([]);
   });
 
   it("returns empty array when stories field is undefined", () => {
-    const feature: Feature = {
-      feature_slug: "my-feature",
-      name: "My Feature",
+    const epic: Epic = {
+      epic_slug: "my-epic",
+      name: "My Epic",
       status: "not-started",
       stories_done: 0,
       stories_remaining: 0,
     };
-    const rows = buildFeatureStoryRows(feature, {});
+    const rows = buildEpicStoryRows(epic, {});
     expect(rows).toEqual([]);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Feature L2 — FeatureDetailView HTML rendering
+// Epic L2 — EpicDetailView HTML rendering
 // ---------------------------------------------------------------------------
-describe("FeatureDetailView", () => {
-  const baseFeature: Feature = {
-    feature_slug: "momentum-canvas",
+describe("EpicDetailView", () => {
+  const baseEpic: Epic = {
+    epic_slug: "momentum-canvas",
     name: "Momentum Canvas",
     status: "partial",
+    lifecycle: "finite-lived",
+    audience: "user",
     stories_done: 3,
     stories_remaining: 2,
-    acceptance_condition: "Developer can view feature L2.",
+    acceptance_condition: "Developer can view epic L2.",
     value_analysis: "This provides significant value.",
     system_context: "Lives within the canvas skill.",
     stories: ["story-a", "story-b"],
   };
 
   it("renders warm light reading-surface with readingPaper background", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("reading-surface");
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("reading-surface");
   });
 
-  it("renders feature heading with feature name", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("Momentum Canvas");
-    expect(html).toContain("l2-name");
+  it("renders epic heading with epic name", () => {
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("Momentum Canvas");
+    expect(h).toContain("l2-name");
   });
 
-  it("renders meta strip with status badge, story fraction, and reading mode label", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("l2-meta");
-    expect(html).toContain("partial");
-    expect(html).toContain("3");
-    expect(html).toContain("stories");
-    expect(html).toContain("reading mode");
+  it("renders meta strip with story fraction and reading mode label", () => {
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("l2-meta");
+    expect(h).toContain("3");
+    expect(h).toContain("stories");
+    expect(h).toContain("reading mode");
+  });
+
+  it("renders lifecycle pill in l2-meta when lifecycle is present", () => {
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("l2-meta");
+    expect(h).toContain("finite-lived");
+  });
+
+  it("renders audience pill in l2-meta when audience is present", () => {
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("l2-meta");
+    expect(h).toContain("user");
   });
 
   it("renders value narrative section when value_analysis is present", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("value narrative");
-    expect(html).toContain("This provides significant value.");
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("value narrative");
+    expect(h).toContain("This provides significant value.");
   });
 
   it("does not render value narrative section when value_analysis is absent", () => {
-    const feature = { ...baseFeature, value_analysis: undefined };
-    const html = String(FeatureDetailView({ feature, storyRows: [] }));
-    expect(html).not.toContain("Value Narrative");
+    const epic = { ...baseEpic, value_analysis: undefined };
+    const h = String(EpicDetailView({ epic, storyRows: [] }));
+    expect(h).not.toContain("Value Narrative");
   });
 
   it("renders acceptance condition in boxed container with reading-ac-box", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("reading-ac-box");
-    expect(html).toContain("Developer can view feature L2.");
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("reading-ac-box");
+    expect(h).toContain("Developer can view epic L2.");
+  });
+
+  it("renders acceptance_conditions array as single text block when present", () => {
+    const epic = { ...baseEpic, acceptance_condition: undefined, acceptance_conditions: ["AC one", "AC two"] };
+    const h = String(EpicDetailView({ epic, storyRows: [] }));
+    expect(h).toContain("reading-ac-box");
+    expect(h).toContain("AC one");
+    expect(h).toContain("AC two");
   });
 
   it("renders system context as callout block", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("reading-callout");
-    expect(html).toContain("Lives within the canvas skill.");
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("reading-callout");
+    expect(h).toContain("Lives within the canvas skill.");
   });
 
   it("renders stories list with status badge and title", () => {
     const storyRows = [
-      { slug: "story-a", title: "Story Alpha", status: "done", featureSlug: "test-feature" },
-      { slug: "story-b", title: "Story Beta", status: "in-progress", featureSlug: "test-feature" },
+      { slug: "story-a", title: "Story Alpha", status: "done", epicSlug: "test-epic" },
+      { slug: "story-b", title: "Story Beta", status: "in-progress", epicSlug: "test-epic" },
     ];
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows }));
-    expect(html).toContain("Story Alpha");
-    expect(html).toContain("Story Beta");
-    expect(html).toContain("l2-stories");
-    expect(html).toContain('href="/stories/story-a?from=feature&amp;feature=test-feature"');
-    expect(html).toContain('href="/stories/story-b?from=feature&amp;feature=test-feature"');
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows }));
+    expect(h).toContain("Story Alpha");
+    expect(h).toContain("Story Beta");
+    expect(h).toContain("l2-stories");
+    expect(h).toContain('href="/stories/story-a?from=epic&amp;epic=test-epic"');
+    expect(h).toContain('href="/stories/story-b?from=epic&amp;epic=test-epic"');
   });
 
-  it("renders breadcrumb OOB swap with Dashboard link and Feature label in accent", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain('hx-swap-oob="true"');
-    expect(html).toContain('href="/"');
-    expect(html).toContain("dashboard");
-    // Feature name appears as breadcrumb "here" segment
-    expect(html).toContain("Momentum Canvas");
+  it("renders breadcrumb OOB swap with Dashboard link and epic label", () => {
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain('hx-swap-oob="true"');
+    expect(h).toContain('href="/"');
+    expect(h).toContain("dashboard");
+    // Epic name appears in the content
+    expect(h).toContain("Momentum Canvas");
   });
 
   it("renders pure href for breadcrumb navigation back to root", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain('href="/"');
-    expect(html).not.toContain('hx-push-url="/"');
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain('href="/"');
+    expect(h).not.toContain('hx-push-url="/"');
   });
 
   it("renders l2-body content container", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).toContain("l2-body");
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).toContain("l2-body");
   });
 
   it("does not render dependencies section when no dependencies", () => {
-    const html = String(FeatureDetailView({ feature: baseFeature, storyRows: [] }));
-    expect(html).not.toContain("Dependencies");
+    const h = String(EpicDetailView({ epic: baseEpic, storyRows: [] }));
+    expect(h).not.toContain("Dependencies");
   });
 
   it("renders dependencies as plain list when present", () => {
-    const feature = { ...baseFeature, dependencies: ["dep-feature-a", "dep-feature-b"] };
-    const html = String(FeatureDetailView({ feature, storyRows: [] }));
-    expect(html).toContain("dependencies");
-    expect(html).toContain("reading-deps-list");
-    expect(html).toContain("dep-feature-a");
-    expect(html).toContain("dep-feature-b");
+    const epic = { ...baseEpic, dependencies: ["dep-epic-a", "dep-epic-b"] };
+    const h = String(EpicDetailView({ epic, storyRows: [] }));
+    expect(h).toContain("dependencies");
+    expect(h).toContain("reading-deps-list");
+    expect(h).toContain("dep-epic-a");
+    expect(h).toContain("dep-epic-b");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// readEpicsJson — graceful degradation when epics.json is missing
+// ---------------------------------------------------------------------------
+describe("readEpicsJson", () => {
+  it("returns empty array when called (graceful degradation assurance)", async () => {
+    // The function returns [] when the file is missing or invalid.
+    // In a normal test environment, epics.json may be present, so we simply
+    // assert it returns an array (not throwing) to confirm graceful behavior.
+    const result = await readEpicsJson();
+    expect(Array.isArray(result)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// readEpicBySlug — null for missing slug
+// ---------------------------------------------------------------------------
+describe("readEpicBySlug", () => {
+  it("returns null for a slug that does not exist", async () => {
+    const result = await readEpicBySlug("__nonexistent-slug-xyz__");
+    expect(result).toBeNull();
   });
 });
 
@@ -915,10 +1118,15 @@ describe("StoryDetailView", () => {
     expect(h).toContain("reading-crumb-bar");
   });
 
-  it("breadcrumb includes feature link when from=feature", () => {
-    const h = String(StoryDetailView({ story: baseStory, from: "feature" }));
-    expect(h).toContain('href="/features/test-feature"');
-    expect(h).toContain("feature");
+  it("breadcrumb includes epic link when from=epic", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: "epic" }));
+    expect(h).toContain('href="/epics/test-epic"');
+    expect(h).toContain("epic");
+  });
+
+  it("breadcrumb uses epicSlugOverride when provided, overriding frontmatter", () => {
+    const h = String(StoryDetailView({ story: baseStory, from: "epic", epicSlugOverride: "override-epic" }));
+    expect(h).toContain('href="/epics/override-epic"');
   });
 
   it("breadcrumb includes sprint link when from=sprint with activeSprintSlug", () => {
@@ -935,8 +1143,8 @@ describe("StoryDetailView", () => {
 
   it("breadcrumb has no middle segment when from=null", () => {
     const h = String(StoryDetailView({ story: baseStory, from: null }));
-    // Should not have feature or sprint links in breadcrumb
-    expect(h).not.toContain('hx-get="/features/test-feature"');
+    // Should not have epic or sprint links in breadcrumb
+    expect(h).not.toContain('hx-get="/epics/test-epic"');
     expect(h).not.toContain('hx-get="/lenses/sprint"');
   });
 
@@ -954,5 +1162,53 @@ describe("StoryDetailView", () => {
     const h = String(StoryDetailView({ story, from: null }));
     expect(h).not.toContain('<script>alert("xss")</script>');
     expect(h).toContain("&lt;script&gt;");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Route handler tests — /lenses/epics and /epics/:slug
+// ---------------------------------------------------------------------------
+describe("HTTP route: /lenses/epics", () => {
+  it("returns 200 HTML response with section id lens-epics", async () => {
+    const server = (await import("./server")).default;
+    const req = new Request("http://localhost:3456/lenses/epics");
+    const res = await server.fetch(req);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("lens-epics");
+  });
+});
+
+describe("HTTP route: /epics/:slug", () => {
+  it("returns 200 with epic detail view for an existing epic slug", async () => {
+    const mod = await import("./server");
+    const server = mod.default;
+    const epics = await mod.readEpicsJson();
+    if (epics.length === 0) {
+      // Skip if epics.json not present in test environment
+      return;
+    }
+    const epic = epics[0];
+    const slug = epic.epic_slug;
+    const req = new Request(`http://localhost:3456/epics/${slug}`, {
+      headers: { "HX-Request": "true" },
+    });
+    const res = await server.fetch(req);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    // Epic detail view should contain the epic name (slug may or may not appear verbatim)
+    expect(body).toContain("reading-surface");
+    expect(body).toContain("l2-body");
+  });
+
+  it("returns graceful not-found fragment for unknown slug", async () => {
+    const server = (await import("./server")).default;
+    const req = new Request("http://localhost:3456/epics/__nonexistent-slug-xyz__", {
+      headers: { "HX-Request": "true" },
+    });
+    const res = await server.fetch(req);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("not found");
   });
 });

@@ -1702,6 +1702,219 @@
       "started": "2026-05-18",
       "completed": "2026-05-19",
       "retro_run_at": "2026-05-20"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "stories": [
+        "a1-practice-ledger-schema-cli-redesign-true-append-only",
+        "a2-practice-ledger-hygiene-cleanup-close-12-stale-entries",
+        "a3-impetus-rule-update-honest-counts-new-ledger-retired",
+        "a4-skill-workflow-updates-point-retro-triage-sprint",
+        "b1-epic-schema-migration-define-epicsjson-migrate-features",
+        "b2-create-story-input-routing-read-epic-context-instead-of",
+        "b3-canvas-update-render-epics-instead-of-features",
+        "b4-grooming-breakdown-skill-restructure",
+        "momentumintake-remove-worktree-isolation-story-add-is-safe"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "a1-practice-ledger-schema-cli-redesign-true-append-only",
+            "b1-epic-schema-migration-define-epicsjson-migrate-features",
+            "momentumintake-remove-worktree-isolation-story-add-is-safe"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "a2-practice-ledger-hygiene-cleanup-close-12-stale-entries",
+            "a3-impetus-rule-update-honest-counts-new-ledger-retired",
+            "b2-create-story-input-routing-read-epic-context-instead-of",
+            "b3-canvas-update-render-epics-instead-of-features"
+          ]
+        },
+        {
+          "wave": 3,
+          "stories": [
+            "a4-skill-workflow-updates-point-retro-triage-sprint"
+          ]
+        },
+        {
+          "wave": 4,
+          "stories": [
+            "b4-grooming-breakdown-skill-restructure"
+          ]
+        }
+      ],
+      "approvals": [
+        {
+          "story_slug": "a1-practice-ledger-schema-cli-redesign-true-append-only",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "b77047d06fa9845510768c6c87a91e88c251b548c8f2d0bdc41abe06f40b3f32"
+        },
+        {
+          "story_slug": "a2-practice-ledger-hygiene-cleanup-close-12-stale-entries",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "3c18e5d64a77be7f0144ddef260ce08fa8f1cc534d02b004d6d044cea13bf44a"
+        },
+        {
+          "story_slug": "a3-impetus-rule-update-honest-counts-new-ledger-retired",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "43494459780f486a71c4fe9553dcbad2a7d77d1c589fbac53a3c1600fe989b9e"
+        },
+        {
+          "story_slug": "a4-skill-workflow-updates-point-retro-triage-sprint",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "2f6fbf0bf3c1cbcbcd5abfadf35969f796f32e21ff97596d9428e4247ce667d8"
+        },
+        {
+          "story_slug": "b1-epic-schema-migration-define-epicsjson-migrate-features",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "fbcfb5e262a9dc48d8ebc488c69c11047fc3ac27d25c097a108b167b73ecc22b"
+        },
+        {
+          "story_slug": "b2-create-story-input-routing-read-epic-context-instead-of",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "416215cefd1e14b4495741796075645ed53d984a209882efca5360a61b2ae19d"
+        },
+        {
+          "story_slug": "b3-canvas-update-render-epics-instead-of-features",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "51163fcce711b3e5be5053102c204c41d05895d19bf0e962d5e914f386349fb9"
+        },
+        {
+          "story_slug": "b4-grooming-breakdown-skill-restructure",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "89c8201d59614daf73dfa4e7ba7011d8f2a4d0f071d6e45797c4f16897b02d1b"
+        },
+        {
+          "story_slug": "momentumintake-remove-worktree-isolation-story-add-is-safe",
+          "decision": "approved",
+          "approved_at": "2026-05-27T01:23:43Z",
+          "story_file_sha": "ed0e010f2cb5ead8c8d86135787e8d82dda756e62dc244f18088537c98e4e9f4"
+        }
+      ],
+      "started": "2026-05-27",
+      "slug": "sprint-2026-05-26",
+      "planned": "2026-05-26",
+      "team": {
+        "story_assignments": {
+          "a1-practice-ledger-schema-cli-redesign-true-append-only": {
+            "role": "dev",
+            "specialist": "dev",
+            "guidelines": null,
+            "guidelines_status": "n/a",
+            "change_type": [
+              "script-code",
+              "script-cli",
+              "specification",
+              "config-structure"
+            ],
+            "verification_method": "execution test"
+          },
+          "a2-practice-ledger-hygiene-cleanup-close-12-stale-entries": {
+            "role": "dev",
+            "specialist": "dev",
+            "guidelines": null,
+            "guidelines_status": "n/a",
+            "change_type": [
+              "script-cli",
+              "specification"
+            ],
+            "verification_method": "execution test"
+          },
+          "a3-impetus-rule-update-honest-counts-new-ledger-retired": {
+            "role": "dev",
+            "specialist": "dev",
+            "guidelines": null,
+            "guidelines_status": "n/a",
+            "change_type": [
+              "rule-hook"
+            ],
+            "verification_method": "behavioral trigger test"
+          },
+          "a4-skill-workflow-updates-point-retro-triage-sprint": {
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "change_type": [
+              "skill-instruction",
+              "specification"
+            ],
+            "verification_method": "skill eval"
+          },
+          "b1-epic-schema-migration-define-epicsjson-migrate-features": {
+            "role": "dev",
+            "specialist": "dev",
+            "guidelines": null,
+            "guidelines_status": "n/a",
+            "change_type": [
+              "config-structure",
+              "specification",
+              "script-code"
+            ],
+            "verification_method": "document review"
+          },
+          "b2-create-story-input-routing-read-epic-context-instead-of": {
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "change_type": [
+              "skill-instruction"
+            ],
+            "verification_method": "EDD eval — adversarial eval scenarios authored by acceptance tester independent of implementation"
+          },
+          "b3-canvas-update-render-epics-instead-of-features": {
+            "role": "dev",
+            "specialist": "dev",
+            "guidelines": null,
+            "guidelines_status": "n/a",
+            "change_type": [
+              "script-code",
+              "skill-instruction"
+            ],
+            "verification_method": "execution test"
+          },
+          "b4-grooming-breakdown-skill-restructure": {
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "change_type": [
+              "skill-instruction",
+              "specification"
+            ],
+            "verification_method": "EDD eval — adversarial eval scenarios authored by acceptance tester independent of implementation"
+          },
+          "momentumintake-remove-worktree-isolation-story-add-is-safe": {
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "change_type": "skill-instruction",
+            "verification_method": "EDD"
+          }
+        },
+        "review_roles": [
+          "qa-reviewer",
+          "e2e-validator",
+          "architecture-guard"
+        ]
+      },
+      "completed": "2026-05-29",
+      "retro_run_at": null
     }
   ],
   "quickfixes": [

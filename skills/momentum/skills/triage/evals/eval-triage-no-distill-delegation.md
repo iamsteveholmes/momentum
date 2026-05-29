@@ -42,7 +42,7 @@ The workflow's Step 5 execution block does not contain:
 The final triage summary shows:
 - Stubbed to backlog (N): items sent to momentum:intake
 - Decisions recorded (N): items sent to momentum:decision
-- Parked to intake-queue.jsonl: shaping/deferred/rejected counts
+- Parked to practice-ledger.jsonl: shaping/deferred/rejected counts
 - No "Distilled (N)" section in the summary
 
 ---

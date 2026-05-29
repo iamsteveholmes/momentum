@@ -22,13 +22,14 @@ When the owner decides to act, the right skill is summoned with confidence and p
 | Capture a quick idea without full intake | `momentum:intake` |
 | Create a fully-enriched, dev-ready story | `momentum:create-story` |
 | Groom the backlog — hygiene and prioritization | `momentum:refine` |
-| Groom features and their taxonomy | `momentum:feature-grooming` |
+| Groom epics and their taxonomy | `momentum:epic-grooming` |
+| Enumerate missing stories for an epic | `momentum:epic-breakdown` |
 | Do deep research on a topic | `momentum:research` |
 | Evaluate the current project state | `momentum:assessment` |
 | Record a strategic decision | `momentum:decision` |
 | Queue a practice fix as a backlog story | `momentum:create-story` |
 | Trace a quality failure to its root cause | `momentum:upstream-fix` |
-| View feature coverage and story gaps | `momentum:feature-status` |
+| View live practice canvas | `momentum:canvas` |
 
 ## Dispatch Protocol
 

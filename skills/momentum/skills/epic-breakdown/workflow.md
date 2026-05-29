@@ -1,6 +1,6 @@
-# Feature Breakdown Workflow
+# Epic Breakdown Workflow
 
-**Goal:** Given a feature slug, enumerate the stories needed to ship that feature end to end,
+**Goal:** Given an epic slug, enumerate the stories needed to ship that epic end to end,
 present a deduplicated gap list for developer review, and delegate approved items to
 `momentum:triage` for classification and routing.
 
@@ -22,7 +22,7 @@ Load config from `_bmad/bmm/config.yaml`. Resolve:
 <check if="_bmad/bmm/config.yaml is missing OR planning_artifacts OR implementation_artifacts keys are unresolved">
   <output>✗ Configuration error: _bmad/bmm/config.yaml is missing or incomplete.
 Required keys: planning_artifacts, implementation_artifacts.
-Ensure _bmad/bmm/config.yaml exists and both keys resolve to valid paths before running feature-breakdown.</output>
+Ensure _bmad/bmm/config.yaml exists and both keys resolve to valid paths before running epic-breakdown.</output>
   <action>HALT.</action>
 </check>
 
@@ -33,60 +33,63 @@ Store {{planning_artifacts}} and {{implementation_artifacts}} for use throughout
 <workflow>
 
   <critical>Orchestrator purity: This workflow MUST NOT write files directly. No Write or Edit
-  actions against features.json, stories/index.json, prd.md, epics.md, architecture.md, or any
+  actions against epics.json, stories/index.json, prd.md, epics.md, architecture.md, or any
   file under _bmad-output/planning-artifacts/ or .momentum/stories/.
-  All writes happen via delegated subagents — triage routes to intake / decision / intake-queue,
+  All writes happen via delegated subagents — triage routes to intake / decision / practice-ledger,
   which own their respective writes. This orchestrator reads, synthesizes, gates, and delegates only.</critical>
 
   <critical>Developer review gate (Step 5) is mandatory before any delegation to triage. No items
   are handed off until the developer explicitly approves.</critical>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- STEP 1: LOAD FEATURE CONTEXT                            -->
+  <!-- STEP 1: LOAD EPIC CONTEXT                               -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="1" goal="Load feature context — validate slug and capture required fields">
+  <step n="1" goal="Load epic context — validate slug and capture required fields">
 
-    <check if="feature_slug was not provided as an argument">
-      <ask>Which feature do you want to break down? Provide a feature slug from features.json.
-      (Run /momentum:feature-grooming to view available slugs.)</ask>
-      <action>Store {{feature_slug}} = developer's response.</action>
+    <check if="epic_slug was not provided as an argument">
+      <ask>Which epic do you want to break down? Provide an epic slug from epics.json.
+      (Run /momentum:epic-grooming to view available slugs.)</ask>
+      <action>Store {{epic_slug}} = developer's response.</action>
     </check>
 
-    <check if="feature_slug was provided as an argument">
-      <action>Store {{feature_slug}} = the argument value.</action>
+    <check if="epic_slug was provided as an argument">
+      <action>Store {{epic_slug}} = the argument value.</action>
     </check>
 
     <action>Check for an optional focus hint (e.g., "ingestion-side only") that narrows the
     gap search scope. If provided as an argument or alongside the slug, store as {{focus_hint}}.
     Otherwise {{focus_hint}} = null.</action>
 
-    <action>Read `{{planning_artifacts}}/features.json`. If the file does not exist:
-      output "✗ features.json not found at {{planning_artifacts}}/features.json — run
-      /momentum:feature-grooming to initialize the feature taxonomy." and HALT.
+    <action>Read `{{planning_artifacts}}/epics.json`. If the file does not exist:
+      output "✗ epics.json not found at {{planning_artifacts}}/epics.json — run
+      /momentum:epic-grooming to initialize the epic taxonomy." and HALT.
     </action>
 
-    <check if="{{feature_slug}} is NOT a key in features.json">
-      <output>✗ Feature slug "{{feature_slug}}" not found in features.json.
+    <check if="{{epic_slug}} is NOT a key in epics.json">
+      <output>✗ Epic slug "{{epic_slug}}" not found in epics.json.
 
-Available slugs: {{list all keys from features.json}}
+Available slugs: {{list all keys from epics.json}}
 
-Run /momentum:feature-grooming to view the full feature list or add new features.</output>
+Run /momentum:epic-grooming to view the full epic list or add new epics.</output>
       <action>HALT.</action>
     </check>
 
-    <action>Extract from features.json[{{feature_slug}}] and store:
-      - {{acceptance_condition}} — the feature's acceptance condition string
+    <action>Extract from epics.json[{{epic_slug}}] and store:
+      - {{acceptance_conditions}} — the epic's acceptance_conditions array (list of condition strings)
       - {{value_analysis}} — the full value_analysis block (including any "known gaps" paragraph)
       - {{system_context}} — the system_context field
-      - {{feature_stories}} — the current stories array (list of story slugs)
-      - {{feature_status}} — the status field
+      - {{epic_stories}} — the current stories array (list of story slugs)
+      - {{stories_done}} — the stories_done count
+      - {{stories_remaining}} — the stories_remaining count
+      - {{lifecycle}} — the lifecycle field
     </action>
 
-    <output>## Feature Loaded: `{{feature_slug}}`
+    <output>## Epic Loaded: `{{epic_slug}}`
 
-**Status:** {{feature_status}}
-**Stories on feature:** {{feature_stories | length}} ({{feature_stories | join ", "}})
+**Lifecycle:** {{lifecycle}}
+**Progress:** {{stories_done}} done / {{stories_remaining}} remaining
+**Stories on epic:** {{epic_stories | length}} ({{epic_stories | join ", "}})
 {{#if focus_hint}}**Focus hint:** {{focus_hint}}{{/if}}</output>
 
   </step>
@@ -102,35 +105,27 @@ Run /momentum:feature-grooming to view the full feature list or add new features
     and filter in-memory; do not paginate.</note>
 
     <action>Read `{{planning_artifacts}}/prd.md`:
-      - Use Grep to find sections relevant to {{feature_slug}} or the feature's known epics.
+      - Use Grep to find sections relevant to {{epic_slug}} or the epic's known themes.
       - Read those sections with offset/limit targeting the identified line ranges.
       - Store {{prd_context}} = relevant excerpts (functional requirements, goals, constraints).
     </action>
 
     <action>Read `{{planning_artifacts}}/epics.md`:
-      - Use Grep to identify epics that relate to the feature (by name or slug).
+      - Use Grep to identify epic definitions related to {{epic_slug}}.
       - Read those sections with offset/limit.
-      - Store {{epics_context}} = relevant epic descriptions and their story lists.
+      - Store {{epics_context}} = relevant epic descriptions.
     </action>
 
     <action>Read `{{planning_artifacts}}/architecture.md`:
-      - Use Grep to find sections related to the feature's system_context or acceptance_condition.
+      - Use Grep to find sections related to the epic's system_context or acceptance_conditions.
       - Read those sections with offset/limit.
       - Store {{architecture_context}} = relevant architectural components and constraints.
     </action>
 
-    <action>Derive {{feature_epics}} — the set of epic_slug values for this feature:
-      - For each slug in {{feature_stories}}, look up the story entry in stories/index.json.
-      - Collect the unique epic_slug values from those story entries.
-      - Store {{feature_epics}} = deduplicated list of epic slugs.
-      <note>features.json does not carry an epics field directly. Epics must be inferred
-      from the stories already on the feature by resolving their epic_slug in stories/index.json.</note>
-    </action>
-
     <action>Read `.momentum/stories/index.json`:
       - Read full file (use offset/limit chunks if large — read in 300-line pages until complete).
-      - Filter in-memory: keep stories where epic_slug is in {{feature_epics}},
-        OR where the story slug is in {{feature_stories}}.
+      - Filter in-memory: keep stories where epic_slug == {{epic_slug}},
+        OR where the story slug is in {{epic_stories}}.
       - Store {{related_stories}} = filtered list of {slug, title, status, epic_slug}.
     </action>
 
@@ -150,7 +145,7 @@ Run /momentum:feature-grooming to view the full feature list or add new features
   <step n="3" goal="Parallel gap analysis — spawn 2 agents in a single message (fan-out)">
 
     <critical>Spawn BOTH agents in a single message using individual Agent tool calls.
-    Do NOT use TeamCreate. These agents work independently — each analyzes the feature
+    Do NOT use TeamCreate. These agents work independently — each analyzes the epic
     from a different lens and returns findings to the orchestrator. They do not need to
     communicate with each other during execution.
     Per ~/.claude/rules/spawning-patterns.md: "Can each agent complete its work without
@@ -160,21 +155,21 @@ Run /momentum:feature-grooming to view the full feature list or add new features
 
       System prompt:
       ```
-      You are an acceptance-first gap analyst for a Momentum feature breakdown.
+      You are an acceptance-first gap analyst for a Momentum epic breakdown.
 
-      Feature slug: {{feature_slug}}
-      Acceptance condition: {{acceptance_condition}}
+      Epic slug: {{epic_slug}}
+      Acceptance conditions: {{acceptance_conditions}}
       System context: {{system_context}}
-      Existing stories on feature: {{feature_stories}}
-      Related stories (from surrounding epics): {{related_stories}}
+      Existing stories on epic: {{epic_stories}}
+      Related stories (from this epic): {{related_stories}}
       PRD context: {{prd_context}}
       Architecture context: {{architecture_context}}
       {{#if focus_hint}}Focus hint (narrow your analysis to this scope): {{focus_hint}}{{/if}}
 
       Your job — Acceptance-first analysis:
-      1. Decompose the acceptance_condition into concrete, testable capabilities that must exist
-         for the condition to be satisfied.
-      2. For each capability, check whether it is already covered by a story in {{feature_stories}}
+      1. Decompose each entry in the acceptance_conditions array into concrete, testable
+         capabilities that must exist for those conditions to be satisfied.
+      2. For each capability, check whether it is already covered by a story in {{epic_stories}}
          or {{related_stories}} (match by title, description, or obvious intent).
       3. Flag capabilities that are NOT covered — these are your gap findings.
 
@@ -188,7 +183,7 @@ Run /momentum:feature-grooming to view the full feature list or add new features
 
       Return ONLY the structured findings list. Do not explain your process.
       Suggested class must be one of: ARTIFACT, DECISION, SHAPING.
-      Do not suggest DISTILL, DEFER, or REJECT — those are triage's routing decisions.
+      Do not suggest DEFER or REJECT — those are triage's routing decisions.
       ```
     </action>
 
@@ -196,13 +191,13 @@ Run /momentum:feature-grooming to view the full feature list or add new features
 
       System prompt:
       ```
-      You are a value-gap analyst for a Momentum feature breakdown.
+      You are a value-gap analyst for a Momentum epic breakdown.
 
-      Feature slug: {{feature_slug}}
+      Epic slug: {{epic_slug}}
       Value analysis: {{value_analysis}}
       System context: {{system_context}}
-      Existing stories on feature: {{feature_stories}}
-      Related stories (from surrounding epics): {{related_stories}}
+      Existing stories on epic: {{epic_stories}}
+      Related stories (from this epic): {{related_stories}}
       Epics context: {{epics_context}}
       Architecture context: {{architecture_context}}
       {{#if focus_hint}}Focus hint (narrow your analysis to this scope): {{focus_hint}}{{/if}}
@@ -211,7 +206,7 @@ Run /momentum:feature-grooming to view the full feature list or add new features
       1. Identify the "known gaps" paragraph in {{value_analysis}} if present.
          If no explicit gaps paragraph exists, treat the full value_analysis as your source.
       2. For each gap or value dimension described, identify what implementation work is
-         required to close it — and check whether any story in {{feature_stories}} or
+         required to close it — and check whether any story in {{epic_stories}} or
          {{related_stories}} already covers that work.
       3. Flag implementation work that is NOT covered — these are your gap findings.
 
@@ -225,7 +220,7 @@ Run /momentum:feature-grooming to view the full feature list or add new features
 
       Return ONLY the structured findings list. Do not explain your process.
       Suggested class must be one of: ARTIFACT, DECISION, SHAPING.
-      Do not suggest DISTILL, DEFER, or REJECT — those are triage's routing decisions.
+      Do not suggest DEFER or REJECT — those are triage's routing decisions.
       ```
     </action>
 
@@ -272,8 +267,8 @@ Run /momentum:feature-grooming to view the full feature list or add new features
     </action>
 
     <note>The suggested_class is a suggestion only — triage makes the binding classification.
-    feature-breakdown emits only ARTIFACT / DECISION / SHAPING suggestions. The additional
-    outcomes triage may assign (DISTILL, DEFER, REJECT) are triage's own routing decisions
+    epic-breakdown emits only ARTIFACT / DECISION / SHAPING suggestions. The additional
+    outcomes triage may assign (DEFER, REJECT) are triage's own routing decisions
     and appear only in the final report (Step 7), never in the gap list handed to triage.</note>
 
     <output>→ Gap list synthesized — {{gap_list | length}} items (after deduplication):
@@ -292,7 +287,7 @@ Run /momentum:feature-grooming to view the full feature list or add new features
 
   <step n="5" goal="Developer review gate — present gap list, allow removals before delegation">
 
-    <output>Feature: {{feature_slug}} · {{gap_list | length}} gap candidates identified.
+    <output>Epic: {{epic_slug}} · {{gap_list | length}} gap candidates identified.
 
 These items will be handed to triage for classification and routing.
 Remove any before we proceed?
@@ -315,7 +310,7 @@ Enter item numbers to remove (e.g., "2, 4"), or press Enter / type "go" to appro
     <action>If developer approves all (Enter or "go"), store {{approved_gap_list}} = {{gap_list}}.</action>
 
     <check if="{{approved_gap_list}} is empty">
-      <output>✓ No gaps to triage — all items removed. Feature breakdown complete with no delegation.</output>
+      <output>✓ No gaps to triage — all items removed. Epic breakdown complete with no delegation.</output>
       <action>HALT cleanly — do not invoke triage.</action>
     </check>
 
@@ -347,11 +342,11 @@ Resolve the missing skill file before proceeding.</output>
       - raw_items: {{approved_gap_list}} — each item as a plain observation string:
           "{{item.title}} — {{item.description}}"
           (one string per item; do NOT include suggested_class in the payload)
-      - source_label: "feature-breakdown:{{feature_slug}}"
+      - source_label: "epic-breakdown:{{epic_slug}}"
 
     Triage will re-classify each item using its own heuristics (from original_text per its
     Step 3 contract), present a batch-approval UX to the developer, and delegate approved items
-    to intake / decision / intake-queue.
+    to intake / decision / practice-ledger.
     </action>
 
     <note>Triage classifies items fresh from original_text per its Step 1 contract. The
@@ -372,26 +367,25 @@ Resolve the missing skill file before proceeding.</output>
     <action>Parse {{triage_output}} to extract the following counts. Triage Step 6 exposes
     these variables directly in its summary output. If a class was not present in this triage
     session, the count will be absent from the output — default any absent count to 0:
-      - {{artifact_count}} — from "Stubbed to backlog (N)" → intake_count in triage Step 6;
-          default 0 if absent
+      - {{artifact_count}} — from "Stubbed to backlog (N)"; default 0 if absent
       - {{decision_count}} — from "Decisions recorded (N)"; default 0 if absent
-      - {{shaping_count}} — from "N shaping (kind: shape)"; default 0 if absent
-      - {{defer_count}} — from "N deferred (kind: watch)"; default 0 if absent
-      - {{reject_count}} — from "N rejected (kind: rejected)"; default 0 if absent
+      - {{shaping_count}} — from "N shaping"; default 0 if absent
+      - {{defer_count}} — from "N deferred"; default 0 if absent
+      - {{reject_count}} — from "N rejected"; default 0 if absent
       - {{story_paths}} — list of stub_path values from intake results; default []
       - {{decision_paths}} — list of outcome paths from decision results; default []
     </action>
 
-    <output>✓ Feature breakdown complete — {{feature_slug}}
+    <output>✓ Epic breakdown complete — {{epic_slug}}
 
 Gap analysis: {{gap_list | length}} candidates identified, {{approved_gap_list | length}} approved for triage.
 
 Triage outcomes ({{approved_gap_list | length}} items):
   · ARTIFACT → {{artifact_count}} (stubbed to backlog)
   · DECISION → {{decision_count}} (decision docs created)
-  · SHAPING  → {{shaping_count}} (parked in intake-queue.jsonl)
-  · DEFER    → {{defer_count}} (parked in intake-queue.jsonl)
-  · REJECT   → {{reject_count}} (logged in intake-queue.jsonl)
+  · SHAPING  → {{shaping_count}} (parked in practice-ledger.jsonl)
+  · DEFER    → {{defer_count}} (parked in practice-ledger.jsonl)
+  · REJECT   → {{reject_count}} (logged in practice-ledger.jsonl)
 
 {{#if story_paths | length > 0}}
 New story stubs:

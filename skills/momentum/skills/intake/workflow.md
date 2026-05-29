@@ -23,6 +23,15 @@ stub file, add index entry. No analysis, no research, no subagents.
   <critical>Minimize tool calls: 1 read (slug conflict check), 1 write (stub file),
   1 bash (CLI index entry). No subagent spawns.</critical>
 
+  <critical>Intake MUST run in the main working tree only. MUST NOT invoke
+  EnterWorktree, ExitWorktree, or any `git worktree` command. Caller skills MUST NOT
+  wrap intake in a worktree for collision protection. Rationale: `story-add` writes a
+  brand-new unique slug key on every invocation — no concurrent-write collision risk
+  exists, so worktree isolation provides no benefit and traps the stub inside a branch
+  instead of landing it on main. Any number of concurrent intake invocations is safe:
+  each generates a unique slug and `story-add` performs an atomic read-modify-write of
+  `stories/index.json`.</critical>
+
   <step n="1" goal="Extract story context from conversation or caller">
     <action>Review the current conversation (or caller-provided context) for story information. Extract:
       - {{title}}: The story title (required — derive from conversation if not explicit)
@@ -127,6 +136,25 @@ stub file, add index entry. No analysis, no research, no subagents.
       <action>HALT — report the error to the user</action>
     </check>
 
+    <action>Append a `created` event to the practice ledger so this capture is
+      visible to `momentum-tools practice-ledger`. Use the bare source label
+      `intake` (matching the triage/retro convention):
+      ```
+      python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+        --event-type created \
+        --entity-id "{{slug}}" \
+        --source intake \
+        --actor "{{user_role}}" \
+        --payload '{"title": "{{title}}", "epic_slug": "{{epic_slug}}", "intent": "capture"}'
+      ```
+    </action>
+
+    <check if="practice-ledger append returns an error">
+      <action>Log the failure but do NOT abort — the stub file and index entry
+        are already written, so the capture is intact. Note the ledger-append
+        failure in the final report.</action>
+    </check>
+
     <!-- SPIKE: beads dual-write — route discovered work via discovered-from edge -->
     <action>[SPIKE: beads] If `.beads/` directory exists:
       1. Determine the origin bead ID:
@@ -141,7 +169,7 @@ stub file, add index entry. No analysis, no research, no subagents.
       3. If `bd create` succeeds: store the new bead ID in `.momentum/beads-id-map.json`
          as `{ "{{slug}}": "<new-bead-id>" }` (merge, don't overwrite other entries).
       4. If `bd create` fails: log to `.momentum/beads-errors.log` — do NOT abort.
-         The `intake-queue.jsonl` append above remains the source of record.
+         The `practice-ledger.jsonl` append above remains the source of record.
       5. Verify: `bd show <new-bead-id>` should show `discovered-from: {{origin_bead_id}}`
          (not `blocks:`) — this confirms the correct edge type.
     </action>

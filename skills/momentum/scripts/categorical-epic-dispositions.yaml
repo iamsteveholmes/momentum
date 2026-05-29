@@ -1,0 +1,223 @@
+# Categorical Epic Dispositions — B1 Migration (DEC-034 D2)
+#
+# For each categorical epic currently in stories/index.json that is NOT one of
+# the 23 migrated features, this file declares the developer's per-epic disposition:
+#
+#   disposition: dissolve   — re-home all stories to `target_epic`; this epic disappears
+#   disposition: long-lived — write into epics.json with lifecycle: long-lived
+#
+# Default disposition is dissolve. long-lived requires explicit justification in `notes`.
+#
+# Evaluated: 2026-05-28 (B1 migration sprint-2026-05-26)
+# Reference: DEC-034 D2, AES-003
+
+# ── ad-hoc ───────────────────────────────────────────────────────────────────
+# Long-lived per DEC-034 D5 explicit: "ad-hoc accepts residue".
+ad-hoc:
+  disposition: long-lived
+  name: "Ad-Hoc Work"
+  description: >
+    Canonical residue catcher. Accepts stories that don't belong to any specific
+    finite-lived epic — quick fixes, tactical work, sprint-specific tasks, and
+    stories that haven't been assigned to a deliverable epic yet.
+  audience: internal
+  notes: >
+    Kept as long-lived per DEC-034 D2 and D5 explicit language. The canonical
+    residue catcher: every sprint produces some ad-hoc work that doesn't fit a
+    deliverable shape. Forcing it into a finite-lived epic would create artificial
+    epics. Long-lived with no closure expectation.
+
+# ── agent-team-model ─────────────────────────────────────────────────────────
+# 81 stories — agent spawning patterns, TeamCreate vs fan-out evaluation, spawn
+# preflight and observability. Maps cleanly to momentum-agent-spawn-orchestration.
+agent-team-model:
+  disposition: dissolve
+  target_epic: momentum-agent-spawn-orchestration
+  notes: >
+    Dissolved. Stories cover spawn patterns, preflight, observability — all
+    squarely in the agent-spawn-orchestration epic. Re-homed 2026-05-28 (B1).
+
+# ── artifact-provenance ──────────────────────────────────────────────────────
+# 7 stories — hash-based staleness, provenance scanner, time-based staleness.
+# Direct match to momentum-provenance-chain feature.
+artifact-provenance:
+  disposition: dissolve
+  target_epic: momentum-provenance-chain
+  notes: >
+    Dissolved. Stories are the implementation backlog for provenance detection —
+    hash staleness, provenance scanner, time-based staleness. Re-homed to
+    momentum-provenance-chain. Re-homed 2026-05-28 (B1).
+
+# ── bring-your-own-tools ─────────────────────────────────────────────────────
+# 6 stories — protocol bindings, provider registration, interface contracts.
+# Maps to momentum-protocol-based-integration.
+bring-your-own-tools:
+  disposition: dissolve
+  target_epic: momentum-protocol-based-integration
+  notes: >
+    Dissolved. Stories cover protocol abstraction, provider swapping — the
+    momentum-protocol-based-integration epic. Re-homed 2026-05-28 (B1).
+
+# ── feature-orientation ──────────────────────────────────────────────────────
+# 25 stories (11 done, 9 dropped, 5 backlog) — feature artifact schema,
+# feature-status, feature-breakdown, grooming. These are the DEC-034-superseded
+# feature layer stories. Most done/dropped; remaining backlog re-homes to the
+# epic that absorbs feature-orientation (feature-taxonomy-maintenance, now
+# becoming epic-grooming in B4).
+feature-orientation:
+  disposition: dissolve
+  target_epic: momentum-feature-taxonomy-maintenance
+  notes: >
+    Dissolved. This was the "Feature Visualization and Developer Orientation"
+    categorical epic (Epic 13 in epics.md). DEC-034 supersedes the feature layer;
+    Epic 13 is annotated HISTORICAL in prd.md. Remaining backlog stories re-homed
+    to momentum-feature-taxonomy-maintenance which absorbs the grooming function
+    pending B4 rename to epic-grooming. Re-homed 2026-05-28 (B1).
+
+# ── foundation-bootstrap ─────────────────────────────────────────────────────
+# 11 stories (all done) — initial Momentum setup, first install, momentum dir
+# migration. Historical foundation work.
+foundation-bootstrap:
+  disposition: dissolve
+  target_epic: ad-hoc
+  notes: >
+    Dissolved. All 11 stories are done — this epic served its purpose as the
+    initial bootstrap foundation. No active backlog. Re-homed to ad-hoc as
+    historical-done residue. Re-homed 2026-05-28 (B1).
+
+# ── foundation-fixes ─────────────────────────────────────────────────────────
+# 9 stories (8 done, 1 backlog) — retro-driven fixes, acceptance testing
+# standards. Mostly done.
+foundation-fixes:
+  disposition: dissolve
+  target_epic: ad-hoc
+  notes: >
+    Dissolved. Stories are retro-driven fixes from early sprints — acceptance
+    testing standards, process corrections. 8 of 9 done. Remaining backlog
+    story re-homed to ad-hoc. Re-homed 2026-05-28 (B1).
+
+# ── impetus-core ─────────────────────────────────────────────────────────────
+# 107 stories — the largest categorical epic. Contains session orientation,
+# sprint orchestration, tooling, logging — many sub-domains. Maps primarily
+# to momentum-impetus-session-orientation (orientation stories) but some
+# belong to orchestration, tooling etc. Best-effort: majority to session-orientation,
+# sprint-related to momentum-sprint-orchestration via epic-slug already set.
+# Since we can only set one target_epic per disposition, use session-orientation
+# as the primary re-home; stories already tagged to sub-features via feature_slug
+# field will be handled by their existing epic assignments.
+impetus-core:
+  disposition: dissolve
+  target_epic: momentum-impetus-session-orientation
+  notes: >
+    Dissolved. 107 stories spanning session orientation, sprint tooling, agent
+    logging, sprint commands. Primary re-home to momentum-impetus-session-orientation
+    as the dominant sub-domain. Sprint-specific stories (sprint activate, epic
+    membership) are orientation/tooling — session-orientation epic absorbs them.
+    Re-homed 2026-05-28 (B1).
+
+# ── impetus-sprint-orchestrator ──────────────────────────────────────────────
+# 25 stories — sprint dev execution, wave orchestration, merge sequencing.
+# Maps directly to momentum-sprint-orchestration.
+impetus-sprint-orchestrator:
+  disposition: dissolve
+  target_epic: momentum-sprint-orchestration
+  notes: >
+    Dissolved (slug was impetus-sprint-orchestrator — renamed from
+    "Impetus as Sprint Orchestrator" per epics.md edit 2026-05-14). Stories
+    cover sprint execution engine — waves, gates, merges. Re-homed to
+    momentum-sprint-orchestration. Re-homed 2026-05-28 (B1).
+
+# ── impetus-ux-redesign ──────────────────────────────────────────────────────
+# 10 stories (7 done, 3 backlog) — Impetus personality, ASCII art, visual identity.
+# Maps to momentum-impetus-experience.
+impetus-ux-redesign:
+  disposition: dissolve
+  target_epic: momentum-impetus-experience
+  notes: >
+    Dissolved. Stories are the visual/UX layer of Impetus — ASCII art, nerdfont
+    icons, greeting personality. Re-homed to momentum-impetus-experience which
+    is exactly the "how it feels" feature. Re-homed 2026-05-28 (B1).
+
+# ── performance-validation ───────────────────────────────────────────────────
+# 21 stories (all backlog) — promptfoo benchmarks, model tier validation,
+# benchmark-result-driven frontmatter updates.
+performance-validation:
+  disposition: dissolve
+  target_epic: momentum-startup-performance
+  notes: >
+    Dissolved. Stories are the benchmark/validation backlog for model routing
+    and startup performance. momentum-startup-performance absorbs the NFR20
+    (sub-2s startup) and model-routing quality validation work. Re-homed
+    2026-05-28 (B1).
+
+# ── practice-compounds ───────────────────────────────────────────────────────
+# 11 stories (all backlog) — cross-sprint pattern detection, signals ledger,
+# flywheel accumulation.
+practice-compounds:
+  disposition: dissolve
+  target_epic: momentum-practice-flywheel
+  notes: >
+    Dissolved. Stories are the practice flywheel implementation backlog —
+    pattern detection, signals ledger, cross-sprint compounding. Direct match
+    to momentum-practice-flywheel. Re-homed 2026-05-28 (B1).
+
+# ── quality-enforcement ──────────────────────────────────────────────────────
+# 33 stories — AVFL, code review, E2E validators, gate integration.
+quality-enforcement:
+  disposition: dissolve
+  target_epic: momentum-quality-gates-enforced
+  notes: >
+    Dissolved. Stories are quality gate infrastructure — AVFL configurations,
+    code review hooks, E2E validators, stop-gate checks. Re-homed to
+    momentum-quality-gates-enforced. Re-homed 2026-05-28 (B1).
+
+# ── redesign-foundation ──────────────────────────────────────────────────────
+# 3 stories (2 done, 1 dropped) — early Momentum redesign stories.
+redesign-foundation:
+  disposition: dissolve
+  target_epic: ad-hoc
+  notes: >
+    Dissolved. 3 stories from the 2026-04-01 redesign foundation (story-id
+    migration, sprint-status schema redesign, sprint-manager skill). 2 done,
+    1 dropped. Historical. Re-homed to ad-hoc. Re-homed 2026-05-28 (B1).
+
+# ── research-knowledge ───────────────────────────────────────────────────────
+# 9 stories (3 done, 6 backlog) — deep research pipeline, Gemini integration.
+research-knowledge:
+  disposition: dissolve
+  target_epic: momentum-deep-research-pipeline
+  notes: >
+    Dissolved. Stories are the research pipeline implementation — AVFL corpus
+    mode, momentum-research skill, Gemini automation. Direct match to
+    momentum-deep-research-pipeline. Re-homed 2026-05-28 (B1).
+
+# ── sprint-dev-workflow ──────────────────────────────────────────────────────
+# 13 stories — sprint-dev phase gate, backend error guidance, sprint scope tracking.
+sprint-dev-workflow:
+  disposition: dissolve
+  target_epic: momentum-sprint-orchestration
+  notes: >
+    Dissolved. Stories are sprint execution improvements — phase-7 gate,
+    error guidance, scope tracking. Direct match to momentum-sprint-orchestration.
+    Re-homed 2026-05-28 (B1).
+
+# ── stay-oriented-impetus ────────────────────────────────────────────────────
+# 13 stories (10 done, 3 backlog) — session orientation, thread management,
+# impetus greeting, feature-status cache.
+stay-oriented-impetus:
+  disposition: dissolve
+  target_epic: momentum-impetus-session-orientation
+  notes: >
+    Dissolved. Stories are session orientation — greeting, thread management,
+    feature-status cache. Direct match to momentum-impetus-session-orientation.
+    Re-homed 2026-05-28 (B1).
+
+# ── story-cycles ─────────────────────────────────────────────────────────────
+# 17 stories (10 backlog, 5 dropped, 2 done) — retro ceremony, sprint closure,
+# triage handoff.
+story-cycles:
+  disposition: dissolve
+  target_epic: momentum-sprint-retro
+  notes: >
+    Dissolved. Stories are retro ceremony, sprint closure, triage handoff —
+    direct match to momentum-sprint-retro. Re-homed 2026-05-28 (B1).

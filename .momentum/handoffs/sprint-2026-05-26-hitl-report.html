@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<!-- Sprint HITL report (v2, post-recovery) · house style after anthropics/html-effectiveness (self-contained, inline CSS+JS, no deps) -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint sprint-2026-05-26 — HITL Review (v2)</title>
+<style>
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 96px}
+  a{color:var(--clay-d)}
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px}
+  .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1.5px solid transparent;white-space:nowrap}
+  .pill.await{background:#FBF1D9;border-color:var(--gold);color:#8A6D12}
+  .pill.ok{background:#EAF0E2;border-color:var(--olive);color:#46552F}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 8px}
+  .metric{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:14px 16px}
+  .metric .n{font-family:var(--serif);font-size:26px;font-weight:600;line-height:1}
+  .metric .l{font-size:11.5px;color:var(--gray-500);margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+  .metric.good .n{color:var(--olive)} .metric.flag .n{color:var(--gold)}
+  section{margin-top:34px}
+  h2{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  .lead{color:var(--gray-700);font-size:14px;margin:0 0 16px}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:20px 22px;box-shadow:var(--shadow)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .sev{font:700 10px/1 var(--mono);padding:4px 7px;border-radius:5px;letter-spacing:.04em;display:inline-block}
+  .sev.crit{background:#F2D9D4;color:#7E2B22} .sev.high{background:#F7E1D6;color:#9A4A22}
+  .sev.med{background:#FBF1D9;color:#8A6D12} .sev.low{background:var(--gray-100);color:var(--gray-700)}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0;border-bottom:1px solid var(--gray-100);font-size:13.5px}
+  ul.clean li:last-child{border-bottom:none}
+  .decision{border:1.5px solid var(--gold);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFFDF7,#FFF);padding:22px 24px;box-shadow:var(--shadow)}
+  .item{border:var(--border);border-radius:var(--radius-row);padding:14px 16px;margin-bottom:12px;background:#fff}
+  .item h4{margin:0 0 4px;font-size:14.5px;font-family:var(--sans);font-weight:600}
+  .item p{margin:0 0 10px;font-size:13px;color:var(--gray-700)}
+  .choices{display:flex;gap:8px;flex-wrap:wrap}
+  .choices label{font:600 12.5px/1 var(--sans);padding:8px 13px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;background:#fff;user-select:none;transition:.12s}
+  .choices input{position:absolute;opacity:0;pointer-events:none}
+  .choices label:hover{border-color:var(--clay)}
+  .choices label.sel{background:var(--clay);border-color:var(--clay-d);color:#fff}
+  .final{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .final label{flex:1;min-width:220px;border:1.5px solid var(--gray-200);border-radius:10px;padding:14px 16px;cursor:pointer;background:#fff}
+  .final label.selA{border-color:var(--olive);background:#EFF3E9} .final label.selH{border-color:var(--rust);background:#F8EAE6}
+  .final b{display:block;font-size:14px} .final small{color:var(--gray-500);font-size:12px}
+  .actions{display:flex;gap:12px;align-items:center;margin-top:20px;flex-wrap:wrap}
+  button{font:600 13.5px/1 var(--sans);padding:12px 20px;border-radius:9px;border:1.5px solid var(--clay-d);background:var(--clay);color:#fff;cursor:pointer;transition:.12s}
+  button:hover{background:var(--clay-d)}
+  button.ghost{background:#fff;color:var(--slate);border-color:var(--gray-200)}
+  .out{margin-top:16px;border:var(--border);border-radius:var(--radius-row);background:var(--gray-50);padding:16px;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;color:var(--slate);display:none}
+  .out.show{display:block}
+  .copied{font:600 12px/1 var(--sans);color:var(--olive);margin-left:4px;opacity:0;transition:.2s}
+  .copied.show{opacity:1}
+  details{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:0 16px;margin-top:10px}
+  summary{cursor:pointer;padding:13px 0;font:600 13.5px/1 var(--sans);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸";color:var(--clay-d);margin-right:9px;display:inline-block;transition:.15s}
+  details[open] summary::before{transform:rotate(90deg)}
+  details .body{padding:0 0 14px;font-size:13.5px;color:var(--gray-700)}
+  code{font-family:var(--mono);font-size:.88em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px}
+  .foot{margin-top:40px;text-align:center;color:var(--gray-400);font-size:12px}
+  @media(max-width:720px){.metrics{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">Sprint Dev · HITL Review · v2 (post-recovery)</div>
+        <h1>sprint-2026-05-26</h1>
+        <div class="sub">9 stories · DEC-033 practice-ledger + DEC-034 epic migration · ran the pre-merge gates (QA + code review + architect-guard) that were mistakenly skipped, then a /simplify cleanup pass.</div>
+      </div>
+      <span class="pill await"><span class="dot"></span>2 decisions + final approval</span>
+    </div>
+    <div class="metrics">
+      <div class="metric good"><div class="n">9/9</div><div class="l">Stories merged</div></div>
+      <div class="metric good"><div class="n">785</div><div class="l">Tests passing</div></div>
+      <div class="metric"><div class="n">20</div><div class="l">Defects auto-fixed</div></div>
+      <div class="metric good"><div class="n">0</div><div class="l">Deferred</div></div>
+      <div class="metric flag"><div class="n">2</div><div class="l">Your call</div></div>
+    </div>
+  </header>
+
+  <section id="decide">
+    <h2><span class="num">01</span>Your decisions</h2>
+    <p class="lead">The earlier items (a1 routine, a3, b4) are resolved — see below. Two genuine engineering calls remain, plus the final go/no-go. Set them, hit <b>Copy decision as prompt</b>, paste back.</p>
+
+    <div class="panel" style="margin-bottom:16px;background:var(--gray-50)">
+      <p style="margin:0;font-size:13.5px;color:var(--gray-700)"><b>Background (both decisions come from story a1).</b> a1 replaced the old <code>intake-queue.jsonl</code> with a <b>practice ledger</b> (<code>.momentum/practice-ledger.jsonl</code>) — an <b>append-only event log</b>: you never edit or delete past lines, you only append events (<code>created</code>, <code>consumed</code>, <code>closed_stale</code>…). To answer "what's still open?" the code <b>reads every event and replays them per item</b> ("folding") — an item that was <code>created</code> then later <code>consumed</code> folds to "closed." Both decisions are about that reader. <b>Neither blocks the sprint</b> — each is "is the current behavior the one we want to bless?"</p>
+    </div>
+
+    <div class="decision">
+
+      <div class="item">
+        <h4>① The practice-ledger reader: DuckDB or pure-Python? <span class="sev high">AC15 / arch D7</span></h4>
+        <p><b>The contradiction:</b> the spec (a1's acceptance criterion <b>AC15</b>, plus architecture <b>Decision 52 / DEC-033 D7</b>) says the reader should use <b>DuckDB</b> — an embeddable SQL engine — to read the JSONL and fold it with SQL. The function is even <i>named</i> <code>_load_duckdb_events</code>. But the code that was actually written is <b>plain Python</b> (open file → parse each line → fold in a loop); it imports <b>no DuckDB at all</b>. It's correct, passes all 658 tests, and is arguably <i>better</i> because it has <b>no external dependency</b> (DuckDB would need installing; pure-Python runs anywhere). Nothing is broken — this is "which side do we make honest?"</p>
+        <details style="margin:0 0 12px"><summary>The three options &amp; trade-offs</summary><div class="body">
+          <b>Bless pure-Python (recommended):</b> update AC15 + the two arch decisions to describe the pure-Python fold, and rename <code>_load_duckdb_events</code> → <code>_load_ledger_events</code>. ~5 min of doc + rename, zero behavior change, stays dependency-free.<br>
+          <b>Implement real DuckDB:</b> rewrite the reader to use DuckDB SQL + add the dependency. Matches the original spec, but adds a dependency the dev deliberately avoided, for <b>no behavioral gain</b>.<br>
+          <b>Defer:</b> leave the mismatch (misleading name/spec lingers), file a follow-up story.
+        </div></details>
+        <div class="choices" data-group="duckdb">
+          <label class="sel"><input type="radio" name="duckdb" value="bless" checked><span>Bless pure-Python — amend AC/arch + rename fn</span></label>
+          <label><input type="radio" name="duckdb" value="implement"><span>Implement real DuckDB reader</span></label>
+          <label><input type="radio" name="duckdb" value="followup"><span>Defer to a follow-up story</span></label>
+        </div>
+      </div>
+
+      <div class="item">
+        <h4>② Archive entries excluded from open/history derivation <span class="sev med">by-design</span></h4>
+        <p><b>What happened:</b> a1 renamed the old <code>intake-queue.jsonl</code> (old schema: <code>id</code>/<code>status</code>/<code>kind</code>) to <code>practice-ledger-pre-2026-05.jsonl</code> — the <b>"archive"</b> — and started a fresh ledger with the new event schema (<code>event_id</code>/<code>entity_id</code>/<code>event_type</code>). The reader <b>counts</b> the 88 archived entries (<code>summary</code> shows <code>archive_entries: 88</code>) but <b>does not fold them</b> into <code>open</code>/<code>history</code> — only new-schema events get replayed, because the old rows are status snapshots, not events, and can't run through the event-fold logic.</p>
+        <p><b>Visible consequence</b> (what a2's QA flagged): <code>history --entity &lt;old-item&gt;</code> shows <b>1 event</b> (just the new "consumed" a2 appended during cleanup), not 2 — the original "created" lives in the archive, which history doesn't read. So the chain looks truncated across the migration boundary.</p>
+        <details style="margin:0 0 12px"><summary>The two options &amp; trade-offs</summary><div class="body">
+          <b>Leave as-is (recommended):</b> the archive is a frozen historical snapshot; new work uses the new ledger; old entries remain a visible count. Clean migration boundary; cross-boundary history is incomplete by design.<br>
+          <b>Follow-up backfill:</b> a one-time script reads still-open archive items and emits synthetic new-schema <code>created</code> events so they appear in <code>open</code>/<code>history</code> with full chains. More work; only worth it if you need seamless history <i>across</i> the old→new cutover.
+        </div></details>
+        <div class="choices" data-group="archive">
+          <label class="sel"><input type="radio" name="archive" value="leave" checked><span>Leave as-is (archive is frozen)</span></label>
+          <label><input type="radio" name="archive" value="followup"><span>Follow-up story: backfill projection</span></label>
+        </div>
+      </div>
+
+      <div style="height:8px"></div>
+      <div class="final">
+        <label class="selA" data-final="approve"><input type="radio" name="final" value="approve" checked>
+          <b>✓ Approve &amp; finish</b><small>verify→done · sprint complete · merge to main · then ask before push</small></label>
+        <label data-final="hold"><input type="radio" name="final" value="hold">
+          <b>✕ Hold</b><small>keep on the sprint branch — don't merge to main yet</small></label>
+      </div>
+
+      <div class="actions">
+        <button onclick="copyPrompt()">Copy decision as prompt</button>
+        <button class="ghost" onclick="toggleOut()">Preview</button>
+        <span class="copied" id="copied">✓ copied — paste it back to me</span>
+      </div>
+      <div class="out" id="out"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span>Recovery round — the gates that were mistakenly skipped</h2>
+    <p class="lead">You wanted QA + code review + architect-guard <b>pre-merge per story</b>; I dropped them entirely. I ran them on the merged branch (no worktree recreation needed — read-only analyses). They earned their keep: <b>13 new real defects</b>, all auto-fixed + re-validated.</p>
+    <div class="grid2">
+      <div class="panel">
+        <h4 style="margin:0 0 8px">QA (9) + architecture-guard</h4>
+        <ul class="clean">
+          <li><span class="sev high">high</span> b1 — <code>stories_remaining</code> counted <code>review</code> status (ad-hoc 14→5)</li>
+          <li><span class="sev high">high</span> b4 — epic-breakdown read <code>acceptance_condition</code>(sing.) + nonexistent <code>status</code> → null input</li>
+          <li><span class="sev med">med ×4</span> a4 eval gaps · b1 _migration notes · b2 missing eval · arch sole-writer note</li>
+          <li><span class="sev low">pass</span> architecture-guard: <b>PASS</b> (2 medium notes folded into fixes)</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h4 style="margin:0 0 8px">Code review (a1/b1/b3) + flake</h4>
+        <ul class="clean">
+          <li><span class="sev high">high</span> a1 — same-second <code>ts</code> + insertion-order tie → <b>non-deterministic</b> open/history (fixed: <code>(ts,event_id)</code>)</li>
+          <li><span class="sev med">med</span> b3 — epic data rendered <b>unescaped</b> (XSS); <code>analyzeGap</code> false-flagged 15/25 epics on real data</li>
+          <li><span class="sev med">med</span> a1 — <code>KeyError</code> crash path on malformed input; b1 zombie epics / provenance / JSON guards</li>
+          <li><span class="sev high">flake</span> ledger test flaked 3/4 → root-caused to the same tie-break; fixed (now 5/5)</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:14px"><b>/simplify cleanup</b> then unified the L1↔L2 gap heuristic, extracted <code>_parse_iso_ts</code>/<code>_append_ledger_event</code> helpers + a TTL constant, and closed a <code>/epics/_migration</code> leak — no behavior change.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span>Resolved since v1</h2>
+    <div class="panel">
+      <ul class="clean">
+        <li>✓ <b>a1 daily routine</b> — registered as a macOS <b>launchd</b> job (<code>com.momentum.practice-ledger-close-stale</code>, 09:07 daily, idempotent). Persistent, unattended.</li>
+        <li>✓ <b>a3 live greeting</b> — accepted; your fresh-session "Hi" greeting <i>was</i> the live verification (honest counts, no intake-queue refs). <span style="color:var(--gray-500)">Noted: 34s bake → fix is a SessionStart hook that pre-renders the report; <code>momentum-tools</code> isn't a PATH binary (canonical = <code>python3 …/momentum-tools.py</code>) — both worth backlog stories.</span></li>
+        <li>✓ <b>b4 cmux scenarios</b> — accepted (infra flake, structurally verified).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span>Deferred cleanups (noted, not blocking)</h2>
+    <details><summary>4 low-value / behavior-adjacent items I intentionally skipped</summary>
+      <div class="body">
+        • Rename <code>_load_duckdb_events</code> → bundled with decision ①.<br>
+        • Generalize the hardcoded <code>"pre-2026-05"</code> archive-detection string (behavior-adjacent).<br>
+        • Merge the migration's first re-home loop into the rebuild loop (behavior risk on non-ad-hoc dispositions).<br>
+        • Remove the now-inert <code>status</code>-severity sort in canvas (test churn, low value).
+      </div></details>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span>Merge &amp; push preview</h2>
+    <div class="panel">
+      <div style="display:flex;gap:28px;flex-wrap:wrap">
+        <div><div class="metric" style="border:none;padding:0"><div class="n" style="color:var(--clay-d)">34</div><div class="l">commits ahead of main</div></div></div>
+        <div><div class="metric" style="border:none;padding:0"><div class="n" style="color:var(--clay-d)">31</div><div class="l">commits ahead of origin</div></div></div>
+        <div><div class="metric" style="border:none;padding:0"><div class="n">785</div><div class="l">tests green (658+41+86)</div></div></div>
+      </div>
+      <p style="font-size:13px;color:var(--gray-700);margin:16px 0 0">On approval: <code>review→verify→done</code> ×9 → <code>momentum-tools sprint complete</code> → merge <code>sprint/sprint-2026-05-26</code> → <code>main</code>. <b>Push stays a separate confirmation.</b></p>
+    </div>
+  </section>
+
+  <div class="foot">Generated by sprint-dev · self-contained HTML, house style from anthropics/html-effectiveness · no dependencies</div>
+</div>
+
+<script>
+  function paint(){
+    document.querySelectorAll('.choices label').forEach(l=>l.classList.toggle('sel',l.querySelector('input').checked));
+    document.querySelectorAll('.final label').forEach(l=>{const v=l.querySelector('input').checked;l.classList.toggle('selA',v&&l.dataset.final==='approve');l.classList.toggle('selH',v&&l.dataset.final==='hold');});
+  }
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener('change',paint)); paint();
+  function val(n){return document.querySelector('input[name="'+n+'"]:checked').value}
+  function buildPrompt(){
+    const duckdb={bless:'DuckDB reader: bless the pure-Python implementation — amend AC15 + architecture Decision 52/DEC-033 D7 to describe the portable pure-Python fold, and rename _load_duckdb_events accordingly.',implement:'DuckDB reader: implement a real DuckDB-backed reader per AC15/D7 (add the dependency).',followup:'DuckDB reader: defer to a follow-up story; leave the pure-Python impl as-is for now.'}[val('duckdb')];
+    const archive={leave:'Archive derivation: leave as-is — pre-2026-05 archive is frozen and excluded from open/history by design.',followup:'Archive derivation: create a follow-up story to backfill still-open archive entities into the new schema.'}[val('archive')];
+    const fin=val('final');
+    const head=fin==='approve'?'Approved. Finish sprint-2026-05-26: transition all 9 stories verify→done, run momentum-tools sprint complete, merge sprint/sprint-2026-05-26 into main, then show me the push list and ask before pushing.':'Hold sprint-2026-05-26 on the sprint branch — do NOT merge to main yet.';
+    return ['Sprint sprint-2026-05-26 final HITL decision:','• '+head,'• '+duckdb,'• '+archive].join('\n');
+  }
+  function toggleOut(){const o=document.getElementById('out');o.textContent=buildPrompt();o.classList.toggle('show')}
+  function copyPrompt(){const t=buildPrompt();const o=document.getElementById('out');o.textContent=t;o.classList.add('show');navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>{const c=document.getElementById('copied');c.classList.add('show');setTimeout(()=>c.classList.remove('show'),2600);});}
+</script>
+</body>
+</html>

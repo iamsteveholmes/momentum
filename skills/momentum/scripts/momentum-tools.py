@@ -20,9 +20,14 @@ Usage:
     momentum-tools.py agent resolve --role qa-reviewer
     momentum-tools.py quickfix register --slug SLUG --story STORY_KEY
     momentum-tools.py quickfix complete --slug SLUG
-    momentum-tools.py intake-queue append --source SOURCE --kind KIND --title TITLE [--description DESC] [--sprint-slug SLUG] [--feature-slug SLUG] [--story-type TYPE] [--feature-state-transition JSON] [--failure-diagnosis JSON]
-    momentum-tools.py intake-queue list [--source SOURCE] [--kind KIND] [--status STATUS]
-    momentum-tools.py intake-queue consume --id ID [--outcome-ref REF]
+    momentum-tools.py practice-ledger append --entity-id ID --event-type TYPE --source SRC --actor ACTOR --payload JSON [--custom-event-type TYPE]
+    momentum-tools.py practice-ledger consume --entity-id ID --actor ACTOR [--source SRC] [--outcome-ref REF]
+    momentum-tools.py practice-ledger summary [--format json|text]
+    momentum-tools.py practice-ledger open
+    momentum-tools.py practice-ledger history --entity ID
+    momentum-tools.py practice-ledger since ISO_TS
+    momentum-tools.py practice-ledger by-source SOURCE
+    momentum-tools.py practice-ledger close-stale [--age-days N]
     momentum-tools.py version check
 """
 
@@ -2214,161 +2219,376 @@ def cmd_triage_prefilter(args: argparse.Namespace) -> None:
            item_count=len(items))
 
 
-# --- Intake Queue Commands ---
+# --- Practice Ledger Commands (DEC-033) ---
 
-INTAKE_QUEUE_KINDS = {"shape", "watch", "rejected", "handoff"}
-INTAKE_QUEUE_SOURCES = {"triage", "retro", "assessment"}
-INTAKE_QUEUE_STATUSES = {"open", "consumed"}
+PRACTICE_LEDGER_EVENT_TYPES = frozenset({
+    "created", "updated", "consumed", "rejected",
+    "closed_stale", "reopened", "custom",
+})
+PRACTICE_LEDGER_TERMINAL_TYPES = frozenset({"consumed", "rejected", "closed_stale"})
+
+# Default TTL (in days) after which a non-terminal practice-ledger entity is
+# eligible for auto-close. The summary's near_auto_close band tracks this value.
+PRACTICE_LEDGER_STALE_TTL_DAYS = 15
 
 
-def intake_queue_path(project_dir: Path) -> Path:
-    return project_dir / ".momentum" / "intake-queue.jsonl"
+def practice_ledger_path(project_dir: Path) -> Path:
+    return project_dir / ".momentum" / "practice-ledger.jsonl"
 
 
-def cmd_intake_queue_append(args: argparse.Namespace) -> None:
-    """Append an event to intake-queue.jsonl."""
+def _generate_event_id() -> str:
+    """Generate a unique event_id using timestamp + UUID."""
     import uuid
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+    return f"pl-{ts}-{uuid.uuid4().hex[:8]}"
 
-    project_dir = resolve_project_dir()
-    queue_path = intake_queue_path(project_dir)
 
-    kind = args.kind
-    source = args.source
-    if kind not in INTAKE_QUEUE_KINDS:
-        error_result("intake_queue_append", f"Invalid kind '{kind}'. Must be one of: {', '.join(sorted(INTAKE_QUEUE_KINDS))}")
-        return
-    if source not in INTAKE_QUEUE_SOURCES:
-        error_result("intake_queue_append", f"Invalid source '{source}'. Must be one of: {', '.join(sorted(INTAKE_QUEUE_SOURCES))}")
-        return
+def _parse_iso_ts(ts_str) -> "datetime | None":
+    """Parse an ISO-8601 timestamp (tolerating a trailing 'Z').
 
-    # Build the event
-    event_id = f"iq-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:8]}"
+    Returns the parsed datetime, or None if the input is not a parseable
+    timestamp string.
+    """
+    try:
+        return datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
+
+
+def _append_ledger_event(ledger_path, *, entity_id, event_type, source, actor,
+                         payload, custom_event_type=None) -> str:
+    """Build a practice-ledger event, append it (append-only), return event_id."""
+    event_id = _generate_event_id()
     event: dict = {
-        "id": event_id,
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "event_id": event_id,
+        "entity_id": entity_id,
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "event_type": event_type,
         "source": source,
-        "kind": kind,
-        "status": "open",
-        "title": args.title,
-        "description": args.description or "",
-        "sprint_slug": args.sprint_slug or None,
+        "actor": actor,
+        "payload": payload,
+    }
+    if custom_event_type:
+        event["custom_event_type"] = custom_event_type
+
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(event, ensure_ascii=False)
+    with open(ledger_path, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+    return event_id
+
+
+def cmd_practice_ledger_append(args: argparse.Namespace) -> None:
+    """Append an event to practice-ledger.jsonl (true append-only, O_APPEND)."""
+    project_dir = resolve_project_dir()
+    ledger_path = practice_ledger_path(project_dir)
+
+    event_type = args.event_type
+    if event_type not in PRACTICE_LEDGER_EVENT_TYPES:
+        error_result("practice_ledger_append",
+                     f"Invalid event_type '{event_type}'. Must be one of: "
+                     f"{', '.join(sorted(PRACTICE_LEDGER_EVENT_TYPES))}")
+        return
+
+    try:
+        payload = json.loads(args.payload) if args.payload else {}
+    except json.JSONDecodeError as e:
+        error_result("practice_ledger_append", f"Invalid JSON for --payload: {e}")
+        return
+
+    custom_event_type = None
+    if event_type == "custom":
+        custom_event_type = getattr(args, "custom_event_type", None) or None
+
+    event_id = _append_ledger_event(
+        ledger_path,
+        entity_id=args.entity_id,
+        event_type=event_type,
+        source=args.source,
+        actor=args.actor,
+        payload=payload,
+        custom_event_type=custom_event_type,
+    )
+
+    result("practice_ledger_append", success=True, event_id=event_id,
+           entity_id=args.entity_id, ledger_path=str(ledger_path))
+
+
+def cmd_practice_ledger_consume(args: argparse.Namespace) -> None:
+    """Append a consumed event referencing the original entity_id (append-only)."""
+    project_dir = resolve_project_dir()
+    ledger_path = practice_ledger_path(project_dir)
+
+    entity_id = args.entity_id
+    outcome_ref = getattr(args, "outcome_ref", None) or ""
+
+    payload: dict = {}
+    if outcome_ref:
+        payload["outcome_ref"] = outcome_ref
+
+    event_id = _append_ledger_event(
+        ledger_path,
+        entity_id=entity_id,
+        event_type="consumed",
+        source=getattr(args, "source", "momentum-tools-consume"),
+        actor=getattr(args, "actor", "unknown"),
+        payload=payload,
+    )
+
+    result("practice_ledger_consume", success=True, event_id=event_id,
+           entity_id=entity_id, ledger_path=str(ledger_path))
+
+
+def _load_ledger_events(project_dir: Path) -> tuple:
+    """Load new-schema ledger events with a pure-Python fold; count archive entries.
+
+    Implementation: glob the .momentum/practice-ledger*.jsonl files, parse each
+    line as JSON one at a time, and fold by entity. No DuckDB is involved — this
+    is plain stdlib (glob + json + a defaultdict fold downstream). The function
+    name historically implied DuckDB; it does not.
+
+    The five fixed reader subcommands (summary/open/history/since/by-source) are
+    served entirely by this fold. An arbitrary-SQL-query interface (the actual
+    value DuckDB would add) is intentionally DEFERRED to the follow-up story
+    `practice-ledger-duckdb-sql-query-command`.
+
+    Returns (new_events_list, archive_count).
+    New-schema events have 'event_id' field. Lines missing it are archive entries.
+    """
+    import glob as _glob
+
+    momentum_dir = project_dir / ".momentum"
+    pattern = str(momentum_dir / "practice-ledger*.jsonl")
+    files = sorted(_glob.glob(pattern))
+
+    new_events: list = []
+    archive_count = 0
+
+    for fpath in files:
+        is_archive = "pre-2026-05" in fpath
+        try:
+            with open(fpath, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        ev = json.loads(line)
+                    except json.JSONDecodeError:
+                        archive_count += 1
+                        continue
+                    # New-schema entries have event_id
+                    if "event_id" in ev and not is_archive:
+                        new_events.append(ev)
+                    else:
+                        archive_count += 1
+        except OSError:
+            pass
+
+    return new_events, archive_count
+
+
+def _event_order_key(ev: dict) -> tuple:
+    """Deterministic ordering key for folding/history.
+
+    ts is written at 1-second resolution, so same-second events for one entity
+    tie on ts alone and the stable sort then falls back to file insertion order.
+    event_id embeds a microsecond timestamp (pl-YYYYMMDDTHHMMSSffffff-<hex>), so
+    appending it as a secondary key gives a stable monotonic tiebreak.
+    """
+    return (ev.get("ts", ""), ev.get("event_id", ""))
+
+
+def _derive_current_state(events: list) -> dict:
+    """Fold events by entity_id to derive current state (last event wins by ts)."""
+    from collections import defaultdict
+    by_entity: dict = defaultdict(list)
+    for ev in events:
+        entity_id = ev.get("entity_id")
+        if entity_id is None:
+            # New-schema lines without entity_id can't be folded; skip defensively
+            # rather than crashing the JSON contract with a KeyError traceback.
+            continue
+        by_entity[entity_id].append(ev)
+    current: dict = {}
+    for entity_id, evlist in by_entity.items():
+        sorted_evs = sorted(evlist, key=_event_order_key)
+        last = sorted_evs[-1]
+        current[entity_id] = {
+            "entity_id": entity_id,
+            "last_event_type": last.get("event_type"),
+            "last_ts": last.get("ts"),
+            "last_event_id": last.get("event_id"),
+            "created_ts": sorted_evs[0].get("ts"),
+            "event_count": len(sorted_evs),
+        }
+    return current
+
+
+def cmd_practice_ledger_summary(args: argparse.Namespace) -> None:
+    """summary — counts by event_type, source, age buckets, archive_entries."""
+    from collections import defaultdict
+    project_dir = resolve_project_dir()
+    new_events, archive_count = _load_ledger_events(project_dir)
+
+    by_event_type: dict = defaultdict(int)
+    by_source: dict = defaultdict(int)
+
+    now = datetime.now(timezone.utc)
+
+    lt_7d = 0
+    d7_30 = 0
+    gt_30d = 0
+    near_close = 0
+
+    for ev in new_events:
+        etype = ev.get("event_type", "unknown")
+        src = ev.get("source", "unknown")
+        by_event_type[etype] += 1
+        by_source[src] += 1
+
+        ev_dt = _parse_iso_ts(ev.get("ts", ""))
+        if ev_dt is not None:
+            age_days = (now - ev_dt).days
+            if age_days < 7:
+                lt_7d += 1
+            elif age_days <= 30:
+                d7_30 += 1
+            else:
+                gt_30d += 1
+            if PRACTICE_LEDGER_STALE_TTL_DAYS - 3 <= age_days < PRACTICE_LEDGER_STALE_TTL_DAYS:
+                near_close += 1
+
+    output_fmt = getattr(args, "format", "json")
+    summary_data = {
+        "new_entries": len(new_events),
+        "archive_entries": archive_count,
+        "by_event_type": dict(by_event_type),
+        "by_source": dict(by_source),
+        "age_buckets": {
+            "lt_7d": lt_7d,
+            "d7_30": d7_30,
+            "gt_30d": gt_30d,
+            "near_auto_close": near_close,
+        },
     }
 
-    # Optional enrichment fields
-    if args.feature_slug:
-        event["feature_slug"] = args.feature_slug
-    if args.story_type:
-        event["story_type"] = args.story_type
-    if args.feature_state_transition:
-        try:
-            fst = json.loads(args.feature_state_transition)
-            event["feature_state_transition"] = fst
-        except json.JSONDecodeError as e:
-            error_result("intake_queue_append", f"Invalid JSON for --feature-state-transition: {e}")
-            return
-    if args.failure_diagnosis:
-        try:
-            fd = json.loads(args.failure_diagnosis)
-            event["failure_diagnosis"] = fd
-        except json.JSONDecodeError as e:
-            error_result("intake_queue_append", f"Invalid JSON for --failure-diagnosis: {e}")
-            return
-
-    # Ensure directory exists
-    queue_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Atomic append
-    line = json.dumps(event, ensure_ascii=False)
-    tmp_path = queue_path.parent / "intake-queue.jsonl.tmp"
-    try:
-        tmp_path.write_text(line + "\n", encoding="utf-8")
-        json.loads(tmp_path.read_text(encoding="utf-8").strip())
-        with open(queue_path, "a", encoding="utf-8") as f:
-            f.write(line + "\n")
-        tmp_path.unlink(missing_ok=True)
-    except Exception as e:
-        tmp_path.unlink(missing_ok=True)
-        error_result("intake_queue_append", f"Append failed: {e}")
+    if output_fmt == "text":
+        lines = [
+            f"Practice Ledger Summary",
+            f"  new entries:     {len(new_events)}",
+            f"  archive entries: {archive_count}",
+            f"  by event_type:   {dict(by_event_type)}",
+            f"  by source:       {dict(by_source)}",
+            f"  age <7d:         {lt_7d}",
+            f"  age 7-30d:       {d7_30}",
+            f"  age >30d:        {gt_30d}",
+            f"  near_auto_close: {near_close}",
+        ]
+        print("\n".join(lines))
         return
 
-    result("intake_queue_append", success=True, id=event_id, queue_path=str(queue_path))
+    result("practice_ledger_summary", success=True, **summary_data)
 
 
-def cmd_intake_queue_list(args: argparse.Namespace) -> None:
-    """List events from intake-queue.jsonl, with optional filters."""
+def cmd_practice_ledger_open(args: argparse.Namespace) -> None:
+    """open — entities whose last event is non-terminal."""
     project_dir = resolve_project_dir()
-    queue_path = intake_queue_path(project_dir)
+    new_events, _ = _load_ledger_events(project_dir)
+    current = _derive_current_state(new_events)
 
-    if not queue_path.exists():
-        result("intake_queue_list", success=True, events=[], count=0,
-               queue_path=str(queue_path), note="intake-queue.jsonl does not exist yet")
-        return
-
-    events = []
-    with open(queue_path, encoding="utf-8") as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                event = json.loads(line)
-            except json.JSONDecodeError:
-                # Skip malformed lines silently
-                continue
-
-            # Apply filters
-            if args.source and event.get("source") != args.source:
-                continue
-            if args.kind and event.get("kind") != args.kind:
-                continue
-            if args.status and event.get("status") != args.status:
-                continue
-
-            events.append(event)
-
-    result("intake_queue_list", success=True, events=events, count=len(events),
-           queue_path=str(queue_path))
+    open_entities = [
+        v for v in current.values()
+        if v["last_event_type"] not in PRACTICE_LEDGER_TERMINAL_TYPES
+    ]
+    result("practice_ledger_open", success=True, entities=open_entities,
+           count=len(open_entities))
 
 
-def cmd_intake_queue_consume(args: argparse.Namespace) -> None:
-    """Mark an intake-queue event as consumed by rewriting its status field."""
+def cmd_practice_ledger_history(args: argparse.Namespace) -> None:
+    """history --entity <id> — all events for entity, sorted by ts ascending."""
     project_dir = resolve_project_dir()
-    queue_path = intake_queue_path(project_dir)
+    entity_id = args.entity
+    new_events, _ = _load_ledger_events(project_dir)
+    entity_events = [ev for ev in new_events if ev.get("entity_id") == entity_id]
+    entity_events.sort(key=_event_order_key)
+    result("practice_ledger_history", success=True, entity_id=entity_id,
+           events=entity_events, count=len(entity_events))
 
-    if not queue_path.exists():
-        error_result("intake_queue_consume", "intake-queue.jsonl does not exist")
+
+def cmd_practice_ledger_since(args: argparse.Namespace) -> None:
+    """since <iso-ts> — events strictly after the given timestamp."""
+    project_dir = resolve_project_dir()
+    since_ts = args.ts
+    since_dt = _parse_iso_ts(since_ts)
+    if since_dt is None:
+        error_result("practice_ledger_since",
+                     f"Invalid --ts '{since_ts}': must be an ISO-8601 timestamp "
+                     f"(e.g. 2026-05-28T12:00:00Z)",
+                     since=since_ts)
         return
-
-    event_id = args.id
-    outcome_ref = args.outcome_ref or ""
-
-    lines = queue_path.read_text(encoding="utf-8").splitlines()
-    updated = False
-    new_lines = []
-    for line in lines:
-        line = line.strip()
-        if not line:
-            new_lines.append(line)
+    new_events, _ = _load_ledger_events(project_dir)
+    filtered = []
+    for ev in new_events:
+        ev_dt = _parse_iso_ts(ev.get("ts", ""))
+        if ev_dt is None:
+            # Skip events whose ts can't be parsed rather than including/dropping
+            # them via lexical comparison against a parsed bound.
             continue
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            new_lines.append(line)
+        if ev_dt > since_dt:
+            filtered.append(ev)
+    result("practice_ledger_since", success=True, since=since_ts,
+           events=filtered, count=len(filtered))
+
+
+def cmd_practice_ledger_by_source(args: argparse.Namespace) -> None:
+    """by-source <source> — events whose source matches exactly."""
+    project_dir = resolve_project_dir()
+    source = args.source
+    new_events, _ = _load_ledger_events(project_dir)
+    filtered = [ev for ev in new_events if ev.get("source") == source]
+    result("practice_ledger_by_source", success=True, source=source,
+           events=filtered, count=len(filtered))
+
+
+def cmd_practice_ledger_close_stale(args: argparse.Namespace) -> None:
+    """close-stale — append closed_stale events for non-terminal entities older than TTL."""
+    project_dir = resolve_project_dir()
+    age_days = int(getattr(args, "age_days", PRACTICE_LEDGER_STALE_TTL_DAYS))
+
+    new_events, _ = _load_ledger_events(project_dir)
+    current = _derive_current_state(new_events)
+
+    now = datetime.now(timezone.utc)
+    closed_count = 0
+    closed_entity_ids = []
+
+    for entity_id, state in current.items():
+        if state["last_event_type"] in PRACTICE_LEDGER_TERMINAL_TYPES:
             continue
-        if event.get("id") == event_id:
-            event["status"] = "consumed"
-            event["consumed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-            if outcome_ref:
-                event["outcome_ref"] = outcome_ref
-            updated = True
-        new_lines.append(json.dumps(event, ensure_ascii=False))
+        created_dt = _parse_iso_ts(state.get("created_ts", ""))
+        if created_dt is None:
+            continue
+        age = (now - created_dt).days
+        if age > age_days:
+            closed_entity_ids.append((entity_id, age))
 
-    if not updated:
-        error_result("intake_queue_consume", f"Event id '{event_id}' not found in intake-queue.jsonl")
-        return
+    ledger_path = practice_ledger_path(project_dir)
+    for entity_id, age in closed_entity_ids:
+        _append_ledger_event(
+            ledger_path,
+            entity_id=entity_id,
+            event_type="closed_stale",
+            source="momentum-tools-close-stale",
+            actor="automation",
+            payload={"age_days_at_close": age},
+        )
+        closed_count += 1
 
-    queue_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-    result("intake_queue_consume", success=True, id=event_id, queue_path=str(queue_path))
+    result("practice_ledger_close_stale", success=True,
+           closed_count=closed_count,
+           closed_entity_ids=[eid for eid, _ in closed_entity_ids],
+           age_days=age_days)
 
 
 # --- Version Command ---
@@ -2555,43 +2775,64 @@ def build_parser() -> argparse.ArgumentParser:
     qfc.add_argument("--slug", required=True, help="Quickfix slug")
     qfc.set_defaults(func=cmd_quickfix_complete)
 
-    # intake-queue command group
-    iq = subparsers.add_parser("intake-queue", help="Intake queue (intake-queue.jsonl) operations")
-    iq_sub = iq.add_subparsers(dest="iq_action", required=True)
+    # practice-ledger command group (DEC-033)
+    pl = subparsers.add_parser("practice-ledger",
+                               help="Practice-ledger (practice-ledger.jsonl) operations — DEC-033")
+    pl_sub = pl.add_subparsers(dest="pl_action", required=True)
 
-    # intake-queue append
-    iqa = iq_sub.add_parser("append", help="Append an event to intake-queue.jsonl")
-    iqa.add_argument("--source", required=True,
-                     choices=sorted(INTAKE_QUEUE_SOURCES),
-                     help="Event source (triage|retro|assessment)")
-    iqa.add_argument("--kind", required=True,
-                     choices=sorted(INTAKE_QUEUE_KINDS),
-                     help="Event kind (handoff|shape|watch|rejected)")
-    iqa.add_argument("--title", required=True, help="Short title for the event")
-    iqa.add_argument("--description", default="", help="Full description")
-    iqa.add_argument("--sprint-slug", default=None, help="Retro sprint slug (provenance)")
-    iqa.add_argument("--feature-slug", default=None, help="Associated feature slug")
-    iqa.add_argument("--story-type", default=None,
-                     help="Suggested story type (feature|maintenance|defect|exploration|practice)")
-    iqa.add_argument("--feature-state-transition", default=None,
-                     help='JSON object: {"feature_slug":"...","prior_state":"...","observed_state":"...","evidence":"..."}')
-    iqa.add_argument("--failure-diagnosis", default=None,
-                     help='JSON object: {"attempted":"...","didnt_work":"...","learned":"..."}')
-    iqa.set_defaults(func=cmd_intake_queue_append)
+    # practice-ledger append
+    pla = pl_sub.add_parser("append", help="Append an event to practice-ledger.jsonl")
+    pla.add_argument("--entity-id", required=True, help="Logical entity this event is about")
+    pla.add_argument("--event-type", required=True,
+                     choices=sorted(PRACTICE_LEDGER_EVENT_TYPES),
+                     help="Event type (created|updated|consumed|rejected|closed_stale|reopened|custom)")
+    pla.add_argument("--source", required=True, help="Originating skill/workflow")
+    pla.add_argument("--actor", required=True, help="Human or agent identity")
+    pla.add_argument("--payload", default="{}", help="JSON object payload (default: {})")
+    pla.add_argument("--custom-event-type", default=None,
+                     help="Custom event type name (required when event_type=custom)")
+    pla.set_defaults(func=cmd_practice_ledger_append)
 
-    # intake-queue list
-    iql = iq_sub.add_parser("list", help="List events from intake-queue.jsonl")
-    iql.add_argument("--source", default=None, help="Filter by source")
-    iql.add_argument("--kind", default=None, help="Filter by kind")
-    iql.add_argument("--status", default=None, help="Filter by status (open|consumed)")
-    iql.set_defaults(func=cmd_intake_queue_list)
+    # practice-ledger consume
+    plc = pl_sub.add_parser("consume",
+                             help="Append a consumed event for an entity (append-only)")
+    plc.add_argument("--entity-id", required=True, help="Entity to mark consumed")
+    plc.add_argument("--actor", required=True, help="Who is consuming")
+    plc.add_argument("--source", default="momentum-tools-consume", help="Source skill")
+    plc.add_argument("--outcome-ref", default=None, help="Reference to the outcome")
+    plc.set_defaults(func=cmd_practice_ledger_consume)
 
-    # intake-queue consume
-    iqc = iq_sub.add_parser("consume", help="Mark an event consumed in intake-queue.jsonl")
-    iqc.add_argument("--id", required=True, help="Event ID to mark consumed")
-    iqc.add_argument("--outcome-ref", default=None,
-                     help="Reference to the outcome (story slug, decision ID, etc.)")
-    iqc.set_defaults(func=cmd_intake_queue_consume)
+    # practice-ledger summary
+    pls = pl_sub.add_parser("summary", help="Counts by event_type, source, age, archive entries")
+    pls.add_argument("--format", choices=["json", "text"], default="json",
+                     help="Output format (default: json)")
+    pls.set_defaults(func=cmd_practice_ledger_summary)
+
+    # practice-ledger open
+    plo = pl_sub.add_parser("open", help="Non-terminal entities (current state is open)")
+    plo.set_defaults(func=cmd_practice_ledger_open)
+
+    # practice-ledger history
+    plh = pl_sub.add_parser("history", help="Full event chain for one entity")
+    plh.add_argument("--entity", required=True, help="Entity ID to query history for")
+    plh.set_defaults(func=cmd_practice_ledger_history)
+
+    # practice-ledger since
+    plsi = pl_sub.add_parser("since", help="Events strictly after the given ISO-8601 UTC timestamp")
+    plsi.add_argument("ts", help="ISO-8601 UTC timestamp (e.g. 2026-01-01T00:00:00Z)")
+    plsi.set_defaults(func=cmd_practice_ledger_since)
+
+    # practice-ledger by-source
+    plbs = pl_sub.add_parser("by-source", help="Events whose source matches exactly")
+    plbs.add_argument("source", help="Source value to filter by")
+    plbs.set_defaults(func=cmd_practice_ledger_by_source)
+
+    # practice-ledger close-stale
+    plcs = pl_sub.add_parser("close-stale",
+                              help="Append closed_stale events for non-terminal entities older than TTL")
+    plcs.add_argument("--age-days", type=int, default=PRACTICE_LEDGER_STALE_TTL_DAYS,
+                      help=f"Age threshold in days (default: {PRACTICE_LEDGER_STALE_TTL_DAYS})")
+    plcs.set_defaults(func=cmd_practice_ledger_close_stale)
 
     # triage command group
     triage = subparsers.add_parser("triage", help="Triage dedup prefilter operations")

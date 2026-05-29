@@ -73,21 +73,23 @@
     </check>
     <!-- End Phase A.5 -->
 
-    <!-- Phase A.6: Retro handoff items from intake-queue.jsonl -->
-    <action>Run: `momentum-tools intake-queue list --source retro --kind handoff --status open`</action>
+    <!-- Phase A.6: Retro handoff items from practice-ledger.jsonl -->
+    <action>Run: `momentum-tools practice-ledger by-source retro`
+    Filter results to entities where the last event is non-terminal (not consumed/rejected/closed_stale)
+    and payload.intent == "handoff". These are un-actioned retro findings handed off for sprint planning.</action>
 
-    <check if="intake-queue.jsonl exists AND open retro handoff items found">
-      <action>Store {{retro_handoff_items}} = the `events` array from the command output</action>
+    <check if="practice-ledger.jsonl exists AND open retro handoff items found">
+      <action>Store {{retro_handoff_items}} = the filtered entity list from the command output</action>
       <action>Include {{retro_handoff_items}} in the synthesis context alongside the sprint summary.
-        These are un-actioned findings from prior retros that were explicitly deferred into the queue
-        rather than immediately stubbed. Each carries provenance (sprint_slug), and optionally
-        feature-state-transition and failure-diagnosis context (per DEC-005 D7/D8).
+        These are un-actioned findings from prior retros that were explicitly deferred into the ledger
+        rather than immediately stubbed. Each carries provenance (payload.sprint_slug), and optionally
+        feature_state_transition and failure_diagnosis context (per DEC-005 D7/D8) in its payload.
         Weight them as signals of known pain — findings with feature_state_transition indicating
         regression carry higher urgency; findings with failure_diagnosis indicate unresolved systemic
         issues that block repeatable success.</action>
     </check>
 
-    <check if="intake-queue.jsonl does not exist OR no open retro handoff items">
+    <check if="practice-ledger.jsonl does not exist OR no open retro handoff items">
       <action>Set {{retro_handoff_items}} = []</action>
       <action>Continue without retro handoff context</action>
     </check>
@@ -115,7 +117,7 @@ Presenting full backlog instead.
 Retro handoff items — open findings from prior sprint retros:
 {{#each retro_handoff_items}}
   · [RETRO:{{sprint_slug}}] {{title}}
-    {{#if feature_state_transition}}Feature state: {{feature_state_transition.feature_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
+    {{#if feature_state_transition}}Feature state: {{feature_state_transition.epic_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
     {{#if failure_diagnosis}}Failure: {{failure_diagnosis.attempted}} — {{failure_diagnosis.didnt_work}}{{/if}}
 {{/each}}
 
@@ -160,7 +162,7 @@ Based on the master plan and current backlog state:
 Retro handoff items — {{retro_handoff_items.length}} open finding(s) from prior sprint(s):
 {{#each retro_handoff_items}}
   · [{{sprint_slug}}] {{title}}
-    {{#if feature_state_transition}}Feature state: {{feature_state_transition.feature_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
+    {{#if feature_state_transition}}Feature state: {{feature_state_transition.epic_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
     {{#if failure_diagnosis}}Failure: {{failure_diagnosis.attempted}} — {{failure_diagnosis.didnt_work}}{{/if}}
     {{description}}
 {{/each}}
@@ -202,17 +204,17 @@ If you want to include a retro handoff item as a story, enter "handoff-N" (where
         2. Create a story stub from the handoff event:
            - Generate slug from the handoff item title (kebab-case, max 50 chars)
            - Run: `momentum-tools sprint story-add --slug {{slug}} --title "{{item.title}}" --epic impetus-epic-orchestrator`
-             (use appropriate epic if discernible from feature_slug context)
+             (use appropriate epic if discernible from epic_slug context)
            - Write story stub file at `.momentum/stories/{{slug}}.md`
-             with the handoff item's description, feature_slug, story_type, and any
+             with the handoff item's description, epic_slug, story_type, and any
              feature_state_transition / failure_diagnosis context in the story's Description section
         3. Mark the handoff item consumed:
-           Run: `momentum-tools intake-queue consume --id {{item.id}} --outcome-ref {{slug}}`
+           Run: `momentum-tools practice-ledger append --event-type consumed --entity-id "{{item.entity_id}}" --source "sprint-planning" --actor "sprint-planning" --payload '{"outcome_ref":"{{slug}}"}'`
         4. Add the new slug to the sprint selection
       </action>
       <output>Handoff items promoted to story stubs:
 {{#each promoted_handoff_stories}}
-  · {{original_title}} → story: {{slug}} (intake-queue event consumed)
+  · {{original_title}} → story: {{slug}} (practice-ledger entity consumed)
 {{/each}}</output>
     </check>
 
