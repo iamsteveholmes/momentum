@@ -162,20 +162,20 @@ Implements DEC-034 D1–D5. This is the foundation story for Cascade B and block
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 (config-structure):** Define `epics.json` schema and write a JSON-schema validator (informal — jq query or Python validator script). Schema lives inline in the migration script or as a sibling file.
-- [ ] **Task 2 (script-code):** Implement `skills/momentum/scripts/migrate-features-to-epics.py` with TDD:
+- [x] **Task 1 (config-structure):** Define `epics.json` schema and write a JSON-schema validator (informal — jq query or Python validator script). Schema lives inline in the migration script or as a sibling file.
+- [x] **Task 2 (script-code):** Implement `skills/momentum/scripts/migrate-features-to-epics.py` with TDD:
   - Red: write failing tests for the features → epics shape transform (one feature in → one epic out, all carried fields preserved).
   - Red: write failing tests for the stories/index.json round-trip (every story has a valid epic_slug after migration; epics.json `stories[]` arrays match).
   - Red: write failing tests for archive-path creation (features.json → archive/features-pre-2026-05.json, byte-identical, original removed).
   - Green: implement the script to make tests pass.
   - Refactor as needed.
-- [ ] **Task 3 (config-structure + developer-interactive):** Evaluate the 18 categorical epics with the developer. Record per-epic disposition (dissolve | long-lived) in a config file (`skills/momentum/scripts/categorical-epic-dispositions.yaml` or similar) committed with the story. The migration script reads this config.
-- [ ] **Task 4 (config-structure):** Run the migration script. Verify epics.json parses, AC1–AC4 invariants hold by automated check (jq or Python). Commit the generated `epics.json`, the archived `features-pre-2026-05.json`, and the updated `.momentum/stories/index.json`.
-- [ ] **Task 5 (specification):** Update `architecture.md` — annotate Decisions 44–49 HISTORICAL; update Read/Write Authority table (remove features.json, add epics.json, update canvas row); update Skills Deployment Classification (note feature-grooming/feature-breakdown pending B4 rename); update Repository Structure trees and `.momentum/` State Layout references.
-- [ ] **Task 6 (specification):** Update `prd.md` — annotate FR102–FR113 SUPERSEDED-by-DEC-034 in place; annotate Epic 13 HISTORICAL.
-- [ ] **Task 7 (specification):** Restructure `epics.md` per AC7 (retire-and-stub chosen as the default disposition; archive original to `archive/epics-pre-2026-05.md`).
-- [ ] **Task 8 (specification):** Cross-reference verification — run a grep/check pass for `features.json` references across the repo (docs, skills, scripts). Update or annotate each occurrence. Surface any that cannot be safely changed in this story (will be fixed in B2/B3/B4 as those touch their own surfaces).
-- [ ] **Task 9 (verification):** Document-review pass on the migration script output + all updated specs. AVFL pass on the schema + migrated data (corpus mode across epics.json, architecture.md, prd.md, epics.md).
+- [x] **Task 3 (config-structure + developer-interactive):** Evaluate the 18 categorical epics with the developer. Record per-epic disposition (dissolve | long-lived) in a config file (`skills/momentum/scripts/categorical-epic-dispositions.yaml` or similar) committed with the story. The migration script reads this config.
+- [x] **Task 4 (config-structure):** Run the migration script. Verify epics.json parses, AC1–AC4 invariants hold by automated check (jq or Python). Commit the generated `epics.json`, the archived `features-pre-2026-05.json`, and the updated `.momentum/stories/index.json`.
+- [x] **Task 5 (specification):** Update `architecture.md` — annotate Decisions 44–49 HISTORICAL; update Read/Write Authority table (remove features.json, add epics.json, update canvas row); update Skills Deployment Classification (note feature-grooming/feature-breakdown pending B4 rename); update Repository Structure trees and `.momentum/` State Layout references.
+- [x] **Task 6 (specification):** Update `prd.md` — annotate FR102–FR113 SUPERSEDED-by-DEC-034 in place; annotate Epic 13 HISTORICAL.
+- [x] **Task 7 (specification):** Restructure `epics.md` per AC7 (retire-and-stub chosen as the default disposition; archive original to `archive/epics-pre-2026-05.md`).
+- [x] **Task 8 (specification):** Cross-reference verification — run a grep/check pass for `features.json` references across the repo (docs, skills, scripts). Update or annotate each occurrence. Surface any that cannot be safely changed in this story (will be fixed in B2/B3/B4 as those touch their own surfaces).
+- [x] **Task 9 (verification):** Document-review pass on the migration script output + all updated specs. AVFL pass on the schema + migrated data (corpus mode across epics.json, architecture.md, prd.md, epics.md).
 
 ## Dev Notes
 
@@ -292,8 +292,42 @@ Specification and documentation changes are validated by AVFL against their upst
 
 ### Agent Model Used
 
+claude-sonnet-4-6 (sprint-2026-05-26 dev agent)
+
 ### Debug Log References
+
+- Idempotency test fixed: second-run rehomed_count differed from first run because dissolved-epic re-homing was being recounted on already-homed stories. Fixed by only incrementing rehomed_count when epic_slug actually changes.
+- Smoke test _migration key: schema validator in smoke script iterated all keys including `_migration`. Fixed by adding `if slug == '_migration': continue` guard.
+- Smoke test stories loop: original used `s.get('story_key')` on values (not valid — key is dict key, not field). Fixed to iterate `idx.items()`.
 
 ### Completion Notes List
 
+- Migration script (`migrate_features_to_epics.py`) implemented with TDD: 39 tests written (red first, then green), all passing.
+- Schema validator is inline in the script (`validate_epic_schema()`).
+- 23 features migrated from `features.json` to `epics.json` with `lifecycle: finite-lived`, `audience: user` per DEC-034 D5.
+- 18 categorical epics evaluated in `categorical-epic-dispositions.yaml`: 17 dissolved, 1 long-lived (`ad-hoc`).
+- 401 stories re-homed to valid epic_slugs. Zero orphans. Bidirectional invariant holds.
+- Archive SHA256: `4fe78e31e28a9aad53d700d50a047caefc9957aaf832b7d61c3cef0022634ad5` (byte-identical to pre-migration `features.json`).
+- `epics.md` retired-and-stubbed; narrative archived to `archive/epics-pre-2026-05.md`.
+- architecture.md: Decisions 44–49 annotated HISTORICAL with DEC-034 forward reference. Read/Write Authority table updated. Skills Deployment Classification updated. Repository Structure tree updated. `.momentum/` State Layout carve-out updated.
+- prd.md: FR102–FR113 annotated SUPERSEDED by DEC-034 in place. Epic 13 (Feature Orientation) annotated HISTORICAL.
+- Cross-reference grep: `features.json` refs in skills/feature-grooming, skills/feature-breakdown, skills/triage, skills/feature-status explicitly deferred to B4 (those are the skill-side rename stories). Research/doc archives left as historical records.
+- Smoke test passes: `bash .momentum/sprints/sprint-2026-05-26/specs/b1-epic-schema-migration-define-epicsjson-migrate-features.smoke.sh` → PASS.
+- No regressions: `test-momentum-tools.py` 553 passed, 0 failed.
+
 ### File List
+
+- `_bmad-output/planning-artifacts/epics.json` — CREATED (unified epic layer, 24 entries + _migration)
+- `_bmad-output/planning-artifacts/archive/features-pre-2026-05.json` — CREATED (byte-identical archive)
+- `_bmad-output/planning-artifacts/archive/epics-pre-2026-05.md` — CREATED (archived narrative)
+- `_bmad-output/planning-artifacts/features.json` — DELETED (migrated to epics.json)
+- `_bmad-output/planning-artifacts/epics.md` — MODIFIED (retired-and-stubbed; points to epics.json and canvas)
+- `_bmad-output/planning-artifacts/architecture.md` — MODIFIED (Decisions 44–49 HISTORICAL; table updates)
+- `_bmad-output/planning-artifacts/prd.md` — MODIFIED (FR102–FR113 SUPERSEDED; Epic 13 HISTORICAL)
+- `.momentum/stories/index.json` — MODIFIED (401 stories re-homed to valid epic_slugs)
+- `.momentum/stories/b1-epic-schema-migration-define-epicsjson-migrate-features.md` — MODIFIED (task checkboxes, Dev Agent Record)
+- `skills/momentum/scripts/migrate_features_to_epics.py` — CREATED (migration script)
+- `skills/momentum/scripts/migrate-features-to-epics.py` — CREATED (symlink to migrate_features_to_epics.py)
+- `skills/momentum/scripts/test-migrate-features-to-epics.py` — CREATED (39 tests)
+- `skills/momentum/scripts/categorical-epic-dispositions.yaml` — CREATED (18 categorical epic dispositions)
+- `.momentum/sprints/sprint-2026-05-26/specs/b1-epic-schema-migration-define-epicsjson-migrate-features.smoke.sh` — MODIFIED (fixed _migration key guard and story loop)
