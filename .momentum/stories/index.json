@@ -4705,7 +4705,7 @@
     "harness_profile": "default"
   },
   "a4-skill-workflow-updates-point-retro-triage-sprint": {
-    "status": "in-progress",
+    "status": "review",
     "title": "A4: Skill workflow updates — point retro/triage/sprint-planning/intake/feature-breakdown at the new practice-ledger CLI",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -4801,7 +4801,7 @@
     "priority": "low"
   },
   "b4-grooming-breakdown-skill-restructure": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "B4: feature-grooming + feature-breakdown → epic-grooming + epic-breakdown restructure",
     "epic_slug": "ad-hoc",
     "story_file": true,
