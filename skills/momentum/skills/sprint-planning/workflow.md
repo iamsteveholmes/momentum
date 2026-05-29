@@ -117,7 +117,7 @@ Presenting full backlog instead.
 Retro handoff items — open findings from prior sprint retros:
 {{#each retro_handoff_items}}
   · [RETRO:{{sprint_slug}}] {{title}}
-    {{#if feature_state_transition}}Feature state: {{feature_state_transition.feature_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
+    {{#if feature_state_transition}}Feature state: {{feature_state_transition.epic_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
     {{#if failure_diagnosis}}Failure: {{failure_diagnosis.attempted}} — {{failure_diagnosis.didnt_work}}{{/if}}
 {{/each}}
 
@@ -162,7 +162,7 @@ Based on the master plan and current backlog state:
 Retro handoff items — {{retro_handoff_items.length}} open finding(s) from prior sprint(s):
 {{#each retro_handoff_items}}
   · [{{sprint_slug}}] {{title}}
-    {{#if feature_state_transition}}Feature state: {{feature_state_transition.feature_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
+    {{#if feature_state_transition}}Feature state: {{feature_state_transition.epic_slug}} {{feature_state_transition.prior_state}} → {{feature_state_transition.observed_state}}{{/if}}
     {{#if failure_diagnosis}}Failure: {{failure_diagnosis.attempted}} — {{failure_diagnosis.didnt_work}}{{/if}}
     {{description}}
 {{/each}}
@@ -204,9 +204,9 @@ If you want to include a retro handoff item as a story, enter "handoff-N" (where
         2. Create a story stub from the handoff event:
            - Generate slug from the handoff item title (kebab-case, max 50 chars)
            - Run: `momentum-tools sprint story-add --slug {{slug}} --title "{{item.title}}" --epic impetus-epic-orchestrator`
-             (use appropriate epic if discernible from feature_slug context)
+             (use appropriate epic if discernible from epic_slug context)
            - Write story stub file at `.momentum/stories/{{slug}}.md`
-             with the handoff item's description, feature_slug, story_type, and any
+             with the handoff item's description, epic_slug, story_type, and any
              feature_state_transition / failure_diagnosis context in the story's Description section
         3. Mark the handoff item consumed:
            Run: `momentum-tools practice-ledger append --event-type consumed --entity-id "{{item.entity_id}}" --source "sprint-planning" --actor "sprint-planning" --payload '{"outcome_ref":"{{slug}}"}'`

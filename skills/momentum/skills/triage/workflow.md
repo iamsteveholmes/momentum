@@ -86,14 +86,14 @@ These will be included alongside new items for re-classification.
   </step>
 
   <step n="2" goal="Read context artifacts for enrichment">
-    <action>Read `_bmad-output/planning-artifacts/features.json` to get the features list.
-    Store {{features}} = map of feature_slug → name for suggestion during enrichment.</action>
+    <action>Read `_bmad-output/planning-artifacts/epics.json` to get the epics list.
+    epics.json is a JSON object keyed by epic_slug; each value is an epic record with an
+    `epic_slug` and a `name` field (plus description, lifecycle, etc.).
+    Store {{epics}} = map of epic_slug → name for suggestion during enrichment and for
+    DDD boundary awareness.</action>
 
-    <action>Read `_bmad-output/planning-artifacts/epics.md` to get the epic list.
-    Store {{epics}} = list of epic slugs for DDD boundary awareness.</action>
-
-    <note>Use offset/limit if either file is large. features.json and epics.md are
-    typically under the token limit but may grow.</note>
+    <note>Use offset/limit if the file is large. epics.json is typically under the token
+    limit but may grow.</note>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -106,7 +106,7 @@ These will be included alongside new items for re-classification.
 
     <action>Serialize {{all_items}} as a JSON array. Each element must have at minimum:
       { "id": "...", "title": "...", "description": "...",
-        "touches": [...], "epic_slug": "...", "feature_slug": "..." }
+        "touches": [...], "epic_slug": "..." }
     Items from {{open_queue_items}} use their existing `id` field.
     Items from {{raw_items}} without an `id` use the temp IDs assigned in Step 1.
     </action>
@@ -195,7 +195,7 @@ Falling back to classification without dedup gate. Backlog hygiene note: dedup s
 
       For each candidate slug in union_shortlist, load full story metadata from
       `.momentum/stories/index.json` (title, description, status, epic_slug,
-      feature_slug, touches, depends_on).
+      touches, depends_on).
 
       PROMPT:
       ---
@@ -319,12 +319,12 @@ Falling back to classification without dedup gate. Backlog hygiene note: dedup s
     </action>
 
     <action>For each ARTIFACT item, enrich with:
-    · {{feature_slug}}: suggest from {{features}} — pick the closest match by name/description.
-        If none fits, leave blank and flag as "no feature match — may need a new feature".
     · {{story_type}}: heuristic from description — default "feature"; use "defect" for bugs,
         "maintenance" for upgrades/refactors, "exploration" for research spikes,
         "practice" for Momentum meta-work.
-    · {{epic_slug}}: suggest from {{epics}} based on DDD boundary alignment.
+    · {{epic_slug}}: suggest from {{epics}} — pick the closest match by name/description and
+        DDD boundary alignment. If none fits, leave blank and flag as "no epic match — may
+        need a new epic".
     · {{priority}}: default "low"; promote to "medium" or "high" if urgency signals present.
     · {{proposed_depends_on}}: flag obvious blockers if mentioned; default empty.
     </action>
@@ -397,7 +397,7 @@ Triage — {{total_count}} items · {{dedup_findings | length}} dedup findings �
 [ARTIFACT] — {{count}} items  →  will be sent to momentum:intake
 {{for each:
   [N] {{title_or_summary}}
-      type: {{story_type}} · feature: {{feature_slug|"(none)"}} · epic: {{epic_slug}} · priority: {{priority}}
+      type: {{story_type}} · epic: {{epic_slug|"(none)"}} · priority: {{priority}}
       {{proposed_depends_on if non-empty: depends: {{proposed_depends_on}}}}
 }}
   → Approve all? (A=all / R=all / pick individually by number)
@@ -466,7 +466,6 @@ Override specific items? Enter numbers to re-classify or edit, or 'done' to proc
       Pass enriched context to intake:
         - title: derived from item text
         - description: item text expanded
-        - feature_slug: approved feature_slug
         - story_type: approved story_type
         - epic_slug: approved epic_slug
         - priority: approved priority

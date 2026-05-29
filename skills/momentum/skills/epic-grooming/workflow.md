@@ -2,7 +2,7 @@
 
 **Goal:** Produce a complete, value-oriented epic taxonomy — either bootstrapping `epics.json` from
 scratch or refining an existing one — with every epic carrying a multi-paragraph `value_analysis`,
-`system_context`, typed classification, and verifiable `acceptance_condition`. Also resolves
+`system_context`, typed classification, and verifiable `acceptance_conditions`. Also resolves
 orphaned `epic_slug` values in `stories/index.json` so every slug maps to a registered epic.
 
 **Sole write authority:** This skill is the only authorized writer of
@@ -29,8 +29,9 @@ orphaned `epic_slug` values in `stories/index.json` so every slug maps to a regi
   single message (fan-out pattern, NOT TeamCreate). The orchestrator handles all synthesis, value
   analysis, developer interaction, and writing directly.</critical>
   <critical>Every epic written to epics.json must have a non-empty value_analysis (multi-paragraph),
-  system_context, type in {flow, connection, quality}, and acceptance_condition string. Any epic
-  missing these fields is rejected before write.</critical>
+  system_context, type in {flow, connection, quality}, a non-empty acceptance_conditions array,
+  lifecycle in {finite-lived, long-lived}, and audience in {user, internal}. Any epic missing these
+  fields is rejected before write.</critical>
   <critical>In refine mode: epic entries whose proposals are rejected are left byte-identical. Only
   approved-change entries are modified.</critical>
   <critical>stories_done and stories_remaining are computed fresh from `.momentum/stories/index.json`
@@ -78,7 +79,7 @@ orphaned `epic_slug` values in `stories/index.json` so every slug maps to a regi
           - suggested slug (kebab-case)
           - suggested title
           - which FRs it covers
-          - draft acceptance_condition ("A developer can [action] and [observe outcome]")
+          - draft acceptance_conditions (array — each "A developer can [action] and [observe outcome]")
           - suggested type: flow / connection / quality
         Return a structured list of epic candidates.
 
@@ -114,8 +115,8 @@ orphaned `epic_slug` values in `stories/index.json` so every slug maps to a regi
         2. Decision: `_bmad-output/planning-artifacts/decisions/dec-NNN-epic-value-first.md`
            Use the next available NNN sequence number.
            Content: record the decision to adopt value-first epic schema — slug + type +
-           value_analysis + system_context + acceptance_condition as mandatory fields; rationale;
-           alternatives; consequences.
+           value_analysis + system_context + acceptance_conditions + lifecycle + audience as
+           mandatory fields; rationale; alternatives; consequences.
       </action>
     </check>
 
@@ -162,7 +163,9 @@ orphaned `epic_slug` values in `stories/index.json` so every slug maps to a regi
           Paragraph 2 — Full vision including new capabilities (beyond pain removal)
           Paragraph 3 — Known gaps
       - system_context: 1–2 sentences explaining how this epic fits the overall product
-      - acceptance_condition: single string — "A developer can [action] and [observe outcome]"
+      - acceptance_conditions: array of one or more strings — each "A developer can [action] and [observe outcome]"
+      - lifecycle: finite-lived | long-lived
+      - audience: user | internal
       - ⚠ flag: add if the epic has no current delivery — developer must confirm inclusion
     </action>
 
@@ -199,7 +202,8 @@ Epic Grooming — Candidate Set ({N} epics)
 
     {paragraph 3 — known gaps}
   system_context: {text}
-  acceptance_condition: {A developer can [action] and [observe outcome].}
+  acceptance_conditions:
+    {· each: A developer can [action] and [observe outcome].}
   {⚠ Deferred value — no current delivery. Confirm inclusion? if flagged}
 
 {If orphaned slugs have taxonomy proposals:}
@@ -281,10 +285,11 @@ Taxonomy proposals ({M} orphaned slugs):
         "name": "...",
         "type": "flow|connection|quality",
         "description": "...",
-        "acceptance_condition": "A developer can [action] and [observe outcome].",
+        "acceptance_conditions": ["A developer can [action] and [observe outcome]."],
         "value_analysis": "...",
         "system_context": "...",
-        "status": "working|partial|not-started",
+        "lifecycle": "finite-lived|long-lived",
+        "audience": "user|internal",
         "stories": ["story-slug-1", ...],
         "stories_done": N,
         "stories_remaining": M,

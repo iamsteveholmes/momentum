@@ -41,8 +41,7 @@ If the developer asks about practice state, here is where to look. Read on deman
 | Unblocked work | `bd ready --json` |
 | Story spec for a slug | `.momentum/stories/{slug}.md` |
 | Decisions | `_bmad-output/planning-artifacts/decisions/` |
-| Epics | `_bmad-output/planning-artifacts/epics.md` |
-| Features (being dissolved into epics) | `_bmad-output/planning-artifacts/features.json` |
+| Epics | `_bmad-output/planning-artifacts/epics.json` (authoritative; `epics.md` is a derived index) |
 | Architecture | `_bmad-output/planning-artifacts/architecture.md` |
 | PRD | `_bmad-output/planning-artifacts/prd.md` |
 | UX spec | `_bmad-output/planning-artifacts/ux-design-specification.md` |

@@ -2256,119 +2256,6 @@ def test_story_add_feature_slug_omitted_when_empty():
     assert_eq("feature_slug absent", "feature_slug" not in stories["no-feat-story"], True)
 
 
-# --- intake-queue Tests ---
-
-def read_queue(project_dir: Path) -> list:
-    path = project_dir / ".momentum" / "intake-queue.jsonl"
-    if not path.exists():
-        return []
-    lines = [l.strip() for l in path.read_text().splitlines() if l.strip()]
-    return [json.loads(l) for l in lines]
-
-
-def test_intake_queue_append_creates_file():
-    """append creates intake-queue.jsonl if absent."""
-    print("\n[intake-queue append] Creates file when absent")
-    proj = setup_project()
-    code, out = run_tool(proj, "intake-queue", "append",
-                         "--source", "triage", "--kind", "shape",
-                         "--title", "Test item", "--description", "desc")
-    assert_eq("exit code 0", code, 0)
-    queue = read_queue(proj)
-    assert_eq("one event", len(queue), 1)
-
-
-def test_intake_queue_append_correct_fields():
-    """append writes all required fields."""
-    print("\n[intake-queue append] Required fields present")
-    proj = setup_project()
-    code, out = run_tool(proj, "intake-queue", "append",
-                         "--source", "retro", "--kind", "handoff",
-                         "--title", "Handoff item", "--description", "Something to hand off")
-    assert_eq("exit code 0", code, 0)
-    queue = read_queue(proj)
-    event = queue[0]
-    assert_eq("kind handoff", event.get("kind"), "handoff")
-    assert_eq("title correct", event.get("title"), "Handoff item")
-    assert_eq("source correct", event.get("source"), "retro")
-    assert_eq("status open", event.get("status"), "open")
-    assert_eq("id present", "id" in event, True)
-    assert_eq("timestamp present", "timestamp" in event, True)
-
-
-def test_intake_queue_append_invalid_kind():
-    """append rejects unknown kind."""
-    print("\n[intake-queue append] Invalid kind rejected")
-    proj = setup_project()
-    code, out = run_tool(proj, "intake-queue", "append",
-                         "--source", "triage", "--kind", "invalid-kind",
-                         "--title", "Bad item")
-    assert_eq("rejected", code != 0, True)
-
-
-def test_intake_queue_append_appends():
-    """append appends — does not overwrite existing events."""
-    print("\n[intake-queue append] Appends to existing file")
-    proj = setup_project()
-    run_tool(proj, "intake-queue", "append",
-             "--source", "triage", "--kind", "shape", "--title", "First")
-    run_tool(proj, "intake-queue", "append",
-             "--source", "triage", "--kind", "rejected", "--title", "Second")
-    queue = read_queue(proj)
-    assert_eq("two events", len(queue), 2)
-    assert_eq("first kind", queue[0].get("kind"), "shape")
-    assert_eq("second kind", queue[1].get("kind"), "rejected")
-
-
-def test_intake_queue_consume_sets_status():
-    """consume marks event as consumed."""
-    print("\n[intake-queue consume] Sets status to consumed")
-    proj = setup_project()
-    run_tool(proj, "intake-queue", "append",
-             "--source", "retro", "--kind", "handoff", "--title", "To consume")
-    queue = read_queue(proj)
-    event_id = queue[0]["id"]
-    code, out = run_tool(proj, "intake-queue", "consume", "--id", event_id)
-    assert_eq("exit code 0", code, 0)
-    updated = read_queue(proj)
-    assert_eq("status consumed", updated[0].get("status"), "consumed")
-    assert_eq("consumed_at set", "consumed_at" in updated[0], True)
-
-
-def test_intake_queue_consume_missing_id():
-    """consume errors when id not found."""
-    print("\n[intake-queue consume] Errors on missing id")
-    proj = setup_project()
-    run_tool(proj, "intake-queue", "append",
-             "--source", "triage", "--kind", "shape", "--title", "Existing")
-    code, out = run_tool(proj, "intake-queue", "consume", "--id", "nonexistent-id")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-
-
-def test_intake_queue_consume_missing_file():
-    """consume errors when intake-queue.jsonl does not exist."""
-    print("\n[intake-queue consume] Errors when file absent")
-    proj = setup_project()
-    code, out = run_tool(proj, "intake-queue", "consume", "--id", "anything")
-    assert_eq("rejected", code, 1)
-    assert_eq("success false", out.get("success"), False)
-
-
-def test_intake_queue_list_filters():
-    """list filters by source and kind."""
-    print("\n[intake-queue list] Filters work correctly")
-    proj = setup_project()
-    run_tool(proj, "intake-queue", "append",
-             "--source", "retro", "--kind", "handoff", "--title", "Retro item")
-    run_tool(proj, "intake-queue", "append",
-             "--source", "triage", "--kind", "shape", "--title", "Triage item")
-    code, out = run_tool(proj, "intake-queue", "list", "--source", "retro")
-    assert_eq("exit code 0", code, 0)
-    assert_eq("one filtered event", out.get("count"), 1)
-    assert_eq("correct source", out["events"][0].get("source"), "retro")
-
-
 # --- .momentum/ Path Migration Tests ---
 
 def test_stories_path_resolves_to_momentum():
@@ -2406,23 +2293,6 @@ def test_sprints_path_resolves_to_momentum():
     assert_eq("activate exit code 0", code, 0)
     result = read_sprints(proj)
     assert_eq("active sprint set at new path", result["active"]["slug"], "test-sprint")
-
-
-def test_intake_queue_path_resolves_to_momentum():
-    """intake_queue_path() must resolve to .momentum/intake-queue.jsonl."""
-    print("\n[.momentum/ migration] intake_queue_path resolves to .momentum/")
-    proj = setup_project()
-    code, out = run_tool(
-        proj, "intake-queue", "append",
-        "--source", "triage",
-        "--kind", "shape",
-        "--title", "Test item"
-    )
-    assert_eq("exit code 0", code, 0)
-    new_queue = proj / ".momentum" / "intake-queue.jsonl"
-    old_queue = proj / "_bmad-output" / "implementation-artifacts" / "intake-queue.jsonl"
-    assert_eq("queue created at new path", new_queue.exists(), True)
-    assert_eq("old path not created", old_queue.exists(), False)
 
 
 # --- Plugin Cache Check Tests ---
@@ -3218,20 +3088,9 @@ def main():
     test_story_add_feature_slug_persisted()
     test_story_add_feature_slug_omitted_when_empty()
 
-    # intake-queue tests
-    test_intake_queue_append_creates_file()
-    test_intake_queue_append_correct_fields()
-    test_intake_queue_append_invalid_kind()
-    test_intake_queue_append_appends()
-    test_intake_queue_consume_sets_status()
-    test_intake_queue_consume_missing_id()
-    test_intake_queue_consume_missing_file()
-    test_intake_queue_list_filters()
-
     # .momentum/ path migration tests
     test_stories_path_resolves_to_momentum()
     test_sprints_path_resolves_to_momentum()
-    test_intake_queue_path_resolves_to_momentum()
 
     # session plugin-cache-check tests
     test_plugin_cache_check_match()

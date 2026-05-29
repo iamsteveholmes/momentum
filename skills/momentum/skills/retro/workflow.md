@@ -562,12 +562,12 @@ Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
     when applicable.
 
     <!-- Migration note (DEC-033): the legacy --kind handoff flag is replaced by
-         --event_type created + --payload-json '{"intent":"handoff"}'. The 'kind' field
+         --event-type created + --payload '{"intent":"handoff"}'. The 'kind' field
          no longer exists in the DEC-033 schema. Handoff semantics are preserved via
          payload so sprint-planning can distinguish retro handoffs from other created
          events by filtering on source:retro + payload.intent:handoff. -->
 
-    Write CLI: `python3 skills/momentum/scripts/momentum-tools.py practice-ledger append --source retro --event_type created --payload-json '{"intent":"handoff","origin_skill":"retro"}' ...`
+    Write CLI: `python3 skills/momentum/scripts/momentum-tools.py practice-ledger append --source retro --event-type created --payload '{"intent":"handoff","origin_skill":"retro"}' ...`
 
     What goes into the ledger:
       - Findings from the "Priority Action Items" section that were NOT stubbed
@@ -604,7 +604,7 @@ Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
       <output>{{handoff_items | length}} findings could carry forward to the next planning cycle:
 
 {{#each handoff_items}}
-  · {{title}}{{#if feature_slug}} (feature: {{feature_slug}}){{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}
+  · {{title}}{{#if epic_slug}} (epic: {{epic_slug}}){{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}
 {{/each}}
 
 Carry these forward as handoff events in practice-ledger.jsonl? (Y/N)</output>
@@ -626,9 +626,9 @@ Carry these forward as handoff events in practice-ledger.jsonl? (Y/N)</output>
           --payload '{"intent":"handoff","origin_skill":"retro","sprint_slug":"{{sprint_slug}}","title":"{{item.title}}","description":"{{item.description}}"}'
 
         Optional payload fields (include when the finding has this context — merge into --payload JSON):
-          "feature_slug": "{{item.feature_slug}}"           (when finding is tied to a feature)
+          "epic_slug": "{{item.epic_slug}}"                 (when finding is tied to an epic)
           "story_type": "{{item.suggested_story_type}}"     (when finding implies future story work)
-          "feature_state_transition": {"feature_slug":"...","prior_state":"...","observed_state":"...","evidence":"..."} (DEC-005 D8: feature state hygiene)
+          "feature_state_transition": {"epic_slug":"...","prior_state":"...","observed_state":"...","evidence":"..."} (DEC-005 D8: feature state hygiene)
           "failure_diagnosis": {"attempted":"...","didnt_work":"...","learned":"..."}  (DEC-005 D7: failure naming)
 
         Example for a feature regression finding:
@@ -637,7 +637,7 @@ Carry these forward as handoff events in practice-ledger.jsonl? (Y/N)</output>
             --entity-id "retro-{{sprint_slug}}-m3-consistency" \
             --source retro \
             --actor retro \
-            --payload '{"intent":"handoff","origin_skill":"retro","sprint_slug":"{{sprint_slug}}","title":"M3 consistency regressed in sprint-2026-04-08","description":"Material 3 design tokens are inconsistent across 3 surfaces that were previously aligned","feature_slug":"material-3-design-system","story_type":"defect","feature_state_transition":{"feature_slug":"material-3-design-system","prior_state":"partial","observed_state":"partial","evidence":"User reported token inconsistency in Settings, Profile, and Home screens"}}'
+            --payload '{"intent":"handoff","origin_skill":"retro","sprint_slug":"{{sprint_slug}}","title":"M3 consistency regressed in sprint-2026-04-08","description":"Material 3 design tokens are inconsistent across 3 surfaces that were previously aligned","epic_slug":"material-3-design-system","story_type":"defect","feature_state_transition":{"epic_slug":"material-3-design-system","prior_state":"partial","observed_state":"partial","evidence":"User reported token inconsistency in Settings, Profile, and Home screens"}}'
 
         Example for a failure-diagnosis finding:
           python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
@@ -657,7 +657,7 @@ Carry these forward as handoff events in practice-ledger.jsonl? (Y/N)</output>
       <output>Phase 5.5 complete — {{handoff_items | length}} findings written to practice-ledger.jsonl:
 
 {{#each handoff_items}}
-  · {{title}} [{{#if feature_slug}}feature: {{feature_slug}}{{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}]
+  · {{title}} [{{#if epic_slug}}epic: {{epic_slug}}{{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}]
 {{/each}}
 
 These will be surfaced automatically in the next sprint planning session (Step 1 — backlog synthesis).</output>

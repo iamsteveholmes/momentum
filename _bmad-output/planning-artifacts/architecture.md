@@ -238,7 +238,7 @@ The leading `.` distinguishes operational state (Momentum's working memory) from
 
 ### Planning artifact carve-out
 
-`_bmad-output/planning-artifacts/features.json` (and the rest of `_bmad-output/planning-artifacts/`) intentionally stays where it is. Planning artifacts are spec/source — they describe the product, are committed to the repo as primary content, and are produced by planning workflows (PRD, architecture, feature grooming). They are not Momentum's operational state.
+`_bmad-output/planning-artifacts/epics.json` (and the rest of `_bmad-output/planning-artifacts/`) intentionally stays where it is. Planning artifacts are spec/source — they describe the product, are committed to the repo as primary content, and are produced by planning workflows (PRD, architecture, epic grooming). They are not Momentum's operational state.
 
 ### `.momentum/signals/` — RETIRED (DEC-033 D6)
 
