@@ -23,6 +23,15 @@ stub file, add index entry. No analysis, no research, no subagents.
   <critical>Minimize tool calls: 1 read (slug conflict check), 1 write (stub file),
   1 bash (CLI index entry). No subagent spawns.</critical>
 
+  <critical>Intake MUST run in the main working tree only. MUST NOT invoke
+  EnterWorktree, ExitWorktree, or any `git worktree` command. Caller skills MUST NOT
+  wrap intake in a worktree for collision protection. Rationale: `story-add` writes a
+  brand-new unique slug key on every invocation — no concurrent-write collision risk
+  exists, so worktree isolation provides no benefit and traps the stub inside a branch
+  instead of landing it on main. Any number of concurrent intake invocations is safe:
+  each generates a unique slug and `story-add` performs an atomic read-modify-write of
+  `stories/index.json`.</critical>
+
   <step n="1" goal="Extract story context from conversation or caller">
     <action>Review the current conversation (or caller-provided context) for story information. Extract:
       - {{title}}: The story title (required — derive from conversation if not explicit)
