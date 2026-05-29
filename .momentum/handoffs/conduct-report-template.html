@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  CONDUCT REPORT TEMPLATE  ·  momentum:conduct  ·  authored by the Conductor
+  ============================================================================
+  This is the single HITL surface for Momentum's redesigned sprint-execution
+  skill (`momentum:conduct` / `/conduct`). The Conductor renders it after every
+  story movement has merged and AVFL + E2E have run; the developer reads it top
+  to bottom and copies back a `changes` or `approve` prompt from the GATE.
+
+  ── CORE MANDATE — total per-section self-sufficiency ──────────────────────
+  Every section must carry ALL context required to make the decision IN THAT
+  SECTION, written for a developer who has NOT been watching the sprint and has
+  NO access to the code, the spec, or prior report versions. A section is
+  INVALID if a competent reader would have to open a file, grep a symbol,
+  recall a prior conversation, or read another section to understand it.
+
+  Every finding / decision / scorecard row / deferred item MUST inline:
+    1. WHAT — plain language (never a bare code symbol as the headline)
+    2. WHERE — file + function/line, as supporting detail AFTER the plain words
+    3. WHY IT MATTERS — the observable consequence, not an abstraction
+    4. EVIDENCE — the actual proof, quoted inline (never linked, never "see code")
+    5. OPTIONS + TRADE-OFFS — each option with cost AND benefit (in <details> if long)
+    6. RECOMMENDATION — the Conductor's pick with a one-line rationale
+  BANNED: "see code", "see spec", "as discussed", "per above", bare symbol headlines.
+
+  ── TEMPLATE vs EXAMPLE ────────────────────────────────────────────────────
+  This file doubles as a WORKED EXAMPLE. Every data-bearing section is filled
+  with REPRESENTATIVE SAMPLE CONTENT (the real sprint-2026-05-26: 9 movements,
+  practice-ledger + epic-migration work, DuckDB and archive decisions) so the
+  format is visible fully realized. Sample data-bearing blocks open with an
+  HTML comment:  <!-- SAMPLE: replace with real {section} data -->
+  The CSS, JS, and section skeleton are the reusable TEMPLATE. Naming is
+  swappable (conduct / Conductor / movement / encore / Impetus) — see the CSS
+  comment header — but this template uses the working names throughout.
+
+  House style: self-contained single .html, zero external deps (inline CSS+JS,
+  no CDN/fonts/images), Anthropic warm palette, three font stacks, numbered
+  sections, severity chips, <details> disclosure. Per anthropics/html-effectiveness.
+  Reference: .momentum/handoffs/sprint-2026-05-26-hitl-report.html
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>conduct — sprint-2026-05-26 · HITL Review (v1)</title>
+<style>
+  /* ── Design tokens (carried forward VERBATIM from the house style) ─────── */
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 96px}
+  a{color:var(--clay-d)}
+
+  /* ── HERO ──────────────────────────────────────────────────────────────── */
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px;max-width:74ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1.5px solid transparent;white-space:nowrap}
+  .pill.await{background:#FBF1D9;border-color:var(--gold);color:#8A6D12}
+  .pill.ok{background:#EAF0E2;border-color:var(--olive);color:#46552F}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 8px}
+  .metric{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:14px 16px}
+  .metric .n{font-family:var(--serif);font-size:26px;font-weight:600;line-height:1}
+  .metric .l{font-size:11.5px;color:var(--gray-500);margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+  .metric.good .n{color:var(--olive)} .metric.flag .n{color:var(--gold)}
+
+  /* ── Sections ─────────────────────────────────────────────────────────── */
+  section{margin-top:34px}
+  h2{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  .lead{color:var(--gray-700);font-size:14px;margin:0 0 16px;max-width:78ch}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:20px 22px;box-shadow:var(--shadow)}
+  .panel.empty{background:var(--gray-50);color:var(--gray-700);font-size:13.5px;box-shadow:none}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .sev{font:700 10px/1 var(--mono);padding:4px 7px;border-radius:5px;letter-spacing:.04em;display:inline-block}
+  .sev.crit{background:#F2D9D4;color:#7E2B22} .sev.high{background:#F7E1D6;color:#9A4A22}
+  .sev.med{background:#FBF1D9;color:#8A6D12} .sev.low{background:var(--gray-100);color:var(--gray-700)}
+  .sev.pass{background:#EAF0E2;color:#46552F}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0;border-bottom:1px solid var(--gray-100);font-size:13.5px}
+  ul.clean li:last-child{border-bottom:none}
+
+  /* ── Scorecard (02) ───────────────────────────────────────────────────── */
+  .score{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:15px 17px;margin-bottom:12px}
+  .score h4{margin:0 0 3px;font-size:14.5px;font-family:var(--sans);font-weight:600}
+  .score .did{margin:0 0 10px;font-size:13px;color:var(--gray-700)}
+  .score .meta{font-size:12.5px;color:var(--gray-700);margin:0 0 8px}
+  .score .meta b{color:var(--slate)}
+  .gates{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .gate{font:600 11px/1 var(--mono);padding:5px 9px;border-radius:6px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-700)}
+  .gate.p{background:#EAF0E2;border-color:var(--olive);color:#46552F}
+  .gate.f{background:#F2D9D4;border-color:var(--rust);color:#7E2B22}
+  .gate.na{opacity:.55}
+  .evi{font-family:var(--mono);font-size:12px;color:var(--gray-700);background:var(--gray-50);border:1px solid var(--gray-100);border-radius:6px;padding:8px 10px;margin-top:6px}
+
+  /* ── Finding card (03) ────────────────────────────────────────────────── */
+  .find{border:var(--border);border-radius:var(--radius-row);padding:14px 16px;margin-bottom:12px;background:#fff}
+  .find .top{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:5px}
+  .find h4{margin:0;font-size:14.5px;font-family:var(--sans);font-weight:600;flex:1;min-width:60%}
+  .find .where{font-family:var(--mono);font-size:12px;color:var(--gray-500);margin:0 0 8px}
+  .find p{margin:0 0 8px;font-size:13px;color:var(--gray-700)}
+  .find .label{font-weight:600;color:var(--slate)}
+  .find .quote{font-family:var(--mono);font-size:12px;color:var(--slate);background:var(--gray-50);border-left:3px solid var(--gray-200);padding:8px 11px;margin:0 0 8px;white-space:pre-wrap}
+  .find .fixed{font:600 11px/1 var(--mono);color:#46552F;background:#EAF0E2;border:1.5px solid var(--olive);border-radius:6px;padding:5px 9px;display:inline-block}
+
+  /* ── Decision card (04 — the ONLY interactive cards) ──────────────────── */
+  .decision{border:1.5px solid var(--gold);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFFDF7,#FFF);padding:22px 24px;box-shadow:var(--shadow)}
+  .item{border:var(--border);border-radius:var(--radius-row);padding:14px 16px;margin-bottom:12px;background:#fff}
+  .item h4{margin:0 0 4px;font-size:14.5px;font-family:var(--sans);font-weight:600}
+  .item p{margin:0 0 10px;font-size:13px;color:var(--gray-700)}
+  .item .rec{font-size:12.5px;color:#46552F;background:#EAF0E2;border:1.5px solid var(--olive);border-radius:6px;padding:8px 11px;margin:0 0 12px}
+  .choices{display:flex;gap:8px;flex-wrap:wrap}
+  .choices label{font:600 12.5px/1 var(--sans);padding:8px 13px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;background:#fff;user-select:none;transition:.12s}
+  .choices input{position:absolute;opacity:0;pointer-events:none}
+  .choices label:hover{border-color:var(--clay)}
+  .choices label.sel{background:var(--clay);border-color:var(--clay-d);color:#fff}
+
+  /* ── End gate (GATE) ──────────────────────────────────────────────────── */
+  .final{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .final label{flex:1;min-width:240px;border:1.5px solid var(--gray-200);border-radius:10px;padding:14px 16px;cursor:pointer;background:#fff}
+  .final input{position:absolute;opacity:0;pointer-events:none}
+  .final label.selA{border-color:var(--olive);background:#EFF3E9} .final label.selC{border-color:var(--clay-d);background:#F8EAE6}
+  .final b{display:block;font-size:14px} .final small{color:var(--gray-500);font-size:12px}
+  .changes{margin-top:12px;display:none}
+  .changes.show{display:block}
+  .changes label{display:block;font:600 12.5px/1 var(--sans);margin:0 0 7px;color:var(--gray-700)}
+  textarea{width:100%;min-height:96px;font-family:var(--mono);font-size:13px;line-height:1.5;color:var(--slate);background:#fff;border:var(--border);border-radius:var(--radius-row);padding:12px 14px;resize:vertical}
+  textarea:focus{outline:none;border-color:var(--clay)}
+  .actions{display:flex;gap:12px;align-items:center;margin-top:20px;flex-wrap:wrap}
+  button{font:600 13.5px/1 var(--sans);padding:12px 20px;border-radius:9px;border:1.5px solid var(--clay-d);background:var(--clay);color:#fff;cursor:pointer;transition:.12s}
+  button:hover{background:var(--clay-d)}
+  button.ghost{background:#fff;color:var(--slate);border-color:var(--gray-200)}
+  .out{margin-top:16px;border:var(--border);border-radius:var(--radius-row);background:var(--gray-50);padding:16px;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;color:var(--slate);display:none}
+  .out.show{display:block}
+  .copied{font:600 12px/1 var(--sans);color:var(--olive);margin-left:4px;opacity:0;transition:.2s}
+  .copied.show{opacity:1}
+
+  /* ── Disclosure + inline code + footer ────────────────────────────────── */
+  details{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:0 16px;margin-top:10px}
+  summary{cursor:pointer;padding:13px 0;font:600 13.5px/1 var(--sans);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸";color:var(--clay-d);margin-right:9px;display:inline-block;transition:.15s}
+  details[open] summary::before{transform:rotate(90deg)}
+  details .body{padding:0 0 14px;font-size:13.5px;color:var(--gray-700);line-height:1.6}
+  code{font-family:var(--mono);font-size:.88em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px}
+  .foot{margin-top:40px;text-align:center;color:var(--gray-400);font-size:12px}
+  @media(max-width:720px){.metrics{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.final label{min-width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ════════════════════════ HERO ════════════════════════ -->
+  <!-- SAMPLE: replace slug · review version · subtitle · status pill · metrics strip -->
+  <header class="hero">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">conduct · HITL Review · v1 · authored by the Conductor</div>
+        <h1>sprint-2026-05-26</h1>
+        <div class="sub">9 movements, run as independent per-story pipelines: DEC-033 practice-ledger replacing the intake queue, and DEC-034 epic migration dissolving features into epics. Every movement built in its own worktree, passed QA + adversarial code review pre-merge, merged itself, then the integrated branch went through one AVFL merge-review and the E2E pass. Two genuine engineering calls remain for you, plus the go/no-go.</div>
+      </div>
+      <span class="pill await"><span class="dot"></span>2 decisions + the end gate</span>
+    </div>
+    <div class="metrics">
+      <div class="metric good"><div class="n">9/9</div><div class="l">Movements merged</div></div>
+      <div class="metric good"><div class="n">785</div><div class="l">Tests passing</div></div>
+      <div class="metric"><div class="n">21</div><div class="l">Defects auto-fixed</div></div>
+      <div class="metric flag"><div class="n">2</div><div class="l">Decisions for you</div></div>
+      <!-- "Leftovers to triage" = deferred items (05) + blocked/incomplete (06) + any capped/residual findings.
+           Compute it from those sections — do NOT hardcode. Here: 1 deferred item (05) + 0 blocked (06) = 1. -->
+      <div class="metric flag"><div class="n">1</div><div class="l">Leftovers to triage</div></div>
+    </div>
+  </header>
+
+  <!-- ════════════════════ 01 · SPRINT SUMMARY ════════════════════ -->
+  <!-- SAMPLE: replace with "what the sprint set out to do + what actually shipped" (2-4 sentences) -->
+  <section id="s01">
+    <h2><span class="num">01</span>Sprint summary</h2>
+    <div class="panel">
+      <p style="margin:0 0 10px;font-size:13.5px;color:var(--gray-700)"><b>What this sprint set out to do.</b> Replace the legacy <code>intake-queue.jsonl</code> backlog file with an append-only <b>practice ledger</b> (DEC-033), and dissolve the standalone <code>features.json</code> taxonomy into the epic model (DEC-034). The practice ledger is an <b>event log</b>: you never edit or delete a line — you only append events (<code>created</code>, <code>consumed</code>, <code>closed_stale</code>…). To answer "what is still open?" the reader replays every event per item ("folding"): an item that was <code>created</code> then later <code>consumed</code> folds to closed.</p>
+      <p style="margin:0;font-size:13.5px;color:var(--gray-700)"><b>What actually shipped.</b> All 9 movements merged independently to <code>sprint/sprint-2026-05-26</code>. The ledger reader, writer, daily stale-close routine, epic-migration tool, and the canvas/greeting surfaces that consume them are all in place and green (785 tests). The AVFL merge-review found no unresolved integration defects. Two design questions surfaced that are not bugs — they are "is the current behavior the one we want to bless?" calls — and are waiting for you in section 04.</p>
+    </div>
+  </section>
+
+  <!-- ════════════════════ 02 · PER-MOVEMENT SCORECARD ════════════════════ -->
+  <!-- SAMPLE: one self-contained .score row per movement (story). Schema:
+       title · what_it_did · verification_method (from contract) · gates · evidence · merged_at -->
+  <section id="s02">
+    <h2><span class="num">02</span>Per-movement scorecard</h2>
+    <p class="lead">One self-contained row per movement: what it changed in the world, how it was verified (from its frozen verification contract), each pre-merge gate, the evidence, and the independent merge time that proves it merged on its own rather than in a wave.</p>
+
+    <div class="score">
+      <h4>a1 — Practice ledger replaces the intake queue</h4>
+      <p class="did">Introduced <code>.momentum/practice-ledger.jsonl</code> as an append-only event log and a reader that folds events per item into <code>open</code>/<code>history</code>/<code>summary</code>. Renamed the legacy queue to a frozen archive. This is the data foundation the other 8 movements build on.</p>
+      <p class="meta"><b>Verification method:</b> <code>bash</code> — unit tests on the fold logic, plus a smoke script that appends a <code>created</code>+<code>consumed</code> pair and asserts the item folds to closed and disappears from <code>open</code>.</p>
+      <div class="gates">
+        <span class="gate p">dev ✓</span><span class="gate p">qa ✓</span><span class="gate p">code-review ✓</span><span class="gate p">avfl ✓</span><span class="gate p">e2e ✓</span>
+      </div>
+      <div class="evi">658 unit tests green incl. <code>test_fold_replay</code>, <code>test_consumed_removes_from_open</code>; smoke: ledger.smoke.sh PASS (open count 0 after consume). 3 defects found pre-merge, all fixed (see 03).</div>
+      <p class="meta" style="margin-top:8px"><b>Merged independently at</b> 2026-05-26T14:02:11Z</p>
+    </div>
+
+    <div class="score">
+      <h4>a2 — Migrate open intake-queue items into the new ledger</h4>
+      <p class="did">One-time migration that reads still-open rows from the legacy queue and appends matching <code>created</code> events into the new ledger so live work is not lost at the cutover.</p>
+      <p class="meta"><b>Verification method:</b> <code>bash</code> — smoke script runs the migration against a fixture queue and asserts every open legacy item appears in the new ledger's <code>open</code> projection.</p>
+      <div class="gates">
+        <span class="gate p">dev ✓</span><span class="gate p">qa ✓</span><span class="gate p">code-review ✓</span><span class="gate p">avfl ✓</span><span class="gate p">e2e ✓</span>
+      </div>
+      <div class="evi">migration.smoke.sh PASS (7/7 open legacy items projected). QA flagged the cross-boundary <code>history</code> truncation — that is a by-design call, surfaced as decision ② in section 04, not a defect.</div>
+      <p class="meta" style="margin-top:8px"><b>Merged independently at</b> 2026-05-26T14:48:30Z · depends_on: a1 (waited for a1 ≥ review)</p>
+    </div>
+
+    <div class="score">
+      <h4>a3 — Live session greeting reads from the ledger</h4>
+      <p class="did">The fresh-session Impetus greeting now derives its open-work counts from the ledger reader instead of the retired queue, so the first thing you see each session reflects honest, current state.</p>
+      <p class="meta"><b>Verification method:</b> <code>document-review</code> — a live fresh-session greeting was captured and reviewed for honest counts and the absence of any <code>intake-queue</code> reference.</p>
+      <div class="gates">
+        <span class="gate p">dev ✓</span><span class="gate p">qa ✓</span><span class="gate p">code-review ✓</span><span class="gate p">avfl ✓</span><span class="gate na">e2e n/a</span>
+      </div>
+      <div class="evi">Captured greeting showed open=N from ledger, zero queue references. e2e n/a: greeting is a read surface with no executable scenario — discharged by document-review per the contract.</div>
+      <p class="meta" style="margin-top:8px"><b>Merged independently at</b> 2026-05-26T15:30:05Z · depends_on: a1</p>
+    </div>
+
+    <div class="score">
+      <h4>b1 — Epic migration tool: dissolve features.json into epics</h4>
+      <p class="did">Tooling that re-homes every feature into its owning epic, rewrites status counts, and removes the standalone <code>features.json</code> taxonomy (DEC-034). The largest movement by diff.</p>
+      <p class="meta"><b>Verification method:</b> <code>bash</code> — unit tests over the re-home and count logic, plus a smoke run against a snapshot of the real epics file.</p>
+      <div class="gates">
+        <span class="gate p">dev ✓</span><span class="gate p">qa ✓</span><span class="gate p">code-review ✓</span><span class="gate p">avfl ✓</span><span class="gate p">e2e ✓</span>
+      </div>
+      <div class="evi">41 unit tests green incl. <code>test_remaining_excludes_review</code>; migration.smoke.sh PASS. 4 defects found pre-merge incl. the "stories remaining" overcount (03), all fixed + re-validated.</div>
+      <p class="meta" style="margin-top:8px"><b>Merged independently at</b> 2026-05-26T16:11:44Z</p>
+    </div>
+
+    <div class="score">
+      <h4>b2–b4, a4 — supporting movements (collapsed for brevity in this sample)</h4>
+      <p class="did">b2 epic-context routing for create-story · b3 canvas gap-analysis view of the migrated epics · b4 cmux scenario coverage for the new surfaces · a4 daily stale-close routine for the ledger. Each ran its own full pipeline (dev → QA + code-review → fix → self-merge) and is green.</p>
+      <p class="meta"><b>Verification methods:</b> b2 <code>skill-invoke</code> · b3 <code>smoke-ui</code> · b4 <code>behavioral-trigger</code> · a4 <code>bash</code> (idempotent launchd job).</p>
+      <div class="gates">
+        <span class="gate p">dev ✓</span><span class="gate p">qa ✓</span><span class="gate p">code-review ✓</span><span class="gate p">avfl ✓</span><span class="gate p">e2e ✓</span>
+      </div>
+      <div class="evi">86 UI/trigger assertions green (b3 Playwright + b4 cmux). b3 code review caught an XSS + a false-flagging heuristic (03), both fixed. In a real report each of these is its OWN full scorecard row — collapsed here only to keep the worked example readable.</div>
+      <p class="meta" style="margin-top:8px"><b>Merged independently</b> between 2026-05-26T16:40Z and 2026-05-26T18:05Z</p>
+    </div>
+  </section>
+
+  <!-- ════════════════════ 03 · QUALITY-GATE FINDINGS ════════════════════ -->
+  <!-- SAMPLE: every finding from QA, code-review, AVFL, E2E as a self-contained card per the CORE MANDATE.
+       Grouped by gate, severity-sorted. Auto-fixed findings show fix + re-validation ("no decision needed"). -->
+  <section id="s03">
+    <h2><span class="num">03</span>Quality-gate findings</h2>
+    <p class="lead">Every finding the gates raised, each fully self-contained — what, where, the observable consequence, the quoted evidence, the fix, and the re-validation. All were legitimate and all were auto-fixed in place (decision 1: legitimate findings are always fixed, never deferred). Nothing here needs a decision; they are shown for transparency. 21 defects fixed across the sprint; the load-bearing ones are below.</p>
+
+    <h4 style="font-family:var(--serif);font-size:15px;margin:18px 0 8px">From QA (AC verification)</h4>
+
+    <!-- The spec's banned-failure example, rebuilt as a fully self-contained card -->
+    <div class="find">
+      <div class="top">
+        <h4>The "stories remaining" count was inflated by stories already in review.</h4>
+        <span class="sev high">high</span>
+      </div>
+      <p class="where">b1 · <code>momentum-tools.py → count_remaining()</code></p>
+      <p><span class="label">What:</span> the remaining-work counter treated stories whose status was <code>review</code> as still remaining, even though a story in review is built and merged — not outstanding work.</p>
+      <p><span class="label">Why it matters:</span> the ad-hoc epic reported <b>14 remaining when only 5 were actually open</b> — a ~3× overcount that would mislead every planning and status surface that reads it.</p>
+      <div class="quote">test_remaining_excludes_review FAILED
+  assert 14 == 5
+(passes after the fix)</div>
+      <span class="fixed">FIXED &amp; RE-VALIDATED · <code>review</code> excluded from the remaining set; <code>test_remaining_excludes_review</code> now green. No decision needed.</span>
+    </div>
+
+    <h4 style="font-family:var(--serif);font-size:15px;margin:18px 0 8px">From code review (adversarial bug hunt)</h4>
+
+    <div class="find">
+      <div class="top">
+        <h4>Open/history order was non-deterministic when two events shared a timestamp.</h4>
+        <span class="sev high">high</span>
+      </div>
+      <p class="where">a1 · <code>practice_ledger.py → fold_events()</code></p>
+      <p><span class="label">What:</span> events were sorted by timestamp alone. When two events were appended in the same second (common in scripted runs), their relative order — and therefore which one "won" the fold — depended on dict insertion order, which is not guaranteed stable across runs.</p>
+      <p><span class="label">Why it matters:</span> the same ledger could fold to a <i>different</i> <code>open</code> set on two consecutive reads — a flaky source of truth. The ledger unit test flaked 3 of 4 runs and was root-caused to exactly this.</p>
+      <div class="quote">sort key was: lambda e: e["ts"]
+fix:            lambda e: (e["ts"], e["event_id"])   # stable tie-break</div>
+      <span class="fixed">FIXED &amp; RE-VALIDATED · tie-break on <code>(ts, event_id)</code>; ledger test now 5/5 green. No decision needed.</span>
+    </div>
+
+    <div class="find">
+      <div class="top">
+        <h4>Migrated epic data was rendered into the canvas without escaping (XSS).</h4>
+        <span class="sev med">med</span>
+      </div>
+      <p class="where">b3 · <code>canvas/epicView.js → renderEpicCard()</code></p>
+      <p><span class="label">What:</span> epic titles and descriptions were interpolated straight into <code>innerHTML</code>. Any epic whose text contained <code>&lt;</code> or a tag would inject markup; a malicious or accidental <code>&lt;img onerror&gt;</code> would execute.</p>
+      <p><span class="label">Why it matters:</span> the canvas reads developer-authored epic files, so the risk is low-likelihood — but it is a real script-injection path in a surface you open every session, and the fix is cheap.</p>
+      <div class="quote">card.innerHTML = `<h3>${epic.title}</h3>${epic.desc}`
+fix: textContent + createElement; desc passed through escapeHtml()</div>
+      <span class="fixed">FIXED &amp; RE-VALIDATED · switched to safe DOM construction; b3 render tests green. No decision needed.</span>
+    </div>
+
+    <h4 style="font-family:var(--serif);font-size:15px;margin:18px 0 8px">From AVFL (merge-review of the integrated branch)</h4>
+
+    <div class="find">
+      <div class="top">
+        <h4>The gap heuristic was duplicated across two movements with diverging logic.</h4>
+        <span class="sev med">med</span>
+      </div>
+      <p class="where">integration · <code>canvas/epicView.js</code> (b3) and <code>momentum-tools.py</code> (b1) — touched by two different dev agents</p>
+      <p><span class="label">What:</span> b1 and b3 each independently implemented the L1↔L2 "epic has no stories" gap test, and the two copies disagreed on edge cases — b3's flagged 15 of 25 real epics as gaps that b1's did not.</p>
+      <p><span class="label">Why it matters:</span> the canvas and the CLI would report different gap counts for the same data — exactly the cross-story contradiction per-movement QA cannot see, because each movement passed in isolation.</p>
+      <div class="quote">AVFL COHERENCE-002 (confidence HIGH, spans b1+b3):
+"Two gap heuristics; canvas reports 15 gaps, CLI reports 7, same epics file."</div>
+      <span class="fixed">FIXED &amp; RE-VALIDATED · unified on the b1 heuristic, b3 now calls the shared function; both report 7. AVFL re-run score 96 (≥95). No decision needed.</span>
+    </div>
+
+    <div class="panel empty" style="margin-top:12px">E2E pass: no findings. All behavioral scenarios against the merged branch passed (785 total tests green); nothing surfaced that the per-movement gates and AVFL did not already resolve.</div>
+  </section>
+
+  <!-- ════════════════════ 04 · DECISIONS NEEDING YOU ════════════════════ -->
+  <!-- SAMPLE: the ONLY interactive cards. Schema per card:
+       title (plain QUESTION, not a symbol) · severity chip · background panel ·
+       the_call (contradiction/fork) · options[] each with cost+benefit (in <details>) ·
+       recommendation · <choices> radio group.
+       These radio selections feed buildPrompt(). -->
+  <section id="s04">
+    <h2><span class="num">04</span>Decisions needing you</h2>
+    <p class="lead">The only choices on this page. Each card carries its own full background — you do not need to have watched the sprint. Set both, choose the end gate below them, hit <b>Copy decision as prompt</b>, paste back.</p>
+
+    <div class="panel" style="margin-bottom:16px;background:var(--gray-50)">
+      <p style="margin:0;font-size:13.5px;color:var(--gray-700)"><b>Shared background (both decisions come from the practice ledger, movement a1).</b> a1 replaced the old <code>intake-queue.jsonl</code> with an <b>append-only event log</b> at <code>.momentum/practice-ledger.jsonl</code>: you never edit or delete past lines, you only append events (<code>created</code>, <code>consumed</code>, <code>closed_stale</code>…). To answer "what is still open?" the code <b>reads every event and replays them per item</b> ("folding") — an item that was <code>created</code> then later <code>consumed</code> folds to closed. Both decisions below are about that reader. <b>Neither blocks the sprint</b> — each is "is the current behavior the one we want to bless?"</p>
+    </div>
+
+    <div class="decision">
+
+      <!-- Fully-worked decision card: the DuckDB-vs-pure-Python call -->
+      <div class="item">
+        <h4>① Should the ledger reader use DuckDB as the spec says, or keep the pure-Python implementation that was actually written? <span class="sev high">AC15 / arch D7</span></h4>
+        <p><b>The call (the contradiction):</b> the spec — a1's acceptance criterion <b>AC15</b>, plus architecture <b>Decision 52 / DEC-033 D7</b> — says the reader should use <b>DuckDB</b>, an embeddable SQL engine, to read the JSONL and fold it with SQL. The function is even <i>named</i> <code>_load_duckdb_events</code>. But the code that shipped is <b>plain Python</b> (open file → parse each line → fold in a loop); it imports <b>no DuckDB at all</b>. It is correct, passes all 658 tests, and is arguably <i>better</i> because it has <b>no external dependency</b> (DuckDB would need installing; pure-Python runs anywhere). Nothing is broken — this is purely "which side do we make honest, the spec or the code?"</p>
+        <p class="rec"><b>Recommendation:</b> Bless pure-Python — it is dependency-free, already passing, and DuckDB buys no behavioral gain at this data scale.</p>
+        <details style="margin:0 0 12px"><summary>The three options &amp; their trade-offs</summary><div class="body">
+          <b>Bless pure-Python (recommended).</b> Cost: ~5 min — amend AC15 + the two arch decisions to describe the pure-Python fold, and rename <code>_load_duckdb_events</code> → <code>_load_ledger_events</code>. Benefit: zero behavior change, stays dependency-free, the spec stops lying about the implementation.<br><br>
+          <b>Implement real DuckDB.</b> Cost: rewrite the reader as DuckDB SQL + add and pin the dependency + CI install step. Benefit: matches the original spec letter-for-letter. Downside: adds a dependency the dev deliberately avoided, for <b>no behavioral gain</b> at this scale.<br><br>
+          <b>Defer.</b> Cost: the misleading name and spec linger until a follow-up story is picked up. Benefit: zero work now. Downside: anyone reading <code>_load_duckdb_events</code> meanwhile is misled.
+        </div></details>
+        <div class="choices" data-group="duckdb">
+          <label class="sel"><input type="radio" name="duckdb" value="bless" checked><span>Bless pure-Python — amend AC/arch + rename fn</span></label>
+          <label><input type="radio" name="duckdb" value="implement"><span>Implement real DuckDB reader</span></label>
+          <label><input type="radio" name="duckdb" value="followup"><span>Defer to a follow-up story</span></label>
+        </div>
+      </div>
+
+      <!-- Second worked decision card: the archive-exclusion call -->
+      <div class="item">
+        <h4>② Should archived (pre-migration) entries be left out of open/history, or backfilled so history spans the cutover? <span class="sev med">by-design</span></h4>
+        <p><b>The call:</b> a2 renamed the old <code>intake-queue.jsonl</code> (old schema: <code>id</code>/<code>status</code>/<code>kind</code>) to <code>practice-ledger-pre-2026-05.jsonl</code> — the <b>archive</b> — and started a fresh ledger with the new event schema (<code>event_id</code>/<code>entity_id</code>/<code>event_type</code>). The reader <b>counts</b> the 88 archived entries (<code>summary</code> shows <code>archive_entries: 88</code>) but <b>does not fold them</b> into <code>open</code>/<code>history</code>, because the old rows are status snapshots, not events, and cannot run through the event-fold logic.</p>
+        <p><b>Observable consequence (what a2's QA flagged):</b> <code>history --entity &lt;old-item&gt;</code> shows <b>1 event</b> (only the new "consumed" a2 appended during cleanup), not 2 — the original "created" lives in the archive, which <code>history</code> does not read. So the chain looks truncated across the migration boundary.</p>
+        <p class="rec"><b>Recommendation:</b> Leave as-is — the archive is a frozen historical snapshot, and a clean migration boundary is worth more than seamless cross-cutover history that nothing currently needs.</p>
+        <details style="margin:0 0 12px"><summary>The two options &amp; their trade-offs</summary><div class="body">
+          <b>Leave as-is (recommended).</b> Cost: cross-boundary <code>history</code> is incomplete by design; old entries remain a visible count only. Benefit: clean migration boundary, zero work, new work uses the new ledger cleanly.<br><br>
+          <b>Follow-up backfill.</b> Cost: a one-time script reads still-open archive items and emits synthetic new-schema <code>created</code> events. Benefit: <code>open</code>/<code>history</code> show full chains across the old→new cutover. Only worth it if you actually need seamless history across the boundary.
+        </div></details>
+        <div class="choices" data-group="archive">
+          <label class="sel"><input type="radio" name="archive" value="leave" checked><span>Leave as-is (archive is frozen)</span></label>
+          <label><input type="radio" name="archive" value="followup"><span>Follow-up story: backfill projection</span></label>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════ 05 · DEFERRED ITEMS ════════════════════ -->
+  <!-- SAMPLE: each deferred item with WHAT, WHY safe to defer, and what triaging later COSTS.
+       These become triage stubs on approval. If none -> the contextualized empty state shown below. -->
+  <section id="s05">
+    <h2><span class="num">05</span>Deferred items</h2>
+    <p class="lead">Behavior-adjacent cleanups intentionally left for a later cycle. On approval each becomes a triage stub. Each carries why it is safe to defer and what deferring costs.</p>
+
+    <div class="find">
+      <div class="top">
+        <h4>The archive-detection filename string is hardcoded as "pre-2026-05".</h4>
+        <span class="sev low">low</span>
+      </div>
+      <p class="where">a2 · <code>practice_ledger.py → _is_archive_file()</code></p>
+      <p><span class="label">Why safe to defer:</span> there is exactly one archive file today and it matches; the hardcoded string is correct until a <i>second</i> migration happens. <span class="label">Cost of deferring:</span> the next migration (if there is one) must remember to generalize this first, or it will silently fail to detect the new archive. Low likelihood, captured here so it is not forgotten.</p>
+    </div>
+
+    <!-- EMPTY-STATE PATTERN (use this block INSTEAD of the items above when nothing was deferred): -->
+    <!--
+    <div class="panel empty">Nothing was deferred this cycle — every finding was either fixed in place or surfaced as a decision in section 04. There is no deferred work to triage on approval.</div>
+    -->
+  </section>
+
+  <!-- ════════════════════ 06 · BLOCKED / INCOMPLETE ════════════════════ -->
+  <!-- SAMPLE: any movement that did not complete — what blocked it + the recovery path.
+       On approval these spin out as stubs via momentum:triage. This sample shows the EMPTY STATE
+       (nothing blocked) — the contextualized empty state, never blank. Swap in .find cards if blocked. -->
+  <section id="s06">
+    <h2><span class="num">06</span>Blocked / incomplete</h2>
+    <div class="panel empty">Every movement reached its merge gate — none was blocked, quarantined, or left incomplete. All 9 worktrees merged cleanly into the sprint branch within the retry bound, so there is nothing to spin out as a recovery stub on approval. (When a movement <i>does</i> block: it appears here with the conflicting hunks, both stories' intent inline, and the recovery path, and on approval it is fed to <code>momentum:triage</code> while the original transitions to <code>closed-incomplete</code>.)</div>
+  </section>
+
+  <!-- ════════════════════ 07 · MERGE & PUSH PREVIEW ════════════════════ -->
+  <!-- SAMPLE: commits ahead of main/origin · full test totals · the exact approval sequence ·
+       explicit note that PUSH IS A SEPARATE CONFIRMATION. -->
+  <section id="s07">
+    <h2><span class="num">07</span>Merge &amp; push preview</h2>
+    <div class="panel">
+      <div style="display:flex;gap:28px;flex-wrap:wrap">
+        <div><div class="metric" style="border:none;padding:0"><div class="n" style="color:var(--clay-d)">34</div><div class="l">commits ahead of main</div></div></div>
+        <div><div class="metric" style="border:none;padding:0"><div class="n" style="color:var(--clay-d)">31</div><div class="l">commits ahead of origin</div></div></div>
+        <div><div class="metric" style="border:none;padding:0"><div class="n">785</div><div class="l">tests green (658+41+86)</div></div></div>
+      </div>
+      <p style="font-size:13px;color:var(--gray-700);margin:16px 0 6px"><b>Exact approve sequence:</b></p>
+      <ul class="clean">
+        <li>1 · Triage leftovers + any newly-discovered work into backlog stubs via <code>momentum:triage</code> (1 pending this cycle — the deferred hardcoded archive-detection string from section 05 becomes a triage stub on approval).</li>
+        <li>2 · Close every movement: completed-and-validated → <code>done</code> (all 9); blocked → <code>closed-incomplete</code> (none).</li>
+        <li>3 · Run sprint complete, then merge <code>sprint/sprint-2026-05-26</code> → <code>main</code> (the Conductor resolves any conflicts and retries — never halts).</li>
+        <li>4 · Show <code>git log @{u}..HEAD --oneline</code> and ask before pushing.</li>
+      </ul>
+      <p style="font-size:13px;color:var(--gray-700);margin:10px 0 0"><b>Push is a separate confirmation.</b> Approving here merges to <code>main</code> locally; nothing is pushed to origin until you confirm the push list (git-discipline rule).</p>
+    </div>
+  </section>
+
+  <!-- ════════════════════ GATE · the single end-gate control ════════════════════ -->
+  <!-- The ONE end gate (decision 2): Request changes vs Approve & finish. No Reject.
+       - Request changes -> reveals the free-text scope textarea; buildPrompt() appends it verbatim.
+       - Approve & finish -> triage leftovers, close stories, merge to main, then ask before push.
+       buildPrompt() = gate choice as head line + one bullet per decision-card selection
+       (+ verbatim changes textarea when "changes" is selected). -->
+  <section id="gate">
+    <h2><span class="num">GATE</span>Your decision</h2>
+    <p class="lead">Two outcomes only. <b>Approve &amp; finish</b> is terminal. <b>Request changes</b> runs one change-encore over the fixes you describe, then re-issues this report as the next version. There is no Reject — the conversation stays open until you choose one.</p>
+
+    <div class="decision">
+      <div class="final">
+        <label class="selA" data-final="approve"><input type="radio" name="final" value="approve" checked>
+          <b>✓ Approve &amp; finish</b><small>your 2 decisions above are applied · all movements verify→done · sprint complete · merge to main · then ask before push</small></label>
+        <label data-final="changes"><input type="radio" name="final" value="changes">
+          <b>⟲ Request changes</b><small>run one change-encore over the fixes you describe below · re-issue this report as v2 · no merge to main</small></label>
+      </div>
+
+      <div class="changes" id="changesWrap">
+        <label for="changes">Describe the changes (becomes the change-encore's scope, pasted back verbatim):</label>
+        <textarea id="changes" placeholder="e.g. Reverse decision ① — actually implement the DuckDB reader. Also: the canvas gap count still looks off for the 'ad-hoc' epic, re-check it against momentum-tools status."></textarea>
+      </div>
+
+      <div class="actions">
+        <button onclick="copyPrompt()">Copy decision as prompt</button>
+        <button class="ghost" onclick="toggleOut()">Preview</button>
+        <span class="copied" id="copied">✓ copied — paste it back to me</span>
+      </div>
+      <div class="out" id="out"></div>
+    </div>
+  </section>
+
+  <div class="foot">Generated by the Conductor · momentum:conduct · self-contained HTML, house style from anthropics/html-effectiveness · no dependencies</div>
+</div>
+
+<script>
+  /* ── paint(): reflect radio state into label styling (.choices + .final) ── */
+  function paint(){
+    document.querySelectorAll('.choices label').forEach(l=>l.classList.toggle('sel',l.querySelector('input').checked));
+    document.querySelectorAll('.final label').forEach(l=>{
+      const v=l.querySelector('input').checked;
+      l.classList.toggle('selA',v&&l.dataset.final==='approve');
+      l.classList.toggle('selC',v&&l.dataset.final==='changes');
+    });
+    /* reveal the free-text scope only on the "changes" path */
+    document.getElementById('changesWrap').classList.toggle('show',val('final')==='changes');
+  }
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener('change',paint));
+
+  /* ── val(): selected value of a radio group ── */
+  function val(n){return document.querySelector('input[name="'+n+'"]:checked').value}
+
+  /* ── buildPrompt(): gate head line + one bullet per decision-card selection
+        (+ verbatim changes textarea when "changes" is selected) ── */
+  function buildPrompt(){
+    const fin=val('final');
+    const duckdb={
+      bless:'Decision ① (DuckDB reader): bless the pure-Python implementation — amend AC15 + architecture Decision 52/DEC-033 D7 to describe the portable pure-Python fold, and rename _load_duckdb_events → _load_ledger_events.',
+      implement:'Decision ① (DuckDB reader): implement a real DuckDB-backed reader per AC15/D7 (add and pin the dependency, update CI install).',
+      followup:'Decision ① (DuckDB reader): defer to a follow-up story; leave the pure-Python impl as-is for now.'
+    }[val('duckdb')];
+    const archive={
+      leave:'Decision ② (archive derivation): leave as-is — the pre-2026-05 archive is frozen and excluded from open/history by design.',
+      followup:'Decision ② (archive derivation): create a follow-up story to backfill still-open archive entities into the new schema so history spans the cutover.'
+    }[val('archive')];
+
+    const head = fin==='approve'
+      ? 'Approved. Finish sprint-2026-05-26: apply my two decisions below, transition all 9 movements verify→done, run sprint complete, merge sprint/sprint-2026-05-26 into main, then show me the push list and ask before pushing.'
+      : 'Request changes on sprint-2026-05-26 — do NOT merge to main. Run one change-encore over the scope below, then re-issue the report as v2.';
+
+    const lines=['Sprint sprint-2026-05-26 — conduct end-gate decision:','• '+head,'• '+duckdb,'• '+archive];
+
+    if(fin==='changes'){
+      const c=document.getElementById('changes').value.trim();
+      lines.push('','Change scope (verbatim):',c||'(none specified — please describe the changes before pasting back)');
+    }
+    return lines.join('\n');
+  }
+
+  /* ── toggleOut(): show/hide the live preview of the assembled prompt ── */
+  function toggleOut(){const o=document.getElementById('out');o.textContent=buildPrompt();o.classList.toggle('show')}
+
+  /* ── flash(): show a transient message in the #copied affordance ── */
+  function flash(msg){
+    const c=document.getElementById('copied');
+    c.textContent=msg;c.classList.add('show');
+    setTimeout(()=>c.classList.remove('show'),2600);
+  }
+
+  /* ── copyPrompt(): render + copy to clipboard + flash confirmation.
+        #out is always populated first, so the paste-back flow works even
+        when the clipboard API is unavailable (file://, insecure context)
+        or rejects — in that case the affordance degrades to a visible
+        "select the text below to copy" hint rather than failing silently. ── */
+  function copyPrompt(){
+    const t=buildPrompt();
+    const o=document.getElementById('out');
+    o.textContent=t;o.classList.add('show');
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t)
+        .then(()=>flash('✓ copied — paste it back to me'))
+        .catch(()=>flash('⤓ select the text below to copy'));
+    } else {
+      flash('⤓ select the text below to copy');
+    }
+  }
+
+  paint();
+</script>
+</body>
+</html>
