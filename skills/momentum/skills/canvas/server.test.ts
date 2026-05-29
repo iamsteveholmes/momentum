@@ -44,12 +44,11 @@ describe("computeCycleState", () => {
   test("empty sprints index — optional phases not-run, required phases pending, next-required = sprint-planning", () => {
     const result = computeCycleState(null);
 
-    expect(result.phases).toHaveLength(7);
+    expect(result.phases).toHaveLength(6);
 
     const slugs = result.phases.map((p) => p.slug);
     expect(slugs).toEqual([
       "triage",
-      "feature-grooming",
       "epic-grooming",
       "refine",
       "sprint-planning",
@@ -59,7 +58,6 @@ describe("computeCycleState", () => {
 
     // Optional phases: not-run
     expect(result.phases.find((p) => p.slug === "triage")?.state).toBe("not-run");
-    expect(result.phases.find((p) => p.slug === "feature-grooming")?.state).toBe("not-run");
     expect(result.phases.find((p) => p.slug === "epic-grooming")?.state).toBe("not-run");
     expect(result.phases.find((p) => p.slug === "refine")?.state).toBe("not-run");
 
@@ -173,7 +171,7 @@ describe("computeCycleState", () => {
   test("optional phases never receive next-required state", () => {
     const result = computeCycleState(null);
 
-    const optionalSlugs = ["triage", "feature-grooming", "epic-grooming", "refine"];
+    const optionalSlugs = ["triage", "epic-grooming", "refine"];
     for (const slug of optionalSlugs) {
       const phase = result.phases.find((p) => p.slug === slug);
       expect(phase?.required).toBe(false);
@@ -194,7 +192,7 @@ describe("computeCycleState", () => {
       })
     );
 
-    const optionalSlugs = ["triage", "feature-grooming", "epic-grooming", "refine"];
+    const optionalSlugs = ["triage", "epic-grooming", "refine"];
     for (const slug of optionalSlugs) {
       const phase = result.phases.find((p) => p.slug === slug);
       expect(phase?.state).not.toBe("next-required");
@@ -208,7 +206,7 @@ describe("computeCycleState", () => {
     const optional = result.phases.filter((p) => !p.required).map((p) => p.slug);
 
     expect(required).toEqual(["sprint-planning", "sprint-dev", "retro"]);
-    expect(optional).toEqual(["triage", "feature-grooming", "epic-grooming", "refine"]);
+    expect(optional).toEqual(["triage", "epic-grooming", "refine"]);
   });
 
   test("lastSprintSlug returns most recent completed sprint slug", () => {
