@@ -215,6 +215,20 @@ Either add the epic record to `epics.json` (run `momentum:epic-grooming`) or cor
     </check>
     <action>Store {{epic_record}} = the JSON record at `epics.json["{{epic_slug}}"]`</action>
 
+    <!-- Write epic provenance into the story file BODY (not just index.json/frontmatter) so the
+         generated story cites the epic it was routed under. Eval contract b2 Scenario 5 requires
+         the story body's References subsection to name the source epic. -->
+    <action>Read the current content of {{story_file}}</action>
+    <action>Locate the `### References` subsection within the Dev Notes section. If a `### References`
+    subsection does not exist, create one at the end of the Dev Notes section (add the `### References`
+    heading immediately before the next `##`-level heading, or at end of file if Dev Notes is the last section).</action>
+    <action>Append this citation bullet to the `### References` subsection (do not duplicate if an identical
+    line already exists):
+      `- Epic context: \`{{epic_slug}}\` (from _bmad-output/planning-artifacts/epics.json)`
+    </action>
+    <action>Write the updated content back to {{story_file}}</action>
+    <output>**Epic provenance** cited in `{{story_file}}` body — References → `{{epic_slug}}`</output>
+
     <!-- Extract depends_on: check epic stories array for cross-references, fall back to [] -->
     <action>Scan {{epic_record}}.stories array for any story object with a non-empty `depends_on`
 field whose slugs match other entries in `stories/index.json`. Also scan

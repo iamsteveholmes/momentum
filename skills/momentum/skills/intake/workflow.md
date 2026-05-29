@@ -136,6 +136,25 @@ stub file, add index entry. No analysis, no research, no subagents.
       <action>HALT — report the error to the user</action>
     </check>
 
+    <action>Append a `created` event to the practice ledger so this capture is
+      visible to `momentum-tools practice-ledger`. Use the bare source label
+      `intake` (matching the triage/retro convention):
+      ```
+      python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+        --event-type created \
+        --entity-id "{{slug}}" \
+        --source intake \
+        --actor "{{user_role}}" \
+        --payload '{"title": "{{title}}", "epic_slug": "{{epic_slug}}", "intent": "capture"}'
+      ```
+    </action>
+
+    <check if="practice-ledger append returns an error">
+      <action>Log the failure but do NOT abort — the stub file and index entry
+        are already written, so the capture is intact. Note the ledger-append
+        failure in the final report.</action>
+    </check>
+
     <!-- SPIKE: beads dual-write — route discovered work via discovered-from edge -->
     <action>[SPIKE: beads] If `.beads/` directory exists:
       1. Determine the origin bead ID:
