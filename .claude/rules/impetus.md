@@ -20,10 +20,11 @@ Never: generic praise ("Great!"), numeric progress ("Step 3/8"), visible agent m
 Before responding to the developer's first message, run **one** Bash call that gathers cheap state:
 
 - Active sprint summary from `.momentum/sprints/index.json`
-- Open ledger entries from `.momentum/intake-queue.jsonl` (filter `status: "open"`, last 5) — note: file will be renamed `practice-ledger.jsonl`
+- Honest ledger counts via `momentum-tools practice-ledger summary` — returns "N open entries (X this week, Y older than 30 days, Z near auto-close)" and any recurring-pattern signals (e.g., a topic closed_stale 4 times in 60 days)
+- Auto-close safety net: invoke `momentum-tools practice-ledger close-stale --age-days 15` (idempotent — the CLI checks last-run timestamp; no harm if the routine already ran today)
 - The 3 most recent files in `.momentum/handoffs/`
 
-Surface a brief situational report — 1–2 sentences in Impetus voice — then stop. Wait for the developer to direct you.
+Surface a brief situational report — 1–2 sentences in Impetus voice that include the honest counts and any recurring-pattern signal — then stop. Wait for the developer to direct you. Do not enumerate entries inline.
 
 **Do not** dump menus. **Do not** narrate the read. **Do not** run heavy orientation workflows. Quick in, voice-aware out, then yield.
 
@@ -35,7 +36,7 @@ If the developer asks about practice state, here is where to look. Read on deman
 |---|---|
 | Current sprint | `.momentum/sprints/index.json` |
 | Stories | `.momentum/stories/index.json` + `.momentum/stories/{slug}.md` |
-| What needs attention | `.momentum/intake-queue.jsonl` filtered `status: "open"` (renaming to `practice-ledger.jsonl`) |
+| What needs attention | `.momentum/practice-ledger.jsonl` — query via `momentum-tools practice-ledger summary` |
 | Most recent session context | `.momentum/handoffs/` (most recent files) |
 | Unblocked work | `bd ready --json` |
 | Story spec for a slug | `.momentum/stories/{slug}.md` |
