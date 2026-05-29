@@ -215,30 +215,111 @@ Per Decision 30 black-box separation: if Gherkin specs exist for this sprint at 
 
 ## Dev Agent Record
 
-_DRAFT — this section is populated by the dev agent during implementation._
-
 ### Agent Model Used
+
+claude-sonnet-4-6
 
 ### Debug Log References
 
+None — execution proceeded without errors.
+
 ### Completion Notes List
+
+All 12 entries closed via CLI. No direct file edits made. Script committed for auditability.
+
+**AC 4/5/8 design gap note:** A1's `_load_duckdb_events` implementation treats all entries in `practice-ledger-pre-2026-05.jsonl` as `archive_entries` (opaque count), NOT as derivable new-schema entities. As a result:
+- `practice-ledger open` returns 0 both pre- and post-cleanup (archive entities never appear in the open set)
+- `practice-ledger history --entity <id>` returns only 1 event (the new `consumed` event) instead of 2, because the original archive entry lacks `event_id` and is excluded from history queries
+- The "52 -> 40 open count" semantic in the story description does not hold with A1's implementation — archive entities are not counted in the open set
+
+This is an upstream design gap in A1. The 12 `consumed` events ARE correctly appended and are auditable via `summary` (new_entries: 12, by_event_type: {consumed: 12}). The intent of the hygiene pass is satisfied — any future migration that projects archive entries into new-schema events will inherit these consumed markers via entity_id matching. Recommend filing an upstream-fix note against A1 to resolve the history chain gap (AC 8) and open-count semantics (AC 4/5).
 
 #### Pre-cleanup state
 
-_To be filled by dev: paste output of `momentum-tools practice-ledger open` and `summary` here._
+```
+$ python3 skills/momentum/scripts/momentum-tools.py practice-ledger open
+{"action":"practice_ledger_open","success":true,"entities":[],"count":0}
+
+$ python3 skills/momentum/scripts/momentum-tools.py practice-ledger summary
+{"action":"practice_ledger_summary","success":true,"new_entries":0,"archive_entries":88,"by_event_type":{},"by_source":{},"age_buckets":{"lt_7d":0,"d7_30":0,"gt_30d":0,"near_auto_close":0}}
+```
+
+Pre-open count (new-schema): 0
+Pre-consumed count (new-schema): 0
+Archive entries: 88 (includes 52 open + 36 consumed in old schema)
 
 #### Closure invocations
 
-_To be filled by dev: paste the 12 CLI invocations (or script path) here._
+Script committed: `scripts/practice-ledger-hygiene-2026-05-26.sh`
+
+Exact invocations executed:
+
+```bash
+# Superseded entries (8)
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260424205245-50b859cb --actor developer --source triage --outcome-ref "superseded:design-pass-4-7"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260516154102-22515545 --actor developer --source triage --outcome-ref "superseded:DEC-020,DEC-024"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260516154102-1ae5c62a --actor developer --source triage --outcome-ref "superseded:DEC-020,DEC-024"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260516154102-d032731e --actor developer --source triage --outcome-ref "superseded:DEC-020"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260516154102-f89de525 --actor developer --source triage --outcome-ref "superseded:DEC-020,DEC-025"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260516154102-221bdb70 --actor developer --source triage --outcome-ref "superseded:DEC-023"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260516154102-f098660a --actor developer --source triage --outcome-ref "superseded:DEC-026"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260518032341-976884b5 --actor developer --source triage --outcome-ref "superseded:DEC-029"
+
+# Test/leftover entries (4)
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260416054851-aec14053 --actor developer --source triage --outcome-ref "test-leftover"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260416055625-ab0b3dc4 --actor developer --source triage --outcome-ref "test-leftover"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260416055626-153bbdd3 --actor developer --source triage --outcome-ref "test-leftover"
+python3 skills/momentum/scripts/momentum-tools.py practice-ledger consume --entity-id iq-20260416055624-9f5c9655 --actor developer --source triage --outcome-ref "test-leftover"
+```
+
+All 12 returned `"success": true`. No errors.
 
 #### Post-cleanup state
 
-_To be filled by dev: paste output of `momentum-tools practice-ledger open` and `summary` here, plus delta confirmation (pre - post = 12)._
+```
+$ python3 skills/momentum/scripts/momentum-tools.py practice-ledger open
+{"action":"practice_ledger_open","success":true,"entities":[],"count":0}
+
+$ python3 skills/momentum/scripts/momentum-tools.py practice-ledger summary
+{"action":"practice_ledger_summary","success":true,"new_entries":12,"archive_entries":88,"by_event_type":{"consumed":12},"by_source":{"triage":12},"age_buckets":{"lt_7d":12,"d7_30":0,"gt_30d":0,"near_auto_close":0}}
+```
+
+Post-consumed count (new-schema): 12
+Delta confirmation: 12 new `consumed` events appended (pre_new_entries=0 -> post_new_entries=12, delta=12). The 12 entity_ids are exactly the table from the story Description.
+
+No direct edits to `.momentum/practice-ledger.jsonl` or `.momentum/practice-ledger-pre-2026-05.jsonl` — all writes via CLI.
 
 #### Event chain verification
 
-_To be filled by dev: paste output of `momentum-tools practice-ledger history --entity <id>` for one closed entity, showing the original + new consumed event._
+For entity `iq-20260516154102-d032731e` (documenter-agent-definition — superseded by DEC-020):
+
+```
+$ python3 skills/momentum/scripts/momentum-tools.py practice-ledger history --entity iq-20260516154102-d032731e
+{
+  "action": "practice_ledger_history",
+  "success": true,
+  "entity_id": "iq-20260516154102-d032731e",
+  "events": [
+    {
+      "event_id": "pl-20260529T053901156135-fa90125e",
+      "entity_id": "iq-20260516154102-d032731e",
+      "ts": "2026-05-29T05:39:01Z",
+      "event_type": "consumed",
+      "source": "triage",
+      "actor": "developer",
+      "payload": {
+        "outcome_ref": "superseded:DEC-020"
+      }
+    }
+  ],
+  "count": 1
+}
+```
+
+**AC 8 partial pass:** History returns 1 event (the new `consumed` event), not 2. The original archive entry (from `practice-ledger-pre-2026-05.jsonl`) does not appear in history because A1's `_load_duckdb_events` excludes archive-file entries from new-schema event processing. The consumed event is correctly appended and the `entity_id` chain is intact for future migration. See Completion Notes for upstream-fix recommendation.
 
 ### File List
 
-_To be filled by dev: list any committed files (e.g., `scripts/practice-ledger-hygiene-2026-05-26.sh`), or note "no committed files — invocations only" if the developer used the copy-paste path._
+- `.momentum/practice-ledger.jsonl` — 12 `consumed` events appended (one per stale entity)
+- `.momentum/stories/a2-practice-ledger-hygiene-cleanup-close-12-stale-entries.md` — Dev Agent Record populated
+- `scripts/practice-ledger-hygiene-2026-05-26.sh` — one-shot dated script for auditability
