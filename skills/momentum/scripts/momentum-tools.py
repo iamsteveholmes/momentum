@@ -2227,6 +2227,10 @@ PRACTICE_LEDGER_EVENT_TYPES = frozenset({
 })
 PRACTICE_LEDGER_TERMINAL_TYPES = frozenset({"consumed", "rejected", "closed_stale"})
 
+# Default TTL (in days) after which a non-terminal practice-ledger entity is
+# eligible for auto-close. The summary's near_auto_close band tracks this value.
+PRACTICE_LEDGER_STALE_TTL_DAYS = 15
+
 
 def practice_ledger_path(project_dir: Path) -> Path:
     return project_dir / ".momentum" / "practice-ledger.jsonl"
@@ -2237,6 +2241,41 @@ def _generate_event_id() -> str:
     import uuid
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
     return f"pl-{ts}-{uuid.uuid4().hex[:8]}"
+
+
+def _parse_iso_ts(ts_str) -> "datetime | None":
+    """Parse an ISO-8601 timestamp (tolerating a trailing 'Z').
+
+    Returns the parsed datetime, or None if the input is not a parseable
+    timestamp string.
+    """
+    try:
+        return datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
+
+
+def _append_ledger_event(ledger_path, *, entity_id, event_type, source, actor,
+                         payload, custom_event_type=None) -> str:
+    """Build a practice-ledger event, append it (append-only), return event_id."""
+    event_id = _generate_event_id()
+    event: dict = {
+        "event_id": event_id,
+        "entity_id": entity_id,
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "event_type": event_type,
+        "source": source,
+        "actor": actor,
+        "payload": payload,
+    }
+    if custom_event_type:
+        event["custom_event_type"] = custom_event_type
+
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(event, ensure_ascii=False)
+    with open(ledger_path, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+    return event_id
 
 
 def cmd_practice_ledger_append(args: argparse.Namespace) -> None:
@@ -2257,25 +2296,19 @@ def cmd_practice_ledger_append(args: argparse.Namespace) -> None:
         error_result("practice_ledger_append", f"Invalid JSON for --payload: {e}")
         return
 
-    event_id = _generate_event_id()
-    event: dict = {
-        "event_id": event_id,
-        "entity_id": args.entity_id,
-        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "event_type": event_type,
-        "source": args.source,
-        "actor": args.actor,
-        "payload": payload,
-    }
+    custom_event_type = None
     if event_type == "custom":
-        custom = getattr(args, "custom_event_type", None) or ""
-        if custom:
-            event["custom_event_type"] = custom
+        custom_event_type = getattr(args, "custom_event_type", None) or None
 
-    ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    line = json.dumps(event, ensure_ascii=False)
-    with open(ledger_path, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    event_id = _append_ledger_event(
+        ledger_path,
+        entity_id=args.entity_id,
+        event_type=event_type,
+        source=args.source,
+        actor=args.actor,
+        payload=payload,
+        custom_event_type=custom_event_type,
+    )
 
     result("practice_ledger_append", success=True, event_id=event_id,
            entity_id=args.entity_id, ledger_path=str(ledger_path))
@@ -2289,25 +2322,18 @@ def cmd_practice_ledger_consume(args: argparse.Namespace) -> None:
     entity_id = args.entity_id
     outcome_ref = getattr(args, "outcome_ref", None) or ""
 
-    event_id = _generate_event_id()
     payload: dict = {}
     if outcome_ref:
         payload["outcome_ref"] = outcome_ref
 
-    event: dict = {
-        "event_id": event_id,
-        "entity_id": entity_id,
-        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "event_type": "consumed",
-        "source": getattr(args, "source", "momentum-tools-consume"),
-        "actor": getattr(args, "actor", "unknown"),
-        "payload": payload,
-    }
-
-    ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    line = json.dumps(event, ensure_ascii=False)
-    with open(ledger_path, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    event_id = _append_ledger_event(
+        ledger_path,
+        entity_id=entity_id,
+        event_type="consumed",
+        source=getattr(args, "source", "momentum-tools-consume"),
+        actor=getattr(args, "actor", "unknown"),
+        payload=payload,
+    )
 
     result("practice_ledger_consume", success=True, event_id=event_id,
            entity_id=entity_id, ledger_path=str(ledger_path))
@@ -2411,10 +2437,8 @@ def cmd_practice_ledger_summary(args: argparse.Namespace) -> None:
         by_event_type[etype] += 1
         by_source[src] += 1
 
-        ts_str = ev.get("ts", "")
-        try:
-            from datetime import timezone as _tz
-            ev_dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+        ev_dt = _parse_iso_ts(ev.get("ts", ""))
+        if ev_dt is not None:
             age_days = (now - ev_dt).days
             if age_days < 7:
                 lt_7d += 1
@@ -2422,10 +2446,8 @@ def cmd_practice_ledger_summary(args: argparse.Namespace) -> None:
                 d7_30 += 1
             else:
                 gt_30d += 1
-            if 12 <= age_days < 15:
+            if PRACTICE_LEDGER_STALE_TTL_DAYS - 3 <= age_days < PRACTICE_LEDGER_STALE_TTL_DAYS:
                 near_close += 1
-        except (ValueError, AttributeError):
-            pass
 
     output_fmt = getattr(args, "format", "json")
     summary_data = {
@@ -2488,20 +2510,18 @@ def cmd_practice_ledger_since(args: argparse.Namespace) -> None:
     """since <iso-ts> — events strictly after the given timestamp."""
     project_dir = resolve_project_dir()
     since_ts = args.ts
-    try:
-        since_dt = datetime.fromisoformat(since_ts.replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
+    since_dt = _parse_iso_ts(since_ts)
+    if since_dt is None:
         error_result("practice_ledger_since",
                      f"Invalid --ts '{since_ts}': must be an ISO-8601 timestamp "
                      f"(e.g. 2026-05-28T12:00:00Z)",
                      since=since_ts)
+        return
     new_events, _ = _load_duckdb_events(project_dir)
     filtered = []
     for ev in new_events:
-        ev_ts = ev.get("ts", "")
-        try:
-            ev_dt = datetime.fromisoformat(ev_ts.replace("Z", "+00:00"))
-        except (ValueError, AttributeError):
+        ev_dt = _parse_iso_ts(ev.get("ts", ""))
+        if ev_dt is None:
             # Skip events whose ts can't be parsed rather than including/dropping
             # them via lexical comparison against a parsed bound.
             continue
@@ -2524,7 +2544,7 @@ def cmd_practice_ledger_by_source(args: argparse.Namespace) -> None:
 def cmd_practice_ledger_close_stale(args: argparse.Namespace) -> None:
     """close-stale — append closed_stale events for non-terminal entities older than TTL."""
     project_dir = resolve_project_dir()
-    age_days = int(getattr(args, "age_days", 15))
+    age_days = int(getattr(args, "age_days", PRACTICE_LEDGER_STALE_TTL_DAYS))
 
     new_events, _ = _load_duckdb_events(project_dir)
     current = _derive_current_state(new_events)
@@ -2536,31 +2556,23 @@ def cmd_practice_ledger_close_stale(args: argparse.Namespace) -> None:
     for entity_id, state in current.items():
         if state["last_event_type"] in PRACTICE_LEDGER_TERMINAL_TYPES:
             continue
-        created_ts = state.get("created_ts", "")
-        try:
-            created_dt = datetime.fromisoformat(created_ts.replace("Z", "+00:00"))
-            age = (now - created_dt).days
-        except (ValueError, AttributeError):
+        created_dt = _parse_iso_ts(state.get("created_ts", ""))
+        if created_dt is None:
             continue
+        age = (now - created_dt).days
         if age > age_days:
             closed_entity_ids.append((entity_id, age))
 
     ledger_path = practice_ledger_path(project_dir)
-    ledger_path.parent.mkdir(parents=True, exist_ok=True)
     for entity_id, age in closed_entity_ids:
-        event_id = _generate_event_id()
-        event = {
-            "event_id": event_id,
-            "entity_id": entity_id,
-            "ts": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "event_type": "closed_stale",
-            "source": "momentum-tools-close-stale",
-            "actor": "automation",
-            "payload": {"age_days_at_close": age},
-        }
-        line = json.dumps(event, ensure_ascii=False)
-        with open(ledger_path, "a", encoding="utf-8") as f:
-            f.write(line + "\n")
+        _append_ledger_event(
+            ledger_path,
+            entity_id=entity_id,
+            event_type="closed_stale",
+            source="momentum-tools-close-stale",
+            actor="automation",
+            payload={"age_days_at_close": age},
+        )
         closed_count += 1
 
     result("practice_ledger_close_stale", success=True,
@@ -2808,8 +2820,8 @@ def build_parser() -> argparse.ArgumentParser:
     # practice-ledger close-stale
     plcs = pl_sub.add_parser("close-stale",
                               help="Append closed_stale events for non-terminal entities older than TTL")
-    plcs.add_argument("--age-days", type=int, default=15,
-                      help="Age threshold in days (default: 15)")
+    plcs.add_argument("--age-days", type=int, default=PRACTICE_LEDGER_STALE_TTL_DAYS,
+                      help=f"Age threshold in days (default: {PRACTICE_LEDGER_STALE_TTL_DAYS})")
     plcs.set_defaults(func=cmd_practice_ledger_close_stale)
 
     # triage command group

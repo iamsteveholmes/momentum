@@ -156,16 +156,11 @@ async function readStoriesIndex(): Promise<StoryMap> {
 }
 
 export async function readEpicBySlug(slug: string): Promise<Epic | null> {
-  try {
-    const file = Bun.file("_bmad-output/planning-artifacts/epics.json");
-    if (!(await file.exists())) return null;
-    const data = await file.json();
-    if (!data || typeof data !== "object") return null;
-    const epic = (data as Record<string, Epic>)[slug];
-    return epic ?? null;
-  } catch {
-    return null;
-  }
+  // Delegate to readEpicsJson so this inherits the same file-load/parse/guard
+  // and, critically, the `_migration` metadata-key filter — otherwise a slug of
+  // "_migration" could surface the provenance blob as if it were an epic.
+  const epics = await readEpicsJson();
+  return epics.find((e) => e.epic_slug === slug) ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -701,7 +696,11 @@ export function EpicDetailView({
     : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No dependencies</div>`;
 
   const typeTag = (epic as any).type ? `<span class="type-tag">${escapeHtml((epic as any).type)}</span>` : "";
-  const hasGap = epic.stories_done === 0 && epic.status !== "working";
+  // Use the canonical gap heuristic so the L2 detail view agrees with the L1
+  // list. analyzeGap derives the flag from the epic's own story counts and only
+  // honours legacy status="working" as an explicit override; it does not read
+  // the story map, so an empty map is sufficient here.
+  const hasGap = analyzeGap(epic, {}).has_gap;
 
   return html`
     <!-- Breadcrumb OOB swap — light mode crumb bar -->
@@ -1673,6 +1672,7 @@ app.get("/lenses/epics", async (c) => {
   const stories = (await readStoriesIndex()) ?? {};
   const rows = buildSortedRows(epics, stories);
   const tableBody = renderEpicsTable(rows);
+  const gapCount = rows.filter(r => r.has_gap).length;
   return c.html(`
     <section id="lens-epics" class="dash-section"
       hx-get="/lenses/epics"
@@ -1682,7 +1682,7 @@ app.get("/lenses/epics", async (c) => {
       <div class="dash-lens-hdr">
         <span class="tag">Epics</span>
         <div class="rule"></div>
-        <span class="count">${rows.length}${rows.filter(r => r.has_gap).length > 0 ? ` · ${rows.filter(r => r.has_gap).length} gap${rows.filter(r => r.has_gap).length > 1 ? 's' : ''}` : ''}</span>
+        <span class="count">${rows.length}${gapCount > 0 ? ` · ${gapCount} gap${gapCount > 1 ? 's' : ''}` : ''}</span>
       </div>
       <div class="feat-list">
         ${tableBody}
