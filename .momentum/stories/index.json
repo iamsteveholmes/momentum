@@ -4848,5 +4848,29 @@
     "change_type": "skill-instruction",
     "verification_method": "EDD",
     "harness_profile": "default"
+  },
+  "backfill-pre-2026-05-archive-into-practice-ledger": {
+    "status": "backlog",
+    "title": "Backfill still-open pre-2026-05 archive entities into the practice-ledger schema",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "a1-practice-ledger-schema-cli-redesign-true-append-only"
+    ],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "maintenance"
+  },
+  "practice-ledger-duckdb-sql-query-command": {
+    "status": "backlog",
+    "title": "Add a DuckDB-backed practice-ledger query command for arbitrary SQL over ledger records",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [
+      "a1-practice-ledger-schema-cli-redesign-true-append-only"
+    ],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
   }
 }
