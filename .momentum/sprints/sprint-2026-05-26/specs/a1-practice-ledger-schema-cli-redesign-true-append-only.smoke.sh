@@ -55,7 +55,7 @@ $TOOLS_CMD append \
   --entity-id smoke-test-entity-a1 \
   --source smoke-test \
   --actor developer \
-  --payload-json '{"smoke":true}' >/dev/null
+  --payload '{"smoke":true}' >/dev/null
 
 # Reject an event with an invalid event_type
 set +e
@@ -64,7 +64,7 @@ $TOOLS_CMD append \
   --entity-id smoke-test-entity-a1-bad \
   --source smoke-test \
   --actor developer \
-  --payload-json '{}' 2>/dev/null
+  --payload '{}' 2>/dev/null
 INVALID_RC=$?
 set -e
 
@@ -75,9 +75,9 @@ set -e
 
 # Append two consume events for the same entity_id — both must land
 $TOOLS_CMD append --event-type consumed --entity-id smoke-test-entity-a1 \
-  --source smoke-test --actor developer --payload-json '{"n":1}' >/dev/null
+  --source smoke-test --actor developer --payload '{"n":1}' >/dev/null
 $TOOLS_CMD append --event-type consumed --entity-id smoke-test-entity-a1 \
-  --source smoke-test --actor developer --payload-json '{"n":2}' >/dev/null
+  --source smoke-test --actor developer --payload '{"n":2}' >/dev/null
 
 HISTORY=$($TOOLS_CMD history --entity smoke-test-entity-a1)
 echo "$HISTORY" | grep -q '"event_type": *"created"' || {
@@ -144,7 +144,7 @@ POST_CLOSED=$($TOOLS_CMD by-source momentum-tools-close-stale 2>/dev/null | grep
 # Append-only check: every line is valid JSON and lines never decrease.
 LINES_BEFORE=$(grep -c . "$LEDGER" || true)
 $TOOLS_CMD append --event-type updated --entity-id smoke-test-append-only \
-  --source smoke-test --actor developer --payload-json '{}' >/dev/null
+  --source smoke-test --actor developer --payload '{}' >/dev/null
 LINES_AFTER=$(grep -c . "$LEDGER" || true)
 [[ "$LINES_AFTER" -gt "$LINES_BEFORE" ]] || {
   echo "FAIL: append did not add a line (before=$LINES_BEFORE after=$LINES_AFTER)"
