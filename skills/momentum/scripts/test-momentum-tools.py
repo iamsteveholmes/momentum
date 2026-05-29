@@ -3281,6 +3281,41 @@ def main():
     test_prefilter_known_duplicates_from_ac15()
     test_prefilter_runs_triage_group()
 
+    # Practice ledger tests (A1 / DEC-033)
+    # Task 2: append writer
+    test_practice_ledger_append_creates_file()
+    test_practice_ledger_append_correct_fields()
+    test_practice_ledger_append_invalid_event_type()
+    test_practice_ledger_append_all_valid_event_types()
+    test_practice_ledger_append_two_sequential_both_land()
+    test_practice_ledger_append_custom_event_type_field()
+    test_practice_ledger_append_event_ids_unique()
+    # Task 3: append-only consume
+    test_practice_ledger_consume_appends_event()
+    test_practice_ledger_consume_nonexistent_entity_still_appends()
+    test_practice_ledger_consume_twice_both_land()
+    # Task 4: DuckDB reader CLI
+    test_practice_ledger_summary_empty()
+    test_practice_ledger_summary_counts_by_event_type()
+    test_practice_ledger_summary_archive_entries()
+    test_practice_ledger_open_returns_nonterminal()
+    test_practice_ledger_open_terminal_types()
+    test_practice_ledger_history_returns_ordered_events()
+    test_practice_ledger_history_unknown_entity_empty()
+    test_practice_ledger_since_filters_by_ts()
+    test_practice_ledger_by_source_filters()
+    test_practice_ledger_summary_text_format()
+    test_practice_ledger_help_subcommands_registered()
+    # Task 5: close-stale
+    test_practice_ledger_close_stale_appends_events()
+    test_practice_ledger_close_stale_idempotent()
+    test_practice_ledger_close_stale_respects_ttl()
+    test_practice_ledger_close_stale_skips_terminal()
+    # Task 9: end-to-end
+    test_practice_ledger_e2e_full_lifecycle()
+    test_practice_ledger_e2e_migration_boundary()
+    test_practice_ledger_e2e_close_stale_idempotency()
+
     print(f"\n{'=' * 50}")
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
 
@@ -3601,6 +3636,627 @@ def test_prefilter_runs_triage_group():
     )
     assert_eq("--help exits 0", proc.returncode, 0)
     assert_eq("'prefilter' in help text", "prefilter" in proc.stdout.lower(), True)
+
+
+# ---------------------------------------------------------------------------
+# Practice Ledger Tests (A1 story: DEC-033)
+# ---------------------------------------------------------------------------
+
+
+def setup_ledger_project() -> Path:
+    """Create a temp project with an empty practice-ledger.jsonl."""
+    proj = setup_project()
+    (proj / ".momentum" / "practice-ledger.jsonl").write_text("")
+    return proj
+
+
+def read_ledger(proj: Path, filename: str = "practice-ledger.jsonl") -> list:
+    """Read JSONL ledger file and return list of parsed events."""
+    path = proj / ".momentum" / filename
+    if not path.exists():
+        return []
+    events = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            events.append(json.loads(line))
+    return events
+
+
+# --- Task 2: practice-ledger append writer ---
+
+def test_practice_ledger_append_creates_file():
+    """append creates practice-ledger.jsonl if it does not exist."""
+    print("\n[practice-ledger append] Creates file on first write")
+    proj = setup_project()
+    # No practice-ledger.jsonl yet
+    code, out = run_tool(proj, "practice-ledger", "append",
+                         "--entity-id", "entity-1",
+                         "--event-type", "created",
+                         "--source", "triage",
+                         "--actor", "test-agent",
+                         "--payload", "{}")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    ledger = read_ledger(proj)
+    assert_eq("one event written", len(ledger), 1)
+
+
+def test_practice_ledger_append_correct_fields():
+    """append writes all required schema fields."""
+    print("\n[practice-ledger append] All required fields present")
+    proj = setup_ledger_project()
+    code, out = run_tool(proj, "practice-ledger", "append",
+                         "--entity-id", "entity-abc",
+                         "--event-type", "created",
+                         "--source", "retro",
+                         "--actor", "impetus",
+                         "--payload", '{"title": "hello"}')
+    assert_eq("exit code 0", code, 0)
+    ledger = read_ledger(proj)
+    assert_eq("one event", len(ledger), 1)
+    ev = ledger[0]
+    assert_eq("event_id present", "event_id" in ev, True)
+    assert_eq("entity_id", ev.get("entity_id"), "entity-abc")
+    assert_eq("ts present", "ts" in ev, True)
+    assert_eq("ts ends in Z", ev["ts"].endswith("Z"), True)
+    assert_eq("event_type", ev.get("event_type"), "created")
+    assert_eq("source", ev.get("source"), "retro")
+    assert_eq("actor", ev.get("actor"), "impetus")
+    assert_eq("payload is dict", isinstance(ev.get("payload"), dict), True)
+    assert_eq("no custom_event_type", "custom_event_type" not in ev, True)
+
+
+def test_practice_ledger_append_invalid_event_type():
+    """append rejects event_type values outside the enum (argparse or explicit check)."""
+    print("\n[practice-ledger append] Invalid event_type rejected")
+    proj = setup_ledger_project()
+    code, out = run_tool(proj, "practice-ledger", "append",
+                         "--entity-id", "entity-1",
+                         "--event-type", "invalid-type",
+                         "--source", "triage",
+                         "--actor", "test",
+                         "--payload", "{}")
+    assert_eq("rejected with error", code != 0, True)
+    # success may be False (JSON error) or absent (argparse error) — both are valid rejection signals
+    assert_eq("not success", out.get("success") is not True, True)
+    # File must not have any new events
+    ledger = read_ledger(proj)
+    assert_eq("no event written on rejection", len(ledger), 0)
+
+
+def test_practice_ledger_append_all_valid_event_types():
+    """All seven valid event_type values are accepted."""
+    print("\n[practice-ledger append] All 7 event types accepted")
+    proj = setup_ledger_project()
+    valid_types = ["created", "updated", "consumed", "rejected",
+                   "closed_stale", "reopened", "custom"]
+    for i, etype in enumerate(valid_types):
+        extra_args = []
+        if etype == "custom":
+            extra_args = ["--custom-event-type", "my_custom_type"]
+        code, out = run_tool(proj, "practice-ledger", "append",
+                             "--entity-id", f"entity-{i}",
+                             "--event-type", etype,
+                             "--source", "triage",
+                             "--actor", "test",
+                             "--payload", "{}",
+                             *extra_args)
+        assert_eq(f"{etype} accepted", code, 0)
+    ledger = read_ledger(proj)
+    assert_eq("7 events written", len(ledger), 7)
+
+
+def test_practice_ledger_append_two_sequential_both_land():
+    """Two sequential appends both land — no truncation."""
+    print("\n[practice-ledger append] Two sequential appends both land")
+    proj = setup_ledger_project()
+    run_tool(proj, "practice-ledger", "append",
+             "--entity-id", "entity-first",
+             "--event-type", "created",
+             "--source", "triage",
+             "--actor", "test",
+             "--payload", "{}")
+    run_tool(proj, "practice-ledger", "append",
+             "--entity-id", "entity-second",
+             "--event-type", "updated",
+             "--source", "retro",
+             "--actor", "test",
+             "--payload", "{}")
+    ledger = read_ledger(proj)
+    assert_eq("two events", len(ledger), 2)
+    assert_eq("first entity_id", ledger[0].get("entity_id"), "entity-first")
+    assert_eq("second entity_id", ledger[1].get("entity_id"), "entity-second")
+
+
+def test_practice_ledger_append_custom_event_type_field():
+    """custom event_type includes custom_event_type field."""
+    print("\n[practice-ledger append] custom event includes custom_event_type")
+    proj = setup_ledger_project()
+    code, out = run_tool(proj, "practice-ledger", "append",
+                         "--entity-id", "entity-c",
+                         "--event-type", "custom",
+                         "--source", "triage",
+                         "--actor", "test",
+                         "--custom-event-type", "sprint_rolled_over",
+                         "--payload", "{}")
+    assert_eq("exit code 0", code, 0)
+    ledger = read_ledger(proj)
+    ev = ledger[0]
+    assert_eq("event_type custom", ev.get("event_type"), "custom")
+    assert_eq("custom_event_type present", ev.get("custom_event_type"), "sprint_rolled_over")
+
+
+def test_practice_ledger_append_event_ids_unique():
+    """Each appended row gets a unique event_id."""
+    print("\n[practice-ledger append] event_ids are unique")
+    proj = setup_ledger_project()
+    for i in range(3):
+        run_tool(proj, "practice-ledger", "append",
+                 "--entity-id", f"e-{i}",
+                 "--event-type", "created",
+                 "--source", "triage",
+                 "--actor", "test",
+                 "--payload", "{}")
+    ledger = read_ledger(proj)
+    ids = [ev["event_id"] for ev in ledger]
+    assert_eq("three unique event_ids", len(set(ids)), 3)
+
+
+# --- Task 3: append-only consume ---
+
+def test_practice_ledger_consume_appends_event():
+    """consume appends a consumed event — does NOT mutate the original created line."""
+    print("\n[practice-ledger consume] Appends consumed event, original unchanged")
+    proj = setup_ledger_project()
+    # Append a created event
+    run_tool(proj, "practice-ledger", "append",
+             "--entity-id", "entity-to-consume",
+             "--event-type", "created",
+             "--source", "triage",
+             "--actor", "test",
+             "--payload", '{"title": "original"}')
+    # Read original raw text
+    path = proj / ".momentum" / "practice-ledger.jsonl"
+    original_text = path.read_text(encoding="utf-8")
+    # Consume
+    code, out = run_tool(proj, "practice-ledger", "consume",
+                         "--entity-id", "entity-to-consume",
+                         "--actor", "test",
+                         "--outcome-ref", "story-abc")
+    assert_eq("exit code 0", code, 0)
+    # File should be a superset — original line still there
+    new_text = path.read_text(encoding="utf-8")
+    assert_eq("original line preserved", original_text.strip() in new_text, True)
+    # Two events total
+    ledger = read_ledger(proj)
+    assert_eq("two events", len(ledger), 2)
+    assert_eq("first still created", ledger[0].get("event_type"), "created")
+    assert_eq("second is consumed", ledger[1].get("event_type"), "consumed")
+    assert_eq("consumed entity_id matches", ledger[1].get("entity_id"), "entity-to-consume")
+
+
+def test_practice_ledger_consume_nonexistent_entity_still_appends():
+    """consume on a non-existent entity_id still appends (audit trail first)."""
+    print("\n[practice-ledger consume] Non-existent entity_id still appends consumed event")
+    proj = setup_ledger_project()
+    code, out = run_tool(proj, "practice-ledger", "consume",
+                         "--entity-id", "never-created",
+                         "--actor", "test",
+                         "--outcome-ref", "")
+    assert_eq("exit code 0", code, 0)
+    ledger = read_ledger(proj)
+    assert_eq("one event appended", len(ledger), 1)
+    assert_eq("event_type consumed", ledger[0].get("event_type"), "consumed")
+
+
+def test_practice_ledger_consume_twice_both_land():
+    """Two concurrent consume calls for the same entity_id both land (observable duplicate)."""
+    print("\n[practice-ledger consume] Two consume calls both land")
+    proj = setup_ledger_project()
+    run_tool(proj, "practice-ledger", "append",
+             "--entity-id", "shared-entity",
+             "--event-type", "created",
+             "--source", "triage",
+             "--actor", "test",
+             "--payload", "{}")
+    run_tool(proj, "practice-ledger", "consume",
+             "--entity-id", "shared-entity",
+             "--actor", "consumer-1",
+             "--outcome-ref", "ref-1")
+    run_tool(proj, "practice-ledger", "consume",
+             "--entity-id", "shared-entity",
+             "--actor", "consumer-2",
+             "--outcome-ref", "ref-2")
+    ledger = read_ledger(proj)
+    assert_eq("three events total", len(ledger), 3)
+    consumed_events = [e for e in ledger if e.get("event_type") == "consumed"]
+    assert_eq("two consumed events", len(consumed_events), 2)
+
+
+# --- Task 4: DuckDB reader CLI ---
+
+def setup_seeded_ledger(proj: Path, events: list) -> None:
+    """Write a list of event dicts as JSONL to practice-ledger.jsonl."""
+    import uuid
+    from datetime import datetime, timezone, timedelta
+    path = proj / ".momentum" / "practice-ledger.jsonl"
+    lines = []
+    for ev in events:
+        if "event_id" not in ev:
+            ev["event_id"] = f"evt-{uuid.uuid4().hex[:8]}"
+        if "ts" not in ev:
+            ev["ts"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        if "payload" not in ev:
+            ev["payload"] = {}
+        lines.append(json.dumps(ev))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def test_practice_ledger_summary_empty():
+    """summary returns zero counts on empty ledger."""
+    print("\n[practice-ledger summary] Empty ledger returns zero counts")
+    proj = setup_ledger_project()
+    code, out = run_tool(proj, "practice-ledger", "summary")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    assert_eq("new_entries 0", out.get("new_entries"), 0)
+
+
+def test_practice_ledger_summary_counts_by_event_type():
+    """summary groups counts by event_type."""
+    print("\n[practice-ledger summary] Counts by event_type")
+    proj = setup_ledger_project()
+    setup_seeded_ledger(proj, [
+        {"entity_id": "e1", "event_type": "created", "source": "triage", "actor": "a"},
+        {"entity_id": "e2", "event_type": "created", "source": "retro", "actor": "a"},
+        {"entity_id": "e1", "event_type": "consumed", "source": "triage", "actor": "a"},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "summary")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("new_entries 3", out.get("new_entries"), 3)
+    by_type = out.get("by_event_type", {})
+    assert_eq("created count 2", by_type.get("created"), 2)
+    assert_eq("consumed count 1", by_type.get("consumed"), 1)
+
+
+def test_practice_ledger_summary_archive_entries():
+    """summary reports archive_entries from pre-2026-05 file."""
+    print("\n[practice-ledger summary] archive_entries count from pre-2026-05 file")
+    proj = setup_ledger_project()
+    # Create a fake archive with 3 legacy lines (old schema — no event_id)
+    archive = proj / ".momentum" / "practice-ledger-pre-2026-05.jsonl"
+    archive.write_text(
+        '{"id": "old-1", "status": "open"}\n'
+        '{"id": "old-2", "status": "open"}\n'
+        '{"id": "old-3", "status": "consumed"}\n',
+        encoding="utf-8"
+    )
+    code, out = run_tool(proj, "practice-ledger", "summary")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("archive_entries 3", out.get("archive_entries"), 3)
+    assert_eq("new_entries 0", out.get("new_entries"), 0)
+
+
+def test_practice_ledger_open_returns_nonterminal():
+    """open returns entities whose last event is non-terminal."""
+    print("\n[practice-ledger open] Returns only non-terminal entities")
+    proj = setup_ledger_project()
+    setup_seeded_ledger(proj, [
+        {"entity_id": "open-entity", "event_type": "created", "source": "triage", "actor": "a"},
+        {"entity_id": "closed-entity", "event_type": "created", "source": "triage", "actor": "a"},
+        {"entity_id": "closed-entity", "event_type": "consumed", "source": "triage", "actor": "a"},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "open")
+    assert_eq("exit code 0", code, 0)
+    entity_ids = [e.get("entity_id") for e in out.get("entities", [])]
+    assert_eq("open-entity present", "open-entity" in entity_ids, True)
+    assert_eq("closed-entity absent", "closed-entity" not in entity_ids, True)
+
+
+def test_practice_ledger_open_terminal_types():
+    """open excludes consumed, rejected, closed_stale; includes reopened, created, updated, custom."""
+    print("\n[practice-ledger open] Terminal vs non-terminal event types")
+    proj = setup_ledger_project()
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    setup_seeded_ledger(proj, [
+        {"entity_id": "e-consumed", "event_type": "consumed", "source": "triage", "actor": "a", "ts": ts},
+        {"entity_id": "e-rejected", "event_type": "rejected", "source": "triage", "actor": "a", "ts": ts},
+        {"entity_id": "e-stale", "event_type": "closed_stale", "source": "triage", "actor": "a", "ts": ts},
+        {"entity_id": "e-reopened", "event_type": "reopened", "source": "triage", "actor": "a", "ts": ts},
+        {"entity_id": "e-created", "event_type": "created", "source": "triage", "actor": "a", "ts": ts},
+        {"entity_id": "e-updated", "event_type": "updated", "source": "triage", "actor": "a", "ts": ts},
+        {"entity_id": "e-custom", "event_type": "custom", "source": "triage", "actor": "a", "ts": ts},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "open")
+    assert_eq("exit code 0", code, 0)
+    entity_ids = [e.get("entity_id") for e in out.get("entities", [])]
+    assert_eq("e-consumed excluded", "e-consumed" not in entity_ids, True)
+    assert_eq("e-rejected excluded", "e-rejected" not in entity_ids, True)
+    assert_eq("e-stale excluded", "e-stale" not in entity_ids, True)
+    assert_eq("e-reopened included", "e-reopened" in entity_ids, True)
+    assert_eq("e-created included", "e-created" in entity_ids, True)
+    assert_eq("e-updated included", "e-updated" in entity_ids, True)
+    assert_eq("e-custom included", "e-custom" in entity_ids, True)
+
+
+def test_practice_ledger_history_returns_ordered_events():
+    """history --entity returns all events sorted by ts ascending."""
+    print("\n[practice-ledger history] Returns events sorted by ts ascending")
+    proj = setup_ledger_project()
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone.utc)
+    ts1 = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts2 = (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts3 = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    setup_seeded_ledger(proj, [
+        {"entity_id": "traced-entity", "event_type": "created", "source": "triage", "actor": "a", "ts": ts1},
+        {"entity_id": "other-entity", "event_type": "created", "source": "triage", "actor": "a", "ts": ts2},
+        {"entity_id": "traced-entity", "event_type": "updated", "source": "triage", "actor": "a", "ts": ts2},
+        {"entity_id": "traced-entity", "event_type": "consumed", "source": "triage", "actor": "a", "ts": ts3},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "history", "--entity", "traced-entity")
+    assert_eq("exit code 0", code, 0)
+    events = out.get("events", [])
+    assert_eq("three events", len(events), 3)
+    assert_eq("all for traced-entity", all(e["entity_id"] == "traced-entity" for e in events), True)
+    assert_eq("ordered by ts", [e["event_type"] for e in events], ["created", "updated", "consumed"])
+
+
+def test_practice_ledger_history_unknown_entity_empty():
+    """history --entity for unknown entity returns empty list with exit 0."""
+    print("\n[practice-ledger history] Unknown entity returns empty, exit 0")
+    proj = setup_ledger_project()
+    code, out = run_tool(proj, "practice-ledger", "history", "--entity", "nonexistent")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("empty events list", len(out.get("events", [])), 0)
+
+
+def test_practice_ledger_since_filters_by_ts():
+    """since <iso-ts> returns events strictly after the given timestamp."""
+    print("\n[practice-ledger since] Returns events strictly after timestamp")
+    proj = setup_ledger_project()
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone.utc)
+    ts_old = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts_recent = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    cutoff = (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    setup_seeded_ledger(proj, [
+        {"entity_id": "e-old", "event_type": "created", "source": "triage", "actor": "a", "ts": ts_old},
+        {"entity_id": "e-recent", "event_type": "created", "source": "triage", "actor": "a", "ts": ts_recent},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "since", cutoff)
+    assert_eq("exit code 0", code, 0)
+    events = out.get("events", [])
+    entity_ids = [e.get("entity_id") for e in events]
+    assert_eq("recent included", "e-recent" in entity_ids, True)
+    assert_eq("old excluded", "e-old" not in entity_ids, True)
+
+
+def test_practice_ledger_by_source_filters():
+    """by-source <source> returns only events with matching source."""
+    print("\n[practice-ledger by-source] Filters by source exactly")
+    proj = setup_ledger_project()
+    setup_seeded_ledger(proj, [
+        {"entity_id": "e1", "event_type": "created", "source": "triage", "actor": "a"},
+        {"entity_id": "e2", "event_type": "created", "source": "retro", "actor": "a"},
+        {"entity_id": "e3", "event_type": "updated", "source": "triage", "actor": "a"},
+    ])
+    code, out = run_tool(proj, "practice-ledger", "by-source", "triage")
+    assert_eq("exit code 0", code, 0)
+    events = out.get("events", [])
+    assert_eq("two triage events", len(events), 2)
+    assert_eq("all source triage", all(e.get("source") == "triage" for e in events), True)
+
+
+def test_practice_ledger_summary_text_format():
+    """summary --format text returns non-JSON human-readable output."""
+    print("\n[practice-ledger summary] --format text produces non-JSON output")
+    proj = setup_ledger_project()
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "practice-ledger", "summary", "--format", "text"],
+        capture_output=True, text=True,
+        env={**os.environ, "CLAUDE_PROJECT_DIR": str(proj)}
+    )
+    assert_eq("exit code 0", proc.returncode, 0)
+    # Text format should not be JSON (should not start with '{')
+    stdout = proc.stdout.strip()
+    assert_eq("not JSON object", stdout.startswith("{"), False)
+
+
+def test_practice_ledger_help_subcommands_registered():
+    """practice-ledger --help lists all expected subcommands."""
+    print("\n[practice-ledger] --help lists all subcommands")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "practice-ledger", "--help"],
+        capture_output=True, text=True
+    )
+    assert_eq("exit code 0", proc.returncode, 0)
+    for sub in ["summary", "open", "history", "since", "by-source", "close-stale", "consume"]:
+        assert_eq(f"{sub} in help", sub in proc.stdout, True)
+
+
+# --- Task 5: close-stale subcommand ---
+
+def setup_aged_ledger(proj: Path, age_days: int, count: int) -> None:
+    """Seed `count` created events with ts older than age_days."""
+    import uuid
+    from datetime import datetime, timezone, timedelta
+    path = proj / ".momentum" / "practice-ledger.jsonl"
+    lines = []
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=age_days + 1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for i in range(count):
+        ev = {
+            "event_id": f"evt-{uuid.uuid4().hex[:8]}",
+            "entity_id": f"stale-entity-{i}",
+            "ts": old_ts,
+            "event_type": "created",
+            "source": "triage",
+            "actor": "test",
+            "payload": {}
+        }
+        lines.append(json.dumps(ev))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def test_practice_ledger_close_stale_appends_events():
+    """close-stale appends closed_stale events for stale non-terminal entities."""
+    print("\n[practice-ledger close-stale] Appends closed_stale events")
+    proj = setup_ledger_project()
+    setup_aged_ledger(proj, age_days=20, count=2)
+    code, out = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("success true", out.get("success"), True)
+    assert_eq("closed_count 2", out.get("closed_count"), 2)
+    ledger = read_ledger(proj)
+    stale_events = [e for e in ledger if e.get("event_type") == "closed_stale"]
+    assert_eq("two closed_stale events", len(stale_events), 2)
+    for ev in stale_events:
+        assert_eq("source is close-stale", ev.get("source"), "momentum-tools-close-stale")
+        assert_eq("age_days_at_close in payload", "age_days_at_close" in ev.get("payload", {}), True)
+
+
+def test_practice_ledger_close_stale_idempotent():
+    """close-stale is idempotent: second run appends zero events."""
+    print("\n[practice-ledger close-stale] Idempotent — second run adds nothing")
+    proj = setup_ledger_project()
+    setup_aged_ledger(proj, age_days=20, count=2)
+    # First run
+    code1, out1 = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
+    assert_eq("first run exit 0", code1, 0)
+    assert_eq("first run closed 2", out1.get("closed_count"), 2)
+    count_after_first = len(read_ledger(proj))
+    # Second run
+    code2, out2 = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
+    assert_eq("second run exit 0", code2, 0)
+    assert_eq("second run closed 0", out2.get("closed_count"), 0)
+    count_after_second = len(read_ledger(proj))
+    assert_eq("no new events on second run", count_after_second, count_after_first)
+
+
+def test_practice_ledger_close_stale_respects_ttl():
+    """close-stale does not close entities younger than --age-days."""
+    print("\n[practice-ledger close-stale] Respects TTL — young entities untouched")
+    proj = setup_ledger_project()
+    import uuid
+    from datetime import datetime, timezone, timedelta
+    path = proj / ".momentum" / "practice-ledger.jsonl"
+    # One old entity (25 days) and one young (5 days)
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=25)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    young_ts = (datetime.now(timezone.utc) - timedelta(days=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    lines = [
+        json.dumps({"event_id": f"evt-{uuid.uuid4().hex[:8]}", "entity_id": "old-entity",
+                    "ts": old_ts, "event_type": "created", "source": "triage", "actor": "a", "payload": {}}),
+        json.dumps({"event_id": f"evt-{uuid.uuid4().hex[:8]}", "entity_id": "young-entity",
+                    "ts": young_ts, "event_type": "created", "source": "triage", "actor": "a", "payload": {}}),
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    code, out = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("only 1 closed", out.get("closed_count"), 1)
+    ledger = read_ledger(proj)
+    stale_events = [e for e in ledger if e.get("event_type") == "closed_stale"]
+    assert_eq("one stale event", len(stale_events), 1)
+    assert_eq("old entity closed", stale_events[0].get("entity_id"), "old-entity")
+
+
+def test_practice_ledger_close_stale_skips_terminal():
+    """close-stale does not close already-terminal entities."""
+    print("\n[practice-ledger close-stale] Skips already-terminal entities")
+    proj = setup_ledger_project()
+    import uuid
+    from datetime import datetime, timezone, timedelta
+    path = proj / ".momentum" / "practice-ledger.jsonl"
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=20)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    recent_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    lines = [
+        json.dumps({"event_id": f"evt-{uuid.uuid4().hex[:8]}", "entity_id": "consumed-entity",
+                    "ts": old_ts, "event_type": "created", "source": "triage", "actor": "a", "payload": {}}),
+        json.dumps({"event_id": f"evt-{uuid.uuid4().hex[:8]}", "entity_id": "consumed-entity",
+                    "ts": recent_ts, "event_type": "consumed", "source": "triage", "actor": "a", "payload": {}}),
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    code, out = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("zero closed", out.get("closed_count"), 0)
+
+
+# --- Task 9: End-to-end execution tests ---
+
+def test_practice_ledger_e2e_full_lifecycle():
+    """AC26: Full lifecycle: create → update → consume → open excludes it → history has 3 events."""
+    print("\n[practice-ledger e2e] Full lifecycle test (AC26)")
+    proj = setup_ledger_project()
+    # create
+    run_tool(proj, "practice-ledger", "append",
+             "--entity-id", "lifecycle-entity",
+             "--event-type", "created",
+             "--source", "triage",
+             "--actor", "test-agent",
+             "--payload", '{"title": "lifecycle test"}')
+    # update
+    run_tool(proj, "practice-ledger", "append",
+             "--entity-id", "lifecycle-entity",
+             "--event-type", "updated",
+             "--source", "triage",
+             "--actor", "test-agent",
+             "--payload", '{"title": "lifecycle test updated"}')
+    # consume
+    run_tool(proj, "practice-ledger", "consume",
+             "--entity-id", "lifecycle-entity",
+             "--actor", "test-agent",
+             "--outcome-ref", "story-123")
+    # open should exclude it
+    code_open, out_open = run_tool(proj, "practice-ledger", "open")
+    assert_eq("open exit 0", code_open, 0)
+    open_ids = [e.get("entity_id") for e in out_open.get("entities", [])]
+    assert_eq("lifecycle-entity not in open", "lifecycle-entity" not in open_ids, True)
+    # history should have 3 events in order
+    code_hist, out_hist = run_tool(proj, "practice-ledger", "history",
+                                    "--entity", "lifecycle-entity")
+    assert_eq("history exit 0", code_hist, 0)
+    events = out_hist.get("events", [])
+    assert_eq("three events", len(events), 3)
+    assert_eq("order: created", events[0].get("event_type"), "created")
+    assert_eq("order: updated", events[1].get("event_type"), "updated")
+    assert_eq("order: consumed", events[2].get("event_type"), "consumed")
+
+
+def test_practice_ledger_e2e_migration_boundary():
+    """AC27: Migration boundary — archive entries in summary, new file empty."""
+    print("\n[practice-ledger e2e] Migration boundary (AC27)")
+    proj = setup_project()
+    # Create archive with N legacy entries
+    archive_path = proj / ".momentum" / "practice-ledger-pre-2026-05.jsonl"
+    n_legacy = 7
+    legacy_lines = [f'{{"id": "old-{i}", "status": "open"}}' for i in range(n_legacy)]
+    archive_path.write_text("\n".join(legacy_lines) + "\n", encoding="utf-8")
+    # Empty new ledger
+    ledger_path = proj / ".momentum" / "practice-ledger.jsonl"
+    ledger_path.write_text("", encoding="utf-8")
+    # summary should report archive_entries = N, new_entries = 0
+    code, out = run_tool(proj, "practice-ledger", "summary")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("archive_entries N", out.get("archive_entries"), n_legacy)
+    assert_eq("new_entries 0", out.get("new_entries"), 0)
+
+
+def test_practice_ledger_e2e_close_stale_idempotency():
+    """AC28: close-stale idempotency: 2 stale entities → 2 events first, 0 second."""
+    print("\n[practice-ledger e2e] close-stale idempotency (AC28)")
+    proj = setup_ledger_project()
+    setup_aged_ledger(proj, age_days=20, count=2)
+    # First run
+    code1, out1 = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
+    assert_eq("first run exit 0", code1, 0)
+    assert_eq("first run 2 closed", out1.get("closed_count"), 2)
+    # Run summary to see state
+    _, sum1 = run_tool(proj, "practice-ledger", "summary")
+    # Second run — must close nothing
+    code2, out2 = run_tool(proj, "practice-ledger", "close-stale", "--age-days", "15")
+    assert_eq("second run exit 0", code2, 0)
+    assert_eq("second run 0 closed", out2.get("closed_count"), 0)
 
 
 if __name__ == "__main__":

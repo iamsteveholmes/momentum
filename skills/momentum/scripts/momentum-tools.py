@@ -20,10 +20,16 @@ Usage:
     momentum-tools.py agent resolve --role qa-reviewer
     momentum-tools.py quickfix register --slug SLUG --story STORY_KEY
     momentum-tools.py quickfix complete --slug SLUG
-    momentum-tools.py intake-queue append --source SOURCE --kind KIND --title TITLE [--description DESC] [--sprint-slug SLUG] [--feature-slug SLUG] [--story-type TYPE] [--feature-state-transition JSON] [--failure-diagnosis JSON]
-    momentum-tools.py intake-queue list [--source SOURCE] [--kind KIND] [--status STATUS]
-    momentum-tools.py intake-queue consume --id ID [--outcome-ref REF]
+    momentum-tools.py practice-ledger append --entity-id ID --event-type TYPE --source SRC --actor ACTOR --payload JSON [--custom-event-type TYPE]
+    momentum-tools.py practice-ledger consume --entity-id ID --actor ACTOR [--source SRC] [--outcome-ref REF]
+    momentum-tools.py practice-ledger summary [--format json|text]
+    momentum-tools.py practice-ledger open
+    momentum-tools.py practice-ledger history --entity ID
+    momentum-tools.py practice-ledger since ISO_TS
+    momentum-tools.py practice-ledger by-source SOURCE
+    momentum-tools.py practice-ledger close-stale [--age-days N]
     momentum-tools.py version check
+    [DEPRECATED] momentum-tools.py intake-queue append|list|consume — use practice-ledger instead
 """
 
 import argparse
@@ -2371,6 +2377,323 @@ def cmd_intake_queue_consume(args: argparse.Namespace) -> None:
     result("intake_queue_consume", success=True, id=event_id, queue_path=str(queue_path))
 
 
+# --- Practice Ledger Commands (DEC-033) ---
+
+PRACTICE_LEDGER_EVENT_TYPES = frozenset({
+    "created", "updated", "consumed", "rejected",
+    "closed_stale", "reopened", "custom",
+})
+PRACTICE_LEDGER_TERMINAL_TYPES = frozenset({"consumed", "rejected", "closed_stale"})
+
+
+def practice_ledger_path(project_dir: Path) -> Path:
+    return project_dir / ".momentum" / "practice-ledger.jsonl"
+
+
+def _generate_event_id() -> str:
+    """Generate a unique event_id using timestamp + UUID."""
+    import uuid
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+    return f"pl-{ts}-{uuid.uuid4().hex[:8]}"
+
+
+def cmd_practice_ledger_append(args: argparse.Namespace) -> None:
+    """Append an event to practice-ledger.jsonl (true append-only, O_APPEND)."""
+    project_dir = resolve_project_dir()
+    ledger_path = practice_ledger_path(project_dir)
+
+    event_type = args.event_type
+    if event_type not in PRACTICE_LEDGER_EVENT_TYPES:
+        error_result("practice_ledger_append",
+                     f"Invalid event_type '{event_type}'. Must be one of: "
+                     f"{', '.join(sorted(PRACTICE_LEDGER_EVENT_TYPES))}")
+        return
+
+    try:
+        payload = json.loads(args.payload) if args.payload else {}
+    except json.JSONDecodeError as e:
+        error_result("practice_ledger_append", f"Invalid JSON for --payload: {e}")
+        return
+
+    event_id = _generate_event_id()
+    event: dict = {
+        "event_id": event_id,
+        "entity_id": args.entity_id,
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "event_type": event_type,
+        "source": args.source,
+        "actor": args.actor,
+        "payload": payload,
+    }
+    if event_type == "custom":
+        custom = getattr(args, "custom_event_type", None) or ""
+        if custom:
+            event["custom_event_type"] = custom
+
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(event, ensure_ascii=False)
+    with open(ledger_path, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+    result("practice_ledger_append", success=True, event_id=event_id,
+           entity_id=args.entity_id, ledger_path=str(ledger_path))
+
+
+def cmd_practice_ledger_consume(args: argparse.Namespace) -> None:
+    """Append a consumed event referencing the original entity_id (append-only)."""
+    project_dir = resolve_project_dir()
+    ledger_path = practice_ledger_path(project_dir)
+
+    entity_id = args.entity_id
+    outcome_ref = getattr(args, "outcome_ref", None) or ""
+
+    event_id = _generate_event_id()
+    payload: dict = {}
+    if outcome_ref:
+        payload["outcome_ref"] = outcome_ref
+
+    event: dict = {
+        "event_id": event_id,
+        "entity_id": entity_id,
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "event_type": "consumed",
+        "source": getattr(args, "source", "momentum-tools-consume"),
+        "actor": getattr(args, "actor", "unknown"),
+        "payload": payload,
+    }
+
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(event, ensure_ascii=False)
+    with open(ledger_path, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+    result("practice_ledger_consume", success=True, event_id=event_id,
+           entity_id=entity_id, ledger_path=str(ledger_path))
+
+
+def _load_duckdb_events(project_dir: Path) -> tuple:
+    """Load new-schema events via DuckDB glob and count archive entries.
+
+    Returns (new_events_list, archive_count).
+    New-schema events have 'event_id' field. Lines missing it are archive entries.
+    """
+    import glob as _glob
+
+    momentum_dir = project_dir / ".momentum"
+    pattern = str(momentum_dir / "practice-ledger*.jsonl")
+    files = sorted(_glob.glob(pattern))
+
+    new_events: list = []
+    archive_count = 0
+
+    for fpath in files:
+        is_archive = "pre-2026-05" in fpath
+        try:
+            with open(fpath, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        ev = json.loads(line)
+                    except json.JSONDecodeError:
+                        archive_count += 1
+                        continue
+                    # New-schema entries have event_id
+                    if "event_id" in ev and not is_archive:
+                        new_events.append(ev)
+                    else:
+                        archive_count += 1
+        except OSError:
+            pass
+
+    return new_events, archive_count
+
+
+def _derive_current_state(events: list) -> dict:
+    """Fold events by entity_id to derive current state (last event wins by ts)."""
+    from collections import defaultdict
+    by_entity: dict = defaultdict(list)
+    for ev in events:
+        by_entity[ev["entity_id"]].append(ev)
+    current: dict = {}
+    for entity_id, evlist in by_entity.items():
+        sorted_evs = sorted(evlist, key=lambda e: e.get("ts", ""))
+        last = sorted_evs[-1]
+        current[entity_id] = {
+            "entity_id": entity_id,
+            "last_event_type": last.get("event_type"),
+            "last_ts": last.get("ts"),
+            "last_event_id": last.get("event_id"),
+            "created_ts": sorted_evs[0].get("ts"),
+            "event_count": len(sorted_evs),
+        }
+    return current
+
+
+def cmd_practice_ledger_summary(args: argparse.Namespace) -> None:
+    """summary — counts by event_type, source, age buckets, archive_entries."""
+    from collections import defaultdict
+    project_dir = resolve_project_dir()
+    new_events, archive_count = _load_duckdb_events(project_dir)
+
+    by_event_type: dict = defaultdict(int)
+    by_source: dict = defaultdict(int)
+
+    now = datetime.now(timezone.utc)
+
+    lt_7d = 0
+    d7_30 = 0
+    gt_30d = 0
+    near_close = 0
+
+    for ev in new_events:
+        etype = ev.get("event_type", "unknown")
+        src = ev.get("source", "unknown")
+        by_event_type[etype] += 1
+        by_source[src] += 1
+
+        ts_str = ev.get("ts", "")
+        try:
+            from datetime import timezone as _tz
+            ev_dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+            age_days = (now - ev_dt).days
+            if age_days < 7:
+                lt_7d += 1
+            elif age_days <= 30:
+                d7_30 += 1
+            else:
+                gt_30d += 1
+            if 12 <= age_days < 15:
+                near_close += 1
+        except (ValueError, AttributeError):
+            pass
+
+    output_fmt = getattr(args, "format", "json")
+    summary_data = {
+        "new_entries": len(new_events),
+        "archive_entries": archive_count,
+        "by_event_type": dict(by_event_type),
+        "by_source": dict(by_source),
+        "age_buckets": {
+            "lt_7d": lt_7d,
+            "d7_30": d7_30,
+            "gt_30d": gt_30d,
+            "near_auto_close": near_close,
+        },
+    }
+
+    if output_fmt == "text":
+        lines = [
+            f"Practice Ledger Summary",
+            f"  new entries:     {len(new_events)}",
+            f"  archive entries: {archive_count}",
+            f"  by event_type:   {dict(by_event_type)}",
+            f"  by source:       {dict(by_source)}",
+            f"  age <7d:         {lt_7d}",
+            f"  age 7-30d:       {d7_30}",
+            f"  age >30d:        {gt_30d}",
+            f"  near_auto_close: {near_close}",
+        ]
+        print("\n".join(lines))
+        return
+
+    result("practice_ledger_summary", success=True, **summary_data)
+
+
+def cmd_practice_ledger_open(args: argparse.Namespace) -> None:
+    """open — entities whose last event is non-terminal."""
+    project_dir = resolve_project_dir()
+    new_events, _ = _load_duckdb_events(project_dir)
+    current = _derive_current_state(new_events)
+
+    open_entities = [
+        v for v in current.values()
+        if v["last_event_type"] not in PRACTICE_LEDGER_TERMINAL_TYPES
+    ]
+    result("practice_ledger_open", success=True, entities=open_entities,
+           count=len(open_entities))
+
+
+def cmd_practice_ledger_history(args: argparse.Namespace) -> None:
+    """history --entity <id> — all events for entity, sorted by ts ascending."""
+    project_dir = resolve_project_dir()
+    entity_id = args.entity
+    new_events, _ = _load_duckdb_events(project_dir)
+    entity_events = [ev for ev in new_events if ev.get("entity_id") == entity_id]
+    entity_events.sort(key=lambda e: e.get("ts", ""))
+    result("practice_ledger_history", success=True, entity_id=entity_id,
+           events=entity_events, count=len(entity_events))
+
+
+def cmd_practice_ledger_since(args: argparse.Namespace) -> None:
+    """since <iso-ts> — events strictly after the given timestamp."""
+    project_dir = resolve_project_dir()
+    since_ts = args.ts
+    new_events, _ = _load_duckdb_events(project_dir)
+    filtered = [ev for ev in new_events if ev.get("ts", "") > since_ts]
+    result("practice_ledger_since", success=True, since=since_ts,
+           events=filtered, count=len(filtered))
+
+
+def cmd_practice_ledger_by_source(args: argparse.Namespace) -> None:
+    """by-source <source> — events whose source matches exactly."""
+    project_dir = resolve_project_dir()
+    source = args.source
+    new_events, _ = _load_duckdb_events(project_dir)
+    filtered = [ev for ev in new_events if ev.get("source") == source]
+    result("practice_ledger_by_source", success=True, source=source,
+           events=filtered, count=len(filtered))
+
+
+def cmd_practice_ledger_close_stale(args: argparse.Namespace) -> None:
+    """close-stale — append closed_stale events for non-terminal entities older than TTL."""
+    project_dir = resolve_project_dir()
+    age_days = int(getattr(args, "age_days", 15))
+
+    new_events, _ = _load_duckdb_events(project_dir)
+    current = _derive_current_state(new_events)
+
+    now = datetime.now(timezone.utc)
+    closed_count = 0
+    closed_entity_ids = []
+
+    for entity_id, state in current.items():
+        if state["last_event_type"] in PRACTICE_LEDGER_TERMINAL_TYPES:
+            continue
+        created_ts = state.get("created_ts", "")
+        try:
+            created_dt = datetime.fromisoformat(created_ts.replace("Z", "+00:00"))
+            age = (now - created_dt).days
+        except (ValueError, AttributeError):
+            continue
+        if age > age_days:
+            closed_entity_ids.append((entity_id, age))
+
+    ledger_path = practice_ledger_path(project_dir)
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    for entity_id, age in closed_entity_ids:
+        event_id = _generate_event_id()
+        event = {
+            "event_id": event_id,
+            "entity_id": entity_id,
+            "ts": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "event_type": "closed_stale",
+            "source": "momentum-tools-close-stale",
+            "actor": "automation",
+            "payload": {"age_days_at_close": age},
+        }
+        line = json.dumps(event, ensure_ascii=False)
+        with open(ledger_path, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+        closed_count += 1
+
+    result("practice_ledger_close_stale", success=True,
+           closed_count=closed_count,
+           closed_entity_ids=[eid for eid, _ in closed_entity_ids],
+           age_days=age_days)
+
+
 # --- Version Command ---
 
 def cmd_version_check(args: argparse.Namespace) -> None:
@@ -2592,6 +2915,65 @@ def build_parser() -> argparse.ArgumentParser:
     iqc.add_argument("--outcome-ref", default=None,
                      help="Reference to the outcome (story slug, decision ID, etc.)")
     iqc.set_defaults(func=cmd_intake_queue_consume)
+
+    # practice-ledger command group (DEC-033)
+    pl = subparsers.add_parser("practice-ledger",
+                               help="Practice-ledger (practice-ledger.jsonl) operations — DEC-033")
+    pl_sub = pl.add_subparsers(dest="pl_action", required=True)
+
+    # practice-ledger append
+    pla = pl_sub.add_parser("append", help="Append an event to practice-ledger.jsonl")
+    pla.add_argument("--entity-id", required=True, help="Logical entity this event is about")
+    pla.add_argument("--event-type", required=True,
+                     choices=sorted(PRACTICE_LEDGER_EVENT_TYPES),
+                     help="Event type (created|updated|consumed|rejected|closed_stale|reopened|custom)")
+    pla.add_argument("--source", required=True, help="Originating skill/workflow")
+    pla.add_argument("--actor", required=True, help="Human or agent identity")
+    pla.add_argument("--payload", default="{}", help="JSON object payload (default: {})")
+    pla.add_argument("--custom-event-type", default=None,
+                     help="Custom event type name (required when event_type=custom)")
+    pla.set_defaults(func=cmd_practice_ledger_append)
+
+    # practice-ledger consume
+    plc = pl_sub.add_parser("consume",
+                             help="Append a consumed event for an entity (append-only)")
+    plc.add_argument("--entity-id", required=True, help="Entity to mark consumed")
+    plc.add_argument("--actor", required=True, help="Who is consuming")
+    plc.add_argument("--source", default="momentum-tools-consume", help="Source skill")
+    plc.add_argument("--outcome-ref", default=None, help="Reference to the outcome")
+    plc.set_defaults(func=cmd_practice_ledger_consume)
+
+    # practice-ledger summary
+    pls = pl_sub.add_parser("summary", help="Counts by event_type, source, age, archive entries")
+    pls.add_argument("--format", choices=["json", "text"], default="json",
+                     help="Output format (default: json)")
+    pls.set_defaults(func=cmd_practice_ledger_summary)
+
+    # practice-ledger open
+    plo = pl_sub.add_parser("open", help="Non-terminal entities (current state is open)")
+    plo.set_defaults(func=cmd_practice_ledger_open)
+
+    # practice-ledger history
+    plh = pl_sub.add_parser("history", help="Full event chain for one entity")
+    plh.add_argument("--entity", required=True, help="Entity ID to query history for")
+    plh.set_defaults(func=cmd_practice_ledger_history)
+
+    # practice-ledger since
+    plsi = pl_sub.add_parser("since", help="Events strictly after the given ISO-8601 UTC timestamp")
+    plsi.add_argument("ts", help="ISO-8601 UTC timestamp (e.g. 2026-01-01T00:00:00Z)")
+    plsi.set_defaults(func=cmd_practice_ledger_since)
+
+    # practice-ledger by-source
+    plbs = pl_sub.add_parser("by-source", help="Events whose source matches exactly")
+    plbs.add_argument("source", help="Source value to filter by")
+    plbs.set_defaults(func=cmd_practice_ledger_by_source)
+
+    # practice-ledger close-stale
+    plcs = pl_sub.add_parser("close-stale",
+                              help="Append closed_stale events for non-terminal entities older than TTL")
+    plcs.add_argument("--age-days", type=int, default=15,
+                      help="Age threshold in days (default: 15)")
+    plcs.set_defaults(func=cmd_practice_ledger_close_stale)
 
     # triage command group
     triage = subparsers.add_parser("triage", help="Triage dedup prefilter operations")
