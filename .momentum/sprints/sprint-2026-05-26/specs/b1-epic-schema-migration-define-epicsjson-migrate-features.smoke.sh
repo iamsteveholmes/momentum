@@ -63,6 +63,8 @@ LIFECYCLE = {'finite-lived','long-lived'}
 AUDIENCE = {'user','internal'}
 errors = []
 for slug, entry in data.items():
+    if slug == '_migration':
+        continue  # reserved provenance key, not an epic entry
     for field in REQUIRED:
         if field not in entry:
             errors.append(f'{slug}: missing {field}')
@@ -70,6 +72,12 @@ for slug, entry in data.items():
         errors.append(f'{slug}: lifecycle={entry.get(\"lifecycle\")!r} not in {LIFECYCLE}')
     if entry.get('audience') not in AUDIENCE:
         errors.append(f'{slug}: audience={entry.get(\"audience\")!r} not in {AUDIENCE}')
+    if isinstance(entry.get('stories'), list):
+        seen = set()
+        for sk in entry['stories']:
+            if sk in seen:
+                errors.append(f'{slug}: duplicate story {sk!r} in stories[]')
+            seen.add(sk)
 if errors:
     print('FAIL: schema violations:')
     for e in errors[:20]:
@@ -103,20 +111,17 @@ with open('$STORIES_INDEX') as f:
     idx = json.load(f)
 with open('$EPICS_JSON') as f:
     epics = json.load(f)
-stories = idx.get('stories', idx) if isinstance(idx, dict) else idx
-if isinstance(stories, dict):
-    iterable = stories.values()
-else:
-    iterable = stories
 orphans = []
 missing_epic = []
-for s in iterable:
-    es = s.get('epic_slug') if isinstance(s, dict) else None
+for story_key, s in idx.items():
+    if not isinstance(s, dict):
+        continue
+    es = s.get('epic_slug')
     if not es:
-        orphans.append(s.get('story_key','<unknown>'))
+        orphans.append(story_key)
         continue
     if es not in epics:
-        missing_epic.append((s.get('story_key','<unknown>'), es))
+        missing_epic.append((story_key, es))
 if orphans:
     print(f'FAIL: {len(orphans)} stories missing epic_slug (first 10): {orphans[:10]}')
     sys.exit(1)

@@ -195,7 +195,7 @@ The vision: a developer running BMAD workflows gets Momentum's quality layer for
 
 > _[Added 2026-04-28: Sprint-2026-04-27 introduces `.momentum/` as the single, hidden top-level location for Momentum's operational runtime state. Replaces the prior split where sprints/stories/intake-queue lived under `_bmad-output/implementation-artifacts/`. Closes DEC-011 Gate G1.]_
 
-Momentum's operational runtime state lives under a single hidden top-level directory: `.momentum/` at the project root. This directory holds everything the practice itself produces and consumes during normal operation — sprint records, story index, signals, the intake queue, and per-sprint working subtrees. Planning artifacts that describe what to build (PRD, architecture, features, decisions, assessments) remain under `_bmad-output/planning-artifacts/` — that carve-out is intentional.
+Momentum's operational runtime state lives under a single hidden top-level directory: `.momentum/` at the project root. This directory holds everything the practice itself produces and consumes during normal operation — sprint records, story index, signals, the intake queue, and per-sprint working subtrees. Planning artifacts that describe what to build (PRD, architecture, epics, decisions, assessments) remain under `_bmad-output/planning-artifacts/` — that carve-out is intentional. Note: `features.json` was the prior planning artifact for feature taxonomy; it is superseded by `epics.json` per DEC-034 (2026-05-25).
 
 ### Layout
 
@@ -310,14 +310,14 @@ The defining question for each component: *does this need main-context persona p
 | refine | Flat skill (`/momentum:refine`) | Backlog refinement: two-wave planning artifact discovery and update (Wave 1 discovers PRD + architecture coverage gaps in parallel; Wave 2 conditionally spawns update agents per developer approval), status hygiene detection, delegation to epic-grooming, stale-story triage, batch approval UX; CLI-only mutations |
 | intake | Flat skill (`/momentum:intake`) | User-invokable; **single-item capture only** — one idea → one story stub, feature-slug and story-type aware per DEC-005 D1/D5. No batching (that is `momentum:triage`'s job). Writes `stories/{slug}.md` + `stories/index.json` entry via `momentum-tools sprint story-add`. |
 | triage | Flat skill (`/momentum:triage`) | Orchestrator; `model: claude-sonnet-4-6`, `effort: high`. Multi-item batch classification of observations into five active classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT) per DEC-007. The DISTILL class is removed post-removal of the distill skill (ARCH-1/ARCH-5). Delegates ARTIFACT → `momentum:intake`, DECISION → `momentum:decision`; writes SHAPING / DEFER / REJECT inline to `intake-queue.jsonl` via `momentum-tools` CLI. Deterministic prefilter via `momentum-tools triage prefilter` (TF-IDF + Jaccard + epic boost, status-filtered, top-K=10 shortlist); inline batch clustering; parallel per-cluster dedup fan-out subagents returning per-theme JSON findings; inline consolidation-candidate grouping; five-class classification for unique survivors. Performs no gap-check (DEC-005 D10). Entry point replaces the Impetus `[3] Triage` placeholder. |
-| feature-breakdown | Flat skill (`/momentum:feature-breakdown`) | Pure orchestrator; takes a feature slug as input, enumerates story gaps end-to-end, passes pre-enumerated candidate list to `momentum:triage` with `source_label = "feature-breakdown:{feature_slug}"`. NEVER writes to features.json or stories/index.json — all classification and write authority belongs to triage (Decision 50). |
+| feature-breakdown | Flat skill (`/momentum:feature-breakdown`) — **pending rename to `momentum:epic-breakdown` (B4, DEC-034 D6)** | Pure orchestrator; takes a feature/epic slug as input, enumerates story gaps end-to-end, passes pre-enumerated candidate list to `momentum:triage`. NEVER writes to epics.json or stories/index.json. Will read `epics.json` instead of `features.json` after B2 update (Decision 50). |
 | distill | Flat skill (`/momentum:distill`) — **(removed — `remove-momentum-distill` story ready-for-dev)** | Practice-artifact distillation: session learning or retro finding → 2-agent discovery (Enumerator + Adversary) → classify fix scope → apply to artifact → scoped AVFL validation. Previously listed as third execution path alongside sprint orchestration and quick-fix (Decision 42). **ARCH-1: This skill is being removed. The `remove-momentum-distill` story is ready-for-dev. Decision 42 references to distill as an active execution path are deprecated; see Decision 42 note below.** |
 | assessment | Flat skill (`/momentum:assessment`) | User-invokable; evaluates a story or backlog item for readiness, risk, and completeness; no fork needed |
 | sprint-manager | Flat skill (`/momentum:sprint-manager`) | Wraps momentum-tools.py CLI; provides /momentum:sprint-manager command for sprint lifecycle management (activate, close, status); sole writer of sprints/index.json in conjunction with momentum-tools CLI. |
 | decision | Flat skill (`/momentum:decision`) | User-invokable; facilitates architectural or product decision capture (ADR/trade-off analysis); no fork needed |
 | agent-guidelines | Flat skill (`/momentum:agent-guidelines`) | 5-phase guided workflow for generating technology-specific development guidelines for a project: Discover (stack analysis), Research (web search), Consult (developer preferences), Generate (guidelines documents), Validate (AVFL checkpoint). Generates path-scoped rules and reference documents. |
-| feature-status | Flat skill (`/momentum:feature-status`) — **(deprecated — use momentum:canvas)** | Reads features.json + stories/index.json; writes self-contained HTML dashboard (`.claude/momentum/feature-status.html`) and YAML-frontmatter cache (`.claude/momentum/feature-status.md`). Two rendering paths: product (flow/connection/quality tables + gap analysis) and practice (skill topology + SDLC coverage). Supersedes DRIFT-006 proposal to absorb into Impetus/momentum-tools — standalone skill per Decision 45. **Deprecated by DEC-019 (2026-05-03) — canvas supersedes this skill as the unified planning dashboard.** |
-| canvas | Flat skill (`/momentum:canvas`) — invoker (SKILL.md + workflow.md + server.tsx) | Bun-based live dashboard server (port 3456). Reads features.json, stories/index.json, sprints/index.json to render a Hono+HTMX multi-lens planning canvas. Three view layers: L1 timeline/cycle overview (dark), L2 feature detail (warm light), L3 story detail (warm light). No writes. Supersedes momentum:feature-status per DEC-019. |
+| feature-status | Flat skill (`/momentum:feature-status`) — **(deprecated — use momentum:canvas)** | Reads ~~features.json~~ `epics.json` **(DEC-034)** + stories/index.json; writes self-contained HTML dashboard and YAML-frontmatter cache. **Deprecated by DEC-019 (2026-05-03) — canvas supersedes this skill as the unified planning dashboard.** |
+| canvas | Flat skill (`/momentum:canvas`) — invoker (SKILL.md + workflow.md + server.tsx) | Bun-based live dashboard server (port 3456). Reads `epics.json` **(DEC-034 — replaces features.json)**, stories/index.json, sprints/index.json to render a Hono+HTMX multi-lens planning canvas. Three view layers: L1 timeline/cycle overview (dark), L2 epic detail (warm light), L3 story detail (warm light). No writes. Canvas update to render epics instead of features: story B3 (sprint-2026-05-26). |
 | status | Not planned as standalone skill | ~~Status functionality is absorbed into Impetus greeting workflow and momentum-tools CLI (`momentum-tools sprint status`). No backlog story exists or is needed.~~ **Superseded by Decision 45 (sprint-2026-04-11):** feature-status is implemented as a dedicated standalone skill (`/momentum:feature-status`). The startup-preflight cache check (Decision 46) handles the Impetus greeting integration path. The momentum-tools `feature-status-hash` command provides the hash utility. This row is retained for historical context only. |
 | code-reviewer | `context: fork` skill | Pure verifier — `context: fork` provides isolation; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
 | architecture-guard | `context: fork` skill | Pattern analysis — isolation prevents drift; `allowed-tools: Read` enforces read-only. Also useful standalone (Decision 35). |
@@ -1271,7 +1271,9 @@ momentum/                                    ← Plugin root
 │   └── planning-artifacts/
 │       ├── prd.md
 │       ├── ux-design-specification.md
-│       ├── features.json                    ← Feature artifact layer (Decision 44)
+│       ├── epics.json                       ← Unified epic layer (DEC-034, replaces features.json — Decision 44 HISTORICAL)
+│       ├── archive/
+│       │   └── features-pre-2026-05.json    ← Frozen archive of features.json pre-DEC-034 migration
 │       └── architecture.md                  ← This document
 │
 ├── _bmad/                                   ← BMAD framework (managed by BMAD)
@@ -1340,7 +1342,7 @@ momentum/                                    ← Plugin root
 └── .beads/                                     ← Gitignored Dolt DB (DEC-028 — Beads tracker local store; never committed)
 ```
 
-> _Planning artifacts (PRD, architecture, features.json, decisions, assessments) intentionally remain under `_bmad-output/planning-artifacts/` — they are spec/source, not operational state. See `.momentum/` State Layout section for the carve-out rationale._
+> _Planning artifacts (PRD, architecture, epics.json, decisions, assessments) intentionally remain under `_bmad-output/planning-artifacts/` — they are spec/source, not operational state. Note: `features.json` superseded by `epics.json` per DEC-034 (2026-05-25). See `.momentum/` State Layout section for the carve-out rationale._
 
 ---
 
@@ -1360,8 +1362,9 @@ momentum/                                    ← Plugin root
 | momentum:dev | Story files, code | Code in worktree only; structured JSON completion output |
 | momentum:create-story | `.momentum/stories/index.json`, epics.md | Story files in `.momentum/stories/` |
 | momentum:refine | prd.md, architecture.md, `.momentum/stories/index.json`, story files, assessments/*.md, decisions/*.md | prd.md (via PRD update subagent — sole writer); architecture.md (via architecture update subagent — sole writer); `.momentum/stories/index.json` mutations (via momentum-tools CLI); delegates: momentum:create-story, momentum:epic-grooming |
-| momentum:feature-status **(deprecated — use momentum:canvas)** | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json` | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
-| canvas server (Bun process, port 3456) | `_bmad-output/planning-artifacts/features.json`, `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/stories/{slug}.md` | _(none — read-only server)_ |
+| momentum:feature-status **(deprecated — use momentum:canvas)** | ~~`_bmad-output/planning-artifacts/features.json`~~ `_bmad-output/planning-artifacts/epics.json` **(DEC-034)**, `.momentum/stories/index.json` | `.claude/momentum/feature-status.html` (HTML dashboard); `.claude/momentum/feature-status.md` (cache — sole writer) |
+| canvas server (Bun process, port 3456) | `_bmad-output/planning-artifacts/epics.json` **(DEC-034 — replaces features.json)**, `.momentum/stories/index.json`, `.momentum/sprints/index.json`, `.momentum/stories/{slug}.md` | _(none — read-only server)_ |
+| `_bmad-output/planning-artifacts/epics.json` **(DEC-034)** | _(read by canvas server, momentum:feature-grooming (pending B4 rename to momentum:epic-grooming), momentum:feature-breakdown (pending B4 rename), momentum:create-story (pending B2 update))_ | TBD by B4 — currently: migration script in story B1 (sprint-2026-05-26); future sole writer: momentum:epic-grooming once B4 ships |
 | momentum:sprint-planning | `.momentum/stories/index.json`, `.momentum/sprints/index.json`, story files, `momentum/verification-harness.json` (for per-story contract-type selection) | `.momentum/sprints/{sprint-slug}/specs/` (multi-extension contract files: `.feature`, `.eval.yaml`, `.trigger.md`, `.smoke.sh`, `.review.md` per story `verification_method`); `.momentum/sprints/{sprint-slug}/coverage-plan.md` (written at activation, then immutable); sprint record team composition + `approvals[]` entries (via momentum-tools sprint) |
 | momentum:sprint-dev | `.momentum/sprints/index.json` (active sprint, team, deps, approvals), `.momentum/stories/index.json`, `.momentum/sprints/{sprint-slug}/specs/*.feature` | Task state (via TaskCreate/TaskUpdate); status transitions (via momentum-tools sprint); sprint completion (via momentum-tools sprint complete). Phase 1 verifies `active.approvals` SHAs against current story-file SHAs before any in-progress transition (`momentum-tools sprint verify-approvals`). |
 | momentum:retro | `.momentum/sprints/index.json`, `.momentum/stories/index.json`, session JSONL transcripts, decisions/*.md | `.momentum/sprints/{sprint-slug}/retro-transcript-audit.md`; `.momentum/sprints/{sprint-slug}/sprint-summary.md` (Decision 47 — sole writer at Phase 6 close); `.momentum/signals/*.json` (e.g., `triage-uncleared-*`) — **ARCH-8: signal write calls are pending, not yet shipped**. Note: feature-status cache read and `/momentum:feature-status` spawn removed — **ARCH-6: feature-status deprecated, canvas supersedes** |
@@ -1419,7 +1422,7 @@ momentum/                                    ← Plugin root
 | Feature Status | `skills/feature-status/` | ~~Plugin skill: `/momentum:feature-status`; HTML output: `.claude/momentum/feature-status.html`; cache: `.claude/momentum/feature-status.md`~~ — **deprecated (ARCH-6); canvas supersedes feature-status per DEC-019** |
 | Canvas | `skills/canvas/` | Plugin skill: `/momentum:canvas`; Bun+Hono+HTMX server at port 3456; SKILL.md + workflow.md + server.tsx (DEC-019, supersedes feature-status — ARCH-6) |
 | Agent Guidelines | `skills/agent-guidelines/` | Plugin skill: `/momentum:agent-guidelines` (FR61a — 5-phase guided workflow generating path-scoped rules and reference docs) |
-| Feature artifact (features.json) | (runtime / planning artifact) | `_bmad-output/planning-artifacts/features.json` (written by developer or planning workflow) |
+| Epic artifact (epics.json) **(DEC-034 — replaces features.json)** | (planning artifact) | `_bmad-output/planning-artifacts/epics.json` (written by migration script B1; future sole writer: momentum:epic-grooming after B4) |
 | Sprint summary | (runtime, per-sprint) | `.momentum/sprints/{sprint-slug}/sprint-summary.md` (written by retro orchestrator at Phase 6 close) |
 | Intake queue | (runtime, per-project) | `.momentum/intake-queue.jsonl` (DEC-007 / Decision 52 — written by momentum:triage and momentum:retro via `momentum-tools intake-queue` CLI; append-only) |
 | Sprint registry | (runtime, per-project) | `.momentum/sprints/index.json` (sole writer: `momentum-tools sprint`) |
@@ -2506,7 +2509,9 @@ This pattern is distinct from the per-finding Add/Modify/Remove triage used in o
 
 <!-- Added sprint-2026-04-11: Feature-orientation epic decisions. These decisions introduce the feature artifact layer, feature status visualization, cache infrastructure, sprint summary artifact, and practice project detection. -->
 
-**Decision 44 — Feature Artifact Layer (sprint-2026-04-11)**
+**Decision 44 — Feature Artifact Layer (sprint-2026-04-11)** — **HISTORICAL — superseded by DEC-034 (Epic-Layer Consolidation, 2026-05-25)**
+
+> _[HISTORICAL: The dual features.json + categorical-epics architecture described in Decisions 44–49 is superseded by DEC-034, which unifies both layers into a single `epics.json` at `_bmad-output/planning-artifacts/epics.json`. Migration executed in story B1 (sprint-2026-05-26). See DEC-034 and `_bmad-output/planning-artifacts/epics.json` for the current schema. Decisions 44–49 are preserved here as historical record only.]_
 
 A new first-class planning artifact: `_bmad-output/planning-artifacts/features.json`. Features represent user-observable capabilities — the persistent units of product value that survive sprint boundaries.
 
@@ -2581,7 +2586,7 @@ A new first-class planning artifact: `_bmad-output/planning-artifacts/features.j
 
 ---
 
-**Decision 45 — Feature Status Skill: Standalone with Dual Output (sprint-2026-04-11)**
+**Decision 45 — Feature Status Skill: Standalone with Dual Output (sprint-2026-04-11)** — **HISTORICAL — superseded by DEC-034 (2026-05-25)**
 
 `/momentum:feature-status` is a standalone flat skill that reads `features.json` + `stories/index.json` and produces two output artifacts for different consumption contexts.
 
@@ -2636,7 +2641,7 @@ The signal hierarchy prioritizes scannability: a developer can assess the full f
 
 ---
 
-**Decision 46 — Feature Status Cache Pattern and Startup Integration (sprint-2026-04-11)**
+**Decision 46 — Feature Status Cache Pattern and Startup Integration (sprint-2026-04-11)** — **HISTORICAL — superseded by DEC-034 (2026-05-25)**
 
 The feature status cache provides fast, zero-cost feature health visibility in the Impetus greeting without re-running the full feature-status skill at every session start.
 
@@ -2692,7 +2697,7 @@ momentum-tools feature-status-hash   # prints: sha256:<hex>
 
 ---
 
-**Decision 47 — Sprint Summary at Retro Boundary (sprint-2026-04-11)**
+**Decision 47 — Sprint Summary at Retro Boundary (sprint-2026-04-11)** — **HISTORICAL in part — features.json reference superseded by DEC-034 (2026-05-25); sprint-summary.md artifact remains in force**
 
 A new artifact written by the retro orchestrator at Phase 6 close: `.momentum/sprints/{sprint-slug}/sprint-summary.md`. It compresses each completed sprint's signal into a structured reference document for sprint planning and future retro context loading.
 
@@ -2724,7 +2729,7 @@ A new artifact written by the retro orchestrator at Phase 6 close: `.momentum/sp
 
 ---
 
-**Decision 48 — Practice Project Detection and Practice Rendering Path (sprint-2026-04-11)**
+**Decision 48 — Practice Project Detection and Practice Rendering Path (sprint-2026-04-11)** — **HISTORICAL — features.json reference superseded by DEC-034 (2026-05-25); detection heuristic may survive in different form for canvas**
 
 `/momentum:feature-status` automatically detects whether it is running inside a practice project (a project that IS a Momentum-like practice framework) or a product project, and selects the appropriate rendering path.
 
@@ -2782,7 +2787,7 @@ Redundancy flags: phases with 0 skills are flagged as uncovered; phases with 4+ 
 
 ---
 
-**Decision 49 — Feature Grooming Skill: Orchestrator Pattern and Write Authority (sprint-2026-04-11)**
+**Decision 49 — Feature Grooming Skill: Orchestrator Pattern and Write Authority (sprint-2026-04-11)** — **HISTORICAL — superseded by DEC-034 (2026-05-25); momentum:feature-grooming pending rename to momentum:epic-grooming (B4)**
 
 The `momentum:feature-grooming` skill is a flat orchestrator. It spawns exactly 2 discovery subagents in a single message (model: haiku, effort: quick):
 
