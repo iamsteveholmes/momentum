@@ -10,16 +10,19 @@ import { html, raw } from "hono/html";
 import { join } from "path";
 
 // ---------------------------------------------------------------------------
-// Features lens — types
+// Epics lens — types
 // ---------------------------------------------------------------------------
-export type Feature = {
-  feature_slug: string;
+export type Epic = {
+  epic_slug: string;
   name: string;
-  status: string;
+  status?: string;
+  lifecycle?: "finite-lived" | "long-lived";
+  audience?: "user" | "internal";
   stories_done: number;
   stories_remaining: number;
   stories?: string[];
   acceptance_condition?: string;
+  acceptance_conditions?: string[];
   value_analysis?: string;
   system_context?: string;
   description?: string;
@@ -29,29 +32,29 @@ export type Feature = {
 export type StoryEntry = { status: string; title?: string };
 export type StoryMap = Record<string, StoryEntry>;
 
-export type FeatureRow = Feature & {
+export type EpicRow = Epic & {
   has_gap: boolean;
   gap_reason: string;
   total: number;
 };
 
 // ---------------------------------------------------------------------------
-// Features lens — gap analysis (Task 2)
+// Epics lens — gap analysis
 // ---------------------------------------------------------------------------
 
 /**
- * Structural gap heuristic: a feature has a gap when stories_done === 0
- * and status is not 'working'. Features with status 'working' are never
+ * Structural gap heuristic: an epic has a gap when stories_done === 0
+ * and status is not 'working'. Epics with status 'working' are never
  * flagged regardless of story counts.
  */
 export function analyzeGap(
-  feature: Feature,
+  epic: Epic,
   _storyMap: StoryMap
 ): { has_gap: boolean; reason: string } {
-  if (feature.status === "working") {
+  if (epic.status === "working") {
     return { has_gap: false, reason: "" };
   }
-  if (feature.stories_done === 0) {
+  if (epic.stories_done === 0) {
     return {
       has_gap: true,
       reason: "zero stories done and status is not working",
@@ -61,7 +64,7 @@ export function analyzeGap(
 }
 
 // ---------------------------------------------------------------------------
-// Features lens — sort helpers (Task 3)
+// Epics lens — sort helpers
 // ---------------------------------------------------------------------------
 
 const STATUS_SEVERITY: Record<string, number> = {
@@ -76,10 +79,10 @@ function severityOf(status: string): number {
 }
 
 export function buildSortedRows(
-  features: Feature[],
+  epics: Epic[],
   storyMap: StoryMap
-): FeatureRow[] {
-  const rows: FeatureRow[] = features.map((f) => {
+): EpicRow[] {
+  const rows: EpicRow[] = epics.map((f) => {
     const { has_gap, reason } = analyzeGap(f, storyMap);
     return {
       ...f,
@@ -92,27 +95,29 @@ export function buildSortedRows(
   // Gap rows first (alpha), then non-gap sorted by severity then alpha
   rows.sort((a, b) => {
     if (a.has_gap !== b.has_gap) return a.has_gap ? -1 : 1;
-    if (a.has_gap && b.has_gap) return a.name.localeCompare(b.name);
-    const sevDiff = severityOf(a.status) - severityOf(b.status);
+    const aName = a.name ?? "";
+    const bName = b.name ?? "";
+    if (a.has_gap && b.has_gap) return aName.localeCompare(bName);
+    const sevDiff = severityOf(a.status ?? "") - severityOf(b.status ?? "");
     if (sevDiff !== 0) return sevDiff;
-    return a.name.localeCompare(b.name);
+    return aName.localeCompare(bName);
   });
 
   return rows;
 }
 
 // ---------------------------------------------------------------------------
-// Features lens — data readers (Task 1, Task 5)
+// Epics lens — data readers
 // ---------------------------------------------------------------------------
 
-async function readFeaturesJson(): Promise<Feature[]> {
+export async function readEpicsJson(): Promise<Epic[]> {
   try {
-    const file = Bun.file("_bmad-output/planning-artifacts/features.json");
+    const file = Bun.file("_bmad-output/planning-artifacts/epics.json");
     if (!(await file.exists())) return [];
     const data = await file.json();
     if (!data || typeof data !== "object") return [];
-    // features.json is an object keyed by feature_slug
-    return Object.values(data) as Feature[];
+    // epics.json is an object keyed by epic_slug
+    return Object.values(data) as Epic[];
   } catch {
     return [];
   }
@@ -134,21 +139,21 @@ async function readStoriesIndex(): Promise<StoryMap> {
   }
 }
 
-async function readFeatureBySlug(slug: string): Promise<Feature | null> {
+export async function readEpicBySlug(slug: string): Promise<Epic | null> {
   try {
-    const file = Bun.file("_bmad-output/planning-artifacts/features.json");
+    const file = Bun.file("_bmad-output/planning-artifacts/epics.json");
     if (!(await file.exists())) return null;
     const data = await file.json();
     if (!data || typeof data !== "object") return null;
-    const feature = (data as Record<string, Feature>)[slug];
-    return feature ?? null;
+    const epic = (data as Record<string, Epic>)[slug];
+    return epic ?? null;
   } catch {
     return null;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Features lens — status badge CSS class (Task 4)
+// Epics lens — status badge CSS class
 // ---------------------------------------------------------------------------
 
 /**
@@ -169,25 +174,15 @@ function badgeClass(status: string): string {
   return classMap[status] ?? "not-started";
 }
 
-/** @deprecated Use badgeClass instead — kept for compatibility with FeatureDetailView */
-function badgeColor(status: string): string {
-  const colors: Record<string, string> = {
-    working: "var(--accent, #5863a8)",
-    partial: "#d97706",
-    "not-working": "#dc2626",
-    "not-started": "#6b7280",
-  };
-  return colors[status] ?? "#6b7280";
-}
 
 // ---------------------------------------------------------------------------
-// Features lens — HTML renderer (Tasks 3, 4)
+// Epics lens — HTML renderer
 // ---------------------------------------------------------------------------
 
-function renderFeaturesTable(rows: FeatureRow[]): string {
+function renderEpicsTable(rows: EpicRow[]): string {
   if (rows.length === 0) {
     return `<div class="feat-row" style="padding:12px 0;">
-  <span class="feat-name" style="font-style:italic;color:var(--inkOnDarkMuted);">No features found — run momentum:feature-grooming first</span>
+  <span class="feat-name" style="font-style:italic;color:var(--inkOnDarkMuted);">No epics found — run momentum:epic-grooming first</span>
 </div>`;
   }
 
@@ -201,9 +196,11 @@ function renderFeaturesTable(rows: FeatureRow[]): string {
       // Third column: gap-flag for gap rows, badge for non-gap
       const rightCol = row.has_gap
         ? `<span class="gap-flag prominent">⚠ gap</span>`
-        : `<span class="badge ${badgeClass(row.status)}"><span class="dot"></span>${row.status}</span>`;
+        : row.status
+          ? `<span class="badge ${badgeClass(row.status)}"><span class="dot"></span>${row.status}</span>`
+          : `<span class="badge not-started"><span class="dot"></span>${row.lifecycle ?? "—"}</span>`;
 
-      return `<a class="feat-row${lastClass}" href="/features/${row.feature_slug}"${gapBg}>
+      return `<a class="feat-row${lastClass}" href="/epics/${row.epic_slug}"${gapBg}>
   <span class="feat-name">${row.name}</span>
   <span class="frac">${done}<span class="slash">/</span>${total}</span>
   ${rightCol}
@@ -593,7 +590,7 @@ function SprintLensSection({ sprint, inProgress, blocked }: { sprint: SprintEntr
 }
 
 // ---------------------------------------------------------------------------
-// Feature L2 detail view — reading mode
+// Epic L2 detail view — reading mode
 // ---------------------------------------------------------------------------
 
 const STORY_STATUS_ICON: Record<string, string> = {
@@ -622,18 +619,18 @@ function storyBadgeColor(status: string): string {
   return STORY_BADGE_COLORS[status] ?? "#9ca3af";
 }
 
-export function buildFeatureStoryRows(
-  feature: Feature,
+export function buildEpicStoryRows(
+  epic: Epic,
   storyMap: StoryMap
-): Array<{ slug: string; title: string; status: string; featureSlug: string }> {
-  const slugs = feature.stories ?? [];
+): Array<{ slug: string; title: string; status: string; epicSlug: string }> {
+  const slugs = epic.stories ?? [];
   const rows = slugs.map((slug) => {
     const entry = storyMap[slug];
     return {
       slug,
       title: entry?.title ?? slug,
       status: entry?.status ?? "backlog",
-      featureSlug: feature.feature_slug,
+      epicSlug: epic.epic_slug,
     };
   });
   const STATUS_ORDER = ['in-progress', 'review', 'verify', 'ready-for-dev', 'backlog', 'done'];
@@ -645,8 +642,8 @@ export function buildFeatureStoryRows(
   return rows;
 }
 
-function FeatureStoryRow({ slug, title, status, featureSlug }: { slug: string; title: string; status: string; featureSlug: string }) {
-  const storyUrl = `/stories/${slug}?from=feature&feature=${featureSlug}`;
+function EpicStoryRow({ slug, title, status, epicSlug }: { slug: string; title: string; status: string; epicSlug: string }) {
+  const storyUrl = `/stories/${slug}?from=epic&epic=${epicSlug}`;
   return html`
     <a
       class="story click"
@@ -662,28 +659,30 @@ function FeatureStoryRow({ slug, title, status, featureSlug }: { slug: string; t
   `;
 }
 
-export function FeatureDetailView({
-  feature,
+export function EpicDetailView({
+  epic,
   storyRows,
 }: {
-  feature: Feature;
+  epic: Epic;
   storyRows: Array<{ slug: string; title: string; status: string }>;
 }) {
-  const done = feature.stories_done;
-  const total = feature.stories_done + feature.stories_remaining;
-  const badgeStyle = `background:${badgeColor(feature.status)};`;
-  const deps = feature.dependencies ?? [];
+  const done = epic.stories_done;
+  const total = epic.stories_done + epic.stories_remaining;
+  const deps = epic.dependencies ?? [];
+
+  // acceptance_conditions is an array in epics.json; acceptance_condition is the legacy string field
+  const acText = epic.acceptance_conditions?.join("\n") ?? epic.acceptance_condition ?? null;
 
   const storyRowsHtml = storyRows.length > 0
-    ? storyRows.map((r) => FeatureStoryRow(r)).join("")
+    ? storyRows.map((r) => EpicStoryRow(r)).join("")
     : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No stories linked</div>`;
 
   const depsHtml = deps.length > 0
     ? `<ul class="reading-deps-list">${deps.map((d) => `<li>${escapeHtml(d)}</li>`).join("")}</ul>`
     : `<div style="font-family:'Source Serif 4',serif;font-size:14px;font-style:italic;color:var(--inkMuted);">No dependencies</div>`;
 
-  const typeTag = (feature as any).type ? `<span class="type-tag">${escapeHtml((feature as any).type)}</span>` : "";
-  const hasGap = feature.stories_done === 0 && feature.status !== "working";
+  const typeTag = (epic as any).type ? `<span class="type-tag">${escapeHtml((epic as any).type)}</span>` : "";
+  const hasGap = epic.stories_done === 0 && epic.status !== "working";
 
   return html`
     <!-- Breadcrumb OOB swap — light mode crumb bar -->
@@ -691,45 +690,49 @@ export function FeatureDetailView({
       <div class="crumbs">
         <a class="seg" href="/">dashboard</a>
         <span class="sep">›</span>
-        <span class="seg here">feature</span>
+        <span class="seg here">epic</span>
       </div>
       <span class="reading-pill"><span class="rd"></span>reading mode</span>
     </nav>
 
-    <!-- Feature detail content -->
+    <!-- Epic detail content -->
     <div class="reading-surface">
       <div class="l2-body">
 
         <!-- l2-meta strip -->
         <div class="l2-meta">
-          <span class="badge ${badgeClass(feature.status)}"><span class="dot"></span>${feature.status}</span>
+          ${epic.status
+            ? html`<span class="badge ${badgeClass(epic.status)}"><span class="dot"></span>${epic.status}</span>`
+            : ""}
           <span class="frac">${done}<span class="slash">/</span>${total}<span class="lbl">stories</span></span>
+          ${epic.lifecycle ? html`<span class="badge not-started"><span class="dot"></span>${epic.lifecycle}</span>` : ""}
+          ${epic.audience ? html`<span class="badge validated"><span class="dot"></span>${epic.audience}</span>` : ""}
           ${raw(typeTag)}
           ${hasGap ? html`<span class="gap-flag prominent">gap</span>` : ""}
         </div>
 
         <!-- Title -->
-        <h1 class="l2-name">${feature.name}</h1>
+        <h1 class="l2-name">${epic.name}</h1>
 
         <!-- Short description -->
-        ${feature.description ? html`<div class="l2-desc">${feature.description}</div>` : ""}
+        ${epic.description ? html`<div class="l2-desc">${epic.description}</div>` : ""}
 
         <!-- Value narrative -->
-        ${feature.value_analysis ? html`
+        ${epic.value_analysis ? html`
           <div class="l2-section-cap">value narrative</div>
-          <div class="l2-narrative"><p>${feature.value_analysis}</p></div>
+          <div class="l2-narrative"><p>${epic.value_analysis}</p></div>
         ` : ""}
 
         <!-- Acceptance condition -->
-        ${feature.acceptance_condition ? html`
+        ${acText ? html`
           <div class="l2-section-cap">acceptance condition</div>
-          <div class="reading-ac-box">${feature.acceptance_condition}</div>
+          <div class="reading-ac-box">${acText}</div>
         ` : ""}
 
         <!-- System context -->
-        ${feature.system_context ? html`
+        ${epic.system_context ? html`
           <div class="l2-section-cap">system context</div>
-          <div class="reading-callout">${feature.system_context}</div>
+          <div class="reading-callout">${epic.system_context}</div>
         ` : ""}
 
         <!-- Stories list -->
@@ -1126,7 +1129,7 @@ function DashboardShell({
     .l2-body .frac .slash { color: var(--inkFaint); }
     .l2-body .frac .lbl { color: var(--inkFaint); }
 
-    /* ── Features list — grid rows ── */
+    /* ── Epics list — grid rows ── */
     .feat-list { padding: 4px 0 2px; }
     .feat-row {
       display: grid; grid-template-columns: 1fr auto auto;
@@ -1328,7 +1331,7 @@ function DashboardShell({
     .reading-crumb-bar .seg.here { color: var(--accent); }
     .reading-crumb-bar .sep { color: var(--inkFaint); }
 
-    /* Feature L2 reading ── */
+    /* Epic L2 reading ── */
     .l2-body { padding: 16px 20px 18px; }
     .l2-meta {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -1375,7 +1378,7 @@ function DashboardShell({
     }
     .l2-stories .story:last-child { border-bottom: none; }
 
-    /* Feature heading */
+    /* Epic heading */
     .feature-heading {
       font-family: "Source Serif 4", Georgia, serif;
       font-size: 24px; font-weight: 600;
@@ -1586,7 +1589,7 @@ function DashboardShell({
       ${mainContent != null ? raw(mainContent) : html`
       ${cycleSection ?? LensSection({ id: "cycle",    tag: "Cycle",    title: "Cycle"    })}
       ${sprintSection ?? SprintLensSection({ sprint: null })}
-      ${LensSection({ id: "features", tag: "Features", title: "Features" })}
+      ${LensSection({ id: "epics", tag: "Epics", title: "Epics" })}
       `}
     </div>
 
@@ -1621,7 +1624,7 @@ app.get("/", async (c) => {
       <!-- Dashboard lens sections (primary payload → #main-content innerHTML) -->
       ${cycleSection as string}
       ${sprintSection as string}
-      ${LensSection({ id: "features", tag: "Features", title: "Features" }) as string}
+      ${LensSection({ id: "epics", tag: "Epics", title: "Epics" }) as string}
     `);
   }
 
@@ -1632,21 +1635,21 @@ app.get("/", async (c) => {
 });
 
 // ---------------------------------------------------------------------------
-// Features lens route — Task 1 (reads features.json + stories/index.json)
+// Epics lens route (reads epics.json + stories/index.json)
 // ---------------------------------------------------------------------------
-app.get("/lenses/features", async (c) => {
-  const features = await readFeaturesJson();
+app.get("/lenses/epics", async (c) => {
+  const epics = await readEpicsJson();
   const stories = (await readStoriesIndex()) ?? {};
-  const rows = buildSortedRows(features, stories);
-  const tableBody = renderFeaturesTable(rows);
+  const rows = buildSortedRows(epics, stories);
+  const tableBody = renderEpicsTable(rows);
   return c.html(`
-    <section id="lens-features" class="dash-section"
-      hx-get="/lenses/features"
+    <section id="lens-epics" class="dash-section"
+      hx-get="/lenses/epics"
       hx-trigger="every 2s"
       hx-swap="outerHTML"
     >
       <div class="dash-lens-hdr">
-        <span class="tag">Features</span>
+        <span class="tag">Epics</span>
         <div class="rule"></div>
         <span class="count">${rows.length}${rows.filter(r => r.has_gap).length > 0 ? ` · ${rows.filter(r => r.has_gap).length} gap${rows.filter(r => r.has_gap).length > 1 ? 's' : ''}` : ''}</span>
       </div>
@@ -1903,18 +1906,21 @@ async function readStoryBySlug(slug: string): Promise<ParsedStory | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Story L3 detail view — reading mode (warm light, same polarity as Feature L2)
+// Story L3 detail view — reading mode (warm light, same polarity as Epic L2)
 // ---------------------------------------------------------------------------
 
 export function StoryDetailView({
   story,
   from,
   activeSprintSlug,
+  epicSlugOverride,
   featureSlugOverride,
 }: {
   story: ParsedStory;
-  from: "feature" | "sprint" | null;
+  from: "epic" | "feature" | "sprint" | null;
   activeSprintSlug?: string | null;
+  epicSlugOverride?: string | null;
+  /** @deprecated Use epicSlugOverride — kept for backward compatibility */
   featureSlugOverride?: string | null;
 }) {
   const { meta, storyNarrative, acceptanceCriteria, devNotes, workflowSection, touches } = story;
@@ -1927,13 +1933,13 @@ export function StoryDetailView({
     } else {
       breadcrumbMiddle = `<a class="seg" href="/">sprint</a><span class="sep">›</span>`;
     }
-  } else if (from === "feature") {
-    // Use URL-passed feature slug first, then frontmatter, then fallback to dashboard
-    const featureSlug = featureSlugOverride || meta.feature_slug;
-    if (featureSlug) {
-      breadcrumbMiddle = `<a class="seg" href="/features/${featureSlug}">feature</a><span class="sep">›</span>`;
+  } else if (from === "epic" || from === "feature") {
+    // Use URL-passed epic slug first, then frontmatter epic_slug, then feature_slug (legacy), then fallback
+    const epicSlug = epicSlugOverride || featureSlugOverride || meta.epic_slug || meta.feature_slug;
+    if (epicSlug) {
+      breadcrumbMiddle = `<a class="seg" href="/epics/${epicSlug}">epic</a><span class="sep">›</span>`;
     } else {
-      breadcrumbMiddle = `<a class="seg" href="/">feature</a><span class="sep">›</span>`;
+      breadcrumbMiddle = `<a class="seg" href="/">epic</a><span class="sep">›</span>`;
     }
   } else {
     breadcrumbMiddle = "";
@@ -2068,9 +2074,13 @@ function escapeHtml(str: string): string {
 app.get("/stories/:slug", async (c) => {
   const slug = c.req.param("slug");
   const fromParam = c.req.query("from");
-  const featureParam = c.req.query("feature"); // feature slug passed when coming from Feature L2
-  const from: "feature" | "sprint" | null =
-    fromParam === "feature" ? "feature" : fromParam === "sprint" ? "sprint" : null;
+  const epicParam = c.req.query("epic"); // epic slug passed when coming from Epic L2
+  const featureParam = c.req.query("feature"); // legacy: feature slug for backward compat
+  const from: "epic" | "feature" | "sprint" | null =
+    fromParam === "epic" ? "epic"
+    : fromParam === "feature" ? "feature"
+    : fromParam === "sprint" ? "sprint"
+    : null;
 
   const story = await readStoryBySlug(slug);
 
@@ -2105,17 +2115,17 @@ app.get("/stories/:slug", async (c) => {
     activeSprintSlug = sprintsData?.active?.slug ?? null;
   }
 
-  const storyFragment = StoryDetailView({ story, from, activeSprintSlug, featureSlugOverride: featureParam ?? null }) as string;
+  const storyFragment = StoryDetailView({ story, from, activeSprintSlug, epicSlugOverride: epicParam ?? featureParam ?? null }) as string;
   const isHtmx = !!c.req.header("HX-Request");
   if (isHtmx) return c.html(storyFragment);
 
   // Direct browser navigation — wrap in full shell with reading mode
   const storyContent = storyFragment.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
   // Build breadcrumb with correct back-links based on entry point
-  const featureSlug = featureParam || story.meta.feature_slug;
+  const epicSlug = epicParam || featureParam || story.meta.epic_slug || story.meta.feature_slug;
   let crumbs = `<a class="seg" href="/">dashboard</a>`;
-  if (from === "feature" && featureSlug) {
-    crumbs += `<span class="sep">›</span><a class="seg" href="/features/${featureSlug}">feature</a>`;
+  if ((from === "epic" || from === "feature") && epicSlug) {
+    crumbs += `<span class="sep">›</span><a class="seg" href="/epics/${epicSlug}">epic</a>`;
   } else if (from === "sprint" && activeSprintSlug) {
     crumbs += `<span class="sep">›</span><a class="seg" href="/sprints/${activeSprintSlug}">sprint</a>`;
   }
@@ -2124,25 +2134,25 @@ app.get("/stories/:slug", async (c) => {
   return c.html(DashboardShell({ hash: shortHash(), date: isoDate(), mainContent: storyContent, navHtml: storyNavHtml }) as string);
 });
 
-// Feature L2 drill-down — reading mode
-app.get("/features/:slug", async (c) => {
+// Epic L2 drill-down — reading mode
+app.get("/epics/:slug", async (c) => {
   const slug = c.req.param("slug");
-  const feature = await readFeatureBySlug(slug);
+  const epic = await readEpicBySlug(slug);
   const isHtmx = !!c.req.header("HX-Request");
 
-  if (!feature) {
+  if (!epic) {
     const notFoundFragment = `
       <nav id="breadcrumb" class="crumb-bar" hx-swap-oob="true">
         <div class="crumbs">
           <a class="seg" href="/">dashboard</a>
           <span class="sep">/</span>
-          <span class="seg here">feature</span>
+          <span class="seg here">epic</span>
         </div>
       </nav>
       <div class="reading-surface">
         <div class="reading-col">
           <div style="font-family:'Source Serif 4',serif;font-size:16px;font-style:italic;color:var(--inkMuted);padding-top:16px;">
-            Feature "${escapeHtml(slug)}" not found.
+            Epic "${escapeHtml(slug)}" not found.
           </div>
         </div>
       </div>
@@ -2160,22 +2170,22 @@ app.get("/features/:slug", async (c) => {
   }
 
   const storyMap = (await readStoriesIndex()) ?? {};
-  const storyRows = buildFeatureStoryRows(feature, storyMap);
-  const fragmentHtml = FeatureDetailView({ feature, storyRows }) as string;
+  const storyRows = buildEpicStoryRows(epic, storyMap);
+  const fragmentHtml = EpicDetailView({ epic, storyRows }) as string;
 
   if (isHtmx) {
     return c.html(fragmentHtml);
   }
 
-  // Direct browser navigation — wrap in full shell with ONLY the feature content in #main-content
+  // Direct browser navigation — wrap in full shell with ONLY the epic content in #main-content
   // Strip OOB nav tag (contains hx-swap-oob="true") from fragment before injecting
-  const featureContent = fragmentHtml.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
-  const featureNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">›</span><span class="seg here">feature</span></div><span class="reading-pill"><span class="rd"></span>reading mode</span></nav>`;
+  const epicContent = fragmentHtml.replace(/<nav id="breadcrumb"[^>]*hx-swap-oob="true"[\s\S]*?<\/nav>/m, "").trim();
+  const epicNavHtml = `<nav id="breadcrumb" class="crumb-bar reading-crumb-bar"><div class="crumbs"><a class="seg" href="/">dashboard</a><span class="sep">›</span><span class="seg here">epic</span></div><span class="reading-pill"><span class="rd"></span>reading mode</span></nav>`;
   return c.html(DashboardShell({
     hash: shortHash(),
     date: isoDate(),
-    mainContent: featureContent,
-    navHtml: featureNavHtml,
+    mainContent: epicContent,
+    navHtml: epicNavHtml,
   }) as string);
 });
 
