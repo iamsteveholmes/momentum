@@ -43,7 +43,7 @@
       3. Story verification — check status of every sprint story
       4. Auditor team — fan-out 3 auditors (parallel), collect findings, spawn synthesizer to write findings doc
       5. Story stub creation — propose and approve actionable backlog items from findings
-      5.5. Handoff to intake queue — write un-actioned findings to intake-queue.jsonl for next planning cycle
+      5.5. Handoff to practice ledger — write un-actioned findings to practice-ledger.jsonl for next planning cycle
       6. Sprint closure — call sprint complete + retro-complete, show summary
     </action>
   </step>
@@ -551,17 +551,25 @@ Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
   <!-- PHASE 5.5: HANDOFF TO INTAKE QUEUE                      -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="5.5" goal="Write un-actioned retro findings to intake-queue.jsonl for next sprint planning">
+  <step n="5.5" goal="Write un-actioned retro findings to practice-ledger.jsonl for next sprint planning">
     <action>Update task 5.5 to in_progress</action>
 
-    <note>The intake-queue.jsonl is the unified artifact (per DEC-007) for cross-workflow
-    handoffs. Retro writes `source: "retro"`, `kind: "handoff"` events so sprint-planning
-    Step 1 can surface them without manual re-injection. Each finding carries feature-state
-    transition context (DEC-005 D8) and failure-diagnosis framing (DEC-005 D7) when applicable.
+    <note>The practice-ledger.jsonl is the unified event log (per DEC-033) for cross-workflow
+    handoffs. Retro writes `source: "retro"`, `event_type: "created"` events with
+    `payload.intent: "handoff"` so sprint-planning Step 1 can surface them via
+    `practice-ledger by-source retro` without manual re-injection. Each finding carries
+    feature-state transition context (DEC-005 D8) and failure-diagnosis framing (DEC-005 D7)
+    when applicable.
 
-    Write CLI: `python3 skills/momentum/scripts/momentum-tools.py intake-queue append --source retro --kind handoff ...`
+    <!-- Migration note (DEC-033): the legacy --kind handoff flag is replaced by
+         --event_type created + --payload-json '{"intent":"handoff"}'. The 'kind' field
+         no longer exists in the DEC-033 schema. Handoff semantics are preserved via
+         payload so sprint-planning can distinguish retro handoffs from other created
+         events by filtering on source:retro + payload.intent:handoff. -->
 
-    What goes into the queue:
+    Write CLI: `python3 skills/momentum/scripts/momentum-tools.py practice-ledger append --source retro --event_type created --payload-json '{"intent":"handoff","origin_skill":"retro"}' ...`
+
+    What goes into the ledger:
       - Findings from the "Priority Action Items" section that were NOT stubbed
         (i.e., developer declined during Phase 5, or were low-priority observations worth watching)
       - Feature-state transitions observed during this retro (feature X regressed, feature Y ready
@@ -570,11 +578,11 @@ Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
         `failure_diagnosis` JSON
       - Cross-cutting patterns the documenter elevated but which don't warrant immediate stub creation
 
-    What DOES NOT go into the queue:
+    What DOES NOT go into the ledger:
       - Stubs already approved and added to stories/index.json (Phase 5) — those are tracked there
       - The sprint-summary content — that stays in sprint-summary.md
 
-    One event per finding. Use `python3 skills/momentum/scripts/momentum-tools.py intake-queue append` for each.</note>
+    One event per finding. Use `python3 skills/momentum/scripts/momentum-tools.py practice-ledger append` for each.</note>
 
     <action>Gather the items to hand off:
       1. From {{rejected_stubs}} (Phase 5 developer-declined stubs): these are un-actioned findings
@@ -599,57 +607,54 @@ Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
   · {{title}}{{#if feature_slug}} (feature: {{feature_slug}}){{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}
 {{/each}}
 
-Carry these forward as handoff events in intake-queue.jsonl? (Y/N)</output>
+Carry these forward as handoff events in practice-ledger.jsonl? (Y/N)</output>
       <ask>Approve handoff writes?</ask>
       <check if="developer declines">
-        <output>Handoff skipped — no events written to intake-queue.jsonl.</output>
+        <output>Handoff skipped — no events written to practice-ledger.jsonl.</output>
         <action>Update task 5.5 to completed</action>
       </check>
 
-      <output>Writing {{handoff_items | length}} findings to intake-queue.jsonl...</output>
+      <output>Writing {{handoff_items | length}} findings to practice-ledger.jsonl...</output>
 
-      <action>For each item in {{handoff_items}}, run one `python3 skills/momentum/scripts/momentum-tools.py intake-queue append` call:
+      <action>For each item in {{handoff_items}}, run one `python3 skills/momentum/scripts/momentum-tools.py practice-ledger append` call:
 
         Required flags for every event:
+          --event-type created
+          --entity-id "retro-{{sprint_slug}}-{{item.slug}}"
           --source retro
-          --kind handoff
-          --title "{{item.title}}"
-          --description "{{item.description}}"
-          --sprint-slug "{{sprint_slug}}"
+          --actor retro
+          --payload '{"intent":"handoff","origin_skill":"retro","sprint_slug":"{{sprint_slug}}","title":"{{item.title}}","description":"{{item.description}}"}'
 
-        Optional flags (include when the finding has this context):
-          --feature-slug "{{item.feature_slug}}"            (when finding is tied to a feature)
-          --story-type "{{item.suggested_story_type}}"      (when finding implies future story work)
-          --feature-state-transition '{"feature_slug":"...","prior_state":"...","observed_state":"...","evidence":"..."}' (DEC-005 D8: feature state hygiene)
-          --failure-diagnosis '{"attempted":"...","didnt_work":"...","learned":"..."}' (DEC-005 D7: failure naming)
+        Optional payload fields (include when the finding has this context — merge into --payload JSON):
+          "feature_slug": "{{item.feature_slug}}"           (when finding is tied to a feature)
+          "story_type": "{{item.suggested_story_type}}"     (when finding implies future story work)
+          "feature_state_transition": {"feature_slug":"...","prior_state":"...","observed_state":"...","evidence":"..."} (DEC-005 D8: feature state hygiene)
+          "failure_diagnosis": {"attempted":"...","didnt_work":"...","learned":"..."}  (DEC-005 D7: failure naming)
 
         Example for a feature regression finding:
-          python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
+          python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+            --event-type created \
+            --entity-id "retro-{{sprint_slug}}-m3-consistency" \
             --source retro \
-            --kind handoff \
-            --title "M3 consistency regressed in sprint-2026-04-08" \
-            --description "Material 3 design tokens are inconsistent across 3 surfaces that were previously aligned" \
-            --sprint-slug "{{sprint_slug}}" \
-            --feature-slug "material-3-design-system" \
-            --story-type "defect" \
-            --feature-state-transition '{"feature_slug":"material-3-design-system","prior_state":"partial","observed_state":"partial","evidence":"User reported token inconsistency in Settings, Profile, and Home screens"}'
+            --actor retro \
+            --payload '{"intent":"handoff","origin_skill":"retro","sprint_slug":"{{sprint_slug}}","title":"M3 consistency regressed in sprint-2026-04-08","description":"Material 3 design tokens are inconsistent across 3 surfaces that were previously aligned","feature_slug":"material-3-design-system","story_type":"defect","feature_state_transition":{"feature_slug":"material-3-design-system","prior_state":"partial","observed_state":"partial","evidence":"User reported token inconsistency in Settings, Profile, and Home screens"}}'
 
         Example for a failure-diagnosis finding:
-          python3 skills/momentum/scripts/momentum-tools.py intake-queue append \
+          python3 skills/momentum/scripts/momentum-tools.py practice-ledger append \
+            --event-type created \
+            --entity-id "retro-{{sprint_slug}}-e2e-false-positives" \
             --source retro \
-            --kind handoff \
-            --title "E2E validator prompt produced false positives on UI stories" \
-            --description "E2E validator repeatedly flagged valid UI states as failures due to overly strict selector assumptions" \
-            --sprint-slug "{{sprint_slug}}" \
-            --failure-diagnosis '{"attempted":"E2E validation via DOM selector matching","didnt_work":"Selectors assumed specific CSS class names that change with M3 theming","learned":"E2E specs must use semantic roles and aria-labels, not CSS classes"}'
+            --actor retro \
+            --payload '{"intent":"handoff","origin_skill":"retro","sprint_slug":"{{sprint_slug}}","title":"E2E validator prompt produced false positives on UI stories","description":"E2E validator repeatedly flagged valid UI states as failures due to overly strict selector assumptions","failure_diagnosis":{"attempted":"E2E validation via DOM selector matching","didnt_work":"Selectors assumed specific CSS class names that change with M3 theming","learned":"E2E specs must use semantic roles and aria-labels, not CSS classes"}}'
       </action>
 
       <action>Verify all events were written:
-        Run: `python3 skills/momentum/scripts/momentum-tools.py intake-queue list --source retro --kind handoff --status open`
+        Run: `python3 skills/momentum/scripts/momentum-tools.py practice-ledger by-source retro`
+        Filter results to entities where payload.intent == "handoff" and event is non-terminal.
         Confirm the returned count matches {{handoff_items | length}}
       </action>
 
-      <output>Phase 5.5 complete — {{handoff_items | length}} findings written to intake-queue.jsonl:
+      <output>Phase 5.5 complete — {{handoff_items | length}} findings written to practice-ledger.jsonl:
 
 {{#each handoff_items}}
   · {{title}} [{{#if feature_slug}}feature: {{feature_slug}}{{/if}}{{#if failure_diagnosis}} — failure diagnosed{{/if}}]
@@ -763,7 +768,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 
 **Story stubs created:** {{approved_count}} added to backlog
 
-**Findings handed off:** {{handoff_items | length}} events written to intake-queue.jsonl (source: retro, kind: handoff)
+**Findings handed off:** {{handoff_items | length}} events written to practice-ledger.jsonl (source: retro, event_type: created, intent: handoff)
 
 **Sprint status:** closed (retro_run_at set to {{today}})
 

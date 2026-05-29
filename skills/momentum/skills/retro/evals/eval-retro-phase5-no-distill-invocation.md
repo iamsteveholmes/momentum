@@ -42,9 +42,9 @@ The word "distill" does not appear in Phase 5 output at all.
 
 ### B4: Phase 5.5 Note Cleaned
 
-Phase 5.5 (handoff to intake-queue) does not reference "findings already routed to distill".
+Phase 5.5 (handoff to practice-ledger) does not reference "findings already routed to distill".
 Any item rejected by the developer in Phase 5 appears in `{{handoff_items}}` for possible
-handoff to the intake queue.
+handoff to `practice-ledger.jsonl` as a `created` event with `payload.intent: "handoff"`.
 
 ### B5: Phase 5.5 Language Clean
 

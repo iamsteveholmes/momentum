@@ -35,7 +35,7 @@ Store {{planning_artifacts}} and {{implementation_artifacts}} for use throughout
   <critical>Orchestrator purity: This workflow MUST NOT write files directly. No Write or Edit
   actions against features.json, stories/index.json, prd.md, epics.md, architecture.md, or any
   file under _bmad-output/planning-artifacts/ or .momentum/stories/.
-  All writes happen via delegated subagents — triage routes to intake / decision / intake-queue,
+  All writes happen via delegated subagents — triage routes to intake / decision / practice-ledger,
   which own their respective writes. This orchestrator reads, synthesizes, gates, and delegates only.</critical>
 
   <critical>Developer review gate (Step 5) is mandatory before any delegation to triage. No items
@@ -351,7 +351,7 @@ Resolve the missing skill file before proceeding.</output>
 
     Triage will re-classify each item using its own heuristics (from original_text per its
     Step 3 contract), present a batch-approval UX to the developer, and delegate approved items
-    to intake / decision / intake-queue.
+    to intake / decision / practice-ledger.
     </action>
 
     <note>Triage classifies items fresh from original_text per its Step 1 contract. The
@@ -375,9 +375,9 @@ Resolve the missing skill file before proceeding.</output>
       - {{artifact_count}} — from "Stubbed to backlog (N)" → intake_count in triage Step 6;
           default 0 if absent
       - {{decision_count}} — from "Decisions recorded (N)"; default 0 if absent
-      - {{shaping_count}} — from "N shaping (kind: shape)"; default 0 if absent
-      - {{defer_count}} — from "N deferred (kind: watch)"; default 0 if absent
-      - {{reject_count}} — from "N rejected (kind: rejected)"; default 0 if absent
+      - {{shaping_count}} — from "N shaping (event_type: created, triage_class: shaping)"; default 0 if absent
+      - {{defer_count}} — from "N deferred (event_type: created, triage_class: defer)"; default 0 if absent
+      - {{reject_count}} — from "N rejected (event_type: rejected)"; default 0 if absent
       - {{story_paths}} — list of stub_path values from intake results; default []
       - {{decision_paths}} — list of outcome paths from decision results; default []
     </action>
@@ -389,9 +389,9 @@ Gap analysis: {{gap_list | length}} candidates identified, {{approved_gap_list |
 Triage outcomes ({{approved_gap_list | length}} items):
   · ARTIFACT → {{artifact_count}} (stubbed to backlog)
   · DECISION → {{decision_count}} (decision docs created)
-  · SHAPING  → {{shaping_count}} (parked in intake-queue.jsonl)
-  · DEFER    → {{defer_count}} (parked in intake-queue.jsonl)
-  · REJECT   → {{reject_count}} (logged in intake-queue.jsonl)
+  · SHAPING  → {{shaping_count}} (parked in practice-ledger.jsonl)
+  · DEFER    → {{defer_count}} (parked in practice-ledger.jsonl)
+  · REJECT   → {{reject_count}} (logged in practice-ledger.jsonl)
 
 {{#if story_paths | length > 0}}
 New story stubs:

@@ -150,7 +150,7 @@ stub file, add index entry. No analysis, no research, no subagents.
       3. If `bd create` succeeds: store the new bead ID in `.momentum/beads-id-map.json`
          as `{ "{{slug}}": "<new-bead-id>" }` (merge, don't overwrite other entries).
       4. If `bd create` fails: log to `.momentum/beads-errors.log` — do NOT abort.
-         The `intake-queue.jsonl` append above remains the source of record.
+         The `practice-ledger.jsonl` append above remains the source of record.
       5. Verify: `bd show <new-bead-id>` should show `discovered-from: {{origin_bead_id}}`
          (not `blocks:`) — this confirms the correct edge type.
     </action>
