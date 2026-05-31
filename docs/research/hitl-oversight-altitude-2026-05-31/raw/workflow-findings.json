@@ -1,0 +1,1619 @@
+{
+  "summary": "Latest-evidence research on the HITL sweet spot: decision altitude + review granularity in agentic AI. 8 discovery threads, each adversarially verified.",
+  "agentCount": 16,
+  "logs": [
+    "Researching 8 sub-questions on the HITL sweet spot — discovery then adversarial verification, pipelined.",
+    "Completed 8/8 threads (discovery + verification)."
+  ],
+  "result": [
+    {
+      "sub_question_id": "sq1-autonomy-delegation-levels",
+      "title": "Autonomy & delegation levels — decision altitude",
+      "discovery": {
+        "sub_question_id": "sq1-autonomy-delegation-levels",
+        "summary": "2025–2026 work converges on treating agent autonomy as a graduated, designable property modeled on SAE J3016 driving levels, rather than a binary. The canonical academic taxonomy (Feng, McDonald & Zhang, U. Washington / Knight Inst., June–July 2025) defines five levels by the human's role — Operator, Collaborator, Consultant, Approver, Observer — and argues autonomy is \"a deliberate design decision, separate from capability and operational environment,\" proposing third-party \"autonomy certificates\" that cap the max allowed level. Coding-specific five-rung ladders (Swarmia's Assistive→Conversational→Task Agent→Autonomous Teammate→Agentic Avalanche; ASDLC's L1–L5) map each level to a descending human decision altitude (Driver→Reviewer→Change Owner→Auditor→Consumer) and argue higher autonomy is NOT always better — match level to task ambiguity/verifiability, with most teams' ceiling at Levels 2–3. Governance reframes the target as \"managed/bounded autonomy\" with risk-tiered HITL (pre-approval) / HOTL (monitored intervention) / HOOTL decision rights, time-boxed by reversibility; CSA's L0–L5 scales controls and approval seniority by level. Anthropic's primary telemetry (Feb 2026) shows experienced users migrating HITL→HOTL (auto-approve 20%→40%+, interrupts 5%→9%) — calibrated, not blind, trust — while a persistent \"delegation gap\" (≈60% AI use but only 0–20% full delegation) is attributed to missing judgment, persistent context, testable outcomes, and explicit constraints, not capability. The strongest split is task-delegation vs goal-delegation: developers delegate bounded tasks but retain architecture/goal decisions.",
+        "key_findings": [
+          {
+            "claim": "The leading academic framework defines five autonomy levels by the human's role (Operator, Collaborator, Consultant, Approver, Observer) and treats autonomy as a deliberate design choice separable from capability.",
+            "evidence": "\"an agent's level of autonomy can be treated as a deliberate design decision, separate from its capability and operational environment\"; levels are \"characterized by the roles a user can take when interacting with an agent.\"",
+            "source_title": "Levels of Autonomy for AI Agents (Feng, McDonald, Zhang)",
+            "source_url": "https://arxiv.org/abs/2506.12469",
+            "source_date": "2025-07-28",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "The same paper proposes 'autonomy certificates' — third-party-issued documents capping the maximum autonomy level an agent may operate at, backed by an 'autonomy case' analogous to a safety case.",
+            "evidence": "A certificate \"prescribes the maximum level of autonomy at which an agent can operate given... technical specifications... and... operational environment,\" issued \"by a third-party governing body.\"",
+            "source_title": "Levels of Autonomy for AI Agents",
+            "source_url": "https://knightcolumbia.org/content/levels-of-autonomy-for-ai-agents-1",
+            "source_date": "2025-07-28",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "The 2026 HITL/HOTL/HOOTL oversight choice is explicitly risk- and reversibility-driven, with time-boxed decision lanes per action class.",
+            "evidence": "HITL \"requires a human to approve... before the AI system executes\"; HOTL \"allows the AI to act autonomously while a human monitors outputs and can intervene\"; lanes of \"15 seconds for low-risk... 15 minutes for financial disbursements.\"",
+            "source_title": "Human-in-the-Loop: A 2026 Guide to AI Oversight (Strata)",
+            "source_url": "https://www.strata.io/blog/agentic-identity/practicing-the-human-in-the-loop/",
+            "source_date": "2026-05-11",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "The Cloud Security Alliance defines a six-level L0–L5 autonomy taxonomy where controls and approval seniority scale with level, and Level 5 is deemed inappropriate for enterprises today.",
+            "evidence": "L3 Conditional: \"The AI makes decisions... autonomously within defined boundaries, escalating to humans only when it... exceed[s] those boundaries.\" \"Autonomy boundaries must be technically enforced, not just policy-documented.\"",
+            "source_title": "Autonomy Levels for Agentic AI (Jim Reavis, CSA)",
+            "source_url": "https://cloudsecurityalliance.org/blog/2026/01/28/levels-of-autonomy",
+            "source_date": "2026-01-28",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Coding-specific five-level ladders argue higher autonomy is not always better; the right level depends on task ambiguity and verifiability, with most teams' ceiling at Levels 2–3.",
+            "evidence": "\"making an industry expert work as an intern is wasted potential; putting a middle-schooler in the CEO chair is a disaster\"; Level 3 test: \"can you create a pull request from your phone without opening your laptop?\"",
+            "source_title": "Five levels of AI coding agent autonomy (Swarmia)",
+            "source_url": "https://www.swarmia.com/blog/five-levels-ai-agent-autonomy/",
+            "source_date": "2026-03-19",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "A parallel L1–L5 coding scale explicitly pairs each autonomy level with a human decision-altitude role (Driver, Reviewer, Change Owner, Auditor, Consumer).",
+            "evidence": "L1 \"Driver (hands-on 100%)\"; L2 \"Reviewer\"; L3 \"Change Owner (async validation of CI/CD and intent drift)\"; L4 \"Auditor (post-hoc telemetry)\"; L5 \"Consumer (passive beneficiary).\"",
+            "source_title": "Levels of Autonomy: L1-L5 AI Agent Autonomy Scale (ASDLC.io)",
+            "source_url": "https://asdlc.io/concepts/levels-of-autonomy/",
+            "source_date": "2026-05-28",
+            "source_type": "other",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Anthropic's measured Claude Code data shows experienced users raise auto-approval AND interruptions simultaneously, indicating a real HITL→HOTL migration driven by calibrated trust.",
+            "evidence": "Auto-approval ~20% (new) to >40% (~750 sessions); interrupt rate 5%→9%; experienced users \"stop reviewing each action and instead let Claude run autonomously, intervening only when needed.\"",
+            "source_title": "Measuring AI agent autonomy in practice (Anthropic)",
+            "source_url": "https://www.anthropic.com/news/measuring-agent-autonomy",
+            "source_date": "2026-02-18",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "A persistent 'delegation gap' — ~60% AI use but only 0–20% full delegation — is attributed to missing judgment, persistent context, testable outcomes, and explicit constraints, not capability.",
+            "evidence": "\"Developers now use AI in roughly 60% of their work — but they report being able to fully delegate only 0–20% of tasks.\" \"The problem isn't capability. It's judgment.\"",
+            "source_title": "Anthropic's 2026 Agentic Coding Report: Delegation/Orchestration Era (Pathmode)",
+            "source_url": "https://pathmode.io/blog/orchestration-era-needs-intent",
+            "source_date": "2026-03-11",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Google DeepMind formalizes delegation as a sequenced transfer of authority/responsibility/accountability spanning atomic, open-ended, and recursive autonomy.",
+            "evidence": "Delegation is \"a sequence of decisions involving task allocation, that also incorporates transfer of authority, responsibility, accountability... clarity of intent, and mechanisms for establishing trust\"; spectrum from \"atomic execution\" to agents that \"decompose objectives and pursue sub-goals.\"",
+            "source_title": "Intelligent AI Delegation (Tomašev, Franklin, Osindeler — Google DeepMind)",
+            "source_url": "https://arxiv.org/html/2602.11865v1",
+            "source_date": "2026-02-12",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "Professional developers adopt a control-first stance: delegate bounded tasks but retain goal- and architecture-level decisions where downstream consequences are high.",
+            "evidence": "Developers \"delegate specific, bounded tasks while maintaining control over broader objectives and architectural decisions,\" retaining control \"when outcomes significantly impact code quality, system architecture, or downstream consequences.\"",
+            "source_title": "Professional Software Developers Don't Vibe, They Control (Huang et al.)",
+            "source_url": "https://arxiv.org/pdf/2512.14012",
+            "source_date": "2025-12-17",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Enterprise governance frames decision altitude as explicitly assigned agent 'decision rights' tiered by reversibility (autonomous / HITL pre-approval / HOTL post-review), aiming at 'bounded autonomy'.",
+            "evidence": "Enterprises must define \"which decisions the agent can make entirely autonomously, which... require a human-in-the-loop... before execution, and which... require a human-on-the-loop for post-execution review.\"",
+            "source_title": "Governing the Agentic Enterprise (Berkeley CMR) / 7 Agentic AI Trends 2026 (MLM)",
+            "source_url": "https://cmr.berkeley.edu/2026/03/governing-the-agentic-enterprise-a-new-operating-model-for-autonomous-ai-at-scale/",
+            "source_date": "2026-03",
+            "source_type": "industry-report",
+            "confidence": "medium"
+          },
+          {
+            "claim": "SAE J3016 is the explicit foundational analogy for L0–L5 agent ladders, including domain-specific data-agent taxonomies (HKUST/Tsinghua).",
+            "evidence": "A \"six-level hierarchy (L0–L5) for data agents, inspired by the SAE driving automation scale,\" delineating \"progressive shifts in autonomy, from manual operations (L0) to fully autonomous data agents (L5).\"",
+            "source_title": "Data Agents L0-L5: Understanding the New Autonomy Hierarchy (TechLife)",
+            "source_url": "https://techlife.blog/posts/data-agents/",
+            "source_date": "2026",
+            "source_type": "blog",
+            "confidence": "medium"
+          }
+        ],
+        "named_frameworks": [
+          "Five Levels of Autonomy (user-role): Operator / Collaborator / Consultant / Approver / Observer — Feng, McDonald & Zhang, arXiv 2506.12469 (2025)",
+          "Autonomy Certificates — third-party max-autonomy cap backed by an 'autonomy case' (same paper)",
+          "CSA Six-Level Autonomy Taxonomy L0–L5: No Autonomy / Assisted / Supervised / Conditional / High / Full — Jim Reavis, Cloud Security Alliance (Jan 2026)",
+          "Swarmia Five Levels of Coding-Agent Autonomy: Assistive / Conversational / Task Agent / Autonomous Teammate / Agentic Avalanche (Mar 2026)",
+          "ASDLC L1–L5 Autonomy Scale with human roles Driver / Reviewer / Change Owner / Auditor / Consumer (May 2026)",
+          "HITL / HOTL / HOOTL risk-tiered oversight model with time-boxed decision lanes — Strata (May 2026)",
+          "Managed / Bounded Autonomy (technically enforced boundaries + escalation + auto-downgrade) — CSA, Microsoft Agent 365, Berkeley CMR",
+          "Intelligent AI Delegation (five pillars; atomic vs open-ended vs recursive delegation; Zone of Indifference, Authority Gradient, Liability Firebreaks, Privilege Attenuation) — Google DeepMind, arXiv 2602.11865 (Feb 2026)",
+          "Enterprise autonomy tiers: informational / advisory / transactional / autonomous-operational",
+          "Data Agents L0–L5 (SAE-J3016-inspired, HKUST/Tsinghua)",
+          "Delegation Gap (≈60% AI use, 0–20% full delegation) — Anthropic 2026 agentic coding report",
+          "SAE J3016 driving-automation levels (foundational analogy for all agent ladders)",
+          "Agent-in-the-Loop (AITL) — contested claim that it is replacing HITL"
+        ],
+        "raw_file_path": "/Users/steve/projects/momentum/.momentum/research/raw/research-sq1-autonomy-delegation-levels.md",
+        "recency_note": "Evidence is very recent and the area is fast-moving. The strongest sources cluster in Jan–May 2026 (CSA Jan 28, Anthropic Feb 18, DeepMind Feb 12, Pathmode Mar 11, Swarmia Mar 19, Berkeley CMR Mar, ASDLC May 28, Strata May 11, CIO May 5), anchored by the foundational June–July 2025 academic taxonomy (Feng et al.) and a Dec 2025 empirical developer study. Terminology is still consolidating — multiple competing L0/L1–L5 ladders coexist, and the HITL-vs-AITL and 'managed autonomy' framings are actively contested as of mid-2026. The SAE J3016 analogy is foundational but the agent-specific role-based and risk-based ladders supersede it for this domain. Expect continued churn; revisit within 1–2 quarters."
+      },
+      "verification": {
+        "sub_question_id": "sq1-autonomy-delegation-levels",
+        "overall_reliability": "high",
+        "validation_file_path": "/Users/steve/projects/momentum/.momentum/research/validation/verify-sq1-autonomy-delegation-levels.md",
+        "verdicts": [
+          {
+            "claim": "Feng, McDonald & Zhang define five autonomy levels by the human's role (Operator, Collaborator, Consultant, Approver, Observer) and treat autonomy as a deliberate design choice separable from capability.",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/abs/2506.12469",
+            "note": "Five level names and the exact quote 'a deliberate design decision, separate from its capability and operational environment' both verified in the abstract. Authors/dates match. Minor: it is an arXiv/Knight working paper, not demonstrably peer-reviewed as the discovery source-type label implies."
+          },
+          {
+            "claim": "The same paper proposes 'autonomy certificates' issued by a third-party governing body, capping max autonomy, backed by an 'autonomy case' analogous to a safety case.",
+            "verdict": "confirmed",
+            "source_url": "https://knightcolumbia.org/content/levels-of-autonomy-for-ai-agents-1",
+            "better_source_url": "https://knightcolumbia.org/content/levels-of-autonomy-for-ai-agents-1",
+            "note": "Confirmed in the Knight Columbia full text (Section 4): 'issued by a third-party governing body to agent developers' and 'analogous to safety cases.' Caveat: the arXiv abstract alone does NOT support the third-party-body language — it calls this one exploratory 'potential application.' Cite the full text, not the abstract; the verb 'proposes' slightly overstates an exploratory mechanism."
+          },
+          {
+            "claim": "HITL/HOTL/HOOTL oversight is risk- and reversibility-driven with time-boxed decision lanes (15s low-risk, 2min PII, 15min financial).",
+            "verdict": "confirmed",
+            "source_url": "https://www.strata.io/blog/agentic-identity/practicing-the-human-in-the-loop/",
+            "note": "HITL/HOTL definitions and all three time-boxed lane figures verbatim. HOOTL appears only as an example, not formally defined in the three-term spectrum. Vendor (identity-platform) blog — practitioner opinion, not a standard."
+          },
+          {
+            "claim": "CSA defines an L0-L5 autonomy taxonomy with controls/approval scaling by level; boundaries 'technically enforced, not just policy-documented'; auto-drop to L1 on anomaly; L5 inappropriate for enterprise today.",
+            "verdict": "confirmed",
+            "source_url": "https://cloudsecurityalliance.org/blog/2026/01/28/levels-of-autonomy",
+            "note": "Every sub-claim (L3 Conditional definition, technical-enforcement line, auto-drop-to-L1, 'I don't believe Level 5 is appropriate for enterprise deployment today') verified verbatim. Author Jim Reavis, 2026-01-28."
+          },
+          {
+            "claim": "Swarmia's five coding-autonomy levels (Assistive/Conversational/Task Agent/Autonomous Teammate/Agentic Avalanche) argue higher isn't better; ceiling at L2-3; phone-PR test for L3.",
+            "verdict": "confirmed",
+            "source_url": "https://www.swarmia.com/blog/five-levels-ai-agent-autonomy/",
+            "note": "All five names, 'higher is not always better,' the CEO/intern/middle-schooler quote, the phone-PR L3 test, and the L2-3 ceiling all verified verbatim. Author Miikka Holkeri, 2026-03-19."
+          },
+          {
+            "claim": "ASDLC L1-L5 scale pairs each level with a human role: Driver, Reviewer, Change Owner, Auditor, Consumer.",
+            "verdict": "confirmed",
+            "source_url": "https://asdlc.io/concepts/levels-of-autonomy/",
+            "note": "All five role pairings present verbatim, last updated 2026-05-28. Low authority: anonymous self-published knowledge base with no named author; valid as an illustrative framework, not as evidence of industry consensus. Discovery's medium confidence is right."
+          },
+          {
+            "claim": "Anthropic telemetry shows experienced users raise auto-approval (~20%->40%+) AND interruptions (5%->9%), a HITL->HOTL migration driven by calibrated trust.",
+            "verdict": "partially-supported",
+            "source_url": "https://www.anthropic.com/news/measuring-agent-autonomy",
+            "better_source_url": "https://www.technologyreview.com/2026/04/16/1136029/humans-in-the-loop-ai-war-illusion/",
+            "note": "All raw numbers (auto-approve 20%->40%+, interrupts 5%->9%, 80% safeguards, 73% HITL, turn duration 25->45min) confirmed verbatim. But the 'calibrated trust, not blind trust' interpretation is a gloss — the same data is consistent with the competing 2026 'HITL theater / oversight illusion' thesis (rising interrupts may mean users catch MORE problems, not better calibration). Numbers confirmed; causal/normative spin is contestable."
+          },
+          {
+            "claim": "A persistent 'delegation gap' (~60% AI use, 0-20% full delegation) is attributed to missing judgment/context/testable outcomes/constraints, not capability.",
+            "verdict": "confirmed",
+            "source_url": "https://pathmode.io/blog/orchestration-era-needs-intent",
+            "better_source_url": "https://resources.anthropic.com/2026-agentic-coding-trends-report",
+            "note": "Figures and 'the problem isn't capability, it's judgment' framing trace to a REAL primary source — Anthropic's 2026 Agentic Coding Trends Report — corroborated across 5+ independent secondary write-ups. Discovery cites the Pathmode secondary blog; should cite the primary Anthropic report. A rival causal explanation (Osmani's 'comprehension debt') is omitted by the thread's single-cause framing."
+          },
+          {
+            "claim": "DeepMind 'Intelligent AI Delegation' formalizes delegation as sequenced authority/responsibility/accountability transfer spanning atomic, open-ended, and recursive autonomy.",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/html/2602.11865v1",
+            "note": "Best-sourced finding. Authors (Tomasev, Franklin, Osindero, Google DeepMind), delegation definition, and ALL eight named concepts (atomic/open-ended/recursive delegation, zone of indifference, authority gradient, liability firebreaks, privilege attenuation, contract-first decomposition) verified in the body. It is a preprint, not peer-reviewed as the label implies."
+          },
+          {
+            "claim": "Professional developers delegate bounded tasks but retain goal/architecture decisions where downstream consequences are high (Huang et al.).",
+            "verdict": "partially-supported",
+            "source_url": "https://arxiv.org/pdf/2512.14012",
+            "note": "Paper exists; title/authors match; core control-first thesis confirmed by abstract ('retain their agency in software design and implementation out of insistence on fundamental software quality attributes'). BUT the specific quoted evidence strings ('bounded tasks while maintaining control over broader objectives and architectural decisions'; 'when outcomes significantly impact code quality, system architecture, or downstream consequences') were NOT located in the abstract/metadata — possibly body text or paraphrase-presented-as-quote. n=13+99, modest weight."
+          },
+          {
+            "claim": "SAE J3016 is the foundational analogy that the 2026 agent L0-L5 ladders cleanly build on.",
+            "verdict": "partially-supported",
+            "source_url": "https://techlife.blog/posts/data-agents/",
+            "better_source_url": "https://www.interface-eu.org/publications/ai-agent-classification",
+            "note": "The borrowing-from-SAE claim is corroborated, but the framing as a clean foundation is contradicted by 2026 critiques: the SAE analogy's gains are non-linear, self-driving 'levels' have slipped for ~a decade, and rivals (Parasuraman-Sheridan-Wickens 10-level; a minimal 3-level model) are argued to fit better. The analogy is contested and leaky, not foundational-and-settled. Finding 12's TechLife source is a low-authority blog."
+          }
+        ],
+        "contradicting_evidence": [
+          "MIT Technology Review (2026-04-16), Defense News (2026-03-26), and SiliconANGLE (2026-01-18) advance a 'HITL theater / oversight illusion' thesis: human overseers often lack context/visibility to evaluate at machine speed, producing 'the illusion of oversight rather than the substance.' This directly qualifies the thread's optimistic 'calibrated trust' reading of the Anthropic HITL->HOTL migration (Findings 3, 7, 11) — the same telemetry is consistent with a slide toward nominal-only oversight.",
+          "The SAE J3016 analogy that the synthesis treats as a clean foundation is actively critiqued in 2026 (interface-eu.org, emergentmind.com): non-linear capability gains, a decade of unmet self-driving 'level' promises, and rival models (Parasuraman-Sheridan-Wickens 10-level; a minimal 3-level human-controlled/bounded/broad scheme). The analogy is leaky and contested, not foundational-and-settled.",
+          "Taxonomy proliferation undercuts any implied 'convergence': beyond the five ladders catalogued there are several MORE competing L1-L5 frameworks circulating in 2026 (OpenDataScience/Datasaur 'Agents to Autonomy', Sean Falconer's 'Practical Guide to Levels of AI Agent Autonomy'). The field has many incompatible L0/L1-L5 ladders, not one converging standard — the synthesis soft-pedals this.",
+          "Addy Osmani's 'comprehension debt' offers a rival causal explanation for the delegation gap (the downstream cost of not understanding AI-generated code), distinct from the thread's single-cause 'missing judgment/context/spec.' Does not contradict the 60%/0-20% numbers but exposes the thread's mono-causal framing as incomplete."
+        ],
+        "training_data_smells": [
+          "Recurring 'peer-reviewed' source-type label applied to what are arXiv PREPRINTS / working papers (Feng et al. 2506.12469, DeepMind 2602.11865, Huang et al. 2512.14012) — inflates authority; none is shown to be peer-reviewed.",
+          "Finding 10's quoted evidence strings ('delegate specific, bounded tasks while maintaining control over broader objectives and architectural decisions'; 'when outcomes significantly impact code quality, system architecture, or downstream consequences') could not be matched to the cited source's abstract/metadata — possible paraphrase presented as a direct quotation.",
+          "The synthesis's 'converges on' / 'consensus' framing reads as a selection artifact: the corpus over-weights sources that agree and under-weights the substantial 2026 oversight-skeptic and taxonomy-proliferation literature."
+        ]
+      }
+    },
+    {
+      "sub_question_id": "sq2-risk-calibrated-oversight",
+      "title": "Risk-calibrated oversight — reversibility & blast radius",
+      "discovery": {
+        "sub_question_id": "sq2-risk-calibrated-oversight",
+        "summary": "The 2025-2026 consensus is that review depth should scale with stakes decomposed into reversibility, blast radius, security exposure, and cost of error — converging on a three-tier shape: read-only/idempotent actions run autonomously, reversible state changes proceed with asynchronous/after-the-fact review, and irreversible or wide-blast actions require explicit pre-execution human approval. This maps onto Amazon's one-way/two-way door framing applied to agent tool calls, onto HITL/HOTL/out-of-the-loop oversight tiers, and onto named engineering patterns like Baytech's Helmsman Pattern and four-ring Blast Radius Containment model. A second strong theme is that calibration must be enforced at the tool/API layer, not by prompts or policy — exemplified by Anthropic's shipped Claude Code Auto Mode, whose classifier gates only high-downside actions (force-push, mass deletion, exfiltration, prod deploys) while letting version-controlled (i.e., reversible) edits run. The sharpest tension: reversibility-based frameworks would spot-check reversible work, but the AI-code-review camp insists every line be reviewed because security exposure is a separate axis from recovery cost; meanwhile METR's empirical survey shows the field already loosens permissions by stakes (~40% unrestricted on low-stakes vs <20% high-stakes) yet imposes no strict universal oversight mandates. The EU AI Act Article 14 provides the clearest legal endorsement of risk-calibration: oversight must be \"commensurate with risk, autonomy and context,\" with per-decision human review required only for biometric identification (two-person verification).",
+        "key_findings": [
+          {
+            "claim": "The canonical risk-calibrated pattern is a three-tier action classification: read-only/idempotent runs immediately, reversible changes execute with async review flags, irreversible actions require cryptographic human approval (the 'Helmsman Pattern'), wrapped in a four-ring Blast Radius Containment model (tool scope, data scope, reversibility evaluation, human approval).",
+            "evidence": "Tier 1 (Automated): read-only, idempotent ... execute immediately; Tier 2 (Warning): reversible changes execute with asynchronous review flags; Tier 3 (Locked): irreversible actions require cryptographic human approval. Four rings: tool scope, data scope, reversibility evaluation, human approval for high-impact API payloads.",
+            "source_title": "Five Engineering Patterns to Secure Agentic AI in 2026",
+            "source_url": "https://www.baytechconsulting.com/blog/engineering-patterns-secure-agentic-ai-2026",
+            "source_date": "2026-05-01",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Reversibility is the primary heuristic for autonomy: one-way-door (irreversible) actions like wire transfers demand exhaustive verification, while agents succeed in software dev precisely because git/code-review/transactions/observability make actions reversible.",
+            "evidence": "tool calling enables agents to make decisions but doesn't address whether those decisions are reversible ... software development is made up entirely of systems that make decisions more reversible and less consequential ... for one-way doors no amount of additional verification is excessive.",
+            "source_title": "It's Not Too Late to Roll Back MCP",
+            "source_url": "https://theoryvc.com/blog-posts/its-not-too-late-to-roll-back-mcp",
+            "source_date": "2026-04-13",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "A four-dimension decision matrix scores each action on reversibility, blast radius, context completeness, and error-cost-vs-delay-cost to set autonomy level, and stresses enforcement by architecture not prompts.",
+            "evidence": "Is the action reversible? No -> require confirmation. Is blast radius contained? No -> add resource limits. Full context? No -> require verification. Error cost < delay cost? No -> human in loop. autonomy level must be enforced by system architecture, not by instructions in a prompt.",
+            "source_title": "AI Agent Autonomy Levels: How Much Freedom Is Too Much?",
+            "source_url": "https://apptitude.io/blog/ai-agent-autonomy-levels-decision-framework/",
+            "source_date": "2026-05-10",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Risk-tiered HITL/HOTL/out-of-the-loop oversight uses time-boxed approval windows scaled to risk (15s low-risk, 2min PII, 15min financial), defaulting to denial on timeout.",
+            "evidence": "HITL requires a human to approve before the AI executes (financial disbursements, legal agreements); HOTL allows autonomous action where mistakes remain reversible. Time-boxed decision lanes: 15-second window for low-risk, 15-minute for financial disbursements.",
+            "source_title": "Human-in-the-Loop: A 2026 Guide to AI Oversight",
+            "source_url": "https://www.strata.io/blog/agentic-identity/practicing-the-human-in-the-loop/",
+            "source_date": "2026-05-11",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "Anthropic's shipped Claude Code Auto Mode is a concrete risk-calibrated approval system: it auto-allows reads and version-controlled project edits (because reversible) and gates ~20+ high-downside categories via a transcript classifier, checking intent alignment and capping at 3 consecutive / 20 total denials.",
+            "evidence": "routine edits within project directories bypass approval since they're reviewable via version control; classifier blocks force-pushing git history, mass cloud-storage deletion, external data exfiltration, production deploys; 'clean up my branches' doesn't authorize batch deletion; 0.4% false-positive vs 17% false-negative rate.",
+            "source_title": "How we built Claude Code auto mode",
+            "source_url": "https://www.anthropic.com/engineering/claude-code-auto-mode",
+            "source_date": "2026-03-25",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Deterministic pre-action authorization gates each tool call on Action Risk x Reversibility x Blast Radius, arguing post-hoc monitoring cannot intercept individual production tool calls.",
+            "evidence": "Authorization decisions scale based on Action Risk Level, Reversibility, and Blast Radius (how many systems/users affected) ... reversible low-impact actions require minimal overhead while destructive or broad-impact actions demand explicit human approval. Post-hoc evaluation is structurally retrospective ... does not intercept individual tool calls.",
+            "source_title": "Before the Tool Call: Deterministic Pre-Action Authorization for Autonomous AI Agents",
+            "source_url": "https://arxiv.org/pdf/2603.20953",
+            "source_date": "2026-03-24",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "The EU AI Act Article 14 mandates oversight 'commensurate with risk, level of autonomy and context of use' and explicitly does NOT require per-decision human review for most high-risk systems — only biometric identification needs two-person verification.",
+            "evidence": "measures shall be commensurate with the risks, level of autonomy and context of use ... does not require a human to review every AI decision before it takes effect ... biometric ID: no action unless separately verified and confirmed by at least two natural persons. In force 2026-08-02.",
+            "source_title": "Article 14: Human Oversight — EU Artificial Intelligence Act",
+            "source_url": "https://artificialintelligenceact.eu/article/14/",
+            "source_date": "2024",
+            "source_type": "other",
+            "confidence": "high"
+          },
+          {
+            "claim": "Empirically (METR survey, Feb-Apr 2026) practitioners already loosen permissions by stakes (~40% unrestricted on low-stakes vs <20% high-stakes) but thorough review of low-stakes output is rare and no company imposes strict universal oversight mandates.",
+            "evidence": "~40% of respondents gave agents unrestricted permissions on low-stakes projects vs less than 20% on high-stakes ... a minority thoroughly reviewed code or logs for low-stakes projects ... We are not aware of any company imposing strict requirements about human oversight of agents in Feb-Mar 2026.",
+            "source_title": "Frontier Risk Report (February to March 2026)",
+            "source_url": "https://metr.org/blog/2026-05-19-frontier-risk-report/",
+            "source_date": "2026-05-19",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Security exposure is a distinct axis that can override the reversibility tier: AI-generated code is cited as 1.7x more issue-prone and 2.74x more XSS-prone, so the code-review camp argues for exhaustive (not spot-check) review despite code being reversible, with automation as the answer to reviewer fatigue.",
+            "evidence": "AI-authored pull requests contain 1.7x more issues and are 2.74x more prone to XSS vulnerabilities ... every line of AI-generated code needs thorough review ... the answer to reviewer fatigue is automation/AI-assisted review, not reducing thoroughness.",
+            "source_title": "Code Review in 2026: Reviewing the AI, Not the Human",
+            "source_url": "https://raogy.guide/blog/ai-code-review-2026",
+            "source_date": "2026",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Autonomy-level taxonomies (NVIDIA 0-3, CSA 0-5) escalate oversight controls with autonomy and capability, requiring technical (not policy) enforcement and dynamic de-escalation on anomalies; financial/code-execution/physical capabilities warrant extra controls at any level.",
+            "evidence": "NVIDIA Level 2/3: consider time-of-use manual approval of sensitive actions, taint tracing. CSA: boundaries must be technically enforced, not policy-documented; financial transactions, code execution, physical operations warrant additional controls at any autonomy level; autonomy could automatically decrease if anomalies detected.",
+            "source_title": "Autonomy Levels for AI Agents (CSA) / Agentic Autonomy Levels and Security (NVIDIA)",
+            "source_url": "https://cloudsecurityalliance.org/blog/2026/01/28/levels-of-autonomy",
+            "source_date": "2026-01-28",
+            "source_type": "industry-report",
+            "confidence": "high"
+          }
+        ],
+        "named_frameworks": [
+          "Helmsman Pattern (Tier 1 Automated / Tier 2 Warning / Tier 3 Locked) — Baytech Consulting",
+          "Blast Radius Containment Model (4 concentric rings: tool scope, data scope, reversibility evaluation, human approval) — Baytech",
+          "One-way door vs. two-way door decisions / 'zone of comfort' reversibility-vs-consequence matrix — Amazon origin, applied to agents by Adam Conway/Theory Ventures",
+          "Reversibility / Blast Radius / Context / Error-cost-vs-delay decision matrix with Autonomy Levels 0-3 — Apptitude",
+          "HITL / HOTL / Human-out-of-the-loop + time-boxed decision lanes — Strata Identity",
+          "Deterministic Pre-Action Authorization (Action Risk x Reversibility x Blast Radius) — Uchibeke, arXiv:2603.20953",
+          "Claude Code Auto Mode (3-tier permission classifier + intent alignment + denial caps) — Anthropic",
+          "NVIDIA Agentic Autonomy Levels 0-3 + taint tracing + time-of-use manual approval",
+          "CSA Six-Level Autonomy Taxonomy + Capability-Control Matrix + AI Controls Matrix (AICM)",
+          "EU AI Act Article 14 'commensurate with risk/autonomy/context' + two-person biometric verification",
+          "Asymmetry of Verification / Verifier's Law — Jason Wei (foundational)"
+        ],
+        "debates_tensions": [
+          "Spot-check vs. exhaustive review for reversible domains: reversibility frameworks would lightly review reversible actions (incl. code, made reversible by git), but the AI-code-review camp insists every line be reviewed — reconciled by treating security exposure as a separate axis from recovery cost that can override the reversibility tier.",
+          "Aspirational frameworks vs. observed practice: CSA/NVIDIA/Strata/Baytech prescribe tiered approval, but METR finds almost no org enforces strict oversight, thorough low-stakes review is rare, and monitoring is easily bypassed.",
+          "Pre-action gating vs. post-hoc monitoring: Uchibeke argues post-hoc evaluation cannot intercept individual tool calls so pre-action authorization is required; CSA Level 4 and METR lean on monitoring/anomaly-detection/kill-switches after the fact.",
+          "Per-decision human review required or not: EU AI Act Article 14 explicitly does NOT require it for most high-risk systems (only biometric ID needs two-person sign-off), endorsing risk-calibration; some governance writers read 'meaningful human control' more strictly.",
+          "Who makes the approval call — human or model: Anthropic Auto Mode delegates judgment to a classifier (17% false-negative on dangerous actions), while HITL purists keep a human in the gate for irreversible/Tier-3 actions; disagreement over whether a classifier substitutes for human approval."
+        ],
+        "recency_note": "Evidence is very recent and the area is fast-moving: 9 of 12 sources are from 2026 (Jan-May), including the strongest (METR Frontier Risk Report 2026-05-19, Anthropic Auto Mode 2026-03-25, Baytech 2026-05-01, Strata 2026-05-11, Apptitude 2026-05-10, CSA 2026-01-28, Uchibeke arXiv 2026-03-24). The NVIDIA autonomy-levels framework (2025-02-25) is the oldest substantive source and remains current but pre-dates the reversibility/blast-radius framing that 2026 sources adopt. The EU AI Act text is 2024 statute but its human-oversight obligations enter force 2026-08-02. Frameworks are proliferating faster than they are being adopted — METR confirms no enforced industry standard yet.",
+        "raw_file_path": "/Users/steve/projects/momentum/.momentum/research/raw/research-sq2-risk-calibrated-oversight.md"
+      },
+      "verification": {
+        "sub_question_id": "sq2-risk-calibrated-oversight",
+        "overall_reliability": "medium",
+        "validation_file_path": "/Users/steve/projects/momentum/.momentum/research/validation/verify-sq2-risk-calibrated-oversight.md",
+        "verdicts": [
+          {
+            "claim": "Anthropic's shipped Claude Code Auto Mode auto-allows reads and version-controlled project edits and gates ~20+ high-downside categories via a transcript classifier (intent alignment, 3 consecutive / 20 total denial caps, 0.4% FPR vs 17% FNR, 93% manual acceptance baseline).",
+            "verdict": "confirmed",
+            "source_url": "https://www.anthropic.com/engineering/claude-code-auto-mode",
+            "note": "Every specific (in-project edits reviewable via version control, force-push/mass-delete/exfiltration categories, 'clean up my branches' intent example, 3 consecutive/20 total, 0.4% FPR, 17% FNR, 93% acceptance) is verbatim in the primary source. Strongest claim in the thread."
+          },
+          {
+            "claim": "METR survey: ~40% gave unrestricted permissions on low-stakes vs <20% high-stakes; only a minority thoroughly reviewed low-stakes output; no company imposed strict human-oversight requirements in Feb-Mar 2026; monitoring was easily disabled.",
+            "verdict": "confirmed",
+            "source_url": "https://metr.org/blog/2026-05-19-frontier-risk-report/",
+            "note": "All four statements verbatim. Survey window is Feb-Apr 2026 (Appendix F); the oversight quote is scoped to Feb-Mar 2026 — discovery summary uses both, both correct. Sample size NOT disclosed, so '~40%' is directional, not precise."
+          },
+          {
+            "claim": "EU AI Act Article 14 mandates oversight 'commensurate with risk, autonomy and context,' requires two-person verification only for biometric ID, and explicitly does NOT require per-decision human review for most high-risk systems.",
+            "verdict": "partially-supported",
+            "source_url": "https://artificialintelligenceact.eu/article/14/",
+            "note": "'Commensurate with risk', the biometric two-person rule, and stop button are verbatim statutory text. BUT 'does not require a human to review every AI decision before it takes effect' is the discovery agent's interpretation, NOT statutory text — and several governance sources read Art 14(1) as REQUIRING human sign-off gates for consequential high-risk actions. Interpretation presented as source evidence; overstated.",
+            "better_source_url": "https://www.bearingpoint.com/en-us/insights-events/insights/the-ai-act-requires-human-oversight/"
+          },
+          {
+            "claim": "The canonical risk-calibrated pattern is Baytech's three-tier Helmsman Pattern (Automated/Warning/Locked) wrapped in a four-ring Blast Radius Containment model (tool scope, data scope, reversibility, human approval).",
+            "verdict": "confirmed",
+            "source_url": "https://www.baytechconsulting.com/blog/engineering-patterns-secure-agentic-ai-2026",
+            "note": "Tier names and the four rings are verbatim. But this is a single consultancy marketing blog with no evidence of external adoption or validation; 'cryptographic human approval' is aspirational. Accurately reported, but its status as a 'canonical' industry pattern is unsupported — it is one vendor's coinage."
+          },
+          {
+            "claim": "Reversibility is the primary heuristic for autonomy: one-way doors (wire transfers) demand exhaustive verification; agents succeed in software dev because git/code-review/transactions/observability make actions reversible.",
+            "verdict": "confirmed",
+            "source_url": "https://theoryvc.com/blog-posts/its-not-too-late-to-roll-back-mcp",
+            "note": "All sub-claims near-verbatim including the 'zone of comfort' and 'no amount of verification is too much' lines. It is a VC opinion blog (framing, not evidence); confidence:high is generous for a single opinion post, though the framing is sound and widely echoed."
+          },
+          {
+            "claim": "Risk-tiered HITL/HOTL/out-of-the-loop uses time-boxed approval windows (15s low-risk, 2min PII, 15min financial), defaulting to denial on timeout.",
+            "verdict": "confirmed",
+            "source_url": "https://www.strata.io/blog/agentic-identity/practicing-the-human-in-the-loop/",
+            "note": "Time windows and HITL/HOTL definitions verbatim. These specific windows are one vendor's PROPOSAL with no evidence of real-world use; treat numbers as illustrative, not a validated standard. confidence:high conflates 'source says it' with 'it is a standard'."
+          },
+          {
+            "claim": "Deterministic pre-action authorization (arXiv 2603.20953, Uchibeke) gates each tool call on Action Risk x Reversibility x Blast Radius, arguing post-hoc monitoring cannot intercept individual tool calls.",
+            "verdict": "partially-supported",
+            "source_url": "https://arxiv.org/abs/2603.20953",
+            "note": "Paper exists; title/author confirmed; post-hoc-is-retrospective thesis supported. BUT the actual core is the 'Open Agent Passport' (spending limits, capability scoping) — the clean 'Action Risk x Reversibility x Blast Radius' triad is NOT surfaced in the abstract and appears extrapolated. Submission date is Mar 21 2026 (discovery says Mar 24). Discovery mislabels source_type as 'peer-reviewed' — it is a non-peer-reviewed arXiv preprint."
+          },
+          {
+            "claim": "AI-generated code is 1.7x more issue-prone and 2.74x more XSS-prone, so the code-review camp argues every line needs review despite code being reversible.",
+            "verdict": "confirmed",
+            "source_url": "https://raogy.guide/blog/ai-code-review-2026",
+            "note": "Numbers are real and accurate (1.7x = total issues, 10.83 vs 6.45/PR; 2.74x = specifically XSS) but mis-attributed to a thin blog. Primary source is CodeRabbit's 470-PR study, corroborated by The Register and TechRadar. Swap the citation.",
+            "better_source_url": "https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report"
+          }
+        ],
+        "training_data_smells": [
+          "'EU AI Act explicitly does NOT require per-decision human review' — interpretation presented as if it were sourced statutory evidence; the phrase appears nowhere in Article 14.",
+          "'Cryptographic human approval' (Baytech Helmsman Tier 3) and the precise 15s/2min/15min time-boxed lanes (Strata) read as confident vendor invention given authority they have not earned — correctly attributed but over-weighted as if industry standards.",
+          "The Medium 'Asymmetry of Verification' source (confidence:low) invoking 'Verifier's Law / Jason Wei' as foundational is a low-trust personal blog used to inflate the bibliography; the Jason Wei attribution should be sourced to Wei directly, not a third-party summary.",
+          "Multiple single-vendor marketing/opinion blogs (Baytech, Strata, Theory Ventures, Apptitude) were assigned confidence:high, conflating 'the source asserts it' with 'it is validated/adopted'."
+        ],
+        "contradicting_evidence": [
+          "EU AI Act Article 14(1) is widely read as REQUIRING human oversight with sign-off gates for consequential high-risk actions (in force 2026-08-02), which qualifies METR's 'no company imposes strict oversight' — true of voluntary practice in Feb-Mar 2026 but not of the incoming regulatory floor. (BearingPoint, RegulaAI, digitalapplied governance guides.)",
+          "The classifier-substitutes-for-human approach (Anthropic Auto Mode's 17% false-negative rate on dangerous actions) is actively criticized: HITL is 'expected to largely fail due to approval fatigue / auto-approve' (WitnessAI 2026), and models trained out of cheating 'learned to hide their intent while continuing to misbehave' (Hatchworks/Anthropic 2026) — undercutting trust in a model gating irreversible actions.",
+          "Reversibility is not the only axis: the International AI Safety Report 2026 frames risk as malicious use / malfunction / SYSTEMIC plus loss-of-control (shutdown subversion), and arXiv 2503.04750 argues regulation should key off 'extent of autonomous operations' — categories a reversibility/blast-radius matrix does not capture. Emerging counter-framing is defense-in-depth (continuous monitoring + containment), not reversibility-first gating alone.",
+          "Practical governance maturity is low: a Deloitte survey found only ~21% of companies have a mature agent governance model, corroborating that the tiered-approval frameworks are aspirational rather than adopted."
+        ]
+      }
+    },
+    {
+      "sub_question_id": "sq3-reviewing-ai-generated-code",
+      "title": "Reviewing AI-generated artifacts — every line vs. sampling",
+      "discovery": {
+        "sub_question_id": "sq3-reviewing-ai-generated-code",
+        "summary": "The 2025-2026 consensus is that practitioners do NOT re-read every AI-generated line by eye; they review at the behavior/acceptance level backed by automated structural gates (static analysis, type-checking, dependency verification, tests), reserving scarce human judgment for requirement fidelity, business logic, architecture, and consequence — while the committing human remains fully accountable (Simon Willison: \"a computer can never be held accountable; that's your job\"). The strongest empirical signal is that review has become the bottleneck: Faros AI telemetry on 10,000+ developers found high AI adoption drove 154% larger PRs, 91% longer review times, and 9% more bugs/developer; METR's RCT found experienced devs 19% slower with AI; and even when 73.8% of AI review-bot comments were acted on, PR closure time still rose 42%. AI code-review bots are empirically noisy (60.2% of agent-only-reviewed PRs fell in the lowest 0-30% signal band; CRA-only PRs merged at 45% vs 68% human-reviewed). The academic MSR/EASE 2026 corpus reveals the real-world failure mode is the opposite of \"every line\": 38-61% of agent PRs receive no recorded human review (\"reviewer abandonment\" is the top rejection cause at 38%), humans intervene less on agent PRs (52% vs 84%) but at higher per-intervention cost, and surface plausibility suppresses scrutiny. Test-as-trust crystallizes as acceptance-criteria-driven TDD (humans define testable \"done\" before AI codes; tests validate the spec not the implementation) with higher coverage bars (85-90% vs 70-80%), but carries the \"tautological testing\" risk where AI tests inherit AI blind spots, making a human business-logic checkpoint irreducible. DORA 2025 frames AI as an amplifier: up on throughput, negatively correlated with stability, with ~30% distrusting AI code and an explicit \"trust but verify\" recommendation.",
+        "key_findings": [
+          {
+            "claim": "Moving from low to high AI adoption inflated PR size 154%, lengthened review time 91%, and raised bugs 9% per developer — throughput moved into the review bottleneck rather than relieving it.",
+            "evidence": "154% increase in PR size; 91% longer code-review duration; 9% more bugs per developer; 98% more merged PRs (10,000+ developers, 1,255 teams, up to 2 years).",
+            "source_title": "What METR's Study Missed About AI Productivity in the Wild (Faros AI telemetry study)",
+            "source_url": "https://www.faros.ai/blog/lab-vs-reality-ai-productivity-study-findings",
+            "source_date": "2025-07-28",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "In an RCT, experienced developers were 19% slower with AI despite believing they were ~20% faster; only ~9% of task time went to reviewing/modifying AI output.",
+            "evidence": "Developers using AI took 19% longer to complete 246 tasks; perception-reality gap ~39 points; cites arXiv 2507.09089.",
+            "source_title": "Why AI Coding Tools Make Experienced Developers 19% Slower (METR study, Augment Code)",
+            "source_url": "https://www.augmentcode.com/guides/why-ai-coding-tools-make-experienced-developers-19-slower-and-how-to-fix-it",
+            "source_date": "2025-10-03",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Automated AI review comments did not reduce review burden even when acted upon, and only ~20-25% of AI hallucinations are catchable by static analysis (44% escape automation, needing human judgment).",
+            "evidence": "Even with 73.8% of automated review comments acted on, PR closure time still increased 42%; 20-25% of AI hallucinations detectable by static analysis, ~44% escape automated detection.",
+            "source_title": "Stop Sending IDE-Catchable AI Code Errors to Review (JetBrains AI Blog)",
+            "source_url": "https://blog.jetbrains.com/ai/2026/05/stop-sending-ide-catchable-ai-code-errors-to-review/",
+            "source_date": "2026-05",
+            "source_type": "vendor-docs",
+            "confidence": "medium"
+          },
+          {
+            "claim": "DORA 2025 frames AI as an amplifier: positive on throughput, negative on delivery stability, with ~30% distrusting AI code and an explicit 'trust but verify' recommendation.",
+            "evidence": "30% report little or no trust in AI-generated code; researchers recommend trust-but-verify; AI adoption negatively related to delivery stability absent strong testing/version control/fast feedback.",
+            "source_title": "DORA — State of AI-assisted Software Development 2025",
+            "source_url": "https://dora.dev/dora-report-2025/",
+            "source_date": "2025-07",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "A majority of agent-authored PRs receive no recorded human review; agent comments dominate review threads and agent-steering commands are 16x more frequent than on human PRs.",
+            "evidence": "61.38% of AI-generated PRs received no recorded review activity; agent-authored comments 71.58% of threads; agent-steering 25.92% vs 1.63% (V=0.34). 33,596 agent PRs, AIDev dataset.",
+            "source_title": "These Aren't the Reviews You're Looking For: How Humans Review AI-Generated Pull Requests (Duma et al., EASE 2026)",
+            "source_url": "https://arxiv.org/html/2605.02273v1",
+            "source_date": "2026-05-04",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "Reviewer abandonment is the top failure mode for agent PRs; incorrect implementation is rare by comparison, showing review attention (not code correctness) is the binding constraint.",
+            "evidence": "Abandoned/Not Reviewed = 228 (38%) of rejections; Duplicate 23%; CI/Test Failure 17%; Incorrect Implementation only 3%. 33,596 agent PRs across 5 agents; overall merge rate 71.48%.",
+            "source_title": "Where Do AI Coding Agents Fail? An Empirical Study of Failed Agentic Pull Requests in GitHub (Ehsani et al., MSR 2026)",
+            "source_url": "https://arxiv.org/html/2601.15195",
+            "source_date": "2026-04",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "Humans intervene less often on agent PRs than human PRs but each intervention costs more; review work is shifting from implementation to supervision/guidance/quality-control.",
+            "evidence": "Human interventions occur less frequently in APRs than HPRs (52.17% vs 83.59%) but require higher review effort, larger code churn, longer durations. Intervention taxonomy: Guidance 58%, Decision 21%, Direct code 17%, Operational 4%.",
+            "source_title": "Behind Agentic Pull Requests: Developer Interventions in AI Agent-Authored PRs (Khelifi et al., MSR 2026)",
+            "source_url": "https://2026.msrconf.org/details/msr-2026-mining-challenge/26/Behind-Agentic-Pull-Requests-An-Empirical-Study-on-Developer-Interventions-in-AI-Age",
+            "source_date": "2026-04-13",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "AI code-review bots are empirically noisy and correlate with worse merge outcomes; signal-to-noise is poor across most tools.",
+            "evidence": "60.2% of closed CRA-only PRs in the 0-30% (noisy) signal range; 12 of 13 CRAs below 60% signal; CRA-only merge 45.20% vs human-only 68.37% (chi-sq=83.03, p<0.001). 3,109 PRs, 19,450 comments.",
+            "source_title": "From Industry Claims to Empirical Reality: An Empirical Study of Code Review Agents in Pull Requests (Chowdhury et al., MSR 2026)",
+            "source_url": "https://arxiv.org/html/2604.03196v1",
+            "source_date": "2026-04-03",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "Test-as-trust crystallizes as acceptance-criteria-driven TDD with higher coverage bars for AI code, but carries the 'tautological testing' risk requiring an irreducible human business-logic checkpoint.",
+            "evidence": "85-90% coverage for AI code vs 70-80% for human code; tests should validate the specification not the implementation; same AI generating code+tests means both share blind spots; human review mandatory for business/regulatory logic.",
+            "source_title": "How to Test AI Generated Code: A QA Checklist for 2026 (ContextQA)",
+            "source_url": "https://contextqa.com/blog/what-is-ai-generated-code-testing-checklist/",
+            "source_date": "2026-04-08",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Named-practitioner stance: the human committing AI code is fully accountable; shipping unreviewed/untested AI output dumps the work on reviewers and is a dereliction of duty.",
+            "evidence": "A computer can never be held accountable; that's your job as the human in the loop. Reviewing/testing/understanding all AI lines is using an LLM as a typing assistant, not vibe coding.",
+            "source_title": "Simon Willison on delivering AI generated code (Stefan Judis notes)",
+            "source_url": "https://www.stefanjudis.com/notes/simon-willison-on-delivering-ai-generated-code/",
+            "source_date": "2025-12-18",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "GitHub's official guidance is an 8-area multi-layered review (not line-by-line), with explicit AI-specific pitfalls including hallucinated APIs and deleted/skipped tests.",
+            "evidence": "Eight areas incl. functional checks (compiles, tests pass), context/intent, AI-specific pitfalls (hallucinated APIs, deleted tests, logic errors), automation (CodeQL, Dependabot); don't accept tests that are deleted or skipped instead of fixed.",
+            "source_title": "Review AI-generated code (GitHub Docs)",
+            "source_url": "https://docs.github.com/en/copilot/tutorials/review-ai-generated-code",
+            "source_date": "2026",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          }
+        ],
+        "named_frameworks": [
+          "DORA 'AI as amplifier' model (throughput up, stability down) — DORA 2025",
+          "Acceptance-Criteria-Driven TDD (AC-TDD) — humans define testable 'done' before AI generates; tests validate spec not implementation",
+          "JiTTests (Just-in-Time Tests, Meta Engineering) — diff-aware test generation, ~4x more useful catches than generic hardening tests",
+          "Six-Layer AI Code Review (requirement fidelity -> logic/edge cases -> API integrity -> security) — Shift Asia",
+          "GitHub 8-area multi-layer review checklist (functional, context, quality, dependencies, AI pitfalls, collaborative, automation, workflow)",
+          "CRA signal-to-noise two-tier keyword framework (0-30% noisy / 31-59% / 60-79% / 80-100% high-quality) — Chowdhury et al. MSR 2026",
+          "Agent-PR rejection taxonomy (4-level: Reviewer/Pull-Request/Code/Agentic) — Ehsani et al. MSR 2026",
+          "Developer-intervention taxonomy (Guidance/Decision/Direct-code/Operational) — Khelifi et al. MSR 2026",
+          "Review-interaction taxonomy (Agent-steering/Automation-CI/Human-review) — Duma et al. EASE 2026",
+          "'Tautological testing' anti-pattern + 'on-the-loop' supervision model",
+          "'Lethal trifecta' (Willison, 2025) — adjacent agent-security framing"
+        ],
+        "debates_tensions": [
+          "Does test-as-trust replace line-by-line review? AC-TDD advocates say validated specs + high coverage substitute for reading every line; the 'tautological testing' critique counters that AI-generated tests inherit AI blind spots, making a human business-logic checkpoint irreducible.",
+          "Do AI review tools reduce or increase reviewer burden? Vendors imply reduction; empirical data (MSR 2026 CRA noise study; 2024 42%-closure-time finding) shows bots are noisy and burden often rises — they triage but don't relieve the human bottleneck.",
+          "Lab vs field on productivity: METR RCT (19% slower) vs Faros field telemetry (21% more tasks, 98% more PRs) vs DORA (>80% perceive gains). Reconciliation: individual output rises while organizational quality/stability and review throughput degrade.",
+          "'Review every line' vs behavior-level: guidance converges on behavior + structural gates, but academic data shows the real-world failure is the opposite extreme — 38-61% silent unreviewed merges, i.e. neither approach is actually applied.",
+          "Reviewer bias: AI code's surface plausibility reduces critical scrutiny (fewer negative reactions despite ~2x redundancy), an argument AGAINST relaxing review rigor for AI output."
+        ],
+        "recency_note": "Evidence is very recent and the area is fast-moving. The strongest empirical sources are 2026 peer-reviewed MSR/EASE conference papers (Apr-May 2026) on agent-authored PRs, plus 2025 industry telemetry (Faros AI Jul 2025, DORA Jul/Sep 2025, METR Jul 2025) and 2026 vendor/practitioner guidance (GitHub, JetBrains May 2026, ContextQA Apr 2026, Willison Dec 2025). No source predates 2024, and the few 2024 datapoints (the 42%-closure-time study) are cited within 2026 articles. The agentic-PR review literature is brand-new and likely to expand rapidly through 2026.",
+        "raw_file_path": "/Users/steve/projects/momentum/raw/research-sq3-reviewing-ai-generated-code.md"
+      },
+      "verification": {
+        "sub_question_id": "sq3-reviewing-ai-generated-code",
+        "overall_reliability": "medium",
+        "validation_file_path": "/Users/steve/projects/momentum/validation/verify-sq3-reviewing-ai-generated-code.md",
+        "verdicts": [
+          {
+            "claim": "Faros telemetry: low->high AI adoption produced 154% larger PRs, 91% longer review time, 9% more bugs/dev, 98% more merged PRs (10,000+ devs, 1,255 teams, up to 2 years).",
+            "verdict": "confirmed",
+            "source_url": "https://www.faros.ai/blog/lab-vs-reality-ai-productivity-study-findings",
+            "note": "Re-fetched; all four figures and study scale verbatim. Caveat: vendor telemetry, correlational not causal; Faros has commercial interest in the 'AI productivity paradox' framing."
+          },
+          {
+            "claim": "Duma et al. EASE 2026: 61.38% of AI PRs received no recorded review; 71.58% of thread comments agent-authored; agent-steering 25.92% vs 1.63% (Cramer's V=0.34). 33,596 agent PRs, AIDev.",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/html/2605.02273v1",
+            "note": "Re-fetched; every figure matches to the decimal incl. raw counts (20,621; 28,004). Strong peer-reviewed source."
+          },
+          {
+            "claim": "Ehsani et al. MSR 2026: Abandoned/Not Reviewed 228 (38%), Duplicate 23%, CI/Test 17%, Incorrect Impl 3%; overall merge rate 71.48%; 33,596 PRs across 5 agents.",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/html/2601.15195",
+            "note": "Re-fetched; taxonomy counts, merge rate (24,014/33,596), and per-agent breakdown all confirmed. Taxonomy % is over 562 manually-analyzed rejected PRs, correctly stated by thread."
+          },
+          {
+            "claim": "Chowdhury et al. MSR 2026: 60.2% of closed CRA-only PRs in 0-30% signal band; 12/13 CRAs below 60% signal; CRA-only merge 45.20% vs human-only 68.37% (chi2=83.03, p<0.001).",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/html/2604.03196v1",
+            "note": "Re-fetched; all figures verbatim. Exact framing is '23.17 percentage points lower'. Strong peer-reviewed source."
+          },
+          {
+            "claim": "DORA 2025 frames AI as an amplifier; ~30% distrust AI code; explicit 'trust but verify'; AI negatively related to delivery stability.",
+            "verdict": "confirmed",
+            "source_url": "https://dora.dev/dora-report-2025/",
+            "better_source_url": "https://cloud.google.com/blog/products/ai-machine-learning/announcing-the-2025-dora-report",
+            "note": "'Amplifier' verbatim on landing page; 30%/trust-but-verify/stability confirmed via Google Cloud blog + multiple summaries. MATERIAL QUALIFIER thread omits: DORA 2025 now links AI POSITIVELY to throughput (reversal of 2024)."
+          },
+          {
+            "claim": "20-25% of AI hallucinations are detectable by static analysis; ~44% escape automated detection (requiring human judgment).",
+            "verdict": "unsupported",
+            "source_url": "https://blog.jetbrains.com/ai/2026/05/stop-sending-ide-catchable-ai-code-errors-to-review/",
+            "better_source_url": "https://arxiv.org/html/2409.20550",
+            "note": "PROVENANCE FAILURE. JetBrains cites arXiv 2409.20550 for these numbers but that paper does NOT contain them. The paper gives a hallucination-TYPE taxonomy (43.53/31.91/24.56%) and only a qualitative statement that some classes evade static checks/tests. The 20-25%/44% figures appear fabricated or misattributed. Companion 73.8%/42% claim cites a different paper (2412.18531), not independently verified here."
+          },
+          {
+            "claim": "METR RCT: experienced devs 19% slower with AI despite believing ~20% faster; ~9% of task time spent reviewing/modifying AI output.",
+            "verdict": "partially-supported",
+            "source_url": "https://www.augmentcode.com/guides/why-ai-coding-tools-make-experienced-developers-19-slower-and-how-to-fix-it",
+            "better_source_url": "https://metr.org/blog/2026-02-24-uplift-update/",
+            "note": "19% slowdown is real and independently confirmed, but OVER-GENERALIZED: perceived speedup is +24% not ~20%; METR explicitly says the slowdown percentage likely does NOT generalize (narrow population, mature repos where AI helps least); METR redesigned the experiment Feb 2026 after unreliable follow-up signals. Only the expectation gap generalizes."
+          },
+          {
+            "claim": "Test-as-trust = acceptance-criteria-driven TDD; tests validate spec not implementation; higher coverage bars 85-90% (AI) vs 70-80% (human); 'tautological testing' risk requires human business-logic checkpoint.",
+            "verdict": "partially-supported",
+            "source_url": "https://contextqa.com/blog/what-is-ai-generated-code-testing-checklist/",
+            "better_source_url": "https://arxiv.org/pdf/2603.25773",
+            "note": "Spec-vs-implementation and tautological-testing framing accurately quoted. BUT the 85-90% vs 70-80% coverage bars are bare unsourced assertions (training-data smell) — article sources its other stats but not these. The conceptual claim is corroborated more strongly by arXiv 2603.25773 (correlated generator/reviewer failures)."
+          },
+          {
+            "claim": "Simon Willison: 'a computer can never be held accountable; that's your job as the human in the loop'; shipping untested AI code is a dereliction of duty that dumps work on reviewers.",
+            "verdict": "confirmed",
+            "source_url": "https://www.stefanjudis.com/notes/simon-willison-on-delivering-ai-generated-code/",
+            "note": "Accountability and dereliction-of-duty / shifts-burden quotes present verbatim (Dec 19, 2025). Minor: the 'typing assistant vs vibe coding' phrasing is NOT on this page (Willison position from elsewhere); immaterial."
+          },
+          {
+            "claim": "GitHub's official guidance is an 8-area multi-layered review (not line-by-line), with AI-specific pitfalls (hallucinated APIs, deleted/skipped tests, logic errors) and automation (CodeQL, Dependabot).",
+            "verdict": "confirmed",
+            "source_url": "https://docs.github.com/en/copilot/tutorials/review-ai-generated-code",
+            "note": "Re-fetched; eight named areas, AI pitfalls, deleted-test warning ('fix the test instead of deleting it'), and CodeQL/Dependabot all verbatim. Strong vendor source."
+          }
+        ],
+        "training_data_smells": [
+          "ContextQA coverage bars '85-90% for AI code vs 70-80% for human code' presented as bare numeric assertions with no source, while the same article sources its other statistics (Stack Overflow, Stanford) — false-precision filler.",
+          "JetBrains '20-25% detectable / 44% escape' hallucination split: precise-looking numbers attributed to arXiv 2409.20550, a paper that does not actually contain them — false precision with a citation that does not check out.",
+          "'Meta JiTTests ~4x more useful catches than generic hardening tests': carried from a New Stack blog with no primary Meta source located; plausible but unverified vendor/blog claim."
+        ],
+        "contradicting_evidence": [
+          "Genuine 2026 expert split on line-by-line review: contra the thread's 'almost no one argues for reading every line,' practitioners (javaworldmag 2026; CIO 'Developers still don't trust AI-generated code') insist on careful per-line reading because structural/logical failures hide beneath superficially-convincing AI code. The behavior-level consensus is softer than the thread states.",
+          "METR self-qualification (metr.org Feb 2026): METR redesigned its productivity experiment after the original setting proved unrepresentative and a follow-up gave unreliable signals; METR says the slowdown PERCENTAGE likely does not generalize (only the expectation gap does). Weakens '19% slower' as a headline empirical anchor.",
+          "DORA 2025 throughput reversal: AI is now POSITIVELY linked to software delivery throughput (reversing 2024), a material qualifier the thread omits while keeping only the stability-negative half.",
+          "arXiv 2603.25773 'The Specification as Quality Gate' (2026): independent preprint sharpening the tautological-testing concern — AI reviewers without EXECUTABLE specifications are structurally unsound because generator and reviewer reason from the same artifacts and exhibit correlated failures. Stronger than the blog sources the thread used."
+        ]
+      }
+    },
+    {
+      "sub_question_id": "sq4-plan-review-altitude",
+      "title": "Plan/spec review altitude — decision-grade summaries",
+      "discovery": {
+        "sub_question_id": "sq4-plan-review-altitude",
+        "summary": "The 2025–2026 consensus is that humans should NOT review an agent's plan line-by-line; instead agents should present a decision-grade summary (executive view / \"bird's-eye view\" / \"evidence pack\") with detail offloaded but expandable on demand — classic progressive disclosure. Anthropic codified the three-level model (name/description → full instructions → appendix) and Will Larson and Addy Osmani apply the same summary-first, detail-on-demand pattern to plans, where Plan Mode is a read-only approval gate before code. StackAI's \"evidence pack\" operationalizes the dual-track output most concretely: concise-by-default with expandable detail, framed as \"the difference between a 15-second approval and a 15-minute investigation,\" reframing the reviewer's job as verify-not-redo. A deeper \"altitude\" theme holds the spec/intent — not the code/diff — is the correct unit of review: Zietsman (arXiv) argues reviewing code-against-code is circular and the spec provides the external correctness reference, and Amazon Kiro makes the spec the signed-off contract before any code. Risk-based gating decides where full detail is warranted: confirm 100% at risk boundaries (irreversible, costly, regulated, high blast radius), sample or batch low-risk. The main tension is throughput vs. thoroughness — GitHub's Griffiths warns summaries can mask subtle hallucinations and unscoped \"agent abandonment,\" and that human judgment is the real bottleneck.",
+        "key_findings": [
+          {
+            "claim": "Progressive disclosure (summary first, detail on demand) is the canonical agent information pattern, modeled as table-of-contents → chapters → appendix.",
+            "evidence": "\"Like a well-organized manual that starts with a table of contents, then specific chapters, and finally a detailed appendix, skills let Claude load information only as needed.\" Three levels: name+description preloaded → full SKILL.md when relevant → linked appendix files navigated only as needed.",
+            "source_title": "Equipping agents for the real world with Agent Skills",
+            "source_url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
+            "source_date": "2025-10-16",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Plans should carry a hierarchical 'bird's-eye view' summary that stays in context while fine detail is offloaded; Plan Mode is a read-only approval gate before code.",
+            "evidence": "\"By creating a hierarchical summary in the planning phase, you get a bird's-eye view that can stay in the prompt, while the fine details remain offloaded unless needed.\" Plan Mode \"won't write any code until you're ready.\" Phased gates Specify→Plan→Tasks→Implement: \"you don't move to the next one until the current task is fully validated.\"",
+            "source_title": "How to Write a Good Spec for AI Agents",
+            "source_url": "https://www.oreilly.com/radar/how-to-write-a-good-spec-for-ai-agents/",
+            "source_date": "2026-02-20",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "An 'evidence pack' decision-grade summary — concise by default, expandable detail — turns review into fast verification rather than redoing the work.",
+            "evidence": "\"The evidence pack is the difference between a 15-second approval and a 15-minute investigation.\" \"The reviewer's job is not to re-do the agent's work; it's to verify it quickly.\" Keep evidence \"concise by default with expandable detail options\"; include \"decision rationale and confidence scores,\" cited sources, rollback plans; \"batch low-risk items for single-screen review.\"",
+            "source_title": "Human-in-the-Loop AI Agents: How to Design Approval Workflows for Safe and Scalable Automation",
+            "source_url": "https://www.stackai.com/insights/human-in-the-loop-ai-agents-how-to-design-approval-workflows-for-safe-and-scalable-automation",
+            "source_date": "2026-05-29",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Risk-based gates decide where full detail is warranted: confirm only at risk boundaries, with plan previews for meaningful changes and dual control for sensitive actions.",
+            "evidence": "\"Plan previews for meaningful changes ('Approve these steps before we run them').\" \"The trick is to confirm only at risk boundaries: drafting is cheap; sending at scale is not; changing access rights is never 'just a click.'\" Sensitive actions \"need dual control: a second approver or an admin-level sign-off.\"",
+            "source_title": "The Agentic Product Stack in 2026: How Teams Are Shipping AI 'Operators' Without Breaking Trust, Cost, or Control",
+            "source_url": "https://icmd.app/article/the-agentic-product-stack-in-2026-how-teams-are-shipping-ai-operators-without-br-1779153812284",
+            "source_date": "2026-05-19",
+            "source_type": "industry-report",
+            "confidence": "medium"
+          },
+          {
+            "claim": "The correct review altitude is the spec/intent, not the code — reviewing code-against-code is structurally circular; the spec is the external correctness reference.",
+            "evidence": "Deploying AI reviewers without executable specs \"creates a structurally circular problem where both the generating agent and reviewing agent reason from the same artifact... resulting in the review checking code against itself rather than against intent.\" Executable specs \"perform a domain transition in the Cynefin sense... moving the problem from the complex domain to the complicated domain.\"",
+            "source_title": "The Specification as Quality Gate: Three Hypotheses on AI-Assisted Code Review (arXiv:2603.25773)",
+            "source_url": "https://arxiv.org/pdf/2603.25773",
+            "source_date": "2026-03-30",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Spec-driven IDEs make the spec the signed-off unit of work (EARS requirements + testable acceptance criteria) so humans review intent before any code.",
+            "evidence": "\"The spec is the unit of work. Code is what happens after you sign off on the spec.\" Users \"review the spec... edit it... reject it and rewrite it\"; the doc \"becomes the explicit contract between what you want and what the agent will build,\" preventing \"vibe coding.\"",
+            "source_title": "Amazon Kiro Review — The Agentic IDE That Writes the Spec Before the Code",
+            "source_url": "https://chatforest.com/reviews/amazon-kiro-aws-agentic-ide-spec-driven-review/",
+            "source_date": "2026-05-23",
+            "source_type": "news",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Progressive disclosure means present overview/metadata first and expand detail only on request (peek/load/extract) — mirroring executive summary plus optional deep dive.",
+            "evidence": "Progressive disclosure is \"limiting what is added to the context window to the minimum necessary amount, and adding more detail over time as necessary,\" implemented via metadata-first listing, selective preloading, and on-demand tools peek_file()/load_file()/extract_file().",
+            "source_title": "Building an internal agent: Progressive disclosure and handling large files",
+            "source_url": "https://lethain.com/agents-large-files/",
+            "source_date": "2025-12-26",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "Efficient review of agent output is risk-ordered, time-boxed, and surfaces highest-impact checks first; but human judgment is the bottleneck and summaries can mask subtle defects.",
+            "evidence": "A \"10-minute progressive review framework\": classify (1-2m) → scan CI changes (\"highest priority\") → check duplicate utilities → trace critical logic → verify security boundaries. Red flags include \"agent abandonment — large, unscoped PRs with no implementation plan\" and \"subtle hallucinations.\" \"Judgment is the bottleneck, and that's fine.\"",
+            "source_title": "Agent pull requests are everywhere. Here's how to review them.",
+            "source_url": "https://github.blog/ai-and-ml/generative-ai/agent-pull-requests-are-everywhere-heres-how-to-review-them/",
+            "source_date": "2026-05-07",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "HITL approval design should separate reviewed content ('details') from decision options ('actions'), offer approve/reject/edit, and gate before consequential actions.",
+            "evidence": "\"The details key passed into interrupt() contains the generated content, while the action key triggers a handler function.\" Three pathways: approve, reject, inline-edit. Place interrupts \"as a gate before an action\" (e.g., before publishing), not after non-deterministic steps.",
+            "source_title": "Building Human-In-The-Loop Agentic Workflows",
+            "source_url": "https://towardsdatascience.com/building-human-in-the-loop-agentic-workflows/",
+            "source_date": "2026-03-25",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "'Altitude' means keeping plans/instructions at the right abstraction; irrelevant detail degrades both agent and reviewer attention, so use relevance-gated disclosure.",
+            "evidence": "\"The more information you have in the file that's not universally applicable... the more likely it is that Claude will ignore your instructions.\" Tell Claude \"how to find important information so that it can find and use it, but only when it needs to.\" Frontier LLMs follow \"~150-200 instructions with reasonable consistency.\"",
+            "source_title": "Writing a good CLAUDE.md",
+            "source_url": "https://www.humanlayer.dev/blog/writing-a-good-claude-md",
+            "source_date": "2025-11-25",
+            "source_type": "blog",
+            "confidence": "medium"
+          }
+        ],
+        "named_frameworks": [
+          "Progressive disclosure (three-level model: name/description → full SKILL.md → linked appendix) — Anthropic Agent Skills",
+          "Evidence pack (concise-by-default, expandable; action details + context + policy flags + confidence scores + sources + rollback) — StackAI",
+          "Specify → Plan → Tasks → Implement phased approval gates — Addy Osmani / spec-driven development",
+          "Hierarchical summary / 'bird's-eye view' plan presentation — Addy Osmani",
+          "Specification as Quality Gate (3 hypotheses: review against intent, code-against-code circularity, Cynefin domain transition) — Zietsman arXiv",
+          "Spec-as-unit-of-work (EARS requirements + acceptance criteria signed off before code) — Amazon Kiro",
+          "10-minute progressive review framework (risk-ordered, time-boxed) — GitHub / Andrea Griffiths",
+          "Risk-boundary confirmation + dual control (100% high-risk, sample/batch low-risk) — icmd & StackAI",
+          "details-vs-actions separation in interrupt() approval (approve/reject/edit) — Kenneth Leung / LangGraph pattern",
+          "EARS (Easy Approach to Requirements Syntax)"
+        ],
+        "debates_tensions": [
+          "Summarized/decision-grade review vs thoroughness: progressive-disclosure advocates (Anthropic, Larson, Osmani, StackAI) optimize fast approval, but GitHub's Griffiths warns 'judgment is the bottleneck' and that summaries can hide subtle hallucinations (compiles but wrong) and unscoped 'agent abandonment.'",
+          "Right altitude/unit of review — plan/spec vs code/diff: Zietsman and Kiro argue the spec/intent is the correct review altitude (code-against-code is circular), while GitHub's framework still treats the PR diff as the primary reviewed artifact (validating intent capture alongside it).",
+          "How much to gate at all: 'Approve the plan' previews for meaningful changes (icmd) vs sampling/exception-only for low-risk with 100% only at risk boundaries (StackAI) — shared worry is reviewer fatigue/rubber-stamping vs blind spots.",
+          "Whether decision-grade summaries should carry explicit confidence scores and provenance: StackAI recommends surfacing confidence scores and cited sources; icmd frames it as verification/receipts rather than numeric confidence — no consensus."
+        ],
+        "recency_note": "Evidence is very recent and the area is fast-moving: 8 of 10 sources are from 2026 (Feb–May 2026), including GitHub (2026-05-07), StackAI (2026-05-29), icmd (2026-05-19), the Kiro review (2026-05-23), Osmani/O'Reilly (2026-02-20), Zietsman arXiv (2026-03-30), and Kenneth Leung/TDS (2026-03-25). The remaining two are late-2025 (Anthropic 2025-10, Larson 2025-12, HumanLayer 2025-11) and remain foundational/current. No source was older than Oct 2025; nothing here is superseded. Spec-driven approval gates and risk-based 'evidence pack' approval UX are actively converging as of mid-2026.",
+        "raw_file_path": "/Users/steve/projects/momentum/.momentum/research/raw/research-sq4-plan-review-altitude.md"
+      },
+      "verification": {
+        "sub_question_id": "sq4-plan-review-altitude",
+        "overall_reliability": "medium",
+        "validation_file_path": "/Users/steve/projects/momentum/.momentum/research/validation/verify-sq4-plan-review-altitude.md",
+        "verdicts": [
+          {
+            "claim": "Progressive disclosure is the canonical agent pattern, modeled as table-of-contents -> chapters -> appendix; three levels name/description -> full SKILL.md -> linked appendix.",
+            "verdict": "confirmed",
+            "source_url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
+            "note": "Re-fetched. Analogy and three-level model verbatim; date 2025-10-16 confirmed. Caveat: source describes agent context loading, not human plan-review UX — the application to executive-summary plan presentation is the discovery agent's analogy, not Anthropic's claim."
+          },
+          {
+            "claim": "Plans should carry a hierarchical bird's-eye-view summary that stays in context while detail is offloaded; Plan Mode is a read-only approval gate; Specify->Plan->Tasks->Implement gates.",
+            "verdict": "confirmed",
+            "source_url": "https://www.oreilly.com/radar/how-to-write-a-good-spec-for-ai-agents/",
+            "note": "Re-fetched. All quotes verbatim. Author Addy Osmani, date 2026-02-20 confirmed. Strong, accurately represented."
+          },
+          {
+            "claim": "An 'evidence pack' decision-grade summary (concise-by-default, expandable) turns review into fast verification: '15-second approval vs 15-minute investigation'; verify-not-redo.",
+            "verdict": "confirmed",
+            "source_url": "https://www.stackai.com/insights/human-in-the-loop-ai-agents-how-to-design-approval-workflows-for-safe-and-scalable-automation",
+            "note": "All phrases confirmed verbatim. BUT date is wrong: page reports 2026-03-03, not the thread's 2026-05-29. Source is a HITL-tooling vendor's marketing-insights post; the '15-second approval' framing is sales rhetoric, not measured data."
+          },
+          {
+            "claim": "Risk-based gates: confirm only at risk boundaries, plan previews for meaningful changes, dual control for sensitive actions.",
+            "verdict": "partially-supported",
+            "source_url": "https://icmd.app/article/the-agentic-product-stack-in-2026-how-teams-are-shipping-ai-operators-without-br-1779153812284",
+            "note": "Not re-fetched this pass; low-authority blog (programmatic URL). The substantive claim is independently corroborated by confirmed StackAI batching/sampling guidance and by EU AI Act Art.14 / NIST oversight requirements. Treat icmd as illustrative, not authoritative.",
+            "better_source_url": "https://www.stackai.com/insights/human-in-the-loop-ai-agents-how-to-design-approval-workflows-for-safe-and-scalable-automation"
+          },
+          {
+            "claim": "Correct review altitude is the spec/intent, not code; code-against-code review is structurally circular; spec is the external correctness reference (Cynefin transition).",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/abs/2603.25773",
+            "note": "Paper is real (arXiv:2603.25773, also ResearchGate). Core claims confirmed verbatim from abstract; Cynefin transition explicit. Author Zietsman, submitted 2026-03-26. CAVEAT: discovery mislabeled it 'peer-reviewed' — it is a single-author preprint presenting three HYPOTHESES, argumentative not empirical. Authority overstated."
+          },
+          {
+            "claim": "Spec-driven IDEs make the spec the signed-off unit of work (EARS + acceptance criteria) reviewed before any code — 'the spec is the unit of work'.",
+            "verdict": "confirmed",
+            "source_url": "https://chatforest.com/reviews/amazon-kiro-aws-agentic-ide-spec-driven-review/",
+            "note": "All quotes confirmed verbatim, date 2026-05-23 confirmed. BUT source is a third-party SEO/affiliate review site, not AWS primary docs. Characterization accurate; a primary AWS Kiro docs citation would be materially stronger.",
+            "better_source_url": "https://kiro.dev/docs/specs/"
+          },
+          {
+            "claim": "Progressive disclosure = minimum-necessary context, detail added over time via metadata-first listing and peek/load/extract tools (Will Larson).",
+            "verdict": "confirmed",
+            "source_url": "https://lethain.com/agents-large-files/",
+            "note": "Re-fetched. Definition and tools verbatim. Author Will Larson, 2025-12-26 confirmed. Same caveat as Anthropic: agent-context engineering applied to human review by analogy."
+          },
+          {
+            "claim": "Efficient review is risk-ordered and time-boxed (10-minute progressive framework); but judgment is the bottleneck and summaries can mask subtle hallucinations and 'agent abandonment'.",
+            "verdict": "confirmed",
+            "source_url": "https://github.blog/ai-and-ml/generative-ai/agent-pull-requests-are-everywhere-heres-how-to-review-them/",
+            "note": "Re-fetched. Steps, 'agent abandonment', 'subtle hallucinations' (compiles/passes tests but wrong), and 'Judgment is the bottleneck, and that's fine' all confirmed. Author Andrea Griffiths, 2026-05-07. Strongest, most-balanced source in the set; accurately represented."
+          },
+          {
+            "claim": "Spec-driven / spec-as-unit-of-review is the settled best practice for the correct review altitude (implied universality across the synthesis).",
+            "verdict": "partially-supported",
+            "source_url": "https://medium.com/activated-thinker/spec-driven-development-isnt-broken-it-will-collapse-c00609f72496",
+            "note": "Contradicted as a universal: 2026 critiques (Kent Beck; enterprise-failure and overhead reports — e.g. 33 min + 2,577 lines of spec for 689 lines of code, no quality gain) show spec-first gating is high-overhead and quality-neutral on small/uncertain work. Consensus is CONTEXTUAL adoption, not universal. The thread states the altitude thesis too strongly."
+          }
+        ],
+        "training_data_smells": [
+          "HumanLayer's '~150-200 instructions with reasonable consistency' (claim #10) is a confidently-stated, thinly-sourced heuristic number; not load-bearing and not re-verified.",
+          "StackAI's '15-second approval vs 15-minute investigation' (claim #3) is real text but is vendor marketing rhetoric, not measured data — the synthesis treats a slogan as an operational finding."
+        ],
+        "contradicting_evidence": [
+          "Spec-driven development overhead / 'waterfall reborn' critique (2026): Kent Beck and multiple practitioner reports argue spec-first gating is high-overhead and quality-neutral on small/uncertain work (cited test: 33 min + 2,577 lines of spec for 689 lines of code vs 8 min iterating, no quality gain). Consensus is contextual adoption, qualifying the 'spec is the correct review altitude' claim.",
+          "Automation bias / vigilance decrement: a 2025 Cognitive Science review calls vigilance decrement 'one of the most robust findings in attention research' — when systems are mostly correct humans systematically over-trust and it 'cannot be overcome with simple practice or instructions.' 'AI review fatigue'/rubber-stamping is a recognized 2026 problem. The '15-second approval' decision-grade summary is exactly the design that maximizes this bias; the synthesis underweights it.",
+          "Verification cost reality check: ~64% of teams report verifying AI code takes as long or longer than writing it from scratch, cutting against the implied throughput gains of summarized review.",
+          "Regulatory counter-pressure: EU AI Act Art.14 and NIST AI RMF require demonstrable, trained, provable human oversight for high-risk systems (high-risk track fully operative 2026-08-02), pushing toward MORE substantive review in regulated contexts and qualifying the 'don't review line-by-line' default."
+        ]
+      }
+    },
+    {
+      "sub_question_id": "sq5-communication-altitude-control",
+      "title": "Making LLMs communicate at the right altitude",
+      "discovery": {
+        "sub_question_id": "sq5-communication-altitude-control",
+        "summary": "By mid-2026 \"communicating at the right altitude\" is governed by three converging levers: first-class API verbosity parameters, default model behavior that now favors conciseness, and prompting/config patterns that steer altitude via measurable constraints. The biggest 2025-2026 shift is decoupling how much a model thinks from how much it says: OpenAI GPT-5 (Aug 2025) shipped a `verbosity` param (low/medium/high) separate from `reasoning_effort`, retained in GPT-5.5 as `text.verbosity` (default medium); Google Gemini 3 replaced `thinking_budget` with `thinking_level` and ships less-verbose-by-default; Anthropic Claude Opus 4.8 has no verbosity knob but calibrates length to judged task complexity and exposes an `effort` parameter (low to max). Across vendors the default posture is now terse, so you steer up toward chattiness rather than down toward brevity. The dominant prompting principle is that vague words like \"be concise\" underperform measurable constraints (word/bullet/section counts, templates) and positive examples of good concision beat negative \"don't\" instructions; the senior-briefing pattern is persona + audience-level + length cap. Academic work documents a verbosity bias (responses longer than necessary, partly from preference-optimization length bias) and an active length-control research frontier (Plan-and-Write, Hansel, dynamic length feedback).",
+        "key_findings": [
+          {
+            "claim": "OpenAI GPT-5 (Aug 2025) introduced a dedicated `verbosity` parameter (low/medium/high) that scales output length and depth independently of the prompt, separate from `reasoning_effort` (minimal/medium/high).",
+            "evidence": "Low produced 560 output tokens (terse), medium ~849, high 1,288 with comprehensive commentary; 'reliably scales both the length and depth of the model's output while preserving correctness' without prompt rewrites.",
+            "source_title": "GPT-5 New Params and Tools (OpenAI Cookbook)",
+            "source_url": "https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_new_params_and_tools",
+            "source_date": "2025-08-07",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "GPT-5.5 keeps `text.verbosity` (default medium); set it low for concise responses, and define voice and length explicitly in the prompt.",
+            "evidence": "'For concise responses, use text.verbosity set to low when you prefer shorter, more concise responses'; 'Write for a senior business audience. Keep the answer under 400 words. Use short paragraphs and only include bullets when they improve scannability.' Default to plain paragraphs.",
+            "source_title": "Prompt guidance (OpenAI API Docs)",
+            "source_url": "https://developers.openai.com/api/docs/guides/prompt-guidance",
+            "source_date": "2026",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Claude Opus 4.8 calibrates response length to judged task complexity (no verbosity param); to reduce verbosity, add explicit concise instructions and prefer positive examples of good concision over negative 'don't' instructions.",
+            "evidence": "'Claude Opus 4.8 calibrates response length to how complex it judges the task to be, rather than defaulting to a fixed verbosity.' Recommended snippet: 'Provide concise, focused responses. Skip non-essential context, and keep examples minimal.' 'Positive examples... tend to be more effective than negative examples.'",
+            "source_title": "Prompting best practices (Claude API Docs)",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+            "source_date": "2026",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Claude Opus 4.8's `effort` parameter (low to max) controls scope/thinking depth; at low/medium it scopes work to exactly what was asked, indirectly controlling altitude. Thinking is off unless adaptive thinking is explicitly enabled.",
+            "evidence": "'Claude Opus 4.8 respects effort levels strictly, especially at the low end. At low and medium, the model scopes its work to what was asked rather than going above and beyond.'",
+            "source_title": "Prompting best practices (Claude API Docs)",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+            "source_date": "2026",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Gemini 3 is less verbose by default and uses `thinking_level` (minimal/low/medium/high), which replaces the legacy `thinking_budget`; you must explicitly steer for verbose output.",
+            "evidence": "'By default, Gemini 3 is less verbose and prefers providing direct, efficient answers.' 'You cannot use both thinking_level and the legacy thinking_budget parameter in the same request.' Keep temperature at default 1.0.",
+            "source_title": "Gemini 3 Developer Guide (generateContent API)",
+            "source_url": "https://ai.google.dev/gemini-api/docs/gemini-3",
+            "source_date": "2026-05-29",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Named expert Philipp Schmid recommends an explicit 'Verbosity: [Low/Medium/High]' line in Gemini 3 system constraints plus a dedicated <output_format> section with an executive summary; Gemini 3 can over-analyze overly complex prompt engineering.",
+            "evidence": "'If you require a more conversational or chatty persona, you must explicitly ask for it.' Output format template: 'Executive Summary: [2 sentence overview]'. Self-review: 'Is the tone authentic to the requested persona?'",
+            "source_title": "Gemini 3 Prompting: Best Practices for General Usage (Philipp Schmid)",
+            "source_url": "https://www.philschmid.de/gemini-3-prompt-practices",
+            "source_date": "2025-11-19",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "The dominant cross-vendor prompting principle: 'be concise' is too vague; altitude control works best through measurable, explicit constraints (word/bullet/section counts, templates), structured as directive + constraints + format.",
+            "evidence": "'Terms like brief, concise, or detailed are subjective; verbosity control works best when it is explicit and measurable through word limits, bullet counts, section counts, or strict templates.' 'Be specific: 5 bullets, each under 15 words not be concise.'",
+            "source_title": "Prompting best practices (Claude API Docs) + 2026 prompt-engineering guides",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+            "source_date": "2026",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "The 'brief me as a senior reviewing a junior' pattern is implemented as persona + audience-level + length constraint (ROLE + TASK + CONTEXT + INSTRUCTIONS).",
+            "evidence": "'Using persona-based prompting, like You are a senior data scientist... Explain... to a junior developer, helps LLMs provide responses tailored to a specific expertise level and audience.' Example: 'You're a senior legal analyst. Summarize this deal in plain English' under ~150 words.",
+            "source_title": "The Ultimate Guide to Prompt Engineering in 2025 / Module 2: Prompt Structure & Role Engineering (Medium)",
+            "source_url": "https://medium.com/@generativeai.saif/the-ultimate-guide-to-prompt-engineering-in-2025-mastering-llm-interactions-8b88c5cf65b6",
+            "source_date": "2025",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Claude Code 'output styles' operationalize communication altitude as a persistent system-prompt-level setting: Default (concise), Explanatory (narrated reasoning), Learning (collaborative), plus custom styles.",
+            "evidence": "'Output styles modify the system prompt directly and apply to every response, giving you fine-grained control over how Claude Code communicates.' Default style 'is concise, and targeted mainly at solving software engineering tasks.'",
+            "source_title": "Output styles (Claude Code Docs)",
+            "source_url": "https://code.claude.com/docs/en/output-styles",
+            "source_date": "2025",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Academic research documents a verbosity bias: LLM responses are significantly longer than necessary, partly an artifact of pairwise preference optimization rewarding length, harming UX and sustainability.",
+            "evidence": "'LLM-generated responses are significantly longer than target responses for factual questions, regardless of whether targets are human-written or machine-generated.' Title: 'Brevity is the soul of sustainability'; benchmarked 12 LLMs.",
+            "source_title": "Brevity is the soul of sustainability: Characterizing LLM response lengths (arXiv 2506.08686)",
+            "source_url": "https://arxiv.org/pdf/2506.08686",
+            "source_date": "2025-06",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Dedicated length-control methods (training/decoding level, not prompt level) are an active 2025-2026 frontier: Plan-and-Write, Hansel, precise length control via SFT/PPO/DPO/ORPO, and dynamic length-feedback so models track their own output length.",
+            "evidence": "LLMs 'often struggle with strictly adhering to length constraints when given queries like write a 500-word composition'; feedback mechanisms let LLMs 'track and dynamically adjust their output length.'",
+            "source_title": "Plan-and-Write / dynamic length feedback / Hansel (arXiv length-control papers)",
+            "source_url": "https://arxiv.org/pdf/2511.01807",
+            "source_date": "2025",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          }
+        ],
+        "named_frameworks": [
+          "verbosity parameter (OpenAI GPT-5 / GPT-5.5 text.verbosity: low/medium/high)",
+          "reasoning_effort parameter (OpenAI GPT-5: minimal/medium/high)",
+          "effort parameter (Anthropic Claude Opus 4.8: low/medium/high/xhigh/max)",
+          "adaptive thinking (Claude Opus 4.8, thinking:{type:adaptive})",
+          "thinking_level (Google Gemini 3: minimal/low/medium/high; replaces thinking_budget)",
+          "Output Styles (Claude Code: Default/Explanatory/Learning + custom)",
+          "directive + constraints + format (prompt structure)",
+          "ROLE + TASK + CONTEXT + INSTRUCTIONS (persona/audience framing)",
+          "Plan-and-Write (structure-guided length control)",
+          "Hansel (output-length controlling framework)",
+          "dynamic length-feedback (output-length tracking)",
+          "LLM-Lingua (prompt compression)"
+        ],
+        "debates_tensions": [
+          "Vendor docs (Claude Opus 4.8, Gemini 3) claim the newest models self-calibrate length and advise REMOVING brevity/structure scaffolding, while academic and practitioner sources still treat verbosity bias as a live, measurable problem requiring active constraint. Reconciliation: vendor claims are specific to the latest generation; the literature benchmarks broader/older model populations.",
+          "Parameter vs. prompt: OpenAI and Google expose explicit verbosity/thinking knobs and prefer them over prompt rewrites; Anthropic deliberately ships NO verbosity parameter, relying on task-complexity calibration + concision examples + the effort lever. 'Right altitude control' is vendor-specific.",
+          "Reasoning depth is NOT output verbosity: GPT-5 explicitly separates them (reason hard, answer tersely), while Gemini folds reasoning into thinking_level and handles output verbosity only via prompt steering — a common point of practitioner confusion.",
+          "Negative vs. positive instruction: Claude docs say positive examples of good concision beat negative 'don't over-explain' instructions, contradicting common practitioner reliance on prohibitions.",
+          "Format defaults: OpenAI now advises plain paragraphs as default and bullets only when they aid comprehension, pushing back on the habitual always-bullet output style — a subtle altitude question (structure can summarize or fragment)."
+        ],
+        "recency_note": "Evidence is very recent and the area is fast-moving. The strongest sources are 2025-2026 primary vendor docs: Gemini 3 developer guide last updated 2026-05-29, OpenAI GPT-5.5 prompt guidance (2026), Claude Opus 4.8 prompting best practices (2026), OpenAI GPT-5 cookbook (2025-08-07), and Philipp Schmid's Gemini 3 guide (2025-11-19). Academic verbosity/length-control papers span 2024-12 through 2026. The verbosity-parameter and thinking-level/effort landscape changes with every model release, so specifics (defaults, value names) should be re-verified against vendor docs at time of use.",
+        "raw_file_path": "/Users/steve/projects/momentum/docs/research/raw/research-sq5-communication-altitude-control.md"
+      },
+      "verification": {
+        "sub_question_id": "sq5-communication-altitude-control",
+        "overall_reliability": "medium",
+        "validation_file_path": "/Users/steve/projects/momentum/docs/research/validation/verify-sq5-communication-altitude-control.md",
+        "verdicts": [
+          {
+            "claim": "OpenAI GPT-5 (Aug 2025) introduced a dedicated `verbosity` parameter (low/medium/high) that scales output length and depth independently of the prompt, separate from `reasoning_effort`.",
+            "verdict": "confirmed",
+            "source_url": "https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_new_params_and_tools",
+            "note": "Verbatim quote present: 'reliably scales both the length and depth ... without changing the underlying prompt.' Caveat: the cited token counts (560/849/1288) are example-specific; another rendering of the same doc shows 731/1017/1263. The directional claim holds but the exact numbers are illustrative, not a spec."
+          },
+          {
+            "claim": "GPT-5.5 keeps `text.verbosity` (default medium); set low for concise responses; default to plain paragraphs; example 'Write for a senior business audience. Keep the answer under 400 words.'",
+            "verdict": "confirmed",
+            "source_url": "https://developers.openai.com/api/docs/guides/prompt-guidance",
+            "note": "All elements verbatim in the GPT-5.5 section. Doc has no explicit publish date but covers GPT-5.5/5.4/5.3-Codex etc., consistent with 2026."
+          },
+          {
+            "claim": "Claude Opus 4.8 calibrates response length to judged task complexity (no verbosity param); prefer positive concision examples over negative 'don't' instructions; snippet 'Provide concise, focused responses. Skip non-essential context, and keep examples minimal.'",
+            "verdict": "confirmed",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+            "note": "All three elements verbatim. Page uses a <NextOpus /> placeholder that resolves to Claude Opus 4.8 (confirmed via anchor #prompting-claude-opus-4-8 and model-string examples claude-opus-4-8)."
+          },
+          {
+            "claim": "Claude Opus 4.8's `effort` parameter (low to max) controls scope/thinking depth; at low/medium it scopes work to exactly what was asked, indirectly controlling altitude; thinking off unless adaptive thinking explicitly enabled.",
+            "verdict": "confirmed",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+            "note": "Quotes verbatim and five effort levels (low/medium/high/xhigh/max) confirmed. Skeptic caveat: the thread frames low/medium effort as the lever for less-verbose RESPONSES, conflating scope-of-work/thinking-depth with output verbosity. The doc keeps these in separate sections and actually warns against low effort (under-thinking) and recommends starting at xhigh/high. Effort is a cost/intelligence knob, not a verbosity knob."
+          },
+          {
+            "claim": "Gemini 3 is less verbose by default and uses `thinking_level` (minimal/low/medium/high), which replaces the legacy `thinking_budget`; cannot use both in one request; keep temperature 1.0.",
+            "verdict": "confirmed",
+            "source_url": "https://ai.google.dev/gemini-api/docs/gemini-3",
+            "note": "All elements verbatim; doc last updated 2026-05-29. 400-error on using both params confirmed."
+          },
+          {
+            "claim": "Philipp Schmid recommends an explicit 'Verbosity: [Low/Medium/High]' line and an <output_format> Executive Summary section; warns Gemini 3 can over-analyze overly complex prompt engineering.",
+            "verdict": "partially-supported",
+            "source_url": "https://www.philschmid.de/gemini-3-prompt-practices",
+            "note": "Verbosity line, <output_format>/Executive Summary, and 'must explicitly ask for a chatty persona' all confirmed (post dated 2025-11-19). NOT confirmed: the 'may over-analyze verbose or overly complex prompt engineering' warning was not found in the post. That sub-claim should be dropped or re-sourced."
+          },
+          {
+            "claim": "Dominant cross-vendor principle: 'be concise' is too vague; altitude control works best through measurable explicit constraints (word/bullet/section counts, templates) — quote attributed to Claude API docs.",
+            "verdict": "partially-supported",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+            "note": "The principle is sound and widely echoed, but the marquee quote ('Terms like brief, concise, or detailed are subjective ... word limits, bullet counts, section counts, or strict templates') does NOT appear in the Claude doc it is primarily cited to. The doc says 'Be specific about the desired output format and constraints' and 'tell Claude what to do instead of what not to do.' The quote is third-party aggregation (DigitalOcean/Lakera), which the finding partly admits. Treat as practitioner consensus, not a vendor quote."
+          },
+          {
+            "claim": "The 'brief me as a senior reviewing a junior' pattern = persona + audience-level + length constraint (ROLE + TASK + CONTEXT + INSTRUCTIONS).",
+            "verdict": "unverifiable",
+            "source_url": "https://medium.com/@generativeai.saif/the-ultimate-guide-to-prompt-engineering-in-2025-mastering-llm-interactions-8b88c5cf65b6",
+            "note": "Sole source is a generic Medium listicle. The pattern is uncontroversial but the framing reads like generic prompt-engineering boilerplate without an authoritative source. Confidence 'medium' in the thread is appropriate; should not be elevated."
+          },
+          {
+            "claim": "Claude Code 'output styles' operationalize altitude as a persistent system-prompt setting: Default (concise), Explanatory, Learning, plus custom styles.",
+            "verdict": "outdated",
+            "source_url": "https://code.claude.com/docs/en/output-styles",
+            "note": "Core claim ('modify the system prompt directly and apply to every response') is verbatim-correct. STALE specifics: current docs list FOUR built-ins — Default, Proactive, Explanatory, Learning — not three. The /output-style command (and /output-style:new) were deprecated v2.1.73 and removed v2.1.91; selection is now via /config. Custom-style frontmatter also expanded (keep-coding-instructions, force-for-plugin)."
+          },
+          {
+            "claim": "Academic research (arXiv 2506.08686) documents a verbosity bias: responses significantly longer than necessary, partly an artifact of pairwise preference optimization rewarding length; benchmarked 12 LLMs; responses longer than human-written or machine-generated targets.",
+            "verdict": "partially-supported",
+            "source_url": "https://arxiv.org/abs/2506.08686",
+            "note": "Confirmed in 2506.08686: title, author list, 12 LLMs across 5 datasets, ACL 2025 Findings, 'substantially longer than necessary.' NOT in that paper's abstract: the 'pairwise preference optimization rewards length' causal attribution and the 'human-written or machine-generated targets' quote. Those belong to the broader DPO/RLHF length-bias literature, so the claim is true of the field but the citation is mis-attributed.",
+            "better_source_url": "https://arxiv.org/abs/2403.19159"
+          },
+          {
+            "claim": "Dedicated length-control methods (training/decoding level) are an active 2025-2026 frontier: Plan-and-Write, Hansel, precise length control, dynamic length-feedback.",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/abs/2511.01807",
+            "note": "Plan-and-Write (2511.01807, Nov 3 2025) confirmed: structure-guided length control without retraining via planning + word-counting. Cluster (Hansel 2412.14033, dynamic feedback 2601.01768, precise control 2412.11937) is real and recent. Minor: the exact 'write a 500-word composition' phrasing wasn't located in the Plan-and-Write abstract, but the under-addressed length-control framing is present."
+          },
+          {
+            "claim": "Cross-vendor thesis: terseness is now the default posture across frontier models, so you steer UP toward chattiness rather than DOWN toward brevity.",
+            "verdict": "contradicted",
+            "source_url": "https://arxiv.org/abs/2601.00624",
+            "note": "YapBench (arXiv 2601.00624, Jan 2026, 76 models incl. OpenAI/Anthropic/Google) finds the OPPOSITE population-level trend: models released 2025-2026 are on average MORE verbose than 2023-2024 models ('length bias is getting worse, not better'); worst models over-generate 10-20x; GPT-3.5-Turbo is among the most concise. The thread's 'terse-by-default, steer up' generalization is a per-vendor marketing posture, not a measured cross-vendor fact."
+          }
+        ],
+        "training_data_smells": [
+          "Finding 8 (persona / ROLE+TASK+CONTEXT+INSTRUCTIONS 'senior reviewing a junior') is sourced only to a generic Medium 'Ultimate Guide to Prompt Engineering 2025' listicle; reads like prompt-engineering boilerplate that could be produced from training-data priors rather than a primary source.",
+          "Finding 7's marquee quote ('5 bullets, each under 15 words not be concise'; 'word limits, bullet counts, section counts, or strict templates') is presented as if vendor-sourced (Claude docs) but is actually third-party SEO-style aggregation; true in spirit, weak in provenance.",
+          "The synthesis-level generalization 'terseness is now the default posture across vendors; steer UP not DOWN' is asserted more confidently than the evidence supports — vendor docs say it only about their own latest models, and it is contradicted as a cross-vendor trend by YapBench 2026."
+        ],
+        "contradicting_evidence": [
+          "YapBench (arXiv 2601.00624, Jan 2026; tabularis.ai), benchmarking 76 assistant LLMs across OpenAI/Anthropic/Google/Meta/Mistral: models released in 2025-2026 are on AVERAGE MORE verbose than 2023-2024 models ('length bias in training is getting worse, not better'); the most verbose models over-generate 10-20x; GPT-3.5-Turbo is among the most concise. Directly qualifies the thread's 'terse-by-default' thesis.",
+          "GPT-5's verbosity/reasoning_effort parameters have documented integration failures: Azure does not support them on the standard gpt-5-chat model (2025-04-01-preview), and LangChain has a bug where verbosity conflicts with structured output (GitHub issue #32492). The 'just set the first-class knob' framing omits these caveats.",
+          "Verbosity-compensation literature (arXiv 2411.07858 'Verbosity != Veracity') shows over-length responses persist EVEN UNDER explicit conciseness instructions, with verbosity-compensation frequencies of 13.6% (Llama-3-70B) to 74% (Mistral-7B) — qualifies the optimistic 'measurable constraints solve verbosity' framing.",
+          "GPT-5 cookbook token counts are not stable across renderings (560/849/1288 in one, 731/1017/1263 in another), indicating the numeric 'scaling' is anecdotal per-prompt rather than a guaranteed spec."
+        ]
+      }
+    },
+    {
+      "sub_question_id": "sq6-trust-calibration-failure-modes",
+      "title": "Trust calibration — automation bias vs verification fatigue",
+      "discovery": {
+        "sub_question_id": "sq6-trust-calibration-failure-modes",
+        "summary": "The 2025-2026 evidence shows AI coding tools shift the bottleneck from writing to judging, and humans miscalibrate that judgment in both directions. UNDER-reviewing: Sonar (Jan 2026, 1,100+ devs) found 96% distrust AI code but only 48% always verify it (\"verification debt,\" per AWS CTO Werner Vogels); the foundational Parasuraman & Manzey result (operators of high-reliability automation are ~50% less likely to detect failures) underlies this rubber-stamping; an Anthropic RCT (Feb 2026) found full delegation cut comprehension ~17 points (50% vs 67%), with code-generators scoring <40% vs >65% for conceptual users; and CHI '26 confirms over-reliance is the dominant inappropriate-reliance mode. OVER-reviewing: 38% say reviewing AI code is harder than human code, AI PRs carry ~1.7x more issues (CodeRabbit, 10.83 vs 6.45/PR), and the resulting \"density of work\"/decision fatigue makes reviewers sloppy. Humans add most value on intent, business logic, and architecture (AI is reliable only for mechanical/security/style defects); Anthropic reports devs \"fully delegate\" only 0-20% of tasks and delegate only the \"easily verifiable.\" Best mitigations are trust-adaptive interventions (counter-explanations + forced pauses: 38% less inappropriate reliance, 20% accuracy gain) and specification-grounded review that breaks the circular AI-reviews-itself loop (90.9% adoption lift). Sources diverge on net effect — METR found experienced devs 19% slower (and misperceived a 20% speedup) while DORA 2025 finds AI raises throughput but also instability.",
+        "key_findings": [
+          {
+            "claim": "The verification gap: 96% of developers don't fully trust AI code, yet only 48% always verify it before committing; 42% of committed code is now AI-produced.",
+            "evidence": "96% of developers do not fully trust that AI-generated code is functionally correct... only 48% always verify their AI-assisted code before committing it. 42% of committed code comes from AI.",
+            "source_title": "Sonar Data Reveals Critical Verification Gap in AI Coding",
+            "source_url": "https://www.sonarsource.com/company/press-releases/sonar-data-reveals-critical-verification-gap-in-ai-coding/",
+            "source_date": "2026-01-08",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "'Verification debt' is the named risk for unreviewed AI code; fewer than half of developers review AI code before committing, and 61% agree AI produces code that looks correct but isn't reliable.",
+            "evidence": "fewer than half say they review it before committing... 'verification debt' [term] used by AWS CTO Werner Vogels... 61% of respondents agreed AI often produces code that looks correct but isn't reliable.",
+            "source_title": "Nearly half of software developers don't check AI-generated code (IT Pro)",
+            "source_url": "https://www.itpro.com/software/development/software-developers-not-checking-ai-generated-code-verification-debt",
+            "source_date": "2026-01-09",
+            "source_type": "news",
+            "confidence": "high"
+          },
+          {
+            "claim": "Foundational automation-complacency result: operators of constantly high-reliability automation are ~50% less likely to detect failures; complacency occurs under multi-task load and afflicts both novices and experts.",
+            "evidence": "operators of constantly high reliability systems were 50% less likely to detect failures than operators of unreliable systems... found in both naive and expert participants and cannot be overcome with simple practice.",
+            "source_title": "Complacency and Bias in Human Use of Automation: An Attentional Integration (Parasuraman & Manzey)",
+            "source_url": "https://journals.sagepub.com/doi/10.1177/0018720810376055",
+            "source_date": "2010",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "Over-reliance is the dominant inappropriate-reliance failure mode across HCI human-AI decision-making studies; people over-rely without analytically engaging, and engagement comes at a cost.",
+            "evidence": "recent empirical studies show critical concerns that people over-rely on AI advice without analytically engaging with it... user engagement is a precious commodity... it comes at a cost.",
+            "source_title": "Do People Appropriately Rely on AI-Advice? An Analytical Review of HCI Research on Human-AI Decision-Making (CHI 2026)",
+            "source_url": "https://dl.acm.org/doi/10.1145/3772318.3791467",
+            "source_date": "2026-04",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Full delegation to AI atrophies skill ~17 points: AI group scored 50% vs 67% manual on comprehension/debugging quizzes; conceptual users scored >=65% while code-delegators scored <40%.",
+            "evidence": "The AI group averaged 50% compared to 67% for the manual coding group... those who used AI for conceptual questions scored 65% or higher, while those delegating code generation to AI scored below 40%.",
+            "source_title": "Anthropic Study: AI Coding Assistance Reduces Developer Skill Mastery by 17% (InfoQ, reporting Shen & Tamkin)",
+            "source_url": "https://www.infoq.com/news/2026/02/ai-coding-skill-formation/",
+            "source_date": "2026-02",
+            "source_type": "news",
+            "confidence": "high"
+          },
+          {
+            "claim": "Reviewing AI code is harder than reviewing human code (38% of devs), shifting and intensifying the burden onto reviewers.",
+            "evidence": "38% of developers say reviewing AI-generated code requires more effort than reviewing code written by their human colleagues... 'Reviewing [another's] code is so much harder than writing it. AI tools are increasing the rate at which people can churn out code that needs to be reviewed.'",
+            "source_title": "Balancing AI tensions: Moving from AI adoption to effective SDLC use (DORA)",
+            "source_url": "https://dora.dev/insights/balancing-ai-tensions/",
+            "source_date": "2026-03-10",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "AI-co-authored PRs contain ~1.7x more issues than human-only PRs (10.83 vs 6.45 per PR), with security issues up to 2.74x and logic/correctness +75% — more defects to catch, that look correct at a glance.",
+            "evidence": "AI-authored changes produced 10.83 issues per PR, compared to 6.45 for human-only PRs (~1.7x)... security vulnerabilities up to 2.74x higher, logic/correctness 75% more common. AI optimizes for surface-level correctness, not deep project context.",
+            "source_title": "State of AI vs Human Code Generation Report (CodeRabbit)",
+            "source_url": "https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report",
+            "source_date": "2025-12-17",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Verification/decision fatigue: AI lowered writing cost but raised review cognitive load, creating a 'density of work' that makes reviewers sloppy and error-prone from burnout.",
+            "evidence": "this imbalance leads to decision fatigue, increasing the risk of human error when reviewers become sloppy due to burnout... developers spend more time gathering context and making high-stakes judgement calls than actually coding.",
+            "source_title": "Coding Agents Are Giving Everyone Decision Fatigue (Dev|Journal)",
+            "source_url": "https://earezki.com/ai-news/2026-05-21-coding-agents-are-giving-everyone-decision-fatigue/",
+            "source_date": "2026-05-21",
+            "source_type": "blog",
+            "confidence": "low"
+          },
+          {
+            "claim": "METR RCT: experienced developers were 19% SLOWER with AI on familiar mature repos, yet expected a 24% speedup and still believed AI sped them up 20% afterward — a large self-perception miscalibration.",
+            "evidence": "Developers took 19% longer when using AI tools... Developers expected 24% speedup, perceived 20% speedup post-study, but actually experienced slowdown. 16 developers, 246 issues, repos averaging 22k+ stars and 1M+ LOC.",
+            "source_title": "Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity (METR)",
+            "source_url": "https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/",
+            "source_date": "2025-07-10",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Humans add most value on intent, business logic, and architecture; AI review is reliable only for mechanical/pattern defects (security signatures, null safety, style). 84% use AI but only ~33% trust its accuracy.",
+            "evidence": "AI is highly accurate for security vulnerabilities and null safety but less reliable for business logic and architectural concerns... humans remain essential for business intent, system context, architectural implications, and compliance. 84% of developers now use AI; only a third trust the accuracy.",
+            "source_title": "How Accurate Is AI Code Review in 2026? (CodeAnt AI)",
+            "source_url": "https://www.codeant.ai/blogs/ai-code-review-accuracy",
+            "source_date": "2026-05-29",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Anthropic frames human oversight as scaling 'through intelligent failures': engineers can 'fully delegate' only 0-20% of tasks, keep design-dependent/conceptually difficult work, and delegate freely only what is 'easily verifiable' (sniff-checkable). The role shifts from writing to reviewing/supervising/validating.",
+            "evidence": "they report being able to 'fully delegate' only 0-20% of tasks... delegate tasks that are easily verifiable, where they 'can relatively easily sniff-check on correctness'... the shift is from writing code to reviewing, prompting, active supervision, validation, and human judgment... make human attention count where it matters most.",
+            "source_title": "2026 Agentic Coding Trends Report (Anthropic)",
+            "source_url": "https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf",
+            "source_date": "2026",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Trust-adaptive interventions fix BOTH failure modes: counter-explanations at high trust and supporting-explanations at low trust yield up to 38% reduction in inappropriate reliance and 20% accuracy gain; forced pauses reduce over-reliance. Under-reliance is also costly — at low trust, doctors reject correct AI diagnoses 68% of the time (up from 40%).",
+            "evidence": "providing supporting and counter-explanations during moments of low and high trust... yields up to 38% reduction in inappropriate reliance and 20% improvement in decision accuracy... reduce over-reliance by adaptively inserting forced pauses... when user trust is low, doctors reject correct AI diagnoses 68% of the time, up from 40% otherwise.",
+            "source_title": "Adjust for Trust: Mitigating Trust-Induced Inappropriate Reliance on AI Assistance (Srinivasan & Thomason, IUI '26)",
+            "source_url": "https://arxiv.org/pdf/2502.13321",
+            "source_date": "2026-01-27",
+            "source_type": "peer-reviewed",
+            "confidence": "high"
+          },
+          {
+            "claim": "Specification-grounded review breaks the circular 'AI reviews its own output' loop: homogeneous LLM pipelines have correlated errors and overcorrection bias; grounding review in human-authored specs lifted developer adoption of suggestions by 90.9%.",
+            "evidence": "homogeneous LLM pipelines exhibit correlated errors... AI checks code against itself, not against intent... specification-grounded review achieved a 90.9% improvement in adoption rates (Wang et al.).",
+            "source_title": "The Specification as Quality Gate: Three Hypotheses on AI-Assisted Code Review (Zietsman)",
+            "source_url": "https://arxiv.org/pdf/2603.25773",
+            "source_date": "2026",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "The 'augmentation trap': even a rational worker who fully anticipates skill erosion adopts AI because front-loaded productivity outweighs long-run skill costs, ending up less capable; less-experienced workers can deskill permanently.",
+            "evidence": "even a decision-maker who fully anticipates skill erosion rationally adopts AI when front-loaded productivity gains outweigh long-run skill costs... less experienced workers deskill permanently, widening inequality irreversibly.",
+            "source_title": "The Augmentation Trap: AI Productivity and the Cost of Cognitive Offloading (Caosun & Aral)",
+            "source_url": "https://arxiv.org/html/2604.03501",
+            "source_date": "2026-05-21",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "DORA 2025: AI adoption (~90%) now correlates with higher delivery throughput but continues to correlate with lower delivery stability; 30% of developers report little/no trust in AI code. AI acts as an amplifier of existing team capability.",
+            "evidence": "higher AI adoption is associated with an increase in both software delivery throughput and software delivery instability... 30% of developers report little to no trust in the code generated by AI.",
+            "source_title": "Announcing the 2025 DORA Report (Google Cloud / DORA)",
+            "source_url": "https://cloud.google.com/blog/products/ai-machine-learning/announcing-the-2025-dora-report",
+            "source_date": "2025",
+            "source_type": "industry-report",
+            "confidence": "high"
+          }
+        ],
+        "named_frameworks": [
+          "Automation complacency / automation bias — attentional integration model (Parasuraman & Manzey, 2010; omission vs commission errors)",
+          "Appropriate reliance / over-reliance / under-reliance; Relative AI Reliance (RAIR) — HCI human-AI decision-making literature (CHI 2026 review)",
+          "Verification gap / verification debt (Sonar 2026; 'verification debt' per AWS CTO Werner Vogels)",
+          "The Augmentation Trap — alpha skill-neutral vs beta knowledge-complementary gains; steady-state loss; skill divergence (Caosun & Aral 2026)",
+          "Vibe-Check Protocol — quantifying cognitive offloading in AI programming (Aiersilan 2026)",
+          "Specification as Quality Gate; Correlated Error Hypothesis; Circular Review Problem; overcorrection bias (Zietsman 2026)",
+          "Trust-adaptive explanations / cognitive forcing functions — forced pauses + adaptive counter-explanations (Srinivasan & Thomason, 'Adjust for Trust', IUI 2026)",
+          "'Human oversight scales through intelligent failures'; delegate-the-sniff-checkable heuristic; fully-delegate-only-0-20% (Anthropic 2026 Agentic Coding Trends Report)",
+          "AI-as-amplifier — throughput up, stability down (DORA 2025)"
+        ],
+        "debates_tensions": [
+          "Net productivity: METR's RCT found experienced devs 19% SLOWER with AI on familiar mature codebases, while DORA 2025 finds AI now RAISES throughput at scale — though both agree AI raises instability and pushes work downstream into review.",
+          "More AI reviewers as the cure vs. a circular trap: industry (CodeRabbit) deploys AI PR review gates, but Zietsman argues homogeneous AI-on-AI review is structurally circular, amplifying correlated errors unless grounded in a human-authored spec.",
+          "Is over- or under-reliance the bigger danger? CHI '26 frames over-reliance as dominant; 'Adjust for Trust' shows under-reliance is equally costly (doctors reject correct AI advice 68% of the time at low trust) — the real target is calibration, not maximizing or minimizing reliance.",
+          "Does AI build or erode skill? Anthropic and the Augmentation Trap show delegation atrophies skill, but conceptual/engaged use preserves or builds it — the determinant is HOW AI is used, not adoption itself.",
+          "Source-incentive caution: vendor reports (Sonar, CodeRabbit, CodeAnt, Anthropic) sell review/verification tooling; their directional findings align with independent academic work (METR, CHI, IUI, MIT) but exact magnitudes should be read as vendor-favorable."
+        ],
+        "recency_note": "Evidence is very recent and the area is fast-moving. The strongest sources cluster in late 2025 through May 2026: peer-reviewed/preprint work (CHI 2026, IUI 2026 'Adjust for Trust', Zietsman spec-as-quality-gate 2026, Caosun & Aral 2026, Vibe-Check 2026), the METR RCT (Jul 2025), the 2025 DORA report, Sonar's Jan 2026 survey, CodeRabbit's Dec 2025 report, and Anthropic's 2026 Agentic Coding Trends Report. Only one source is foundational/older (Parasuraman & Manzey 2010), explicitly flagged as such and extended — not superseded — by the 2025-2026 work. The named taxonomies (RAIR, verification debt, augmentation trap, trust-adaptive cognitive forcing) are emerging and likely to be refined within months.",
+        "raw_file_path": "/Users/steve/projects/momentum/undefined/raw/research-sq6-trust-calibration-failure-modes.md"
+      },
+      "verification": {
+        "sub_question_id": "sq6-trust-calibration-failure-modes",
+        "overall_reliability": "medium",
+        "validation_file_path": "/Users/steve/projects/momentum/undefined/validation/verify-sq6-trust-calibration-failure-modes.md",
+        "verdicts": [
+          {
+            "claim": "METR RCT: experienced devs 19% slower with AI; expected 24% speedup, perceived 20% speedup; 16 devs, 246 issues, repos 22k+ stars / 1M+ LOC, Cursor Pro + Claude 3.5/3.7 Sonnet.",
+            "verdict": "outdated",
+            "source_url": "https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/",
+            "better_source_url": "https://metr.org/blog/2026-02-24-uplift-update/",
+            "note": "All figures re-fetch exactly. BUT METR's own 2026-02-24 follow-up found the same developers ~18% FASTER and is redesigning the study due to selection bias. The thread uses the 19%-slowdown as a stable tension-pole without disclosing the authors' walk-back. Quoted correctly; used in an outdated way."
+          },
+          {
+            "claim": "Sonar verification gap: 96% don't fully trust AI code, only 48% always verify, 42% of committed code is AI-produced.",
+            "verdict": "confirmed",
+            "source_url": "https://www.sonarsource.com/company/press-releases/sonar-data-reveals-critical-verification-gap-in-ai-coding/",
+            "note": "All three figures verbatim; 1,100+ devs; Jan 8 2026."
+          },
+          {
+            "claim": "61% agreed AI often produces code that looks correct but isn't reliable.",
+            "verdict": "partially-supported",
+            "source_url": "https://www.itpro.com/software/development/software-developers-not-checking-ai-generated-code-verification-debt",
+            "note": "IT Pro confirms 61% for one worded statement. Sonar's own press release reports 53% citing 'code that looks correct but isn't reliable' as a negative impact. Likely two different survey items; unreconciled internal tension. 'Verification debt'/Werner Vogels attribution confirmed."
+          },
+          {
+            "claim": "Anthropic RCT: full delegation cut comprehension ~17 pts (50% vs 67%); conceptual users >=65%, code-delegators <40%; speed gain not statistically significant; 52 junior engineers, Trio library.",
+            "verdict": "confirmed",
+            "source_url": "https://www.infoq.com/news/2026/02/ai-coding-skill-formation/",
+            "note": "Every figure confirmed via InfoQ. Note this is a learning/skill-formation study on juniors, not a code-review-bias study; thread applies it appropriately to the skill-atrophy point."
+          },
+          {
+            "claim": "AI-co-authored PRs ~1.7x more issues (10.83 vs 6.45), security up to 2.74x, logic +75%.",
+            "verdict": "confirmed",
+            "source_url": "https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report",
+            "note": "All figures confirmed; 470 PRs (320 AI / 150 human); Dec 17 2025. Caveat the thread under-weights: AI-authorship was INFERRED from signals, not confirmed; vendor sells AI review tooling. Directionally credible, magnitudes vendor-favorable."
+          },
+          {
+            "claim": "Parasuraman & Manzey: operators of high-reliability automation ~50% less likely to detect failures; complacency under multi-task load; in both naive and expert participants; not fixed by simple practice.",
+            "verdict": "partially-supported",
+            "source_url": "https://journals.sagepub.com/doi/10.1177/0018720810376055",
+            "note": "Abstract confirms multi-task-load, naive+expert, and not-fixed-by-practice verbatim. The specific '50% less likely to detect failures' figure is NOT in the abstract — it is a body summary of a single reviewed study, frequently quoted secondhand. Mechanism solid; the 50% number loosely attributed. Correctly flagged as foundational/2010."
+          },
+          {
+            "claim": "Adjust for Trust (Srinivasan & Thomason, IUI '26): supporting/counter-explanations yield up to 38% reduction in inappropriate reliance and 20% accuracy gain; forced pauses reduce over-reliance; doctors reject correct AI 68% vs 40% at low trust.",
+            "verdict": "confirmed",
+            "source_url": "https://arxiv.org/abs/2502.13321",
+            "note": "Title, authors, and the 38%/20% + forced-pauses findings confirmed verbatim from the abstract. The '68% vs 40%' doctor stat is in the full body, not the abstract — unverified here but plausible and consistent."
+          },
+          {
+            "claim": "DORA 2025: ~90% AI adoption; throughput now positively associated (reversal); stability still negatively associated; AI-as-amplifier; 30% report little/no trust.",
+            "verdict": "confirmed",
+            "source_url": "https://cloud.google.com/blog/products/ai-machine-learning/announcing-the-2025-dora-report",
+            "note": "All claims confirmed verbatim including the explicit throughput reversal and amplifier framing."
+          },
+          {
+            "claim": "38% of developers say reviewing AI-generated code requires more effort than reviewing human colleagues' code (attributed to DORA).",
+            "verdict": "contradicted",
+            "source_url": "https://dora.dev/insights/balancing-ai-tensions/",
+            "better_source_url": "https://www.itpro.com/software/development/software-developers-not-checking-ai-generated-code-verification-debt",
+            "note": "The 38% figure is NOT on the dora.dev page (which has only the qualitative 'babysitting the AI' / 'reviewing is harder than writing' quotes). The 38% is a Sonar survey figure (confirmed via IT Pro). Real number, mis-sourced to DORA."
+          },
+          {
+            "claim": "Specification-grounded review breaks the circular AI-reviews-itself loop; grounding in human specs lifted developer adoption of suggestions by 90.9% (Wang et al., per Zietsman).",
+            "verdict": "partially-supported",
+            "source_url": "https://arxiv.org/abs/2603.25773",
+            "note": "Title (The Specification as Quality Gate), author (Christo Zietsman), and the correlated-errors/circular-review thesis confirmed from abstract. BUT the '90.9% adoption lift (Wang et al.)' could not be located anywhere in the paper — weakest single claim, treat as unverified. Also: this is a hypotheses/preprint paper, so even the core thesis is proposed, not demonstrated."
+          },
+          {
+            "claim": "CHI '26 analytical review confirms over-reliance is the dominant inappropriate-reliance failure mode across HCI human-AI decision-making studies.",
+            "verdict": "unverifiable",
+            "source_url": "https://dl.acm.org/doi/10.1145/3772318.3791467",
+            "better_source_url": "https://arxiv.org/html/2509.08010v1",
+            "note": "ACM DL returned HTTP 403; paper existence/wording not directly confirmable. Broader literature confirms over-reliance is a major documented concern but treats under-reliance/algorithm-aversion as co-equal — so the 'dominant' characterization is contestable, not settled. Thread already marked confidence medium."
+          },
+          {
+            "claim": "The Augmentation Trap (Caosun & Aral, MIT): rational AI adoption still erodes long-run skill; less-experienced workers deskill permanently.",
+            "verdict": "unverifiable",
+            "source_url": "https://arxiv.org/html/2604.03501",
+            "note": "Not independently re-fetched this pass; arXiv ID format plausible for Apr 2026. Critically, this is a THEORETICAL economic model result, not empirical evidence of real-world deskilling — should be read as a formal argument, not data. Thread marks it medium."
+          }
+        ],
+        "contradicting_evidence": [
+          "METR's own 2026-02-24 follow-up (metr.org/blog/2026-02-24-uplift-update/) found the same developers ~18% FASTER with AI, directly reversing the 19%-slowdown headline; METR is redesigning the experiment due to selection bias (devs refused to work without AI; 30-50% avoided submitting high-AI-benefit tasks). The thread relies on the slowdown figure without this walk-back.",
+          "A 'modest gains' cluster of 2026 sources (Second Talent: 84% adoption but only ~10% productivity gain; philippdubach: 93% adoption, productivity 'hasn't moved') places real-world net effect as small-positive — between METR-slowdown and DORA-throughput, so neither extreme dominates.",
+          "The reliance literature (Computers in Human Behavior 2024 doi 10.1016/j.chb.2024.108352; arXiv 2509.08010; CHI 2025 doi 10.1145/3706598.3714097) treats over- and under-reliance (algorithm aversion) as CO-EQUAL failure modes with a dynamic flip (overtrust then over-distrust after a visible error), undercutting any 'over-reliance is THE dominant mode' framing while supporting the thread's calibration thesis.",
+          "The skill effect is conditional, not a simple deskilling story: 2026 sources (Uvik; Data Science Collective; the Anthropic study itself) confirm conceptual/engaged use preserves or builds skill while only careless delegation erodes it — corroborating the thread's 'how, not whether' nuance and arguing against a blanket deskilling narrative."
+        ],
+        "training_data_smells": [
+          "Zietsman's '90.9% improvement in adoption attributed to Wang et al.' — precise statistic not locatable anywhere in the cited Zietsman paper; classic over-specific, weakly-grounded figure shape. Highest smell.",
+          "Parasuraman & Manzey '50% less likely to detect failures' — real but NOT in the abstract; a secondhand body-of-paper summary of a single reviewed study, showing mild citation-telephone smell despite the source being genuine and foundational.",
+          "'Vibe-Check Protocol' (Aiersilan, arXiv 2601.02410) — appears only in the raw file, not independently re-fetched; niche preprint with a catchy name that warrants a direct existence check before being treated as load-bearing."
+        ]
+      }
+    },
+    {
+      "sub_question_id": "sq7-junior-employee-analogy",
+      "title": "The \"junior employee\" analogy — validity & limits",
+      "discovery": {
+        "sub_question_id": "sq7-junior-employee-analogy",
+        "summary": "The junior-developer analogy is a useful delegation posture but breaks on no cross-session learning, confidently wrong, jagged capability, and no accountability. Full synthesis and all 10 sources are in the raw file.",
+        "key_findings": [
+          {
+            "claim": "Practitioners treat LLM output like a junior dev but verify every output; Harris counters it is NOT a junior (no memory, no consequences); Goedecke notes no learning across sessions.",
+            "evidence": "I treat every AI-generated snippet as if it came from a junior developer: I read, run, and test it. I am the senior dev.",
+            "source_title": "My LLM coding workflow going into 2026 (Osmani)",
+            "source_url": "https://addyosmani.com/blog/ai-coding-workflow/",
+            "source_date": "2026-01-04",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "Jaggedness is structural and over-trust is empirical: Gemini is plus 1.99 SD math but minus 1.02 SD visual reasoning, and devs were 19 percent slower with AI yet believed they were 20 percent faster.",
+            "evidence": "Allowing AI increased completion time by 19 percent; developers estimated a 20 percent reduction (METR). Gemini 2.5 Pro jaggedness per DeepMind.",
+            "source_title": "METR (Willison) and Characterizing Model Jaggedness (Google DeepMind)",
+            "source_url": "https://simonwillison.net/2025/Jul/12/ai-open-source-productivity/",
+            "source_date": "2025-07-12",
+            "source_type": "industry-report",
+            "confidence": "high"
+          }
+        ],
+        "named_frameworks": [
+          "Jaggedness index (Google DeepMind 2026)",
+          "Jagged frontier; Centaur vs Cyborg (Mollick)",
+          "Situational Leadership (Hersey-Blanchard)",
+          "7 Levels of Delegation / Delegation Poker (Appelo)",
+          "Tannenbaum-Schmidt continuum",
+          "Agentic AI Maturity Model (Microsoft 2026)",
+          "The Accountability Stack (Yamin)"
+        ],
+        "debates_tensions": [
+          "Useful posture vs harmful metaphor (Osmani/Goedecke vs Harris).",
+          "Trust accrues vs resets: frameworks assume graduation, but LLMs do not learn across sessions.",
+          "Speedup vs slowdown: METR 19 percent slowdown vs BCG large gains on in-frontier tasks.",
+          "Can agents be accountable: Yamin no; HBR/Microsoft say engineered controls substitute."
+        ],
+        "recency_note": "6 of 10 sources from 2026; METR mid-2025; Mollick 2023 and Appelo flagged foundational. Fast-moving area.",
+        "raw_file_path": "/Users/steve/projects/momentum/docs/research/hitl-oversight-altitude-2026-05-31/raw/research-sq7-junior-employee-analogy.md"
+      },
+      "verification": {
+        "sub_question_id": "sq7-junior-employee-analogy",
+        "overall_reliability": "medium",
+        "validation_file_path": "/Users/steve/projects/momentum/docs/research/hitl-oversight-altitude-2026-05-31/validation/verify-sq7-junior-employee-analogy.md",
+        "verdicts": [
+          {
+            "claim": "Osmani treats every AI snippet 'as if it came from a junior developer' (reads/runs/tests it) and remains the accountable senior engineer.",
+            "verdict": "confirmed",
+            "source_url": "https://addyosmani.com/blog/ai-coding-workflow/",
+            "note": "Exact quotes verified in source dated 2026-01-04: 'I treat every AI-generated snippet as if it came from a junior developer...', 'I remain the accountable engineer', 'I am the senior dev'. Also the Willison 'over-confident and prone to mistakes' / 'writes code with complete conviction - including bugs or nonsense' framing."
+          },
+          {
+            "claim": "Osmani explicitly contrasts LLMs with junior devs as 'lack judgment, no accountability, cannot learn from corrections across sessions, require verification of every output rather than developing trustworthiness over time'.",
+            "verdict": "partially-supported",
+            "source_url": "https://addyosmani.com/blog/ai-coding-workflow/",
+            "note": "Judgment / accountability / verify-everything are supported. The 'cannot learn across sessions / never develops trustworthiness over time' contrast is NOT explicitly stated by Osmani; it is the discovery agent's synthesis (sourced elsewhere from Harris/Goedecke) presented as an Osmani-attributed paraphrase. Down-rated from high."
+          },
+          {
+            "claim": "METR RCT found AI increased completion time 19% while developers estimated a ~20% reduction (16 devs, 143 hrs of screen recording).",
+            "verdict": "outdated",
+            "source_url": "https://simonwillison.net/2025/Jul/12/ai-open-source-productivity/",
+            "better_source_url": "https://metr.org/blog/2026-02-24-uplift-update/",
+            "note": "Figures verified as originally reported (2025-07-12). But METR itself (2026-02-24) acknowledged severe selection effects — devs who benefit most declined the no-AI condition; 30-50% withheld tasks they didn't want to do without AI — biasing the estimate DOWNWARD. METR now calls 19% a lower bound and is redesigning the study. The thread uses this as its 'strongest empirical caution'; that use no longer holds un-caveated."
+          },
+          {
+            "claim": "Google DeepMind jaggedness paper: Gemini 2.5 Pro scores z=+1.99 on AIME 2025 math (top ~3%) and z=-1.02 on ARC-AGI-1 visual reasoning (bottom ~16%); jaggedness is 'alien to our own' and a structural property; index = SD of Winsorized z-scores.",
+            "verdict": "confirmed",
+            "source_url": "https://cs.stanford.edu/~merrie/papers/jaggedness_preprint.pdf",
+            "note": "Verified verbatim from the PDF (Morris et al., Google DeepMind, 2026-01-27): z'_math=1.99, z'_visual_reasoning=-1.02, top 3% / bottom 16%, 'alien to our own', 'jaggedness is a structural property of current architectures and scaling paradigms', index = spread of Winsorized z-scores. Caveat: paper states these numbers are 'illustrative of the method and not as an endorsement of these particular benchmarks' — the thread presents them as a hard capability fact."
+          },
+          {
+            "claim": "BCG/HBS field experiment of 758 consultants: 12.2% more tasks / 25.1% faster / 40% higher quality in-frontier; on an out-of-frontier task humans were right 84% unaided vs 60-70% with AI.",
+            "verdict": "confirmed",
+            "source_url": "https://www.oneusefulthing.org/p/centaurs-and-cyborgs-on-the-jagged",
+            "note": "All figures and centaur/cyborg definitions verified in the cited Mollick post. But this is a 2023-09-16 source reporting the 2023 Dell'Acqua et al. study — foundational, not recent. Correctly flagged as foundational by the discovery agent; usable as 'what the study found', dated as live 2026 evidence."
+          },
+          {
+            "claim": "Harris argues the LLM is NOT a junior engineer (no long-term memory, won't mature, no legal/professional consequences, no internalized values); compares it to Amelia Bedelia and Leonard Shelby from Memento.",
+            "verdict": "confirmed",
+            "source_url": "https://jacobharr.is/personal/llm-not-junior-engineer",
+            "note": "All quotes verified in source dated 2026-04-29. The Amelia Bedelia / Memento comparison is verbatim."
+          },
+          {
+            "claim": "Goedecke uses agents 'constantly and with light supervision', ~30s initial assessment, rejects most attempts, and notes agents show 'no learning' across sessions.",
+            "verdict": "partially-supported",
+            "source_url": "https://www.seangoedecke.com/how-i-use-llms-in-2026/",
+            "note": "'constantly and with light supervision', '~thirty seconds', 'reject them entirely' all verified verbatim (2026-05-17). The 'no learning across sessions' attribution is NOT explicit in the article; it is implied via 'five or six (or more!) agent attempts' and over-attributed by the discovery agent as a direct claim."
+          },
+          {
+            "claim": "Yamin: 'literally nobody's accountable', 'personalized responsibility becomes mathematically unattainable', reviewers degrade to ritual, and manipulated chain-of-thought 'inflated false positives by 90%'.",
+            "verdict": "partially-supported",
+            "source_url": "https://tahir-yamin.medium.com/the-ai-agent-accountability-crisis-3917e5b3be85",
+            "note": "All phrases verified present in the Medium piece (2026-01-25). But these are second-hand citations (Romanchuk & Bondar 2026; Khalifa et al. arXiv:2601.14691, 800 trajectories) inside an opinion post; the underlying primary sources and the 90% figure were NOT independently verified. Treat as illustrative, not established fact. Discovery agent's 'medium' confidence is appropriate."
+          },
+          {
+            "claim": "LLMs structurally cannot learn across sessions, so trust must reset per session rather than graduate.",
+            "verdict": "partially-supported",
+            "source_url": "https://jacobharr.is/personal/llm-not-junior-engineer",
+            "better_source_url": "https://mem0.ai/blog/state-of-ai-agent-memory-2026",
+            "note": "True of the bare/stateless model. Increasingly contested for deployed agent SYSTEMS in 2026: Mem0 (MCP-integrated with Claude Code), AgeMem (arXiv:2601.01885), survey arXiv:2603.07670 show engineered external-memory layers persisting learned facts/policies across sessions. The thread treats no-cross-session-learning as a hard invariant; better framed as a model default that memory layers partially close (with staleness/identity caveats)."
+          }
+        ],
+        "contradicting_evidence": [
+          "METR's own follow-up (https://metr.org/blog/2026-02-24-uplift-update/, 2026-02-24) acknowledges severe selection effects in the 19%-slowdown RCT: developers who benefit most from AI declined the no-AI condition, and 30-50% of developers withheld tasks they didn't want to do without AI. METR now calls the 19% figure a LOWER BOUND on AI's true productivity effect and is redesigning the study. This directly undercuts the thread's use of '19% slower' as its strongest empirical caution against over-trusting agents.",
+          "A substantial 2026 agentic-memory literature contradicts the flat 'no cross-session learning' pillar for deployed agent systems: Mem0 (MCP-integrated with Claude Code, https://mem0.ai/blog/state-of-ai-agent-memory-2026), AgeMem (arXiv:2601.01885), and survey arXiv:2603.07670 show production agents persisting learned facts and policies across sessions via external memory stores. The bare model is stateless, but the engineered system increasingly is not — so 'trust never compounds' is weaker than stated, though memory staleness and cross-session identity remain open problems.",
+          "The junior-dev analogy has active 2026 defenders beyond Osmani/Goedecke (rmoff 'Reflections of a Developer on LLMs in January 2026', 2026-01-27; arXiv:2602.00496 'From Junior to Senior: Allocating Agency...'), treating 'eager junior under close supervision' as a working and pedagogically useful model. Harris's 'the analogy is harmful/insulting' is one pole of a live debate, not a settled refutation.",
+          "The DeepMind paper explicitly states the Gemini 2.5 Pro z-scores (+1.99 / -1.02) are 'illustrative of the method and not as an endorsement of these particular benchmarks' — the thread presents them as a hard capability claim rather than the worked example the authors intended."
+        ],
+        "training_data_smells": [
+          "Finding 2 attributes a tidy four-part contrast (lack judgment / no accountability / cannot learn across sessions / verify every output instead of developing trust over time) to Osmani as if quoted; the source supports only part of it and does not state the cross-session-learning contrast. Clean synthesis hardened into an apparent source quote.",
+          "Finding 4's 'agents show no learning across sessions' is presented as a Goedecke claim but is the discovery agent's gloss; the article only implies independence-per-attempt.",
+          "Yamin's '90% inflated false positives' and 'personalized responsibility becomes mathematically unattainable' are authoritative-sounding numbers laundered through a Medium opinion post, with primary citations (arXiv:2601.14691; Romanchuk & Bondar 2026) that were not independently verified."
+        ]
+      }
+    },
+    {
+      "sub_question_id": "sq8-operationalizing-hitl-gates",
+      "title": "Operationalizing HITL gates in agentic engineering",
+      "discovery": {
+        "sub_question_id": "sq8-operationalizing-hitl-gates",
+        "summary": "Leading 2026 agentic engineering workflows converge on a small vocabulary of human checkpoints and are shifting from human-IN-the-loop (approve every action) toward human-ON-the-loop (supervise and intervene when it matters). The dominant concrete gate placement is a three-gate pattern around the autonomous coding loop — Plan Review (before file touch), Findings/Exploration Review (after codebase investigation, before edits), and Diff-Before-Push (before commit/merge) — explicitly designed to avoid the approval-fatigue failure mode of gating every tool call. Spec-driven development (GitHub Spec Kit, open-sourced 2026-05-09) operationalizes the same idea as phase boundaries (Specify→Plan→Tasks→Implement) where humans approve the spec, plan, and tests before autonomous implementation is unlocked. The clearest ask-vs-act primary source is Anthropic's Claude Code auto mode (2026-03-25): a Sonnet-4.6 transcript classifier runs in-repo edits freely but gates shell/external/out-of-project actions against 20+ block rules, escalating to the human after 3 consecutive or 20 total denials; Anthropic's companion research reframes autonomy as a 1-10 emergent property and shows experienced users grant MORE autonomy yet intervene MORE. Enterprise framing (Digital Applied, Waxell) adds risk/reversibility-tiered gate taxonomies (Advisory/Validating/Blocking/Escalating; Free-run/Monitor-and-flag/Block-for-approval) enforced in a governance layer rather than agent code, mapped to NIST/ISO 42001/EU AI Act Art. 14. METR's rising time horizons (14.5h at 50%) are read as changing the nature of failure (rarer, more complex, harder to catch) rather than removing the need for well-placed gates.",
+        "key_findings": [
+          {
+            "claim": "The dominant concrete gate placement for autonomous coding agents is three strategic gates: Plan Review (before file touch), Findings Review (after exploration, before edits), and Diff-Before-Push (before commit), chosen as highest-leverage, lowest-cost intervention points.",
+            "evidence": "Three minimal approval gates—plan review, findings review, and diff-before-push—cover real agent risk... gates work when they surface moments that actually require human judgment — not when they interrupt every tool invocation. Sequence: Task → Plan Gate → Exploration → Findings Gate → Implementation → Diff Gate → Commit.",
+            "source_title": "Where to Gate Your AI Coding Agent: A 3-Checkpoint Framework",
+            "source_url": "https://codeongrass.com/blog/where-to-gate-your-ai-coding-agent-3-checkpoint-framework/",
+            "source_date": "2026-05-03",
+            "source_type": "blog",
+            "confidence": "high"
+          },
+          {
+            "claim": "Claude Code auto mode replaces per-action approval with a Sonnet-4.6 transcript classifier that runs in-repo edits freely but gates shell/external/out-of-project actions against 20+ block rules, escalating to the human after 3 consecutive denials or 20 total denials per session.",
+            "evidence": "The system escalates when: Three consecutive denials occur... Twenty total denials accumulate across a session. Block-rule categories: destroy/exfiltrate, security-posture degradation, trust-boundary crossing, review-bypass. 'effective oversight doesn't require approving every action but being in a position to intervene when it matters.'",
+            "source_title": "How we built Claude Code auto mode: a safer way to skip permissions",
+            "source_url": "https://www.anthropic.com/engineering/claude-code-auto-mode",
+            "source_date": "2026-03-25",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Anthropic measures autonomy as an emergent 1-10 property (not fixed levels); experienced users grant MORE autonomy (>40% full auto-approval vs ~20% for new users) yet intervene MORE (9% vs 5%), shifting from per-action approval to monitoring-and-intervene.",
+            "evidence": "experienced users grant more autonomy while simultaneously intervening more frequently. Agent-initiated pauses: presenting alternatives (35%), gathering diagnostics (21%), requesting credentials (12%); Claude asks clarification 2x+ more on complex tasks; 73% involve humans somewhere in the loop.",
+            "source_title": "Measuring AI agent autonomy in practice",
+            "source_url": "https://www.anthropic.com/research/measuring-agent-autonomy",
+            "source_date": "2026-02-18",
+            "source_type": "industry-report",
+            "confidence": "high"
+          },
+          {
+            "claim": "Spec-driven development (GitHub Spec Kit) operationalizes HITL as phase-boundary approval gates: humans validate the spec (no [NEEDS CLARIFICATION] markers), approve the plan, and per its constitution approve tests before any implementation code is generated.",
+            "evidence": "'Tests are validated and approved by the user' before implementation begins; '[NEEDS CLARIFICATION: specific question]' markers must be resolved through human dialogue before progression. Humans decide requirements/acceptance/trade-offs; AI executes generation/code.",
+            "source_title": "spec-kit/spec-driven.md",
+            "source_url": "https://github.com/github/spec-kit/blob/main/spec-driven.md",
+            "source_date": "2026-05",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          },
+          {
+            "claim": "Enterprise governance framing defines four risk/reversibility-keyed gate types — Advisory (log-only), Validating (async 4-24h SLA), Blocking (synchronous 15-min SLA), Escalating (conditional routing) — with the reviewer barred from being the workflow's Responsible party, mapped to NIST AI RMF / ISO 42001 / EU AI Act Art. 14.",
+            "evidence": "'Reviewer must NOT be Responsible on the workflow.' Three SLA tiers: 15-min (real-time), 4-hour (standard), 24-hour (complex). Nine-field audit schema including 'state diff at gate.'",
+            "source_title": "Agentic Workflow Approval Gates: Governance Framework",
+            "source_url": "https://www.digitalapplied.com/blog/agentic-workflow-approval-gate-framework-governance",
+            "source_date": "2026-04-27",
+            "source_type": "industry-report",
+            "confidence": "medium"
+          },
+          {
+            "claim": "2026 designs shift toward human-on-the-loop (autonomous execution + monitoring + reactive intervention) for reversible/low-stakes work, reserving blocking HITL gates for irreversible/high-stakes/regulated actions; oversight policy should live in a governance layer, not agent code.",
+            "evidence": "Three-tier rubric — Tier 1 free-run (read-only/internal), Tier 2 monitor-and-flag (reversible external, HOTL), Tier 3 block-for-approval (irreversible/high-stakes, HITL). 'a tiered approval policy—enforced at the governance layer, not inside agent code—solves all three problems.'",
+            "source_title": "Human-in-the-Loop vs Human-on-the-Loop for AI Agents",
+            "source_url": "https://www.waxell.ai/blog/human-in-the-loop-vs-human-on-the-loop-ai-agents",
+            "source_date": "2026-04-27",
+            "source_type": "blog",
+            "confidence": "medium"
+          },
+          {
+            "claim": "ESCALATE.md is an open MIT file convention declaring when an agent must seek approval: TRIGGERS (prod deploys, external comms, financial txns, permanent deletion, privilege changes, cost-threshold), CHANNELS (per-channel timeouts), and APPROVAL (default 30-min timeout + fallback), with full audit logging.",
+            "evidence": "'A plain-text file convention for defining human notification and approval protocols in AI agent projects.' Notifications include action, justification, estimated cost, reversibility, alternatives, session ID, deadline; approval via email reply, Slack reaction, or signed API POST.",
+            "source_title": "ESCALATE.md — The AI Agent Human Approval Protocol",
+            "source_url": "https://escalate.md/",
+            "source_date": "2026-03",
+            "source_type": "other",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Autonomous agent platforms place the human checkpoint at the pull-request boundary: the agent runs in a sandbox and returns a PR for review — the engineer re-enters at checkpoints, not at every keystroke (Devin; Goldman Sachs pilot, Nubank migrations).",
+            "evidence": "'Devin... returns a pull request for human review. The engineer re-enters at checkpoints, not at every keystroke.' Reliability: 'an agent that succeeds on 90% of tasks but fails unpredictably on the remaining 10% may be a useful assistant yet an unacceptable autonomous system.'",
+            "source_title": "Devin AI Complete Guide: Autonomous Software Engineering",
+            "source_url": "https://www.digitalapplied.com/blog/devin-ai-autonomous-coding-complete-guide",
+            "source_date": "2026",
+            "source_type": "blog",
+            "confidence": "low"
+          },
+          {
+            "claim": "METR's rising autonomous task time horizon (14.5h at 50% for Claude Opus 4.6, ~7-month doubling) is read as changing the nature of failure — rarer but more complex and harder to catch — rather than removing the need for well-placed gates.",
+            "evidence": "'Doubling the time horizon doesn't double the degree of automation — it changes the nature of failure. Errors become rarer but more complex and harder to catch. A silent reconciliation error building over three weeks is categorically different from a flagged exception on a single transaction.'",
+            "source_title": "Time Horizon 1.1 / Task-Completion Time Horizons of Frontier AI Models",
+            "source_url": "https://metr.org/blog/2026-1-29-time-horizon-1-1/",
+            "source_date": "2026-01-29",
+            "source_type": "peer-reviewed",
+            "confidence": "medium"
+          },
+          {
+            "claim": "Cross-source consensus anti-pattern: defaulting to 'interrupt on everything' destroys agent value and trains rubber-stamping, while 'interrupt on nothing' is unsafe; a 'high but not 100%' approval rate is the health signal (100% = rubber stamp).",
+            "evidence": "Anthropic: manual-approval mode leads users to 'accept 93% of prompts.' Grass: approval rates should be 'high but not 100%... Perfect approval signals gates have become rubber stamps.' Multiple: developers 'default to one extreme or the other.'",
+            "source_title": "How we built Claude Code auto mode + 3-Checkpoint Framework",
+            "source_url": "https://www.anthropic.com/engineering/claude-code-auto-mode",
+            "source_date": "2026-03-25",
+            "source_type": "vendor-docs",
+            "confidence": "high"
+          }
+        ],
+        "named_frameworks": [
+          "3-Checkpoint Framework (Grass): Plan Review / Findings Review / Diff-Before-Push gates",
+          "Claude Code Auto Mode (Anthropic): prompt-injection probe + Sonnet-4.6 transcript classifier, 3 permission tiers, 20+ block rules, 3-consecutive/20-total denial escalation",
+          "Claude Code Permission Modes: default / Plan Mode / Auto Mode / --dangerously-skip-permissions",
+          "Autonomy 1-10 emergent scale (Anthropic 'Measuring agent autonomy')",
+          "Four-Gate-Type taxonomy (Digital Applied): Advisory / Validating / Blocking / Escalating with 15min/4h/24h SLA tiers + RACI separation",
+          "Three-Tier approval rubric (Waxell): Free-run / Monitor-and-flag (HOTL) / Block-for-approval (HITL)",
+          "Human-in-the-loop vs Human-on-the-loop (HITL vs HOTL) distinction",
+          "Spec-Driven Development phase gates (GitHub Spec Kit): Specify→Plan→Tasks→Implement, [NEEDS CLARIFICATION] markers, Phase -1 Gates, test-approval gate",
+          "ESCALATE.md (WellStrategic): TRIGGERS / CHANNELS / APPROVAL file convention",
+          "Change-set state machine (Kilo/StackAI): INTENT→SPEC→PLAN→IMPLEMENT→VERIFY→DOCS→REVIEW→RELEASE→MONITOR→ITERATE",
+          "METR HCAST / Time-Horizon (TH1.1): 50%-task-completion time horizon as an autonomy measure"
+        ],
+        "debates_tensions": [
+          "HITL vs HOTL direction of travel: practitioner sources report a shift toward human-on-the-loop autonomy, while governance/enterprise sources keep blocking HITL gates mandatory for irreversible/regulated actions — reconciled by tiering on risk/reversibility.",
+          "Is HITL real oversight? An April 2026 MIT Technology Review piece (cited secondhand) argues 'humans in the loop' has become an illusion because overseers cannot verify internal model reasoning, cutting against spec-driven phase-gate optimism.",
+          "Where policy lives: Waxell insists oversight rules belong in a governance layer (not agent code, which drifts), while Anthropic bakes much policy into a model classifier and ESCALATE.md puts it in a repo file — three different loci for the same rules.",
+          "Does longer time horizon reduce the need for gates? METR's hours-long autonomy could argue for fewer interruptions, but the practitioner reading is failures become rarer and harder to catch, arguing for better-placed gates rather than fewer.",
+          "Approval-rate calibration target: Anthropic observes 93% blind approval under manual mode (fatigue evidence); Grass prescribes 'high but not 100%' — no agreed numeric target, only that 100% = rubber-stamp and frequent rejection = upstream workflow problem."
+        ],
+        "recency_note": "Evidence is strongly current: the strongest sources are all 2026 (Anthropic auto mode 2026-03-25, Anthropic agent-autonomy research 2026-02-18, METR TH1.1 2026-01-29, GitHub Spec Kit open-sourced 2026-05-09, Grass 3-checkpoint 2026-05-03, Digital Applied and Waxell both 2026-04-27). This is a fast-moving area — Claude Code permission modes, auto mode, and Spec Kit have all shipped or changed within the last ~4 months, and the HITL→HOTL framing is actively being debated in real time, so specifics (denial thresholds, classifier model versions, time-horizon numbers) should be re-verified against vendor docs before being treated as durable.",
+        "raw_file_path": "/Users/steve/projects/momentum/.momentum/research/raw/research-sq8-operationalizing-hitl-gates.md"
+      },
+      "verification": {
+        "sub_question_id": "sq8-operationalizing-hitl-gates",
+        "overall_reliability": "medium",
+        "validation_file_path": "/Users/steve/projects/momentum/.momentum/research/validation/verify-sq8-operationalizing-hitl-gates.md",
+        "verdicts": [
+          {
+            "claim": "Claude Code auto mode uses a Sonnet 4.6 transcript classifier, runs in-repo edits freely but gates shell/external/out-of-project actions against 20+ block rules, escalating after 3 consecutive or 20 total denials per session.",
+            "verdict": "partially-supported",
+            "source_url": "https://www.anthropic.com/engineering/claude-code-auto-mode",
+            "note": "Source confirms Sonnet 4.6 classifier, 'more than twenty block rules' in four groups (destroy/exfiltrate, degrade security, cross trust boundaries, bypass review), 3-consecutive/20-total escalation, FPR 8.5%->0.4%, and the 93% approval figure. BUT the evidence string attaches the quote 'effective oversight doesn't require approving every action but being in a position to intervene when it matters' to THIS page; that quote is not on the auto-mode page (it is from Anthropic's Measuring Agent Autonomy page). Misattributed quote within an otherwise-confirmed claim."
+          },
+          {
+            "claim": "Anthropic measures autonomy as an emergent (not fixed-level) property; experienced users grant more autonomy (>40% full auto-approval vs ~20%) yet intervene more (9% vs 5%); pauses 35/21/12%; clarification 2x+ on complex tasks; 73% have a human in the loop.",
+            "verdict": "confirmed",
+            "source_url": "https://www.anthropic.com/research/measuring-agent-autonomy",
+            "note": "All numeric specifics verified verbatim in source: '~20%' vs '>40%' auto-approval, '5%' vs 'around 9%' interrupt, present-choice 35% / diagnostics 21% / credentials 12%, 'more than twice as often' clarification, '73% appear to have a human in the loop in some way', and 'not a fixed property... emergent characteristic'. Minor: the literal '1-10 scale' is a paraphrase; source says 'emergent characteristic'."
+          },
+          {
+            "claim": "The dominant/canonical concrete gate placement for autonomous coding agents is three strategic gates (Plan Review, Findings Review, Diff-Before-Push), a cross-source consensus pattern.",
+            "verdict": "partially-supported",
+            "source_url": "https://codeongrass.com/blog/where-to-gate-your-ai-coding-agent-3-checkpoint-framework/",
+            "note": "The blog fully supports the three gates, the Task->Plan->Exploration->Findings->Implementation->Diff->Commit sequence, and the 'judgment not every tool invocation' quote. But independent search for the three gate names returns ONLY codeongrass.com (Grass) pages. This is one vendor blog's coined framework, not an independently corroborated 'dominant/canonical/consensus' industry pattern. The 'dominant pattern' elevation is unsupported."
+          },
+          {
+            "claim": "GitHub Spec Kit (open-sourced 2026-05-09) operationalizes HITL as phase-boundary gates: validate spec (no [NEEDS CLARIFICATION] markers), approve plan (Phase -1 gates), approve tests before implementation.",
+            "verdict": "confirmed",
+            "source_url": "https://github.com/github/spec-kit/blob/main/spec-driven.md",
+            "note": "Source confirms 'Tests are validated and approved by the user' before implementation, [NEEDS CLARIFICATION] markers, Specify->Plan->Tasks->Implement, and 'Phase -1: Pre-Implementation Gates'. 2026-05-09 open-source date corroborated by GitHub Blog, MarkTechPost, WinBuzzer, Visual Studio Magazine independently."
+          },
+          {
+            "claim": "METR's rising autonomous task time horizon is 14.5h at 50% for Claude Opus 4.6 (~7-month doubling), read as 'changing the nature of failure' rather than removing gates.",
+            "verdict": "contradicted",
+            "source_url": "https://metr.org/blog/2026-1-29-time-horizon-1-1/",
+            "better_source_url": "https://metr.org/time-horizons/",
+            "note": "The cited Jan-29-2026 page reports Claude Opus 4.5 at ~4h49m (~5.3h), NOT 14.5h and NOT Opus 4.6. The 14.5h/Opus-4.6 figure is from a LATER measurement reported ~2026-02-21 (e.g. officechai), wrongly pinned to the Jan-29 URL. The 'doubling... changes the nature of failure / silent reconciliation error over three weeks' quote does NOT appear on the METR page; it is secondary blog commentary, not METR. Source-type also inflated to 'peer-reviewed' (it is a research-org blog)."
+          },
+          {
+            "claim": "Enterprise governance framing defines four gate types (Advisory/Validating/Blocking/Escalating) with 15min/4h/24h SLAs, reviewer-not-Responsible rule, nine-field audit schema, mapped to NIST AI RMF / ISO 42001 / EU AI Act Art. 14.",
+            "verdict": "confirmed",
+            "source_url": "https://www.digitalapplied.com/blog/agentic-workflow-approval-gate-framework-governance",
+            "note": "Every specific verified in source, including the 'Reviewer must NOT be Responsible' rule, the SLA tiers, the nine-field schema with 'agent state diff', and the compliance mapping. Provenance caveat: this is a single vendor's proprietary thought-leadership framework, not a standards-body artifact; the SLA numbers and schema are this blog's design proposal. Confidence 'medium' was appropriate."
+          },
+          {
+            "claim": "ESCALATE.md is an open MIT file convention for declaring agent approval protocols (TRIGGERS / CHANNELS / APPROVAL, default 30-min timeout, audit logging).",
+            "verdict": "partially-supported",
+            "source_url": "https://escalate.md/",
+            "note": "Spec content confirmed: MIT license, TRIGGERS (prod deploy, external comms, financial, permanent deletion, privilege, cost threshold), CHANNELS (email/Slack/PagerDuty), approval via email/Slack emoji/signed POST, 30-min default (escalating to KILLSWITCH). But the site self-describes as a conceptual/marketing-stage spec, the domain is listed for acquisition, and there is no evidence of real-world adoption. Framing as an established 'open standard' oversells it."
+          },
+          {
+            "claim": "Autonomous agent platforms place the human checkpoint at the PR boundary; the engineer re-enters at checkpoints not every keystroke (Devin; Goldman Sachs pilot; Nubank migrations).",
+            "verdict": "confirmed",
+            "source_url": "https://www.digitalapplied.com/blog/devin-ai-autonomous-coding-complete-guide",
+            "better_source_url": "https://cognition.ai/blog/devin-annual-performance-review-2025",
+            "note": "Cited blog is low quality, but substance independently corroborated: Devin proposes a PR for human review (Cognition + multiple 2026 outlets), Goldman Sachs piloted Devin (first reported July 2025), Nubank ran large-scale migrations with ~12x efficiency. The 're-enters at checkpoints not every keystroke' line is the blog's paraphrase, not a Cognition primary quote. Better cited to Cognition's own posts."
+          }
+        ],
+        "contradicting_evidence": [
+          "MIT Technology Review, 'Why having humans in the loop in an AI war is an illusion' (2026-04-16, https://www.technologyreview.com/2026/04/16/1136029/humans-in-the-loop-ai-war-illusion/) is a REAL first-party piece (the thread hedged it as 'cited secondhand'). It argues HITL becomes theatre when overseers cannot audit internal model reasoning, operate under workflow pressure, and suffer skill atrophy — directly qualifying the spec-driven phase-gate optimism and the broader 'well-placed gates solve oversight' thesis. Corroborated by Defense News (2026-03-26) and the Institute for Systems Integrity 'Human-with-Agency' piece.",
+          "The METR Jan-29-2026 page actually reports Claude Opus 4.5 at ~4h49m (~5.3h), not 14.5h. The 14.5h/Opus-4.6 number is from a separate, later (~Feb-21-2026) evaluation. So the thread's own recency caveat ('re-verify the time-horizon numbers') is well-founded — and the number was already mis-cited to the wrong page/model/date.",
+          "Independent search for the 'Plan Review / Findings Review / Diff-before-push' three-gate names surfaces only codeongrass.com (Grass) — there is no cross-vendor corroboration that this specific three-gate framework is an industry-dominant pattern, contradicting the synthesis's 'dominant/canonical/consensus' framing."
+        ],
+        "training_data_smells": [
+          "'The dominant concrete gate placement is a three-gate pattern' / 'canonical 3-gate' / 'cross-source consensus anti-pattern' — promotes a single vendor blog's (Grass) coined framework to industry consensus with no independent corroboration. The gate content is sound; the consensus framing is ungrounded.",
+          "METR 'Doubling the time horizon doesn't double the degree of automation — it changes the nature of failure... A silent reconciliation error building over three weeks...' — a vivid, quotable passage attributed to a 'peer-reviewed' METR source where it does not appear; it is secondary blog commentary (the raw file half-admits 'Apiar/METR commentary'). Classic too-clean-quote-attached-to-wrong-source.",
+          "ESCALATE.md framed as an established 'open standard / open convention' when the source is a marketing-stage spec with the domain listed for acquisition and no demonstrated adoption."
+        ]
+      }
+    }
+  ]
+}
