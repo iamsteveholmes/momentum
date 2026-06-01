@@ -1,0 +1,305 @@
+{
+  "summary": "Independent confirmation pass: source-or-retract the suspect single-engine claims, verify load-bearing headline stats, and probe two frontiers — for the HITL altitude research.",
+  "agentCount": 5,
+  "logs": [
+    "Independent confirmation pass: 5 contested target areas, each adjudicated against primary sources.",
+    "Confirmation complete: 5/5 target areas adjudicated."
+  ],
+  "result": [
+    {
+      "target_id": "altitude-control-playbook",
+      "title": "Altitude / verbosity control — concrete 2026 mechanisms + \"terse by default\" claim",
+      "confirmation": {
+        "target_id": "altitude-control-playbook",
+        "validation_file_path": "/Users/steve/projects/momentum/validation/confirm-altitude-control-playbook.md",
+        "verdicts": [
+          {
+            "claim": "OpenAI exposes a 'verbosity' parameter (GPT-5 family) controlling output length.",
+            "verdict": "confirmed",
+            "primary_source_url": "https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_new_params_and_tools",
+            "source_date": "2025-2026",
+            "note": "Set at text.verbosity in the Responses API. Accepts exactly low | medium | high; default medium. Cookbook: 'low -> terse UX, minimal prose. medium (default) -> balanced detail. high -> verbose'. Controls final-answer length, not thinking depth. Token-scaling illustration: low 731 / med 1017 / high 1263. Available across GPT-5 family (5, 5.1, 5.2, 5.5, mini, nano)."
+          },
+          {
+            "claim": "Google Gemini exposes a 'thinking_level' / thinking-budget control affecting reasoning/output.",
+            "verdict": "confirmed",
+            "primary_source_url": "https://ai.google.dev/gemini-api/docs/thinking",
+            "source_date": "2026",
+            "note": "Two controls: thinkingBudget (Gemini 2.5, integer token budget; e.g. 2.5 Flash 0-24576, 0 disables, -1 dynamic) and thinkingLevel (Gemini 3+, categorical minimal/low/medium/high with per-model defaults). Setting both errors. These are primarily reasoning-depth controls; they affect total token spend but Gemini's pure output-length knob is maxOutputTokens + prompt instructions."
+          },
+          {
+            "claim": "Anthropic Claude exposes an 'effort' control and/or output-shaping controls.",
+            "verdict": "confirmed",
+            "primary_source_url": "https://platform.claude.com/docs/en/build-with-claude/effort",
+            "source_date": "2026",
+            "note": "effort set inside output_config (not top-level). Values low | medium | high | xhigh | max; default high (= omitting it). Supported on Opus 4.8, Mythos Preview, Opus 4.7/4.6, Sonnet 4.6, Opus 4.5. Crucially, effort 'affects ALL tokens' including text/explanations, tool calls, and thinking, so it genuinely shapes output verbosity, not just reasoning. Also documented: a 'Response length and verbosity' section, Structured Outputs, anti-markdown prose snippet, 'no preamble' instructions."
+          },
+          {
+            "claim": "The claim that 2025-2026 models are TERSE BY DEFAULT is FALSE; YapBench (arXiv 2601.00624, ~Jan 2026) found 2025-26 models trend MORE verbose on average, persisting even under explicit conciseness instructions.",
+            "verdict": "partially-confirmed",
+            "primary_source_url": "https://arxiv.org/abs/2601.00624",
+            "source_date": "2026-01-02",
+            "note": "Paper ID/title/date CONFIRMED (submitted 2026-01-02; Borisov, Groger, Mikhael, Schreiber; 76 LLMs). Upward verbosity trend CONFIRMED but MILD: paper states r=0.21. Most concise model = gpt-3.5-turbo (2023), best YapIndex 23 (abstract/blog round to ~20). HOWEVER the rider 'persisting even under explicit conciseness instructions' is a MISATTRIBUTION/likely-confabulated extension: YapBench scores brevity-IDEAL prompts, it does NOT add explicit 'be concise' directives and test persistence; no such finding exists in the paper or authors' blog. Also 'terse by default is FALSE' is overstated as a blanket claim given r=0.21 is weak and vendor docs (OpenAI GPT-5.5 'efficient, direct by default'; Anthropic 'less verbose, calibrate to task') show several 2026 flagships ARE deliberately tuned terser. Honest synthesis: do not assume terseness, measure and control it."
+          },
+          {
+            "claim": "System-prompt patterns that empirically reduce verbosity: measurable caps (word/section limits), executive summary first, persona/audience framing, output schemas/templates.",
+            "verdict": "confirmed",
+            "primary_source_url": "https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-2_prompting_guide",
+            "source_date": "2026",
+            "note": "GPT-5.2 guide prescribes measurable caps ('3-6 sentences or <=5 bullets'; '<=2 sentences' for yes/no) and an exec-summary-then-tagged-bullets template ('1 short overview paragraph then <=5 bullets tagged: What changed, Where, Risks, Next steps, Open questions'). GPT-5.5 guide: 'specify word budgets, section counts, table widths, or JSON-only output'. Anthropic: Structured Outputs (schema), role/persona, and positive-example concision tip. Caveat: persona/audience framing is the weakest-evidenced sub-pattern (vendors frame it as a tone lever, not a documented verbosity reducer), and 'empirically' is a generous gloss on what are vendor best-practice recommendations with qualitative backing."
+          }
+        ],
+        "net_assessment": "The playbook's core mechanism claims (1, 2, 3, 5) all hold up well against first-party vendor documentation: OpenAI's text.verbosity (low/medium/high, default medium), Gemini's thinkingBudget/thinkingLevel, Anthropic's effort (inside output_config, low->max, default high, affecting ALL output tokens not just thinking), and the prompt-pattern toolkit (measurable caps, exec-summary-first, schemas/templates) are all confirmed by primary sources. The one shaky target is Claim 4. YapBench is a real paper (arXiv 2601.00624, submitted 2026-01-02), it does find a more-verbose-over-time trend, and gpt-3.5-turbo really is its most concise model -- but two things are wrong in the original framing. First, the trend is MILD (r=0.21) with huge model variance, so 'terse by default is FALSE' is overstated as an absolute. Second, and more seriously, the rider 'persisting even under explicit conciseness instructions' is a misattribution -- YapBench tests brevity-IDEAL prompts, never explicit 'be concise' directives, and makes no persistence claim; that clause looks confabulated. There is also countervailing primary evidence the report missed: OpenAI's and Anthropic's own 2026 docs claim several flagship models ARE tuned terser/task-calibrated by default, which sits in genuine tension with the population-level YapBench result. The honest takeaway -- do not assume default terseness, use the API knobs plus explicit caps, and measure -- survives intact; only the 'instruction-resistant verbosity' overreach needs correction.",
+        "new_or_corrected_findings": [
+          {
+            "finding": "YapBench's verbosity-over-time trend is MILD, not strong: the paper reports r=0.21. The original report's 'terse by default is FALSE' should be softened to reflect a weak correlation with high model-to-model variance.",
+            "source_url": "https://arxiv.org/html/2601.00624v1",
+            "source_date": "2026-01-02"
+          },
+          {
+            "finding": "CORRECTION: The clause 'persisting even under explicit conciseness instructions' is not supported by YapBench. The benchmark uses brevity-IDEAL prompts (ambiguous inputs, closed-form factual Qs, one-line coding tasks); it does not append explicit 'be concise' directives or measure instruction persistence. This sub-claim appears confabulated and should be removed.",
+            "source_url": "https://tabularis.ai/blog/yapbench/",
+            "source_date": "2026-01"
+          },
+          {
+            "finding": "Countervailing primary evidence the report missed: 2026 vendor docs claim several flagships ARE deliberately tuned terser by default. OpenAI GPT-5.5 guide: model 'tends to be efficient, direct, and task-oriented by default'; GPT-5.2 'generally lower verbosity'. Anthropic prompting docs: latest models are 'Less verbose... may skip detailed summaries' and 'calibrate response length to task complexity'. This tensions with the blanket 'not terse by default' framing.",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices",
+            "source_date": "2026"
+          },
+          {
+            "finding": "Refinement: Anthropic's effort parameter is not merely a thinking-depth control. Per docs it 'affects ALL tokens in the response' including text explanations, tool calls, and thinking, so it is a legitimate output-verbosity lever (lower effort -> terser text + fewer tool calls). This strengthens Claim 3's 'output-shaping' half beyond what a thinking-only reading would suggest.",
+            "source_url": "https://platform.claude.com/docs/en/build-with-claude/effort",
+            "source_date": "2026"
+          },
+          {
+            "finding": "Minor figure discrepancy on YapBench's most-concise model: abstract/blog approximate gpt-3.5-turbo's YapIndex as 'around 20', but the paper body states the best overall YapIndex is 23. Use 23 as the paper's stated figure.",
+            "source_url": "https://arxiv.org/html/2601.00624v1",
+            "source_date": "2026-01-02"
+          },
+          {
+            "finding": "Gemini thinkingLevel current accepted values are minimal | low | medium | high (per-model defaults), broader than a low/high binary; thinkingBudget and thinkingLevel cannot be combined (returns an error), and thinkingBudget on Gemini 3 is backward-compat-only and may degrade performance.",
+            "source_url": "https://ai.google.dev/gemini-api/docs/thinking",
+            "source_date": "2026"
+          }
+        ]
+      }
+    },
+    {
+      "target_id": "suspect-claims-audit",
+      "title": "Source-or-retract — suspect single-engine (Gemini-only) claims",
+      "confirmation": {
+        "target_id": "suspect-claims-audit",
+        "validation_file_path": "/Users/steve/projects/momentum/undefined/validation/confirm-suspect-claims-audit.md",
+        "verdicts": [
+          {
+            "claim": "A Microsoft \"Council\" multi-model oversight system running models named \"Claude Mythos\" and \"GPT-5.4\".",
+            "verdict": "partially-confirmed",
+            "primary_source_url": "https://www.microsoft.com/en-us/microsoft-365/blog/2026/03/30/copilot-cowork-now-available-in-frontier/",
+            "source_date": "2026-03-30",
+            "note": "The three components are each REAL but the binding is confabulated. Microsoft's 'Model Council' is real (M365 Copilot Frontier, 2026-03-30) and compares GPT vs Claude side-by-side with a judge model. 'Claude Mythos' is a real Anthropic model (red.anthropic.com, 2026-04-07; restricted/Project Glasswing, not GA). 'GPT-5.4' is a real OpenAI model (2026-03-05, TechCrunch). BUT no primary source says Council runs 'Claude Mythos' + 'GPT-5.4'; Microsoft names only 'Anthropic and OpenAI'. Secondary coverage of Council cites GPT-5.2 (judge), Claude Sonnet 4.5, Claude Opus 4.6, GPT-5.5 — not Mythos/5.4. Mythos is not GA so it would not be inside a GA Copilot Council. Drop or correct the model names."
+          },
+          {
+            "claim": "A product/system named \"NextAds\" relevant to AI oversight.",
+            "verdict": "refuted",
+            "primary_source_url": "https://nextads.ai/",
+            "source_date": "2026",
+            "note": "'NextAds' exists only in ad-tech (nextads.ai AI ad creator; nextad.org optimization; arxiv 2603.02137 personalized video advertising; Crunchbase NEXTads affiliate marketing). The nearest AI-adjacent name is 'Nexad' (nex.ad, a16z) — an ad-INSERTION platform for AI apps, still not oversight. No primary source ties any 'NextAds' to AI oversight. The oversight framing is unsupported; likely confabulated or a garble of 'Nexad'."
+          },
+          {
+            "claim": "A tool named \"VibeSec\".",
+            "verdict": "confirmed",
+            "primary_source_url": "https://www.ox.security/vibesec/",
+            "source_date": "2025-2026",
+            "note": "Real and multiply-instantiated: OX Security VibeSec (first-party product page + blog), open-source Untamed Theory VibeSec (github.com/untamed-theory/vibesec), and a Claude security Skill (vibesec.sh). All target securing AI-generated/'vibe-coded' code. Caveat: several distinct projects share the name, so a specific claim should name the vendor."
+          },
+          {
+            "claim": "A system named \"OpenClaw\" described as \"an operating system for people who…\".",
+            "verdict": "confirmed",
+            "primary_source_url": "https://openclaw.ai/",
+            "source_date": "2026",
+            "note": "Real self-hosted AI-agent OS. Tagline matches exactly: 'OpenClaw: The Operating System for People Who Actually Work' (product site + gist). Corroborated by NVIDIA newsroom 'NemoClaw for the OpenClaw Community' and multiple architecture write-ups. Describes sessions, memory, tool sandboxing, orchestration, connects to email/calendar/repos."
+          },
+          {
+            "claim": "CSET finding that \"68-73% of AI-generated code is vulnerable / contains vulnerabilities\".",
+            "verdict": "refuted",
+            "primary_source_url": "https://cset.georgetown.edu/wp-content/uploads/CSET-Cybersecurity-Risks-of-AI-Generated-Code.pdf",
+            "source_date": "2024-11",
+            "note": "MISATTRIBUTION. The 68%/73% figures appear in the CSET report (Nov 2024, read in full) but as a CITATION of Siddiq & Santos (2022): 'out of 130 code samples generated using InCoder and Github Copilot, 68% and 73% ... respectively contained vulnerabilities.' CSET's OWN headline finding is ~48% ('an average of 48% of the code produced by five different LLMs contains at least [one bug]'). Attributing 68-73% to CSET is wrong; the correct CSET number is 48%."
+          },
+          {
+            "claim": "A survey statistic that \"76% of developers believe AI-generated code is more secure\".",
+            "verdict": "confirmed",
+            "primary_source_url": "https://snyk.io/reports/ai-code-security/",
+            "source_date": "2024",
+            "note": "Verbatim in CSET report p.9: 'in a 2023 industry survey of 537 technology and IT workers and managers, 76% responded that AI code is more secure than human code.' CSET footnote 26 attributes it to Snyk 'AI Code, Security, and Trust in Modern Development' (2024); corroborated via CloudWars coverage. Faithful paraphrase. Note: it is a COMPARATIVE belief (AI code more secure than human code), n=537, 2023 survey."
+          }
+        ],
+        "net_assessment": "Contrary to the \"suspect single-engine, likely-confabulated\" framing, most of these names and figures trace to real 2026 primary sources — the report's defects are precision and attribution, not wholesale fabrication. CONFIRMED: VibeSec (OX Security + Untamed Theory), OpenClaw (\"The Operating System for People Who Actually Work\"), and the 76% Snyk survey statistic (traced through CSET footnote 26 to the Snyk 2024 report). PARTIALLY-CONFIRMED: the Microsoft Model Council, Claude Mythos, and GPT-5.4 each exist independently, but the report's BINDING of them (\"Council running Claude Mythos and GPT-5.4\") is unsupported — Microsoft names no versions, Council coverage cites GPT-5.2/Sonnet 4.5/Opus 4.6/GPT-5.5, and Mythos is restricted/non-GA. REFUTED: the \"68-73% CSET\" claim is a misattribution (those are Siddiq & Santos 2022 figures cited by CSET; CSET's own number is 48%), and \"NextAds relevant to AI oversight\" is a category error (NextAds is ad-tech; the closest AI-adjacent name, Nexad, is ad-insertion, not oversight). One caution: I could not fetch the OpenAI GPT-5.4 page directly (403) and relied on TechCrunch plus the OpenAI URL existing; and the red.anthropic.com Mythos page was flagged \"fictional\" by a summarizer due to its future date relative to that model's training, but multiple first-party and major-press sources (Axios, Yahoo Finance, BleepingComputer) corroborate it as a real announced model as of the 2026-05-31 environment date."
+      }
+    },
+    {
+      "target_id": "headline-stats-audit",
+      "title": "Verify load-bearing headline statistics in the Decision Brief",
+      "confirmation": {
+        "target_id": "headline-stats-audit",
+        "validation_file_path": "/Users/steve/projects/momentum/undefined/validation/confirm-headline-stats-audit.md",
+        "verdicts": [
+          {
+            "claim": "38-61% of AI-agent-authored PRs merge with NO recorded human review (attributed to MSR / EASE 2026)",
+            "verdict": "partially-confirmed",
+            "primary_source_url": "https://arxiv.org/html/2605.02273v1",
+            "source_date": "2026-05-04",
+            "note": "Both numbers are real but come from two different papers measuring two different populations, and the joint 'MSR / EASE' attribution is loose. The 61.38% ('no recorded review ACTIVITY', not specifically 'no human review') is from Duma et al., EASE 2026 (arXiv 2605.02273, May 4 2026) on popular-repo AI PRs; of those, 22.6% are reviewed agent-only and 15.9% show human participation. Critically, in matched same-repo comparison AI PRs had LESS no-review (28.92%) than human PRs (34.52%). The 38% is from a SEPARATE paper, 'Where Do AI Coding Agents Fail?' (MSR 2026, arXiv 2601.15195): 228 PRs (38%) = reviewer-level abandonment among REJECTED PRs, not among merges. Stitching them into a '38-61%' range is misleading; the 61% headline is EASE 2026, not MSR."
+          },
+          {
+            "claim": "CodeRabbit: AI-generated code had ~1.7x more issues and ~2.74x more XSS vulnerabilities than human code (~Dec 2025)",
+            "verdict": "confirmed",
+            "primary_source_url": "https://www.businesswire.com/news/home/20251217666881/en/CodeRabbits-State-of-AI-vs-Human-Code-Generation-Report-Finds-That-AI-Written-Code-Produces-1.7x-More-Issues-Than-Human-Code",
+            "source_date": "2025-12-17",
+            "note": "First-party CodeRabbit release (Dec 17 2025): '~1.7x more issues' is the headline; '2.74x more likely to add XSS vulnerabilities' is explicit in the security breakdown (alongside 1.88x password handling, 1.91x insecure object refs, 1.82x insecure deserialization). Sample: 470 PRs. Both numbers and date accurate. Caveat: vendor self-report, not peer-reviewed."
+          },
+          {
+            "claim": "Anthropic 2026: developers use AI in ~60% of work but fully delegate only 0-20%; auto-approval rises ~20%->40%+ and interrupt rate 5%->9% with experience (Feb 2026)",
+            "verdict": "partially-confirmed",
+            "primary_source_url": "https://www.anthropic.com/research/measuring-agent-autonomy",
+            "source_date": "2026-02-18",
+            "note": "All four figures are accurate but span TWO Anthropic publications and the brief mis-dates one. The 59% (~60%) work usage and the 0-20% full-delegation figures are from 'How AI Is Transforming Work at Anthropic', published Dec 2 2025 (NOT Feb 2026). The auto-approve (~20% -> over 40%) and interrupt (~5% -> ~9%) figures are from 'Measuring agent autonomy', Feb 18 2026. Numbers check out; bundling them as one 'Feb 2026' source is imprecise."
+          },
+          {
+            "claim": "DORA 2025 State of AI-assisted Software Development: ~90% of professionals use AI daily; 80%+ report productivity gains (Sep 2025)",
+            "verdict": "confirmed",
+            "primary_source_url": "https://blog.google/innovation-and-ai/technology/developers-tools/dora-report-2025/",
+            "source_date": "2025-09-23",
+            "note": "Google/DORA 2025 report, announced Sep 23 2025: 90% of software professionals use AI (median ~2 hrs/day) and over 80% report AI enhanced productivity; ~5,000 respondents. Minor wording caveat: the strict stat is '90% adoption + median 2 hrs daily' rather than literally '90% use daily', but the daily-use gloss is fair."
+          },
+          {
+            "claim": "METR: mid-2025 RCT found experienced devs ~19% SLOWER with AI; a Feb 2026 follow-up found the same devs ~18% FASTER and attributed the reversal partly to selection bias / learning",
+            "verdict": "refuted",
+            "primary_source_url": "https://metr.org/blog/2026-02-24-uplift-update/",
+            "source_date": "2026-02-24",
+            "note": "The 19% slowdown (Jul 10 2025 RCT, data Feb-June 2025) is confirmed. The Feb 24 2026 follow-up does contain a -18% point estimate for original devs (CI -38% to +9%, crosses zero) and -4% for new devs, BUT the post's headline is that this data is UNRELIABLE due to selection bias, which is why they redesigned the experiment. METR explicitly says it 'gives us an unreliable signal.' Moreover the selection bias they describe biases the estimate DOWNWARD (devs who refused to work without AI dropped out; 30-50% avoided AI-favorable tasks), so METR believes true speedup may be even larger, not that +18% is a trustworthy reversal. The brief presents +18% as a finding and frames selection bias/learning as explaining a reversal, which inverts METR's actual conclusion."
+          }
+        ],
+        "net_assessment": "Two of the five headline numbers are clean (CodeRabbit 1.7x/2.74x, Dec 17 2025; DORA 90%/80%+, Sep 23 2025) — though both are vendor/industry self-reports rather than peer-reviewed, which the brief should flag. The other three each have a real defect. The METR claim is the worst: the +18% 'faster' figure exists only as a point estimate METR explicitly labels unreliable and used to justify scrapping the experiment design; the brief presents it as a confirmed reversal and even gets the direction of the selection-bias caveat backwards, so I refute it as framed. The Anthropic claim is accurate on all four numbers but conflates a Dec 2 2025 article (59% usage, 0-20% delegation) with a Feb 18 2026 paper (auto-approve and interrupt rates) under a single 'Feb 2026' label. The PR-review claim manufactures a '38-61%' range by combining two unrelated statistics from two different papers (EASE 2026's 61.38% 'no review activity' vs MSR 2026's 38% of REJECTED PRs), and misattributes the 61% headline to 'MSR/EASE' when it is EASE alone — it also omits the inconvenient same-repo finding that AI PRs are NOT reviewed less than human PRs in matched repos. Net: the brief's vendor stats survive, but its two most rhetorically powerful framings (the PR no-review range and the METR reversal) are overstated and need correction before they can carry decision weight."
+      }
+    },
+    {
+      "target_id": "memory-trust-compounding",
+      "title": "Frontier — does agent memory let human trust safely compound across sessions?",
+      "confirmation": {
+        "target_id": "memory-trust-compounding",
+        "validation_file_path": "/Users/steve/projects/momentum/validation/confirm-memory-trust-compounding.md",
+        "verdicts": [
+          {
+            "claim": "Persistent memory frameworks (e.g. Mem0, MCP memory servers, AgeMem or similar) exist and are used in 2025-2026 agent systems.",
+            "verdict": "confirmed",
+            "primary_source_url": "https://arxiv.org/abs/2504.19413",
+            "source_date": "2025-04-28",
+            "note": "Mem0 (arXiv:2504.19413, Chhikara et al., 2025-04-28) and the official MCP memory server (@modelcontextprotocol/server-memory, knowledge-graph persistent memory) are both real, primary-sourced, and in active use. CAVEAT: 'AgeMem' could not be found in any credible primary source and appears confabulated/placeholder; substitute Memori (arXiv:2603.19935) if a third named framework is needed. The two named anchors are confirmed."
+          },
+          {
+            "claim": "There is evidence that durable agent memory improves cross-session reliability / lets oversight relax over time.",
+            "verdict": "partially-confirmed",
+            "primary_source_url": "https://arxiv.org/pdf/2506.02539",
+            "source_date": "2025-06",
+            "note": "First half SUPPORTED but caveated: Mem0 reports +26% LLM-as-Judge over OpenAI memory, 91% lower p95 latency, >90% token savings on LoCoMo (vendor self-reported). But LoCoMo shows LLMs still ~32 vs human ~88 and ~30% accuracy drop across sustained interactions, so absolute reliability remains low. Second half REFUTED: the closest primary source, VerificAgent (arXiv:2506.02539), explicitly makes oversight more efficient/targeted but does NOT argue oversight can relax; SSGM (arXiv:2603.11768) and human-gated-write patterns recommend verification-first, increasing governance as memory grows. Trust does not safely compound by default."
+          },
+          {
+            "claim": "Documented failure modes of agent memory: staleness, identity/context drift, memory poisoning, and resulting MIS-calibrated trust.",
+            "verdict": "confirmed",
+            "primary_source_url": "https://arxiv.org/abs/2503.03704",
+            "source_date": "2025-03-05",
+            "note": "All four documented. Poisoning is strongest: MINJA (arXiv:2503.03704) ISR 98.2%/ASR 76.8% query-only on EHRAgent/RAP/QA agents; MemoryGraft (arXiv:2512.16962); Sleeper Memory Poisoning (arXiv:2605.15338) up to 99.8% poisoned-memory insertion + 60-89% action triggering, temporally decoupled. Staleness/drift: SSGM (arXiv:2603.11768) names semantic drift + temporal obsolescence; survey arXiv:2604.16548 gives lifecycle taxonomy. CORRECTION: original report's 'over 95%' for MINJA conflates ISR (98.2%) with ASR (76.8%); and arXiv:2601.05504 shows real-world poisoning effectiveness drops sharply with pre-existing legitimate memory. Miscalibrated-trust linkage is recognized but the least-quantified of the four."
+          }
+        ],
+        "new_or_corrected_findings": [
+          {
+            "finding": "'AgeMem' is unverifiable / likely confabulated — no credible primary source. Real third option is Memori (Memori Labs, arXiv:2603.19935, 2026-03-20).",
+            "source_url": "https://arxiv.org/html/2603.19935",
+            "source_date": "2026-03-20"
+          },
+          {
+            "finding": "MINJA's exact figures are ISR 98.2% / ASR 76.8% (avg). The 'over 95%' the report cited is the injection rate only; the attack-success rate is the materially lower 76.8%. Tested on GPT-4/GPT-4o across EHRAgent, RAP, QA agent.",
+            "source_url": "https://arxiv.org/html/2503.03704v4",
+            "source_date": "2026-02-12"
+          },
+          {
+            "finding": "MINJA's headline numbers are idealized: arXiv:2601.05504 (2026-01-09) finds pre-existing legitimate memories dramatically reduce attack effectiveness, so real-world poisoning risk is lower than MINJA implies. Report should cite this caveat alongside MINJA.",
+            "source_url": "https://arxiv.org/abs/2601.05504",
+            "source_date": "2026-01-09"
+          },
+          {
+            "finding": "The 'oversight relaxes / trust safely compounds' framing is contradicted by the verification/governance literature. VerificAgent (oversight efficient not relaxed) and SSGM (pre-consolidation validation gates, human-gated writes) both advocate verification-first as memory grows.",
+            "source_url": "https://arxiv.org/html/2603.11768v1",
+            "source_date": "2026-03-12"
+          },
+          {
+            "finding": "Newer survey (arXiv:2604.16548, 2026-04-17) provides a six-phase memory-lifecycle security taxonomy and explicitly notes benign-persistence/staleness/drift and trust-miscalibration remain SPARSELY STUDIED — useful framing the original report missed.",
+            "source_url": "https://arxiv.org/abs/2604.16548",
+            "source_date": "2026-04-17"
+          }
+        ],
+        "net_assessment": "The targets largely held up, but with one consequential correction. Claims 1 and 3 are solidly confirmed against primary sources: Mem0 (arXiv:2504.19413) and the official MCP memory server are real and in use, and all four failure modes — staleness, drift, poisoning, and (least-quantified) miscalibrated trust — are documented across MINJA, MemoryGraft, Sleeper Memory Poisoning, SSGM, and a 2026 security survey. The weak link is Claim 2's second half: while durable memory does improve *measured, relative* cross-session metrics (Mem0's own LoCoMo numbers), the assertion that memory 'lets oversight relax' or that trust 'safely compounds' is contradicted by the most on-point sources (VerificAgent, SSGM, human-gated-write patterns), which uniformly recommend verification-first and increasing governance as memory grows — precisely because memory adds new attack surfaces. Two factual cleanups: 'AgeMem' appears confabulated (use Memori instead), and the report's '95%+' MINJA figure conflates injection success (98.2%) with attack success (76.8%) and omits the finding that real-world poisoning is far less effective once legitimate memory exists. Net: the evidence base is real and recent, but the report's optimistic 'trust compounds' framing should be flipped to a 'trust does NOT safely compound without verification gates' posture.\""
+      }
+    },
+    {
+      "target_id": "oversight-theatre-vs-calibration",
+      "title": "Frontier — calibrated oversight vs. \"oversight theatre\"",
+      "confirmation": {
+        "target_id": "oversight-theatre-vs-calibration",
+        "validation_file_path": "/Users/steve/projects/momentum/validation/confirm-oversight-theatre-vs-calibration.md",
+        "verdicts": [
+          {
+            "claim": "MIT Technology Review published a 2026 piece arguing human-in-the-loop can be illusory / theatre.",
+            "verdict": "confirmed",
+            "primary_source_url": "https://www.technologyreview.com/2026/04/16/1136029/humans-in-the-loop-ai-war-illusion/",
+            "source_date": "2026-04-16",
+            "note": "Confirmed verbatim: 'human oversight over AI may be more illusion than safeguard' and 'the human cannot know the AI's intention before it acts.' Author: Uri Maoz. SCOPE CORRECTION: the article is about AI WARFARE / autonomous weapons targeting, NOT code review or generic decision review. It supports the concept of illusory HITL strongly but is opinion/commentary, not empirical evidence about software oversight. Do not conflate with the separate 'Moltbook was peak AI theater' (Feb 6, 2026) piece, which uses 'AI theater' in a product-hype sense."
+          },
+          {
+            "claim": "There is empirical 2025-2026 work measuring automation bias / rubber-stamping in AI code or decision review.",
+            "verdict": "partially-confirmed",
+            "primary_source_url": "https://arxiv.org/abs/2603.11821",
+            "source_date": "2026-03-12",
+            "note": "Real, robust empirical automation-bias work exists but is in CLINICAL/PATHOLOGY and HCI domains, not coding telemetry. Rosbach et al. 'Stuck on Suggestions' (arXiv:2603.11821, March 2026, MELBA) measured ~7% automation-bias rate in n=28 pathologists, worse under time pressure. Kucking et al. (PubMed 39234734, Aug 2024, n=210 wound care) measured agreement rate with wrong AI recommendations. For CODE specifically the cleanest 2026 source is Zietsman 'Specification as Quality Gate' (arXiv:2603.25773) but it is a hypotheses/position paper whose 'contrived experiments' the author calls 'directional evidence, not a controlled demonstration.' BairesDev Q4 2025 (~9% trust AI code without oversight, n=501) is perception data, not behavioral measurement."
+          },
+          {
+            "claim": "There exists (or does not exist) a validated metric distinguishing genuine calibrated oversight from nominal-only review.",
+            "verdict": "refuted",
+            "primary_source_url": "https://arxiv.org/abs/2604.23896",
+            "source_date": "2026-04-26",
+            "note": "No single validated discriminating metric exists; the field is explicitly fragmented. Raees & Papangelis (arXiv:2604.23896, April 2026): 'constructs for human-AI appropriate reliance are still fragmented in research'; three competing perspectives; 'trust measurements do not inform users' appropriate reliance.' Ibrahim et al. (arXiv:2509.08010, Sept 2025, rev May 2026) frames measurement as having 'three important gaps' needing improvement. Industry observability playbooks recommend RECORDING approvals/overrides but validate no calibration-vs-theatre metric. So the negative claim holds: as of mid-2026 the rising-auto-approval+rising-interrupts telemetry remains genuinely ambiguous."
+          }
+        ],
+        "new_or_corrected_findings": [
+          {
+            "finding": "The MIT Tech Review 'illusion' piece is about AI warfare/autonomous weapons (Uri Maoz, neuroscientist), not software/code review. Its 'intention gap' framing (operators approve a surface 92% success metric while the system computed hidden collateral damage) is structurally the 'oversight theatre' shape, but transplanting it to code review is a domain leap, and it is commentary not empirical work.",
+            "source_url": "https://www.technologyreview.com/2026/04/16/1136029/humans-in-the-loop-ai-war-illusion/",
+            "source_date": "2026-04-16"
+          },
+          {
+            "finding": "Newest load-bearing source for Claim 3: Raees & Papangelis 'From Trust to Appropriate Reliance: Measurement Constructs in Human-AI Decision-Making' (arXiv:2604.23896, April 26 2026) explicitly states reliance-measurement constructs are still fragmented and argues FOR consensus that does not yet exist. Directly supports the 'no validated discriminator' conclusion.",
+            "source_url": "https://arxiv.org/abs/2604.23896",
+            "source_date": "2026-04-26"
+          },
+          {
+            "finding": "Freshest hard behavioral number for Claim 2: Rosbach et al. (arXiv:2603.11821, MELBA, March 2026) report ~7% of correct independent human judgments overturned by incorrect AI advice, with severity intensifying under time pressure and higher AI-assisted confidence correlating with more reliance. This is the closest verified quantitative evidence that interrupts/approvals do not guarantee genuine scrutiny.",
+            "source_url": "https://arxiv.org/abs/2603.11821",
+            "source_date": "2026-03-12"
+          },
+          {
+            "finding": "FALSE FRIEND caught: 'Automatic Bias Detection in Source Code Review' (arXiv:2504.18449, Berhanu Alebachew & Brown, April 2025) is REAL but measures human reviewers' PREJUDICIAL bias via eye-tracking, NOT automation bias / rubber-stamping of AI. It must not be cited as evidence for Claim 2.",
+            "source_url": "https://arxiv.org/abs/2504.18449",
+            "source_date": "2025-04-25"
+          },
+          {
+            "finding": "LIKELY-CONFABULATED statistics surfaced by the web-search summarizer that could NOT be traced to primary sources and should not be propagated: a '90.9% relative improvement in adoption from specification-grounded review', a '30.7% negative reactions across 229 review comments / 179 GitHub projects', and a clean '26% higher rate' of following erroneous advice attributed to Goddard 2012. Treat as unverified.",
+            "source_url": "https://arxiv.org/abs/2603.25773",
+            "source_date": "2026-03-26"
+          }
+        ],
+        "net_assessment": "All three claims survive, but the original report's targets need sharp scoping corrections, and the most useful result is a negative one. Claim 1 is confirmed verbatim but the MIT Tech Review piece is about AI warfare, not code/decision review — it supports the CONCEPT of illusory human-in-the-loop, not the software instance, and is commentary not evidence. Claim 2 is only partially confirmed: real, rigorous automation-bias/rubber-stamping measurement exists (Rosbach 2026 pathology ~7%; Kucking 2024 wound care; Microsoft over-reliance syntheses) but in clinical/HCI domains, while the most code-specific 2026 source (Zietsman's 'structurally circular' AI-review argument) is a hypotheses paper with self-described 'directional, not controlled' experiments. Claim 3 resolves cleanly in the negative and is the strongest finding for this target: the appropriate-reliance measurement literature explicitly calls itself 'fragmented' (Raees & Papangelis, April 2026) and full of 'gaps' (Ibrahim et al., Sept 2025), industry observability playbooks only recommend logging approvals/overrides, and no source validates a metric keyed to the 'rising auto-approval + rising interrupts' signature — meaning that telemetry is genuinely ambiguous on current evidence, which is precisely why the calibration-vs-theatre debate persists. I also caught one false-friend citation (arXiv:2504.18449 is about reviewer prejudice, not automation bias) and several confident-but-untraceable statistics from the search summarizer that should be flagged as likely-confabulated."
+      }
+    }
+  ]
+}
