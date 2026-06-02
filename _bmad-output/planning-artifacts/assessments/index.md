@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-05-25'
+lastEdited: '2026-06-01'
 description: Registry of point-in-time assessment records that evaluate current product state against goals, identify gaps, and inform strategic decisions. Each assessment links forward to the decisions it produced.
 ---
 
@@ -28,3 +28,4 @@ Codebase state
 | AES-001 | [Agent Guidelines Current State — Gen-1 vs. Gen-2 Target](aes-001-agent-guidelines-current-state-2026-04-09.md) | 2026-04-09 | DEC-001 | current |
 | AES-002 | [Feature Schema Value Gap — Structural Definition Without Value Context](aes-002-feature-value-gap-2026-04-11.md) | 2026-04-11 | DEC-004 | current |
 | AES-003 | [Practice-Ledger Defects + Epic-Layer Consolidation — State Audit and Cascade Capture](aes-003-practice-ledger-defects-and-epic-unification-2026-05-25.md) | 2026-05-25 | [] | current |
+| AES-004 | [Momentum's HITL-Facing Design vs. the Decision-Altitude Research — Conduct Is Legible but Stakes-Blind](aes-004-hitl-altitude-design-gaps-2026-06-01.md) | 2026-06-01 | [] | current |
