@@ -4872,5 +4872,45 @@
     "touches": [],
     "priority": "high",
     "story_type": "feature"
+  },
+  "conduct-stakes-timing-escalation-mechanism": {
+    "status": "backlog",
+    "title": "Conduct stakes-and-timing mid-flight escalation mechanism",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "stakes-classification-rubric": {
+    "status": "backlog",
+    "title": "Stakes-classification rubric (shared, single source)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "conduct-spec-revision-dec036": {
+    "status": "backlog",
+    "title": "Revise the conduct spec to design to the DEC-036 stakes-and-timing exception",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
+  },
+  "decision-grade-presentation-standard": {
+    "status": "backlog",
+    "title": "Practice-wide decision-grade presentation standard",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
   }
 }

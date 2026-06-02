@@ -75,6 +75,10 @@ Grouped by leg. Each is "what I'd suggest changing, and why (decision)." Concret
 
 ## 3. New stories I'd suggest intaking
 
+> **Reconciliation — DEC-036's "five stories" (Phase 1 / D6) resolves to:** 2 genuinely-new mechanism stories (the escalation engine, the shared rubric) + 1 spec-revision unit + 1 practice-wide D5 unit + per-leg **amendments** to the existing 18 (schema `escalated` disposition / stakes-class, dev-fix-mode branch, stage-3 escalation route, normalize-triage + qa-reviewer emission, the spine/preflight/frontier/merge carve-outs). The amendments are **edits to breakdown stories, NOT new stubs** — do not double-count.
+>
+> **Status (2026-06-01):** the four new units were intaken as backlog stubs — `conduct-stakes-timing-escalation-mechanism`, `stakes-classification-rubric`, and `conduct-spec-revision-dec036` under epic `momentum-sprint-orchestration`; `decision-grade-presentation-standard` under `ad-hoc`. (`momentum-sprint-orchestration` is the registry home for conduct-build work — the breakdown's "epic" labels like conduct-orchestrator are work-areas, not registry epics.) The per-leg amendments remain here for the build session to fold into the breakdown.
+
 Listed by importance. The **first one is the single biggest cross-leg gap** — every leg points at it, none builds it.
 
 ### ⭐ `conduct-stakes-timing-escalation-mechanism` — epic 03 *(D1 tier b)*

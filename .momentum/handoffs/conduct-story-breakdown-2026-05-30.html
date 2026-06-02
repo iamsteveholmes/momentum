@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Conduct story breakdown · house style after anthropics/html-effectiveness · charset-first <head> · self-contained -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conduct — Story Breakdown (DEC-035)</title>
+<style>
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:40px 28px 96px}
+  a{color:var(--clay-d)}
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px;max-width:88ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1.5px solid transparent}
+  .pill.ok{background:#EAF0E2;border-color:var(--olive);color:#46552F}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 4px}
+  .metric{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:14px 16px}
+  .metric .n{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1}
+  .metric .l{font-size:11px;color:var(--gray-500);margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+  .metric.good .n{color:var(--olive)}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}
+  .toc a{font:600 12px/1 var(--mono);text-decoration:none;color:var(--gray-700);border:var(--border);border-radius:999px;padding:7px 12px;background:#fff;transition:.12s}
+  .toc a:hover{border-color:var(--clay);color:var(--clay-d)}
+  section{margin-top:32px}
+  h2{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  .lead{color:var(--gray-700);font-size:13.6px;margin:0 0 14px;max-width:92ch}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:18px 20px;box-shadow:var(--shadow)}
+  .callout{border:1.5px solid var(--gold);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFFDF7,#FFF);padding:16px 20px;box-shadow:var(--shadow)}
+  .callout .k-label{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-d);margin-bottom:7px;display:block}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:7px 0;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-700)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li b{color:var(--slate)}
+  table{width:100%;border-collapse:collapse;font-size:12.6px;margin-top:4px}
+  th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+  th{font:600 10.5px/1 var(--mono);letter-spacing:.03em;text-transform:uppercase;color:var(--gray-500);border-bottom:1.5px solid var(--gray-200)}
+  td b{color:var(--slate)} td{color:var(--gray-700)}
+  td.slug{font-family:var(--mono);font-size:11.5px;color:var(--clay-d);white-space:nowrap}
+  td.deps{font-family:var(--mono);font-size:10.5px;color:var(--gray-500)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px;color:var(--clay-d)}
+  .p{font:700 9.5px/1 var(--mono);padding:3px 6px;border-radius:5px;display:inline-block}
+  .p0{background:#F2D9D4;color:#7E2B22} .p1{background:#FBF1D9;color:#8A6D12} .p2{background:var(--gray-100);color:var(--gray-700)}
+  .sz{font:600 10px/1 var(--mono);color:var(--gray-500)}
+  .badge{font:700 8.5px/1 var(--mono);padding:2px 5px;border-radius:4px;margin-left:5px;vertical-align:1px}
+  .badge.add{background:#EAF0E2;color:#46552F} .badge.fix{background:#E7EEF6;color:#2F557E}
+  .epic-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .epic-h .cnt{font:600 11px/1 var(--mono);color:var(--gray-500)}
+  .foot{margin-top:44px;text-align:center;color:var(--gray-400);font-size:12px}
+  .nb{font-size:12px;color:var(--gray-500);margin-top:8px}
+  @media(max-width:820px){.metrics{grid-template-columns:repeat(2,1fr)}td.deps{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">Conduct Rebuild · Story Breakdown · DEC-035</div>
+        <h1>Building the Conduct Execution Engine</h1>
+        <div class="sub">52 stories across 7 epics — from the spec's §10 gap-map, with DEC-035's overrides applied (feature-epic unit, no cap, in-session Workflows, beads-decoupled, directed-<code>dev</code> fixer, functionality-organized report) and the completeness critic's fixes folded in.</div>
+      </div>
+      <span class="pill ok"><span class="dot"></span>DEC-035-conformant · critic-fixed</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="n">7</div><div class="l">Epics</div></div>
+      <div class="metric"><div class="n">54</div><div class="l">Stories (+2 DEC-036)</div></div>
+      <div class="metric"><div class="n">~26</div><div class="l">P0 (engine core)</div></div>
+      <div class="metric good"><div class="n">+3</div><div class="l">Gaps added by critic</div></div>
+      <div class="metric good"><div class="n">0</div><div class="l">Scope violations</div></div>
+    </div>
+    <div class="toc">
+      <a href="#read">00 · How to read + foundation</a>
+      <a href="#e1">01 · code-review-adapter</a>
+      <a href="#e2">02 · fixer-via-dev</a>
+      <a href="#e3">03 · conduct-orchestrator</a>
+      <a href="#e4">04 · html-report</a>
+      <a href="#e5">05 · qa+dev rescope</a>
+      <a href="#e6">06 · avfl-merge-review</a>
+      <a href="#e7">07 · cleanup+coexistence</a>
+      <a href="#fixes">08 · critic fixes</a>
+    </div>
+  </header>
+
+  <!-- 00 -->
+  <section id="read">
+    <h2><span class="num">00</span>How to read this + where to start</h2>
+    <div class="callout" style="margin-bottom:14px"><span class="k-label" style="font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-d);display:block;margin-bottom:6px">DEC-036 addendum (2026-06-01)</span>DEC-036 (conduct HITL calibration) amends DEC-035 #1 — a narrow, stakes-gated mid-flight escalation tier is now permitted, and stakes-class findings leave the silent auto-fix path. Impact on this breakdown: <b>+2 new stories</b> — <code>stakes-classification-rubric</code> (epic 02 / fixer) and <code>conduct-stakes-timing-escalation-mechanism</code> (epic 03 / conductor-skeleton) — plus <b>per-leg amendments</b> to existing stories (the <code>directed-fix-finding-schema</code> gains an <code>escalated</code> disposition + stakes-class enum; dev-fix-mode/stage-3/normalize-triage/qa-reviewer gain emission touches; preflight-halts gains a second developer-facing carve-out). Two further units intaken separately: <code>conduct-spec-revision-dec036</code> (Phase-2 pre-build gate) and <code>decision-grade-presentation-standard</code> (Phase-4, practice-wide). <b>First sprint slice grows 18 → ~20.</b> Full mapping: <code>.momentum/handoffs/conduct-dec036-impact-brief-2026-06-01.md</code>.</div>
+    <p class="lead"><span class="badge add">+</span> = story the critic added to close a gap. <span class="badge fix">✎</span> = dependency repointed by the critic. <code>deps</code> are within-breakdown slugs; cross-epic ordering is by priority. Verification method is derived from each story's change-type (mostly <code>skill-invoke</code>; the report/AVFL code is <code>bash</code>; schemas are <code>document-review</code>).</p>
+    <div class="panel">
+      <h3 style="margin:0 0 8px;font-size:14px">Foundation — start here (no dependencies, build in parallel)</h3>
+      <ul class="clean">
+        <li><b><code>conduct-skill-scaffold-and-spine</code></b> — the Conductor skill shell + workflow spine. Everything in epic 03 hangs off it; it's the keystone.</li>
+        <li><b><code>directed-fix-finding-schema</code></b> — the canonical §4 normalized finding schema (the contract code-review, AVFL, and the fixer all speak). Unblocks both the fixer and the report.</li>
+        <li><b><code>code-review-adapter-noninteractive-driver</code></b> — wrap <code>bmad-code-review</code> report-only; lowest-effort P0, unblocks the per-story review leg.</li>
+        <li><b><code>report-data-schema</code> + <code>report-template-skeleton</code></b> — the report's data model + HTML skeleton; the whole report epic builds on these two.</li>
+        <li><b>qa/dev rescope trio</b> — small agent-definition edits, independently buildable.</li>
+      </ul>
+      <p class="nb"><b>P0 critical path:</b> scaffold-spine → build-phase-frontier → merge+conflict → AVFL/E2E/arch-guard handoff → end-gate-conversation → approve-sequence. The report epic (04) and the fixer contract (02) feed it and should land in parallel before the end-gate stories.</p>
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section id="e1">
+    <h2><span class="num">01</span>code-review-adapter <span class="sz">— retire the stub; drive bmad-code-review (8 stories)</span></h2>
+    <table>
+      <thead><tr><th>Story</th><th>Pri</th><th>Sz</th><th>What</th><th class="deps">Deps</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">…noninteractive-driver</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Thin adapter drives <code>bmad-code-review</code> report-only on a story diff; suppresses its HALTs; verifies the bmad config exists</td><td class="deps">—</td></tr>
+        <tr><td class="slug">…normalize-triage</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Map bmad triage buckets → canonical finding schema (<code>source=bmad-code-review</code>); dismiss-bucket dropped</td><td class="deps">driver</td></tr>
+        <tr><td class="slug">…retire-stub</td><td><span class="p p0">P0</span></td><td class="sz">S</td><td>Delete the in-house stub body; repoint the command shim to the adapter</td><td class="deps">driver, normalize</td></tr>
+        <tr><td class="slug">…repoint-sprint-dev</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Repoint the sprint-dev caller to the adapter <span class="badge fix">✎ dep→scaffold-spine</span></td><td class="deps">retire-stub, scaffold-spine</td></tr>
+        <tr><td class="slug">…repoint-quick-fix</td><td><span class="p p0">P0</span></td><td class="sz">S</td><td>Repoint the quick-fix caller to the adapter</td><td class="deps">retire-stub</td></tr>
+        <tr><td class="slug">…refresh-evals</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Rewrite stale evals to assert adapter behavior, not stub behavior</td><td class="deps">retire-stub, repoints</td></tr>
+        <tr><td class="slug">…honor-deep-review-depth</td><td><span class="p p2">P2</span></td><td class="sz">S</td><td>Honor the optional <code>review_depth=deep</code> field — pure consumption only (authority is the deferred planning epic)</td><td class="deps">normalize</td></tr>
+      </tbody>
+    </table>
+    <p class="nb">The 8th draft story (a separate finding-schema fixture) is <b>merged into</b> <code>directed-fix-finding-schema</code> (epic 02) — one canonical schema, per the critic.</p>
+  </section>
+
+  <!-- 02 -->
+  <section id="e2">
+    <h2><span class="num">02</span>fixer-via-directed-dev <span class="sz">— no new base body; dev gains a fix-mode (7 stories)</span></h2>
+    <table>
+      <thead><tr><th>Story</th><th>Pri</th><th>Sz</th><th>What</th><th class="deps">Deps</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">directed-fix-finding-schema</td><td><span class="p p0">P0</span></td><td class="sz">S</td><td><b>Canonical</b> §4 normalized finding schema + disposition vocab (fixed / dismissed / triaged-out). The one schema all consumers reference</td><td class="deps">—</td></tr>
+        <tr><td class="slug">directed-fix-invocation-contract</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>The directed <code>momentum:dev</code> fix-mode invocation contract (findings in → applied fixes + dispositions out)</td><td class="deps">finding-schema</td></tr>
+        <tr><td class="slug">dev-fix-mode-entry</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Add fix-mode to <code>momentum:dev</code> (accepts a directed-fix payload alongside green-field build)</td><td class="deps">invocation-contract</td></tr>
+        <tr><td class="slug">dev-pure-builder-rewrite</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Strip merge/worktree/crash-ask authority so dev stays a pure builder</td><td class="deps">fix-mode-entry</td></tr>
+        <tr><td class="slug">stage3-fix-loop-via-directed-dev</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Wire the per-story stage-3 fix loop to the directed fixer (retry bound 3)</td><td class="deps">contract, fix-mode</td></tr>
+        <tr><td class="slug">change-workflow-fixer-worker</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Directed fixer is the change-workflow worker (build-fix AND developer-requested changes)</td><td class="deps">contract, fix-mode</td></tr>
+        <tr><td class="slug">merge-conflict-resolver-via-directed-dev</td><td><span class="p p2">P2</span></td><td class="sz">M</td><td>Fire the directed fixer for semantic merge conflicts (Conductor handles trivial inline)</td><td class="deps">contract, fix-mode</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 03 -->
+  <section id="e3">
+    <h2><span class="num">03</span>conduct-orchestrator <span class="sz">— the top-level-session Conductor (11 stories)</span></h2>
+    <table>
+      <thead><tr><th>Story</th><th>Pri</th><th>Sz</th><th>What</th><th class="deps">Deps</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">conduct-skill-scaffold-and-spine</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Orchestrator skill scaffold + workflow spine (top-level session) — the keystone</td><td class="deps">—</td></tr>
+        <tr><td class="slug">conduct-preflight-halts</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Pre-flight HALTs H1–H5 + non-interactive git reconcile <span class="badge fix">✎ "no <i>developer-facing</i> HALT outside Phase 1"</span></td><td class="deps">scaffold-spine</td></tr>
+        <tr><td class="slug">conduct-build-phase-frontier</td><td><span class="p p0">P0</span></td><td class="sz">L</td><td>Build phase — Conductor frontier over the feature-epic's stories (index.json/depends_on, <b>no cap</b>)</td><td class="deps">scaffold-spine</td></tr>
+        <tr><td class="slug">conduct-contract-freeze-check</td><td><span class="p p0">P0</span></td><td class="sz">S</td><td>Assert <code>sha256(contract)==frozen_sha256</code> before per-story verify; mismatch surfaces to the Conductor (not you) <span class="badge add">+ added (§7)</span></td><td class="deps">build-phase-frontier</td></tr>
+        <tr><td class="slug">conduct-coverage-disposition-branch</td><td><span class="p p0">P0</span></td><td class="sz">S</td><td>Honor <code>coverage_disposition: covered-by-composition</code> — skip dedicated QA, discharge at AVFL/merge <span class="badge add">+ added (§7)</span></td><td class="deps">build-phase-frontier, qa-rescope</td></tr>
+        <tr><td class="slug">conduct-merge-and-conflict-resolution</td><td><span class="p p0">P0</span></td><td class="sz">L</td><td>Per-story merge, conflict resolution, quarantine (Conductor owns all git)</td><td class="deps">build-phase-frontier</td></tr>
+        <tr><td class="slug">conduct-avfl-e2e-handoff</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>AVFL-on-merge + E2E handoff and result consumption</td><td class="deps">merge</td></tr>
+        <tr><td class="slug">conduct-architecture-guard-wiring</td><td><span class="p p0">P0</span></td><td class="sz">S</td><td>Run <code>architecture-guard</code> on the merged diff alongside E2E (read-only PASS/FAIL → report) <span class="badge add">+ added (§10)</span></td><td class="deps">avfl-e2e-handoff</td></tr>
+        <tr><td class="slug">conduct-end-gate-conversation</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>End-gate loop (question / changes / approve) <span class="badge fix">✎ dep→report-generator</span></td><td class="deps">report-generator, avfl-e2e, arch-guard</td></tr>
+        <tr><td class="slug">conduct-change-workflow</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>The single change-workflow (build-fix AND developer-requested changes)</td><td class="deps">merge</td></tr>
+        <tr><td class="slug">conduct-approve-sequence-and-push</td><td><span class="p p0">P0</span></td><td class="sz">L</td><td>Approve: triage leftovers, close stories, merge to main, push-with-approval</td><td class="deps">end-gate, change-workflow</td></tr>
+      </tbody>
+    </table>
+    <p class="nb">The draft's <code>conduct-report-data-model-and-html</code> is <b>dropped</b> — it duplicated epic 04, which now solely owns the renderer (per the critic). End-gate-conversation depends on epic 04's <code>report-generator</code>.</p>
+  </section>
+
+  <!-- 04 -->
+  <section id="e4">
+    <h2><span class="num">04</span>conduct-html-report <span class="sz">— self-sufficient, data-driven, functionality-organized (8 stories)</span></h2>
+    <table>
+      <thead><tr><th>Story</th><th>Pri</th><th>Sz</th><th>What</th><th class="deps">Deps</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">report-data-schema</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>The frozen report-data schema (the persisted model the report renders from); references the canonical finding schema</td><td class="deps">—</td></tr>
+        <tr><td class="slug">report-template-skeleton</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Extract the fixed HTML skeleton (charset-first head, tokens, component CSS, JS) from the mockup</td><td class="deps">—</td></tr>
+        <tr><td class="slug">report-generator</td><td><span class="p p0">P0</span></td><td class="sz">L</td><td>The data-driven render: report-data object → self-sufficient HTML</td><td class="deps">data-schema, skeleton</td></tr>
+        <tr><td class="slug">functionality-grouped-organization</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Organize by user-facing functionality + divergences (collapse clean, expand diverged) — <b>DEC-035 D6</b></td><td class="deps">data-schema, generator</td></tr>
+        <tr><td class="slug">legible-autofix-log</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Render the legible auto-fix log — what changed AND dismissed, full context — <b>DEC-035 D5</b></td><td class="deps">data-schema, generator</td></tr>
+        <tr><td class="slug">self-sufficiency-validator</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>Enforce the CORE MANDATE at the data layer (missing required field = build error)</td><td class="deps">data-schema</td></tr>
+        <tr><td class="slug">report-data-assembly-instructions</td><td><span class="p p0">P0</span></td><td class="sz">M</td><td>The Conductor's report-data assembly + authoring-discipline instructions</td><td class="deps">data-schema</td></tr>
+        <tr><td class="slug">report-gate-control-wiring</td><td><span class="p p1">P1</span></td><td class="sz">S</td><td>Wire the two-outcome (changes | approve) control + copy-back prompt</td><td class="deps">skeleton, generator</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 05 -->
+  <section id="e5">
+    <h2><span class="num">05</span>qa-and-dev-rescope <span class="sz">— repurpose qa-reviewer + dev for per-story (4 stories)</span></h2>
+    <table>
+      <thead><tr><th>Story</th><th>Pri</th><th>Sz</th><th>What</th><th class="deps">Deps</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">qa-reviewer-rescope-per-story-contract</td><td><span class="p p1">P1</span></td><td class="sz">S</td><td>Rescope qa-reviewer to the per-story worktree diff vs the story's verification contract</td><td class="deps">—</td></tr>
+        <tr><td class="slug">dev-read-contract-part-a-header</td><td><span class="p p1">P1</span></td><td class="sz">S</td><td>Teach <code>momentum:dev</code> to read the contract's Part-A header (consume only — emission stays out of scope)</td><td class="deps">—</td></tr>
+        <tr><td class="slug">dev-strip-merge-cleanup-authority</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Strip merge/worktree-cleanup/lock/crash-ask from <code>momentum:dev</code> (moves to Conductor)</td><td class="deps">—</td></tr>
+        <tr><td class="slug">dev-bmad-wrapper-rewrite-consideration</td><td><span class="p p2">P2</span></td><td class="sz">S</td><td>Capture the <code>momentum:dev</code> bmad-wrapper rewrite as a tracked consideration</td><td class="deps">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 06 -->
+  <section id="e6">
+    <h2><span class="num">06</span>avfl-merge-review <span class="sz">— AVFL as a Workflow over the merged feature (10 stories)</span></h2>
+    <table>
+      <thead><tr><th>Story</th><th>Pri</th><th>Sz</th><th>What</th><th class="deps">Deps</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">avfl-merge-workflow-scaffold</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Scaffold the Workflow with frozen config (skepticism [3,2,2,2] floor 2, pass 95, max 4) + retained framework assets <span class="badge fix">✎ dep→scaffold-spine</span></td><td class="deps">scaffold-spine</td></tr>
+        <tr><td class="slug">avfl-merge-gather-3dot-diff</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Gather the 3-dot merged diff, blame index, integration surface</td><td class="deps">workflow-scaffold</td></tr>
+        <tr><td class="slug">avfl-merge-result-object</td><td><span class="p p1">P1</span></td><td class="sz">S</td><td>Emit the typed AVFL result object the orchestrator consumes</td><td class="deps">workflow-scaffold</td></tr>
+        <tr><td class="slug">avfl-merge-empty-surface-shortcircuit</td><td><span class="p p1">P1</span></td><td class="sz">S</td><td>Short-circuit to CLEAN when the integration surface is empty</td><td class="deps">gather-3dot, result-object</td></tr>
+        <tr><td class="slug">avfl-merge-lens-fanout-join</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Four-lens validator fan-out with a join barrier per iteration</td><td class="deps">scaffold, gather-3dot</td></tr>
+        <tr><td class="slug">avfl-merge-consolidate-score-classify</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Consolidate, dedup, score; classify INTEGRATION vs LOCAL</td><td class="deps">lens-fanout</td></tr>
+        <tr><td class="slug">avfl-merge-evaluate-exit-guards</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Structural evaluate/exit: declining skepticism, pass-score, max-iter, oscillation guard</td><td class="deps">consolidate, result-object</td></tr>
+        <tr><td class="slug">avfl-merge-autofix-loop</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Auto-fix integration findings in the merged tree; loop with declining skepticism</td><td class="deps">evaluate-exit</td></tr>
+        <tr><td class="slug">avfl-merge-code-finding-handoff</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Route source-code integration findings to the directed-dev fixer <span class="badge fix">✎ dep→directed-fix-contract</span></td><td class="deps">autofix-loop, directed-fix-contract</td></tr>
+        <tr><td class="slug">avfl-merge-conduct-integration</td><td><span class="p p1">P1</span></td><td class="sz">M</td><td>Wire conduct to invoke avfl-merge-review once post-merge and consume the result <span class="badge fix">✎ dep→scaffold-spine</span></td><td class="deps">result-object, evaluate-exit, scaffold-spine</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 07 -->
+  <section id="e7">
+    <h2><span class="num">07</span>cleanup-and-coexistence <span class="sz">— prune, ship-beside, soft-deprecate, stub (5 stories)</span></h2>
+    <table>
+      <thead><tr><th>Story</th><th>Pri</th><th>Sz</th><th>What</th><th class="deps">Deps</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">agents-json-prune-dead-routing-paths</td><td><span class="p p2">P2</span></td><td class="sz">S</td><td>Prune dead architect/pm/sm routing entries from agents.json</td><td class="deps">—</td></tr>
+        <tr><td class="slug">record-dec032-supersession-reference</td><td><span class="p p2">P2</span></td><td class="sz">S</td><td>Record DEC-032→DEC-035 supersession at the dispatcher decision point (Gas City stays a deferred option, not deleted)</td><td class="deps">—</td></tr>
+        <tr><td class="slug">conduct-ship-beside-sprint-dev</td><td><span class="p p2">P2</span></td><td class="sz">S</td><td>Ship conduct beside sprint-dev (both invokable; no behavior change to sprint-dev) <span class="badge fix">✎ dep→scaffold-spine</span></td><td class="deps">scaffold-spine</td></tr>
+        <tr><td class="slug">conduct-default-dispatch-soft-deprecate</td><td><span class="p p2">P2</span></td><td class="sz">S</td><td>Make conduct Impetus's default "build stories" dispatch (soft-deprecate sprint-dev)</td><td class="deps">ship-beside</td></tr>
+        <tr><td class="slug">sprint-dev-stub-to-conduct</td><td><span class="p p2">P2</span></td><td class="sz">M</td><td>Stub sprint-dev to redirect to conduct (feature-status→canvas pattern)</td><td class="deps">soft-deprecate</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 08 -->
+  <section id="fixes">
+    <h2><span class="num">08</span>What the critic caught (all folded in above)</h2>
+    <div class="callout">
+      <span class="k-label">3 gaps added · 4 structural fixes · 0 scope violations</span>
+      <ul class="clean">
+        <li><b>+ architecture-guard wiring</b> — spec §10 requires it on the merged diff alongside E2E; the draft omitted it. Added as <code>conduct-architecture-guard-wiring</code>.</li>
+        <li><b>+ contract-freeze check</b> — spec §7 mandates asserting <code>frozen_sha256</code> before verifying; the one sanctioned non-developer halt (surfaces to the Conductor). Added.</li>
+        <li><b>+ coverage-disposition branch</b> — spec §7: a <code>covered-by-composition</code> story skips dedicated QA and is discharged at AVFL/merge. Added.</li>
+        <li><b>✎ dangling deps</b> — the foreign slug <code>conduct-orchestrator</code> (4 stories) repointed to the real spine <code>conduct-skill-scaffold-and-spine</code>; AVFL's code-finding handoff repointed to <code>directed-fix-invocation-contract</code>.</li>
+        <li><b>✎ report built twice</b> — the orchestrator-epic duplicate dropped; epic 04 solely owns the renderer.</li>
+        <li><b>✎ three schema owners</b> — <code>directed-fix-finding-schema</code> is canonical; the code-review fixture merged into it; <code>report-data-schema</code> references it.</li>
+        <li><b>✎ HALT invariant</b> — <code>conduct-preflight-halts</code> softened to "no <i>developer-facing</i> HALT outside Phase 1," so it doesn't forbid the §7 freeze guard.</li>
+      </ul>
+    </div>
+    <p class="nb"><b>Out of scope (deferred, per DEC-035 D7):</b> the plan-gate legibility epic — canvas Planner/Reviewer tabs, sprint-planning plain-language output, verification-contract <i>emission</i>. Conduct only <i>consumes</i> existing contracts. The <code>momentum:dev</code> bmad-wrapper rewrite is captured as a P2 consideration, not committed here.</p>
+  </section>
+
+  <div class="foot">Conduct story breakdown · 2026-05-30 · 7 epics · 52 stories · drafted by 7 agents + completeness critic, fixes applied · governed by DEC-035 · self-contained HTML</div>
+</div>
+</body>
+</html>
