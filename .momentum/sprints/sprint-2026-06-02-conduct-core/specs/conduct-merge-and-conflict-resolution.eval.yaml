@@ -1,0 +1,97 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-merge-and-conflict-resolution
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/conduct-merge-and-conflict-resolution.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, drive the Conductor through a sprint that integrates several completed
+  stories and confirm the per-story merge behavior is observable end to end:
+    - Stage a story whose branch produces a TRIVIAL conflict (e.g. an additive, non-overlapping
+      change). Run the integration and confirm it merges with no human prompt and no escalation.
+    - Stage a story whose branch produces a SEMANTIC conflict (overlapping edits to the same logic)
+      that touches NO stakes area and does not break the build. Confirm the Conductor resolves it
+      autonomously (firing its fixer and retrying), continues, and does NOT pull you in.
+    - Stage a story that cannot be reconciled. Confirm that after a bounded number of attempts the
+      Conductor QUARANTINES it (its work is preserved, the conflict is recorded), the remaining
+      stories still integrate, and the sprint does NOT halt.
+    - Stage a story whose only viable semantic resolution would change an auth/security boundary,
+      perform an irreversible/destructive action, or break the build. Confirm the Conductor RAISES
+      this mid-flight (it stops silently auto-resolving) and the raised item is recorded as an
+      escalation, not as a silent fix.
+    - Stage a routine semantic resolution and a stakes/build-invalidating one in the same sprint and
+      confirm ONLY the latter is raised mid-flight — the narrow bar holds.
+    - Confirm nothing about the final sprint-to-main merge gets raised mid-flight; it stays inside
+      the end-gate approval sequence.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-merge-and-conflict-resolution.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Trivial conflict auto-resolves and integration continues silently
+    invocation: Run a conduct sprint that integrates a completed story whose branch collides only in a mechanically reconcilable way (additive, non-overlapping change) with the sprint integration line.
+    given: A sprint is mid-build with one completed story queued for integration, and that story's change does not overlap the intent of any other change.
+    when: The Conductor integrates the story.
+    then:
+      - The story's work lands in the sprint integration line.
+      - No prompt or pause is presented to the operator during integration.
+      - No item is raised or recorded as an escalation for this story.
+    pass_criteria: The story integrates cleanly with zero operator interaction and zero escalation records.
+    fail_criteria: The operator is prompted, the run pauses for input, or an escalation is recorded for a purely mechanical reconciliation.
+
+  - name: Semantic, low-stakes conflict is resolved autonomously with bounded retries
+    invocation: Run a conduct sprint integrating a completed story whose branch overlaps the same logic as an already-integrated change, where the conflict touches no security/auth area, performs no irreversible action, and does not break the build.
+    given: A completed story conflicts in a way that requires understanding intent to reconcile, and the conflict is routine (no stakes area, build stays valid).
+    when: The Conductor integrates the story.
+    then:
+      - The Conductor produces a corrected resolution and re-attempts the integration rather than abandoning it on first conflict.
+      - The story ends up integrated into the sprint line.
+      - The operator is not pulled in and the run does not pause.
+      - No escalation is recorded for this story.
+    pass_criteria: The story integrates after one or more automatic resolve-and-retry cycles, with no operator interaction and no escalation record.
+    fail_criteria: The Conductor halts, prompts the operator, retries without bound, or raises an escalation for a routine semantic resolution.
+
+  - name: Unreconcilable story is quarantined and the sprint continues
+    invocation: Run a conduct sprint with one completed story that cannot be reconciled no matter how it is resolved, alongside other completed stories that integrate fine.
+    given: A completed story produces a conflict that remains unresolved after the allowed number of automatic attempts, and other completed stories are available to integrate.
+    when: The Conductor reaches the attempt limit for the problem story.
+    then:
+      - The problem story's work is preserved (not discarded) and its conflict detail is recorded.
+      - The Conductor stops retrying that story after a bounded number of attempts rather than looping indefinitely.
+      - The remaining completed stories still integrate.
+      - The sprint does not halt and the operator is not pulled in mid-flight for the quarantine.
+      - The quarantined story is surfaced at the end-gate.
+    pass_criteria: The problem story is set aside with its work and conflict preserved, the other stories integrate, the sprint runs to its end-gate, and the quarantine appears in the end-gate output.
+    fail_criteria: The sprint halts on the unmergeable story, the story's work is lost, retries are unbounded, the other stories are blocked, or the operator is interrupted mid-flight.
+
+  - name: Stakes-touching or build-invalidating resolution is raised mid-flight, not silently applied
+    invocation: Run a conduct sprint where a completed story's only viable semantic resolution would change an auth/security boundary, perform an irreversible/destructive action (migration, delete, force-push, prod deploy), or break the build for the sprint or downstream stories.
+    given: A completed story conflicts such that resolving it would touch a high-stakes area or invalidate the build.
+    when: The Conductor attempts to resolve the conflict.
+    then:
+      - The Conductor stops the silent auto-resolve-and-continue path for this conflict.
+      - The matter is raised mid-flight and recorded as an escalation (raised, not silently fixed), distinct from a clean auto-fix record and distinct from a quarantine record.
+      - The raised item is available for the operator to see.
+    pass_criteria: The stakes/build-invalidating resolution is surfaced mid-flight and recorded as an escalation rather than being applied silently and forgotten.
+    fail_criteria: The resolution is applied silently with no escalation record, or it is recorded only as an ordinary auto-fix or quarantine.
+
+  - name: The mid-flight raise is narrow — only stakes/build-invalidating, not routine
+    invocation: Run a conduct sprint that contains both a routine semantic resolution (no stakes area, build stays valid) and a stakes-touching-or-build-invalidating resolution.
+    given: Two completed stories require semantic resolution, one routine and one stakes/build-invalidating.
+    when: The Conductor integrates both.
+    then:
+      - Only the stakes/build-invalidating resolution is raised mid-flight.
+      - The routine resolution is auto-resolved and the run continues with no escalation for it.
+    pass_criteria: Exactly one escalation is raised — for the stakes/build-invalidating story — and the routine story integrates with no escalation.
+    fail_criteria: The routine resolution is also raised mid-flight, or the stakes/build-invalidating one is not raised.
+
+  - name: Final sprint-to-main merge is not raised mid-flight
+    invocation: Run a conduct sprint to completion and observe whether the final integration to the mainline triggers a mid-flight raise.
+    given: A sprint has finished its per-story integration and reaches the point of merging the assembled work to the mainline.
+    when: The sprint advances toward the mainline merge.
+    then:
+      - The mainline merge is presented only inside the end-gate approval sequence, where the operator approves.
+      - No mid-flight escalation is raised solely because the run reaches the mainline merge.
+    pass_criteria: The mainline merge appears only at the operator-approved end-gate and produces no standalone mid-flight raise.
+    fail_criteria: The run raises a mid-flight escalation for the mainline merge itself, or performs the mainline merge without the operator-approved end-gate.

@@ -1,0 +1,96 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: stage3-fix-loop-via-directed-dev
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/stage3-fix-loop-via-directed-dev.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the per-story build through the Conductor against a story
+  whose work product produces findings, and confirm the observable behavior:
+  - A routine finding gets a fix applied, is re-checked, and loops; if the re-check is clean
+    it resolves. A routine finding that stays unresolved after the third attempt is reported
+    BLOCKED, and the build moves on to the next story instead of stopping the whole run.
+  - A finding that should escalate is reported with a disposition of "escalated" — clearly
+    distinct from "fixed", from a still-remaining finding, and from BLOCKED — and is NOT
+    fix/re-checked again inside the loop.
+  - An escalated finding with no mid-flight timing condition is carried to the single human
+    end-gate as a decision-card item (end-gate-expanded tier).
+  - An escalated finding flagged irreversible-and-imminent OR build-invalidating triggers a
+    mid-flight raise during the build, not at the end.
+  - No stakes-class finding (security / auth-isolation; irreversible-destructive like a
+    migration, delete, force-push, or prod deploy; high-blast-radius / architecture) is ever
+    silently auto-fixed inside the loop — each is routed to the escalation channel.
+  Read the build report and the human-facing prompts to confirm each of the above is visible.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/stage3-fix-loop-via-directed-dev.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Routine finding fixes and clears within the bound
+    invocation: Run the per-story build phase against a story whose work product contains one routine (default-class) finding that is fixable.
+    given: A story under build with exactly one routine finding that a fix resolves.
+    when: The build phase runs the per-story fix loop.
+    then:
+      - A fix is applied to the finding and the work product is re-checked.
+      - The re-check reports the finding resolved.
+      - The finding's reported disposition is "fixed".
+      - No human prompt or end-gate decision-card item is produced for this finding.
+    pass_criteria: The build report shows the routine finding fixed and cleared, with no human gate involved for it.
+    fail_criteria: The finding is left unresolved, requires a human prompt, or is reported with any disposition other than fixed.
+
+  - name: Routine finding hits the retry bound and is BLOCKED without halting the build
+    invocation: Run the per-story build phase against a story with one routine finding that the fixer cannot resolve, in a run that has at least one more story queued after it.
+    given: A routine finding that stays unresolved no matter how many fix attempts are made, with a following story queued.
+    when: The build phase runs the per-story fix loop.
+    then:
+      - At most 3 fix-and-re-check attempts are made against the finding.
+      - After the attempts are exhausted the finding is reported BLOCKED.
+      - The build continues to the next queued story rather than stopping the whole run.
+    pass_criteria: The report shows no more than 3 attempts, a BLOCKED outcome for the finding, and the next story still gets built.
+    fail_criteria: More than 3 attempts are made, the finding is not marked BLOCKED, or the whole build halts instead of continuing.
+
+  - name: Escalated finding leaves the loop and rides the default end-gate tier
+    invocation: Run the per-story build phase against a story with one escalatable finding that carries no mid-flight timing condition.
+    given: A finding that qualifies for escalation but is not flagged irreversible-and-imminent or build-invalidating.
+    when: The build phase runs the per-story fix loop.
+    then:
+      - The finding's reported disposition is "escalated", distinct from fixed, from a remaining finding, and from BLOCKED.
+      - No further fix-and-re-check attempts are run against the finding inside the loop.
+      - The finding is carried to the single human end-gate and appears there as a decision-card item.
+      - No mid-flight raise is triggered for this finding during the build.
+    pass_criteria: The finding is reported as escalated, is not re-attempted in the loop, and surfaces only at the end-gate as a decision-card item.
+    fail_criteria: The finding is silently fixed, re-attempted in the loop, reported as fixed/BLOCKED, or triggers a mid-flight raise despite no mid-flight condition.
+
+  - name: Mid-flight-flagged escalation raises during the build, not at the end
+    invocation: Run the per-story build phase against a story with one escalated finding flagged irreversible-and-imminent OR build-invalidating.
+    given: An escalated finding whose timing flag marks it as a mid-flight condition.
+    when: The build phase runs the per-story fix loop.
+    then:
+      - The finding is removed from the loop (no further fix/re-check attempts inside it).
+      - A mid-flight escalation is raised during the build for this finding, rather than the finding waiting silently for the end-gate.
+      - The mid-flight raise is reserved to this case; a finding without a mid-flight timing flag does not trigger one.
+    pass_criteria: The mid-flight raise occurs during the build for the flagged finding and only for findings carrying one of the two narrow conditions.
+    fail_criteria: The flagged finding waits silently for the end-gate, is fixed in the loop, or a finding lacking a mid-flight flag triggers a mid-flight raise.
+
+  - name: Stakes-class finding is never silently auto-fixed inside the loop
+    invocation: Run the per-story build phase against a story whose work product contains a stakes-class finding (for example an auth-isolation regression, a destructive migration or force-push, or a high-blast-radius architecture change).
+    given: A finding that falls into a stakes class rather than the routine default class.
+    when: The build phase runs the per-story fix loop.
+    then:
+      - The finding is not fixed silently inside the loop.
+      - The finding is routed to the escalation channel (either to the end-gate decision card or, if flagged for a mid-flight condition, to a mid-flight raise).
+      - The build report makes the stakes-class finding and its routing visible to the human.
+    pass_criteria: The stakes-class finding is visibly routed to the escalation channel and never silently auto-fixed within the loop.
+    fail_criteria: The stakes-class finding is fixed inside the loop without surfacing it, or it does not appear on the escalation channel.
+
+  - name: Escalation on one item does not disrupt routine handling of others
+    invocation: Run the per-story build phase against a story whose work product mixes one escalated finding with routine findings on other items.
+    given: One finding escalates while other independent findings are routine and fixable.
+    when: The build phase runs the per-story fix loop.
+    then:
+      - The escalated finding is routed to the escalation channel and removed from the loop.
+      - The routine findings on the other items still complete their normal fix, re-check, and bound-3 cycle.
+      - The escalated finding's routing does not stop or skip the routine findings.
+    pass_criteria: Routine findings on other items are fixed (or BLOCKED at the bound) normally while the escalated finding is independently routed to the escalation channel.
+    fail_criteria: The escalated finding's routing halts, skips, or corrupts the routine handling of the other items.

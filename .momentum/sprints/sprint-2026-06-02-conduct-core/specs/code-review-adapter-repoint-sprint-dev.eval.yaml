@@ -1,0 +1,75 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: code-review-adapter-repoint-sprint-dev
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/code-review-adapter-repoint-sprint-dev.eval.yaml
+how_dev_self_checks: |
+  Before you signal done: run the sprint-dev workflow up to and through its per-story
+  code-review step, and confirm two things by observation. First, the review step reaches
+  the bmad-code-review adapter — the same review entry point used everywhere else — and
+  does not fall back to the retired code-reviewer stub. Second, the findings it returns
+  are in the adapter's normalized shape: the exact same structure you get if you invoke
+  the bmad-code-review adapter directly on the same change. Then confirm the rest of the
+  per-story review flow is unchanged — review still triggers at the same point, reviews
+  the same change, and feeds its result into the same next step. Finally, confirm you did
+  NOT add any escalation, disposition handling, or end-gate/report behavior — this story
+  is pure wiring and is unchanged by DEC-036.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/code-review-adapter-repoint-sprint-dev.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: per-story review reaches the adapter entry point
+    invocation: Run the sprint-dev workflow on a sample story until it reaches the per-story code-review step.
+    given: A sprint-dev run with a story whose changes are ready for code review.
+    when: The workflow executes its per-story code-review step.
+    then:
+      - The review step produces review findings rather than the retired stub's placeholder output.
+      - The review step completes without error and the run continues past it.
+    pass_criteria: The per-story review step returns genuine review findings (not stub placeholder output) and the run continues past the review step normally.
+    fail_criteria: The review step returns stub-style placeholder output, errors out at the review step, or is skipped entirely.
+
+  - name: review output is adapter-normalized
+    invocation: Capture the findings produced by the sprint-dev per-story review step, then invoke the bmad-code-review adapter directly on the same change and compare output shape.
+    given: A change with at least one reviewable issue, run once through sprint-dev's review step and once through the adapter directly.
+    when: Both reviews complete.
+    then:
+      - The findings returned by the sprint-dev review step are in the adapter's normalized findings shape.
+      - The shape of the sprint-dev review output matches the shape of the adapter's output when the adapter is invoked directly on the same change.
+    pass_criteria: Sprint-dev's per-story review emits adapter-normalized findings indistinguishable in structure from a direct adapter invocation.
+    fail_criteria: Sprint-dev's review emits findings in a different, non-normalized, or legacy-stub shape.
+
+  - name: no stub-style output anywhere in the review flow
+    invocation: Run the full sprint-dev workflow through the review step and read every review output it produces end to end.
+    given: A sprint-dev run that exercises each code-review point in the flow.
+    when: The workflow reaches and passes the code-review step.
+    then:
+      - Every review output produced in the sprint-dev flow is in the adapter-normalized findings shape.
+      - No review output in the flow is stub-style placeholder output.
+    pass_criteria: The workflow completes its review step(s) producing only adapter-normalized findings, with no stub-style placeholder output anywhere in the flow.
+    fail_criteria: Any review output in the flow is stub-style placeholder output rather than adapter-normalized findings.
+
+  - name: surrounding review flow is unchanged
+    invocation: Compare the sprint-dev per-story review flow behavior (when it triggers, what it reviews, how its result is consumed) against the prior behavior, changing only the callee.
+    given: A sprint-dev run that reaches the per-story review step.
+    when: The review step runs and its result feeds the next step.
+    then:
+      - Review triggers at the same point in the per-story flow as before.
+      - Review operates on the same change it operated on before.
+      - The review result is consumed by the same downstream step as before, with the findings now in adapter-normalized shape.
+    pass_criteria: Trigger timing, review input, and downstream consumption are observably the same as before, with the only observable difference being that review output is now adapter-normalized.
+    fail_criteria: The trigger point, the reviewed input, or how the result feeds downstream changed, beyond review output now being adapter-normalized.
+
+  - name: pure wiring — no escalation, disposition, or end-gate behavior added
+    invocation: Inspect the observable behavior of the sprint-dev review step for any new escalation, disposition handling, or end-gate/report rendering.
+    given: A sprint-dev per-story review run after the repoint.
+    when: The review step runs and returns findings.
+    then:
+      - The review step produces no mid-flight escalation, prompt, or pause.
+      - The review step adds no new disposition handling output (fixed / dismissed / triaged-out / escalated) of its own.
+      - The review step renders no end-gate or report output.
+      - The review step's only observable output is adapter-normalized review findings.
+    pass_criteria: The review step's only observable output is adapter-normalized findings — with no escalation, no disposition-handling output, and no end-gate/report output (confirming the story is unchanged by DEC-036).
+    fail_criteria: The review step produces any escalation, disposition-handling output, or end-gate/report output beyond adapter-normalized review findings.

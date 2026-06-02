@@ -1,0 +1,90 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: dev-fix-mode-entry
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/dev-fix-mode-entry.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, invoke momentum:dev three ways and inspect what comes back:
+  (1) Hand it a directed-fix payload for a routine, legitimate finding — confirm a fix was
+      written to the affected file(s) and a commit now contains that fix.
+  (2) Hand it a directed-fix payload for a stakes-class, legitimate finding (e.g. an
+      auth-isolation issue or a destructive migration) — confirm NO new commit and NO edit
+      were made for that finding, and that instead you got back an escalation that, read on
+      its own, tells you what the finding is, why it is stakes-class, the evidence behind it,
+      and which timing tier it belongs to (end-gate-expanded or mid-flight).
+  (3) Hand it a finding it judges not worth fixing — confirm the dismissal it returns carries
+      a non-empty written rationale.
+  Finally, invoke dev the old way with an ordinary green-field story and confirm it still
+  builds as before with no escalation output. If any of these don't hold, you are not done.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/dev-fix-mode-entry.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Routine finding is auto-fixed and committed
+    invocation: Invoke momentum:dev in fix-mode with a directed-fix payload describing a legitimate routine finding.
+    given: A buildable change exists with a small, legitimate, routine (non-stakes) finding raised against it, expressed as a directed-fix payload.
+    when: dev is invoked with that directed-fix payload.
+    then:
+      - The affected file(s) named in the finding are modified to address the finding.
+      - A commit is produced that contains the fix.
+      - No escalation output is returned for this finding.
+    pass_criteria: The working tree shows the fix applied AND a commit containing the fix exists AND no escalation output was returned.
+    fail_criteria: No fix is applied, OR no commit is produced, OR an escalation is returned instead of a committed fix.
+
+  - name: Stakes-class finding is escalated, not committed
+    invocation: Invoke momentum:dev in fix-mode with a directed-fix payload describing a legitimate stakes-class finding (e.g. auth-isolation, a destructive migration/delete/force-push/prod-deploy, or a high-blast-radius architecture issue).
+    given: A buildable change exists with a legitimate stakes-class finding raised against it, expressed as a directed-fix payload.
+    when: dev is invoked with that directed-fix payload.
+    then:
+      - No file edit is made for that finding.
+      - No new commit is produced for that finding.
+      - An escalation output is returned for that finding.
+    pass_criteria: No edit and no new commit appear for the finding AND an escalation output is returned in its place.
+    fail_criteria: dev edits a file or produces a commit for the stakes-class finding, OR no escalation output is returned.
+
+  - name: Escalation output is self-contained (what / why / evidence) and names a timing tier
+    invocation: Invoke momentum:dev in fix-mode with a directed-fix payload for a legitimate stakes-class finding and read the escalation output it returns.
+    given: A stakes-class finding has been escalated by dev (as in the prior scenario).
+    when: The returned escalation output is read on its own, with no other context.
+    then:
+      - The escalation states what the finding is (a description).
+      - The escalation states why it is stakes-class (the rationale / stakes).
+      - The escalation includes the evidence supporting the finding.
+      - The escalation names the timing tier as exactly one of "end-gate-expanded" or "mid-flight".
+    pass_criteria: All four are present inline — what, why, evidence, and a timing tier that is exactly one of "end-gate-expanded" or "mid-flight".
+    fail_criteria: Any of what / why / evidence is missing, OR the escalation requires external lookup to interpret, OR the timing tier is absent or not one of the two allowed values.
+
+  - name: Routine and stakes-class paths are mutually exclusive
+    invocation: Invoke momentum:dev in fix-mode once with a routine directed-fix payload and once with a stakes-class directed-fix payload, and compare the outcomes.
+    given: One legitimate routine finding and one legitimate stakes-class finding, each as a directed-fix payload.
+    when: dev is invoked on each finding.
+    then:
+      - The routine finding yields a committed fix and no escalation.
+      - The stakes-class finding yields an escalation and no committed fix.
+      - For neither finding does dev both commit a fix and escalate the same finding.
+    pass_criteria: The routine finding produces fix+commit only; the stakes-class finding produces escalation only; no single finding produces both.
+    fail_criteria: A single finding produces both a committed fix and an escalation, OR the outcomes are swapped (routine escalated, or stakes-class committed).
+
+  - name: Dismissed finding carries a non-empty rationale
+    invocation: Invoke momentum:dev in fix-mode with a directed-fix payload for a finding that dev judges not to warrant a fix.
+    given: A finding that dev determines should be dismissed rather than fixed or escalated.
+    when: dev dispositions the finding as dismissed.
+    then:
+      - The dismissal output includes a written rationale.
+      - That rationale is non-empty.
+    pass_criteria: The dismissal is accompanied by a non-empty rationale explaining why the finding was dismissed.
+    fail_criteria: A dismissal is produced with an empty or missing rationale.
+
+  - name: Green-field build mode is unaffected
+    invocation: Invoke momentum:dev the existing way with an ordinary green-field story and no directed-fix payload.
+    given: A green-field story with no directed-fix payload.
+    when: dev is invoked on that story.
+    then:
+      - dev produces the same green-field build output as before this change (a built change and commits, with no directed-fix dispositions).
+      - No escalation output is returned.
+      - No per-finding disposition output (fixed / dismissed / triaged-out / escalated) is returned.
+    pass_criteria: The green-field invocation produces a built change as before, with no escalation output and no per-finding disposition output.
+    fail_criteria: The green-field invocation produces different build output, returns an escalation output, or returns any per-finding disposition output.

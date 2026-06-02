@@ -1,0 +1,130 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: dev-read-contract-part-a-header
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/dev-read-contract-part-a-header.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, read the Part-A header of your story's verification
+  contract: the plain-language self-check prompt and the observable clauses.
+  Hold those observable clauses as your acceptance target and confirm your work
+  satisfies each one. Keep implementing against the story's plain-English
+  acceptance criteria — Part A is an additional self-check, not a replacement
+  for the ACs. Read only Part A: never open or act on the verifier body. Do not
+  write, edit, or alter the contract, and do not choose the verification method.
+  Your completion signal must reflect that this Part-A self-check was performed.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/dev-read-contract-part-a-header.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Dev self-checks against the plain-language acceptance target before signaling done
+    invocation: >
+      Invoke the dev capability on a story whose verification contract carries a
+      plain-language Part-A header (a self-check prompt plus observable clauses).
+      Observe the dev run end to end and capture its completion signal.
+    given: >
+      A story exists with plain-English acceptance criteria and a verification
+      contract whose Part-A header states a plain-language self-check prompt and a
+      set of observable clauses describing the acceptance target.
+    when: The dev capability is invoked on that story and runs to completion.
+    then:
+      - The produced result satisfies the Part-A observable clauses when each is exercised.
+      - The completion signal states that a Part-A self-check was performed and references the Part-A observable clauses.
+    pass_criteria: >
+      The completion signal shows a Part-A self-check was performed against the
+      observable clauses, and the produced result satisfies those clauses when
+      exercised.
+    fail_criteria: >
+      The completion signal does not indicate a Part-A self-check was performed, or
+      the produced result fails one or more of the Part-A observable clauses when
+      exercised.
+
+  - name: Dev neither authors the contract nor chooses the verification method
+    invocation: >
+      Run the dev capability on a story that has a verification contract and a set
+      verification method. After the run, inspect the contract file and the
+      story's recorded verification method for any changes attributable to dev.
+    given: >
+      A story with an existing verification contract (Part A present) and an
+      already-set verification method.
+    when: The dev capability is invoked on that story and completes its work.
+    then:
+      - The contract file is unchanged by the dev run — no part of it (including Part A) is written, edited, or appended.
+      - The verification method recorded for the story is unchanged by the dev run.
+      - No dev output proposes, sets, or alters a verification method.
+    pass_criteria: >
+      After the dev run, the contract and the story's verification method are
+      byte-for-byte unchanged, and nothing in the run authors contract content or
+      selects a method.
+    fail_criteria: >
+      The dev run modifies any part of the contract, or changes/sets/proposes the
+      verification method.
+
+  - name: Dev implements against the plain-English ACs and never reads the verifier body
+    invocation: >
+      Run the dev capability on a story whose plain-English acceptance criteria
+      require specific observable behavior, then exercise the produced result
+      against those acceptance criteria. Separately, observe what contract material
+      the dev run reads.
+    given: >
+      A story with plain-English acceptance criteria and a two-part verification
+      contract (a plain-language Part-A header and a separate verifier body).
+    when: The dev capability is invoked on that story and runs to completion.
+    then:
+      - The produced result satisfies the story's plain-English acceptance criteria when exercised.
+      - The result satisfies the full set of plain-English acceptance criteria, not only the subset restated in the Part-A header (Part A is an additional self-check, not a substitute for the ACs).
+      - The completion signal references the Part-A header self-check rather than the verifier body.
+    pass_criteria: >
+      The result passes the full set of plain-English acceptance criteria when
+      exercised, and the completion signal references only the Part-A header
+      self-check, not the verifier body.
+    fail_criteria: >
+      The result fails the plain-English acceptance criteria, satisfies only the
+      Part-A subset while leaving other ACs unmet, or the completion signal
+      references the verifier body.
+
+  - name: Contract consumption is identical regardless of stakes routing or mid-flight escalation
+    invocation: >
+      Run the dev capability on two stories that differ only in the kind of
+      findings their work would surface — one whose work would surface only routine
+      findings, and one whose work would surface a stakes-class / escalation-eligible
+      finding. Compare what each dev run reads from the contract and how each
+      self-checks.
+    given: >
+      Two stories, each with a Part-A header, where one is associated with routine
+      findings and the other with stakes-class or mid-flight-escalation-eligible
+      findings downstream.
+    when: The dev capability is invoked on each story and runs to completion.
+    then:
+      - In both runs, the completion signal references the same Part-A self-check (same self-check shape, against the Part-A observable clauses).
+      - In both runs, the dev produces no escalation, disposition, or stakes-routing output of its own at the contract-consumption step.
+      - The observable completion behavior does not differ between the routine-finding story and the stakes/escalation story.
+    pass_criteria: >
+      Both dev runs produce a completion signal referencing the same Part-A
+      self-check and neither produces stakes/disposition/escalation output of its
+      own, with no observable difference attributable to stakes routing.
+    fail_criteria: >
+      The completion signal's Part-A self-check differs between the two stories, or
+      the stakes/escalation story produces extra stakes/disposition/escalation
+      output the routine story does not.
+
+  - name: Missing Part-A header does not block completion against the plain-English ACs
+    invocation: >
+      Run the dev capability on a story whose verification contract has no readable
+      Part-A header but whose plain-English acceptance criteria are present.
+      Observe whether the dev run completes.
+    given: >
+      A story with plain-English acceptance criteria and a verification contract
+      that has no available or readable Part-A header.
+    when: The dev capability is invoked on that story and runs to completion.
+    then:
+      - The dev run implements the work against the story's plain-English acceptance criteria.
+      - The dev run signals done; the absence of a readable Part-A header does not block completion.
+    pass_criteria: >
+      The dev run completes against the plain-English acceptance criteria and
+      signals done despite no readable Part-A header being available.
+    fail_criteria: >
+      The dev run stalls, errors out, or refuses to signal done solely because the
+      Part-A header is missing or unreadable.

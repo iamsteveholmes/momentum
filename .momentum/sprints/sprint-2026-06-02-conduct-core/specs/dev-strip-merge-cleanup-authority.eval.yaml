@@ -1,0 +1,85 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: dev-strip-merge-cleanup-authority
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/dev-strip-merge-cleanup-authority.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, invoke the dev step on a representative story inside a clean
+  scratch checkout and watch what it produces. Confirm its terminal output ends with
+  "implementation complete" and a list of the files it changed (the file_list), and that
+  it does NOT propose a merge, does NOT pause to wait for merge approval, and does NOT ask
+  you any recovery question. Then inspect the repository: there must be no new merge commit,
+  no worktree that was merged or torn down, and no build/merge lock file created, changed,
+  or cleared as a result of running the dev step. Also kill or interrupt a dev run partway
+  through and confirm it does not prompt you to choose how to recover — it just stops.
+  Finally, search the dev agent definition for any "no-auto-merge" critical rule and confirm
+  it is gone. If any of those still happen, you are not done.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/dev-strip-merge-cleanup-authority.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Dev step ends at implementation-complete plus file_list, never proposes or awaits a merge
+    invocation: Invoke the dev step on a representative story in a clean scratch checkout and read its terminal output to completion.
+    given: A story is available to implement and the working tree is clean before the run.
+    when: The dev step runs to the end of its work.
+    then:
+      - Its terminal output reports that implementation is complete.
+      - Its terminal output includes a list of the files it changed (the file_list).
+      - Its terminal output does not propose merging the change.
+      - The run finishes without pausing to wait for a merge to be approved.
+    pass_criteria: The final output is implementation-complete plus a file_list and the run ends on its own with no merge proposal and no merge-approval wait.
+    fail_criteria: The output proposes a merge, the run blocks waiting for merge approval, or no file_list is reported.
+
+  - name: Running the dev step performs no merge and no conflict resolution
+    invocation: Run the dev step on a story whose branch could be merged into a target branch, then inspect the repository's commit graph and branch state.
+    given: A target branch exists into which the change could in principle be merged.
+    when: The dev step completes.
+    then:
+      - No merge of the change into any target branch has occurred.
+      - No merge commit attributable to the dev step exists.
+      - No merge-conflict resolution was attempted or performed by the dev step.
+    pass_criteria: After the run the target branch is unchanged, there is no merge commit from the dev step, and no conflict was resolved by it.
+    fail_criteria: A merge or merge commit attributable to the dev step is present, or a conflict was resolved by the dev step.
+
+  - name: Running the dev step performs no worktree cleanup and no lock handling
+    invocation: Record the set of worktrees and any build/merge lock files before the run, run the dev step, then compare against the state afterward.
+    given: A worktree exists for the run and a build/merge lock file may or may not be present beforehand.
+    when: The dev step completes normally.
+    then:
+      - No worktree is removed, pruned, or torn down as a result of the dev step.
+      - No build/merge lock file is created, acquired, released, or cleared as a result of the dev step.
+    pass_criteria: The worktree set and any lock-file state are unchanged by the dev step except for the implemented file changes themselves.
+    fail_criteria: A worktree was torn down by the dev step, or a build/merge lock file was created, changed, or removed by it.
+
+  - name: An interrupted dev run does not ask the human how to recover
+    invocation: Start the dev step on a story and interrupt or fail the run partway through, then observe whether it prompts for a recovery decision.
+    given: A dev run is in progress and is interrupted or fails before completing.
+    when: The interruption or failure occurs.
+    then:
+      - The dev step does not prompt the human to choose how to recover.
+      - The dev step does not block waiting on a human recovery decision.
+    pass_criteria: On interruption or failure the dev step stops without asking the human any recovery question and without waiting on a human decision.
+    fail_criteria: The dev step prompts the human for a recovery choice or blocks awaiting a human recovery decision.
+
+  - name: The no-auto-merge critical rule is absent from the dev agent definition
+    invocation: Open the published dev agent definition and search it for any "no-auto-merge" critical rule or equivalent merge-related prohibition.
+    given: The dev agent definition is the one shipped after this change.
+    when: The definition is searched for a "no-auto-merge" rule.
+    then:
+      - No "no-auto-merge" critical rule is present in the dev agent definition.
+      - No remaining rule references the dev step proposing, awaiting, or performing a merge.
+    pass_criteria: The "no-auto-merge" rule is gone and no merge-proposal/merge-perform rule remains in the dev agent definition.
+    fail_criteria: A "no-auto-merge" rule, or any rule describing the dev step merging or awaiting a merge, is still present.
+
+  - name: No merge or worktree artifact is attributable to the dev step end-to-end
+    invocation: Snapshot the repository state, run the dev step to completion on a story, and diff repository state to attribute every change.
+    given: A clean repository snapshot is taken before the run.
+    when: The dev step completes.
+    then:
+      - The only changes attributable to the dev step are the implemented file edits reported in its file_list.
+      - No merge artifact (merge commit, merged-and-removed worktree, changed lock file) is attributable to the dev step.
+    pass_criteria: The post-run diff attributable to the dev step is exactly the implemented file changes, with no merge, worktree-teardown, or lock artifact.
+    fail_criteria: Any merge commit, worktree teardown, or lock-file change is attributable to the dev step beyond the implemented file edits.

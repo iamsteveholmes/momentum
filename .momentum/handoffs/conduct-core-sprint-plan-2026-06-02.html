@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Conduct core-build sprint plan · charset-first <head> · self-contained · house style after anthropics/html-effectiveness -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conduct Core-Build — Sprint Plan (DEC-035 / DEC-036)</title>
+<style>
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1160px;margin:0 auto;padding:40px 28px 96px}
+  a{color:var(--clay-d)}
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px;max-width:90ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1.5px solid transparent}
+  .pill.warn{background:#FBF1D9;border-color:var(--gold);color:#8A6D12}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:22px 0 4px}
+  .metric{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:14px 16px}
+  .metric .n{font-family:var(--serif);font-size:23px;font-weight:600;line-height:1}
+  .metric .l{font-size:10.5px;color:var(--gray-500);margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+  .metric.good .n{color:var(--olive)}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}
+  .toc a{font:600 12px/1 var(--mono);text-decoration:none;color:var(--gray-700);border:var(--border);border-radius:999px;padding:7px 12px;background:#fff;transition:.12s}
+  .toc a:hover{border-color:var(--clay);color:var(--clay-d)}
+  section{margin-top:32px}
+  h2{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  .lead{color:var(--gray-700);font-size:13.8px;margin:0 0 14px;max-width:94ch}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:18px 20px;box-shadow:var(--shadow)}
+  .callout{border:1.5px solid var(--gold);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFFDF7,#FFF);padding:16px 20px;box-shadow:var(--shadow)}
+  .callout.olive{border-color:var(--olive);background:linear-gradient(180deg,#F4F7EF,#FFF)}
+  .k-label{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-d);margin-bottom:7px;display:block}
+  .callout.olive .k-label{color:#46552F}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:7px 0;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-700)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li b{color:var(--slate)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+  th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+  th{font:600 10.5px/1 var(--mono);letter-spacing:.03em;text-transform:uppercase;color:var(--gray-500);border-bottom:1.5px solid var(--gray-200)}
+  td b{color:var(--slate)} td{color:var(--gray-700)}
+  td.slug{font-family:var(--mono);font-size:11px;color:var(--clay-d);white-space:nowrap}
+  td.deps{font-family:var(--mono);font-size:10px;color:var(--gray-500)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px;color:var(--clay-d)}
+  .vm{font:600 9.5px/1 var(--mono);padding:3px 6px;border-radius:5px;display:inline-block;white-space:nowrap}
+  .vm.eval{background:#E7EEF6;color:#2F557E} .vm.rev{background:#F2E7F6;color:#6B2F7E}
+  .w{font:700 9.5px/1 var(--mono);padding:3px 6px;border-radius:5px;display:inline-block;background:var(--gray-100);color:var(--gray-700)}
+  .tag{font:700 8.5px/1 var(--mono);padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:1px}
+  .tag.new{background:#F2D9D4;color:#7E2B22} .tag.unch{background:var(--gray-100);color:var(--gray-500)} .tag.root{background:#EAF0E2;color:#46552F} .tag.amend{background:#FBF1D9;color:#8A6D12}
+  .epic-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .wave-grid{display:flex;flex-direction:column;gap:10px}
+  .wave-row{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start}
+  .wave-tag{font:700 11px/1 var(--mono);color:#fff;background:var(--clay);border-radius:7px;padding:9px 8px;text-align:center}
+  .wave-tag.r2{background:var(--clay-d)} .wave-tag.r3{background:var(--olive)} .wave-tag.r4{background:#6E8898} .wave-tag.r5{background:var(--gold);color:var(--slate)} .wave-tag.r6{background:var(--gray-500)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font:600 11px/1 var(--mono);border:var(--border);border-radius:999px;padding:6px 10px;background:#fff;color:var(--gray-700)}
+  .chip.root{border-color:var(--olive);background:#F4F7EF;color:#46552F}
+  .chip.star{border-color:var(--clay);background:#FCEFE9;color:var(--clay-d)}
+  .foot{margin-top:44px;text-align:center;color:var(--gray-400);font-size:12px}
+  .nb{font-size:12px;color:var(--gray-500);margin-top:10px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:880px){.metrics{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}td.deps{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">Sprint Plan · Conduct Core-Build Slice · DEC-035 + DEC-036</div>
+        <h1>Building the Conduct Execution Engine — first slice</h1>
+        <div class="sub">21 dev-ready stories that build the core of <b>conduct</b> (the per-story, autonomous-build, single-end-gate rewrite of <code>momentum:sprint-dev</code>), as amended by <b>DEC-036</b>'s stakes-and-timing HITL calibration. Story files, frozen verification contracts, and the sprint record are written. <b>This sprint is planned, not activated</b> — it is ready for you to review and activate.</div>
+      </div>
+      <span class="pill warn"><span class="dot"></span>Planned — not activated · locked:false</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="n">21</div><div class="l">Stories</div></div>
+      <div class="metric"><div class="n">6</div><div class="l">Dependency waves</div></div>
+      <div class="metric"><div class="n">17 · 4</div><div class="l">skill-invoke · doc-review</div></div>
+      <div class="metric good"><div class="n">21/21</div><div class="l">Critic pass</div></div>
+      <div class="metric good"><div class="n">23</div><div class="l">Guard clauses hardened</div></div>
+      <div class="metric"><div class="n">2</div><div class="l">New DEC-036 stories</div></div>
+    </div>
+    <div class="toc">
+      <a href="#why">00 · What this is</a>
+      <a href="#order">01 · Build order</a>
+      <a href="#stories">02 · The 21 stories</a>
+      <a href="#routing">03 · Verification routing</a>
+      <a href="#quality">04 · Quality gates</a>
+      <a href="#flags">05 · Judgment calls</a>
+      <a href="#next">06 · Next steps</a>
+    </div>
+  </header>
+
+  <!-- 00 -->
+  <section id="why">
+    <h2><span class="num">00</span>What this sprint is — and the DEC-036 through-line</h2>
+    <p class="lead">Conduct collapses <code>sprint-dev</code>'s multi-gate firehose into an autonomous per-story build with <b>one</b> human gate at the end (DEC-035). DEC-036 then found conduct <b>legible but stakes-blind</b> and amended DEC-035's binding decision #1: a <b>narrow, high-bar, stakes-gated mid-flight escalation tier</b> is now permitted, stakes-class findings leave the silent auto-fix path, the report renders dismissals, and the end-gate gains an anti-rubber-stamp forcing function. This slice builds that core — the escalation engine, the finding schema + shared stakes rubric, the Conductor spine, the <code>bmad-code-review</code> adapter, the directed-<code>dev</code> fix leg, and the dev/qa rescope.</p>
+    <div class="callout">
+      <span class="k-label">The load-bearing rule — quote it when a judgment call gets fuzzy</span>
+      <b>Don't remove HITL — remove the <i>safely-handled</i> decisions so the human isn't overwhelmed, while raising safety and review ability.</b> Gate the human only for <i>stakes classes</i> (security/auth-isolation; irreversible/destructive; high-blast-radius/architecture), routed by what (stakes) <b>and</b> when (timing). The mid-flight bar stays <b>narrow</b> — irreversible-and-imminent OR build-invalidating only — or it re-becomes the firehose DEC-036 exists to kill. Routine findings stay always auto-fixed.
+    </div>
+    <p class="nb">Governed by <b>DEC-035</b> (adopt conduct; one end-gate; no story-count cap; functionality-organized report; legible auto-fix) and <b>DEC-036</b> (stakes-and-timing escalation; render dismissals; anti-rubber-stamp; decision-grade presentation). The 2&ndash;8 story sprint cap is <b>intentionally overridden</b> — this is a ~21-story feature-grained slice by design (testing DEC-035's no-cap model). Built in a markdown/bash repo, so every story is a skill, agent-definition, or spec doc — all built by <code>momentum:dev-skills</code>; there is no code/UI lane.</p>
+  </section>
+
+  <!-- 01 -->
+  <section id="order">
+    <h2><span class="num">01</span>Build order — dependency graph (6 waves)</h2>
+    <p class="lead">Execution gates on each story's own <code>depends_on</code> (a story is launch-ready when every blocker has reached <code>&gt;= review</code>); waves are the advisory layering. <b>Two roots anchor everything:</b> the spec revision lands first, then the two keystones — the finding schema (fix chain) and the Conductor spine.</p>
+    <div class="panel wave-grid">
+      <div class="wave-row"><div class="wave-tag">W1</div><div class="chips">
+        <span class="chip root">conduct-spec-revision-dec036 · ROOT</span>
+        <span class="chip">code-review-adapter-noninteractive-driver</span>
+        <span class="chip">dev-read-contract-part-a-header</span>
+        <span class="chip">dev-strip-merge-cleanup-authority</span>
+      </div></div>
+      <div class="wave-row"><div class="wave-tag r2">W2</div><div class="chips">
+        <span class="chip root">directed-fix-finding-schema · KEYSTONE</span>
+        <span class="chip root">conduct-skill-scaffold-and-spine · KEYSTONE</span>
+      </div></div>
+      <div class="wave-row"><div class="wave-tag r3">W3</div><div class="chips">
+        <span class="chip">directed-fix-invocation-contract</span>
+        <span class="chip">stakes-classification-rubric</span>
+        <span class="chip">conduct-preflight-halts</span>
+        <span class="chip">conduct-build-phase-frontier</span>
+      </div></div>
+      <div class="wave-row"><div class="wave-tag r4">W4</div><div class="chips">
+        <span class="chip star">conduct-stakes-timing-escalation-mechanism · engine</span>
+        <span class="chip">dev-fix-mode-entry</span>
+        <span class="chip">conduct-contract-freeze-check</span>
+        <span class="chip">code-review-adapter-normalize-triage</span>
+        <span class="chip">qa-reviewer-rescope-per-story-contract</span>
+      </div></div>
+      <div class="wave-row"><div class="wave-tag r5">W5</div><div class="chips">
+        <span class="chip">stage3-fix-loop-via-directed-dev</span>
+        <span class="chip">conduct-merge-and-conflict-resolution</span>
+        <span class="chip">conduct-coverage-disposition-branch</span>
+        <span class="chip">code-review-adapter-retire-stub</span>
+      </div></div>
+      <div class="wave-row"><div class="wave-tag r6">W6</div><div class="chips">
+        <span class="chip">code-review-adapter-repoint-sprint-dev</span>
+        <span class="chip">code-review-adapter-repoint-quick-fix</span>
+      </div></div>
+    </div>
+    <p class="nb"><span class="chip root" style="padding:3px 8px">ROOT/KEYSTONE</span> = no in-slice deps, unblocks a chain. <span class="chip star" style="padding:3px 8px">engine</span> = the DEC-036 escalation primitive every leg points at. The critical path runs spec-revision → schema/spine → frontier → escalation-mechanism → merge/stage-3 → repoints.</p>
+  </section>
+
+  <!-- 02 -->
+  <section id="stories">
+    <h2><span class="num">02</span>The 21 stories, by leg</h2>
+    <p class="lead"><span class="tag new">NEW</span> = net-new DEC-036 story (the 2 engine/rubric units). <span class="tag amend">AMEND</span> = existing breakdown story with a DEC-036 fold-in. <span class="tag unch">UNCHANGED</span> = DEC-036 leaves semantics intact (disclaimed in Dev Notes). <span class="tag root">ROOT</span> = no in-slice deps.</p>
+
+    <div class="epic-h"><h2 style="font-size:16px">Pre-build gate</h2></div>
+    <div class="panel" style="margin-top:8px"><table>
+      <thead><tr><th>Story</th><th>Verify</th><th class="deps">Deps · Wave</th><th>What + DEC-036 fold-in</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">conduct-spec-revision-dec036 <span class="tag root">ROOT</span></td><td><span class="vm rev">document-review</span><br><span style="font-size:10px;color:var(--gray-500)">specification</span></td><td class="deps">&mdash;<br>W1</td><td><b>Lands first.</b> Revise the conduct spec &sect;1/&sect;4/&sect;8/&sect;9 to design <i>to</i> the stakes-and-timing exception (engine stories must not build against a spec that still says "zero intermediate gates / ALWAYS auto-fix") + reconciliation note to DEC-035 #1.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="epic-h"><h2 style="font-size:16px">Fix leg &mdash; schema root + directed-<code>dev</code> fixer</h2></div>
+    <div class="panel" style="margin-top:8px"><table>
+      <thead><tr><th>Story</th><th>Verify</th><th class="deps">Deps · Wave</th><th>What + DEC-036 fold-in</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">directed-fix-finding-schema <span class="tag root">ROOT</span></td><td><span class="vm rev">document-review</span><br><span style="font-size:10px;color:var(--gray-500)">config-structure</span></td><td class="deps">spec-revision<br>W2</td><td><b>THE HARD ROOT.</b> Canonical finding schema + <b>stakes_class</b> enum (3 classes + routine, orthogonal to severity), the new <b>escalated</b> disposition, a <b>timing_tier</b> marker, required dismissed-rationale, and the relaxed "always-auto-fix" invariant.</td></tr>
+        <tr><td class="slug">directed-fix-invocation-contract <span class="tag amend">AMEND</span></td><td><span class="vm rev">document-review</span><br><span style="font-size:10px;color:var(--gray-500)">specification</span></td><td class="deps">finding-schema<br>W3</td><td>The fix-mode I/O contract + an <b>"escalate, do not fix"</b> output path returning <code>escalated</code> + an inline escalation payload (what/why/evidence + timing flag).</td></tr>
+        <tr><td class="slug">dev-fix-mode-entry <span class="tag amend">AMEND</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">agent-definition</span></td><td class="deps">invocation-contract<br>W4</td><td>Add fix-mode to <code>momentum:dev</code>; <b>branch on stakes_class</b> &mdash; a stakes finding returns escalated+payload, not edit+commit; routine keeps always-auto-fix.</td></tr>
+        <tr><td class="slug">stage3-fix-loop-via-directed-dev <span class="tag amend">AMEND</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">invocation-contract, fix-mode, escalation-mechanism<br>W5</td><td>Wire stage-3 to the directed fixer (retry bound 3); <b>route an escalated finding OUT of the loop</b> onto the escalation channel (end-gate default; mid-flight only on the narrow bar).</td></tr>
+        <tr><td class="slug">stakes-classification-rubric <span class="tag new">NEW</span></td><td><span class="vm rev">document-review</span><br><span style="font-size:10px;color:var(--gray-500)">specification</span></td><td class="deps">finding-schema<br>W3</td><td><b>The shared single-source rubric</b> that populates stakes_class: signals for the 3 classes + the narrow timing-tier rule + routine fall-through. Consumed by every producer (one rubric, not three classifiers).</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="epic-h"><h2 style="font-size:16px">Conductor spine</h2></div>
+    <div class="panel" style="margin-top:8px"><table>
+      <thead><tr><th>Story</th><th>Verify</th><th class="deps">Deps · Wave</th><th>What + DEC-036 fold-in</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">conduct-skill-scaffold-and-spine <span class="tag root">ROOT</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">spec-revision<br>W2</td><td><b>KEYSTONE.</b> Conductor skill scaffold + workflow spine; <b>add an escalation control-flow branch</b>; soften "the Conductor never asks during build" to "...except the narrow stakes-and-timing tier".</td></tr>
+        <tr><td class="slug">conduct-stakes-timing-escalation-mechanism <span class="tag new">NEW</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">scaffold-spine, build-phase-frontier, finding-schema<br>W4</td><td><b>&#9733; THE ESCALATION ENGINE</b> &mdash; the Conductor-side pause-ask-resume primitive. Reads stakes_class+timing_tier, fires ONLY on irreversible-and-imminent/build-invalidating, raises one inline pause-ask, resumes proceed/change/abort-that-branch. The shared primitive every leg points at; existed nowhere in the 52.</td></tr>
+        <tr><td class="slug">conduct-preflight-halts <span class="tag amend">AMEND</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">scaffold-spine<br>W3</td><td>H1&ndash;H5 pre-flight HALTs + non-interactive git reconcile; <b>second carve-out</b> &mdash; "no developer-facing HALT outside Phase 1 EXCEPT the stakes-and-timing mid-flight tier" (distinct from the &sect;7 freeze-guard carve-out).</td></tr>
+        <tr><td class="slug">conduct-build-phase-frontier <span class="tag amend">AMEND</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">scaffold-spine<br>W3</td><td>Event-driven frontier (gate on &gt;=review, no cap); <b>add a consumption hook</b> &mdash; a mid-flight-bar stakes finding pauses that branch via the mechanism instead of continuing/auto-fixing.</td></tr>
+        <tr><td class="slug">conduct-merge-and-conflict-resolution <span class="tag amend">AMEND</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">build-phase-frontier, escalation-mechanism<br>W5</td><td>Per-story merge/conflict/quarantine (Conductor owns git); <b>escalate</b> (not silent auto-resolve+continue) when a semantic resolution touches a stakes class or is build-invalidating; expose the escalation hook.</td></tr>
+        <tr><td class="slug">conduct-contract-freeze-check <span class="tag unch">UNCHANGED</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">build-phase-frontier<br>W4</td><td>Assert <code>sha256(contract)==frozen_sha256</code> before verify; mismatch surfaces to the Conductor. A Conductor-facing integrity check, not a stakes class &mdash; DEC-036 leaves it unchanged.</td></tr>
+        <tr><td class="slug">conduct-coverage-disposition-branch <span class="tag unch">UNCHANGED</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">skill-instruction</span></td><td class="deps">build-phase-frontier, qa-rescope<br>W5</td><td>Honor <code>covered-by-composition</code> &mdash; skip dedicated QA, discharge at AVFL/merge. Routes <i>when</i> verification runs, not how findings are classified &mdash; DEC-036 leaves it unchanged.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="epic-h"><h2 style="font-size:16px">Code-review adapter &mdash; retire the stub, drive <code>bmad-code-review</code></h2></div>
+    <div class="panel" style="margin-top:8px"><table>
+      <thead><tr><th>Story</th><th>Verify</th><th class="deps">Deps · Wave</th><th>What + DEC-036 fold-in</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">code-review-adapter-noninteractive-driver <span class="tag root">ROOT</span></td><td><span class="vm eval">skill-invoke</span></td><td class="deps">&mdash;<br>W1</td><td>Thin adapter drives <code>bmad-code-review</code> report-only on a story diff; suppresses HALTs; verifies the bmad config. Pure transport &mdash; UNCHANGED by DEC-036.</td></tr>
+        <tr><td class="slug">code-review-adapter-normalize-triage <span class="tag amend">AMEND</span></td><td><span class="vm eval">skill-invoke</span></td><td class="deps">driver, finding-schema, rubric<br>W4</td><td>Map bmad triage &rarr; canonical schema; <b>populate stakes_class via the shared rubric</b> (routine/null if no signal). Documents the two-dismiss trap: bmad's dropped "dismiss" (noise) &ne; the fixer's "dismissed" disposition (waved-off-with-rationale).</td></tr>
+        <tr><td class="slug">code-review-adapter-retire-stub <span class="tag unch">UNCHANGED</span></td><td><span class="vm eval">skill-invoke</span></td><td class="deps">driver, normalize<br>W5</td><td>Delete the in-house stub body; repoint the command shim to the adapter. Deletion + shim &mdash; UNCHANGED by DEC-036.</td></tr>
+        <tr><td class="slug">code-review-adapter-repoint-sprint-dev <span class="tag unch">UNCHANGED</span></td><td><span class="vm eval">skill-invoke</span></td><td class="deps">retire-stub, scaffold-spine<br>W6</td><td>Repoint the sprint-dev caller to the adapter. Call-site wiring &mdash; UNCHANGED by DEC-036.</td></tr>
+        <tr><td class="slug">code-review-adapter-repoint-quick-fix <span class="tag unch">UNCHANGED</span></td><td><span class="vm eval">skill-invoke</span></td><td class="deps">retire-stub<br>W6</td><td>Repoint the quick-fix caller to the adapter. Call-site wiring &mdash; UNCHANGED (see judgment call &sect;05.2).</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="epic-h"><h2 style="font-size:16px">Dev / QA rescope</h2></div>
+    <div class="panel" style="margin-top:8px"><table>
+      <thead><tr><th>Story</th><th>Verify</th><th class="deps">Deps · Wave</th><th>What + DEC-036 fold-in</th></tr></thead>
+      <tbody>
+        <tr><td class="slug">qa-reviewer-rescope-per-story-contract <span class="tag amend">AMEND</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">agent-definition</span></td><td class="deps">finding-schema, rubric<br>W4</td><td>Rescope qa-reviewer to a single story's worktree diff vs its contract; <b>fold in producer-side stakes_class tagging</b> via the shared rubric (no separate emit story) so the fixer-hold + end-gate forcing function get a true signal.</td></tr>
+        <tr><td class="slug">dev-read-contract-part-a-header <span class="tag unch">UNCHANGED · ROOT</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">agent-definition</span></td><td class="deps">&mdash;<br>W1</td><td>Teach <code>momentum:dev</code> to read the contract's Part-A header (consume only). Stakes routing never touches what dev consumes &mdash; UNCHANGED by DEC-036.</td></tr>
+        <tr><td class="slug">dev-strip-merge-cleanup-authority <span class="tag unch">UNCHANGED · ROOT</span></td><td><span class="vm eval">skill-invoke</span><br><span style="font-size:10px;color:var(--gray-500)">agent-definition</span></td><td class="deps">&mdash;<br>W1</td><td>Strip merge/cleanup/lock/crash-ask from <code>momentum:dev</code> (moves to the Conductor). UNCHANGED semantics &mdash; but <b>CONFIRMED</b> by DEC-036: relocating git authority is a precondition for Conductor-owned escalation.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 03 -->
+  <section id="routing">
+    <h2><span class="num">03</span>Verification routing &amp; the sprint record</h2>
+    <div class="two">
+      <div class="panel">
+        <span class="k-label" style="color:var(--clay-d)">Method routing (frozen at planning)</span>
+        <ul class="clean">
+          <li><b>17 stories</b> &rarr; <span class="vm eval">skill-invoke</span> &rarr; <code>.eval.yaml</code> (black-box scenarios). The skill-instruction + agent-definition stories.</li>
+          <li><b>4 stories</b> &rarr; <span class="vm rev">document-review</span> &rarr; <code>.review.md</code> (required-claims). The schema / spec / rubric / contract docs.</li>
+          <li><b>Specialist:</b> every story &rarr; <code>momentum:dev-skills</code> (markdown/bash repo; guidelines <code>.claude/rules/dev-skills.md</code> present).</li>
+          <li><b>Role:</b> <code>dev</code> (build) + <code>qa</code> (per-story contract verification).</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="k-label" style="color:var(--clay-d)">What was written to disk</span>
+        <ul class="clean">
+          <li><b>21 story files</b> &rarr; <code>.momentum/stories/&lt;slug&gt;.md</code> (full ACs, status <code>ready-for-dev</code>).</li>
+          <li><b>21 frozen contracts</b> (Part A header + Part B body, &sect;7) &rarr; <code>.momentum/sprints/sprint-2026-06-02-conduct-core/specs/</code>, each <code>frozen_sha256</code> recorded.</li>
+          <li><b>21 index entries</b> reconciled in <code>stories/index.json</code> (18 new + 3 stubs promoted).</li>
+          <li><b>Sprint record</b> in <code>sprints/index.json</code> &rarr; <code>planning</code> slot, <code>locked:false</code>, 6 waves, full <code>story_assignments[]</code> (role · specialist · change_type · verification_method · contract{path, harness_profile, coverage_disposition, frozen_sha256} · can_merge_independently).</li>
+        </ul>
+      </div>
+    </div>
+    <p class="nb"><b>can_merge_independently</b> is <code>true</code> for the 4 dependency-free roots and <code>false</code> for the 17 with a populated <code>depends_on</code> (per spec &sect;7's literal rule). <b>coverage_disposition</b> is <code>dedicated-run</code> for all 21 (conservative; composition opportunities noted in &sect;05).</p>
+  </section>
+
+  <!-- 04 -->
+  <section id="quality">
+    <h2><span class="num">04</span>Quality gates run during planning</h2>
+    <div class="two">
+      <div class="callout olive">
+        <span class="k-label">Adversarial Outsider-Test guard (contracts)</span>
+        A decorrelated reviewer applied the Outsider Test to every Part B clause across all 21 contracts. <b>9 clean, 12 rewritten &mdash; 23 Part B clauses hardened</b> from insider phrasing (internal routing / "computes" / "no path reaches the stub") to observable outcomes. All 21 Part A headers carry valid <code>harness_profile</code> (17 skill-invoke, 4 document-review) and all required fields; all edited YAML re-validated as parseable.
+      </div>
+      <div class="callout olive">
+        <span class="k-label">DEC-036 completeness + consistency critic (stories)</span>
+        <b>21/21 PASS</b> the per-story amendment checklist and every cross-cutting rule. Frontmatter exact on all 21 (status, epic, change_type, verification_method, depends_on &mdash; diffed programmatically). The schema root defines all five required elements. The seven UNCHANGED stories correctly disclaim DEC-036 without inventing escalation behavior. <b>The narrow mid-flight bar is stated identically everywhere and never widened.</b> No story-file fixes were required.
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="flags">
+    <h2><span class="num">05</span>Judgment calls &amp; flags for your review</h2>
+    <div class="panel"><ul class="clean">
+      <li><b>1 &mdash; <code>directed-fix-invocation-contract</code> routed to document-review (specification).</b> It defines an I/O <i>contract</i>, so I verify it by reading the spec doc. Alternative: treat it as <code>skill-invoke</code> if you'd rather verify the realized fix-mode behavior. Its sibling <code>dev-fix-mode-entry</code> (the implementation) <i>is</i> skill-invoke, so the behavior is covered there either way.</li>
+      <li><b>2 &mdash; <code>code-review-adapter-repoint-quick-fix</code> names DEC-036 pass-through obligations in its ACs</b> (routine stays auto-fixed; dismissals carry rationale; escalated findings surfaced). The critic flagged this as the lone UNCHANGED story whose ACs name DEC-036 mechanics rather than confining them to Dev Notes. Defensible as <i>inherit-only non-regression guards</i> (they forbid the caller re-implementing/narrowing/widening adapter semantics); the sibling sprint-dev repoint keeps DEC-036 out of its ACs. Demote to Dev Notes if you want uniformity. No rule violated.</li>
+      <li><b>3 &mdash; <code>touches</code> overlap = merge-conflict risk.</b> 8 conductor stories touch <code>skills/momentum/skills/conductor/workflow.md</code>; 4 dev/qa stories touch <code>skills/momentum/agents/dev.md</code>; 3 adapter stories touch the code-reviewer skill. The wave ordering largely serializes these, and conduct's own model has the Conductor resolve residual conflicts autonomously &mdash; but expect concurrent edits to those 3 hot files.</li>
+      <li><b>4 &mdash; coverage all <code>dedicated-run</code>.</b> No story is marked <code>covered-by-composition</code>. The clearest composition candidate is the two repoints (one "code review runs via the adapter in sprint-dev and quick-fix" scenario could discharge both) &mdash; left dedicated for legibility; refine at activation if you want to trim redundant verification.</li>
+      <li><b>5 &mdash; beads dual-write deferred.</b> The 21 entries were written to the authoritative <code>index.json</code> files directly (the <code>momentum:sprint-manager</code> skill isn't spawnable as a subagent here; the writes are deterministic, atomic, and validated). The best-effort beads shadow-write was <b>not</b> run &mdash; reconcile it at activation (index.json is authoritative; <code>bd ready</code> isn't consulted until sprint-dev Phase 1).</li>
+      <li><b>6 &mdash; intentionally excluded:</b> <code>decision-grade-presentation-standard</code> (DEC-036 D5 / Phase-4, practice-wide &mdash; assessment/decision/retro/impetus + conduct report). It remains a backlog stub for its own effort, per directive.</li>
+      <li><b>7 &mdash; conduct doesn't exist yet,</b> so this slice will run on the <i>current</i> <code>sprint-dev</code> when activated. Not a planning concern &mdash; flagged for awareness.</li>
+    </ul></div>
+  </section>
+
+  <!-- 06 -->
+  <section id="next">
+    <h2><span class="num">06</span>Where this stands &mdash; ready to review and activate</h2>
+    <div class="callout">
+      <span class="k-label">Status: planned, not activated</span>
+      The sprint sits in the <code>planning</code> slot with <code>locked:false</code>; <code>active</code> is still <code>null</code>. Nothing is building. <b>STOP point reached as instructed.</b>
+      <ul class="clean" style="margin-top:10px">
+        <li><b>To review:</b> open any of the 21 stories in <code>.momentum/stories/</code> and their contracts in <code>.momentum/sprints/sprint-2026-06-02-conduct-core/specs/</code>. Start with the two keystones (<code>directed-fix-finding-schema</code>, <code>conduct-skill-scaffold-and-spine</code>) and the engine (<code>conduct-stakes-timing-escalation-mechanism</code>).</li>
+        <li><b>To adjust:</b> tell me which judgment call in &sect;05 to flip (e.g. demote quick-fix's AC4-6, mark the repoints covered-by-composition, re-route the invocation contract).</li>
+        <li><b>To activate:</b> say the word &mdash; activation flips the sprint <code>planning &rarr; active</code> (locked), creates the <code>sprint/&hellip;</code> branch, and (optionally) reconciles beads. Then execution begins on the current <code>sprint-dev</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="foot">Conduct core-build sprint plan · sprint-2026-06-02-conduct-core · 21 stories · 6 waves · governed by DEC-035 + DEC-036 · authored via dynamic-workflow fan-out (21 per-story agents + adversarial guard + completeness critic) · planning only, not activated · self-contained HTML</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-stakes-timing-escalation-mechanism
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/conduct-stakes-timing-escalation-mechanism.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the Conductor build over a few crafted per-story results and
+  watch what it interrupts you for.
+  - Feed it a result with a routine finding and a non-imminent stakes finding: confirm the
+    build runs through to the end with NO mid-flight question — both should be handled
+    silently and only show up in the final report.
+  - Feed it a result with one finding that is genuinely irreversible-and-about-to-happen
+    (e.g. an imminent destructive migration or force-push), and a separate result with one
+    finding that would invalidate the build: confirm each one, and ONLY each one, raises a
+    single pause that stops the build and waits for you.
+  - Read that pause: it must tell you what the change is, why it matters, and show the
+    evidence right there — you should be able to decide without going to look anything up.
+  - Answer it three different ways across runs: proceed, change, and abort-that-branch.
+    Confirm the build continues correctly for each and never hangs and never re-asks the
+    same thing.
+  - Run a build with many routine/non-imminent findings and only two bar-clearing ones:
+    confirm you were stopped exactly twice, not flooded.
+  - Confirm the final report marks the raised findings as "escalated" (raised, not silently
+    fixed), separate from fixed / dismissed / triaged-out.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-stakes-timing-escalation-mechanism.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Routine and non-imminent findings never interrupt the build
+    invocation: Run a Conductor build over a per-story result that contains a routine finding and a stakes-class finding whose action is not imminent (no destructive or build-breaking action about to occur).
+    given: A build whose findings are all either routine or non-imminent stakes-class.
+    when: The Conductor processes the result and runs to completion.
+    then:
+      - The build proceeds end to end with no mid-flight question or pause directed at the developer.
+      - Both findings appear in the final end-of-run report rather than as live interruptions.
+    pass_criteria: Zero developer-facing pauses occur during the run; the findings are collapsed into the final report.
+    fail_criteria: The build stops and asks the developer about a routine or non-imminent finding at any point before the end.
+
+  - name: An irreversible-and-imminent finding raises exactly one pause
+    invocation: Run a Conductor build over a per-story result containing one finding whose action is destructive/irreversible and about to be executed (for example an imminent destructive migration, a delete, a force-push, or a prod deploy).
+    given: A build with a single irreversible-and-imminent finding.
+    when: The Conductor reaches the point where that action would be taken.
+    then:
+      - The build stops and raises exactly one developer-facing pause for that finding before the action happens.
+      - The pause names what the change is, why it matters, and presents the supporting evidence inline.
+      - No additional pauses are raised for that same finding.
+    pass_criteria: Exactly one pause appears, it precedes the irreversible action, and it is self-contained (what / why / evidence all present in the surface).
+    fail_criteria: The action happens with no pause, the pause omits what/why/evidence, or more than one pause is raised for the single finding.
+
+  - name: A build-invalidating finding raises a pause and a non-imminent stakes finding does not
+    invocation: Run two Conductor builds — one over a result whose finding would invalidate the build, and one over a result with a stakes-class finding that is real but not imminent — and compare what each interrupts for.
+    given: One build-invalidating finding in run A and one non-imminent stakes finding in run B.
+    when: The Conductor processes each run.
+    then:
+      - Run A stops with a single pause for the build-invalidating finding.
+      - Run B completes with no mid-flight pause and surfaces its finding only in the final report.
+    pass_criteria: Only the build-invalidating finding triggers a mid-flight pause; the non-imminent stakes finding stays on the silent/collapsed path.
+    fail_criteria: Run B pauses mid-flight, or Run A does not pause for the build-invalidating finding.
+
+  - name: The developer can resolve a pause three ways and the build resumes correctly
+    invocation: Trigger a qualifying mid-flight pause and resolve it, across separate runs, with each of the three available answers.
+    given: A build paused on a bar-clearing finding.
+    when: The developer answers proceed, then in another run change, then in another run abort-that-branch.
+    then:
+      - On proceed, the build continues with the planned action.
+      - On change, the build applies the altered action and continues.
+      - On abort-that-branch, the build abandons that line of work and continues with the rest of the run.
+      - In every case the run resumes without hanging and does not re-ask the same resolved finding.
+    pass_criteria: Each of the three answers produces its corresponding resume behavior; the run never hangs and never re-prompts a resolved finding.
+    fail_criteria: Any answer leaves the build hung, produces the wrong resume behavior, or re-raises the already-resolved pause.
+
+  - name: Raised findings are marked escalated and distinct from other dispositions
+    invocation: Run a Conductor build that produces at least one mid-flight pause and at least one routinely auto-fixed finding, then read the final report.
+    given: A completed run containing both a raised finding and an auto-fixed finding.
+    when: The end-of-run report is produced.
+    then:
+      - The raised finding is labeled as escalated (raised, not silently fixed).
+      - The escalated label is distinct from fixed, dismissed, and triaged-out.
+      - The auto-fixed finding is not labeled escalated.
+    pass_criteria: The report shows the raised finding under an escalated disposition that is clearly separate from fixed / dismissed / triaged-out.
+    fail_criteria: The raised finding is reported as fixed/dismissed/triaged-out, or no escalated disposition is distinguishable.
+
+  - name: Many routine findings do not produce a firehose of pauses
+    invocation: Run a Conductor build over results that contain many routine and non-imminent findings and exactly two findings that clear the bar (irreversible-and-imminent or build-invalidating).
+    given: A representative build with many non-qualifying findings and two qualifying ones.
+    when: The Conductor processes the whole run.
+    then:
+      - The number of mid-flight pauses equals two — one per bar-clearing finding.
+      - None of the routine or non-imminent findings produces a pause.
+    pass_criteria: Exactly two pauses occur across the run, matching the count of bar-clearing findings, with no extra interruptions.
+    fail_criteria: More than two pauses occur, or any routine/non-imminent finding produces a pause.

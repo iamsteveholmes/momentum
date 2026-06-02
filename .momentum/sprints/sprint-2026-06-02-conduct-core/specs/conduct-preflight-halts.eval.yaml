@@ -1,0 +1,99 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-preflight-halts
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/conduct-preflight-halts.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, invoke the Conductor under each pre-flight condition and watch what it
+  actually does — do not reason about the source, observe the behavior.
+  1. Invoke with no active sprint, then again with a sprint that exists but was never activated, then
+     with required approvals missing, then with state left stalled/inconsistent. Each time, confirm the
+     Conductor stops before any build work, says which cannot-start guard fired and why, and dispatches
+     no story.
+  2. Invoke with all guards passing AND a story left "in-progress" from a prior interrupted run. Confirm
+     the Conductor never shows a resume-vs-cleanup prompt, never asks you to choose, auto-resets that
+     story to a clean state, re-dispatches it, and starts building from a known-good working tree.
+  3. Let a build run start cleanly. Confirm that once building, the Conductor never re-asks the
+     cannot-start questions and never raises a developer-facing pause for a routine finding — the only
+     developer-facing mid-build pause that may ever occur is the narrow stakes-gated escalation tier, and
+     only for an irreversible-and-imminent or build-invalidating trigger.
+  4. Read the Conductor's own statement of its invariant and confirm it names BOTH carve-outs distinctly:
+     the Conductor-facing freeze guard AND the developer-facing mid-flight escalation tier.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-preflight-halts.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Pre-flight cannot-start guards halt before any build work
+    invocation: Invoke the Conductor to run a sprint while a cannot-start condition holds — run it once for each of the four conditions below.
+    given:
+      - A condition exists that should block the sprint from starting, one per run:
+          (1) no active sprint;
+          (2) a sprint exists but was never activated;
+          (3) required approvals are missing;
+          (4) state is stalled or inconsistent.
+    when:
+      - The Conductor is invoked to run the sprint.
+    then:
+      - The Conductor stops before any build work occurs.
+      - It reports which cannot-start guard fired and the reason it fired.
+      - No story is dispatched and the working tree is not mutated.
+    pass_criteria: For every one of the four conditions, the run halts at pre-flight, names the specific blocking reason, and dispatches nothing.
+    fail_criteria: Any condition lets build work begin, dispatches a story, mutates the tree, or halts without naming which guard fired.
+
+  - name: Reconcile-on-start runs non-interactively and re-dispatches a stale story
+    invocation: Invoke the Conductor with all cannot-start guards passing and one story left "in-progress" from a prior interrupted run.
+    given:
+      - All cannot-start conditions are clear.
+      - One story is in an "in-progress" state left over from a previous interrupted session.
+    when:
+      - The Conductor is invoked to run the sprint.
+    then:
+      - No resume-vs-cleanup prompt is ever shown and the developer is never asked to choose how to handle prior state.
+      - The stale in-progress story is automatically reset to a clean, dispatchable state.
+      - That story is re-dispatched into the build phase.
+      - The build phase begins from a known-good working-tree and story state.
+    pass_criteria: The run completes pre-flight with zero prompts, auto-resets and re-dispatches the stale story, and starts building from a clean state.
+    fail_criteria: Any prompt asks the developer to resume or clean up or choose, the stale story is not reset, it is not re-dispatched, or the build starts from an unreconciled state.
+
+  - name: No re-evaluation or routine developer pause once building has started
+    invocation: Invoke the Conductor so the build phase starts cleanly, then let it run through routine findings.
+    given:
+      - All pre-flight guards passed and reconcile succeeded.
+      - The build encounters ordinary, routine findings during execution.
+    when:
+      - The Conductor proceeds through the build phase.
+    then:
+      - The cannot-start guards are not re-evaluated and no new cannot-start guard appears after build work has begun.
+      - Routine findings never trigger a developer-facing pause and are not raised to the developer mid-build.
+      - No per-story confirmation, resume/cleanup prompt, or other mid-build question is presented.
+    pass_criteria: Once building, the developer sees no cannot-start re-check and no developer-facing pause for any routine finding.
+    fail_criteria: The build re-asks a cannot-start question, or pauses to ask the developer about a routine finding, or presents any per-story or mid-build prompt outside the narrow escalation tier.
+
+  - name: The only mid-build developer pause is the narrow stakes-gated tier
+    invocation: Invoke the Conductor on a build that surfaces (a) a routine finding, (b) a high-blast-radius/architecture finding, and (c) an irreversible-and-imminent or build-invalidating finding.
+    given:
+      - The build encounters findings spanning routine, high-blast-radius, and irreversible-and-imminent/build-invalidating severities.
+    when:
+      - The Conductor processes each finding during the build phase.
+    then:
+      - The routine finding produces no developer-facing pause.
+      - A developer-facing mid-build pause occurs only for an irreversible-and-imminent OR build-invalidating finding.
+      - No developer-facing mid-build pause is triggered by any finding that is merely high-blast-radius or otherwise outside the irreversible-and-imminent / build-invalidating bar.
+    pass_criteria: The single mid-build developer-facing pause that ever fires is gated to irreversible-and-imminent or build-invalidating triggers; all narrower classes pass without a developer pause.
+    fail_criteria: A developer-facing mid-build pause fires for a routine or merely high-blast-radius finding, or an irreversible-and-imminent/build-invalidating finding fails to pause when it should.
+
+  - name: Invariant statement names both carve-outs distinctly
+    invocation: Invoke the Conductor and read its own stated invariant about developer-facing HALTs.
+    given:
+      - The Conductor's stated rule about when developer-facing HALTs may occur is available in its output or stated behavior.
+    when:
+      - The invariant is read.
+    then:
+      - It states no developer-facing HALT exists outside pre-flight EXCEPT a narrow mid-flight escalation tier.
+      - It explicitly names BOTH exceptions as distinct carve-outs — one Conductor-facing freeze guard, and one developer-facing mid-flight escalation tier.
+      - It constrains the developer-facing tier to irreversible-and-imminent OR build-invalidating triggers only.
+    pass_criteria: The invariant names two distinct carve-outs (one Conductor-facing, one developer-facing) and limits the developer-facing tier to the narrow bar.
+    fail_criteria: The invariant omits either carve-out, merges them into one, fails to distinguish Conductor-facing from developer-facing, or states a broader bar than irreversible-and-imminent / build-invalidating for the developer-facing tier.

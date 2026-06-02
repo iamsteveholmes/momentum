@@ -1,0 +1,138 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: code-review-adapter-normalize-triage
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/code-review-adapter-normalize-triage.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the code review on a sample change set non-interactively and
+  inspect the findings it hands forward. Confirm:
+  - Every finding that flows forward is shaped like the project's one canonical finding record
+    (same fields as findings from any other source) and is stamped as coming from the
+    bmad code-review source.
+  - Findings the review tool sorted into its decision-needed, patch, and defer buckets all
+    appear in the forwarded stream; none of those three are silently dropped.
+  - Findings the review tool sorted into its own noise/dismiss bucket do NOT appear in the
+    forwarded stream.
+  - Every forwarded finding has a populated stakes-class value. Feed in cases where the review
+    tool gives no security/stakes hint and confirm the value defaults to routine (or the
+    schema's "no signal" value) — never blank.
+  - Feed in a case that the shared stakes rubric recognizes as a stakes class (e.g. a security
+    or destructive-operation finding) and confirm the forwarded finding carries that class —
+    proving the adapter consults the shared rubric rather than guessing.
+  - Read the skill instruction text and confirm it explicitly states that the review tool's
+    dropped noise/dismiss bucket is a DIFFERENT thing from the downstream fixer's
+    "dismissed-with-rationale" outcome, so legitimate findings are never pre-filtered.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/code-review-adapter-normalize-triage.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Legitimate buckets normalize into the canonical finding shape with source stamped
+    invocation: >
+      Run the code-review step non-interactively over a sample change set whose review
+      produces at least one decision-needed, one patch, and one defer finding, then read the
+      findings it hands forward.
+    given:
+      - A change set whose adversarial review yields findings in the decision-needed, patch,
+        and defer buckets.
+    when:
+      - The code-review step runs to completion and emits its forwarded findings.
+    then:
+      - Each forwarded finding has the same record shape (field names and structure) as
+        findings produced by every other source the build's fixer consumes.
+      - Every forwarded finding identifies its origin as the bmad code-review source.
+      - At least one forwarded finding traces to each of the decision-needed, patch, and
+        defer buckets.
+    pass_criteria: >
+      All forwarded findings share the single canonical record shape, each is marked as
+      coming from the bmad code-review source, and decision-needed, patch, and defer are all
+      represented in the forwarded stream.
+    fail_criteria: >
+      Any forwarded finding uses a different/ad-hoc shape, omits the bmad code-review source
+      marker, or one or more of decision-needed / patch / defer is absent from the stream.
+
+  - name: The review tool's own noise bucket is dropped and never forwarded
+    invocation: >
+      Run the code-review step non-interactively over a sample change set whose review sorts
+      one or more findings into its noise/dismiss (false-positive / handled-elsewhere) bucket,
+      then read the forwarded findings.
+    given:
+      - A change set whose review produces at least one finding in the noise/dismiss bucket
+        AND at least one legitimate (decision-needed / patch / defer) finding.
+    when:
+      - The code-review step runs to completion and emits its forwarded findings.
+    then:
+      - No forwarded finding corresponds to the noise/dismiss bucket.
+      - The legitimate findings from the same run are still present in the forwarded stream.
+    fail_criteria: >
+      A noise/dismiss-bucket finding appears in the forwarded stream, or legitimate findings
+      from the same run are missing.
+    pass_criteria: >
+      The noise/dismiss-bucket finding is absent from the forwarded stream while the
+      legitimate findings from the same run remain present.
+
+  - name: Every forwarded finding carries a populated stakes-class, defaulting to routine on no signal
+    invocation: >
+      Run the code-review step non-interactively over a change set whose review gives no
+      security or stakes hint on its findings, then read the stakes-class value on each
+      forwarded finding.
+    given:
+      - A change set whose review produces legitimate findings but conveys no
+        security/stakes signal.
+    when:
+      - The code-review step runs to completion and emits its forwarded findings.
+    then:
+      - Every forwarded finding has a populated stakes-class value (never blank/unset).
+      - Findings with no signal carry the routine class (or the schema's defined "no signal"
+        value).
+    pass_criteria: >
+      No forwarded finding has an empty stakes-class, and no-signal findings resolve to the
+      routine / no-signal value.
+    fail_criteria: >
+      Any forwarded finding has a blank or missing stakes-class, or no-signal findings resolve
+      to a non-routine stakes class.
+
+  - name: A finding the shared rubric recognizes as a stakes class is tagged accordingly
+    invocation: >
+      Run the code-review step non-interactively over a change set containing a change the
+      shared stakes rubric recognizes as a stakes class (for example a security/auth-isolation
+      issue or a destructive/irreversible operation), then read the stakes-class on the
+      corresponding forwarded finding.
+    given:
+      - A change set with at least one finding that the shared stakes rubric classifies as a
+        non-routine stakes class (security/auth-isolation, irreversible/destructive, or
+        high-blast-radius/architecture).
+    when:
+      - The code-review step runs to completion and emits its forwarded findings.
+    then:
+      - The corresponding forwarded finding carries the non-routine stakes class the shared
+        rubric assigns.
+      - Findings the rubric does not flag remain routine.
+    pass_criteria: >
+      The rubric-recognized finding is tagged with the same non-routine stakes class the shared
+      rubric assigns, while findings the rubric does not flag stay routine.
+    fail_criteria: >
+      A rubric-recognized stakes finding is tagged routine, or a finding the rubric does not
+      flag is given a non-routine class.
+
+  - name: The instruction text distinguishes the dropped noise bucket from the fixer dismissed disposition
+    invocation: >
+      Read the code-review skill instruction text that governs this normalization step.
+    given:
+      - The published skill instruction for the code-review normalization adapter.
+    when:
+      - A reader inspects how the instruction describes dropping the review tool's noise/dismiss
+        bucket versus the downstream fixer's dismissed-with-rationale outcome.
+    then:
+      - The instruction explicitly states the dropped noise/dismiss bucket is a DISTINCT concept
+        from the downstream fixer's dismissed (waved-off-with-rationale) disposition.
+      - The instruction directs that legitimate decision-needed / patch / defer findings are not
+        pre-filtered, so the fixer can still see and dismiss-with-rationale where warranted.
+    pass_criteria: >
+      The instruction names both concepts, marks them as distinct, and forbids pre-filtering
+      legitimate findings on the adapter's own judgment.
+    fail_criteria: >
+      The instruction conflates the two dismiss concepts, omits the distinction, or permits the
+      adapter to drop legitimate decision-needed / patch / defer findings.

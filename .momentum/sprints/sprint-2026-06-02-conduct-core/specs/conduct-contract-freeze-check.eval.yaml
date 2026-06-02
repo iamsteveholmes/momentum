@@ -1,0 +1,93 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-contract-freeze-check
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/conduct-contract-freeze-check.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, invoke the Conductor over a story's verification under two contract states and
+  watch what it actually does — do not reason about the source, observe the behavior.
+  1. Run a story to the point of verification with its contract file untouched (its fingerprint still
+     matches the value frozen when the story was assigned). Confirm verification proceeds normally and
+     the build is not interrupted.
+  2. Alter the contract file after its fingerprint was frozen (any change to its bytes), then run the
+     same story to verification. Confirm the Conductor does NOT produce a verification result from the
+     changed contract — it stops short, recomputes the contract fingerprint, sees it differs from the
+     frozen value, and surfaces the mismatch to itself (the Conductor), not to you. You are never paused
+     or prompted by it; no developer-facing HALT appears.
+  3. On that mismatch, confirm the Conductor does NOT treat it as a stakes-class finding: it raises no
+     mid-flight escalation to you, does not route it into a silent auto-fix loop, and does not dismiss it.
+     It is an integrity stop the Conductor owns and resolves before any verification result is recorded.
+  4. Confirm the check is per story: each story's verification compares that story's own contract against
+     that story's own frozen fingerprint, not a shared or global one.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-contract-freeze-check.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Unchanged contract passes the freeze check and verification proceeds
+    invocation: Invoke the Conductor to verify a story whose contract file is exactly as it was when the story was assigned (its fingerprint still matches the frozen value).
+    given:
+      - A story has reached the point where the Conductor verifies it.
+      - The story's contract file has not changed since its fingerprint was frozen at assignment.
+    when:
+      - The Conductor begins verifying the story.
+    then:
+      - The Conductor produces a verification result for the story.
+      - Verification proceeds normally and the build is not interrupted.
+    pass_criteria: With a contract whose bytes are unchanged since assignment, the story is verified and a verification result is produced without any interruption.
+    fail_criteria: The Conductor interrupts, stops, or refuses to verify a story whose contract file is unchanged since assignment, or fails to produce a verification result for it.
+
+  - name: Drifted contract is caught and not silently re-verified
+    invocation: Invoke the Conductor to verify a story whose contract file was altered after its fingerprint was frozen.
+    given:
+      - A story has reached the point where the Conductor verifies it.
+      - The story's contract file has been changed since its fingerprint was frozen at assignment, so the current fingerprint differs from the frozen value.
+    when:
+      - The Conductor begins verifying the story.
+    then:
+      - The Conductor does not produce a verification result from the changed contract — it stops short of verifying against it.
+      - No pass/fail verification outcome is recorded for the story off the changed contract.
+    pass_criteria: When the contract file has changed since assignment, the Conductor refuses to verify against it and records no verification result from the changed contract.
+    fail_criteria: The Conductor verifies the story against the changed contract, or records a pass/fail outcome from a contract whose file has changed since assignment.
+
+  - name: Mismatch surfaces to the Conductor, never to the developer
+    invocation: Invoke the Conductor to verify a story whose contract was altered after freezing, and observe who the integrity stop is surfaced to.
+    given:
+      - A story's contract file differs from its frozen fingerprint at verification time.
+    when:
+      - The Conductor detects the fingerprint mismatch.
+    then:
+      - The mismatch is surfaced to the Conductor itself as an integrity stop.
+      - No developer-facing HALT, pause, prompt, or question is presented to the developer.
+      - The developer is not asked to choose, approve, or resolve anything about the mismatch.
+    pass_criteria: The mismatch is handled as a Conductor-facing stop; the developer sees no HALT, prompt, or pause from it.
+    fail_criteria: The mismatch raises any developer-facing HALT, prompt, pause, or choice, or is otherwise routed to the developer rather than handled by the Conductor.
+
+  - name: Freeze mismatch is not a finding and not a stakes-class escalation
+    invocation: Invoke the Conductor on a story with a drifted contract, then inspect how the mismatch is categorized and routed.
+    given:
+      - A story's contract fingerprint does not match the frozen value at verification time.
+    when:
+      - The Conductor handles the mismatch.
+    then:
+      - The mismatch does not raise a mid-flight stakes-class escalation to the developer.
+      - The mismatch is not routed into a silent auto-fix loop and is not auto-fixed as a finding.
+      - The mismatch is not recorded with a finding disposition (it is neither fixed, dismissed, triaged-out, nor escalated) — it is handled as an integrity stop the Conductor owns.
+    pass_criteria: The mismatch is treated strictly as a Conductor-owned integrity stop — no stakes escalation, no auto-fix loop, no finding disposition.
+    fail_criteria: The mismatch triggers a mid-flight escalation, enters an auto-fix loop, is dismissed, or is otherwise recorded as a finding with a disposition.
+
+  - name: The freeze check is performed per story against that story's own frozen fingerprint
+    invocation: Invoke the Conductor across multiple stories, with one story's contract unchanged and another story's contract altered after freezing, and observe each story's verification independently.
+    given:
+      - At least two stories reach verification in the same run.
+      - One story's contract still matches its frozen fingerprint; another story's contract has been changed since its fingerprint was frozen.
+    when:
+      - The Conductor verifies each story.
+    then:
+      - The story whose contract file is unchanged since assignment is verified and a verification result is produced for it.
+      - The story whose contract file was altered after assignment is not verified against the changed contract and no verification result is produced from it.
+      - The drifted contract on one story does not change the verification outcome of the unchanged story.
+    pass_criteria: In a single run, the unchanged-contract story is verified while the altered-contract story is refused, and one story's contract state does not affect the other's verification outcome.
+    fail_criteria: The altered-contract story is verified against its changed contract, the unchanged-contract story is refused, or one story's contract state changes another story's verification outcome.

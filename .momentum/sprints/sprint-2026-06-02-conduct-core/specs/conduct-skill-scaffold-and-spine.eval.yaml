@@ -1,0 +1,91 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-skill-scaffold-and-spine
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/conduct-skill-scaffold-and-spine.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, invoke the Conductor skill in a fresh session and confirm it loads
+  cleanly and presents itself as the top-level build orchestrator for a sprint. Walk its
+  workflow from start to finish and confirm the phases run in this order: pre-flight, then the
+  build phase (a repeated per-story unit), then validation on merge, then end-to-end validation,
+  then exactly one human acceptance gate at the very end. Confirm that on a routine run the
+  orchestrator asks you nothing between starting the run and that final gate. Confirm the
+  workflow names an explicit pause-ask-resume escalation path and describes it as a narrow,
+  high-bar exception reserved for a small stakes-class of findings — not a general way to ask
+  questions — and that its supervision rule reads "never asks during build except the narrow
+  stakes-and-timing mid-flight escalation tier" rather than an absolute no-questions claim.
+  Confirm the orchestrator delegates all building, all repository-history changes, and all
+  helper spawning to the agents it launches, never doing that work inline, and that the build
+  carries any number of stories without stopping to ask you between them.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-skill-scaffold-and-spine.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Orchestrator loads and presents the ordered build spine
+    invocation: Invoke the Conductor orchestrator skill in a fresh session and read out its workflow.
+    given: A sprint with one or more ready stories is available to build.
+    when: The skill is invoked and its workflow is inspected end to end.
+    then:
+      - It loads without missing-file, malformed-frontmatter, or parse errors.
+      - It presents itself as the top-level, in-session build orchestrator for a sprint.
+      - Its workflow sequences phases in order — pre-flight, build phase, validation-on-merge, end-to-end validation, and a single human acceptance gate — with no later phase preceding an earlier one.
+    pass_criteria: The orchestrator loads cleanly and exposes exactly that ordered five-phase spine, with the human acceptance gate appearing last.
+    fail_criteria: The skill errors on load, omits a phase, presents the phases out of order, or places the human acceptance gate anywhere but last.
+
+  - name: Routine run reaches the end with only two developer touchpoints
+    invocation: Walk a routine build run (only ordinary, low-stakes work) from start through the final gate.
+    given: A sprint whose stories produce only routine findings during the build.
+    when: The build runs from invocation to completion.
+    then:
+      - The orchestrator asks the developer nothing between the start of the run and the final acceptance gate.
+      - Exactly two developer-facing touchpoints occur on this path — the start of the run and the final acceptance gate.
+      - The build proceeds through every story without inserting a human gate between stories.
+    pass_criteria: A routine run involves only the run-start and end-gate developer touchpoints and never pauses to ask between stories.
+    fail_criteria: The build asks the developer any routine question mid-run, inserts a between-stories human gate, or presents more than the two expected touchpoints on the routine path.
+
+  - name: No story-count cap on the build phase
+    invocation: Inspect the build phase against sprints of varying size.
+    given: Sprints containing few stories and many stories.
+    when: The build phase is examined for limits on how many stories it will process.
+    then:
+      - The build processes each story as a repeated per-story unit with no hardcoded maximum.
+      - Larger sprints are handled by repeating the per-story unit, not by refusing or truncating.
+    pass_criteria: The build phase processes an arbitrary number of stories with no story-count cap and no human gate between stories.
+    fail_criteria: The build refuses, truncates, or requires manual continuation beyond some fixed story count.
+
+  - name: Workflow text delegates building, git mutation, and spawning rather than performing it inline
+    invocation: Read the Conductor workflow document end to end and run a build that produces output and changes repository history.
+    given: The Conductor workflow document, and a build run that produces code or spec output and changes repository history.
+    when: The workflow document is read and the run's produced artifacts and commit history are inspected.
+    then:
+      - The workflow document instructs that all build authoring (code, spec, or fix) be performed by delegated helper agents and not written inline by the orchestrator step itself.
+      - The workflow document instructs delegated helpers not to change repository history on their own, concentrating history changes under the orchestrator's coordination.
+      - The workflow document states that helper spawning is single-tier — the orchestrator launches helpers and helpers do not launch further build helpers.
+      - After the run, produced build artifacts exist and the repository history contains the run's commits.
+    pass_criteria: The workflow document contains the delegation, history-concentration, and single-tier-spawning instructions as written text, and the completed run shows produced artifacts plus commits in repository history.
+    fail_criteria: The workflow document omits any of the three delegation instructions, or the run produces no artifacts / no commits in repository history.
+
+  - name: Narrow mid-flight escalation path exists as a softened, high-bar exception
+    invocation: Inspect the workflow's escalation handling and its stated supervision rule.
+    given: The build phase as defined in the workflow.
+    when: The escalation path and the supervision-rule wording are examined.
+    then:
+      - The workflow defines an explicit pause-ask-resume path the build can enter — halt, surface a developer prompt, then resume from the pause point.
+      - The path is described as narrow and high-bar, reserved for a small stakes-class of findings, and explicitly not a general-purpose way to ask the developer questions.
+      - The stated supervision rule reads as "never asks during build except the narrow stakes-and-timing mid-flight escalation tier," carving out exactly this one exception rather than asserting an absolute no-questions claim.
+      - Routine findings are stated to never route to this path.
+    pass_criteria: A defined pause-ask-resume escalation path is present, framed as a narrow stakes-gated exception, and the supervision rule uses the softened "except the narrow tier" wording.
+    fail_criteria: No escalation path is defined, the path is presented as a general questioning mechanism, routine findings are routed to it, or the supervision rule asserts an absolute no-questions-during-build claim.
+
+  - name: Exactly one human acceptance gate, after end-to-end validation
+    invocation: Run the build to completion and count mandatory human acceptance gates.
+    given: A completed build run that has passed end-to-end validation.
+    when: The points at which the build hands off to the developer for final acceptance are counted.
+    then:
+      - Exactly one mandatory human acceptance gate occurs, and it occurs after end-to-end validation.
+      - No second mandatory human acceptance gate exists anywhere else in the workflow.
+    pass_criteria: The build reaches one and only one human acceptance gate, positioned after end-to-end validation.
+    fail_criteria: There are zero such gates, more than one, or the single gate appears before end-to-end validation.

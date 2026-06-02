@@ -4874,34 +4874,59 @@
     "story_type": "feature"
   },
   "conduct-stakes-timing-escalation-mechanism": {
-    "status": "backlog",
-    "title": "Conduct stakes-and-timing mid-flight escalation mechanism",
+    "status": "ready-for-dev",
+    "title": "Conductor stakes-and-timing mid-flight escalation mechanism",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "conduct-skill-scaffold-and-spine",
+      "conduct-build-phase-frontier",
+      "directed-fix-finding-schema"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/conductor/references/escalation.md"
+    ],
     "priority": "high",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
   },
   "stakes-classification-rubric": {
-    "status": "backlog",
-    "title": "Stakes-classification rubric (shared, single source)",
+    "status": "ready-for-dev",
+    "title": "Shared single-source stakes-classification rubric",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "directed-fix-finding-schema"
+    ],
+    "touches": [
+      "skills/momentum/references/stakes-classification-rubric.md"
+    ],
     "priority": "high",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": [
+      "specification"
+    ],
+    "verification_method": "document-review"
   },
   "conduct-spec-revision-dec036": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Revise the conduct spec to design to the DEC-036 stakes-and-timing exception",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "_bmad-output/planning-artifacts/sprint-dev-redesign-spec.md"
+    ],
     "priority": "high",
-    "story_type": "maintenance"
+    "story_type": "maintenance",
+    "change_type": [
+      "specification"
+    ],
+    "verification_method": "document-review"
   },
   "decision-grade-presentation-standard": {
     "status": "backlog",
@@ -4912,5 +4937,338 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "directed-fix-finding-schema": {
+    "status": "ready-for-dev",
+    "title": "Canonical normalized finding schema with stakes-class and escalated disposition",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-spec-revision-dec036"
+    ],
+    "touches": [
+      "skills/momentum/references/finding-schema.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "config-structure"
+    ],
+    "verification_method": "document-review"
+  },
+  "directed-fix-invocation-contract": {
+    "status": "ready-for-dev",
+    "title": "Directed momentum:dev fix-mode invocation contract with escalate-do-not-fix path",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "directed-fix-finding-schema"
+    ],
+    "touches": [
+      "skills/momentum/references/directed-fix-invocation-contract.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "specification"
+    ],
+    "verification_method": "document-review"
+  },
+  "dev-fix-mode-entry": {
+    "status": "ready-for-dev",
+    "title": "Add fix-mode to momentum:dev that branches on the stakes-class",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "directed-fix-invocation-contract"
+    ],
+    "touches": [
+      "skills/momentum/agents/dev.md",
+      "skills/momentum/skills/dev/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "agent-definition"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "stage3-fix-loop-via-directed-dev": {
+    "status": "ready-for-dev",
+    "title": "Wire the per-story stage-3 fix loop to the directed fixer with escalation routing",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "directed-fix-invocation-contract",
+      "dev-fix-mode-entry",
+      "conduct-stakes-timing-escalation-mechanism"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-skill-scaffold-and-spine": {
+    "status": "ready-for-dev",
+    "title": "Conductor orchestrator skill scaffold and workflow spine",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-spec-revision-dec036"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/SKILL.md",
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-preflight-halts": {
+    "status": "ready-for-dev",
+    "title": "Conductor Phase-1 pre-flight HALTs and non-interactive git reconcile",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-skill-scaffold-and-spine"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-build-phase-frontier": {
+    "status": "ready-for-dev",
+    "title": "Conductor build phase: dependency frontier with a mid-flight escalation consumption hook",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-skill-scaffold-and-spine"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-merge-and-conflict-resolution": {
+    "status": "ready-for-dev",
+    "title": "Conductor per-story merge, conflict resolution, quarantine, and escalation hook",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-build-phase-frontier",
+      "conduct-stakes-timing-escalation-mechanism"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-contract-freeze-check": {
+    "status": "ready-for-dev",
+    "title": "Conductor contract-freeze check before per-story verification",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-build-phase-frontier"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-coverage-disposition-branch": {
+    "status": "ready-for-dev",
+    "title": "Conductor coverage-disposition branch (dedicated-run vs covered-by-composition)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-build-phase-frontier",
+      "qa-reviewer-rescope-per-story-contract"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "code-review-adapter-noninteractive-driver": {
+    "status": "ready-for-dev",
+    "title": "Code-review adapter: non-interactive bmad-code-review driver",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/code-reviewer/SKILL.md",
+      "skills/momentum/skills/code-reviewer/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "code-review-adapter-normalize-triage": {
+    "status": "ready-for-dev",
+    "title": "Code-review adapter: normalize bmad triage into the canonical schema and populate stakes-class",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "code-review-adapter-noninteractive-driver",
+      "directed-fix-finding-schema",
+      "stakes-classification-rubric"
+    ],
+    "touches": [
+      "skills/momentum/skills/code-reviewer/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "code-review-adapter-retire-stub": {
+    "status": "ready-for-dev",
+    "title": "Code-review adapter: retire the in-house stub and repoint the command",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "code-review-adapter-noninteractive-driver",
+      "code-review-adapter-normalize-triage"
+    ],
+    "touches": [
+      "skills/momentum/skills/code-reviewer/SKILL.md",
+      "commands/code-reviewer.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "code-review-adapter-repoint-sprint-dev": {
+    "status": "ready-for-dev",
+    "title": "Repoint sprint-dev code-review calls to the adapter",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "code-review-adapter-retire-stub",
+      "conduct-skill-scaffold-and-spine"
+    ],
+    "touches": [
+      "skills/momentum/skills/sprint-dev/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "code-review-adapter-repoint-quick-fix": {
+    "status": "ready-for-dev",
+    "title": "Repoint quick-fix code-review calls to the adapter",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "code-review-adapter-retire-stub"
+    ],
+    "touches": [
+      "skills/momentum/skills/quick-fix/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "qa-reviewer-rescope-per-story-contract": {
+    "status": "ready-for-dev",
+    "title": "Rescope qa-reviewer to the per-story contract and add producer-side stakes tagging",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "directed-fix-finding-schema",
+      "stakes-classification-rubric"
+    ],
+    "touches": [
+      "skills/momentum/agents/qa-reviewer.md"
+    ],
+    "priority": "medium",
+    "story_type": "feature",
+    "change_type": [
+      "agent-definition"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "dev-read-contract-part-a-header": {
+    "status": "ready-for-dev",
+    "title": "Teach momentum:dev to read the verification contract Part-A header",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/dev.md",
+      "skills/momentum/skills/dev/workflow.md"
+    ],
+    "priority": "medium",
+    "story_type": "feature",
+    "change_type": [
+      "agent-definition"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "dev-strip-merge-cleanup-authority": {
+    "status": "ready-for-dev",
+    "title": "Strip merge, worktree-cleanup, lock, and crash-ask authority from momentum:dev",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/dev.md",
+      "skills/momentum/skills/dev/workflow.md"
+    ],
+    "priority": "medium",
+    "story_type": "feature",
+    "change_type": [
+      "agent-definition"
+    ],
+    "verification_method": "skill-invoke"
   }
 }

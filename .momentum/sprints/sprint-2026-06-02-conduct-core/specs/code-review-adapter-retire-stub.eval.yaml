@@ -1,0 +1,82 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: code-review-adapter-retire-stub
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/code-review-adapter-retire-stub.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, exercise the code-reviewer command and the retired stub from the
+  outside and watch what comes back:
+  (1) Invoke the code-reviewer command on a small change with at least one real issue in it.
+      Confirm the findings you get back are adapter-style normalized findings — each can carry
+      a disposition (fixed | dismissed | triaged-out | escalated) and a stakes class
+      (security/auth-isolation; irreversible/destructive; high-blast-radius/architecture; or
+      default routine) — NOT the old placeholder stub output.
+  (2) Try to use the in-house stub reviewer directly. Confirm it no longer produces review
+      findings — its placeholder body is gone.
+  (3) Confirm no path through the command reaches the old stub: the command always drives the
+      adapter, and routing is the same on a repeat invocation with identical input.
+  (4) Confirm this change added NO new escalation behavior of its own: invoking the command
+      does not introduce a mid-flight escalation tier, does not invent stakes-classification
+      it did not already get from upstream, does not change how dismissals are shown, and does
+      not change any end-gate. It only changes WHERE the findings come from (the adapter).
+  If any of these don't hold, you are not done.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/code-review-adapter-retire-stub.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Command produces adapter-normalized findings, not placeholder output
+    invocation: Invoke the code-reviewer command on a small change that contains at least one genuine review issue.
+    given: A small, reviewable change is staged that has at least one real, legitimate issue in it.
+    when: The code-reviewer command is invoked on that change.
+    then:
+      - Real review findings are returned, not placeholder or stub text.
+      - At least one returned finding is in the normalized shape — it can carry a disposition that is one of "fixed", "dismissed", "triaged-out", or "escalated".
+      - At least one returned finding can carry a stakes class that is one of "security/auth-isolation", "irreversible/destructive", "high-blast-radius/architecture", or "default routine".
+    pass_criteria: The command returns genuine findings in the normalized disposition/stakes-class shape, and no placeholder/stub output appears.
+    fail_criteria: The command returns placeholder or stub output, OR the findings are not in the normalized disposition/stakes-class shape.
+
+  - name: The in-house stub reviewer no longer reviews
+    invocation: Attempt to use the in-house stub reviewer directly (the legacy reviewer that previously emitted placeholder output).
+    given: The legacy in-house stub reviewer existed before this change and emitted only placeholder output.
+    when: The stub reviewer is invoked directly.
+    then:
+      - It does not produce review findings.
+      - It no longer behaves as a reviewer (it emits no placeholder review output).
+    pass_criteria: Invoking the stub directly yields no review findings; the stub no longer acts as a reviewer.
+    fail_criteria: The stub still emits placeholder findings or otherwise behaves as a reviewer.
+
+  - name: The command returns only adapter-normalized output, never stub placeholder
+    invocation: Invoke the code-reviewer command on a reviewable change and read the output it returns.
+    given: The code-reviewer command is the entry point developers invoke for review.
+    when: The command is invoked.
+    then:
+      - The returned findings bear the adapter-normalized shape (each can carry a disposition and a stakes class).
+      - The output contains no stub-style placeholder text.
+    pass_criteria: The command's returned output is adapter-normalized and contains no stub-style placeholder output.
+    fail_criteria: The command returns stub-style placeholder output, OR the returned findings are not in the adapter-normalized shape.
+
+  - name: Repeat invocation returns the same adapter-normalized output — no placeholder on retry
+    invocation: Invoke the code-reviewer command twice on identical input and compare the output each time.
+    given: A fixed input change that can be reviewed repeatedly.
+    when: The command is invoked on that same input a second time.
+    then:
+      - Both invocations return adapter-normalized findings (not placeholder output).
+      - Neither invocation returns stub-style placeholder output.
+      - The output shape is consistent across the two runs.
+    pass_criteria: Both invocations return adapter-normalized findings with no placeholder output, and the output shape is consistent between the two runs.
+    fail_criteria: Either invocation returns placeholder output, OR the output shape differs between the two runs.
+
+  - name: No new escalation behavior is introduced by this change
+    invocation: Invoke the code-reviewer command on a change containing a clearly stakes-class issue (for example an auth-isolation issue or a destructive migration) and observe the command's own behavior.
+    given: A change containing an issue that would qualify as stakes-class, reviewed through the repointed command.
+    when: The code-reviewer command is invoked on that change.
+    then:
+      - The command itself does not introduce or perform a mid-flight escalation as a result of this story — it only surfaces findings in the normalized shape.
+      - The command does not change how dismissals are rendered.
+      - The command does not change any end-gate behavior.
+      - Any disposition or stakes class present on a finding is carried through from the normalized findings, not invented anew by this command repoint.
+    pass_criteria: The command behaves as a pass-through to the adapter's normalized findings; it adds no mid-flight escalation, no dismissal-rendering change, and no end-gate change of its own.
+    fail_criteria: The command introduces a mid-flight escalation tier, alters dismissal rendering, alters end-gate behavior, or invents stakes classification beyond what the normalized findings already carry.

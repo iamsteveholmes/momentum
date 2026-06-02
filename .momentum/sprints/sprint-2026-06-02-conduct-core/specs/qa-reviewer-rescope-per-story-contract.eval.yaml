@@ -1,0 +1,173 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: qa-reviewer-rescope-per-story-contract
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/qa-reviewer-rescope-per-story-contract.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, hand the reviewer a single story's worktree diff plus
+  that one story's verification contract, then invoke it and inspect the output.
+  Confirm by observation only:
+    - Every acceptance criterion comes back labeled exactly one of VERIFIED /
+      PARTIAL / MISSING / BLOCKED, and each label points at a concrete file and
+      line in the diff.
+    - No finding mentions any story other than the one you handed over.
+    - Where the story has runnable tests, the verdicts reflect that the tests
+      were actually run — a verdict that only quotes source without running the
+      tests is a fail.
+    - MISSING and BLOCKED are used distinctly: BLOCKED only when something stopped
+      verification, MISSING when the behavior is genuinely absent.
+    - When the story needs services, the reviewer starts them and exercises the
+      behavior instead of declaring it BLOCKED.
+    - Every emitted finding carries a stakes class set to one of:
+      security/auth-isolation, irreversible/destructive,
+      high-blast-radius/architecture, or routine.
+    - A finding on an auth-isolation / security criterion is tagged
+      security/auth-isolation; a MISSING or PARTIAL finding on a destructive op
+      (migration, delete, force-push, prod deploy) is tagged
+      irreversible/destructive; a finding with no signal is tagged routine.
+    - No cross-story / sprint-wide / integration finding appears, and the reviewer
+      does not run post-merge over the whole sprint.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/qa-reviewer-rescope-per-story-contract.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Per-story scope — verdicts and file-line evidence for one story only
+    invocation: >
+      Invoke the qa-reviewer, handing it exactly one story's worktree diff and
+      that same story's verification contract.
+    given:
+      - A single story exists with a worktree diff and a verification contract
+        listing several acceptance criteria.
+      - The diff under review belongs to that one story only.
+    when:
+      - The reviewer is invoked against that single story.
+    then:
+      - Each acceptance criterion in the contract is labeled exactly one of
+        VERIFIED, PARTIAL, MISSING, or BLOCKED.
+      - Each labeled criterion cites a concrete file and line in the diff as
+        evidence.
+      - No finding references any story other than the one under review.
+    pass_criteria: >
+      Every criterion gets exactly one of the four labels with a file:line
+      citation into the diff, and the output is confined to the single story
+      handed in.
+    fail_criteria: >
+      A criterion is unlabeled, carries multiple labels, lacks file:line
+      evidence, or the output references a different story.
+
+  - name: Tests are executed — source-reading never substitutes
+    invocation: >
+      Invoke the qa-reviewer on a story whose acceptance criteria are backed by
+      runnable tests, including at least one criterion whose source looks
+      satisfied but whose test fails when run.
+    given:
+      - The story has runnable tests covering its acceptance criteria.
+      - At least one criterion appears satisfied by reading the source but its
+        test fails when executed.
+    when:
+      - The reviewer is invoked.
+    then:
+      - The verdict for the misleading criterion reflects the failing test
+        result, not the source appearance.
+      - The reviewer's output shows the tests were run to reach its verdicts.
+    pass_criteria: >
+      The criterion whose test fails is not marked VERIFIED on the strength of
+      source alone; verdicts demonstrably rest on executed tests.
+    fail_criteria: >
+      A criterion is marked VERIFIED based only on reading source while its
+      runnable test would fail, or no test was executed where one was available.
+
+  - name: MISSING vs BLOCKED distinction and mandatory service startup
+    invocation: >
+      Invoke the qa-reviewer on a story with (a) a criterion whose behavior is
+      genuinely absent, (b) a criterion that cannot be verified because something
+      prevents execution, and (c) a criterion that requires a running service.
+    given:
+      - One criterion's behavior is absent from the diff.
+      - One criterion is unverifiable because execution is prevented.
+      - One criterion requires a service to be running to be exercised, and the
+        service is not already running.
+    when:
+      - The reviewer is invoked.
+    then:
+      - The genuinely-absent criterion is labeled MISSING.
+      - The unverifiable-due-to-blockage criterion is labeled BLOCKED.
+      - The service-backed criterion is exercised against a started service and
+        is NOT labeled BLOCKED merely because the service was not already up.
+    pass_criteria: >
+      MISSING and BLOCKED are applied to the correct criteria respectively, and
+      the service-backed criterion receives a real verdict after the reviewer
+      starts the service.
+    fail_criteria: >
+      MISSING and BLOCKED are swapped or conflated, or the service-backed
+      criterion is labeled BLOCKED instead of being exercised against a started
+      service.
+
+  - name: Producer-side stakes tagging — every finding carries a class, routine is default
+    invocation: >
+      Invoke the qa-reviewer on a story that yields several findings, including
+      at least one with no special stakes signal.
+    given:
+      - The story produces multiple findings.
+      - At least one finding has no security, destructive, or architecture signal.
+    when:
+      - The reviewer is invoked.
+    then:
+      - Every emitted finding carries a stakes class.
+      - Each stakes class is one of security/auth-isolation,
+        irreversible/destructive, high-blast-radius/architecture, or routine.
+      - The finding with no signal is tagged routine.
+    pass_criteria: >
+      No finding is emitted without a stakes class, every class is one of the
+      four defined values, and signal-free findings are routine.
+    fail_criteria: >
+      A finding lacks a stakes class, uses a value outside the four classes, or a
+      signal-free finding is tagged as anything other than routine.
+
+  - name: Stakes triggers — auth-isolation and destructive-op tagging (DEC-036 D2/D4)
+    invocation: >
+      Invoke the qa-reviewer on a story containing (a) an authentication-isolation
+      / security acceptance criterion and (b) an acceptance criterion whose
+      behavior touches a destructive operation (migration, delete, force-push, or
+      prod deploy) that comes back MISSING or PARTIAL.
+    given:
+      - The story has an auth-isolation / security acceptance criterion.
+      - The story has a criterion touching a destructive operation that is not
+        fully satisfied (MISSING or PARTIAL).
+    when:
+      - The reviewer is invoked.
+    then:
+      - The finding on the auth-isolation / security criterion is tagged with the
+        security/auth-isolation stakes class.
+      - The MISSING-or-PARTIAL finding touching the destructive operation is
+        tagged with the irreversible/destructive stakes class.
+    pass_criteria: >
+      The security-related finding carries security/auth-isolation and the
+      destructive-op finding carries irreversible/destructive, matching the
+      shared rubric's mapping.
+    fail_criteria: >
+      The auth-isolation finding is tagged routine (or any non-security class), or
+      the destructive-op finding is tagged routine (or any non-destructive class).
+
+  - name: Cross-story and post-merge scope removed
+    invocation: >
+      Invoke the qa-reviewer against a single story while other stories also have
+      pending diffs in the sprint, and observe whether it stays scoped.
+    given:
+      - Multiple stories have pending worktree diffs in the sprint.
+      - The reviewer is handed exactly one of them.
+    when:
+      - The reviewer is invoked.
+    then:
+      - The reviewer emits no cross-story, sprint-wide, or integration findings.
+      - The reviewer does not run over the merged whole sprint or post-merge on
+        the trunk; it reviews only the single pre-merge story it was handed.
+    pass_criteria: >
+      Output is confined to the single story; no integration / sprint-wide /
+      post-merge-on-trunk behavior is observed.
+    fail_criteria: >
+      The reviewer emits findings spanning multiple stories, performs sprint-wide
+      or integration checks, or runs post-merge over the whole sprint.

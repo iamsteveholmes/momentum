@@ -1,0 +1,157 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-coverage-disposition-branch
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/conduct-coverage-disposition-branch.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the Conductor over a small batch of stories whose frozen
+  assignments carry different coverage_disposition values and watch what happens at build time:
+  - A story marked dedicated-run should get its own QA verification run during the build.
+  - A story marked covered-by-composition should NOT get a dedicated build-time run; instead the
+    build output should plainly say the dedicated run was skipped and name the integration scenario
+    that will discharge that story later, at AVFL/merge.
+  - A story with a missing or garbage coverage_disposition must fall back to running a dedicated
+    verification (the safe default) — never silently skip it.
+  Then confirm the boundary holds: deferring a story to composition must not change how findings
+  are classified and must not demote, hide, or silence any finding — especially a stakes-class
+  finding (security/auth-isolation; irreversible/destructive like a migration, delete, force-push,
+  or prod deploy; or high-blast-radius/architecture). The disposition only moves WHEN and WHERE the
+  run happens, never HOW a finding is handled.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-coverage-disposition-branch.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: dedicated-run story is verified at build time
+    invocation: >
+      Run the build orchestration over a single story whose frozen assignment sets
+      coverage_disposition to "dedicated-run", then read the build-phase output for that story.
+    given:
+      - A story is on the build frontier with a frozen assignment.
+      - That assignment's coverage_disposition is "dedicated-run".
+    when:
+      - The build phase processes the story.
+    then:
+      - The build-phase output shows that a dedicated QA verification run was performed for the
+        story during the build.
+      - The output does not say the dedicated run was skipped or deferred for this story.
+    pass_criteria: >
+      A dedicated build-time QA verification run is observably performed for the dedicated-run story,
+      and the output contains no skip/defer indication for it.
+    fail_criteria: >
+      No dedicated build-time verification run occurs for the story, or the output marks it as
+      skipped/deferred.
+
+  - name: covered-by-composition story skips the build-time run and names the discharge scenario
+    invocation: >
+      Run the build orchestration over a single story whose frozen assignment sets
+      coverage_disposition to "covered-by-composition", then read the build-phase output for that story.
+    given:
+      - A story is on the build frontier with a frozen assignment.
+      - That assignment's coverage_disposition is "covered-by-composition" and names an integration
+        scenario responsible for discharging the story at AVFL/merge.
+    when:
+      - The build phase processes the story.
+    then:
+      - No dedicated QA verification run is performed for the story during the build.
+      - The build-phase output states that the dedicated build-time run was skipped for this story.
+      - The output names the specific integration scenario that will discharge the story's
+        verification later, at AVFL/merge.
+    pass_criteria: >
+      The dedicated build-time run is observably absent for the story, AND the output both states the
+      skip and names the discharging integration scenario.
+    fail_criteria: >
+      A dedicated build-time verification run is performed anyway, OR the skip is silent (no record),
+      OR no integration scenario is named for the downstream discharge.
+
+  - name: orchestrator honors the frozen disposition and does not override it
+    invocation: >
+      Run the build orchestration over two stories — one frozen as "dedicated-run" and one frozen as
+      "covered-by-composition" — whose content would, on its face, suggest the opposite treatment.
+      Read the output for both.
+    given:
+      - Two stories on the frontier with frozen assignments.
+      - The frozen coverage_disposition values are fixed and do not match what the story text alone
+        might imply.
+    when:
+      - The build phase processes both stories.
+    then:
+      - The story frozen as "dedicated-run" receives a dedicated build-time QA verification run,
+        even though its content alone might suggest composition.
+      - The story frozen as "covered-by-composition" skips its dedicated build-time run, even though
+        its content alone might suggest a dedicated run.
+      - The build-phase output for each story matches its frozen coverage_disposition value, not the
+        treatment the story's content alone would imply.
+    pass_criteria: >
+      Each story's observed build-time verification treatment matches its frozen coverage_disposition
+      value rather than the treatment its content alone would imply.
+    fail_criteria: >
+      Either story's observed treatment matches its content's implied disposition instead of its
+      frozen coverage_disposition value.
+
+  - name: missing or unrecognized disposition falls back to a dedicated run
+    invocation: >
+      Run the build orchestration over a story whose frozen assignment has a missing or unrecognized
+      coverage_disposition value, then read the build-phase output for that story.
+    given:
+      - A story is on the build frontier with a frozen assignment.
+      - The assignment's coverage_disposition is absent or set to an unrecognized value.
+    when:
+      - The build phase processes the story.
+    then:
+      - The story is treated as dedicated-run and receives a dedicated QA verification run during
+        the build.
+      - The story is NOT silently skipped.
+    pass_criteria: >
+      A dedicated build-time verification run is performed for the story, demonstrating the
+      conservative fallback (verify, do not skip).
+    fail_criteria: >
+      The story is skipped, deferred, or otherwise not verified at build time.
+
+  - name: deferral changes timing only — stakes-class findings are never demoted by it
+    invocation: >
+      Run the build orchestration over a covered-by-composition story, then run the downstream
+      AVFL/merge discharge of its named integration scenario in a setup where that scenario surfaces a
+      stakes-class finding (for example, an auth-isolation gap or an irreversible/destructive action).
+      Inspect the build-phase output and the discharge output and report.
+    given:
+      - A covered-by-composition story has deferred its verification to a named integration scenario.
+      - When that scenario runs at AVFL/merge, it surfaces a stakes-class finding.
+    when:
+      - The build phase processes the story (deferring its run).
+      - The named integration scenario is discharged at AVFL/merge and produces the stakes-class
+        finding.
+    then:
+      - The deferral does not alter how findings are classified for the story.
+      - The stakes-class finding is routed out of the silent auto-fix path and is rendered in the
+        report (it is not auto-fixed away, hidden, or silenced).
+      - The build-phase deferral output contains no classification, demotion, or suppression of any
+        finding — it only records timing/venue (skip now, discharge at AVFL/merge).
+    pass_criteria: >
+      The stakes-class finding appears in the report and is kept out of the silent auto-fix path, and
+      nothing in the deferral step demotes, hides, or silences it; deferral affected only when/where
+      the run happened.
+    fail_criteria: >
+      The stakes-class finding is auto-fixed silently, hidden, demoted, or omitted from the report, OR
+      the deferral step is observed to classify/suppress findings rather than only record timing/venue.
+
+  - name: no duplicate or widened verification for a composed story
+    invocation: >
+      Run the build orchestration over a covered-by-composition story end to end through its
+      AVFL/merge discharge, and count how many times the story is verified and where.
+    given:
+      - A story is frozen as covered-by-composition.
+    when:
+      - The build phase processes it and the named integration scenario later discharges it.
+    then:
+      - The story is not given a dedicated build-time verification run in addition to the composed
+        discharge.
+      - Build-time verification is not widened beyond what the disposition specifies.
+    pass_criteria: >
+      The story is verified exactly once, via the composed discharge at AVFL/merge; no extra
+      build-time run and no widened build-time verification occur.
+    fail_criteria: >
+      The story receives both a build-time run and a composed discharge, or build-time verification is
+      widened beyond the disposition.

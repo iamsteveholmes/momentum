@@ -1,0 +1,101 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: code-review-adapter-repoint-quick-fix
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/code-review-adapter-repoint-quick-fix.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the quick-fix flow through to its code-review step and watch
+  what actually runs. Confirm the review goes through the bmad-code-review adapter and not the
+  retired code-review stub: the findings that come back should be in the adapter's normalized
+  shape, identical in form to what you'd get invoking the adapter directly. Then confirm the
+  caller is a clean pass-through — it should not add its own gate around routine findings, it
+  should keep showing dismissed findings together with their non-empty rationale, and it should
+  surface any escalated (raised, not silently fixed) finding rather than swallowing or
+  auto-resolving it. Finally, search the quick-fix flow for any lingering mention of the old
+  stub; there should be none. If routine handling, dismissal rendering, or escalation behavior
+  looks different from a direct adapter run, the wiring changed semantics it should only inherit.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/code-review-adapter-repoint-quick-fix.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Quick-fix review runs through the adapter and returns normalized findings
+    invocation: Run the quick-fix flow on a small change until it reaches and completes its code-review step.
+    given:
+      - A working repository where a quick-fix can be started on a trivial change.
+      - The retired code-review stub is no longer the active code-review entry point.
+    when:
+      - The quick-fix flow reaches its code-review step.
+      - The code-review step is allowed to run to completion.
+    then:
+      - The code-review step returns findings rather than the retired stub's placeholder output.
+      - The findings returned are in the adapter's normalized form (the same shape the adapter produces when invoked directly on the same change).
+      - The findings are NOT in the old stub's raw, un-normalized form.
+    pass_criteria: The quick-fix code-review step completes and the returned findings match the adapter's normalized shape (and are not stub placeholder output).
+    fail_criteria: The review step errors out, returns stub-style placeholder output, or returns findings in a non-normalized shape.
+
+  - name: No reference to the retired stub remains in the quick-fix flow, and no stub output appears
+    invocation: Search the quick-fix flow definition text for any mention of the retired code-review stub, then run the flow to its code-review step and read its review output.
+    given:
+      - The quick-fix flow definition is available to read.
+    when:
+      - The quick-fix flow definition text is searched for any mention of the retired stub.
+      - The quick-fix flow is run to its code-review step and its review output is read.
+    then:
+      - The flow definition text contains no reference, fallback, or comment pointing the code-review step at the retired stub.
+      - The review output produced at runtime is adapter-normalized findings, not stub-style placeholder output.
+    pass_criteria: The flow definition text mentions the retired stub nowhere, and the running flow's review output is adapter-normalized rather than stub placeholder output.
+    fail_criteria: The flow definition text still mentions the retired stub, or the running flow's review output is stub-style placeholder output.
+
+  - name: Routine findings stay on the always-auto-fixed path through quick-fix (DEC-036)
+    invocation: Run a quick-fix review on a change that produces at least one routine finding and observe how the finding is handled.
+    given:
+      - A change crafted to surface a routine (default-class) code-review finding.
+    when:
+      - The quick-fix code-review step runs through the adapter.
+    then:
+      - The routine finding is auto-fixed without any developer prompt or gate.
+      - The quick-fix caller does not introduce its own gate, prompt, or suppression around the routine finding.
+      - The observed handling of the routine finding matches a direct adapter run on the same change.
+    pass_criteria: Routine findings are auto-fixed without a quick-fix-introduced gate, matching direct-adapter behavior.
+    fail_criteria: Quick-fix gates, prompts on, suppresses, or otherwise diverts a routine finding from the auto-fix path.
+
+  - name: Dismissed findings render with their rationale through quick-fix (DEC-036)
+    invocation: Run a quick-fix review on a change that yields a dismissed finding and inspect the review output.
+    given:
+      - A change for which the adapter dismisses at least one finding with a non-empty rationale.
+    when:
+      - The quick-fix code-review step runs through the adapter and surfaces the review output.
+    then:
+      - The dismissed finding appears in the quick-fix review output.
+      - The dismissed finding is shown together with its non-empty dismissal rationale.
+      - The quick-fix caller does not silently drop the dismissed finding.
+    pass_criteria: Dismissed findings are visible in quick-fix output with their non-empty rationale, matching the adapter output.
+    fail_criteria: A dismissed finding is dropped by quick-fix, or appears without its rationale.
+
+  - name: Escalated findings are surfaced, not swallowed, through quick-fix (DEC-036)
+    invocation: Run a quick-fix review on a change that triggers an escalated (raised, not silently fixed) finding and observe quick-fix's handling.
+    given:
+      - A change for which the adapter raises an escalated finding under its narrow stakes criteria.
+    when:
+      - The quick-fix code-review step runs through the adapter.
+    then:
+      - The escalated finding is surfaced to the developer by quick-fix rather than swallowed or auto-resolved.
+      - Quick-fix does not widen the escalation criteria — it surfaces only what the adapter escalated, nothing more.
+      - The set of escalated findings matches a direct adapter run on the same change.
+    pass_criteria: Escalated findings raised by the adapter are surfaced by quick-fix unchanged, with no caller-side widening.
+    fail_criteria: Quick-fix swallows, auto-resolves, or hides an escalated finding, or escalates findings the adapter did not.
+
+  - name: Repoint does not alter adapter review semantics
+    invocation: Compare a quick-fix review run against a direct adapter run on the same change.
+    given:
+      - One change exercised twice — once via the quick-fix code-review step, once via the adapter directly.
+    when:
+      - Both runs complete their code review.
+    then:
+      - The finding shape, stakes-class labels, and dispositions are equivalent between the two runs.
+      - Any difference is attributable to the quick-fix wrapper context, not to changed review semantics.
+    pass_criteria: Quick-fix review output is semantically equivalent to a direct adapter run; only the call site differs.
+    fail_criteria: Quick-fix produces different finding shape, stakes classes, or dispositions than a direct adapter run.

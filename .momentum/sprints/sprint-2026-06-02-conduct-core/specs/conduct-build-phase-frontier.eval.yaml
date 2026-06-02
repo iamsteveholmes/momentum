@@ -1,0 +1,142 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-build-phase-frontier
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/conduct-build-phase-frontier.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, drive the Conductor build phase against a small sprint fixture
+  whose stories carry a known dependency graph, and watch what it actually launches and when.
+  Confirm five observable things by running the build phase and reading its outputs/logs:
+  (1) every story whose dependencies are all at or past "review" launches at once, with no
+  ceiling on how many run together; (2) when a story reaches "merged", the stories that just
+  became unblocked launch right after, with no human prompt in between; (3) when a story
+  exhausts its retries, it is marked blocked and the rest of the run keeps going — the whole
+  phase never stalls; (4) when a story's pipeline raises a finding that meets the narrow
+  mid-flight bar (something irreversible-and-imminent or build-invalidating), that one branch
+  pauses and the run hands off to the escalation path instead of quietly continuing or
+  auto-fixing — while the other branches keep advancing; and (5) when a story's pipeline raises
+  an ordinary/routine finding, no branch pauses — the run continues normally. If you can
+  manufacture each of these situations in a fixture and observe the matching behavior, the
+  story is done.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-build-phase-frontier.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Full frontier launches concurrently with no count cap
+    invocation: >
+      Invoke the Conductor build phase against a sprint fixture in which many stories
+      (more than any plausible fixed limit, e.g. eight) have all of their declared
+      dependencies already at or past the "review" status.
+    given:
+      - A sprint whose story set declares dependencies between stories.
+      - A large group of stories whose every dependency is at or past "review".
+    when:
+      - The build phase starts and begins launching stories.
+    then:
+      - Every story whose dependencies are all at or past "review" is observed launching.
+      - All such stories are launched concurrently, not in fixed-size batches.
+      - No ready story is held back solely because of how many stories are ready at once.
+    pass_criteria: >
+      All dependency-satisfied stories are observed launching together, and the count of
+      simultaneously-launched stories exceeds any fixed batch size — demonstrating no cap.
+    fail_criteria: >
+      Ready stories are deferred, throttled to a fixed batch, or otherwise withheld solely
+      due to the number of ready stories.
+
+  - name: Merge re-evaluates the frontier and launches newly-unblocked stories
+    invocation: >
+      Invoke the Conductor build phase against a fixture where story B depends on story A and
+      story C depends on story A, and only A is initially launchable.
+    given:
+      - Story A is launchable; stories B and C each depend on A and are initially blocked.
+    when:
+      - Story A's pipeline reaches the "merged" terminal signal.
+    then:
+      - The build phase re-evaluates the dependency frontier after the merge.
+      - Stories B and C are launched once A is merged, without any human prompt to advance.
+    pass_criteria: >
+      Immediately after A reaches "merged", B and C are observed launching, with no manual
+      step required between A's completion and their launch.
+    fail_criteria: >
+      B and C remain unlaunched after A merges, or a human prompt is required to continue.
+
+  - name: Exhausted retries mark the story blocked and the phase continues
+    invocation: >
+      Invoke the Conductor build phase against a fixture containing one story rigged to fail
+      its pipeline repeatedly until retries are exhausted, alongside other independent stories.
+    given:
+      - One story will fail through all of its bounded retries.
+      - Other independent, dependency-satisfied stories are present.
+    when:
+      - The failing story exhausts its retries.
+    then:
+      - The failing story is marked blocked.
+      - The build phase continues advancing the remaining stories.
+      - The phase does not halt or stall on the single failed story.
+    pass_criteria: >
+      The failed story is reported as blocked AND the other stories continue to launch,
+      advance, and complete; the run reaches a normal end despite the failure.
+    fail_criteria: >
+      The whole phase halts, stalls, or refuses to advance other stories after one story's
+      retries are exhausted.
+
+  - name: Mid-flight-bar stakes finding pauses only that branch and escalates
+    invocation: >
+      Invoke the Conductor build phase against a fixture where one story's pipeline surfaces a
+      finding that meets the narrow mid-flight bar (an irreversible-and-imminent or
+      build-invalidating stakes finding), while other independent stories run normally.
+    given:
+      - One story's pipeline will surface a stakes-class finding meeting the narrow mid-flight
+        bar (irreversible-and-imminent OR build-invalidating).
+      - Other independent stories are advancing normally.
+    when:
+      - That stakes finding is surfaced before the affected branch would otherwise continue.
+    then:
+      - The affected branch is paused rather than silently continued or auto-fixed.
+      - The run hands the finding off to the escalation path (it is raised, not quietly resolved).
+      - The other independent branches continue to launch and advance unaffected.
+    pass_criteria: >
+      The affected branch is observed pausing and being escalated, AND the remaining branches
+      keep running — the pause is scoped to one branch, not the whole phase.
+    fail_criteria: >
+      The affected branch silently continues or is auto-fixed without escalation, OR the pause
+      halts the entire build phase.
+
+  - name: Stakes finding that misses the narrow bar is not paused mid-flight
+    invocation: >
+      Invoke the Conductor build phase against a fixture where one story's pipeline surfaces a
+      stakes-class finding that does NOT meet the narrow mid-flight bar (it is neither
+      irreversible-and-imminent nor build-invalidating).
+    given:
+      - One story's pipeline surfaces a stakes-class finding below the mid-flight bar.
+    when:
+      - That finding is surfaced during the run.
+    then:
+      - The affected branch is NOT paused mid-flight for this finding.
+      - The finding is deferred to the end-of-run gate rather than widening the mid-flight trigger.
+    pass_criteria: >
+      The branch continues during the run and the finding is observed being carried to the
+      end-of-run gate, not triggering a mid-flight pause.
+    fail_criteria: >
+      A stakes finding below the narrow bar pauses the branch mid-flight, demonstrating the
+      mid-flight trigger was widened.
+
+  - name: Routine finding never pauses a branch (anti-firehose)
+    invocation: >
+      Invoke the Conductor build phase against a fixture where one story's pipeline surfaces an
+      ordinary/routine finding (the default, non-stakes class).
+    given:
+      - One story's pipeline surfaces a routine finding.
+    when:
+      - That routine finding is surfaced during the run.
+    then:
+      - No branch is paused for the routine finding.
+      - The affected branch continues normally and the run is not interrupted.
+    pass_criteria: >
+      The run proceeds without any mid-flight pause for the routine finding; the branch
+      continues to completion.
+    fail_criteria: >
+      A routine finding triggers a branch pause or any mid-flight interruption.

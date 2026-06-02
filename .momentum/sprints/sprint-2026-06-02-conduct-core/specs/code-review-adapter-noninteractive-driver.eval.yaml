@@ -1,0 +1,97 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: code-review-adapter-noninteractive-driver
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-02-conduct-core/specs/code-review-adapter-noninteractive-driver.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, drive the adapter against a real single-story diff and watch it
+  run end to end without ever stopping to ask you anything — no prompts, no confirmations,
+  no pauses. Confirm it hands you back the review findings (and gives you an explicit
+  "nothing found" answer when the diff is clean). Then check `git status` before and after a
+  run: nothing in the working tree should have changed — the adapter reports, it never edits.
+  Finally, rename or remove the review tool's configuration file and run again: instead of
+  failing deep inside the tool, the adapter should stop early with a clear message that names
+  the missing configuration and tells you what to provide. Put the config back and confirm it
+  runs clean. The adapter should only ever transport findings — if you see it classifying,
+  triaging, escalating, or fixing anything, it has overstepped its scope.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/code-review-adapter-noninteractive-driver.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Non-interactive run returns findings without pausing
+    invocation: Invoke the code-review adapter against a single story's diff that contains at least one reviewable issue.
+    given:
+      - A working repository checked out to a story branch with a diff that has a known reviewable issue.
+      - No human is present to answer prompts during the run.
+    when:
+      - The adapter is invoked against that story's diff.
+    then:
+      - The run proceeds from start to finish without emitting any prompt, confirmation request, or pause that waits for human input.
+      - The run terminates on its own and returns the review's findings to the caller.
+      - The returned result includes the known reviewable issue.
+    pass_criteria: The invocation completes unattended and returns findings that include the planted issue, with no point at which it waited for input.
+    fail_criteria: The run stops to ask for confirmation or input, hangs waiting for a human, or returns without the findings.
+
+  - name: Report-only — working tree is left unchanged
+    invocation: Capture the working-tree state, invoke the adapter against a story diff, then capture the working-tree state again.
+    given:
+      - A repository whose tracked files are in a known state, recorded before the run.
+    when:
+      - The adapter is invoked against the story's diff and the run completes.
+    then:
+      - No tracked file in the working tree is added, modified, or deleted by the run.
+      - The post-run working-tree state is identical to the pre-run state.
+    pass_criteria: A diff of the working tree before vs. after the run shows zero changes; the adapter applied no fixes.
+    fail_criteria: Any tracked file is changed, created, or removed by the run, indicating the adapter mutated the tree or applied a fix.
+
+  - name: Clean diff returns an explicit no-findings result
+    invocation: Invoke the adapter against a single story's diff that contains no reviewable issues.
+    given:
+      - A story branch whose diff is trivially clean (no issues to report).
+    when:
+      - The adapter is invoked against that clean diff.
+    then:
+      - The run completes successfully without error.
+      - The result explicitly reports that no findings were produced, rather than failing or returning nothing.
+    pass_criteria: The adapter returns an explicit empty/no-findings result and does not raise an error on a clean diff.
+    fail_criteria: The adapter errors out, or returns an ambiguous/empty response that cannot be distinguished from a failure.
+
+  - name: Missing configuration surfaces an actionable error
+    invocation: Remove or rename the review tool's required configuration file, then invoke the adapter against a story diff.
+    given:
+      - A repository in which the review tool's required configuration scaffolding is absent (the config file has been moved aside).
+    when:
+      - The adapter is invoked against a story's diff.
+    then:
+      - The adapter does not start a silent or partial review run.
+      - The adapter stops early and emits a clear, actionable error message.
+      - The error names what configuration is missing and indicates what the operator must provide.
+    pass_criteria: The adapter halts before running the tool and prints a diagnosable error identifying the missing configuration and the remedy.
+    fail_criteria: The adapter runs anyway, fails opaquely deep inside the tool, or emits an error that does not say what is missing or how to fix it.
+
+  - name: Present configuration lets a normal run proceed
+    invocation: With the review tool's required configuration in place, invoke the adapter against a story diff.
+    given:
+      - A repository in which the review tool's required configuration scaffolding is present (restored to a known-good state).
+    when:
+      - The adapter is invoked against a story's diff.
+    then:
+      - The adapter runs the review without emitting the missing-configuration error.
+      - The run completes and returns findings (or an explicit no-findings result).
+    pass_criteria: With configuration present, the adapter runs the review to completion and returns a result without raising the missing-configuration error.
+    fail_criteria: The adapter still reports the configuration as missing, or refuses to run despite the configuration being present.
+
+  - name: Transport only — no classification, escalation, or fix applied
+    invocation: Invoke the adapter against a story diff containing issues of varying apparent severity and inspect the returned result and the working tree.
+    given:
+      - A story diff containing more than one issue, including at least one that would plausibly be sensitive (e.g., touching auth/secret handling) and one routine issue.
+    when:
+      - The adapter is invoked against that diff and completes.
+    then:
+      - The returned result is the review's findings as transported, with no stakes-class labels, disposition assignments (fixed / dismissed / triaged-out / escalated), or timing-tier decisions added by the adapter.
+      - No finding is auto-fixed and no separate escalation is raised by the adapter; the working tree remains unchanged.
+    pass_criteria: The adapter returns raw findings only — it neither classifies, triages, escalates, nor fixes anything, and the working tree is unchanged.
+    fail_criteria: The result shows the adapter has classified findings by stakes, assigned dispositions, raised an escalation, or applied a fix.
