@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-05-30'
+lastEdited: '2026-06-01'
 
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
@@ -50,4 +50,5 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-032 | [Gas City as Momentum's Dispatcher — Adoption Decision](dec-032-gas-city-dispatcher-adoption-2026-05-22.md) | 2026-05-22 | gas-town-dispatcher-2026-05-20 research corpus | superseded by DEC-035 |
 | DEC-033 | [Practice-Ledger Event-Log Redesign](dec-033-practice-ledger-event-log-redesign-2026-05-25.md) | 2026-05-25 | AES-003 | decided |
 | DEC-034 | [Epic-Layer Consolidation — Unify Features and Categorical Epics Into One Concept](dec-034-epic-layer-consolidation-2026-05-25.md) | 2026-05-25 | AES-003 | decided |
-| DEC-035 | [Conduct Execution Engine — In-Session Dynamic Workflows, Feature-Grained HITL, Gas City Deferred](dec-035-conduct-execution-engine-in-session-workflows-2026-05-30.md) | 2026-05-30 | execution-architecture council brief + (conversation) | decided |
+| DEC-035 | [Conduct Execution Engine — In-Session Dynamic Workflows, Feature-Grained HITL, Gas City Deferred](dec-035-conduct-execution-engine-in-session-workflows-2026-05-30.md) | 2026-05-30 | execution-architecture council brief + (conversation) | decided (amended by DEC-036) |
+| DEC-036 | [Conduct HITL Calibration — Stakes-and-Timing Escalation, Legible Auto-Fix, Anti-Rubber-Stamp, and Decision-Grade Presentation](dec-036-conduct-hitl-calibration-2026-06-01.md) | 2026-06-01 | AES-004 | decided |

@@ -4,7 +4,7 @@ title: Momentum's HITL-Facing Design vs. the Decision-Altitude Research — Cond
 date: '2026-06-01'
 status: current
 method: 4-agent parallel discovery (conduct end-gate auditor, plan-gate legibility auditor, communication-altitude auditor, gate-placement & calibration auditor) grading actual artifact state against the HITL decision-altitude research at docs/research/hitl-oversight-altitude-2026-05-31
-decisions_produced: []
+decisions_produced: [DEC-036]
 ---
 
 # AES-004: Momentum's HITL-Facing Design vs. the Decision-Altitude Research — Conduct Is Legible but Stakes-Blind
