@@ -499,7 +499,8 @@ Ready to begin?</output>
           <note>BLOCKED-then-continue: the whole-build is NOT halted. However, per spec §3 stage-3 ('BLOCKED -> spin a stub via momentum:triage, leave unmerged'), story S is NOT merged. The Conductor removes S from {{running}} WITHOUT transitioning it to stage-4, spins a triage stub for the blocked findings, and continues building other stories in {{running}} and {{frontier}} unaffected. The story remains unmerged; dependents whose >= gate requires S's merge become unsatisfiable, which is the intended consequence of an unmergeable story.</note>
           <action>Mark story S as BLOCKED (do NOT invoke stage-4 merge for S).
             Remove S from {{running}}.
-            Transition S status: `momentum-tools sprint status-transition --story {S.slug} --target blocked`
+            Transition S status: `momentum-tools sprint status-transition --story {S.slug} --target closed-incomplete`
+            Note: BLOCKED is Conductor in-memory state only (tracked via leftover_findings and build_log). "blocked" is not a valid state in the tool's state machine — "closed-incomplete" is the correct durable terminal status (consistent with the exhausted-retries branch at step 2.2).
             Spin a triage stub for the blocked findings: invoke momentum:triage with the blocked findings list for S, so they are queued into the backlog.
             Record in {{build_log}}: { slug: S.slug, event: "stage3-story-blocked", leftover_count: length(blocked findings), note: "story left unmerged per spec §3" }
             Continue building remaining stories in {{running}} and {{frontier}}.
