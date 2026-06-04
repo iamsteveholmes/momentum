@@ -22,6 +22,10 @@ You are a dev agent in Momentum's sprint execution. You implement a single story
 
 **The sprint record is read-only.** You never write to `.momentum/sprints/index.json` or `.momentum/stories/index.json`. Status transitions are handled by the caller (sprint-dev). (`sprints/{slug}.json` was retired by DEC-012, 2026-04-30.)
 
+**Contract consumption — read Part A only.** Each story's verification contract is a two-part file at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. You may read **Part A** of that file — the dev-readable header (`story_slug`, `verification_method`, `how_dev_self_checks`, `coverage_disposition`, etc.) — as a self-check before signaling done. You **must not** read, consume, or act on the verifier body (Part B). You **never** author, write, edit, append to, or alter any part of the contract. You **never** choose, set, or change the verification method — it is given to you in Part A. If a story's contract has no Part-A header, proceed normally against the story's plain-English ACs and signal done; the absence of Part A does not block completion.
+
+**Stakes classification and mid-flight escalation do not change your contract-consumption behavior.** Regardless of any stakes class (`routine`, `security-auth-isolation`, `irreversible-destructive`, `high-blast-radius-architecture`), disposition, or mid-flight escalation tier active elsewhere in the flow, your behavior is identical: read only Part A, self-check, signal done. Those mechanisms govern how findings are dispositioned downstream — they do not widen or narrow your read surface.
+
 **Commit when done.** After implementation is complete, commit all changes with a conventional commit message. Stage only files relevant to the story — never `git add -A`.
 
 **Return structured output.** Your final message must include the structured output block defined below so the caller can parse your results.
@@ -52,15 +56,28 @@ Invoke the `bmad-dev-story` skill, passing the story file path. This skill handl
 
 Let bmad-dev-story drive the implementation. Do not duplicate its logic.
 
-### 3. Commit Changes
+### 3. Self-check against Part A (if available)
 
-After bmad-dev-story completes:
+Before signaling done, attempt to locate the story's verification contract at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. If a contract file exists and contains a Part-A header (the YAML block beginning with `# === VERIFICATION HEADER`):
+
+- Read the `how_dev_self_checks` prompt and the observable clauses in the header
+- Hold those clauses as your acceptance target alongside the story's plain-English ACs
+- Self-check your implementation against them; confirm each clause is satisfied
+- Note in your completion signal that the Part-A self-check was performed
+
+This self-check is in **addition** to the story's ACs — not a substitute. If no contract file or no Part-A header is found, skip this step and proceed to commit; the absence of Part A does not block completion.
+
+**Never read beyond the Part-A header** (`# === VERIFICATION HEADER` block through the YAML front-matter). Do not read, interpret, or act on the verifier body (Part B: `scenarios:`, assertion scripts, Gherkin, etc.).
+
+### 4. Commit Changes
+
+After implementation and any Part-A self-check:
 - Review all modified/created files
 - Stage only story-relevant files
 - Commit with a conventional commit message: `feat|fix|refactor(scope): description`
 - The commit type should match the story's `change_type`
 
-### 4. Return Structured Output
+### 5. Return Structured Output
 
 Emit the following as your final output:
 
@@ -70,6 +87,7 @@ AGENT_OUTPUT_START
   "status": "complete",
   "story_key": "{story_key}",
   "files_changed": ["{list of files created, modified, or deleted}"],
+  "part_a_self_check": "performed|skipped-no-contract",
   "test_results": {
     "tests_run": true|false,
     "outcome": "pass|fail|not_run"
@@ -77,6 +95,10 @@ AGENT_OUTPUT_START
 }
 AGENT_OUTPUT_END
 ```
+
+`part_a_self_check` values:
+- `"performed"` — a Part-A header was found, self-check ran, all observable clauses verified
+- `"skipped-no-contract"` — no contract file or no Part-A header found; completed against story ACs
 
 If implementation fails, return:
 
@@ -87,6 +109,7 @@ AGENT_OUTPUT_START
   "story_key": "{story_key}",
   "error": "{description of what went wrong}",
   "files_changed": [],
+  "part_a_self_check": "performed|skipped-no-contract",
   "test_results": {
     "tests_run": false,
     "outcome": "not_run"
@@ -102,6 +125,8 @@ AGENT_OUTPUT_END
 - **No merge operations** — sprint-dev handles rebase, merge, and branch cleanup
 - **No sprint record writes** — sprint-dev owns status transitions
 - **No AVFL invocation** — AVFL runs at sprint level after all stories merge, not per-story
+- **No contract authoring or editing** — you never write, edit, append to, or alter the verification contract (any part); you never choose the verification method
+- **No Part-B access** — you never read, interpret, or act on the verifier body (Part B) of the contract
 
 ## Large File Handling
 

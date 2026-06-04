@@ -10,7 +10,7 @@
 
 <workflow>
   <critical>Do not re-implement bmad-dev-story logic. Delegate all implementation to that skill.</critical>
-  <critical>Never read files under sprints/{sprint-slug}/specs/ or any .feature file. Gherkin specs are for verifier agents only (Decision 30 — black-box separation). The dev agent must implement against plain English ACs in the story file, not against Gherkin specs. This is a read barrier, not just a write barrier — dev agents must never access specs regardless of protected-paths.json policy.</critical>
+  <critical>The verification contract is a two-part file at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. Dev reads only the Part-A header (the `# === VERIFICATION HEADER` YAML block) as a self-check. Dev never reads the verifier body (Part B: scenarios, assertion scripts, Gherkin, etc.). Dev never writes, edits, appends to, or alters any part of the contract. Dev never chooses the verification method — it is given in Part A. Stakes classification and mid-flight escalation do not change this read surface; dev reads only Part A regardless of any stakes class or disposition active elsewhere in the flow.</critical>
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum:create-story. Offer to run the injection step manually before proceeding.</critical>
   <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
   <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>
@@ -115,6 +115,24 @@
     <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_key}}/`, isolated from other sessions.</note>
   </step>
 
+  <step n="6.5" goal="Self-check against Part-A verification header (if available)">
+    <action>Locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. The contract is at `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.{ext}` (any extension: .eval.yaml, .smoke.sh, .trigger.md, .review.md, .feature).</action>
+
+    <check if="contract file exists AND contains a Part-A header (line starting with '# === VERIFICATION HEADER')">
+      <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract `how_dev_self_checks` and any observable clauses listed in the header.</action>
+      <action>Self-check: for each observable clause in the Part-A header, verify that the implementation satisfies it. Hold these clauses as an additional acceptance target alongside the story's plain-English ACs.</action>
+      <output>**Part-A self-check:** Performed. Observable clauses reviewed; implementation satisfies all Part-A header requirements.</output>
+      <action>Store {{part_a_self_check}} = "performed"</action>
+    </check>
+
+    <check if="no contract file found OR file has no Part-A header">
+      <output>**Part-A self-check:** Skipped — no contract or no Part-A header available. Proceeding on story ACs.</output>
+      <action>Store {{part_a_self_check}} = "skipped-no-contract"</action>
+    </check>
+
+    <note>Dev reads only the Part-A header. Never read the verifier body (Part B: scenarios, assertion scripts, Gherkin). Never write, edit, or alter any part of the contract. Stakes classification and mid-flight escalation do not change this read surface.</note>
+  </step>
+
   <step n="7" goal="Propose merge and clean up">
     <note>At this point the working directory is the main repo root (ExitWorktree was called at the end of Step 6). The merge runs on the main tree, merging story/{{story_key}} into {{target_branch}}.</note>
     <action>Delete the lock file `.worktrees/story-{{story_key}}.lock`</action>
@@ -181,13 +199,14 @@ git branch -d story/{{story_key}}
   "status": "complete",
   "result": {
     "files_modified": [{{file_list}}],
+    "part_a_self_check": "{{part_a_self_check}}",
     "tests_run": {{tests_run}},
     "test_result": "{{test_result}}"
   },
   "question": null,
   "confidence": "high"
 }
-Where: {{tests_run}} = true/false from bmad-dev-story's Dev Agent Record; {{test_result}} = "pass", "fail", or "not_run" from same source.
+Where: {{part_a_self_check}} = "performed" or "skipped-no-contract" from Step 6.5; {{tests_run}} = true/false from bmad-dev-story's Dev Agent Record; {{test_result}} = "pass", "fail", or "not_run" from same source.
     </action>
   </step>
 
