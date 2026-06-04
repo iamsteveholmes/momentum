@@ -146,6 +146,8 @@ Each finding:
 [1–2 sentences: what passed, what did not, and whether any findings carry a non-routine stakes class]
 ```
 
+> **Schema note:** The output shape above is the qa-reviewer's *producer* format. It is not the canonical normalized finding shape (see `skills/momentum/references/finding-schema.md`). An external normalization adapter (owned by the `directed-fix-finding-schema` story) maps qa-reviewer findings into the full canonical shape — adding `source: qa-reviewer`, `legitimate`, `severity`, `type`, `suggested_fix`, and `story_slug` — before they enter the conduct directed-fix chain. No change to this output template is required here.
+
 ## Verdict Rules
 
 - **PASS**: All ACs are VERIFIED; no test failures; all findings (if any) have stakes_class `routine`
