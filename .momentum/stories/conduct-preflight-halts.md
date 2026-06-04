@@ -85,7 +85,8 @@ The Conductor is the top-level session orchestrator that owns the build phase, a
 This story implements **Phase 1 — pre-flight** of the Conductor skill. The Conductor writes no code itself; it is the orchestrator that owns the build phase, all git mutation, and the single human end-gate. Phase 1 runs before any story is dispatched.
 
 **Governing spec sections (cited by number from the brief):**
-- **Section 6 — "Git lifecycle"** (including "Reconcile on start"): the non-interactive git reconcile that auto-resets and re-dispatches stale `in-progress` stories without a resume/cleanup prompt, and the git-state handling for bringing the working tree to a known-good condition (AC 3, 4, 5).
+- **Section 6 — "Reconcile on start"**: the non-interactive git reconcile that auto-resets and re-dispatches stale `in-progress` stories without a resume/cleanup prompt (AC 3, 4, 5).
+- **Section 8**: the git-state handling that the reconcile-on-start procedure draws on for bringing the working tree to a known-good condition (AC 3, 5).
 - **Section 7**: the **Conductor-facing** freeze guard — the *first* carve-out from the DEC-035 #1 invariant. This story does not implement section 7; it references it so the invariant statement names it as carve-out (a) (AC 7).
 
 **The two carve-outs, kept distinct.** DEC-035 #1 originally asserted a single, absolute invariant: no developer-facing HALT outside Phase 1. There are now two separate exceptions and the workflow must name both without conflating them:
