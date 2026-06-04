@@ -46,8 +46,9 @@ SPRINT-PLANNING  (decision 10)
 │      2. QA + REVIEW (concurrent fan-out, read-only, this story's diff)   │
 │           • qa-reviewer    → verifies the story's verification contract  │
 │           • bmad-code-review → adversarial bug hunt                      │
-│      3. FIX      — code-fixer applies ALL legitimate findings; re-check; │
-│                    /simplify optional cleanup after fixes; bounded retry │
+│      3. FIX      — code-fixer auto-fixes all ROUTINE legitimate findings; │
+│                    stakes-class findings are escalated (not auto-fixed); │
+│                    re-check; /simplify optional cleanup; bounded retry   │
 │      4. MERGE    — Conductor rebases+merges S's worktree → sprint branch;│
 │                    status → review; worktree+branch removed (per-story). │
 │                    Conflict → Conductor resolves or fires fixer; retry.  │
@@ -72,7 +73,7 @@ SPRINT-PLANNING  (decision 10)
               show push list → ASK before push → git push
 ```
 
-There are **two** developer touchpoints in the whole flow: the end-gate conversation (which resolves to *changes* or *approve*), and the push confirmation (folded into approve, mandated by git-discipline). Everything else is autonomous.
+There are **two** routine developer touchpoints in the whole flow: the end-gate conversation (which resolves to *changes* or *approve*), and the push confirmation (folded into approve, mandated by git-discipline). Everything else is autonomous. In addition, a rare mid-flight escalation may surface ONLY when a stakes-class finding meets the strict bar: **irreversible-and-imminent** OR **build-invalidating**. No other condition widens this path.
 
 ---
 
@@ -97,11 +98,12 @@ The **Conductor** is the orchestrator role that owns the build phase. It replace
 ```
 Conductor state (in-memory, mirrored to task tracking):
 {
-  frontier:  [slug, ...],            // unblocked, not yet launched
-  running:   { slug: pipeline_handle },
-  merged:    [slug, ...],            // status == 'review' on sprint branch
-  blocked:   [slug, ...],            // exhausted retries OR unsatisfiable dep
-  retries:   { slug: int },          // per-story retry count
+  frontier:    [slug, ...],            // unblocked, not yet launched
+  running:     { slug: pipeline_handle },
+  merged:      [slug, ...],            // status == 'review' on sprint branch
+  blocked:     [slug, ...],            // exhausted retries OR unsatisfiable dep
+  retries:     { slug: int },          // per-story retry count
+  escalations: [...],                  // mid-flight escalation records (stakes-class, strict bar only)
 }
 ```
 
@@ -114,7 +116,7 @@ Responsibilities during build:
 - On merge conflict: resolve itself or fire a dev subagent, then retry the merge (decision 9). Never halt.
 - When the frontier is empty and all pipelines have terminated: hand off to AVFL-on-merge, then E2E, then the end-gate report.
 
-The Conductor never asks the developer anything during build.
+The Conductor never asks the developer anything during build, except a mid-flight escalation that meets the strict stakes-and-timing bar (irreversible-and-imminent OR build-invalidating).
 
 ### Per-story dependency gating (no global waves)
 
@@ -171,9 +173,10 @@ pipeline(story S):
   ── stage 3: FIX (automatic, in-place) ──────────────────────
   If either reviewer returns legitimate findings:
     Conductor spawns ONE code-fixer subagent (single writer) in the SAME
-    worktree. It fixes EVERY legitimate finding automatically (no prompt),
-    dismisses with rationale, or emits a triage stub for genuinely
-    out-of-scope new work. Commits the fixes.
+    worktree. It fixes every **routine** legitimate finding automatically
+    (no prompt), escalates stakes-class findings as decision cards (raised,
+    not silently fixed), dismisses with rationale, or emits a triage stub
+    for genuinely out-of-scope new work. Commits the fixes.
     Optional: /simplify cleanup pass AFTER the fixer (sequential, never
     concurrent with the fixer — it mutates the tree).
     Re-run only the reviewer(s) that raised findings. Loop until clean or
@@ -191,7 +194,7 @@ pipeline(story S):
     status -> review                                 # the story's merge gate
     git worktree remove --force .worktrees/story-{slug}
     git branch -d story/{slug}                        # cleanup is per-story
-  Emit { slug, outcome: merged, leftover_findings: [...] }
+  Emit { slug, outcome: merged, leftover_findings: [...], escalations: [...] }
 ```
 
 The story reaches `review` at its own merge and stays there until sprint end. `verify`/`done` transitions happen at sprint completion (after AVFL + E2E + approve) but no longer gate any other story's launch — gating is on `>= review`.
@@ -261,7 +264,7 @@ All reviewers normalize to one shape so the fixer and the report consume them un
   "evidence": "the proof: failing test+assertion, diff hunk, or command output",
   "ac_id": "AC2 | null",
   "legitimate": true,                 // legit -> disposition depends on stakes class + timing tier (see below)
-  "stakes_class": "routine | security/auth-isolation | irreversible/destructive | high-blast-radius/architecture",
+  "stakes_class": "routine | security-auth-isolation | irreversible-destructive | high-blast-radius-architecture",
   "timing_tier": "end-gate-expanded | mid-flight",  // end-gate-expanded is the default
   "suggested_fix": "concrete, actionable — never 'see code'"
 }
@@ -664,6 +667,8 @@ state ConductorGate:
 
 **Two outcomes only.** `changes` loops back through the fix-workflow and re-renders; `approve` is terminal. `question` is the conversational substrate — the gate stays open, answering and updating, until the developer issues `changes` or `approve`. Ambiguous input defaults to `question` (never silently approve or mutate).
 
+**Mid-flight escalation (rare, not modeled here).** During the build phase, a mid-flight escalation surfaces a single decision card to the developer when the strict bar is met (irreversible-and-imminent OR build-invalidating). This is separate from the ConductorGate above — it fires inside the pipeline, before merge, not at end-gate. The escalation engine control flow (card format, acknowledgment, resume logic) is realized by the conduct build stories (the conductor skill), not re-specified here. Resolved mid-flight escalations are recorded in `Conductor.escalations` and appear in the end-gate report.
+
 ### The change-workflow (one workflow — build-fix AND developer-requested changes) — decision 3
 
 ```
@@ -975,7 +980,7 @@ This note maps each spec change in this revision to the source decision it satis
 | Finding schema: `legitimate: true` no longer asserts ALWAYS auto-fixed; disposition depends on stakes class + timing tier. | §4 (normalized finding schema inline comment) | "Legitimate issues are always fixed automatically." — relaxed for stakes-class. | D2 — Stakes finding-class added to fixer schema. |
 | Three stakes classes documented: security/auth-isolation, irreversible/destructive (migration, delete, force-push, prod deploy), high-blast-radius/architecture; plus default routine class. | §4 (Stakes classes table) | Not enumerated in DEC-035. | D2 — Stakes classes defined as adopted; these are the basis for the escalation routing. |
 | Full disposition set documented: `fixed`, `escalated` (new), `dismissed` (non-empty rationale required), `triaged-out`. | §4 (Disposition table) | Disposition set was: fixed, dismissed (with rationale), triaged-out. | D2 — `escalated` disposition is the mechanism by which stakes-class findings are raised rather than silently fixed. |
-| Timing-tier marker added to finding schema: `end-gate-expanded` (default) | `mid-flight` (narrow exception). | §4 (finding schema + Timing tiers table) | Not present in DEC-035 schema. | D1 — Timing-tier marker is the implementation of the two-tier routing: end-gate-expanded is the norm; mid-flight fires only on the bar. |
+| Timing-tier marker added to finding schema: `end-gate-expanded` (default) and `mid-flight` (narrow exception). | §4 (finding schema + Timing tiers table) | Not present in DEC-035 schema. | D1 — Timing-tier marker is the implementation of the two-tier routing: end-gate-expanded is the norm; mid-flight fires only on the bar. |
 | Non-empty dismissal rationale required — empty or missing rationale is invalid. | §4 (Disposition table, `dismissed` row) | "Dismissed (with rationale)" was in DEC-035 schema but not enforced as a validation gate. | D3 (indirectly) — Legible auto-fix loop requires the rationale to be present for rendering; empty rationale makes the dismissed-rendering section incoherent. |
 | §8 documents the narrow mid-flight escalation tier alongside the single human end-gate; restates the narrow bar; makes clear end-gate is default and mid-flight is rare exception. | §8 (Principle, mid-flight paragraph) | "Sprint-dev has exactly one HITL gate." — amended: one primary gate (default) plus a narrow exception. | D1 — The conduct spec must be revised (§8 gate model) to design to the stakes-and-timing exception. |
 | Dismissed findings rendered in report (D3 — section 03-D). The auto-fix loop is legible about what it dismissed, not only what it changed. | §9 (Required sections — section 03-D) | DEC-035 D5 mandated surfacing what the fixer changed and dismissed; dismissed rendering was not built (only the "changed" half). | D3 — Builds the unbuilt half of DEC-035 D5; purely additive. |
