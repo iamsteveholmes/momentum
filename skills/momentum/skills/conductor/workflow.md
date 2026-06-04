@@ -195,7 +195,7 @@ The build will proceed silently through all stories. The next human touchpoint i
 Ready to begin?</output>
 
     <ask>Confirm to start the build.</ask>
-    <note>This is the only ask on the routine path before the end-gate. Once confirmed, the build runs silently through Phase 2, Phase 3, and Phase 4. No developer-facing HALT exists outside this Phase 1, except: (a) the Conductor-facing section-7 freeze guard (internal, developer does not see it) and (b) the developer-facing mid-flight escalation tier for irreversible-and-imminent or build-invalidating findings only (Phase 2, step 2.E). Routine findings are never raised mid-build. There is no resume/cleanup prompt, no per-story confirmation, and no other mid-build questions.</note>
+    <note>This is the only ask on the routine path before the end-gate. Once confirmed, the build runs silently through Phase 2, Phase 3, and Phase 4. No developer-facing HALT exists outside this Phase 1, except: (a) the Conductor-facing section-7 freeze guard (internal, developer does not see it) and (b) the developer-facing mid-flight escalation tier for irreversible-and-imminent or build-invalidating findings only (Phase 2, step 2.E). Routine findings are never raised mid-build. There is no resume/cleanup prompt, no per-story confirmation, and no other mid-build questions. Note: "step 2.E" in older notes is a stale label; the canonical step is 2.F.</note>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
@@ -425,7 +425,7 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
 
       <note>ANTI-FIREHOSE GUARD: Routine findings NEVER enter this hook. Routine findings stay on the always-auto-fix path inside the per-story pipeline. Across a representative build with many routine and non-imminent findings and only a small number of true bar-clearing findings, the number of mid-flight pauses must equal the number of bar-clearing findings and no more. The anti-firehose intent of DEC-035 binding decision #1 is fully preserved: the build flow is not flooded with mid-flight pauses for ordinary work. Everything that does not clear the bar flows to the end-gate-expanded tier.</note>
 
-      <note>SHARED-PRIMITIVE CONTRACT: This engine is the single detection-and-pause primitive for mid-flight escalation. Both the build-phase frontier (step 2.2) and the merge/conflict-resolution leg (step 2.M) route mid-flight escalation through this step. Neither leg independently decides the bar or owns its own pause primitive. See references/escalation.md for the authoritative contract.</note>
+      <note>SHARED-PRIMITIVE CONTRACT: This engine is the single detection-and-pause primitive for mid-flight escalation. Both the build-phase frontier (step 2.2) and the merge/conflict-resolution leg (step 2.2.M) route mid-flight escalation through this step. Neither leg independently decides the bar or owns its own pause primitive. See references/escalation.md for the authoritative contract.</note>
 
       <!-- ── Hook entry point ─────────────────────────────────── -->
       <action>Receive S.escalations from the pipeline's terminal signal.

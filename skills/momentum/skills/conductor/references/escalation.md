@@ -1,7 +1,7 @@
 # Conductor Escalation Engine — Stakes-and-Timing Mid-Flight Escalation
 
 **Reference for:** `skills/momentum/skills/conductor/workflow.md` step 2.F  
-**Invoked by:** Build-phase frontier (step 2.2) and merge/conflict-resolution leg (step 2.M)  
+**Invoked by:** Build-phase frontier (step 2.2) and merge/conflict-resolution leg (step 2.2.M)  
 **Governing decisions:** DEC-035 D1 (one end-gate; anti-firehose), DEC-036 D1 (two-tier timing model), D2 (stakes classes), D5 (self-sufficiency floor), Decision Gate (anti-firehose — never widen the bar)
 
 ---
@@ -14,7 +14,7 @@ This engine is the **single shared detection-and-pause primitive** for mid-fligh
 3. Raising exactly one developer-facing pause-ask when the bar is met
 4. Resolving the developer's answer into one of three outcomes and resuming the build
 
-Both the **build-phase frontier leg** (`conduct-build-phase-frontier`, step 2.2) and the **merge/conflict-resolution leg** (`conduct-merge-and-conflict-resolution`, step 2.M) route all mid-flight escalation decisions through this engine. Neither leg independently decides the bar or owns its own pause primitive. Detection-of-the-bar and the pause primitive live here once.
+Both the **build-phase frontier leg** (`conduct-build-phase-frontier`, step 2.2) and the **merge/conflict-resolution leg** (`conduct-merge-and-conflict-resolution`, step 2.2.M) route all mid-flight escalation decisions through this engine. Neither leg independently decides the bar or owns its own pause primitive. Detection-of-the-bar and the pause primitive live here once.
 
 ---
 
@@ -66,12 +66,14 @@ The engine receives a findings array from a per-story pipeline or validation res
 
 ## Engine Return Values
 
-The engine returns one of two outcomes to the caller (step 2.2 or step 2.M):
+The engine returns one of two outcomes to the caller (step 2.2 or step 2.2.M):
 
 | Return | Meaning |
 |---|---|
 | `{ outcome: "continue" }` | No finding in the array meets the mid-flight bar; proceed normally; any stakes-class findings are tagged for end-gate-expanded |
-| `{ outcome: "pause-branch", finding: {...}, stakes_class, timing_tier }` | Exactly one bar-clearing finding detected; the engine raises the pause-ask to the developer |
+| `{ outcome: "pause-branch", finding: {...}, stakes_class, timing_tier }` | One bar-clearing finding detected; the engine raises the pause-ask to the developer for that finding |
+
+**Multi-finding contract (K > 1 bar-clearing findings):** The engine raises one pause-ask at a time. If the findings array contains K bar-clearing findings, the caller invokes the engine once per bar-clearing finding, sequentially — each invocation surfaces exactly one pause-ask, and the developer resolves it before the next. The caller iterates until all bar-clearing findings have been surfaced. This preserves "one finding = one pause" (AC 11 / AC 5) without bundling multiple findings into a single pause card.
 
 The Conductor (caller) does not classify findings itself. It invokes the engine and acts only on the engine's returned outcome.
 
@@ -161,7 +163,7 @@ Any finding raised mid-flight via this engine is recorded with the **`escalated`
 This engine is the **only** place where mid-flight bar evaluation and the pause primitive live.
 
 - `conduct-build-phase-frontier` (step 2.2) calls this engine for mid-flight escalation on the build leg
-- `conduct-merge-and-conflict-resolution` (step 2.M) calls this engine for mid-flight escalation on the merge leg
+- `conduct-merge-and-conflict-resolution` (step 2.2.M) calls this engine for mid-flight escalation on the merge leg
 
 Neither caller implements its own bar logic or its own pause prompt. Any apparent shortcut — "I'll just check the class inline here" or "I'll raise a quick prompt in the merge step" — violates the shared-primitive contract and risks fragmenting the narrow bar. Both callers must defer entirely to this engine.
 
