@@ -298,6 +298,15 @@ Ready to begin?</output>
           they MUST NOT add a second freeze check at the per-story verification boundary. The gate belongs here, once, at
           launch. Adding it again inside the per-story pipeline would double-gate and create redundant integrity stops.]
 
+        2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before verifier dispatch):
+          Invoke step 2.C for story S. Step 2.C reads S's frozen `coverage_disposition` from the assignment
+          and returns one of two routing outcomes:
+            { outcome: "dedicated-run" }         — perform the dedicated QA verification run during this build phase
+            { outcome: "covered-by-composition", integration_scenario: "<scenario-id>" }
+                                                 — skip the dedicated build-time run; record the deferral
+          Act on the routing outcome as specified in step 2.C. Do NOT dispatch the verifier at build time
+          for a story whose coverage_disposition is "covered-by-composition".
+
         Store pipeline_handle in {{running}}[S.slug].
       </action>
 
@@ -361,6 +370,73 @@ Ready to begin?</output>
 
         <note>This is the ONE sanctioned non-developer halt in the verification path. It does not raise a stakes-class escalation. It does not enter the silent auto-fix loop. It is not dismissable with a rationale — there is no disposition to dismiss. It is not a mid-flight escalation eligible for the developer-facing pause (step 2.F). It is the Conductor catching its own integrity violation before it can corrupt a verification result, then continuing the build. The developer sees the mismatch in the end-gate report as an informational note (the integrity-stop entry in {{contract_integrity_stops}}), not as a prompt during the build.</note>
       </check>
+    </step>
+
+    <!-- ─────────────────────────────────────────────────────── -->
+    <!-- STEP 2.C — Coverage-disposition branch (per story)     -->
+    <!-- Reads frozen coverage_disposition; routes dedicated-run -->
+    <!-- vs. covered-by-composition. Does not classify findings. -->
+    <!-- ─────────────────────────────────────────────────────── -->
+
+    <step n="2.C" goal="Coverage-disposition branch — read frozen coverage_disposition from the assignment and route: dedicated-run (perform QA at build time) vs. covered-by-composition (skip build-time QA; record deferral to named integration scenario at AVFL/merge)">
+
+      <note>READS, DOES NOT DECIDE. This step is purely mechanical. The Conductor reads the frozen `coverage_disposition` value from the assignment record it was handed at planning. It does not compute, infer, choose, or override the disposition — the disposition was set upstream (planning/contract freeze) and is immutable at build time. The only judgment-shaped behavior allowed is the safe default for a missing or unrecognized value, and that default is conservative (`dedicated-run`; do not skip verification). Spec reference: §7 step 4 (build-time verifier dispatch gated on coverage_disposition).</note>
+
+      <note>TIMING-AND-VENUE ONLY — DEC-036 does NOT change this branch. DEC-036's amendments (narrow stakes-gated mid-flight escalation; legible dispositions fixed | dismissed | triaged-out | escalated with required non-empty rationale for dismissals; end-gate-expanded vs. mid-flight timing tiers; anti-rubber-stamp end-gate) concern HOW findings are classified and WHEN stakes-class findings leave the silent auto-fix path. This branch concerns only WHEN the verification run happens (build vs. AVFL/merge) and WHERE it runs. Choosing `covered-by-composition` changes only the timing and venue of the QA run; it never demotes, hides, silences, or auto-resolves any finding — including any stakes-class finding. A stakes-class finding (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture) that surfaces when the deferred verification is discharged at AVFL/merge is still routed out of the silent auto-fix path and rendered in the report by the finding schema and report — NOT by this branch. The deferral does not weaken that routing. This boundary must remain clear: a future reader must not mistake `covered-by-composition` for a way to bypass stakes handling.</note>
+
+      <note>NON-GOALS — guardrails this branch must never violate:
+        (1) This branch must not change how any finding is classified. Finding classification (stakes classes, dispositions, timing tiers) belongs to the finding schema and the auto-fix / escalation machinery — not to coverage routing.
+        (2) This branch must not demote, hide, silence, or auto-resolve any finding, including a stakes-class finding. The deferral records the timing/venue change only.
+        (3) This branch must not widen build-time verification beyond what the disposition specifies (no adding extra verification runs for a `dedicated-run` story beyond its one run).
+        (4) This branch must not produce a second dedicated verification run for a story already marked `covered-by-composition`.
+        (5) This branch must not re-derive or substitute its own judgment for the frozen `coverage_disposition` value.
+      </note>
+
+      <!-- ── Per-story invocation ────────────────────────────── -->
+      <action>For each story S entering the coverage-disposition check:
+        1. Resolve S's assignment from `story_assignments[S.slug]` in the sprint record (`.momentum/sprints/index.json`).
+        2. Read the frozen coverage fields from the assignment's contract block:
+             {{coverage_disposition}}   = assignment.contract.coverage_disposition
+             {{covered_by_scenario}}    = assignment.contract.covered_by_scenario  (may be null)
+        3. Evaluate {{coverage_disposition}} against the two recognized values:
+             "dedicated-run"           — recognized; route to dedicated-run path below
+             "covered-by-composition"  — recognized; route to covered-by-composition path below
+             any other value (including null, missing, empty string, or unrecognized string):
+                                       — treat as "dedicated-run" (safe default; see safe-default check below)
+      </action>
+
+      <!-- ── Safe default: missing or unrecognized ────────────── -->
+      <check if="{{coverage_disposition}} is null OR missing OR not in {'dedicated-run', 'covered-by-composition'}">
+        <note>Missing or unrecognized `coverage_disposition`. The safe default is `dedicated-run` — treat this story as requiring a dedicated verification run at build time. Do NOT silently skip verification when the disposition is absent or unrecognized. The conservative choice is always to run the dedicated check. This prevents silent coverage gaps from malformed or missing assignment data.</note>
+        <action>Log a warning in {{build_log}} for story S: { slug: S.slug, event: "coverage-disposition-default", reason: "coverage_disposition was missing or unrecognized — defaulted to dedicated-run", observed_value: {{coverage_disposition}} }.
+          Treat S as `dedicated-run` for all purposes in this build phase. Proceed to the dedicated-run path below.
+        </action>
+      </check>
+
+      <!-- ── Path A: dedicated-run ─────────────────────────────── -->
+      <check if="{{coverage_disposition}} == 'dedicated-run' (or defaulted to dedicated-run)">
+        <note>This story gets a dedicated QA verification run during the build phase. The verifier is dispatched for this story as normal. No deferral is recorded. The dedicated run is the standard build-time path.</note>
+        <action>Return routing outcome to step 2.1.5: { outcome: "dedicated-run" }.
+          Proceed to verifier dispatch for story S in the build phase. Exactly one dedicated verification run is performed.
+        </action>
+      </check>
+
+      <!-- ── Path B: covered-by-composition ───────────────────── -->
+      <check if="{{coverage_disposition}} == 'covered-by-composition'">
+        <note>This story's verification is deferred to a named integration scenario at AVFL/merge. No dedicated QA verification run is performed for this story at build time. The Conductor records the deferral explicitly — it does not silently drop the verification. The named integration scenario ({{covered_by_scenario}}) is the downstream discharge point at AVFL/merge (Phase 3). The deferral record is informational: it states THAT the run was skipped and WHICH scenario owns the discharge. Nothing in this record changes how findings from that scenario are classified, escalated, or reported.</note>
+        <action>Skip the dedicated QA verification run for story S at build time. Do NOT dispatch the per-story verifier for S during this build phase.
+          Record the deferral in {{build_log}}:
+            { slug: S.slug, title: S.title, event: "coverage-disposition-deferred",
+              coverage_disposition: "covered-by-composition",
+              covered_by_scenario: {{covered_by_scenario}},
+              note: "Dedicated build-time QA run skipped. Verification debt discharged at AVFL/merge by the named integration scenario." }
+          Return routing outcome to step 2.1.5: { outcome: "covered-by-composition", integration_scenario: {{covered_by_scenario}} }.
+          Do not produce a VERIFIED / PARTIAL / MISSING / BLOCKED verification disposition for story S from this build-phase step — the verification result belongs to the integration scenario at AVFL/merge.
+        </action>
+        <note>GUARDRAIL — no second run. Once this routing outcome is returned and the deferral is recorded, the Conductor must NOT perform an additional dedicated verification run for S during the build phase. The deferral is a one-way routing decision for the build phase; it does not prevent the integration scenario from running at AVFL/merge — it ensures the dedicated build-time run does not also run. Double-running wastes effort and can produce contradictory signals.</note>
+        <note>STAKES-CLASS BOUNDARY — deferral does not weaken routing. If the integration scenario at AVFL/merge surfaces a stakes-class finding (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture), that finding is still routed out of the silent auto-fix path and rendered in the report by the finding schema and report. The deferral from this build-phase branch does not weaken, suppress, or narrow that routing. The timing/venue changed; the routing rules did not.</note>
+      </check>
+
     </step>
 
     <!-- ─────────────────────────────────────────────────────── -->
