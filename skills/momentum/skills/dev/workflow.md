@@ -1,8 +1,10 @@
 # momentum:dev Workflow
 
-**Goal:** Implement a Momentum story by selecting the next unblocked story (or using an explicit path), running in an isolated git worktree, delegating to bmad-dev-story, then returning merge-ready output.
+**Goal:** Implement a Momentum story by resolving the target story and delegating implementation to bmad-dev-story, then returning implementation-complete output with a list of files changed.
 
-**Role:** Pure executor. Manages story selection from stories/index.json, worktree lifecycle, and merge gate. The story's Momentum Implementation Guide (injected by momentum:create-story) contains the developer's implementation instructions.
+**Role:** Pure implementer. Receives a story (explicit path or unblocked selection), delegates all implementation to bmad-dev-story, and reports what was changed. The story's Momentum Implementation Guide (injected by momentum:create-story) contains the developer's implementation instructions.
+
+**Conductor owns everything else.** Worktree creation/lifecycle, lockfile handling, git mutation (merge, rebase, conflict resolution), worktree cleanup, and crash recovery are all Conductor responsibilities (spec sections 3 and 6). The dev agent does not touch any of those concerns — adding them back here would break the Conductor's single-owner model and the precondition for mid-flight escalation (DEC-035, DEC-036 D1).
 
 ---
 
@@ -10,18 +12,10 @@
 
 <workflow>
   <critical>Do not re-implement bmad-dev-story logic. Delegate all implementation to that skill.</critical>
-  <critical>The verification contract is a two-part file at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. Dev reads only the Part-A header (the `# === VERIFICATION HEADER` YAML block) as a self-check. Dev never reads the verifier body (Part B: scenarios, assertion scripts, Gherkin, etc.). Dev never writes, edits, appends to, or alters any part of the contract. Dev never chooses the verification method — it is given in Part A. Stakes classification and mid-flight escalation do not change this read surface; dev reads only Part A regardless of any stakes class or disposition active elsewhere in the flow.</critical>
+  <critical>The verification contract is a two-part file at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. Dev reads only the Part-A header (the `# === VERIFICATION HEADER` YAML block) as a self-check. Dev never reads the verifier body (Part B: scenarios, assertion scripts, Gherkin, etc.) beyond sections explicitly referenced by `how_dev_self_checks`. Dev never writes, edits, appends to, or alters any part of the contract. Dev never chooses the verification method — it is given in Part A. Stakes classification and mid-flight escalation do not change this read surface; dev reads only Part A regardless of any stakes class or disposition active elsewhere in the flow.</critical>
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum:create-story. Offer to run the injection step manually before proceeding.</critical>
-  <critical>Always create a git worktree for every story session — even if this appears to be the only active session. This prevents mid-session file-change races.</critical>
-  <critical>Never auto-execute git merge. Always propose the merge command and wait for explicit user confirmation before running it.</critical>
-  <critical>Always write status changes to stories/index.json in the MAIN working tree — not inside the worktree. This ensures all concurrent sessions see the update immediately.</critical>
 
-  <step n="1" goal="Capture target branch">
-    <action>Run via Bash tool: `git branch --show-current`</action>
-    <action>Store {{target_branch}} = the output of that command (e.g., "main")</action>
-  </step>
-
-  <step n="2" goal="Resolve story to develop">
+  <step n="1" goal="Resolve story to develop">
     <action>Check: has the user provided an explicit story file path or story key?</action>
 
     <check if="explicit story path or key provided">
@@ -56,64 +50,28 @@
 
   </step>
 
-  <step n="3" goal="Crash recovery check">
-    <action>Check if branch `story/{{story_key}}` already exists: run `git branch --list story/{{story_key}}`</action>
-    <action>Check if worktree `.worktrees/story-{{story_key}}` already exists (check filesystem)</action>
-
-    <check if="branch exists AND worktree directory exists">
-      <ask>A previous session for Story {{story_key}} appears to be in progress (branch story/{{story_key}} + worktree .worktrees/story-{{story_key}} both exist). Resume from where it left off, or clean up and start fresh?
-
-  R — Resume: continue in the existing worktree
-  C — Clean up: delete branch and worktree, start fresh</ask>
-      <check if="user chooses Resume">
-        <action>Skip worktree creation (Step 4) — worktree already exists. Continue from Step 5.</action>
-      </check>
-      <check if="user chooses Clean up">
-        <action>Run: `git worktree remove --force .worktrees/story-{{story_key}}`</action>
-        <action>Run: `git branch -d story/{{story_key}}`</action>
-        <action>Delete lock file `.worktrees/story-{{story_key}}.lock` if it exists</action>
-        <action>Proceed to Step 4 (worktree creation).</action>
-      </check>
-    </check>
-
-    <check if="branch exists but worktree directory does NOT exist">
-      <action>Inform the user: "Stale branch story/{{story_key}} found without a worktree. This branch may have uncommitted development work. Force-deleting it."</action>
-      <action>Run: `git branch -D story/{{story_key}}`</action>
-      <action>Proceed to Step 4 (worktree creation).</action>
-    </check>
-
-    <check if="neither branch nor worktree exists">
-      <action>Proceed to Step 4 (worktree creation).</action>
-    </check>
-  </step>
-
-  <step n="4" goal="Create git worktree">
-    <action>Run: `git worktree add .worktrees/story-{{story_key}} -b story/{{story_key}}`</action>
-    <output>**Worktree created** at `.worktrees/story-{{story_key}}` on branch `story/{{story_key}}`</output>
-  </step>
-
-  <step n="5" goal="Mark story in-progress">
-    <action>Write (or overwrite) the lock file `.worktrees/story-{{story_key}}.lock` in the main working tree (not inside the worktree). This is a plain text file; content: "locked by momentum:dev session started {{timestamp}}". Overwriting is safe — the new timestamp reflects the current session.</action>
-    <output>**Story `{{story_key}}`** marked `in-progress`. Lock file created.</output>
-  </step>
-
-  <step n="6" goal="Invoke bmad-dev-story, self-check against Part-A, then exit worktree">
-    <action>Enter the worktree context: use the EnterWorktree tool with path `.worktrees/story-{{story_key}}`. This sets the working directory to the worktree for all subsequent file operations until ExitWorktree is called. All bmad-dev-story file writes will land in the worktree, not the main tree.</action>
-
-    <action>Invoke the `bmad-dev-story` skill inside the worktree `.worktrees/story-{{story_key}}`. Pass the story file path ({{story_file}}). bmad-dev-story will read the story's Dev Notes — including the Momentum Implementation Guide section — and implement accordingly.</action>
+  <step n="2" goal="Invoke bmad-dev-story">
+    <action>Invoke the `bmad-dev-story` skill. Pass the story file path ({{story_file}}). bmad-dev-story will read the story's Dev Notes — including the Momentum Implementation Guide section — and implement accordingly.</action>
 
     <action>Wait for bmad-dev-story to complete fully (story status = "review")</action>
-    <action>After bmad-dev-story completes, capture from its completion output:
+    <action>After bmad-dev-story completes, capture:
       - {{story_key}}: the story key
       Then read {{story_file}} and extract:
       - {{file_list}}: from the story's File List section — files created/modified/deleted
+      - {{tests_run}}: true if bmad-dev-story ran tests, false otherwise (from the Dev Agent Record or implementation output)
+      - {{test_result}}: "pass", "fail", or "not_run" — the outcome of the test run (from the same source; use "not_run" if {{tests_run}} is false)
     </action>
 
-    <action>While still inside the worktree context, locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. Look up the story's `verification_method` from the sprint assignment record (`.momentum/sprints/index.json` or the assignment JSON); the extension maps 1:1: eval_yaml→.eval.yaml, smoke_sh→.smoke.sh, trigger_md→.trigger.md, review_md→.review.md, gherkin→.feature. If the verification_method is unavailable, glob `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.*` and take the single matching file (expect 0 or 1 result).</action>
+    <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
+    <note>Working directory: the Conductor spawns this agent already scoped to the story worktree (spec section 6 — 'Dev subagents write and commit inside their worktrees'). The dev agent neither creates nor enters/exits worktrees; bmad-dev-story writes and commits land in the Conductor-provided worktree automatically.</note>
+  </step>
+
+  <step n="2.5" goal="Part-A header self-check">
+    <action>Locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. Look up the story's `verification_method` from the sprint assignment record (`.momentum/sprints/index.json` or the assignment JSON); the extension maps 1:1: eval_yaml→.eval.yaml, smoke_sh→.smoke.sh, trigger_md→.trigger.md, review_md→.review.md, gherkin→.feature. If the verification_method is unavailable, glob `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.*` and take the single matching file (expect 0 or 1 result).</action>
 
     <check if="contract file exists AND contains a Part-A header (line starting with '# === VERIFICATION HEADER')">
       <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract the `how_dev_self_checks` prompt. Note: `how_dev_self_checks` is Part A's plain-language restatement of the observable acceptance target. It may explicitly reference observable clauses in the contract body (e.g., "the scenarios below") — those referenced clauses are Part-A-sanctioned and form part of your acceptance target alongside the prompt itself.</action>
-      <action>Self-check: execute the directives in `how_dev_self_checks` against the just-built implementation in the worktree, including any observable clauses the prompt explicitly references in the contract body. Hold the full acceptance target (prompt + any referenced clauses) alongside the story's plain-English ACs. Do not read beyond the sections explicitly referenced — the verifier body as a whole (scenarios not referenced by the prompt, assertion scripts, Gherkin) remains off-limits.</action>
+      <action>Self-check: execute the directives in `how_dev_self_checks` against the just-built implementation in the current worktree, including any observable clauses the prompt explicitly references in the contract body. Hold the full acceptance target (prompt + any referenced clauses) alongside the story's plain-English ACs. Do not read beyond the sections explicitly referenced — the verifier body as a whole (scenarios not referenced by the prompt, assertion scripts, Gherkin) remains off-limits.</action>
       <output>**Part-A self-check:** Performed. `how_dev_self_checks` prompt executed; implementation satisfies all Part-A header requirements.</output>
       <action>Store {{part_a_self_check}} = "performed"</action>
     </check>
@@ -124,89 +82,54 @@
     </check>
 
     <note>Dev reads the Part-A header and any observable clauses explicitly referenced by `how_dev_self_checks`. Never read the verifier body beyond those referenced sections. Never write, edit, or alter any part of the contract. Stakes classification and mid-flight escalation do not change this read surface.</note>
-
-    <action>Exit the worktree context: use the ExitWorktree tool. This restores the working directory to the main repo root. All subsequent steps operate on the main tree.</action>
-
-    <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
-    <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_key}}/`, isolated from other sessions.</note>
-    <note>The Part-A self-check runs inside the worktree context (before ExitWorktree) so it inspects the just-built implementation, not the unmodified main tree.</note>
+    <note>No EnterWorktree/ExitWorktree is needed — the Conductor already scoped this agent to the story worktree. The self-check inspects the just-built implementation in the current working directory automatically.</note>
   </step>
 
-  <step n="7" goal="Propose merge and clean up">
-    <note>At this point the working directory is the main repo root (ExitWorktree was called at the end of Step 6). The merge runs on the main tree, merging story/{{story_key}} into {{target_branch}}.</note>
-    <action>Delete the lock file `.worktrees/story-{{story_key}}.lock`</action>
+  <step n="3" goal="Report implementation-complete">
+    <output>## Story `{{story_key}}` — Implementation Complete
 
-    <action>Read `.momentum/stories/index.json` and look up {{story_key}}.touches</action>
-    <action>Check for overlap: are any paths in {{touches}} also listed in other stories whose `status` is `in-progress` in `.momentum/stories/index.json`? If yes, note them as potential merge conflict paths. If no other in-progress stories, overlap = none.</action>
-    <action>Store {{touches_overlap_summary}} = the result of the overlap check above. If overlapping paths were found, format as "Potential conflicts: [comma-separated list of overlapping paths]". If no other in-progress stories or no overlap, use "none".</action>
+**Files changed:**
+{{file_list}}
 
-    <output>## Story `{{story_key}}` — Done and Ready to Merge
+Implementation is done. The Conductor handles merge, worktree cleanup, and any recovery from here.
+    </output>
 
-**Branch:** `story/{{story_key}}`
-**Target:** `{{target_branch}}`
-**Touches overlap:** {{touches_overlap_summary}}
-
-To merge, run:
+    <action>Emit the structured completion signal:
 ```
-git rebase {{target_branch}} story/{{story_key}} && git merge story/{{story_key}}
-```
-
-Confirm to proceed with rebase and merge, or review the diff first.</output>
-    <ask>Run the rebase and merge now?</ask>
-
-    <check if="user confirms merge">
-      <action>Rebase the story branch onto the latest target branch, then merge:
-        Run: `git rebase {{target_branch}} story/{{story_key}}`
-        Story branches are local-only (never pushed), so rebase is safe — no history-rewriting risk. This ensures the story branch includes all recent main changes (e.g., status updates from other merged stories) and conflicts are resolved before the merge.</action>
-      <check if="rebase reports conflicts">
-        <output>Rebase conflicts detected on story/{{story_key}}. Resolve conflicts in the affected files, then run:
-  git rebase --continue
-
-After rebase completes, the merge will proceed.</output>
-        <action>HALT — wait for user to resolve rebase conflicts before continuing to merge</action>
-      </check>
-      <action>Run: `git merge story/{{story_key}}`</action>
-      <check if="merge succeeds cleanly">
-        <action>Run: `git worktree remove --force .worktrees/story-{{story_key}}`
-Note: Using --force because the merge has already succeeded — all work is safely on {{target_branch}}. Any uncommitted files in the worktree are discarded.</action>
-        <action>Run: `git branch -d story/{{story_key}}`</action>
-        <output>**Merged and cleaned up** worktree for Story `{{story_key}}`.</output>
-      </check>
-      <check if="merge reports conflicts">
-        <output>Merge conflicts detected. Resolve conflicts in the affected files, then run:
-  git add [resolved files]
-  git merge --continue
-
-After merge is complete, clean up the worktree:
-  git worktree remove .worktrees/story-{{story_key}}
-  git branch -d story/{{story_key}}</output>
-        <action>HALT — do not auto-resolve conflicts. Wait for user to resolve and continue.</action>
-      </check>
-    </check>
-
-    <check if="user declines merge">
-      <output>**Merge deferred.** When ready:
-```
-git merge story/{{story_key}}
-git worktree remove .worktrees/story-{{story_key}}
-git branch -d story/{{story_key}}
-```</output>
-    </check>
-
-    <action>Emit the structured completion signal (subagent output contract per Architecture Decision 3b):
+AGENT_OUTPUT_START
 {
   "status": "complete",
-  "result": {
-    "files_modified": [{{file_list}}],
-    "part_a_self_check": "{{part_a_self_check}}",
+  "story_key": "{{story_key}}",
+  "files_changed": [{{file_list}}],
+  "part_a_self_check": "{{part_a_self_check}}",
+  "test_results": {
     "tests_run": {{tests_run}},
-    "test_result": "{{test_result}}"
-  },
-  "question": null,
-  "confidence": "high"
+    "outcome": "{{test_result}}"
+  }
 }
-Where: {{part_a_self_check}} = "performed" or "skipped-no-contract" from Step 6; {{tests_run}} = true/false from bmad-dev-story's Dev Agent Record; {{test_result}} = "pass", "fail", or "not_run" from same source.
+AGENT_OUTPUT_END
+```
+Where {{file_list}} is the comma-separated list of files from the story's File List section; {{part_a_self_check}} is "performed" or "skipped-no-contract" from Step 2.5; {{tests_run}} is true|false and {{test_result}} is "pass", "fail", or "not_run" — all captured in Step 2 from bmad-dev-story's Dev Agent Record.
+
+If implementation failed (bmad-dev-story did not reach story status "review"), emit the failed variant instead. Populate files_changed with whatever files were committed before the failure (check git log in the worktree); use an empty array only if no commits were made:
+```
+AGENT_OUTPUT_START
+{
+  "status": "failed",
+  "story_key": "{{story_key}}",
+  "error": "{{error_description}}",
+  "files_changed": [{{files_committed_before_failure_or_empty}}],
+  "part_a_self_check": "{{part_a_self_check}}",
+  "test_results": {
+    "tests_run": false,
+    "outcome": "not_run"
+  }
+}
+AGENT_OUTPUT_END
+```
     </action>
+
+    <note>Terminal contract: implementation-complete + file_list. Nothing more. The Conductor owns all git mutation (merge, rebase, conflict resolution), worktree lifecycle, lockfile handling, and crash recovery per spec sections 3 and 6. Relocating those authorities out of dev is the precondition for the Conductor to own the narrow, stakes-gated mid-flight escalation tier (DEC-036 D1).</note>
   </step>
 
 </workflow>
