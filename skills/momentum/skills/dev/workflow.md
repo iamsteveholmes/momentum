@@ -109,11 +109,11 @@
       - {{file_list}}: from the story's File List section — files created/modified/deleted
     </action>
 
-    <action>While still inside the worktree context, locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. The contract is at `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.{ext}` (any extension: .eval.yaml, .smoke.sh, .trigger.md, .review.md, .feature).</action>
+    <action>While still inside the worktree context, locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. Look up the story's `verification_method` from the sprint assignment record (`.momentum/sprints/index.json` or the assignment JSON); the extension maps 1:1: eval_yaml→.eval.yaml, smoke_sh→.smoke.sh, trigger_md→.trigger.md, review_md→.review.md, gherkin→.feature. If the verification_method is unavailable, glob `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.*` and take the single matching file (expect 0 or 1 result).</action>
 
     <check if="contract file exists AND contains a Part-A header (line starting with '# === VERIFICATION HEADER')">
-      <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract the `how_dev_self_checks` prompt.</action>
-      <action>Self-check: run the self-check described in `how_dev_self_checks` against the just-built implementation in the worktree. Hold this prompt as an additional acceptance target alongside the story's plain-English ACs.</action>
+      <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract the `how_dev_self_checks` prompt. Note: `how_dev_self_checks` is Part A's plain-language restatement of the observable acceptance target; the underlying observable clauses live in Part B (off-limits). The prompt conveys the acceptance target without requiring Part-B access.</action>
+      <action>Self-check: execute only the plain-language directives stated in `how_dev_self_checks` against the just-built implementation in the worktree. Hold this prompt as an additional acceptance target alongside the story's plain-English ACs. If the prompt contains any pointer into Part-B internals (e.g., "see scenarios: below"), self-check against the plain-language portion only — never follow such pointers into Part B.</action>
       <output>**Part-A self-check:** Performed. `how_dev_self_checks` prompt executed; implementation satisfies all Part-A header requirements.</output>
       <action>Store {{part_a_self_check}} = "performed"</action>
     </check>
@@ -205,7 +205,7 @@ git branch -d story/{{story_key}}
   "question": null,
   "confidence": "high"
 }
-Where: {{part_a_self_check}} = "performed" or "skipped-no-contract" from Step 6.5; {{tests_run}} = true/false from bmad-dev-story's Dev Agent Record; {{test_result}} = "pass", "fail", or "not_run" from same source.
+Where: {{part_a_self_check}} = "performed" or "skipped-no-contract" from Step 6; {{tests_run}} = true/false from bmad-dev-story's Dev Agent Record; {{test_result}} = "pass", "fail", or "not_run" from same source.
     </action>
   </step>
 
