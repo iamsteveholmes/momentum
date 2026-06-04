@@ -81,7 +81,7 @@ A finding routes to `mid-flight` **only** when it meets **at least one** of the 
 1. **Irreversible-and-imminent** — the finding describes an action that is both irreversible (cannot be undone) and about to execute as part of the current build step. Continuing would make recovery impossible.
 2. **Build-invalidating** — the finding reveals that the build as currently structured cannot produce a valid artifact and that continuing would compound the invalid state (e.g., a foundational spec contradiction that makes all downstream stories invalid).
 
-**Stakes class alone is not sufficient to trigger `mid-flight`.** Urgency alone is not sufficient. The combination of irreversibility-or-build-invalidity *with* imminence or build-invalidity is what crosses the bar. A security finding, an architecture finding, or a destructive-action finding that does not meet this test belongs to `end-gate-expanded`.
+**Stakes class alone is not sufficient to trigger `mid-flight`.** Urgency alone is not sufficient. Irreversibility paired with imminence, OR build-invalidity on its own, is what crosses the bar. A security finding, an architecture finding, or a destructive-action finding that does not meet this test belongs to `end-gate-expanded`.
 
 **Bias narrow. When in doubt, use `end-gate-expanded`.** The end-gate-expanded tier is the safety net — it catches everything the mid-flight tier deliberately excludes. A finding held to the end-gate is not lost; it is reviewed with full context. A mid-flight escalation that fires too early interrupts the human unnecessarily and undermines the anti-firehose intent of the whole conduct design.
 
