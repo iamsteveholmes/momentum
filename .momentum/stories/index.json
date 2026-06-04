@@ -4994,7 +4994,7 @@
     "verification_method": "skill-invoke"
   },
   "stage3-fix-loop-via-directed-dev": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Wire the per-story stage-3 fix loop to the directed fixer with escalation routing",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5069,7 +5069,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-merge-and-conflict-resolution": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Conductor per-story merge, conflict resolution, quarantine, and escalation hook",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5106,7 +5106,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-coverage-disposition-branch": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Conductor coverage-disposition branch (dedicated-run vs covered-by-composition)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5162,7 +5162,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-retire-stub": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Code-review adapter: retire the in-house stub and repoint the command",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
