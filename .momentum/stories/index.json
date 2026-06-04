@@ -4939,7 +4939,7 @@
     "story_type": "practice"
   },
   "directed-fix-finding-schema": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Canonical normalized finding schema with stakes-class and escalated disposition",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5014,7 +5014,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-skill-scaffold-and-spine": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Conductor orchestrator skill scaffold and workflow spine",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
