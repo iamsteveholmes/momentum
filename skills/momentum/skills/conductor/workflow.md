@@ -426,9 +426,22 @@ Ready to begin?</output>
         </action>
       </check>
 
+      <!-- ── Path B guard: covered-by-composition with no named scenario ── -->
+      <check if="{{coverage_disposition}} == 'covered-by-composition' AND ({{covered_by_scenario}} is null OR missing OR empty string)">
+        <note>AC 3 requires that for a covered-by-composition story the Conductor names the specific integration scenario that will discharge the story's verification. A null/missing/empty covered_by_scenario means there is no named downstream owner — skipping the dedicated run would create a silent coverage gap. The safe default is dedicated-run, mirroring the AC 5 treatment already applied to a missing coverage_disposition.</note>
+        <action>Log a warning in {{build_log}} for story S:
+            { slug: S.slug, event: "coverage-disposition-incomplete",
+              reason: "coverage_disposition is 'covered-by-composition' but covered_by_scenario is null/missing/empty — cannot defer without a named integration scenario; defaulted to dedicated-run",
+              observed_coverage_disposition: "covered-by-composition",
+              observed_covered_by_scenario: {{covered_by_scenario}} }
+          Treat S as `dedicated-run` for all purposes in this build phase. Proceed to the dedicated-run path (Path A) below.
+        </action>
+      </check>
+
       <!-- ── Path B: covered-by-composition ───────────────────── -->
-      <check if="{{coverage_disposition}} == 'covered-by-composition'">
+      <check if="{{coverage_disposition}} == 'covered-by-composition' AND {{covered_by_scenario}} is present AND non-empty">
         <note>This story's verification is deferred to a named integration scenario at AVFL/merge. No dedicated QA verification run is performed for this story at build time. The Conductor records the deferral explicitly — it does not silently drop the verification. The named integration scenario ({{covered_by_scenario}}) is the downstream discharge point at AVFL/merge (Phase 3). The deferral record is informational: it states THAT the run was skipped and WHICH scenario owns the discharge. Nothing in this record changes how findings from that scenario are classified, escalated, or reported.</note>
+        <note>PRECONDITION — a named scenario is required. This path is reached only when covered_by_scenario is present and non-empty. When it is null/missing/empty, the guard above fires first and routes to dedicated-run instead. This ensures AC 3's naming requirement is a hard precondition for skipping the dedicated build-time run.</note>
         <action>Skip the dedicated QA verification run for story S at build time. Do NOT dispatch the per-story verifier for S during this build phase.
           Record the deferral in {{build_log}}:
             { slug: S.slug, title: S.title, event: "coverage-disposition-deferred",
