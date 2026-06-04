@@ -292,6 +292,64 @@ Ready to begin?</output>
     </step>
 
     <!-- ─────────────────────────────────────────────────────── -->
+    <!-- STEP 2.V — Contract-freeze check (per story, first      -->
+    <!-- step of verification — spec §7 step 2)                  -->
+    <!-- ─────────────────────────────────────────────────────── -->
+
+    <step n="2.V" goal="Contract-freeze check — Conductor asserts sha256(contract) == frozen_sha256 before per-story verification; Conductor-facing integrity stop on mismatch">
+
+      <note>CONDUCTOR-FACING INTEGRITY GATE. This step is the first thing the Conductor does before running verification for each story. It is executed per story — once per story, for that story's contract. It is NOT a developer-facing HALT and NOT a stakes-class escalation. It is the Conductor checking its own inputs before trusting a verification result. The developer is never paused, prompted, or shown this check. Spec reference: §7 step 2 (the first carve-out from the DEC-035 #1 "no developer-facing HALT outside pre-flight" invariant). The second carve-out is the developer-facing mid-flight escalation tier (step 2.F); these two carve-outs are different in kind and must not be conflated.</note>
+
+      <note>This step is not a finding disposition. It produces no disposition of fixed | dismissed | triaged-out | escalated. A fingerprint mismatch is not a stakes-class finding and does not enter the silent auto-fix path. It is a structural integrity assertion the Conductor makes about its own inputs: "is the contract under verification the same contract that was frozen at assignment?" If not, the Conductor stops before producing any verification result for that story and surfaces the mismatch to itself — not to the developer.</note>
+
+      <note>Vocabulary invariant (do not widen): stakes classes (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture | routine) apply only to build findings. The freeze check belongs to none of these classes. Timing tiers (end-gate-expanded | mid-flight) apply only to finding routing. The freeze check uses neither tier. Dispositions (fixed | dismissed | triaged-out | escalated) apply only to findings in the auto-fix loop or mid-flight escalation. The freeze check produces none of these.</note>
+
+      <!-- ── Per-story invocation ────────────────────────────── -->
+      <action>For each story S that is about to enter verification:
+        1. Resolve S's assignment from `story_assignments[S.slug]` in the sprint record (`.momentum/sprints/index.json`).
+           Bind:
+             {{contract_path}}   = assignment.contract.path
+             {{frozen_sha256}}   = assignment.contract.frozen_sha256
+        2. Compute the current fingerprint of the contract file on disk:
+             {{live_sha256}} = sha256( file-contents at {{contract_path}} )
+           Use a SHA-256 digest of the exact file bytes. (Shell reference: `sha256sum {{contract_path}}` or `shasum -a 256 {{contract_path}}`.)
+        3. Compare {{live_sha256}} to {{frozen_sha256}}.
+      </action>
+
+      <!-- ── Match path — proceed ───────────────────────────── -->
+      <check if="{{live_sha256}} == {{frozen_sha256}}">
+        <note>Contract unchanged. The contract file on disk is identical to what was frozen at assignment. Verification integrity is confirmed. Proceed to per-story verification without interruption.</note>
+        <action>Allow per-story verification to proceed for story S. The build is not interrupted.</action>
+      </check>
+
+      <!-- ── Mismatch path — Conductor-facing integrity stop ── -->
+      <check if="{{live_sha256}} != {{frozen_sha256}}">
+        <note>Contract has drifted since it was frozen at assignment. The Conductor must NOT silently re-verify story S against the changed contract. Doing so would mean the verification result rests on a contract that was never assigned — the end-gate would inherit a corrupted result. The mismatch surfaces to the Conductor only. The developer is not paused, prompted, or shown this stop.</note>
+
+        <action>Integrity stop — Conductor-facing only:
+          1. Do NOT dispatch the per-story verifier for story S.
+          2. Do NOT produce a verification result for story S (no VERIFIED / PARTIAL / MISSING / BLOCKED disposition is recorded from a drifted contract).
+          3. Record the integrity stop in {{build_log}}:
+             { slug: S.slug, title: S.title, outcome: "contract-integrity-stop",
+               reason: "contract fingerprint mismatch — live sha256 does not equal frozen_sha256",
+               contract_path: {{contract_path}},
+               frozen_sha256: {{frozen_sha256}},
+               live_sha256: {{live_sha256}} }
+          4. Record an entry in {{escalations}} that identifies story S as contract-integrity-stopped,
+             so the end-gate report can surface it to the developer as an informational item:
+             { slug: S.slug, event: "contract-integrity-stop", disposition: null,
+               contract_path: {{contract_path}}, frozen_sha256: {{frozen_sha256}}, live_sha256: {{live_sha256}} }
+          5. Remove S from {{running}} without transitioning it to "review".
+             Mark S in Conductor in-memory state as integrity-stopped (not blocked, not failed).
+          6. CONTINUE the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
+             The mismatch on one story does not halt the rest of the build.
+        </action>
+
+        <note>This is the ONE sanctioned non-developer halt in the verification path. It does not raise a stakes-class escalation. It does not enter the silent auto-fix loop. It is not dismissable with a rationale — there is no disposition to dismiss. It is not a mid-flight escalation eligible for the developer-facing pause (step 2.F). It is the Conductor catching its own integrity violation before it can corrupt a verification result, then continuing the build. The developer sees the mismatch in the end-gate report as an informational note (the integrity-stop entry in {{escalations}}), not as a prompt during the build.</note>
+      </check>
+    </step>
+
+    <!-- ─────────────────────────────────────────────────────── -->
     <!-- STEP 2.2 — Heartbeat: react to each terminal signal     -->
     <!-- ─────────────────────────────────────────────────────── -->
 
@@ -548,6 +606,9 @@ Recommended action: {{finding.suggested_fix}}
       - Stakes-class section (if any): expanded decision cards — one per finding — requiring explicit developer acknowledgment before Approve enables
       - Dismissed / not-actioned section: findings the auto-fix loop dismissed, each with rationale
       - Mid-flight escalations section (if any): findings that were escalated during the build, with disposition recorded
+      - Contract-integrity-stops section (if any): from {{escalations}}, filter entries with event == "contract-integrity-stop";
+        surface as informational — no developer action required during the report; these are stories that need follow-up
+        because their verification contract fingerprint did not match the frozen_sha256 recorded at assignment
       - E2E summary: scenarios passed, failed, blocked
     </action>
 
@@ -584,6 +645,14 @@ Recommended action: {{finding.suggested_fix}}
 ### Mid-flight Escalations During Build
 {{#each mid_flight_escalations}}
 - Story `{{slug}}`: {{finding_summary}} — Disposition: {{disposition}}
+{{/each}}
+{{/if}}
+
+{{#if contract_integrity_stops}}
+### Contract-Integrity Stops (Informational)
+<!-- These stories were not verified: the contract file on disk did not match the fingerprint frozen at assignment. No verification result was recorded for them. The contract freeze check (spec §7 step 2) caught the drift before it could corrupt a result. No action required from you during the build — this section informs you that these stories need follow-up. -->
+{{#each contract_integrity_stops}}
+- Story `{{slug}}`: contract fingerprint mismatch. Contract path: `{{contract_path}}`. Frozen sha256: `{{frozen_sha256}}`. Live sha256: `{{live_sha256}}`. Story was not verified; no verification result recorded.
 {{/each}}
 {{/if}}
 
