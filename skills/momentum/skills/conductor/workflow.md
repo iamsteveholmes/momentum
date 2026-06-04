@@ -34,14 +34,56 @@
   <!-- PHASE 1: PRE-FLIGHT                                         -->
   <!-- ═══════════════════════════════════════════════════════════ -->
 
-  <step n="1" goal="Pre-flight — validate sprint readiness before the build begins">
-    <note>This is Touchpoint 1: the only developer interaction before the end-gate on the routine path. Present the sprint plan and confirm the build should begin.</note>
+  <!--
+    INVARIANT (re-softened, DEC-035 + DEC-036):
+    No developer-facing HALT exists outside Phase 1, EXCEPT:
+      (a) The Conductor-facing section-7 freeze guard — an internal guard the Conductor
+          observes; the developer does not see it. This was the conduct breakdown's first
+          carve-out from the DEC-035 #1 invariant.
+      (b) The developer-facing mid-flight escalation tier (DEC-036) — a narrow, high-bar,
+          stakes-gated pause that DOES reach the developer mid-build. This is the second,
+          distinct carve-out. It fires ONLY for irreversible-and-imminent OR build-invalidating
+          triggers. Stakes classes that qualify: security-auth-isolation,
+          irreversible-destructive (migration, delete, force-push, prod deploy),
+          high-blast-radius-architecture. No other condition widens this tier.
+    These two exceptions are different in kind: (a) is Conductor-facing; (b) is developer-facing.
+    They must not be conflated.
+
+    Apart from H1–H5 pre-flight guards and exception (b), no other developer-facing HALT exists
+    anywhere in the conduct flow. Routine findings are never raised to the developer mid-build.
+    There is no resume/cleanup prompt, no per-story confirmation, and no mid-build question
+    outside the narrow stakes-and-timing mid-flight tier.
+  -->
+
+  <step n="1" goal="Pre-flight — cannot-start guards and non-interactive git reconcile before any build work">
+    <note>Phase 1 is the ONLY place where developer-facing cannot-start HALTs fire. All five guards (H1–H5) are evaluated here, before any build work begins. Once the build starts (Phase 2), these guards are not re-evaluated and no new cannot-start guard is introduced. Touchpoint 1 (developer confirmation to start the build) is the last developer interaction before the end-gate on the routine path.</note>
+
+    <!-- ─── H1: No active sprint ─────────────────────────────── -->
 
     <action>Read the active sprint record from `.momentum/sprints/index.json` — bind {{sprint_record}} to its `active` block.</action>
 
-    <check if="{{sprint_record}} is null OR {{sprint_record}}.status != 'active'">
-      <output>No active sprint found. Run sprint planning and activate a sprint before invoking Conductor.</output>
-      <action>HALT.</action>
+    <check if="{{sprint_record}} is null OR {{sprint_record}}.slug is empty">
+      <output>## Conductor — Cannot Start (H1)
+
+**Guard:** H1 — No active sprint.
+
+No active sprint record was found in `.momentum/sprints/index.json`. The Conductor cannot start without an active sprint.
+
+**Resolution:** Run sprint planning and activate a sprint, then re-invoke the Conductor.</output>
+      <action>HALT. Do not dispatch any story.</action>
+    </check>
+
+    <!-- ─── H2: Sprint not activated ─────────────────────────── -->
+
+    <check if="{{sprint_record}}.status != 'active'">
+      <output>## Conductor — Cannot Start (H2)
+
+**Guard:** H2 — Sprint not activated.
+
+Sprint `{{sprint_record}}.slug` exists but its status is `{{sprint_record}}.status`, not `active`. The Conductor requires an activated sprint.
+
+**Resolution:** Activate the sprint via `momentum-tools sprint activate`, then re-invoke the Conductor.</output>
+      <action>HALT. Do not dispatch any story.</action>
     </check>
 
     <action>Bind:
@@ -50,28 +92,110 @@
       {{sprint_waves}} = {{sprint_record}}.waves
     </action>
 
+    <!-- ─── H3: Missing required approvals ───────────────────── -->
+
+    <action>Read the sprint's approval state. From the active sprint record in `.momentum/sprints/index.json`, read the `approvals` array (entries shaped `{story_slug, decision, story_file_sha}`). For each entry, check that `decision == 'approved'` AND that `story_file_sha` matches the SHA of the current story file at `.momentum/stories/{story_slug}.md`. Bind {{missing_approvals}} to any entries that fail either check (missing, not approved, or SHA mismatch).</action>
+
+    <check if="{{missing_approvals}} is non-empty">
+      <output>## Conductor — Cannot Start (H3)
+
+**Guard:** H3 — Missing required approvals.
+
+Sprint `{{sprint_slug}}` has unsatisfied required approvals. The Conductor cannot start until all required approvals are in place.
+
+**Unsatisfied approvals:** {{missing_approvals}}
+
+**Resolution:** Satisfy the listed approvals and re-invoke the Conductor.</output>
+      <action>HALT. Do not dispatch any story.</action>
+    </check>
+
+    <!-- ─── H4/H5: Stalled or inconsistent state ─────────────── -->
+
     <action>For each story slug in {{sprint_stories}}, read its entry from `.momentum/stories/index.json` to collect: title, status, depends_on, touches. Store as {{story_map}}.</action>
 
-    <action>Verify all stories are in `ready-for-dev` status (or already `done` from a prior partial run). Flag any stories in unexpected states.</action>
+    <action>For any story in {{sprint_stories}} whose `depends_on` array contains a slug not in {{sprint_stories}}, look up that external slug's status in `.momentum/stories/index.json`. A dependency is considered satisfied only if its status is `done`. Bind {{unsatisfied_external_deps}} to any external dependency slug whose status is not `done`.</action>
 
-    <action>Confirm the sprint branch `sprint/{{sprint_slug}}` exists. If it does not exist, HALT — sprint planning should have created it.</action>
+    <action>Bind {{stalled_stories}} to the union of: (a) any story slug in {{sprint_stories}} whose status is `blocked` AND whose `depends_on` slugs are all either within {{sprint_stories}} or `done` — meaning blocked with no in-sprint resolution path, and (b) any story slug in {{sprint_stories}} that depends on a slug in {{unsatisfied_external_deps}}. This is the complete set of stories that cannot make progress.</action>
+
+    <check if="{{stalled_stories}} is non-empty">
+      <output>## Conductor — Cannot Start (H4)
+
+**Guard:** H4 — Stalled state detected.
+
+One or more sprint stories are `blocked` with no available resolution path, or have unsatisfiable dependencies outside this sprint. The Conductor cannot proceed from a stalled state.
+
+**Affected stories:** {{stalled_stories}}
+**Unsatisfied external dependencies:** {{unsatisfied_external_deps}}
+
+**Resolution:** Resolve the blocked stories or drop them from the sprint, then re-invoke the Conductor.</output>
+      <action>HALT. Do not dispatch any story.</action>
+    </check>
+
+    <action>Check for H5 inconsistency conditions and bind {{inconsistency_details}} to a human-readable description of whichever condition(s) are detected: (a) if `stories/index.json` and `sprints/index.json` disagree on story membership, list the disagreeing slugs; (b) if any story's `status` field is not one of the canonical Valid Story Statuses (`backlog`, `ready-for-dev`, `in-progress`, `review`, `verify`, `done`, `dropped`, `closed-incomplete`), name the story and the unrecognized value; (c) if the sprint branch `sprint/{{sprint_slug}}` does not exist in git, note the missing branch. If none of these conditions are detected, bind {{inconsistency_details}} to an empty string.</action>
+
+    <check if="{{inconsistency_details}} is non-empty">
+      <output>## Conductor — Cannot Start (H5)
+
+**Guard:** H5 — Inconsistent state detected.
+
+The sprint and story records are inconsistent. This may mean the sprint index and story index disagree on story membership, a story carries an unrecognized status, or the sprint branch `sprint/{{sprint_slug}}` is missing (sprint planning should have created it).
+
+**Details:** {{inconsistency_details}}
+
+**Resolution:** Repair the inconsistency (re-run sprint planning if the branch is missing, or correct the index entries), then re-invoke the Conductor.</output>
+      <action>HALT. Do not dispatch any story.</action>
+    </check>
+
+    <note>H1–H5 are the only cannot-start guards. All five have now been evaluated. If execution reaches this point, all guards passed. The reconcile section below performs a final defensive integrity re-check of the sprint branch (a guard-class condition) before any story is dispatched — this is still Phase 1 pre-flight, not build work. H1–H5 are NOT re-evaluated once Phase 2 dispatch begins.</note>
+
+    <!-- ─── Reconcile on start (non-interactive) ──────────────── -->
+
+    <note>RECONCILE ON START: The Conductor reconciles git state non-interactively before dispatching any story. There is no resume/cleanup prompt. The developer is never asked to choose how to handle prior state. The reconcile decides and proceeds on its own.</note>
+
+    <action>For each story slug in {{sprint_stories}}:
+      1. Check whether a story branch `story/{slug}` exists from a prior interrupted session.
+      2. Check whether a worktree `.worktrees/story-{slug}` exists from a prior interrupted session.
+      3. If either exists AND the story's current status is `in-progress` (left over from a prior session):
+         a. Remove the worktree: `git worktree remove --force .worktrees/story-{slug}` (if it exists)
+         b. Delete the stale branch: `git branch -D story/{slug}` (if it exists)
+         c. Reset the story status to `ready-for-dev` (backward transition requires --force):
+            `momentum-tools sprint status-transition --story {slug} --target ready-for-dev --force`
+         d. The story is now in a clean, dispatchable state and will be re-dispatched in Phase 2.
+         — No prompt to the developer. No resume/cleanup choice presented.
+    </action>
+
+    <action>Run `git worktree prune` to clean up any stale worktree references.</action>
+
+    <action>Force-remove any orphaned `worktree-agent-*` entries: for each entry in `git worktree list` that matches the pattern `worktree-agent-*`, run `git worktree remove --force {path}`.</action>
+
+    <action>Verify the sprint branch `sprint/{{sprint_slug}}` is checked out and up to date. If the branch does not exist, this is an H5-class inconsistency — report it and HALT (this path should not be reached if H5 passed, but guard defensively).</action>
+
+    <note>Reconcile end condition: all story branches and worktrees from prior sessions are removed; all stories that were `in-progress` are reset to `ready-for-dev`; `git worktree list` shows only the main worktree and the sprint branch worktree (if applicable); the sprint branch exists and is clean. The build begins from this known-good state.</note>
+
+    <!-- ─── Touchpoint 1: confirm to start ───────────────────── -->
+
+    <action>For each story slug in {{sprint_stories}}, re-read status from {{story_map}} (refresh after reconcile). Collect final list of stories ready for build.</action>
 
     <output>## Conductor — Pre-flight Complete
 
 **Sprint:** `{{sprint_slug}}`
 **Stories:** {{sprint_stories | length}} (listed in wave order)
 {{#each sprint_stories}}
-- `{{slug}}` — {{title}}
+- `{{slug}}` — {{title}} — status: {{status}}
 {{/each}}
+
+**Pre-flight guards:** H1 No active sprint — PASS · H2 Sprint not activated — PASS · H3 Missing approvals — PASS · H4 Stalled state — PASS · H5 Inconsistent state — PASS
+
+**Reconcile on start:** Complete. Any stale in-progress stories from prior sessions have been auto-reset to ready-for-dev and will be re-dispatched. No resume/cleanup prompt was shown.
 
 **Phase sequence:** Pre-flight → Build (per-story pipelines) → AVFL-on-merge → E2E → End-gate
 
-The build will proceed silently through all stories. The next human touchpoint is the end-gate after E2E completes, unless a narrow stakes-and-timing escalation surfaces during the build.
+The build will proceed silently through all stories. The next human touchpoint is the end-gate after E2E completes, unless a narrow stakes-and-timing escalation surfaces during the build (irreversible-and-imminent or build-invalidating only).
 
 Ready to begin?</output>
 
     <ask>Confirm to start the build.</ask>
-    <note>This is the only ask on the routine path before the end-gate. Once confirmed, the build runs silently through Phase 2, Phase 3, and Phase 4.</note>
+    <note>This is the only ask on the routine path before the end-gate. Once confirmed, the build runs silently through Phase 2, Phase 3, and Phase 4. No developer-facing HALT exists outside this Phase 1, except: (a) the Conductor-facing section-7 freeze guard (internal, developer does not see it) and (b) the developer-facing mid-flight escalation tier for irreversible-and-imminent or build-invalidating findings only (Phase 2, step 2.E). Routine findings are never raised mid-build. There is no resume/cleanup prompt, no per-story confirmation, and no other mid-build questions.</note>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
