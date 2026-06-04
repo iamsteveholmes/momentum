@@ -111,6 +111,19 @@ Ready to begin?</output>
         Note: on a fresh run {{merged}} starts empty (no stories yet at review/done), which is correct.
       </action>
 
+      <action>Reconcile in-progress stories from a crashed or aborted prior partial run:
+        For each story S in {{story_map}} where S.status == "in-progress":
+          Option A (clean worktree): if S's worktree is clean or abandonable, reset S's status to "ready-for-dev"
+            via `momentum-tools sprint status-transition --story {S.slug} --target ready-for-dev`
+            and admit S to the frontier on the pass below.
+          Option B (dirty worktree): record S in {{build_log}} with outcome: "stranded",
+            reason: "in-progress on resume — worktree not clean" and note dependency on
+            spec §6 reconcile-on-start (owned by conduct-merge-and-conflict-resolution).
+            Do NOT add S to {{frontier}}; it must be handled by the reconcile-on-start handler.
+        Note: stories at in-progress from a prior run must not be silently abandoned — they need
+        an explicit reconcile decision, not a silent fall-through.
+      </action>
+
       <action>Compute initial frontier: for each story S in {{story_map}}:
         if S.status == "ready-for-dev"
            AND every slug in S.depends_on is in {{merged}} (status >= review):
@@ -161,7 +174,9 @@ Ready to begin?</output>
 
       <note>This step is the event-driven loop of the build phase. The Conductor receives terminal signals from running pipelines. Each signal triggers a specific reaction. No human input is needed to advance between stories on the routine path — the loop runs autonomously until the frontier is exhausted and all pipelines have terminated.</note>
 
-      <note>Terminal signals: a per-story pipeline emits exactly one of: { slug, outcome: "merged", leftover_findings: [...], escalations: [...] } OR { slug, outcome: "failed", reason: "...", retry_count: int }. The Conductor reacts to each signal as it arrives from any running pipeline.</note>
+      <note>Terminal signals: a per-story pipeline emits exactly one of: { slug, outcome: "merged", leftover_findings: [...], escalations: [...] } OR { slug, outcome: "failed", reason: "...", retry_count: int, escalations: [...] }. The Conductor reacts to each signal as it arrives from any running pipeline.
+
+Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, failed. "blocked" is NOT a pipeline-emitted signal; it is a Conductor-assigned categorization applied after retries are exhausted or a dependency becomes unsatisfiable (see exhausted-retries and completion-sweep branches below). The two-signal model here is intentionally reconciled with spec §3's three-term list: pipelines emit only merged or failed; the Conductor derives blocked from failed exhaustion and dep-unsatisfiable outcomes.</note>
 
       <!-- ── Signal: merged ──────────────────────────────────── -->
       <check if="terminal signal received with outcome == 'merged' for story S">
@@ -179,7 +194,7 @@ Ready to begin?</output>
             While S's branch is paused: other stories in {{running}} and any newly-unblocked stories continue unaffected.
             Pausing one branch does NOT halt the rest of the build phase.
           </action>
-          <note>After the pause is resolved (developer responds via step 2.F), the hook returns a resolution outcome. Continue with the merge and frontier re-evaluation for S using that resolution.</note>
+          <note>After the pause is resolved (developer responds via step 2.F), the hook returns "continue" (Continue and Dismiss both resume the branch) or terminates the run (Halt). There is no richer resolution-outcome object — "continue" is the only return value that resumes the branch. The merge and frontier re-evaluation for S proceed on "continue".</note>
         </check>
 
         <check if="hook returns 'continue' OR hook resolution completes">
@@ -222,6 +237,16 @@ Ready to begin?</output>
 
         <note>Bounded retry: default retry bound is 2 (the pipeline may retry internally; this is the Conductor-level retry on top). On retry, the Conductor re-launches the pipeline for S. On exhausted retries, the Conductor marks S blocked and CONTINUES — it never halts the build phase for a single story's failure. The rest of the frontier and all running pipelines are unaffected.</note>
 
+        <!-- Consumption hook on failed: invoked BEFORE the retry/block decision -->
+        <!-- A build-invalidating finding is the class most likely to surface via a failed outcome. -->
+        <!-- Without this hook invocation, build-invalidating escalations would bypass mid-flight escalation entirely. -->
+        <action>If S.escalations is non-empty: invoke consumption hook (step 2.F) with S.escalations before the retry/block decision.
+          The hook's pause-branch vs. continue outcome takes effect here identically to the merged path:
+          — "pause-branch": pause this branch and surface the mid-flight escalation to the developer before retrying or marking blocked.
+          — "continue": proceed to the retry/block decision below.
+          If S.escalations is empty: skip the hook and proceed directly to the retry/block decision.
+        </action>
+
         <action>Increment {{retries}}[S.slug] (initialize to 0 if absent).</action>
 
         <check if="{{retries}}[S.slug] less than 2">
@@ -234,7 +259,8 @@ Ready to begin?</output>
           <action>Exhausted retries. Mark S blocked:
             Add S.slug to {{blocked}}.
             Remove S.slug from {{running}}.
-            `momentum-tools sprint status-transition --story {S.slug} --target blocked` (or nearest available state).
+            `momentum-tools sprint status-transition --story {S.slug} --target closed-incomplete`
+            Note: "blocked" is Conductor in-memory state ({{blocked}} array). The durable story status is "closed-incomplete" — "blocked" is not a valid state in the tool's state machine. If the intent is only in-memory tracking and no durable state transition is needed, omit this command; if a durable terminal state is required, "dropped" is the alternative valid choice.
             Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "blocked", reason: S.reason, retry_count: {{retries}}[S.slug] }.
             CONTINUE. Do not halt the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
           </action>
@@ -246,7 +272,9 @@ Ready to begin?</output>
       <check if="{{running}} is empty AND {{frontier}} is empty">
         <action>All pipelines have terminated. Build phase heartbeat ends.
           For any remaining stories in {{story_map}} that are still in "ready-for-dev" state with unsatisfiable depends_on:
-            Mark them blocked; append to {{build_log}} with outcome: "blocked", reason: "dependency never reached >= review".
+            Add to {{blocked}}; transition to "closed-incomplete" via `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`; append to {{build_log}} with outcome: "blocked", reason: "dependency never reached >= review".
+          For any story in {{story_map}} still in "in-progress" not handled by step 2.0 reconcile:
+            Record in {{build_log}} with outcome: "stranded"; defer to spec §6 reconcile-on-start handler.
           Proceed to Phase 3 (AVFL-on-merge).
         </action>
       </check>
@@ -308,8 +336,10 @@ Recommended action: {{finding.suggested_fix}}
 
         <check if="Continue">
           <action>Spawn a fix subagent scoped to the finding (individual-agent, not TeamCreate). The subagent produces output only. The Conductor (not the subagent) commits the fix.</action>
-          <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "fixed", finding_summary: {{finding.summary}} }.</action>
-          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, escalation_reason, disposition: "fixed" }.</action>
+          <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "escalated", resolution: "fix-applied", finding_summary: {{finding.summary}} }.
+            Note: disposition is "escalated" (not "fixed") because this finding was raised mid-flight to the developer — it is stakes-class and was not silently auto-fixed. "fixed" is reserved for routine findings on the always-auto-fix path inside the pipeline. "resolution: fix-applied" records how the escalated finding was resolved.
+          </action>
+          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, escalation_reason, disposition: "escalated", resolution: "fix-applied" }.</action>
           <action>Return "continue" to step 2.2 (the merge and frontier re-evaluation for S proceed).</action>
         </check>
 
