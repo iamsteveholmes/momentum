@@ -13,7 +13,7 @@ depends_on:
   - code-review-adapter-normalize-triage
 touches:
   - skills/momentum/skills/code-reviewer/SKILL.md
-  - commands/code-reviewer.md
+  - skills/momentum/commands/code-reviewer.md
 ---
 
 # Code-review adapter: retire the in-house stub and repoint the command
@@ -58,7 +58,7 @@ Source decisions: DEC-035 (adopt conduct; single human end-gate; report organize
 
 ## Dev Notes
 
-This is a skill-instruction change verified by skill-invoke. The two files touched are the in-house stub skill (`skills/momentum/skills/code-reviewer/SKILL.md`) and the command shim (`commands/code-reviewer.md`). The work is intentionally small: delete the stub's placeholder reviewer body and repoint the command at the adapter.
+This is a skill-instruction change verified by skill-invoke. The two files touched are the in-house stub skill (`skills/momentum/skills/code-reviewer/SKILL.md`) and the command shim (`skills/momentum/commands/code-reviewer.md`). The work is intentionally small: delete the stub's placeholder reviewer body and repoint the command at the adapter.
 
 Dependency ordering matters. This story is `depends_on` two predecessors:
 - `code-review-adapter-noninteractive-driver` — makes the `bmad-code-review` adapter run without interactive prompting, which is what lets the command drive it autonomously inside the Conductor's build phase.
