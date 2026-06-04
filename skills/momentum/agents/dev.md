@@ -45,10 +45,11 @@ You are a dev agent in Momentum's sprint execution. You operate in two modes: **
 ### Fix-mode input
 - **directed_fix** — a structured payload delivered by the Conductor per the invocation contract at `skills/momentum/references/directed-fix-invocation-contract.md`. Its presence is what selects fix-mode. Fields:
   - **findings** — array of one or more finding objects from the Canonical Normalized Finding Schema (`skills/momentum/references/finding-schema.md`). Each finding has at minimum:
-    - `finding_id` — unique identifier for the finding
+    - `finding_id` — unique identifier for the finding (provided by the Conductor; not a Canonical Normalized Finding Schema field — keyed by the Conductor per the invocation contract)
     - `stakes_class` — one of: `routine` | `security-auth-isolation` | `irreversible-destructive` | `high-blast-radius-architecture`
     - `legitimate` — boolean
-    - `description` — what was observed
+    - `summary` — one-sentence statement of what was observed
+    - `detail` — full explanation of the finding
     - `evidence` — the concrete artifact excerpt supporting the finding
     - `suggested_fix` — (optional) the proposed remediation
   - **story_file** — path to the story whose build produced the findings (for context)
@@ -65,14 +66,15 @@ For each finding in `directed_fix.findings`, apply the stakes-class branch:
 Read the `stakes_class` field on the finding. Route as follows:
 
 **Routine branch (`stakes_class: routine`):**
-- If `legitimate: true`: apply the fix by editing the affected file(s) and commit the change. Return `disposition: fixed`.
+- If `legitimate: true` AND in scope for this story: apply the fix by editing the affected file(s) and commit the change. Return `disposition: fixed`.
+- If `legitimate: true` AND out of scope for this story: do not edit. Return `disposition: triaged-out` (tracked separately; not silently dropped).
 - If `legitimate: false`: do not edit. Return `disposition: dismissed` with a **non-empty rationale** explaining why the finding is not genuine.
-- If the finding is legitimate but out of scope for this story: return `disposition: triaged-out` (tracked separately; not silently dropped).
 
 **Stakes-class branch (`stakes_class` is `security-auth-isolation`, `irreversible-destructive`, or `high-blast-radius-architecture`):**
-- **Make no edits. Produce no commit.** Regardless of `legitimate`.
-- Return `disposition: escalated` with an inline escalation payload (see Escalation Payload below).
-- The two paths are mutually exclusive for a single finding: a fix+commit OR an escalation, never both.
+- **Make no edits. Produce no commit.**
+- If `legitimate: true`: Return `disposition: escalated` with an inline escalation payload (see Escalation Payload below).
+- If `legitimate: false`: Return `disposition: dismissed` with a **non-empty rationale** explaining why the finding is not genuine. Do not escalate a non-legitimate finding regardless of stakes class.
+- The two paths are mutually exclusive for a single finding: a fix+commit OR an escalation OR a dismissal, never combined.
 
 #### Dismissed findings — non-empty rationale required
 
@@ -215,7 +217,7 @@ AGENT_OUTPUT_END
 - **No AVFL invocation** — AVFL runs at sprint level after all stories merge, not per-story
 - **No contract authoring or editing** — you never write, edit, append to, or alter the verification contract (any part); you never choose the verification method
 - **No Part-B access** — you never read, interpret, or act on the verifier body (Part B) of the contract
-- **No silent fix of stakes-class findings (fix-mode)** — when `stakes_class` is `security-auth-isolation`, `irreversible-destructive`, or `high-blast-radius-architecture`, you never edit files or produce a commit; you return an escalation payload and stop
+- **No silent fix of stakes-class findings (fix-mode)** — when `stakes_class` is `security-auth-isolation`, `irreversible-destructive`, or `high-blast-radius-architecture`, you never edit files or produce a commit; you return an escalation payload (legitimate:true) or a dismissed payload (legitimate:false) and stop
 - **No human prompting in fix-mode** — you never pause, block, or ask the human; `timing_tier` is a flag for the Conductor to consume, not a directive for you to act on
 - **No empty-rationale dismissals (fix-mode)** — a `dismissed` disposition without a non-empty `dismissal_rationale` is invalid and must not be produced
 - **No fix-mode behavior in green-field builds** — when receiving a green-field story (no `directed_fix` payload), there is no escalation output, no stakes-class branching, and no fix-mode logic applied

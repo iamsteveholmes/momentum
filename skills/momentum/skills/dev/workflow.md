@@ -14,7 +14,7 @@
   <critical>Do not re-implement bmad-dev-story logic. Delegate all green-field implementation to that skill.</critical>
   <critical>The verification contract is a two-part file at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. Dev reads only the Part-A header (the `# === VERIFICATION HEADER` YAML block) as a self-check. Dev never reads the verifier body (Part B: scenarios, assertion scripts, Gherkin, etc.) beyond sections explicitly referenced by `how_dev_self_checks`. Dev never writes, edits, appends to, or alters any part of the contract. Dev never chooses the verification method — it is given in Part A. Stakes classification and mid-flight escalation do not change this read surface; dev reads only Part A regardless of any stakes class or disposition active elsewhere in the flow.</critical>
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum:create-story. Offer to run the injection step manually before proceeding.</critical>
-  <critical>Fix-mode stakes-class branch is mutually exclusive: a finding receives EITHER a fix+commit OR an escalation payload — never both. For stakes-class findings (security-auth-isolation, irreversible-destructive, high-blast-radius-architecture), make zero edits and produce zero commits regardless of the `legitimate` flag.</critical>
+  <critical>Fix-mode disposition outcomes are mutually exclusive: a finding receives exactly ONE of fixed, dismissed, triaged-out, or escalated — never combined. For stakes-class findings (security-auth-isolation, irreversible-destructive, high-blast-radius-architecture), make zero edits and produce zero commits. Route on legitimate: legitimate:true → escalated (with inline payload); legitimate:false → dismissed (with non-empty rationale). A non-legitimate stakes-class finding is dismissed, never escalated.</critical>
   <critical>Fix-mode dismissed disposition always requires a non-empty dismissal_rationale. An empty or missing rationale is invalid and must not be produced.</critical>
   <critical>Fix-mode does not pause, block, or prompt the human. Emitting the timing_tier flag is the full extent of routing output. The Conductor owns the pause decision.</critical>
 
@@ -43,18 +43,27 @@
 
     <check if="finding.stakes_class is 'security-auth-isolation', 'irreversible-destructive', or 'high-blast-radius-architecture'">
       <action>STAKES-CLASS PATH: Make NO edits to any file. Produce NO commit.</action>
-      <action>Build the escalation payload inline:
-        - **what**: state clearly what issue was detected and where (from finding.description and finding.evidence)
-        - **why**: explain why this finding is stakes-class and what the consequences of mis-handling are; name the specific stakes_class
-        - **evidence**: include the concrete artifact excerpt from finding.evidence that substantiates the finding
-        - **timing_tier**: assign `end-gate-expanded` by default; assign `mid-flight` ONLY if the finding is both irreversible-and-imminent (about to execute now, cannot be undone) OR build-invalidating (continuing would compound an invalid build state). Do not widen this bar — urgency alone or stakes class alone is insufficient for mid-flight.
-      </action>
-      <action>Append to {{disposition_map}}: { finding_id, disposition: "escalated", files_changed: [], dismissal_rationale: null, escalation: { what, why, evidence, timing_tier } }</action>
-      <note>This path applies regardless of finding.legitimate. The stakes class, not the legitimate flag, triggers escalation.</note>
+
+      <check if="finding.legitimate is true">
+        <action>Build the escalation payload inline:
+          - **what**: state clearly what issue was detected and where (from finding.summary, finding.detail, and finding.evidence)
+          - **why**: explain why this finding is stakes-class and what the consequences of mis-handling are; name the specific stakes_class
+          - **evidence**: include the concrete artifact excerpt from finding.evidence that substantiates the finding
+          - **timing_tier**: assign `end-gate-expanded` by default; assign `mid-flight` ONLY if the finding is both irreversible-and-imminent (about to execute now, cannot be undone) OR build-invalidating (continuing would compound an invalid build state). Do not widen this bar — urgency alone or stakes class alone is insufficient for mid-flight.
+        </action>
+        <action>Append to {{disposition_map}}: { finding_id, disposition: "escalated", files_changed: [], dismissal_rationale: null, escalation: { what, why, evidence, timing_tier } }</action>
+      </check>
+
+      <check if="finding.legitimate is false">
+        <action>DISMISSED PATH (stakes-class false positive): Do not edit any file. Compose a non-empty dismissal_rationale explaining specifically why this finding is not genuine despite its stakes-class label (false positive, misidentified scope, pre-existing known issue, etc.). An empty or missing rationale is invalid — do not produce one.</action>
+        <action>Append to {{disposition_map}}: { finding_id, disposition: "dismissed", files_changed: [], dismissal_rationale: "{{non-empty explanation}}", escalation: null }</action>
+      </check>
+
+      <note>Escalation requires legitimate:true. A non-legitimate finding is dismissed even when stakes_class is non-routine — schema Rule 3 states non-legitimate findings are never escalated.</note>
     </check>
 
-    <check if="finding.stakes_class is 'routine' AND finding.legitimate is true">
-      <action>ROUTINE FIX PATH: Apply the fix by editing the affected file(s) per finding.suggested_fix (or derive the fix from finding.description and finding.evidence if no suggested_fix is provided).</action>
+    <check if="finding.stakes_class is 'routine' AND finding.legitimate is true AND finding is in scope for this story">
+      <action>ROUTINE FIX PATH: Apply the fix by editing the affected file(s) per finding.suggested_fix (or derive the fix from finding.summary, finding.detail, and finding.evidence if no suggested_fix is provided).</action>
       <action>Commit the change with a conventional commit message. Stage only the files changed by this fix — never git add -A.</action>
       <action>Capture {{files_fixed}} = list of files edited and committed.</action>
       <action>Append to {{disposition_map}}: { finding_id, disposition: "fixed", files_changed: [{{files_fixed}}], dismissal_rationale: null, escalation: null }</action>
