@@ -60,9 +60,9 @@ Let bmad-dev-story drive the implementation. Do not duplicate its logic.
 
 Before signaling done, attempt to locate the story's verification contract at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. If a contract file exists and contains a Part-A header (the YAML block beginning with `# === VERIFICATION HEADER`):
 
-- Read the `how_dev_self_checks` prompt and the observable clauses in the header
-- Hold those clauses as your acceptance target alongside the story's plain-English ACs
-- Self-check your implementation against them; confirm each clause is satisfied
+- Read the `how_dev_self_checks` prompt (the only self-check surface Part A carries)
+- Hold this prompt as your acceptance target alongside the story's plain-English ACs
+- Self-check your implementation against the prompt; confirm the implementation satisfies it
 - Note in your completion signal that the Part-A self-check was performed
 
 This self-check is in **addition** to the story's ACs — not a substitute. If no contract file or no Part-A header is found, skip this step and proceed to commit; the absence of Part A does not block completion.
@@ -97,7 +97,7 @@ AGENT_OUTPUT_END
 ```
 
 `part_a_self_check` values:
-- `"performed"` — a Part-A header was found, self-check ran, all observable clauses verified
+- `"performed"` — a Part-A header was found, self-check ran against `how_dev_self_checks` prompt, implementation verified
 - `"skipped-no-contract"` — no contract file or no Part-A header found; completed against story ACs
 
 If implementation fails, return:

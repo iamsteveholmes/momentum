@@ -97,7 +97,7 @@
     <output>**Story `{{story_key}}`** marked `in-progress`. Lock file created.</output>
   </step>
 
-  <step n="6" goal="Invoke bmad-dev-story">
+  <step n="6" goal="Invoke bmad-dev-story, self-check against Part-A, then exit worktree">
     <action>Enter the worktree context: use the EnterWorktree tool with path `.worktrees/story-{{story_key}}`. This sets the working directory to the worktree for all subsequent file operations until ExitWorktree is called. All bmad-dev-story file writes will land in the worktree, not the main tree.</action>
 
     <action>Invoke the `bmad-dev-story` skill inside the worktree `.worktrees/story-{{story_key}}`. Pass the story file path ({{story_file}}). bmad-dev-story will read the story's Dev Notes — including the Momentum Implementation Guide section — and implement accordingly.</action>
@@ -109,19 +109,12 @@
       - {{file_list}}: from the story's File List section — files created/modified/deleted
     </action>
 
-    <action>Exit the worktree context: use the ExitWorktree tool. This restores the working directory to the main repo root. All subsequent steps operate on the main tree.</action>
-
-    <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
-    <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_key}}/`, isolated from other sessions.</note>
-  </step>
-
-  <step n="6.5" goal="Self-check against Part-A verification header (if available)">
-    <action>Locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. The contract is at `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.{ext}` (any extension: .eval.yaml, .smoke.sh, .trigger.md, .review.md, .feature).</action>
+    <action>While still inside the worktree context, locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. The contract is at `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.{ext}` (any extension: .eval.yaml, .smoke.sh, .trigger.md, .review.md, .feature).</action>
 
     <check if="contract file exists AND contains a Part-A header (line starting with '# === VERIFICATION HEADER')">
-      <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract `how_dev_self_checks` and any observable clauses listed in the header.</action>
-      <action>Self-check: for each observable clause in the Part-A header, verify that the implementation satisfies it. Hold these clauses as an additional acceptance target alongside the story's plain-English ACs.</action>
-      <output>**Part-A self-check:** Performed. Observable clauses reviewed; implementation satisfies all Part-A header requirements.</output>
+      <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract the `how_dev_self_checks` prompt.</action>
+      <action>Self-check: run the self-check described in `how_dev_self_checks` against the just-built implementation in the worktree. Hold this prompt as an additional acceptance target alongside the story's plain-English ACs.</action>
+      <output>**Part-A self-check:** Performed. `how_dev_self_checks` prompt executed; implementation satisfies all Part-A header requirements.</output>
       <action>Store {{part_a_self_check}} = "performed"</action>
     </check>
 
@@ -131,6 +124,12 @@
     </check>
 
     <note>Dev reads only the Part-A header. Never read the verifier body (Part B: scenarios, assertion scripts, Gherkin). Never write, edit, or alter any part of the contract. Stakes classification and mid-flight escalation do not change this read surface.</note>
+
+    <action>Exit the worktree context: use the ExitWorktree tool. This restores the working directory to the main repo root. All subsequent steps operate on the main tree.</action>
+
+    <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
+    <note>bmad-dev-story runs inside the worktree — all its file writes land in `.worktrees/story-{{story_key}}/`, isolated from other sessions.</note>
+    <note>The Part-A self-check runs inside the worktree context (before ExitWorktree) so it inspects the just-built implementation, not the unmodified main tree.</note>
   </step>
 
   <step n="7" goal="Propose merge and clean up">
