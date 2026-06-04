@@ -299,8 +299,13 @@ Ready to begin?</output>
           launch. Adding it again inside the per-story pipeline would double-gate and create redundant integrity stops.]
 
         2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before verifier dispatch):
-          Invoke step 2.C for story S. Step 2.C reads S's frozen `coverage_disposition` from the assignment
-          and returns one of two routing outcomes:
+          INTEGRITY-STOP GUARD: If step 2.V recorded an integrity stop for S (i.e., S is in {{contract_integrity_stops}}),
+          skip this step entirely — do NOT invoke step 2.C and do NOT dispatch any verifier for S. The integrity-stop
+          semantics from 2.1.4 take precedence: no further verification actions are performed for S in this pipeline
+          iteration. Only proceed when 2.1.4 confirmed the contract is unchanged.
+
+          When the contract is confirmed unchanged: Invoke step 2.C for story S. Step 2.C reads S's frozen
+          `coverage_disposition` from the assignment and returns one of two routing outcomes:
             { outcome: "dedicated-run" }         — perform the dedicated QA verification run during this build phase
             { outcome: "covered-by-composition", integration_scenario: "<scenario-id>" }
                                                  — skip the dedicated build-time run; record the deferral
@@ -435,6 +440,7 @@ Ready to begin?</output>
         </action>
         <note>GUARDRAIL — no second run. Once this routing outcome is returned and the deferral is recorded, the Conductor must NOT perform an additional dedicated verification run for S during the build phase. The deferral is a one-way routing decision for the build phase; it does not prevent the integration scenario from running at AVFL/merge — it ensures the dedicated build-time run does not also run. Double-running wastes effort and can produce contradictory signals.</note>
         <note>STAKES-CLASS BOUNDARY — deferral does not weaken routing. If the integration scenario at AVFL/merge surfaces a stakes-class finding (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture), that finding is still routed out of the silent auto-fix path and rendered in the report by the finding schema and report. The deferral from this build-phase branch does not weaken, suppress, or narrow that routing. The timing/venue changed; the routing rules did not.</note>
+        <note>DOWNSTREAM DISCHARGE — forward reference. The `coverage-disposition-deferred` build_log record and the `covered_by_scenario` field are informational markers that a named integration scenario owns discharge of this story's verification debt. Consumption of this record — actually running the named integration scenario at AVFL/merge and verifying its outcome — is NOT wired in the current Conductor Phase 3 (step 3). Wiring that consumer is owned by a downstream story/spec section (§5 AVFL). Until that downstream story lands, the deferral record is a correct and complete artifact of the build phase; the discharge loop closes in a later sprint increment. This is an intentional incremental gap, not a spec defect in this story's diff.</note>
       </check>
 
     </step>
