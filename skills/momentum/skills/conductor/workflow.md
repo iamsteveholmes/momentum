@@ -484,8 +484,11 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
                 - The story's intent (S.title, S.acceptance_criteria from the story spec)
                 - The sprint integration branch context
               Constraint passed to fixer: "Produce resolution content only. Do not mutate git."
-              The fixer returns resolved file content. The Conductor stages the resolutions, then retries
-              the interrupted step (rebase or merge). Proceed to step 2.2.M.4 (attempt accounting).
+              The fixer returns resolved file content AND annotates the finding with `stakes_class` and
+              `timing_tier` (per directed-fix-finding-schema). Before staging the resolutions, proceed to
+              step 2.2.M.4.E (escalation hook). The hook determines whether to escalate or continue;
+              only after the hook returns "continue" does the Conductor stage and commit the resolution
+              and proceed to step 2.2.M.4 (attempt accounting).
             </action>
           </check>
 
@@ -508,38 +511,54 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
           </check>
 
           <!-- ── 2.2.M.4.E — Escalation hook for semantic resolutions ─────────────── -->
-          <note>ESCALATION HOOK (spec §6, DEC-036 D1). This is the integration point where the stakes-and-timing
-            escalation mechanism is invoked for the merge path. The merge leg calls the engine; the engine decides
-            the bar. The Conductor never classifies stakes or timing itself here.
+          <action>2.2.M.4.E — ESCALATION HOOK (spec §6, DEC-036 D1). Called from the semantic resolution
+            path (step 2.2.M.3) BEFORE the resolution is staged or committed. The merge leg calls the engine;
+            the engine decides the bar. The Conductor never classifies stakes or timing itself here.
 
-            After a semantic conflict is resolved by the directed fixer, before committing the resolution:
-              1. The fixer annotates the resolution with `stakes_class` and `timing_tier` (per directed-fix-finding-schema).
-              2. If the resolution carries a stakes-class finding (security-auth-isolation | irreversible-destructive |
-                 high-blast-radius-architecture) AND timing_tier == mid-flight (irreversible-and-imminent or
-                 build-invalidating), the Conductor invokes step 2.F with that finding before committing.
-              3. The escalation engine (references/escalation.md) evaluates the bar and returns pause-branch or continue.
-              4. If pause-branch: the mid-flight escalation pause-ask surfaces to the developer (step 2.F).
-                 While S's branch is paused, other stories in {{running}} continue unaffected.
-                 After the developer resolves (Proceed / Change / Abort-that-branch), return to the merge path.
-              5. If continue: commit the resolution and proceed to the merge retry.
+            Inputs: the fixer-annotated finding with `stakes_class` and `timing_tier`.
 
             NARROW BAR — must never widen:
-              Escalate ONLY on stakes-class-touching AND timing_tier == mid-flight.
-              A routine semantic resolution (stakes_class == routine, any timing) is auto-resolved-and-continued
-              silently — no escalation, no pause, no developer involvement.
-              A stakes-class resolution with timing_tier == end-gate-expanded is tagged for the end-gate report
-              — no mid-flight pause.
-              Only `irreversible-and-imminent OR build-invalidating` qualifies for mid-flight.
-              The end-gate-expanded tier is the safety net for everything that does not clear the bar.
+              Escalate when the resolution is build-invalidating OR stakes-class-touching
+              (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture).
+              Routine semantic resolutions (stakes_class == routine AND not build-invalidating) are
+              auto-continued silently — no escalation, no pause, no developer involvement.
+              The escalation engine (references/escalation.md) determines whether timing_tier qualifies
+              for mid-flight pause or end-gate-expanded tagging; the Conductor delegates that decision
+              entirely to the engine (step 2.F) and does not re-evaluate it here.
+
+            Execution:
+
+              Step 1: Evaluate the bar.
+                If stakes_class == routine AND resolution is NOT build-invalidating:
+                  CONTINUE — skip steps 2–4; return to 2.2.M.3 to stage and retry.
+                If stakes_class != routine OR resolution is build-invalidating:
+                  Proceed to step 2.
+
+              Step 2: Invoke the escalation engine.
+                Pass the fixer-annotated finding to step 2.F (escalation engine).
+                Step 2.F evaluates timing_tier and returns one of: pause-branch | continue.
+
+              Step 3: Act on the engine's response.
+                If engine returns "continue":
+                  Proceed back to step 2.2.M.3 to stage and commit the resolution, then to 2.2.M.4.
+                If engine returns "pause-branch":
+                  Surface the mid-flight escalation to the developer (step 2.F manages the pause-ask).
+                  While S's branch is paused, other stories in {{running}} continue unaffected.
+                  Wait for the developer's resolution choice:
+                    - Proceed or Change: stage and commit the resolution, then proceed to step 2.2.M.4.
+                    - Abort-that-branch: step 2.F has already removed S from {{running}} and set the
+                      story to closed-incomplete. Do NOT stage, commit, or continue the merge for S.
+                      Fall through directly to frontier re-evaluation (step 2.2's frontier block),
+                      bypassing step 2.2.M.4 and 2.2.M.6 entirely for this story.
 
             TERMINAL SPRINT→MAIN MERGE SCOPE-OUT:
-              This escalation hook applies ONLY to per-story merge operations (story/* → sprint/*).
-              The terminal sprint→main merge in Phase 5 is already inside the developer-gated end-gate APPROVE
+              This hook applies ONLY to per-story merge operations (story/* → sprint/*).
+              The terminal sprint→main merge in Phase 5 is inside the developer-gated end-gate APPROVE
               sequence and is NOT a mid-flight trigger. Do not invoke this hook for the terminal merge.
 
             DISPOSITION: Any finding raised through this hook is recorded with disposition `escalated`
               (distinct from `fixed`, `dismissed`, and `triaged-out`). See step 2.2.M.6.
-          </note>
+          </action>
 
           <!-- ── 2.2.M.5 — Quarantine (after 3 failed attempts) ───────────────────── -->
           <note>QUARANTINE-NOT-HALT. A story that cannot be merged after 3 attempts is quarantined. Quarantine
@@ -559,11 +578,12 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
             3. Remove S.slug from {{running}}. Do NOT transition to a terminal story status here —
                the story remains at its current status; the quarantine record in {{build_log}} is the
                durable signal. The end-gate report surfaces the quarantine to the developer.
-            4. CONTINUE. Do not halt the build phase. Other stories in {{running}} and {{frontier}}
-               are entirely unaffected. The frontier re-evaluation (below) proceeds for all other stories.
-               A quarantined story is NOT treated as merged — its slug is NOT added to {{merged}} — so
-               any stories that depend_on S will never satisfy the >= review gate for S and will be
-               swept into blocked at build-phase completion.
+            4. TERMINATE this story's integration. Do not halt the build phase. Other stories in
+               {{running}} and {{frontier}} are entirely unaffected. A quarantined story is NOT treated
+               as merged — its slug is NOT added to {{merged}} — so any stories that depend_on S will
+               never satisfy the >= review gate for S and will be swept into blocked at build-phase
+               completion. Step 2.2.M.6 (successful integration) does NOT apply to a quarantined story;
+               jump directly to the frontier re-evaluation block below.
           </action>
 
           <note>Quarantine records and escalation records ({{escalations}}) are separate collections.
@@ -572,6 +592,8 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
           </note>
 
           <!-- ── 2.2.M.6 — Successful integration path ───────────────────────────── -->
+          <!-- Reached ONLY via the explicit "Proceed to step 2.2.M.6" from a clean merge (line 440)     -->
+          <!-- or from a successful retry after conflict resolution. Never reached from quarantine (2.2.M.5). -->
           <action>2.2.M.6 — SUCCESSFUL INTEGRATION (reached after a clean rebase-then-merge, with or without
             prior conflict resolution):
 
