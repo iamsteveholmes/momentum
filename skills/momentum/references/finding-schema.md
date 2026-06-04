@@ -13,9 +13,9 @@ Every finding carries all of the following fields.
 | Field | Type | Meaning |
 |---|---|---|
 | `story_slug` | string | The slug of the story the finding is against. Ties the finding to a specific unit of work. |
-| `source` | string | Which reviewer produced the finding — e.g. `code-review`, `avfl`, `qa-reviewer`. |
-| `verdict` | string | The reviewer's raw verdict on this issue — e.g. `fail`, `warning`, `nitpick`. Distinct from `disposition` (disposition is what happens to the finding; verdict is what the reviewer assessed). |
-| `severity` | string | The reviewer's severity assessment: `critical`, `major`, `minor`, or `nitpick`. Orthogonal to `stakes_class` — see below. |
+| `source` | string | Which reviewer produced the finding — e.g. `bmad-code-review`, `avfl`, `qa-reviewer`, `architecture-guard`, `e2e-validator`, `simplify`. Open string; listed values are non-exhaustive examples. |
+| `verdict` | string | The reviewer's raw verdict on this issue — e.g. `PASS`, `FAIL`, `BLOCKED`. Distinct from `disposition` (disposition is what happens to the finding; verdict is what the reviewer assessed). Open string; listed values are non-exhaustive examples. |
+| `severity` | string | The reviewer's severity assessment — e.g. `blocker`, `critical`, `major`, `minor`, `low`. Orthogonal to `stakes_class` — see below. Open string; listed values are non-exhaustive examples. |
 | `type` | string | Category of issue — e.g. `correctness`, `security`, `spec-compliance`, `style`, `test-coverage`. |
 | `location` | string | Where in the artifact the issue appears — file path, line range, function name, or step reference. |
 | `summary` | string | One-sentence plain-English description of the problem. Used in collapsed views and report headers. |
@@ -100,9 +100,13 @@ When `legitimate` is `true` and `stakes_class` is one of `security-auth-isolatio
 
 This rule is the relaxation of DEC-035's absolutism ("legitimate issues are *always* fixed automatically"). The relaxation is narrow: only stakes-class findings leave the silent auto-fix path. Routine findings remain always auto-fixed.
 
-**Rule 3 — Non-legitimate findings are dismissed or triaged-out.**
+**Rule 3 — Non-legitimate findings are dismissed.**
 
-When `legitimate` is `false`, the fixer sets `disposition` to `dismissed` (with a non-empty rationale) or `triaged-out`. Non-legitimate findings are never fixed or escalated.
+When `legitimate` is `false`, the fixer sets `disposition` to `dismissed` with a non-empty rationale. Non-legitimate findings are never fixed, triaged-out, or escalated.
+
+**Rule 4 — Legitimate but out-of-scope findings are triaged-out.**
+
+When `legitimate` is `true` but the finding is out of scope for this story (e.g., it belongs to a different component or requires work tracked separately), the fixer sets `disposition` to `triaged-out` and spins a backlog stub via momentum:triage. Triaged-out findings appear in the report's out-of-scope section; they are not silently dropped.
 
 ### Severity and Stakes Class Are Independent Axes
 
@@ -143,9 +147,9 @@ The end-gate-expanded tier is the safety net. When in doubt, the finding belongs
 ```yaml
 # Required base fields
 story_slug: string
-source: string                        # code-review | avfl | qa-reviewer
-verdict: string                       # reviewer's raw verdict
-severity: critical | major | minor | nitpick
+source: string                        # bmad-code-review | avfl | qa-reviewer | architecture-guard | e2e-validator | simplify | ... (open string)
+verdict: string                       # PASS | FAIL | BLOCKED | ... (open string; reviewer's raw verdict)
+severity: string                      # blocker | critical | major | minor | low | ... (open string)
 stakes_class: security-auth-isolation | irreversible-destructive | high-blast-radius-architecture | routine
 type: string                          # correctness | security | spec-compliance | style | test-coverage | ...
 location: string
