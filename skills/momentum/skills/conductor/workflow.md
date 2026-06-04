@@ -103,6 +103,14 @@ Ready to begin?</output>
         {{build_log}}   = []    — per-story pipeline outcomes for the end-gate report
       </action>
 
+      <action>Seed {{merged}} from current story statuses to support partial-run resume:
+        For each story S in {{story_map}}:
+          if S.status is "review" OR S.status is "done":
+            add S.slug to {{merged}}
+        This ensures dependents of already-merged blockers can satisfy the >= review gate on resume.
+        Note: on a fresh run {{merged}} starts empty (no stories yet at review/done), which is correct.
+      </action>
+
       <action>Compute initial frontier: for each story S in {{story_map}}:
         if S.status == "ready-for-dev"
            AND every slug in S.depends_on is in {{merged}} (status >= review):
@@ -176,25 +184,17 @@ Ready to begin?</output>
 
         <check if="hook returns 'continue' OR hook resolution completes">
           <action>Complete the merge for story S:
-            2.2.M.1 — Rebase story branch onto sprint branch:
-              `git rebase sprint/{{sprint_slug}} story/{S.slug}`
-              Conflict → Conductor resolves autonomously or fires a fixer subagent; retry rebase.
-              Never HALT for developer resolution on a routine merge conflict.
-              (Full conflict-resolution engine delivered by conduct-merge-and-conflict-resolution.)
+            [HOLLOW: per-story rebase-then-merge, conflict-resolution, worktree/branch cleanup, and quarantine machinery
+             are owned by conduct-merge-and-conflict-resolution (spec §6 — the single-git-writer locus for per-story
+             integration). That story depends_on this one and will fill this block. The Conductor is the sole
+             git-mutation authority; the story branch and worktree must exist as a precondition for these git ops —
+             their creation contract is defined by the per-story pipeline stories (downstream). Do not add merge
+             implementation details here until conduct-merge-and-conflict-resolution lands.]
 
-            2.2.M.2 — Merge to sprint branch:
-              `git checkout sprint/{{sprint_slug}}`
-              `git merge --no-ff story/{S.slug}`
-              Conflict/failure → resolve + retry; persistent failure → mark S blocked (see 'failed' signal).
-
-            2.2.M.3 — Transition story to review:
+            2.2.M.1 — Transition story to review after successful merge:
               `momentum-tools sprint status-transition --story {S.slug} --target review`
 
-            2.2.M.4 — Remove worktree and branch (per-story cleanup):
-              `git worktree remove --force .worktrees/story-{S.slug}`
-              `git branch -d story/{S.slug}`
-
-            2.2.M.5 — Record outcome:
+            2.2.M.2 — Record outcome:
               Add S.slug to {{merged}}.
               Remove S.slug from {{running}}.
               Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "merged", findings_summary: S.leftover_findings }.
@@ -238,7 +238,7 @@ Ready to begin?</output>
             Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "blocked", reason: S.reason, retry_count: {{retries}}[S.slug] }.
             CONTINUE. Do not halt the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
           </action>
-          <note>A blocked story does not propagate to its dependents automatically — dependents whose depends_on includes S.slug can never satisfy the >= review gate for S. They will also be marked blocked when the frontier finds them unsatisfiable at build end.</note>
+          <note>A blocked story does not propagate to its dependents automatically. Dependents whose depends_on includes S.slug remain in "ready-for-dev" — they can never satisfy the >= review gate for S, so they are never added to the frontier and never launched. At build end, the completion check (below) sweeps all remaining ready-for-dev stories with unsatisfiable depends_on and marks them blocked. The end-of-build sweep is the single mechanism that marks stranded dependents blocked.</note>
         </check>
       </check>
 
