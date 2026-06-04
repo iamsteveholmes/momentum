@@ -222,7 +222,8 @@ Ready to begin?</output>
         {{running}}     = {}    — { slug: pipeline_handle } for in-flight stories
         {{merged}}      = []    — stories that have reached status >= review on the sprint branch
         {{blocked}}     = []    — stories that exhausted retries or have an unsatisfiable dependency
-        {{retries}}     = {}    — { slug: int } per-story retry counter
+        {{retries}}     = {}    — { slug: int } per-story retry counter (pipeline-level; distinct from merge_attempts)
+        {{merge_attempts}}           = {}    — { slug: int } per-story rebase-then-merge attempt counter (bound: 3); owned by step 2.2.M
         {{escalations}}              = []    — mid-flight escalation records (stakes-class, strict bar only)
         {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
         {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
@@ -395,28 +396,200 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
         </check>
 
         <check if="hook returns 'continue' OR hook resolution completes">
-          <action>Complete the merge for story S:
-            [HOLLOW: per-story rebase-then-merge, conflict-resolution, worktree/branch cleanup, and quarantine machinery
-             are owned by conduct-merge-and-conflict-resolution (spec §6 — the single-git-writer locus for per-story
-             integration). That story depends_on this one and will fill this block. The Conductor is the sole
-             git-mutation authority; the story branch and worktree must exist as a precondition for these git ops —
-             their creation contract is defined by the per-story pipeline stories (downstream). Do not add merge
-             implementation details here until conduct-merge-and-conflict-resolution lands.
+          <!-- ═══════════════════════════════════════════════════════════════════════ -->
+          <!-- STEP 2.2.M — PER-STORY INTEGRATION: REBASE → MERGE → CONFLICT PATH    -->
+          <!-- Conductor is the sole git-mutation authority for all operations below. -->
+          <!-- The directed fixer produces content only; the Conductor commits it.    -->
+          <!-- Terminal sprint→main merge is NOT handled here — it belongs in Phase 5 -->
+          <!-- and is already gated by the developer-approved end-gate APPROVE seq.   -->
+          <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-             ESCALATION CONTRACT (binding on conduct-merge-and-conflict-resolution): The merge leg must route all
-             mid-flight escalation decisions through the escalation engine at step 2.F. It must NOT implement its
-             own bar evaluation or its own pause prompt. Any escalation-qualifying finding encountered during
-             rebase-then-merge or conflict-resolution must be passed to step 2.F. The engine (references/escalation.md)
-             is the shared primitive; the merge leg is a caller, not an owner of the bar.]
+          <!-- ── 2.2.M.0 — Initialize per-story attempt counter ──────────────────── -->
+          <action>Initialize {{merge_attempts}}[S.slug] = 0 (if absent). This counter tracks the total number
+            of rebase-then-merge attempts for story S and is bounded at 3.
+          </action>
 
-            2.2.M.1 — Transition story to review after successful merge:
+          <!-- ── 2.2.M.1 — Rebase step (conflict-guarded) ────────────────────────── -->
+          <action>2.2.M.1 — REBASE: Increment {{merge_attempts}}[S.slug].
+            Rebase the story branch `story/{S.slug}` onto the sprint integration branch `sprint/{{sprint_slug}}`:
+              `git rebase sprint/{{sprint_slug}} story/{S.slug}`
+            This step is conflict-guarded: any conflict surfacing during the rebase is detected here and enters
+            the conflict-classification path (step 2.2.M.3). The Conductor is the sole git writer for this op.
+          </action>
+
+          <check if="rebase completes cleanly (no conflicts)">
+            <action>Proceed to the merge step (2.2.M.2).</action>
+          </check>
+
+          <check if="rebase produces conflicts">
+            <action>Abort the in-progress rebase: `git rebase --abort`
+              Bind {{conflict_files}} to the list of conflicted files.
+              Proceed to conflict classification (step 2.2.M.3).
+            </action>
+          </check>
+
+          <!-- ── 2.2.M.2 — Merge step (conflict-guarded) ─────────────────────────── -->
+          <action>2.2.M.2 — MERGE: Merge the rebased story branch into the sprint integration branch:
+              `git checkout sprint/{{sprint_slug}}`
+              `git merge --no-ff story/{S.slug}`
+            This step is conflict-guarded: any conflict surfacing during the merge is detected here and enters
+            the conflict-classification path (step 2.2.M.3). The Conductor is the sole git writer for this op.
+          </action>
+
+          <check if="merge completes cleanly (no conflicts)">
+            <action>Proceed to the successful-integration path (step 2.2.M.6).</action>
+          </check>
+
+          <check if="merge produces conflicts">
+            <action>Abort the in-progress merge: `git merge --abort`
+              Bind {{conflict_files}} to the list of conflicted files.
+              Proceed to conflict classification (step 2.2.M.3).
+            </action>
+          </check>
+
+          <!-- ── 2.2.M.3 — Conflict classification: trivial vs. semantic ──────────── -->
+          <note>CONFLICT CLASSIFICATION. A conflict is either trivial (mechanically resolvable) or semantic
+            (requires understanding intent). The classification determines whether the Conductor auto-resolves
+            or fires a directed fixer. Only the Conductor performs the actual git operations — the fixer
+            produces resolution content; the Conductor commits it.
+
+            Trivial conflict (auto-resolve, no human involvement):
+              - Non-overlapping hunks — the conflicted regions edit different constructs in the same area
+              - Additive-only collisions — both sides add content (imports, entries) with no removal
+              - Generated index or lockfile churn the Conductor can reconcile deterministically
+                (e.g., package-lock.json, yarn.lock, go.sum, Gemfile.lock)
+              In these cases the resolution is deterministic and requires no intent-understanding.
+
+            Semantic conflict (requires directed fixer):
+              - Overlapping logic — both sides modify the same function, method, or control-flow construct
+              - Contradictory edits to the same named construct (variable, class, schema field, config key)
+              - Any case where choosing one side's edit over the other requires knowing the intended behavior
+              In these cases the Conductor fires a directed fixer to produce a correct resolution.
+          </note>
+
+          <check if="conflict is trivial">
+            <action>AUTO-RESOLVE (trivial):
+              Apply the deterministic resolution without invoking a fixer. The Conductor resolves the conflict
+              directly (non-overlapping hunks: accept both; additive-only: merge both additions; lockfile churn:
+              regenerate deterministically). Stage the resolved files, then retry the interrupted step
+              (rebase or merge) from the point of the conflict. No human involvement. No escalation.
+              Proceed to step 2.2.M.4 (attempt accounting).
+            </action>
+          </check>
+
+          <check if="conflict is semantic">
+            <action>SEMANTIC RESOLUTION via directed fixer:
+              Spawn a directed fixer subagent (individual-agent, NOT TeamCreate) with:
+                - The conflicted file(s) and their conflict markers
+                - The story's intent (S.title, S.acceptance_criteria from the story spec)
+                - The sprint integration branch context
+              Constraint passed to fixer: "Produce resolution content only. Do not mutate git."
+              The fixer returns resolved file content. The Conductor stages the resolutions, then retries
+              the interrupted step (rebase or merge). Proceed to step 2.2.M.4 (attempt accounting).
+            </action>
+          </check>
+
+          <!-- ── 2.2.M.4 — Attempt accounting and bounded-retry gate ───────────────── -->
+          <note>BOUNDED RETRY. Conflict-resolution attempts for a single story are capped at 3. This bound
+            covers the total number of rebase-then-merge attempts, including the initial attempt and any
+            retries after conflict resolution. A story that cannot be integrated after 3 attempts is quarantined
+            (step 2.2.M.5) — it is never retried indefinitely.
+          </note>
+
+          <check if="{{merge_attempts}}[S.slug] less than 3">
+            <action>Retry is allowed. After the directed fixer (or trivial auto-resolve) stages the resolved
+              files, return to step 2.2.M.1 to retry the full rebase-then-merge sequence for story S with
+              {{merge_attempts}}[S.slug] already incremented.
+            </action>
+          </check>
+
+          <check if="{{merge_attempts}}[S.slug] >= 3">
+            <action>Retry bound exhausted. Proceed to quarantine (step 2.2.M.5).</action>
+          </check>
+
+          <!-- ── 2.2.M.4.E — Escalation hook for semantic resolutions ─────────────── -->
+          <note>ESCALATION HOOK (spec §6, DEC-036 D1). This is the integration point where the stakes-and-timing
+            escalation mechanism is invoked for the merge path. The merge leg calls the engine; the engine decides
+            the bar. The Conductor never classifies stakes or timing itself here.
+
+            After a semantic conflict is resolved by the directed fixer, before committing the resolution:
+              1. The fixer annotates the resolution with `stakes_class` and `timing_tier` (per directed-fix-finding-schema).
+              2. If the resolution carries a stakes-class finding (security-auth-isolation | irreversible-destructive |
+                 high-blast-radius-architecture) AND timing_tier == mid-flight (irreversible-and-imminent or
+                 build-invalidating), the Conductor invokes step 2.F with that finding before committing.
+              3. The escalation engine (references/escalation.md) evaluates the bar and returns pause-branch or continue.
+              4. If pause-branch: the mid-flight escalation pause-ask surfaces to the developer (step 2.F).
+                 While S's branch is paused, other stories in {{running}} continue unaffected.
+                 After the developer resolves (Proceed / Change / Abort-that-branch), return to the merge path.
+              5. If continue: commit the resolution and proceed to the merge retry.
+
+            NARROW BAR — must never widen:
+              Escalate ONLY on stakes-class-touching AND timing_tier == mid-flight.
+              A routine semantic resolution (stakes_class == routine, any timing) is auto-resolved-and-continued
+              silently — no escalation, no pause, no developer involvement.
+              A stakes-class resolution with timing_tier == end-gate-expanded is tagged for the end-gate report
+              — no mid-flight pause.
+              Only `irreversible-and-imminent OR build-invalidating` qualifies for mid-flight.
+              The end-gate-expanded tier is the safety net for everything that does not clear the bar.
+
+            TERMINAL SPRINT→MAIN MERGE SCOPE-OUT:
+              This escalation hook applies ONLY to per-story merge operations (story/* → sprint/*).
+              The terminal sprint→main merge in Phase 5 is already inside the developer-gated end-gate APPROVE
+              sequence and is NOT a mid-flight trigger. Do not invoke this hook for the terminal merge.
+
+            DISPOSITION: Any finding raised through this hook is recorded with disposition `escalated`
+              (distinct from `fixed`, `dismissed`, and `triaged-out`). See step 2.2.M.6.
+          </note>
+
+          <!-- ── 2.2.M.5 — Quarantine (after 3 failed attempts) ───────────────────── -->
+          <note>QUARANTINE-NOT-HALT. A story that cannot be merged after 3 attempts is quarantined. Quarantine
+            means: work is preserved (never discarded), conflict detail is recorded, and the rest of the sprint
+            continues. Quarantine is NEVER a HALT. It never pulls the developer in mid-flight. The sprint does
+            not stop. The quarantined story is surfaced at the end-gate.
+          </note>
+
+          <action>2.2.M.5 — QUARANTINE story S:
+            1. Preserve the story branch: `story/{S.slug}` is kept as-is (do NOT delete it).
+               The branch remains accessible for post-sprint inspection or manual resolution.
+            2. Record conflict detail in {{build_log}}:
+               { slug: S.slug, title: S.title, outcome: "quarantined",
+                 reason: "conflict unresolved after 3 attempts",
+                 conflict_files: {{conflict_files}},
+                 merge_attempts: {{merge_attempts}}[S.slug] }
+            3. Remove S.slug from {{running}}. Do NOT transition to a terminal story status here —
+               the story remains at its current status; the quarantine record in {{build_log}} is the
+               durable signal. The end-gate report surfaces the quarantine to the developer.
+            4. CONTINUE. Do not halt the build phase. Other stories in {{running}} and {{frontier}}
+               are entirely unaffected. The frontier re-evaluation (below) proceeds for all other stories.
+               A quarantined story is NOT treated as merged — its slug is NOT added to {{merged}} — so
+               any stories that depend_on S will never satisfy the >= review gate for S and will be
+               swept into blocked at build-phase completion.
+          </action>
+
+          <note>Quarantine records and escalation records ({{escalations}}) are separate collections.
+            A quarantined story produces a quarantine entry in {{build_log}}, not an `escalated` disposition.
+            The `escalated` disposition is produced only by the escalation engine (step 2.F / 2.2.M.4.E).
+          </note>
+
+          <!-- ── 2.2.M.6 — Successful integration path ───────────────────────────── -->
+          <action>2.2.M.6 — SUCCESSFUL INTEGRATION (reached after a clean rebase-then-merge, with or without
+            prior conflict resolution):
+
+            Worktree and branch cleanup:
+              Remove the story worktree: `git worktree remove --force .worktrees/story-{S.slug}`
+              Delete the story branch: `git branch -d story/{S.slug}`
+
+            2.2.M.6.1 — Transition story to review after successful merge:
               `momentum-tools sprint status-transition --story {S.slug} --target review`
 
-            2.2.M.2 — Record outcome:
+            2.2.M.6.2 — Record outcome:
               Add S.slug to {{merged}}.
               Remove S.slug from {{running}}.
-              Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "merged", findings_summary: S.leftover_findings }.
-              Append any escalation records from the hook to {{escalations}}.
+              Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "merged",
+                findings_summary: S.leftover_findings,
+                escalations: (any escalation records produced during this story's merge path) }.
+              For any escalations produced during the merge path (step 2.2.M.4.E), append each to
+              {{escalations}} with disposition: "escalated".
           </action>
 
           <!-- Frontier re-evaluation: event-driven, triggered by the merge -->
@@ -641,6 +814,11 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       - Stakes-class section (if any): expanded decision cards — one per finding — requiring explicit developer acknowledgment before Approve enables
       - Dismissed / not-actioned section: findings the auto-fix loop dismissed, each with rationale
       - Mid-flight escalations section (if any): findings that were escalated during the build, with disposition recorded
+      - Quarantined stories section (if any): from {{build_log}} entries where outcome == "quarantined";
+        surface as informational — the story branch is preserved and the conflict detail is recorded;
+        these are stories that exhausted the 3-attempt merge bound and could not be integrated this sprint;
+        no developer action is required during the report itself; quarantined stories are surfaced for
+        post-sprint follow-up (create backlog stories or manually resolve the conflict)
       - Contract-integrity-stops section (if any): from {{contract_integrity_stops}} directly (a dedicated collection —
         not filtered from {{escalations}}); surface as informational — no developer action required during the report;
         these are stories that need follow-up because their verification contract fingerprint did not match the
@@ -681,6 +859,14 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 ### Mid-flight Escalations During Build
 {{#each mid_flight_escalations}}
 - Story `{{slug}}`: {{finding_summary}} — Disposition: {{disposition}}
+{{/each}}
+{{/if}}
+
+{{#if quarantined_stories}}
+### Quarantined Stories (Informational)
+<!-- These stories exhausted the 3-attempt per-story merge bound and could not be integrated this sprint. Their work is preserved on the story branch. No developer action is required during the build — this section informs you that these stories need post-sprint follow-up. -->
+{{#each quarantined_stories}}
+- Story `{{slug}}` — {{title}}: could not be merged after {{merge_attempts}} attempts. Conflicted files: {{conflict_files}}. Branch `story/{{slug}}` preserved. Recommend: create a backlog follow-up story or manually resolve the conflict.
 {{/each}}
 {{/if}}
 
