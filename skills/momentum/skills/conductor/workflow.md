@@ -195,7 +195,7 @@ The build will proceed silently through all stories. The next human touchpoint i
 Ready to begin?</output>
 
     <ask>Confirm to start the build.</ask>
-    <note>This is the only ask on the routine path before the end-gate. Once confirmed, the build runs silently through Phase 2, Phase 3, and Phase 4. No developer-facing HALT exists outside this Phase 1, except: (a) the Conductor-facing section-7 freeze guard (internal, developer does not see it) and (b) the developer-facing mid-flight escalation tier for irreversible-and-imminent or build-invalidating findings only (Phase 2, step 2.E). Routine findings are never raised mid-build. There is no resume/cleanup prompt, no per-story confirmation, and no other mid-build questions.</note>
+    <note>This is the only ask on the routine path before the end-gate. Once confirmed, the build runs silently through Phase 2, Phase 3, and Phase 4. No developer-facing HALT exists outside this Phase 1, except: (a) the Conductor-facing section-7 freeze guard (internal, developer does not see it) and (b) the developer-facing mid-flight escalation tier for irreversible-and-imminent or build-invalidating findings only (Phase 2, step 2.F). Routine findings are never raised mid-build. There is no resume/cleanup prompt, no per-story confirmation, and no other mid-build questions.</note>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
@@ -223,8 +223,9 @@ Ready to begin?</output>
         {{merged}}      = []    — stories that have reached status >= review on the sprint branch
         {{blocked}}     = []    — stories that exhausted retries or have an unsatisfiable dependency
         {{retries}}     = {}    — { slug: int } per-story retry counter
-        {{escalations}} = []    — mid-flight escalation records (stakes-class, strict bar only)
-        {{build_log}}   = []    — per-story pipeline outcomes for the end-gate report
+        {{escalations}}              = []    — mid-flight escalation records (stakes-class, strict bar only)
+        {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
+        {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
       </action>
 
       <action>Seed {{merged}} from current story statuses to support partial-run resume:
@@ -285,6 +286,11 @@ Ready to begin?</output>
           Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
           [HOLLOW: per-story pipeline internals — dev spawn, auto-fix loop, per-story quality gate — are specified by downstream conduct stories. Fill the spawn calls and fix loop when those stories land.]
 
+        2.1.4 — CONTRACT-FREEZE GATE (mandatory first action of per-story verification, before any verifier is dispatched):
+          Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
+          skip all further verification actions for S in this pipeline iteration — do NOT dispatch the verifier for S.
+          If step 2.V confirms the contract is unchanged, proceed to verification as normal.
+
         Store pipeline_handle in {{running}}[S.slug].
       </action>
 
@@ -335,17 +341,18 @@ Ready to begin?</output>
                contract_path: {{contract_path}},
                frozen_sha256: {{frozen_sha256}},
                live_sha256: {{live_sha256}} }
-          4. Record an entry in {{escalations}} that identifies story S as contract-integrity-stopped,
+          4. Record an entry in {{contract_integrity_stops}} that identifies story S as integrity-stopped,
              so the end-gate report can surface it to the developer as an informational item:
-             { slug: S.slug, event: "contract-integrity-stop", disposition: null,
-               contract_path: {{contract_path}}, frozen_sha256: {{frozen_sha256}}, live_sha256: {{live_sha256}} }
+             { slug: S.slug, contract_path: {{contract_path}}, frozen_sha256: {{frozen_sha256}}, live_sha256: {{live_sha256}} }
+             Note: {{contract_integrity_stops}} is a dedicated collection initialized at step 2.0 — it is separate from
+             {{escalations}} (which is reserved for stakes-class mid-flight records only, per line 226).
           5. Remove S from {{running}} without transitioning it to "review".
              Mark S in Conductor in-memory state as integrity-stopped (not blocked, not failed).
           6. CONTINUE the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
              The mismatch on one story does not halt the rest of the build.
         </action>
 
-        <note>This is the ONE sanctioned non-developer halt in the verification path. It does not raise a stakes-class escalation. It does not enter the silent auto-fix loop. It is not dismissable with a rationale — there is no disposition to dismiss. It is not a mid-flight escalation eligible for the developer-facing pause (step 2.F). It is the Conductor catching its own integrity violation before it can corrupt a verification result, then continuing the build. The developer sees the mismatch in the end-gate report as an informational note (the integrity-stop entry in {{escalations}}), not as a prompt during the build.</note>
+        <note>This is the ONE sanctioned non-developer halt in the verification path. It does not raise a stakes-class escalation. It does not enter the silent auto-fix loop. It is not dismissable with a rationale — there is no disposition to dismiss. It is not a mid-flight escalation eligible for the developer-facing pause (step 2.F). It is the Conductor catching its own integrity violation before it can corrupt a verification result, then continuing the build. The developer sees the mismatch in the end-gate report as an informational note (the integrity-stop entry in {{contract_integrity_stops}}), not as a prompt during the build.</note>
       </check>
     </step>
 
@@ -606,9 +613,10 @@ Recommended action: {{finding.suggested_fix}}
       - Stakes-class section (if any): expanded decision cards — one per finding — requiring explicit developer acknowledgment before Approve enables
       - Dismissed / not-actioned section: findings the auto-fix loop dismissed, each with rationale
       - Mid-flight escalations section (if any): findings that were escalated during the build, with disposition recorded
-      - Contract-integrity-stops section (if any): from {{escalations}}, filter entries with event == "contract-integrity-stop";
-        surface as informational — no developer action required during the report; these are stories that need follow-up
-        because their verification contract fingerprint did not match the frozen_sha256 recorded at assignment
+      - Contract-integrity-stops section (if any): from {{contract_integrity_stops}} directly (a dedicated collection —
+        not filtered from {{escalations}}); surface as informational — no developer action required during the report;
+        these are stories that need follow-up because their verification contract fingerprint did not match the
+        frozen_sha256 recorded at assignment
       - E2E summary: scenarios passed, failed, blocked
     </action>
 
