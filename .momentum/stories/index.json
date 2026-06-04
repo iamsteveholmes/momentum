@@ -5182,7 +5182,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-repoint-sprint-dev": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Repoint sprint-dev code-review calls to the adapter",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5201,7 +5201,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-repoint-quick-fix": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Repoint quick-fix code-review calls to the adapter",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
