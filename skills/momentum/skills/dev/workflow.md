@@ -112,8 +112,8 @@
     <action>While still inside the worktree context, locate the story's verification contract. Derive the sprint slug from context or read `.momentum/sprints/index.json` to find the active sprint. Look up the story's `verification_method` from the sprint assignment record (`.momentum/sprints/index.json` or the assignment JSON); the extension maps 1:1: eval_yaml→.eval.yaml, smoke_sh→.smoke.sh, trigger_md→.trigger.md, review_md→.review.md, gherkin→.feature. If the verification_method is unavailable, glob `.momentum/sprints/{sprint-slug}/specs/{{story_key}}.*` and take the single matching file (expect 0 or 1 result).</action>
 
     <check if="contract file exists AND contains a Part-A header (line starting with '# === VERIFICATION HEADER')">
-      <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract the `how_dev_self_checks` prompt. Note: `how_dev_self_checks` is Part A's plain-language restatement of the observable acceptance target; the underlying observable clauses live in Part B (off-limits). The prompt conveys the acceptance target without requiring Part-B access.</action>
-      <action>Self-check: execute only the plain-language directives stated in `how_dev_self_checks` against the just-built implementation in the worktree. Hold this prompt as an additional acceptance target alongside the story's plain-English ACs. If the prompt contains any pointer into Part-B internals (e.g., "see scenarios: below"), self-check against the plain-language portion only — never follow such pointers into Part B.</action>
+      <action>Read the Part-A header block only — the YAML front-matter from `# === VERIFICATION HEADER` through the end of the YAML block. Extract the `how_dev_self_checks` prompt. Note: `how_dev_self_checks` is Part A's plain-language restatement of the observable acceptance target. It may explicitly reference observable clauses in the contract body (e.g., "the scenarios below") — those referenced clauses are Part-A-sanctioned and form part of your acceptance target alongside the prompt itself.</action>
+      <action>Self-check: execute the directives in `how_dev_self_checks` against the just-built implementation in the worktree, including any observable clauses the prompt explicitly references in the contract body. Hold the full acceptance target (prompt + any referenced clauses) alongside the story's plain-English ACs. Do not read beyond the sections explicitly referenced — the verifier body as a whole (scenarios not referenced by the prompt, assertion scripts, Gherkin) remains off-limits.</action>
       <output>**Part-A self-check:** Performed. `how_dev_self_checks` prompt executed; implementation satisfies all Part-A header requirements.</output>
       <action>Store {{part_a_self_check}} = "performed"</action>
     </check>
@@ -123,7 +123,7 @@
       <action>Store {{part_a_self_check}} = "skipped-no-contract"</action>
     </check>
 
-    <note>Dev reads only the Part-A header. Never read the verifier body (Part B: scenarios, assertion scripts, Gherkin). Never write, edit, or alter any part of the contract. Stakes classification and mid-flight escalation do not change this read surface.</note>
+    <note>Dev reads the Part-A header and any observable clauses explicitly referenced by `how_dev_self_checks`. Never read the verifier body beyond those referenced sections. Never write, edit, or alter any part of the contract. Stakes classification and mid-flight escalation do not change this read surface.</note>
 
     <action>Exit the worktree context: use the ExitWorktree tool. This restores the working directory to the main repo root. All subsequent steps operate on the main tree.</action>
 

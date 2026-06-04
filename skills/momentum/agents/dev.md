@@ -60,14 +60,14 @@ Let bmad-dev-story drive the implementation. Do not duplicate its logic.
 
 Before signaling done, attempt to locate the story's verification contract at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. If a contract file exists and contains a Part-A header (the YAML block beginning with `# === VERIFICATION HEADER`):
 
-- Read the `how_dev_self_checks` prompt (the only self-check surface Part A carries). This prompt is Part A's plain-language restatement of the observable acceptance target — the underlying observable clauses live in Part B (which you must not read), but `how_dev_self_checks` conveys the acceptance target in terms you can act on without accessing Part B.
-- Hold this prompt as your acceptance target alongside the story's plain-English ACs
-- Self-check your implementation against the plain-language directives in the prompt. Execute only what the prompt states directly; if the prompt contains any pointer into Part B internals (e.g., "see scenarios: below"), self-check against the plain-language portion only — never follow such pointers into Part B.
+- Read the `how_dev_self_checks` prompt. This prompt is Part A's plain-language restatement of the observable acceptance target. It may explicitly reference observable clauses in the contract body (e.g., "the scenarios in `scenarios:` below — run them yourself") — those referenced clauses are Part-A-sanctioned and form part of your acceptance target alongside the prompt.
+- Hold the full acceptance target (prompt + any observable clauses it explicitly references) alongside the story's plain-English ACs
+- Self-check your implementation against this target: execute the prompt's directives and satisfy any observable clauses it explicitly references. Do not read beyond those referenced sections — the verifier body as a whole (scenarios not referenced by the prompt, assertion scripts, Gherkin) remains off-limits.
 - Note in your completion signal that the Part-A self-check was performed
 
 This self-check is in **addition** to the story's ACs — not a substitute. If no contract file or no Part-A header is found, skip this step and proceed to commit; the absence of Part A does not block completion.
 
-**Never read beyond the Part-A header** (`# === VERIFICATION HEADER` block through the YAML front-matter). Do not read, interpret, or act on the verifier body (Part B: `scenarios:`, assertion scripts, Gherkin, etc.).
+**Never read beyond the Part-A header and any sections it explicitly references.** Do not read, interpret, or act on the verifier body (Part B: `scenarios:`, assertion scripts, Gherkin, etc.) beyond what `how_dev_self_checks` explicitly points to.
 
 ### 4. Commit Changes
 
