@@ -284,7 +284,10 @@ Ready to begin?</output>
           Resolve agent via: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
           Spawn the resolved agent with the story file at `.momentum/stories/{S.slug}.md`.
           Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
-          [HOLLOW: per-story pipeline internals — dev spawn, auto-fix loop, per-story quality gate — are specified by downstream conduct stories. Fill the spawn calls and fix loop when those stories land.]
+          [HOLLOW: per-story pipeline stage 1 (dev spawn ordering) and stage 2 (QA + code-review concurrent fan-out) are
+           specified by downstream conduct stories — fill those spawn calls when those stories land.
+           Stage 3 (fix loop — Phase B–D) is implemented in step 2.S3 below and is LIVE. The Conductor invokes step 2.S3
+           after stage-2 reviewers return their findings for story S. See step 2.S3 for the full fix-loop spec.]
 
         2.1.4 — CONTRACT-FREEZE GATE (hooked at story launch — earliest sound point):
           Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
@@ -361,6 +364,143 @@ Ready to begin?</output>
 
         <note>This is the ONE sanctioned non-developer halt in the verification path. It does not raise a stakes-class escalation. It does not enter the silent auto-fix loop. It is not dismissable with a rationale — there is no disposition to dismiss. It is not a mid-flight escalation eligible for the developer-facing pause (step 2.F). It is the Conductor catching its own integrity violation before it can corrupt a verification result, then continuing the build. The developer sees the mismatch in the end-gate report as an informational note (the integrity-stop entry in {{contract_integrity_stops}}), not as a prompt during the build.</note>
       </check>
+    </step>
+
+    <!-- ─────────────────────────────────────────────────────── -->
+    <!-- STEP 2.S3 — Stage-3 fix loop (Phase B–D, per story)     -->
+    <!-- Invoked after stage-2 (QA + code-review) returns        -->
+    <!-- findings for story S. Governs: spec §3 Phase B–D + §4.  -->
+    <!-- ─────────────────────────────────────────────────────── -->
+
+    <step n="2.S3" goal="Stage-3 per-story fix loop — directed fixer with retry-bound-3, escalation routing (DEC-036 D1/D2)">
+
+      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, optionally run /simplify, re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.</note>
+
+      <note>ROUTINE-PATH GUARANTEE (DEC-035 D1, always-on default). Routine findings (stakes_class == routine) are ALWAYS auto-fixed inside this loop with no human gate. The always-auto-fix behavior for routine findings is UNCHANGED and PRESERVED. This is the anti-firehose baseline: the vast majority of findings complete Phase B→D autonomously without any escalation or human contact.</note>
+
+      <note>ESCALATION-PATH GUARD (DEC-036 D2 amendment). A stakes-class finding (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture) is NEVER silently auto-fixed inside this loop. Such a finding is immediately routed to the escalation channel (end-gate-expanded tier by default; mid-flight tier only on the narrow irreversible-and-imminent OR build-invalidating bar). This is the stage-3 leg of the three-place absolute — the guard must be honored here even though the other two legs (schema comment, dev executor) are threaded by their own stories.</note>
+
+      <note>ISOLATION INVARIANT. An escalated finding for one item does NOT stop routine findings on other items from completing their normal fix → re-check → bound-3 cycle. The escalation path is non-destructive to the routine path. Within a single story's findings list, escalated findings exit the retry loop; routine findings continue their fix/re-check cycle to completion regardless.</note>
+
+      <!-- ── Entry: bind findings, initialize per-finding retry state ─── -->
+
+      <action>Bind {{stage2_findings}} = merged findings array from stage-2 (qa-reviewer + bmad-code-review output for story S),
+        deduplicated and severity-sorted (highest severity first).
+        Bind {{fix_attempts}} = {} — per-finding retry counter keyed by finding ID.
+        Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked).
+        Bind {{end_gate_escalations}} = [] — escalated findings routed to end-gate-expanded tier (held for Phase 5).
+        Bind {{mid_flight_candidates}} = [] — escalated findings that will invoke the mid-flight escalation hook (step 2.F).
+      </action>
+
+      <check if="{{stage2_findings}} is empty">
+        <note>No findings from stage-2. Skip the fix loop entirely and proceed to stage-4 (merge). This is the clean path — the story merges immediately after stage-2.</note>
+        <action>Proceed to stage-4 (merge) for story S. Do not invoke the directed fixer.</action>
+      </check>
+
+      <!-- ── Phase B: CONVERGE — directed fixer invocation ──────────── -->
+
+      <action>PHASE B — Invoke the directed fixer (momentum:dev in fix mode) as a subagent (individual-agent, NOT TeamCreate):
+        Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration).
+        Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only."
+        Invocation contract: references/directed-fix-invocation-contract.md.
+        The fixer applies every routine legitimate finding automatically (no prompt), returns escalated disposition for stakes-class findings (not silently fixed), dismissed with non-empty rationale for non-genuine findings, or triaged-out for out-of-scope new work.
+        The Conductor (not the fixer) commits any applied fixes after the fixer returns.
+      </action>
+
+      <!-- ── Route each finding by disposition returned by fixer ───── -->
+
+      <action>For each finding F in the fixer's returned dispositions:
+
+        CASE disposition == "fixed":
+          — Stakes-class guard: VERIFY that F.stakes_class == "routine". If the fixer returns "fixed" for a stakes-class finding (non-routine), treat it as an implementation error — do NOT commit the fix. Log a warning in {{build_log}} and re-classify F as escalated (see escalated path below).
+          — Commit the applied fix to the story worktree .worktrees/story-{S.slug}: `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
+          — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
+
+        CASE disposition == "dismissed":
+          — Validate non-empty rationale: if F.dismissal_rationale is empty or missing, treat as invalid — log error in {{build_log}} and re-present F to the fixer in the next iteration (do not record as dismissed until a rationale is supplied).
+          — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "dismissed", summary: F.summary, dismissal_rationale: F.dismissal_rationale }
+
+        CASE disposition == "triaged-out":
+          — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "triaged-out", summary: F.summary }
+          — The Conductor will route triaged-out findings to momentum:triage at build-phase completion (not inline here — triage is deferred to avoid blocking the fix loop).
+
+        CASE disposition == "escalated":
+          — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "escalated", stakes_class: F.stakes_class, timing_tier: F.timing_tier, summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix }
+          — F is removed from the retry-bound-3 loop IMMEDIATELY. No further fix/re-check attempts will be run against F inside this loop.
+          — Route by timing tier:
+              IF F.timing_tier == "mid-flight":
+                — The finding is irreversible-and-imminent OR build-invalidating (per directed-fix-invocation-contract.md narrow bar).
+                — Append F to {{mid_flight_candidates}}. After all findings are processed, invoke step 2.F for each candidate (see mid-flight dispatch below).
+              ELSE (F.timing_tier == "end-gate-expanded" OR timing_tier not set):
+                — The finding is stakes-class but does NOT meet the mid-flight bar. Route to end-gate-expanded tier (the default and safety net).
+                — Append F to {{end_gate_escalations}}: { finding_id: F.id, stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix }
+                — Record in {{build_log}}: { slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_summary: F.summary }
+                — Continue the fix loop. This escalation does NOT pause the build or stop other findings from completing.
+      </action>
+
+      <!-- ── Optional Phase C: /simplify cleanup pass ─────────────── -->
+
+      <note>PHASE C (/simplify) is an optional post-fixer cleanup pass. It runs AFTER the fixer (Phase B), NEVER concurrently — it mutates the tree and must not double-mutate code the fixer just touched. /simplify is NOT a bug hunter; it applies cleanup only. Its findings, if any, feed back into the next Phase B iteration as routine cleanup findings.</note>
+
+      <!-- ── Mid-flight dispatch for bar-clearing escalations ───────── -->
+
+      <check if="{{mid_flight_candidates}} is non-empty">
+        <note>One or more findings in the current iteration met the narrow mid-flight bar (irreversible-and-imminent OR build-invalidating). These findings are dispatched to the escalation hook (step 2.F) mid-build, before the fix loop continues. Other routine findings on other items continue their fix/re-check cycle unaffected by this pause.</note>
+        <action>For each finding F in {{mid_flight_candidates}} (sequentially — one pause-ask at a time per escalation.md multi-finding contract):
+          Invoke step 2.F with F (the mid-flight escalation consumption hook).
+          Record outcome in {{build_log}}: { slug: S.slug, event: "stage3-mid-flight-escalation", disposition: "escalated", timing_tier: "mid-flight", finding_summary: F.summary }
+          Append to {{escalations}}: { slug: S.slug, stakes_class: F.stakes_class, timing_tier: "mid-flight", disposition: "escalated" }
+        </action>
+      </check>
+
+      <!-- ── Phase D: RE-CHECK gate — loop control ─────────────────── -->
+
+      <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
+        Collect {{remaining_findings}} = findings not yet resolved (status not fixed | dismissed | triaged-out | escalated).
+        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop.
+      </action>
+
+      <check if="{{remaining_findings}} is empty">
+        <note>All findings are resolved (fixed, dismissed, triaged-out, or escalated). The fix loop is clean. Proceed to stage-4 (merge).</note>
+        <action>Proceed to stage-4 (merge) for story S.
+          Emit partial pipeline signal payload (for eventual terminal signal from stage-4):
+            leftover_findings: [] (none remaining)
+            escalations: {{end_gate_escalations}} (held for Phase 5 end-gate; mid-flight escalations already dispatched)
+        </action>
+      </check>
+
+      <check if="{{remaining_findings}} is non-empty">
+
+        <!-- ── Retry-bound-3 enforcement ──────────────────────── -->
+
+        <action>For each finding F in {{remaining_findings}}:
+          Increment {{fix_attempts}}[F.id] (initialize to 0 if absent).
+        </action>
+
+        <check if="any F in {{remaining_findings}} has {{fix_attempts}}[F.id] less than 3">
+          <note>Retry budget available for at least one remaining finding. Loop back to Phase B with the unresolved findings.</note>
+          <action>Return to Phase B (CONVERGE): invoke the directed fixer again with {{remaining_findings}} (the subset still unresolved).
+            Do not pass already-fixed, dismissed, triaged-out, or escalated findings back to the fixer — pass only the genuinely unresolved ones.
+          </action>
+        </check>
+
+        <check if="all F in {{remaining_findings}} have {{fix_attempts}}[F.id] >= 3">
+          <note>Retry budget exhausted for all remaining findings. Mark each exhausted finding BLOCKED. Continue to the next story — do NOT halt the whole build.</note>
+          <action>For each finding F in {{remaining_findings}} (where {{fix_attempts}}[F.id] >= 3):
+            Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "blocked", summary: F.summary, attempts: {{fix_attempts}}[F.id] }
+            Append to {{build_log}}: { slug: S.slug, event: "stage3-finding-blocked", finding_id: F.id, finding_summary: F.summary, attempts: {{fix_attempts}}[F.id] }
+          </action>
+          <action>Emit partial pipeline signal payload:
+            leftover_findings: blocked findings list (for end-gate report and triage spin-out)
+            escalations: {{end_gate_escalations}} (held for Phase 5 end-gate)
+            Note: mid-flight escalations were already dispatched inline; they do not appear in leftover_findings.
+          </action>
+          <note>BLOCKED-then-continue: the whole-build is NOT halted. The story continues to stage-4 (merge) with the blocked findings recorded. The Conductor continues processing other stories in {{running}} and {{frontier}} unaffected. At the end-gate, blocked findings are surfaced as items for triage (spin into backlog stubs via momentum:triage).</note>
+          <action>Proceed to stage-4 (merge) for story S with leftover_findings recorded.</action>
+        </check>
+
+      </check>
+
     </step>
 
     <!-- ─────────────────────────────────────────────────────── -->
