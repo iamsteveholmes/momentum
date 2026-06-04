@@ -1,7 +1,8 @@
 <workflow>
 
   <critical>
-    This adapter is PURE TRANSPORT. It carries findings from bmad-code-review to the Conductor.
+    This adapter is READ-ONLY. It drives bmad-code-review, filters out dismissed findings,
+    normalizes surviving findings into the canonical schema, and returns them to the Conductor.
     It NEVER mutates any tracked file in the working tree. It NEVER applies fixes. It NEVER
     writes to the story file, deferred-work.md, or any other project file. The Conductor owns
     all git mutation; the adapter owns none.
