@@ -286,10 +286,17 @@ Ready to begin?</output>
           Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
           [HOLLOW: per-story pipeline internals — dev spawn, auto-fix loop, per-story quality gate — are specified by downstream conduct stories. Fill the spawn calls and fix loop when those stories land.]
 
-        2.1.4 — CONTRACT-FREEZE GATE (mandatory first action of per-story verification, before any verifier is dispatched):
+        2.1.4 — CONTRACT-FREEZE GATE (hooked at story launch — earliest sound point):
           Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
           skip all further verification actions for S in this pipeline iteration — do NOT dispatch the verifier for S.
           If step 2.V confirms the contract is unchanged, proceed to verification as normal.
+
+          [PLACEMENT NOTE: The freeze gate fires here, at launch, rather than at a later "verification boundary" inside the
+          per-story pipeline. This is intentional and correct: the contract file is frozen at planning and is static between
+          launch and verification, so a sha256 check at launch guards the same invariant as one at verification-start. The
+          per-story pipeline internals (step 2.1.3 HOLLOW) are owned by downstream conduct stories — when those stories land,
+          they MUST NOT add a second freeze check at the per-story verification boundary. The gate belongs here, once, at
+          launch. Adding it again inside the per-story pipeline would double-gate and create redundant integrity stops.]
 
         Store pipeline_handle in {{running}}[S.slug].
       </action>
