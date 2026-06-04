@@ -4,7 +4,7 @@
 
 **Role:** Pure implementer. Receives a story (explicit path or unblocked selection), delegates all implementation to bmad-dev-story, and reports what was changed. The story's Momentum Implementation Guide (injected by momentum:create-story) contains the developer's implementation instructions.
 
-**Conductor owns everything else.** Worktree creation/lifecycle, lockfile handling, git mutation (merge, rebase, conflict resolution), worktree cleanup, and crash recovery are all Conductor responsibilities (spec sections 3, 6, 12). The dev agent does not touch any of those concerns — adding them back here would break the Conductor's single-owner model and the precondition for mid-flight escalation (DEC-035, DEC-036 D1).
+**Conductor owns everything else.** Worktree creation/lifecycle, lockfile handling, git mutation (merge, rebase, conflict resolution), worktree cleanup, and crash recovery are all Conductor responsibilities (spec sections 3 and 6). The dev agent does not touch any of those concerns — adding them back here would break the Conductor's single-owner model and the precondition for mid-flight escalation (DEC-035, DEC-036 D1).
 
 ---
 
@@ -63,6 +63,7 @@
     </action>
 
     <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
+    <note>Working directory: the Conductor spawns this agent already scoped to the story worktree (spec section 6 — 'Dev subagents write and commit inside their worktrees'). The dev agent neither creates nor enters/exits worktrees; bmad-dev-story writes and commits land in the Conductor-provided worktree automatically.</note>
   </step>
 
   <step n="3" goal="Report implementation-complete">
@@ -90,14 +91,14 @@ AGENT_OUTPUT_END
 ```
 Where {{file_list}} is the comma-separated list of files from the story's File List section, {{tests_run}} is true|false, and {{test_result}} is "pass", "fail", or "not_run" — all captured in Step 2 from bmad-dev-story's Dev Agent Record.
 
-If implementation failed (bmad-dev-story did not reach story status "review"), emit the failed variant instead:
+If implementation failed (bmad-dev-story did not reach story status "review"), emit the failed variant instead. Populate files_changed with whatever files were committed before the failure (check git log in the worktree); use an empty array only if no commits were made:
 ```
 AGENT_OUTPUT_START
 {
   "status": "failed",
   "story_key": "{{story_key}}",
   "error": "{{error_description}}",
-  "files_changed": [],
+  "files_changed": [{{files_committed_before_failure_or_empty}}],
   "test_results": {
     "tests_run": false,
     "outcome": "not_run"
@@ -107,7 +108,7 @@ AGENT_OUTPUT_END
 ```
     </action>
 
-    <note>Terminal contract: implementation-complete + file_list. Nothing more. The Conductor owns all git mutation (merge, rebase, conflict resolution), worktree lifecycle, lockfile handling, and crash recovery per spec sections 3, 6, and 12. Relocating those authorities out of dev is the precondition for the Conductor to own the narrow, stakes-gated mid-flight escalation tier (DEC-036 D1).</note>
+    <note>Terminal contract: implementation-complete + file_list. Nothing more. The Conductor owns all git mutation (merge, rebase, conflict resolution), worktree lifecycle, lockfile handling, and crash recovery per spec sections 3 and 6. Relocating those authorities out of dev is the precondition for the Conductor to own the narrow, stakes-gated mid-flight escalation tier (DEC-036 D1).</note>
   </step>
 
 </workflow>
