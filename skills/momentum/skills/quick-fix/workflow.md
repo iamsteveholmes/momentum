@@ -327,6 +327,10 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
     <action>Wait for the dev agent to complete. Read its completion output.</action>
 
     <!-- 3d: Merge worktree to main -->
+    <action>Capture the pre-merge main tip for later diff computation:
+      Store {{pre_merge_main}} = output of `git rev-parse main` (run on main branch before merge).
+    </action>
+
     <action>Merge the worktree branch back:
       1. `git rebase main` (from worktree branch — rebases onto latest main)
       2. `git checkout main`
@@ -373,8 +377,9 @@ Proceeding to validation.</output>
 
     <!-- 4a.1: Code review via bmad-code-review adapter — between AVFL and team validation -->
     <action>Generate the story diff for the adapter:
-      Run: `git diff main~1..main -- {{story_touches}}`
-      where {{story_touches}} is the space-separated list of paths from the story's `touches` array.
+      Run: `git diff {{pre_merge_main}}..main`
+      ({{pre_merge_main}} was captured in Phase 3d before the merge — this covers all commits
+      the story landed on main, regardless of how many commits bmad-dev-story produced.)
       Store as {{story_diff}}.
     </action>
 
