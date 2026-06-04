@@ -1,21 +1,94 @@
 # momentum:dev Workflow
 
-**Goal:** Implement a Momentum story by resolving the target story and delegating implementation to bmad-dev-story, then returning implementation-complete output with a list of files changed.
+**Goal:** Implement a Momentum story (green-field build mode) or apply a directed fix and return a per-finding disposition map (fix-mode). Mode is determined by input: a `directed_fix` payload selects fix-mode; everything else is green-field build.
 
-**Role:** Pure implementer. Receives a story (explicit path or unblocked selection), delegates all implementation to bmad-dev-story, and reports what was changed. The story's Momentum Implementation Guide (injected by momentum:create-story) contains the developer's implementation instructions.
+**Role:** Pure implementer. In green-field mode, receives a story, delegates all implementation to bmad-dev-story, and reports what was changed. In fix-mode, receives a set of findings from the Conductor, applies the stakes-class branch, and returns dispositions (fixed + commit, dismissed + rationale, triaged-out, or escalated + inline payload).
 
-**Conductor owns everything else.** Worktree creation/lifecycle, lockfile handling, git mutation (merge, rebase, conflict resolution), worktree cleanup, and crash recovery are all Conductor responsibilities (spec sections 3 and 6). The dev agent does not touch any of those concerns — adding them back here would break the Conductor's single-owner model and the precondition for mid-flight escalation (DEC-035, DEC-036 D1).
+**Conductor owns everything else.** Worktree creation/lifecycle, lockfile handling, git mutation (merge, rebase, conflict resolution), worktree cleanup, crash recovery, and the mid-flight pause decision are all Conductor responsibilities (spec sections 3 and 6). The dev agent does not touch any of those concerns — adding them back here would break the Conductor's single-owner model and the precondition for mid-flight escalation (DEC-035, DEC-036 D1).
 
 ---
 
 ## EXECUTION
 
 <workflow>
-  <critical>Do not re-implement bmad-dev-story logic. Delegate all implementation to that skill.</critical>
+  <critical>Do not re-implement bmad-dev-story logic. Delegate all green-field implementation to that skill.</critical>
   <critical>The verification contract is a two-part file at `.momentum/sprints/{sprint-slug}/specs/{story-slug}.{ext}`. Dev reads only the Part-A header (the `# === VERIFICATION HEADER` YAML block) as a self-check. Dev never reads the verifier body (Part B: scenarios, assertion scripts, Gherkin, etc.) beyond sections explicitly referenced by `how_dev_self_checks`. Dev never writes, edits, appends to, or alters any part of the contract. Dev never chooses the verification method — it is given in Part A. Stakes classification and mid-flight escalation do not change this read surface; dev reads only Part A regardless of any stakes class or disposition active elsewhere in the flow.</critical>
   <critical>If the story does not have a Momentum Implementation Guide section, warn the user: the story was likely created with bmad-create-story directly rather than momentum:create-story. Offer to run the injection step manually before proceeding.</critical>
+  <critical>Fix-mode stakes-class branch is mutually exclusive: a finding receives EITHER a fix+commit OR an escalation payload — never both. For stakes-class findings (security-auth-isolation, irreversible-destructive, high-blast-radius-architecture), make zero edits and produce zero commits regardless of the `legitimate` flag.</critical>
+  <critical>Fix-mode dismissed disposition always requires a non-empty dismissal_rationale. An empty or missing rationale is invalid and must not be produced.</critical>
+  <critical>Fix-mode does not pause, block, or prompt the human. Emitting the timing_tier flag is the full extent of routing output. The Conductor owns the pause decision.</critical>
 
-  <step n="1" goal="Resolve story to develop">
+  <step n="0" goal="Detect operating mode — fix-mode or green-field build">
+    <action>Check: does the input contain a `directed_fix` payload?</action>
+
+    <check if="directed_fix payload is present">
+      <action>Store {{mode}} = "fix"</action>
+      <action>Store {{findings}} = directed_fix.findings (array of finding objects)</action>
+      <action>Store {{story_file}} = directed_fix.story_file</action>
+      <action>Store {{sprint_slug}} = directed_fix.sprint_slug</action>
+      <output>> Fix-mode selected. Processing {{findings.length}} finding(s) for story `{{story_file}}`.</output>
+      <action>Jump to Step 0.5 (fix-mode execution). Skip Steps 1–3 entirely — fix-mode does not invoke bmad-dev-story or perform a green-field build.</action>
+    </check>
+
+    <check if="no directed_fix payload">
+      <action>Store {{mode}} = "green-field"</action>
+      <output>> Green-field build mode selected. Proceeding to story resolution.</output>
+      <action>Continue to Step 1 (story resolution for green-field build).</action>
+    </check>
+  </step>
+
+  <step n="0.5" goal="Fix-mode: apply stakes-class branch to each finding">
+    <action>Initialize {{disposition_map}} = empty array to collect per-finding results.</action>
+    <action>For each finding in {{findings}}, apply the following branch logic:</action>
+
+    <check if="finding.stakes_class is 'security-auth-isolation', 'irreversible-destructive', or 'high-blast-radius-architecture'">
+      <action>STAKES-CLASS PATH: Make NO edits to any file. Produce NO commit.</action>
+      <action>Build the escalation payload inline:
+        - **what**: state clearly what issue was detected and where (from finding.description and finding.evidence)
+        - **why**: explain why this finding is stakes-class and what the consequences of mis-handling are; name the specific stakes_class
+        - **evidence**: include the concrete artifact excerpt from finding.evidence that substantiates the finding
+        - **timing_tier**: assign `end-gate-expanded` by default; assign `mid-flight` ONLY if the finding is both irreversible-and-imminent (about to execute now, cannot be undone) OR build-invalidating (continuing would compound an invalid build state). Do not widen this bar — urgency alone or stakes class alone is insufficient for mid-flight.
+      </action>
+      <action>Append to {{disposition_map}}: { finding_id, disposition: "escalated", files_changed: [], dismissal_rationale: null, escalation: { what, why, evidence, timing_tier } }</action>
+      <note>This path applies regardless of finding.legitimate. The stakes class, not the legitimate flag, triggers escalation.</note>
+    </check>
+
+    <check if="finding.stakes_class is 'routine' AND finding.legitimate is true">
+      <action>ROUTINE FIX PATH: Apply the fix by editing the affected file(s) per finding.suggested_fix (or derive the fix from finding.description and finding.evidence if no suggested_fix is provided).</action>
+      <action>Commit the change with a conventional commit message. Stage only the files changed by this fix — never git add -A.</action>
+      <action>Capture {{files_fixed}} = list of files edited and committed.</action>
+      <action>Append to {{disposition_map}}: { finding_id, disposition: "fixed", files_changed: [{{files_fixed}}], dismissal_rationale: null, escalation: null }</action>
+    </check>
+
+    <check if="finding.stakes_class is 'routine' AND finding.legitimate is false">
+      <action>DISMISSED PATH: Do not edit any file. Compose a non-empty dismissal_rationale explaining specifically why this finding is not genuine (false positive, misidentified scope, pre-existing known issue, etc.). An empty or missing rationale is invalid — do not produce one.</action>
+      <action>Append to {{disposition_map}}: { finding_id, disposition: "dismissed", files_changed: [], dismissal_rationale: "{{non-empty explanation}}", escalation: null }</action>
+    </check>
+
+    <check if="finding.stakes_class is 'routine' AND finding.legitimate is true AND finding is out of scope for this story">
+      <action>TRIAGED-OUT PATH: Do not edit any file. Record that this finding is legitimate but out of scope. It will be tracked separately via momentum:triage and is not silently dropped.</action>
+      <action>Append to {{disposition_map}}: { finding_id, disposition: "triaged-out", files_changed: [], dismissal_rationale: null, escalation: null }</action>
+    </check>
+
+    <action>After processing all findings, emit the fix-mode output signal:</action>
+    <output>
+```
+AGENT_OUTPUT_START
+{
+  "mode": "fix",
+  "story_file": "{{story_file}}",
+  "dispositions": {{disposition_map}}
+}
+AGENT_OUTPUT_END
+```
+Where {{disposition_map}} is the array of per-finding disposition objects built above. Each escalated finding has a fully populated escalation object including timing_tier; each fixed finding has files_changed populated; each dismissed finding has a non-empty dismissal_rationale.
+    </output>
+    <action>HALT. Fix-mode is complete. The Conductor owns all routing from here — including whether and when to surface mid-flight escalations to the human.</action>
+
+    <note>Fix-mode contract reference: `skills/momentum/references/directed-fix-invocation-contract.md`. Fix-mode finding schema: `skills/momentum/references/finding-schema.md`. Dispositions vocabulary: fixed | dismissed (non-empty rationale required) | triaged-out | escalated. Timing tiers: end-gate-expanded (default) | mid-flight (narrow: irreversible-and-imminent OR build-invalidating ONLY). The mutual exclusivity invariant: a finding receives exactly one disposition; fix+commit and escalation are never both produced for the same finding.</note>
+  </step>
+
+  <step n="1" goal="Resolve story to develop (green-field only)">
     <action>Check: has the user provided an explicit story file path or story key?</action>
 
     <check if="explicit story path or key provided">
