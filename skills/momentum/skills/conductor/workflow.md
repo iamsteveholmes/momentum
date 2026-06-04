@@ -12,7 +12,7 @@
 
 **Developer touchpoints:**
 - Touchpoint 1 — Run start (this step)
-- Touchpoint 2 — End-gate (Phase 5, after E2E)
+- Touchpoint 2 — End-gate (Phase 5, after E2E) — includes the push confirmation folded into the approve sequence (per spec §2 line 76 and git-discipline; the push ask is part of end-gate, not a separate acceptance gate)
 - Touchpoint 3 (narrow exception) — Mid-flight escalation (within Phase 2, stakes-and-timing only)
 
 **Governing decisions:** DEC-035 (conduct as execution engine; one end-gate; no story-count cap), DEC-036 (stakes-and-timing escalation tier amending DEC-035 D1).
@@ -126,7 +126,7 @@ Ready to begin?</output>
 
       <action>For each story in {{pending_merge_list}}:
         - Rebase story branch onto sprint branch: `git rebase sprint/{{sprint_slug}} story/{slug}`
-        - If rebase conflicts: HALT for developer resolution.
+        - If rebase conflicts: the Conductor resolves them autonomously or fires a fixer subagent, then retries the rebase. Never HALT for developer resolution on a routine merge conflict (per spec decision #9; full conflict-resolution engine delivered by conduct-merge-and-conflict-resolution).
         - Merge to sprint branch: `git checkout sprint/{{sprint_slug}}` then `git merge story/{slug}`
         - Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`
         - Append to {{build_log}}: { slug, title, status: "merged", findings_summary }
@@ -305,7 +305,7 @@ The build has paused for a finding that meets the narrow stakes-and-timing bar (
       <action>Merge sprint branch to main:
         1. `git checkout main`
         2. `git merge sprint/{{sprint_slug}}`
-        3. If conflicts: HALT for developer resolution.
+        3. If conflicts: the Conductor resolves them autonomously or fires a fixer subagent, then retries the merge (per spec §2 and decision #9 — "Conductor resolves conflicts; retry"; conflict-resolution engine delivered by conduct-merge-and-conflict-resolution). Never HALT for developer resolution.
         4. After successful merge: `git branch -d sprint/{{sprint_slug}}`
       </action>
       <action>Transition all sprint stories to done:
