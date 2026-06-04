@@ -422,8 +422,9 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
           </check>
 
           <check if="rebase produces conflicts">
-            <action>Abort the in-progress rebase: `git rebase --abort`
-              Bind {{conflict_files}} to the list of conflicted files.
+            <action>Leave the rebase in-progress (do NOT abort).
+              Bind {{conflict_files}} to the list of conflicted files (from `git diff --name-only --diff-filter=U`).
+              Bind {{conflict_op}} to "rebase".
               Proceed to conflict classification (step 2.2.M.3).
             </action>
           </check>
@@ -441,8 +442,9 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
           </check>
 
           <check if="merge produces conflicts">
-            <action>Abort the in-progress merge: `git merge --abort`
-              Bind {{conflict_files}} to the list of conflicted files.
+            <action>Leave the merge in-progress (do NOT abort).
+              Bind {{conflict_files}} to the list of conflicted files (from `git diff --name-only --diff-filter=U`).
+              Bind {{conflict_op}} to "merge".
               Proceed to conflict classification (step 2.2.M.3).
             </action>
           </check>
@@ -471,38 +473,67 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
             <action>AUTO-RESOLVE (trivial):
               Apply the deterministic resolution without invoking a fixer. The Conductor resolves the conflict
               directly (non-overlapping hunks: accept both; additive-only: merge both additions; lockfile churn:
-              regenerate deterministically). Stage the resolved files, then retry the interrupted step
-              (rebase or merge) from the point of the conflict. No human involvement. No escalation.
-              Proceed to step 2.2.M.4 (attempt accounting).
+              regenerate deterministically).
+              Stage the resolved files: `git add &lt;resolved-files&gt;`
+              Continue the in-progress operation (the operation was NOT aborted):
+                If {{conflict_op}} == "rebase": `git rebase --continue`
+                If {{conflict_op}} == "merge":  `git merge --continue` (or `git commit` to finalize)
+              If the continue succeeds with no further conflicts:
+                If {{conflict_op}} == "rebase": proceed to the merge step (2.2.M.2).
+                If {{conflict_op}} == "merge":  proceed to the successful-integration path (2.2.M.6).
+              If the continue surfaces another conflict: bind {{conflict_files}} to the new set,
+                increment {{merge_attempts}}[S.slug], and return to step 2.2.M.3.
+              No human involvement. No escalation. Proceed to step 2.2.M.4 (attempt accounting) only
+              when the continue itself fails (i.e., cannot be continued cleanly after resolution).
             </action>
           </check>
 
           <check if="conflict is semantic">
             <action>SEMANTIC RESOLUTION via directed fixer:
               Spawn a directed fixer subagent (individual-agent, NOT TeamCreate) with:
-                - The conflicted file(s) and their conflict markers
+                - The conflicted file(s) and their conflict markers (the operation is still in-progress)
                 - The story's intent (S.title, S.acceptance_criteria from the story spec)
                 - The sprint integration branch context
               Constraint passed to fixer: "Produce resolution content only. Do not mutate git."
               The fixer returns resolved file content AND annotates the finding with `stakes_class` and
               `timing_tier` (per directed-fix-finding-schema). Before staging the resolutions, proceed to
-              step 2.2.M.4.E (escalation hook). The hook determines whether to escalate or continue;
-              only after the hook returns "continue" does the Conductor stage and commit the resolution
-              and proceed to step 2.2.M.4 (attempt accounting).
+              step 2.2.M.4.E (escalation hook). The hook determines whether to escalate or continue.
+              Only after the hook returns "continue" does the Conductor:
+                1. Write the fixer's resolved content into the conflicted files.
+                2. Stage the resolved files: `git add &lt;resolved-files&gt;`
+                3. Continue the in-progress operation:
+                     If {{conflict_op}} == "rebase": `git rebase --continue`
+                     If {{conflict_op}} == "merge":  `git merge --continue` (or `git commit` to finalize)
+                4. If the continue succeeds with no further conflicts:
+                     If {{conflict_op}} == "rebase": proceed to the merge step (2.2.M.2).
+                     If {{conflict_op}} == "merge":  proceed to the successful-integration path (2.2.M.6).
+                5. If the continue surfaces another conflict: bind {{conflict_files}} to the new set,
+                     increment {{merge_attempts}}[S.slug], and return to step 2.2.M.3.
+                6. If the continue itself fails (cannot be completed even after resolution):
+                     abort the operation (`git rebase --abort` or `git merge --abort`) and proceed to
+                     step 2.2.M.4 (attempt accounting) to decide whether to retry or quarantine.
             </action>
           </check>
 
           <!-- ── 2.2.M.4 — Attempt accounting and bounded-retry gate ───────────────── -->
-          <note>BOUNDED RETRY. Conflict-resolution attempts for a single story are capped at 3. This bound
-            covers the total number of rebase-then-merge attempts, including the initial attempt and any
-            retries after conflict resolution. A story that cannot be integrated after 3 attempts is quarantined
-            (step 2.2.M.5) — it is never retried indefinitely.
+          <note>BOUNDED RETRY. This gate is reached ONLY when `--continue` itself fails after a resolution
+            attempt (i.e., the operation could not be resumed even after staging the resolved files). Successful
+            resolutions — those where `--continue` completes cleanly — route directly to 2.2.M.2 (if the rebase
+            leg resolved) or to 2.2.M.6 (if the merge leg resolved) without passing through this gate.
+
+            The abort-and-restart-from-scratch path (entered here) is capped at 3 total attempts per story.
+            A story that exhausts the cap is quarantined (step 2.2.M.5) — it is never retried indefinitely.
           </note>
 
+          <action>2.2.M.4 — ABORT the failed operation before retrying from scratch:
+            If {{conflict_op}} == "rebase": `git rebase --abort`
+            If {{conflict_op}} == "merge":  `git merge --abort`
+            Increment {{merge_attempts}}[S.slug].
+          </action>
+
           <check if="{{merge_attempts}}[S.slug] less than 3">
-            <action>Retry is allowed. After the directed fixer (or trivial auto-resolve) stages the resolved
-              files, return to step 2.2.M.1 to retry the full rebase-then-merge sequence for story S with
-              {{merge_attempts}}[S.slug] already incremented.
+            <action>Retry is allowed. Return to step 2.2.M.1 to retry the full rebase-then-merge sequence
+              for story S ({{merge_attempts}}[S.slug] has already been incremented).
             </action>
           </check>
 
@@ -530,7 +561,8 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
 
               Step 1: Evaluate the bar.
                 If stakes_class == routine AND resolution is NOT build-invalidating:
-                  CONTINUE — skip steps 2–4; return to 2.2.M.3 to stage and retry.
+                  CONTINUE — skip steps 2–4; return to 2.2.M.3 to stage the resolved files and
+                  continue the in-progress operation (`git rebase --continue` / `git merge --continue`).
                 If stakes_class != routine OR resolution is build-invalidating:
                   Proceed to step 2.
 
@@ -540,14 +572,19 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
 
               Step 3: Act on the engine's response.
                 If engine returns "continue":
-                  Proceed back to step 2.2.M.3 to stage and commit the resolution, then to 2.2.M.4.
+                  Proceed back to step 2.2.M.3 to stage the resolved files and continue the in-progress
+                  operation (`git rebase --continue` / `git merge --continue`). On success route per
+                  the continue-success rules in 2.2.M.3 (rebase success → 2.2.M.2; merge success → 2.2.M.6).
+                  If the continue itself fails, proceed to step 2.2.M.4 (abort-and-bounded-retry gate).
                 If engine returns "pause-branch":
                   Surface the mid-flight escalation to the developer (step 2.F manages the pause-ask).
                   While S's branch is paused, other stories in {{running}} continue unaffected.
                   Wait for the developer's resolution choice:
-                    - Proceed or Change: stage and commit the resolution, then proceed to step 2.2.M.4.
-                    - Abort-that-branch: step 2.F has already removed S from {{running}} and set the
-                      story to closed-incomplete. Do NOT stage, commit, or continue the merge for S.
+                    - Proceed or Change: stage the resolved files, continue the in-progress operation,
+                      and on success route per 2.2.M.3 continue-success rules.
+                    - Abort-that-branch: abort the in-progress operation (`git rebase --abort` /
+                      `git merge --abort`). Step 2.F has already removed S from {{running}} and set the
+                      story to closed-incomplete. Do NOT stage or commit any resolution for S.
                       Fall through directly to frontier re-evaluation (step 2.2's frontier block),
                       bypassing step 2.2.M.4 and 2.2.M.6 entirely for this story.
 
