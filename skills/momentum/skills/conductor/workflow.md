@@ -75,120 +75,262 @@ Ready to begin?</output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!-- PHASE 2: BUILD PHASE — PER-STORY PIPELINES                  -->
+  <!-- PHASE 2: BUILD PHASE — DEPENDENCY FRONTIER + PIPELINES      -->
   <!-- ═══════════════════════════════════════════════════════════ -->
 
-  <step n="2" goal="Build phase — run per-story pipelines for all sprint stories in dependency order">
-    <note>No story-count cap. No human gate between stories on the routine path. The mid-flight escalation branch (step 2.E) is the single narrow exception — reserved for irreversible-and-imminent or build-invalidating findings only.</note>
+  <step n="2" goal="Build phase — event-driven dependency frontier: launch all unblocked stories concurrently, react to terminal signals, apply the mid-flight consumption hook">
 
-    <action>Build dependency graph from {{sprint_waves}} and story-level `depends_on` arrays in {{story_map}}. A story is unblocked when all its blockers reach `done`.</action>
-
-    <action>Initialize {{build_log}} = [] (accumulates per-story pipeline outcomes for the end-gate report).</action>
-    <action>Initialize {{pending_merge_list}} = [] (accumulates stories ready to merge to the sprint branch).</action>
-    <action>Initialize {{escalation_queue}} = [] (accumulates any mid-flight escalation findings surfaced during the build — processed at step 2.E).</action>
+    <note>This is the engine of the autonomous build. It is event-driven: the Conductor reacts to per-story terminal signals (merged | failed) rather than advancing a sequential queue. No story-count cap applies. No human gate separates stories on the routine path. The sole exception is the narrow mid-flight escalation consumption hook (step 2.F), which fires only when the escalation mechanism surfaces a finding meeting the strict stakes-and-timing bar.</note>
 
     <!-- ─────────────────────────────────────────────────────── -->
-    <!-- STEP 2.A — Per-story pipeline (repeated unit)           -->
+    <!-- STEP 2.0 — Initialize frontier state                    -->
     <!-- ─────────────────────────────────────────────────────── -->
 
-    <step n="2.A" goal="Per-story pipeline — the repeated build unit for each unblocked story">
-      <note>This step executes once per story in dependency order. It is the hollow shell for the per-story pipeline internals delivered by downstream stories (dev agent spawn, auto-fix loop, per-story AVFL, code review). Fill the spawn calls and fix loop when those stories land.</note>
+    <step n="2.0" goal="Initialize Conductor state for the dependency frontier">
 
-      <action>For each unblocked story (status == `ready-for-dev` AND all depends_on blockers are `done`):
-
-        2.A.1 — Transition to in-progress:
-          `momentum-tools sprint status-transition --story {slug} --target in-progress`
-
-        2.A.2 — Spawn dev agent (individual-agent, not TeamCreate):
-          Resolve agent via: `momentum-tools agent resolve --touches "{{story.touches | join(',')}}"`
-          Spawn the resolved agent with the story file at `.momentum/stories/{slug}.md`.
-          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
-          [HOLLOW: per-story pipeline internals — dev spawn, auto-fix loop, per-story AVFL, code review — are delivered by downstream conduct stories.]
-
-        2.A.3 — Receive dev agent output. The Conductor (not the agent) commits:
-          - Create or check out story branch: `git checkout -b story/{slug}` (or `git checkout story/{slug}`)
-          - Stage files: `git add {touched_files}`
-          - Commit: `git commit -m "feat({slug}): [story title]"`
-
-        2.A.4 — Auto-fix loop (HOLLOW — downstream story delivers the loop engine):
-          [Placeholder: run per-story AVFL + code review, route routine findings to silent auto-fix,
-           route stakes-class findings to {{escalation_queue}} or end-gate-expanded per DEC-036 D1/D2.
-           The selection logic (which findings qualify for mid-flight escalation) is delivered by the
-           stakes-timing escalation mechanism story. Mark stakes-class findings with their disposition:
-           fixed | dismissed (non-empty rationale) | triaged-out | escalated.]
-
-        2.A.5 — Mark story merge-ready. Add to {{pending_merge_list}}.
+      <action>Build the dependency graph from each story's `depends_on` array in {{story_map}}.
+        Ignore {{sprint_waves}} as a binding source — the `depends_on` array per story is the authoritative gate.
+        {{sprint_waves}} is advisory ordering metadata only.
       </action>
 
-      <check if="{{escalation_queue}} is non-empty">
-        <action>Before merging this story, evaluate escalation candidates (step 2.E).</action>
-      </check>
-
-      <action>For each story in {{pending_merge_list}}:
-        - Rebase story branch onto sprint branch: `git rebase sprint/{{sprint_slug}} story/{slug}`
-        - If rebase conflicts: the Conductor resolves them autonomously or fires a fixer subagent, then retries the rebase. Never HALT for developer resolution on a routine merge conflict (per spec decision #9; full conflict-resolution engine delivered by conduct-merge-and-conflict-resolution).
-        - Merge to sprint branch: `git checkout sprint/{{sprint_slug}}` then `git merge story/{slug}`
-        - Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`
-        - Append to {{build_log}}: { slug, title, status: "merged", findings_summary }
-        - Clear {{pending_merge_list}} entry.
+      <action>Initialize Conductor state:
+        {{frontier}}    = []    — unblocked stories not yet launched
+        {{running}}     = {}    — { slug: pipeline_handle } for in-flight stories
+        {{merged}}      = []    — stories that have reached status >= review on the sprint branch
+        {{blocked}}     = []    — stories that exhausted retries or have an unsatisfiable dependency
+        {{retries}}     = {}    — { slug: int } per-story retry counter
+        {{escalations}} = []    — mid-flight escalation records (stakes-class, strict bar only)
+        {{build_log}}   = []    — per-story pipeline outcomes for the end-gate report
       </action>
 
-      <action>Re-evaluate dependency graph. If newly unblocked stories exist, loop back to step 2.A for those stories.</action>
+      <action>Compute initial frontier: for each story S in {{story_map}}:
+        if S.status == "ready-for-dev"
+           AND every slug in S.depends_on is in {{merged}} (status >= review):
+          add S to {{frontier}}
 
-      <check if="all sprint stories are in review or done status">
-        <action>Build phase complete. Proceed to Phase 3 (AVFL-on-merge).</action>
+        Note: stories with empty depends_on are launch-ready immediately.
+        Note: independent stories all enter the frontier at t=0.
+      </action>
+
+      <check if="{{frontier}} is empty AND {{running}} is empty">
+        <note>All stories were either already at review/done (prior partial run) or have unsatisfiable dependencies. Build phase is already complete.</note>
+        <action>Proceed to Phase 3 (AVFL-on-merge).</action>
       </check>
     </step>
 
     <!-- ─────────────────────────────────────────────────────── -->
-    <!-- STEP 2.E — Mid-flight escalation branch (DEC-036 D1)    -->
+    <!-- STEP 2.1 — Launch the full frontier concurrently        -->
     <!-- ─────────────────────────────────────────────────────── -->
 
-    <step n="2.E" goal="Mid-flight escalation — pause-ask-resume for narrow, stakes-gated findings">
-      <note>STRUCTURAL ACKNOWLEDGMENT ONLY. This branch is present as the defined home for the DEC-036 D1 mid-flight escalation tier. The decision logic that determines which findings qualify (irreversible-and-imminent or build-invalidating, with stakes classes: security-auth-isolation | irreversible-destructive | high-blast-radius-architecture) is delivered by the stakes-timing escalation mechanism story. Do not widen the bar here. Routine findings are never routed to this branch.</note>
+    <step n="2.1" goal="Launch every story in the frontier concurrently — no story-count cap">
 
-      <note>Timing bar (DEC-036 D1, narrow): mid-flight escalation applies only when BOTH conditions hold — (1) the finding is stakes-class (security-auth-isolation, irreversible-destructive, or high-blast-radius-architecture) AND (2) the timing qualifies (irreversible-and-imminent: continuing the build would make the finding unrecoverable; OR build-invalidating: the finding structurally blocks correct build completion). Everything else routes to end-gate-expanded (the default tier) or silent auto-fix.</note>
+      <note>All stories currently in {{frontier}} are launched as concurrent per-story pipelines in a single turn. There is NO story-count cap: if 10 stories are unblocked at once, all 10 are launched. None are deferred solely because of how many are ready. This invariant is absolute — it derives from DEC-035 D4 and the no-cap critical above.</note>
 
-      <check if="{{escalation_queue}} is non-empty AND escalation decision logic is available">
-        <!-- PAUSE — Touchpoint 3 (narrow exception): surface escalation findings to developer -->
-        <output>## Mid-flight Escalation — Build Paused
+      <action>For each story S in {{frontier}} (launch ALL simultaneously, not sequentially):
 
-The build has paused for a finding that meets the narrow stakes-and-timing bar (DEC-036 D1).
+        2.1.1 — Remove S from {{frontier}}. Add S to {{running}}.
 
-**Paused at:** story `{{current_story_slug}}`
-**Finding type:** {{stakes_class}}
-**Reason for mid-flight routing:** {{escalation_reason}} (irreversible-and-imminent | build-invalidating)
+        2.1.2 — Transition to in-progress:
+          `momentum-tools sprint status-transition --story {S.slug} --target in-progress`
 
-**Finding detail:**
-{{escalation_finding_detail}}
+        2.1.3 — Spawn dev agent (individual-agent fan-out, NOT TeamCreate — spawned concurrently with all other frontier pipelines):
+          Resolve agent via: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
+          Spawn the resolved agent with the story file at `.momentum/stories/{S.slug}.md`.
+          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
+          [HOLLOW: per-story pipeline internals — dev spawn, auto-fix loop, per-story quality gate — are specified by downstream conduct stories. Fill the spawn calls and fix loop when those stories land.]
 
-**Options:**
-- **Continue** — apply the recommended resolution and resume the build from this point
-- **Halt** — stop the build here for deeper investigation
-- **Dismiss** — record a rationale and route this finding to end-gate-expanded; resume build</output>
+        Store pipeline_handle in {{running}}[S.slug].
+      </action>
 
-        <ask>Continue, Halt, or Dismiss?</ask>
+      <note>After launching the full frontier, the Conductor enters the heartbeat (step 2.2): it waits for terminal signals from running pipelines and reacts to each as it arrives. It does not advance manually — the event drives the next action.</note>
+    </step>
 
-        <check if="Continue">
-          <!-- RESUME: apply resolution, commit via Conductor (not subagent), clear escalation queue, resume build -->
-          <action>Spawn a fix subagent scoped to the finding. Receive output. The Conductor commits the fix.</action>
-          <action>Clear {{escalation_queue}}. Record outcome in {{build_log}} with disposition: fixed.</action>
-          <action>Resume build from the story that triggered the escalation (return to step 2.A loop).</action>
+    <!-- ─────────────────────────────────────────────────────── -->
+    <!-- STEP 2.2 — Heartbeat: react to each terminal signal     -->
+    <!-- ─────────────────────────────────────────────────────── -->
+
+    <step n="2.2" goal="Heartbeat — react to per-story terminal signals without requiring human input to advance">
+
+      <note>This step is the event-driven loop of the build phase. The Conductor receives terminal signals from running pipelines. Each signal triggers a specific reaction. No human input is needed to advance between stories on the routine path — the loop runs autonomously until the frontier is exhausted and all pipelines have terminated.</note>
+
+      <note>Terminal signals: a per-story pipeline emits exactly one of: { slug, outcome: "merged", leftover_findings: [...], escalations: [...] } OR { slug, outcome: "failed", reason: "...", retry_count: int }. The Conductor reacts to each signal as it arrives from any running pipeline.</note>
+
+      <!-- ── Signal: merged ──────────────────────────────────── -->
+      <check if="terminal signal received with outcome == 'merged' for story S">
+
+        <!-- Consumption hook: inserted BETWEEN the terminal signal and the "continue" action -->
+        <!-- See step 2.F for the full hook definition. Execute it before re-evaluating the frontier. -->
+        <action>Invoke consumption hook (step 2.F) with S's escalations array from the terminal signal.
+          The hook determines whether any finding in S.escalations meets the narrow mid-flight bar.
+          The hook defers detection and classification to the escalation mechanism — the frontier does not classify.
+          Outcome: hook returns "pause-branch" or "continue".
+        </action>
+
+        <check if="hook returns 'pause-branch'">
+          <action>Execute mid-flight escalation pause for story S (step 2.F handles the pause-ask-resume).
+            While S's branch is paused: other stories in {{running}} and any newly-unblocked stories continue unaffected.
+            Pausing one branch does NOT halt the rest of the build phase.
+          </action>
+          <note>After the pause is resolved (developer responds via step 2.F), the hook returns a resolution outcome. Continue with the merge and frontier re-evaluation for S using that resolution.</note>
         </check>
 
-        <check if="Halt">
-          <action>HALT. Record build state in {{build_log}} with disposition: escalated (build halted). Surface the finding detail for developer investigation.</action>
-        </check>
+        <check if="hook returns 'continue' OR hook resolution completes">
+          <action>Complete the merge for story S:
+            2.2.M.1 — Rebase story branch onto sprint branch:
+              `git rebase sprint/{{sprint_slug}} story/{S.slug}`
+              Conflict → Conductor resolves autonomously or fires a fixer subagent; retry rebase.
+              Never HALT for developer resolution on a routine merge conflict.
+              (Full conflict-resolution engine delivered by conduct-merge-and-conflict-resolution.)
 
-        <check if="Dismiss">
-          <action>Record dismissal with developer-provided rationale in {{build_log}}. Disposition: dismissed (rationale required — must be non-empty). Route finding to end-gate-expanded section of the end-gate report.</action>
-          <action>Clear {{escalation_queue}}. Resume build from the story that triggered the escalation (return to step 2.A loop).</action>
+            2.2.M.2 — Merge to sprint branch:
+              `git checkout sprint/{{sprint_slug}}`
+              `git merge --no-ff story/{S.slug}`
+              Conflict/failure → resolve + retry; persistent failure → mark S blocked (see 'failed' signal).
+
+            2.2.M.3 — Transition story to review:
+              `momentum-tools sprint status-transition --story {S.slug} --target review`
+
+            2.2.M.4 — Remove worktree and branch (per-story cleanup):
+              `git worktree remove --force .worktrees/story-{S.slug}`
+              `git branch -d story/{S.slug}`
+
+            2.2.M.5 — Record outcome:
+              Add S.slug to {{merged}}.
+              Remove S.slug from {{running}}.
+              Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "merged", findings_summary: S.leftover_findings }.
+              Append any escalation records from the hook to {{escalations}}.
+          </action>
+
+          <!-- Frontier re-evaluation: event-driven, triggered by the merge -->
+          <action>Re-evaluate the dependency frontier: for each story T not yet launched and not in {{blocked}}:
+            if T.status == "ready-for-dev"
+               AND every slug in T.depends_on is in {{merged}} (status >= review):
+              add T to {{frontier}}
+
+            Note: the readiness gate is >= review (status on the sprint branch), NOT done.
+            A blocker is available to depend on the instant its code is merged, before AVFL or E2E.
+          </action>
+
+          <check if="{{frontier}} is non-empty">
+            <action>Launch all newly-unblocked stories concurrently (return to step 2.1 for the new frontier batch). No story is deferred because of how many others are running.</action>
+          </check>
         </check>
       </check>
 
-      <check if="{{escalation_queue}} is non-empty AND escalation decision logic is NOT yet available">
-        <note>Escalation decision engine not yet delivered (downstream story). Route all candidates to end-gate-expanded as a safe fallback. Do not interrupt the build for this reason.</note>
-        <action>Move all {{escalation_queue}} entries to end-gate-expanded section of the report. Clear {{escalation_queue}}. Resume build.</action>
+      <!-- ── Signal: failed ──────────────────────────────────── -->
+      <check if="terminal signal received with outcome == 'failed' for story S">
+
+        <note>Bounded retry: default retry bound is 2 (the pipeline may retry internally; this is the Conductor-level retry on top). On retry, the Conductor re-launches the pipeline for S. On exhausted retries, the Conductor marks S blocked and CONTINUES — it never halts the build phase for a single story's failure. The rest of the frontier and all running pipelines are unaffected.</note>
+
+        <action>Increment {{retries}}[S.slug] (initialize to 0 if absent).</action>
+
+        <check if="{{retries}}[S.slug] less than 2">
+          <action>Retry: re-launch S's pipeline (return to step 2.1 for S alone).
+            Record the retry attempt in {{build_log}}: { slug: S.slug, event: "retry", attempt: {{retries}}[S.slug] }.
+          </action>
+        </check>
+
+        <check if="{{retries}}[S.slug] >= 2">
+          <action>Exhausted retries. Mark S blocked:
+            Add S.slug to {{blocked}}.
+            Remove S.slug from {{running}}.
+            `momentum-tools sprint status-transition --story {S.slug} --target blocked` (or nearest available state).
+            Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "blocked", reason: S.reason, retry_count: {{retries}}[S.slug] }.
+            CONTINUE. Do not halt the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
+          </action>
+          <note>A blocked story does not propagate to its dependents automatically — dependents whose depends_on includes S.slug can never satisfy the >= review gate for S. They will also be marked blocked when the frontier finds them unsatisfiable at build end.</note>
+        </check>
+      </check>
+
+      <!-- ── Build-phase completion check ─────────────────────── -->
+      <check if="{{running}} is empty AND {{frontier}} is empty">
+        <action>All pipelines have terminated. Build phase heartbeat ends.
+          For any remaining stories in {{story_map}} that are still in "ready-for-dev" state with unsatisfiable depends_on:
+            Mark them blocked; append to {{build_log}} with outcome: "blocked", reason: "dependency never reached >= review".
+          Proceed to Phase 3 (AVFL-on-merge).
+        </action>
+      </check>
+    </step>
+
+    <!-- ─────────────────────────────────────────────────────── -->
+    <!-- STEP 2.F — Mid-flight escalation consumption hook       -->
+    <!-- (DEC-036 D1 — invoked from step 2.2, between terminal   -->
+    <!--  signal and the "continue" action)                      -->
+    <!-- ─────────────────────────────────────────────────────── -->
+
+    <step n="2.F" goal="Mid-flight escalation consumption hook — pause-branch vs. continue, deferred to the escalation mechanism">
+
+      <note>CONSUMPTION HOOK. This step is inserted between a per-story pipeline's terminal signal and the "continue" (merge + frontier re-evaluation) action in step 2.2. Its job is to consume the outcome of the escalation mechanism — not to detect or classify findings itself. The Conductor defers detection and classification entirely to the escalation mechanism (delivered by the stakes-timing escalation mechanism story). The frontier's role is: observe the pipeline signal, invoke the mechanism, and act on the mechanism's outcome (pause-branch or continue).</note>
+
+      <note>Narrow mid-flight bar (DEC-036 D1, must not be widened): the escalation mechanism may signal "pause-branch" ONLY when a finding is BOTH (1) stakes-class (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture) AND (2) meets the timing qualifier (irreversible-and-imminent: continuing would make the finding unrecoverable; OR build-invalidating: the finding structurally blocks correct build completion). Nothing else qualifies for mid-flight escalation. Stakes-class findings that do NOT meet the timing qualifier are NOT routed here — they are held for end-gate-expanded. The mid-flight tier is the exception; end-gate-expanded is the norm and safety net. Do not widen this bar.</note>
+
+      <note>Routine findings (the default class) NEVER enter this hook. Routine findings stay on the always-auto-fix path inside the per-story pipeline. The hook is not invoked for them, and no mid-flight pause occurs. The anti-firehose intent of DEC-035 is fully preserved: the build flow is not flooded with mid-flight pauses for ordinary work.</note>
+
+      <!-- ── Hook entry point ─────────────────────────────────── -->
+      <action>Receive S.escalations from the pipeline's terminal signal.
+        Invoke the escalation mechanism with S.escalations.
+        The mechanism returns one of:
+          { outcome: "continue" }  — no mid-flight bar finding; proceed normally
+          { outcome: "pause-branch", finding: {...}, stakes_class, escalation_reason }  — bar is met
+        The Conductor does not itself inspect or classify S.escalations; it only acts on the mechanism's returned outcome.
+      </action>
+
+      <!-- ── Outcome: continue ─────────────────────────────────── -->
+      <check if="mechanism returns outcome == 'continue'">
+        <action>No mid-flight escalation. All S.escalations are either routine (stayed on auto-fix path inside the pipeline) or stakes-class findings that do not meet the mid-flight bar (held for end-gate-expanded). Return "continue" to step 2.2. Record any end-gate-expanded findings in {{build_log}} for the end-gate report.</action>
+      </check>
+
+      <!-- ── Outcome: pause-branch ─────────────────────────────── -->
+      <check if="mechanism returns outcome == 'pause-branch'">
+        <note>This is Touchpoint 3 (narrow exception). The build pauses THIS branch — not the entire build phase. Other stories in {{running}} and newly-unblocked stories in {{frontier}} continue unaffected. Pausing one branch does not halt the rest of the build.</note>
+
+        <!-- PAUSE — Surface to developer -->
+        <output>## Mid-flight Escalation — Branch Paused
+
+The build has paused story `{{S.slug}}` for a finding that meets the narrow stakes-and-timing bar (DEC-036 D1). Other stories continue building.
+
+**Paused story:** `{{S.slug}}` — {{S.title}}
+**Finding class:** {{stakes_class}}
+**Mid-flight qualifier:** {{escalation_reason}} (irreversible-and-imminent | build-invalidating)
+
+**Finding detail:**
+{{finding.summary}}
+
+Evidence: {{finding.evidence}}
+Recommended action: {{finding.suggested_fix}}
+
+**Options:**
+- **Continue** — apply the recommended resolution and resume this branch
+- **Halt** — stop the entire build here for deeper investigation
+- **Dismiss** — record a rationale; route to end-gate-expanded; resume this branch</output>
+
+        <ask>Continue, Halt, or Dismiss this finding?</ask>
+
+        <check if="Continue">
+          <action>Spawn a fix subagent scoped to the finding (individual-agent, not TeamCreate). The subagent produces output only. The Conductor (not the subagent) commits the fix.</action>
+          <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "fixed", finding_summary: {{finding.summary}} }.</action>
+          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, escalation_reason, disposition: "fixed" }.</action>
+          <action>Return "continue" to step 2.2 (the merge and frontier re-evaluation for S proceed).</action>
+        </check>
+
+        <check if="Halt">
+          <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "escalated", finding_summary: {{finding.summary}}, build_state: "halted" }.</action>
+          <action>HALT. Surface the finding detail and build state for developer investigation. The build does not proceed.</action>
+        </check>
+
+        <check if="Dismiss">
+          <action>Require non-empty developer-provided rationale. An empty or missing rationale is invalid — re-ask until rationale is provided.</action>
+          <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "dismissed", rationale: {{developer_rationale}}, finding_summary: {{finding.summary}} }.</action>
+          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, escalation_reason, disposition: "dismissed", rationale: {{developer_rationale}} }. Route finding to end-gate-expanded section of the end-gate report.</action>
+          <action>Return "continue" to step 2.2 (the merge and frontier re-evaluation for S proceed).</action>
+        </check>
+      </check>
+
+      <!-- ── Fallback: mechanism not yet delivered ────────────── -->
+      <check if="escalation mechanism is NOT yet delivered">
+        <note>The stakes-timing escalation mechanism (delivered by a downstream story) is not yet available. Safe fallback: route all entries in S.escalations to end-gate-expanded. Do not interrupt the build. Return "continue" to step 2.2.</note>
+        <action>For each entry in S.escalations: add to {{build_log}} with timing_tier: "end-gate-expanded" and note: "mechanism not yet delivered — routed to end-gate as fallback".</action>
+        <action>Return "continue" to step 2.2.</action>
       </check>
     </step>
 
