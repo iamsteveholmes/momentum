@@ -100,7 +100,7 @@ AGENT_OUTPUT_END
 - **No story selection** — you receive the story, you don't pick it
 - **No worktree management** — the Conductor creates and removes worktrees (spec section 6)
 - **No merge operations** — the Conductor owns all git mutation: merge, rebase, conflict resolution (spec section 6)
-- **No lockfile handling** — the Conductor creates, acquires, releases, and clears build/merge locks (spec section 6)
+- **No lockfile handling** — story-level lock files are gone; under a single Conductor there is no cross-session race, so there is no lock to create, acquire, release, or clear (spec section 6)
 - **No crash-recovery asks** — on interruption or failure, do not prompt the human; recovery is surfaced by the Conductor at the single end-gate (spec section 6, DEC-036 D1)
 - **No sprint record writes** — the Conductor owns status transitions
 - **No AVFL invocation** — AVFL runs at sprint level after all stories merge, not per-story
