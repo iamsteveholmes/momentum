@@ -115,7 +115,9 @@ Sprint `{{sprint_slug}}` has unsatisfied required approvals. The Conductor canno
 
     <action>For any story in {{sprint_stories}} whose `depends_on` array contains a slug not in {{sprint_stories}}, look up that external slug's status in `.momentum/stories/index.json`. A dependency is considered satisfied only if its status is `done`. Bind {{unsatisfied_external_deps}} to any external dependency slug whose status is not `done`.</action>
 
-    <check if="any story has status 'blocked' with no resolution path OR {{unsatisfied_external_deps}} is non-empty">
+    <action>Bind {{stalled_stories}} to the union of: (a) any story slug in {{sprint_stories}} whose status is `blocked` AND whose `depends_on` slugs are all either within {{sprint_stories}} or `done` — meaning blocked with no in-sprint resolution path, and (b) any story slug in {{sprint_stories}} that depends on a slug in {{unsatisfied_external_deps}}. This is the complete set of stories that cannot make progress.</action>
+
+    <check if="{{stalled_stories}} is non-empty">
       <output>## Conductor — Cannot Start (H4)
 
 **Guard:** H4 — Stalled state detected.
@@ -123,12 +125,15 @@ Sprint `{{sprint_slug}}` has unsatisfied required approvals. The Conductor canno
 One or more sprint stories are `blocked` with no available resolution path, or have unsatisfiable dependencies outside this sprint. The Conductor cannot proceed from a stalled state.
 
 **Affected stories:** {{stalled_stories}}
+**Unsatisfied external dependencies:** {{unsatisfied_external_deps}}
 
 **Resolution:** Resolve the blocked stories or drop them from the sprint, then re-invoke the Conductor.</output>
       <action>HALT. Do not dispatch any story.</action>
     </check>
 
-    <check if="stories/index.json and sprints/index.json disagree on story membership OR any story's status is an unrecognized value OR the sprint branch sprint/{{sprint_slug}} does not exist">
+    <action>Check for H5 inconsistency conditions and bind {{inconsistency_details}} to a human-readable description of whichever condition(s) are detected: (a) if `stories/index.json` and `sprints/index.json` disagree on story membership, list the disagreeing slugs; (b) if any story's `status` field is not one of the recognized values (`ready-for-dev`, `in-progress`, `blocked`, `done`, `approved`), name the story and the unrecognized value; (c) if the sprint branch `sprint/{{sprint_slug}}` does not exist in git, note the missing branch. If none of these conditions are detected, bind {{inconsistency_details}} to an empty string.</action>
+
+    <check if="{{inconsistency_details}} is non-empty">
       <output>## Conductor — Cannot Start (H5)
 
 **Guard:** H5 — Inconsistent state detected.
@@ -141,7 +146,7 @@ The sprint and story records are inconsistent. This may mean the sprint index an
       <action>HALT. Do not dispatch any story.</action>
     </check>
 
-    <note>H1–H5 are the only cannot-start guards. All five have now been evaluated. If execution reaches this point, all guards passed. The build will proceed; H1–H5 are NOT re-evaluated once the build starts.</note>
+    <note>H1–H5 are the only cannot-start guards. All five have now been evaluated. If execution reaches this point, all guards passed. The reconcile section below performs a final defensive integrity re-check of the sprint branch (a guard-class condition) before any story is dispatched — this is still Phase 1 pre-flight, not build work. H1–H5 are NOT re-evaluated once Phase 2 dispatch begins.</note>
 
     <!-- ─── Reconcile on start (non-interactive) ──────────────── -->
 
