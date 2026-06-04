@@ -10,8 +10,8 @@
 
 This redesign collapses the multi-gate, wave-barriered sprint-dev flow into an autonomous build with **exactly one** human-in-the-loop surface at the end. It is grounded in ten binding developer decisions. They are not up for relitigation — every section below designs *to* them.
 
-1. **No in-between HITL.** Every intermediate approval gate is removed. AVFL never asks the developer anything. Dev agents *always* retry on failure (no retry/skip/halt prompt). Legitimate issues are *always* fixed automatically — there is no per-finding fix/defer prompt.
-2. **One end gate only.** After the report, a **Conductor** waits for the developer to either (a) say *"we need changes"* → run ONE change-workflow that loops over fixes, or (b) *approve* → triage any leftover issues into new stubs, merge to main, push. There is **no Reject**. Stories close one way or another; the only non-closed case is a blocked/never-completed story → spin out a new stub via `momentum:triage`. New work discovered during review → new stubs via triage.
+1. **End-gate is the default HITL surface; a narrow mid-flight escalation tier is the sole exception.** The single human end-gate remains the default and the safety net: AVFL never asks the developer anything, dev agents always retry on failure (no retry/skip/halt prompt), and **routine** findings are *always* auto-fixed silently — there is no per-finding fix/defer prompt for ordinary work. The sole exception is a narrow, high-bar, stakes-gated mid-flight escalation tier: a finding may escalate mid-flight ONLY if it is **irreversible-and-imminent** OR **build-invalidating**. No other condition widens the mid-flight tier. Stakes-class legitimate findings (security/auth-isolation, irreversible/destructive, high-blast-radius/architecture) are **raised** (surfaced as decision cards) rather than silently auto-fixed; findings that do not meet the mid-flight bar are held for end-gate expansion. This amends DEC-035 binding decision #1 — preserving its anti-firehose intent while relaxing its absolutism.
+2. **One end gate only (default) + narrow mid-flight exception.** After the report, a **Conductor** waits for the developer to either (a) say *"we need changes"* → run ONE change-workflow that loops over fixes, or (b) *approve* → triage any leftover issues into new stubs, merge to main, push. There is **no Reject**. Stories close one way or another; the only non-closed case is a blocked/never-completed story → spin out a new stub via `momentum:triage`. New work discovered during review → new stubs via triage. The mid-flight escalation tier fires only on the stakes-and-timing bar (irreversible-and-imminent OR build-invalidating); end-gate expansion is the norm and safety net.
 3. **One workflow for all fixing.** The change-workflow and the build-fix loop are the **same** workflow type, run any time fixing is required.
 4. **Per-story independence.** Each story runs its *own* complete flow: dev → concurrent QA + code-review → fixers → merge its own worktree → done. Prefer per-story independence (a story merges the instant it passes) over global waves. Fall back to waves only when a hard dependency forces it.
 5. **Code review tooling.** `momentum:code-reviewer` is a STUB and must not be relied on. Use **`bmad-code-review`** for the adversarial bug hunt; use the built-in **`/simplify`** for optional cleanup. Do not build an in-house reviewer now.
@@ -225,8 +225,12 @@ Story worktree (post-dev, code complete, pre-merge)
 │
 ├─ Phase B: CONVERGE → one code-fixer subagent (single writer)
 │      input: qa_findings[] + review_findings[]  (deduped, severity-sorted)
-│      action: fix EVERY legitimate finding (decision 1 — no fix/defer prompt)
-│              dismiss only with recorded rationale; out-of-scope NEW work
+│      action: auto-fix ALL routine legitimate findings (no fix/defer prompt for ordinary work);
+│              escalate stakes-class findings (security/auth-isolation, irreversible/destructive,
+│              high-blast-radius/architecture) as decision cards — NOT silently fixed;
+│              apply timing tier: mid-flight if irreversible-and-imminent OR build-invalidating,
+│              otherwise end-gate-expanded (default);
+│              dismiss only with non-empty recorded rationale; out-of-scope NEW work
 │              → triage stub (momentum:triage), don't fix. Commit.
 │
 ├─ Phase C: /simplify (optional cleanup, applies fixes) — AFTER B, sequential
@@ -256,12 +260,39 @@ All reviewers normalize to one shape so the fixer and the report consume them un
   "detail": "full context — what's wrong AND why it violates the AC/contract",
   "evidence": "the proof: failing test+assertion, diff hunk, or command output",
   "ac_id": "AC2 | null",
-  "legitimate": true,                 // legit -> ALWAYS auto-fixed (decision 1)
+  "legitimate": true,                 // legit -> disposition depends on stakes class + timing tier (see below)
+  "stakes_class": "routine | security/auth-isolation | irreversible/destructive | high-blast-radius/architecture",
+  "timing_tier": "end-gate-expanded | mid-flight",  // end-gate-expanded is the default
   "suggested_fix": "concrete, actionable — never 'see code'"
 }
 ```
 
-The fixer's disposition per finding: `fixed` (default for any legitimate issue), `dismissed` (with rationale), or `triaged-out` (new stub). There is **no `deferred` disposition** — decision 1 removes the defer prompt.
+**Stakes classes** — every finding carries exactly one:
+
+| Class | Examples |
+|---|---|
+| `security/auth-isolation` | XSS, auth bypass, credential exposure, permission escalation |
+| `irreversible/destructive` | migration, delete, force-push, prod deploy, data truncation |
+| `high-blast-radius/architecture` | cross-cutting pattern change, public API break, structural drift |
+| `routine` (default) | everything else — bugs, missing ACs, style, cleanup |
+
+**Timing tiers** — two values only:
+
+| Tier | When it applies |
+|---|---|
+| `end-gate-expanded` | Default. Finding held for end-gate; appears as a decision card at the human surface. |
+| `mid-flight` | Narrow exception. Finding escalates immediately ONLY if it is **irreversible-and-imminent** OR **build-invalidating**. No other condition qualifies. |
+
+**Disposition** — the fixer's outcome per finding:
+
+| Disposition | Meaning | Constraint |
+|---|---|---|
+| `fixed` | Applied automatically; routine findings always land here | Default for routine class |
+| `escalated` | Stakes-class finding raised as a decision card (not silently fixed); routed to end-gate-expanded or mid-flight per timing tier | Stakes class only |
+| `dismissed` | Fixer judged finding invalid or out-of-scope | **Non-empty rationale REQUIRED** — empty or missing rationale is invalid |
+| `triaged-out` | New out-of-scope work; spun into a backlog stub via `momentum:triage` | — |
+
+There is **no `deferred` disposition** — the defer prompt is removed. Routine findings are always auto-fixed (`fixed`). Stakes-class findings are `escalated`, not silently fixed. There is no per-finding fix/defer prompt for ordinary work.
 
 ### What this replaces in `sprint-dev/workflow.md`
 
@@ -280,7 +311,7 @@ AVFL runs **exactly once per sprint, after every story worktree has merged**. It
 
 It honors the binding decisions:
 - **Never asks the developer anything** (decision 1) — no GATE_FAILED prompt, no MAX_ITERATIONS prompt, no per-finding fix/defer.
-- **Always auto-fixes legitimate findings** and loops with declining skepticism until clean or non-convergent.
+- **Always auto-fixes routine legitimate findings** and loops with declining skepticism until clean or non-convergent. Stakes-class findings (security/auth-isolation, irreversible/destructive, high-blast-radius/architecture) surfaced by AVFL are tagged `escalated` and passed to the Conductor as decision cards for the end-gate, not silently auto-fixed.
 - It is **not** the end gate. It produces a result object; the Conductor reads it and folds it into the report. Anything AVFL could not resolve becomes a **leftover** the Conductor routes to `momentum:triage` — AVFL never spins stories itself.
 
 This kills the audited contradiction: sprint-dev currently wraps AVFL as a read-only `checkpoint` stop-gate, then runs a *separate* developer-driven fix/defer queue (Phase 4c/4d). That entire HITL queue is deleted; AVFL's native auto-fix loop *is* the mechanism now.
@@ -588,7 +619,9 @@ No verification decisions are made here:
 
 ### Principle
 
-Sprint-dev has **exactly one** HITL gate: the **Conductor end-gate**. Every intermediate `<ask>`, HALT, and per-finding fix/defer prompt is removed. The build phase, AVFL, E2E, and all fix loops run autonomously. The developer is engaged once — after merge and all validation — through a single open-ended conversational gate that resolves to **"we need changes"** or **"approve"**. There is no Reject. The only other touchpoint is the push confirmation, folded into approve.
+Sprint-dev has **one primary HITL surface: the Conductor end-gate**, which is the default and the safety net. Every intermediate `<ask>`, HALT, and per-finding fix/defer prompt for routine findings is removed. The build phase, AVFL, E2E, and all fix loops run autonomously. The developer is engaged at the end — after merge and all validation — through a single open-ended conversational gate that resolves to **"we need changes"** or **"approve"**. There is no Reject. The only other touchpoint is the push confirmation, folded into approve.
+
+**Mid-flight escalation tier (narrow exception, not the default):** A stakes-class finding may escalate mid-flight — bypassing end-gate deferral — ONLY if it meets the strict bar: **irreversible-and-imminent** OR **build-invalidating**. No other condition widens this tier. The three stakes classes that qualify a finding for consideration: security/auth-isolation, irreversible/destructive (migration, delete, force-push, prod deploy), high-blast-radius/architecture. A finding in one of these classes that does NOT meet the mid-flight timing bar is held for end-gate expansion (the default). End-gate expansion is the norm and safety net; the mid-flight tier is the rare exception. Routine findings are always auto-fixed silently and never surface mid-flight.
 
 ### What is removed
 
@@ -597,7 +630,7 @@ Sprint-dev has **exactly one** HITL gate: the **Conductor end-gate**. Every inte
 | Session resumption ask (Resume/Reset) | **Removed.** Stale in-progress stories auto-reset to `ready-for-dev` and re-dispatched. |
 | Dev-agent failure ask (Retry/Skip/Halt) | **Removed.** Auto-retry (bounded); exhausted → `blocked`, build continues; spun to a stub at approve. |
 | AVFL acknowledgement wall | **Removed.** Findings flow straight into the autonomous fix loop. |
-| Consolidated fix queue (per-finding fix/defer) | **Removed.** Legitimate findings always auto-fixed. |
+| Consolidated fix queue (per-finding fix/defer) | **Removed for routine findings.** Routine findings always auto-fixed. Stakes-class findings are escalated (decision cards), not prompted per-finding. |
 | Remaining-findings ask (Accept/fix/defer) | **Removed.** The autonomous loop iterates to convergence (bounded). |
 | Team-review findings ask | **Removed.** Same loop. |
 | Verification checklist ask | **Removed as a gate.** Gherkin results become a read-only report section; `done` is driven by approve. |
@@ -728,9 +761,17 @@ HERO  Sprint slug · review version (v1/v2/…) · one-line subtitle · status p
 03 Quality-gate findings  Every finding from QA, code-review, AVFL, E2E — each a self-contained
    (full context)         card per the CORE MANDATE. Grouped by gate, severity-sorted. Auto-fixed
                           findings shown with their fix + re-validation ("no decision needed").
-04 Decisions needing you  The ONLY interactive cards. Each: background panel + the
-   (fully contextualized)  contradiction/question + options-with-tradeoffs (<details>) +
-                          recommendation + a <choices> radio group.
+03-D Dismissed findings   **[D3 — Required]** Every finding the fixer dismissed, rendered as a
+   (legible auto-fix)     self-contained card: what was dismissed, the non-empty rationale, and
+                          why it was judged invalid/out-of-scope. The auto-fix loop must be legible
+                          about what it dismissed, not only what it changed. Never omit or collapse
+                          dismissed items — empty-state renders "Nothing dismissed this cycle."
+04 Decisions needing you  Stakes-class findings (security/auth-isolation, irreversible/destructive,
+   (fully contextualized)  high-blast-radius/architecture) that were escalated appear here as
+                          decision cards, not in the auto-fixed section. Each: background panel +
+                          the contradiction/question + options-with-tradeoffs (<details>) +
+                          recommendation + a <choices> radio group. Mid-flight escalations that
+                          resolved before the end-gate appear with their resolution noted inline.
 05 Deferred items         Each with what, why safe to defer, and what triaging later costs.
                           Become triage stubs on approval. Empty-state if none.
 06 Blocked / incomplete   Any story that didn't complete; what blocked it + recovery path.
@@ -783,6 +824,13 @@ Reuses the existing template's `.final` pair + `paint()`/`val()`/`buildPrompt()`
 
 No Reject, no Hold-forever. `buildPrompt()` assembles a newline-bulleted natural-language prompt: gate choice as head line, one bullet per decision-card selection; when `changes` is selected, a free-text `<textarea id="changes">` is appended verbatim (the change-workflow's scope). `copyPrompt()` writes to `#out`, copies, flashes "✓ copied — paste it back to me."
 
+**D4 — Anti-rubber-stamp forcing function [Required]:** The end-gate is structured so the human cannot trivially rubber-stamp it when stakes-class items are present. Implementation requirements:
+- The `✓ Approve & finish` button is **not pre-checked** and is **disabled** when unresolved stakes-class decision cards are present in section 04.
+- Each stakes-class decision card in section 04 requires **explicit per-card acknowledgment** (a radio selection or explicit choice) before the Approve control enables.
+- Routine auto-fixed items (section 03) require no per-card action — they collapse and need nothing.
+- The `buildPrompt()` function includes each acknowledged card choice in the submitted prompt, creating an audit trail of which stakes items the developer explicitly reviewed.
+- If no stakes-class items are present (section 04 is empty), the Approve control enables normally — the forcing function activates only when it has something stakes-class to force attention onto.
+
 ### Live conversation + template/data separation
 
 Per decision 8 the report is a **fully open conversation** — the Conductor stays available, answers questions, and **rewrites the report file in place** when asked for more context; the developer reloads. So the report must be cheap to regenerate: it is **data-driven**, not bespoke prose.
@@ -792,6 +840,25 @@ Per decision 8 the report is a **fully open conversation** — the Conductor sta
 - **Self-sufficiency enforced at the data layer** — every finding/decision/row object has required non-empty fields (`what`, `why`, `evidence`; decisions add `options[]` + `recommendation`). An object missing a required field is a *build error*, not a rendered-empty card. This makes "no terse shorthand" a system property, not a hope.
 
 **House style (carried forward verbatim):** self-contained single `.html`, zero external dependencies (inline `<style>` + `<script>`, no CDN/fonts/images, per `anthropics/html-effectiveness`). Anthropic warm palette, three font stacks, radius/border/shadow tokens, numbered sections, severity chips, `<details>` disclosure. Reference: `.momentum/handoffs/sprint-2026-05-26-hitl-report.html`.
+
+### D5 — Decision-grade presentation standard [Required]
+
+The report applies a practice-wide "decision-grade presentation" standard that reconciles two competing mandates: cut irrelevant material (Specification Fatigue source) while guaranteeing sufficient context to decide without leaving the report (self-sufficiency mandate from decision 8). The standard is: **tight on the irrelevant, complete on the decision-relevant.**
+
+**Presentation caps (upper bounds — cut irrelevant material):**
+- Per auto-fixed finding (section 03): summary ≤ 3 sentences; evidence quoted inline ≤ 10 lines; longer evidence in a `<details>` block.
+- Per dismissed finding (section 03-D): reason ≤ 2 sentences; no reproduction steps unless they constitute the rationale.
+- Per decision card (section 04): background panel ≤ 150 words; options list ≤ 3–5 items; each option ≤ 1 cost + 1 benefit sentence. Use `<details>` for anything beyond these caps.
+- Sprint summary (section 01): 2–4 sentences; no enumeration of every story name.
+- Scorecard row (section 02): `what_it_did` ≤ 2 sentences; evidence ≤ 1 line summarizing test counts + outcome.
+
+**Self-sufficiency floor (lower bounds — decision context must stay inline):**
+- Every decision card (section 04) MUST carry `what / why / evidence` inline — the human must never be sent to reference another file, the spec, or a prior conversation to make a call.
+- Every dismissed finding (section 03-D) MUST carry the non-empty rationale inline — "see code" or "context-dependent" are not rationales.
+- Every blocked/incomplete story (section 06) MUST carry what blocked it and the recovery path inline.
+- The self-sufficiency checklist (§ "Authoring discipline" above) is the gate — any item that fails the checklist is a build error, not a rendered-empty card.
+
+**Conflict resolution:** When the cap and the floor conflict (the decision context required exceeds the cap), the self-sufficiency floor wins. The cap cuts *irrelevant* material; it never cuts decision-relevant context.
 
 ---
 
@@ -893,3 +960,24 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 9. **`closed-incomplete` vs `dropped`.** The state machine has both terminal states. Blocked/never-completed stories are routed to `closed-incomplete` (work preserved as a stub). When, if ever, does a story go to `dropped` instead? Is `dropped` reachable from the new flow at all, or only by explicit developer action outside sprint-dev?
 
 10. **Pre-flight HALTs retained — confirm the set.** H1–H5 (no sprint / not activated / missing approvals / stalled) are kept as Phase-1 "cannot start" guards. Confirm these are still desirable as hard HALTs (they are the *only* HALTs left), or whether any should also become autonomous (e.g. auto-activate, auto-reconcile) to match the decision-1 spirit.
+
+---
+
+## 14. Reconciliation note — DEC-035 binding decision #1 × DEC-036
+
+This note maps each spec change in this revision to the source decision it satisfies, mirroring the DEC-036 Reconciliation table structure.
+
+| Spec change | Section(s) revised | DEC-035 binding decision #1 (as written) | DEC-036 decision satisfied |
+|---|---|---|---|
+| "Zero intermediate gates / one human gate at the end" absolute replaced with "end-gate is the default; narrow mid-flight escalation tier is the sole exception." | §1 (binding decision #1), §8 (Principle) | "Every intermediate approval gate is removed." — relaxed: intermediate gate permitted only when irreversible-and-imminent OR build-invalidating. | D1 — Stakes-and-timing escalation policy adopted. Amendment is intent-preserving: anti-firehose intent preserved, absolutism relaxed. |
+| Mid-flight bar stated explicitly and narrowly — a finding may escalate mid-flight ONLY if irreversible-and-imminent OR build-invalidating; no other condition. | §1 (binding decision #1), §8 (mid-flight escalation tier paragraph) | Not addressed in DEC-035. | D1 — The mid-flight bar is the load-bearing definition; must stay narrow. |
+| Routine findings stated to be always auto-fixed silently; stakes-class legitimate findings raised (escalated), not silently fixed. | §1 (binding decision #1), §4 (Phase B action text), §8 (Principle) | "Legitimate issues are always fixed automatically — no per-finding fix/defer prompt." — amended: true for routine class only; stakes-class findings are raised as decision cards. | D1 + D2 — Stakes-class findings leave the silent auto-fix path; routine findings remain always auto-fixed. Anti-firehose intent preserved. |
+| Finding schema: `legitimate: true` no longer asserts ALWAYS auto-fixed; disposition depends on stakes class + timing tier. | §4 (normalized finding schema inline comment) | "Legitimate issues are always fixed automatically." — relaxed for stakes-class. | D2 — Stakes finding-class added to fixer schema. |
+| Three stakes classes documented: security/auth-isolation, irreversible/destructive (migration, delete, force-push, prod deploy), high-blast-radius/architecture; plus default routine class. | §4 (Stakes classes table) | Not enumerated in DEC-035. | D2 — Stakes classes defined as adopted; these are the basis for the escalation routing. |
+| Full disposition set documented: `fixed`, `escalated` (new), `dismissed` (non-empty rationale required), `triaged-out`. | §4 (Disposition table) | Disposition set was: fixed, dismissed (with rationale), triaged-out. | D2 — `escalated` disposition is the mechanism by which stakes-class findings are raised rather than silently fixed. |
+| Timing-tier marker added to finding schema: `end-gate-expanded` (default) | `mid-flight` (narrow exception). | §4 (finding schema + Timing tiers table) | Not present in DEC-035 schema. | D1 — Timing-tier marker is the implementation of the two-tier routing: end-gate-expanded is the norm; mid-flight fires only on the bar. |
+| Non-empty dismissal rationale required — empty or missing rationale is invalid. | §4 (Disposition table, `dismissed` row) | "Dismissed (with rationale)" was in DEC-035 schema but not enforced as a validation gate. | D3 (indirectly) — Legible auto-fix loop requires the rationale to be present for rendering; empty rationale makes the dismissed-rendering section incoherent. |
+| §8 documents the narrow mid-flight escalation tier alongside the single human end-gate; restates the narrow bar; makes clear end-gate is default and mid-flight is rare exception. | §8 (Principle, mid-flight paragraph) | "Sprint-dev has exactly one HITL gate." — amended: one primary gate (default) plus a narrow exception. | D1 — The conduct spec must be revised (§8 gate model) to design to the stakes-and-timing exception. |
+| Dismissed findings rendered in report (D3 — section 03-D). The auto-fix loop is legible about what it dismissed, not only what it changed. | §9 (Required sections — section 03-D) | DEC-035 D5 mandated surfacing what the fixer changed and dismissed; dismissed rendering was not built (only the "changed" half). | D3 — Builds the unbuilt half of DEC-035 D5; purely additive. |
+| Anti-rubber-stamp end-gate forcing function (D4): Approve not pre-checked; stakes-class cards require explicit per-card acknowledgment before Approve enables. | §9 (D4 — Anti-rubber-stamp forcing function) | DEC-035 end-gate had no forcing function; Approve control was pre-checked. | D4 — Forcing function adopted; depends on D1/D2 classification accuracy. |
+| Decision-grade presentation caps (upper bounds) + self-sufficiency floor (lower bounds) — tight on irrelevant, complete on decision-relevant. | §9 (D5 — Decision-grade presentation standard) | DEC-035 decision 8 mandated self-sufficiency but had no concision counterweight. | D5 — Adapted with self-sufficiency floor; caps cut irrelevant material, floor preserves decision context inline. |
