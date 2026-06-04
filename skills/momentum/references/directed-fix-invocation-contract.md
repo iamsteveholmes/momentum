@@ -104,9 +104,9 @@ The escalation payload MUST also carry a `timing_tier` flag with one of exactly 
 
 ---
 
-## Dismissed-Rationale Rule (DEC-036 Amendment D3)
+## Dismissed-Rationale Rule (DEC-035 D5 / DEC-036 D3)
 
-When `disposition` is `dismissed`, the fix-mode's return MUST carry a non-empty `dismissal_rationale` string explaining why the finding was dismissed. A dismissal with a missing or empty rationale is invalid. Empty wave-offs defeat the legible auto-fix record required by DEC-035 D5 — dismissal explanations are not optional.
+When `disposition` is `dismissed`, the fix-mode's return MUST carry a non-empty `dismissal_rationale` string explaining why the finding was dismissed. A dismissal with a missing or empty rationale is invalid. Empty wave-offs defeat the legible auto-fix record required by DEC-035 D5 — dismissal explanations are not optional. DEC-036 D3 extends this legibility requirement by mandating that dismissals be rendered in the conduct report (the "Dismissed / not-actioned" section), but the underlying non-empty-rationale requirement is grounded in DEC-035 D5.
 
 ---
 
@@ -136,7 +136,7 @@ These rules encode the DEC-036 amendment to DEC-035's binding decision #1.
 ## Source Decisions
 
 - **DEC-035** — Adopt conduct; one human end-gate; no story-count cap; report organized by user-facing functionality; legible auto-fix loop showing what it changed AND what it dismissed.
-- **DEC-036** — Amends DEC-035 binding decision #1 narrowly: stakes-class findings leave the silent auto-fix path and are escalated instead; dispositions extended to include `escalated` (D1); inline escalation payload required (D2, D5); non-empty rationale required on `dismissed` (D3); timing tier introduced (`end-gate-expanded` default; narrow `mid-flight` bar); anti-firehose intent and always-auto-fix for routine findings are preserved.
+- **DEC-036** — Amends DEC-035 binding decision #1 narrowly: D1 = stakes-and-timing escalation policy (the centerpiece — defines the three stakes classes, two timing tiers, and the narrow mid-flight bar); D2 = add a stakes finding-class to the fixer schema and hold stakes-class findings out of silent auto-fix; D3 = render the `dismissed` disposition in the conduct report (builds the unbuilt half of DEC-035 D5's legibility requirement); D5 = establish a decision-grade presentation standard with a self-sufficiency floor (the inline `what / why / evidence` payload requirement); anti-firehose intent and always-auto-fix for routine findings are preserved.
 
 ---
 
