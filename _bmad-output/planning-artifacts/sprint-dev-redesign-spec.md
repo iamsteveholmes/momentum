@@ -10,11 +10,11 @@
 
 This redesign collapses the multi-gate, wave-barriered sprint-dev flow into an autonomous build with **exactly one** human-in-the-loop surface at the end. It is grounded in ten binding developer decisions. They are not up for relitigation — every section below designs *to* them.
 
-1. **End-gate is the default HITL surface; a narrow mid-flight escalation tier is the sole exception.** The single human end-gate remains the default and the safety net: AVFL never asks the developer anything, dev agents always retry on failure (no retry/skip/halt prompt), and **routine** findings are *always* auto-fixed silently — there is no per-finding fix/defer prompt for ordinary work. The sole exception is a narrow, high-bar, stakes-gated mid-flight escalation tier: a finding may escalate mid-flight ONLY if it is **irreversible-and-imminent** OR **build-invalidating**. No other condition widens the mid-flight tier. Stakes-class legitimate findings (security/auth-isolation, irreversible/destructive, high-blast-radius/architecture) are **raised** (surfaced as decision cards) rather than silently auto-fixed; findings that do not meet the mid-flight bar are held for end-gate expansion. This amends DEC-035 binding decision #1 — preserving its anti-firehose intent while relaxing its absolutism.
+1. **End-gate is the default HITL surface; a narrow mid-flight escalation tier is the sole exception.** The single human end-gate remains the default and the safety net: AVFL never asks the developer anything, dev agents always retry on failure (no retry/skip/halt prompt), and **routine** findings are *always* auto-fixed silently — there is no per-finding fix/defer prompt for ordinary work. The sole exception is a narrow, high-bar, stakes-gated mid-flight escalation tier: a finding may escalate mid-flight ONLY if it is **irreversible-and-imminent** OR **build-invalidating**. No other condition widens the mid-flight tier. Stakes-class legitimate findings (security-auth-isolation, irreversible-destructive, high-blast-radius-architecture) are **raised** (surfaced as decision cards) rather than silently auto-fixed; findings that do not meet the mid-flight bar are held for end-gate expansion. This amends DEC-035 binding decision #1 — preserving its anti-firehose intent while relaxing its absolutism.
 2. **One end gate only (default) + narrow mid-flight exception.** After the report, a **Conductor** waits for the developer to either (a) say *"we need changes"* → run ONE change-workflow that loops over fixes, or (b) *approve* → triage any leftover issues into new stubs, merge to main, push. There is **no Reject**. Stories close one way or another; the only non-closed case is a blocked/never-completed story → spin out a new stub via `momentum:triage`. New work discovered during review → new stubs via triage. The mid-flight escalation tier fires only on the stakes-and-timing bar (irreversible-and-imminent OR build-invalidating); end-gate expansion is the norm and safety net.
 3. **One workflow for all fixing.** The change-workflow and the build-fix loop are the **same** workflow type, run any time fixing is required.
 4. **Per-story independence.** Each story runs its *own* complete flow: dev → concurrent QA + code-review → fixers → merge its own worktree → done. Prefer per-story independence (a story merges the instant it passes) over global waves. Fall back to waves only when a hard dependency forces it.
-5. **Code review tooling.** `momentum:code-reviewer` is a STUB and must not be relied on. Use **`bmad-code-review`** for the adversarial bug hunt; use the built-in **`/simplify`** for optional cleanup. Do not build an in-house reviewer now.
+5. **Code review tooling.** `momentum:code-reviewer` is now the canonical non-interactive `bmad-code-review` adapter — the reviewer of record for the per-story review leg. It normalizes `bmad-code-review` findings to the canonical finding schema (adding `stakes_class`, `source: bmad-code-review`) and is relied upon by both `sprint-dev` and `quick-fix`. The underlying adversarial engine remains `bmad-code-review`; the built-in **`/simplify`** handles optional cleanup. Do not replace this adapter with a from-scratch in-house reviewer.
 6. **AVFL kept, repositioned.** AVFL runs *after* all worktrees merge — it is the reviewer **of the merge**, inspecting the integrated git result to catch integration issues. Rewrite it as a dynamic **Workflow** (the Workflow tool), not a prose skill.
 7. **E2E validation kept.**
 8. **HTML report, fully self-sufficient.** The recurring failure to fix: reports omit context the developer needs. Every section MUST contain ALL context needed to decide *in that section* — no terse shorthand, no "see code". The report step is a fully open conversation; the Conductor updates the report and answers questions until the developer gives the go-ahead.
@@ -229,8 +229,8 @@ Story worktree (post-dev, code complete, pre-merge)
 ├─ Phase B: CONVERGE → one code-fixer subagent (single writer)
 │      input: qa_findings[] + review_findings[]  (deduped, severity-sorted)
 │      action: auto-fix ALL routine legitimate findings (no fix/defer prompt for ordinary work);
-│              escalate stakes-class findings (security/auth-isolation, irreversible/destructive,
-│              high-blast-radius/architecture) as decision cards — NOT silently fixed;
+│              escalate stakes-class findings (security-auth-isolation, irreversible-destructive,
+│              high-blast-radius-architecture) as decision cards — NOT silently fixed;
 │              apply timing tier: mid-flight if irreversible-and-imminent OR build-invalidating,
 │              otherwise end-gate-expanded (default);
 │              dismiss only with non-empty recorded rationale; out-of-scope NEW work
@@ -274,9 +274,9 @@ All reviewers normalize to one shape so the fixer and the report consume them un
 
 | Class | Examples |
 |---|---|
-| `security/auth-isolation` | XSS, auth bypass, credential exposure, permission escalation |
-| `irreversible/destructive` | migration, delete, force-push, prod deploy, data truncation |
-| `high-blast-radius/architecture` | cross-cutting pattern change, public API break, structural drift |
+| `security-auth-isolation` | XSS, auth bypass, credential exposure, permission escalation |
+| `irreversible-destructive` | migration, delete, force-push, prod deploy, data truncation |
+| `high-blast-radius-architecture` | cross-cutting pattern change, public API break, structural drift |
 | `routine` (default) | everything else — bugs, missing ACs, style, cleanup |
 
 **Timing tiers** — two values only:
@@ -314,7 +314,7 @@ AVFL runs **exactly once per sprint, after every story worktree has merged**. It
 
 It honors the binding decisions:
 - **Never asks the developer anything** (decision 1) — no GATE_FAILED prompt, no MAX_ITERATIONS prompt, no per-finding fix/defer.
-- **Always auto-fixes routine legitimate findings** and loops with declining skepticism until clean or non-convergent. Stakes-class findings (security/auth-isolation, irreversible/destructive, high-blast-radius/architecture) surfaced by AVFL are tagged `escalated` and passed to the Conductor as decision cards for the end-gate, not silently auto-fixed.
+- **Always auto-fixes routine legitimate findings** and loops with declining skepticism until clean or non-convergent. Stakes-class findings (security-auth-isolation, irreversible-destructive, high-blast-radius-architecture) surfaced by AVFL are tagged `escalated` and passed to the Conductor as decision cards for the end-gate, not silently auto-fixed.
 - It is **not** the end gate. It produces a result object; the Conductor reads it and folds it into the report. Anything AVFL could not resolve becomes a **leftover** the Conductor routes to `momentum:triage` — AVFL never spins stories itself.
 
 This kills the audited contradiction: sprint-dev currently wraps AVFL as a read-only `checkpoint` stop-gate, then runs a *separate* developer-driven fix/defer queue (Phase 4c/4d). That entire HITL queue is deleted; AVFL's native auto-fix loop *is* the mechanism now.
@@ -624,7 +624,7 @@ No verification decisions are made here:
 
 Sprint-dev has **one primary HITL surface: the Conductor end-gate**, which is the default and the safety net. Every intermediate `<ask>`, HALT, and per-finding fix/defer prompt for routine findings is removed. The build phase, AVFL, E2E, and all fix loops run autonomously. The developer is engaged at the end — after merge and all validation — through a single open-ended conversational gate that resolves to **"we need changes"** or **"approve"**. There is no Reject. The only other touchpoint is the push confirmation, folded into approve.
 
-**Mid-flight escalation tier (narrow exception, not the default):** A stakes-class finding may escalate mid-flight — bypassing end-gate deferral — ONLY if it meets the strict bar: **irreversible-and-imminent** OR **build-invalidating**. No other condition widens this tier. The three stakes classes that qualify a finding for consideration: security/auth-isolation, irreversible/destructive (migration, delete, force-push, prod deploy), high-blast-radius/architecture. A finding in one of these classes that does NOT meet the mid-flight timing bar is held for end-gate expansion (the default). End-gate expansion is the norm and safety net; the mid-flight tier is the rare exception. Routine findings are always auto-fixed silently and never surface mid-flight.
+**Mid-flight escalation tier (narrow exception, not the default):** A stakes-class finding may escalate mid-flight — bypassing end-gate deferral — ONLY if it meets the strict bar: **irreversible-and-imminent** OR **build-invalidating**. No other condition widens this tier. The three stakes classes that qualify a finding for consideration: security-auth-isolation, irreversible-destructive (migration, delete, force-push, prod deploy), high-blast-radius-architecture. A finding in one of these classes that does NOT meet the mid-flight timing bar is held for end-gate expansion (the default). End-gate expansion is the norm and safety net; the mid-flight tier is the rare exception. Routine findings are always auto-fixed silently and never surface mid-flight.
 
 ### What is removed
 
@@ -771,8 +771,8 @@ HERO  Sprint slug · review version (v1/v2/…) · one-line subtitle · status p
                           why it was judged invalid/out-of-scope. The auto-fix loop must be legible
                           about what it dismissed, not only what it changed. Never omit or collapse
                           dismissed items — empty-state renders "Nothing dismissed this cycle."
-04 Decisions needing you  Stakes-class findings (security/auth-isolation, irreversible/destructive,
-   (fully contextualized)  high-blast-radius/architecture) that were escalated appear here as
+04 Decisions needing you  Stakes-class findings (security-auth-isolation, irreversible-destructive,
+   (fully contextualized)  high-blast-radius-architecture) that were escalated appear here as
                           decision cards, not in the auto-fixed section. Each: background panel +
                           the contradiction/question + options-with-tradeoffs (<details>) +
                           recommendation + a <choices> radio group. Mid-flight escalations that
@@ -978,7 +978,7 @@ This note maps each spec change in this revision to the source decision it satis
 | Mid-flight bar stated explicitly and narrowly — a finding may escalate mid-flight ONLY if irreversible-and-imminent OR build-invalidating; no other condition. | §1 (binding decision #1), §8 (mid-flight escalation tier paragraph) | Not addressed in DEC-035. | D1 — The mid-flight bar is the load-bearing definition; must stay narrow. |
 | Routine findings stated to be always auto-fixed silently; stakes-class legitimate findings raised (escalated), not silently fixed. | §1 (binding decision #1), §4 (Phase B action text), §8 (Principle) | "Legitimate issues are always fixed automatically — no per-finding fix/defer prompt." — amended: true for routine class only; stakes-class findings are raised as decision cards. | D1 + D2 — Stakes-class findings leave the silent auto-fix path; routine findings remain always auto-fixed. Anti-firehose intent preserved. |
 | Finding schema: `legitimate: true` no longer asserts ALWAYS auto-fixed; disposition depends on stakes class + timing tier. | §4 (normalized finding schema inline comment) | "Legitimate issues are always fixed automatically." — relaxed for stakes-class. | D2 — Stakes finding-class added to fixer schema. |
-| Three stakes classes documented: security/auth-isolation, irreversible/destructive (migration, delete, force-push, prod deploy), high-blast-radius/architecture; plus default routine class. | §4 (Stakes classes table) | Not enumerated in DEC-035. | D2 — Stakes classes defined as adopted; these are the basis for the escalation routing. |
+| Three stakes classes documented: security-auth-isolation, irreversible-destructive (migration, delete, force-push, prod deploy), high-blast-radius-architecture; plus default routine class. | §4 (Stakes classes table) | Not enumerated in DEC-035. | D2 — Stakes classes defined as adopted; these are the basis for the escalation routing. |
 | Full disposition set documented: `fixed`, `escalated` (new), `dismissed` (non-empty rationale required), `triaged-out`. | §4 (Disposition table) | Disposition set was: fixed, dismissed (with rationale), triaged-out. | D2 — `escalated` disposition is the mechanism by which stakes-class findings are raised rather than silently fixed. |
 | Timing-tier marker added to finding schema: `end-gate-expanded` (default) and `mid-flight` (narrow exception). | §4 (finding schema + Timing tiers table) | Not present in DEC-035 schema. | D1 — Timing-tier marker is the implementation of the two-tier routing: end-gate-expanded is the norm; mid-flight fires only on the bar. |
 | Non-empty dismissal rationale required — empty or missing rationale is invalid. | §4 (Disposition table, `dismissed` row) | "Dismissed (with rationale)" was in DEC-035 schema but not enforced as a validation gate. | D3 (indirectly) — Legible auto-fix loop requires the rationale to be present for rendering; empty rationale makes the dismissed-rendering section incoherent. |

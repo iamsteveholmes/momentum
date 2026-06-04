@@ -370,7 +370,7 @@ Ready to begin?</output>
              so the end-gate report can surface it to the developer as an informational item:
              { slug: S.slug, contract_path: {{contract_path}}, frozen_sha256: {{frozen_sha256}}, live_sha256: {{live_sha256}} }
              Note: {{contract_integrity_stops}} is a dedicated collection initialized at step 2.0 — it is separate from
-             {{escalations}} (which is reserved for stakes-class mid-flight records only, per line 226).
+             {{escalations}} (which is reserved for stakes-class mid-flight records only, per its initialization in step 2.0).
           5. Remove S from {{running}} without transitioning it to "review".
              Mark S in Conductor in-memory state as integrity-stopped (not blocked, not failed).
           6. CONTINUE the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
@@ -403,6 +403,7 @@ Ready to begin?</output>
         deduplicated and severity-sorted (highest severity first).
         Bind {{fix_attempts}} = {} — per-finding retry counter keyed by finding ID.
         Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked).
+          [NOTE: "blocked" is Conductor-internal-only, used when retry budget is exhausted. It is NOT in the canonical four-value disposition set (fixed | dismissed | triaged-out | escalated) defined by finding-schema.md. Before blocked findings reach the end-gate report or any schema consumer, they are treated as escalated findings (the canonical catch-all for findings that cannot be fixed, dismissed, or triaged-out per finding-schema.md §73). The triage spin-out path for blocked findings serves the same routing purpose as the escalated path.]
         Bind {{end_gate_escalations}} = [] — escalated findings routed to end-gate-expanded tier (held for Phase 5).
           [HOLLOW: {{end_gate_escalations}} is written here and emitted in the pipeline signal payload but NOT yet consumed by the end-gate report (step 5). Wiring {{end_gate_escalations}} into the step 5 decision-card section ({{stakes_findings}}) is owned by a downstream end-gate-rendering story. This dead-end is intentional and traceable — it is not silent.]
         Bind {{mid_flight_escalations}} = [] — escalated findings accumulated for single dispatch to step 2.F (the shared-primitive escalation hook).
@@ -429,6 +430,7 @@ Ready to begin?</output>
 
         CASE disposition == "fixed":
           — Stakes-class guard: VERIFY that F.stakes_class == "routine". If the fixer returns "fixed" for a stakes-class finding (non-routine), treat it as an implementation error — do NOT commit the fix. Log a warning in {{build_log}} and re-classify F as escalated (see escalated path below).
+            When re-classifying: look up the inbound finding for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's "fixed" disposition object does not carry these fields). Default timing_tier to "end-gate-expanded" (the conservative default per finding-schema.md) since the fixer never sets timing_tier on a "fixed" disposition.
           — Commit the applied fix to the story worktree .worktrees/story-{S.slug}: `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
 
@@ -437,20 +439,23 @@ Ready to begin?</output>
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "dismissed", summary: F.summary, dismissal_rationale: F.dismissal_rationale }
 
         CASE disposition == "triaged-out":
-          — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "triaged-out", summary: F.summary }
-          — The Conductor will route triaged-out findings to momentum:triage at build-phase completion (not inline here — triage is deferred to avoid blocking the fix loop).
+          — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover summary, detail, location, and suggested_fix (the fixer's triaged-out disposition object carries only finding_id and disposition; the descriptive fields live on the inbound finding).
+          — Record F in {{finding_dispositions}}: { finding_id: F.finding_id, disposition: "triaged-out", summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix }
+          — The Conductor will route triaged-out findings to momentum:triage at build-phase completion (not inline here — triage is deferred to avoid blocking the fix loop). The recovered descriptive fields ensure the triage stub has actionable content.
 
         CASE disposition == "escalated":
-          — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "escalated", stakes_class: F.stakes_class, timing_tier: F.timing_tier, summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix }
+          — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's escalated disposition object carries these in the nested escalation object and does not echo them at the top level; join by finding_id).
+            Resolve fields: stakes_class = I.stakes_class; timing_tier = F.escalation.timing_tier (default "end-gate-expanded" if absent); summary = I.summary; evidence = F.escalation.evidence (inline from fixer) or I.evidence; suggested_fix = I.suggested_fix.
+          — Record in {{finding_dispositions}}: { finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, evidence: evidence, suggested_fix: suggested_fix }
           — F is removed from the retry-bound-3 loop IMMEDIATELY. No further fix/re-check attempts will be run against F inside this loop.
           — Route by timing tier:
-              IF F.timing_tier == "mid-flight":
+              IF timing_tier == "mid-flight":
                 — The finding is irreversible-and-imminent OR build-invalidating (per skills/momentum/references/directed-fix-invocation-contract.md narrow bar).
-                — Append F to {{mid_flight_escalations}} (accumulated for dispatch to step 2.F after all findings are processed).
-              ELSE (F.timing_tier == "end-gate-expanded" OR timing_tier not set):
+                — Append to {{mid_flight_escalations}} (accumulated for dispatch to step 2.F after all findings are processed).
+              ELSE (timing_tier == "end-gate-expanded" OR timing_tier not set):
                 — The finding is stakes-class but does NOT meet the mid-flight bar. Route to end-gate-expanded tier (the default and safety net).
-                — Append F to {{end_gate_escalations}}: { finding_id: F.id, stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix }
-                — Record in {{build_log}}: { slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_summary: F.summary }
+                — Append to {{end_gate_escalations}}: { finding_id: F.finding_id, stakes_class: stakes_class, timing_tier: "end-gate-expanded", summary: summary, evidence: evidence, suggested_fix: suggested_fix }
+                — Record in {{build_log}}: { slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_summary: summary }
                 — Continue the fix loop. This escalation does NOT pause the build or stop other findings from completing.
       </action>
 
@@ -868,11 +873,12 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
 
           <note>Quarantine records and escalation records ({{escalations}}) are separate collections.
             A quarantined story produces a quarantine entry in {{build_log}}, not an `escalated` disposition.
-            The `escalated` disposition is produced only by the escalation engine (step 2.F / 2.2.M.4.E).
+            The `escalated` disposition is assigned by the fixer (dev fix-mode) per the canonical finding schema;
+            the mid-flight pause primitive is owned only by the escalation engine (step 2.F / 2.2.M.4.E).
           </note>
 
           <!-- ── 2.2.M.6 — Successful integration path ───────────────────────────── -->
-          <!-- Reached ONLY via the explicit "Proceed to step 2.2.M.6" from a clean merge (line 440)     -->
+          <!-- Reached ONLY via the explicit "Proceed to step 2.2.M.6" from a clean merge (the merge-clean branch at step 2.2.M.2) -->
           <!-- or from a successful retry after conflict resolution. Never reached from quarantine (2.2.M.5). -->
           <action>2.2.M.6 — SUCCESSFUL INTEGRATION (reached after a clean rebase-then-merge, with or without
             prior conflict resolution):
@@ -938,7 +944,7 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
             Add S.slug to {{blocked}}.
             Remove S.slug from {{running}}.
             `momentum-tools sprint status-transition --story {S.slug} --target closed-incomplete`
-            Note: "blocked" is Conductor in-memory state ({{blocked}} array). The durable story status is "closed-incomplete" — "blocked" is not a valid state in the tool's state machine. If the intent is only in-memory tracking and no durable state transition is needed, omit this command; if a durable terminal state is required, "dropped" is the alternative valid choice.
+            Note: "blocked" is Conductor in-memory state ({{blocked}} array). The durable story status is "closed-incomplete" — "blocked" is not a valid state in the tool's state machine. "closed-incomplete" is the sole correct durable terminal for retry/dependency-exhausted stranding (per spec §8: blocked/never-completed -> closed-incomplete).
             Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "blocked", reason: S.reason, retry_count: {{retries}}[S.slug] }.
             CONTINUE. Do not halt the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
           </action>
@@ -1055,7 +1061,9 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
   <step n="3" goal="AVFL-on-merge — sprint-level quality scan on the full integrated sprint branch">
     <note>AVFL runs once after ALL stories are merged to the sprint branch. It is a read-only scan at this phase — findings are not fixed here; they are held for the end-gate report. This phase runs silently; no developer interaction unless a finding triggers mid-flight escalation criteria (which are delivered by a downstream story).</note>
 
-    <action>Capture sprint diff: identify files changed by all merged stories (union of all `touches` arrays in {{story_map}}).</action>
+    <action>Capture sprint diff: identify files changed by all merged stories (union of all `touches` arrays in {{story_map}}).
+      [INTERIM NOTE: The authoritative spec (§5, §6) calls for a 3-dot merge-base diff (`git diff <merge-base>...sprint/{{sprint_slug}}`) fed to an avfl-merge-review Workflow (not this prose skill). The touches-union approach here is an interim approximation. The AVFL-as-Workflow + 3-dot-diff rewrite is tracked as a downstream story per spec §10 PROSE→WF build order. When that story lands, replace this touches-union diff with the spec's merge-base 3-dot diff so AVFL inspects the net integrated change rather than a file-name union. This deviation is intentional and tracked — not a silent gap.]
+    </action>
     <action>Collect acceptance criteria from all sprint story files. Concatenate as {{all_acs}}.</action>
 
     <action>Spawn `momentum:avfl` (individual-agent, not TeamCreate) with:
@@ -1198,9 +1206,13 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         3. If conflicts: the Conductor resolves them autonomously or fires a fixer subagent, then retries the merge (per spec §2 and decision #9 — "Conductor resolves conflicts; retry"; conflict-resolution engine delivered by conduct-merge-and-conflict-resolution). Never HALT for developer resolution.
         4. After successful merge: `git branch -d sprint/{{sprint_slug}}`
       </action>
-      <action>Transition all sprint stories to done:
+      <action>Transition sprint stories to their correct terminal status (per spec §8):
         For each story in {{sprint_stories}}:
-          `momentum-tools sprint status-transition --story {slug} --target done`
+          IF slug is in {{merged}} (story completed-and-validated, work integrated):
+            `momentum-tools sprint status-transition --story {slug} --target done`
+          ELSE (story is quarantined, integrity-stopped, or blocked/never-merged — not in {{merged}}):
+            `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
+            Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked stories (retry-exhausted, left unmerged) all go to closed-incomplete, not done. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
       </action>
       <action>Show push summary: `git log @{u}..HEAD --oneline`</action>
       <ask>Push to origin/main?</ask>

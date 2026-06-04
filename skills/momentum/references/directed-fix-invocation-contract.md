@@ -22,6 +22,18 @@ The fix-mode accepts a set of inbound findings — each conforming to the Canoni
 
 ---
 
+## Finding Identification
+
+Each inbound finding carries a `finding_id` field assigned by the Conductor **before** the fix-mode is invoked. The `finding_id` is:
+
+- **Assigned by:** the Conductor (not by any reviewer, not by the fix-mode itself)
+- **Unique within:** the findings array of a single fix-mode invocation (one story's fix call)
+- **Lifetime:** the Conductor uses it to correlate each returned disposition back to the inbound finding, and to key per-finding retry counts in `{{fix_attempts}}`
+
+The fix-mode echoes `finding_id` in every returned disposition object so the Conductor can match dispositions to inbound findings without relying on positional ordering. The `finding_id` is a Conductor-internal correlation key; it is not part of the Canonical Normalized Finding Schema field set defined in `finding-schema.md`.
+
+---
+
 ## Disposition Vocabulary
 
 Every finding processed by the fix-mode exits with exactly one of the following disposition values. These values are authoritative; no other value is valid.

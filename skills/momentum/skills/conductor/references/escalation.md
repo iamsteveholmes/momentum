@@ -24,8 +24,8 @@ The engine receives a findings array from a per-story pipeline or validation res
 
 | Field | Values | Source |
 |---|---|---|
-| `stakes_class` | `routine` \| `security-auth-isolation` \| `irreversible-destructive` \| `high-blast-radius-architecture` | Produced by `directed-fix-finding-schema` — the engine consumes this field, it does not define it |
-| `timing_tier` | `end-gate-expanded` \| `mid-flight` | Produced by `directed-fix-finding-schema` — `mid-flight` means the finding is irreversible-and-imminent or build-invalidating (encoded in the value's semantics per schema ACs 9–10); the engine consumes this field, it does not define it |
+| `stakes_class` | `routine` \| `security-auth-isolation` \| `irreversible-destructive` \| `high-blast-radius-architecture` | Defined by the canonical finding schema (`skills/momentum/references/finding-schema.md`, authored by the directed-fix-finding-schema story) — the engine consumes this field, it does not define it |
+| `timing_tier` | `end-gate-expanded` \| `mid-flight` | Defined by the canonical finding schema (`skills/momentum/references/finding-schema.md`) — `mid-flight` means the finding is irreversible-and-imminent or build-invalidating (encoded in the value's semantics per schema ACs 9–10); the engine consumes this field, it does not define it |
 | `summary` | String | Human-readable description of the finding |
 | `evidence` | String | Supporting evidence inline |
 | `suggested_fix` | String | Recommended resolution |
@@ -39,7 +39,7 @@ The engine receives a findings array from a per-story pipeline or validation res
 1. `stakes_class` is one of: `security-auth-isolation`, `irreversible-destructive`, `high-blast-radius-architecture`  
    (i.e., NOT `routine`)
 2. `timing_tier == mid-flight`  
-   (The `mid-flight` value already encodes that the finding is irreversible-and-imminent or build-invalidating — this is the semantic definition of `mid-flight` in the upstream `directed-fix-finding-schema`. No separate reason field is required.)
+   (The `mid-flight` value already encodes that the finding is irreversible-and-imminent or build-invalidating — this is the semantic definition of `mid-flight` per the canonical finding schema (`skills/momentum/references/finding-schema.md`). No separate reason field is required.)
 
 **Everything else stays on the autonomous path — no mid-flight pause.**
 
@@ -147,14 +147,14 @@ Any finding raised mid-flight via this engine is recorded with the **`escalated`
 
 **Disposition vocabulary:**
 
-| Disposition | Producer | Meaning |
+| Disposition | Assigned by | Meaning |
 |---|---|---|
-| `fixed` | Routine auto-fix path inside the pipeline | Silently resolved; developer not involved |
-| `dismissed` | Auto-fix loop (requires non-empty rationale) | Waved off by the fixer; rationale recorded |
-| `triaged-out` | Auto-fix loop | Outside scope; not actioned |
-| `escalated` | This engine only | Raised mid-flight to the developer; not silently fixed |
+| `fixed` | Fixer (dev fix-mode) — routine path | Silently resolved; developer not involved |
+| `dismissed` | Fixer (dev fix-mode) — requires non-empty rationale | Waved off by the fixer; rationale recorded |
+| `triaged-out` | Fixer (dev fix-mode) | Outside scope; not actioned |
+| `escalated` | Fixer (dev fix-mode) — per `finding-schema.md` Rule 2 and `directed-fix-invocation-contract.md` | Raised for human attention; not silently fixed |
 
-`escalated` is the sole producer of the `escalated` disposition. No other path produces it. The `escalated` disposition is visible in the end-gate report's "Mid-flight Escalations During Build" section so the developer can see what was raised and how it was resolved.
+The `escalated` disposition is **assigned by the fixer (dev fix-mode)** per the canonical finding schema (`skills/momentum/references/finding-schema.md` Rule 2) and the directed-fix invocation contract. This engine is the **sole owner of the mid-flight pause primitive** — it consumes already-`escalated` findings whose `timing_tier` is `mid-flight` and decides whether to raise a developer-facing pause-ask. Disposition assignment and mid-flight routing are distinct roles: the fixer assigns dispositions; this engine routes the mid-flight subset. The `escalated` disposition is visible in the end-gate report's "Mid-flight Escalations During Build" section so the developer can see what was raised and how it was resolved.
 
 ---
 
@@ -186,6 +186,6 @@ Note: AVFL runs after all stories are merged, so mid-flight escalations from AVF
 | Boundary | Owned by |
 |---|---|
 | Terminal end-gate (single mandatory human gate at run close) | Conductor Phase 5 (a separate surface and separate story) |
-| Stakes finding-class schema field (`stakes_class`, `timing_tier`) | `directed-fix-finding-schema` (upstream; this engine consumes those fields) |
+| Stakes finding-class schema field (`stakes_class`, `timing_tier`) | Canonical finding schema at `skills/momentum/references/finding-schema.md` (upstream; this engine consumes those fields) |
 | Anti-rubber-stamp forcing function (DEC-036 D4) | End-gate report (requires per-card acknowledgment; lives in Phase 5) |
 | Routine auto-fix loop | Per-story pipeline internals (never routes through this engine) |
