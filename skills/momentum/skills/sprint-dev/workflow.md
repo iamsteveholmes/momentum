@@ -405,9 +405,12 @@ Options:
 
     <action>For each story in {{sprint_stories}} (all stories now in "review" status):
       Generate the story diff to pass to the adapter:
-        Run: `git diff sprint/{{sprint_slug}}~{{N}}..sprint/{{sprint_slug}} -- {{story.touches | join(' ')}}`
-        Where {{N}} is the number of commits this story contributed (use `git log --oneline sprint/{{sprint_slug}} -- {{story.touches | join(' ')}}` to count).
-        Alternatively: diff the story branch merge point against the commit immediately preceding the first story commit on the sprint branch.
+        The story branch `story/{slug}` is still present (deferred cleanup — see {{pending_worktree_cleanup}}).
+        Run: `git diff sprint/{{sprint_slug}}...story/{slug} -- {{story.touches | join(' ')}}`
+        (Three-dot form: diffs from the merge-base of the sprint branch and the story branch to the story branch tip.
+        This correctly isolates exactly what this story introduced, regardless of how many other stories have merged.)
+        Fallback if the story branch has already been deleted: use `git log --oneline sprint/{{sprint_slug}} -- {{story.touches | join(' ')}}` to find the story's merge commit SHA, then diff its first-parent:
+          `git diff <merge-sha>^1 <merge-sha> -- {{story.touches | join(' ')}}`
         Store as {{story_diff[slug]}} per story.
       Collect {{story_spec[slug]}} = `.momentum/stories/{slug}.md` (the story file, used as the spec for the Acceptance Auditor layer).
     </action>
