@@ -319,7 +319,7 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
             While S's branch is paused: other stories in {{running}} and any newly-unblocked stories continue unaffected.
             Pausing one branch does NOT halt the rest of the build phase.
           </action>
-          <note>After the pause is resolved (developer responds via step 2.F), the hook returns "continue" (Continue and Dismiss both resume the branch) or terminates the run (Halt). There is no richer resolution-outcome object — "continue" is the only return value that resumes the branch. The merge and frontier re-evaluation for S proceed on "continue".</note>
+          <note>After the pause is resolved (developer responds via step 2.F with Proceed, Change, or Abort-that-branch), the hook returns "continue" to step 2.2 for all three outcomes. Proceed and Change resume the branch (merge and frontier re-evaluation for S proceed normally). Abort-that-branch abandons S's branch only — the rest of the build continues unaffected; the build is NOT terminated globally. There is no run-terminating outcome.</note>
         </check>
 
         <check if="hook returns 'continue' OR hook resolution completes">
@@ -430,10 +430,11 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
       <!-- ── Hook entry point ─────────────────────────────────── -->
       <action>Receive S.escalations from the pipeline's terminal signal.
         Invoke the escalation engine (references/escalation.md) with S.escalations.
-        The engine evaluates bar: stakes_class in {security-auth-isolation, irreversible-destructive, high-blast-radius-architecture} AND timing_tier == mid-flight AND escalation_reason in {irreversible-and-imminent, build-invalidating}.
+        The engine evaluates bar: stakes_class in {security-auth-isolation, irreversible-destructive, high-blast-radius-architecture} AND timing_tier == mid-flight.
+        (timing_tier == mid-flight encodes that the finding is irreversible-and-imminent or build-invalidating — per the upstream directed-fix-finding-schema ACs 9–10. No separate escalation_reason field is consulted.)
         Engine returns one of:
           { outcome: "continue" }  — no mid-flight bar finding; proceed normally
-          { outcome: "pause-branch", finding: {...}, stakes_class, escalation_reason }  — bar is met
+          { outcome: "pause-branch", finding: {...}, stakes_class, timing_tier }  — bar is met
         The Conductor does not itself inspect or classify S.escalations; it only acts on the engine's returned outcome.
       </action>
 
@@ -453,7 +454,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
 **Paused story:** `{{S.slug}}` — {{S.title}}
 **Finding class:** {{stakes_class}}
-**Mid-flight qualifier:** {{escalation_reason}} (irreversible-and-imminent | build-invalidating)
+**Timing tier:** mid-flight (irreversible-and-imminent or build-invalidating)
 
 **What is at stake:**
 {{finding.summary}}
@@ -475,14 +476,14 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "escalated", resolution: "fix-applied", finding_summary: {{finding.summary}} }.
             Note: disposition is "escalated" (not "fixed") — this finding was raised mid-flight to the developer; it is stakes-class and was not silently auto-fixed. The "escalated" disposition is distinct from "fixed" (routine auto-fix), "dismissed" (waved off with rationale), and "triaged-out" (outside scope). "resolution: fix-applied" records how the escalated finding was resolved.
           </action>
-          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, escalation_reason, disposition: "escalated", resolution: "fix-applied" }.</action>
+          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, timing_tier: "mid-flight", disposition: "escalated", resolution: "fix-applied" }.</action>
           <action>Return "continue" to step 2.2 (the merge and frontier re-evaluation for S proceed). No further mid-flight pause is raised for this resolved finding.</action>
         </check>
 
         <check if="Change">
           <action>Receive the developer's alternative instruction (what to do differently). Spawn a fix subagent with the developer's alternative instruction (individual-agent, not TeamCreate). The subagent produces output only. The Conductor commits the changed action.</action>
           <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "escalated", resolution: "changed-action", developer_instruction: {{developer_instruction}}, finding_summary: {{finding.summary}} }.</action>
-          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, escalation_reason, disposition: "escalated", resolution: "changed-action", developer_instruction: {{developer_instruction}} }.</action>
+          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, timing_tier: "mid-flight", disposition: "escalated", resolution: "changed-action", developer_instruction: {{developer_instruction}} }.</action>
           <action>Return "continue" to step 2.2 (the merge and frontier re-evaluation for S proceed). No further mid-flight pause is raised for this resolved finding.</action>
         </check>
 
@@ -492,7 +493,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             `momentum-tools sprint status-transition --story {S.slug} --target closed-incomplete`
           </action>
           <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "escalated", resolution: "branch-aborted", finding_summary: {{finding.summary}} }.</action>
-          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, escalation_reason, disposition: "escalated", resolution: "branch-aborted" }.</action>
+          <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, timing_tier: "mid-flight", disposition: "escalated", resolution: "branch-aborted" }.</action>
           <note>The build continues for all other stories. The frontier re-evaluation in step 2.2 is NOT triggered for S (the branch is abandoned, not merged). Dependents of S.slug can never satisfy the >= review gate and will be swept into blocked at build-phase completion.</note>
         </check>
       </check>
@@ -529,6 +530,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           If engine returns { outcome: "continue" }: tag F with timing_tier: "end-gate-expanded"; hold for end-gate report.
           If engine returns { outcome: "pause-branch" }: invoke step 2.F pause-ask-resume logic for F.
             Note: AVFL runs post-merge; mid-flight escalations from AVFL are post-merge pauses. The engine evaluates the bar identically regardless of phase.
+            Post-merge resolution outcome differences: Proceed = spawn fixer + commit to sprint branch; Change = fixer with alternative + commit to sprint branch. Abort-that-branch does NOT apply post-merge (no in-flight story branch exists); if the developer rejects the finding, open a follow-up backlog story instead.
       ANTI-FIREHOSE: Only findings explicitly flagged irreversible-and-imminent or build-invalidating by AVFL fire a pause-ask. Non-imminent stakes-class findings go to end-gate-expanded.
     </action>
 

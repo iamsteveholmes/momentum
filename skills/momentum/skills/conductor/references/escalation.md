@@ -25,8 +25,7 @@ The engine receives a findings array from a per-story pipeline or validation res
 | Field | Values | Source |
 |---|---|---|
 | `stakes_class` | `routine` \| `security-auth-isolation` \| `irreversible-destructive` \| `high-blast-radius-architecture` | Produced by `directed-fix-finding-schema` — the engine consumes this field, it does not define it |
-| `timing_tier` | `end-gate-expanded` \| `mid-flight` | Set by the pipeline when a finding is imminent or build-invalidating |
-| `escalation_reason` | `irreversible-and-imminent` \| `build-invalidating` | Required when `timing_tier == mid-flight` |
+| `timing_tier` | `end-gate-expanded` \| `mid-flight` | Produced by `directed-fix-finding-schema` — `mid-flight` means the finding is irreversible-and-imminent or build-invalidating (encoded in the value's semantics per schema ACs 9–10); the engine consumes this field, it does not define it |
 | `summary` | String | Human-readable description of the finding |
 | `evidence` | String | Supporting evidence inline |
 | `suggested_fix` | String | Recommended resolution |
@@ -39,7 +38,8 @@ The engine receives a findings array from a per-story pipeline or validation res
 
 1. `stakes_class` is one of: `security-auth-isolation`, `irreversible-destructive`, `high-blast-radius-architecture`  
    (i.e., NOT `routine`)
-2. `timing_tier == mid-flight` AND `escalation_reason` is one of: `irreversible-and-imminent` OR `build-invalidating`
+2. `timing_tier == mid-flight`  
+   (The `mid-flight` value already encodes that the finding is irreversible-and-imminent or build-invalidating — this is the semantic definition of `mid-flight` in the upstream `directed-fix-finding-schema`. No separate reason field is required.)
 
 **Everything else stays on the autonomous path — no mid-flight pause.**
 
@@ -71,7 +71,7 @@ The engine returns one of two outcomes to the caller (step 2.2 or step 2.M):
 | Return | Meaning |
 |---|---|
 | `{ outcome: "continue" }` | No finding in the array meets the mid-flight bar; proceed normally; any stakes-class findings are tagged for end-gate-expanded |
-| `{ outcome: "pause-branch", finding: {...}, stakes_class, escalation_reason }` | Exactly one bar-clearing finding detected; the engine raises the pause-ask to the developer |
+| `{ outcome: "pause-branch", finding: {...}, stakes_class, timing_tier }` | Exactly one bar-clearing finding detected; the engine raises the pause-ask to the developer |
 
 The Conductor (caller) does not classify findings itself. It invokes the engine and acts only on the engine's returned outcome.
 
@@ -97,7 +97,7 @@ stakes-and-timing bar (DEC-036 D1). Other stories continue building.
 
 **Paused story:** `{{S.slug}}` — {{S.title}}
 **Finding class:** {{stakes_class}}
-**Mid-flight qualifier:** {{escalation_reason}}
+**Timing tier:** mid-flight (irreversible-and-imminent or build-invalidating)
 
 **What is at stake:**
 {{finding.summary}}
@@ -175,7 +175,7 @@ AVFL findings (Phase 3) carry the same `stakes_class` and `timing_tier` fields. 
 - Stakes-class findings with `timing_tier == end-gate-expanded` → end-gate-expanded decision cards (no mid-flight pause; AVFL runs after the build phase is complete)
 - Stakes-class findings with `timing_tier == mid-flight` → invoke this engine; engine evaluates the bar; pause-ask fires if the bar is met
 
-Note: AVFL runs after all stories are merged, so mid-flight escalations from AVFL are post-merge pauses, not in-build pauses. The engine handles them identically — the bar evaluation and pause-ask contract are the same regardless of which phase invokes the engine.
+Note: AVFL runs after all stories are merged, so mid-flight escalations from AVFL are post-merge pauses, not in-build pauses. The bar evaluation and pause-ask contract are identical regardless of phase. **Resolution outcome differences in the post-merge phase:** Proceed = spawn fixer subagent and commit to the sprint branch; Change = fixer with developer's alternative instruction and commit. **Abort-that-branch does not apply post-merge** — there is no in-flight story branch to abandon. If a finding is post-merge and the developer wants to reject it, the outcome is "open a follow-up backlog story" (route to end-gate-expanded tracking) rather than branch-abort. The caller (workflow.md Phase 3) must adapt resolution outcome semantics accordingly.
 
 ---
 
