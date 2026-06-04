@@ -69,7 +69,7 @@ You receive:
 - Determine the project's test command from CLAUDE.md, package.json, or project structure
 - Execute the test suite scoped to this story's changes (or the full suite if story-scoped execution is not available)
 - Record: total tests, passed, failed, skipped
-- Failing tests are MISSING findings attributed to the AC they cover
+- A failing test that covers an AC drives that AC to a non-VERIFIED verdict; if the behavior is absent or untested, classify as MISSING; if the test fails due to a correctness defect in the implementation, record the failure detail in the finding. Either way the story-level verdict is FAIL.
 
 ### 5. Classify Each AC
 
@@ -83,7 +83,7 @@ For each acceptance criterion:
    - **PARTIAL** — a test exists and passes, but it exercises only part of the AC's stated behavior; some aspect remains untested. Record what is covered and what is not.
    - **MISSING** — execution succeeded but no passing test provides evidence the AC is satisfied. The behavior is absent or untested.
    - **BLOCKED** — execution was prevented and the AC cannot be assessed (infrastructure unavailable after good-faith startup attempt, harness absent, build failure, etc.).
-5. Every classification carries concrete `file:line` evidence pointing into the diff under review. If you cannot provide a `file:line` reference because you did not execute the code path, your verdict is BLOCKED — not VERIFIED.
+5. Every classification carries concrete evidence pointing into the diff under review. For VERIFIED and PARTIAL, record a `file:line` reference in the diff. For MISSING, record the test output or command output demonstrating the behavior is absent or untested — a diff line is not required when the implementing code does not exist. If you cannot provide any evidence (test output, command output, or diff line) because execution was prevented, your verdict is BLOCKED — not VERIFIED or MISSING.
 
 ### 6. Assign Stakes Class to Each Finding
 
