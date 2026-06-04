@@ -4913,7 +4913,7 @@
     "verification_method": "document-review"
   },
   "conduct-spec-revision-dec036": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Revise the conduct spec to design to the DEC-036 stakes-and-timing exception",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
