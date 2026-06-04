@@ -4895,7 +4895,7 @@
     "verification_method": "skill-invoke"
   },
   "stakes-classification-rubric": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Shared single-source stakes-classification rubric",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4957,7 +4957,7 @@
     "verification_method": "document-review"
   },
   "directed-fix-invocation-contract": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Directed momentum:dev fix-mode invocation contract with escalate-do-not-fix path",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5033,7 +5033,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-preflight-halts": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Conductor Phase-1 pre-flight HALTs and non-interactive git reconcile",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5051,7 +5051,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-build-phase-frontier": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Conductor build phase: dependency frontier with a mid-flight escalation consumption hook",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5125,7 +5125,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-noninteractive-driver": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Code-review adapter: non-interactive bmad-code-review driver",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5238,7 +5238,7 @@
     "verification_method": "skill-invoke"
   },
   "dev-read-contract-part-a-header": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Teach momentum:dev to read the verification contract Part-A header",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5255,7 +5255,7 @@
     "verification_method": "skill-invoke"
   },
   "dev-strip-merge-cleanup-authority": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Strip merge, worktree-cleanup, lock, and crash-ask authority from momentum:dev",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
