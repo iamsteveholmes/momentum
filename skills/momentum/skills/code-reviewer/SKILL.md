@@ -12,22 +12,25 @@ user-invocable: false
 
 This skill is a **thin transport adapter**. It drives the existing `bmad-code-review` adversarial
 bug-hunt engine in report-only, non-interactive mode against a single story's diff and returns
-the findings to the Conductor. It does not interpret, classify, triage, or act on findings.
+the findings to the Conductor. It passes through the engine's internal triage buckets unchanged
+but does not assign DEC-036 dispositions, stakes classes, or timing tiers.
 
 ## What This Adapter Is — and Is Not
 
-**Is:** Pure transport. Carries findings from the review engine to the Conductor.
+**Is:** Transport with pass-through normalization. Carries findings from the review engine to
+the Conductor, including the engine's internal classification (patch / defer / dismiss /
+decision_needed). All findings are returned in full — none are dropped.
 
-**Is not:** A classifier, escalator, or fixer. The following are explicitly out of scope:
-- Stakes classification (routine / security-auth-isolation / irreversible-destructive /
+**Is not:** A DEC-036 escalator or fixer. The following are explicitly out of scope:
+- DEC-036 stakes classification (routine / security-auth-isolation / irreversible-destructive /
   high-blast-radius-architecture)
-- Disposition assignment (fixed / dismissed / triaged-out / escalated)
+- DEC-036 disposition assignment (fixed / dismissed / triaged-out / escalated)
 - Timing-tier selection (mid-flight vs. end-gate-expanded)
 - Fix application — the adapter is read-only; it never mutates any tracked file
 
 These responsibilities belong to separate stories that consume this adapter's output. Keeping the
-adapter pure transport is deliberate: it is the lowest-effort P0 that unblocks the per-story
-review leg without entangling it with the DEC-036 escalation surface.
+adapter free of DEC-036 concerns is deliberate: it is the lowest-effort P0 that unblocks the
+per-story review leg without entangling it with the DEC-036 escalation surface.
 
 ## Governing Decisions
 

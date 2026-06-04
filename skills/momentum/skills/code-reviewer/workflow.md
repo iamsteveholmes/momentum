@@ -20,28 +20,53 @@
     — the diff is the input, full stop.
   </critical>
 
+  <critical>
+    The bmad-code-review SKILL.md activation flow (Steps 1–6: resolve_customization.py,
+    persistent_facts, config load, user greeting, "WAIT FOR INPUT") is SUPPRESSED entirely.
+    This adapter does NOT run resolve_customization.py and does NOT greet the user. Config is
+    loaded directly from `config_path` resolved in step 1 of this workflow; no activation
+    ceremony precedes it.
+
+    step-01-gather-context from bmad-code-review is likewise BYPASSED in its entirety. The
+    adapter does not run the five-tier target-discovery cascade, does not ask "What do you want
+    to review?", and does not present the CHECKPOINT summary or wait for user confirmation. All
+    of those prompts are suppressed because the diff and spec are already injected by the
+    Conductor — step 2 of this workflow is the complete substitute for step-01-gather-context.
+  </critical>
+
   <step n="1" goal="Verify required configuration scaffolding">
     <action>
-      Check whether `_bmad/bmm/config.yaml` exists in the project root.
+      Resolve the project's main-worktree root — the canonical checkout where `_bmad/` lives.
+      This is NOT necessarily the CWD (git worktrees do not materialize gitignored/untracked
+      files). Resolve with:
 
-      Run: `ls _bmad/bmm/config.yaml` (or equivalent existence check via Read).
+        `git rev-parse --git-common-dir`
+
+      That returns the path to the `.git` directory of the main worktree (e.g.,
+      `/path/to/project/.git`). Strip the `.git` suffix to get `main_root`.
+
+      Then check whether `${main_root}/_bmad/bmm/config.yaml` exists (Read or ls).
     </action>
-    <check if="config.yaml is ABSENT">
+    <check if="config.yaml is ABSENT from main_root">
       <output>
         ERROR — required configuration scaffolding is missing.
 
-        bmad-code-review requires `_bmad/bmm/config.yaml` to load project context. This file
-        does not exist in the current project.
+        bmad-code-review requires `_bmad/bmm/config.yaml` (in the main project checkout) to
+        load project context. This file does not exist.
 
-        To resolve, create `_bmad/bmm/config.yaml` with at minimum these fields:
+        To resolve, create `_bmad/bmm/config.yaml` at the project root with these fields:
 
         ```yaml
         project_name: &lt;your-project-name&gt;
-        planning_artifacts: "{project-root}/docs/planning-artifacts"
-        implementation_artifacts: "{project-root}/docs/implementation-artifacts"
+        user_skill_level: intermediate
+        planning_artifacts: "{project-root}/_bmad-output/planning-artifacts"
+        implementation_artifacts: "{project-root}/_bmad-output/implementation-artifacts"
+        momentum_state: "{project-root}/.momentum"
+        project_knowledge: "{project-root}/docs"
         user_name: &lt;your-name&gt;
         communication_language: English
         document_output_language: English
+        output_folder: "{project-root}/_bmad-output"
         ```
 
         The Conductor cannot proceed with the code-review leg for this story until this file is
@@ -49,8 +74,10 @@
       </output>
       <note>Halt the adapter run after emitting this error. Do not attempt a partial run.</note>
     </check>
-    <check if="config.yaml is PRESENT">
-      <action>Proceed to step 2.</action>
+    <check if="config.yaml is PRESENT at main_root">
+      <action>
+        Set `config_path` to `${main_root}/_bmad/bmm/config.yaml`. Proceed to step 2.
+      </action>
     </check>
   </step>
 
@@ -150,7 +177,10 @@
            requiring human input. When `review_mode` = "no-spec", reclassify as `patch` (if fix
            is unambiguous) or `defer` (if not).
 
-      4. **Drop** all `dismiss` findings. Record dismiss count.
+      4. **Retain all findings**, including `dismiss` findings — do not drop them. All findings
+         are returned to the Conductor so it can decide what to act on. Record the dismiss count
+         for the header summary. Mark each dismissed finding with `classification: dismiss` in
+         its entry; the Conductor can filter them as needed.
 
       This triage runs entirely in-process. It does NOT write to any file.
     </action>
@@ -197,11 +227,14 @@
       It does not apply patches. It does not write to any file. It does not prompt for next steps.
     </action>
     <note>
-      AC4 compliance: when findings exist, all are returned in full (no summarizing away).
+      AC4 compliance: all findings — including those classified `dismiss` — are returned in full
+      (none dropped, none summarized away). The dismiss count in the header allows downstream
+      filtering; the dismissed findings' detail is preserved in the body.
       When no findings exist, an explicit "none" result is returned rather than an error.
       AC2 compliance: working tree is byte-for-byte unchanged from before this run.
-      AC8 compliance: no stakes classification, no disposition assignment, no escalation,
-      no fix application — pure transport.
+      AC8 compliance: no DEC-036 stakes classification, no DEC-036 disposition assignment, no
+      escalation, no fix application. The engine's internal triage buckets (patch/defer/dismiss/
+      decision_needed) are passed through unmodified.
     </note>
   </step>
 
