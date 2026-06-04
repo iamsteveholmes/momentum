@@ -4874,7 +4874,7 @@
     "story_type": "feature"
   },
   "conduct-stakes-timing-escalation-mechanism": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Conductor stakes-and-timing mid-flight escalation mechanism",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4975,7 +4975,7 @@
     "verification_method": "document-review"
   },
   "dev-fix-mode-entry": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Add fix-mode to momentum:dev that branches on the stakes-class",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5088,7 +5088,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-contract-freeze-check": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Conductor contract-freeze check before per-story verification",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5142,7 +5142,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-normalize-triage": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Code-review adapter: normalize bmad triage into the canonical schema and populate stakes-class",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5219,7 +5219,7 @@
     "verification_method": "skill-invoke"
   },
   "qa-reviewer-rescope-per-story-contract": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Rescope qa-reviewer to the per-story contract and add producer-side stakes tagging",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
