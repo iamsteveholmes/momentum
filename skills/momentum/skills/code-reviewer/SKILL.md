@@ -12,8 +12,10 @@ user-invocable: false
 
 This skill is a **thin transport adapter**. It drives the existing `bmad-code-review` adversarial
 bug-hunt engine in report-only, non-interactive mode against a single story's diff and returns
-the findings to the Conductor. It passes through the engine's internal triage buckets unchanged
-but does not assign DEC-036 dispositions, stakes classes, or timing tiers.
+the findings to the Conductor. It preserves the engine's triage bucket labels (patch / defer /
+dismiss / decision_needed) but, unlike the standalone engine, retains dismiss findings rather
+than dropping them — so the Conductor receives the full set. It does not assign DEC-036
+dispositions, stakes classes, or timing tiers.
 
 ## What This Adapter Is — and Is Not
 
@@ -49,4 +51,4 @@ available) and the triage step. It does **not** drive step-04-present from `bmad
 — that step owns file writes, HALTs, and fix-application logic that are incompatible with
 autonomous execution.
 
-See `workflow.md` for the full execution protocol.
+Load and follow `./workflow.md` — it is the binding execution protocol for every adapter run.

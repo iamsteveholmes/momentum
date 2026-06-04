@@ -57,13 +57,13 @@
         To resolve, create `_bmad/bmm/config.yaml` at the project root with these fields:
 
         ```yaml
-        project_name: &lt;your-project-name&gt;
+        project_name: YOUR_PROJECT_NAME
         user_skill_level: intermediate
         planning_artifacts: "{project-root}/_bmad-output/planning-artifacts"
         implementation_artifacts: "{project-root}/_bmad-output/implementation-artifacts"
         momentum_state: "{project-root}/.momentum"
         project_knowledge: "{project-root}/docs"
-        user_name: &lt;your-name&gt;
+        user_name: YOUR_NAME
         communication_language: English
         document_output_language: English
         output_folder: "{project-root}/_bmad-output"
