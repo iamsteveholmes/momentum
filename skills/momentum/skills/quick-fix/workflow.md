@@ -327,6 +327,10 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
     <action>Wait for the dev agent to complete. Read its completion output.</action>
 
     <!-- 3d: Merge worktree to main -->
+    <action>Capture the pre-merge main tip for later diff computation:
+      Store {{pre_merge_main}} = output of `git rev-parse main` (run on main branch before merge).
+    </action>
+
     <action>Merge the worktree branch back:
       1. `git rebase main` (from worktree branch — rebases onto latest main)
       2. `git checkout main`
@@ -371,24 +375,38 @@ Proceeding to validation.</output>
       <output>AVFL scan complete. Proceeding to code review.</output>
     </check>
 
-    <!-- 4a.1: Code review — between AVFL and team validation -->
-    <action>Read the story's `touches` array from {{story_file}} frontmatter.</action>
-
-    <action>Invoke `momentum:code-reviewer` with:
-      - Scope: files in the story's `touches` array
-      - Context: "Code review for quick-fix {{story_slug}}"
-      - Story file: {{story_file}}
-      - Working branch: main (post-merge)
+    <!-- 4a.1: Code review via bmad-code-review adapter — between AVFL and team validation -->
+    <action>Generate the story diff for the adapter:
+      Run: `git diff {{pre_merge_main}}..main`
+      ({{pre_merge_main}} was captured in Phase 3d before the merge — this covers all commits
+      the story landed on main, regardless of how many commits bmad-dev-story produced.)
+      Store as {{story_diff}}.
     </action>
 
-    <action>Store {{code_review_findings}} = findings from code-reviewer output, tagged with source="code-reviewer" and severity per finding.</action>
+    <action>Invoke `momentum:code-reviewer` (the bmad-code-review adapter) with:
+      - Diff: {{story_diff}} (the story's committed changes — adapter input, not a file scope)
+      - Story spec: {{story_file}} (enables the Acceptance Auditor layer)
+      - Context: "Code review for quick-fix {{story_slug}}"
+      The adapter drives bmad-code-review non-interactively and returns adapter-normalized findings
+      (canonical schema: source=bmad-code-review, stakes_class populated, dispositions fixer-assigned).
+      Do NOT pass a branch name or a file scope list — the adapter takes a diff, not a scope.
+    </action>
+
+    <action>Store {{code_review_findings}} = adapter-normalized findings from the code-reviewer output.
+      Each finding carries: source="bmad-code-review", stakes_class, severity, and verdict.
+      Disposition and timing_tier are fixer-assigned downstream — do NOT pre-assign them here.
+      Pass through all findings exactly as the adapter emits them:
+        - Routine findings: do NOT add a gate or suppress — they stay on the adapter's always-auto-fixed path (DEC-036).
+        - Dismissed findings (disposition=dismissed): pass through with their required non-empty rationale visible — do NOT drop silently.
+        - Escalated findings (disposition=escalated): surface as-is — do NOT auto-resolve or widen escalation criteria.
+    </action>
 
     <action>Merge {{avfl_findings}} and {{code_review_findings}} into {{all_findings}}, sorted by severity: critical → high → medium → low.</action>
 
     <output>Code review complete. Combined findings for {{story_slug}}:
 
 AVFL: {{avfl_findings | length}} findings
-Code review: {{code_review_findings | length}} findings
+Code review (adapter-normalized): {{code_review_findings | length}} findings
 
 All findings will be addressed in the collaborative fix loop.</output>
 
