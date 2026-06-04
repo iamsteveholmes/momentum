@@ -389,7 +389,8 @@ Ready to begin?</output>
         Bind {{fix_attempts}} = {} — per-finding retry counter keyed by finding ID.
         Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked).
         Bind {{end_gate_escalations}} = [] — escalated findings routed to end-gate-expanded tier (held for Phase 5).
-        Bind {{mid_flight_candidates}} = [] — escalated findings that will invoke the mid-flight escalation hook (step 2.F).
+          [HOLLOW: {{end_gate_escalations}} is written here and emitted in the pipeline signal payload but NOT yet consumed by the end-gate report (step 5). Wiring {{end_gate_escalations}} into the step 5 decision-card section ({{stakes_findings}}) is owned by a downstream end-gate-rendering story. This dead-end is intentional and traceable — it is not silent.]
+        Bind {{mid_flight_escalations}} = [] — escalated findings accumulated for single dispatch to step 2.F (the shared-primitive escalation hook).
       </action>
 
       <check if="{{stage2_findings}} is empty">
@@ -402,7 +403,7 @@ Ready to begin?</output>
       <action>PHASE B — Invoke the directed fixer (momentum:dev in fix mode) as a subagent (individual-agent, NOT TeamCreate):
         Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration).
         Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only."
-        Invocation contract: references/directed-fix-invocation-contract.md.
+        Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
         The fixer applies every routine legitimate finding automatically (no prompt), returns escalated disposition for stakes-class findings (not silently fixed), dismissed with non-empty rationale for non-genuine findings, or triaged-out for out-of-scope new work.
         The Conductor (not the fixer) commits any applied fixes after the fixer returns.
       </action>
@@ -429,8 +430,8 @@ Ready to begin?</output>
           — F is removed from the retry-bound-3 loop IMMEDIATELY. No further fix/re-check attempts will be run against F inside this loop.
           — Route by timing tier:
               IF F.timing_tier == "mid-flight":
-                — The finding is irreversible-and-imminent OR build-invalidating (per directed-fix-invocation-contract.md narrow bar).
-                — Append F to {{mid_flight_candidates}}. After all findings are processed, invoke step 2.F for each candidate (see mid-flight dispatch below).
+                — The finding is irreversible-and-imminent OR build-invalidating (per skills/momentum/references/directed-fix-invocation-contract.md narrow bar).
+                — Append F to {{mid_flight_escalations}} (accumulated for dispatch to step 2.F after all findings are processed).
               ELSE (F.timing_tier == "end-gate-expanded" OR timing_tier not set):
                 — The finding is stakes-class but does NOT meet the mid-flight bar. Route to end-gate-expanded tier (the default and safety net).
                 — Append F to {{end_gate_escalations}}: { finding_id: F.id, stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix }
@@ -444,12 +445,12 @@ Ready to begin?</output>
 
       <!-- ── Mid-flight dispatch for bar-clearing escalations ───────── -->
 
-      <check if="{{mid_flight_candidates}} is non-empty">
-        <note>One or more findings in the current iteration met the narrow mid-flight bar (irreversible-and-imminent OR build-invalidating). These findings are dispatched to the escalation hook (step 2.F) mid-build, before the fix loop continues. Other routine findings on other items continue their fix/re-check cycle unaffected by this pause.</note>
-        <action>For each finding F in {{mid_flight_candidates}} (sequentially — one pause-ask at a time per escalation.md multi-finding contract):
-          Invoke step 2.F with F (the mid-flight escalation consumption hook).
-          Record outcome in {{build_log}}: { slug: S.slug, event: "stage3-mid-flight-escalation", disposition: "escalated", timing_tier: "mid-flight", finding_summary: F.summary }
-          Append to {{escalations}}: { slug: S.slug, stakes_class: F.stakes_class, timing_tier: "mid-flight", disposition: "escalated" }
+      <check if="{{mid_flight_escalations}} is non-empty">
+        <note>One or more findings in the current iteration were classified mid-flight by the fixer. Per the SHARED-PRIMITIVE CONTRACT (step 2.F / references/escalation.md), the Conductor does NOT pre-classify or loop over candidates itself. It passes the full {{mid_flight_escalations}} array to the escalation engine (step 2.F) in a single invocation — the engine owns bar evaluation and the pause/continue decision. Other routine findings continue their fix/re-check cycle unaffected.</note>
+        <action>Invoke step 2.F (the mid-flight escalation consumption hook) once with the full {{mid_flight_escalations}} array as the findings input.
+          The escalation engine evaluates the bar for each finding and returns "pause-branch" or "continue" per its contract (references/escalation.md).
+          Record outcome in {{build_log}}: { slug: S.slug, event: "stage3-mid-flight-escalation", disposition: "escalated", timing_tier: "mid-flight", finding_count: length({{mid_flight_escalations}}) }
+          Append each finding to {{escalations}}: { slug: S.slug, stakes_class: F.stakes_class, timing_tier: "mid-flight", disposition: "escalated" }
         </action>
       </check>
 
@@ -495,8 +496,14 @@ Ready to begin?</output>
             escalations: {{end_gate_escalations}} (held for Phase 5 end-gate)
             Note: mid-flight escalations were already dispatched inline; they do not appear in leftover_findings.
           </action>
-          <note>BLOCKED-then-continue: the whole-build is NOT halted. The story continues to stage-4 (merge) with the blocked findings recorded. The Conductor continues processing other stories in {{running}} and {{frontier}} unaffected. At the end-gate, blocked findings are surfaced as items for triage (spin into backlog stubs via momentum:triage).</note>
-          <action>Proceed to stage-4 (merge) for story S with leftover_findings recorded.</action>
+          <note>BLOCKED-then-continue: the whole-build is NOT halted. However, per spec §3 stage-3 ('BLOCKED -> spin a stub via momentum:triage, leave unmerged'), story S is NOT merged. The Conductor removes S from {{running}} WITHOUT transitioning it to stage-4, spins a triage stub for the blocked findings, and continues building other stories in {{running}} and {{frontier}} unaffected. The story remains unmerged; dependents whose >= gate requires S's merge become unsatisfiable, which is the intended consequence of an unmergeable story.</note>
+          <action>Mark story S as BLOCKED (do NOT invoke stage-4 merge for S).
+            Remove S from {{running}}.
+            Transition S status: `momentum-tools sprint status-transition --story {S.slug} --target blocked`
+            Spin a triage stub for the blocked findings: invoke momentum:triage with the blocked findings list for S, so they are queued into the backlog.
+            Record in {{build_log}}: { slug: S.slug, event: "stage3-story-blocked", leftover_count: length(blocked findings), note: "story left unmerged per spec §3" }
+            Continue building remaining stories in {{running}} and {{frontier}}.
+          </action>
         </check>
 
       </check>
