@@ -82,7 +82,7 @@ No active sprint record was found in `.momentum/sprints/index.json`. The Conduct
 
 Sprint `{{sprint_record}}.slug` exists but its status is `{{sprint_record}}.status`, not `active`. The Conductor requires an activated sprint.
 
-**Resolution:** Activate the sprint via `momentum-tools sprint activate --sprint {{sprint_record}}.slug`, then re-invoke the Conductor.</output>
+**Resolution:** Activate the sprint via `momentum-tools sprint activate`, then re-invoke the Conductor.</output>
       <action>HALT. Do not dispatch any story.</action>
     </check>
 
@@ -94,9 +94,9 @@ Sprint `{{sprint_record}}.slug` exists but its status is `{{sprint_record}}.stat
 
     <!-- ─── H3: Missing required approvals ───────────────────── -->
 
-    <action>Read the sprint's approval requirements. Check `.momentum/sprints/index.json` for any `required_approvals` field on the active sprint record. If present, verify each listed approval is marked satisfied.</action>
+    <action>Read the sprint's approval state. From the active sprint record in `.momentum/sprints/index.json`, read the `approvals` array (entries shaped `{story_slug, decision, story_file_sha}`). For each entry, check that `decision == 'approved'` AND that `story_file_sha` matches the SHA of the current story file at `.momentum/stories/{story_slug}.md`. Bind {{missing_approvals}} to any entries that fail either check (missing, not approved, or SHA mismatch).</action>
 
-    <check if="any required approval is not satisfied">
+    <check if="{{missing_approvals}} is non-empty">
       <output>## Conductor — Cannot Start (H3)
 
 **Guard:** H3 — Missing required approvals.
@@ -113,7 +113,9 @@ Sprint `{{sprint_slug}}` has unsatisfied required approvals. The Conductor canno
 
     <action>For each story slug in {{sprint_stories}}, read its entry from `.momentum/stories/index.json` to collect: title, status, depends_on, touches. Store as {{story_map}}.</action>
 
-    <check if="any story has status 'blocked' with no resolution path OR any story's depends_on references a story not in {{sprint_stories}} and not already 'done'">
+    <action>For any story in {{sprint_stories}} whose `depends_on` array contains a slug not in {{sprint_stories}}, look up that external slug's status in `.momentum/stories/index.json`. A dependency is considered satisfied only if its status is `done`. Bind {{unsatisfied_external_deps}} to any external dependency slug whose status is not `done`.</action>
+
+    <check if="any story has status 'blocked' with no resolution path OR {{unsatisfied_external_deps}} is non-empty">
       <output>## Conductor — Cannot Start (H4)
 
 **Guard:** H4 — Stalled state detected.
@@ -151,8 +153,8 @@ The sprint and story records are inconsistent. This may mean the sprint index an
       3. If either exists AND the story's current status is `in-progress` (left over from a prior session):
          a. Remove the worktree: `git worktree remove --force .worktrees/story-{slug}` (if it exists)
          b. Delete the stale branch: `git branch -D story/{slug}` (if it exists)
-         c. Reset the story status to `ready-for-dev`:
-            `momentum-tools sprint status-transition --story {slug} --target ready-for-dev`
+         c. Reset the story status to `ready-for-dev` (backward transition requires --force):
+            `momentum-tools sprint status-transition --story {slug} --target ready-for-dev --force`
          d. The story is now in a clean, dispatchable state and will be re-dispatched in Phase 2.
          — No prompt to the developer. No resume/cleanup choice presented.
     </action>
