@@ -114,7 +114,8 @@ Ready to begin?</output>
       <action>Reconcile in-progress stories from a crashed or aborted prior partial run:
         For each story S in {{story_map}} where S.status == "in-progress":
           Option A (clean worktree): if S's worktree is clean or abandonable, reset S's status to "ready-for-dev"
-            via `momentum-tools sprint status-transition --story {S.slug} --target ready-for-dev`
+            via `momentum-tools sprint status-transition --story {S.slug} --target ready-for-dev --force`
+            (--force is required: in-progress -> ready-for-dev is a backward transition; intentional for crash-recovery)
             and admit S to the frontier on the pass below.
           Option B (dirty worktree): record S in {{build_log}} with outcome: "stranded",
             reason: "in-progress on resume — worktree not clean" and note dependency on
