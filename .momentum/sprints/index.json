@@ -1,7 +1,6 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
+  "active": {
+    "locked": true,
     "slug": "sprint-2026-06-02-conduct-core",
     "goal": "Conduct core-build slice (DEC-035 + DEC-036): the stakes-and-timing escalation engine, the canonical finding schema + shared stakes rubric, the Conductor spine, the bmad-code-review adapter, the directed-dev fix leg, and the dev/qa rescope. 21 stories, ~6 dependency waves. Planning only — NOT activated.",
     "planned": "2026-06-02",
@@ -452,8 +451,139 @@
       "DEC-035",
       "DEC-036"
     ],
-    "notes": "All stories built by momentum:dev-skills in a markdown/bash repo. 17 skill/agent-definition stories -> skill-invoke; 4 schema/spec stories -> document-review. Frozen verification contracts at specs/. STOP at ready-to-review; do not activate."
+    "notes": "All stories built by momentum:dev-skills in a markdown/bash repo. 17 skill/agent-definition stories -> skill-invoke; 4 schema/spec stories -> document-review. Frozen verification contracts at specs/. STOP at ready-to-review; do not activate.",
+    "approvals": [
+      {
+        "story_slug": "conduct-spec-revision-dec036",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:32Z",
+        "story_file_sha": "e23723464582b6158f2797438793c8076be388efe08b183e2b613075eb7f9666"
+      },
+      {
+        "story_slug": "code-review-adapter-noninteractive-driver",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:32Z",
+        "story_file_sha": "a658fe31135b9f0a4de00149c33c71d5861173bab2ba1b3e9b98a6df786d06fd"
+      },
+      {
+        "story_slug": "dev-read-contract-part-a-header",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:32Z",
+        "story_file_sha": "58b7bc3767de64e208994e7f568b93162b52321127a441c8b54f9d267087efdd"
+      },
+      {
+        "story_slug": "dev-strip-merge-cleanup-authority",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:32Z",
+        "story_file_sha": "57cef970c349ddc0b1e071d9f4e4ce7477c56c9529843d9d9f4a357f3797feca"
+      },
+      {
+        "story_slug": "directed-fix-finding-schema",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:32Z",
+        "story_file_sha": "0a2504a895f90bc1bfcf6fb7f96be507583ba23912c08b1b638f0c5342cd7335"
+      },
+      {
+        "story_slug": "conduct-skill-scaffold-and-spine",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "79619ebedbc29424ffe262bb7179e8838ce0e7d14450833b862d5a00142e4067"
+      },
+      {
+        "story_slug": "directed-fix-invocation-contract",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "b268941fc20e1ef438d138de10b3a9963976297683d42b2df8e54f6e36939d07"
+      },
+      {
+        "story_slug": "stakes-classification-rubric",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "5c877a993af329e03cb86293617a081f9e5e61a8ba766287c2bb9864f79c0b98"
+      },
+      {
+        "story_slug": "conduct-preflight-halts",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "0524f83fc9e2b2b691f5ccb4e52758a4cdffc9bde1ba12f6be79344bca65d9cd"
+      },
+      {
+        "story_slug": "conduct-build-phase-frontier",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "11e39ab0809ed88a697702539b66349a50f45d586d80a346fd24fedace15eb47"
+      },
+      {
+        "story_slug": "dev-fix-mode-entry",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "04fe39893c2f0193abdf0a1ebb46c55b2bb9708d077c31f515ea59a42ac19751"
+      },
+      {
+        "story_slug": "conduct-contract-freeze-check",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "8832191a3416c383897e23cef31a60d7b8951a0f29faee9ac0cf73520a85d450"
+      },
+      {
+        "story_slug": "conduct-stakes-timing-escalation-mechanism",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "e6b412bb542506d1a561b9f268634c8f156040cb37172ee63f73e52d19830c9d"
+      },
+      {
+        "story_slug": "code-review-adapter-normalize-triage",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "e2578da446a77cbd91370b19f0e589e250e4c1c364734eb3b484421efb68c0ec"
+      },
+      {
+        "story_slug": "qa-reviewer-rescope-per-story-contract",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "bfd1e38798dcf75fc2b79517edb47a06c29c1a5741fa6c539276def1ecca2235"
+      },
+      {
+        "story_slug": "stage3-fix-loop-via-directed-dev",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "dd22650b772a484e1f8de1a77461a67f876087352e472d62cd4a4b1e9e40a066"
+      },
+      {
+        "story_slug": "conduct-merge-and-conflict-resolution",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "178914f137d9dbec8a7c8c85e527ea9fc3558433b13ef5b4dd77416318a84f73"
+      },
+      {
+        "story_slug": "conduct-coverage-disposition-branch",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "cc56342290447f54973923f964db794e81c332b04e54da54b5938c9411332d53"
+      },
+      {
+        "story_slug": "code-review-adapter-retire-stub",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "31206e02d42814b1c7912d43b8cc51f672c9699f0716207af24b46ee0aedca05"
+      },
+      {
+        "story_slug": "code-review-adapter-repoint-sprint-dev",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "a338c1b92390b0cafbb73ce72c69846a846abd2a35abed447e58ec2925e3719f"
+      },
+      {
+        "story_slug": "code-review-adapter-repoint-quick-fix",
+        "decision": "approved",
+        "approved_at": "2026-06-04T05:21:33Z",
+        "story_file_sha": "f41327de0c974c9e969ff63372239d5f047447c7b2fbc172ab4647c982d63b6a"
+      }
+    ],
+    "started": "2026-06-03",
+    "status": "active"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
