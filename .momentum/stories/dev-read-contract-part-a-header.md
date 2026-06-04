@@ -30,7 +30,7 @@ This story teaches momentum:dev to consume **only** the Part-A header — as a s
 
 Part A is intentionally a plain-language dev self-check. The stakes-routing and mid-flight-escalation machinery introduced by DEC-036 governs how *findings* are dispositioned later in the flow; it never changes what the dev agent consumes from the contract. Whether a finding is routine or stakes-class, dev's relationship to the contract is identical: read Part A, self-check, signal done. This story therefore inherits no behavioral change from DEC-036 — but the AC set below makes that invariance explicit so it can be verified.
 
-Source decisions: DEC-035 (adopt conduct; single human end-gate; legible build phase) and DEC-036 (narrow stakes-gated mid-flight escalation tier amending DEC-035 #1). Governing spec: section 7 / decision 10 (the dev-readable verification header and dev agent contract consumption boundary — both live in "## 7. Planning → dev handoff: the verification contract (decision 10)").
+Source decisions: DEC-035 (adopt conduct; single human end-gate; legible build phase) and DEC-036 (narrow stakes-gated mid-flight escalation tier amending DEC-035 #1). Governing spec: section 7 Part A (the dev-readable verification header) and section 10 (dev agent contract consumption).
 
 ## Acceptance Criteria
 
@@ -66,13 +66,13 @@ Source decisions: DEC-035 (adopt conduct; single human end-gate; legible build p
 
 This story touches only the dev agent definition (`skills/momentum/agents/dev.md`) and the dev workflow (`skills/momentum/skills/dev/workflow.md`). It is a consume-only change: emission of the contract is explicitly out of scope and lives elsewhere in the conduct build.
 
-The shape of Part A (per spec section 7 / decision 10): a plain-language self-check prompt (`how_dev_self_checks`) that may explicitly reference observable clauses in the contract body. Dev's acceptance target is the prompt plus any clauses it explicitly references — these are Part-A-sanctioned (spec L607: "how_dev_self_checks + the contract body's observable clauses"). The dev agent must never reach into the verifier body beyond what the prompt references — section 7 / decision 10 governs this consumption boundary.
+The shape of Part A (per spec section 7 Part A): a plain-language self-check prompt plus a set of observable clauses describing the acceptance target in dev-readable terms. The dev agent's job is to read that header, hold the observable clauses as its target, and run a self-check against its own work before signaling done. The dev agent must never reach into the verifier body (Part B, spec section 10 governs the dev-side consumption boundary) — Part A is the only surface it touches, read-only.
 
 The previously-binding critical rule "dev agents never access specs/" is removed by this story and replaced with the Part-A-only read allowance. This is the single behavioral change; everything else (implement against the story ACs, signal done) is preserved.
 
 **Unchanged by DEC-036.** Part A is a plain-language dev self-check, and the stakes-routing / mid-flight-escalation machinery introduced by DEC-036 never touches what the dev agent consumes from the contract. Stakes classification, dispositions, and timing tiers govern how *findings* are handled downstream — they do not change dev's read surface (Part A only) or its self-check behavior. AC 7 makes this invariance an explicit, verifiable requirement so the boundary cannot silently erode. No other DEC-036 amendment (escalation tier, dismissal rendering, anti-rubber-stamp end-gate) reaches this story, because none of them alters the dev-side contract-consumption contract.
 
-Governing spec sections: section 7 / decision 10 (dev-readable verification header and dev agent contract consumption boundary — both are in "## 7. Planning → dev handoff: the verification contract (decision 10)"; there is no separate "section 10").
+Governing spec sections: section 7 Part A (dev-readable verification header), section 10 (dev agent contract consumption boundary).
 
 ### References
 
