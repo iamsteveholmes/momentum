@@ -216,7 +216,10 @@
       **Adapter-stamped fields (set by this adapter, not the fixer):**
       - `story_slug` — the story slug from the Conductor's invocation context
       - `source` — always `bmad-code-review` for every finding this adapter emits; no exceptions
-      - `verdict` — set to the bmad bucket label: `decision_needed` | `patch` | `defer`
+      - `verdict` — set to `FAIL` for every finding this adapter emits; all surviving findings
+        (patch, defer, decision_needed) represent genuine issues the reviewer flagged, so the
+        reviewer's raw verdict is always FAIL. Do NOT write the bmad bucket label into this field
+        — the bucket is a triage category, not the reviewer's pass/fail assessment
       - `severity` — infer from the finding's detail prose (e.g., `blocker` if the reviewer
         flagged it as critical/blocking, `major` if significant but non-blocking, `minor` for
         style/low-impact); when inference is ambiguous, use `minor` as the conservative default
@@ -229,10 +232,10 @@
       - `evidence` — copy any code snippet or diff excerpt the reviewer cited; use `""` if none
       - `ac_id` — set to the acceptance criterion identifier if the Acceptance Auditor cited one;
         otherwise `null`
-      - `legitimate` — set to `true` for `patch` and `decision_needed` findings (the reviewer
-        judged them genuine); set to `true` for `defer` findings as well (deferred means valid
-        but pre-existing, not false-positive); the fixer will apply Rule 4 (triaged-out) as
-        appropriate for deferred findings
+      - `legitimate` — set to `true` for `patch`, `decision_needed`, and `defer` findings (all
+        three buckets represent issues the reviewer judged genuine, not false positives); the
+        fixer assigns disposition entirely based on the emitted fields — the adapter does not
+        predict or constrain fixer routing
       - `suggested_fix` — copy any fix suggestion from the reviewer's prose; `null` if none
 
       **Disposition and timing fields** — these are fixer-assigned; the adapter does NOT set

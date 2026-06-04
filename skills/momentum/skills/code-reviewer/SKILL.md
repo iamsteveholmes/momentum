@@ -39,7 +39,7 @@ rubric. The normalized finding stream is returned to the Conductor.
 - Fix application — the adapter is strictly read-only; it never mutates any tracked file
 
 The adapter owns emission-wiring only: it consumes the shared rubric's signal list and attaches
-the rubric's verdict to each finding. It does not re-implement or fork the rubric's logic.
+the rubric's stakes_class to each finding. It does not re-implement or fork the rubric's logic.
 
 ## The Two "Dismiss" Concepts — Kept Distinct
 
