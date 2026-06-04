@@ -334,11 +334,18 @@ Options:
         <action>HALT — wait for developer to resolve</action>
       </check>
       <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
+      <action>Capture pre-merge sprint tip: `git rev-parse sprint/{{sprint_slug}}` → store as {{pre_merge_sha[slug]}}.
+        This SHA is the sprint branch tip immediately before the story lands and is used in Phase 4b to diff exactly what this story introduced.</action>
       <action>Run: `git merge story/{slug}`</action>
+      <action>Capture post-merge sprint tip: `git rev-parse sprint/{{sprint_slug}}` → store as {{post_merge_sha[slug]}}.
+        Together with {{pre_merge_sha[slug]}}, this pair fully defines the story's commit range on the sprint branch
+        and enables Phase 4b to diff the story even if the story branch is deleted before review runs.</action>
       <note>Worktree .worktrees/story-{slug} and branch story/{slug} are intentionally NOT removed here.
         They remain available through Phase 4 (AVFL), Phase 4b (code review), and Phase 4d (fix agents)
         so fix agents can operate in the isolated story context. Cleanup runs after Phase 4d completes.
-        Register story/{slug} in {{pending_worktree_cleanup}} for deferred removal.</note>
+        Register story/{slug} in {{pending_worktree_cleanup}} for deferred removal.
+        {{pre_merge_sha[slug]}} and {{post_merge_sha[slug]}} are persisted here so Phase 4b can generate
+        a correct diff even after branch deletion.</note>
       <action>Add `{slug}` to {{pending_worktree_cleanup}} list (initialize the list if this is the first entry).</action>
       <action>Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`</action>
       <action>Update task {{task_map}}[slug] to completed</action>
@@ -404,13 +411,17 @@ Options:
     <output>Running independent code review for each merged story...</output>
 
     <action>For each story in {{sprint_stories}} (all stories now in "review" status):
-      Generate the story diff to pass to the adapter:
-        The story branch `story/{slug}` is still present (deferred cleanup — see {{pending_worktree_cleanup}}).
-        Run: `git diff sprint/{{sprint_slug}}...story/{slug} -- {{story.touches | join(' ')}}`
-        (Three-dot form: diffs from the merge-base of the sprint branch and the story branch to the story branch tip.
-        This correctly isolates exactly what this story introduced, regardless of how many other stories have merged.)
-        Fallback if the story branch has already been deleted: use `git log --oneline sprint/{{sprint_slug}} -- {{story.touches | join(' ')}}` to find the story's merge commit SHA, then diff its first-parent:
-          `git diff <merge-sha>^1 <merge-sha> -- {{story.touches | join(' ')}}`
+      Generate the story diff to pass to the adapter using the pre-merge SHA captured at merge time:
+        Primary form (story branch still present):
+          Run: `git diff {{pre_merge_sha[slug]}}..story/{slug} -- {{story.touches | join(' ')}}`
+          (Two-dot range from the sprint tip immediately before this story merged to the story branch tip.
+          Because sprint-dev uses rebase-then-fast-forward, there are no 2-parent merge commits and three-dot
+          diffs against the post-merge sprint branch always return empty. The pre-merge SHA isolates exactly
+          what this story introduced, including multi-commit stories.)
+        Fallback (story branch already deleted):
+          Run: `git diff {{pre_merge_sha[slug]}}..{{post_merge_sha[slug]}} -- {{story.touches | join(' ')}}`
+          Both SHAs were captured at merge time (lines 337-342) and are always available in context.
+          This avoids any reliance on merge-commit archaeology; the range is fully defined by the two persisted SHAs.
         Store as {{story_diff[slug]}} per story.
       Collect {{story_spec[slug]}} = `.momentum/stories/{slug}.md` (the story file, used as the spec for the Acceptance Auditor layer).
     </action>
