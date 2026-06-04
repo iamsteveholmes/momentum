@@ -55,7 +55,7 @@ You receive:
 
 ### 2. Scope the Diff
 
-- In the worktree, run `git diff main...HEAD` (or `git diff` against the base branch) to capture the story's changes
+- In the worktree, run `git diff sprint/{sprint_slug}...HEAD` (or the Conductor-supplied `{pre_merge_sha}..HEAD` range if provided) to capture the story's changes — this scopes to the single story's diff, not the whole sprint against main
 - Your evidence must point into this diff; do not cite files or lines untouched by this story
 
 ### 3. Start Required Services

@@ -519,10 +519,9 @@ Ready to begin?</output>
           <note>BLOCKED-then-continue: the whole-build is NOT halted. However, per spec §3 stage-3 ('BLOCKED -> spin a stub via momentum:triage, leave unmerged'), story S is NOT merged. The Conductor removes S from {{running}} WITHOUT transitioning it to stage-4, spins a triage stub for the blocked findings, and continues building other stories in {{running}} and {{frontier}} unaffected. The story remains unmerged; dependents whose >= gate requires S's merge become unsatisfiable, which is the intended consequence of an unmergeable story.</note>
           <action>Mark story S as BLOCKED (do NOT invoke stage-4 merge for S).
             Remove S from {{running}}.
-            Transition S status: `momentum-tools sprint status-transition --story {S.slug} --target closed-incomplete`
-            Note: BLOCKED is Conductor in-memory state only (tracked via leftover_findings and build_log). "blocked" is not a valid state in the tool's state machine — "closed-incomplete" is the correct durable terminal status (consistent with the exhausted-retries branch at step 2.2).
+            Note: do NOT transition S to a terminal status here — the story remains at its current non-terminal status. The terminal transition (closed-incomplete) is deferred to Phase 5 approve, which performs the single terminal transition for all stranded/blocked stories (quarantine convention, per spec §6/§8). "blocked" is Conductor in-memory state only (tracked via leftover_findings and build_log).
             Spin a triage stub for the blocked findings: invoke momentum:triage with the blocked findings list for S, so they are queued into the backlog.
-            Record in {{build_log}}: { slug: S.slug, event: "stage3-story-blocked", leftover_count: length(blocked findings), note: "story left unmerged per spec §3" }
+            Record in {{build_log}}: { slug: S.slug, event: "stage3-story-blocked", leftover_count: length(blocked findings), stranded: true, note: "story left unmerged per spec §3; terminal status transition deferred to Phase 5 approve" }
             Continue building remaining stories in {{running}} and {{frontier}}.
           </action>
         </check>
@@ -831,8 +830,9 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
                     - Proceed or Change: stage the resolved files, continue the in-progress operation,
                       and on success route per 2.2.M.3 continue-success rules.
                     - Abort-that-branch: abort the in-progress operation (`git rebase --abort` /
-                      `git merge --abort`). Step 2.F has already removed S from {{running}} and set the
-                      story to closed-incomplete. Do NOT stage or commit any resolution for S.
+                      `git merge --abort`). Step 2.F has already removed S from {{running}} and added
+                      S to {{blocked}} (terminal transition deferred to Phase 5 approve per quarantine
+                      convention). Do NOT stage or commit any resolution for S.
                       Fall through directly to frontier re-evaluation (step 2.2's frontier block),
                       bypassing step 2.2.M.4 and 2.2.M.6 entirely for this story.
 
@@ -943,9 +943,8 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
           <action>Exhausted retries. Mark S blocked:
             Add S.slug to {{blocked}}.
             Remove S.slug from {{running}}.
-            `momentum-tools sprint status-transition --story {S.slug} --target closed-incomplete`
-            Note: "blocked" is Conductor in-memory state ({{blocked}} array). The durable story status is "closed-incomplete" — "blocked" is not a valid state in the tool's state machine. "closed-incomplete" is the sole correct durable terminal for retry/dependency-exhausted stranding (per spec §8: blocked/never-completed -> closed-incomplete).
-            Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "blocked", reason: S.reason, retry_count: {{retries}}[S.slug] }.
+            Note: do NOT transition S to a terminal status here — the story remains at its current non-terminal status. The terminal transition (closed-incomplete) is deferred to Phase 5 approve, which performs the single terminal transition for all stranded/blocked stories (quarantine convention, per spec §6/§8). "blocked" is Conductor in-memory state ({{blocked}} array); "blocked" is not a valid state in the tool's state machine.
+            Append to {{build_log}}: { slug: S.slug, title: S.title, outcome: "blocked", reason: S.reason, retry_count: {{retries}}[S.slug], stranded: true, note: "terminal status transition deferred to Phase 5 approve" }.
             CONTINUE. Do not halt the build phase. Other stories in {{running}} and {{frontier}} are unaffected.
           </action>
           <note>A blocked story does not propagate to its dependents automatically. Dependents whose depends_on includes S.slug remain in "ready-for-dev" — they can never satisfy the >= review gate for S, so they are never added to the frontier and never launched. At build end, the completion check (below) sweeps all remaining ready-for-dev stories with unsatisfiable depends_on and marks them blocked. The end-of-build sweep is the single mechanism that marks stranded dependents blocked.</note>
@@ -1042,8 +1041,9 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
         <check if="Abort-that-branch">
           <action>Abandon this branch only. Do NOT halt the entire build phase — other stories in {{running}} and {{frontier}} continue unaffected.</action>
-          <action>Remove S.slug from {{running}}. Transition story to closed-incomplete:
-            `momentum-tools sprint status-transition --story {S.slug} --target closed-incomplete`
+          <action>Remove S.slug from {{running}}.
+            Note: do NOT transition S to a terminal status here — the story remains at its current non-terminal status. The terminal transition (closed-incomplete) is deferred to Phase 5 approve, which performs the single terminal transition for all stranded/blocked stories (quarantine convention, per spec §6/§8).
+            Add S.slug to {{blocked}} so Phase 5 approve can identify it for the closed-incomplete transition.
           </action>
           <action>Record outcome in {{build_log}}: { slug: S.slug, event: "mid-flight-escalation", disposition: "escalated", resolution: "branch-aborted", finding_summary: {{finding.summary}} }.</action>
           <action>Append record to {{escalations}}: { slug: S.slug, stakes_class, timing_tier: "mid-flight", disposition: "escalated", resolution: "branch-aborted" }.</action>
@@ -1209,10 +1209,12 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <action>Transition sprint stories to their correct terminal status (per spec §8):
         For each story in {{sprint_stories}}:
           IF slug is in {{merged}} (story completed-and-validated, work integrated):
-            `momentum-tools sprint status-transition --story {slug} --target done`
+            Step 1: `momentum-tools sprint status-transition --story {slug} --target verify`
+            Step 2: `momentum-tools sprint status-transition --story {slug} --target done`
+            Note: the state machine requires adjacent transitions — review -> verify -> done (two steps). A direct review -> done skip is invalid. Both steps are performed here in sequence before moving to the next story.
           ELSE (story is quarantined, integrity-stopped, or blocked/never-merged — not in {{merged}}):
             `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
-            Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked stories (retry-exhausted, left unmerged) all go to closed-incomplete, not done. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
+            Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
       </action>
       <action>Show push summary: `git log @{u}..HEAD --oneline`</action>
       <ask>Push to origin/main?</ask>

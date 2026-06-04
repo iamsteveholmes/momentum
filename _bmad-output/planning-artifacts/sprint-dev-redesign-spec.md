@@ -46,7 +46,7 @@ SPRINT-PLANNING  (decision 10)
 │      2. QA + REVIEW (concurrent fan-out, read-only, this story's diff)   │
 │           • qa-reviewer    → verifies the story's verification contract  │
 │           • bmad-code-review → adversarial bug hunt                      │
-│      3. FIX      — code-fixer auto-fixes all ROUTINE legitimate findings; │
+│      3. FIX      — directed fixer (momentum:dev fix-mode) auto-fixes all  │
 │                    stakes-class findings are escalated (not auto-fixed); │
 │                    re-check; /simplify optional cleanup; bounded retry   │
 │      4. MERGE    — Conductor rebases+merges S's worktree → sprint branch;│
@@ -172,7 +172,7 @@ pipeline(story S):
 
   ── stage 3: FIX (automatic, in-place) ──────────────────────
   If either reviewer returns legitimate findings:
-    Conductor spawns ONE code-fixer subagent (single writer) in the SAME
+    Conductor spawns ONE directed fixer (momentum:dev fix-mode) subagent (single writer) in the SAME
     worktree. It fixes every **routine** legitimate finding automatically
     (no prompt), escalates stakes-class findings as decision cards (raised,
     not silently fixed), dismisses with rationale, or emits a triage stub
@@ -209,11 +209,11 @@ This is the gate *inside* the per-story flow — distinct from the post-merge AV
 
 | Lane | Tool | Mode | Why |
 |---|---|---|---|
-| **Bug-hunting review** (PRIMARY) | **`bmad-code-review`** | report-only, scoped to story diff | Only existing real adversarial bug hunter (Blind Hunter + Edge Case Hunter + Acceptance Auditor + structured triage). Returns categorized findings that map onto the normalized schema. Does not apply fixes — correct, because fixing is the code-fixer's job. |
+| **Bug-hunting review** (PRIMARY) | **`bmad-code-review`** | report-only, scoped to story diff | Only existing real adversarial bug hunter (Blind Hunter + Edge Case Hunter + Acceptance Auditor + structured triage). Returns categorized findings that map onto the normalized schema. Does not apply fixes — correct, because fixing is the directed fixer's job (momentum:dev fix-mode). |
 | **AC verification** (concurrent) | **`momentum:qa-reviewer`** (rescoped) | read-only, per-story worktree | Reads the verification contract, runs the test command, classifies each AC VERIFIED/PARTIAL/MISSING/BLOCKED with file:line evidence. |
 | **Cleanup** (optional, post-fix) | built-in **`/simplify`** | applies fixes | Purpose-built cleanup (reuse, simplification, efficiency, altitude). NOT a bug hunter. Runs *after* the fixer, sequential — never concurrent (it mutates the tree). Keep out of the always-on leg so it doesn't double-mutate code the fixer just touched. |
 
-**Wire `bmad-code-review` report-only, not via `/code-review --fix`:** two reviewers run concurrently and may both surface fixes (e.g. a MISSING-AC finding is also a fix). Routing **all** findings through one code-fixer gives a single writer per worktree (orchestrator-purity), lets the fixer dedupe overlapping findings, and keeps fix provenance in one commit per story.
+**Wire `bmad-code-review` report-only, not via `/code-review --fix`:** two reviewers run concurrently and may both surface fixes (e.g. a MISSING-AC finding is also a fix). Routing **all** findings through one directed fixer (momentum:dev fix-mode) gives a single writer per worktree (orchestrator-purity), lets the fixer dedupe overlapping findings, and keeps fix provenance in one commit per story.
 
 **Retire the stub.** Delete `skills/momentum/skills/code-reviewer/SKILL.md` and `commands/code-reviewer.md` (or convert the stub into a thin adapter that invokes `bmad-code-review` and normalizes its triage into the finding schema). Replace every `momentum:code-reviewer` invocation in `sprint-dev/workflow.md` and `quick-fix/workflow.md`. **Do not build an in-house reviewer now** — defer to backlog. For high-risk stories, a story field `review_depth: deep` may opt into `bmad-review-adversarial-general` + `bmad-review-edge-case-hunter` instead of the default.
 
@@ -226,7 +226,7 @@ Story worktree (post-dev, code complete, pre-merge)
 │   ├─ qa-reviewer (read-only)         → verification_contract → qa_findings[]
 │   └─ bmad-code-review (report-only)  → git diff scoped → review_findings[]
 │
-├─ Phase B: CONVERGE → one code-fixer subagent (single writer)
+├─ Phase B: CONVERGE → one directed fixer (momentum:dev fix-mode) subagent (single writer)
 │      input: qa_findings[] + review_findings[]  (deduped, severity-sorted)
 │      action: auto-fix ALL routine legitimate findings (no fix/defer prompt for ordinary work);
 │              escalate stakes-class findings (security-auth-isolation, irreversible-destructive,
@@ -409,7 +409,7 @@ WORKFLOW avfl-merge-review
 
 The Conductor renders **every leftover with full context** into the report's integration section (each leftover carries description + evidence + owning stories + suggestion inline). On approval, leftovers flow to `momentum:triage` as new stubs.
 
-> **Cross-pillar note on the fixer.** The AVFL `fixer` sub-skill historically fixes *artifacts/docs*. For merge-integration findings that touch source code, AVFL should hand off to the **code-fixer** (Section 4 / Section 8), not its internal artifact fixer. Do not conflate the two.
+> **Cross-pillar note on the fixer.** The AVFL `fixer` sub-skill historically fixes *artifacts/docs*. For merge-integration findings that touch source code, AVFL should hand off to the **directed fixer (momentum:dev fix-mode)** (Section 4 / Section 8), not its internal artifact fixer. Do not conflate the two.
 
 ### Placement
 
@@ -471,9 +471,9 @@ resolve_conflicts(slug, mode):
              status/index.json   -> re-derive from authoritative source (sprint-manager)
              pure-additive       -> union-merge; git add resolved paths
   3. FIRE FIXER if semantic paths remain:
-             spawn ONE dev/code-fixer subagent (change_type matched via routing
-             table) with: conflicted files (markers in place) + BOTH stories' ACs +
-             instruction to resolve preserving both intents, then stage.
+             spawn ONE directed fixer (momentum:dev fix-mode) subagent (change_type matched
+             via routing table) with: conflicted files (markers in place) + BOTH stories'
+             ACs + instruction to resolve preserving both intents, then stage.
   4. FINALIZE rebase --continue | commit --no-edit; verify no markers remain;
              if still dirty -> abort this attempt (--abort) and let merge_story retry.
 ```
@@ -676,7 +676,7 @@ CHANGE_WORKFLOW(scope):
   # scope: findings (autonomous, build phase) | request (Conductor gate)
   items = resolve_items(scope)
   for each item (parallel where independent):
-    spawn code-fixer subagent with: item, target branch, story context
+    spawn directed fixer (momentum:dev fix-mode) subagent with: item, target branch, story context
   await all fixers
   re-run only the affected validators (AVFL lens / E2E scenario / review) on changed files
   if residual legitimate findings AND iterations < MAX_FIX_ITERATIONS: recurse
@@ -875,7 +875,7 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 |---|---|---|---|---|
 | **conductor** — owns end gate, writes/updates HTML report, answers live, triages leftovers, merges to main, pushes | nothing | **MISSING** | **P0 — hardest block.** Decisions 2/8/9 hang off it. | New `skills/momentum/skills/conductor/` (orchestrator skill + `workflow.md`). Owns the single HITL. Spawns merge-resolver/fixer for conflicts, invokes triage, runs `git push` only with approval. |
 | **code-reviewer** — adversarial bug hunt, read-only | `skills/.../code-reviewer/SKILL.md` (stub) | **STUB** | **P0 (decision 5).** | **Do not build in-house.** Wire `bmad-code-review` as the per-story reviewer. Convert the stub into a thin adapter that invokes it against the story diff and normalizes triage into the finding schema. |
-| **code-fixer** — applies findings to *merged source code*, auto-fixes routine findings, escalates stakes-class findings as decision cards, retries | only `avfl/sub-skills/fixer` (artifacts, not code) | **MISSING (for code)** | **P0.** Decisions 1 + 3 + 4. | New `skills/momentum/agents/code-fixer.md` (write-capable). Consumes `findings[]`, applies every routine legitimate fix, retries, commits, emits structured output. Reuses dev.md's commit + output blocks. Also the change-workflow worker and the merge-conflict resolver. |
+| **code-fixer** — applies findings to *merged source code*, auto-fixes routine findings, escalates stakes-class findings as decision cards, retries | only `avfl/sub-skills/fixer` (artifacts, not code) | **IMPLEMENTED** (as dev fix-mode) | **P0.** Decisions 1 + 3 + 4. | Implemented as the **fix-mode of `momentum:dev`** (`agents/dev.md` + `skills/dev/workflow.md`). No separate `agents/code-fixer.md` was created. Consumes `findings[]`, applies every routine legitimate fix, retries, commits, emits structured output. Also the change-workflow worker and the merge-conflict resolver. |
 | **dev** — per-story executor in own worktree | `agents/dev.md` (REAL) | **REAL** | scope change | Keep. Remove its merge/cleanup/lock/crash-ask responsibilities (move to Conductor). Add: dev reads the verification contract's Part A header (decision 10). Terminal output = implementation-complete + file_list. |
 | **dev-skills** — SKILL.md / workflow / agents specialist | `agents/dev-skills.md` | **REAL** | none | Keep — the only specialist relevant to Momentum's own repo; the likely default specialist here. |
 | **dev-build / dev-frontend** (Gradle/Kotlin, Compose) | `agents/dev-build.md`, `agents/dev-frontend.md` | **REAL but stack-coupled** | low | Irrelevant to Momentum's markdown/bash repo. Leave; flag against DEC-026 (generic base + project guidelines). Out of scope this sprint. |
@@ -883,8 +883,8 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 | **e2e-validator** — behavioral validation | `agents/e2e-validator.md` (REAL) | **REAL** | none | Keep (decision 7). Stays sprint-level, runs against the merged result after AVFL. Harness-driven; the per-story contract populates/extends `verification-harness.json`. |
 | **architecture-guard** — drift vs decisions | `skills/.../architecture-guard/SKILL.md` (REAL) | **REAL** | none | Keep. Runs against the merged diff alongside e2e-validator. Read-only PASS/FAIL — feeds the report, never auto-blocks. |
 | **avfl** orchestrator — reviewer OF THE MERGE | `skills/.../avfl/SKILL.md` (prose) | **PROSE→WF** | medium | Rewrite as a Workflow (decision 6); retarget from artifact validation to inspecting the merged git result. |
-| **avfl lenses** — validator-enum / validator-adv / consolidator / fixer | `avfl/sub-skills/*` (REAL) | **REAL** | none | Keep all four. The AVFL `fixer` fixes *artifacts* — for merge-integration *code* findings, hand off to the new **code-fixer**, do not conflate. |
-| **merge-resolver** — resolves worktree→sprint and sprint→main conflicts | nothing | **MISSING** | **P1 (decision 9).** | No new base body. Conductor resolves trivial conflicts inline; for semantic, fires the **code-fixer** as the conflict-resolution worker (it has Edit/Bash/commit). Merge failure → retry. |
+| **avfl lenses** — validator-enum / validator-adv / consolidator / fixer | `avfl/sub-skills/*` (REAL) | **REAL** | none | Keep all four. The AVFL `fixer` fixes *artifacts* — for merge-integration *code* findings, hand off to the **directed fixer (momentum:dev fix-mode)**, do not conflate. |
+| **merge-resolver** — resolves worktree→sprint and sprint→main conflicts | nothing | **MISSING** | **P1 (decision 9).** | No new base body. Conductor resolves trivial conflicts inline; for semantic, fires the **directed fixer (momentum:dev fix-mode)** as the conflict-resolution worker (it has Edit/Bash/commit). Merge failure → retry. |
 | **triage** — leftovers / new work → stubs | `momentum:triage` (REAL) | **REAL** | none | Keep. Conductor invokes it at the approve branch. Accepts a pre-enumerated list from a caller; ARTIFACT → `momentum:intake` stub. No Reject path. |
 | **routing roles: architect / pm / sm** | `agents.json` → 3 dead paths | **MISSING bodies** | P2 | `agents.json` maps these to nonexistent files. Create the bodies or delete the dead entries. Not needed for the redesign to run — cleanup. |
 | **analyst / researcher / ux** | real bodies | **ORPHAN** | none | Out of sprint-dev scope; nothing spawns them. Leave; note for a separate composition-pipeline effort. |
@@ -892,11 +892,11 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 ### Build order (most-blocking first)
 
 1. **code-reviewer adapter → `bmad-code-review`** (P0) — unblocks the per-story review leg; lowest effort (wraps an existing real bug hunter).
-2. **code-fixer base body** (P0) — required by the per-story fix step, the change-workflow loop, and (reused) merge-conflict resolution.
+2. **dev fix-mode** (P0) — required by the per-story fix step, the change-workflow loop, and (reused) merge-conflict resolution. Implemented as fix-mode of `momentum:dev` (`agents/dev.md` + `skills/dev/workflow.md`); no separate `agents/code-fixer.md` base body was built.
 3. **conductor skill + HTML report template** (P0) — the single end gate, report-as-conversation, triage/merge/push. Largest new build; everything post-merge depends on it.
 4. **Rescope qa-reviewer to per-story worktree + teach dev to read the verification contract** (P1) — small prompt edits to real agents.
-5. **AVFL prose → Workflow, retargeted at the merged git result** (P1) — mechanical rewrite; sub-agents reused; integration findings → code-fixer.
-6. **merge-resolver wiring** (P1) — Conductor-inline first, escalate to firing code-fixer; no new base body.
+5. **AVFL prose → Workflow, retargeted at the merged git result** (P1) — mechanical rewrite; sub-agents reused; integration findings → directed fixer (momentum:dev fix-mode).
+6. **merge-resolver wiring** (P1) — Conductor-inline first, escalate to firing the directed fixer (momentum:dev fix-mode); no new base body.
 7. **Cleanup `agents.json`** dead `architect`/`pm`/`sm` paths (P2) — not required for the redesign to run.
 
 ---
@@ -929,7 +929,7 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 | `skills/momentum/skills/dev/workflow.md` | Strip merge gate, cleanup, lock, crash-ask; reduce to worktree-local commit + completion signal; add Part-A header consumption. |
 | `skills/momentum/agents/dev.md` | Remove the `<critical>` no-auto-merge rule; remove merge/cleanup authority. |
 | `skills/momentum/skills/conductor/` (new) | New orchestrator skill + `workflow.md` — owns the end gate, report, change-workflow, approve sequence, all git mutation. |
-| `skills/momentum/agents/code-fixer.md` (new) | New write-capable fixer base body. |
+| `skills/momentum/agents/dev.md` + `skills/momentum/skills/dev/workflow.md` | Extended with fix-mode (the directed fixer); replaces the proposed separate `agents/code-fixer.md`. |
 | `skills/momentum/skills/code-reviewer/SKILL.md` | Convert stub → thin `bmad-code-review` adapter (or delete + repoint callers). |
 | `commands/code-reviewer.md` | Delete or repoint. |
 | `skills/momentum/agents/qa-reviewer.md` | Rescope to per-story worktree + verification contract. |
@@ -958,7 +958,7 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 
 6. **Conductor as a skill vs. the top-level session.** The Conductor is specified as a new orchestrator skill. But it must own git mutation, spawn subagents, and hold a long live conversation at the end gate — that is the top-level session's job, and orchestrator-purity rules forbid skills from writing files directly. Confirm: is the Conductor a *skill that sprint-dev's workflow embodies* (i.e. the sprint-dev top-level session *is* the Conductor), or a separately-spawned skill? This affects who legitimately runs `git push`.
 
-7. **Where the `code-fixer` lives.** Proposed as `skills/momentum/agents/code-fixer.md` (a base body) reusing `dev.md`'s commit/output blocks. Should it instead be a *mode* of `momentum:dev` ("fix-mode") to avoid a second body that drifts from dev.md? Two sections phrase it both ways.
+7. **Where the `code-fixer` lives.** ~~Proposed as `skills/momentum/agents/code-fixer.md`~~ **RESOLVED:** Implemented as **fix-mode of `momentum:dev`** (`agents/dev.md` + `skills/dev/workflow.md`). No separate base body was created; this avoids drift between the two bodies. All spec references to "code-fixer" or "the directed fixer" refer to this dev fix-mode.
 
 8. **E2E ↔ verification-contract overlap.** The verification contract has an `e2e` / `e2e_binding` field *and* E2E is a separate sprint-wide pillar consuming `verification-harness.json`. Confirm the contract's `e2e_binding` is the *only* source the sprint-wide E2E pass reads (single source of truth), vs. the harness JSON being authored independently.
 
