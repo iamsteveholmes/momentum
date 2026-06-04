@@ -58,6 +58,8 @@
       - {{story_key}}: the story key
       Then read {{story_file}} and extract:
       - {{file_list}}: from the story's File List section — files created/modified/deleted
+      - {{tests_run}}: true if bmad-dev-story ran tests, false otherwise (from the Dev Agent Record or implementation output)
+      - {{test_result}}: "pass", "fail", or "not_run" — the outcome of the test run (from the same source; use "not_run" if {{tests_run}} is false)
     </action>
 
     <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
@@ -80,13 +82,29 @@ AGENT_OUTPUT_START
   "story_key": "{{story_key}}",
   "files_changed": [{{file_list}}],
   "test_results": {
-    "tests_run": true,
-    "outcome": "pass"
+    "tests_run": {{tests_run}},
+    "outcome": "{{test_result}}"
   }
 }
 AGENT_OUTPUT_END
 ```
-Where {{file_list}} is the comma-separated list of files from the story's File List section.
+Where {{file_list}} is the comma-separated list of files from the story's File List section, {{tests_run}} is true|false, and {{test_result}} is "pass", "fail", or "not_run" — all captured in Step 2 from bmad-dev-story's Dev Agent Record.
+
+If implementation failed (bmad-dev-story did not reach story status "review"), emit the failed variant instead:
+```
+AGENT_OUTPUT_START
+{
+  "status": "failed",
+  "story_key": "{{story_key}}",
+  "error": "{{error_description}}",
+  "files_changed": [],
+  "test_results": {
+    "tests_run": false,
+    "outcome": "not_run"
+  }
+}
+AGENT_OUTPUT_END
+```
     </action>
 
     <note>Terminal contract: implementation-complete + file_list. Nothing more. The Conductor owns all git mutation (merge, rebase, conflict resolution), worktree lifecycle, lockfile handling, and crash recovery per spec sections 3, 6, and 12. Relocating those authorities out of dev is the precondition for the Conductor to own the narrow, stakes-gated mid-flight escalation tier (DEC-036 D1).</note>
