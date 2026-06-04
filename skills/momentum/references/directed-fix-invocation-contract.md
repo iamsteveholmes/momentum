@@ -29,9 +29,9 @@ Every finding processed by the fix-mode exits with exactly one of the following 
 | Disposition | Meaning |
 |---|---|
 | `fixed` | A fix was applied to the finding. The finding is resolved. |
-| `dismissed` | The finding was judged not worth acting on. **Requires a non-empty rationale** — see Dismissed-Rationale Rule below. |
-| `triaged-out` | The finding is legitimate but out of scope for this story; it is tracked separately and is not silently dropped. |
-| `escalated` | The finding was raised for human attention rather than quietly resolved by the auto-fix path. This disposition is returned **instead of** applying a fix. |
+| `dismissed` | The finding was judged not a genuine issue (false positive). **Requires a non-empty rationale** — see Dismissed-Rationale Rule below. |
+| `triaged-out` | The finding is legitimate but out of scope for this story; it is tracked separately via a `momentum:triage` backlog stub and rendered in the report's out-of-scope section (per `finding-schema.md` Rule 4) — it is not silently dropped. |
+| `escalated` | The finding was raised for human attention rather than quietly resolved by the auto-fix path. This disposition is returned **instead of** applying a fix or producing a fix commit. |
 
 ### No Deferred Disposition
 
