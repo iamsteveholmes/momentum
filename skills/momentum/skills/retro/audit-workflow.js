@@ -14,6 +14,18 @@ export const meta = {
 // scope-bound comes from args; the script body computes NO dates/randomness
 // (Date.now()/Math.random()/new Date() are unavailable in Workflow scripts).
 // ─────────────────────────────────────────────────────────────────────────────
+// `args` may arrive as a parsed object OR as a raw JSON string depending on the
+// harness — normalize to an object before destructuring.
+let _args = args
+if (typeof _args === 'string') {
+  try {
+    _args = JSON.parse(_args)
+  } catch (e) {
+    _args = {}
+  }
+}
+_args = _args || {}
+
 const {
   sprint_slug,
   sprint_started,
@@ -21,10 +33,12 @@ const {
   sprint_stories = [],
   audit_dir,
   transcript_query_path,
-} = args || {}
+} = _args
 
 if (!sprint_slug || !audit_dir) {
-  throw new Error('retro-audit-engine: args.sprint_slug and args.audit_dir are required')
+  throw new Error(
+    `retro-audit-engine: args.sprint_slug and args.audit_dir are required (received typeof ${typeof args})`
+  )
 }
 
 const sprint_dir = audit_dir.replace(/\/audit-extracts\/?$/, '')
@@ -60,13 +74,26 @@ const FINDINGS_SCHEMA = {
   },
 }
 
-const VERDICT_SCHEMA = {
+// Batched verdicts — one verifier agent judges a chunk of findings and returns
+// one verdict per finding (bounds agent count and makes StructuredOutput reliable).
+const VERDICTS_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['refuted', 'reason'],
+  required: ['verdicts'],
   properties: {
-    refuted: { type: 'boolean' },
-    reason: { type: 'string' },
+    verdicts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['index', 'refuted', 'reason'],
+        properties: {
+          index: { type: 'integer', description: 'the finding index within the batch' },
+          refuted: { type: 'boolean' },
+          reason: { type: 'string' },
+        },
+      },
+    },
   },
 }
 
@@ -189,39 +216,73 @@ log(
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Phase: Verify — pipeline() so each finding streams through its own refute
-// panel without waiting for the others. The verify stage spawns a 2–3 skeptic
-// parallel() panel per finding; majority-refute drops it. Kills false positives.
+// Phase: Verify — BOUNDED adversarial verification. Dedup near-duplicate
+// candidates, then judge them in BATCHES (one verifier agent per ~12 findings)
+// rather than one panel per finding. This caps the agent count (≈ findings/12
+// instead of findings×3) and makes StructuredOutput reliable (one array call per
+// batch). A finding is dropped ONLY when a successful verdict refutes it —
+// verifier failure never drops a finding (keep-as-unverified).
 // ─────────────────────────────────────────────────────────────────────────────
 phase('Verify')
 
-const PANEL = [1, 2, 3]
-const judged = (
-  await pipeline(discovered, (f) =>
-    parallel(
-      PANEL.map((n) => () =>
-        agent(
-          `Adversarially REFUTE this retrospective finding. Default to refuted=true unless the evidence clearly holds up.
-Finding: ${JSON.stringify({ type: f.type, severity: f.severity, evidence: f.evidence, reveals: f.reveals, source: f.source })}
+// Dedup by a normalized (type + evidence-prefix) key — lenses often surface the
+// same underlying issue.
+const _seen = new Set()
+const deduped = []
+for (const f of discovered) {
+  const key = ((f.type || '') + '|' + (f.evidence || '')).toLowerCase().replace(/\s+/g, ' ').slice(0, 90)
+  if (_seen.has(key)) continue
+  _seen.add(key)
+  deduped.push(f)
+}
 
-Skeptic #${n}. Ask: is the evidence real and correctly interpreted? Is this actually a problem, or normal/expected behavior (e.g., a single-turn consolidator is NOT an abandoned agent; one redirection is not a frustration pattern)? Could it be a coincidence or a selection artifact?
+// Hard safety cap so a pathological discovery can never explode verification.
+const MAX_VERIFY = 180
+const toVerify = deduped.slice(0, MAX_VERIFY)
+if (deduped.length > MAX_VERIFY) {
+  log(`Verify: capped ${deduped.length} deduped findings to ${MAX_VERIFY} (severity order not guaranteed — see synthesizer)`)
+}
 
-Return refuted (boolean) and a one-line reason.`,
-          { label: `refute:${f.source}#${n}`, phase: 'Verify', schema: VERDICT_SCHEMA }
-        )
-      )
-    ).then((verdicts) => {
-      const v = verdicts.filter(Boolean)
-      const refutes = v.filter((x) => x.refuted).length
-      // Majority of the panel must refute to drop the finding.
-      return { finding: f, kept: refutes < Math.ceil(v.length / 2), refutes, votes: v.length }
-    })
+const BATCH = 12
+const batches = []
+for (let i = 0; i < toVerify.length; i += BATCH) batches.push(toVerify.slice(i, i + BATCH))
+log(`Verify: ${deduped.length} findings after dedup (from ${discovered.length}); ${batches.length} verifier agents (batch=${BATCH})`)
+
+const batchResults = (
+  await parallel(
+    batches.map((batch, bi) => () =>
+      agent(
+        `Adversarially verify a batch of ${batch.length} retrospective findings from the ${sprint_slug} retro.
+For EACH finding decide whether to REFUTE it — refute only when the evidence does not hold, the claim is wrong, or it is normal/expected behavior (e.g., a single-turn consolidator is NOT an abandoned agent; one redirection is not a frustration pattern). Default to refuted=false (keep); do NOT refute for mere uncertainty.
+
+Findings (0-indexed within this batch):
+${batch.map((f, i) => `[${i}] type=${f.type} | severity=${f.severity} | evidence=${String(f.evidence || '').slice(0, 400)} | reveals=${String(f.reveals || '').slice(0, 200)}`).join('\n')}
+
+You MUST call the structured-output tool once with exactly ${batch.length} verdicts — one per finding index 0..${batch.length - 1}: { verdicts: [{ index, refuted, reason }] }.`,
+        { label: `verify:batch-${bi}`, phase: 'Verify', schema: VERDICTS_SCHEMA }
+      ).then((res) => ({ batch, verdicts: res && Array.isArray(res.verdicts) ? res.verdicts : null }))
+    )
   )
 ).filter(Boolean)
 
-const survivors = judged.filter((r) => r.kept).map((r) => r.finding)
-const dropped = judged.length - survivors.length
-log(`Verify: ${survivors.length} findings survived, ${dropped} dropped by majority refute`)
+const survivors = []
+let dropped = 0
+let unverified = 0
+for (const { batch, verdicts } of batchResults) {
+  if (!verdicts) {
+    // Verifier failed for this batch — keep everything, flagged unverified.
+    batch.forEach((f) => survivors.push({ ...f, verified: false }))
+    unverified += batch.length
+    continue
+  }
+  const vByIdx = new Map(verdicts.map((v) => [v.index, v]))
+  batch.forEach((f, i) => {
+    const v = vByIdx.get(i)
+    if (v && v.refuted) dropped++
+    else survivors.push({ ...f, verified: !!v })
+  })
+}
+log(`Verify: ${survivors.length} kept (${unverified} unverified due to batch failures), ${dropped} refuted`)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Phase: Synthesize — a SINGLE agent() (the one documenter). Never in a loop or
@@ -233,7 +294,7 @@ phase('Synthesize')
 const synth = await agent(
   `You are the SINGLE synthesizer for the ${sprint_slug} retrospective. You are the only agent that writes the findings document — there is exactly one of you.
 
-You received ${survivors.length} adversarially-verified findings (false positives already removed):
+You received ${survivors.length} findings that survived adversarial verification (refuted ones already removed). Each carries a "verified" flag — verified:false means the verifier did not reach a verdict on it (keep it, but weight it a touch lower):
 ${JSON.stringify(survivors, null, 2)}
 
 Do the following:
@@ -266,5 +327,5 @@ return {
   metrics: synth?.metrics || {},
   doc_path: synth?.doc_path || doc_path,
   synthesize_status: synth?.synthesize_status || 'failed',
-  verify_stats: { candidates: discovered.length, survived: survivors.length, dropped },
+  verify_stats: { candidates: discovered.length, deduped: deduped.length, survived: survivors.length, refuted: dropped, unverified },
 }
