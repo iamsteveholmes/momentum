@@ -444,8 +444,8 @@ Ready to begin?</output>
           — The Conductor will route triaged-out findings to momentum:triage at build-phase completion (not inline here — triage is deferred to avoid blocking the fix loop). The recovered descriptive fields ensure the triage stub has actionable content.
 
         CASE disposition == "escalated":
-          — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's escalated disposition object carries these in the nested escalation object and does not echo them at the top level; join by finding_id).
-            Resolve fields: stakes_class = I.stakes_class; timing_tier = F.escalation.timing_tier (default "end-gate-expanded" if absent); summary = I.summary; evidence = F.escalation.evidence (inline from fixer) or I.evidence; suggested_fix = I.suggested_fix.
+          — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's escalated disposition object carries these in the nested escalation object and does not echo them at the top level; join by finding_id). Canonical shape defined in directed-fix-invocation-contract.md §"Canonical Fixer Output Shape".
+            Resolve fields: stakes_class = I.stakes_class; timing_tier = F.escalation.timing_tier (NESTED — read from inside the escalation object, NOT from F.timing_tier; default "end-gate-expanded" if absent); summary = I.summary; evidence = F.escalation.evidence (inline from fixer) or I.evidence; suggested_fix = I.suggested_fix.
           — Record in {{finding_dispositions}}: { finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, evidence: evidence, suggested_fix: suggested_fix }
           — F is removed from the retry-bound-3 loop IMMEDIATELY. No further fix/re-check attempts will be run against F inside this loop.
           — Route by timing tier:

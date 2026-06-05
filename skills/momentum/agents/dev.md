@@ -126,6 +126,8 @@ For `dismissed` dispositions: `files_changed` is empty; `dismissal_rationale` is
 For `triaged-out` dispositions: `files_changed` is empty; `dismissal_rationale` is null; `escalation` is null.
 For `escalated` dispositions: `files_changed` is empty (no edits made, no commits produced); `dismissal_rationale` is null; `escalation` object is fully populated including `timing_tier`.
 
+This schema is the **canonical fixer output shape** defined in `skills/momentum/references/directed-fix-invocation-contract.md` §"Canonical Fixer Output Shape". Key invariant: `timing_tier` lives INSIDE the `escalation` object — it is never emitted at the top level of the disposition object. The Conductor recovers `stakes_class`, `summary`, and other inbound-finding fields by joining on `finding_id` back to the findings it sent in; the fixer does NOT echo those fields at the top level.
+
 ### Green-field build process (runs when no `directed_fix` payload)
 
 ### 1 (Green-field). Read the Story

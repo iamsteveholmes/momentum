@@ -152,6 +152,61 @@ These rules encode the DEC-036 amendment to DEC-035's binding decision #1.
 
 ---
 
+## Canonical Fixer Output Shape
+
+This section codifies the authoritative per-finding output shape that the fix-mode fixer MUST produce and that the Conductor MUST consume. Both sides of the seam are bound to this shape.
+
+### Per-finding disposition object
+
+```json
+{
+  "finding_id": "<string — Conductor-assigned, echoed back>",
+  "disposition": "fixed|dismissed|triaged-out|escalated",
+  "files_changed": ["<file paths — populated for fixed; empty for all other dispositions>"],
+  "dismissal_rationale": "<non-empty string if dismissed; null otherwise>",
+  "escalation": {
+    "what": "<description of the finding>",
+    "why": "<rationale for escalation — stakes class and consequences>",
+    "evidence": "<concrete artifact excerpt>",
+    "timing_tier": "end-gate-expanded|mid-flight"
+  }
+}
+```
+
+**Key shape rules:**
+
+- **`timing_tier` is INSIDE `escalation`** — it is a field of the `escalation` object, not a top-level field on the disposition object. A consumer reading `F.timing_tier` will find nothing; the correct path is `F.escalation.timing_tier`.
+- **`escalation` is present only when `disposition == "escalated"`** — for all other dispositions it is `null`.
+- **The `escalation` object does NOT echo `stakes_class`, `summary`, or `location`** from the inbound finding — those fields live on the inbound finding only. The consumer (the Conductor) recovers them by **joining on `finding_id`** back to the stage-2 findings array it sent in.
+
+### Conductor join pattern
+
+When the Conductor routes an escalated finding, it MUST join by `finding_id` to recover the inbound finding's fields:
+
+```
+For disposition F where F.disposition == "escalated":
+  I = stage2_findings.find(x => x.finding_id == F.finding_id)
+  stakes_class   = I.stakes_class
+  summary        = I.summary
+  suggested_fix  = I.suggested_fix
+  timing_tier    = F.escalation.timing_tier  ← nested inside escalation object
+  evidence       = F.escalation.evidence     ← inline payload from fixer (preferred)
+                   OR I.evidence             ← fallback if fixer evidence is absent
+```
+
+This join is the ONLY correct way to recover `stakes_class` and `summary` for an escalated finding. Reading those fields from the top-level disposition object will silently find `undefined`.
+
+### Disposition-by-disposition shape reference
+
+| Disposition | `files_changed` | `dismissal_rationale` | `escalation` |
+|---|---|---|---|
+| `fixed` | Populated | `null` | `null` |
+| `dismissed` | Empty `[]` | Non-empty string | `null` |
+| `triaged-out` | Empty `[]` | `null` | `null` |
+| `escalated` | Empty `[]` | `null` | Fully populated object including `timing_tier` |
+
+---
+
 ## Related References
 
 - `skills/momentum/references/finding-schema.md` — Canonical Normalized Finding Schema; defines the inbound finding shape (including `stakes_class`, `legitimate`, `suggested_fix`) and the disposition and timing-tier fields this contract assigns.
