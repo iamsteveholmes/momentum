@@ -5464,5 +5464,75 @@
       "skills/momentum/skills/retro/evals/"
     ],
     "priority": "high"
+  },
+  "widen-document-review-whole-doc-contradiction-scan": {
+    "status": "backlog",
+    "title": "Widen document-review verification to scan the whole document for contradictions",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
+  },
+  "reconcile-fix-disposition-with-conductor-scope-reverts": {
+    "status": "backlog",
+    "title": "Reconcile fix-disposition with Conductor scope-discipline reverts",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "retro-audit-extract-harvest-keys-on-build-session-id": {
+    "status": "backlog",
+    "title": "Key the retro audit-extract harvest on the build session IDs",
+    "epic_slug": "momentum-sprint-retro",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "create-story-blast-radius-and-citation-discipline": {
+    "status": "backlog",
+    "title": "Harden create-story blast-radius and citation discipline",
+    "epic_slug": "momentum-backlog-refinement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "plain-anchor-and-durable-handoff-on-returning-turns": {
+    "status": "backlog",
+    "title": "Lead returning/jargon-bearing turns with a plain-language anchor and a durable session handoff",
+    "epic_slug": "momentum-impetus-session-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "contract-seam-stories-two-sided-review-scope": {
+    "status": "backlog",
+    "title": "Give contract/seam stories a two-sided (producer + consumer) review scope",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "surface-decision-record-conflicts-on-plan-supersession": {
+    "status": "backlog",
+    "title": "Surface decision-record conflicts when a new plan supersedes prior commitments",
+    "epic_slug": "momentum-assessment-decision-pipeline",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }
