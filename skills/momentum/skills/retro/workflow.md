@@ -13,22 +13,17 @@
   <critical>Story stubs require developer approval before being written to stories/index.json. Write stub entries directly to stories/index.json (no momentum-tools command exists for this operation).</critical>
   <critical>Transcript audit (Phases 2-3) is the primary data source. Milestone logs are NOT the critical path — retro proceeds and produces findings even when zero log events exist.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for retro phases — this prevents context drift in long runs.</critical>
-  <critical>Phase 4 auditor team: pure fan-out — NO TeamCreate, NO SendMessage. Spawn 3 auditors in parallel (foreground, one message), each returns structured findings as its final response. Orchestrator collects 3 findings blocks and passes them to a synthesizer agent that writes retro-transcript-audit.md. This is the correct shape per spawning-patterns.md: agents work independently and return results to the orchestrator.</critical>
+  <critical>Phase 4 is a single dynamic-Workflow call. The orchestrator does NOT hand-spawn auditors. It invokes the Workflow tool ONCE with `audit-workflow.js`, which fans out internally (Discover: parallel lens auditors + per-story analysts → Verify: per-finding adversarial refute panels → Synthesize: ONE agent writes retro-transcript-audit.md). The Workflow runs in the background and RETURNS ONCE — it performs NO human-in-the-loop. Every retro gate stays in this main-loop prose, bracketing the Workflow call.</critical>
+  <critical>The audit Workflow is read-mostly: it writes only retro-transcript-audit.md. It MUST NOT mutate stories/index.json or sprints/index.json and MUST NOT call momentum-tools sprint transitions — those stay in the main loop (Phases 3, 5, 6).</critical>
 
   <team-composition>
-    <phase name="auditor-team" step="4">
-      <role name="auditor-human" spawning="individual" concurrency="parallel">
-        Reads user-messages.jsonl. Returns human_findings JSON array as final response to orchestrator.
-      </role>
-      <role name="auditor-execution" spawning="individual" concurrency="parallel">
-        Reads agent-summaries.jsonl and errors.jsonl. Returns execution_findings JSON array as final response to orchestrator.
-      </role>
-      <role name="auditor-review" spawning="individual" concurrency="parallel">
-        Reads team-messages.jsonl. Returns review_findings JSON array as final response to orchestrator.
-      </role>
-      <role name="synthesizer" spawning="individual" concurrency="sequential">
-        Receives all 3 findings blocks in prompt from orchestrator. Performs cross-cutting synthesis. Writes retro-transcript-audit.md.
-      </role>
+    <phase name="audit-workflow" step="4">
+      The Phase-4 fan-out lives inside `skills/momentum/skills/retro/audit-workflow.js`, not here. Its
+      three internal phases: Discover (`parallel()` lens auditors: human, execution, review, efficiency,
+      coordination — plus one per-story analyst per sprint story), Verify (`pipeline(findings,
+      f => parallel([…skeptics]))` adversarial refute panels), Synthesize (a single `agent()` that writes
+      retro-transcript-audit.md and returns the structured contract). The synthesize-stage singleton is
+      structural — one `agent()` call, never looped or parallelized.
     </phase>
   </team-composition>
 
@@ -41,7 +36,7 @@
       1. Sprint identification — find the sprint to retro
       2. Transcript preprocessing — DuckDB extraction of session data into audit-extracts/
       3. Story verification — check status of every sprint story
-      4. Auditor team — fan-out 3 auditors (parallel), collect findings, spawn synthesizer to write findings doc
+      4. Audit engine — invoke the audit Workflow (one Workflow-tool call); it fans out internally and returns structured findings + writes the findings doc
       5. Story stub creation — propose and approve actionable backlog items from findings
       5.5. Handoff to practice ledger — write un-actioned findings to practice-ledger.jsonl for next planning cycle
       6. Sprint closure — call sprint complete + retro-complete, show summary
@@ -247,234 +242,65 @@ For each of these, choose:
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 4: AUDITOR TEAM                                  -->
+  <!-- PHASE 4: AUDIT ENGINE (dynamic Workflow)                                  -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Fan-out 3 auditors (parallel), collect findings, spawn synthesizer to write findings doc">
+  <step n="4" goal="Invoke the audit Workflow (one Workflow-tool call); consume its structured return">
     <action>Update task 4 to in_progress</action>
 
-    <note>Pure fan-out — no TeamCreate, no SendMessage. All 3 auditors run in parallel as foreground
-    agents and return findings as structured text in their final response. The orchestrator collects
-    all 3 findings blocks and passes them to a synthesizer agent that performs cross-cutting analysis
-    and writes retro-transcript-audit.md. This is the correct spawning-patterns.md shape for independent
-    parallel work with results collected by the orchestrator.</note>
+    <note>Phase 4 is a SINGLE dynamic-Workflow call. The Workflow runs in the background and returns
+    ONCE — it does NO human-in-the-loop. The orchestrator does not hand-spawn auditors; the fan-out
+    (Discover -> Verify -> Synthesize) lives inside audit-workflow.js (see the team-composition block).
+    This step is reached only after the Phase 2 zero-session HALT has passed, so the Workflow never
+    runs on empty extracts.</note>
 
-    <action>Step 4a — Fan out 3 auditor Agent spawns in a single message (foreground, parallel).
-    Each auditor reads its assigned extract files and returns all findings as its final text response.
-    No SendMessage. No team_name. Results come back as tool return values to the orchestrator.
-
-      **auditor-human** — System prompt:
+    <action>Resolve the audit Workflow script path (store {{audit_workflow_path}}) — highest-semver
+    plugin-cache copy wins, with an in-repo fallback for dogfood runs:
       ```
-      You are auditor-human for the {{sprint_slug}} retrospective.
-
-      Read `{{audit_dir}}/user-messages.jsonl`. Each line is a JSON object with
-      timestamp, session_file, content, and is_first_message fields.
-
-      Large-file protocol (mandatory — follow before reading any file):
-        1. Run `wc -l` on the file first to check its size.
-        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
-           or stream JSONL line-by-line via `python3`.
-        3. Never attempt a full Read on these known-large files:
-           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
-        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
-
-      Identify and categorize every notable pattern:
-        - Corrections: user fixing agent behavior mid-task
-        - Redirections: user changing approach or canceling agent work
-        - Frustration signals: repeated asks, escalating tone, explicit complaints
-        - Praise/approval: positive signals about what worked well
-        - Decision points: human exercised judgment agents couldn't handle
-
-      For each finding, record:
-        - type (correction|redirection|frustration|praise|decision)
-        - severity (high|medium|low)
-        - quote or paraphrase of the message
-        - what it reveals about practice gaps or strengths
-        - recommendation (fix|keep|investigate)
-
-      Return ALL findings as your final response in this exact format:
-      HUMAN_FINDINGS_START
-      [{"type":"correction","severity":"high","quote":"...","reveals":"...","recommendation":"fix"}, ...]
-      HUMAN_FINDINGS_END
-
-      Available tool: transcript-query.py for additional ad-hoc queries if needed:
-        python3 {{transcript_query_path}} sql "SELECT ..." \
-          --after {{sprint_started}} --before {{sprint_completed}}
+      AUDIT_WF=$(ls -d ~/.claude/plugins/cache/momentum/momentum/*/skills/retro/audit-workflow.js 2>/dev/null \
+        | sort -V | tail -n1)
+      [ -z "$AUDIT_WF" ] && [ -f skills/momentum/skills/retro/audit-workflow.js ] \
+        && AUDIT_WF=skills/momentum/skills/retro/audit-workflow.js
       ```
-
-      **auditor-execution** — System prompt:
-      ```
-      You are auditor-execution for the {{sprint_slug}} retrospective.
-
-      Read:
-        - `{{audit_dir}}/agent-summaries.jsonl` — per-subagent digests
-        - `{{audit_dir}}/errors.jsonl` — tool errors (actual error indicators only)
-
-      Large-file protocol (mandatory — follow before reading any file):
-        1. Run `wc -l` on each file first to check its size.
-        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
-           or stream JSONL line-by-line via `python3`.
-        3. Never attempt a full Read on these known-large files:
-           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
-        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
-
-      Investigate patterns across the subagent population:
-        - Duplication: multiple agents with identical or near-identical first prompts
-        - Error recovery: which agents had high error counts, did they recover?
-        - Tool efficiency: agents with high tool_results but low assistant_turns
-        - Story iteration: stories with many dev agents (why did story X need N passes?)
-        - Abandoned agents: agents with very low turn counts (< 3 assistant turns)
-
-      Single-turn consolidator exception: some agent roles are designed to complete their
-      full work in exactly one turn (receive inputs → process → return structured output → done).
-      Examples: AVFL consolidator, retro synthesizer, format converters, result aggregators.
-      Detection signal: single turn + non-empty output = consolidator pattern (correct behavior,
-      do NOT flag). Single turn + empty output = anomaly (flag as abandoned).
-      Do not flag single-turn consolidators as abandoned — flag only zero-turn or empty-output agents.
-
-      For agents of interest, run ad-hoc queries via transcript-query.py sql "..." to
-      investigate their full transcripts.
-
-      For each finding, record:
-        - type (duplication|error-pattern|efficiency|iteration|abandon)
-        - affected agents or stories
-        - evidence (counts, examples)
-        - root cause hypothesis
-        - recommendation (fix|keep|investigate)
-
-      Return ALL findings as your final response in this exact format:
-      EXECUTION_FINDINGS_START
-      [{"type":"duplication","affected":"...","evidence":"...","hypothesis":"...","recommendation":"fix"}, ...]
-      EXECUTION_FINDINGS_END
-
-      Available tool: transcript-query.py for additional ad-hoc queries:
-        python3 {{transcript_query_path}} sql "SELECT ..." \
-          --after {{sprint_started}} --before {{sprint_completed}}
-      ```
-
-      **auditor-review** — System prompt:
-      ```
-      You are auditor-review for the {{sprint_slug}} retrospective.
-
-      Read:
-        - `{{audit_dir}}/team-messages.jsonl` — inter-agent SendMessage content
-        - `{{audit_dir}}/agent-summaries.jsonl` — filter to review roles:
-            agent_type containing "reviewer", "validator", "qa", "prompt-engineer"
-
-      Large-file protocol (mandatory — follow before reading any file):
-        1. Run `wc -l` on each file first to check its size.
-        2. For files over 200 lines, read in 500-line chunks via Read offset/limit,
-           or stream JSONL line-by-line via `python3`.
-        3. Never attempt a full Read on these known-large files:
-           agent-summaries.jsonl, errors.jsonl, prd.md, architecture.md, stories/index.json.
-        4. If a Read fails with a token-limit error, do not retry the same read — narrow scope.
-
-      Evaluate quality gate effectiveness:
-        - Real issues caught: review findings that led to genuine fixes
-        - False positives: review blocks that were overturned or unnecessary
-        - Fix cycle quality: did fix passes converge or thrash?
-        - Inter-agent coordination: clear handoffs, confusion, missing context
-        - Reviewer prompt quality: were review agents well-instructed?
-
-      For each finding, record:
-        - type (real-catch|false-positive|thrash|coordination|prompt-quality)
-        - evidence (message quotes, patterns)
-        - impact on sprint velocity
-        - recommendation (fix|keep|investigate)
-
-      Return ALL findings as your final response in this exact format:
-      REVIEW_FINDINGS_START
-      [{"type":"real-catch","evidence":"...","impact":"...","recommendation":"fix"}, ...]
-      REVIEW_FINDINGS_END
-      ```
+      Store {{audit_workflow_path}} = $AUDIT_WF. Log: "Using audit-workflow.js at: {{audit_workflow_path}}".
     </action>
 
-    <action>Step 4b — Collect findings from the 3 auditor return values:
-      - Extract the JSON array between HUMAN_FINDINGS_START / HUMAN_FINDINGS_END from auditor-human's output
-      - Extract the JSON array between EXECUTION_FINDINGS_START / EXECUTION_FINDINGS_END from auditor-execution's output
-      - Extract the JSON array between REVIEW_FINDINGS_START / REVIEW_FINDINGS_END from auditor-review's output
-      Store as {{human_findings}}, {{execution_findings}}, {{review_findings}}.
+    <action>Invoke the **Workflow** tool EXACTLY ONCE (this is the explicit Workflow opt-in — do NOT
+    fall back to hand-spawning Agent calls) with:
+      - scriptPath: {{audit_workflow_path}}
+      - args (a real JSON object, not a string):
+        {
+          "sprint_slug": "{{sprint_slug}}",
+          "sprint_started": "{{sprint_started}}",
+          "sprint_completed": "{{sprint_completed}}",
+          "sprint_stories": {{sprint_stories}},
+          "audit_dir": "{{audit_dir}}",
+          "transcript_query_path": "{{transcript_query_path}}"
+        }
     </action>
 
-    <action>Step 4c — Spawn 1 synthesizer agent (foreground) that receives all findings in its prompt:
-
-      **synthesizer** — System prompt:
-      ```
-      You are the synthesizer for the {{sprint_slug}} retrospective.
-
-      You have received findings from 3 auditors:
-
-      HUMAN FINDINGS:
-      {{human_findings}}
-
-      EXECUTION FINDINGS:
-      {{execution_findings}}
-
-      REVIEW FINDINGS:
-      {{review_findings}}
-
-      Perform a cross-cutting synthesis pass:
-        - Identify themes that appear across multiple auditor reports
-        - Prioritize findings by impact and actionability
-        - Separate successes (preserve) from struggles (fix)
-
-      Write the findings document to:
-        `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
-
-      Document structure (required sections):
-
-      # Sprint Transcript Audit — {{sprint_slug}}
-
-      **Retro date:** {{today}}
-      **Sprint completed:** {{sprint_completed}}
-      **Data analyzed:** {{user_msg_count}} user messages | {{agent_count}} subagents | {{error_count}} errors | {{team_msg_count}} team messages
-
-      ## Executive Summary
-      [2-3 paragraph synthesis of the sprint — what happened, key themes, priority actions]
-
-      ## What Worked Well
-      [Each item: description, evidence, recommendation: KEEP]
-
-      ## What Struggled
-      [Each item: description, evidence, root cause, recommendation: FIX or INVESTIGATE]
-
-      ## User Interventions
-      [All corrections, redirections, frustration signals — with context and implications]
-
-      ## Story-by-Story Analysis
-      [For each story with notable patterns: what happened, iteration count, issues]
-
-      ## Cross-Cutting Patterns
-      [Themes that appear across human, execution, and review audits]
-
-      ## Metrics
-      | Metric | Value |
-      |--------|-------|
-      | User messages analyzed | {{user_msg_count}} |
-      | Subagents analyzed | {{agent_count}} |
-      | Tool errors detected | {{error_count}} |
-      | Struggles identified | N |
-      | Successes identified | N |
-      | User interventions | N |
-      | Cross-cutting patterns | N |
-
-      ## Priority Action Items
-      [Ranked list: item, priority (critical/high/medium/low), recommended story stub title]
-
-      Each finding must include: what happened, evidence (quote or data), root cause, recommendation.
-      ```
+    <action>Bind the Workflow's structured return:
+      {{priority_action_items}} = return.priority_action_items   (consumed by Phase 5)
+      {{handoff_candidates}}    = return.handoff_candidates       (consumed by Phase 5.5)
+      {{audit_metrics}}         = return.metrics
+      {{audit_doc_path}}        = return.doc_path
+      {{synthesize_status}}     = return.synthesize_status
+      {{user_msg_count}}, {{agent_count}}, {{error_count}}, {{team_msg_count}} remain as bound in
+      Phase 2 (authoritative extract line counts). Additionally bind {{struggle_count}} =
+      audit_metrics.struggles and {{success_count}} = audit_metrics.successes for the Phase 6 summary.
     </action>
 
-    <check if="findings document written at `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`">
-      <output>**Auditor team complete.** Findings document written:
-  `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</output>
+    <check if="{{synthesize_status}} == 'ok' AND a findings document exists at {{audit_doc_path}}">
+      <output>**Audit engine complete.** Findings document written:
+  `{{audit_doc_path}}`
+  ({{struggle_count}} struggles, {{success_count}} successes; {{priority_action_items | length}} priority action items)</output>
     </check>
 
-    <check if="findings document not found after synthesizer exits">
-      <output>Warning: Synthesizer did not write findings document. Check agent logs.</output>
-      <ask>Continue retro without findings document (story stubs will be manually specified)?</ask>
+    <check if="{{synthesize_status}} != 'ok' OR {{audit_doc_path}} is null/absent">
+      <output>Warning: the audit Workflow did not confirm a findings document (synthesize_status = {{synthesize_status}}). Inspect the run via `/workflows`.</output>
+      <ask>Continue retro without a findings document (story stubs will be manually specified)?</ask>
       <check if="developer says no">
-        <action>HALT — investigate synthesizer failure.</action>
+        <action>HALT — investigate the audit Workflow failure.</action>
       </check>
     </check>
 
@@ -488,22 +314,23 @@ For each of these, choose:
   <step n="5" goal="Propose and approve story stubs from audit findings">
     <action>Update task 5 to in_progress</action>
 
-    <action>Read `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`</action>
-    <action>Extract all items under "Priority Action Items" section</action>
+    <action>Use {{priority_action_items}} bound from the Phase 4 audit Workflow return (the structured
+    list). Do NOT re-read or re-parse retro-transcript-audit.md — the returned contract is authoritative.
+    Each item already carries: title, priority, source_detail, suggested_ac[], and optional epic_slug.</action>
 
-    <check if="no priority action items found">
-      <output>No actionable items found in findings document. No story stubs to create.</output>
+    <check if="{{priority_action_items}} is empty">
+      <output>No actionable items in the audit return. No story stubs to create.</output>
     </check>
 
-    <check if="priority action items found">
+    <check if="{{priority_action_items}} is non-empty">
 
-      <action>For each priority action item, derive a story stub:
+      <action>For each item in {{priority_action_items}}, derive a story stub directly from its fields:
         {
-          title: recommended story stub title from findings,
-          epic_slug: "impetus-core" (for Momentum/practice findings) or appropriate project epic,
+          title: item.title,
+          epic_slug: item.epic_slug (or "impetus-core" for Momentum/practice findings when absent),
           status: "backlog",
-          description: one-sentence summary of the finding,
-          suggested_ac: bulleted acceptance criteria derived from the finding's recommendation
+          description: item.source_detail (one-sentence summary),
+          suggested_ac: item.suggested_ac
         }
       </action>
 
@@ -576,7 +403,7 @@ Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
         for Done) — these carry `feature_state_transition` JSON
       - Specific failures diagnosed during auditor analysis (DEC-005 D7) — these carry
         `failure_diagnosis` JSON
-      - Cross-cutting patterns the documenter elevated but which don't warrant immediate stub creation
+      - Cross-cutting patterns the audit surfaced but which don't warrant immediate stub creation
 
     What DOES NOT go into the ledger:
       - Stubs already approved and added to stories/index.json (Phase 5) — those are tracked there
@@ -587,10 +414,10 @@ Stubbed: {{approved_count}} | Skipped: {{rejected_count}}</output>
     <action>Gather the items to hand off:
       1. From {{rejected_stubs}} (Phase 5 developer-declined stubs): these are un-actioned findings
          the developer chose not to stub but may want to revisit
-      2. From Phase 4 findings: any feature-state transitions observed (DEC-005 D8) — features
-         that regressed, partially advanced, or are candidates for Done/Shelved/Abandoned/Rejected
-      3. From Phase 4 findings: any specific failures with diagnosed causes (DEC-005 D7)
-      4. Any cross-cutting patterns from the documenter that aren't covered by approved stubs
+      2. From {{handoff_candidates}} (the Phase 4 audit Workflow return): feature-state transitions
+         observed (DEC-005 D8) and specific failures with diagnosed causes (DEC-005 D7). Each item
+         already carries title/slug/description plus optional epic_slug/failure_diagnosis/feature_state_transition.
+      3. Any cross-cutting patterns surfaced by the audit that aren't covered by approved stubs
 
       Store {{handoff_items}} = list of all items to write to queue
     </action>

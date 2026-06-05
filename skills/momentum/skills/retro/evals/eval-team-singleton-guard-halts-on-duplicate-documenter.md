@@ -1,58 +1,42 @@
-# Eval: Team singleton guard halts Phase 4 when documenter is duplicated
+# Eval: Synthesize-stage singleton makes duplicate documenters unreachable
 
 ## Scenario
 
-Given a retro for `sprint-2026-04-08` where Phase 4 used TeamCreate without cardinality=1
-(Shape A misconfiguration) for team `retro-sprint-2026-04-08`, and the team config file at
-`~/.claude/teams/retro-sprint-2026-04-08/config.json` exists and contains:
-
-```json
-{
-  "members": [
-    { "name": "documenter", "agentId": "a1", "agentType": "documenter" },
-    { "name": "documenter", "agentId": "a2", "agentType": "documenter" },
-    { "name": "documenter", "agentId": "a3", "agentType": "documenter" },
-    { "name": "documenter", "agentId": "a4", "agentType": "documenter" },
-    { "name": "documenter", "agentId": "a5", "agentType": "documenter" },
-    { "name": "auditor-human", "agentId": "a6", "agentType": "auditor-human" },
-    { "name": "auditor-execution", "agentId": "a7", "agentType": "auditor-execution" },
-    { "name": "auditor-review", "agentId": "a8", "agentType": "auditor-review" }
-  ]
-}
-```
-
-(8 total members: 5 documenters + 3 auditors — the replication defect pattern the Shape A
-topology prevents by requiring TeamCreate with cardinality=1. The guard must catch this
-regardless of how the duplicate documenters arose.)
-
-The singleton guard step runs immediately after the spawn block and before the wait loop.
+The dynamic audit Workflow (`skills/momentum/skills/retro/audit-workflow.js`) is the Phase-4
+mechanism. There is **no** `TeamCreate` and **no** `~/.claude/teams/{team}/config.json` — the old
+"Shape A" team topology is gone, and with it the runtime member tally it required.
 
 ## Expected Behavior
 
-The retro orchestrator should:
+A duplicate documenter cannot arise, because the `Synthesize` phase is a single `agent()` call by
+construction. A reviewer inspecting `audit-workflow.js` confirms ALL of the following:
 
-1. Read `~/.claude/teams/retro-sprint-2026-04-08/config.json`.
-2. Parse the `members` array and tally per-role counts:
-   - documenter: 5
-   - auditor-human: 1
-   - auditor-execution: 1
-   - auditor-review: 1
-   - Total: 8
-3. Detect that the tally does not match the expected composition (1 + 1 + 1 + 1 = 4 total).
-4. Emit a diagnostic block that includes ALL of the following:
-   - The sprint slug under retro (`sprint-2026-04-08`)
-   - Expected composition: `1 documenter + 1 auditor-human + 1 auditor-execution + 1 auditor-review (4 total)`
-   - Actual composition per role (e.g., `5 documenter, 1 auditor-human, 1 auditor-execution, 1 auditor-review (8 total)`)
-   - The path to the team config file read (`~/.claude/teams/retro-sprint-2026-04-08/config.json`)
-   - A reference to story slugs `retro-team-singleton-guard` and `fix-retro-documenter-replication-defect`
-5. HALT Phase 4 — do NOT proceed to the `Wait for the team to complete` action.
-6. NOT prompt the developer to "continue anyway" — there is no continue-with-known-bad-team path.
-7. NOT write or await the findings document (`retro-transcript-audit.md`).
+1. The `Synthesize` phase contains exactly one `agent(...)` call.
+2. That call is **not** inside a loop, `parallel()`, or a multi-item `pipeline()` stage.
+3. No `TeamCreate`, `SendMessage`, or `~/.claude/teams/.../config.json` machinery exists anywhere in
+   Phase 4 or the audit Workflow.
+
+There is no runtime "guard step" to halt on — the property is enforced structurally in the script,
+which is strictly stronger than a post-hoc config tally. The old failure (5 documenters in a team
+config) has no representation in this design.
+
+## Pass Condition
+
+Exactly one synthesize-stage `agent()` call; no `TeamCreate`/`SendMessage`/team-config machinery
+present. A second documenter is unreachable by construction.
+
+## Fail Condition
+
+The `Synthesize` `agent()` call is wrapped in a loop / `parallel()` / multi-item `pipeline()` stage
+(which could multiplex it), or any `TeamCreate`/config-tally machinery is re-introduced into Phase 4.
 
 ## What This Tests
 
-- The guard runs before any auditor or documenter work begins
-- Duplicate members (same role appearing multiple times) trigger a HALT
-- The diagnostic output names the actual per-role counts, not just a total mismatch
-- The HALT is unconditional — no "continue anyway" prompt
-- The findings document is not written when the guard fires
+- The duplicate-documenter defect is prevented structurally, not by a runtime guard.
+- The TeamCreate/`config.json` topology has been fully removed.
+- The single-writer property lives in the Workflow script and can be verified by reading it.
+
+## Rationale
+
+Migrated from the runtime team-cardinality guard (which tallied `config.json` members and halted on a
+mismatch) to a structural invariant of the Workflow script: one `agent()` in `Synthesize`.

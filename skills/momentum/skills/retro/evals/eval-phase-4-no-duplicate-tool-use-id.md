@@ -1,47 +1,36 @@
-# Eval: Phase 4 No Duplicate tool_use_id
+# Eval: Phase 4 Cannot Replicate Agents (Workflow-managed spawns)
 
 ## Scenario
 
-Given Phase 4 of the retro workflow spawns its auditor team (1 documenter + 3 auditors),
-the session transcript is inspected for the tool_use_id values associated with each spawned agent.
+Phase 4 of retro performs its auditor work via the dynamic audit Workflow — a **single** Workflow-tool
+invocation — rather than the main loop hand-emitting multiple parallel `Agent` tool calls.
 
 ## Expected Behavior
 
-Every spawned agent must have a distinct tool_use_id in the session transcript. No two agents
-share a tool_use_id. Shared tool_use_id values would indicate that multiple agents were produced
-from a single API call (single-call replication — the root cause of the historical defect).
+Phase 4 makes exactly one Workflow-tool call. Every auditor, refuter, and the synthesizer is spawned
+by the Workflow runtime (the `agent()` calls inside `audit-workflow.js`), which assigns each its own
+managed spawn — two agents cannot share a `tool_use_id`. The historical single-call replication defect
+(8–10 documenters sharing one `tool_use_id` on sprint-2026-04-08 / 04-10) is **structurally
+impossible**, because the main loop no longer hand-emits a batch of `Agent` calls for Phase 4.
 
 ## Verification
 
-After Phase 4 completes, query the session JSONL for Phase 4 agent spawn tool calls:
-
-```bash
-# DuckDB query pattern (adjust session path):
-# SELECT tool_use_id, COUNT(*) as cnt
-# FROM session_events
-# WHERE type = 'agent_spawn' AND phase = 4
-# GROUP BY tool_use_id
-# HAVING cnt > 1;
-# Expected: zero rows (no shared tool_use_id)
-
-# Or with jq against session transcript:
-# jq '[.[] | select(.type=="tool_use" and .name=="Agent")] | group_by(.id) | map(select(length > 1))' session.jsonl
-# Expected: empty array
-```
+1. `retro/workflow.md` Phase 4 contains a single Workflow-tool call and **no** foreground `Agent`
+   fan-out for auditors/synthesizer.
+2. In a real run, Phase-4 subagents appear under the Workflow runtime, each with a distinct identity;
+   no two share a `tool_use_id`.
 
 ## Pass Condition
 
-Zero tool_use_id values appear more than once across the 4 Phase 4 agent spawns. Each of the
-4 agents (documenter, auditor-human, auditor-execution, auditor-review) has a unique tool_use_id.
+Phase 4 is a single Workflow invocation, and no two Phase-4 agents share a `tool_use_id`.
 
 ## Fail Condition
 
-Any tool_use_id appears more than once — indicating that one API call produced multiple agent
-instances (the replication defect observed in sprint-2026-04-08 and sprint-2026-04-10 retros,
-where 8–10 documenters shared a tool_use_id).
+`retro/workflow.md` re-introduces hand-emitted parallel `Agent` spawns for Phase 4 (the configuration
+that originally allowed single-call replication), or any two Phase-4 agents share a `tool_use_id`.
 
 ## Rationale
 
-AC1 and AC5 of `fix-retro-documenter-replication-defect`: "Distinct tool_use_id per spawned
-agent in the session transcript (no two agents share a tool_use_id, ruling out single-call
-replication)."
+The original eval guarded against a main-loop footgun (multiple agents produced from one API call).
+Moving Phase 4 into the Workflow tool removes the footgun by construction; this eval now asserts that
+the Workflow-tool boundary is preserved and the hand-rolled fan-out is not reintroduced.
