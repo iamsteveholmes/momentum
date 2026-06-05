@@ -76,6 +76,40 @@ gives the system, and what would go wrong without it. This is the "enough contex
 reader understands why a divergence matters" layer. Derive the guarantee from the contract's *intent*, never
 from its raw syntax.
 
+## 6a. Per-item review panel (the §02 expand) — enabling actual review, not rubber-stamping
+
+The single biggest risk of an autonomous builder is that the human *approves without reviewing* — the LLM does
+the coding and the human signs off blind. The cure is to put the reviewable material one click away on **every**
+item. Each §02 item carries an **expand ("Review this work item")** containing, in this order:
+
+1. **How it was verified — TESTING FIRST.** Before any code, show how we know it works:
+   - *What had to be true* — the behaviors the frozen contract required, in plain language (the eval scenarios /
+     review-claims translated into "the things it must do"), so the reader sees the test design.
+   - *How it was checked* — the QA verification + the independent adversarial review + (for high-risk) the
+     re-check. **Be honest about the strength of verification.** If it was structured inspection against the
+     contract rather than live execution (e.g. markdown artifacts with a "skip" runtime harness), say so — never
+     let "verified" be mistaken for "executed."
+   - *Result* — the verdict and the concrete evidence.
+2. **Why it's built this way — architectural rationale + references.** The design choice, with **explicit
+   references to the governing decisions and spec sections** that drove it (name them), and the files changed.
+3. **The actual diff.** The real change, embedded (collapsed `<pre>`, escaped, self-contained) so the developer
+   can read the implementation themselves. This is the artifact that makes review real rather than notional.
+4. **Visual evidence — for any item that changes user-facing UI (see §6b).**
+
+Testing-first ordering is deliberate: the reader should judge *whether it's trustworthy* before reading the code,
+and the diff is there to verify, not to take on faith.
+
+## 6b. Visual evidence for UI changes (screenshots / GIFs)
+
+**A diff does not show what the user sees.** For any work item that changes user-facing UI, the review panel's
+verification block must **lead with visual evidence**: before/after **screenshots** (and a short **GIF** for an
+interaction or animation), treated as the *primary* verification artifact for the visual change, with the code
+diff as supporting detail. Capture them by actually running the app / driving the browser (e.g. the project's
+run skill or browser automation), and embed them self-contained (committed image asset, or inline data-URI) so
+the report stays a single portable file. If a UI item ships without a screenshot, that is a verification gap and
+the panel must say so. (This sprint changed no UI — markdown/skills only — so no screenshots apply here; the rule
+exists so conduct includes them automatically when a sprint does touch UI.)
+
 ## 7. The honesty / completeness section (§06)
 
 State completeness plainly, even when it's awkward. Two tables — **what's live** vs **what's still hollow** —
