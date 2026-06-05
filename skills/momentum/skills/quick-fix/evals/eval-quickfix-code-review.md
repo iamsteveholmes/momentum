@@ -9,8 +9,8 @@ collaborative fix loop task list.
 
 ## Preconditions
 
-- Phase 3 (Implement) is complete and changes are merged to the working branch
-- The story's `touches` array is available from the story file frontmatter
+- Phase 3 (Implement) is complete and changes are merged to main
+- `{{pre_merge_main}}` was captured (as `git rev-parse main`) before the Phase 3d merge
 - The worktree has been cleaned up after the merge (Phase 3)
 - A post-merge AVFL scan has just completed (step 4a)
 
@@ -21,7 +21,7 @@ collaborative fix loop task list.
 Given the post-merge AVFL scan (step 4a) has completed
 When Phase 4 continues
 Then `momentum:code-reviewer` is invoked before the validation team is created
-And the code reviewer is scoped to the files in the story's `touches` array
+And the code reviewer receives the full story diff (`git diff {{pre_merge_main}}..main`) as its input
 And code review findings are collected before team validation begins
 
 ### 2. Code review findings are presented alongside AVFL findings
@@ -53,4 +53,4 @@ And the worktree is NOT deleted until all gates have passed or the developer
 - Code review runs after team validation instead of before it
 - Code review findings are not passed to the Dev agent in the fix loop
 - The worktree is cleaned up before all quality gates complete
-- Code review scoping does not use the story's `touches` array
+- Code reviewer input is pathspec-filtered to the story's `touches` array instead of the full story diff

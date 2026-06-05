@@ -10,11 +10,11 @@
 
 This redesign collapses the multi-gate, wave-barriered sprint-dev flow into an autonomous build with **exactly one** human-in-the-loop surface at the end. It is grounded in ten binding developer decisions. They are not up for relitigation — every section below designs *to* them.
 
-1. **No in-between HITL.** Every intermediate approval gate is removed. AVFL never asks the developer anything. Dev agents *always* retry on failure (no retry/skip/halt prompt). Legitimate issues are *always* fixed automatically — there is no per-finding fix/defer prompt.
-2. **One end gate only.** After the report, a **Conductor** waits for the developer to either (a) say *"we need changes"* → run ONE change-workflow that loops over fixes, or (b) *approve* → triage any leftover issues into new stubs, merge to main, push. There is **no Reject**. Stories close one way or another; the only non-closed case is a blocked/never-completed story → spin out a new stub via `momentum:triage`. New work discovered during review → new stubs via triage.
+1. **End-gate is the default HITL surface; a narrow mid-flight escalation tier is the sole exception.** The single human end-gate remains the default and the safety net: AVFL never asks the developer anything, dev agents always retry on failure (no retry/skip/halt prompt), and **routine** findings are *always* auto-fixed silently — there is no per-finding fix/defer prompt for ordinary work. The sole exception is a narrow, high-bar, stakes-gated mid-flight escalation tier: a finding may escalate mid-flight ONLY if it is **irreversible-and-imminent** OR **build-invalidating**. No other condition widens the mid-flight tier. Stakes-class legitimate findings (security-auth-isolation, irreversible-destructive, high-blast-radius-architecture) are **raised** (surfaced as decision cards) rather than silently auto-fixed; findings that do not meet the mid-flight bar are held for end-gate expansion. This amends DEC-035 binding decision #1 — preserving its anti-firehose intent while relaxing its absolutism.
+2. **One end gate only (default) + narrow mid-flight exception.** After the report, a **Conductor** waits for the developer to either (a) say *"we need changes"* → run ONE change-workflow that loops over fixes, or (b) *approve* → triage any leftover issues into new stubs, merge to main, push. There is **no Reject**. Stories close one way or another; the only non-closed case is a blocked/never-completed story → spin out a new stub via `momentum:triage`. New work discovered during review → new stubs via triage. The mid-flight escalation tier fires only on the stakes-and-timing bar (irreversible-and-imminent OR build-invalidating); end-gate expansion is the norm and safety net.
 3. **One workflow for all fixing.** The change-workflow and the build-fix loop are the **same** workflow type, run any time fixing is required.
 4. **Per-story independence.** Each story runs its *own* complete flow: dev → concurrent QA + code-review → fixers → merge its own worktree → done. Prefer per-story independence (a story merges the instant it passes) over global waves. Fall back to waves only when a hard dependency forces it.
-5. **Code review tooling.** `momentum:code-reviewer` is a STUB and must not be relied on. Use **`bmad-code-review`** for the adversarial bug hunt; use the built-in **`/simplify`** for optional cleanup. Do not build an in-house reviewer now.
+5. **Code review tooling.** `momentum:code-reviewer` is now the canonical non-interactive `bmad-code-review` adapter — the reviewer of record for the per-story review leg. It normalizes `bmad-code-review` findings to the canonical finding schema (adding `stakes_class`, `source: bmad-code-review`) and is relied upon by both `sprint-dev` and `quick-fix`. The underlying adversarial engine remains `bmad-code-review`; the built-in **`/simplify`** handles optional cleanup. Do not replace this adapter with a from-scratch in-house reviewer.
 6. **AVFL kept, repositioned.** AVFL runs *after* all worktrees merge — it is the reviewer **of the merge**, inspecting the integrated git result to catch integration issues. Rewrite it as a dynamic **Workflow** (the Workflow tool), not a prose skill.
 7. **E2E validation kept.**
 8. **HTML report, fully self-sufficient.** The recurring failure to fix: reports omit context the developer needs. Every section MUST contain ALL context needed to decide *in that section* — no terse shorthand, no "see code". The report step is a fully open conversation; the Conductor updates the report and answers questions until the developer gives the go-ahead.
@@ -46,8 +46,9 @@ SPRINT-PLANNING  (decision 10)
 │      2. QA + REVIEW (concurrent fan-out, read-only, this story's diff)   │
 │           • qa-reviewer    → verifies the story's verification contract  │
 │           • bmad-code-review → adversarial bug hunt                      │
-│      3. FIX      — code-fixer applies ALL legitimate findings; re-check; │
-│                    /simplify optional cleanup after fixes; bounded retry │
+│      3. FIX      — directed fixer (momentum:dev fix-mode) auto-fixes all  │
+│                    stakes-class findings are escalated (not auto-fixed); │
+│                    re-check; /simplify optional cleanup; bounded retry   │
 │      4. MERGE    — Conductor rebases+merges S's worktree → sprint branch;│
 │                    status → review; worktree+branch removed (per-story). │
 │                    Conflict → Conductor resolves or fires fixer; retry.  │
@@ -72,7 +73,7 @@ SPRINT-PLANNING  (decision 10)
               show push list → ASK before push → git push
 ```
 
-There are **two** developer touchpoints in the whole flow: the end-gate conversation (which resolves to *changes* or *approve*), and the push confirmation (folded into approve, mandated by git-discipline). Everything else is autonomous.
+There are **two** routine developer touchpoints in the whole flow: the end-gate conversation (which resolves to *changes* or *approve*), and the push confirmation (folded into approve, mandated by git-discipline). Everything else is autonomous. In addition, a rare mid-flight escalation may surface ONLY when a stakes-class finding meets the strict bar: **irreversible-and-imminent** OR **build-invalidating**. No other condition widens this path.
 
 ---
 
@@ -97,11 +98,12 @@ The **Conductor** is the orchestrator role that owns the build phase. It replace
 ```
 Conductor state (in-memory, mirrored to task tracking):
 {
-  frontier:  [slug, ...],            // unblocked, not yet launched
-  running:   { slug: pipeline_handle },
-  merged:    [slug, ...],            // status == 'review' on sprint branch
-  blocked:   [slug, ...],            // exhausted retries OR unsatisfiable dep
-  retries:   { slug: int },          // per-story retry count
+  frontier:    [slug, ...],            // unblocked, not yet launched
+  running:     { slug: pipeline_handle },
+  merged:      [slug, ...],            // status == 'review' on sprint branch
+  blocked:     [slug, ...],            // exhausted retries OR unsatisfiable dep
+  retries:     { slug: int },          // per-story retry count
+  escalations: [...],                  // mid-flight escalation records (stakes-class, strict bar only)
 }
 ```
 
@@ -114,7 +116,7 @@ Responsibilities during build:
 - On merge conflict: resolve itself or fire a dev subagent, then retry the merge (decision 9). Never halt.
 - When the frontier is empty and all pipelines have terminated: hand off to AVFL-on-merge, then E2E, then the end-gate report.
 
-The Conductor never asks the developer anything during build.
+The Conductor never asks the developer anything during build, except a mid-flight escalation that meets the strict stakes-and-timing bar (irreversible-and-imminent OR build-invalidating).
 
 ### Per-story dependency gating (no global waves)
 
@@ -170,10 +172,11 @@ pipeline(story S):
 
   ── stage 3: FIX (automatic, in-place) ──────────────────────
   If either reviewer returns legitimate findings:
-    Conductor spawns ONE code-fixer subagent (single writer) in the SAME
-    worktree. It fixes EVERY legitimate finding automatically (no prompt),
-    dismisses with rationale, or emits a triage stub for genuinely
-    out-of-scope new work. Commits the fixes.
+    Conductor spawns ONE directed fixer (momentum:dev fix-mode) subagent (single writer) in the SAME
+    worktree. It fixes every **routine** legitimate finding automatically
+    (no prompt), escalates stakes-class findings as decision cards (raised,
+    not silently fixed), dismisses with rationale, or emits a triage stub
+    for genuinely out-of-scope new work. Commits the fixes.
     Optional: /simplify cleanup pass AFTER the fixer (sequential, never
     concurrent with the fixer — it mutates the tree).
     Re-run only the reviewer(s) that raised findings. Loop until clean or
@@ -191,7 +194,7 @@ pipeline(story S):
     status -> review                                 # the story's merge gate
     git worktree remove --force .worktrees/story-{slug}
     git branch -d story/{slug}                        # cleanup is per-story
-  Emit { slug, outcome: merged, leftover_findings: [...] }
+  Emit { slug, outcome: merged, leftover_findings: [...], escalations: [...] }
 ```
 
 The story reaches `review` at its own merge and stays there until sprint end. `verify`/`done` transitions happen at sprint completion (after AVFL + E2E + approve) but no longer gate any other story's launch — gating is on `>= review`.
@@ -206,11 +209,11 @@ This is the gate *inside* the per-story flow — distinct from the post-merge AV
 
 | Lane | Tool | Mode | Why |
 |---|---|---|---|
-| **Bug-hunting review** (PRIMARY) | **`bmad-code-review`** | report-only, scoped to story diff | Only existing real adversarial bug hunter (Blind Hunter + Edge Case Hunter + Acceptance Auditor + structured triage). Returns categorized findings that map onto the normalized schema. Does not apply fixes — correct, because fixing is the code-fixer's job. |
+| **Bug-hunting review** (PRIMARY) | **`bmad-code-review`** | report-only, scoped to story diff | Only existing real adversarial bug hunter (Blind Hunter + Edge Case Hunter + Acceptance Auditor + structured triage). Returns categorized findings that map onto the normalized schema. Does not apply fixes — correct, because fixing is the directed fixer's job (momentum:dev fix-mode). |
 | **AC verification** (concurrent) | **`momentum:qa-reviewer`** (rescoped) | read-only, per-story worktree | Reads the verification contract, runs the test command, classifies each AC VERIFIED/PARTIAL/MISSING/BLOCKED with file:line evidence. |
 | **Cleanup** (optional, post-fix) | built-in **`/simplify`** | applies fixes | Purpose-built cleanup (reuse, simplification, efficiency, altitude). NOT a bug hunter. Runs *after* the fixer, sequential — never concurrent (it mutates the tree). Keep out of the always-on leg so it doesn't double-mutate code the fixer just touched. |
 
-**Wire `bmad-code-review` report-only, not via `/code-review --fix`:** two reviewers run concurrently and may both surface fixes (e.g. a MISSING-AC finding is also a fix). Routing **all** findings through one code-fixer gives a single writer per worktree (orchestrator-purity), lets the fixer dedupe overlapping findings, and keeps fix provenance in one commit per story.
+**Wire `bmad-code-review` report-only, not via `/code-review --fix`:** two reviewers run concurrently and may both surface fixes (e.g. a MISSING-AC finding is also a fix). Routing **all** findings through one directed fixer (momentum:dev fix-mode) gives a single writer per worktree (orchestrator-purity), lets the fixer dedupe overlapping findings, and keeps fix provenance in one commit per story.
 
 **Retire the stub.** Delete `skills/momentum/skills/code-reviewer/SKILL.md` and `commands/code-reviewer.md` (or convert the stub into a thin adapter that invokes `bmad-code-review` and normalizes its triage into the finding schema). Replace every `momentum:code-reviewer` invocation in `sprint-dev/workflow.md` and `quick-fix/workflow.md`. **Do not build an in-house reviewer now** — defer to backlog. For high-risk stories, a story field `review_depth: deep` may opt into `bmad-review-adversarial-general` + `bmad-review-edge-case-hunter` instead of the default.
 
@@ -223,10 +226,14 @@ Story worktree (post-dev, code complete, pre-merge)
 │   ├─ qa-reviewer (read-only)         → verification_contract → qa_findings[]
 │   └─ bmad-code-review (report-only)  → git diff scoped → review_findings[]
 │
-├─ Phase B: CONVERGE → one code-fixer subagent (single writer)
+├─ Phase B: CONVERGE → one directed fixer (momentum:dev fix-mode) subagent (single writer)
 │      input: qa_findings[] + review_findings[]  (deduped, severity-sorted)
-│      action: fix EVERY legitimate finding (decision 1 — no fix/defer prompt)
-│              dismiss only with recorded rationale; out-of-scope NEW work
+│      action: auto-fix ALL routine legitimate findings (no fix/defer prompt for ordinary work);
+│              escalate stakes-class findings (security-auth-isolation, irreversible-destructive,
+│              high-blast-radius-architecture) as decision cards — NOT silently fixed;
+│              apply timing tier: mid-flight if irreversible-and-imminent OR build-invalidating,
+│              otherwise end-gate-expanded (default);
+│              dismiss only with non-empty recorded rationale; out-of-scope NEW work
 │              → triage stub (momentum:triage), don't fix. Commit.
 │
 ├─ Phase C: /simplify (optional cleanup, applies fixes) — AFTER B, sequential
@@ -256,12 +263,39 @@ All reviewers normalize to one shape so the fixer and the report consume them un
   "detail": "full context — what's wrong AND why it violates the AC/contract",
   "evidence": "the proof: failing test+assertion, diff hunk, or command output",
   "ac_id": "AC2 | null",
-  "legitimate": true,                 // legit -> ALWAYS auto-fixed (decision 1)
+  "legitimate": true,                 // legit -> disposition depends on stakes class + timing tier (see below)
+  "stakes_class": "routine | security-auth-isolation | irreversible-destructive | high-blast-radius-architecture",
+  "timing_tier": "end-gate-expanded | mid-flight",  // end-gate-expanded is the default
   "suggested_fix": "concrete, actionable — never 'see code'"
 }
 ```
 
-The fixer's disposition per finding: `fixed` (default for any legitimate issue), `dismissed` (with rationale), or `triaged-out` (new stub). There is **no `deferred` disposition** — decision 1 removes the defer prompt.
+**Stakes classes** — every finding carries exactly one:
+
+| Class | Examples |
+|---|---|
+| `security-auth-isolation` | XSS, auth bypass, credential exposure, permission escalation |
+| `irreversible-destructive` | migration, delete, force-push, prod deploy, data truncation |
+| `high-blast-radius-architecture` | cross-cutting pattern change, public API break, structural drift |
+| `routine` (default) | everything else — bugs, missing ACs, style, cleanup |
+
+**Timing tiers** — two values only:
+
+| Tier | When it applies |
+|---|---|
+| `end-gate-expanded` | Default. Finding held for end-gate; appears as a decision card at the human surface. |
+| `mid-flight` | Narrow exception. Finding escalates immediately ONLY if it is **irreversible-and-imminent** OR **build-invalidating**. No other condition qualifies. |
+
+**Disposition** — the fixer's outcome per finding:
+
+| Disposition | Meaning | Constraint |
+|---|---|---|
+| `fixed` | Applied automatically; routine findings always land here | Default for routine class |
+| `escalated` | Stakes-class finding raised as a decision card (not silently fixed); routed to end-gate-expanded or mid-flight per timing tier | Stakes class only |
+| `dismissed` | Fixer judged finding invalid or out-of-scope | **Non-empty rationale REQUIRED** — empty or missing rationale is invalid |
+| `triaged-out` | New out-of-scope work; spun into a backlog stub via `momentum:triage` | — |
+
+There is **no `deferred` disposition** — the defer prompt is removed. Routine findings are always auto-fixed (`fixed`). Stakes-class findings are `escalated`, not silently fixed. There is no per-finding fix/defer prompt for ordinary work.
 
 ### What this replaces in `sprint-dev/workflow.md`
 
@@ -280,7 +314,7 @@ AVFL runs **exactly once per sprint, after every story worktree has merged**. It
 
 It honors the binding decisions:
 - **Never asks the developer anything** (decision 1) — no GATE_FAILED prompt, no MAX_ITERATIONS prompt, no per-finding fix/defer.
-- **Always auto-fixes legitimate findings** and loops with declining skepticism until clean or non-convergent.
+- **Always auto-fixes routine legitimate findings** and loops with declining skepticism until clean or non-convergent. Stakes-class findings (security-auth-isolation, irreversible-destructive, high-blast-radius-architecture) surfaced by AVFL are tagged `escalated` and passed to the Conductor as decision cards for the end-gate, not silently auto-fixed.
 - It is **not** the end gate. It produces a result object; the Conductor reads it and folds it into the report. Anything AVFL could not resolve becomes a **leftover** the Conductor routes to `momentum:triage` — AVFL never spins stories itself.
 
 This kills the audited contradiction: sprint-dev currently wraps AVFL as a read-only `checkpoint` stop-gate, then runs a *separate* developer-driven fix/defer queue (Phase 4c/4d). That entire HITL queue is deleted; AVFL's native auto-fix loop *is* the mechanism now.
@@ -375,7 +409,7 @@ WORKFLOW avfl-merge-review
 
 The Conductor renders **every leftover with full context** into the report's integration section (each leftover carries description + evidence + owning stories + suggestion inline). On approval, leftovers flow to `momentum:triage` as new stubs.
 
-> **Cross-pillar note on the fixer.** The AVFL `fixer` sub-skill historically fixes *artifacts/docs*. For merge-integration findings that touch source code, AVFL should hand off to the **code-fixer** (Section 4 / Section 8), not its internal artifact fixer. Do not conflate the two.
+> **Cross-pillar note on the fixer.** The AVFL `fixer` sub-skill historically fixes *artifacts/docs*. For merge-integration findings that touch source code, AVFL should hand off to the **directed fixer (momentum:dev fix-mode)** (Section 4 / Section 8), not its internal artifact fixer. Do not conflate the two.
 
 ### Placement
 
@@ -437,9 +471,9 @@ resolve_conflicts(slug, mode):
              status/index.json   -> re-derive from authoritative source (sprint-manager)
              pure-additive       -> union-merge; git add resolved paths
   3. FIRE FIXER if semantic paths remain:
-             spawn ONE dev/code-fixer subagent (change_type matched via routing
-             table) with: conflicted files (markers in place) + BOTH stories' ACs +
-             instruction to resolve preserving both intents, then stage.
+             spawn ONE directed fixer (momentum:dev fix-mode) subagent (change_type matched
+             via routing table) with: conflicted files (markers in place) + BOTH stories'
+             ACs + instruction to resolve preserving both intents, then stage.
   4. FINALIZE rebase --continue | commit --no-edit; verify no markers remain;
              if still dirty -> abort this attempt (--abort) and let merge_story retry.
 ```
@@ -572,7 +606,7 @@ No verification decisions are made here:
 2. **Verify freeze:** `sha256(contract.path) == contract.frozen_sha256`. Mismatch → halt and surface to the Conductor (do not silently re-verify against a changed contract).
 3. **Dev consumes Part A** — its acceptance target is `how_dev_self_checks` + the contract body's observable clauses. Dev never authors or alters the contract, and never chooses how it is verified.
 4. **QA/verifier consumes Part B** — verifier selected purely by `verification_method` → `driver_bindings[method].driver`. If `coverage_disposition: covered-by-composition`, the dedicated run is skipped at build time and discharged later by the named integration scenario at AVFL/merge.
-5. **Fixer loop** — on fail, the fixer (decision 1: always auto-fix) gets Part A + the failing Part B clauses and iterates until the frozen contract passes.
+5. **Fixer loop** — on fail, the fixer (decision 1: auto-fixes routine findings; escalates stakes-class findings as decision cards) gets Part A + the failing Part B clauses and iterates until the frozen contract passes.
 
 ### Required changes
 
@@ -588,7 +622,9 @@ No verification decisions are made here:
 
 ### Principle
 
-Sprint-dev has **exactly one** HITL gate: the **Conductor end-gate**. Every intermediate `<ask>`, HALT, and per-finding fix/defer prompt is removed. The build phase, AVFL, E2E, and all fix loops run autonomously. The developer is engaged once — after merge and all validation — through a single open-ended conversational gate that resolves to **"we need changes"** or **"approve"**. There is no Reject. The only other touchpoint is the push confirmation, folded into approve.
+Sprint-dev has **one primary HITL surface: the Conductor end-gate**, which is the default and the safety net. Every intermediate `<ask>`, HALT, and per-finding fix/defer prompt for routine findings is removed. The build phase, AVFL, E2E, and all fix loops run autonomously. The developer is engaged at the end — after merge and all validation — through a single open-ended conversational gate that resolves to **"we need changes"** or **"approve"**. There is no Reject. The only other touchpoint is the push confirmation, folded into approve.
+
+**Mid-flight escalation tier (narrow exception, not the default):** A stakes-class finding may escalate mid-flight — bypassing end-gate deferral — ONLY if it meets the strict bar: **irreversible-and-imminent** OR **build-invalidating**. No other condition widens this tier. The three stakes classes that qualify a finding for consideration: security-auth-isolation, irreversible-destructive (migration, delete, force-push, prod deploy), high-blast-radius-architecture. A finding in one of these classes that does NOT meet the mid-flight timing bar is held for end-gate expansion (the default). End-gate expansion is the norm and safety net; the mid-flight tier is the rare exception. Routine findings are always auto-fixed silently and never surface mid-flight.
 
 ### What is removed
 
@@ -597,7 +633,7 @@ Sprint-dev has **exactly one** HITL gate: the **Conductor end-gate**. Every inte
 | Session resumption ask (Resume/Reset) | **Removed.** Stale in-progress stories auto-reset to `ready-for-dev` and re-dispatched. |
 | Dev-agent failure ask (Retry/Skip/Halt) | **Removed.** Auto-retry (bounded); exhausted → `blocked`, build continues; spun to a stub at approve. |
 | AVFL acknowledgement wall | **Removed.** Findings flow straight into the autonomous fix loop. |
-| Consolidated fix queue (per-finding fix/defer) | **Removed.** Legitimate findings always auto-fixed. |
+| Consolidated fix queue (per-finding fix/defer) | **Removed for routine findings.** Routine findings always auto-fixed. Stakes-class findings are escalated (decision cards), not prompted per-finding. |
 | Remaining-findings ask (Accept/fix/defer) | **Removed.** The autonomous loop iterates to convergence (bounded). |
 | Team-review findings ask | **Removed.** Same loop. |
 | Verification checklist ask | **Removed as a gate.** Gherkin results become a read-only report section; `done` is driven by approve. |
@@ -631,6 +667,8 @@ state ConductorGate:
 
 **Two outcomes only.** `changes` loops back through the fix-workflow and re-renders; `approve` is terminal. `question` is the conversational substrate — the gate stays open, answering and updating, until the developer issues `changes` or `approve`. Ambiguous input defaults to `question` (never silently approve or mutate).
 
+**Mid-flight escalation (rare, not modeled here).** During the build phase, a mid-flight escalation surfaces a single decision card to the developer when the strict bar is met (irreversible-and-imminent OR build-invalidating). This is separate from the ConductorGate above — it fires inside the pipeline, before merge, not at end-gate. The escalation engine control flow (card format, acknowledgment, resume logic) is realized by the conduct build stories (the conductor skill), not re-specified here. Resolved mid-flight escalations are recorded in `Conductor.escalations` and appear in the end-gate report.
+
 ### The change-workflow (one workflow — build-fix AND developer-requested changes) — decision 3
 
 ```
@@ -638,7 +676,7 @@ CHANGE_WORKFLOW(scope):
   # scope: findings (autonomous, build phase) | request (Conductor gate)
   items = resolve_items(scope)
   for each item (parallel where independent):
-    spawn code-fixer subagent with: item, target branch, story context
+    spawn directed fixer (momentum:dev fix-mode) subagent with: item, target branch, story context
   await all fixers
   re-run only the affected validators (AVFL lens / E2E scenario / review) on changed files
   if residual legitimate findings AND iterations < MAX_FIX_ITERATIONS: recurse
@@ -728,9 +766,17 @@ HERO  Sprint slug · review version (v1/v2/…) · one-line subtitle · status p
 03 Quality-gate findings  Every finding from QA, code-review, AVFL, E2E — each a self-contained
    (full context)         card per the CORE MANDATE. Grouped by gate, severity-sorted. Auto-fixed
                           findings shown with their fix + re-validation ("no decision needed").
-04 Decisions needing you  The ONLY interactive cards. Each: background panel + the
-   (fully contextualized)  contradiction/question + options-with-tradeoffs (<details>) +
-                          recommendation + a <choices> radio group.
+03-D Dismissed findings   **[D3 — Required]** Every finding the fixer dismissed, rendered as a
+   (legible auto-fix)     self-contained card: what was dismissed, the non-empty rationale, and
+                          why it was judged invalid/out-of-scope. The auto-fix loop must be legible
+                          about what it dismissed, not only what it changed. Never omit or collapse
+                          dismissed items — empty-state renders "Nothing dismissed this cycle."
+04 Decisions needing you  Stakes-class findings (security-auth-isolation, irreversible-destructive,
+   (fully contextualized)  high-blast-radius-architecture) that were escalated appear here as
+                          decision cards, not in the auto-fixed section. Each: background panel +
+                          the contradiction/question + options-with-tradeoffs (<details>) +
+                          recommendation + a <choices> radio group. Mid-flight escalations that
+                          resolved before the end-gate appear with their resolution noted inline.
 05 Deferred items         Each with what, why safe to defer, and what triaging later costs.
                           Become triage stubs on approval. Empty-state if none.
 06 Blocked / incomplete   Any story that didn't complete; what blocked it + recovery path.
@@ -783,6 +829,13 @@ Reuses the existing template's `.final` pair + `paint()`/`val()`/`buildPrompt()`
 
 No Reject, no Hold-forever. `buildPrompt()` assembles a newline-bulleted natural-language prompt: gate choice as head line, one bullet per decision-card selection; when `changes` is selected, a free-text `<textarea id="changes">` is appended verbatim (the change-workflow's scope). `copyPrompt()` writes to `#out`, copies, flashes "✓ copied — paste it back to me."
 
+**D4 — Anti-rubber-stamp forcing function [Required]:** The end-gate is structured so the human cannot trivially rubber-stamp it when stakes-class items are present. Implementation requirements:
+- The `✓ Approve & finish` button is **not pre-checked** and is **disabled** when unresolved stakes-class decision cards are present in section 04.
+- Each stakes-class decision card in section 04 requires **explicit per-card acknowledgment** (a radio selection or explicit choice) before the Approve control enables.
+- Routine auto-fixed items (section 03) require no per-card action — they collapse and need nothing.
+- The `buildPrompt()` function includes each acknowledged card choice in the submitted prompt, creating an audit trail of which stakes items the developer explicitly reviewed.
+- If no stakes-class items are present (section 04 is empty), the Approve control enables normally — the forcing function activates only when it has something stakes-class to force attention onto.
+
 ### Live conversation + template/data separation
 
 Per decision 8 the report is a **fully open conversation** — the Conductor stays available, answers questions, and **rewrites the report file in place** when asked for more context; the developer reloads. So the report must be cheap to regenerate: it is **data-driven**, not bespoke prose.
@@ -792,6 +845,25 @@ Per decision 8 the report is a **fully open conversation** — the Conductor sta
 - **Self-sufficiency enforced at the data layer** — every finding/decision/row object has required non-empty fields (`what`, `why`, `evidence`; decisions add `options[]` + `recommendation`). An object missing a required field is a *build error*, not a rendered-empty card. This makes "no terse shorthand" a system property, not a hope.
 
 **House style (carried forward verbatim):** self-contained single `.html`, zero external dependencies (inline `<style>` + `<script>`, no CDN/fonts/images, per `anthropics/html-effectiveness`). Anthropic warm palette, three font stacks, radius/border/shadow tokens, numbered sections, severity chips, `<details>` disclosure. Reference: `.momentum/handoffs/sprint-2026-05-26-hitl-report.html`.
+
+### D5 — Decision-grade presentation standard [Required]
+
+The report applies a practice-wide "decision-grade presentation" standard that reconciles two competing mandates: cut irrelevant material (Specification Fatigue source) while guaranteeing sufficient context to decide without leaving the report (self-sufficiency mandate from decision 8). The standard is: **tight on the irrelevant, complete on the decision-relevant.**
+
+**Presentation caps (upper bounds — cut irrelevant material):**
+- Per auto-fixed finding (section 03): summary ≤ 3 sentences; evidence quoted inline ≤ 10 lines; longer evidence in a `<details>` block.
+- Per dismissed finding (section 03-D): reason ≤ 2 sentences; no reproduction steps unless they constitute the rationale.
+- Per decision card (section 04): background panel ≤ 150 words; options list ≤ 3–5 items; each option ≤ 1 cost + 1 benefit sentence. Use `<details>` for anything beyond these caps.
+- Sprint summary (section 01): 2–4 sentences; no enumeration of every story name.
+- Scorecard row (section 02): `what_it_did` ≤ 2 sentences; evidence ≤ 1 line summarizing test counts + outcome.
+
+**Self-sufficiency floor (lower bounds — decision context must stay inline):**
+- Every decision card (section 04) MUST carry `what / why / evidence` inline — the human must never be sent to reference another file, the spec, or a prior conversation to make a call.
+- Every dismissed finding (section 03-D) MUST carry the non-empty rationale inline — "see code" or "context-dependent" are not rationales.
+- Every blocked/incomplete story (section 06) MUST carry what blocked it and the recovery path inline.
+- The self-sufficiency checklist (§ "Authoring discipline" above) is the gate — any item that fails the checklist is a build error, not a rendered-empty card.
+
+**Conflict resolution:** When the cap and the floor conflict (the decision context required exceeds the cap), the self-sufficiency floor wins. The cap cuts *irrelevant* material; it never cuts decision-relevant context.
 
 ---
 
@@ -803,7 +875,7 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 |---|---|---|---|---|
 | **conductor** — owns end gate, writes/updates HTML report, answers live, triages leftovers, merges to main, pushes | nothing | **MISSING** | **P0 — hardest block.** Decisions 2/8/9 hang off it. | New `skills/momentum/skills/conductor/` (orchestrator skill + `workflow.md`). Owns the single HITL. Spawns merge-resolver/fixer for conflicts, invokes triage, runs `git push` only with approval. |
 | **code-reviewer** — adversarial bug hunt, read-only | `skills/.../code-reviewer/SKILL.md` (stub) | **STUB** | **P0 (decision 5).** | **Do not build in-house.** Wire `bmad-code-review` as the per-story reviewer. Convert the stub into a thin adapter that invokes it against the story diff and normalizes triage into the finding schema. |
-| **code-fixer** — applies findings to *merged source code*, always auto-fixes, retries | only `avfl/sub-skills/fixer` (artifacts, not code) | **MISSING (for code)** | **P0.** Decisions 1 + 3 + 4. | New `skills/momentum/agents/code-fixer.md` (write-capable). Consumes `findings[]`, applies every legitimate fix, retries, commits, emits structured output. Reuses dev.md's commit + output blocks. Also the change-workflow worker and the merge-conflict resolver. |
+| **code-fixer** — applies findings to *merged source code*, auto-fixes routine findings, escalates stakes-class findings as decision cards, retries | only `avfl/sub-skills/fixer` (artifacts, not code) | **IMPLEMENTED** (as dev fix-mode) | **P0.** Decisions 1 + 3 + 4. | Implemented as the **fix-mode of `momentum:dev`** (`agents/dev.md` + `skills/dev/workflow.md`). No separate `agents/code-fixer.md` was created. Consumes `findings[]`, applies every routine legitimate fix, retries, commits, emits structured output. Also the change-workflow worker and the merge-conflict resolver. |
 | **dev** — per-story executor in own worktree | `agents/dev.md` (REAL) | **REAL** | scope change | Keep. Remove its merge/cleanup/lock/crash-ask responsibilities (move to Conductor). Add: dev reads the verification contract's Part A header (decision 10). Terminal output = implementation-complete + file_list. |
 | **dev-skills** — SKILL.md / workflow / agents specialist | `agents/dev-skills.md` | **REAL** | none | Keep — the only specialist relevant to Momentum's own repo; the likely default specialist here. |
 | **dev-build / dev-frontend** (Gradle/Kotlin, Compose) | `agents/dev-build.md`, `agents/dev-frontend.md` | **REAL but stack-coupled** | low | Irrelevant to Momentum's markdown/bash repo. Leave; flag against DEC-026 (generic base + project guidelines). Out of scope this sprint. |
@@ -811,8 +883,8 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 | **e2e-validator** — behavioral validation | `agents/e2e-validator.md` (REAL) | **REAL** | none | Keep (decision 7). Stays sprint-level, runs against the merged result after AVFL. Harness-driven; the per-story contract populates/extends `verification-harness.json`. |
 | **architecture-guard** — drift vs decisions | `skills/.../architecture-guard/SKILL.md` (REAL) | **REAL** | none | Keep. Runs against the merged diff alongside e2e-validator. Read-only PASS/FAIL — feeds the report, never auto-blocks. |
 | **avfl** orchestrator — reviewer OF THE MERGE | `skills/.../avfl/SKILL.md` (prose) | **PROSE→WF** | medium | Rewrite as a Workflow (decision 6); retarget from artifact validation to inspecting the merged git result. |
-| **avfl lenses** — validator-enum / validator-adv / consolidator / fixer | `avfl/sub-skills/*` (REAL) | **REAL** | none | Keep all four. The AVFL `fixer` fixes *artifacts* — for merge-integration *code* findings, hand off to the new **code-fixer**, do not conflate. |
-| **merge-resolver** — resolves worktree→sprint and sprint→main conflicts | nothing | **MISSING** | **P1 (decision 9).** | No new base body. Conductor resolves trivial conflicts inline; for semantic, fires the **code-fixer** as the conflict-resolution worker (it has Edit/Bash/commit). Merge failure → retry. |
+| **avfl lenses** — validator-enum / validator-adv / consolidator / fixer | `avfl/sub-skills/*` (REAL) | **REAL** | none | Keep all four. The AVFL `fixer` fixes *artifacts* — for merge-integration *code* findings, hand off to the **directed fixer (momentum:dev fix-mode)**, do not conflate. |
+| **merge-resolver** — resolves worktree→sprint and sprint→main conflicts | nothing | **MISSING** | **P1 (decision 9).** | No new base body. Conductor resolves trivial conflicts inline; for semantic, fires the **directed fixer (momentum:dev fix-mode)** as the conflict-resolution worker (it has Edit/Bash/commit). Merge failure → retry. |
 | **triage** — leftovers / new work → stubs | `momentum:triage` (REAL) | **REAL** | none | Keep. Conductor invokes it at the approve branch. Accepts a pre-enumerated list from a caller; ARTIFACT → `momentum:intake` stub. No Reject path. |
 | **routing roles: architect / pm / sm** | `agents.json` → 3 dead paths | **MISSING bodies** | P2 | `agents.json` maps these to nonexistent files. Create the bodies or delete the dead entries. Not needed for the redesign to run — cleanup. |
 | **analyst / researcher / ux** | real bodies | **ORPHAN** | none | Out of sprint-dev scope; nothing spawns them. Leave; note for a separate composition-pipeline effort. |
@@ -820,11 +892,11 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 ### Build order (most-blocking first)
 
 1. **code-reviewer adapter → `bmad-code-review`** (P0) — unblocks the per-story review leg; lowest effort (wraps an existing real bug hunter).
-2. **code-fixer base body** (P0) — required by the per-story fix step, the change-workflow loop, and (reused) merge-conflict resolution.
+2. **dev fix-mode** (P0) — required by the per-story fix step, the change-workflow loop, and (reused) merge-conflict resolution. Implemented as fix-mode of `momentum:dev` (`agents/dev.md` + `skills/dev/workflow.md`); no separate `agents/code-fixer.md` base body was built.
 3. **conductor skill + HTML report template** (P0) — the single end gate, report-as-conversation, triage/merge/push. Largest new build; everything post-merge depends on it.
 4. **Rescope qa-reviewer to per-story worktree + teach dev to read the verification contract** (P1) — small prompt edits to real agents.
-5. **AVFL prose → Workflow, retargeted at the merged git result** (P1) — mechanical rewrite; sub-agents reused; integration findings → code-fixer.
-6. **merge-resolver wiring** (P1) — Conductor-inline first, escalate to firing code-fixer; no new base body.
+5. **AVFL prose → Workflow, retargeted at the merged git result** (P1) — mechanical rewrite; sub-agents reused; integration findings → directed fixer (momentum:dev fix-mode).
+6. **merge-resolver wiring** (P1) — Conductor-inline first, escalate to firing the directed fixer (momentum:dev fix-mode); no new base body.
 7. **Cleanup `agents.json`** dead `architect`/`pm`/`sm` paths (P2) — not required for the redesign to run.
 
 ---
@@ -857,7 +929,7 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 | `skills/momentum/skills/dev/workflow.md` | Strip merge gate, cleanup, lock, crash-ask; reduce to worktree-local commit + completion signal; add Part-A header consumption. |
 | `skills/momentum/agents/dev.md` | Remove the `<critical>` no-auto-merge rule; remove merge/cleanup authority. |
 | `skills/momentum/skills/conductor/` (new) | New orchestrator skill + `workflow.md` — owns the end gate, report, change-workflow, approve sequence, all git mutation. |
-| `skills/momentum/agents/code-fixer.md` (new) | New write-capable fixer base body. |
+| `skills/momentum/agents/dev.md` + `skills/momentum/skills/dev/workflow.md` | Extended with fix-mode (the directed fixer); replaces the proposed separate `agents/code-fixer.md`. |
 | `skills/momentum/skills/code-reviewer/SKILL.md` | Convert stub → thin `bmad-code-review` adapter (or delete + repoint callers). |
 | `commands/code-reviewer.md` | Delete or repoint. |
 | `skills/momentum/agents/qa-reviewer.md` | Rescope to per-story worktree + verification contract. |
@@ -886,10 +958,31 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 
 6. **Conductor as a skill vs. the top-level session.** The Conductor is specified as a new orchestrator skill. But it must own git mutation, spawn subagents, and hold a long live conversation at the end gate — that is the top-level session's job, and orchestrator-purity rules forbid skills from writing files directly. Confirm: is the Conductor a *skill that sprint-dev's workflow embodies* (i.e. the sprint-dev top-level session *is* the Conductor), or a separately-spawned skill? This affects who legitimately runs `git push`.
 
-7. **Where the `code-fixer` lives.** Proposed as `skills/momentum/agents/code-fixer.md` (a base body) reusing `dev.md`'s commit/output blocks. Should it instead be a *mode* of `momentum:dev` ("fix-mode") to avoid a second body that drifts from dev.md? Two sections phrase it both ways.
+7. **Where the `code-fixer` lives.** ~~Proposed as `skills/momentum/agents/code-fixer.md`~~ **RESOLVED:** Implemented as **fix-mode of `momentum:dev`** (`agents/dev.md` + `skills/dev/workflow.md`). No separate base body was created; this avoids drift between the two bodies. All spec references to "code-fixer" or "the directed fixer" refer to this dev fix-mode.
 
 8. **E2E ↔ verification-contract overlap.** The verification contract has an `e2e` / `e2e_binding` field *and* E2E is a separate sprint-wide pillar consuming `verification-harness.json`. Confirm the contract's `e2e_binding` is the *only* source the sprint-wide E2E pass reads (single source of truth), vs. the harness JSON being authored independently.
 
 9. **`closed-incomplete` vs `dropped`.** The state machine has both terminal states. Blocked/never-completed stories are routed to `closed-incomplete` (work preserved as a stub). When, if ever, does a story go to `dropped` instead? Is `dropped` reachable from the new flow at all, or only by explicit developer action outside sprint-dev?
 
 10. **Pre-flight HALTs retained — confirm the set.** H1–H5 (no sprint / not activated / missing approvals / stalled) are kept as Phase-1 "cannot start" guards. Confirm these are still desirable as hard HALTs (they are the *only* HALTs left), or whether any should also become autonomous (e.g. auto-activate, auto-reconcile) to match the decision-1 spirit.
+
+---
+
+## 14. Reconciliation note — DEC-035 binding decision #1 × DEC-036
+
+This note maps each spec change in this revision to the source decision it satisfies, mirroring the DEC-036 Reconciliation table structure.
+
+| Spec change | Section(s) revised | DEC-035 binding decision #1 (as written) | DEC-036 decision satisfied |
+|---|---|---|---|
+| "Zero intermediate gates / one human gate at the end" absolute replaced with "end-gate is the default; narrow mid-flight escalation tier is the sole exception." | §1 (binding decision #1), §8 (Principle) | "Every intermediate approval gate is removed." — relaxed: intermediate gate permitted only when irreversible-and-imminent OR build-invalidating. | D1 — Stakes-and-timing escalation policy adopted. Amendment is intent-preserving: anti-firehose intent preserved, absolutism relaxed. |
+| Mid-flight bar stated explicitly and narrowly — a finding may escalate mid-flight ONLY if irreversible-and-imminent OR build-invalidating; no other condition. | §1 (binding decision #1), §8 (mid-flight escalation tier paragraph) | Not addressed in DEC-035. | D1 — The mid-flight bar is the load-bearing definition; must stay narrow. |
+| Routine findings stated to be always auto-fixed silently; stakes-class legitimate findings raised (escalated), not silently fixed. | §1 (binding decision #1), §4 (Phase B action text), §8 (Principle) | "Legitimate issues are always fixed automatically — no per-finding fix/defer prompt." — amended: true for routine class only; stakes-class findings are raised as decision cards. | D1 + D2 — Stakes-class findings leave the silent auto-fix path; routine findings remain always auto-fixed. Anti-firehose intent preserved. |
+| Finding schema: `legitimate: true` no longer asserts ALWAYS auto-fixed; disposition depends on stakes class + timing tier. | §4 (normalized finding schema inline comment) | "Legitimate issues are always fixed automatically." — relaxed for stakes-class. | D2 — Stakes finding-class added to fixer schema. |
+| Three stakes classes documented: security-auth-isolation, irreversible-destructive (migration, delete, force-push, prod deploy), high-blast-radius-architecture; plus default routine class. | §4 (Stakes classes table) | Not enumerated in DEC-035. | D2 — Stakes classes defined as adopted; these are the basis for the escalation routing. |
+| Full disposition set documented: `fixed`, `escalated` (new), `dismissed` (non-empty rationale required), `triaged-out`. | §4 (Disposition table) | Disposition set was: fixed, dismissed (with rationale), triaged-out. | D2 — `escalated` disposition is the mechanism by which stakes-class findings are raised rather than silently fixed. |
+| Timing-tier marker added to finding schema: `end-gate-expanded` (default) and `mid-flight` (narrow exception). | §4 (finding schema + Timing tiers table) | Not present in DEC-035 schema. | D1 — Timing-tier marker is the implementation of the two-tier routing: end-gate-expanded is the norm; mid-flight fires only on the bar. |
+| Non-empty dismissal rationale required — empty or missing rationale is invalid. | §4 (Disposition table, `dismissed` row) | "Dismissed (with rationale)" was in DEC-035 schema but not enforced as a validation gate. | D3 (indirectly) — Legible auto-fix loop requires the rationale to be present for rendering; empty rationale makes the dismissed-rendering section incoherent. |
+| §8 documents the narrow mid-flight escalation tier alongside the single human end-gate; restates the narrow bar; makes clear end-gate is default and mid-flight is rare exception. | §8 (Principle, mid-flight paragraph) | "Sprint-dev has exactly one HITL gate." — amended: one primary gate (default) plus a narrow exception. | D1 — The conduct spec must be revised (§8 gate model) to design to the stakes-and-timing exception. |
+| Dismissed findings rendered in report (D3 — section 03-D). The auto-fix loop is legible about what it dismissed, not only what it changed. | §9 (Required sections — section 03-D) | DEC-035 D5 mandated surfacing what the fixer changed and dismissed; dismissed rendering was not built (only the "changed" half). | D3 — Builds the unbuilt half of DEC-035 D5; purely additive. |
+| Anti-rubber-stamp end-gate forcing function (D4): Approve not pre-checked; stakes-class cards require explicit per-card acknowledgment before Approve enables. | §9 (D4 — Anti-rubber-stamp forcing function) | DEC-035 end-gate had no forcing function; Approve control was pre-checked. | D4 — Forcing function adopted; depends on D1/D2 classification accuracy. |
+| Decision-grade presentation caps (upper bounds) + self-sufficiency floor (lower bounds) — tight on irrelevant, complete on decision-relevant. | §9 (D5 — Decision-grade presentation standard) | DEC-035 decision 8 mandated self-sufficiency but had no concision counterweight. | D5 — Adapted with self-sufficiency floor; caps cut irrelevant material, floor preserves decision context inline. |

@@ -73,6 +73,9 @@
     <phase name="code-review" step="4b">
       <role name="code-reviewer" spawning="individual-agent" concurrency="parallel">
         One code-reviewer per merged story. Spawned in parallel in a single message turn.
+        Skill: `momentum:code-reviewer` (the bmad-code-review adapter — drives bmad-code-review
+        non-interactively and returns adapter-normalized findings with stakes_class populated).
+        Requires a story diff in context; see step 4.1 for diff generation before spawning.
         Never use TeamCreate.
       </role>
     </phase>
@@ -331,11 +334,18 @@ Options:
         <action>HALT — wait for developer to resolve</action>
       </check>
       <action>Run: `git checkout sprint/{{sprint_slug}}`</action>
+      <action>Capture pre-merge sprint tip: `git rev-parse sprint/{{sprint_slug}}` → store as {{pre_merge_sha[slug]}}.
+        This SHA is the sprint branch tip immediately before the story lands and is used in Phase 4b to diff exactly what this story introduced.</action>
       <action>Run: `git merge story/{slug}`</action>
+      <action>Capture post-merge sprint tip: `git rev-parse sprint/{{sprint_slug}}` → store as {{post_merge_sha[slug]}}.
+        Together with {{pre_merge_sha[slug]}}, this pair fully defines the story's commit range on the sprint branch
+        and enables Phase 4b to diff the story even if the story branch is deleted before review runs.</action>
       <note>Worktree .worktrees/story-{slug} and branch story/{slug} are intentionally NOT removed here.
         They remain available through Phase 4 (AVFL), Phase 4b (code review), and Phase 4d (fix agents)
         so fix agents can operate in the isolated story context. Cleanup runs after Phase 4d completes.
-        Register story/{slug} in {{pending_worktree_cleanup}} for deferred removal.</note>
+        Register story/{slug} in {{pending_worktree_cleanup}} for deferred removal.
+        {{pre_merge_sha[slug]}} and {{post_merge_sha[slug]}} are persisted here so Phase 4b can generate
+        a correct diff even after branch deletion.</note>
       <action>Add `{slug}` to {{pending_worktree_cleanup}} list (initialize the list if this is the first entry).</action>
       <action>Transition story to review: `momentum-tools sprint status-transition --story {slug} --target review`</action>
       <action>Update task {{task_map}}[slug] to completed</action>
@@ -396,27 +406,41 @@ Options:
   <!-- PHASE 4b: PER-STORY CODE REVIEW                         -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="4.1" goal="Independent code review per merged story">
+  <step n="4.1" goal="Independent code review per merged story via the bmad-code-review adapter">
     <action>Update task 4b (Per-Story Code Review) to in_progress</action>
     <output>Running independent code review for each merged story...</output>
 
     <action>For each story in {{sprint_stories}} (all stories now in "review" status):
-      Collect {{story_touches}} = the story's `touches` array from its story file.
+      Generate the story diff to pass to the adapter using the pre-merge SHA captured at merge time:
+        Primary form (story branch still present):
+          Run: `git diff {{pre_merge_sha[slug]}}..story/{slug} -- {{story.touches | join(' ')}}`
+          (Two-dot range from the sprint tip immediately before this story merged to the story branch tip.
+          Because sprint-dev uses rebase-then-fast-forward, there are no 2-parent merge commits and three-dot
+          diffs against the post-merge sprint branch always return empty. The pre-merge SHA isolates exactly
+          what this story introduced, including multi-commit stories.)
+        Fallback (story branch already deleted):
+          Run: `git diff {{pre_merge_sha[slug]}}..{{post_merge_sha[slug]}} -- {{story.touches | join(' ')}}`
+          Both SHAs were captured at merge time (lines 337-342) and are always available in context.
+          This avoids any reliance on merge-commit archaeology; the range is fully defined by the two persisted SHAs.
+        Store as {{story_diff[slug]}} per story.
+      Collect {{story_spec[slug]}} = `.momentum/stories/{slug}.md` (the story file, used as the spec for the Acceptance Auditor layer).
     </action>
 
-    <action>Spawn `momentum:code-reviewer` for each story IN PARALLEL (single message, one invocation per story):
+    <action>Spawn `momentum:code-reviewer` (the bmad-code-review adapter) for each story IN PARALLEL (single message, one invocation per story):
       For each story {slug}:
-        - Scope: files in {{story_touches}} for story {slug}
-        - Context: "Code review for story {slug} — sprint {{sprint_slug}}"
-        - Story file: `.momentum/stories/{slug}.md`
-        - Sprint branch: `sprint/{{sprint_slug}}`
+        - Story diff: {{story_diff[slug]}} — the unified diff of changes introduced by this story (injected into the adapter's invocation context as the diff)
+        - Story spec file: {{story_spec[slug]}} (`.momentum/stories/{slug}.md`)
+        - Story slug: {slug}
+        - Sprint context: "Code review for story {slug} — sprint {{sprint_slug}}"
+      The adapter drives `bmad-code-review` non-interactively using `./workflow.md` and returns adapter-normalized findings.
       Tag each review invocation with the story slug for findings attribution.
     </action>
 
     <action>Wait for all per-story code reviews to complete.</action>
 
     <action>Store {{code_review_findings}} = merged list of all findings from all story reviews,
-      each tagged with: source="code-reviewer", story_key={slug}, severity, file, description.
+      each tagged with: source="bmad-code-review", story_key={slug}, stakes_class, severity, file, description.
+      (The adapter stamps source="bmad-code-review" and stakes_class on every finding it emits.)
     </action>
 
     <output>**Per-story code review complete.** **{{code_review_findings | length}} findings** collected across **{{sprint_stories | length}} stories**.</output>
@@ -431,7 +455,7 @@ Options:
     <action>Update task 4c (Consolidated Fix Queue) to in_progress</action>
     <action>Merge {{avfl_findings}} and {{code_review_findings}} into a single list {{all_findings}},
       sorted by severity: critical → high → medium → low.
-      Each item retains its source tag (avfl or code-reviewer + story_key) for selective re-review routing.
+      Each item retains its source tag (avfl or bmad-code-review + story_key) for selective re-review routing.
     </action>
 
     <output>## Consolidated Fix Queue — Sprint {{sprint_slug}}
@@ -497,7 +521,7 @@ For each item above, mark: **fix** (spawn fix agent) or **defer** (create follow
     <!-- Selective re-review: only re-run reviewers whose findings were fixed -->
     <action>Determine which reviewers to re-run:
       - If any fix_items have source="avfl": schedule AVFL re-scan
-      - If any fix_items have source="code-reviewer" for story {slug}: schedule code-reviewer re-run for that story only
+      - If any fix_items have source="bmad-code-review" for story {slug}: schedule adapter re-run for that story only
       Do NOT re-run reviewers that had no fixed findings.
     </action>
 
@@ -508,8 +532,10 @@ For each item above, mark: **fix** (spawn fix agent) or **defer** (create follow
       <action>Update {{avfl_findings}} with re-scan results — remove resolved items, keep any new findings.</action>
     </check>
 
-    <check if="code-reviewer re-run scheduled for any story">
-      <action>Spawn code-reviewer for each affected story (files modified by fixes in that story's scope).
+    <check if="adapter re-run scheduled for any story">
+      <action>For each affected story {slug} (files modified by fixes in that story's scope):
+        Regenerate {{story_diff[slug]}} from the updated sprint branch (scoped to the fixed files).
+        Spawn `momentum:code-reviewer` (the bmad-code-review adapter) for each affected story, passing the updated diff and story spec file.
         Run in parallel if multiple stories are affected.
       </action>
       <action>Update {{code_review_findings}} — remove resolved items, keep any new findings.</action>
