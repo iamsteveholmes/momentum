@@ -5270,5 +5270,55 @@
       "agent-definition"
     ],
     "verification_method": "skill-invoke"
+  },
+  "conduct-per-story-build-review-dispatch": {
+    "status": "backlog",
+    "title": "Wire conduct stages 1-2: per-story dev spawn + concurrent QA/code-review fan-out",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
+  },
+  "conduct-endgate-decision-card-rendering": {
+    "status": "backlog",
+    "title": "Render conduct end-gate decision cards",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "avfl-merge-review-as-workflow": {
+    "status": "backlog",
+    "title": "AVFL-on-merge as a Workflow (3-dot diff)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "conduct-endgate-request-changes-redispatch": {
+    "status": "backlog",
+    "title": "End-gate request-changes re-dispatch",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "conduct-coverage-disposition-discharge-consumer": {
+    "status": "backlog",
+    "title": "Coverage-disposition discharge consumer",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }
