@@ -5,6 +5,26 @@ import json, html, re
 NAR = json.load(open('/private/tmp/claude-501/-Users-steve-projects-momentum/12af2ca3-45e1-48fb-bdde-e3f7bc996ff2/tasks/wh0y51gjn.output'))['result']['narratives']
 CARDS = json.load(open('.momentum/conduct-core-finding-cards-by-story.json'))
 nar = {n['slug']: n for n in NAR}
+PANELS = json.load(open('/private/tmp/claude-501/-Users-steve-projects-momentum/12af2ca3-45e1-48fb-bdde-e3f7bc996ff2/tasks/wsknuuotr.output'))['result']['panels']
+panels = {p['slug']: p for p in PANELS}
+diffs = json.load(open('.momentum/conduct-core-story-diffs.json'))
+
+def render_diff(t):
+    out=['<pre class="diff">']
+    for ln in t.split('\n'):
+        e=html.escape(ln)
+        if ln.startswith('diff --git') or ln.startswith('index ') or ln.startswith('--- ') or ln.startswith('+++ '):
+            out.append(f'<span class="meta">{e}</span>')
+        elif ln.startswith('@@'):
+            out.append(f'<span class="hunk">{e}</span>')
+        elif ln.startswith('+'):
+            out.append(f'<span class="add">{e}</span>')
+        elif ln.startswith('-'):
+            out.append(f'<span class="del">{e}</span>')
+        else:
+            out.append(f'<span>{e}</span>')
+    out.append('</pre>')
+    return ''.join(out)
 
 def md(s):
     """Tiny markdown -> HTML: paragraphs on blank lines, **bold**, — kept."""
@@ -122,6 +142,20 @@ h2 .num{font:600 13px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertic
 .story .t{font-weight:700;font-size:15.5px;color:var(--slate)} .story .slug{font:600 11px/1 var(--mono);color:var(--gray-400);margin-left:8px}
 .story p{font-size:15px;color:var(--gray-700);margin:7px 0 0}
 .story .deliv{font-size:14px;color:var(--gray-500);margin-top:6px}
+.review{margin-top:10px;border-top:1px dashed var(--gray-200);padding-top:8px}
+.review>summary{cursor:pointer;list-style:none;font:600 13.5px/1.3 var(--sans);color:var(--clay-d);display:flex;gap:8px;align-items:center}
+.review>summary::-webkit-details-marker{display:none}
+.review .caret,.diffd .caret{color:var(--clay);font-size:13px;transition:.15s;display:inline-block}
+.review[open]>summary .caret,.diffd[open]>summary .caret{transform:rotate(90deg)}
+.rbody{padding:6px 2px 2px}
+.rsec{margin:12px 0} .rsec .rh{font:700 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--olive-d);margin-bottom:6px}
+.rsec p{font-size:14.5px;color:var(--gray-700);margin:8px 0} .rsec strong{color:var(--slate)}
+.diffd{margin-top:10px} .diffd>summary{cursor:pointer;list-style:none;font:600 12.5px/1 var(--mono);color:var(--gray-700);display:flex;gap:8px;align-items:center}
+.diffd>summary::-webkit-details-marker{display:none}
+pre.diff{font:12px/1.45 var(--mono);background:#FBFAF6;border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px;margin-top:8px;max-height:540px;overflow:auto;white-space:pre}
+pre.diff span{display:block}
+pre.diff .add{background:#EAF0E2;color:#2c4a1e} pre.diff .del{background:#F7E0DC;color:#7E2B22}
+pre.diff .hunk{color:#8A6D12;background:#FBF1D9} pre.diff .meta{color:var(--gray-500)}
 .risk{border:1.5px solid var(--clay);border-radius:12px;background:#fff;box-shadow:var(--shadow);margin:14px 0;overflow:hidden}
 .risk>summary{cursor:pointer;list-style:none;padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
 .risk>summary::-webkit-details-marker{display:none}
@@ -191,7 +225,7 @@ w('''<section id="what"><h2><span class="num">01</span>What conduct is, and what
 
 # 02 WHAT EACH PIECE IS FOR
 w('<section id="pieces"><h2><span class="num">02</span>What each piece is for</h2>')
-w('<p class="lead">Plain-language purpose of all 21 work items — enough to understand why a problem in any of them would matter. The ones that needed correcting link down to their risk story in §03.</p>')
+w('<p class="lead">Plain-language purpose of all 21 work items — enough to understand why a problem in any of them would matter. The ones that needed correcting are flagged and have their full risk story in §03. <b>Open "Review this work item" on any row</b> to actually review the work: how it was verified (testing first, and honest about what "verified" means here), why it\'s built that way with references to the governing decisions, and the real diff — so you\'re not signing off blind.</p>')
 for legtitle, slugs in LEGS:
     w(f'<div class="leg"><h3>{esc(legtitle)}</h3>')
     for slug in slugs:
@@ -201,7 +235,19 @@ for legtitle, slugs in LEGS:
         flag = ' &nbsp;<span class="sev h">had a high-risk divergence → §03</span>' if hi else ''
         w(f'<div class="story"><div class="t">{esc(story_title(slug))}<span class="slug">{esc(slug)}</span>{flag}</div>')
         w(f'<p>{esc(n.get("purpose",""))}</p>')
-        w(f'<div class="deliv"><b>Delivered:</b> {esc(n.get("delivered",""))}</div></div>')
+        w(f'<div class="deliv"><b>Delivered:</b> {esc(n.get("delivered",""))}</div>')
+        pan = panels.get(slug); dif = diffs.get(slug)
+        if pan or dif:
+            w('<details class="review"><summary><span class="caret">▶</span> Review this work item — testing first, then the architectural why, then the actual diff</summary><div class="rbody">')
+            if pan and pan.get('verification_md'):
+                w('<div class="rsec"><div class="rh">① How it was verified (testing first)</div>' + md(pan['verification_md']) + '</div>')
+            if pan and pan.get('rationale_md'):
+                w('<div class="rsec"><div class="rh">② Why it\'s built this way — architecture &amp; decision references</div>' + md(pan['rationale_md']) + '</div>')
+            if dif:
+                statline = (dif.get('stat','').splitlines()[-1].strip() if dif.get('stat') else '')
+                w(f'<details class="diffd"><summary><span class="caret">▶</span> ③ The actual diff &nbsp;<span style="color:var(--gray-400)">({esc(statline)})</span></summary>' + render_diff(dif.get('diff','')) + '</details>')
+            w('</div></details>')
+        w('</div>')
     w('</div>')
 w('</section>')
 

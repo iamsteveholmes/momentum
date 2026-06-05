@@ -4874,7 +4874,7 @@
     "story_type": "feature"
   },
   "conduct-stakes-timing-escalation-mechanism": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor stakes-and-timing mid-flight escalation mechanism",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4895,7 +4895,7 @@
     "verification_method": "skill-invoke"
   },
   "stakes-classification-rubric": {
-    "status": "review",
+    "status": "done",
     "title": "Shared single-source stakes-classification rubric",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4913,7 +4913,7 @@
     "verification_method": "document-review"
   },
   "conduct-spec-revision-dec036": {
-    "status": "review",
+    "status": "done",
     "title": "Revise the conduct spec to design to the DEC-036 stakes-and-timing exception",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4939,7 +4939,7 @@
     "story_type": "practice"
   },
   "directed-fix-finding-schema": {
-    "status": "review",
+    "status": "done",
     "title": "Canonical normalized finding schema with stakes-class and escalated disposition",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4957,7 +4957,7 @@
     "verification_method": "document-review"
   },
   "directed-fix-invocation-contract": {
-    "status": "review",
+    "status": "done",
     "title": "Directed momentum:dev fix-mode invocation contract with escalate-do-not-fix path",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4975,7 +4975,7 @@
     "verification_method": "document-review"
   },
   "dev-fix-mode-entry": {
-    "status": "review",
+    "status": "done",
     "title": "Add fix-mode to momentum:dev that branches on the stakes-class",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -4994,7 +4994,7 @@
     "verification_method": "skill-invoke"
   },
   "stage3-fix-loop-via-directed-dev": {
-    "status": "review",
+    "status": "done",
     "title": "Wire the per-story stage-3 fix loop to the directed fixer with escalation routing",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5014,7 +5014,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-skill-scaffold-and-spine": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor orchestrator skill scaffold and workflow spine",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5033,7 +5033,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-preflight-halts": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor Phase-1 pre-flight HALTs and non-interactive git reconcile",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5051,7 +5051,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-build-phase-frontier": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor build phase: dependency frontier with a mid-flight escalation consumption hook",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5069,7 +5069,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-merge-and-conflict-resolution": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor per-story merge, conflict resolution, quarantine, and escalation hook",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5088,7 +5088,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-contract-freeze-check": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor contract-freeze check before per-story verification",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5106,7 +5106,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-coverage-disposition-branch": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor coverage-disposition branch (dedicated-run vs covered-by-composition)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5125,7 +5125,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-noninteractive-driver": {
-    "status": "review",
+    "status": "done",
     "title": "Code-review adapter: non-interactive bmad-code-review driver",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5142,7 +5142,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-normalize-triage": {
-    "status": "review",
+    "status": "done",
     "title": "Code-review adapter: normalize bmad triage into the canonical schema and populate stakes-class",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5162,7 +5162,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-retire-stub": {
-    "status": "review",
+    "status": "done",
     "title": "Code-review adapter: retire the in-house stub and repoint the command",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5182,7 +5182,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-repoint-sprint-dev": {
-    "status": "review",
+    "status": "done",
     "title": "Repoint sprint-dev code-review calls to the adapter",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5201,7 +5201,7 @@
     "verification_method": "skill-invoke"
   },
   "code-review-adapter-repoint-quick-fix": {
-    "status": "review",
+    "status": "done",
     "title": "Repoint quick-fix code-review calls to the adapter",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5219,7 +5219,7 @@
     "verification_method": "skill-invoke"
   },
   "qa-reviewer-rescope-per-story-contract": {
-    "status": "review",
+    "status": "done",
     "title": "Rescope qa-reviewer to the per-story contract and add producer-side stakes tagging",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5238,7 +5238,7 @@
     "verification_method": "skill-invoke"
   },
   "dev-read-contract-part-a-header": {
-    "status": "review",
+    "status": "done",
     "title": "Teach momentum:dev to read the verification contract Part-A header",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5255,7 +5255,7 @@
     "verification_method": "skill-invoke"
   },
   "dev-strip-merge-cleanup-authority": {
-    "status": "review",
+    "status": "done",
     "title": "Strip merge, worktree-cleanup, lock, and crash-ask authority from momentum:dev",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
