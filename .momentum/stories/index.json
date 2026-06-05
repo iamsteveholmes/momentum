@@ -5320,5 +5320,135 @@
     "touches": [],
     "priority": "medium",
     "story_type": "feature"
+  },
+  "conduct-resolve-invocation-model-q6": {
+    "status": "backlog",
+    "title": "Resolve spec §13 Q6 — Conductor as a separate skill vs. sprint-dev's top-level session (who legitimately runs git push)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "exploration"
+  },
+  "conduct-entry-point-command": {
+    "status": "backlog",
+    "title": "Create the /momentum:conduct entry-point command file (and resolve the conduct-vs-conductor name)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
+  },
+  "conduct-register-skill-and-refresh-cache": {
+    "status": "backlog",
+    "title": "Register the conductor skill: confirm user-invocable frontmatter and force a plugin/marketplace refresh so it surfaces",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
+  },
+  "conduct-wire-caller-and-discovery": {
+    "status": "backlog",
+    "title": "Wire a caller and a discovery route into the Conductor (sprint-dev rewrite and/or Impetus dispatch)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "conduct-momentum-tools-path-resolution": {
+    "status": "backlog",
+    "title": "Ensure momentum-tools is resolvable in the conductor's execution environment",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "maintenance"
+  },
+  "conduct-planning-emit-contract-schema": {
+    "status": "backlog",
+    "title": "Build the planning→build producer suite: sprint-planning + sprint-manager must emit the story_assignments[].contract{} s",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
+  },
+  "conduct-e2e-finding-normalization-escalation": {
+    "status": "backlog",
+    "title": "Normalize E2E findings to canonical schema and route them through escalation + decision cards",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "conduct-e2e-validation-and-test-fixture": {
+    "status": "backlog",
+    "title": "Add a producer→consumer smoke/eval proving a planned sprint yields a conduct-runnable record, and create an activated te",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "conduct-verification-method-enum-alignment": {
+    "status": "backlog",
+    "title": "verification-standard.md + contract-format-guide.md + create-story: align the verification_method vocabulary to the clos",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
+  },
+  "conduct-planning-reconcile-gherkin-and-specs-rule": {
+    "status": "backlog",
+    "title": "Reconcile sprint-planning Step 4 (Gherkin generation) and remove the stale 'dev never accesses specs/' rule",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
+  },
+  "conduct-simplify-and-convergence-questions": {
+    "status": "backlog",
+    "title": "Wire /simplify Phase C invocation and resolve the §13 convergence open questions",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
+  },
+  "conduct-per-project-verification-harness-config": {
+    "status": "backlog",
+    "title": "Configure per-project verification-harness execution_surfaces (non-markdown projects only)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "conduct-cleanup-dead-agent-paths-and-validate-resolve": {
+    "status": "backlog",
+    "title": "Clean up dead agent routing entries and add existence validation to agent resolve",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
   }
 }
