@@ -185,3 +185,27 @@ own dedicated run.
 
 **Tally:** 20 stories. 3 covered-by-composition (slugs 1, 6, 13). 17 dedicated-run (including the two
 composition drivers, slugs 4 and 10). Every slug appears exactly once. ✅
+
+---
+
+## Addendum — 5 stories folded in post-AVFL (2026-06-06)
+
+Five net-new conduct-completion retro findings were folded into the sprint after the initial
+coverage pass (developer decision: complete conduct in one sprint). All five are **dedicated-run**
+— each verifies a distinct conductor behavior/artifact the clean end-to-end fixture run does not
+seed:
+
+- `conduct-state-machine-defects-shipped-unfixed` (W2) — dedicated-run · drives specific illegal
+  transitions (review→done skip; terminal→terminal) the happy-path fixture never attempts.
+- `controlled-enums-and-stable-ledger-schema-finding-cards` (W2) — dedicated-run · ledger schema /
+  enum inspection + join, verified by reading the produced ledgers.
+- `extract-shared-diff-range-helper-for-per-story-review` (W2) — dedicated-run · pattern document
+  review + a scoped-diff behavioral check.
+- `tighten-dev-fixer-write-scope-stop-story-spec-edits` (W4) — dedicated-run · out-of-scope-edit
+  absence + revert-rate, observed over a multi-story batch.
+- `exercise-conduct-escalation-machinery-end-to-end` (W5) — dedicated-run · deliberately seeds a
+  real stakes-class finding to drive the mid-flight branch + BLOCKED/escalated dispositions the
+  routine fixture run cannot trigger.
+
+**Updated tally:** 25 stories — 3 covered-by-composition, 22 dedicated-run. Every story appears
+exactly once.

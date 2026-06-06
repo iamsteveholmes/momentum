@@ -20,12 +20,19 @@ Retro finding (sprint-2026-06-02-conduct-core, **critical**): the AVFL "— resi
 
 A MAJOR severity finding leaving a sprint with no backlog linkage is itself the deeper defect — the triage-out path must not silently drop MAJOR residuals.
 
+## Status (verified 2026-06-06, sprint-planning AVFL)
+A convergence commit landed AFTER conduct-core merge but BEFORE this story's intake, so two of the
+fixes below are **already present** on this branch — confirm-then-verify, do NOT re-author:
+- approve path already routes `review`→`verify`→`done` (`conductor/workflow.md` ~L1212–1214, commit `9e72bb2`).
+- terminal→terminal transitions are already rejected (`skills/momentum/scripts/momentum-tools.py` ~L55–56, `--force` required).
+The **genuinely-open** deliverable is the governance guard (last bullet): a MAJOR residual must not leave a sprint without a linked backlog stub. Treat the two transition fixes as regression-verification (the evals still apply), and focus implementation on the residual-linkage guard.
+
 ## What's needed
-- Identify both runtime-rejected transitions in `conductor/workflow.md`.
-- Fix the approve path to route merged stories `review`→`verify`→`done`.
-- Add a guard preventing terminal-to-terminal status transitions.
-- Add an eval scenario per defect.
-- No residual carrying MAJOR severity leaves a future sprint without a linked backlog stub.
+- Confirm (regression) both runtime-rejected transitions are fixed in `conductor/workflow.md` / `momentum-tools`.
+- Keep the approve path routing merged stories `review`→`verify`→`done`.
+- Keep the guard preventing terminal-to-terminal status transitions.
+- Add an eval scenario per defect (regression coverage).
+- **PRIMARY OPEN WORK:** No residual carrying MAJOR severity leaves a future sprint without a linked backlog stub.
 
 ## References
 - Retro findings (v2): `.momentum/sprints/sprint-2026-06-02-conduct-core/retro-transcript-audit.md`

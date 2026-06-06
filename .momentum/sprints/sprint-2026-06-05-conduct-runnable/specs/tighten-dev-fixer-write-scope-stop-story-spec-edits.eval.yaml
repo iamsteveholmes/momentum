@@ -1,0 +1,64 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: tighten-dev-fixer-write-scope-stop-story-spec-edits
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/tighten-dev-fixer-write-scope-stop-story-spec-edits.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run a build across several stories and watch which files the build's
+  authoring/fixing work actually touches. For each story, note the explicit set of files the build is
+  allowed to write for that story (its deliverables). Then, after the build merges, inspect what
+  changed: confirm that the story's own spec .md file and the spec .md files of sibling stories were
+  NOT modified by the build's authoring work. A build doing work on story A must not edit story A's
+  own spec file, nor any other story's spec file. Next, deliberately set up a case where the build
+  surfaces a problem that genuinely belongs to a DIFFERENT artifact than the one being built — confirm
+  that this cross-artifact problem is captured as a follow-up note recorded against the owning story,
+  rather than fixed by editing that other artifact inside the current work tree. Finally, run a batch
+  of stories (a dozen or more) end to end and count how many of them required the build to back out
+  (revert) an out-of-scope edit to a spec file. Confirm that count, as a fraction of the stories run,
+  is below ten percent — the out-of-scope revert rate must drop under 10%.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/tighten-dev-fixer-write-scope-stop-story-spec-edits.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A build does not modify its own story's spec file
+    invocation: Run a build on a story and, after it merges, inspect whether the story's own spec file was modified by the build's authoring work.
+    given: A story whose explicit writable file set (its deliverables) does not include the story's own spec .md file.
+    when: The build authors and merges the story's work.
+    then:
+      - The story's own spec .md file is unchanged by the build's authoring/fixing work.
+      - Only files within the story's explicit writable set show authoring changes.
+    pass_criteria: After merge, the story's own spec file content is unchanged and all authored changes fall within the declared writable set.
+    fail_criteria: The build edits the story's own spec .md file, or writes to any file outside the story's explicit writable set.
+
+  - name: A build does not modify sibling stories' spec files
+    invocation: Run a build on one story and inspect whether any other story's spec file was modified.
+    given: A sprint containing several stories, each with its own spec .md file.
+    when: The build authors and merges work for one of those stories.
+    then:
+      - No sibling story's spec .md file is modified by the build.
+      - Changes are confined to the active story's declared writable file set.
+    pass_criteria: After the build, every sibling story's spec file is byte-for-byte unchanged.
+    fail_criteria: The build modifies any sibling story's spec .md file.
+
+  - name: A cross-artifact problem routes to a reconciliation note, not an in-tree edit
+    invocation: Run a build that surfaces a problem belonging to a different artifact than the one being built, then inspect how that problem is handled.
+    given: A build whose work surfaces a finding that actually belongs to a different artifact (e.g. another story's spec).
+    when: The build handles that cross-artifact finding.
+    then:
+      - The cross-artifact finding is captured as a follow-up note recorded against the owning story.
+      - The build does not edit the other artifact inside the current work tree to resolve it.
+    pass_criteria: The cross-artifact finding appears as a reconciliation/follow-up note for the owning story, and the other artifact is left unedited in the work tree.
+    fail_criteria: The build edits the other artifact in-tree to resolve the cross-artifact finding, or drops it with no follow-up note.
+
+  - name: Out-of-scope revert rate stays below ten percent across a batch
+    invocation: Run a batch of a dozen or more stories end to end and count how many required the build to revert an out-of-scope spec-file edit.
+    given: A batch of at least twelve stories built end to end.
+    when: The number of stories requiring an out-of-scope-edit revert is counted against the total stories run.
+    then:
+      - Fewer than ten percent of the stories required a revert of an out-of-scope spec-file edit.
+      - The revert count and the batch size are both observable so the rate can be computed.
+    pass_criteria: The out-of-scope revert rate computed over the batch is below 10%.
+    fail_criteria: Ten percent or more of the stories required an out-of-scope spec-file edit to be reverted.

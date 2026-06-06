@@ -23,7 +23,12 @@
       "conduct-per-project-verification-harness-config",
       "contract-seam-stories-two-sided-review-scope",
       "reconcile-fix-disposition-with-conductor-scope-reverts",
-      "decision-grade-presentation-standard"
+      "decision-grade-presentation-standard",
+      "conduct-state-machine-defects-shipped-unfixed",
+      "tighten-dev-fixer-write-scope-stop-story-spec-edits",
+      "controlled-enums-and-stable-ledger-schema-finding-cards",
+      "exercise-conduct-escalation-machinery-end-to-end",
+      "extract-shared-diff-range-helper-for-per-story-review"
     ],
     "waves": [
       {
@@ -42,7 +47,10 @@
           "conduct-planning-emit-contract-schema",
           "conduct-register-skill-and-refresh-cache",
           "conduct-planning-reconcile-gherkin-and-specs-rule",
-          "conduct-per-project-verification-harness-config"
+          "conduct-per-project-verification-harness-config",
+          "conduct-state-machine-defects-shipped-unfixed",
+          "controlled-enums-and-stable-ledger-schema-finding-cards",
+          "extract-shared-diff-range-helper-for-per-story-review"
         ]
       },
       {
@@ -60,14 +68,16 @@
           "conduct-coverage-disposition-discharge-consumer",
           "conduct-e2e-finding-normalization-escalation",
           "avfl-merge-review-as-workflow",
-          "reconcile-fix-disposition-with-conductor-scope-reverts"
+          "reconcile-fix-disposition-with-conductor-scope-reverts",
+          "tighten-dev-fixer-write-scope-stop-story-spec-edits"
         ]
       },
       {
         "wave": 5,
         "stories": [
           "conduct-endgate-request-changes-redispatch",
-          "conduct-simplify-and-convergence-questions"
+          "conduct-simplify-and-convergence-questions",
+          "exercise-conduct-escalation-machinery-end-to-end"
         ]
       },
       {
@@ -280,6 +290,56 @@
           "guidelines": ".claude/rules/dev-skills.md",
           "guidelines_status": "present",
           "wave": 1
+        },
+        "conduct-state-machine-defects-shipped-unfixed": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 2
+        },
+        "tighten-dev-fixer-write-scope-stop-story-spec-edits": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 4
+        },
+        "controlled-enums-and-stable-ledger-schema-finding-cards": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 2
+        },
+        "exercise-conduct-escalation-machinery-end-to-end": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 5
+        },
+        "extract-shared-diff-range-helper-for-per-story-review": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 2
         }
       },
       "review_roles": [
@@ -287,7 +347,7 @@
         "e2e-validator",
         "architecture-guard"
       ],
-      "specialist_note": "dev-skills for all 20 (markdown/bash repo, per DEC-035 sprint mandate)"
+      "specialist_note": "dev-skills for all 25 (markdown/bash repo, per DEC-035 sprint mandate)"
     }
   },
   "completed": [
