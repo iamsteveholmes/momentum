@@ -21,6 +21,8 @@ Retro finding (sprint-2026-06-02-conduct-core): three high-severity findings ori
 - Cite-by-number is forbidden unless the referenced section is opened and verified.
 - The touches list is validated against the actual surfaces the change invalidates (e.g. public SKILL.md descriptions).
 
+**From the deeper re-audit (v2):** more instances of the same class — `dev-read-contract-part-a-header` carried a dangling "section 10" cited 3× plus a self-contradictory AC; `code-review-adapter-repoint-quick-fix` omitted the co-located eval the same edit invalidated. Strengthen the ACs: create-story verifies every cited spec-section number against the live spec before commit; `touches` enumerates the full agent surface (`agent.md` + `workflow.md` + `SKILL.md` + co-located evals); adapter-migration/repoint stories are not pre-classified as trivial wiring; document-wide policy changes are not scoped by section number.
+
 ## References
 - Retro findings: `.momentum/sprints/sprint-2026-06-02-conduct-core/retro-transcript-audit.md`
 - Related (dedup, adjacent — different concerns): `create-story-update`, `create-story-advanced-elicitation`, `inject-constitution-md-path-into-create-story-flesh-out-prompts`. NOTE: `dag-dispatch-blast-radius-discovery` reuses the term "blast-radius" but is about DAG dispatch host resolution — not this.

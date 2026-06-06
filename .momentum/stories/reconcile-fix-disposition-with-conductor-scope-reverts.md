@@ -21,6 +21,8 @@ Retro finding (sprint-2026-06-02-conduct-core): `conduct-preflight-halts` findin
 - The correction is re-routed (e.g. to create-story/refine) so the defect is still addressed for the record.
 - The end-gate scorecard cannot report a reverted fix as `fixed`.
 
+**From the deeper re-audit (v2):** the divergence is not isolated — `code-review-adapter-retire-stub`'s card also says "fixed" while the dangling pointer it was meant to remove still exists on main. The scorecard must reflect **only what actually reached main**, cross-checking every Conductor revert against open finding dispositions at end-gate.
+
 ## References
 - Retro findings: `.momentum/sprints/sprint-2026-06-02-conduct-core/retro-transcript-audit.md`
 - Related (dedup, adjacent): `conduct-merge-and-conflict-resolution` (Conductor git mutations / revert point), `conduct-endgate-decision-card-rendering`, `conduct-coverage-disposition-discharge-consumer` (disposition lifecycle)

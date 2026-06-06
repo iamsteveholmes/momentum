@@ -20,6 +20,8 @@ Retro finding (sprint-2026-06-02-conduct-core): `directed-fix-invocation-contrac
 - Stories that define a contract between two agents declare both sides (producer + consumer) as review scope.
 - The per-story gate checks field-shape compatibility across both sides, not only the produced artifact.
 
+**From the deeper re-audit (v2):** make the contract explicit, not just co-reviewed. Seam contracts include a **"Canonical Output Shape"** section with exact JSON nesting (the defect was nested `escalation.timing_tier` vs flat `F.timing_tier`); correlation keys like `finding_id` are defined with assigner, uniqueness scope, and lifetime (it was undefined in `directed-fix-invocation-contract.md`, starving triage with a thin disposition object); and the QA gate checks producer-emitted fields against consumer-read fields.
+
 ## References
 - Retro findings: `.momentum/sprints/sprint-2026-06-02-conduct-core/retro-transcript-audit.md`
 - Related (dedup, adjacent): `sprint-planning-frozen-per-story-contract-holistic-coverage` (done), `qa-reviewer-rescope-per-story-contract` (done), `avfl-cross-story-integration-lens`

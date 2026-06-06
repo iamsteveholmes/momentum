@@ -5534,5 +5534,65 @@
     "touches": [],
     "priority": "medium",
     "story_type": "feature"
+  },
+  "conduct-state-machine-defects-shipped-unfixed": {
+    "status": "backlog",
+    "title": "Fix two MAJOR conduct state-machine defects shipped unfixed (terminal->terminal + verify-skip)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
+  },
+  "tighten-dev-fixer-write-scope-stop-story-spec-edits": {
+    "status": "backlog",
+    "title": "Tighten dev/fixer write-scope to stop out-of-scope story-spec edit-then-revert",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "persist-scope-boundaries-across-sessions": {
+    "status": "backlog",
+    "title": "Persist scope boundaries across sessions",
+    "epic_slug": "momentum-impetus-session-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "extract-shared-diff-range-helper-for-per-story-review": {
+    "status": "backlog",
+    "title": "Extract a shared diff-range reference/helper for per-story review",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "controlled-enums-and-stable-ledger-schema-finding-cards": {
+    "status": "backlog",
+    "title": "Controlled enums + stable schema for finding-cards / build-results ledgers",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "exercise-conduct-escalation-machinery-end-to-end": {
+    "status": "backlog",
+    "title": "Exercise the conduct escalation machinery end-to-end before trusting it",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }

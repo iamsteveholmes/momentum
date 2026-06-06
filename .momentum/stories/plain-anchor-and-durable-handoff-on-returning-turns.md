@@ -23,6 +23,8 @@ This story consolidates several existing slices into one coherent behavioral rul
 - A durable session-handoff artifact is written that the next session reads, replacing hand-pasted prompts.
 - The handoff carries the live story set, active decisions, and the sprint plan.
 
+**From the deeper re-audit (v2):** quantified at 8 developer-confusion messages over the sprint window on internal jargon ("52 stories", beads, stubs, per-leg amendments, Pre-flight HALTs H1–H5); approval clustered only when framing was decision-grade. Add a "decision-grade altitude" guardrail for HITL-facing prompts: lead with the plain-language question + stakes; ban internal counts/jargon without a plain anchor; decision context travels with the decision (no "reference other material"); a lint flags raw internal vocabulary in developer-facing output. (Scope-persistence is split into `persist-scope-boundaries-across-sessions`.)
+
 ## References
 - Retro findings: `.momentum/sprints/sprint-2026-06-02-conduct-core/retro-transcript-audit.md`
 - Consolidates (dedup — collapse these slices into this coherent intent): `session-handoff-prompt-as-artifact` (durable handoff half), `add-proactive-handoff-offer-to-long-running-workflow-skills` (when to fire), `distill-jargon-definition-fix` + `hash-drift-plain-language-message` (done — plain-language slices), `impetus-lifecycle-and-handoff-fix` (adjacent — lifecycle state)
