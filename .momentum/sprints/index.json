@@ -25,9 +25,270 @@
       "reconcile-fix-disposition-with-conductor-scope-reverts",
       "decision-grade-presentation-standard"
     ],
-    "waves": [],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "conduct-momentum-tools-path-resolution",
+          "conduct-verification-method-enum-alignment",
+          "conduct-entry-point-command",
+          "conduct-cleanup-dead-agent-paths-and-validate-resolve",
+          "decision-grade-presentation-standard"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "conduct-planning-emit-contract-schema",
+          "conduct-register-skill-and-refresh-cache",
+          "conduct-planning-reconcile-gherkin-and-specs-rule",
+          "conduct-per-project-verification-harness-config"
+        ]
+      },
+      {
+        "wave": 3,
+        "stories": [
+          "conduct-wire-caller-and-discovery",
+          "conduct-per-story-build-review-dispatch",
+          "contract-seam-stories-two-sided-review-scope"
+        ]
+      },
+      {
+        "wave": 4,
+        "stories": [
+          "conduct-endgate-decision-card-rendering",
+          "conduct-coverage-disposition-discharge-consumer",
+          "conduct-e2e-finding-normalization-escalation",
+          "avfl-merge-review-as-workflow",
+          "reconcile-fix-disposition-with-conductor-scope-reverts"
+        ]
+      },
+      {
+        "wave": 5,
+        "stories": [
+          "conduct-endgate-request-changes-redispatch",
+          "conduct-simplify-and-convergence-questions"
+        ]
+      },
+      {
+        "wave": 6,
+        "stories": [
+          "conduct-e2e-validation-and-test-fixture"
+        ]
+      }
+    ],
     "slug": "sprint-2026-06-05-conduct-runnable",
-    "planned": "2026-06-05"
+    "planned": "2026-06-05",
+    "team": {
+      "story_assignments": {
+        "conduct-momentum-tools-path-resolution": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 1
+        },
+        "conduct-entry-point-command": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 1
+        },
+        "conduct-register-skill-and-refresh-cache": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 2
+        },
+        "conduct-wire-caller-and-discovery": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 3
+        },
+        "conduct-planning-emit-contract-schema": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 2
+        },
+        "conduct-per-story-build-review-dispatch": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 3
+        },
+        "conduct-endgate-decision-card-rendering": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 4
+        },
+        "conduct-coverage-disposition-discharge-consumer": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 4
+        },
+        "conduct-e2e-finding-normalization-escalation": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 4
+        },
+        "conduct-e2e-validation-and-test-fixture": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 6
+        },
+        "conduct-verification-method-enum-alignment": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 1
+        },
+        "conduct-planning-reconcile-gherkin-and-specs-rule": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 2
+        },
+        "avfl-merge-review-as-workflow": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 4
+        },
+        "conduct-endgate-request-changes-redispatch": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 5
+        },
+        "conduct-simplify-and-convergence-questions": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 5
+        },
+        "conduct-cleanup-dead-agent-paths-and-validate-resolve": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 1
+        },
+        "conduct-per-project-verification-harness-config": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 2
+        },
+        "contract-seam-stories-two-sided-review-scope": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 3
+        },
+        "reconcile-fix-disposition-with-conductor-scope-reverts": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 4
+        },
+        "decision-grade-presentation-standard": {
+          "role": [
+            "dev",
+            "qa"
+          ],
+          "specialist": "dev-skills",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "present",
+          "wave": 1
+        }
+      },
+      "review_roles": [
+        "qa-reviewer",
+        "e2e-validator",
+        "architecture-guard"
+      ],
+      "specialist_note": "dev-skills for all 20 (markdown/bash repo, per DEC-035 sprint mandate)"
+    }
   },
   "completed": [
     {
