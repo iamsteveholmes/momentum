@@ -24,10 +24,11 @@ how_dev_self_checks: |
   committed result without the orchestrator stopping to ask you whether to fix it.
 
   Confirm per-story isolation holds: one story's in-progress changes are not visible in
-  another story's working area during the build, and every history change is made under the
-  orchestrator's own coordination — no review or build helper writes its own commit. Finally
-  confirm a clean routine build reaches the end without the orchestrator asking you any
-  question between starting and the final acceptance point.
+  another story's working area during the build, and after the run each built story's
+  implementation is committed onto the single sprint branch with a linear, coherent history
+  for the run — the run leaves no orphaned worktree branches and no stray uncommitted working
+  trees behind. Finally confirm a clean routine build reaches the end without the orchestrator
+  asking you any question between starting and the final acceptance point.
 coverage_disposition: dedicated-run
 covered_by_scenario: null
 acceptance_criteria_ref: .momentum/stories/conduct-per-story-build-review-dispatch.md#acceptance-criteria
@@ -68,15 +69,17 @@ scenarios:
     pass_criteria: The seeded routine defect is gone in the final committed result, fixed automatically with no fix-or-defer question to the developer.
     fail_criteria: The seeded defect remains in the final result, or the build pauses to ask the developer whether to fix the routine finding.
 
-  - name: Per-story isolation and orchestrator-owned history hold across the build
-    invocation: Run the build against a multi-story sprint and inspect, during and after the run, the separation of each story's working changes and the authorship of history changes.
+  - name: Per-story isolation and consolidated sprint-branch history hold across the build
+    invocation: Run the build against a multi-story sprint and inspect, during the run, the separation of each story's working changes, and after the run, the repository's branches, working tree, and commit history.
     given: An activated sprint with more than one ready story building in the same run.
-    when: The per-story working areas and the run's history changes are inspected.
+    when: The per-story working areas are inspected during the run, and the branches, working tree, and commit history are inspected after the run.
     then:
       - One story's in-progress changes are not present in another story's working area during the build.
-      - Every history change in the run is made under the orchestrator's own coordination — no separate review or build helper records its own commit.
-    pass_criteria: Stories build in isolated working areas with no cross-contamination, and all commits in the run are made under the orchestrator's coordination.
-    fail_criteria: One story's changes leak into another story's working area, or a commit in the run is authored by a review or build helper rather than under the orchestrator's coordination.
+      - After the run, each built story's implementation is committed onto the single sprint branch.
+      - After the run, no orphaned per-story worktree branches and no stray uncommitted working trees remain.
+      - The commit history produced by the run is linear and coherent (each story's work appears as committed changes on the sprint branch, with no leftover detached or unmerged story branches).
+    pass_criteria: Stories build in isolated working areas with no cross-contamination, every built story's implementation is committed onto the single sprint branch, the run leaves no orphaned worktree branches or stray uncommitted working trees, and the resulting history is linear and coherent.
+    fail_criteria: One story's changes leak into another story's working area, or after the run a built story's implementation is missing from the sprint branch, or the run leaves an orphaned worktree branch or a stray uncommitted working tree, or the resulting history is not a coherent linear record of the run's work.
 
   - name: A clean routine build reaches the end without mid-run questions
     invocation: Run the build against a sprint whose stories produce only routine findings and observe developer-facing prompts from start to the final acceptance point.
