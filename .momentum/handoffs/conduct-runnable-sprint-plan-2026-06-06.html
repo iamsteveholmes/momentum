@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint Plan — conduct-runnable</title>
+<style>
+  :root {
+    --bg:#fffcf7; --panel:#fffdfa; --ink:#1c1b19; --soft:#6f6a60; --line:#e8e0d2;
+    --accent:#a8401f; --accent2:#1d6a54; --warn:#9a6a00; --crit:#9a1a1a;
+    --code-bg:#f5efe3; --shadow:0 1px 3px rgba(60,50,30,.07),0 8px 24px rgba(60,50,30,.05);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1040px; margin:0 auto; padding:40px 28px 96px; }
+  header.top { border-bottom:2px solid var(--line); padding-bottom:22px; margin-bottom:8px; }
+  .eyebrow { letter-spacing:.14em; text-transform:uppercase; font-size:12px; color:var(--accent); font-weight:700; }
+  h1 { font-size:30px; margin:.18em 0 .1em; letter-spacing:-.01em; }
+  .sub { color:var(--soft); font-size:16px; }
+  .banner { display:flex; align-items:center; gap:12px; margin:22px 0 8px; padding:14px 18px;
+    background:linear-gradient(0deg,#fdf6e9,#fffdf8); border:1px solid #ecdcb6; border-left:4px solid var(--warn);
+    border-radius:10px; box-shadow:var(--shadow); }
+  .banner b { color:var(--warn); }
+  .metrics { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin:26px 0 8px; }
+  .metric { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 12px; text-align:center; box-shadow:var(--shadow); }
+  .metric .n { font-size:24px; font-weight:750; letter-spacing:-.02em; }
+  .metric .l { font-size:11px; color:var(--soft); text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
+  .metric.ok .n { color:var(--accent2); }
+  .metric.warn .n { color:var(--warn); }
+  h2 { font-size:21px; margin:42px 0 6px; padding-top:10px; letter-spacing:-.01em; }
+  h2 .hn { color:var(--accent); font-weight:750; margin-right:8px; }
+  .lead { color:var(--soft); margin:.1em 0 1em; }
+  p, li { color:#2a2824; }
+  code { background:var(--code-bg); padding:.08em .38em; border-radius:5px; font-size:.86em;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace; color:#5a3a1a; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:14px 0; box-shadow:var(--shadow); }
+  .wave { margin:16px 0 22px; }
+  .wave h3 { font-size:16px; margin:0 0 2px; display:flex; align-items:center; gap:10px; }
+  .wn { background:var(--accent); color:#fff; font-size:12px; padding:3px 9px; border-radius:6px; font-weight:700; letter-spacing:.02em; }
+  .wcount { margin-left:auto; font-size:12px; color:var(--soft); font-weight:500; }
+  .wsub { color:var(--soft); font-size:13.5px; margin:2px 0 10px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.stories th { text-align:left; color:var(--soft); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; padding:6px 10px; border-bottom:1px solid var(--line); }
+  table.stories td { padding:8px 10px; border-bottom:1px solid #f1eadd; vertical-align:top; }
+  table.stories tr:last-child td { border-bottom:none; }
+  table.stories code { font-size:12px; }
+  .what { color:var(--soft); }
+  .pill { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; font-weight:600; white-space:nowrap; }
+  .pc { background:#fbe3e1; color:var(--crit); } .ph { background:#fde9cf; color:#8a4a00; }
+  .pm { background:#eef0d9; color:#5d6a12; } .pl { background:#e7ece9; color:#56635c; }
+  .m-si { background:#e4eef0; color:#1d5a6a; } .m-dr { background:#efe7f2; color:#6a3a78; } .m-bash { background:#f0ece2; color:#6a5630; }
+  ul { margin:.4em 0 .8em; padding-left:1.2em; } li { margin:.22em 0; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .kv { font-size:14px; } .kv b { color:var(--accent2); }
+  .danger { border-left:4px solid var(--crit); } .good { border-left:4px solid var(--accent2); }
+  .warnc { border-left:4px solid var(--warn); }
+  pre.cmd { background:#262017; color:#f3ecdd; padding:14px 16px; border-radius:10px; overflow:auto; font-size:12.5px; line-height:1.5;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace; }
+  pre.cmd .c { color:#c89a5b; } pre.cmd .g { color:#8fbf8f; }
+  .commit { font-family:"SF Mono",ui-monospace,Menlo,monospace; font-size:12.5px; }
+  .commit .h { color:var(--accent); }
+  footer { margin-top:40px; padding-top:18px; border-top:1px solid var(--line); color:var(--soft); font-size:12.5px; }
+  .tag { display:inline-block; background:var(--code-bg); border:1px solid var(--line); border-radius:6px; padding:1px 7px; font-size:12px; color:#5a3a1a; margin:2px 3px 2px 0; font-family:"SF Mono",monospace; }
+</style></head>
+<body><div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Momentum · Sprint Planning · Ready for Review</div>
+  <h1>conduct-runnable</h1>
+  <div class="sub"><code>sprint/sprint-2026-06-05-conduct-runnable</code> · planned 2026-06-06 · take the merged conduct CORE to a first runnable <code>/momentum:conduct</code></div>
+</header>
+
+<div class="banner">
+  <span style="font-size:20px">⏸</span>
+  <div><b>STOPPED at ready-to-review — not activated.</b> Every artifact below is built, validated, and committed to the sprint branch. Nothing is live. You review, then activate (turnkey command at the end).</div>
+</div>
+
+<div class="metrics">
+  <div class="metric"><div class="n">25</div><div class="l">Stories</div></div>
+  <div class="metric"><div class="n">6</div><div class="l">Waves</div></div>
+  <div class="metric"><div class="n">25</div><div class="l">Frozen contracts</div></div>
+  <div class="metric ok"><div class="n">CLEAN</div><div class="l">Outsider guard</div></div>
+  <div class="metric warn"><div class="n">91</div><div class="l">AVFL /100</div></div>
+  <div class="metric ok"><div class="n">9</div><div class="l">Commits ready</div></div>
+</div>
+
+<h2><span class="hn">§1</span>The decision in front of you</h2>
+<p class="lead">Approve this plan to activate a 25-story sprint that makes <code>/momentum:conduct</code> runnable end-to-end and clears every known gap between the shipped conduct core and a first real run.</p>
+<div class="card">
+<p style="margin-top:0"><b>What this sprint delivers:</b> a developer can type <code>/momentum:conduct</code>, and it builds a whole sprint — per-story build → review → fix, AVFL-on-merge, E2E validation — surfacing exactly one human acceptance gate at the end. It closes the invocation gap (command, registration, discovery), fills the hollow build/review dispatch, wires end-gate decision-card rendering, and proves itself with an activated test-fixture run.</p>
+<p><b>Scope:</b> all 25 remaining conduct-completion stories — your original 20, plus 5 net-new retro findings that landed mid-planning (you chose to fold them in so conduct completes in one sprint). Per <b>DEC-037</b>, conduct ships as a <b>standalone <code>/momentum:conduct</code> skill that coexists with <code>sprint-dev</code></b>; <code>sprint-dev</code> is <b>not</b> rewritten here (that's the later adoption step).</p>
+<p style="margin-bottom:0"><b>Specialist:</b> <code>dev-skills</code> for all 25 (markdown/bash repo) · <b>roles:</b> dev + qa · <b>no story-count cap</b> (DEC-035).</p>
+</div>
+
+<h2><span class="hn">§2</span>Execution waves</h2>
+<p class="lead">The index carried <em>no</em> dependency or <code>touches</code> metadata (these were intake stubs), so the wave order below is derived from your sequencing hints + story semantics — not auto-computed. It is the load-bearing planning judgment; review it closely.</p>
+
+    <div class="wave">
+      <h3><span class="wn">Wave 1</span> Foundation <span class="wcount">5 stories</span></h3>
+      <p class="wsub">Environment + enum + command scaffold + cleanup — unblock everything</p>
+      <table class="stories">
+        <thead><tr><th>Story</th><th>Priority</th><th>Type</th><th>Verify method</th><th>What it does</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><code>conduct-entry-point-command</code></td>
+          <td><span class="pill pc">critical</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">There is no command file exposing the Conductor as a slash command. skills/momentum/commands/ has thin one-line wrappers for every other skill (sprint-dev.md = …</td>
+        </tr>
+        <tr>
+          <td><code>conduct-momentum-tools-path-resolution</code></td>
+          <td><span class="pill pc">critical</span></td>
+          <td>maintenance</td>
+          <td><span class="pill m-bash">bash</span></td>
+          <td class="what">The conductor workflow calls bare `momentum-tools sprint status-transition|activate`, `momentum-tools agent resolve` ~11 times. `which momentum-tools` returns &#x27;…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-verification-method-enum-alignment</code></td>
+          <td><span class="pill ph">high</span></td>
+          <td>maintenance</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Three coupled spec-document/skill fixes that supply the source-of-truth the planning producer suite computes from. (1) verification-standard.md §1 Method Routin…</td>
+        </tr>
+        <tr>
+          <td><code>decision-grade-presentation-standard</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>practice</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">As a developer reviewing AI-produced output at every human gate, I want a practice-wide decision-grade presentation standard with measurable output caps and a s…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-cleanup-dead-agent-paths-and-validate-resolve</code></td>
+          <td><span class="pill pl">low</span></td>
+          <td>maintenance</td>
+          <td><span class="pill m-bash">bash</span></td>
+          <td class="what">momentum/agents.json defaults map architect, pm, sm to agent body files that do NOT exist (verified 2026-06-06: `skills/momentum/agents/` contains dev.md, dev-b…</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wave">
+      <h3><span class="wn">Wave 2</span> Producers, registration &amp; core-defect fixes <span class="wcount">7 stories</span></h3>
+      <p class="wsub">Contract-schema producer, skill registration, state-machine fix, ledger schema, diff-range helper</p>
+      <table class="stories">
+        <thead><tr><th>Story</th><th>Priority</th><th>Type</th><th>Verify method</th><th>What it does</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><code>conduct-planning-emit-contract-schema</code></td>
+          <td><span class="pill pc">critical</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">The entire build phase depends on decision-10 artifacts that NO skill produces — in the conduct-core sprint they were hand-crafted into sprints/index.json. This…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-state-machine-defects-shipped-unfixed</code></td>
+          <td><span class="pill pc">critical</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Two MAJOR status-transition defects were found during the conduct-core build, triaged-out with no backlog linkage, and shipped unfixed. Fix both and guard again…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-register-skill-and-refresh-cache</code></td>
+          <td><span class="pill ph">high</span></td>
+          <td>maintenance</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">conductor/SKILL.md frontmatter has only name/description/model/effort — no explicit user-invocable flag (structurally matching other user-invocable skills that …</td>
+        </tr>
+        <tr>
+          <td><code>conduct-per-project-verification-harness-config</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-dr">document-review</span></td>
+          <td class="what">momentum/verification-harness.json sets every execution_surface (skill-instruction, agent-definition, rule-hook, script-code, script-cli, backend, app-ui, resea…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-planning-reconcile-gherkin-and-specs-rule</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>maintenance</td>
+          <td><span class="pill m-dr">document-review</span></td>
+          <td class="what">Two coupled sprint-planning corrections needed once the new contract model lands. (1) Step 4 still generates standalone .feature files for non-app-ui stories ke…</td>
+        </tr>
+        <tr>
+          <td><code>controlled-enums-and-stable-ledger-schema-finding-cards</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-dr">document-review</span></td>
+          <td class="what">The conduct finding-cards and build-results ledgers need controlled enums and one stable schema so a consumer can join them on a canonical key without losing st…</td>
+        </tr>
+        <tr>
+          <td><code>extract-shared-diff-range-helper-for-per-story-review</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-dr">document-review</span></td>
+          <td class="what">Document one vetted diff-range pattern and cite it from every per-story review call site, so the same merge-boundary diff bug stops being re-authored.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wave">
+      <h3><span class="wn">Wave 3</span> Keystone dispatch &amp; seam <span class="wcount">3 stories</span></h3>
+      <p class="wsub">Fill the hollow dev+QA+code-review build loop; wire the caller; two-sided contract review</p>
+      <table class="stories">
+        <thead><tr><th>Story</th><th>Priority</th><th>Type</th><th>Verify method</th><th>What it does</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><code>conduct-per-story-build-review-dispatch</code></td>
+          <td><span class="pill pc">critical</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Follow-up from the conduct core-build slice (`sprint-2026-06-02-conduct-core`). Wire conduct stages 1–2: per-story dev spawn + concurrent QA/code-review fan-out…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-wire-caller-and-discovery</code></td>
+          <td><span class="pill ph">high</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">The Conductor is built in complete isolation with zero callers and zero discovery path. (a) sprint-dev/workflow.md still contains the OLD wave-loop architecture…</td>
+        </tr>
+        <tr>
+          <td><code>contract-seam-stories-two-sided-review-scope</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">A story that defines a contract between two agents must declare BOTH sides as review scope, and the per-story gate must check field-shape compatibility across b…</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wave">
+      <h3><span class="wn">Wave 4</span> Review / report consumers <span class="wcount">6 stories</span></h3>
+      <p class="wsub">End-gate card rendering, coverage discharge, E2E normalization, AVFL-on-merge, fix-disposition + dev-fixer scope</p>
+      <table class="stories">
+        <thead><tr><th>Story</th><th>Priority</th><th>Type</th><th>Verify method</th><th>What it does</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><code>conduct-endgate-decision-card-rendering</code></td>
+          <td><span class="pill ph">high</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Follow-up from the conduct core-build slice (`sprint-2026-06-02-conduct-core`). Render conduct&#x27;s end-gate decision cards (wire end_gate_escalations into the ste…</td>
+        </tr>
+        <tr>
+          <td><code>reconcile-fix-disposition-with-conductor-scope-reverts</code></td>
+          <td><span class="pill ph">high</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">When the Conductor reverts a fix under scope discipline, the corresponding finding-card disposition and the build-results scorecard must stop reporting that fin…</td>
+        </tr>
+        <tr>
+          <td><code>tighten-dev-fixer-write-scope-stop-story-spec-edits</code></td>
+          <td><span class="pill ph">high</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Dev/fixer agents must be confined to an explicit writable file set so they stop editing the story `.md` or sibling workflow files, forcing Conductor reverts.</td>
+        </tr>
+        <tr>
+          <td><code>avfl-merge-review-as-workflow</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Follow-up from the conduct core-build slice (`sprint-2026-06-02-conduct-core`). Build AVFL-on-merge as a Workflow over the 3-dot merged diff (replace the interi…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-coverage-disposition-discharge-consumer</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Follow-up from the conduct core-build slice (`sprint-2026-06-02-conduct-core`). Wire the AVFL/merge consumer that discharges covered-by-composition deferrals.</td>
+        </tr>
+        <tr>
+          <td><code>conduct-e2e-finding-normalization-escalation</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Phase 4 (E2E) spawns the e2e-validator and only STORES {{e2e_results}}, holding them for the report as a raw summary. E2E findings never become canonical findin…</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wave">
+      <h3><span class="wn">Wave 5</span> Gate redispatch &amp; convergence <span class="wcount">3 stories</span></h3>
+      <p class="wsub">Request-changes redispatch, simplify/convergence, exercise escalation end-to-end</p>
+      <table class="stories">
+        <thead><tr><th>Story</th><th>Priority</th><th>Type</th><th>Verify method</th><th>What it does</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><code>conduct-endgate-request-changes-redispatch</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Follow-up from the conduct core-build slice (`sprint-2026-06-02-conduct-core`). Wire the end-gate &#x27;request changes&#x27; path to spawn fixers (the change-workflow fr…</td>
+        </tr>
+        <tr>
+          <td><code>exercise-conduct-escalation-machinery-end-to-end</code></td>
+          <td><span class="pill pm">medium</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Drive the stakes-and-timing escalation machinery through its branches with real findings/evals, since it has never actually fired on a per-story mid-flight find…</td>
+        </tr>
+        <tr>
+          <td><code>conduct-simplify-and-convergence-questions</code></td>
+          <td><span class="pill pl">low</span></td>
+          <td>maintenance</td>
+          <td><span class="pill m-dr">document-review</span></td>
+          <td class="what">Two small loose-end items. (1) Step 2.S3 Phase C describes /simplify as an optional post-fixer cleanup pass but contains NO actual &lt;action&gt; that invokes it, cap…</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wave">
+      <h3><span class="wn">Wave 6</span> End-to-end proof <span class="wcount">1 story</span></h3>
+      <p class="wsub">Activated test-fixture sprint that proves a real /momentum:conduct run</p>
+      <table class="stories">
+        <thead><tr><th>Story</th><th>Priority</th><th>Type</th><th>Verify method</th><th>What it does</th></tr></thead>
+        <tbody>
+        <tr>
+          <td><code>conduct-e2e-validation-and-test-fixture</code></td>
+          <td><span class="pill ph">high</span></td>
+          <td>feature</td>
+          <td><span class="pill m-si">skill-invoke</span></td>
+          <td class="what">Two coupled integration-test gaps. (1) There is no verification artifact (eval scenario or smoke contract) asserting that a fresh sprint-planning → sprint-manag…</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+<h2><span class="hn">§3</span>Verification contracts &amp; adversarial guard</h2>
+<div class="two">
+  <div class="card good">
+    <p style="margin-top:0"><b>25 frozen contracts</b>, hand-authored (the producer that would emit them — <code>conduct-planning-emit-contract-schema</code> — doesn't exist yet, so authored by hand exactly as conduct-core did).</p>
+    <p>Each carries the Part-A <b>verification header</b> (<code>how_dev_self_checks</code>, <code>coverage_disposition</code>, <code>acceptance_criteria_ref</code>…) + a Part-B black-box body.</p>
+    <p style="margin-bottom:0">Method mix: <span class="tag">18 skill-invoke</span> <span class="tag">5 document-review</span> <span class="tag">2 bash</span></p>
+  </div>
+  <div class="card good">
+    <p style="margin-top:0"><b>Decorrelated Outsider-Test guard: CLEAN.</b></p>
+    <p>A separate agent (contract text only, no source) flagged 13 clauses across 5 contracts requiring source-inspection or naming internals. All remediated in one rewrite pass each; re-guard returned <b>GUARD_CLEAN</b>.</p>
+    <p style="margin-bottom:0">Two contracts were correctly <b>reclassified to document-review</b> (their acceptance is about a deliverable document's content, not black-box behavior).</p>
+  </div>
+</div>
+
+<h2><span class="hn">§4</span>Coverage plan</h2>
+<div class="card">
+<p style="margin-top:0"><b>3 covered-by-composition · 22 dedicated-run</b> — every story accounted for exactly once.</p>
+<ul>
+<li><b>End-to-End Fixture Build Run</b> (driver: <code>conduct-e2e-validation-and-test-fixture</code>) discharges the per-story dispatch + AVFL-on-merge — a real run can't reach a clean gate unless those actually fired.</li>
+<li><b>Invocation Cluster</b> (driver: <code>conduct-wire-caller-and-discovery</code>) discharges <code>conduct-momentum-tools-path-resolution</code> — the "live engine, not dead code" clause is observable only if bare <code>momentum-tools</code> resolves when the build calls it.</li>
+<li>The negative-path stories (escalation, request-changes, coverage discharge, scope-revert) stay dedicated-run — a clean fixture run never seeds their load-bearing behaviors.</li>
+</ul>
+</div>
+
+<h2><span class="hn">§5</span>Spec impact — applied (separately committed, reversible)</h2>
+<p class="lead">architecture.md's Decisions stopped at 58 with <em>zero</em> coverage of the conduct engine. These reconcile the docs to already-ratified decisions (DEC-035/036/037) and conduct-core, which already shipped.</p>
+<div class="two">
+  <div class="card">
+    <div class="kv"><b>architecture.md</b> — 11 sections</div>
+    <ul style="margin-bottom:0">
+      <li><b>NEW Decision 59</b> — Conduct Execution Engine (standalone <code>/momentum:conduct</code>, per-story pipeline, Conductor-owns-git, one end-gate)</li>
+      <li>NEW — stakes-and-timing HITL gate model + decision-grade presentation rule</li>
+      <li>MODIFIED — <code>verification_method</code> closed enum (legacy <code>eval|trigger|smoke|review|gherkin</code> → driver-binding enum); frozen <code>story_assignments[].contract{}</code> schema; AVFL-on-merge; agent-resolve hardening</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="kv"><b>prd.md</b> — 3 requirements</div>
+    <ul style="margin-bottom:0">
+      <li><span class="tag">FR139</span> runnable <code>/momentum:conduct</code> single-gate sprint build</li>
+      <li><span class="tag">FR140</span> conduct coexists with sprint-dev; Impetus-dispatch front door</li>
+      <li><span class="tag">NFR22</span> decision-grade presentation (measurable caps + self-sufficiency floor)</li>
+    </ul>
+  </div>
+</div>
+<p style="font-size:13.5px;color:var(--soft)">These landed in their own commit (<code>92dbf9c</code>) — if you disagree with any, revert just that commit; the rest of the plan stands.</p>
+
+<h2><span class="hn">§6</span>AVFL validation</h2>
+<div class="card warnc">
+<p style="margin-top:0"><b>CHECKPOINT_WARNING · 91/100</b> (no critical/high). The plan is coherent, complete, and DEC-037-faithful. Findings were addressed during planning:</p>
+<ul>
+<li><b>Fixed</b> — <code>conduct-cleanup-dead-agent-paths</code> overstated the dead-agent set (ux/analyst/researcher actually exist; only architect/pm/sm are dead).</li>
+<li><b>Fixed</b> — <code>conduct-wire-caller-and-discovery</code> carried stale sprint-dev-<em>rewrite</em> language contradicting DEC-037; title/body reconciled to standalone scope.</li>
+<li><b>Fixed (de-pinned)</b> — stale plugin-version reference in <code>conduct-register-skill</code>.</li>
+<li><b>Annotated</b> — <code>conduct-state-machine-defects-shipped-unfixed</code> (critical): both transition fixes <em>already landed</em> on the branch (commit <code>9e72bb2</code> + the <code>momentum-tools</code> terminal guard). Story refocused on its real open work — the MAJOR-residual→backlog-stub governance guard — so the dev doesn't re-fix what's done.</li>
+</ul>
+<p style="margin-bottom:0;font-size:13.5px;color:var(--soft)">Noted, not blocking: <code>decision-grade-presentation-standard</code> is the lone <code>ad-hoc</code>/<code>ready-for-dev</code> story (it was the one true stub, enriched via create-story). The conduct stories lack a literal <code>## Acceptance Criteria</code> heading (they use <code>## What's needed</code>); contracts reference the <code>#acceptance-criteria</code> anchor by convention — a known data-quality item, not a blocker.</p>
+</div>
+
+<h2><span class="hn">§7</span>Planning decisions &amp; deviations (so nothing is hidden)</h2>
+<div class="card">
+<ul style="margin:0">
+<li><b>Holistic review, per-story gates skipped</b> — you authorized one whole-plan review instead of 25 blocking A/R/J viewer stops. This deviates from the workflow's step-3b per-story gate (your call, recorded here).</li>
+<li><b>Hand-authored contracts</b> — the contract-emitting producer is itself a story in this sprint, so all 25 contracts were authored by hand, matching conduct-core's format.</li>
+<li><b>Waves derived, not computed</b> — index <code>depends_on</code>/<code>touches</code> were empty; the DAG comes from your sequencing hints + story semantics.</li>
+<li><b><code>momentum-tools</code> path workaround</b> — bare <code>momentum-tools</code> doesn't resolve in this shell (that's literally story #1, <code>conduct-momentum-tools-path-resolution</code>); planning invoked it as <code>python3 skills/momentum/scripts/momentum-tools.py</code>.</li>
+<li><b>Planning slug written directly</b> — there's no CLI to set <code>planning.slug</code>; it was written into the planning section per workflow step 8.</li>
+</ul>
+</div>
+
+<h2><span class="hn">§8</span>Risks &amp; watch-items</h2>
+<div class="card danger">
+<ul style="margin:0">
+<li><b>High <code>workflow.md</code> contention.</b> ~12 stories edit the conductor's single <code>workflow.md</code>. Index <code>touches</code> were empty, so overlap can't be auto-detected. Within a wave, parallel stories on that file <b>will</b> conflict — recommend the build serialize <code>workflow.md</code>-heavy stories or lean on careful merge review.</li>
+<li><b>Chicken-and-egg.</b> conduct isn't runnable yet, so <em>this</em> sprint must be built with <code>sprint-dev</code>, not conduct. The capstone (<code>conduct-e2e-validation-and-test-fixture</code>) is the first real conduct run.</li>
+<li><b>Branch carries 2 of your earlier commits</b> (<code>cabf9f2</code>, <code>b4cff4e</code> — retro audit + the 6 finding intakes) that aren't on <code>main</code>. They're the source of the 5 folded-in stories. Expected, but worth knowing when you merge.</li>
+<li><b>Activation needs approvals</b> — see §9 (holistic review left <code>planning.approvals</code> empty).</li>
+</ul>
+</div>
+
+<h2><span class="hn">§9</span>Activate when ready (turnkey)</h2>
+<p class="lead">Because holistic review skipped the per-story approval gates, a bare <code>sprint activate</code> will fail its approval guard. This one-liner records your holistic approval for all 25, marks ready, and activates:</p>
+<pre class="cmd"><span class="c"># from repo root, on branch sprint/sprint-2026-06-05-conduct-runnable</span>
+MT=<span class="g">"python3 skills/momentum/scripts/momentum-tools.py"</span>
+<span class="c"># record holistic approval for every planned story</span>
+for s in $(python3 -c <span class="g">"import json;print(' '.join(json.load(open('.momentum/sprints/index.json'))['planning']['stories']))"</span>); do
+  $MT sprint story-approve --slug <span class="g">"$s"</span> --decision approved
+done
+$MT sprint ready
+$MT sprint activate</pre>
+<p style="font-size:13.5px;color:var(--soft)">I deliberately did <b>not</b> run any of this. <code>git push</code> is also held for your approval per discipline.</p>
+
+<h2><span class="hn">§10</span>Commits on the branch (9 ahead of main)</h2>
+<div class="card">
+<div class="commit">
+<span class="h">596921d</span> docs(story): apply AVFL checkpoint corrections to 3 conduct stories<br>
+<span class="h">323458e</span> chore(sprint): assign 6 dependency waves + dev-skills/dev+qa team<br>
+<span class="h">92dbf9c</span> docs(architecture): reconcile specs with conduct decisions (DEC-035/036/037)<br>
+<span class="h">2e55494</span> docs(sprint): coverage plan + adversarial-guard remediation (GUARD_CLEAN)<br>
+<span class="h">db0a0dc</span> docs(sprint): author 20 frozen verification contracts<br>
+<span class="h">dd0045a</span> chore(sprint): register conduct-runnable planning sprint — 20 stories<br>
+<span style="color:var(--soft)">+ the 25-story fold-in commit, and 2 pre-existing retro commits (cabf9f2, b4cff4e) carried on the branch base</span>
+</div>
+</div>
+
+<footer>
+Generated by Momentum sprint-planning · held at ready-to-review · 25 stories · 6 waves · guard CLEAN · AVFL 91/100 ·
+no activation performed.
+</footer>
+
+</div></body></html>
