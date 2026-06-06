@@ -1,0 +1,55 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-planning-reconcile-gherkin-and-specs-rule
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-planning-reconcile-gherkin-and-specs-rule.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run sprint planning in a fresh session against a small set of
+  non-app stories (no user-interface stories among them), let it produce and activate a
+  sprint, then list the contract files it wrote in the sprint's specs/ directory.
+
+  Confirm there is exactly one contract file of record per planned story — no story has both
+  a Gherkin .feature file and a separate contract file (such as a .eval.yaml, .smoke.sh, or
+  .review.md) written for the same slug. In other words, a single glob of specs/ for any one
+  story's slug returns exactly one file, never two.
+
+  Then read the sprint-planning skill's instructions and the story-creation skill's injected
+  guidance and confirm the standing prohibition that "dev agents never access the specs
+  path" has been removed — there is no remaining instruction anywhere in those skills that
+  forbids the developer role from reading contract files in specs/. Confirm this by searching
+  the skill text for any such forbid-access wording and finding none.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-planning-reconcile-gherkin-and-specs-rule.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Exactly one contract of record per non-app story — no duplicate Gherkin file
+    invocation: Run sprint planning against a set of non-app stories, activate the sprint, then list the contract files in the sprint's specs/ directory and group them by story slug.
+    given: A backlog of stories with no user-interface story among them, available to plan.
+    when: Sprint planning runs to activation and writes contract files into specs/.
+    then:
+      - For each planned story, globbing specs/ on that story's slug returns exactly one contract file.
+      - No non-app story has both a Gherkin .feature file and another contract file (.eval.yaml, .smoke.sh, or .review.md) bearing the same slug.
+    pass_criteria: Every planned non-app story resolves to exactly one contract file in specs/, with no second file of record for the same slug.
+    fail_criteria: Any non-app story has two or more contract files for its slug — for example a .feature file alongside a .eval.yaml/.smoke.sh/.review.md.
+
+  - name: Story-slug glob fallback resolves cleanly under the single-contract model
+    invocation: For one planned story, run a glob of the specs/ directory on its slug and count the matches.
+    given: An activated sprint produced by the previous scenario.
+    when: A specs/ glob keyed on a single story's slug is evaluated.
+    then:
+      - The glob returns exactly one file (never zero for a planned story, never more than one).
+    pass_criteria: The slug glob returns a single contract file for the planned story.
+    fail_criteria: The glob returns zero files for a planned story or more than one file for a single slug.
+
+  - name: The "dev never accesses specs/" prohibition is gone from the planning and story-creation skills
+    invocation: Read the sprint-planning skill instructions and the story-creation skill's injected guidance, and search their text for any wording forbidding the developer role from accessing the specs path.
+    given: The sprint-planning skill and the story-creation skill are present in the repository.
+    when: Their instruction text is read and searched for a prohibition against the developer role reading files under specs/.
+    then:
+      - No instruction in the sprint-planning skill forbids the developer role from accessing the specs path.
+      - No injected guidance carried into created stories forbids the developer role from accessing the specs path.
+    pass_criteria: Neither the planning skill nor the story-creation guidance contains any forbid-access wording targeting the specs path for the developer role.
+    fail_criteria: A standing instruction forbidding the developer role from accessing the specs path remains in the planning skill or in the injected story guidance.

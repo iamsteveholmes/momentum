@@ -1,0 +1,55 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-entry-point-command
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-entry-point-command.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, open a fresh session and type the slash command a developer is meant
+  to type to start a sprint build — /momentum:conduct. Confirm it resolves to something real:
+  it should bring up the build orchestrator rather than reporting an unknown or unrecognized
+  command. Confirm the name actually works as typed — that /momentum:conduct (the name the goal
+  and the practice's decisions call this capability) is the one that resolves, not only some
+  other spelling, and that whatever single canonical name is chosen is the one a developer can
+  discover and type. Confirm that once invoked, the thing that comes up is the top-level,
+  in-session sprint build orchestrator (it presents itself as running the build of a sprint's
+  stories end to end), not an unrelated skill. List the available slash commands and confirm
+  conduct now appears among them alongside the other practice commands. There should be no
+  ambiguity where the same typed name brings up two different things.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-entry-point-command.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: The canonical conduct slash command resolves to the build orchestrator
+    invocation: In a fresh session, type the conduct slash command (/momentum:conduct) the way a developer would to start a sprint build.
+    given: A fresh session with the practice's command set available.
+    when: The developer types /momentum:conduct.
+    then:
+      - The command resolves — it does not report an unknown, unrecognized, or unbound command.
+      - What comes up presents itself as the top-level, in-session orchestrator that builds a sprint's stories from start to finish.
+      - The capability is reachable under exactly one canonical typed name, with no second name bringing up a different thing.
+    pass_criteria: Typing /momentum:conduct in a fresh session brings up the in-session sprint build orchestrator without an unknown-command error.
+    fail_criteria: /momentum:conduct reports an unknown or unrecognized command, brings up an unrelated skill, or resolves to nothing.
+
+  - name: Conduct is discoverable in the command listing under its canonical name
+    invocation: In a fresh session, list the available slash commands.
+    given: A fresh session with the practice's command set available.
+    when: The available slash commands are enumerated.
+    then:
+      - A conduct entry appears in the listing alongside the other practice commands.
+      - The listed name matches the name that successfully resolves when typed.
+      - No duplicate or conflicting entry exists that would make the same typed name ambiguous.
+    pass_criteria: The command listing includes a single, unambiguous conduct entry whose name is the one a developer can type to launch the build orchestrator.
+    fail_criteria: No conduct entry appears in the listing, or two entries collide on the same typed name, or the listed name differs from the name that actually resolves.
+
+  - name: The name mismatch is resolved — the goal's name is the one that works
+    invocation: In a fresh session, type the conduct command using the name the goal and the practice's decisions use for this capability.
+    given: A fresh session.
+    when: The developer types the conduct command using the capability's intended name.
+    then:
+      - The intended name resolves to the build orchestrator rather than to nothing.
+      - A developer following the documented goal can launch the orchestrator without guessing an alternate spelling.
+    pass_criteria: The capability launches when invoked under the intended conduct name, with no dead-ends caused by a name mismatch.
+    fail_criteria: The intended conduct name resolves to nothing and only an undocumented alternate spelling works.

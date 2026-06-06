@@ -1,0 +1,92 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-planning-emit-contract-schema
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-planning-emit-contract-schema.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run sprint planning in a fresh session against a small set of
+  stories of mixed kinds (at least one skill story, one rule/hook story, and one
+  specification story), let it produce and activate a sprint, then open the resulting
+  sprint record and the per-story contract files it wrote. Confirm by inspection that:
+
+  Every planned story has its own contract file in the sprint's specs/ directory, and the
+  top of each contract carries a verification-header block whose fields appear in this
+  order — story_slug, verification_method, harness_profile, contract_path,
+  how_dev_self_checks, coverage_disposition, covered_by_scenario, acceptance_criteria_ref,
+  platforms. Confirm verification_method is one single word drawn from a fixed short list
+  (skill-invoke, behavioral-trigger, bash, smoke-ui, curl, document-review) and never a
+  free-text sentence, and that harness_profile is identical to it. Confirm the value chosen
+  matches the kind of story (a skill story reads skill-invoke, a rule/hook story reads
+  behavioral-trigger, a specification story reads document-review). Confirm how_dev_self_checks
+  is present and reads as a plain-language self-check an outside reader could follow.
+
+  Then open the sprint record and confirm each story's assignment carries a contract block
+  with a path, a harness_profile, a coverage_disposition, a covered_by_scenario, and a
+  recorded checksum string, plus a top-level verification_method and a true/false
+  can-merge-independently flag. Recompute the checksum of one contract file yourself and
+  confirm it equals the checksum recorded in the sprint record. Confirm a story with no
+  declared dependency is marked can-merge-independently true. Finally confirm no planned
+  story is missing its contract block — there are as many contract blocks as there are
+  planned stories.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-planning-emit-contract-schema.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Every planned story gets a contract file with an ordered verification header
+    invocation: Run sprint planning against a set of mixed-kind stories, activate the sprint, then inspect the sprint's specs/ directory and each contract file.
+    given: A backlog containing at least one skill-kind story, one rule/hook-kind story, and one specification-kind story available to plan.
+    when: Sprint planning runs to activation and writes per-story contracts and the sprint record.
+    then:
+      - The sprint's specs/ directory contains exactly one contract file per planned story.
+      - Each contract file opens with a verification-header block.
+      - The header fields appear in this order — story_slug, verification_method, harness_profile, contract_path, how_dev_self_checks, coverage_disposition, covered_by_scenario, acceptance_criteria_ref, platforms.
+      - how_dev_self_checks is non-empty and reads as plain-language guidance an outsider could follow.
+    pass_criteria: One contract file exists per planned story, each carries the nine header fields in the stated order, and the self-check field is populated with readable guidance.
+    fail_criteria: Any planned story has no contract file, a header is absent, the fields appear out of order or omit any of the nine, or the self-check field is empty.
+
+  - name: verification_method is a single closed-enum token, equal to harness_profile, and matched to the story kind
+    invocation: Inspect the verification_method and harness_profile values across the produced contracts and the sprint record.
+    given: The activated sprint from the previous scenario with its mixed-kind stories.
+    when: The verification_method and harness_profile fields are read from each contract header and from each assignment in the sprint record.
+    then:
+      - Every verification_method value is exactly one of skill-invoke, behavioral-trigger, bash, smoke-ui, curl, or document-review — a single token, never a sentence or a space-containing phrase.
+      - For each story, harness_profile equals its verification_method.
+      - The skill-kind story reads skill-invoke, the rule/hook-kind story reads behavioral-trigger, and the specification-kind story reads document-review.
+      - The verification_method recorded at the top of each sprint-record assignment matches the verification_method in that story's contract header.
+    pass_criteria: All verification_method values are single closed-enum tokens that match the story kind, harness_profile equals verification_method for every story, and the sprint-record and contract values agree.
+    fail_criteria: Any verification_method is free text or a multi-word phrase, harness_profile differs from verification_method, a value does not match the story kind, or the sprint-record value disagrees with the contract.
+
+  - name: Sprint record carries the full contract block, frozen checksum, and merge-independence flag per story
+    invocation: Open the activated sprint record and inspect each story's assignment, then recompute the checksum of a contract file.
+    given: The activated sprint with its per-story contracts on disk.
+    when: Each story assignment in the sprint record is read and one contract file's checksum is recomputed independently.
+    then:
+      - Each assignment carries a contract block containing a path, a harness_profile, a coverage_disposition, a covered_by_scenario, and a recorded checksum string.
+      - Each assignment carries a top-level verification_method and a boolean can-merge-independently flag.
+      - The independently recomputed checksum of the contract file equals the checksum recorded for that story in the sprint record.
+      - A story with no declared dependency is marked can-merge-independently true.
+    pass_criteria: Every assignment carries the complete contract block plus verification_method and the merge-independence flag, the recorded checksum matches a fresh recomputation, and a dependency-free story is marked independently mergeable.
+    fail_criteria: Any assignment is missing the contract block or any of its fields, the recorded checksum does not match a fresh recomputation, or a dependency-free story is not marked independently mergeable.
+
+  - name: coverage_disposition and covered_by_scenario are denormalized into each contract header
+    invocation: Inspect the coverage_disposition and covered_by_scenario fields in each contract header and confirm they are populated machine-readable values.
+    given: An activated sprint whose stories carry coverage decisions.
+    when: The coverage_disposition and covered_by_scenario fields are read from each contract header.
+    then:
+      - Every contract header has a populated coverage_disposition field holding a discrete value (such as dedicated-run or covered-by-composition), not a prose paragraph.
+      - covered_by_scenario is present in every header, holding either a scenario identifier or an explicit empty/null value.
+    pass_criteria: Every contract header carries a discrete coverage_disposition value and a present covered_by_scenario field across all planned stories.
+    fail_criteria: Any contract header lacks coverage_disposition or covered_by_scenario, or coverage_disposition holds free-form prose rather than a discrete value.
+
+  - name: Contract block count equals planned-story count — no story is left without a contract
+    invocation: Count the planned stories in the sprint record and count the contract blocks, then compare.
+    given: An activated sprint produced by sprint planning.
+    when: The number of planned stories is compared against the number of assignment contract blocks and the number of contract files in specs/.
+    then:
+      - The count of contract blocks in the sprint record equals the count of planned stories.
+      - The count of contract files in specs/ equals the count of planned stories.
+    pass_criteria: Planned-story count, contract-block count, and contract-file count are all equal with no story missing a contract.
+    fail_criteria: Any planned story has no contract block or no contract file, so the three counts are not equal.

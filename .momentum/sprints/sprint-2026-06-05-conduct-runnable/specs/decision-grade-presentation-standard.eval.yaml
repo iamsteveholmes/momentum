@@ -1,0 +1,91 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: decision-grade-presentation-standard
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/decision-grade-presentation-standard.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, exercise each of the practice's live conversational surfaces and read
+  the developer-facing output as a busy reviewer would. For the session greeting, the
+  decision-walk presentation, the assessment findings hand-off, the retro findings digest, and
+  the build's developer-facing report/pause surface, confirm two opposite things hold at the same
+  time. First — TIGHT: each surface stays within a stated, countable limit. The session greeting
+  stays at one to two sentences; lists do not run past their stated bullet ceiling; the
+  decision/headline leads and the supporting detail follows; routine and clean items are collapsed
+  to a line rather than expanded. You should be able to literally count and confirm the limit is
+  respected. Second — COMPLETE: every item you actually have to make a call on carries, right there
+  on the surface, WHAT it is, WHY it matters, and the EVIDENCE behind it — you never have to open a
+  file, scroll back to remember earlier context, or read another document to decide. Then probe the
+  boundary deliberately: confirm that when there is a lot of decision-relevant content, the surface
+  does NOT drop the what/why/evidence to hit its limit — it trims the routine and the clean
+  instead. Tight on the irrelevant; complete on the decision-relevant. If any surface blows past its
+  stated limit, OR if any item you must decide on arrives missing its what, its why, or its
+  evidence, the standard is not yet wired in.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/decision-grade-presentation-standard.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Session greeting stays at its stated brevity while carrying its required signal inline
+    invocation: Start a fresh session in the practice and read the opening session situational report.
+    given: A practice state that includes a current sprint, open ledger counts, and at least one recurring-pattern signal.
+    when: The session opens and produces its one-to-two-sentence situational report.
+    then:
+      - The situational report is no longer than its stated brevity (one to two sentences) — countable and confirmable on its face.
+      - The honest ledger counts and any recurring-pattern signal it must carry are present inline in that same report, not deferred to a file or a follow-up.
+    pass_criteria: The greeting stays within its sentence cap AND the required ledger counts / recurring-pattern signal appear inline in the same short report.
+    fail_criteria: The greeting exceeds its stated sentence count, OR the required counts / recurring-pattern signal are missing from the report and the reader is sent elsewhere to find them.
+
+  - name: Decision-walk presents each option tightly but self-sufficiently
+    invocation: Run the decision-capture surface over a small set of findings and read how each adopt/reject/defer item is presented to the developer.
+    given: A handful of findings to walk for an adopt / reject / defer call.
+    when: Each item is presented to the developer for a decision.
+    then:
+      - Each presented item leads with its decision/headline, with supporting detail following rather than preceding it.
+      - Each decision-relevant item carries its what, its why-it-matters, and its evidence inline on the same surface.
+      - The presentation does not exceed its stated list/bullet ceiling, and routine or clean context is summarized to a line rather than expanded.
+    pass_criteria: Each item is decidable from the surface alone (what + why + evidence present) AND the presentation respects its stated bullet/line ceiling with headline-first ordering.
+    fail_criteria: An item is missing what, why, or evidence and forces the developer to open a file or recall prior context, OR the list runs past its stated ceiling, OR detail precedes the headline.
+
+  - name: Findings hand-off and retro digest stay capped while keeping each finding self-sufficient
+    invocation: Run the assessment findings hand-off and, separately, the retro findings digest, and read each developer-facing output.
+    given: An assessment producing findings and a retrospective producing a findings digest.
+    when: Each produces its developer-facing findings output.
+    then:
+      - Each output stays within its stated per-surface budget (its bullet/line/word ceiling) — confirmable by counting.
+      - Each finding the developer must act on carries what / why-it-matters / evidence inline.
+      - Clean or routine findings are collapsed to a line rather than expanded to full detail.
+    pass_criteria: Both surfaces respect their stated caps AND every actionable finding carries its what/why/evidence inline, with clean items collapsed.
+    fail_criteria: Either surface exceeds its stated cap, OR an actionable finding arrives missing what/why/evidence, OR clean items are expanded instead of collapsed.
+
+  - name: Build developer-facing surface obeys the cap and carries its decision context inline
+    invocation: Run a build to a developer-facing report or pause surface and read what is presented for the developer's call.
+    given: A build that reaches a developer-facing report or pause-and-ask surface.
+    when: The developer-facing surface is produced.
+    then:
+      - The surface stays within its stated section/budget cap, collapsing routine material and summarizing clean items to a line.
+      - Any item requiring a developer decision carries what / why-it-matters / evidence inline on that surface.
+    pass_criteria: The build surface respects its stated cap AND every decision item on it carries what/why/evidence inline.
+    fail_criteria: The surface exceeds its stated cap, OR a decision item is presented without its what, why, or evidence and sends the developer elsewhere to decide.
+
+  - name: Under heavy decision-relevant load, completeness wins over the cap
+    invocation: Drive any of the live surfaces with an input that yields many genuinely decision-relevant items, and observe what the surface trims.
+    given: An input that produces a large volume of decision-relevant content alongside routine and clean items.
+    when: The surface is produced under that load.
+    then:
+      - The surface trims the routine and the clean material to stay readable.
+      - The surface does NOT drop the what / why-it-matters / evidence of any decision-relevant item to fit its budget.
+      - Every decision-relevant item remains self-sufficient on the surface even when the budget is under pressure.
+    pass_criteria: Concision is applied to routine/clean material while every decision-relevant item keeps its full what/why/evidence — tight on the irrelevant, complete on the decision-relevant.
+    fail_criteria: The surface drops or truncates a decision-relevant item's what, why, or evidence in order to hit its budget, forcing the developer off-surface to decide.
+
+  - name: Doing more work does not earn a longer presentation
+    invocation: Run the same surface twice with the work-depth setting low and then high, and compare the size of the developer-facing output.
+    given: A surface whose underlying work-depth setting can be raised so it does more analysis.
+    when: The surface is produced at a low work-depth and again at a high work-depth over comparable input.
+    then:
+      - The developer-facing output stays within the same stated cap at high work-depth as at low work-depth.
+      - The deeper run does not widen its presentation merely because more work was done — added depth shows as better-chosen content, not a longer surface.
+    pass_criteria: Output verbosity is governed by the stated cap independent of work-depth — the high-depth run respects the same ceiling as the low-depth run.
+    fail_criteria: Raising the work-depth produces a longer developer-facing surface that exceeds the cap the low-depth run respected.

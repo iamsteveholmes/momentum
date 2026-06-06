@@ -1,0 +1,90 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-simplify-and-convergence-questions
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-simplify-and-convergence-questions.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, invoke the in-session build orchestrator skill in a fresh session and
+  read its per-story build workflow end to end as a plain reader. Confirm that the optional
+  post-fix cleanup pass is no longer inert prose: there is now a concrete, runnable instruction
+  that actually triggers the cleanup pass, captures whatever it produces, and feeds that result
+  back into the build — the same way the mid-flight fix step and the re-check step are concrete
+  runnable steps, not just descriptions. Read the cleanup pass beside the fix step and the
+  re-check step and confirm all three are the same kind of executable step, not one describing
+  and two doing. Then confirm the workflow no longer leaves the convergence questions open: it
+  states exactly when the cleanup pass runs (a single stated rule — every story, a size
+  threshold, or on demand — not several conflicting hints); it states one single canonical
+  number for how many times a retry may be attempted before giving up, and that number is not
+  contradicted by a different number elsewhere in the workflow; it names who or what is allowed
+  to request the deeper review level and on what signal; and it states, for a finding that was
+  approved-as-is rather than fixed, exactly which final state the story lands in, with no
+  reachable end-state left undefined. Finally confirm none of these resolutions reopened a human
+  question on the routine build path — a routine run still reaches the end without the
+  orchestrator asking you anything mid-run.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-simplify-and-convergence-questions.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: The optional cleanup pass is a runnable step, not inert prose
+    invocation: Invoke the in-session build orchestrator skill in a fresh session and read its per-story build workflow end to end.
+    given: A per-story build workflow that contains a mid-flight fix step, an optional post-fix cleanup pass, and a re-check step.
+    when: The cleanup pass is read side by side with the fix step and the re-check step.
+    then:
+      - The cleanup pass contains a concrete, runnable instruction that actually triggers the cleanup work — not a sentence merely describing that such a pass could happen.
+      - The cleanup pass captures whatever the cleanup produces and feeds that result back into the build flow.
+      - The cleanup pass is the same kind of executable step as the fix step and the re-check step, so all three describe an action that runs rather than one describing while the others act.
+    pass_criteria: The cleanup pass is expressed as an executable, output-capturing, fed-back step on par with the fix and re-check steps.
+    fail_criteria: The cleanup pass is descriptive prose only — it states that cleanup may occur but contains no instruction that triggers it, captures nothing, and feeds nothing back, while the fix and re-check steps remain concrete.
+
+  - name: A single stated rule governs when the cleanup pass runs
+    invocation: Read the build workflow for the condition under which the optional cleanup pass executes.
+    given: The build workflow as written, which previously left the cleanup-pass placement unresolved.
+    when: The workflow is inspected for when the cleanup pass is triggered.
+    then:
+      - Exactly one trigger rule for the cleanup pass is stated (for example every story, a size/diff threshold, or on demand).
+      - No second, conflicting statement of when the cleanup pass runs appears elsewhere in the workflow.
+    pass_criteria: One unambiguous cleanup-pass trigger rule is stated and not contradicted anywhere else in the workflow.
+    fail_criteria: The placement is still left open, or two or more conflicting statements of when the cleanup pass runs coexist.
+
+  - name: One canonical retry bound, not several contradictory ones
+    invocation: Read the workflow for every place that states how many times a retry or fix attempt may be made before giving up.
+    given: A workflow that previously stated different retry limits in different places with no single source.
+    when: All retry/fix-attempt limits in the workflow are collected and compared.
+    then:
+      - A single canonical retry bound is stated as the source of truth for how many attempts are allowed before the loop gives up.
+      - Every other mention of a retry or fix-attempt limit agrees with that canonical bound rather than naming a different number.
+    pass_criteria: There is one canonical retry bound and no place in the workflow contradicts it with a different number.
+    fail_criteria: Two or more different retry/fix-attempt limits remain in the workflow with no single reconciling source.
+
+  - name: The deeper-review opt-in has a named owner and trigger
+    invocation: Read the workflow for how the deeper / higher-rigor review level gets requested.
+    given: A workflow whose deeper-review level previously had no party authorized to set it.
+    when: The workflow is inspected for who or what may request the deeper review and on what signal.
+    then:
+      - The workflow names who or what is permitted to request the deeper review level.
+      - The workflow states the signal or condition on which that deeper review is requested.
+    pass_criteria: The deeper-review level has both a named requesting party and a stated triggering signal — it is no longer unassigned.
+    fail_criteria: The deeper-review level remains with no party authorized to request it or no stated trigger.
+
+  - name: Every reachable story end-state is defined, including the approved-as-is case
+    invocation: Read the workflow's story terminal states and trace the path for a finding that is approved as-is rather than fixed.
+    given: A workflow that previously left a terminal story state unreachable / undefined for the approved-as-is path.
+    when: The terminal states are enumerated and the approved-as-is path is traced to its end state.
+    then:
+      - For a finding approved as-is rather than fixed, the workflow states exactly which final state the story lands in.
+      - No terminal story state named by the workflow is left with no defined path that reaches it.
+    pass_criteria: The approved-as-is path lands in a stated terminal state and no named terminal state is unreachable.
+    fail_criteria: The approved-as-is outcome is undefined, or the workflow names a terminal state that nothing can ever transition into.
+
+  - name: Resolutions do not reopen a human question on the routine path
+    invocation: Walk a routine build run (only ordinary, low-stakes work) from start through the final gate after the convergence resolutions are in place.
+    given: A sprint whose stories produce only routine findings during the build.
+    when: The build runs from invocation to completion.
+    then:
+      - The cleanup-pass trigger, retry bound, deeper-review owner, and end-state resolutions introduce no new mid-run developer prompt.
+      - A routine run still reaches the final gate with the orchestrator asking the developer nothing in between.
+    pass_criteria: A routine run completes with only its run-start and end-gate touchpoints; none of the convergence resolutions inserts a mid-run question.
+    fail_criteria: Any convergence resolution causes the build to pause and ask the developer a question on the routine path.

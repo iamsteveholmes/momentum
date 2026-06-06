@@ -1,0 +1,53 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-register-skill-and-refresh-cache
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-register-skill-and-refresh-cache.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, refresh the practice to its latest published version and start a
+  genuinely fresh session — not a reused one. In that fresh session, confirm the conduct build
+  orchestrator now shows up in the list of skills the session can actually invoke, sitting
+  alongside the other practice skills (assessment, decision, retro, triage, and the like). It
+  should no longer be absent from that live list. Then invoke it both ways a developer can:
+  directly by its skill name, and through the normal skill-invocation path — and confirm each
+  brings it up and runs it rather than reporting that no such skill is available. Confirm the
+  orchestrator loads cleanly with no missing-file or malformed-definition errors, and that it
+  presents itself as a developer-invocable capability (a developer is allowed to call it
+  directly), not an internal-only helper. If it still fails to appear in the live skill list, the
+  refresh has not taken effect and you are not done.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-register-skill-and-refresh-cache.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Conduct appears in the live invocable-skill list after a refresh and fresh session
+    invocation: After refreshing the practice to its latest version, start a fresh session and inspect the list of skills the session can invoke.
+    given: The practice has been refreshed to its latest published version and a brand-new session has been started.
+    when: The set of skills available to invoke in the session is enumerated.
+    then:
+      - The conduct build orchestrator is present in the live list of invocable skills.
+      - It appears alongside the other developer-facing practice skills, not absent as it previously was.
+    pass_criteria: A fresh post-refresh session lists the conduct orchestrator among the skills it can invoke.
+    fail_criteria: The conduct orchestrator is missing from the live invocable-skill list in a fresh post-refresh session.
+
+  - name: Conduct is invocable directly and via the normal skill-invocation path
+    invocation: In the fresh post-refresh session, invoke the conduct orchestrator by its skill name and also through the normal skill-invocation path.
+    given: A fresh post-refresh session in which conduct is listed as invocable.
+    when: The conduct orchestrator is invoked both directly by name and through the standard skill-invocation path.
+    then:
+      - Each invocation path brings up and runs the orchestrator rather than reporting that no such skill exists.
+      - The orchestrator loads cleanly with no missing-file or malformed-definition errors.
+    pass_criteria: Both invocation paths successfully launch the conduct orchestrator without a "no such skill" or load error.
+    fail_criteria: Either path reports that the skill is unavailable, or the orchestrator errors on load.
+
+  - name: Conduct presents as a developer-invocable capability
+    invocation: Invoke the conduct orchestrator as a developer and observe whether direct developer invocation is permitted.
+    given: A fresh post-refresh session.
+    when: A developer attempts to invoke the conduct orchestrator directly.
+    then:
+      - The orchestrator accepts direct developer invocation rather than rejecting it as internal-only.
+      - It presents itself as a capability a developer is intended to call directly.
+    pass_criteria: Direct developer invocation of conduct is accepted and the capability identifies itself as developer-facing.
+    fail_criteria: The orchestrator refuses direct developer invocation or is reachable only as an internal-only helper.

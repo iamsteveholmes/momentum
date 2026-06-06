@@ -1,0 +1,71 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: contract-seam-stories-two-sided-review-scope
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/contract-seam-stories-two-sided-review-scope.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, plan a sprint that includes a story which defines a hand-off contract
+  between two different agents — a story where one side produces a record and another side
+  consumes it — and watch how that story is scoped and gated, versus an ordinary single-artifact
+  story.
+
+  Confirm the contract/seam story's review scope names BOTH sides of the hand-off — the producer
+  and the consumer — not just the one artifact the story most obviously creates. Then run the
+  per-story gate for that story two ways. First, with both sides agreeing on the shape of the
+  handed-off record (the same field names, the same nesting), confirm the gate passes. Second,
+  deliberately make the two sides disagree on the record's shape — for example, one side writes
+  a field at the top level while the other side reads it nested one level down, or the two sides
+  use different names for the same field — and confirm the gate FAILS and names the mismatch as
+  a cross-side field-shape incompatibility, rather than passing because the produced artifact
+  looked fine on its own.
+
+  Confirm an ordinary story that does not define a two-agent contract is still scoped and gated
+  to its single artifact and is not forced into two-sided review. Run these yourself; do not
+  delegate the judgment.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/contract-seam-stories-two-sided-review-scope.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A contract/seam story is scoped to both producer and consumer sides
+    invocation: Plan a sprint containing a story that defines a hand-off contract between two different agents (one produces a record, another consumes it), then inspect how that story's review scope is recorded.
+    given: A story whose subject is a contract between two agents — a producer that writes a record and a consumer that reads it.
+    when: The story is planned and its recorded review scope is inspected.
+    then:
+      - The story's review scope names both sides of the hand-off — the producing side and the consuming side.
+      - The review scope is not limited to the single artifact the story most obviously creates.
+    pass_criteria: The contract/seam story declares both the producer side and the consumer side as its review scope.
+    fail_criteria: The story's review scope names only one side or only one artifact, omitting either the producer or the consumer of the contract.
+
+  - name: The per-story gate passes when both sides agree on the record's field shape
+    invocation: Run the per-story gate for a contract/seam story whose producer and consumer agree on the handed-off record's field names and nesting, and read the gate result.
+    given: A contract/seam story where the producing side and consuming side use the same field names and the same nesting for the handed-off record.
+    when: The per-story gate runs across both sides.
+    then:
+      - The gate checks the handed-off record's field shape across both the producer and the consumer.
+      - The gate passes, finding the two sides compatible.
+    pass_criteria: With both sides agreeing on field names and nesting, the cross-side field-shape check passes.
+    fail_criteria: The gate ignores one side, checks only the produced artifact, or fails despite the two sides being shape-compatible.
+
+  - name: The per-story gate fails on a cross-side field-shape mismatch
+    invocation: Run the per-story gate for a contract/seam story whose producer and consumer disagree on the record's shape (e.g., a field written at the top level but read nested, or differing names for the same field), and read the gate result.
+    given: A contract/seam story where one side writes a field at a different nesting level — or under a different name — than the other side reads it.
+    when: The per-story gate runs across both sides.
+    then:
+      - The gate fails.
+      - The reported reason names the mismatch as a cross-side field-shape incompatibility between producer and consumer.
+      - The gate does not pass on the basis that the produced artifact looked correct in isolation.
+    pass_criteria: A producer/consumer field-shape mismatch causes the gate to fail with the mismatch identified as a cross-side incompatibility.
+    fail_criteria: The gate passes despite the mismatch, or fails without identifying the producer/consumer field-shape incompatibility as the cause.
+
+  - name: An ordinary single-artifact story is not forced into two-sided review
+    invocation: Plan a sprint containing an ordinary story that does not define a contract between two agents, and inspect its review scope and gate.
+    given: An ordinary story whose change is a single artifact and which does not define a hand-off contract between two agents.
+    when: The story is planned and gated.
+    then:
+      - The story's review scope remains its single artifact.
+      - The story is not required to declare a producer and consumer or to undergo a cross-side field-shape check.
+    pass_criteria: A non-contract story keeps single-artifact scope and is gated without a forced two-sided producer/consumer check.
+    fail_criteria: An ordinary single-artifact story is forced into two-sided review scope or blocked for lacking a producer/consumer pairing it never had.
