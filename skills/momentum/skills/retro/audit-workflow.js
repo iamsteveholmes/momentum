@@ -154,9 +154,9 @@ const LENSES = [
   },
   {
     key: 'execution',
-    files: ['agent-summaries.jsonl', 'errors.jsonl'],
+    files: ['agent-summaries.jsonl', 'errors.jsonl', 'build-results.jsonl', 'finding-cards.json'],
     focus:
-      'duplication (near-identical first prompts), error recovery, tool efficiency (high tool_results vs low assistant_turns), story iteration counts, and abandoned agents (< 3 assistant turns). Do NOT flag single-turn consolidators (single turn + non-empty output) as abandoned — that is correct behavior',
+      'duplication (near-identical first prompts), error recovery, tool efficiency (high tool_results vs low assistant_turns), story iteration counts, and abandoned agents (< 3 assistant turns). Do NOT flag single-turn consolidators (single turn + non-empty output) as abandoned — that is correct behavior. For conduct/build sprints, build-results.jsonl (per-story build outcomes) and finding-cards.json (the quality ledger: per-story findings + dispositions) ARE the primary execution record — mine them for fix-cycle convergence, escalation thrash, qa/freeze outcomes, and bookkeeping defects',
   },
   {
     key: 'review',
@@ -166,9 +166,9 @@ const LENSES = [
   },
   {
     key: 'efficiency',
-    files: ['agent-summaries.jsonl'],
+    files: ['agent-summaries.jsonl', 'build-results.jsonl'],
     focus:
-      'turn/tool economy across the subagent population: redundant work, agents independently re-authoring the same helper, and high-cost low-yield agents',
+      'turn/tool economy across the subagent population: redundant work, agents independently re-authoring the same helper, and high-cost low-yield agents. For build sprints, use build-results.jsonl to spot stories that needed many fix passes',
   },
   {
     key: 'coordination',
@@ -181,7 +181,7 @@ const LENSES = [
 const lensThunks = LENSES.map((l) => () =>
   agent(
     `You are the ${l.key} lens auditor for the ${sprint_slug} retrospective.
-Read these extract files under ${audit_dir}: ${l.files.join(', ')}.
+Read these extract files under ${audit_dir} (skip any that are absent or empty — build-* artifacts only exist for conduct/build sprints): ${l.files.join(', ')}.
 ${LARGE_FILE}
 
 Investigate: ${l.focus}.
