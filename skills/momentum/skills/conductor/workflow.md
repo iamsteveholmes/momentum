@@ -1246,10 +1246,12 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         — The Conductor spawns a directed fixer (individual-agent) scoped to F: fix the integration defect.
           The fixer returns a disposition: fixed | dismissed (with non-empty rationale) | triaged-out.
           The Conductor commits any fix applied by the fixer:
-            `git -C sprint/{{sprint_slug}} add -u &amp;&amp; git commit -m "fix(e2e): auto-fix {F.summary}"`
+            `git checkout sprint/{{sprint_slug}}`
+            `git add -u && git commit -m "fix(e2e): auto-fix {F.summary}"`
           Record the disposition in {{e2e_findings}}:
             F.disposition = the fixer's returned value ("fixed" | "dismissed" | "triaged-out").
             If "dismissed": also set F.dismissal_rationale = fixer-returned rationale (non-empty required).
+            If "triaged-out": invoke momentum:triage to spin a backlog stub for F (per finding-schema Rule 4 — triaged-out findings are not silently dropped). Record stub slug in F.triage_stub_slug.
           Append to {{build_log}}: { phase: "e2e", event: "e2e-finding-auto-fixed", story_slug: F.story_slug, summary: F.summary, disposition: F.disposition }
 
       CASE F.stakes_class != "routine" (stakes-class finding):
@@ -1292,6 +1294,17 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
   <step n="5" goal="Single human end-gate — the one mandatory developer acceptance point for the sprint build">
     <note>This is Touchpoint 2 — the only mandatory human acceptance gate in the entire build. It is unambiguously last: Phase 5 runs after E2E completes, and no second mandatory acceptance gate follows it. The end-gate report organizes findings by user-facing functionality (DEC-035 D6). Stakes-class items appear as expanded decision cards requiring explicit acknowledgment (DEC-036 D4). Dismissed findings appear in a "Dismissed / not-actioned" section with rationale (DEC-036 D3). The Approve control is not pre-checked (DEC-036 D4 anti-rubber-stamp).</note>
+
+    <action>Derive render variables for the end-gate report template:
+      Bind {{e2e_stakes_findings}}    = [f in {{end_gate_escalations}} where f.source == "e2e-validator"]
+      Bind {{e2e_routine_findings}}   = [f in {{e2e_findings}} where f.stakes_class == "routine"]
+      Bind {{e2e_routine_fixed}}      = count([f in {{e2e_routine_findings}} where f.disposition == "fixed"])
+      Bind {{e2e_routine_dismissed}}  = count([f in {{e2e_routine_findings}} where f.disposition == "dismissed"])
+      Bind {{e2e_passed}}             = the "passed" field from the {{build_log}} entry with phase == "e2e"
+      Bind {{e2e_failed}}             = the "failed" field from that same build_log entry
+      Bind {{e2e_blocked}}            = the "blocked" field from that same build_log entry
+      Note: the phase-4 summary record (step 4.4) is the authoritative source for passed/failed/blocked counts.
+    </action>
 
     <action>Compile the end-gate report from {{build_log}}, {{avfl_findings}}, {{e2e_findings}}, and {{end_gate_escalations}}:
       - Organize by user-facing functionality (not by story or implementation detail)
