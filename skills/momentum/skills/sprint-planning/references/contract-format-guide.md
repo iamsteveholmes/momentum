@@ -16,7 +16,7 @@ Per-change-type authoring rules for frozen verification contracts written during
 | `research-spike` | `.review.md` | `document-review` |
 | `app-ui` | `.feature` | `smoke` |
 | `agent-definition` | `.eval.yaml` | `skill-invoke` |
-| `backend` | `.smoke.sh` | `bash` |
+| `backend` | `.smoke.sh` | `curl` |
 | `config-structure` | `.review.md` | `document-review` |
 
 ### Multi-Change-Type Precedence
@@ -69,9 +69,12 @@ acceptance_criteria_ref: .momentum/stories/<story-slug>.md#acceptance-criteria
 platforms: [host]
 ```
 
-**For Markdown contracts** (`.trigger.md`, `.review.md`), the header is a YAML front-matter block:
+**For Markdown contracts** (`.trigger.md`, `.review.md`), the header is a YAML front-matter block
+prefixed with the `# === VERIFICATION HEADER (Part A) ===` marker line so the dev agent can
+detect it:
 
 ```markdown
+# === VERIFICATION HEADER (Part A) ===
 ---
 story_slug: <story-slug>
 verification_method: <driver-token>
@@ -115,6 +118,16 @@ platforms: [host]
 | `covered_by_scenario` | 7 | `null` for dedicated-run; name of the integration scenario from `coverage-plan.md` for covered-by-composition |
 | `acceptance_criteria_ref` | 8 | Path and anchor to the story's ACs in its markdown file |
 | `platforms` | 9 | List of platforms where verification runs (typically `[host]`; may include `android`, `ios`, `web`) |
+
+---
+
+---
+
+> **Note — Part-A header not shown in examples below.**
+> Every contract file must open with the mandatory Part-A header defined in
+> [Mandatory Verification Header (Part A)](#mandatory-verification-header-part-a) above.
+> The per-type examples in this section show **Part-B body content only** — the Part-A
+> header block is prepended before any of this body content in the actual contract file.
 
 ---
 
@@ -182,7 +195,7 @@ scenarios:
 
 ---
 
-## script-code / script-cli / backend → `.smoke.sh`
+## script-code / script-cli → `.smoke.sh`
 
 ```bash
 #!/usr/bin/env bash
@@ -213,6 +226,53 @@ echo "PASS"
 - Internal data structures
 - File paths that are not public interface paths
 - Internal implementation choices
+
+---
+
+## backend → `.smoke.sh` (curl driver)
+
+Backend HTTP services are verified by exercising their endpoints via `curl`. The harness driver
+is `curl` — NOT `bash`. This aligns with `verification-standard.md` §1 and
+`momentum/verification-harness.json` `driver_bindings.curl`.
+
+```bash
+#!/usr/bin/env bash
+# {story-slug} smoke contract
+# Harness profile: curl
+#
+# Invocation:
+#   Run this script against a locally running instance of the service.
+#
+# Expected: [brief description of expected HTTP behavior]
+
+set -euo pipefail
+
+BASE_URL="${BASE_URL:-http://localhost:8080}"
+
+# Exercise endpoint
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/[path]")
+
+# Assert: observable HTTP response
+[ "$STATUS" = "200" ] || {
+  echo "FAIL: expected HTTP 200 but got: $STATUS"
+  exit 1
+}
+
+BODY=$(curl -s "$BASE_URL/[path]" -d '[sample payload]' -H 'Content-Type: application/json')
+
+echo "$BODY" | grep -q "[expected response pattern]" || {
+  echo "FAIL: expected [what] in response body but got: $BODY"
+  exit 1
+}
+
+echo "PASS"
+```
+
+**Do NOT include:**
+- Internal service implementation details
+- Database query internals
+- Internal function or handler names
+- File paths that are not part of the public HTTP interface
 
 ---
 
@@ -259,6 +319,32 @@ not an internal reference]
 This is a Gherkin feature file. It follows all the rules in `skills/momentum/references/gherkin-template.md`.
 
 The Step 3.5 contract for app-ui stories is the canonical `.feature` — Step 4 (Gherkin spec generation) must NOT overwrite it. Step 4 treats an existing `.feature` in `specs/` as already authored and skips that story.
+
+**Part-A header for `.feature` contracts** — use Gherkin `#`-comment lines at the top of the file,
+before the `Feature:` declaration:
+
+```gherkin
+# === VERIFICATION HEADER (Part A) ===
+# story_slug: <story-slug>
+# verification_method: smoke
+# harness_profile: smoke
+# contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.feature
+# how_dev_self_checks: Run `maestro test <story-slug>.feature` and observe all scenarios pass.
+# coverage_disposition: dedicated-run | covered-by-composition
+# covered_by_scenario: null | "<scenario name from coverage-plan.md>"
+# acceptance_criteria_ref: .momentum/stories/<story-slug>.md#acceptance-criteria
+# platforms: [host]
+
+Feature: <feature name>
+  As a <user role>
+  I want <goal>
+  So that <benefit>
+
+  Scenario: <scenario name>
+    Given <observable precondition>
+    When  <user action>
+    Then  <observable outcome>
+```
 
 ---
 
