@@ -482,7 +482,7 @@ Ready to begin?</output>
         Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked).
           [NOTE: "blocked" is Conductor-internal-only, used when retry budget is exhausted. It is NOT in the canonical four-value disposition set (fixed | dismissed | triaged-out | escalated) defined by finding-schema.md. Before blocked findings reach the end-gate report or any schema consumer, they are treated as escalated findings (the canonical catch-all for findings that cannot be fixed, dismissed, or triaged-out per finding-schema.md §73). The triage spin-out path for blocked findings serves the same routing purpose as the escalated path.]
         Bind {{end_gate_escalations}} = [] — escalated findings routed to end-gate-expanded tier (held for Phase 5).
-          [HOLLOW: {{end_gate_escalations}} is written here and emitted in the pipeline signal payload but NOT yet consumed by the end-gate report (step 5). Wiring {{end_gate_escalations}} into the step 5 decision-card section ({{stakes_findings}}) is owned by a downstream end-gate-rendering story. This dead-end is intentional and traceable — it is not silent.]
+          [WIRED: {{end_gate_escalations}} is written here, emitted in the pipeline signal payload, and consumed by the end-gate report at step 5. Step 5 merges these per-story escalations with AVFL and E2E escalation leftovers into {{stakes_findings}} — the decision-card section of the HTML report. Each entry must carry: finding_id, stakes_class, summary, evidence, suggested_fix. These fields populate the decision cards. See references/endgate-report-renderer.md for the full data contract and rendering spec.]
         Bind {{mid_flight_escalations}} = [] — escalated findings accumulated for single dispatch to step 2.F (the shared-primitive escalation hook).
       </action>
 
@@ -1201,88 +1201,73 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
   <!-- ═══════════════════════════════════════════════════════════ -->
 
   <step n="5" goal="Single human end-gate — the one mandatory developer acceptance point for the sprint build">
-    <note>This is Touchpoint 2 — the only mandatory human acceptance gate in the entire build. It is unambiguously last: Phase 5 runs after E2E completes, and no second mandatory acceptance gate follows it. The end-gate report organizes findings by user-facing functionality (DEC-035 D6). Stakes-class items appear as expanded decision cards requiring explicit acknowledgment (DEC-036 D4). Dismissed findings appear in a "Dismissed / not-actioned" section with rationale (DEC-036 D3). The Approve control is not pre-checked (DEC-036 D4 anti-rubber-stamp).</note>
+    <note>This is Touchpoint 2 — the only mandatory human acceptance gate in the entire build. It is unambiguously last: Phase 5 runs after E2E completes, and no second mandatory acceptance gate follows it. The end-gate report is a self-contained HTML file that organizes findings by user-facing functionality (DEC-035 D6). Stakes-class items appear as expanded decision cards requiring explicit acknowledgment (DEC-036 D4). Dismissed findings appear in a "Waved off" section with rationale (DEC-036 D3). The Approve control is not pre-checked (DEC-036 D4 anti-rubber-stamp). Full rendering spec: references/endgate-report-renderer.md.</note>
 
-    <action>Compile the end-gate report from {{build_log}}, {{avfl_findings}}, and {{e2e_results}}:
-      - Organize by user-facing functionality (not by story or implementation detail)
-      - Routine findings section: auto-fixed items (what changed + what was dismissed with rationale)
-      - Stakes-class section (if any): expanded decision cards — one per finding — requiring explicit developer acknowledgment before Approve enables
-      - Dismissed / not-actioned section: findings the auto-fix loop dismissed, each with rationale
-      - Mid-flight escalations section (if any): findings that were escalated during the build, with disposition recorded
-      - Quarantined stories section (if any): from {{build_log}} entries where outcome == "quarantined";
-        surface as informational — the story branch is preserved and the conflict detail is recorded;
-        these are stories that exhausted the 3-attempt merge bound and could not be integrated this sprint;
-        no developer action is required during the report itself; quarantined stories are surfaced for
-        post-sprint follow-up (create backlog stories or manually resolve the conflict)
-      - Contract-integrity-stops section (if any): from {{contract_integrity_stops}} directly (a dedicated collection —
-        not filtered from {{escalations}}); surface as informational — no developer action required during the report;
-        these are stories that need follow-up because their verification contract fingerprint did not match the
-        frozen_sha256 recorded at assignment
-      - E2E summary: scenarios passed, failed, blocked
+    <!-- ── Assemble {{stakes_findings}} from all three escalation sources ── -->
+
+    <action>Assemble {{stakes_findings}} — the full set of escalated decisions requiring human acknowledgment:
+      Source 1 — Per-story fix-loop escalations (step 2.S3):
+        Collect ALL entries from {{end_gate_escalations}} (written by every story's fix loop).
+        Each entry carries: finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug.
+      Source 2 — Post-merge AVFL escalations (Phase 3):
+        From {{avfl_findings}}: filter to entries where stakes_class != "routine" AND disposition in { "escalated", "residual" }.
+        For each, carry: finding_id (or generate one), stakes_class, summary, evidence, suggested_fix (from recommended_action if present), source:"avfl".
+      Source 3 — E2E failed/stakes scenarios (Phase 4):
+        From {{e2e_results}}.failed_scenarios: include scenarios where the failure_reason indicates a stakes-class behavioral gap.
+        For each, carry: finding_id (generate as "e2e-{scenario_name}"), stakes_class, summary (the scenario name in plain language), evidence (failure_reason), suggested_fix.
+      Bind {{stakes_findings}} = concat(Source 1, Source 2, Source 3), deduplicated by finding_id.
+      If {{stakes_findings}} is empty: the build is clean; the gate can be approved without any decision cards.
     </action>
 
-    <output>## Conductor End-Gate — Sprint `{{sprint_slug}}`
+    <action>Assemble supporting report variables:
+      {{routine_auto_fixed_count}} = count of findings with disposition == "fixed" across {{avfl_findings}} and all per-story {{finding_dispositions}} records in {{build_log}}.
+      {{dismissed_findings}}       = entries with disposition == "dismissed" (must each carry dismissal_rationale; reject any without one and surface as a Conductor warning in {{build_log}}).
+      {{stories_built_count}}      = count of entries in {{merged}}.
+      {{blocked_stories}}          = stories never added to {{merged}} (quarantined, integrity-stopped, fix-budget-exhausted, or mid-flight-aborted); derive from {{build_log}} events.
+      {{quarantined_stories}}      = subset of {{blocked_stories}} where outcome == "quarantined" in {{build_log}}.
+      {{contract_integrity_stops}} = from Conductor in-memory state (step 2.2 integrity-check path).
+      {{mid_flight_escalations}}   = escalations already raised to the developer during the build (informational only in the end-gate report).
+      {{high_risk_divergences}}    = per-story finding records from {{build_log}} where disposition was initially "fixed" (auto-fixed after review) AND severity in { blocker, critical, major } — these are the consequential divergences that were caught and resolved; they populate §03 of the report.
+    </action>
 
-**Stories built:** {{sprint_stories | length}}
-**AVFL findings:** {{avfl_findings_count}} ({{routine_count}} routine, {{stakes_count}} stakes-class)
-**E2E:** {{e2e_passed}} passed / {{e2e_failed}} failed / {{e2e_blocked}} blocked
+    <!-- ── Build the self-contained HTML end-gate report ── -->
 
----
+    <action>BUILD THE END-GATE REPORT as a self-contained HTML file at `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`.
 
-### What Changed (by user-facing area)
-{{build_summary_by_functionality}}
+      Rendering authority: references/endgate-report-renderer.md (full data contract, CSS tokens, section spec, decision-card markup, gate JavaScript, and voice rules).
+      Voice authority: _bmad-output/planning-artifacts/conduct-endgate-report-format-and-voice.md (the canonical Format & Voice spec).
+      Bar: .momentum/handoffs/sprint-2026-06-02-conduct-core-hitl-report.html (the worked example; reproduce its structure and voice, not its sprint-specific content).
 
-### Auto-fix Loop — What Was Fixed
-{{auto_fixed_summary}}
+      The report MUST contain all eight sections in fixed order:
+        HERO    — metrics strip: stories built · high-risk divergences caught · decisions-for-you count · auto-fixed count · waved-off count · blocked/broken count.
+        §01     — What shipped: before/after plain terms, concrete new capabilities, one-line completeness caveat linking to §06.
+        §02     — What each piece is for: one plain paragraph per story (job + guarantee + what breaks without it); each carries a "Review this work item" expand containing: (1) verification first — what had to be true + how it was checked + honest inspection-vs-execution note + result; (2) architectural rationale with named decision/spec references + files changed; (3) actual diff in a collapsed <pre class="diff">; (4) visual evidence for any UI item (data-URI screenshots, or explicit gap note).
+        §03     — Where it diverged: {{high_risk_divergences}} told as 5-beat risk narratives (per renderer §7), scariest-first, collapsible <details class="risk"> cards; routine excluded entirely.
+        §04     — The decision(s) for you: one <div class="decision"> card per entry in {{stakes_findings}}; if {{stakes_findings}} is empty, render "No decisions required — this build raised no stakes-class items." No card is blank; each states in plain language: what the decision is about, what is at stake, options with trade-offs, and a recommendation. No option pre-selected. No acknowledge checkbox pre-checked.
+        §05     — Waved off & routine: {{dismissed_findings}} as a table (what flagged | why safe to leave); {{routine_auto_fixed_count}} as a single count sentence — NOT itemized.
+        §06     — How done is this, really? Two tables: live-vs-hollow. Explicit "what approving actually does" callout. If the sprint is a partial slice, state it plainly.
+        §07     — Merge & push preview: commits/diffstat; exact approve sequence; "push is a separate confirmation."
+        GATE    — Single control: Approve / Request Changes; copy-decision-as-prompt textarea; approve <button> disabled until every §04 card has been acknowledged AND has a selection (per renderer §6 paint() logic); if {{stakes_findings}} is empty, approve enables after gate choice is made (no forcing function for a clean build).
 
-### Auto-fix Loop — Dismissed / Not-Actioned
-{{dismissed_summary}}
-<!-- Each dismissed item includes: finding, rationale for dismissal, disposition: dismissed -->
+      Informational-only sections (render if non-empty, no developer action required):
+        Mid-flight escalations: {{mid_flight_escalations}} — findings already raised during the build, with their recorded disposition.
+        Quarantined stories: {{quarantined_stories}} — branches not merged; preserved; post-sprint follow-up.
+        Contract-integrity stops: {{contract_integrity_stops}} — stories not verified due to fingerprint mismatch.
 
-{{#if stakes_findings}}
-### Stakes-Class Findings — Requires Explicit Acknowledgment
-<!-- These findings were held out of silent auto-fix per DEC-036 D2. Each requires acknowledgment before Approve enables. -->
-{{#each stakes_findings}}
-**[{{stakes_class}}]** {{file}}: {{description}}
-  - Evidence: {{evidence}}
-  - Recommended action: {{recommended_action}}
-  - Acknowledge: [ ] Yes, I have reviewed this finding
-{{/each}}
-{{/if}}
+      HTML requirements:
+        - Inline <style> and <script> only; zero external dependencies; no CDN links; no remote fonts.
+        - CSS tokens per renderer §3 (ivory/slate/clay/olive palette, --fs-scale:1.28 variable).
+        - Single --fs-scale CSS variable for global font scaling.
+        - All diffs HTML-escaped inside <pre> tags.
+        - File must open correctly in a browser with no network access.
+    </action>
 
-{{#if mid_flight_escalations}}
-### Mid-flight Escalations During Build
-{{#each mid_flight_escalations}}
-- Story `{{slug}}`: {{finding_summary}} — Disposition: {{disposition}}
-{{/each}}
-{{/if}}
+    <action>Open the report in the cmux Browser viewer pane as a new tab (right pane; does not create a new structural pane):
+      Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
+      Verify the surface opens: cmux browser {surface} wait --load-state complete --timeout-ms 15000
+    </action>
 
-{{#if quarantined_stories}}
-### Quarantined Stories (Informational)
-<!-- These stories exhausted the 3-attempt per-story merge bound and could not be integrated this sprint. Their work is preserved on the story branch. No developer action is required during the build — this section informs you that these stories need post-sprint follow-up. -->
-{{#each quarantined_stories}}
-- Story `{{slug}}` — {{title}}: could not be merged after {{merge_attempts}} attempts. Conflicted files: {{conflict_files}}. Branch `story/{{slug}}` preserved. Recommend: create a backlog follow-up story or manually resolve the conflict.
-{{/each}}
-{{/if}}
-
-{{#if contract_integrity_stops}}
-### Contract-Integrity Stops (Informational)
-<!-- These stories were not verified: the contract file on disk did not match the fingerprint frozen at assignment. No verification result was recorded for them. The contract freeze check (spec §7 step 2) caught the drift before it could corrupt a result. No action required from you during the build — this section informs you that these stories need follow-up. -->
-{{#each contract_integrity_stops}}
-- Story `{{slug}}`: contract fingerprint mismatch. Contract path: `{{contract_path}}`. Frozen sha256: `{{frozen_sha256}}`. Live sha256: `{{live_sha256}}`. Story was not verified; no verification result recorded.
-{{/each}}
-{{/if}}
-
-### E2E Validation
-{{e2e_results_summary}}
-
----
-
-**Approve:** [ ] I accept this build and authorize merge to main.
-<!-- This control is not pre-checked. If stakes-class findings are present above, acknowledge each before approving. -->
-</output>
-
-    <ask>Review the end-gate report. Acknowledge any stakes-class findings. Approve the build to merge to main, or request fixes.</ask>
+    <ask>The end-gate report is open in the viewer. Review each section. Acknowledge any decision cards in §04. Then approve to merge to main, or request changes.</ask>
 
     <check if="developer approves">
       <action>Merge sprint branch to main:
