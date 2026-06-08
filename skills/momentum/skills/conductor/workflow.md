@@ -281,21 +281,82 @@ Ready to begin?</output>
         2.1.2 — Transition to in-progress:
           `momentum-tools sprint status-transition --story {S.slug} --target in-progress`
 
-        2.1.3 — Spawn dev agent (individual-agent fan-out, NOT TeamCreate — spawned concurrently with all other frontier pipelines):
-          Resolve agent via: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
-          Spawn the resolved agent with the story file at `.momentum/stories/{S.slug}.md`.
-          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
-          [HOLLOW: per-story pipeline stage 1 (dev spawn ordering) and stage 2 (QA + code-review concurrent fan-out) are
-           specified by downstream conduct stories — fill those spawn calls when those stories land.
-           Stage 3 (fix loop — Phase B–D) is implemented in step 2.S3 below and is LIVE. The Conductor invokes step 2.S3
-           after stage-2 reviewers return their findings for story S. See step 2.S3 for the full fix-loop spec.
+        2.1.3 — STAGE-1 + STAGE-2: Dev spawn, await, then concurrent QA + code-review fan-out.
 
-           DIFF RANGE FOR STAGE-2 (QA REVIEWER + CODE-REVIEW ADAPTER): When stage 2 is filled in, the diff range
-           passed to both the QA reviewer and the code-review adapter MUST follow the canonical pre-merge
-           per-story review diff-range pattern — compute the merge-base form at review time (stage 2 runs
-           BEFORE the merge at step 2.2.M). Do NOT capture a SHA at merge time for stage-2 use (the merge
-           has not occurred yet). Do NOT use over-scoped ranges (main...HEAD). Authoritative pattern and
-           rationale: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review)]
+          ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
+          Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
+          Bind {{dev_agent}} = the resolved agent name (e.g., "dev", "dev-build", "dev-frontend", "dev-skills").
+          Spawn {{dev_agent}} as an individual agent (fan-out, NOT TeamCreate) with:
+            - story_file: `.momentum/stories/{S.slug}.md`
+            - sprint_slug: {{sprint_slug}}
+            - worktree_path: `.worktrees/story-{S.slug}` (the story's isolated git worktree)
+            - contract_part_a: path to `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*` (Part A only)
+          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
+          This spawn fires concurrently with all other frontier story spawns (no story-count cap).
+
+          AWAIT STAGE-1 OUTPUT: Wait for {{dev_agent}} to return its implementation-complete signal.
+          Bind {{stage1_output}} = the agent's return value (implementation-complete + file_list).
+          After stage-1 returns, the Conductor (sole git-mutation authority) commits the produced output:
+            `git -C .worktrees/story-{S.slug} add -u`
+            `git -C .worktrees/story-{S.slug} commit -m "feat({S.slug}): implement {{S.title}}"`
+
+          ── STAGE-2: CONCURRENT QA + CODE-REVIEW FAN-OUT ───────────────────────────────────
+          Stage 2 fires AFTER the stage-1 commit, BEFORE the merge at step 2.2.M (pre-merge review).
+          Coverage-disposition check (step 2.1.5 / step 2.C) already routed this story:
+            - If coverage_disposition == "covered-by-composition": skip stage-2 entirely;
+              bind {{stage2_findings}} = [] and proceed directly to step 2.S3 with an empty findings list.
+            - If coverage_disposition == "dedicated-run" (default): dispatch the fan-out below.
+
+          DIFF RANGE (Scenario A — Pre-Merge Review, per references/per-story-review-diff-range.md):
+          Compute the per-story diff at review time — do NOT capture a SHA; do NOT wait for the merge:
+            {{story_diff}} = output of:
+              `git -C .worktrees/story-{S.slug} diff \
+                $(git -C .worktrees/story-{S.slug} \
+                  merge-base sprint/{{sprint_slug}} story/{{S.slug}}) \
+                ..story/{{S.slug}}`
+          Pass the materialized diff (not the range expression) to both reviewers.
+          DO NOT use over-scoped ranges (main...HEAD) or two-dot sprint-tip forms.
+          Authoritative pattern and rationale: references/per-story-review-diff-range.md.
+
+          Spawn the following two agents CONCURRENTLY (individual-agent fan-out, NOT TeamCreate):
+
+            REVIEWER A — qa-reviewer agent:
+              Inputs:
+                - story_slug: S.slug
+                - worktree_path: `.worktrees/story-{S.slug}`
+                - verification_contract: `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*`
+                - story_diff: {{story_diff}}
+              Constraint: "Read-only. Do not modify code. Do not mutate git. Produce findings only."
+              Returns: per-AC classification (VERIFIED / PARTIAL / MISSING / BLOCKED) with stakes_class
+                on each finding, normalized to the canonical finding schema (finding-schema.md).
+                Source field: `qa-reviewer`.
+
+            REVIEWER B — momentum:code-reviewer skill (bmad-code-review adapter):
+              Inputs:
+                - story_slug: S.slug
+                - story_diff: {{story_diff}}
+                - worktree_path: `.worktrees/story-{S.slug}`
+              Constraint: "Report-only mode. Do not modify code. Do not mutate git. Produce findings only."
+              Returns: normalized finding records per canonical finding schema (finding-schema.md),
+                stakes_class populated on every record. Source field: `bmad-code-review`.
+
+          AWAIT STAGE-2 OUTPUT: Wait for BOTH reviewers to return before proceeding.
+          Bind {{qa_findings}} = findings array from REVIEWER A.
+          Bind {{cr_findings}} = findings array from REVIEWER B.
+          Merge into {{stage2_findings}}: deduplicated union of {{qa_findings}} and {{cr_findings}},
+            severity-sorted (critical → major → minor → low).
+          Deduplication: if a qa-reviewer finding and a bmad-code-review finding describe the same
+            location and issue, keep the higher-severity record; annotate source as
+            "qa-reviewer+bmad-code-review".
+          Each finding in {{stage2_findings}} carries: story_slug, source, stakes_class, severity,
+            type, location, summary, detail, evidence, legitimate, ac_id (where applicable),
+            and suggested_fix (when provided).
+
+          ── FEED MERGED FINDINGS INTO STAGE-3 FIX LOOP ────────────────────────────────────
+          Invoke step 2.S3 for story S, passing {{stage2_findings}} as input.
+          Step 2.S3 (live) runs the directed fix-loop (Phase B→C→D, retry-bound-3, escalation routing).
+          Await step 2.S3's terminal signal before proceeding to stage-4 (merge, step 2.2.M)
+            or quarantine per step 2.S3's outcome.
 
         2.1.4 — CONTRACT-FREEZE GATE (hooked at story launch — earliest sound point):
           Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
@@ -305,9 +366,9 @@ Ready to begin?</output>
           [PLACEMENT NOTE: The freeze gate fires here, at launch, rather than at a later "verification boundary" inside the
           per-story pipeline. This is intentional and correct: the contract file is frozen at planning and is static between
           launch and verification, so a sha256 check at launch guards the same invariant as one at verification-start. The
-          per-story pipeline internals (step 2.1.3 HOLLOW) are owned by downstream conduct stories — when those stories land,
-          they MUST NOT add a second freeze check at the per-story verification boundary. The gate belongs here, once, at
-          launch. Adding it again inside the per-story pipeline would double-gate and create redundant integrity stops.]
+          per-story pipeline internals (step 2.1.3) are now filled — they MUST NOT add a second freeze check at the per-story
+          verification boundary. The gate belongs here, once, at launch. Adding it again inside the per-story pipeline would
+          double-gate and create redundant integrity stops.]
 
         2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before verifier dispatch):
           INTEGRITY-STOP GUARD: If step 2.V recorded an integrity stop for S (i.e., S is in {{contract_integrity_stops}}),
