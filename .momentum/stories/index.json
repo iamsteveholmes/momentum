@@ -5272,7 +5272,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-per-story-build-review-dispatch": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Wire conduct stages 1-2: per-story dev spawn + concurrent QA/code-review fan-out",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5352,7 +5352,7 @@
     "story_type": "maintenance"
   },
   "conduct-wire-caller-and-discovery": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Wire a caller and a discovery route into the Conductor (sprint-dev rewrite and/or Impetus dispatch)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
