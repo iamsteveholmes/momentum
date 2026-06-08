@@ -316,8 +316,17 @@ Ready to begin?</output>
           ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
           Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
           Bind {{dev_agent}} = the resolved agent name (e.g., "dev", "dev-build", "dev-frontend", "dev-skills").
-          Bind {{writable_files}} = the explicit set of files this story is expected to create or modify,
-            as declared in the story spec's deliverables / file list section.
+          Bind {{writable_files}} = the explicit set of files this story is expected to create or modify.
+            Derivation rule (in priority order):
+              1. If the story spec contains an explicit `## What's needed` or `## Deliverables` section
+                 that enumerates file paths, use those paths.
+              2. Otherwise (absent or non-enumerated section), derive deterministically:
+                 (a) Any file path literally named in the story spec body (e.g. in backticks or code fences).
+                 (b) Any file matching the story's `touches` globs from `.momentum/stories/index.json`.
+                 (c) Minus: all `.momentum/stories/` paths and all `.momentum/sprints/` paths (always forbidden).
+              The fallback MUST produce an enumerable list — an empty or undefined writable_files is
+              not a valid result. If steps 1-2 yield no paths, bind {{writable_files}} = [] and log a
+              warning; the per-story FORBIDDEN clauses below still apply regardless.
           Spawn {{dev_agent}} as an individual agent (fan-out, NOT TeamCreate) with:
             - story_file: `.momentum/stories/{S.slug}.md`
             - sprint_slug: {{sprint_slug}}
@@ -334,9 +343,28 @@ Ready to begin?</output>
 
           When {{dev_agent}} returns its implementation-complete signal:
           Bind {{stage1_output}} = the agent's return value (implementation-complete + file_list).
+          Bind {{stage1_cross_artifact_notes}} = {{stage1_output}}.cross_artifact_notes (default []).
+
+          WRITE-SCOPE COMMIT GUARD: Before committing, verify that every file staged by `git add -u`
+            falls within {{writable_files}} for story S. To enforce this:
+            — Run `git -C .worktrees/story-{S.slug} diff --name-only --cached` after staging to
+              obtain the actual staged file list.
+            — For each staged path P: confirm P is in {{writable_files}}.
+              If P is NOT in {{writable_files}} AND P is not `.momentum/stories/{S.slug}.md` (always forbidden),
+              log a warning in {{build_log}} and UNSTAGE P (`git -C .worktrees/story-{S.slug} restore --staged P`)
+              before committing. Do NOT commit out-of-scope edits.
           The Conductor (sole git-mutation authority) commits the produced output:
             `git -C .worktrees/story-{S.slug} add -u`
+            (apply write-scope guard above before proceeding)
             `git -C .worktrees/story-{S.slug} commit -m "feat({S.slug}): implement {{S.title}}"`
+
+          CROSS-ARTIFACT ROUTING: If {{stage1_cross_artifact_notes}} is non-empty, accumulate each
+            entry into {{build_cross_artifact_notes}} with the story slug attached:
+              { slug: S.slug, artifact: entry.artifact, note: entry.note }
+            These are deferred — do NOT invoke momentum:triage inline here. The full batch is
+            routed to momentum:triage at build-phase completion (step 2.2 / Phase 2 wrap-up),
+            mirroring the triaged-out path for fix-mode findings.
+
           Then advance this story's pipeline to stage-2.
 
           ── STAGE-2: CONCURRENT QA + CODE-REVIEW FAN-OUT ───────────────────────────────────
