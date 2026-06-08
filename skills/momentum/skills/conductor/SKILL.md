@@ -46,3 +46,21 @@ The full phase sequence and step-by-step orchestration instructions live in `./w
 - **Section 3** — Conductor role and the per-story pipeline (the Conductor's authority surface and the repeated build unit).
 - **Section 2** — End-to-end flow (the phase sequence the spine mirrors).
 - **Section 8** — Single end-gate (the final human acceptance point).
+
+## Presentation Standard
+
+All developer-facing output produced by this skill is governed by the
+**Decision-Grade Presentation Standard** (`skills/momentum/references/rules/decision-grade-presentation.md`).
+
+**Named surface caps that apply here:**
+
+| Surface | Cap |
+|---|---|
+| Pause-ask surface (mid-flight escalation) | Per the Pause-Ask Surface Contract template in `references/escalation.md`; What/Why/Evidence fields are required and cannot be omitted |
+| End-gate report section | Routine items: 1 count line. High-risk items: 5-beat risk narrative. Collapsibles for depth-on-demand. |
+
+**Floor (non-negotiable):** The Pause-Ask Surface Contract (`references/escalation.md` — "Pause-Ask Surface Contract (DEC-036 D5 Self-Sufficiency Floor)") is the existing conduct-specific instance of this floor. The practice-wide rule (`decision-grade-presentation.md`) is the umbrella; the Pause-Ask Surface Contract is the instance under it. Both apply.
+
+**Caps-vs-floor:** Routine items are collapsed to a count at the end-gate. Decision-relevant items (findings requiring developer action) carry what/why/evidence inline — caps never trim these.
+
+`effort: max` means the most thorough build. It does not earn more frequent or more verbose developer-facing touchpoints.

@@ -127,6 +127,11 @@ oversold completeness; this section exists so that can't recur.)
 
 ## 9. Decision-grade presentation (DEC-036 D5) — tight on the irrelevant, complete on the decision-relevant
 
+**Parent standard:** `skills/momentum/references/rules/decision-grade-presentation.md` (practice-wide rule).
+This section is the **conduct-report-specific instance** of that standard. The parent rule governs all
+Momentum human-facing surfaces; this section applies it to the end-gate report. Where the parent and this
+section appear to conflict, the parent rule is authoritative.
+
 - **Caps** cut Specification-Fatigue material: collapse routine, summarize clean items to a line, use
   collapsibles for depth-on-demand.
 - **Self-sufficiency floor (never cut):** every finding/decision/divergence carries what / why-it-matters /
