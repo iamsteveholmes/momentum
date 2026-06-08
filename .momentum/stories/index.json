@@ -4929,7 +4929,7 @@
     "verification_method": "document-review"
   },
   "decision-grade-presentation-standard": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Practice-wide decision-grade presentation standard",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -5332,7 +5332,7 @@
     "story_type": "exploration"
   },
   "conduct-entry-point-command": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Create the /momentum:conduct entry-point command file (and resolve the conduct-vs-conductor name)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5402,7 +5402,7 @@
     "story_type": "feature"
   },
   "conduct-verification-method-enum-alignment": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "verification-standard.md + contract-format-guide.md + create-story: align the verification_method vocabulary to the clos",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5442,7 +5442,7 @@
     "story_type": "feature"
   },
   "conduct-cleanup-dead-agent-paths-and-validate-resolve": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Clean up dead agent routing entries and add existence validation to agent resolve",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
