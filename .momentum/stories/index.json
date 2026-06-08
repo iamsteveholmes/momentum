@@ -5282,7 +5282,7 @@
     "story_type": "feature"
   },
   "conduct-endgate-decision-card-rendering": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Render conduct end-gate decision cards",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5292,7 +5292,7 @@
     "story_type": "feature"
   },
   "avfl-merge-review-as-workflow": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "AVFL-on-merge as a Workflow (3-dot diff)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5382,7 +5382,7 @@
     "story_type": "feature"
   },
   "conduct-e2e-finding-normalization-escalation": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Normalize E2E findings to canonical schema and route them through escalation + decision cards",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5546,7 +5546,7 @@
     "story_type": "feature"
   },
   "tighten-dev-fixer-write-scope-stop-story-spec-edits": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Tighten dev/fixer write-scope to stop out-of-scope story-spec edit-then-revert",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
