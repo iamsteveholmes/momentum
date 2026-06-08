@@ -7,6 +7,10 @@
 # Usage:
 #   bash skills/momentum/scripts/install-momentum-tools.sh
 #
+# IMPORTANT: Run this script from a stable checkout (the repo root or a plugin-cache
+# copy), NOT from a transient worktree path (e.g. .worktrees/). A worktree-relative
+# symlink target will break when the worktree is removed.
+#
 # Prerequisites:
 #   - ~/.local/bin must be on your PATH (it is by default on this machine via ~/.zshrc)
 #   - python3 must be available
@@ -30,6 +34,13 @@ if [ ! -f "$WRAPPER" ]; then
   exit 1
 fi
 
+# Warn if the wrapper resolves inside a transient worktree path
+if echo "$WRAPPER" | grep -q '/.worktrees/'; then
+  echo "WARNING: wrapper resolves inside a worktree path: $WRAPPER" >&2
+  echo "  Worktrees are ephemeral — the symlink will break when the worktree is removed." >&2
+  echo "  Run this installer from a stable checkout (repo root or plugin-cache copy)." >&2
+fi
+
 if [ ! -x "$WRAPPER" ]; then
   chmod +x "$WRAPPER"
   echo "made $WRAPPER executable"
@@ -47,6 +58,10 @@ if [ -L "$TARGET" ]; then
   fi
   echo "updating symlink: $TARGET (was $OLD)"
   rm "$TARGET"
+elif [ -e "$TARGET" ]; then
+  echo "ERROR: $TARGET already exists as a non-symlink file." >&2
+  echo "  Remove it manually and re-run: rm $TARGET" >&2
+  exit 1
 fi
 
 ln -s "$WRAPPER" "$TARGET"

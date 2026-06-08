@@ -13,6 +13,12 @@
 
 set -euo pipefail
 
+# --- 0. Guard: require python3 ---
+command -v python3 >/dev/null 2>&1 || {
+  echo "momentum-tools: python3 not found on PATH" >&2
+  exit 127
+}
+
 # --- 1. Resolve this file's real directory (follow symlinks) ---
 SELF="${BASH_SOURCE[0]}"
 # Follow symlinks to the real file
@@ -37,7 +43,6 @@ fi
 # --- 4. Search well-known locations ---
 SEARCH_PATHS=(
   "$HOME/projects/momentum/skills/momentum/scripts/momentum-tools.py"
-  "$HOME/.claude/plugins/cache/momentum/momentum/0.25.0/scripts/momentum-tools.py"
 )
 for CANDIDATE in "${SEARCH_PATHS[@]}"; do
   if [ -f "$CANDIDATE" ]; then
