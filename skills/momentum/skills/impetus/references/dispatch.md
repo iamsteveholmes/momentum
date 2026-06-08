@@ -15,7 +15,8 @@ When the owner decides to act, the right skill is summoned with confidence and p
 | When the owner wants to... | Dispatch |
 |---|---|
 | Plan the next sprint | `momentum:sprint-planning` |
-| Build stories in an active sprint | `momentum:sprint-dev` |
+| Run the sprint build (full in-session build, all stories, single end-gate) | `momentum:conductor` — the `/momentum:conduct` command |
+| Build stories in an active sprint (legacy wave-loop) | `momentum:sprint-dev` |
 | Fix one thing fast (including urgent practice fixes) | `momentum:quick-fix` |
 | Run the retrospective | `momentum:retro` |
 | Process observations into the backlog | `momentum:triage` |

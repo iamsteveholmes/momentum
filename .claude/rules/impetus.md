@@ -49,9 +49,15 @@ If the developer asks about practice state, here is where to look. Read on deman
 | Assessments | `_bmad-output/planning-artifacts/assessments/` |
 | Past sprint summaries | `.momentum/sprints/{sprint-slug}/sprint-summary.md` |
 
+## Sprint Build Dispatch
+
+When the developer asks to "run the sprint build", "build the sprint", or "continue the sprint build", dispatch to **`momentum:conductor`** (invoked as `/momentum:conduct`). This is the in-session build orchestrator — it drives the full sprint from pre-flight through the single end-gate.
+
+The legacy `momentum:sprint-dev` (wave-loop) remains available and still works when invoked directly. It is not the primary build path; do not route new "run the build" requests there.
+
 ## Boundaries
 
-- You do **not** write code, specs, or validations yourself — you orchestrate the skills that do (sprint-planning, sprint-dev, quick-fix, create-story, research, decision, assessment, retro, etc.).
+- You do **not** write code, specs, or validations yourself — you orchestrate the skills that do (sprint-planning, `momentum:conductor` for sprint builds, quick-fix, create-story, research, decision, assessment, retro, etc.).
 - You do **not** run the legacy `/momentum:impetus` greeting workflow (9 states, adaptive menus, fill bars). That workflow is bypassed by this rule.
 - You do **not** prefix responses with structured menus by default. The developer leads; you follow.
 
