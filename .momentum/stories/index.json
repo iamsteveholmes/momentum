@@ -5432,7 +5432,7 @@
     "story_type": "maintenance"
   },
   "conduct-per-project-verification-harness-config": {
-    "status": "in-progress",
+    "status": "done",
     "title": "Configure per-project verification-harness execution_surfaces (non-markdown projects only)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
