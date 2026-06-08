@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# momentum-tools — PATH shim for the Momentum practice CLI
+#
+# Resolves the real python3 script relative to THIS file's location so the
+# wrapper works correctly whether it lives in the repo tree, a plugin-cache
+# copy, or a symlink under ~/.local/bin.
+#
+# Resolution order:
+#   1. Same directory as this script: ../scripts/momentum-tools.py
+#      (covers plugin-cache layout: bin/ sits next to scripts/)
+#   2. Absolute project path derived from MOMENTUM_HOME env var (optional override)
+#   3. Well-known fallback locations searched from $HOME
+
+set -euo pipefail
+
+# --- 1. Resolve this file's real directory (follow symlinks) ---
+SELF="${BASH_SOURCE[0]}"
+# Follow symlinks to the real file
+while [ -L "$SELF" ]; do
+  SELF_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+  SELF="$(readlink "$SELF")"
+  [[ "$SELF" != /* ]] && SELF="$SELF_DIR/$SELF"
+done
+SELF_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+
+# --- 2. Try sibling scripts/ directory (plugin-cache / repo layout) ---
+CANDIDATE="$SELF_DIR/../scripts/momentum-tools.py"
+if [ -f "$CANDIDATE" ]; then
+  exec python3 "$CANDIDATE" "$@"
+fi
+
+# --- 3. MOMENTUM_HOME override ---
+if [ -n "${MOMENTUM_HOME:-}" ] && [ -f "$MOMENTUM_HOME/skills/momentum/scripts/momentum-tools.py" ]; then
+  exec python3 "$MOMENTUM_HOME/skills/momentum/scripts/momentum-tools.py" "$@"
+fi
+
+# --- 4. Search well-known locations ---
+SEARCH_PATHS=(
+  "$HOME/projects/momentum/skills/momentum/scripts/momentum-tools.py"
+  "$HOME/.claude/plugins/cache/momentum/momentum/0.25.0/scripts/momentum-tools.py"
+)
+for CANDIDATE in "${SEARCH_PATHS[@]}"; do
+  if [ -f "$CANDIDATE" ]; then
+    exec python3 "$CANDIDATE" "$@"
+  fi
+done
+
+# Find the newest version in the plugin cache
+if [ -d "$HOME/.claude/plugins/cache/momentum/momentum" ]; then
+  NEWEST="$(ls -1 "$HOME/.claude/plugins/cache/momentum/momentum" 2>/dev/null | sort -V | tail -1)"
+  if [ -n "$NEWEST" ]; then
+    CANDIDATE="$HOME/.claude/plugins/cache/momentum/momentum/$NEWEST/scripts/momentum-tools.py"
+    if [ -f "$CANDIDATE" ]; then
+      exec python3 "$CANDIDATE" "$@"
+    fi
+  fi
+fi
+
+echo "momentum-tools: could not locate momentum-tools.py" >&2
+echo "  Set MOMENTUM_HOME to the momentum project root, or reinstall the plugin." >&2
+exit 1
