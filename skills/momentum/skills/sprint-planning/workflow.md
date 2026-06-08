@@ -952,7 +952,7 @@ Address them before activating the sprint.</output>
 
     <check if="AVFL returns CHECKPOINT_WARNING">
       <action>Store {{avfl_result}} = "CHECKPOINT_WARNING"</action>
-      <action>Synthesize findings: severity indicators (! critical/high, · medium/low), brief descriptions</action>
+      <action>Synthesize findings: severity indicators (! critical/major, · minor/low), brief descriptions</action>
       <output>AVFL found issues in the sprint plan:
   {{findings list}}
 
@@ -962,7 +962,7 @@ These are warnings — the plan can proceed, but consider addressing them.</outp
 
     <check if="AVFL returns GATE_FAILED">
       <action>Store {{avfl_result}} = "GATE_FAILED"</action>
-      <action>Synthesize findings: severity indicators (! critical/high, · medium/low), brief descriptions</action>
+      <action>Synthesize findings: severity indicators (! critical/major, · minor/low), brief descriptions</action>
       <output>✗ AVFL GATE FAILED — sprint plan has defects that must be resolved:
   {{findings list}}
 

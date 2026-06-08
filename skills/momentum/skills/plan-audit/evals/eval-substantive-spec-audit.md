@@ -37,7 +37,7 @@ Step 4 — Present findings with severity classification
 
 - Skill classifies staged diff correctly
 - Three parallel agents run simultaneously
-- Findings consolidated with severity: critical, high, medium, low
+- Findings consolidated with severity: critical, major, minor, low
 - Hook triggers on Write tool calls to .js and .ts files
 ```
 

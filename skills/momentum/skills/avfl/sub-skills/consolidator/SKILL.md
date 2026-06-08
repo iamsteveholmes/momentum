@@ -15,7 +15,7 @@ Read the consolidator prompt template and scoring weights from:
 
 Use:
 - `prompts.consolidator` — your instruction template
-- `scoring.severity_weights` — score deductions (critical −15, high −8, medium −3, low −1)
+- `scoring.severity_weights` — score deductions (critical −15, major −8, minor −3, low −1)
 - `scoring.grades` — grade thresholds
 
 Steps:

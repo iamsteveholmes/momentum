@@ -454,7 +454,7 @@ Options:
   <step n="4.2" goal="Merge all findings into prioritized fix queue, get developer fix/defer decisions">
     <action>Update task 4c (Consolidated Fix Queue) to in_progress</action>
     <action>Merge {{avfl_findings}} and {{code_review_findings}} into a single list {{all_findings}},
-      sorted by severity: critical → high → medium → low.
+      sorted by severity: critical → major → minor → low.
       Each item retains its source tag (avfl or bmad-code-review + story_key) for selective re-review routing.
     </action>
 

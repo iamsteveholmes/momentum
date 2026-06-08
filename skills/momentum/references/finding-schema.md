@@ -80,7 +80,7 @@ stakes_class: security-auth-isolation | irreversible-destructive | high-blast-ra
 
 **Default:** `routine`
 
-`stakes_class` is **orthogonal to `severity`**. A finding has both independently. A finding may be low-severity yet stakes-class (e.g., a small insecure default in an auth path), or high-severity yet routine (e.g., a major logic bug in a UI component with no blast radius beyond that component). Severity measures the magnitude of the problem in isolation; stakes class measures the consequences of mis-handling it.
+`stakes_class` is **orthogonal to `severity`**. A finding has both independently. A finding may be low-severity yet stakes-class (e.g., a small insecure default in an auth path), or critical/major severity yet routine (e.g., a major logic bug in a UI component with no blast radius beyond that component). Severity measures the magnitude of the problem in isolation; stakes class measures the consequences of mis-handling it.
 
 Reviewers assign `stakes_class` alongside `severity`. When a finding does not meet any of the three stakes criteria below, `stakes_class` is `routine`.
 
