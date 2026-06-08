@@ -334,20 +334,53 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
     <action>Create the sprint specs directory: `.momentum/sprints/{{sprint_slug}}/specs/`</action>
 
     <action>For each approved story in {{selected_stories}}:
-      1. Read the story's `change_type` field from `.momentum/stories/index.json`
+      1. Compute `verification_method` from the story's `change_type`:
+         Run: `momentum-tools sprint compute-verification-method --story {{story_slug}}`
+         The output field `verification_method` is the closed-enum token (skill-invoke |
+         behavioral-trigger | bash | smoke-ui | curl | document-review) drawn from the
+         method-routing table in verification-standard.md Section 1. Store as {{vm}}.
+         harness_profile equals {{vm}} (no project override applies unless explicitly declared
+         in momentum/verification-harness.json). `verification_method` and `harness_profile`
+         are machine-readable routing signals — they are single tokens, never free-text sentences.
+
       2. Determine the contract file extension using the precedence table in contract-format-guide.md
          (for multi-change-type stories: app-ui > script-code > script-cli > backend > agent-definition
           > skill-instruction > rule-hook > config-structure > specification > research-spike)
+
       3. Read the story's plain English Acceptance Criteria from its story file
          · Do NOT read any `.feature` files — they do not exist yet at this point
          · Do NOT read SKILL.md files or workflow.md files for the implementation being specified
+
       4. Author the contract body:
          · State what must be observably true about the story's behavior
          · Every clause must pass the Outsider Test: a person with no source code access
            must be able to verify it by invoking skills, running commands, or reading outputs
          · Include `harness_profile` referencing a driver declared in `momentum/verification-harness.json`
          · Follow the per-change-type format in contract-format-guide.md
-      5. Write to `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}`
+
+      5. Prepend the mandatory Part-A verification header to the contract body before writing.
+         The header fields MUST appear in this exact order (see contract-format-guide.md
+         "Mandatory Verification Header" section for format per contract type):
+           story_slug: {{story_slug}}
+           verification_method: {{vm}}              ← closed-enum token computed in step 1
+           harness_profile: {{vm}}                  ← same token; project overrides listed in momentum/verification-harness.json
+           contract_path: .momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}
+           how_dev_self_checks: |
+             <plain-language self-check the developer follows to confirm this story is done;
+              no insider knowledge; Outsider Test applies — an outside reader must be able
+              to follow it using only skill invocations, commands, and observable outputs>
+           coverage_disposition: dedicated-run      ← placeholder; Phase B back-fills the real value
+           covered_by_scenario: null               ← placeholder; Phase B back-fills
+           acceptance_criteria_ref: .momentum/stories/{{story_slug}}.md#acceptance-criteria
+           platforms: [host]
+
+         Set {{contract_metadata[story_slug]}} = {
+           verification_method: {{vm}},
+           harness_profile: {{vm}},
+           contract_path: ".momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}"
+         }
+
+      6. Write to `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}`
 
       Special case — app-ui stories:
         · Write the `.feature` contract here in Phase A
@@ -356,7 +389,7 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
 
     <output>## Contracts Authored
 
-{{for each story: · {{story_slug}}.{{ext}} — {{change_type}}}}
+{{for each story: · {{story_slug}}.{{ext}} — {{change_type}} → {{verification_method}}}}
 
 Contracts written to `sprints/{{sprint_slug}}/specs/`. Proceeding to coverage plan.</output>
 
@@ -386,6 +419,28 @@ Contracts written to `sprints/{{sprint_slug}}/specs/`. Proceeding to coverage pl
 
     <action>Write coverage plan to: `.momentum/sprints/{{sprint_slug}}/coverage-plan.md`</action>
 
+    <!-- Phase B.1: Back-fill coverage_disposition and covered_by_scenario into each contract header -->
+    <action>After writing coverage-plan.md, back-fill the Part-A header in every contract file with the
+    actual coverage values derived from the plan:
+
+      For each approved story in {{selected_stories}}:
+        · Determine its coverage_disposition from coverage-plan.md:
+            - "covered-by-composition" if it appears in a Discharges list under an integration scenario
+            - "dedicated-run" if it appears in the "dedicated-run" list
+        · Determine its covered_by_scenario:
+            - Name of the integration scenario from coverage-plan.md if covered-by-composition
+            - null if dedicated-run
+        · Edit the contract file at `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.*`:
+            Replace the placeholder `coverage_disposition: dedicated-run` line with the actual value
+            Replace the placeholder `covered_by_scenario: null` line with the actual value
+        · Update {{contract_metadata[story_slug]}} with:
+            coverage_disposition: <actual>
+            covered_by_scenario: <actual>
+
+      Validation: every approved story must have a populated coverage_disposition field in its
+      contract header (dedicated-run or covered-by-composition — never blank or prose).
+    </action>
+
     <output>## Coverage Plan Authored
 
 `.momentum/sprints/{{sprint_slug}}/coverage-plan.md`
@@ -393,7 +448,7 @@ Contracts written to `sprints/{{sprint_slug}}/specs/`. Proceeding to coverage pl
   Covered-by-composition: {{composition_count}} stories
   Dedicated-run: {{dedicated_count}} stories
 
-Proceeding to adversarial guard.</output>
+Contract headers updated with coverage assignments. Proceeding to adversarial guard.</output>
 
     <!-- Phase C: Adversarial guard -->
     <action>Spawn a decorrelated adversarial agent:
@@ -1011,11 +1066,46 @@ AVFL: {{avfl_result}}
     </check>
 
     <!-- Gate passed — proceed with activation -->
-    <action>Store team composition, guidelines status, and dependency graph in the sprint record:
-      · Update `.momentum/sprints/index.json` planning section with:
+
+    <!-- Step 8.A: Freeze contract checksums and compute merge-independence per story -->
+    <action>For each story in {{selected_stories}}:
+      1. Locate the contract file: `.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.*`
+      2. Compute frozen_sha256:
+           Run: `python3 -c "import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())" .momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.<ext>`
+           Store as {{frozen_sha256[story_slug]}}
+      3. Compute can_merge_independently:
+           Read the story's `depends_on` list from `.momentum/stories/index.json`
+           If `depends_on` is empty or null: set {{can_merge_independently[story_slug]}} = true
+           If `depends_on` has one or more entries: set {{can_merge_independently[story_slug]}} = false
+    </action>
+
+    <!-- Step 8.B: Persist formalized story_assignments into the sprint record -->
+    <action>Store team composition, guidelines status, dependency graph, and contract schema
+    in the sprint record. For each story in {{selected_stories}}, call:
+
+      `momentum-tools sprint story-set-contract \
+        --slug {{story_slug}} \
+        --verification-method {{contract_metadata[story_slug].verification_method}} \
+        --contract-path {{contract_metadata[story_slug].contract_path}} \
+        --harness-profile {{contract_metadata[story_slug].harness_profile}} \
+        --coverage-disposition {{contract_metadata[story_slug].coverage_disposition}} \
+        --covered-by-scenario {{contract_metadata[story_slug].covered_by_scenario | "null"}} \
+        --frozen-sha256 {{frozen_sha256[story_slug]}} \
+        --can-merge-independently {{can_merge_independently[story_slug]}}`
+
+      This writes contract{path, harness_profile, coverage_disposition, covered_by_scenario,
+      frozen_sha256} + verification_method + can_merge_independently into each
+      planning.team.story_assignments[slug] entry in sprints/index.json.
+
+      INVARIANT: Every story in {{selected_stories}} must have story-set-contract called exactly
+      once before activation. If any call fails, HALT and surface the error before proceeding.
+
+    Then update `.momentum/sprints/index.json` planning section (edit directly):
         - slug: {{sprint_slug}}
         - team: {{team_composition object — roles with story assignments, specialist types, and guidelines}}
-          Each story_assignment entry includes: role, specialist, guidelines path, and guidelines_status ("present", "missing", "skipped", or "n/a")
+          Each story_assignment entry includes: role, specialist, guidelines path, guidelines_status
+          ("present", "missing", "skipped", or "n/a"), AND the contract block + verification_method
+          + can_merge_independently fields just written by story-set-contract above
         - waves: {{already stored via momentum-tools}}
         - planned: today's date (YYYY-MM-DD)
     </action>

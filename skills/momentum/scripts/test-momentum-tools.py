@@ -3140,6 +3140,23 @@ def main():
     test_prefilter_known_duplicates_from_ac15()
     test_prefilter_runs_triage_group()
 
+    # sprint story-set-contract tests (conduct-planning-emit-contract-schema)
+    test_story_set_contract_persists_full_block()
+    test_story_set_contract_no_planning_sprint()
+    test_story_set_contract_story_not_in_sprint()
+    test_story_set_contract_invalid_verification_method()
+    test_story_set_contract_null_covered_by_scenario()
+    test_story_set_contract_can_merge_bool_strings()
+    test_story_set_contract_creates_team_if_absent()
+
+    # sprint compute-verification-method tests (conduct-planning-emit-contract-schema)
+    test_compute_verification_method_skill_instruction()
+    test_compute_verification_method_rule_hook()
+    test_compute_verification_method_specification()
+    test_compute_verification_method_multi_type_precedence()
+    test_compute_verification_method_unknown_change_type()
+    test_compute_verification_method_not_found_story()
+
     # Practice ledger tests (A1 / DEC-033)
     # Task 2: append writer
     test_practice_ledger_append_creates_file()
@@ -3183,6 +3200,306 @@ def main():
     print(f"Results: {PASS_COUNT} passed, {FAIL_COUNT} failed")
 
     sys.exit(1 if FAIL_COUNT > 0 else 0)
+
+
+# --- Contract Schema Tests (conduct-planning-emit-contract-schema) ---
+
+def _planning_sprint_with_story(slug: str, change_type: str = "skill-instruction",
+                                depends_on: list | None = None) -> dict:
+    """Return a minimal planning sprint + stories dict for contract tests."""
+    return {
+        "stories": {
+            slug: {
+                "status": "backlog",
+                "title": "Test Story",
+                "epic_slug": "test-epic",
+                "story_file": True,
+                "depends_on": depends_on or [],
+                "touches": [],
+                "change_type": change_type,
+            }
+        },
+        "sprints": {
+            "planning": {
+                "locked": False,
+                "status": "planning",
+                "stories": [slug],
+                "waves": [],
+                "team": {},
+            },
+            "active": None,
+            "completed": [],
+        }
+    }
+
+
+def test_story_set_contract_persists_full_block():
+    """story-set-contract writes contract{}, verification_method, can_merge_independently into planning."""
+    print("\n[story-set-contract] Persists full contract block")
+    data = _planning_sprint_with_story("my-story")
+    proj = setup_project(stories=data["stories"], sprints=data["sprints"])
+
+    sha = "abc123def456" * 5  # 60-char fake sha
+    code, out = run_tool(proj, "sprint", "story-set-contract",
+                         "--slug", "my-story",
+                         "--verification-method", "skill-invoke",
+                         "--contract-path", ".momentum/sprints/test-sprint/specs/my-story.eval.yaml",
+                         "--harness-profile", "skill-invoke",
+                         "--coverage-disposition", "dedicated-run",
+                         "--frozen-sha256", sha,
+                         "--can-merge-independently", "true")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method in output", out.get("verification_method"), "skill-invoke")
+    assert_eq("can_merge_independently in output", out.get("can_merge_independently"), True)
+
+    sprints = read_sprints(proj)
+    assignment = sprints["planning"]["team"]["story_assignments"]["my-story"]
+    assert_eq("verification_method persisted", assignment.get("verification_method"), "skill-invoke")
+    assert_eq("can_merge_independently persisted", assignment.get("can_merge_independently"), True)
+    contract = assignment.get("contract", {})
+    assert_eq("contract.path", contract.get("path"),
+              ".momentum/sprints/test-sprint/specs/my-story.eval.yaml")
+    assert_eq("contract.harness_profile", contract.get("harness_profile"), "skill-invoke")
+    assert_eq("contract.coverage_disposition", contract.get("coverage_disposition"), "dedicated-run")
+    assert_eq("contract.covered_by_scenario is None", contract.get("covered_by_scenario"), None)
+    assert_eq("contract.frozen_sha256", contract.get("frozen_sha256"), sha)
+
+
+def test_story_set_contract_no_planning_sprint():
+    """story-set-contract fails when no planning sprint exists."""
+    print("\n[story-set-contract] No planning sprint → error")
+    proj = setup_project()  # no planning sprint
+    code, out = run_tool(proj, "sprint", "story-set-contract",
+                         "--slug", "any",
+                         "--verification-method", "skill-invoke",
+                         "--contract-path", "some/path.eval.yaml",
+                         "--harness-profile", "skill-invoke",
+                         "--coverage-disposition", "dedicated-run",
+                         "--frozen-sha256", "abc",
+                         "--can-merge-independently", "false")
+    assert_eq("exit 1", code, 1)
+    assert_eq("error present", "error" in out, True)
+
+
+def test_story_set_contract_story_not_in_sprint():
+    """story-set-contract fails when slug is not in planning.stories."""
+    print("\n[story-set-contract] Story not in sprint → error")
+    data = _planning_sprint_with_story("my-story")
+    proj = setup_project(stories=data["stories"], sprints=data["sprints"])
+    code, out = run_tool(proj, "sprint", "story-set-contract",
+                         "--slug", "not-in-sprint",
+                         "--verification-method", "skill-invoke",
+                         "--contract-path", "some/path.eval.yaml",
+                         "--harness-profile", "skill-invoke",
+                         "--coverage-disposition", "dedicated-run",
+                         "--frozen-sha256", "abc",
+                         "--can-merge-independently", "false")
+    assert_eq("exit 1", code, 1)
+
+
+def test_story_set_contract_invalid_verification_method():
+    """story-set-contract rejects invalid verification_method values."""
+    print("\n[story-set-contract] Invalid verification_method → argparse error")
+    data = _planning_sprint_with_story("my-story")
+    proj = setup_project(stories=data["stories"], sprints=data["sprints"])
+    # argparse --choices validation should produce exit code 2
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(proj)}
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "sprint", "story-set-contract",
+         "--slug", "my-story",
+         "--verification-method", "free-text-sentence",
+         "--contract-path", "some/path",
+         "--harness-profile", "skill-invoke",
+         "--coverage-disposition", "dedicated-run",
+         "--frozen-sha256", "abc",
+         "--can-merge-independently", "false"],
+        capture_output=True, text=True, env=env
+    )
+    # argparse exits with 2 for invalid choices
+    assert_eq("exit non-zero", proc.returncode != 0, True)
+
+
+def test_story_set_contract_null_covered_by_scenario():
+    """covered_by_scenario='null' string is normalized to None in the contract block."""
+    print("\n[story-set-contract] covered_by_scenario null normalization")
+    data = _planning_sprint_with_story("my-story")
+    proj = setup_project(stories=data["stories"], sprints=data["sprints"])
+    code, out = run_tool(proj, "sprint", "story-set-contract",
+                         "--slug", "my-story",
+                         "--verification-method", "document-review",
+                         "--contract-path", "some/path.review.md",
+                         "--harness-profile", "document-review",
+                         "--coverage-disposition", "dedicated-run",
+                         "--covered-by-scenario", "null",
+                         "--frozen-sha256", "sha256here",
+                         "--can-merge-independently", "true")
+    assert_eq("exit 0", code, 0)
+    sprints = read_sprints(proj)
+    contract = sprints["planning"]["team"]["story_assignments"]["my-story"]["contract"]
+    assert_eq("covered_by_scenario is None", contract.get("covered_by_scenario"), None)
+
+
+def test_story_set_contract_can_merge_bool_strings():
+    """can_merge_independently accepts 'true'/'false' string forms and stores as bool."""
+    print("\n[story-set-contract] can_merge_independently bool string handling")
+    for raw, expected_bool in [("true", True), ("false", False),
+                                ("True", True), ("False", False)]:
+        data = _planning_sprint_with_story("my-story")
+        proj = setup_project(stories=data["stories"], sprints=data["sprints"])
+        code, out = run_tool(proj, "sprint", "story-set-contract",
+                             "--slug", "my-story",
+                             "--verification-method", "skill-invoke",
+                             "--contract-path", "some/path",
+                             "--harness-profile", "skill-invoke",
+                             "--coverage-disposition", "dedicated-run",
+                             "--frozen-sha256", "abc",
+                             "--can-merge-independently", raw)
+        assert_eq(f"exit 0 for '{raw}'", code, 0)
+        sprints = read_sprints(proj)
+        val = sprints["planning"]["team"]["story_assignments"]["my-story"]["can_merge_independently"]
+        assert_eq(f"bool stored for '{raw}'", val, expected_bool)
+
+
+def test_story_set_contract_creates_team_if_absent():
+    """story-set-contract initializes team{} and story_assignments{} if absent."""
+    print("\n[story-set-contract] Creates team and story_assignments if absent")
+    data = _planning_sprint_with_story("my-story")
+    # Remove the team key from the sprint
+    data["sprints"]["planning"].pop("team", None)
+    proj = setup_project(stories=data["stories"], sprints=data["sprints"])
+    code, out = run_tool(proj, "sprint", "story-set-contract",
+                         "--slug", "my-story",
+                         "--verification-method", "behavioral-trigger",
+                         "--contract-path", "some/path.trigger.md",
+                         "--harness-profile", "behavioral-trigger",
+                         "--coverage-disposition", "covered-by-composition",
+                         "--covered-by-scenario", "Integration: full lifecycle",
+                         "--frozen-sha256", "sha_abc123",
+                         "--can-merge-independently", "false")
+    assert_eq("exit 0", code, 0)
+    sprints = read_sprints(proj)
+    assert_eq("team created", "team" in sprints["planning"], True)
+    assert_eq("story_assignments created", "story_assignments" in sprints["planning"]["team"], True)
+    contract = sprints["planning"]["team"]["story_assignments"]["my-story"]["contract"]
+    assert_eq("covered_by_scenario set", contract.get("covered_by_scenario"),
+              "Integration: full lifecycle")
+    assert_eq("coverage_disposition set", contract.get("coverage_disposition"),
+              "covered-by-composition")
+
+
+# --- compute-verification-method tests ---
+
+def test_compute_verification_method_skill_instruction():
+    """skill-instruction change_type → skill-invoke."""
+    print("\n[compute-verification-method] skill-instruction → skill-invoke")
+    stories = {
+        "my-skill-story": {
+            "status": "backlog",
+            "title": "Skill Story",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "skill-instruction",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method",
+                         "--story", "my-skill-story")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method", out.get("verification_method"), "skill-invoke")
+    assert_eq("harness_profile", out.get("harness_profile"), "skill-invoke")
+
+
+def test_compute_verification_method_rule_hook():
+    """rule-hook change_type → behavioral-trigger."""
+    print("\n[compute-verification-method] rule-hook → behavioral-trigger")
+    stories = {
+        "my-hook": {
+            "status": "backlog",
+            "title": "Hook",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "rule-hook",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "my-hook")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method", out.get("verification_method"), "behavioral-trigger")
+
+
+def test_compute_verification_method_specification():
+    """specification change_type → document-review."""
+    print("\n[compute-verification-method] specification → document-review")
+    stories = {
+        "my-spec": {
+            "status": "backlog",
+            "title": "Spec",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "specification",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "my-spec")
+    assert_eq("exit 0", code, 0)
+    assert_eq("verification_method", out.get("verification_method"), "document-review")
+
+
+def test_compute_verification_method_multi_type_precedence():
+    """Multi-change-type 'skill-instruction + rule-hook' → skill-invoke (skill-instruction wins)."""
+    print("\n[compute-verification-method] multi-type precedence (skill-instruction beats rule-hook)")
+    stories = {
+        "multi-type": {
+            "status": "backlog",
+            "title": "Multi",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "skill-instruction + rule-hook",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "multi-type")
+    assert_eq("exit 0", code, 0)
+    # skill-instruction > rule-hook in precedence table → skill-invoke
+    assert_eq("skill-instruction wins", out.get("verification_method"), "skill-invoke")
+
+
+def test_compute_verification_method_unknown_change_type():
+    """Unknown change_type falls back to document-review."""
+    print("\n[compute-verification-method] unknown change_type → document-review")
+    stories = {
+        "unknown-ct": {
+            "status": "backlog",
+            "title": "Unknown CT",
+            "epic_slug": "e",
+            "story_file": True,
+            "depends_on": [],
+            "touches": [],
+            "change_type": "some-future-type",
+        }
+    }
+    proj = setup_project(stories=stories)
+    code, out = run_tool(proj, "sprint", "compute-verification-method", "--story", "unknown-ct")
+    assert_eq("exit 0", code, 0)
+    assert_eq("fallback to document-review", out.get("verification_method"), "document-review")
+
+
+def test_compute_verification_method_not_found_story():
+    """Missing story slug → error."""
+    print("\n[compute-verification-method] missing story → error")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "compute-verification-method",
+                         "--story", "does-not-exist")
+    assert_eq("exit 1", code, 1)
+    assert_eq("error present", "error" in out, True)
 
 
 # --- Triage Prefilter Tests ---
