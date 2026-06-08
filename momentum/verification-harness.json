@@ -1,5 +1,7 @@
 {
+  "_intent": "Shared verification harness for Momentum-managed projects. The 'defaults' block is the all-surfaces-skip posture — a deliberate carve-out for markdown/bash-only repos (like this one) that have no application to run. Skipping every surface is CORRECT for such repos and is not a silent verification gap. A real product repo (one with an app, API, or scripts to execute) MUST add an entry to the 'projects' array to activate real runners for the surfaces that apply. Leaving every surface skipped in a product repo is a silent gap — the 'projects' array is where that is fixed.",
   "defaults": {
+    "_note": "All-surfaces-skip is the intentional carve-out for a project with no executable surface (e.g. a markdown-only or bash-utility repo). A product repo must override via the 'projects' array below.",
     "env": {
       "startup": [],
       "readiness_probe": []
@@ -64,5 +66,55 @@
       "notes": "Set enabled=true and list change_types to bypass smoke validation for trivial stories of those types"
     }
   },
-  "project": []
+  "projects": [
+    {
+      "_template_note": "The block below is a TEMPLATE showing how a real product project configures this harness. Copy it, replace 'example-product-app' with your project slug, and fill in the env values for your stack. Remove this _template_note key before activating.",
+      "slug": "example-product-app",
+      "description": "Example: a product repo with a mobile/web UI, a REST backend, and shell scripts — all three runnable surface types configured with real drivers.",
+      "env": {
+        "_note": "Startup commands and readiness probes are required for every activated runnable surface. Leave none empty when real runners are configured.",
+        "startup": [
+          "docker compose up -d",
+          "npm run dev --prefix frontend &"
+        ],
+        "readiness_probe": [
+          "curl --retry 10 --retry-delay 2 --silent --fail http://localhost:3000/health",
+          "curl --retry 10 --retry-delay 2 --silent --fail http://localhost:8080/api/health"
+        ]
+      },
+      "execution_surfaces": {
+        "_note": "Only override surfaces this project actually exercises. Surfaces not listed here inherit the shared default (skip). Setting a surface to 'skip' here is valid only if the project has no stories of that change_type.",
+        "app-ui": {
+          "driver": "Maestro",
+          "fallback": "Playwright",
+          "description": "UI smoke tests via Maestro for mobile targets; Playwright for web-only flows. Maps to the 'smoke' driver_binding.",
+          "scenario_path": "e2e/maestro",
+          "platform": ["android", "ios", "web"]
+        },
+        "backend": {
+          "driver": "curl",
+          "description": "HTTP endpoint verification via curl against the running backend. Maps to the 'curl' driver_binding.",
+          "base_url_env": "BACKEND_BASE_URL",
+          "default_base_url": "http://localhost:8080",
+          "platform": ["host"]
+        },
+        "script-cli": {
+          "driver": "cmux",
+          "description": "Run CLI scripts in a cmux terminal surface and assert exit code + stdout pattern. Maps to the 'bash' driver_binding.",
+          "platform": ["host"]
+        },
+        "script-code": {
+          "driver": "cmux",
+          "description": "Execute and observe script-code artifacts (e.g. migration scripts, data transforms) via cmux bash surface.",
+          "platform": ["host"]
+        },
+        "skill-instruction": "skip",
+        "agent-definition": "skip",
+        "rule-hook": "skip",
+        "research-spike": "skip",
+        "specification": "skip",
+        "config-structure": "skip"
+      }
+    }
+  ]
 }
