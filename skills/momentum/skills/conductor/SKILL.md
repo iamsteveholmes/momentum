@@ -3,6 +3,7 @@ name: conductor
 description: "In-session sprint build orchestrator — per-story pipelines, AVFL-on-merge, E2E, single end-gate. No story-count cap."
 model: claude-opus-4-6
 effort: max
+user-invocable: true
 ---
 
 # Conductor — Sprint Build Orchestrator
