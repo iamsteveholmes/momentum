@@ -1216,6 +1216,31 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
             Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
       </action>
+      <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
+        Sources of residual findings to scan:
+          (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields.
+          (b) {{build_log}} entries with event == "stage3-finding-blocked" — per-story pipeline findings that exhausted the fix retry budget.
+        Combine both sources into {{all_build_findings}}.
+
+        Collect {{major_residuals}} = all findings F in {{all_build_findings}} where:
+          - F.severity is in {blocker, critical, major}  — the upper severity tier
+          - F.disposition is triaged-out OR escalated OR blocked — finding was NOT fixed or dismissed; it is a residual
+        Note: "fixed" and "dismissed" findings are fully resolved and need no stub.
+        Note: "blocked" findings (step 2.S3 retry-exhausted path) should already have had a triage stub spun at block time; include them here so the guard confirms the stub exists and creates one if it was missed.
+
+        Initialize {{triage_stubs_created}} = [] if not already present (it may have been populated during the build by the blocked-story triage spin at step 2.S3).
+
+        For each finding F in {{major_residuals}}:
+          IF F.finding_id is NOT in {{triage_stubs_created}}:
+            Invoke momentum:triage with F's descriptive fields (summary, detail, evidence, location, story_slug, severity, stakes_class) to create a backlog stub for this residual finding.
+            Append F.finding_id to {{triage_stubs_created}}.
+            Append to {{build_log}}: { event: "major-residual-stub-created", finding_id: F.finding_id, severity: F.severity, summary: F.summary, story_slug: F.story_slug }
+
+        Bind {{stubs_created_this_pass}} = count of stubs created in the loop above.
+        If {{stubs_created_this_pass}} > 0: surface a note in the push summary output: "{{stubs_created_this_pass}} MAJOR-severity residual(s) from this build now have linked backlog stubs — review via momentum:refine before next sprint."
+
+        INVARIANT: When this action completes, every finding in {{major_residuals}} has a corresponding backlog stub. No MAJOR-severity residual may leave this sprint without one.
+      </action>
       <action>Show push summary: `git log @{u}..HEAD --oneline`</action>
       <ask>Push to origin/main?</ask>
       <check if="developer confirms push">
