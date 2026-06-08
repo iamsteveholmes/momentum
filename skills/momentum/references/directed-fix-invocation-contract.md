@@ -1,7 +1,8 @@
 # Directed `momentum:dev` Fix-Mode Invocation Contract
 
-**Version:** 1.1 — seam contract declaration added; review scope explicit (2026-06-07)
-**Previous:** 1.0 — established with DEC-035 + DEC-036 (stakes-class escalation amendment)
+**Version:** 1.2 — write-scope invariant added; cross-artifact triaged-out routing made explicit (2026-06-08)
+**Previous:** 1.1 — seam contract declaration added; review scope explicit (2026-06-07)
+**1.0:** established with DEC-035 + DEC-036 (stakes-class escalation amendment)
 **change_type:** specification
 **Verification:** document-review
 
@@ -146,6 +147,27 @@ This boundary is stated explicitly to prevent the fix-mode from re-introducing a
 
 ---
 
+## Write-Scope Invariant
+
+The fix-mode operates within a **declared writable file set** passed by the Conductor at invocation time. This set enumerates exactly which files the story is authorized to create or modify.
+
+**Hard prohibitions — no exceptions:**
+
+- **Never edit the story's own spec file** (`.momentum/stories/{story-slug}.md`). It is read-only input. Editing it constitutes scope leakage.
+- **Never edit any other story's spec file** under `.momentum/stories/` or its verification contract under `.momentum/sprints/`. Those files belong to sibling stories and are outside this story's writable set.
+- **Never write to any file outside the declared writable set.** If a finding points to a problem in a file not in the writable set, the correct disposition is `triaged-out`, not `fixed`.
+
+**Cross-artifact findings — mandatory `triaged-out` routing:**
+
+When a finding points to a problem that genuinely belongs to a different artifact (a file outside this story's writable set — including another story's spec, a shared reference document not in the writable set, or any file owned by a different story), the fix-mode MUST:
+
+1. Return `disposition: triaged-out` for that finding.
+2. Include in the triaged-out record enough context (location, summary, suggested_fix) for the Conductor to spin a reconciliation note against the owning story via `momentum:triage`.
+
+**What this prevents:** The sprint-2026-06-02-conduct-core retro found 5 of 21 stories (24%) required a Conductor revert because the dev or fixer agent edited the story spec file or a sibling workflow file — files it was never authorized to touch. The write-scope constraint and the triaged-out cross-artifact routing eliminate the root cause of those reverts.
+
+---
+
 ## Disposition Rules Summary
 
 These rules encode the DEC-036 amendment to DEC-035's binding decision #1.
@@ -156,6 +178,7 @@ These rules encode the DEC-036 amendment to DEC-035's binding decision #1.
 | `legitimate: true`, `stakes_class` is `security-auth-isolation`, `irreversible-destructive`, or `high-blast-radius-architecture` | `escalated` — inline payload returned; no fix applied; no fix commit |
 | `legitimate: false` | `dismissed` — non-empty rationale required; never fixed or escalated |
 | `legitimate: true`, out of scope for this story | `triaged-out` — tracked separately; not silently dropped |
+| `legitimate: true`, finding targets a file outside this story's declared writable set | `triaged-out` — cross-artifact routing; DO NOT edit the out-of-scope file |
 
 ---
 
