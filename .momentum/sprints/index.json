@@ -1,8 +1,7 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
-    "status": "planning",
+  "active": {
+    "locked": true,
+    "status": "active",
     "stories": [
       "conduct-momentum-tools-path-resolution",
       "conduct-entry-point-command",
@@ -348,8 +347,162 @@
         "architecture-guard"
       ],
       "specialist_note": "dev-skills for all 25 (markdown/bash repo, per DEC-035 sprint mandate)"
-    }
+    },
+    "approvals": [
+      {
+        "story_slug": "conduct-momentum-tools-path-resolution",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "09a9193df15049bf8e81667734c8231c111dee7e05f22019e696e507b623af4d"
+      },
+      {
+        "story_slug": "conduct-entry-point-command",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "fc37d0a21f835183f3055711ceb9ef447f1d8e135f91ba6fa05741976dc65f08"
+      },
+      {
+        "story_slug": "conduct-register-skill-and-refresh-cache",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "13e7f9f14f8588ae39e4bb2eaec3528643edb1565a0f3f072d46858fa81fa426"
+      },
+      {
+        "story_slug": "conduct-wire-caller-and-discovery",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "9d15b779b8c9f3ad3d71fbf23bd964a72871ff267ca945b7573b958661375a00"
+      },
+      {
+        "story_slug": "conduct-planning-emit-contract-schema",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "65cace0dbab3298ec692e124f0d58fab0b91ac2856b36bf87b817d0a61ceb7e6"
+      },
+      {
+        "story_slug": "conduct-per-story-build-review-dispatch",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "6a00a4b9f984927b65875012430242b952bb141c3961a55889ed890c767007a1"
+      },
+      {
+        "story_slug": "conduct-endgate-decision-card-rendering",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "53fcb309bbe573a3ea85c25a26b878f1dfaf698c4393d8e84bddf92544f58f84"
+      },
+      {
+        "story_slug": "conduct-coverage-disposition-discharge-consumer",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "143171bd78df32f3f29a73ecabc9e08b89d2103e386d99dd974406063f56195b"
+      },
+      {
+        "story_slug": "conduct-e2e-finding-normalization-escalation",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "34a589ee6b61b121070b1e062ed6e502eb1a2bababb7b29cbd1c6d0a678bb92c"
+      },
+      {
+        "story_slug": "conduct-e2e-validation-and-test-fixture",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "7b64ff3b668d46439e7995f404ddbbea294041d4590dc5c3228d33da0ed7e8b3"
+      },
+      {
+        "story_slug": "conduct-verification-method-enum-alignment",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "221e552bcfc07c59bcdc10dba0fb4db7c519ff632f1e6f4fd9b1102d3834bf81"
+      },
+      {
+        "story_slug": "conduct-planning-reconcile-gherkin-and-specs-rule",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "2f5f38dfcccb43cbb225bdef7c572a804fb4eb5df750075b5c0ef6029f6b8026"
+      },
+      {
+        "story_slug": "avfl-merge-review-as-workflow",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "a6675506e33d4ab9a21f2c65dfbf8a43025706338f7fd7c884df300879572b08"
+      },
+      {
+        "story_slug": "conduct-endgate-request-changes-redispatch",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:38Z",
+        "story_file_sha": "02cb66a1128b53826e559d57dc115af41a76b5256744181d05dfb9511456c8b3"
+      },
+      {
+        "story_slug": "conduct-simplify-and-convergence-questions",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "17f83003986a012509a4a1eb7c285ece75fbb82acc5bd65fe9dfa217aa57fb5a"
+      },
+      {
+        "story_slug": "conduct-cleanup-dead-agent-paths-and-validate-resolve",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "e56e5b67884e169041733bf08275326c30b94765f96a84696aca7d76b33a83f9"
+      },
+      {
+        "story_slug": "conduct-per-project-verification-harness-config",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "1dff9d9270db6ceabc2566a331ad2c34d7fea8b4ee6f6c69c061acb56b5dbfc5"
+      },
+      {
+        "story_slug": "contract-seam-stories-two-sided-review-scope",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "d220326a2faf967ad4c9e2fd9213da8ad2c2a71ab0989cfb8c721b189e409058"
+      },
+      {
+        "story_slug": "reconcile-fix-disposition-with-conductor-scope-reverts",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "df1ad32426ed77554c768bfcc2395f0edb8f6ab5ab6e5f0f867f93331e577aeb"
+      },
+      {
+        "story_slug": "decision-grade-presentation-standard",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "0c50109468121f1d9aa9791165d399dc273f1d23f15efb817dd36a4cc4a34718"
+      },
+      {
+        "story_slug": "conduct-state-machine-defects-shipped-unfixed",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "9fa73ffe29f8ef2c9913b51c56ee4f2b40505e6e3c3587734c4ebb8c5593b540"
+      },
+      {
+        "story_slug": "tighten-dev-fixer-write-scope-stop-story-spec-edits",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "e0050dca118d55a884ed4defca6de111c9c00de1eb93a1a559186a265af71686"
+      },
+      {
+        "story_slug": "controlled-enums-and-stable-ledger-schema-finding-cards",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "ece871c0715f395b6623d2a38063377c041f992439bd270881ba5325b3c99ce1"
+      },
+      {
+        "story_slug": "exercise-conduct-escalation-machinery-end-to-end",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "eecbda26bf798e1b29495964710d4ca58401b31c0df209d1c8f9064cba5db095"
+      },
+      {
+        "story_slug": "extract-shared-diff-range-helper-for-per-story-review",
+        "decision": "approved",
+        "approved_at": "2026-06-08T02:54:39Z",
+        "story_file_sha": "ac2123479398058f44f92fca12f5296052511cdf5f6689b774fa7ca757de07da"
+      }
+    ],
+    "started": "2026-06-07"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
@@ -366,10 +519,10 @@
           ],
           "change_type": "skill-instruction + config-structure",
           "guidelines": {
-            "dev": "EDD \u2014 write 3 behavioral evals before touching skill files. NFR: SKILL.md description \u2264150 chars, model/effort frontmatter, body \u2264500 lines. Scan profile adds to framework.json validation_profiles \u2014 do not modify existing profiles.",
+            "dev": "EDD — write 3 behavioral evals before touching skill files. NFR: SKILL.md description ≤150 chars, model/effort frontmatter, body ≤500 lines. Scan profile adds to framework.json validation_profiles — do not modify existing profiles.",
             "qa": "Validate against 11 ACs. Verify framework.json schema consistency with existing profiles. Verify scan composes with corpus mode. Verify backward compatibility of gate/checkpoint/full."
           },
-          "test_approach": "EDD \u2014 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
+          "test_approach": "EDD — 3 evals: scan no-fix-loop, structured output format, existing profiles unchanged",
           "wave": 1,
           "dependencies": []
         }
@@ -433,10 +586,10 @@
           ],
           "change_type": "config-structure",
           "guidelines": {
-            "dev": "Direct implementation \u2014 create plugin.json manifest, move Impetus to nested skills/impetus/. Verify with jq. No tests needed.",
+            "dev": "Direct implementation — create plugin.json manifest, move Impetus to nested skills/impetus/. Verify with jq. No tests needed.",
             "qa": "Validate 8 ACs. Verify plugin.json schema, Impetus SKILL.md name field, old files removed, non-Impetus files untouched."
           },
-          "test_approach": "Inspection \u2014 JSON validation, path existence checks",
+          "test_approach": "Inspection — JSON validation, path existence checks",
           "wave": 1,
           "dependencies": []
         },
@@ -447,10 +600,10 @@
           ],
           "change_type": "skill-instruction",
           "guidelines": {
-            "dev": "EDD \u2014 write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description \u2264150 chars, model/effort frontmatter.",
+            "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
             "qa": "Validate 7 ACs. Verify independent invocability, all 9 steps reachable, workflow moved from old location."
           },
-          "test_approach": "EDD \u2014 2 evals: invocability, step coverage",
+          "test_approach": "EDD — 2 evals: invocability, step coverage",
           "wave": 1,
           "dependencies": []
         },
@@ -461,10 +614,10 @@
           ],
           "change_type": "skill-instruction",
           "guidelines": {
-            "dev": "EDD \u2014 write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description \u2264150 chars, model/effort frontmatter.",
+            "dev": "EDD — write 2 behavioral evals before creating SKILL.md. Thin wrapper around existing validated workflow. NFR: description ≤150 chars, model/effort frontmatter.",
             "qa": "Validate 7 ACs. Verify independent invocability, all 7 phases reachable, workflow moved from old location."
           },
-          "test_approach": "EDD \u2014 2 evals: invocability, phase coverage",
+          "test_approach": "EDD — 2 evals: invocability, phase coverage",
           "wave": 1,
           "dependencies": []
         },
@@ -478,7 +631,7 @@
             "dev": "Use git mv for history preservation. Update name field only. Verify subdirectories intact after each move.",
             "qa": "Validate 6 ACs. Verify all 10 skills moved, name fields updated, old dirs removed, plugin discovers 11 skills."
           },
-          "test_approach": "Inspection \u2014 path checks, glob verification",
+          "test_approach": "Inspection — path checks, glob verification",
           "wave": 2,
           "dependencies": [
             "plugin-skeleton"
@@ -508,7 +661,7 @@
           ],
           "change_type": "skill-instruction + specification",
           "guidelines": {
-            "dev": "EDD \u2014 write 2 evals for spawn names and dead references. Grep-driven audit then targeted updates.",
+            "dev": "EDD — write 2 evals for spawn names and dead references. Grep-driven audit then targeted updates.",
             "qa": "Validate 9 ACs. Zero dead references, correct spawn names, spec docs consistent.",
             "architect-guard": "Verify plugin model section in architecture.md matches actual directory structure. Check Decision 32 consistency."
           },
@@ -564,7 +717,7 @@
             "dev": "Create agents/dev.md agent definition following qa-reviewer.md pattern. Update sprint-dev Phase 2 to spawn agent instead of skill. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
             "qa": "Validate 7 ACs. Verify agent definition schema, sprint-dev spawning, momentum:dev non-regression."
           },
-          "test_approach": "EDD \u2014 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
+          "test_approach": "EDD — 3 evals: agent input/output contract, sprint-dev spawning, non-regression",
           "wave": 1,
           "dependencies": []
         },
@@ -580,7 +733,7 @@
             "qa": "Validate 7 ACs. Verify classification, specialist agents, fallback to base dev, sprint record schema.",
             "architect-guard": "Verify specialist model extends Decision 26 two-layer agent model without breaking existing patterns."
           },
-          "test_approach": "EDD \u2014 evals for classification, specialist spawning, fallback behavior",
+          "test_approach": "EDD — evals for classification, specialist spawning, fallback behavior",
           "wave": 2,
           "dependencies": [
             "dev-agent-definition-files"
@@ -593,10 +746,10 @@
           ],
           "change_type": "skill-instruction",
           "guidelines": {
-            "dev": "EDD \u2014 add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
+            "dev": "EDD — add guidelines check to sprint-planning Step 5 after specialist assignment. File existence checks only. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
             "qa": "Validate 9 ACs. Verify detection, warnings, developer options, non-blocking behavior, sprint record tracking."
           },
-          "test_approach": "EDD \u2014 3 evals: missing detection, developer options, sprint record status",
+          "test_approach": "EDD — 3 evals: missing detection, developer options, sprint record status",
           "wave": 3,
           "dependencies": [
             "specialist-dev-agents"
@@ -612,7 +765,7 @@
             "dev": "Create agents/architecture-guard.md following qa-reviewer.md pattern. Update SKILL.md stub. Update sprint-dev Phase 5. Guidelines: skills/momentum/references/agent-skill-development-guide.md",
             "qa": "Validate 9 ACs. Verify agent definition, decision extraction, findings format, Phase 5 spawning."
           },
-          "test_approach": "EDD \u2014 evals: decision extraction, findings format, read-only constraint",
+          "test_approach": "EDD — evals: decision extraction, findings format, read-only constraint",
           "wave": 2,
           "dependencies": [
             "dev-agent-definition-files"
@@ -664,7 +817,7 @@
             "dev": "Modify 3 existing functions + add 3 new commands in momentum-tools.py. ALL changes must have unit tests in test-momentum-tools.py following existing subprocess pattern.",
             "qa": "Validate 10 ACs. Run full test suite. Verify status fields written on all lifecycle transitions."
           },
-          "test_approach": "Unit tests \u2014 12 new tests in test-momentum-tools.py",
+          "test_approach": "Unit tests — 12 new tests in test-momentum-tools.py",
           "wave": 1,
           "dependencies": []
         },
@@ -675,10 +828,10 @@
           ],
           "change_type": "config-structure",
           "guidelines": {
-            "dev": "Additive JSON edit \u2014 add status/slug/retro_run_at fields. No existing fields changed.",
+            "dev": "Additive JSON edit — add status/slug/retro_run_at fields. No existing fields changed.",
             "qa": "Validate 5 ACs. Verify JSON parses, new fields present, existing fields unchanged."
           },
-          "test_approach": "Inspection \u2014 JSON validation",
+          "test_approach": "Inspection — JSON validation",
           "wave": 1,
           "dependencies": []
         },
@@ -741,10 +894,10 @@
           ],
           "change_type": "skill-instruction + code",
           "guidelines": {
-            "dev": "EDD \u2014 write 2+ behavioral evals before creating skill files. SKILL.md: name=retro, description \u2264150 chars, model/effort frontmatter, body delegates to workflow.md. workflow.md: XML step structure, <critical> invariants, momentum-tools log calls. 7-phase retro: sprint ID \u2192 log correlation \u2192 story verification \u2192 cross-log discovery \u2192 triage output \u2192 story stubs \u2192 sprint closure.",
+            "dev": "EDD — write 2+ behavioral evals before creating skill files. SKILL.md: name=retro, description ≤150 chars, model/effort frontmatter, body delegates to workflow.md. workflow.md: XML step structure, <critical> invariants, momentum-tools log calls. 7-phase retro: sprint ID → log correlation → story verification → cross-log discovery → triage output → story stubs → sprint closure.",
             "qa": "Validate 9 ACs. Verify cross-log correlation reads all agent files. Verify two triage outputs written. Verify sprint-complete and retro-complete both called. Verify closed-incomplete transitions for unfinished stories."
           },
-          "test_approach": "EDD \u2014 evals for log correlation, triage output format, sprint closure",
+          "test_approach": "EDD — evals for log correlation, triage output format, sprint closure",
           "wave": 1,
           "dependencies": [],
           "specialist": "dev-skills",
@@ -758,7 +911,7 @@
           ],
           "change_type": "rule-hook + code",
           "guidelines": {
-            "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-lint.sh: extract file_path from TOOL_INPUT JSON, run linter by extension (.py\u2192ruff, .json\u2192json.tool, .sh\u2192shellcheck, .md\u2192structural), output only on failure, track modified files.",
+            "dev": "Replace placeholder echo in hooks/hooks.json with real script reference. Create momentum-lint.sh: extract file_path from TOOL_INPUT JSON, run linter by extension (.py→ruff, .json→json.tool, .sh→shellcheck, .md→structural), output only on failure, track modified files.",
             "qa": "Validate 7 ACs. Verify hook fires on Edit/Write/NotebookEdit. Verify clean files produce no output. Verify session-modified-files.txt tracks and dedupes paths."
           },
           "test_approach": "Behavioral verification of hook output",
@@ -814,7 +967,7 @@
             "dev": "Add session journal-status subcommand to momentum-tools.py under existing session command group. Scan .claude/momentum/journal.jsonl: group by thread_id, detect open vs closed threads, handle malformed lines. All new code must have unit tests in test-momentum-tools.py.",
             "qa": "Validate 6 ACs. Run full test suite. Verify no-file returns exists:false. Verify open thread counting. Verify malformed line handling. Verify performance on large journals."
           },
-          "test_approach": "Unit tests \u2014 6 new tests in test-momentum-tools.py",
+          "test_approach": "Unit tests — 6 new tests in test-momentum-tools.py",
           "wave": 1,
           "dependencies": [],
           "specialist": "dev",
@@ -1212,7 +1365,7 @@
             "guidelines": ".claude/rules/dev-skills.md",
             "guidelines_status": "present",
             "wave": 3,
-            "note": "Tasks 1/2/5 are script-code TDD \u2014 use momentum:dev (bmad-dev-story) for those tasks; Tasks 3/4 are EDD for dev-skills"
+            "note": "Tasks 1/2/5 are script-code TDD — use momentum:dev (bmad-dev-story) for those tasks; Tasks 3/4 are EDD for dev-skills"
           },
           "feature-status-practice-path": {
             "specialist": "dev-skills",
@@ -2223,7 +2376,7 @@
             "change_type": [
               "skill-instruction"
             ],
-            "verification_method": "EDD eval \u2014 adversarial eval scenarios authored by acceptance tester independent of implementation"
+            "verification_method": "EDD eval — adversarial eval scenarios authored by acceptance tester independent of implementation"
           },
           "b3-canvas-update-render-epics-instead-of-features": {
             "role": "dev",
@@ -2245,7 +2398,7 @@
               "skill-instruction",
               "specification"
             ],
-            "verification_method": "EDD eval \u2014 adversarial eval scenarios authored by acceptance tester independent of implementation"
+            "verification_method": "EDD eval — adversarial eval scenarios authored by acceptance tester independent of implementation"
           },
           "momentumintake-remove-worktree-isolation-story-add-is-safe": {
             "role": "dev",
@@ -2268,7 +2421,7 @@
     {
       "locked": true,
       "slug": "sprint-2026-06-02-conduct-core",
-      "goal": "Conduct core-build slice (DEC-035 + DEC-036): the stakes-and-timing escalation engine, the canonical finding schema + shared stakes rubric, the Conductor spine, the bmad-code-review adapter, the directed-dev fix leg, and the dev/qa rescope. 21 stories, ~6 dependency waves. Planning only \u2014 NOT activated.",
+      "goal": "Conduct core-build slice (DEC-035 + DEC-036): the stakes-and-timing escalation engine, the canonical finding schema + shared stakes rubric, the Conductor spine, the bmad-code-review adapter, the directed-dev fix leg, and the dev/qa rescope. 21 stories, ~6 dependency waves. Planning only — NOT activated.",
       "planned": "2026-06-02",
       "stories": [
         "conduct-spec-revision-dec036",

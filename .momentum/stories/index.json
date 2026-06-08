@@ -4929,7 +4929,7 @@
     "verification_method": "document-review"
   },
   "decision-grade-presentation-standard": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Practice-wide decision-grade presentation standard",
     "epic_slug": "ad-hoc",
     "story_file": true,
@@ -5272,7 +5272,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-per-story-build-review-dispatch": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Wire conduct stages 1-2: per-story dev spawn + concurrent QA/code-review fan-out",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5282,7 +5282,7 @@
     "story_type": "feature"
   },
   "conduct-endgate-decision-card-rendering": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Render conduct end-gate decision cards",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5292,7 +5292,7 @@
     "story_type": "feature"
   },
   "avfl-merge-review-as-workflow": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "AVFL-on-merge as a Workflow (3-dot diff)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5302,7 +5302,7 @@
     "story_type": "feature"
   },
   "conduct-endgate-request-changes-redispatch": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "End-gate request-changes re-dispatch",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5312,7 +5312,7 @@
     "story_type": "feature"
   },
   "conduct-coverage-disposition-discharge-consumer": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Coverage-disposition discharge consumer",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5332,7 +5332,7 @@
     "story_type": "exploration"
   },
   "conduct-entry-point-command": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Create the /momentum:conduct entry-point command file (and resolve the conduct-vs-conductor name)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5342,7 +5342,7 @@
     "story_type": "feature"
   },
   "conduct-register-skill-and-refresh-cache": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Register the conductor skill: confirm user-invocable frontmatter and force a plugin/marketplace refresh so it surfaces",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5352,7 +5352,7 @@
     "story_type": "maintenance"
   },
   "conduct-wire-caller-and-discovery": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Wire a caller and a discovery route into the Conductor (sprint-dev rewrite and/or Impetus dispatch)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5362,7 +5362,7 @@
     "story_type": "feature"
   },
   "conduct-momentum-tools-path-resolution": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Ensure momentum-tools is resolvable in the conductor's execution environment",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5372,7 +5372,7 @@
     "story_type": "maintenance"
   },
   "conduct-planning-emit-contract-schema": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Build the planning→build producer suite: sprint-planning + sprint-manager must emit the story_assignments[].contract{} s",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5382,7 +5382,7 @@
     "story_type": "feature"
   },
   "conduct-e2e-finding-normalization-escalation": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Normalize E2E findings to canonical schema and route them through escalation + decision cards",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5392,7 +5392,7 @@
     "story_type": "feature"
   },
   "conduct-e2e-validation-and-test-fixture": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Add a producer→consumer smoke/eval proving a planned sprint yields a conduct-runnable record, and create an activated te",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5402,7 +5402,7 @@
     "story_type": "feature"
   },
   "conduct-verification-method-enum-alignment": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "verification-standard.md + contract-format-guide.md + create-story: align the verification_method vocabulary to the clos",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5412,7 +5412,7 @@
     "story_type": "maintenance"
   },
   "conduct-planning-reconcile-gherkin-and-specs-rule": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Reconcile sprint-planning Step 4 (Gherkin generation) and remove the stale 'dev never accesses specs/' rule",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5422,7 +5422,7 @@
     "story_type": "maintenance"
   },
   "conduct-simplify-and-convergence-questions": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Wire /simplify Phase C invocation and resolve the §13 convergence open questions",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5432,7 +5432,7 @@
     "story_type": "maintenance"
   },
   "conduct-per-project-verification-harness-config": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Configure per-project verification-harness execution_surfaces (non-markdown projects only)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5442,7 +5442,7 @@
     "story_type": "feature"
   },
   "conduct-cleanup-dead-agent-paths-and-validate-resolve": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Clean up dead agent routing entries and add existence validation to agent resolve",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5476,7 +5476,7 @@
     "story_type": "feature"
   },
   "reconcile-fix-disposition-with-conductor-scope-reverts": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Reconcile fix-disposition with Conductor scope-discipline reverts",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5516,7 +5516,7 @@
     "story_type": "feature"
   },
   "contract-seam-stories-two-sided-review-scope": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Give contract/seam stories a two-sided (producer + consumer) review scope",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5536,7 +5536,7 @@
     "story_type": "feature"
   },
   "conduct-state-machine-defects-shipped-unfixed": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Fix two MAJOR conduct state-machine defects shipped unfixed (terminal->terminal + verify-skip)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5546,7 +5546,7 @@
     "story_type": "feature"
   },
   "tighten-dev-fixer-write-scope-stop-story-spec-edits": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Tighten dev/fixer write-scope to stop out-of-scope story-spec edit-then-revert",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5566,7 +5566,7 @@
     "story_type": "feature"
   },
   "extract-shared-diff-range-helper-for-per-story-review": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Extract a shared diff-range reference/helper for per-story review",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5576,7 +5576,7 @@
     "story_type": "feature"
   },
   "controlled-enums-and-stable-ledger-schema-finding-cards": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Controlled enums + stable schema for finding-cards / build-results ledgers",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5586,7 +5586,7 @@
     "story_type": "feature"
   },
   "exercise-conduct-escalation-machinery-end-to-end": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Exercise the conduct escalation machinery end-to-end before trusting it",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
