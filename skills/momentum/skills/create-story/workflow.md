@@ -193,7 +193,7 @@ Which method should govern this story's verification? Select the method for the 
       - Implementation approach per type (EDD steps for skill-instruction; TDD delegation for script-code; functional verification for rule-hook; direct+inspect for config-structure; visual verification + design-fidelity AC compliance for app-ui; direct authoring with cross-reference verification for specification)
       - NFR compliance requirements for any skill-instruction tasks
       - DoD additions specific to this story's change types
-      - A reminder that Gherkin specs exist for this sprint (in sprints/{sprint-slug}/specs/) but are off-limits to the dev agent — the dev agent implements against plain English ACs in the story file only, never against .feature files (Decision 30 black-box separation)
+      - A reminder that a frozen verification contract exists for this sprint (in sprints/{sprint-slug}/specs/{story-slug}.{ext}). Dev reads the Part-A header (how_dev_self_checks, verification_method, harness_profile) as a self-check before signaling done. Dev never reads the verifier body (Part B: scenarios, assertion scripts, Gherkin) beyond sections explicitly referenced by how_dev_self_checks.
     </critical>
 
     <action>Save {{story_file}} with the injected section</action>
