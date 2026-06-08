@@ -5516,7 +5516,7 @@
     "story_type": "feature"
   },
   "contract-seam-stories-two-sided-review-scope": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Give contract/seam stories a two-sided (producer + consumer) review scope",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
