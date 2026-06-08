@@ -15,6 +15,8 @@ Usage:
     momentum-tools.py sprint epic-membership --story SLUG --epic SLUG
     momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N]
     momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY] [--depends-on SLUG[,SLUG,...]]
+    momentum-tools.py sprint story-set-contract --slug SLUG --verification-method METHOD --contract-path PATH --harness-profile PROFILE --coverage-disposition DISPOSITION [--covered-by-scenario SCENARIO] --frozen-sha256 SHA256 --can-merge-independently BOOL
+    momentum-tools.py sprint compute-verification-method --story SLUG
     momentum-tools.py specialist-classify --touches "path1,path2,..."
     momentum-tools.py agent resolve --touches "path1,path2,..."
     momentum-tools.py agent resolve --role qa-reviewer
@@ -369,6 +371,192 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
 
     write_json(path, sprints)
     result("sprint_plan", success=True, operation=args.operation, stories=story_slugs)
+
+
+def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
+    """Persist the full contract block + verification_method + can_merge_independently
+    into planning.team.story_assignments[slug] in sprints/index.json.
+
+    Called once per story during sprint activation (Step 8 of sprint-planning workflow)
+    after frozen contracts are written to disk and checksums computed.
+
+    Required fields:
+      --slug                Story slug
+      --verification-method Closed-enum token (skill-invoke|behavioral-trigger|bash|smoke|curl|document-review)
+      --contract-path       Relative path to the contract file from project root
+      --harness-profile     Harness profile name (usually same as verification_method)
+      --coverage-disposition  dedicated-run | covered-by-composition
+      --covered-by-scenario   Scenario name (or empty/null for dedicated-run)
+      --frozen-sha256       SHA-256 hex digest of the contract file at activation time
+      --can-merge-independently  true|false (JSON boolean as string)
+    """
+    project_dir = resolve_project_dir()
+    path = sprints_path(project_dir)
+    sprints = read_json(path)
+
+    if not sprints.get("planning"):
+        error_result("sprint_story_set_contract", "No planning sprint exists")
+
+    planning = sprints["planning"]
+    if planning.get("locked"):
+        error_result("sprint_story_set_contract", "Cannot modify a locked sprint")
+
+    slug = args.slug
+    if slug not in planning.get("stories", []):
+        error_result("sprint_story_set_contract",
+                     f"Story '{slug}' is not in the planning sprint's stories list",
+                     story=slug)
+
+    # Validate verification_method against closed enum
+    VALID_VERIFICATION_METHODS = {
+        "skill-invoke", "behavioral-trigger", "bash", "smoke", "curl", "document-review"
+    }
+    vm = args.verification_method
+    if vm not in VALID_VERIFICATION_METHODS:
+        error_result("sprint_story_set_contract",
+                     f"Invalid verification_method '{vm}'. Must be one of: "
+                     f"{', '.join(sorted(VALID_VERIFICATION_METHODS))}",
+                     story=slug)
+
+    # Parse can_merge_independently — accept "true"/"false" strings or JSON booleans
+    cmi_raw = args.can_merge_independently
+    if isinstance(cmi_raw, bool):
+        can_merge = cmi_raw
+    elif isinstance(cmi_raw, str):
+        if cmi_raw.lower() == "true":
+            can_merge = True
+        elif cmi_raw.lower() == "false":
+            can_merge = False
+        else:
+            error_result("sprint_story_set_contract",
+                         f"Invalid can_merge_independently '{cmi_raw}'. Must be true or false",
+                         story=slug)
+    else:
+        can_merge = bool(cmi_raw)
+
+    # Normalize covered_by_scenario — empty string or "null" → None
+    covered_by = args.covered_by_scenario or None
+    if covered_by in ("null", ""):
+        covered_by = None
+
+    # Build the contract block
+    contract_block = {
+        "path": args.contract_path,
+        "harness_profile": args.harness_profile,
+        "coverage_disposition": args.coverage_disposition,
+        "covered_by_scenario": covered_by,
+        "frozen_sha256": args.frozen_sha256,
+    }
+
+    # Ensure team.story_assignments structure exists
+    if "team" not in planning:
+        planning["team"] = {}
+    if "story_assignments" not in planning["team"]:
+        planning["team"]["story_assignments"] = {}
+
+    assignments = planning["team"]["story_assignments"]
+    if slug not in assignments:
+        assignments[slug] = {}
+
+    # Persist the new fields into the existing assignment entry
+    assignments[slug]["verification_method"] = vm
+    assignments[slug]["can_merge_independently"] = can_merge
+    assignments[slug]["contract"] = contract_block
+
+    write_json(path, sprints)
+    result("sprint_story_set_contract", success=True,
+           story=slug,
+           verification_method=vm,
+           can_merge_independently=can_merge,
+           contract=contract_block)
+
+
+# Closed enum: change_type → verification method token
+# Source of truth: skills/momentum/references/rules/verification-standard.md §1
+CHANGE_TYPE_TO_VERIFICATION_METHOD: dict[str, str] = {
+    "skill-instruction": "skill-invoke",
+    "agent-definition": "skill-invoke",
+    "rule-hook": "behavioral-trigger",
+    "script-code": "bash",
+    "script-cli": "bash",
+    "backend": "curl",
+    "app-ui": "smoke",
+    "research-spike": "document-review",
+    "specification": "document-review",
+    "config-structure": "document-review",
+}
+
+# Multi-change-type precedence order (highest weight first)
+CHANGE_TYPE_PRECEDENCE: list[str] = [
+    "app-ui",
+    "script-code",
+    "script-cli",
+    "backend",
+    "agent-definition",
+    "skill-instruction",
+    "rule-hook",
+    "config-structure",
+    "specification",
+    "research-spike",
+]
+
+
+def compute_verification_method(change_type_raw: str) -> str:
+    """Compute the closed-enum verification_method from a story's change_type field.
+
+    Handles multi-value change_type strings (e.g. "skill-instruction + code") by
+    splitting on ' + ' and '+' and applying the precedence table to pick the highest-
+    weight type. Falls back to 'document-review' for unknown/empty change_type values.
+    """
+    if not change_type_raw:
+        return "document-review"
+
+    # Split on common separators used in the existing data
+    import re as _re
+    parts = [p.strip() for p in _re.split(r"\s*\+\s*|,\s*", change_type_raw) if p.strip()]
+
+    # Filter to known types
+    known = [p for p in parts if p in CHANGE_TYPE_TO_VERIFICATION_METHOD]
+
+    if not known:
+        return "document-review"
+
+    if len(known) == 1:
+        return CHANGE_TYPE_TO_VERIFICATION_METHOD[known[0]]
+
+    # Multi-type: apply precedence order (first match wins)
+    for ct in CHANGE_TYPE_PRECEDENCE:
+        if ct in known:
+            return CHANGE_TYPE_TO_VERIFICATION_METHOD[ct]
+
+    # Unreachable if CHANGE_TYPE_PRECEDENCE covers all known types, but guard anyway
+    return CHANGE_TYPE_TO_VERIFICATION_METHOD[known[0]]
+
+
+def cmd_sprint_compute_verification_method(args: argparse.Namespace) -> None:
+    """Compute verification_method for a story from its change_type in stories/index.json.
+
+    Outputs the closed-enum token and the harness_profile (identical to verification_method
+    unless a project override exists). Used by sprint-planning Step 3.5 to populate
+    Part-A contract headers without requiring inline logic in the skill workflow.
+    """
+    project_dir = resolve_project_dir()
+    path = stories_path(project_dir)
+    stories = read_json(path)
+
+    slug = args.story
+    if slug not in stories:
+        error_result("sprint_compute_verification_method",
+                     f"Story '{slug}' not found in stories/index.json", story=slug)
+
+    change_type = stories[slug].get("change_type", "")
+    vm = compute_verification_method(change_type)
+
+    result("sprint_compute_verification_method", success=True,
+           story=slug,
+           change_type=change_type,
+           verification_method=vm,
+           harness_profile=vm)  # harness_profile equals verification_method unless overridden
 
 
 def cmd_sprint_ready(args: argparse.Namespace) -> None:
@@ -2727,6 +2915,38 @@ def build_parser() -> argparse.ArgumentParser:
     ssa.add_argument("--decision", required=True, choices=["approved", "rejected"],
                      help="Approval decision: approved or rejected")
     ssa.set_defaults(func=cmd_sprint_story_approve)
+
+    # sprint story-set-contract
+    ssc = sprint_sub.add_parser(
+        "story-set-contract",
+        help="Persist contract block + verification_method + can_merge_independently into planning.team.story_assignments[slug]"
+    )
+    ssc.add_argument("--slug", required=True, help="Story slug")
+    ssc.add_argument("--verification-method", required=True,
+                     choices=sorted(["skill-invoke", "behavioral-trigger", "bash", "smoke", "curl", "document-review"]),
+                     help="Closed-enum verification method token")
+    ssc.add_argument("--contract-path", required=True,
+                     help="Relative path to the contract file from project root")
+    ssc.add_argument("--harness-profile", required=True,
+                     help="Harness profile name (usually same as verification_method)")
+    ssc.add_argument("--coverage-disposition", required=True,
+                     choices=["dedicated-run", "covered-by-composition"],
+                     help="Coverage disposition for this story")
+    ssc.add_argument("--covered-by-scenario", default=None,
+                     help="Integration scenario name from coverage-plan.md (null for dedicated-run)")
+    ssc.add_argument("--frozen-sha256", required=True,
+                     help="SHA-256 hex digest of the contract file at activation time")
+    ssc.add_argument("--can-merge-independently", required=True,
+                     help="true or false — whether this story can merge without waiting for dependencies")
+    ssc.set_defaults(func=cmd_sprint_story_set_contract)
+
+    # sprint compute-verification-method
+    scvm = sprint_sub.add_parser(
+        "compute-verification-method",
+        help="Compute closed-enum verification_method for a story from its change_type"
+    )
+    scvm.add_argument("--story", required=True, help="Story slug")
+    scvm.set_defaults(func=cmd_sprint_compute_verification_method)
 
     # sprint verify-approvals
     sva = sprint_sub.add_parser("verify-approvals", help="Verify all stories have current approved entries")
