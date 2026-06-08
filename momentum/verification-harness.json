@@ -66,11 +66,12 @@
       "notes": "Set enabled=true and list change_types to bypass smoke validation for trivial stories of those types"
     }
   },
-  "projects": [
+  "project": [
     {
       "_template_note": "The block below is a TEMPLATE showing how a real product project configures this harness. Copy it, replace 'example-product-app' with your project slug, and fill in the env values for your stack. Remove this _template_note key before activating.",
       "slug": "example-product-app",
       "description": "Example: a product repo with a mobile/web UI, a REST backend, and shell scripts — all three runnable surface types configured with real drivers.",
+      "patterns": ["**/src/**", "**/*.kt", "**/*.swift", "**/*.ts", "**/*.tsx"],
       "env": {
         "_note": "Startup commands and readiness probes apply to surfaces that require a running environment (e.g. app-ui needs the frontend, backend needs the API server). Pure script surfaces (script-code, script-cli) run via cmux bash and do not require service readiness — leave their probes absent. The 'npm run dev &' backgrounding below is intentional; readiness for HTTP services is enforced solely by the curl --retry probes.",
         "startup": [
