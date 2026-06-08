@@ -5566,7 +5566,7 @@
     "story_type": "feature"
   },
   "extract-shared-diff-range-helper-for-per-story-review": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Extract a shared diff-range reference/helper for per-story review",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
