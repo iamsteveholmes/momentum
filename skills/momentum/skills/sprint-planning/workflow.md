@@ -500,11 +500,24 @@ The sprint CANNOT activate silently with known guard failures.</output>
     <action>Create the sprint specs directory (if not already created by Step 3.5):
       `.momentum/sprints/{{sprint_slug}}/specs/`</action>
 
+    <action>Load the method-routing table from `skills/momentum/references/rules/verification-standard.md` Section 1.
+    This table maps change_type → driver token (skill-invoke | behavioral-trigger | bash | smoke | curl | document-review).
+    Gherkin specs (.feature files) are generated ONLY for stories whose routing token is NOT already
+    determined by a non-behavioral contract format. Use change_type → routing token (from the table),
+    NOT the story's verification_method_advisory field (which is informational only), to decide.</action>
+
     <action>For each approved story in {{selected_stories}}:
       · SKIP any story that already has a `.feature` file in `specs/` (written by Step 3.5 for app-ui stories) — that file is the canonical spec-of-done and must NOT be overwritten
-      · SKIP any story whose `verification_method` frontmatter field is set to a value other than `gherkin` (e.g., eval, trigger, review, smoke) — those stories use their own contract format, not Gherkin
+      · Read the story's `change_type` from its frontmatter. Look up the routing token in the
+        method-routing table. SKIP any story whose routing token is one of:
+        skill-invoke, behavioral-trigger, bash, curl, document-review
+        (those stories use their own dedicated contract format — .eval.yaml, .trigger.md, .smoke.sh, or .review.md — not Gherkin)
+      · Only generate a .feature file for stories whose routing token is `smoke` and that do not
+        already have a contract file in `specs/`
+      · Do NOT read or branch on `verification_method` or `verification_method_advisory` fields —
+        those are advisory hints written by create-story, not routing signals
     </action>
-    <action>For each approved story WITHOUT an existing `.feature` contract in `specs/` AND without a non-Gherkin `verification_method`:</action>
+    <action>For each approved story WITHOUT an existing contract file in `specs/` AND with routing token `smoke`:</action>
     <action>Read the story's acceptance criteria from its story file — read ALL ACs
       holistically to understand the system's intended behavior, then write Gherkin
       scenarios that describe that behavior end-to-end.</action>

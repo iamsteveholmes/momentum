@@ -8,16 +8,16 @@ Per-change-type authoring rules for frozen verification contracts written during
 
 | change_type | Extension | Harness driver |
 |---|---|---|
-| `skill-instruction` | `.eval.yaml` | skill-invoke |
-| `rule-hook` | `.trigger.md` | hook-trigger |
-| `script-code` | `.smoke.sh` | shell-executor |
-| `script-cli` | `.smoke.sh` | shell-executor |
-| `specification` | `.review.md` | document-reviewer |
-| `research-spike` | `.review.md` | document-reviewer |
-| `app-ui` | `.feature` | smoke |
-| `agent-definition` | `.eval.yaml` | skill-invoke |
-| `backend` | `.smoke.sh` | shell-executor |
-| `config-structure` | `.review.md` | document-reviewer |
+| `skill-instruction` | `.eval.yaml` | `skill-invoke` |
+| `rule-hook` | `.trigger.md` | `behavioral-trigger` |
+| `script-code` | `.smoke.sh` | `bash` |
+| `script-cli` | `.smoke.sh` | `bash` |
+| `specification` | `.review.md` | `document-review` |
+| `research-spike` | `.review.md` | `document-review` |
+| `app-ui` | `.feature` | `smoke` |
+| `agent-definition` | `.eval.yaml` | `skill-invoke` |
+| `backend` | `.smoke.sh` | `bash` |
+| `config-structure` | `.review.md` | `document-review` |
 
 ### Multi-Change-Type Precedence
 
@@ -44,6 +44,77 @@ Rationale: verification weight scales with change-type (DEC-029 D1). The highest
 4. **Harness reference** — every contract must declare `harness_profile: <name>` (for YAML/sh formats) or include a `## Harness Profile: <name>` section (for markdown formats). The name must match an entry in `momentum/verification-harness.json`.
 
 5. **Observable scope** — state what must be true about outputs, files, terminal state, or observable system behavior — not what must happen inside the implementation.
+
+---
+
+## Mandatory Verification Header (Part A)
+
+Every contract file must open with a Part-A header block before its body content. The header
+fields are listed below in required order. All fields are mandatory unless marked optional.
+
+**For YAML contracts** (`.eval.yaml`), the header is a YAML comment block followed by the
+`story_slug` key at the top of the document:
+
+```yaml
+# === VERIFICATION HEADER (Part A) ===
+story_slug: <story-slug>
+verification_method: <driver-token>
+harness_profile: <driver-token>
+contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.<ext>
+how_dev_self_checks: |
+  <plain-language description of what to do and observe to confirm this story is done>
+coverage_disposition: dedicated-run | covered-by-composition
+covered_by_scenario: null | "<scenario name from coverage-plan.md>"
+acceptance_criteria_ref: .momentum/stories/<story-slug>.md#acceptance-criteria
+platforms: [host]
+```
+
+**For Markdown contracts** (`.trigger.md`, `.review.md`), the header is a YAML front-matter block:
+
+```markdown
+---
+story_slug: <story-slug>
+verification_method: <driver-token>
+harness_profile: <driver-token>
+contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.<ext>
+how_dev_self_checks: |
+  <plain-language description of what to do and observe to confirm this story is done>
+coverage_disposition: dedicated-run | covered-by-composition
+covered_by_scenario: null | "<scenario name from coverage-plan.md>"
+acceptance_criteria_ref: .momentum/stories/<story-slug>.md#acceptance-criteria
+platforms: [host]
+---
+```
+
+**For Shell contracts** (`.smoke.sh`), the header is a structured comment block at the top:
+
+```bash
+#!/usr/bin/env bash
+# === VERIFICATION HEADER (Part A) ===
+# story_slug: <story-slug>
+# verification_method: <driver-token>
+# harness_profile: <driver-token>
+# contract_path: .momentum/sprints/<sprint-slug>/specs/<story-slug>.smoke.sh
+# how_dev_self_checks: Run this script; observe exit 0 and PASS output.
+# coverage_disposition: dedicated-run | covered-by-composition
+# covered_by_scenario: null | "<scenario name from coverage-plan.md>"
+# acceptance_criteria_ref: .momentum/stories/<story-slug>.md#acceptance-criteria
+# platforms: [host]
+```
+
+### Header Field Definitions
+
+| Field | Required order | Description |
+|---|---|---|
+| `story_slug` | 1 | Kebab-case identifier matching the story file name |
+| `verification_method` | 2 | Driver token from the closed enum: `skill-invoke`, `behavioral-trigger`, `bash`, `smoke`, `curl`, `document-review` |
+| `harness_profile` | 3 | Same driver token as `verification_method` (or the profile name if project overrides exist in `momentum/verification-harness.json`) |
+| `contract_path` | 4 | Relative path to this contract file from the project root |
+| `how_dev_self_checks` | 5 | Plain-language instructions the developer follows to confirm the story is done — no insider knowledge, Outsider Test applies |
+| `coverage_disposition` | 6 | `dedicated-run` if this story is verified standalone; `covered-by-composition` if an integration scenario discharges it |
+| `covered_by_scenario` | 7 | `null` for dedicated-run; name of the integration scenario from `coverage-plan.md` for covered-by-composition |
+| `acceptance_criteria_ref` | 8 | Path and anchor to the story's ACs in its markdown file |
+| `platforms` | 9 | List of platforms where verification runs (typically `[host]`; may include `android`, `ios`, `web`) |
 
 ---
 
