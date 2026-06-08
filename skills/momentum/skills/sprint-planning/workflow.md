@@ -9,7 +9,8 @@
 ## EXECUTION
 
 <workflow>
-  <critical>Story markdown files retain ONLY plain English ACs. Gherkin specs are written to `sprints/{sprint-slug}/specs/` and are exclusively for verifier agents. Dev agents never access that path.</critical>
+  <critical>Story markdown files retain ONLY plain English ACs. Verification contracts are written to `sprints/{sprint-slug}/specs/`. Dev agents read the Part-A header of their assigned contract (how_dev_self_checks, verification_method, harness_profile) as a self-check before signaling done. The verifier body (Part B: scenarios, assertion scripts, Gherkin) is for verifier agents only.</critical>
+  <critical>One contract of record per story: each planned story must resolve to EXACTLY ONE contract file in `specs/`. Step 3.5 authors the contract for non-app-ui stories (.eval.yaml, .smoke.sh, .trigger.md, or .review.md). Step 3.5 authors the app-ui .feature (Phase A); Step 4 authors .feature ONLY for smoke-routed stories that have NO existing contract file. Never emit a .feature alongside another contract format for the same slug.</critical>
   <critical>AVFL runs ONCE on the complete sprint plan — all stories together as a single validation pass, not per-story.</critical>
   <critical>Team composition uses a two-layer model: Momentum provides generic agent roles (Dev, QA, E2E Validator, Architect Guard), and the project provides stack-specific guidelines for each role.</critical>
   <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
@@ -655,7 +656,7 @@ The sprint CANNOT activate silently with known guard failures.</output>
 
 {{for each story: · story_slug — N scenarios}}
 
-**Specs written to** `sprints/{{sprint_slug}}/specs/` — for verifier agents only, dev agents will not see them.
+**Specs written to** `sprints/{{sprint_slug}}/specs/` — for verifier agents. Dev reads the Part-A header only (self-check).
 
 Proceeding to spec impact analysis.</output>
     <action>Update task 4 (Generate Gherkin specs) to completed</action>
