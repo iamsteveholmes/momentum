@@ -358,6 +358,15 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
            must be able to verify it by invoking skills, running commands, or reading outputs
          · Include `harness_profile` referencing a driver declared in `momentum/verification-harness.json`
          · Follow the per-change-type format in contract-format-guide.md
+         · SEAM STORY RULE: If this story defines or modifies a hand-off contract between two
+           distinct agents (a producer that emits a record and a consumer that reads it), the
+           contract MUST explicitly declare both sides. Name the producer agent and the consumer
+           agent in a "Producer / Consumer scope" clause. Include at least one scenario that
+           checks field-shape compatibility across both sides: a scenario where producer and
+           consumer agree on the record's shape (the gate passes), and a scenario where they
+           disagree (the gate fails and names the mismatch as a cross-side field-shape
+           incompatibility). An ordinary single-artifact story is not a seam story and is not
+           required to declare a producer/consumer pairing.
 
       5. Prepend the mandatory Part-A verification header to the contract body before writing.
          The header fields MUST appear in this exact order (see contract-format-guide.md
