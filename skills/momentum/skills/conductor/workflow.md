@@ -316,12 +316,20 @@ Ready to begin?</output>
           ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
           Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
           Bind {{dev_agent}} = the resolved agent name (e.g., "dev", "dev-build", "dev-frontend", "dev-skills").
+          Bind {{writable_files}} = the explicit set of files this story is expected to create or modify,
+            as declared in the story spec's deliverables / file list section.
           Spawn {{dev_agent}} as an individual agent (fan-out, NOT TeamCreate) with:
             - story_file: `.momentum/stories/{S.slug}.md`
             - sprint_slug: {{sprint_slug}}
             - worktree_path: `.worktrees/story-{S.slug}` (the story's isolated git worktree)
             - contract_part_a: path to `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*` (Part A only)
-          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
+            - writable_files: {{writable_files}} (enumerated list; agent must write ONLY these files)
+          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only.
+            WRITE-SCOPE: You may ONLY create or modify files listed in writable_files for this story.
+            FORBIDDEN: Do NOT edit `.momentum/stories/{S.slug}.md` (this story's own spec file) — it is read-only input.
+            FORBIDDEN: Do NOT edit any other story's spec file under `.momentum/stories/` or its verification contract under `.momentum/sprints/`.
+            FORBIDDEN: Do NOT edit any file outside the declared writable_files set.
+            CROSS-ARTIFACT RULE: If during implementation you identify a problem that belongs to a DIFFERENT artifact (e.g., another story's spec, a shared reference file not in your writable set), do NOT edit that artifact. Instead, record it as a reconciliation note in your completion signal so the Conductor can route it to the owning story via momentum:triage or create-story."
           This spawn fires concurrently with all other frontier story spawns (no story-count cap).
 
           When {{dev_agent}} returns its implementation-complete signal:
@@ -495,7 +503,13 @@ Ready to begin?</output>
 
       <action>PHASE B — Invoke the directed fixer (momentum:dev in fix mode) as a subagent (individual-agent, NOT TeamCreate):
         Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration).
-        Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only."
+        Pass {{writable_files}} (the same set passed to the stage-1 dev spawn for story S) to the fixer.
+        Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only.
+          WRITE-SCOPE: You may ONLY create or modify files listed in writable_files for this story.
+          FORBIDDEN: Do NOT edit `.momentum/stories/{S.slug}.md` (this story's own spec file) — it is read-only input.
+          FORBIDDEN: Do NOT edit any other story's spec file under `.momentum/stories/` or its verification contract under `.momentum/sprints/`.
+          FORBIDDEN: Do NOT edit any file outside the declared writable_files set.
+          CROSS-ARTIFACT RULE: If a finding points to a problem that belongs to a DIFFERENT artifact outside this story's writable_files set, do NOT edit that artifact in-tree. Return disposition `triaged-out` for that finding so the Conductor can route a reconciliation note to the owning story."
         Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
         The fixer applies every routine legitimate finding automatically (no prompt), returns escalated disposition for stakes-class findings (not silently fixed), dismissed with non-empty rationale for non-genuine findings, or triaged-out for out-of-scope new work.
         The Conductor (not the fixer) commits any applied fixes after the fixer returns.
