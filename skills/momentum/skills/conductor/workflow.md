@@ -1224,8 +1224,11 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
   <!-- PHASE 4: END-TO-END (E2E) VALIDATION                        -->
   <!-- ═══════════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="E2E validation — end-to-end behavioral check on the integrated sprint branch">
-    <note>E2E validation runs silently. No developer interaction unless a finding hits the mid-flight escalation bar (downstream story delivers that logic). Results are held for the end-gate report.</note>
+  <step n="4" goal="E2E validation — end-to-end behavioral check on the integrated sprint branch, with normalization and escalation routing">
+
+    <note>E2E validation runs silently. No developer interaction unless a finding hits the narrow mid-flight escalation bar (irreversible-and-imminent or build-invalidating). All other findings — including non-urgent stakes-class E2E findings — are held for the end-gate as decision cards. The E2E findings follow the SAME normalization and escalation-routing path as build findings. They are not stored only as a raw count.</note>
+
+    <!-- ── 4.1 — Spawn E2E validator ─────────────────────────── -->
 
     <action>Spawn E2E validator agent (individual-agent, not TeamCreate):
       Resolve agent via: `momentum-tools agent resolve --role e2e-validator`
@@ -1234,8 +1237,97 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
     </action>
 
     <action>Store {{e2e_results}} = structured E2E validation report from agent output.</action>
-    <action>Append E2E results to {{build_log}}: { phase: "e2e", scenarios_checked, passed, failed, blocked }.</action>
-    <note>No developer ask here. E2E results are held for the end-gate. Proceed to Phase 5.</note>
+
+    <!-- ── 4.2 — Normalize each E2E failure to canonical finding schema ── -->
+
+    <action>NORMALIZE E2E FINDINGS. For each FAIL or ERROR scenario in {{e2e_results}}:
+
+      Extract the following from the e2e-validator's report structure:
+        - story_slug: the story key from the scenario's "[story]:[AC]" label; if no story key, use "e2e-integration" as a sentinel slug indicating a sprint-level integration failure not tied to a single story
+        - location: "[story]:[AC]" label from the validator output, or "sprint-integration" for sprint-level failures
+        - summary: one-sentence plain-English description — use the validator's "Expected: ... Actual: ..." pair as the source material; rephrase as a declarative statement of what is wrong
+        - detail: full explanation of what failed, why it matters as an observable consequence (not just a count), and what the expected vs. actual behavior was
+        - evidence: the concrete artifact excerpt quoted from the validator output — the command run, the actual output observed, or the error message; NEVER substitute a count ("1 failure") for inline evidence
+        - verdict: "FAIL" for behavior-divergence findings; "ERROR" for execution failures
+        - severity: derive from the AC's character:
+            - If the failed AC is a core user-visible behavior or a build-blocking scenario: "major"
+            - If the failure is a non-critical edge case: "minor"
+            - If execution cannot proceed at all (ERROR, environment broken): "critical"
+            - If the failure is a style or presentation detail: "low"
+            Default to "major" when the character is unclear — err toward attention.
+        - type: derive from the failure character:
+            - Behavior diverges from spec: "spec-compliance"
+            - Integration seam between two components is broken: "integration"
+            - Required behavior is entirely absent: "completeness"
+            - Security or auth-isolation observable failure: "security"
+            - Other bug: "bug"
+        - stakes_class: apply the stakes-classification rubric (references/stakes-classification-rubric.md):
+            - If the failing scenario touches auth, security, or isolation boundaries: "security-auth-isolation"
+            - If the scenario validates an irreversible/destructive action (migration, data-delete, force-push, prod-deploy): "irreversible-destructive"
+            - If the failure reveals a cross-cutting architectural contract break: "high-blast-radius-architecture"
+            - Otherwise: "routine"
+        - source: "e2e-validator"
+        - ac_id: the AC identifier from the scenario label, or null if not present
+        - legitimate: true for all FAIL/ERROR findings from the validator (the validator is the verifier of record for E2E; its FAIL verdict is taken as legitimate)
+        - suggested_fix: the validator's suggested remediation if any; null otherwise
+        - timing_tier: default "end-gate-expanded"; override to "mid-flight" only if the finding is BOTH stakes-class AND (irreversible-and-imminent OR build-invalidating) — apply the narrow bar from references/stakes-classification-rubric.md
+
+      Produce {{e2e_findings}} = array of normalized finding records in the canonical shape above.
+      PASS and SKIP scenarios from the validator do NOT produce findings — they produce no entry in {{e2e_findings}}.
+      MANUAL scenarios from the validator produce a finding only if the manual review revealed a failure; otherwise no entry.
+
+      EVIDENCE INVARIANT: Every finding in {{e2e_findings}} must carry non-empty `evidence` quoting inline from the validator's output. A finding with evidence == "" or evidence reduced to a count is malformed and must be rejected before proceeding.
+    </action>
+
+    <!-- ── 4.3 — Route E2E findings through the escalation engine ─── -->
+
+    <action>ROUTE E2E FINDINGS. For each finding F in {{e2e_findings}}:
+
+      CASE F.stakes_class == "routine":
+        — Routine E2E findings are handled on the transparent auto-fix path (parallel to routine build findings).
+        — The Conductor spawns a directed fixer (individual-agent) scoped to F: fix the integration defect.
+          The fixer returns a disposition: fixed | dismissed (with non-empty rationale) | triaged-out.
+          The Conductor commits any fix applied by the fixer:
+            `git checkout sprint/{{sprint_slug}}`
+            `git add -u && git commit -m "fix(e2e): auto-fix {F.summary}"`
+          Record the disposition in {{e2e_findings}}:
+            F.disposition = the fixer's returned value ("fixed" | "dismissed" | "triaged-out").
+            If "dismissed": also set F.dismissal_rationale = fixer-returned rationale (non-empty required).
+            If "triaged-out": invoke momentum:triage to spin a backlog stub for F (per finding-schema Rule 4 — triaged-out findings are not silently dropped). Record stub slug in F.triage_stub_slug.
+          Append to {{build_log}}: { phase: "e2e", event: "e2e-finding-auto-fixed", story_slug: F.story_slug, summary: F.summary, disposition: F.disposition }
+
+      CASE F.stakes_class != "routine" (stakes-class finding):
+        — Stakes-class E2E findings are NEVER silently auto-fixed. Route to escalation.
+        — Set F.disposition = "escalated".
+        — Set F.timing_tier = F.timing_tier (already set in normalization step; default "end-gate-expanded").
+        — Route by timing tier:
+            IF F.timing_tier == "mid-flight":
+              — Finding is irreversible-and-imminent OR build-invalidating.
+              — Invoke step 2.F (mid-flight escalation consumption hook) with F as a single-finding escalations array.
+              — The engine evaluates the bar and returns "pause-branch" or "continue".
+              — Record in {{build_log}}: { phase: "e2e", event: "e2e-mid-flight-escalation", story_slug: F.story_slug, stakes_class: F.stakes_class, summary: F.summary }
+            ELSE (timing_tier == "end-gate-expanded" OR not set):
+              — Finding is stakes-class but does NOT meet the mid-flight bar. Hold for end-gate.
+              — Append to {{end_gate_escalations}}: { finding_id: generated-id, story_slug: F.story_slug, source: "e2e-validator", stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", severity: F.severity, type: F.type, location: F.location, summary: F.summary, detail: F.detail, evidence: F.evidence, suggested_fix: F.suggested_fix, ac_id: F.ac_id, legitimate: true, disposition: "escalated" }
+              — Record in {{build_log}}: { phase: "e2e", event: "e2e-stakes-escalation", story_slug: F.story_slug, stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", summary: F.summary }
+    </action>
+
+    <!-- ── 4.4 — Build log and phase completion ──────────────────── -->
+
+    <action>Append E2E phase summary to {{build_log}}:
+      { phase: "e2e",
+        scenarios_checked: (count of all scenarios in validator output),
+        passed: (count of PASS scenarios),
+        failed: (count of FAIL scenarios),
+        blocked: (count of ERROR/BLOCKED scenarios),
+        e2e_findings_count: length({{e2e_findings}}),
+        routine_auto_fixed: (count of findings where disposition == "fixed"),
+        routine_dismissed: (count of findings where disposition == "dismissed"),
+        stakes_escalated_end_gate: (count of findings with stakes_class != routine AND timing_tier == "end-gate-expanded"),
+        stakes_escalated_mid_flight: (count of findings with stakes_class != routine AND timing_tier == "mid-flight") }
+    </action>
+
+    <note>No developer ask here on the routine path. Routine E2E findings are auto-fixed silently. Stakes-class E2E findings with timing_tier == "end-gate-expanded" are held for the end-gate as decision cards. Only timing_tier == "mid-flight" findings trigger the narrow mid-flight pause (step 2.F). Proceed to Phase 5.</note>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
@@ -1245,12 +1337,30 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
   <step n="5" goal="Single human end-gate — the one mandatory developer acceptance point for the sprint build">
     <note>This is Touchpoint 2 — the only mandatory human acceptance gate in the entire build. It is unambiguously last: Phase 5 runs after E2E completes, and no second mandatory acceptance gate follows it. The end-gate report organizes findings by user-facing functionality (DEC-035 D6). Stakes-class items appear as expanded decision cards requiring explicit acknowledgment (DEC-036 D4). Dismissed findings appear in a "Dismissed / not-actioned" section with rationale (DEC-036 D3). The Approve control is not pre-checked (DEC-036 D4 anti-rubber-stamp).</note>
 
-    <action>Compile the end-gate report from {{build_log}}, {{avfl_findings}}, and {{e2e_results}}:
+    <action>Derive render variables for the end-gate report template:
+      Bind {{e2e_stakes_findings}}    = [f in {{end_gate_escalations}} where f.source == "e2e-validator"]
+      Bind {{e2e_routine_findings}}   = [f in {{e2e_findings}} where f.stakes_class == "routine"]
+      Bind {{e2e_routine_fixed}}      = count([f in {{e2e_routine_findings}} where f.disposition == "fixed"])
+      Bind {{e2e_routine_dismissed}}  = count([f in {{e2e_routine_findings}} where f.disposition == "dismissed"])
+      Bind {{e2e_passed}}             = the "passed" field from the {{build_log}} entry with phase == "e2e"
+      Bind {{e2e_failed}}             = the "failed" field from that same build_log entry
+      Bind {{e2e_blocked}}            = the "blocked" field from that same build_log entry
+      Note: the phase-4 summary record (step 4.4) is the authoritative source for passed/failed/blocked counts.
+    </action>
+
+    <action>Compile the end-gate report from {{build_log}}, {{avfl_findings}}, {{e2e_findings}}, and {{end_gate_escalations}}:
       - Organize by user-facing functionality (not by story or implementation detail)
-      - Routine findings section: auto-fixed items (what changed + what was dismissed with rationale)
-      - Stakes-class section (if any): expanded decision cards — one per finding — requiring explicit developer acknowledgment before Approve enables
-      - Dismissed / not-actioned section: findings the auto-fix loop dismissed, each with rationale
-      - Mid-flight escalations section (if any): findings that were escalated during the build, with disposition recorded
+      - Routine findings section: auto-fixed items (what changed + what was dismissed with rationale),
+        including E2E routine findings that were auto-fixed or dismissed in Phase 4
+      - Stakes-class section (if any): expanded decision cards — one per finding — requiring explicit developer
+        acknowledgment before Approve enables; includes both build/AVFL stakes findings AND E2E stakes findings
+        from {{end_gate_escalations}}; each decision card must carry: what is wrong, where it is, why it matters
+        as an observable consequence, and the inline evidence — the developer must be able to act on it without
+        having watched the run
+      - Dismissed / not-actioned section: findings the auto-fix loop dismissed, each with rationale;
+        includes E2E dismissed findings from Phase 4
+      - Mid-flight escalations section (if any): findings that were escalated during the build, with disposition
+        recorded; includes any E2E mid-flight escalations surfaced during Phase 4
       - Quarantined stories section (if any): from {{build_log}} entries where outcome == "quarantined";
         surface as informational — the story branch is preserved and the conflict detail is recorded;
         these are stories that exhausted the 3-attempt merge bound and could not be integrated this sprint;
@@ -1260,7 +1370,10 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         not filtered from {{escalations}}); surface as informational — no developer action required during the report;
         these are stories that need follow-up because their verification contract fingerprint did not match the
         frozen_sha256 recorded at assignment
-      - E2E summary: scenarios passed, failed, blocked
+      - E2E section: scenarios passed/failed/blocked counts PLUS expanded decision cards for any stakes-class E2E
+        findings (from {{end_gate_escalations}} where source == "e2e-validator"); auto-fixed routine E2E findings
+        appear in the transparency section, not the decision-card section; no E2E finding appears only as a count
+        without a plain-language explanation and inline evidence
     </action>
 
     <output>## Conductor End-Gate — Sprint `{{sprint_slug}}`
@@ -1316,7 +1429,26 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 {{/if}}
 
 ### E2E Validation
-{{e2e_results_summary}}
+
+**Scenarios:** {{e2e_passed}} passed / {{e2e_failed}} failed / {{e2e_blocked}} blocked
+{{#if e2e_routine_findings}}
+**Routine E2E findings (auto-handled):** {{e2e_routine_fixed}} fixed automatically / {{e2e_routine_dismissed}} dismissed — see "Auto-fix Loop" section above for details.
+{{/if}}
+
+{{#if e2e_stakes_findings}}
+<!-- Stakes-class E2E findings are surfaced here as self-contained decision cards. Each card states what is wrong, where, why it matters as an observable consequence, and quotes the inline evidence. The developer who never watched the run must be able to act on this card. These findings also appear in the "Stakes-Class Findings" section above if not already shown there. -->
+{{#each e2e_stakes_findings}}
+**[E2E — {{stakes_class}}]** `{{location}}`
+- **What is wrong:** {{summary}}
+- **Where:** {{location}}
+- **Why it matters:** {{detail}}
+- **Evidence (inline):** {{evidence}}
+- **Recommended action:** {{suggested_fix}}
+- Acknowledge: [ ] Yes, I have reviewed this finding
+{{/each}}
+{{else}}
+No stakes-class E2E findings. All integration checks passed or routine failures were auto-handled.
+{{/if}}
 
 ---
 
@@ -1347,7 +1479,8 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         Sources of residual findings to scan:
           (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized at L1078: fixed | dismissed | escalated | residual).
           (b) {{build_log}} entries with event == "stage3-finding-blocked" — per-story pipeline findings that exhausted the fix retry budget; each carries disposition: "blocked".
-        Combine both sources into {{all_build_findings}}.
+          (c) {{e2e_findings}} — E2E findings (Phase 4); each has severity and disposition fields (normalized at Phase 4 step 4.3: fixed | dismissed | triaged-out | escalated). Findings where disposition != "fixed" AND disposition != "dismissed" are residuals.
+        Combine all three sources into {{all_build_findings}}.
 
         Collect {{major_residuals}} = all findings F in {{all_build_findings}} where:
           - F.severity is in {blocker, critical, major}  — the upper severity tier
