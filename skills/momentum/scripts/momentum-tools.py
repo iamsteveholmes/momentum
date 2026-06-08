@@ -382,7 +382,7 @@ def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
 
     Required fields:
       --slug                Story slug
-      --verification-method Closed-enum token (skill-invoke|behavioral-trigger|bash|smoke|curl|document-review)
+      --verification-method Closed-enum token (skill-invoke|behavioral-trigger|bash|smoke-ui|curl|document-review)
       --contract-path       Relative path to the contract file from project root
       --harness-profile     Harness profile name (usually same as verification_method)
       --coverage-disposition  dedicated-run | covered-by-composition
@@ -407,10 +407,8 @@ def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
                      f"Story '{slug}' is not in the planning sprint's stories list",
                      story=slug)
 
-    # Validate verification_method against closed enum
-    VALID_VERIFICATION_METHODS = {
-        "skill-invoke", "behavioral-trigger", "bash", "smoke", "curl", "document-review"
-    }
+    # Validate verification_method against closed enum — derived from single source of truth
+    VALID_VERIFICATION_METHODS = set(CHANGE_TYPE_TO_VERIFICATION_METHOD.values())
     vm = args.verification_method
     if vm not in VALID_VERIFICATION_METHODS:
         error_result("sprint_story_set_contract",
@@ -480,7 +478,7 @@ CHANGE_TYPE_TO_VERIFICATION_METHOD: dict[str, str] = {
     "script-code": "bash",
     "script-cli": "bash",
     "backend": "curl",
-    "app-ui": "smoke",
+    "app-ui": "smoke-ui",
     "research-spike": "document-review",
     "specification": "document-review",
     "config-structure": "document-review",
@@ -2923,7 +2921,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ssc.add_argument("--slug", required=True, help="Story slug")
     ssc.add_argument("--verification-method", required=True,
-                     choices=sorted(["skill-invoke", "behavioral-trigger", "bash", "smoke", "curl", "document-review"]),
+                     choices=sorted(set(CHANGE_TYPE_TO_VERIFICATION_METHOD.values())),
                      help="Closed-enum verification method token")
     ssc.add_argument("--contract-path", required=True,
                      help="Relative path to the contract file from project root")
