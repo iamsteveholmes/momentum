@@ -281,7 +281,37 @@ Ready to begin?</output>
         2.1.2 — Transition to in-progress:
           `momentum-tools sprint status-transition --story {S.slug} --target in-progress`
 
-        2.1.3 — STAGE-1 + STAGE-2: Dev spawn, await, then concurrent QA + code-review fan-out.
+        2.1.4 — CONTRACT-FREEZE GATE (fires at story launch, before any pipeline stages):
+          Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
+          skip all further verification actions for S in this pipeline iteration — do NOT dispatch the verifier for S.
+          If step 2.V confirms the contract is unchanged, proceed to 2.1.5.
+
+          [PLACEMENT NOTE: The freeze gate fires here, at launch, before stage-1 dev spawn and before any
+          verification dispatch. This is intentional and correct: the contract file is frozen at planning and
+          is static between launch and verification, so a sha256 check at launch guards the same invariant as
+          one at verification-start. The per-story pipeline stages MUST NOT add a second freeze check at any
+          later point. The gate belongs here, once, at launch. Adding it again inside the pipeline would
+          double-gate and create redundant integrity stops.]
+
+        2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before stage-1 dev spawn):
+          INTEGRITY-STOP GUARD: If step 2.V recorded an integrity stop for S (i.e., S is in {{contract_integrity_stops}}),
+          skip this step entirely — do NOT invoke step 2.C and do NOT dispatch any verifier for S. The integrity-stop
+          semantics from 2.1.4 take precedence: no further verification actions are performed for S in this pipeline
+          iteration. Only proceed when 2.1.4 confirmed the contract is unchanged.
+
+          When the contract is confirmed unchanged: Invoke step 2.C for story S. Step 2.C reads S's frozen
+          `coverage_disposition` from the assignment and returns one of two routing outcomes:
+            { outcome: "dedicated-run" }         — perform the dedicated QA verification run during this build phase
+            { outcome: "covered-by-composition", integration_scenario: "<scenario-id>" }
+                                                 — skip the dedicated build-time run; record the deferral
+          Bind {{coverage_disposition}}[S.slug] = the outcome string returned by step 2.C.
+          Act on the routing outcome as specified in step 2.C. Do NOT dispatch the verifier at build time
+          for a story whose coverage_disposition is "covered-by-composition".
+
+        2.1.3 — STAGE-1 → STAGE-2 → STAGE-3 PIPELINE: Fire asynchronously after 2.1.4/2.1.5 resolve.
+          Each story's pipeline runs independently and concurrently with other stories' pipelines.
+          The pipeline emits a single terminal signal when complete; step 2.2 consumes that signal.
+          The launch loop does NOT block on any stage — all per-story pipelines run concurrently.
 
           ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
           Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
@@ -294,18 +324,19 @@ Ready to begin?</output>
           Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
           This spawn fires concurrently with all other frontier story spawns (no story-count cap).
 
-          AWAIT STAGE-1 OUTPUT: Wait for {{dev_agent}} to return its implementation-complete signal.
+          When {{dev_agent}} returns its implementation-complete signal:
           Bind {{stage1_output}} = the agent's return value (implementation-complete + file_list).
-          After stage-1 returns, the Conductor (sole git-mutation authority) commits the produced output:
+          The Conductor (sole git-mutation authority) commits the produced output:
             `git -C .worktrees/story-{S.slug} add -u`
             `git -C .worktrees/story-{S.slug} commit -m "feat({S.slug}): implement {{S.title}}"`
+          Then advance this story's pipeline to stage-2.
 
           ── STAGE-2: CONCURRENT QA + CODE-REVIEW FAN-OUT ───────────────────────────────────
           Stage 2 fires AFTER the stage-1 commit, BEFORE the merge at step 2.2.M (pre-merge review).
-          Coverage-disposition check (step 2.1.5 / step 2.C) already routed this story:
-            - If coverage_disposition == "covered-by-composition": skip stage-2 entirely;
-              bind {{stage2_findings}} = [] and proceed directly to step 2.S3 with an empty findings list.
-            - If coverage_disposition == "dedicated-run" (default): dispatch the fan-out below.
+          Apply coverage routing established at 2.1.5:
+            - If {{coverage_disposition}}[S.slug] == "covered-by-composition": skip stage-2 entirely;
+              bind {{stage2_findings}} = [] and advance directly to stage-3 with an empty findings list.
+            - If {{coverage_disposition}}[S.slug] == "dedicated-run" (default): dispatch the fan-out below.
 
           DIFF RANGE (Scenario A — Pre-Merge Review, per references/per-story-review-diff-range.md):
           Compute the per-story diff at review time — do NOT capture a SHA; do NOT wait for the merge:
@@ -340,7 +371,7 @@ Ready to begin?</output>
               Returns: normalized finding records per canonical finding schema (finding-schema.md),
                 stakes_class populated on every record. Source field: `bmad-code-review`.
 
-          AWAIT STAGE-2 OUTPUT: Wait for BOTH reviewers to return before proceeding.
+          When BOTH reviewers have returned:
           Bind {{qa_findings}} = findings array from REVIEWER A.
           Bind {{cr_findings}} = findings array from REVIEWER B.
           Merge into {{stage2_findings}}: deduplicated union of {{qa_findings}} and {{cr_findings}},
@@ -348,41 +379,17 @@ Ready to begin?</output>
           Deduplication: if a qa-reviewer finding and a bmad-code-review finding describe the same
             location and issue, keep the higher-severity record; annotate source as
             "qa-reviewer+bmad-code-review".
-          Each finding in {{stage2_findings}} carries: story_slug, source, stakes_class, severity,
-            type, location, summary, detail, evidence, legitimate, ac_id (where applicable),
-            and suggested_fix (when provided).
+          Each finding in {{stage2_findings}} carries the canonical base fields of finding-schema.md,
+            including: story_slug, source, stakes_class, severity, verdict, type, location, summary,
+            detail, evidence, legitimate, ac_id (where applicable), and suggested_fix (when provided).
+          Then advance this story's pipeline to stage-3.
 
-          ── FEED MERGED FINDINGS INTO STAGE-3 FIX LOOP ────────────────────────────────────
+          ── STAGE-3 FIX LOOP ───────────────────────────────────────────────────────────────
           Invoke step 2.S3 for story S, passing {{stage2_findings}} as input.
           Step 2.S3 (live) runs the directed fix-loop (Phase B→C→D, retry-bound-3, escalation routing).
-          Await step 2.S3's terminal signal before proceeding to stage-4 (merge, step 2.2.M)
-            or quarantine per step 2.S3's outcome.
-
-        2.1.4 — CONTRACT-FREEZE GATE (hooked at story launch — earliest sound point):
-          Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
-          skip all further verification actions for S in this pipeline iteration — do NOT dispatch the verifier for S.
-          If step 2.V confirms the contract is unchanged, proceed to verification as normal.
-
-          [PLACEMENT NOTE: The freeze gate fires here, at launch, rather than at a later "verification boundary" inside the
-          per-story pipeline. This is intentional and correct: the contract file is frozen at planning and is static between
-          launch and verification, so a sha256 check at launch guards the same invariant as one at verification-start. The
-          per-story pipeline internals (step 2.1.3) are now filled — they MUST NOT add a second freeze check at the per-story
-          verification boundary. The gate belongs here, once, at launch. Adding it again inside the per-story pipeline would
-          double-gate and create redundant integrity stops.]
-
-        2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before verifier dispatch):
-          INTEGRITY-STOP GUARD: If step 2.V recorded an integrity stop for S (i.e., S is in {{contract_integrity_stops}}),
-          skip this step entirely — do NOT invoke step 2.C and do NOT dispatch any verifier for S. The integrity-stop
-          semantics from 2.1.4 take precedence: no further verification actions are performed for S in this pipeline
-          iteration. Only proceed when 2.1.4 confirmed the contract is unchanged.
-
-          When the contract is confirmed unchanged: Invoke step 2.C for story S. Step 2.C reads S's frozen
-          `coverage_disposition` from the assignment and returns one of two routing outcomes:
-            { outcome: "dedicated-run" }         — perform the dedicated QA verification run during this build phase
-            { outcome: "covered-by-composition", integration_scenario: "<scenario-id>" }
-                                                 — skip the dedicated build-time run; record the deferral
-          Act on the routing outcome as specified in step 2.C. Do NOT dispatch the verifier at build time
-          for a story whose coverage_disposition is "covered-by-composition".
+          When step 2.S3 emits its terminal signal, this story's pipeline emits its own terminal signal
+            to step 2.2 — either { slug, outcome: "merged", ... } or { slug, outcome: "failed", ... } —
+            per the outcome and quarantine rules in step 2.S3.
 
         Store pipeline_handle in {{running}}[S.slug].
       </action>
