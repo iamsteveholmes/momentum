@@ -288,7 +288,14 @@ Ready to begin?</output>
           [HOLLOW: per-story pipeline stage 1 (dev spawn ordering) and stage 2 (QA + code-review concurrent fan-out) are
            specified by downstream conduct stories — fill those spawn calls when those stories land.
            Stage 3 (fix loop — Phase B–D) is implemented in step 2.S3 below and is LIVE. The Conductor invokes step 2.S3
-           after stage-2 reviewers return their findings for story S. See step 2.S3 for the full fix-loop spec.]
+           after stage-2 reviewers return their findings for story S. See step 2.S3 for the full fix-loop spec.
+
+           DIFF RANGE FOR STAGE-2 (QA REVIEWER + CODE-REVIEW ADAPTER): When stage 2 is filled in, the diff range
+           passed to both the QA reviewer and the code-review adapter MUST follow the canonical pre-merge
+           per-story review diff-range pattern — compute the merge-base form at review time (stage 2 runs
+           BEFORE the merge at step 2.2.M). Do NOT capture a SHA at merge time for stage-2 use (the merge
+           has not occurred yet). Do NOT use over-scoped ranges (main...HEAD). Authoritative pattern and
+           rationale: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review)]
 
         2.1.4 — CONTRACT-FREEZE GATE (hooked at story launch — earliest sound point):
           Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
@@ -389,7 +396,9 @@ Ready to begin?</output>
 
     <step n="2.S3" goal="Stage-3 per-story fix loop — directed fixer with retry-bound-3, escalation routing (DEC-036 D1/D2)">
 
-      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, optionally run /simplify, re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.</note>
+      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, optionally run /simplify, re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
+
+      Stage-2 callers (QA reviewer + code-review adapter) and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
 
       <note>ROUTINE-PATH GUARANTEE (DEC-035 D1, always-on default). Routine findings (stakes_class == routine) are ALWAYS auto-fixed inside this loop with no human gate. The always-auto-fix behavior for routine findings is UNCHANGED and PRESERVED. This is the anti-firehose baseline: the vast majority of findings complete Phase B→D autonomously without any escalation or human contact.</note>
 
@@ -479,6 +488,7 @@ Ready to begin?</output>
       <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
         Collect {{remaining_findings}} = findings not yet resolved (status not fixed | dismissed | triaged-out | escalated).
         Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop.
+        DIFF RANGE FOR RE-CHECK: Use the same canonical pre-merge merge-base pattern as stage 2. The story branch is still pre-merge at this point. Canonical pattern: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review).
       </action>
 
       <check if="{{remaining_findings}} is empty">
