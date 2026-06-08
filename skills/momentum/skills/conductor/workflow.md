@@ -1075,7 +1075,14 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Return findings only."
     </action>
 
-    <action>Store {{avfl_findings}} = full findings list from AVFL output, tagged with source="avfl" and severity per finding.</action>
+    <action>Store {{avfl_findings}} = full findings list from AVFL output, tagged with source="avfl" and severity per finding.
+      For each finding F in {{avfl_findings}}:
+        If F was resolved as fixed by a post-merge fixer: set F.disposition = "fixed".
+        If F was dismissed (legitimate: false): set F.disposition = "dismissed".
+        If F was escalated (stakes-class, legitimate: true): set F.disposition = "escalated".
+        Otherwise (held unfixed for end-gate — the common case for routine findings): set F.disposition = "residual".
+      Note: "residual" is the disposition for any finding that left the build unresolved (not fixed, not dismissed). This normalization ensures the end-gate guard can filter on F.disposition without reading undefined.
+    </action>
 
     <action>Route AVFL findings through the escalation engine (references/escalation.md):
       For each finding F in {{avfl_findings}}:
@@ -1215,6 +1222,31 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           ELSE (story is quarantined, integrity-stopped, or blocked/never-merged — not in {{merged}}):
             `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
             Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
+      </action>
+      <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
+        Sources of residual findings to scan:
+          (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized at L1078: fixed | dismissed | escalated | residual).
+          (b) {{build_log}} entries with event == "stage3-finding-blocked" — per-story pipeline findings that exhausted the fix retry budget; each carries disposition: "blocked".
+        Combine both sources into {{all_build_findings}}.
+
+        Collect {{major_residuals}} = all findings F in {{all_build_findings}} where:
+          - F.severity is in {blocker, critical, major}  — the upper severity tier
+          - F.disposition is NOT "fixed" AND NOT "dismissed" — finding was not resolved; it is a residual
+        Note: "fixed" and "dismissed" findings are fully resolved and need no stub.
+        Note: "blocked" findings (step 2.S3 retry-exhausted path) and "escalated" and "residual" AVFL findings all satisfy the NOT-fixed/NOT-dismissed condition and are included.
+        Note: "blocked" findings already had a triage stub spun at block time (step 2.S3). momentum:triage's own dedup gate prevents duplicate stubs if the guard re-invokes it for the same finding.
+
+        Initialize {{triage_stubs_created}} = [].
+
+        For each finding F in {{major_residuals}}:
+            Invoke momentum:triage with F's descriptive fields (summary, detail, evidence, location, story_slug, severity, stakes_class) to create a backlog stub for this residual finding.
+            Append F.finding_id to {{triage_stubs_created}}.
+            Append to {{build_log}}: { event: "major-residual-stub-created", finding_id: F.finding_id, severity: F.severity, summary: F.summary, story_slug: F.story_slug }
+
+        Bind {{stubs_created_this_pass}} = count of stubs created in the loop above.
+        If {{stubs_created_this_pass}} > 0: surface a note in the push summary output: "{{stubs_created_this_pass}} MAJOR-severity residual(s) from this build now have linked backlog stubs — review via momentum:refine before next sprint."
+
+        INVARIANT: When this action completes, every finding in {{major_residuals}} has a corresponding backlog stub. No MAJOR-severity residual may leave this sprint without one.
       </action>
       <action>Show push summary: `git log @{u}..HEAD --oneline`</action>
       <ask>Push to origin/main?</ask>
