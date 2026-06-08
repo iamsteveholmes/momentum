@@ -1191,46 +1191,105 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
   <!-- PHASE 3: AVFL-ON-MERGE                                      -->
   <!-- ═══════════════════════════════════════════════════════════ -->
 
-  <step n="3" goal="AVFL-on-merge — sprint-level quality scan on the full integrated sprint branch">
-    <note>AVFL runs once after ALL stories are merged to the sprint branch. It is a read-only scan at this phase — findings are not fixed here; they are held for the end-gate report. This phase runs silently; no developer interaction unless a finding triggers mid-flight escalation criteria (which are delivered by a downstream story).</note>
+  <step n="3" goal="AVFL-on-merge — run avfl-merge-review Workflow over the precise integrated sprint-vs-main diff">
 
-    <action>Capture sprint diff: identify files changed by all merged stories (union of all `touches` arrays in {{story_map}}).
-      [INTERIM NOTE: The authoritative spec (§5, §6) calls for a 3-dot merge-base diff (`git diff <merge-base>...sprint/{{sprint_slug}}`) fed to an avfl-merge-review Workflow (not this prose skill). The touches-union approach here is an interim approximation. The AVFL-as-Workflow + 3-dot-diff rewrite is tracked as a downstream story per spec §10 PROSE→WF build order. When that story lands, replace this touches-union diff with the spec's merge-base 3-dot diff so AVFL inspects the net integrated change rather than a file-name union. This deviation is intentional and tracked — not a silent gap.]
-    </action>
-    <action>Collect acceptance criteria from all sprint story files. Concatenate as {{all_acs}}.</action>
+    <note>AVFL-on-merge runs once after ALL stories are merged to the sprint branch. It uses the avfl-merge-review Workflow (skills/momentum/skills/avfl/workflow-merge-review.md), which inspects the 3-dot merge-base diff of the sprint branch versus main — the net integrated change the developer would actually ship. This phase runs silently; no developer interaction. The workflow returns a typed CLEAN | NON_CONVERGENT result the Conductor consumes directly.</note>
 
-    <action>Spawn `momentum:avfl` (individual-agent, not TeamCreate) with:
-      - task_context: "Sprint {{sprint_slug}} — full codebase after {{sprint_stories | length}} stories merged"
-      - output_to_validate: {{sprint_diff}}
-      - source_material: {{all_acs}}
-      - profile: checkpoint
-      - stage: final
-      Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Return findings only."
+    <!-- ── 3.1 — Assemble inputs for the merge-review Workflow ── -->
+
+    <action>Build the {{merged_stories}} input for the merge-review Workflow:
+      For each story slug S in {{merged}} (stories that reached status >= review):
+        Resolve the files this story touched from the story spec (the `touches` array in {{story_map}}[S]).
+      Bind {{merged_stories}} = array of { slug: S.slug, files_touched: S.touches }
+        for each S in {{merged}}.
     </action>
 
-    <action>Store {{avfl_findings}} = full findings list from AVFL output, tagged with source="avfl" and severity per finding.
-      For each finding F in {{avfl_findings}}:
-        If F was resolved as fixed by a post-merge fixer: set F.disposition = "fixed".
-        If F was dismissed (legitimate: false): set F.disposition = "dismissed".
-        If F was escalated (stakes-class, legitimate: true): set F.disposition = "escalated".
-        Otherwise (held unfixed for end-gate — the common case for routine findings): set F.disposition = "residual".
-      Note: "residual" is the disposition for any finding that left the build unresolved (not fixed, not dismissed). This normalization ensures the end-gate guard can filter on F.disposition without reading undefined.
+    <action>Build the {{story_contracts}} map for the merge-review Workflow:
+      For each story S in {{merged}}:
+        Resolve S's contract path from `story_assignments[S.slug].contract.path` in the sprint record.
+      Bind {{story_contracts}} = map from slug to contract path
+        (used by the fixer for cross-story contradiction resolution — higher-authority contract wins).
     </action>
 
-    <action>Route AVFL findings through the escalation engine (references/escalation.md):
-      For each finding F in {{avfl_findings}}:
-        If F.stakes_class == "routine": add to end-gate report as routine finding; no escalation check.
+    <!-- ── 3.2 — Invoke the avfl-merge-review Workflow ─────────── -->
+
+    <note>The avfl-merge-review Workflow owns the 3-dot diff capture, the dual-reviewer parallel fan-out, the declining-skepticism fix loop, and the typed result. The Conductor does NOT spawn momentum:avfl here — it invokes the avfl-merge-review Workflow, which handles its own subagent spawning. The Conductor remains the sole git-mutation authority: the workflow's fixer produces file content and a commit message label; the Conductor commits after each fix iteration.</note>
+
+    <action>Invoke the avfl-merge-review Workflow (skills/momentum/skills/avfl/workflow-merge-review.md) with:
+      - sprint_branch: "sprint/{{sprint_slug}}"
+      - base_ref: "main"
+      - merged_stories: {{merged_stories}}
+      - story_contracts: {{story_contracts}}
+      Constraint: "Do not ask the developer anything. Do not commit. Return the typed result when done."
+      The workflow runs through its validate → consolidate → evaluate → fix loop autonomously.
+      For each fix iteration where the workflow's fixer produces corrected file content:
+        The Conductor stages and commits the output:
+          `git checkout sprint/{{sprint_slug}}`
+          `git add -u && git commit -m "fix(avfl): resolve integration findings — iteration {N}"`
+        The workflow then re-captures the updated diff and continues its loop.
+      Bind {{merge_review_result}} = the typed result object returned by the Workflow.
+    </action>
+
+    <!-- ── 3.3 — Consume the typed result ──────────────────────── -->
+
+    <action>Extract findings from the merge-review result to populate {{avfl_findings}}:
+      Bind {{avfl_findings}} = array built from {{merge_review_result}} as follows:
+
+      From fixes_applied (findings that were fixed during the review loop):
+        For each fix F: emit { source: "avfl-merge-review", finding_id: F.id, severity: F.severity,
+          summary: F.change, disposition: "fixed", story_slug: F.owning_stories[0] or "sprint-integration",
+          stakes_class: "routine" }
+
+      From leftovers (only present when status == NON_CONVERGENT):
+        For each leftover L: emit { source: "avfl-merge-review", finding_id: L.id,
+          severity: L.severity, confidence: L.confidence, classification: L.classification,
+          summary: L.description, evidence: L.evidence, suggestion: L.suggestion,
+          why_unresolved: L.why_unresolved,
+          story_slug: L.owning_stories[0] or "sprint-integration",
+          location: L.location, owning_stories: L.owning_stories,
+          disposition: "residual", stakes_class: "routine",
+          type: "integration" }
+
+      Tag all entries: source = "avfl-merge-review".
+    </action>
+
+    <!-- ── 3.4 — Route residual leftovers through escalation ─── -->
+
+    <action>Route remaining (non-fixed) AVFL findings through the escalation engine (references/escalation.md):
+      For each finding F in {{avfl_findings}} where F.disposition == "residual":
+        If F.stakes_class == "routine": hold for end-gate report as routine finding; no escalation check.
         If F.stakes_class is stakes-class (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture):
           Invoke escalation engine with F.
           If engine returns { outcome: "continue" }: tag F with timing_tier: "end-gate-expanded"; hold for end-gate report.
           If engine returns { outcome: "pause-branch" }: invoke step 2.F pause-ask-resume logic for F.
-            Note: AVFL runs post-merge; mid-flight escalations from AVFL are post-merge pauses. The engine evaluates the bar identically regardless of phase.
-            Post-merge resolution outcome differences: Proceed = spawn fixer + commit to sprint branch; Change = fixer with alternative + commit to sprint branch. Abort-that-branch does NOT apply post-merge (no in-flight story branch exists); if the developer rejects the finding, open a follow-up backlog story instead.
-      ANTI-FIREHOSE: Only findings explicitly flagged irreversible-and-imminent or build-invalidating by AVFL fire a pause-ask. Non-imminent stakes-class findings go to end-gate-expanded.
+            Note: AVFL runs post-merge; post-merge resolution: Proceed = spawn fixer + commit to sprint branch;
+            Change = fixer with alternative + commit; Abort-that-branch does NOT apply (no in-flight story branch
+            exists) — open a follow-up backlog story instead.
+      ANTI-FIREHOSE: Only findings explicitly flagged irreversible-and-imminent or build-invalidating fire a pause-ask. Non-imminent stakes-class findings go to end-gate-expanded.
     </action>
 
-    <action>Append AVFL results to {{build_log}}: { phase: "avfl-on-merge", findings_count, stakes_findings_count, mid_flight_escalations_count }.</action>
-    <note>No general developer ask here. AVFL findings are held for the end-gate unless the escalation engine fires a pause-ask for a bar-clearing finding. Proceed to Phase 4.</note>
+    <!-- ── 3.5 — Record result and proceed ─────────────────────── -->
+
+    <action>Append AVFL-on-merge results to {{build_log}}:
+      { phase: "avfl-on-merge",
+        result_status: {{merge_review_result}}.status,
+        final_score: {{merge_review_result}}.final_score,
+        iterations: {{merge_review_result}}.iterations,
+        scores_per_iteration: {{merge_review_result}}.scores_per_iteration,
+        fixes_applied_count: length({{merge_review_result}}.fixes_applied),
+        leftovers_count: length({{merge_review_result}}.leftovers or []),
+        fix_commits: {{merge_review_result}}.commits,
+        findings_count: length({{avfl_findings}}),
+        stakes_findings_count: count of F in {{avfl_findings}} where F.stakes_class != "routine",
+        mid_flight_escalations_count: count of F in {{avfl_findings}} where F.timing_tier == "mid-flight" }
+    </action>
+
+    <check if="{{merge_review_result}}.status == 'NON_CONVERGENT'">
+      <note>The merge review could not fully converge. Leftovers carry full context (what/where/evidence/suggestion/why_unresolved). These are already in {{avfl_findings}} with disposition="residual" and will appear as decision cards or residual items in the end-gate report. The build is NOT halted — proceed to Phase 4 (E2E) with the known leftovers. The end-gate report surfaces them to the developer for acknowledgment.</note>
+      <action>Continue to Phase 4. Do not halt or ask the developer. The NON_CONVERGENT result is surfaced at the end-gate.</action>
+    </check>
+
+    <note>No developer ask here on the routine path. The avfl-merge-review Workflow ran over the precise 3-dot integrated diff. AVFL findings are held for the end-gate unless the escalation engine fires a pause-ask for a bar-clearing finding. Proceed to Phase 4.</note>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
