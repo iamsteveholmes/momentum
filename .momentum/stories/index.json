@@ -5412,7 +5412,7 @@
     "story_type": "maintenance"
   },
   "conduct-planning-reconcile-gherkin-and-specs-rule": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Reconcile sprint-planning Step 4 (Gherkin generation) and remove the stale 'dev never accesses specs/' rule",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5536,7 +5536,7 @@
     "story_type": "feature"
   },
   "conduct-state-machine-defects-shipped-unfixed": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Fix two MAJOR conduct state-machine defects shipped unfixed (terminal->terminal + verify-skip)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5576,7 +5576,7 @@
     "story_type": "feature"
   },
   "controlled-enums-and-stable-ledger-schema-finding-cards": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Controlled enums + stable schema for finding-cards / build-results ledgers",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
