@@ -65,7 +65,7 @@ At the top of step 5, before rendering, bind:
 {{stakes_findings}} = concat(
   {{end_gate_escalations}},                                    -- per-story fix-loop escalations
   {{avfl_findings}} filtered to { stakes_class != "routine" AND disposition in { escalated, residual } },
-  {{e2e_results}}.failed_scenarios filtered to { severity == stakes-class }
+  {{e2e_results}}.failed_scenarios filtered to { failure_reason indicates a stakes-class behavioral gap }
 )
 ```
 

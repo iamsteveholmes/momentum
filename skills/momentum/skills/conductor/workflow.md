@@ -225,6 +225,7 @@ Ready to begin?</output>
         {{retries}}     = {}    — { slug: int } per-story retry counter (pipeline-level; distinct from merge_attempts)
         {{merge_attempts}}           = {}    — { slug: int } per-story rebase-then-merge attempt counter (bound: 3); owned by step 2.2.M
         {{escalations}}              = []    — mid-flight escalation records (stakes-class, strict bar only)
+        {{end_gate_escalations}}     = []    — Conductor-scoped accumulator for end-gate-expanded stakes findings across ALL stories; populated by step 2.2 signal handler from each story's S.escalations (end-gate-expanded subset); consumed by step 5 Source 1 to build decision cards. Each entry: { finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug }.
         {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
         {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
       </action>
@@ -721,6 +722,18 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
         </check>
 
         <check if="hook returns 'continue' OR hook resolution completes">
+          <!-- ── Accumulate end-gate-expanded escalations into Conductor scope ──── -->
+          <action>Accumulate end-gate-expanded findings from this story into the Conductor-scoped accumulator:
+            For each entry E in S.escalations where E.timing_tier == "end-gate-expanded":
+              Append { finding_id: E.finding_id, stakes_class: E.stakes_class, timing_tier: "end-gate-expanded",
+                       summary: E.summary, evidence: E.evidence, suggested_fix: E.suggested_fix,
+                       story_slug: S.slug }
+              to {{end_gate_escalations}}.
+            This is the consumer-side aggregation that closes the seam between the per-story
+            {{end_gate_escalations}} (reset each story in step 2.S3) and the Conductor-scoped
+            {{end_gate_escalations}} that step 5 Source 1 reads to build decision cards.
+          </action>
+
           <!-- ═══════════════════════════════════════════════════════════════════════ -->
           <!-- STEP 2.2.M — PER-STORY INTEGRATION: REBASE → MERGE → CONFLICT PATH    -->
           <!-- Conductor is the sole git-mutation authority for all operations below. -->
