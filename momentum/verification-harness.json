@@ -72,7 +72,7 @@
       "slug": "example-product-app",
       "description": "Example: a product repo with a mobile/web UI, a REST backend, and shell scripts — all three runnable surface types configured with real drivers.",
       "env": {
-        "_note": "Startup commands and readiness probes are required for every activated runnable surface. Leave none empty when real runners are configured.",
+        "_note": "Startup commands and readiness probes apply to surfaces that require a running environment (e.g. app-ui needs the frontend, backend needs the API server). Pure script surfaces (script-code, script-cli) run via cmux bash and do not require service readiness — leave their probes absent. The 'npm run dev &' backgrounding below is intentional; readiness for HTTP services is enforced solely by the curl --retry probes.",
         "startup": [
           "docker compose up -d",
           "npm run dev --prefix frontend &"
@@ -83,9 +83,9 @@
         ]
       },
       "execution_surfaces": {
-        "_note": "Only override surfaces this project actually exercises. Surfaces not listed here inherit the shared default (skip). Setting a surface to 'skip' here is valid only if the project has no stories of that change_type.",
+        "_note": "Project entries may use either string values (matching a driver_bindings key — e.g. 'bash', 'curl', 'smoke') or object values for surfaces that need driver-specific options (driver, fallback, scenario_path, base_url_env, platform). The e2e-validator reads the 'driver' key from an object entry the same way it reads a string entry — both resolve to a driver_bindings entry. Surfaces not listed here inherit the shared default (skip). Setting a surface to 'skip' is valid only if the project has no stories of that change_type.",
         "app-ui": {
-          "driver": "Maestro",
+          "driver": "smoke",
           "fallback": "Playwright",
           "description": "UI smoke tests via Maestro for mobile targets; Playwright for web-only flows. Maps to the 'smoke' driver_binding.",
           "scenario_path": "e2e/maestro",
@@ -99,13 +99,13 @@
           "platform": ["host"]
         },
         "script-cli": {
-          "driver": "cmux",
+          "driver": "bash",
           "description": "Run CLI scripts in a cmux terminal surface and assert exit code + stdout pattern. Maps to the 'bash' driver_binding.",
           "platform": ["host"]
         },
         "script-code": {
-          "driver": "cmux",
-          "description": "Execute and observe script-code artifacts (e.g. migration scripts, data transforms) via cmux bash surface.",
+          "driver": "bash",
+          "description": "Execute and observe script-code artifacts (e.g. migration scripts, data transforms) via cmux bash surface. Maps to the 'bash' driver_binding.",
           "platform": ["host"]
         },
         "skill-instruction": "skip",
