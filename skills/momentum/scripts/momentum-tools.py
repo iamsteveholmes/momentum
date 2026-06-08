@@ -1801,10 +1801,19 @@ def cmd_agent_resolve(args: argparse.Namespace) -> None:
         role = args.role
         if role not in defaults:
             error_result("agent_resolve", f"Role '{role}' not found in defaults block", role=role)
+        agent_path = defaults[role]
+        resolved = project_dir / agent_path
+        if not resolved.exists():
+            error_result(
+                "agent_resolve",
+                f"Role '{role}' maps to a missing agent body: {agent_path} (resolved: {resolved})",
+                role=role,
+                agent_path=agent_path,
+            )
         result("agent_resolve", success=True,
                results=[{
                    "slug": role,
-                   "agent_path": defaults[role],
+                   "agent_path": agent_path,
                    "write_permissions": [],
                    "file_scope": [],
                }])
@@ -1814,12 +1823,25 @@ def cmd_agent_resolve(args: argparse.Namespace) -> None:
     touches_raw = getattr(args, "touches", None) or ""
     touches = [p.strip() for p in touches_raw.split(",") if p.strip()]
 
+    def _assert_path_exists(slug: str, agent_path: str) -> None:
+        """Fail loudly if an agent body path does not exist on disk."""
+        resolved = project_dir / agent_path
+        if not resolved.exists():
+            error_result(
+                "agent_resolve",
+                f"Role '{slug}' maps to a missing agent body: {agent_path} (resolved: {resolved})",
+                role=slug,
+                agent_path=agent_path,
+            )
+
     if not touches:
         # No file paths — return base dev default
+        dev_path = defaults.get("dev", "skills/momentum/agents/dev.md")
+        _assert_path_exists("dev", dev_path)
         result("agent_resolve", success=True,
                results=[{
                    "slug": "dev",
-                   "agent_path": defaults.get("dev", "skills/momentum/agents/dev.md"),
+                   "agent_path": dev_path,
                    "write_permissions": [],
                    "file_scope": [],
                }])
@@ -1849,27 +1871,33 @@ def cmd_agent_resolve(args: argparse.Namespace) -> None:
     # One result per matched project entry
     for slug, group in claimed.items():
         entry = group["entry"]
+        agent_path = entry.get("agent", "")
+        _assert_path_exists(slug, agent_path)
         results.append({
             "slug": slug,
-            "agent_path": entry.get("agent", ""),
+            "agent_path": agent_path,
             "write_permissions": entry.get("write_permissions", []),
             "file_scope": group["file_scope"],
         })
 
     # Unclaimed paths fall back to defaults dev entry
     if unclaimed:
+        dev_path = defaults.get("dev", "skills/momentum/agents/dev.md")
+        _assert_path_exists("dev", dev_path)
         results.append({
             "slug": "dev",
-            "agent_path": defaults.get("dev", "skills/momentum/agents/dev.md"),
+            "agent_path": dev_path,
             "write_permissions": [],
             "file_scope": unclaimed,
         })
 
     # Empty touches that somehow got here — shouldn't happen, but guard
     if not results:
+        dev_path = defaults.get("dev", "skills/momentum/agents/dev.md")
+        _assert_path_exists("dev", dev_path)
         results.append({
             "slug": "dev",
-            "agent_path": defaults.get("dev", "skills/momentum/agents/dev.md"),
+            "agent_path": dev_path,
             "write_permissions": [],
             "file_scope": [],
         })

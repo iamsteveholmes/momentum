@@ -19,13 +19,10 @@ write_permissions in the `results` array — not the defaults `dev` fallback.
 ```json
 {
   "defaults": {
-    "architect": "skills/momentum/agents/architect.md",
-    "pm": "skills/momentum/agents/pm.md",
     "ux": "skills/momentum/agents/ux.md",
     "analyst": "skills/momentum/agents/analyst.md",
     "researcher": "skills/momentum/agents/researcher.md",
     "dev": "skills/momentum/agents/dev.md",
-    "sm": "skills/momentum/agents/sm.md",
     "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
     "e2e-validator": "skills/momentum/agents/e2e-validator.md"
   },
@@ -33,7 +30,7 @@ write_permissions in the `results` array — not the defaults `dev` fallback.
     {
       "role": "dev",
       "slug": "dev-cmp",
-      "agent": ".claude/guidelines/agents/dev-cmp.md",
+      "agent": "skills/momentum/agents/dev-build.md",
       "patterns": ["**/src/**/ui/**", "**/*.kt"],
       "write_permissions": ["src/main/kotlin/**/ui/**"]
     }
@@ -56,7 +53,7 @@ momentum-tools agent resolve --touches "src/main/kotlin/ui/Button.kt,src/api/rou
   "results": [
     {
       "slug": "dev-cmp",
-      "agent_path": ".claude/guidelines/agents/dev-cmp.md",
+      "agent_path": "skills/momentum/agents/dev-build.md",
       "write_permissions": ["src/main/kotlin/**/ui/**"],
       "file_scope": ["src/main/kotlin/ui/Button.kt"]
     },
@@ -79,7 +76,7 @@ momentum-tools agent resolve --touches "src/main/kotlin/ui/Button.kt,src/api/rou
 3. Parse the JSON output. Verify:
    - `success` is `true`
    - `results` array has exactly 2 entries
-   - First entry has `slug == "dev-cmp"` and `agent_path == ".claude/guidelines/agents/dev-cmp.md"`
+   - First entry has `slug == "dev-cmp"` and `agent_path == "skills/momentum/agents/dev-build.md"`
    - First entry `file_scope` contains `"src/main/kotlin/ui/Button.kt"` and NOT `"src/api/routes.py"`
    - First entry `write_permissions` equals `["src/main/kotlin/**/ui/**"]`
    - Second entry has `slug == "dev"` (defaults fallback for the unmatched path)

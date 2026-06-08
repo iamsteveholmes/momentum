@@ -1,12 +1,9 @@
 {
   "defaults": {
-    "architect": "skills/momentum/agents/architect.md",
-    "pm": "skills/momentum/agents/pm.md",
     "ux": "skills/momentum/agents/ux.md",
     "analyst": "skills/momentum/agents/analyst.md",
     "researcher": "skills/momentum/agents/researcher.md",
     "dev": "skills/momentum/agents/dev.md",
-    "sm": "skills/momentum/agents/sm.md",
     "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
     "e2e-validator": "skills/momentum/agents/e2e-validator.md"
   },
