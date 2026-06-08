@@ -281,35 +281,19 @@ Ready to begin?</output>
         2.1.2 — Transition to in-progress:
           `momentum-tools sprint status-transition --story {S.slug} --target in-progress`
 
-        2.1.3 — Spawn dev agent (individual-agent fan-out, NOT TeamCreate — spawned concurrently with all other frontier pipelines):
-          Resolve agent via: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
-          Spawn the resolved agent with the story file at `.momentum/stories/{S.slug}.md`.
-          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
-          [HOLLOW: per-story pipeline stage 1 (dev spawn ordering) and stage 2 (QA + code-review concurrent fan-out) are
-           specified by downstream conduct stories — fill those spawn calls when those stories land.
-           Stage 3 (fix loop — Phase B–D) is implemented in step 2.S3 below and is LIVE. The Conductor invokes step 2.S3
-           after stage-2 reviewers return their findings for story S. See step 2.S3 for the full fix-loop spec.
-
-           DIFF RANGE FOR STAGE-2 (QA REVIEWER + CODE-REVIEW ADAPTER): When stage 2 is filled in, the diff range
-           passed to both the QA reviewer and the code-review adapter MUST follow the canonical pre-merge
-           per-story review diff-range pattern — compute the merge-base form at review time (stage 2 runs
-           BEFORE the merge at step 2.2.M). Do NOT capture a SHA at merge time for stage-2 use (the merge
-           has not occurred yet). Do NOT use over-scoped ranges (main...HEAD). Authoritative pattern and
-           rationale: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review)]
-
-        2.1.4 — CONTRACT-FREEZE GATE (hooked at story launch — earliest sound point):
+        2.1.4 — CONTRACT-FREEZE GATE (fires at story launch, before any pipeline stages):
           Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
           skip all further verification actions for S in this pipeline iteration — do NOT dispatch the verifier for S.
-          If step 2.V confirms the contract is unchanged, proceed to verification as normal.
+          If step 2.V confirms the contract is unchanged, proceed to 2.1.5.
 
-          [PLACEMENT NOTE: The freeze gate fires here, at launch, rather than at a later "verification boundary" inside the
-          per-story pipeline. This is intentional and correct: the contract file is frozen at planning and is static between
-          launch and verification, so a sha256 check at launch guards the same invariant as one at verification-start. The
-          per-story pipeline internals (step 2.1.3 HOLLOW) are owned by downstream conduct stories — when those stories land,
-          they MUST NOT add a second freeze check at the per-story verification boundary. The gate belongs here, once, at
-          launch. Adding it again inside the per-story pipeline would double-gate and create redundant integrity stops.]
+          [PLACEMENT NOTE: The freeze gate fires here, at launch, before stage-1 dev spawn and before any
+          verification dispatch. This is intentional and correct: the contract file is frozen at planning and
+          is static between launch and verification, so a sha256 check at launch guards the same invariant as
+          one at verification-start. The per-story pipeline stages MUST NOT add a second freeze check at any
+          later point. The gate belongs here, once, at launch. Adding it again inside the pipeline would
+          double-gate and create redundant integrity stops.]
 
-        2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before verifier dispatch):
+        2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before stage-1 dev spawn):
           INTEGRITY-STOP GUARD: If step 2.V recorded an integrity stop for S (i.e., S is in {{contract_integrity_stops}}),
           skip this step entirely — do NOT invoke step 2.C and do NOT dispatch any verifier for S. The integrity-stop
           semantics from 2.1.4 take precedence: no further verification actions are performed for S in this pipeline
@@ -320,8 +304,92 @@ Ready to begin?</output>
             { outcome: "dedicated-run" }         — perform the dedicated QA verification run during this build phase
             { outcome: "covered-by-composition", integration_scenario: "<scenario-id>" }
                                                  — skip the dedicated build-time run; record the deferral
+          Bind {{coverage_disposition}}[S.slug] = the outcome string returned by step 2.C.
           Act on the routing outcome as specified in step 2.C. Do NOT dispatch the verifier at build time
           for a story whose coverage_disposition is "covered-by-composition".
+
+        2.1.3 — STAGE-1 → STAGE-2 → STAGE-3 PIPELINE: Fire asynchronously after 2.1.4/2.1.5 resolve.
+          Each story's pipeline runs independently and concurrently with other stories' pipelines.
+          The pipeline emits a single terminal signal when complete; step 2.2 consumes that signal.
+          The launch loop does NOT block on any stage — all per-story pipelines run concurrently.
+
+          ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
+          Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
+          Bind {{dev_agent}} = the resolved agent name (e.g., "dev", "dev-build", "dev-frontend", "dev-skills").
+          Spawn {{dev_agent}} as an individual agent (fan-out, NOT TeamCreate) with:
+            - story_file: `.momentum/stories/{S.slug}.md`
+            - sprint_slug: {{sprint_slug}}
+            - worktree_path: `.worktrees/story-{S.slug}` (the story's isolated git worktree)
+            - contract_part_a: path to `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*` (Part A only)
+          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
+          This spawn fires concurrently with all other frontier story spawns (no story-count cap).
+
+          When {{dev_agent}} returns its implementation-complete signal:
+          Bind {{stage1_output}} = the agent's return value (implementation-complete + file_list).
+          The Conductor (sole git-mutation authority) commits the produced output:
+            `git -C .worktrees/story-{S.slug} add -u`
+            `git -C .worktrees/story-{S.slug} commit -m "feat({S.slug}): implement {{S.title}}"`
+          Then advance this story's pipeline to stage-2.
+
+          ── STAGE-2: CONCURRENT QA + CODE-REVIEW FAN-OUT ───────────────────────────────────
+          Stage 2 fires AFTER the stage-1 commit, BEFORE the merge at step 2.2.M (pre-merge review).
+          Apply coverage routing established at 2.1.5:
+            - If {{coverage_disposition}}[S.slug] == "covered-by-composition": skip stage-2 entirely;
+              bind {{stage2_findings}} = [] and advance directly to stage-3 with an empty findings list.
+            - If {{coverage_disposition}}[S.slug] == "dedicated-run" (default): dispatch the fan-out below.
+
+          DIFF RANGE (Scenario A — Pre-Merge Review, per references/per-story-review-diff-range.md):
+          Compute the per-story diff at review time — do NOT capture a SHA; do NOT wait for the merge:
+            {{story_diff}} = output of:
+              `git -C .worktrees/story-{S.slug} diff \
+                $(git -C .worktrees/story-{S.slug} \
+                  merge-base sprint/{{sprint_slug}} story/{{S.slug}}) \
+                ..story/{{S.slug}}`
+          Pass the materialized diff (not the range expression) to both reviewers.
+          DO NOT use over-scoped ranges (main...HEAD) or two-dot sprint-tip forms.
+          Authoritative pattern and rationale: references/per-story-review-diff-range.md.
+
+          Spawn the following two agents CONCURRENTLY (individual-agent fan-out, NOT TeamCreate):
+
+            REVIEWER A — qa-reviewer agent:
+              Inputs:
+                - story_slug: S.slug
+                - worktree_path: `.worktrees/story-{S.slug}`
+                - verification_contract: `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*`
+                - story_diff: {{story_diff}}
+              Constraint: "Read-only. Do not modify code. Do not mutate git. Produce findings only."
+              Returns: per-AC classification (VERIFIED / PARTIAL / MISSING / BLOCKED) with stakes_class
+                on each finding, normalized to the canonical finding schema (finding-schema.md).
+                Source field: `qa-reviewer`.
+
+            REVIEWER B — momentum:code-reviewer skill (bmad-code-review adapter):
+              Inputs:
+                - story_slug: S.slug
+                - story_diff: {{story_diff}}
+                - worktree_path: `.worktrees/story-{S.slug}`
+              Constraint: "Report-only mode. Do not modify code. Do not mutate git. Produce findings only."
+              Returns: normalized finding records per canonical finding schema (finding-schema.md),
+                stakes_class populated on every record. Source field: `bmad-code-review`.
+
+          When BOTH reviewers have returned:
+          Bind {{qa_findings}} = findings array from REVIEWER A.
+          Bind {{cr_findings}} = findings array from REVIEWER B.
+          Merge into {{stage2_findings}}: deduplicated union of {{qa_findings}} and {{cr_findings}},
+            severity-sorted (critical → major → minor → low).
+          Deduplication: if a qa-reviewer finding and a bmad-code-review finding describe the same
+            location and issue, keep the higher-severity record; annotate source as
+            "qa-reviewer+bmad-code-review".
+          Each finding in {{stage2_findings}} carries the canonical base fields of finding-schema.md,
+            including: story_slug, source, stakes_class, severity, verdict, type, location, summary,
+            detail, evidence, legitimate, ac_id (where applicable), and suggested_fix (when provided).
+          Then advance this story's pipeline to stage-3.
+
+          ── STAGE-3 FIX LOOP ───────────────────────────────────────────────────────────────
+          Invoke step 2.S3 for story S, passing {{stage2_findings}} as input.
+          Step 2.S3 (live) runs the directed fix-loop (Phase B→C→D, retry-bound-3, escalation routing).
+          When step 2.S3 emits its terminal signal, this story's pipeline emits its own terminal signal
+            to step 2.2 — either { slug, outcome: "merged", ... } or { slug, outcome: "failed", ... } —
+            per the outcome and quarantine rules in step 2.S3.
 
         Store pipeline_handle in {{running}}[S.slug].
       </action>
