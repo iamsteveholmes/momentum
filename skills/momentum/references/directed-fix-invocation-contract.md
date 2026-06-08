@@ -19,7 +19,7 @@ This document is a **seam contract** — it defines a hand-off boundary between 
 
 | Role | Agent | What it owns |
 |---|---|---|
-| **Producer** | `momentum:dev` fix-mode (fixer subagent) | Emits per-finding disposition objects; populates `finding_id`, `disposition`, `files_changed`, `dismissal_rationale`, and the nested `escalation` object |
+| **Producer** | `momentum:dev` fix-mode (fixer subagent) | Emits per-finding disposition objects; echoes `finding_id` (Conductor-assigned); populates `disposition`, `files_changed`, `dismissal_rationale`, and the nested `escalation` object |
 | **Consumer** | Conductor (`momentum:conductor`) | Reads disposition objects; joins on `finding_id` to recover inbound finding fields; routes on `F.escalation.timing_tier` |
 
 **Field-shape compatibility requirement:** Any story that changes this contract — or either of the agents it binds — must verify that every field the producer emits is read at the correct path by the consumer. The canonical output shape in the [Canonical Fixer Output Shape](#canonical-fixer-output-shape) section below is the authoritative cross-side compatibility reference. A reviewer checking a seam story must confirm both sides agree on field names and nesting; a mismatch (e.g., producer nests a field at `escalation.timing_tier` but consumer reads it at `timing_tier`) is a cross-side field-shape incompatibility and must be reported as a `type: integration` finding.
@@ -189,7 +189,7 @@ This section codifies the authoritative per-finding output shape that the fix-mo
 
 **Key shape rules:**
 
-- **`timing_tier` is INSIDE `escalation`** — it is a field of the `escalation` object, not a top-level field on the disposition object. A consumer reading `F.timing_tier` will find nothing; the correct path is `F.escalation.timing_tier`.
+- **`timing_tier` is INSIDE `escalation`** — it is a field of the `escalation` object, not a top-level field on the disposition object. A consumer reading `F.timing_tier` will find nothing; the correct path is `F.escalation.timing_tier`. Note: `finding-schema.md` lists `timing_tier` as a flat field on the *normalized-finding* object — that is a different object from this *disposition* object. The two schemas represent different stages of the pipeline (inbound finding vs. fixer return), not a contradiction; the nesting difference is intentional and correct.
 - **`escalation` is present only when `disposition == "escalated"`** — for all other dispositions it is `null`.
 - **The `escalation` object does NOT echo `stakes_class`, `summary`, or `location`** from the inbound finding — those fields live on the inbound finding only. The consumer (the Conductor) recovers them by **joining on `finding_id`** back to the stage-2 findings array it sent in.
 

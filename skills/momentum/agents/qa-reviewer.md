@@ -34,6 +34,8 @@ A **seam story** is one whose subject is a hand-off contract between two distinc
 
 1. **Identify both sides.** Name the producer (the agent that emits the shared record) and the consumer (the agent that reads it). Both sides are in-scope for this review, even if only the contract document itself changed.
 
+   **Reconciliation with the single-story rule:** Reading the consumer or producer artifact as a *reference* is permitted for seam stories even when that artifact lies outside this story's diff. The single-story rule forbids emitting a finding *about* another story — it does not forbid reading another artifact to check field-shape compatibility. Any shape mismatch you discover is reported as a finding against THIS seam story (the contract), not against the other artifact's story. This keeps the no-cross-story-finding rule intact: the finding's subject is always the contract boundary under review, not the foreign artifact itself.
+
 2. **Check field-shape compatibility.** For every field the producer emits at a given JSON/YAML path, confirm the consumer reads it at the same path. A field written at `escalation.timing_tier` that the consumer reads as `timing_tier` (flat) is a cross-side field-shape mismatch. Report this as:
    - `type: integration`
    - `summary`: a one-sentence description naming both sides and the mismatched path
