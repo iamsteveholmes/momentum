@@ -20,16 +20,28 @@ The validator reads this table and applies the mapped method.
 
 | change_type | Required Verification Method |
 |---|---|
-| `skill-instruction` | EDD eval — adversarial eval scenarios authored by acceptance tester independent of implementation |
-| `agent-definition` | Run-once behavioral check — invoke the agent with a representative input; observe that it routes, responds, and halts as specified |
-| `rule-hook` | Behavioral trigger test — create the condition that should trigger the rule/hook; observe that expected behavior fires |
-| `script-code` | Execution test — run the script with representative inputs; observe that output matches spec |
-| `script-cli` | Execution test — run the CLI command; observe that output matches spec |
-| `backend` | Execution test — exercise the endpoint or service; observe that response matches spec |
-| `app-ui` | Smoke test (build + launch + drive) then human residual — automated smoke confirms launch; human confirms visible correctness |
-| `research-spike` | Document review — confirm the research artifact satisfies all ACs by inspection and cross-reference |
-| `specification` | Document review — confirm the spec artifact satisfies all ACs by inspection and cross-reference |
-| `config-structure` | Direct implementation + validation — verify JSON/YAML parses, required fields present, no existing entries disturbed |
+| `skill-instruction` | `skill-invoke` |
+| `agent-definition` | `skill-invoke` |
+| `rule-hook` | `behavioral-trigger` |
+| `script-code` | `bash` |
+| `script-cli` | `bash` |
+| `backend` | `curl` |
+| `app-ui` | `smoke` |
+| `research-spike` | `document-review` |
+| `specification` | `document-review` |
+| `config-structure` | `document-review` |
+
+The method values above are the closed enum that equals the `driver_bindings` keys in
+`momentum/verification-harness.json`. Use these exact tokens (hyphenated, lowercase, no spaces)
+in `harness_profile` fields and routing decisions — never free-text descriptions.
+
+**Method token meanings:**
+- `skill-invoke` — invoke the skill or agent directly; observe routing, response, and halt behavior
+- `behavioral-trigger` — create the trigger condition; observe that expected behavior fires
+- `bash` — run the script or CLI command with representative inputs; observe output matches spec
+- `curl` — exercise the endpoint via HTTP; observe that response matches spec
+- `smoke` — automated build + launch + drive via Maestro or Playwright; human residual review for visible correctness
+- `document-review` — confirm the artifact satisfies all ACs by inspection and cross-reference (no automated driver)
 
 Stories with multiple `change_type` values apply each type's required method to the
 task(s) of that type.
