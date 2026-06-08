@@ -221,11 +221,17 @@
         (patch, defer, decision_needed) represent genuine issues the reviewer flagged, so the
         reviewer's raw verdict is always FAIL. Do NOT write the bmad bucket label into this field
         — the bucket is a triage category, not the reviewer's pass/fail assessment
-      - `severity` — infer from the finding's detail prose (e.g., `blocker` if the reviewer
-        flagged it as critical/blocking, `major` if significant but non-blocking, `minor` for
-        style/low-impact); when inference is ambiguous, use `minor` as the conservative default
-      - `type` — infer from the finding's subject: `correctness`, `security`,
-        `spec-compliance`, `style`, `test-coverage`, or another appropriate category
+      - `severity` — map from the finding's detail prose to the controlled enum (`critical`,
+        `major`, `minor`, `low`): use `critical` if the reviewer flagged it as blocking or
+        severe, `major` if significant but non-blocking, `minor` for limited-scope issues,
+        `low` for style/clarity with no functional impact; when inference is ambiguous, use
+        `minor` as the conservative default. Do NOT emit `blocker`, `high`, or `medium` —
+        those are not valid enum values
+      - `type` — infer from the finding's subject using the controlled enum: `bug`,
+        `spec-compliance`, `internal-contradiction`, `cross-reference`, `schema-conformance`,
+        `completeness`, `coherence`, `integration`, `security`, or `style`. Do NOT emit
+        `correctness` or `test-coverage` — map `correctness` → `bug` or `spec-compliance`
+        (whichever fits); map `test-coverage` → `completeness`
       - `location` — copy from the normalized finding's `location` field; use `"unspecified"`
         when unavailable
       - `summary` — copy the normalized finding's `title` (one-line summary)

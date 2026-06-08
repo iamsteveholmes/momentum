@@ -194,7 +194,7 @@ Each role has a prescribed model and effort level derived from Phase 4 benchmark
 
 **Do not use Haiku for Enumerator validators.** Benchmarking showed Haiku enum-medium produces false-pass scores (92/100 while missing a critical architectural contradiction) — the most dangerous failure mode.
 
-**Do not use Sonnet for Adversary validators.** Benchmarking showed Sonnet Adversary systematically downgrades critical findings to high severity across all effort levels — a calibration defect that causes the pipeline to underreport severity.
+**Do not use Sonnet for Adversary validators.** Benchmarking showed Sonnet Adversary systematically downgrades critical findings to major severity across all effort levels — a calibration defect that causes the pipeline to underreport severity.
 
 ---
 
@@ -227,7 +227,7 @@ Run sequentially after all validators complete. Model: `haiku`. Sub-skill: `sub-
 3. Deduplicate: same issue from multiple sources → keep most specific description and highest severity
 4. Investigate MEDIUM-confidence findings against source material — keep if evidence supports, discard if reviewer hallucination
 5. Remove any finding that lacks evidence
-6. Calculate score: start at 100, apply: critical −15, high −8, medium −3, low −1
+6. Calculate score: start at 100, apply: critical −15, major −8, minor −3, low −1
 7. Sort by severity (critical first), then by location
 8. Assign grade: ≥95 Clean, ≥85 Good, ≥70 Fair, ≥50 Poor, <50 Failing
 
@@ -257,7 +257,7 @@ Model: `sonnet`. Sub-skill: `sub-skills/fixer`. Run as the `domain_expert` role.
 - Cross-document contradictions without `authority_hierarchy`: do NOT guess a resolution; annotate the fix log entry as `unresolved_contradiction` and leave both conflicting files unchanged for that issue
 
 Standard fix rules (both modes):
-- Fix in severity order: critical → high → medium → low
+- Fix in severity order: critical → major → minor → low
 - Log each fix: finding ID → what was changed and why
 - Do not introduce new problems while fixing
 - When fixes conflict, resolve in favor of the higher-severity finding
@@ -307,14 +307,14 @@ Report: status, score, findings count by severity tier, full structured findings
 
 When `profile: scan`, the final output uses `structured_handoff` format — a prioritized findings list designed for direct consumption by a resolution team.
 
-**Sort order:** severity (critical → high → medium → low), then confidence (HIGH → MEDIUM) within each severity tier.
+**Sort order:** severity (critical → major → minor → low), then confidence (HIGH → MEDIUM) within each severity tier.
 
 **Required fields per finding:**
 
 | Field | Description |
 |---|---|
 | `id` | Unique finding identifier: `LENS_ID-NNN` (e.g., `STRUCTURAL-001`, `ACCURACY-003`) |
-| `severity` | critical, high, medium, or low |
+| `severity` | critical, major, minor, or low |
 | `confidence` | HIGH (both reviewers found it) or MEDIUM (one reviewer, evidence-confirmed) |
 | `lens` | Which lens surfaced it: structural, accuracy, coherence, or domain |
 | `dimension` | Specific dimension (e.g., structural_validity, correctness, consistency) |

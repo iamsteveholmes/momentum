@@ -1,6 +1,7 @@
 # Canonical Normalized Finding Schema
 
-**Version:** 1.0 — established with DEC-035 + DEC-036 (stakes-class escalation amendment)
+**Version:** 1.1 — controlled enums for `type` and `severity`; story slug is the canonical join key (2026-06-07)
+**Previous:** 1.0 — established with DEC-035 + DEC-036 (stakes-class escalation amendment)
 
 This is the single shared finding schema that every reviewer (code-review, AVFL, qa-reviewer) and the fixer speak. Reviewers normalize their raw output into this shape before the fixer sees it. The fixer reads only this shape. The report and the end-gate render only this shape. No finding travels the conduct directed-fix chain in any other format.
 
@@ -15,8 +16,8 @@ Every finding carries all of the following fields.
 | `story_slug` | string | The slug of the story the finding is against. Ties the finding to a specific unit of work. |
 | `source` | string | Which reviewer produced the finding — e.g. `bmad-code-review`, `avfl`, `qa-reviewer`, `architecture-guard`, `e2e-validator`, `simplify`. Open string; listed values are non-exhaustive examples. |
 | `verdict` | string | The reviewer's raw verdict on this issue — e.g. `PASS`, `FAIL`, `BLOCKED`. Distinct from `disposition` (disposition is what happens to the finding; verdict is what the reviewer assessed). Open string; listed values are non-exhaustive examples. |
-| `severity` | string | The reviewer's severity assessment — e.g. `blocker`, `critical`, `major`, `minor`, `low`. Orthogonal to `stakes_class` — see below. Open string; listed values are non-exhaustive examples. |
-| `type` | string | Category of issue — e.g. `correctness`, `security`, `spec-compliance`, `style`, `test-coverage`. |
+| `severity` | enum | The reviewer's severity assessment. **Controlled enum** — see [Severity Enum](#severity-enum) below. Orthogonal to `stakes_class`. |
+| `type` | enum | Category of issue. **Controlled enum** — see [Type Enum](#type-enum) below. |
 | `location` | string | Where in the artifact the issue appears — file path, line range, function name, or step reference. |
 | `summary` | string | One-sentence plain-English description of the problem. Used in collapsed views and report headers. |
 | `detail` | string | Full explanation: what is wrong, why it matters, and what the expected state is. |
@@ -24,6 +25,50 @@ Every finding carries all of the following fields.
 | `ac_id` | string or null | Acceptance criterion identifier this finding maps to, if any. Null when the finding is not tied to a specific AC. |
 | `legitimate` | boolean | Whether the reviewer judges the finding to be a genuine issue (true) or a false positive (false). Drives the auto-fix invariant — see Disposition Rules below. |
 | `suggested_fix` | string or null | The reviewer's proposed remediation, if one is available. The fixer uses this as a starting point; null when the reviewer offers none. |
+
+---
+
+## Canonical Join Key
+
+`story_slug` is the **canonical join key** for all conduct ledgers. Every finding card and every build-results row carries `story_slug`. A consumer joining the finding-cards ledger to the build-results ledger on `story_slug` must lose no stories: every story slug present in one ledger must resolve to a matching entry (or an explicit, intentional absence) in the other, and no entry may be keyed to a value that is not a real story slug.
+
+---
+
+## Severity Enum
+
+`severity` is a **closed, ordered set**. Reviewers must use exactly one of the values below. No other strings are permitted.
+
+| Value | Meaning |
+|---|---|
+| `critical` | The issue is severe enough to block delivery or cause user-visible breakage. Requires immediate attention. |
+| `major` | Significant correctness, spec-compliance, or structural issue that is likely to cause incorrect behavior or spec divergence if left unfixed. |
+| `minor` | A real issue that is limited in scope or blast radius. Should be fixed but does not block delivery. |
+| `low` | Style, clarity, or consistency improvement with no functional impact. Fix opportunistically. |
+
+**Ordering (most to least severe):** `critical` > `major` > `minor` > `low`
+
+> **Migration note:** The conduct-core run used a mixed vocabulary (`high`, `medium`, `low`, `major`, `minor`). Map as follows when normalizing historical findings: `high` → `critical`; `medium` → `major`; `low` → `low`; `major` → `major`; `minor` → `minor`.
+
+---
+
+## Type Enum
+
+`type` is a **closed set**. Reviewers must use exactly one of the values below. No free-text combinations, no slash-separated compound strings.
+
+| Value | Meaning |
+|---|---|
+| `bug` | A defect in implementation logic — a behavior that is wrong, unreachable, or crashes. |
+| `spec-compliance` | The implementation diverges from what the story spec or AC requires. Covers spec drift, spec-fidelity issues, and AC violations. |
+| `internal-contradiction` | Two statements within the same document or artifact contradict each other. |
+| `cross-reference` | A pointer, link, field reference, or cross-document citation is broken, dangling, or incorrect. |
+| `schema-conformance` | A field name, value, or structure violates a defined schema. Covers vocabulary drift and field-name mismatches. |
+| `completeness` | A required element is missing — a case not handled, a field not specified, an edge case not covered. |
+| `coherence` | The artifact is logically inconsistent or ambiguous without a direct spec contradiction — the reader cannot determine the intended behavior. |
+| `integration` | A contract boundary between two components or steps is wrong, missing, or mismatched. |
+| `security` | A finding that meets the `security-auth-isolation` stakes class bar. |
+| `style` | Formatting, naming, wording, or clarity with no functional impact. |
+
+> **Near-duplicate elimination:** The conduct-core run produced strings such as `internal-contradiction / AC-violation`, `spec-compliance-drift`, `ac-incompleteness`, `broken cross-reference`, `vocabulary-drift`, `dangling-pointer`, and `coherence-gap`. Map them as follows: any slash-compound → pick the dominant category; `ac-*` variants → `spec-compliance`; `broken-cross-reference` / `dangling-*` / `broken cross-reference` → `cross-reference`; `vocabulary-drift` → `schema-conformance`; `coherence-gap` / `inconsistency` / `contradiction` → `coherence` or `internal-contradiction` depending on scope; `scaffold-gap` / `completeness-gap` / `incompleteness` → `completeness`; `control-flow-bug` / `logic-bug` → `bug`.
 
 ---
 
@@ -35,7 +80,7 @@ stakes_class: security-auth-isolation | irreversible-destructive | high-blast-ra
 
 **Default:** `routine`
 
-`stakes_class` is **orthogonal to `severity`**. A finding has both independently. A finding may be low-severity yet stakes-class (e.g., a small insecure default in an auth path), or high-severity yet routine (e.g., a major logic bug in a UI component with no blast radius beyond that component). Severity measures the magnitude of the problem in isolation; stakes class measures the consequences of mis-handling it.
+`stakes_class` is **orthogonal to `severity`**. A finding has both independently. A finding may be low-severity yet stakes-class (e.g., a small insecure default in an auth path), or critical/major severity yet routine (e.g., a major logic bug in a UI component with no blast radius beyond that component). Severity measures the magnitude of the problem in isolation; stakes class measures the consequences of mis-handling it.
 
 Reviewers assign `stakes_class` alongside `severity`. When a finding does not meet any of the three stakes criteria below, `stakes_class` is `routine`.
 
@@ -149,9 +194,9 @@ The end-gate-expanded tier is the safety net. When in doubt, the finding belongs
 story_slug: string
 source: string                        # bmad-code-review | avfl | qa-reviewer | architecture-guard | e2e-validator | simplify | ... (open string)
 verdict: string                       # PASS | FAIL | BLOCKED | ... (open string; reviewer's raw verdict)
-severity: string                      # blocker | critical | major | minor | low | ... (open string)
+severity: critical | major | minor | low                    # controlled enum — see Severity Enum section
 stakes_class: security-auth-isolation | irreversible-destructive | high-blast-radius-architecture | routine
-type: string                          # correctness | security | spec-compliance | style | test-coverage | ...
+type: bug | spec-compliance | internal-contradiction | cross-reference | schema-conformance | completeness | coherence | integration | security | style   # controlled enum — see Type Enum section
 location: string
 summary: string                       # one sentence
 detail: string                        # full explanation

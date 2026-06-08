@@ -16,7 +16,7 @@ Code review findings (from Phase 4b):
 
 ## Expected Behavior
 
-1. **Unified queue presented**: All 6 findings (3 AVFL + 3 code review) are merged into a single list, sorted by severity: critical first, then high, then medium, then low.
+1. **Unified queue presented**: All 6 findings (3 AVFL + 3 code review) are merged into a single list, sorted by severity: critical first, then major, then minor, then low.
 2. **Source tagged**: Each item is tagged with its origin (AVFL or code-reviewer + story key) so re-review routing works correctly in Phase 4d.
 3. **Developer fix/defer decision**: The workflow presents the queue and asks the developer to confirm which items to fix and which to defer. No automatic assumption — each item waits for explicit decision.
 4. **Fix agents spawned only for confirmed items**: If developer defers [MEDIUM] api and [LOW] ui findings, fix agents are spawned ONLY for the 4 confirmed items, not all 6.

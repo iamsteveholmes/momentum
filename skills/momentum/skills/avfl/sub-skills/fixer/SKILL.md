@@ -38,7 +38,7 @@ You will receive: consolidated findings, ALL corpus files, optionally source mat
 - If NO `authority_hierarchy`: DO NOT invent a resolution. Mark the fix log entry as `unresolved_contradiction`. Name both conflicting claims and both source files. Leave both files unchanged for this contradiction. Continue fixing other non-contradictory findings normally.
 
 **Standard fix rules (both modes):**
-1. Fix in severity order: critical → high → medium → low
+1. Fix in severity order: critical → major → minor → low
 2. Log each fix: finding ID → file modified → what was changed and why (or `unresolved_contradiction` note)
 3. Do not introduce new problems while fixing
 4. When fixes conflict, resolve in favor of the higher-severity finding
