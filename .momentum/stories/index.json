@@ -5402,7 +5402,7 @@
     "story_type": "feature"
   },
   "conduct-verification-method-enum-alignment": {
-    "status": "in-progress",
+    "status": "done",
     "title": "verification-standard.md + contract-format-guide.md + create-story: align the verification_method vocabulary to the clos",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5442,7 +5442,7 @@
     "story_type": "feature"
   },
   "conduct-cleanup-dead-agent-paths-and-validate-resolve": {
-    "status": "in-progress",
+    "status": "done",
     "title": "Clean up dead agent routing entries and add existence validation to agent resolve",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
