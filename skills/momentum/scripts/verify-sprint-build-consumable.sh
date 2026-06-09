@@ -29,6 +29,14 @@
 
 set -uo pipefail
 
+# --- Detect sha256 command (macOS ships shasum, Linux ships sha256sum) ---
+
+if command -v sha256sum >/dev/null 2>&1; then
+  HASH_CMD="sha256sum"
+else
+  HASH_CMD="shasum -a 256"
+fi
+
 # --- Argument parsing ---
 
 SPRINT_INDEX=""
@@ -214,7 +222,7 @@ while IFS='|' read -r tag slug vm path harness disposition covered_by sha; do
         note_fail "$slug" "frozen_sha256" "field is absent or empty"
         story_failed=1
       else
-        ACTUAL_SHA="$(sha256sum "$FULL_PATH" | awk '{print $1}')"
+        ACTUAL_SHA="$($HASH_CMD "$FULL_PATH" | awk '{print $1}')"
         if [[ "$ACTUAL_SHA" != "$sha" ]]; then
           note_fail "$slug" "frozen_sha256" "mismatch — recorded=$sha actual=$ACTUAL_SHA"
           story_failed=1
@@ -270,6 +278,14 @@ while IFS='|' read -r tag slug vm path harness disposition covered_by sha; do
       story_failed=1
     else
       echo "  (e) coverage_disposition: OK — $disposition"
+
+      # (f) covered-by-composition requires a non-empty covered_by_scenario
+      if [[ "$disposition" == "covered-by-composition" && -z "$covered_by" ]]; then
+        note_fail "$slug" "covered_by_scenario" "coverage_disposition is 'covered-by-composition' but covered_by_scenario is absent/empty — must name the scenario that discharges this story"
+        story_failed=1
+      elif [[ "$disposition" == "covered-by-composition" ]]; then
+        echo "  (f) covered_by_scenario: OK — $covered_by"
+      fi
     fi
   fi
 
