@@ -1926,8 +1926,14 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <!-- ── 5.RC.2 — Autonomous change-workflow pass (bounded) ──────── -->
 
       <action>5.RC.2 — AUTONOMOUS CHANGE-WORKFLOW PASS:
+        GIT WORKING CONTEXT INVARIANT: The end-gate runs post-merge in the MAIN session on the
+        already-checked-out sprint branch (`sprint/{{sprint_slug}}`). There is no per-story worktree
+        at end-gate time. All fixer edits, write-scope guard operations, and commit commands in this
+        step operate directly in the main worktree on `sprint/{{sprint_slug}}`. This is a single
+        declared invariant — never reasserted mid-loop with a git checkout call.
+
         Collect {{unresolved_endgate_items}} = all items in {{endgate_fixer_items}} not yet resolved
-          (not yet in {{endgate_fix_dispositions}} with outcome "fixed" or "dismissed" or "triaged-out").
+          (not yet in {{endgate_fix_dispositions}} with outcome "fixed" or "dismissed" or "triaged-out" or "residual").
         On the first pass: {{unresolved_endgate_items}} = {{endgate_fixer_items}} (all items).
 
         For each item I in {{unresolved_endgate_items}} (process as fan-out individual-agent spawns
@@ -1945,12 +1951,23 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               for follow-up". Invoke momentum:triage with I's text as the stub. Skip the fixer spawn
               for this item; it is resolved without a fix attempt.
 
+          Determine {{endgate_item_stakes_class}} for item I:
+            COMMON CASE (routine-by-authorization): an ordinary change the developer requested and
+            authorized at the gate is treated as routine and auto-applied autonomously. This is the
+            default path and covers the vast majority of requested changes.
+            STAKES-CLASS OVERRIDE: if the item text explicitly references a security, auth, isolation,
+            irreversible, destructive, or high-blast-radius operation (e.g., "delete all", "drop table",
+            "remove auth check", "force-push", "production deploy"), classify as the matching
+            stakes_class ("security-auth-isolation", "irreversible-destructive", or
+            "high-blast-radius-architecture"). Otherwise: "routine".
+            Bind {{endgate_item_stakes_class}} = classified value.
+
           Spawn momentum:dev in fix-mode (individual-agent, NOT TeamCreate) for item I:
             Input:
               — finding: a synthetic finding object constructed from item I:
                   { finding_id: I.fixer_id,
                     summary: I.text,
-                    stakes_class: "routine",
+                    stakes_class: {{endgate_item_stakes_class}},
                     legitimate: true,
                     severity: "major",
                     source: "developer-endgate-request",
@@ -1968,16 +1985,15 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
 
           When the fixer returns its disposition for item I:
-            Increment {{endgate_fix_attempts}}[I.fixer_id] (initialize to 0 if absent).
 
             CASE disposition == "fixed":
               — WRITE-SCOPE COMMIT GUARD (mirrors step 2.S3 Phase B guard exactly):
                 Run `git diff --name-only` on the affected file set. For each modified file P not
                 in {{endgate_item_writable_files}}: unstage and discard the edit
                 (`git checkout -- P`) before committing.
+                (All git commands operate in the main worktree on the already-checked-out
+                `sprint/{{sprint_slug}}` branch — per the GIT WORKING CONTEXT INVARIANT above.)
               — Commit the applied fix (in-scope edits only):
-                The Conductor commits to the sprint branch `sprint/{{sprint_slug}}`:
-                  `git checkout sprint/{{sprint_slug}}`
                   `git add -u && git commit -m "fix(endgate): apply requested change — {I.text | truncate 60}"`
               — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "fixed",
                   summary: I.text, commit: <sha> }
@@ -1994,6 +2010,19 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "triaged-out",
                   summary: I.text, triage_stub_slug: <returned slug> }
               — Remove I from {{unresolved_endgate_items}}.
+
+            CASE disposition == "escalated":
+              — This fires when the synthetic finding was classified as a non-routine stakes_class
+                (security-auth-isolation, irreversible-destructive, or high-blast-radius-architecture).
+                The fixer correctly declined to auto-apply it.
+              — Route to {{end_gate_escalations}}: append { finding_id: I.fixer_id, stakes_class: {{endgate_item_stakes_class}},
+                  timing_tier: (fixer's escalation.timing_tier, default "end-gate-expanded"),
+                  summary: I.text, evidence: (fixer's escalation.evidence), suggested_fix: I.text }
+                This entry will surface as a §04 decision card on the re-rendered end-gate report.
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "escalated",
+                  summary: I.text, stakes_class: {{endgate_item_stakes_class}} }
+              — Remove I from {{unresolved_endgate_items}}.
+              — Log: { event: "endgate-change-escalated", fixer_id: I.fixer_id, stakes_class: {{endgate_item_stakes_class}}, summary: I.text }
 
         Increment {{endgate_fix_pass_count}}.
         Log: { event: "endgate-change-workflow-pass", pass: {{endgate_fix_pass_count}},
@@ -2030,6 +2059,10 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <!-- ── 5.RC.4 — Commit change-workflow summary and re-render report ── -->
 
       <action>5.RC.4 — RE-RENDER THE END-GATE REPORT:
+        Rendering authority: references/endgate-report-renderer.md — identical to the initial build.
+        The re-render reproduces the same eight-section fixed-order contract, decision-card markup,
+        and gate JS as the initial BUILD action, only ADDING the informational "Changes applied this pass"
+        section described below.
         Re-assemble all end-gate report variables using the same logic as the initial report-build
         action above (the "BUILD THE END-GATE REPORT" action in Phase 5). Re-read from live state:
           — Re-assemble {{stakes_findings}} from {{end_gate_escalations}}, {{avfl_findings}},
