@@ -1885,9 +1885,194 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <output>Sprint `{{sprint_slug}}` complete. All stories merged to main.</output>
     </check>
 
-    <check if="developer requests fixes">
-      <note>Developer-requested fixes at the end-gate are out of scope for this scaffold story. The end-gate fix flow (spawning targeted fix agents from end-gate findings) is delivered by downstream conduct stories. At this stage: acknowledge the request, record the findings for follow-up, and surface them as backlog candidates.</note>
-      <action>For each finding the developer wants fixed: offer to create a follow-up backlog story with title, AC, and source reference.</action>
+    <check if="developer requests changes">
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- END-GATE CHANGE-WORKFLOW (REQUEST-CHANGES REDISPATCH LOOP)  -->
+      <!-- One bounded pass over developer-specified fixer items;      -->
+      <!-- no developer prompt inside the loop; re-render then return  -->
+      <!-- to the same end-gate <ask> above.                           -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+
+      <note>REQUEST-CHANGES PATH. The developer has declined to approve and has submitted a change request. The Conductor now parses that request into discrete fixer items, runs one bounded autonomous pass over them using the directed-fixer machinery (momentum:dev fix-mode via the directed-fix-invocation-contract), re-renders the end-gate report, and returns control to the same end-gate ask above. The developer is never asked a follow-up question while the pass is running — they give the request once and the pass runs to completion. This is an autonomous loop with the Conductor as sole agent-spawning and git-mutation authority throughout.</note>
+
+      <note>LOOP BOUND. The attempt bound for the change-workflow pass is {{MAX_FIX_ATTEMPTS}} (canonical value: 3, declared at step 2.S3). No additional canonical bound is declared here — all mentions of the retry limit in this section defer to the step 2.S3 declaration of {{MAX_FIX_ATTEMPTS}}. After {{MAX_FIX_ATTEMPTS}} fix attempts on a given item, remaining unresolved items are held as residuals and surfaced in the re-rendered report, then the loop returns to the gate without further looping. The Conductor does not loop indefinitely.</note>
+
+      <note>GATE INVARIANT. This change-workflow path does NOT add a second mandatory human acceptance gate. It re-presents the SAME end-gate (the single mandatory human gate in Phase 5). The redispatch loop is: request received → parse → autonomous pass → re-render report → return to the Phase 5 <ask> above. The developer sees the gate again at the top of this same Phase 5 step. No new step is inserted.</note>
+
+      <!-- ── 5.RC.1 — Parse change request into discrete fixer items ── -->
+
+      <action>5.RC.1 — PARSE CHANGE REQUEST into discrete fixer items:
+        Read the developer's full change-request text (the text they submitted at the gate).
+        Parse it into a list {{endgate_fixer_items}} of discrete, independently addressable items:
+          — Each item is a self-contained instruction or finding referencing a specific story, section,
+            code location, report section, or acceptance concern.
+          — Items separated by conjunctions ("and also"), numbered lists, bullet points, or commas
+            each become a distinct entry.
+          — Do NOT collapse the full request into a single monolithic entry; every separately named
+            change must be its own item. Example: "fix the auth check in conductor.md and clean up
+            the Phase 3 note" → two items.
+          — If the request is a single non-separable instruction, {{endgate_fixer_items}} is a
+            single-element list.
+          — Bind {{endgate_fixer_items}} = the parsed list (minimum 1 entry).
+        Assign each item a fixer_id: "endgate-fix-{N}" (N = 1-based index).
+        Initialize {{endgate_fix_attempts}} = {} — per-item retry counter keyed by fixer_id.
+        Initialize {{endgate_fix_dispositions}} = [] — per-item outcome records.
+        Initialize {{endgate_fix_pass_count}} = 0 — total pass iterations in this change-workflow.
+        Log: { event: "endgate-change-request-parsed", item_count: length({{endgate_fixer_items}}),
+               items: {{endgate_fixer_items}} }.
+      </action>
+
+      <!-- ── 5.RC.2 — Autonomous change-workflow pass (bounded) ──────── -->
+
+      <action>5.RC.2 — AUTONOMOUS CHANGE-WORKFLOW PASS:
+        Collect {{unresolved_endgate_items}} = all items in {{endgate_fixer_items}} not yet resolved
+          (not yet in {{endgate_fix_dispositions}} with outcome "fixed" or "dismissed" or "triaged-out").
+        On the first pass: {{unresolved_endgate_items}} = {{endgate_fixer_items}} (all items).
+
+        For each item I in {{unresolved_endgate_items}} (process as fan-out individual-agent spawns
+        where items are independent; do NOT use TeamCreate):
+
+          Determine {{endgate_item_writable_files}} for item I:
+            — If I references a specific named story slug S: use {{writable_files}} as established for
+              S at build time (the story's declared writable file set from step 2.1 STAGE-1). Enforce
+              all write-scope constraints from the directed-fix-invocation-contract.
+            — If I references a sprint-level artifact (e.g., Phase 5 report, AVFL findings,
+              integration-level issue): use the sprint branch's touched files as the scope (files
+              modified since the sprint branch diverged from main).
+            — If scope cannot be determined from the item text: record I as disposition "triaged-out"
+              with rationale "scope could not be determined from change request — item added to backlog
+              for follow-up". Invoke momentum:triage with I's text as the stub. Skip the fixer spawn
+              for this item; it is resolved without a fix attempt.
+
+          Spawn momentum:dev in fix-mode (individual-agent, NOT TeamCreate) for item I:
+            Input:
+              — finding: a synthetic finding object constructed from item I:
+                  { finding_id: I.fixer_id,
+                    summary: I.text,
+                    stakes_class: "routine",
+                    legitimate: true,
+                    severity: "major",
+                    source: "developer-endgate-request",
+                    location: (referenced story slug or file path if identifiable, else "sprint-level"),
+                    detail: I.text }
+              — writable_files: {{endgate_item_writable_files}}
+            Constraint passed to fixer: "Do not mutate git. Do not spawn build agents. Apply the
+              requested change and return a per-finding disposition. Produce output only.
+              WRITE-SCOPE: You may ONLY create or modify files listed in writable_files.
+              FORBIDDEN: Do NOT edit any story's own spec file under .momentum/stories/ or its
+              verification contract under .momentum/sprints/.
+              FORBIDDEN: Do NOT edit any file outside the declared writable_files set.
+              CROSS-ARTIFACT RULE: If the change targets a file outside writable_files, return
+              disposition triaged-out so the Conductor can route a reconciliation stub."
+            Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
+
+          When the fixer returns its disposition for item I:
+            Increment {{endgate_fix_attempts}}[I.fixer_id] (initialize to 0 if absent).
+
+            CASE disposition == "fixed":
+              — WRITE-SCOPE COMMIT GUARD (mirrors step 2.S3 Phase B guard exactly):
+                Run `git diff --name-only` on the affected file set. For each modified file P not
+                in {{endgate_item_writable_files}}: unstage and discard the edit
+                (`git checkout -- P`) before committing.
+              — Commit the applied fix (in-scope edits only):
+                The Conductor commits to the sprint branch `sprint/{{sprint_slug}}`:
+                  `git checkout sprint/{{sprint_slug}}`
+                  `git add -u && git commit -m "fix(endgate): apply requested change — {I.text | truncate 60}"`
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "fixed",
+                  summary: I.text, commit: <sha> }
+              — Remove I from {{unresolved_endgate_items}}.
+
+            CASE disposition == "dismissed":
+              — Validate non-empty rationale; if missing: re-present I on the next pass.
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "dismissed",
+                  summary: I.text, dismissal_rationale: <fixer's rationale> }
+              — Remove I from {{unresolved_endgate_items}}.
+
+            CASE disposition == "triaged-out":
+              — Invoke momentum:triage with I's text and any context to create a backlog stub.
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "triaged-out",
+                  summary: I.text, triage_stub_slug: <returned slug> }
+              — Remove I from {{unresolved_endgate_items}}.
+
+        Increment {{endgate_fix_pass_count}}.
+        Log: { event: "endgate-change-workflow-pass", pass: {{endgate_fix_pass_count}},
+               items_resolved_this_pass: (count of items removed from unresolved),
+               items_remaining: length({{unresolved_endgate_items}}) }.
+      </action>
+
+      <!-- ── 5.RC.3 — Retry gate (bounded) ───────────────────────────── -->
+
+      <check if="{{unresolved_endgate_items}} is non-empty">
+        <action>For each unresolved item I in {{unresolved_endgate_items}}:
+          Increment {{endgate_fix_attempts}}[I.fixer_id].
+        </action>
+
+        <check if="any item in {{unresolved_endgate_items}} has {{endgate_fix_attempts}}[I.fixer_id] less than {{MAX_FIX_ATTEMPTS}}">
+          <note>At least one item still has budget. Re-enter the pass (5.RC.2) with the unresolved items only. Do NOT re-present already-resolved items. The Conductor does not ask the developer anything during this re-entry — the loop is autonomous.</note>
+          <action>Return to 5.RC.2 with {{unresolved_endgate_items}} (items whose budget is not yet exhausted).
+            Do not re-include items that are already in {{endgate_fix_dispositions}}.
+          </action>
+        </check>
+
+        <check if="all items in {{unresolved_endgate_items}} have {{endgate_fix_attempts}}[I.fixer_id] >= {{MAX_FIX_ATTEMPTS}}">
+          <note>Fix budget exhausted for all remaining items. Mark each as residual — do NOT loop further. The unresolved items will appear in the re-rendered report as residual end-gate items requiring follow-up. This terminates the autonomous loop; control passes to the re-render step.</note>
+          <action>For each item I in {{unresolved_endgate_items}}:
+            Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "residual",
+              summary: I.text, attempts: {{endgate_fix_attempts}}[I.fixer_id],
+              note: "fix-budget exhausted — item carried forward as residual in re-rendered report" }
+            Invoke momentum:triage with I's text to create a backlog stub so the item is not silently dropped.
+            Log: { event: "endgate-fix-budget-exhausted", fixer_id: I.fixer_id, attempts: {{endgate_fix_attempts}}[I.fixer_id], summary: I.text }
+          </action>
+        </check>
+      </check>
+
+      <!-- ── 5.RC.4 — Commit change-workflow summary and re-render report ── -->
+
+      <action>5.RC.4 — RE-RENDER THE END-GATE REPORT:
+        Re-assemble all end-gate report variables using the same logic as the initial report-build
+        action above (the "BUILD THE END-GATE REPORT" action in Phase 5). Re-read from live state:
+          — Re-assemble {{stakes_findings}} from {{end_gate_escalations}}, {{avfl_findings}},
+            and {{e2e_findings}} (these are unchanged by the change-workflow pass; the pass
+            targeted story-level or sprint-level code changes, not finding metadata).
+          — Re-assemble supporting variables ({{routine_auto_fixed_count}}, {{dismissed_findings}},
+            {{stories_built_count}}, {{blocked_stories}}, etc.) from live Conductor state.
+          — Append a "Changes applied this pass" section to the report body: a summary table
+            listing each item from {{endgate_fix_dispositions}}:
+              columns: item # | change requested | outcome | commit (if fixed) | note (if residual or triaged-out)
+            This section is informational. It shows the developer what the autonomous pass did.
+          — If any items in {{endgate_fix_dispositions}} have outcome == "residual": add a
+            "Residual change-request items" note in the report's §05 area listing the unresolved
+            items with their triage stub slugs.
+        Overwrite the same HTML file at `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
+          (same path as the initial report; re-render in place).
+        Log: { event: "endgate-report-re-rendered", pass: {{endgate_fix_pass_count}},
+               items_fixed: count of "fixed" in {{endgate_fix_dispositions}},
+               items_triaged_out: count of "triaged-out" in {{endgate_fix_dispositions}},
+               items_residual: count of "residual" in {{endgate_fix_dispositions}} }
+      </action>
+
+      <action>5.RC.5 — OPEN THE RE-RENDERED REPORT in the viewer:
+        Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
+        (The `--focus false` flag keeps the developer in context; the tab is available in the viewer pane.)
+      </action>
+
+      <!-- ── 5.RC.6 — Return to the end-gate ask (redispatch) ─────────── -->
+
+      <note>REDISPATCH. The autonomous pass is complete and the report is re-rendered. The Conductor now returns control to the same end-gate ask above (the single Phase 5 ask: "approve or request changes"). This is not a new gate — it is the same gate re-presented with the updated report. The developer may now: (a) approve (proceeds to the approve branch above), or (b) submit another change request (re-enters this request-changes path for another bounded pass). There is no limit on how many times the developer may cycle through this gate, but each pass is bounded by {{MAX_FIX_ATTEMPTS}} per item internally.</note>
+
+      <output>The requested changes have been applied (or carried forward as residuals where the fix budget was exhausted). The end-gate report has been re-rendered and is open in the viewer.
+
+**Change pass summary:**
+- Items fixed: {{count of "fixed" in endgate_fix_dispositions}}
+- Items dismissed: {{count of "dismissed" in endgate_fix_dispositions}}
+- Items triaged to backlog: {{count of "triaged-out" in endgate_fix_dispositions}}
+- Items carried forward as residuals: {{count of "residual" in endgate_fix_dispositions}}
+
+Review the updated report, acknowledge any decision cards in §04, then approve to merge to main, or request further changes.</output>
+
+      <ask>The end-gate report is open in the viewer. Review each section. Acknowledge any decision cards in §04. Then approve to merge to main, or request changes.</ask>
+
     </check>
   </step>
 
