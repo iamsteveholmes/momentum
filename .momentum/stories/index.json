@@ -5302,7 +5302,7 @@
     "story_type": "feature"
   },
   "conduct-endgate-request-changes-redispatch": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "End-gate request-changes re-dispatch",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
