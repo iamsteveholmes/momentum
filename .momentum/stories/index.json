@@ -5594,5 +5594,35 @@
     "touches": [],
     "priority": "medium",
     "story_type": "feature"
+  },
+  "conduct-live-run-against-fixture-sprint": {
+    "status": "backlog",
+    "title": "Run /momentum:conduct live against the fixture sprint (the one un-executed acceptance clause)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "feature"
+  },
+  "verification-method-two-column-smoke-ui-model": {
+    "status": "backlog",
+    "title": "Decide+build the two-column verification model (method smoke-ui distinct from driver smoke) or ratify single-column",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "feature"
+  },
+  "re-emit-frozen-app-ui-contracts-via-producer": {
+    "status": "backlog",
+    "title": "Re-emit frozen app-ui contracts via the producer so headers match the smoke decision (contract-quality)",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
   }
 }
