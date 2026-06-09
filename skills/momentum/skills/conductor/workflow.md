@@ -228,6 +228,7 @@ Ready to begin?</output>
         {{end_gate_escalations}}     = []    — Conductor-scoped accumulator for end-gate-expanded stakes findings across ALL stories; populated by step 2.2 signal handler from each story's S.escalations (end-gate-expanded subset); consumed by step 5 Source 1 to build decision cards. Each entry: { finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug }.
         {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
         {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
+        {{conductor_reverted_fixes}} = []    — findings whose fix commit was reverted by scope discipline (write-scope guard in stage-3 or stage-1); each entry: { finding_id, story_slug, summary, reverted_files: [], reroute_stub_slug: null }. Consumed at end-gate scorecard assembly to exclude from {{routine_auto_fixed_count}}.
       </action>
 
       <action>Seed {{merged}} from current story statuses to support partial-run resume:
@@ -551,8 +552,20 @@ Ready to begin?</output>
         CASE disposition == "fixed":
           — Stakes-class guard: VERIFY that F.stakes_class == "routine". If the fixer returns "fixed" for a stakes-class finding (non-routine), treat it as an implementation error — do NOT commit the fix. Log a warning in {{build_log}} and re-classify F as escalated (see escalated path below).
             When re-classifying: look up the inbound finding for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's "fixed" disposition object does not carry these fields). Default timing_tier to "end-gate-expanded" (the conservative default per finding-schema.md) since the fixer never sets timing_tier on a "fixed" disposition.
-          — Commit the applied fix to the story worktree .worktrees/story-{S.slug}: `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
+          — WRITE-SCOPE COMMIT GUARD (fix loop): Before staging the fix, run `git -C .worktrees/story-{S.slug} diff --name-only` to enumerate the files the fixer modified. For each modified file P: if P is NOT in {{writable_files}} for story S, it is out of scope. UNSTAGE and DISCARD the out-of-scope edit (`git -C .worktrees/story-{S.slug} checkout -- P`) before committing. Collect the discarded paths into {{fix_reverted_files}}.
+            SCOPE-REVERT PATH (fires when {{fix_reverted_files}} is non-empty after discarding):
+              a. If ALL files the fixer modified were out of scope (the fix produced ONLY out-of-scope edits — nothing was committed), the fix was entirely reverted:
+                 — Do NOT commit. The finding's "fixed" disposition is INVALID — the fix never landed.
+                 — Re-classify F: change disposition from "fixed" to "triaged-out" in {{finding_dispositions}}.
+                 — Append to {{conductor_reverted_fixes}}: { finding_id: F.id, story_slug: S.slug, summary: F.summary, reverted_files: {{fix_reverted_files}}, reroute_stub_slug: null }.
+                 — Log in {{build_log}}: { slug: S.slug, event: "stage3-fix-scope-reverted", finding_id: F.id, finding_summary: F.summary, reverted_files: {{fix_reverted_files}}, note: "fix entirely discarded by write-scope guard — disposition reclassified from fixed to triaged-out; defect re-routed for follow-up" }.
+                 — RE-ROUTE for follow-up (defect must not be silently dropped): invoke momentum:triage with the inbound finding I's descriptive fields (finding_id: F.id, summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix, story_slug: S.slug, severity: I.severity, stakes_class: I.stakes_class) to create a backlog stub so the defect remains on record. Bind the returned stub slug into {{conductor_reverted_fixes}}[last].reroute_stub_slug.
+                 — Do NOT pass F to the fixer again in the next iteration — the defect is out-of-scope for this story's deliverables and will be addressed through the stub.
+              b. If ONLY SOME files were out of scope (the fix contained both in-scope and out-of-scope edits), the partial fix is committed without the out-of-scope files. The finding remains disposition "fixed" only if the in-scope portion of the fix is sufficient to address the finding. If the in-scope portion alone does not address the finding (the core fix was in the discarded file), apply the same full-revert path above (re-classify to triaged-out, append to {{conductor_reverted_fixes}}, re-route). If the in-scope portion is sufficient: commit and record disposition "fixed" normally; log the partial discard in {{build_log}} as a warning.
+          — Commit the applied fix (in-scope edits only, after the guard above):
+              `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
+            (Only reached when the write-scope guard did NOT reclassify F — i.e., the fix landed in-scope and is valid.)
 
         CASE disposition == "dismissed":
           — Validate non-empty rationale: if F.dismissal_rationale is empty or missing, treat as invalid — log error in {{build_log}} and re-present F to the fixer in the next iteration (do not record as dismissed until a rationale is supplied).
@@ -1430,14 +1443,24 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
     </action>
 
     <action>Assemble supporting report variables:
-      {{routine_auto_fixed_count}} = count of findings with disposition == "fixed" across {{avfl_findings}} and all per-story {{finding_dispositions}} records in {{build_log}}.
+
+      CONDUCTOR-REVERT RECONCILIATION (must run BEFORE computing {{routine_auto_fixed_count}}):
+        Collect {{reverted_fix_ids}} = { finding_id : entry } for every entry in {{conductor_reverted_fixes}}.
+        Scan all per-story {{finding_dispositions}} records in {{build_log}}. For each record R where:
+          R.disposition == "fixed" AND R.finding_id is in {{reverted_fix_ids}}:
+          — Override R.disposition to "scope-reverted" in the assembled report data (do NOT mutate the raw {{build_log}}; apply the override only to the variables assembled here for the end-gate report).
+          — Log a Conductor warning in {{build_log}}: { event: "scorecard-revert-reconciliation", finding_id: R.finding_id, story_slug: R.story_slug, note: "disposition overridden from fixed to scope-reverted — fix was discarded by write-scope guard; reroute_stub_slug: {{reverted_fix_ids}}[R.finding_id].reroute_stub_slug" }.
+        Bind {{reconciled_finding_dispositions}} = the per-story disposition records with the overrides applied.
+        Note: this reconciliation ensures the scorecard counts ONLY findings whose fixes actually reached the merged result. A fix that was reverted by scope discipline (write-scope guard discarded it) cannot be counted as fixed — the underlying defect was re-routed to a backlog stub via {{conductor_reverted_fixes}} at stage-3 time, but the overstate risk arises if the raw "fixed" disposition is used without cross-checking.
+
+      {{routine_auto_fixed_count}} = count of findings with disposition == "fixed" across {{avfl_findings}} and all per-story records in {{reconciled_finding_dispositions}} (NOT from the raw {{build_log}} directly — use the reconciled view to exclude scope-reverted fixes).
       {{dismissed_findings}}       = entries with disposition == "dismissed" (must each carry dismissal_rationale; reject any without one and surface as a Conductor warning in {{build_log}}).
       {{stories_built_count}}      = count of entries in {{merged}}.
       {{blocked_stories}}          = stories never added to {{merged}} (quarantined, integrity-stopped, fix-budget-exhausted, or mid-flight-aborted); derive from {{build_log}} events.
       {{quarantined_stories}}      = subset of {{blocked_stories}} where outcome == "quarantined" in {{build_log}}.
       {{contract_integrity_stops}} = from Conductor in-memory state (step 2.2 integrity-check path).
       {{mid_flight_escalations}}   = escalations already raised to the developer during the build (informational only in the end-gate report).
-      {{high_risk_divergences}}    = per-story finding records from {{build_log}} where disposition was initially "fixed" (auto-fixed after review) AND severity in { blocker, critical, major } — these are the consequential divergences that were caught and resolved; they populate §03 of the report.
+      {{high_risk_divergences}}    = per-story finding records from {{reconciled_finding_dispositions}} where disposition was "fixed" (auto-fixed after review, NOT scope-reverted) AND severity in { blocker, critical, major } — these are the consequential divergences that were caught and resolved; they populate §03 of the report. Scope-reverted "fixes" are excluded from this set — they were NOT resolved, they were re-routed.
     </action>
 
     <!-- ── Build the self-contained HTML end-gate report ── -->
