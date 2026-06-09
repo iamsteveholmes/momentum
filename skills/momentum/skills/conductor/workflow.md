@@ -1367,7 +1367,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             - deferred_story_title: R.title
             - story_spec: ".momentum/stories/{{R.slug}}.md"
             - contract_path: the path to R.slug's verification contract (from `story_assignments[R.slug].contract.path` in the sprint record)
-          Constraint passed to agent: "Run the named integration scenario against the integrated sprint branch. Verify that the scenario observes the deferred story's required acceptance behavior. Return a structured result: { scenario_id, ran: bool, passed: bool, deferred_story_observed: bool, evidence: string }. Do not mutate git. Do not spawn build agents."
+          Constraint passed to agent: "Run the named integration scenario against the integrated sprint branch. Verify that the scenario observes the deferred story's required acceptance behavior. Return a structured result: { scenario_id, ran: bool, passed: bool, deferred_story_observed: bool, evidence: string, stakes_findings: array }. The `stakes_findings` array contains any non-routine stakes-class concerns you observe while running the scenario — each entry has shape: { stakes_class: string, summary: string, location: string, evidence: string, suggested_fix: string }. Include only findings whose stakes_class is one of: security-auth-isolation | irreversible-destructive | high-blast-radius-architecture. Routine findings are not included in this array. The array may be empty. Do not mutate git. Do not spawn build agents."
           Bind {{scenario_result}} = the agent's returned result for this record.
 
         EVALUATE DISCHARGE:
@@ -1395,7 +1395,24 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
                 note: "Deferred story's acceptance behavior was observed by the named integration scenario. Verification debt discharged." }
           — Tag the story as verified-by-composition in the Conductor's in-memory state:
               {{coverage_discharge_results}}[R.slug] = { outcome: "verified-by-composition", scenario_id: {{scenario_id}}, evidence: {{scenario_result}}.evidence }
-          — No leftover is appended to {{avfl_findings}} for this record.
+          — No undischarged-deferral leftover is appended to {{avfl_findings}} for this record.
+          — STAKES-FINDINGS PASS-THROUGH: Even when a deferral is discharged, the executor may have observed non-routine stakes-class concerns while running the scenario. These must not be silently dropped.
+            For each entry SF in {{scenario_result}}.stakes_findings (may be empty):
+              If SF.stakes_class is one of { security-auth-isolation, irreversible-destructive, high-blast-radius-architecture }:
+                Append to {{avfl_findings}}:
+                  { source: "coverage-discharge-consumer",
+                    finding_id: "discharge-stakes-{{R.slug}}-{{loop_index}}",
+                    severity: "major",
+                    type: "stakes-finding",
+                    stakes_class: SF.stakes_class,
+                    disposition: "residual",
+                    story_slug: R.slug,
+                    location: SF.location,
+                    summary: SF.summary,
+                    detail: "Stakes-class concern observed by the discharge executor while running scenario `{{scenario_id}}` for deferred story `{{R.slug}}`. The deferral itself was discharged (scenario passed), but this concern requires a human decision — it is not on the routine auto-fix path.",
+                    evidence: SF.evidence,
+                    suggestion: SF.suggested_fix }
+                (Routine findings from the executor are NOT added here — they are out of scope for this path.)
 
         CASE: any discharge condition fails (scenario ran but did not pass, OR ran and passed but deferred story's behavior was not observed, OR scenario could not run):
           — Determine the failure mode for evidence:
@@ -1432,7 +1449,9 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           undischarged_count: count of entries in {{build_log}} where event == "coverage-deferral-undischarged" }
       </action>
 
-      <note>STAKES-ROUTING NOTE. Undischarged-deferral leftovers are injected into {{avfl_findings}} with stakes_class:"routine" and disposition:"residual". Because they are routine, Phase 3 step 3.4 holds them (no escalation check) and Phase 5 Source 2 excludes them from {{stakes_findings}} (which filters to non-routine residuals only). They surface to the developer via the {{undischarged_deferrals}} variable computed in Phase 5's supporting-variables step and rendered in §05 of the end-gate report — not via the §04 decision-card path. If a deferred story's acceptance behavior itself covers a stakes-class concern (e.g., security-auth-isolation), the operator who set coverage_disposition must ensure the integration scenario is stakes-aware. The discharge consumer does not re-classify stakes; it records the discharge outcome as evidence. Stakes routing at the end-gate is driven by the finding schema and report, not by this step.</note>
+      <note>STAKES-ROUTING NOTE. Two categories of findings flow out of this step:
+        (1) Undischarged-deferral leftovers — injected into {{avfl_findings}} with stakes_class:"routine" and disposition:"residual". Because they are routine, Phase 3 step 3.4 holds them (no escalation check) and Phase 5 Source 2 excludes them from {{stakes_findings}} (which filters to non-routine residuals only). They surface to the developer via the {{undischarged_deferrals}} variable computed in Phase 5's supporting-variables step and rendered in §05 of the end-gate report — not via the §04 decision-card path.
+        (2) Stakes-class findings returned by the discharge executor — injected into {{avfl_findings}} with the executor-reported stakes_class (non-routine) and disposition:"residual", source:"coverage-discharge-consumer". Because their stakes_class is non-routine, Phase 5 Source 2 picks them up for {{stakes_findings}} and they render as decision cards in §04 of the end-gate report. This holds EVEN WHEN the deferral itself was discharged (scenario passed). A passing scenario does not suppress a stakes-class concern the executor observed during the run. This routing closes the gap identified at step 2.C's STAKES-CLASS BOUNDARY: a deferral does not weaken stakes routing — it only defers the venue, never the path.</note>
 
       <note>Proceed to Phase 4 (E2E).</note>
     </step>
@@ -1585,7 +1604,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       {{contract_integrity_stops}} = from Conductor in-memory state (step 2.2 integrity-check path).
       {{mid_flight_escalations}}   = escalations already raised to the developer during the build (informational only in the end-gate report).
       {{high_risk_divergences}}    = per-story finding records from {{build_log}} where disposition was initially "fixed" (auto-fixed after review) AND severity in { blocker, critical, major } — these are the consequential divergences that were caught and resolved; they populate §03 of the report.
-      {{undischarged_deferrals}}   = entries from {{avfl_findings}} where source == "coverage-discharge-consumer" AND disposition == "residual" — these are deferred stories whose named integration scenario could not be found or did not pass; they are routine findings excluded from {{stakes_findings}} and must be surfaced explicitly in §05 so the developer can see them at the gate.
+      {{undischarged_deferrals}}   = entries from {{avfl_findings}} where source == "coverage-discharge-consumer" AND disposition == "residual" AND stakes_class == "routine" — these are deferred stories whose named integration scenario could not be found or did not pass; they are routine findings excluded from {{stakes_findings}} and must be surfaced explicitly in §05 so the developer can see them at the gate. (Non-routine stakes-class entries from the discharge executor carry stakes_class != "routine" and are already captured by Source 2 of {{stakes_findings}} above — they are NOT included here to avoid double-rendering.)
     </action>
 
     <!-- ── Build the self-contained HTML end-gate report ── -->
