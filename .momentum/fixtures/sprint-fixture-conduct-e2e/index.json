@@ -1,0 +1,69 @@
+{
+  "_fixture_note": "Test fixture for conduct-e2e-validation-and-test-fixture story. This record represents an activated, build-consumable sprint with full contract blocks. It is a FIXTURE ONLY — do NOT merge into live .momentum/sprints/index.json active block. Used by verify-sprint-build-consumable.sh to assert the producer→consumer handoff closes, and intended as the precondition for a real conductor end-to-end test run.",
+  "locked": true,
+  "status": "active",
+  "slug": "sprint-fixture-conduct-e2e",
+  "planned": "2026-06-08",
+  "started": "2026-06-08",
+  "stories": [
+    "fixture-add-hello-skill",
+    "fixture-update-readme-note"
+  ],
+  "waves": [
+    {
+      "wave": 1,
+      "stories": ["fixture-add-hello-skill", "fixture-update-readme-note"]
+    }
+  ],
+  "team": {
+    "story_assignments": {
+      "fixture-add-hello-skill": {
+        "role": ["dev", "qa"],
+        "specialist": "dev-skills",
+        "guidelines": ".claude/rules/dev-skills.md",
+        "guidelines_status": "present",
+        "wave": 1,
+        "verification_method": "bash",
+        "can_merge_independently": true,
+        "contract": {
+          "path": ".momentum/fixtures/sprint-fixture-conduct-e2e/specs/fixture-add-hello-skill.smoke.sh",
+          "harness_profile": "bash",
+          "coverage_disposition": "dedicated-run",
+          "covered_by_scenario": null,
+          "frozen_sha256": "e42fc7469744e1ae7e9c0f694bb5c93cf58add7a8e5465829e6743a546424cb8"
+        }
+      },
+      "fixture-update-readme-note": {
+        "role": ["dev", "qa"],
+        "specialist": "dev-skills",
+        "guidelines": ".claude/rules/dev-skills.md",
+        "guidelines_status": "present",
+        "wave": 1,
+        "verification_method": "document-review",
+        "can_merge_independently": true,
+        "contract": {
+          "path": ".momentum/fixtures/sprint-fixture-conduct-e2e/specs/fixture-update-readme-note.review.md",
+          "harness_profile": "document-review",
+          "coverage_disposition": "dedicated-run",
+          "covered_by_scenario": null,
+          "frozen_sha256": "f071fc41c3ab66f4405372f45b0924d04eda9f14cd76b402f0376846291f0865"
+        }
+      }
+    },
+    "review_roles": ["qa-reviewer", "e2e-validator"]
+  },
+  "approvals": [
+    {
+      "story_slug": "fixture-add-hello-skill",
+      "decision": "approved",
+      "approved_at": "2026-06-08T00:00:00Z",
+      "story_file_sha": "placeholder-approved-for-fixture"
+    },
+    {
+      "story_slug": "fixture-update-readme-note",
+      "decision": "approved",
+      "approved_at": "2026-06-08T00:00:00Z",
+      "story_file_sha": "placeholder-approved-for-fixture"
+    }
+  ]
+}
