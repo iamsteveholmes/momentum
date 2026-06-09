@@ -226,8 +226,9 @@ Ready to begin?</output>
         {{merge_attempts}}           = {}    — { slug: int } per-story rebase-then-merge attempt counter (bound: 3); owned by step 2.2.M
         {{escalations}}              = []    — mid-flight escalation records (stakes-class, strict bar only)
         {{end_gate_escalations}}     = []    — Conductor-scoped accumulator for end-gate-expanded stakes findings across ALL stories; populated by step 2.2 signal handler from each story's S.escalations (end-gate-expanded subset); consumed by step 5 Source 1 to build decision cards. Each entry: { finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug }.
-        {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
-        {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
+        {{contract_integrity_stops}}  = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
+        {{build_log}}                 = []    — per-story pipeline outcomes for the end-gate report
+        {{coverage_discharge_results}} = {}  — { slug: { outcome, scenario_id, evidence } } — populated by Phase 3 step 3.D; outcome is "verified-by-composition" for discharged deferrals
       </action>
 
       <action>Seed {{merged}} from current story statuses to support partial-run resume:
@@ -727,7 +728,7 @@ Ready to begin?</output>
         </action>
         <note>GUARDRAIL — no second run. Once this routing outcome is returned and the deferral is recorded, the Conductor must NOT perform an additional dedicated verification run for S during the build phase. The deferral is a one-way routing decision for the build phase; it does not prevent the integration scenario from running at AVFL/merge — it ensures the dedicated build-time run does not also run. Double-running wastes effort and can produce contradictory signals.</note>
         <note>STAKES-CLASS BOUNDARY — deferral does not weaken routing. If the integration scenario at AVFL/merge surfaces a stakes-class finding (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture), that finding is still routed out of the silent auto-fix path and rendered in the report by the finding schema and report. The deferral from this build-phase branch does not weaken, suppress, or narrow that routing. The timing/venue changed; the routing rules did not.</note>
-        <note>DOWNSTREAM DISCHARGE — forward reference. The `coverage-disposition-deferred` build_log record and the `covered_by_scenario` field are informational markers that a named integration scenario owns discharge of this story's verification debt. Consumption of this record — actually running the named integration scenario at AVFL/merge and verifying its outcome — is NOT wired in the current Conductor Phase 3 (step 3). Wiring that consumer is owned by a downstream story/spec section (§5 AVFL). Until that downstream story lands, the deferral record is a correct and complete artifact of the build phase; the discharge loop closes in a later sprint increment. This is an intentional incremental gap, not a spec defect in this story's diff.</note>
+        <note>DOWNSTREAM DISCHARGE — wired in Phase 3 step 3.D. The `coverage-disposition-deferred` build_log record and the `covered_by_scenario` field drive the discharge consumer at AVFL/merge (Phase 3 step 3.D). Step 3.D reads all deferred records, runs each named integration scenario, records the outcome as `verified-by-composition` on pass, and surfaces any undischarged deferral as a leftover finding at the end-gate. The discharge loop is closed — the deferral is not silently assumed satisfied.</note>
       </check>
 
     </step>
@@ -1289,7 +1290,153 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <action>Continue to Phase 4. Do not halt or ask the developer. The NON_CONVERGENT result is surfaced at the end-gate.</action>
     </check>
 
-    <note>No developer ask here on the routine path. The avfl-merge-review Workflow ran over the precise 3-dot integrated diff. AVFL findings are held for the end-gate unless the escalation engine fires a pause-ask for a bar-clearing finding. Proceed to Phase 4.</note>
+    <note>No developer ask here on the routine path. The avfl-merge-review Workflow ran over the precise 3-dot integrated diff. AVFL findings are held for the end-gate unless the escalation engine fires a pause-ask for a bar-clearing finding. Proceed to step 3.D.</note>
+
+    <!-- ── 3.D — Coverage-disposition discharge consumer ──────── -->
+    <!--
+      Discharge all coverage-composition deferrals that were recorded in Phase 2.
+      Step 2.C wrote, for each covered-by-composition story S:
+        { slug, title, event: "coverage-disposition-deferred",
+          covered_by_scenario: <scenario-id>,
+          coverage_disposition: "covered-by-composition" }
+      This step is the mandatory consumer: it actually runs the named scenario,
+      verifies the deferred story's acceptance behavior is observed, and records
+      whether the debt is discharged.  A deferral is NEVER silently assumed satisfied.
+    -->
+
+    <step n="3.D" goal="Coverage-disposition discharge consumer — run each named integration scenario for deferred stories; record verified-by-composition on pass; surface undischarged deferrals as end-gate leftovers on fail or missing">
+
+      <note>CONSUMER INVARIANT. This step runs after the AVFL merge-review loop (steps 3.1–3.5) because the integration scenario runs on the fully-integrated sprint branch — the same surface AVFL reviewed. The scenario must observe the deferred story's acceptance behavior in the integrated state, not in a per-story worktree. Running before AVFL would mean running against a partially-integrated surface, which would not satisfy the discharge contract.</note>
+
+      <note>SILENT-GAP PREVENTION. A coverage-composition deferral records a DEBT. That debt is discharged only when the named scenario (a) is found, (b) is run, and (c) observes the deferred story's required behavior. If any of these three conditions fails, the debt is NOT silently closed — it is surfaced as an undischarged-coverage-deferral leftover at the end-gate. The developer sees it as an unverified item. Nothing in this step auto-resolves the deferral based on assumption or proximity to passing work.</note>
+
+      <!-- ── 3.D.1 — Collect all deferred records ─────────────── -->
+
+      <action>Collect {{deferred_records}} from {{build_log}}:
+        Filter {{build_log}} to all entries where event == "coverage-disposition-deferred".
+        Each entry has shape: { slug, title, covered_by_scenario, coverage_disposition }.
+        Bind {{deferred_records}} = the filtered list.
+      </action>
+
+      <check if="{{deferred_records}} is empty">
+        <note>No covered-by-composition deferrals were recorded in this build. Nothing to discharge. This step is a no-op for builds where all stories ran dedicated verification. Proceed to Phase 4.</note>
+        <action>Skip 3.D.2 and 3.D.3. Proceed to Phase 4 (E2E).</action>
+      </check>
+
+      <!-- ── 3.D.2 — Run each named integration scenario ───────── -->
+
+      <action>For each deferred record R in {{deferred_records}} (process concurrently if multiple):
+
+        Bind {{scenario_id}} = R.covered_by_scenario.
+
+        LOCATE THE SCENARIO:
+          Attempt to resolve {{scenario_id}} against the known integration scenario registry for
+          this sprint (e.g., contract files under `.momentum/sprints/{{sprint_slug}}/specs/`,
+          or any file whose scenario `name` field matches {{scenario_id}}).
+          Bind {{scenario_found}} = true if the scenario is located; false otherwise.
+
+        CHECK if {{scenario_found}} == false:
+          — The named scenario cannot be located. The deferral CANNOT be discharged.
+          — Record in {{build_log}}:
+              { slug: R.slug, title: R.title,
+                event: "coverage-deferral-undischarged",
+                covered_by_scenario: {{scenario_id}},
+                outcome: "scenario-not-found",
+                note: "Named integration scenario could not be located; deferral remains open." }
+          — Append an undischarged-deferral leftover to {{avfl_findings}}:
+              { source: "coverage-discharge-consumer",
+                finding_id: "undischarged-deferral-{{R.slug}}",
+                severity: "major",
+                type: "coverage-gap",
+                stakes_class: "routine",
+                disposition: "residual",
+                story_slug: R.slug,
+                location: R.slug,
+                summary: "Coverage deferral for `{{R.slug}}` is undischarged — named scenario `{{scenario_id}}` not found.",
+                detail: "Story `{{R.slug}}` was deferred from build-time QA with the expectation that integration scenario `{{scenario_id}}` would verify its acceptance behavior at AVFL/merge. The scenario cannot be located. The verification debt is unresolved.",
+                evidence: "coverage-disposition-deferred record: slug={{R.slug}}, covered_by_scenario={{scenario_id}}; scenario file not found under `.momentum/sprints/{{sprint_slug}}/specs/`.",
+                suggestion: "Locate or create the named integration scenario `{{scenario_id}}`, run it against the sprint branch, and confirm it observes `{{R.slug}}`'s required behavior. Alternatively, re-run story `{{R.slug}}` with `coverage_disposition: dedicated-run`." }
+          — Skip to the next deferred record. Do NOT proceed to the run step.
+
+        RUN THE SCENARIO (when {{scenario_found}} == true):
+          Spawn an integration-scenario executor agent (individual-agent, NOT TeamCreate) with:
+            - scenario_id: {{scenario_id}}
+            - scenario_path: the resolved path to the scenario file
+            - sprint_branch: "sprint/{{sprint_slug}}"
+            - deferred_story_slug: R.slug
+            - deferred_story_title: R.title
+            - story_spec: ".momentum/stories/{{R.slug}}.md"
+            - contract_path: the path to R.slug's verification contract (from `story_assignments[R.slug].contract.path` in the sprint record)
+          Constraint passed to agent: "Run the named integration scenario against the integrated sprint branch. Verify that the scenario observes the deferred story's required acceptance behavior. Return a structured result: { scenario_id, ran: bool, passed: bool, deferred_story_observed: bool, evidence: string }. Do not mutate git. Do not spawn build agents."
+          Bind {{scenario_result}} = the agent's returned result for this record.
+
+        EVALUATE DISCHARGE:
+          A deferral is DISCHARGED only when ALL three conditions hold:
+            (1) {{scenario_result}}.ran == true          — the scenario was actually executed
+            (2) {{scenario_result}}.passed == true       — the scenario passed
+            (3) {{scenario_result}}.deferred_story_observed == true  — the deferred story's
+                  acceptance behavior was observed by the scenario (not merely that the scenario
+                  passed on its own — the scenario must provide positive evidence that it covers
+                  R.slug's required behavior)
+          If ANY condition is false: the deferral is NOT discharged.
+      </action>
+
+      <!-- ── 3.D.3 — Record outcomes ─────────────────────────────── -->
+
+      <action>For each deferred record R and its {{scenario_result}}:
+
+        CASE: all three discharge conditions hold (ran AND passed AND deferred_story_observed):
+          — Record discharge in {{build_log}}:
+              { slug: R.slug, title: R.title,
+                event: "coverage-deferral-discharged",
+                covered_by_scenario: {{scenario_id}},
+                outcome: "verified-by-composition",
+                evidence: {{scenario_result}}.evidence,
+                note: "Deferred story's acceptance behavior was observed by the named integration scenario. Verification debt discharged." }
+          — Tag the story as verified-by-composition in the Conductor's in-memory state:
+              {{coverage_discharge_results}}[R.slug] = { outcome: "verified-by-composition", scenario_id: {{scenario_id}}, evidence: {{scenario_result}}.evidence }
+          — No leftover is appended to {{avfl_findings}} for this record.
+
+        CASE: any discharge condition fails (scenario ran but did not pass, OR ran and passed but deferred story's behavior was not observed, OR scenario could not run):
+          — Determine the failure mode for evidence:
+              If {{scenario_result}}.ran == false: failure_mode = "scenario-did-not-run"
+              Else if {{scenario_result}}.passed == false: failure_mode = "scenario-failed"
+              Else: failure_mode = "deferred-story-behavior-not-observed"
+          — Record in {{build_log}}:
+              { slug: R.slug, title: R.title,
+                event: "coverage-deferral-undischarged",
+                covered_by_scenario: {{scenario_id}},
+                outcome: failure_mode,
+                evidence: {{scenario_result}}.evidence,
+                note: "Deferral is not discharged; see leftover finding in end-gate report." }
+          — Append an undischarged-deferral leftover to {{avfl_findings}}:
+              { source: "coverage-discharge-consumer",
+                finding_id: "undischarged-deferral-{{R.slug}}",
+                severity: "major",
+                type: "coverage-gap",
+                stakes_class: "routine",
+                disposition: "residual",
+                story_slug: R.slug,
+                location: R.slug,
+                summary: "Coverage deferral for `{{R.slug}}` is undischarged — {{failure_mode}} for scenario `{{scenario_id}}`.",
+                detail: "Story `{{R.slug}}` was deferred from build-time QA. Its named integration scenario `{{scenario_id}}` was expected to observe its acceptance behavior at AVFL/merge. The discharge failed: {{failure_mode}}. The verification debt is unresolved.",
+                evidence: {{scenario_result}}.evidence,
+                suggestion: "Investigate why scenario `{{scenario_id}}` did not discharge the deferral ({{failure_mode}}). Ensure the scenario explicitly covers story `{{R.slug}}`'s acceptance criteria. Re-run Phase 3 after fixing the scenario, or re-run story `{{R.slug}}` with `coverage_disposition: dedicated-run`." }
+      </action>
+
+      <action>Append coverage-discharge summary to {{build_log}}:
+        { phase: "avfl-on-merge",
+          event: "coverage-discharge-consumer-complete",
+          deferred_count: length({{deferred_records}}),
+          discharged_count: count of entries in {{coverage_discharge_results}} where outcome == "verified-by-composition",
+          undischarged_count: count of entries in {{build_log}} where event == "coverage-deferral-undischarged" }
+      </action>
+
+      <note>STAKES-ROUTING NOTE. Undischarged-deferral leftovers are injected into {{avfl_findings}} with stakes_class:"routine" and disposition:"residual". Phase 3 step 3.4 (AVFL residual routing) and Phase 5 (end-gate assembly) will pick them up via the standard residual path — no special-casing needed. If a deferred story's acceptance behavior itself covers a stakes-class concern (e.g., security-auth-isolation), the operator who set coverage_disposition must ensure the integration scenario is stakes-aware. The discharge consumer does not re-classify stakes; it records the discharge outcome as evidence. Stakes routing at the end-gate is driven by the finding schema and report, not by this step.</note>
+
+      <note>Proceed to Phase 4 (E2E).</note>
+    </step>
+
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
