@@ -1,6 +1,8 @@
 # Directed `momentum:dev` Fix-Mode Invocation Contract
 
-**Version:** 1.0 — established with DEC-035 + DEC-036 (stakes-class escalation amendment)
+**Version:** 1.2 — write-scope invariant added; cross-artifact triaged-out routing made explicit (2026-06-08)
+**Previous:** 1.1 — seam contract declaration added; review scope explicit (2026-06-07)
+**1.0:** established with DEC-035 + DEC-036 (stakes-class escalation amendment)
 **change_type:** specification
 **Verification:** document-review
 
@@ -9,6 +11,19 @@
 ## Purpose
 
 This document is the invocation contract for the directed `momentum:dev` fix-mode used by the Conductor during the conduct build phase of `momentum:sprint-dev`. The Conductor is the top-level session orchestrator that owns all git mutation, routing, and the single human end-gate. The directed fix-mode is a subagent invoked by the Conductor; it applies fixes and returns per-finding dispositions, but it never spawns additional humans-in-the-loop and never owns the pause/routing decision. This contract defines the seam between those two roles precisely enough that neither role bleeds into the other.
+
+---
+
+## Seam Contract Declaration
+
+This document is a **seam contract** — it defines a hand-off boundary between two distinct agents. When a story authors or modifies this contract, the per-story review scope MUST cover BOTH sides of the seam, not only the artifact the story most obviously produces.
+
+| Role | Agent | What it owns |
+|---|---|---|
+| **Producer** | `momentum:dev` fix-mode (fixer subagent) | Emits per-finding disposition objects; echoes `finding_id` (Conductor-assigned); populates `disposition`, `files_changed`, `dismissal_rationale`, and the nested `escalation` object |
+| **Consumer** | Conductor (`momentum:conductor`) | Reads disposition objects; joins on `finding_id` to recover inbound finding fields; routes on `F.escalation.timing_tier` |
+
+**Field-shape compatibility requirement:** Any story that changes this contract — or either of the agents it binds — must verify that every field the producer emits is read at the correct path by the consumer. The canonical output shape in the [Canonical Fixer Output Shape](#canonical-fixer-output-shape) section below is the authoritative cross-side compatibility reference. A reviewer checking a seam story must confirm both sides agree on field names and nesting; a mismatch (e.g., producer nests a field at `escalation.timing_tier` but consumer reads it at `timing_tier`) is a cross-side field-shape incompatibility and must be reported as a `type: integration` finding.
 
 ---
 
@@ -132,6 +147,27 @@ This boundary is stated explicitly to prevent the fix-mode from re-introducing a
 
 ---
 
+## Write-Scope Invariant
+
+The fix-mode operates within a **declared writable file set** passed by the Conductor at invocation time. This set enumerates exactly which files the story is authorized to create or modify.
+
+**Hard prohibitions — no exceptions:**
+
+- **Never edit the story's own spec file** (`.momentum/stories/{story-slug}.md`). It is read-only input. Editing it constitutes scope leakage.
+- **Never edit any other story's spec file** under `.momentum/stories/` or its verification contract under `.momentum/sprints/`. Those files belong to sibling stories and are outside this story's writable set.
+- **Never write to any file outside the declared writable set.** If a finding points to a problem in a file not in the writable set, the correct disposition is `triaged-out`, not `fixed`.
+
+**Cross-artifact findings — mandatory `triaged-out` routing:**
+
+When a finding points to a problem that genuinely belongs to a different artifact (a file outside this story's writable set — including another story's spec, a shared reference document not in the writable set, or any file owned by a different story), the fix-mode MUST:
+
+1. Return `disposition: triaged-out` for that finding.
+2. Include in the triaged-out record enough context (location, summary, suggested_fix) for the Conductor to spin a reconciliation note against the owning story via `momentum:triage`.
+
+**What this prevents:** The sprint-2026-06-02-conduct-core retro found 5 of 21 stories (24%) required a Conductor revert because the dev or fixer agent edited the story spec file or a sibling workflow file — files it was never authorized to touch. The write-scope constraint and the triaged-out cross-artifact routing eliminate the root cause of those reverts.
+
+---
+
 ## Disposition Rules Summary
 
 These rules encode the DEC-036 amendment to DEC-035's binding decision #1.
@@ -142,6 +178,7 @@ These rules encode the DEC-036 amendment to DEC-035's binding decision #1.
 | `legitimate: true`, `stakes_class` is `security-auth-isolation`, `irreversible-destructive`, or `high-blast-radius-architecture` | `escalated` — inline payload returned; no fix applied; no fix commit |
 | `legitimate: false` | `dismissed` — non-empty rationale required; never fixed or escalated |
 | `legitimate: true`, out of scope for this story | `triaged-out` — tracked separately; not silently dropped |
+| `legitimate: true`, finding targets a file outside this story's declared writable set | `triaged-out` — cross-artifact routing; DO NOT edit the out-of-scope file |
 
 ---
 
@@ -175,7 +212,7 @@ This section codifies the authoritative per-finding output shape that the fix-mo
 
 **Key shape rules:**
 
-- **`timing_tier` is INSIDE `escalation`** — it is a field of the `escalation` object, not a top-level field on the disposition object. A consumer reading `F.timing_tier` will find nothing; the correct path is `F.escalation.timing_tier`.
+- **`timing_tier` is INSIDE `escalation`** — it is a field of the `escalation` object, not a top-level field on the disposition object. A consumer reading `F.timing_tier` will find nothing; the correct path is `F.escalation.timing_tier`. Note: `finding-schema.md` lists `timing_tier` as a flat field on the *normalized-finding* object — that is a different object from this *disposition* object. The two schemas represent different stages of the pipeline (inbound finding vs. fixer return), not a contradiction; the nesting difference is intentional and correct.
 - **`escalation` is present only when `disposition == "escalated"`** — for all other dispositions it is `null`.
 - **The `escalation` object does NOT echo `stakes_class`, `summary`, or `location`** from the inbound finding — those fields live on the inbound finding only. The consumer (the Conductor) recovers them by **joining on `finding_id`** back to the stage-2 findings array it sent in.
 

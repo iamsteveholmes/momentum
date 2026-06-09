@@ -144,8 +144,8 @@ This story depends on `enforced-verification-rule-change-type-method-routing-har
 
     <check if="{{resolved_methods}} contains exactly one distinct method OR is empty after filtering (only specification tasks remained)">
       <check if="{{resolved_methods}} is empty">
-        <action>Set {{verification_method}} = "document review"</action>
-        <note>All non-unclassified tasks were specification type. Document review is the method for pure specification stories.</note>
+        <action>Set {{verification_method}} = "document-review"</action>
+        <note>All non-unclassified tasks were specification type. document-review is the method for pure specification stories.</note>
       </check>
       <check if="{{resolved_methods}} contains one method">
         <action>Set {{verification_method}} = that single method</action>
@@ -156,16 +156,23 @@ This story depends on `enforced-verification-rule-change-type-method-routing-har
     <check if="{{resolved_methods}} contains two or more distinct methods">
       <ask>The change types in this story map to multiple verification methods:
 {{method_candidates}}
-Which method should govern this story's verification? Select the method for the story's primary deliverable.</ask>
+Which method should govern this story's verification? Select the method for the story's primary deliverable. Use one of: skill-invoke, behavioral-trigger, bash, smoke, curl, document-review.</ask>
       <action>Set {{verification_method}} = developer's selection</action>
     </check>
 
     <anchor id="write_method" />
+    <note>verification_method is written as an ADVISORY hint only — it is NOT the routing key
+    that selects the verifier. The harness and conductor derive routing from change_type via the
+    routing table in verification-standard.md. Sprint-planning Step 4 (Gherkin generation) uses
+    change_type, not this field, to determine contract format. Any value written here must be a
+    closed-enum token (skill-invoke | behavioral-trigger | bash | smoke | curl | document-review)
+    — never a free-text description, legacy alias (eval/trigger/review/gherkin/skip), or
+    space-containing string.</note>
     <action>Read the current content of {{story_file}}</action>
     <action>Locate the YAML frontmatter block (the `---` delimited header at the top of the file)</action>
-    <action>Add or update the `verification_method:` field in the frontmatter with the value `{{verification_method}}`</action>
+    <action>Add or update the `verification_method_advisory:` field in the frontmatter with the value `{{verification_method}}`. Label it `verification_method_advisory` (not `verification_method`) to make clear this is informational, not the routing key used by the harness or conductor.</action>
     <action>Write the updated content back to {{story_file}}</action>
-    <output>**Verification method selected:** `{{verification_method}}`</output>
+    <output>**Verification method (advisory):** `{{verification_method}}` — written as `verification_method_advisory` in frontmatter. Routing is derived from `change_type` at sprint-planning time.</output>
   </step>
 
   <step n="6" goal="Inject Momentum Implementation Guide into story Dev Notes">
@@ -186,7 +193,7 @@ Which method should govern this story's verification? Select the method for the 
       - Implementation approach per type (EDD steps for skill-instruction; TDD delegation for script-code; functional verification for rule-hook; direct+inspect for config-structure; visual verification + design-fidelity AC compliance for app-ui; direct authoring with cross-reference verification for specification)
       - NFR compliance requirements for any skill-instruction tasks
       - DoD additions specific to this story's change types
-      - A reminder that Gherkin specs exist for this sprint (in sprints/{sprint-slug}/specs/) but are off-limits to the dev agent — the dev agent implements against plain English ACs in the story file only, never against .feature files (Decision 30 black-box separation)
+      - A reminder that a frozen verification contract exists for this sprint (in sprints/{sprint-slug}/specs/{story-slug}.{ext}). Dev reads the Part-A header (how_dev_self_checks, verification_method, harness_profile) as a self-check before signaling done. Dev never reads the verifier body (Part B: scenarios, assertion scripts, Gherkin) beyond sections explicitly referenced by how_dev_self_checks.
     </critical>
 
     <action>Save {{story_file}} with the injected section</action>

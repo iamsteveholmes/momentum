@@ -1,0 +1,92 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-per-story-build-review-dispatch
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-per-story-build-review-dispatch.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the in-session build orchestrator end to end against a small
+  activated sprint of a few ready stories, and watch what it actually produces.
+
+  Confirm that for each story the orchestrator carries it through implementation: when the
+  build finishes, each story's intended change exists in the repository as real edited or
+  added files, and the orchestrator's history shows a commit for that story's work — you did
+  not have to write or commit any of it yourself.
+
+  Confirm that before each story is accepted, a review pass runs and reports findings: the
+  run surfaces, per story, both an acceptance-criteria verification result (each criterion
+  marked verified, partial, missing, or blocked, with concrete file-and-line evidence) and a
+  separate bug-hunting review result (categorized findings against that story's change). Both
+  result streams appear for the same story, distinctly, on the same build.
+
+  Confirm the findings actually flow into the downstream fix step: take a story you can seed
+  with an obvious ordinary defect, run it through, and confirm the routine findings are
+  corrected automatically before that story is accepted — the defect is gone in the final
+  committed result without the orchestrator stopping to ask you whether to fix it.
+
+  Confirm per-story isolation holds: one story's in-progress changes are not visible in
+  another story's working area during the build, and after the run each built story's
+  implementation is committed onto the single sprint branch with a linear, coherent history
+  for the run — the run leaves no orphaned worktree branches and no stray uncommitted working
+  trees behind. Finally confirm a clean routine build reaches the end without the orchestrator
+  asking you any question between starting and the final acceptance point.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-per-story-build-review-dispatch.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Each story is implemented and committed during the build
+    invocation: Run the in-session build orchestrator against a small activated sprint of a few ready stories, let it complete, then inspect the repository working files and history.
+    given: An activated sprint with a few ready stories, each with a frozen contract.
+    when: The build runs to completion and the produced files and history are inspected.
+    then:
+      - For each story, the intended change exists in the repository as real edited or added files after the build.
+      - The history contains a commit corresponding to each story's work.
+      - No story required the developer to author or commit its changes by hand.
+    pass_criteria: Every story in the sprint ends with its change present in the repository and a corresponding commit in history, produced by the build itself.
+    fail_criteria: Any story ends with no produced file changes, or with no commit in history for its work, or required the developer to write or commit the change manually.
+
+  - name: Both an acceptance-criteria result and a bug-hunting result are reported per story
+    invocation: Run the build against the small sprint and inspect the per-story review output it surfaces before each story is accepted.
+    given: An activated sprint whose stories carry acceptance criteria in their contracts.
+    when: The build runs and its per-story review output is read.
+    then:
+      - For each story, an acceptance-criteria verification result is reported that classifies each criterion as verified, partial, missing, or blocked.
+      - That acceptance-criteria result cites concrete file-and-line evidence for its classifications.
+      - For each story, a separate bug-hunting review result is reported as categorized findings against that story's change.
+      - Both result streams appear distinctly for the same story on the same build.
+    pass_criteria: Each story produces, before acceptance, both an evidence-backed acceptance-criteria verification result and a distinct categorized bug-hunting result.
+    fail_criteria: Either result stream is missing for a story, the acceptance-criteria result lacks per-criterion classification or file-and-line evidence, or the two streams are not distinguishable.
+
+  - name: Routine findings are corrected automatically before a story is accepted
+    invocation: Seed one story with an obvious ordinary defect, run it through the build, and inspect the final committed result for that story.
+    given: A story whose implementation can be seeded with an obvious routine (non-stakes) defect that the review pass will surface.
+    when: The build runs that story through review and the downstream fix step.
+    then:
+      - The routine finding is corrected automatically and the seeded defect is absent from the final committed result for that story.
+      - The orchestrator does not stop to ask the developer whether to fix the routine finding.
+    pass_criteria: The seeded routine defect is gone in the final committed result, fixed automatically with no fix-or-defer question to the developer.
+    fail_criteria: The seeded defect remains in the final result, or the build pauses to ask the developer whether to fix the routine finding.
+
+  - name: Per-story isolation and consolidated sprint-branch history hold across the build
+    invocation: Run the build against a multi-story sprint and inspect, during the run, the separation of each story's working changes, and after the run, the repository's branches, working tree, and commit history.
+    given: An activated sprint with more than one ready story building in the same run.
+    when: The per-story working areas are inspected during the run, and the branches, working tree, and commit history are inspected after the run.
+    then:
+      - One story's in-progress changes are not present in another story's working area during the build.
+      - After the run, each built story's implementation is committed onto the single sprint branch.
+      - After the run, no orphaned per-story worktree branches and no stray uncommitted working trees remain.
+      - The commit history produced by the run is linear and coherent (each story's work appears as committed changes on the sprint branch, with no leftover detached or unmerged story branches).
+    pass_criteria: Stories build in isolated working areas with no cross-contamination, every built story's implementation is committed onto the single sprint branch, the run leaves no orphaned worktree branches or stray uncommitted working trees, and the resulting history is linear and coherent.
+    fail_criteria: One story's changes leak into another story's working area, or after the run a built story's implementation is missing from the sprint branch, or the run leaves an orphaned worktree branch or a stray uncommitted working tree, or the resulting history is not a coherent linear record of the run's work.
+
+  - name: A clean routine build reaches the end without mid-run questions
+    invocation: Run the build against a sprint whose stories produce only routine findings and observe developer-facing prompts from start to the final acceptance point.
+    given: An activated sprint whose stories produce only ordinary, routine findings.
+    when: The build runs from invocation through to its final acceptance point.
+    then:
+      - The orchestrator asks the developer nothing between the start of the run and the final acceptance point.
+      - Every story is implemented, reviewed, fixed of routine findings, and accepted without a between-stories question to the developer.
+    pass_criteria: The routine build runs to its final acceptance point with no mid-run developer question and every story carried through build, review, and fix.
+    fail_criteria: The build pauses to ask a routine question mid-run, or fails to carry any story through build, review, and fix before the final acceptance point.

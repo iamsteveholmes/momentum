@@ -1,0 +1,82 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-endgate-decision-card-rendering
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-endgate-decision-card-rendering.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run a sprint build all the way to its single final acceptance gate
+  on a sprint that produced at least one stakes-class decision to escalate (and ideally a few
+  routine auto-fixes too). When the build reaches the gate, confirm it hands you a single,
+  self-contained report file that opens in a browser with no external files or network. Open it
+  and confirm: there is a "decisions for you" area that shows one card per escalated stakes
+  decision, and each card states — in plain language an outsider could follow — what the decision
+  is about, what is actually at stake, the options with their trade-offs, and a recommendation;
+  no card is blank or shows only a code symbol, file path, or ticket id as its heading. Confirm
+  the routine auto-fixed items are summarized as a single count rather than listed one by one,
+  and that any waved-off finding shows the reason it was safe to leave. Confirm the report also
+  carries an honest "how done is this, really" section listing what is live versus still hollow.
+  Finally confirm the gate's approve control starts unchecked and stays disabled until every
+  decision card has a selection — you cannot approve while any escalated decision is unanswered.
+  Run a second build on a clean sprint with zero escalations and confirm the report still renders,
+  shows zero decisions, and the gate can be approved without being forced through any decision card.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-endgate-decision-card-rendering.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Escalated stakes decisions render as complete decision cards in the final report
+    invocation: Run a sprint build to its single final acceptance gate on a sprint that produced at least one stakes-class escalation, then open the report it hands over.
+    given: A sprint whose build surfaced one or more stakes-class items that were held for a human decision rather than auto-resolved.
+    when: The build reaches the final acceptance gate and presents its report.
+    then:
+      - The gate hands over a single self-contained report file that opens in a browser with no external file or network dependency.
+      - The report contains a "decisions for you" area showing exactly one decision card per escalated stakes item.
+      - Each decision card states in plain language what the decision is about, what is at stake, the available options with their trade-offs, and a recommendation.
+      - No decision card is empty and none uses a bare code symbol, file path, or ticket id as its heading.
+    pass_criteria: The report renders one populated decision card per escalation, each carrying what / what-is-at-stake / options / recommendation in plain language, with no blank cards and no code-symbol headlines.
+    fail_criteria: The decisions area is empty or absent despite escalations existing, a card is missing for an escalated item, a card is blank, or a card carries only a code symbol / file path / ticket id with no plain-language explanation.
+
+  - name: Routine work is collapsed to a count and waved-off findings carry a reason
+    invocation: Run a build whose stories produced routine auto-fixes and at least one deliberately dismissed finding, then read the report's routine and waved-off sections.
+    given: A build that auto-fixed several routine items and waved off at least one finding as safe to leave.
+    when: The report is read at the final gate.
+    then:
+      - The routine auto-fixed items are presented as a single count rather than enumerated one by one.
+      - Each waved-off finding is shown together with the reason it was safe to leave unfixed.
+      - The report length tracks the risk surface, not the raw story or finding count.
+    pass_criteria: Routine items appear only as an aggregate count, and every waved-off finding shows its dismissal reason.
+    fail_criteria: Routine items are itemized one by one, or a waved-off finding appears with no stated reason for leaving it.
+
+  - name: Report carries an honest completeness section and builds to the captured voice
+    invocation: Open the handed-over report and inspect its completeness and per-item sections against the assume-nothing plain-language standard.
+    given: A completed build report at the final gate.
+    when: The report's structure and voice are inspected.
+    then:
+      - The report includes an honest completeness section that distinguishes what is live from what is still hollow and states what approving actually does.
+      - Each built work item carries a plain paragraph of what it is for, and a way to expand into how it was verified, why it was built that way, and the actual change.
+      - Terms are defined in plain language inline; no section leads with a bare code symbol, file path, or ticket id.
+    pass_criteria: A reader who did not watch the build can read the report and re-explain what shipped, what diverged, and what is undone, without opening another file or knowing internal jargon.
+    fail_criteria: The completeness section is missing or oversells finished-ness, per-item context is absent, or the report reads as undefined jargon a non-watcher cannot follow.
+
+  - name: Anti-rubber-stamp gate blocks approval until every decision is answered
+    invocation: At the final gate of a build with escalated decisions, attempt to approve before and after answering the decision cards.
+    given: A report at the gate carrying one or more escalated decision cards.
+    when: Approval is attempted with decisions unanswered, then again after each decision card has a selection.
+    then:
+      - The approve control starts unchecked and is not pre-selected.
+      - Each decision card ships with no option pre-selected.
+      - Approval is blocked while any decision card lacks a selection, and becomes available only once every decision card has one.
+    pass_criteria: Approval is impossible until all escalated decisions have an explicit selection, and the approve control is never pre-checked.
+    fail_criteria: Approval is possible while a decision card is unanswered, the approve control ships pre-checked, or a decision card ships with an option pre-selected.
+
+  - name: Clean sprint with no escalations still renders and approves without forced decisions
+    invocation: Run a build on a sprint that produced zero stakes-class escalations to its final gate.
+    given: A sprint whose build surfaced no items requiring a human decision.
+    when: The build reaches the final gate and presents its report.
+    then:
+      - The report still renders as a single self-contained file and shows zero decisions in the decisions area.
+      - The gate can be approved without being forced through any decision card.
+    pass_criteria: A no-escalation build produces a valid report showing zero decisions and an approvable gate with no forcing function applied.
+    fail_criteria: The report fails to render, falsely shows decisions, or the gate cannot be approved despite there being nothing to decide.

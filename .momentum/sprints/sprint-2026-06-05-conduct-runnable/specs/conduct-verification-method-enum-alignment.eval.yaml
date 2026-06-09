@@ -1,0 +1,77 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-verification-method-enum-alignment
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-verification-method-enum-alignment.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, do two things — read the two reference documents this story
+  corrects, and exercise the story-creation skill.
+
+  Read the verification-standard document and confirm its change-type-to-method routing
+  table now maps each change type to a single closed token from the fixed list
+  (skill-invoke, behavioral-trigger, bash, smoke-ui, curl, document-review) rather than to
+  a free-text description like "EDD eval — adversarial..." or "Document review — confirm...".
+  Confirm those tokens are exactly the driver keys named in the harness configuration file
+  (open that file and compare) — same spelling, hyphenated, no spaces.
+
+  Read the contract-format guide and confirm its file-extension table's driver column lists
+  only the real driver tokens (bash, behavioral-trigger, document-review, skill-invoke,
+  smoke, curl) and no longer lists the stale words shell-executor, hook-trigger, or
+  document-reviewer. Confirm the guide now documents the mandatory verification-header
+  schema (the ordered fields a contract's header must carry), which it previously lacked,
+  and that the driver tokens in the table agree with the tokens used in the guide's own
+  per-type body templates.
+
+  Then create a story with the story-creation skill and open the story file it writes.
+  Confirm the skill no longer stamps a free-text or space-containing verification method
+  (such as "document review", "eval", "trigger", "smoke", "review", "gherkin", or "skip")
+  into the story as a routing key. If any method value is written at all, confirm it is
+  labelled or treated as advisory, not as the field that selects the verifier.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-verification-method-enum-alignment.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Method routing table maps change types to closed-enum driver tokens, not free text
+    invocation: Open the verification-standard document and inspect its change-type-to-method routing table; open the harness configuration file and compare the driver token list.
+    given: The verification-standard document and the harness configuration file are present in the repository.
+    when: The routing table's right-hand method values are read and compared against the harness configuration's driver token list.
+    then:
+      - Every routing-table method value is a single token drawn from skill-invoke, behavioral-trigger, bash, smoke-ui, curl, or document-review.
+      - No routing-table method value is a free-text description or a sentence containing a dash-prose explanation.
+      - Each token used in the table appears verbatim (same spelling, hyphenated) as a driver key in the harness configuration file.
+    pass_criteria: The routing table maps each change type to one closed-enum token, and every token matches a driver key in the harness configuration file exactly.
+    fail_criteria: Any routing-table value is free text or a multi-word phrase, or any token has no matching driver key in the harness configuration file.
+
+  - name: Contract-format guide's driver column uses real tokens and drops the stale ones
+    invocation: Open the contract-format guide and inspect the driver column of its file-extension table.
+    given: The contract-format guide is present in the repository.
+    when: The driver column of the file-extension table is read.
+    then:
+      - The driver column contains only tokens from the real driver set (bash, behavioral-trigger, document-review, skill-invoke, smoke, curl).
+      - The words shell-executor, hook-trigger, and document-reviewer do not appear in the driver column.
+      - The driver tokens in the table agree with the driver tokens referenced in the guide's own per-type body templates.
+    pass_criteria: The driver column lists only real driver tokens, contains none of the three stale words, and is internally consistent with the guide's per-type templates.
+    fail_criteria: The driver column still lists shell-executor, hook-trigger, or document-reviewer, or its tokens disagree with the guide's per-type templates.
+
+  - name: Contract-format guide documents the mandatory verification-header schema
+    invocation: Open the contract-format guide and look for the verification-header schema specification.
+    given: The contract-format guide is present in the repository.
+    when: The guide is read for a section defining the per-contract verification header.
+    then:
+      - The guide documents a mandatory verification-header schema for contracts.
+      - The documented schema names the required header fields and their order (story_slug, verification_method, harness_profile, contract_path, how_dev_self_checks, coverage_disposition, covered_by_scenario, acceptance_criteria_ref, platforms).
+    pass_criteria: The guide contains a verification-header schema specification naming the required fields in order.
+    fail_criteria: The guide has no verification-header schema, or it omits required fields or their ordering.
+
+  - name: Story-creation skill no longer writes a free-text method as a routing key
+    invocation: Create a story using the story-creation skill and open the resulting story file.
+    given: An epic or context the story-creation skill can author a story against.
+    when: The story-creation skill runs and writes a story file.
+    then:
+      - The story file does not stamp a free-text or space-containing verification method as a routing key.
+      - If any method value is present at all, it is labelled or framed as advisory rather than as the field that selects the verifier.
+    pass_criteria: The created story carries no free-text verification method used as a routing key; any retained method value is explicitly advisory.
+    fail_criteria: The created story stamps a free-text or space-containing method value (e.g. "document review", "eval", "trigger", "smoke", "review", "gherkin", "skip") as the routing key.

@@ -1,0 +1,63 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-coverage-disposition-discharge-consumer
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-coverage-disposition-discharge-consumer.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run a sprint build that contains a story whose own build-time check was
+  deliberately deferred to be covered later by a named integration scenario (a "this story's
+  verification will be proven by running scenario X during integration" arrangement). Run the build
+  through its merge/validation phase to the final acceptance gate. Confirm that during that phase the
+  build actually runs the named integration scenario for the deferred story and records whether it
+  passed — the deferral is not silently assumed satisfied. When the named scenario passes, confirm
+  the final report shows that deferred story's verification as discharged/closed-out (no longer
+  outstanding) with the integration scenario as the evidence. Then run a second build where the named
+  integration scenario fails or is missing, and confirm the build does NOT silently close the deferral:
+  the still-undischarged deferral is surfaced as a leftover at the final gate, clearly flagged as
+  unverified, so the developer sees it. Confirm a build with no deferred-coverage stories reaches the
+  gate normally with nothing extra surfaced.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-coverage-disposition-discharge-consumer.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A deferred-coverage story's named integration scenario is actually run during merge/validation
+    invocation: Run a build containing a story whose build-time verification was deferred to a named integration scenario, through its merge/validation phase.
+    given: A sprint with a story arranged so its verification is to be proven later by running a specific named integration scenario rather than at build time.
+    when: The build proceeds through its merge/validation phase.
+    then:
+      - The build runs the named integration scenario for that deferred story during the merge/validation phase.
+      - The outcome of running that scenario is recorded — the deferral is not assumed satisfied without running it.
+    pass_criteria: The named integration scenario is executed during merge/validation and its pass/fail outcome is recorded.
+    fail_criteria: The named integration scenario is never run, or the deferral is treated as satisfied without any scenario being executed.
+
+  - name: A passing integration scenario discharges the deferral and the report shows it closed
+    invocation: Run a build where the deferred story's named integration scenario passes, then read the final report.
+    given: A deferred-coverage story whose named integration scenario passes when run during merge/validation.
+    when: The build reaches the final acceptance gate.
+    then:
+      - The deferred story's verification is shown as discharged / closed-out rather than outstanding.
+      - The passing integration scenario is shown as the evidence for that discharge.
+    pass_criteria: A passing named scenario marks the deferred story's verification as discharged with that scenario cited as the evidence.
+    fail_criteria: The deferral remains shown as outstanding despite the scenario passing, or no evidence ties the discharge to the scenario.
+
+  - name: An undischarged deferral is surfaced as a leftover at the final gate, never silently closed
+    invocation: Run a build where the deferred story's named integration scenario fails or is missing, then inspect the final gate.
+    given: A deferred-coverage story whose named integration scenario fails or cannot be run.
+    when: The build reaches the final acceptance gate.
+    then:
+      - The deferral is not silently closed or reported as discharged.
+      - The still-undischarged deferral is surfaced as a leftover at the final gate, clearly flagged as unverified.
+    pass_criteria: A failing or missing named scenario leaves the deferral surfaced as an unverified leftover the developer can see at the gate.
+    fail_criteria: The deferral is silently closed, reported as discharged, or omitted from the gate despite its scenario failing or being absent.
+
+  - name: A build with no deferred coverage reaches the gate with nothing extra surfaced
+    invocation: Run a build whose stories carry no deferred-coverage arrangement to the final gate.
+    given: A sprint in which no story defers its verification to a named integration scenario.
+    when: The build reaches the final acceptance gate.
+    then:
+      - The build reaches the gate normally with no deferred-coverage leftover surfaced.
+    pass_criteria: A no-deferral build completes to the gate without surfacing any spurious undischarged-deferral leftover.
+    fail_criteria: The build surfaces a deferred-coverage leftover when no story deferred its coverage.

@@ -1,0 +1,36 @@
+{
+  "avfl": {
+    "pass": "post-merge-avfl-integration",
+    "diff": "sprint-vs-main 3-dot, 108 files, +8601/-495, 25 story merges",
+    "dimensions": {
+      "finding-vocab": "CLEAN \u2014 severity(critical|major|minor|low)/type/stakes_class/disposition/timing_tier consistent across all encoding files; the 12-file severity sweep held; no stray high/medium/blocker severity.",
+      "verification-method-vocab": "DRIFT_FOUND->FIXED \u2014 app-ui method 'smoke-ui' (producer) vs 'smoke' (routing doc/harness/contract-guide/consumable-gate) would reject every app-ui story; collapsed to 'smoke' (Option B, matches authoritative doc + all runtime consumers).",
+      "conductor-coherence": "DRIFT_FOUND->FIXED \u2014 Phase-5 mid-flight read per-story transient not the Conductor accumulator (under-report); end_gate_escalations name-collision hazard; stale L1078 ref; coverage_discharge_results orphaned. All reconciled.",
+      "integration-seams": "DRIFT_FOUND->FIXED \u2014 RC fixer flat payload (dev->green-field, the avfl-merge bug un-propagated to the RC site); AVFL leftovers hard-stamped routine (merge stakes findings silently demoted, no decision card); suggestion vs suggested_fix drift; renderer input-contract gap. All reconciled."
+    },
+    "findings_total": 9,
+    "findings_fixed": 9,
+    "stakes_escalations": 0,
+    "high_risk_resolved": [
+      "smoke/smoke-ui app-ui rejection (collapsed to smoke)",
+      "RC redispatch flat payload -> green-field instead of fix-mode (wrapped in directed_fix)",
+      "AVFL-on-merge stakes findings silently demoted to routine (stakes_class now carried + escalations wired to decision cards)",
+      "Phase-5 mid-flight section under-reporting (sources the Conductor-scoped accumulator now)"
+    ],
+    "leftovers": [
+      "Frozen contract eval.yaml headers for app-ui still say 'smoke-ui' (FROZEN \u2014 not edited); a contract-quality follow-up to re-emit with the producer once the two-column-vs-one-column decision is ratified.",
+      "Design tension: the redesign spec (sprint-dev-redesign-spec.md:539) envisioned a two-column model (method 'smoke-ui' != driver 'smoke'); the build collapsed to one column ('smoke') because the two-column was never fully implemented (harness has no smoke-ui key) and all runtime consumers use 'smoke'. DECISION for the developer: keep the single-column 'smoke' (done) or fully implement the two-column model later."
+    ]
+  },
+  "coverage": {
+    "coverage_plan": "3 covered-by-composition, 22 dedicated-run (coverage-plan.md)",
+    "dedicated_run": "All 22 received a per-story QA verification during the build (each story: dev -> QA-vs-contract + adversarial review -> fix -> merge).",
+    "covered_by_composition": {
+      "conduct-momentum-tools-path-resolution": "DISCHARGED by Scenario 2 (discovery/live-engine): bare momentum-tools resolves and was used by every build operation throughout this run.",
+      "conduct-per-story-build-review-dispatch": "DISCHARGED by Scenario 1 (fixture build run): the per-story build/review/commit dispatch carried all 25 stories through dev->review->fix->merge \u2014 this 25-story by-hand build IS the demonstration.",
+      "avfl-merge-review-as-workflow": "DISCHARGED by Scenario 1: the merge-review ran in its real build position over the sprint-vs-main 3-dot integrated diff (the post-merge AVFL pass above)."
+    },
+    "e2e_surface": "This repo is markdown/skills/bash (no executable app/backend surface) \u2014 verification-harness all-skip carve-out applies; E2E = per-story verification (skill-invoke/document-review/bash) + the integration-consistency AVFL pass. The fixture sprint (capstone) carries real runners for a product-app project, demonstrating the per-project override.",
+    "no_silent_gap": "All 25 stories verified or discharged; the consumable verifier PASSes on the fixture; no story left unverified."
+  }
+}

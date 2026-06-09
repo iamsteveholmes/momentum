@@ -1,0 +1,71 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-state-machine-defects-shipped-unfixed
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-state-machine-defects-shipped-unfixed.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, drive a merged story through the build's approve/acceptance path and watch
+  how its status moves. First, confirm a story that has been merged does NOT jump straight to its
+  final done status — it must pass through the verify state before it can reach done. Take a merged
+  story, run it through approval, and check its recorded status sequence: it should read review, then
+  verify, then done — never review straight to done. Second, exercise the guard against terminal
+  transitions: take a story that is already in a terminal state (done) and attempt to move it to
+  another terminal state. Confirm that attempt is rejected — the system refuses to transition one
+  terminal state into another terminal state, and the story's status is unchanged afterward. You can
+  observe both directly using the status-transition command line tool: ask it for a story's current
+  status, attempt the transitions above, and read back the resulting status and any rejection message.
+  Third, drive a build that surfaces a MAJOR-severity residual finding and confirm that, when the
+  build finishes, that residual has a linked backlog stub recorded for it — a MAJOR residual must not
+  leave the build with nothing tracking it. Finally, exercise both transition defects in a single run:
+  drive one merged story through approve and confirm it routes review then verify then done (the
+  verify-skip is gone), and attempt a terminal-to-terminal transition and confirm it is rejected — both
+  fixes holding in the same pass.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-state-machine-defects-shipped-unfixed.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A merged story reaches done only after passing through verify
+    invocation: Drive a merged story through the approval/acceptance path and read back its recorded status sequence.
+    given: A story that has been merged and is sitting at the review state, ready to be approved.
+    when: The story is approved and its status progression is observed via the status-transition tool.
+    then:
+      - The story moves review then verify then done, in that order.
+      - The story never transitions directly from review to done, skipping verify.
+      - At completion the story's recorded status is done, and verify appears in its transition history before done.
+    pass_criteria: An approved merged story's observed status sequence passes through verify on its way to done, with no review-straight-to-done jump.
+    fail_criteria: The story reaches done without ever entering verify, or the approve path moves it review straight to done.
+
+  - name: A terminal-to-terminal transition is rejected
+    invocation: Take a story already in a terminal state and attempt to move it to a different terminal state via the status-transition tool.
+    given: A story whose current status is a terminal state (done).
+    when: A transition from that terminal state to another terminal state is attempted.
+    then:
+      - The attempted transition is rejected rather than applied.
+      - The story's status is unchanged after the rejected attempt.
+      - The tool surfaces an observable rejection (non-success result or an error message) for the illegal transition.
+    pass_criteria: A terminal-to-terminal transition attempt is refused and the story's status stays as it was, with a visible rejection.
+    fail_criteria: The terminal-to-terminal transition is accepted and applied, or the story's status changes despite the transition being illegal.
+
+  - name: A MAJOR-severity residual finding leaves the build with a linked backlog stub
+    invocation: Run a build that surfaces a MAJOR-severity residual finding and inspect what tracks that residual when the build completes.
+    given: A build run that produces at least one residual finding carrying MAJOR severity.
+    when: The build reaches completion and the backlog is inspected for follow-up linked to that residual.
+    then:
+      - A backlog stub linked to the MAJOR residual exists after the build completes.
+      - No MAJOR-severity residual leaves the build with nothing recorded to track it.
+    pass_criteria: Every MAJOR-severity residual from the run has a linked backlog stub recorded by the time the build completes.
+    fail_criteria: A MAJOR-severity residual is triaged out or otherwise dropped with no linked backlog stub tracking it.
+
+  - name: Both transition defects are demonstrated fixed in a single run
+    invocation: In one run, drive a merged story through approve and attempt a terminal-to-terminal transition, observing each via the status-transition tool.
+    given: A merged story sitting at the review state, and a story already in a terminal state (done).
+    when: The merged story is approved and, in the same run, a transition from the terminal state to another terminal state is attempted.
+    then:
+      - The approved merged story routes review then verify then done, never jumping review straight to done.
+      - The attempted terminal-to-terminal transition is rejected and the terminal story's status is unchanged.
+      - Both behaviors are observed in the same run, each transition exercised against its own story.
+    pass_criteria: In one run, the verify-skip fix holds (review then verify then done) and the terminal-to-terminal transition is refused, each demonstrated by exercising its transition.
+    fail_criteria: The merged story reaches done without entering verify, or the terminal-to-terminal transition is accepted and applied.

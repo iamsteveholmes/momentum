@@ -1,0 +1,84 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: avfl-merge-review-as-workflow
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/avfl-merge-review-as-workflow.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the merge-review over an integrated sprint branch and watch what
+  it does and what it returns. Arrange a sprint branch whose stories merged cleanly but whose
+  combined result contains a cross-story integration defect — for example, two stories that
+  each edited the same shared surface in ways that contradict, or a caller in one story left
+  dangling by a change in another. The defect should be visible only when the merged result is
+  looked at as a whole, not in either story alone.
+
+  Confirm the merge review inspects the net integrated change of the whole sprint branch
+  against the main line (the change the developer would actually ship), not one story's slice.
+  Confirm it surfaces the cross-story integration defect that per-story checks could not see.
+  Confirm it corrects ordinary integration defects automatically, recording its own fix commits
+  on the sprint branch, and loops until either the merged result is clean or it cannot make
+  further progress. Confirm that when it finishes it hands back a clear typed outcome — either
+  "clean" or "could not fully converge" — that the build can act on without re-reading prose,
+  and that anything it could not resolve is handed back as fully-described leftover items
+  (each with what, where, evidence, and a suggestion) rather than silently dropped.
+
+  Finally confirm it never stops to ask you anything during the review, and that the build's
+  merged-result review step now runs this review over the precise integrated diff rather than
+  an approximate prose pass. Run it yourself; do not delegate the judgment.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/avfl-merge-review-as-workflow.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: The merge review inspects the net integrated change of the whole sprint branch
+    invocation: Run the merge review over a sprint branch holding several merged stories and observe what change set it examines.
+    given: A sprint branch whose stories have all merged, holding the integrated result against the main line.
+    when: The merge review runs and the change it inspects is observed.
+    then:
+      - The review examines the net integrated change of the sprint branch relative to the main line — the change the developer would actually ship.
+      - The review operates on the merged whole, not on a single story's slice in isolation.
+    pass_criteria: The merge review inspects the sprint branch's net integrated change against the main line, covering the combined result of all merged stories.
+    fail_criteria: The review inspects only one story's diff, an approximate union of touched files, or a change set other than the net integrated sprint-vs-main change.
+
+  - name: Cross-story integration defects invisible to per-story checks are caught
+    invocation: Arrange a sprint branch with a cross-story integration defect visible only in the merged whole, run the merge review, and read its reported findings.
+    given: A merged sprint branch containing an integration defect that spans more than one story (e.g., contradictory edits to a shared surface, or a caller left dangling by another story's change) and is not visible in either story alone.
+    when: The merge review runs over the integrated result.
+    then:
+      - The review surfaces the cross-story integration defect.
+      - The reported defect is attributable to the integrated result rather than to a single story examined in isolation.
+    pass_criteria: The merge review detects the cross-story integration defect that per-story review structurally could not see.
+    fail_criteria: The integration defect is missed, or is reported only as a single-story issue with no recognition that it spans the merged result.
+
+  - name: Ordinary integration defects are auto-corrected with recorded fix commits, looping to convergence
+    invocation: Run the merge review over a sprint branch carrying ordinary (non-stakes) integration defects and inspect the sprint branch's files and history afterward.
+    given: A merged sprint branch carrying one or more ordinary integration defects the review can resolve.
+    when: The merge review runs through its correction loop.
+    then:
+      - The ordinary integration defects are corrected automatically in the merged result on the sprint branch.
+      - The review records its own fix commits on the sprint branch for the corrections it applied.
+      - The review loops until the merged result is clean or it can make no further progress, without asking the developer anything.
+    pass_criteria: Ordinary integration defects are auto-fixed in the merged result with the review's own commits on the sprint branch, looping to convergence with no developer prompt.
+    fail_criteria: Ordinary defects are left unfixed, no fix commits appear on the sprint branch when corrections were made, the loop never terminates, or the review stops to ask the developer a question.
+
+  - name: The review returns a typed clean-or-non-convergent outcome with fully-described leftovers
+    invocation: Run the merge review to completion and inspect the outcome it hands back to the build.
+    given: A completed merge review over an integrated sprint branch.
+    when: The review finishes and its returned outcome is inspected.
+    then:
+      - The review hands back a clear typed outcome the build can act on directly — either "clean" or "could not fully converge" — without re-reading prose.
+      - Anything the review could not resolve is returned as fully-described leftover items, each stating what is wrong, where, the supporting evidence, and a suggested resolution.
+      - No unresolved item is silently dropped.
+    pass_criteria: The review returns a machine-actionable clean / non-convergent result, and every unresolved item is carried back as a self-contained leftover with what/where/evidence/suggestion.
+    fail_criteria: The outcome is free prose the build must re-parse, neither clean nor non-convergent is signalled, or an unresolved item is dropped or returned without enough context to act on it.
+
+  - name: The build's merged-result review step runs this review over the precise integrated diff
+    invocation: Run the in-session build orchestrator to the point where it reviews the merged result, and observe which review runs and over what change.
+    given: An activated multi-story sprint built and merged by the orchestrator.
+    when: The build reaches its merged-result review step.
+    then:
+      - The merged-result review step runs this merge review over the precise integrated diff of the sprint branch against the main line.
+      - The step no longer runs an approximate prose pass over a union of touched files.
+    pass_criteria: The build's merged-result review is performed by this merge review over the precise integrated sprint-vs-main diff, replacing the interim approximate prose pass.
+    fail_criteria: The build still runs an approximate prose review, reviews a union-of-touched-files diff, or does not run this merge review at the merged-result step.

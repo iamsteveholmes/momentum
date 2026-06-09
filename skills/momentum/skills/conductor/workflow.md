@@ -225,8 +225,11 @@ Ready to begin?</output>
         {{retries}}     = {}    — { slug: int } per-story retry counter (pipeline-level; distinct from merge_attempts)
         {{merge_attempts}}           = {}    — { slug: int } per-story rebase-then-merge attempt counter (bound: 3); owned by step 2.2.M
         {{escalations}}              = []    — mid-flight escalation records (stakes-class, strict bar only)
+        {{end_gate_escalations}}     = []    — Conductor-scoped accumulator for end-gate-expanded stakes findings across ALL stories; populated by step 2.2 signal handler from each story's S.escalations (end-gate-expanded subset); consumed by step 5 Source 1 to build decision cards. Each entry: { finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug }.
         {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
         {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
+        {{conductor_reverted_fixes}} = []    — findings whose fix commit was reverted by scope discipline (write-scope guard in stage-3 or stage-1); each entry: { finding_id, story_slug, summary, reverted_files: [], reroute_stub_slug: null }. Consumed at end-gate scorecard assembly to exclude from {{routine_auto_fixed_count}}.
+        {{coverage_discharge_results}} = {}  — { slug: { outcome, scenario_id, evidence } } — populated by Phase 3 step 3.D; outcome is "verified-by-composition" for discharged deferrals. Consumed at the build_log discharge summary (~step 3.5); NOT consumed at the end-gate scorecard.
       </action>
 
       <action>Seed {{merged}} from current story statuses to support partial-run resume:
@@ -281,28 +284,19 @@ Ready to begin?</output>
         2.1.2 — Transition to in-progress:
           `momentum-tools sprint status-transition --story {S.slug} --target in-progress`
 
-        2.1.3 — Spawn dev agent (individual-agent fan-out, NOT TeamCreate — spawned concurrently with all other frontier pipelines):
-          Resolve agent via: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
-          Spawn the resolved agent with the story file at `.momentum/stories/{S.slug}.md`.
-          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only."
-          [HOLLOW: per-story pipeline stage 1 (dev spawn ordering) and stage 2 (QA + code-review concurrent fan-out) are
-           specified by downstream conduct stories — fill those spawn calls when those stories land.
-           Stage 3 (fix loop — Phase B–D) is implemented in step 2.S3 below and is LIVE. The Conductor invokes step 2.S3
-           after stage-2 reviewers return their findings for story S. See step 2.S3 for the full fix-loop spec.]
-
-        2.1.4 — CONTRACT-FREEZE GATE (hooked at story launch — earliest sound point):
+        2.1.4 — CONTRACT-FREEZE GATE (fires at story launch, before any pipeline stages):
           Invoke step 2.V for story S. If step 2.V records an integrity stop for S (i.e., appends to {{contract_integrity_stops}}),
           skip all further verification actions for S in this pipeline iteration — do NOT dispatch the verifier for S.
-          If step 2.V confirms the contract is unchanged, proceed to verification as normal.
+          If step 2.V confirms the contract is unchanged, proceed to 2.1.5.
 
-          [PLACEMENT NOTE: The freeze gate fires here, at launch, rather than at a later "verification boundary" inside the
-          per-story pipeline. This is intentional and correct: the contract file is frozen at planning and is static between
-          launch and verification, so a sha256 check at launch guards the same invariant as one at verification-start. The
-          per-story pipeline internals (step 2.1.3 HOLLOW) are owned by downstream conduct stories — when those stories land,
-          they MUST NOT add a second freeze check at the per-story verification boundary. The gate belongs here, once, at
-          launch. Adding it again inside the per-story pipeline would double-gate and create redundant integrity stops.]
+          [PLACEMENT NOTE: The freeze gate fires here, at launch, before stage-1 dev spawn and before any
+          verification dispatch. This is intentional and correct: the contract file is frozen at planning and
+          is static between launch and verification, so a sha256 check at launch guards the same invariant as
+          one at verification-start. The per-story pipeline stages MUST NOT add a second freeze check at any
+          later point. The gate belongs here, once, at launch. Adding it again inside the pipeline would
+          double-gate and create redundant integrity stops.]
 
-        2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before verifier dispatch):
+        2.1.5 — COVERAGE-DISPOSITION BRANCH (fires after contract-freeze check, before stage-1 dev spawn):
           INTEGRITY-STOP GUARD: If step 2.V recorded an integrity stop for S (i.e., S is in {{contract_integrity_stops}}),
           skip this step entirely — do NOT invoke step 2.C and do NOT dispatch any verifier for S. The integrity-stop
           semantics from 2.1.4 take precedence: no further verification actions are performed for S in this pipeline
@@ -313,8 +307,131 @@ Ready to begin?</output>
             { outcome: "dedicated-run" }         — perform the dedicated QA verification run during this build phase
             { outcome: "covered-by-composition", integration_scenario: "<scenario-id>" }
                                                  — skip the dedicated build-time run; record the deferral
+          Bind {{coverage_disposition}}[S.slug] = the outcome string returned by step 2.C.
           Act on the routing outcome as specified in step 2.C. Do NOT dispatch the verifier at build time
           for a story whose coverage_disposition is "covered-by-composition".
+
+        2.1.3 — STAGE-1 → STAGE-2 → STAGE-3 PIPELINE: Fire asynchronously after 2.1.4/2.1.5 resolve.
+          Each story's pipeline runs independently and concurrently with other stories' pipelines.
+          The pipeline emits a single terminal signal when complete; step 2.2 consumes that signal.
+          The launch loop does NOT block on any stage — all per-story pipelines run concurrently.
+
+          ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
+          Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
+          Bind {{dev_agent}} = the resolved agent name (e.g., "dev", "dev-build", "dev-frontend", "dev-skills").
+          Bind {{writable_files}} = the explicit set of files this story is expected to create or modify.
+            Derivation rule (in priority order):
+              1. If the story spec contains an explicit `## What's needed` or `## Deliverables` section
+                 that enumerates file paths, use those paths.
+              2. Otherwise (absent or non-enumerated section), derive deterministically:
+                 (a) Any file path literally named in the story spec body (e.g. in backticks or code fences).
+                 (b) Any file matching the story's `touches` globs from `.momentum/stories/index.json`.
+                 (c) Minus: all `.momentum/stories/` paths and all `.momentum/sprints/` paths (always forbidden).
+              The fallback MUST produce an enumerable list — an empty or undefined writable_files is
+              not a valid result. If steps 1-2 yield no paths, bind {{writable_files}} = [] and log a
+              warning; the per-story FORBIDDEN clauses below still apply regardless.
+          Spawn {{dev_agent}} as an individual agent (fan-out, NOT TeamCreate) with:
+            - story_file: `.momentum/stories/{S.slug}.md`
+            - sprint_slug: {{sprint_slug}}
+            - worktree_path: `.worktrees/story-{S.slug}` (the story's isolated git worktree)
+            - contract_part_a: path to `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*` (Part A only)
+            - writable_files: {{writable_files}} (enumerated list; agent must write ONLY these files)
+          Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Produce output only.
+            WRITE-SCOPE: You may ONLY create or modify files listed in writable_files for this story.
+            FORBIDDEN: Do NOT edit `.momentum/stories/{S.slug}.md` (this story's own spec file) — it is read-only input.
+            FORBIDDEN: Do NOT edit any other story's spec file under `.momentum/stories/` or its verification contract under `.momentum/sprints/`.
+            FORBIDDEN: Do NOT edit any file outside the declared writable_files set.
+            CROSS-ARTIFACT RULE: If during implementation you identify a problem that belongs to a DIFFERENT artifact (e.g., another story's spec, a shared reference file not in your writable set), do NOT edit that artifact. Instead, record it as a reconciliation note in your completion signal so the Conductor can route it to the owning story via momentum:triage or create-story."
+          This spawn fires concurrently with all other frontier story spawns (no story-count cap).
+
+          When {{dev_agent}} returns its implementation-complete signal:
+          Bind {{stage1_output}} = the agent's return value (implementation-complete + file_list).
+          Bind {{stage1_cross_artifact_notes}} = {{stage1_output}}.cross_artifact_notes (default []).
+
+          WRITE-SCOPE COMMIT GUARD: Before committing, verify that every file staged by `git add -u`
+            falls within {{writable_files}} for story S. To enforce this:
+            — Run `git -C .worktrees/story-{S.slug} diff --name-only --cached` after staging to
+              obtain the actual staged file list.
+            — For each staged path P: confirm P is in {{writable_files}}.
+              If P is NOT in {{writable_files}} AND P is not `.momentum/stories/{S.slug}.md` (always forbidden),
+              log a warning in {{build_log}} and UNSTAGE P (`git -C .worktrees/story-{S.slug} restore --staged P`)
+              before committing. Do NOT commit out-of-scope edits.
+          The Conductor (sole git-mutation authority) commits the produced output:
+            `git -C .worktrees/story-{S.slug} add -u`
+            (apply write-scope guard above before proceeding)
+            `git -C .worktrees/story-{S.slug} commit -m "feat({S.slug}): implement {{S.title}}"`
+
+          CROSS-ARTIFACT ROUTING: If {{stage1_cross_artifact_notes}} is non-empty, accumulate each
+            entry into {{build_cross_artifact_notes}} with the story slug attached:
+              { slug: S.slug, artifact: entry.artifact, note: entry.note }
+            These are deferred — do NOT invoke momentum:triage inline here. The full batch is
+            routed to momentum:triage at build-phase completion (step 2.2 / Phase 2 wrap-up),
+            mirroring the triaged-out path for fix-mode findings.
+
+          Then advance this story's pipeline to stage-2.
+
+          ── STAGE-2: CONCURRENT QA + CODE-REVIEW FAN-OUT ───────────────────────────────────
+          Stage 2 fires AFTER the stage-1 commit, BEFORE the merge at step 2.2.M (pre-merge review).
+          Apply coverage routing established at 2.1.5:
+            - If {{coverage_disposition}}[S.slug] == "covered-by-composition": skip stage-2 entirely;
+              bind {{stage2_findings}} = [] and advance directly to stage-3 with an empty findings list.
+            - If {{coverage_disposition}}[S.slug] == "dedicated-run" (default): dispatch the fan-out below.
+
+          DIFF RANGE (Scenario A — Pre-Merge Review, per references/per-story-review-diff-range.md):
+          Compute the per-story diff at review time — do NOT capture a SHA; do NOT wait for the merge:
+            {{story_diff}} = output of:
+              `git -C .worktrees/story-{S.slug} diff \
+                $(git -C .worktrees/story-{S.slug} \
+                  merge-base sprint/{{sprint_slug}} story/{{S.slug}}) \
+                ..story/{{S.slug}}`
+          Pass the materialized diff (not the range expression) to both reviewers.
+          DO NOT use over-scoped ranges (main...HEAD) or two-dot sprint-tip forms.
+          Authoritative pattern and rationale: references/per-story-review-diff-range.md.
+
+          Spawn the following two agents CONCURRENTLY (individual-agent fan-out, NOT TeamCreate):
+
+            REVIEWER A — qa-reviewer agent:
+              Inputs:
+                - story_slug: S.slug
+                - worktree_path: `.worktrees/story-{S.slug}`
+                - verification_contract: `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*`
+                - story_diff: {{story_diff}}
+              Constraint: "Read-only. Do not modify code. Do not mutate git. Produce findings only."
+              Returns: per-AC classification (VERIFIED / PARTIAL / MISSING / BLOCKED) with stakes_class
+                on each finding, normalized to the canonical finding schema (finding-schema.md).
+                Source field: `qa-reviewer`.
+
+            REVIEWER B — momentum:code-reviewer skill (bmad-code-review adapter):
+              Inputs:
+                - story_slug: S.slug
+                - story_diff: {{story_diff}}
+                - worktree_path: `.worktrees/story-{S.slug}`
+                - review_depth: S.review_depth if set in the story spec (see DEEPER-REVIEW OPT-IN above);
+                    omit this field (or pass null) when the story spec does not set it, which triggers
+                    standard-depth review. Passing "deep" triggers the higher-rigor pass.
+              Constraint: "Report-only mode. Do not modify code. Do not mutate git. Produce findings only."
+              Returns: normalized finding records per canonical finding schema (finding-schema.md),
+                stakes_class populated on every record. Source field: `bmad-code-review`.
+
+          When BOTH reviewers have returned:
+          Bind {{qa_findings}} = findings array from REVIEWER A.
+          Bind {{cr_findings}} = findings array from REVIEWER B.
+          Merge into {{stage2_findings}}: deduplicated union of {{qa_findings}} and {{cr_findings}},
+            severity-sorted (critical → major → minor → low).
+          Deduplication: if a qa-reviewer finding and a bmad-code-review finding describe the same
+            location and issue, keep the higher-severity record; annotate source as
+            "qa-reviewer+bmad-code-review".
+          Each finding in {{stage2_findings}} carries the canonical base fields of finding-schema.md,
+            including: story_slug, source, stakes_class, severity, verdict, type, location, summary,
+            detail, evidence, legitimate, ac_id (where applicable), and suggested_fix (when provided).
+          Then advance this story's pipeline to stage-3.
+
+          ── STAGE-3 FIX LOOP ───────────────────────────────────────────────────────────────
+          Invoke step 2.S3 for story S, passing {{stage2_findings}} as input.
+          Step 2.S3 (live) runs the directed fix-loop (Phase B→C→D, retry-bound-3, escalation routing).
+          When step 2.S3 emits its terminal signal, this story's pipeline emits its own terminal signal
+            to step 2.2 — either { slug, outcome: "merged", ... } or { slug, outcome: "failed", ... } —
+            per the outcome and quarantine rules in step 2.S3.
 
         Store pipeline_handle in {{running}}[S.slug].
       </action>
@@ -382,6 +499,38 @@ Ready to begin?</output>
     </step>
 
     <!-- ─────────────────────────────────────────────────────── -->
+    <!-- DEEPER-REVIEW OPT-IN (review_depth:deep)                -->
+    <!-- Names the requesting party and triggering signal.        -->
+    <!-- ─────────────────────────────────────────────────────── -->
+
+    <!--
+      REVIEW DEPTH GOVERNANCE:
+
+      Standard depth (default): REVIEWER B (momentum:code-reviewer) runs at its default
+      rigor level on every story in every build. No explicit parameter is required.
+
+      Deeper review (review_depth:deep): a higher-rigor code-review pass. It is dispatched
+      as REVIEWER B with the additional input `review_depth: "deep"` passed to the skill.
+
+      REQUESTING PARTY: The developer is the ONLY party permitted to request review_depth:deep.
+      The Conductor never upgrades to deep review on its own authority.
+
+      TRIGGERING SIGNAL: The developer sets `review_depth: "deep"` in the story's spec file
+      (`.momentum/stories/{slug}.md`) under the story's build-options block (or equivalent
+      top-level field). When the Conductor reads the story spec at launch (step 2.1 STAGE-1),
+      it checks for this field and passes it to REVIEWER B if present.
+
+      ROUTINE PATH: On a routine build the developer does not set this field. REVIEWER B
+      runs at standard depth. The deeper-review opt-in is NOT triggered automatically and
+      does NOT insert any mid-run developer question. It is a planning-time decision by
+      the developer, recorded in the story spec before the build starts.
+
+      BEHAVIORAL INVARIANT: review_depth:deep never reopens a human question on the
+      routine build path. Setting it is a planning action (pre-flight), not a mid-run
+      escalation.
+    -->
+
+    <!-- ─────────────────────────────────────────────────────── -->
     <!-- STEP 2.S3 — Stage-3 fix loop (Phase B–D, per story)     -->
     <!-- Invoked after stage-2 (QA + code-review) returns        -->
     <!-- findings for story S. Governs: spec §3 Phase B–D + §4.  -->
@@ -389,7 +538,9 @@ Ready to begin?</output>
 
     <step n="2.S3" goal="Stage-3 per-story fix loop — directed fixer with retry-bound-3, escalation routing (DEC-036 D1/D2)">
 
-      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, optionally run /simplify, re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.</note>
+      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, run /simplify (every story, once per iteration, after Phase B), re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
+
+      Stage-2 callers (QA reviewer + code-review adapter) and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
 
       <note>ROUTINE-PATH GUARANTEE (DEC-035 D1, always-on default). Routine findings (stakes_class == routine) are ALWAYS auto-fixed inside this loop with no human gate. The always-auto-fix behavior for routine findings is UNCHANGED and PRESERVED. This is the anti-firehose baseline: the vast majority of findings complete Phase B→D autonomously without any escalation or human contact.</note>
 
@@ -397,15 +548,38 @@ Ready to begin?</output>
 
       <note>ISOLATION INVARIANT. An escalated finding for one item does NOT stop routine findings on other items from completing their normal fix → re-check → bound-3 cycle. The escalation path is non-destructive to the routine path. Within a single story's findings list, escalated findings exit the retry loop; routine findings continue their fix/re-check cycle to completion regardless.</note>
 
+      <!-- ── CANONICAL RETRY BOUNDS (declared once; all per-loop mentions defer to these) ───── -->
+      <!--                                                                                        -->
+      <!-- FIX-LOOP BOUND ({{MAX_FIX_ATTEMPTS}}): governs Phase B→D iterations per finding.      -->
+      <!--   Canonical value: 3. Every Phase D check that tests {{fix_attempts}} against a        -->
+      <!--   numeric limit MUST reference {{MAX_FIX_ATTEMPTS}}, not a hardcoded literal.          -->
+      <!--   If the retry budget is ever changed, it is changed here and only here.               -->
+      <!--                                                                                        -->
+      <!-- MERGE-ATTEMPT BOUND: governs rebase-then-merge attempts per story.                    -->
+      <!--   Canonical value: 3. Declared at step 2.0 init ({{merge_attempts}} bound: 3)          -->
+      <!--   and enforced in step 2.2.M.4. Each mention in 2.2.M refers to that step 2.0         -->
+      <!--   declaration; no merge-attempt mention may state a different number.                  -->
+      <!--                                                                                        -->
+      <!-- PIPELINE-RETRY BOUND: governs Conductor-level story-pipeline retries on failure.      -->
+      <!--   Canonical value: 2. Declared at the step 2.2 failed-signal handler note             -->
+      <!--   ("default retry bound is 2"); all checks in that handler defer to that statement.   -->
+      <!--   Pipeline retries are a distinct loop from the fix-loop and merge-attempt loop.       -->
+      <!--   The three loops are separate; each has its own canonical bound declared once.        -->
+
       <!-- ── Entry: bind findings, initialize per-finding retry state ─── -->
 
-      <action>Bind {{stage2_findings}} = merged findings array from stage-2 (qa-reviewer + bmad-code-review output for story S),
+      <action>Bind {{MAX_FIX_ATTEMPTS}} = 3 — the canonical fix-loop bound for this step. Every Phase D check
+        that tests {{fix_attempts}} against a retry limit uses {{MAX_FIX_ATTEMPTS}}. Declared once here;
+        never hardcoded elsewhere in 2.S3.
+        Bind {{stage2_findings}} = merged findings array from stage-2 (qa-reviewer + bmad-code-review output for story S),
         deduplicated and severity-sorted (highest severity first).
         Bind {{fix_attempts}} = {} — per-finding retry counter keyed by finding ID.
-        Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked).
-          [NOTE: "blocked" is Conductor-internal-only, used when retry budget is exhausted. It is NOT in the canonical four-value disposition set (fixed | dismissed | triaged-out | escalated) defined by finding-schema.md. Before blocked findings reach the end-gate report or any schema consumer, they are treated as escalated findings (the canonical catch-all for findings that cannot be fixed, dismissed, or triaged-out per finding-schema.md §73). The triage spin-out path for blocked findings serves the same routing purpose as the escalated path.]
-        Bind {{end_gate_escalations}} = [] — escalated findings routed to end-gate-expanded tier (held for Phase 5).
-          [HOLLOW: {{end_gate_escalations}} is written here and emitted in the pipeline signal payload but NOT yet consumed by the end-gate report (step 5). Wiring {{end_gate_escalations}} into the step 5 decision-card section ({{stakes_findings}}) is owned by a downstream end-gate-rendering story. This dead-end is intentional and traceable — it is not silent.]
+        Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked | scope-reverted).
+          [NOTE: "blocked" and "scope-reverted" are Conductor-internal-only values. They are NOT in the canonical four-value disposition set (fixed | dismissed | triaged-out | escalated) defined by finding-schema.md.
+            "blocked" — used when retry budget is exhausted; treated as escalated for schema consumers.
+            "scope-reverted" — used when the write-scope guard fully discards a fix (stage-3 SCOPE-REVERT PATH case a or case b with insufficient in-scope portion). The scope-reverted disposition has its own inline reroute path (momentum:triage called immediately, not deferred) and MUST NOT be picked up by the build-phase-completion deferred triaged-out router, which would create a duplicate stub. For schema consumers, scope-reverted maps to triaged-out.]
+        Bind {{story_end_gate_escalations}} = [] — per-story accumulator for escalated findings routed to end-gate-expanded tier within this story's pipeline. Reset at the start of each story. Emitted in the pipeline signal payload; consumed by step 2.2's accumulation action which appends entries into the Conductor-scoped {{end_gate_escalations}} accumulator.
+          [WIRED: {{story_end_gate_escalations}} is written here, emitted in the pipeline signal payload, and consumed by step 2.2 to populate the Conductor-scoped {{end_gate_escalations}}. Step 5 reads {{end_gate_escalations}} (Conductor-scoped) to build decision cards. Each entry must carry: finding_id, stakes_class, summary, evidence, suggested_fix. These fields populate the decision cards. See references/endgate-report-renderer.md for the full data contract and rendering spec.]
         Bind {{mid_flight_escalations}} = [] — escalated findings accumulated for single dispatch to step 2.F (the shared-primitive escalation hook).
       </action>
 
@@ -418,7 +592,13 @@ Ready to begin?</output>
 
       <action>PHASE B — Invoke the directed fixer (momentum:dev in fix mode) as a subagent (individual-agent, NOT TeamCreate):
         Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration).
-        Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only."
+        Pass {{writable_files}} (the same set passed to the stage-1 dev spawn for story S) to the fixer.
+        Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only.
+          WRITE-SCOPE: You may ONLY create or modify files listed in writable_files for this story.
+          FORBIDDEN: Do NOT edit `.momentum/stories/{S.slug}.md` (this story's own spec file) — it is read-only input.
+          FORBIDDEN: Do NOT edit any other story's spec file under `.momentum/stories/` or its verification contract under `.momentum/sprints/`.
+          FORBIDDEN: Do NOT edit any file outside the declared writable_files set.
+          CROSS-ARTIFACT RULE: If a finding points to a problem that belongs to a DIFFERENT artifact outside this story's writable_files set, do NOT edit that artifact in-tree. Return disposition `triaged-out` for that finding so the Conductor can route a reconciliation note to the owning story."
         Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
         The fixer applies every routine legitimate finding automatically (no prompt), returns escalated disposition for stakes-class findings (not silently fixed), dismissed with non-empty rationale for non-genuine findings, or triaged-out for out-of-scope new work.
         The Conductor (not the fixer) commits any applied fixes after the fixer returns.
@@ -427,12 +607,27 @@ Ready to begin?</output>
       <!-- ── Route each finding by disposition returned by fixer ───── -->
 
       <action>For each finding F in the fixer's returned dispositions:
+        RESET per-finding locals: {{fix_reverted_files}} = [] — must be cleared at the top of each iteration so a prior finding's discarded paths cannot bleed into the current finding's scope-revert check.
 
         CASE disposition == "fixed":
           — Stakes-class guard: VERIFY that F.stakes_class == "routine". If the fixer returns "fixed" for a stakes-class finding (non-routine), treat it as an implementation error — do NOT commit the fix. Log a warning in {{build_log}} and re-classify F as escalated (see escalated path below).
             When re-classifying: look up the inbound finding for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's "fixed" disposition object does not carry these fields). Default timing_tier to "end-gate-expanded" (the conservative default per finding-schema.md) since the fixer never sets timing_tier on a "fixed" disposition.
-          — Commit the applied fix to the story worktree .worktrees/story-{S.slug}: `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
+          — WRITE-SCOPE COMMIT GUARD (fix loop): Before staging the fix, run `git -C .worktrees/story-{S.slug} diff --name-only` to enumerate the files the fixer modified. For each modified file P: if P is NOT in {{writable_files}} for story S, it is out of scope. UNSTAGE and DISCARD the out-of-scope edit (`git -C .worktrees/story-{S.slug} checkout -- P`) before committing. Collect the discarded paths into {{fix_reverted_files}}.
+            SCOPE-REVERT PATH (fires when {{fix_reverted_files}} is non-empty after discarding):
+              a. If ALL files the fixer modified were out of scope (the fix produced ONLY out-of-scope edits — nothing was committed), the fix was entirely reverted:
+                 — Do NOT commit. The finding's "fixed" disposition is INVALID — the fix never landed.
+                 — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover summary, detail, location, suggested_fix, severity, stakes_class (mirroring the triaged-out and escalated cases at lines 575/580; these descriptive fields are needed for the triage stub below).
+                 — Re-classify F: change disposition from "fixed" to "scope-reverted" in {{finding_dispositions}}.
+                   [NOTE: "scope-reverted" is Conductor-internal (parallel to "blocked" at line 521). It is NOT in the canonical four-value set (fixed | dismissed | triaged-out | escalated). Before any schema consumer sees this record it maps to "triaged-out". Using a distinct value prevents the build-phase-completion deferred-triage router (CASE disposition == "triaged-out") from picking up this record a second time and creating a duplicate stub — the inline reroute below is the sole routing owner for scope-reverted findings.]
+                 — Append to {{conductor_reverted_fixes}}: { finding_id: F.id, story_slug: S.slug, summary: I.summary, reverted_files: {{fix_reverted_files}}, reroute_stub_slug: null }.
+                 — Log in {{build_log}}: { slug: S.slug, event: "stage3-fix-scope-reverted", finding_id: F.id, finding_summary: I.summary, reverted_files: {{fix_reverted_files}}, note: "fix entirely discarded by write-scope guard — disposition reclassified from fixed to scope-reverted; defect re-routed inline for follow-up" }.
+                 — RE-ROUTE for follow-up (defect must not be silently dropped): invoke momentum:triage with the inbound finding I's descriptive fields (finding_id: F.id, summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix, story_slug: S.slug, severity: I.severity, stakes_class: I.stakes_class) to create a backlog stub so the defect remains on record. This triage call is inline because the scope-reverted disposition does NOT enter the deferred-triage router. Bind the returned stub slug into {{conductor_reverted_fixes}}[last].reroute_stub_slug.
+                 — Do NOT pass F to the fixer again in the next iteration — the defect is out-of-scope for this story's deliverables and will be addressed through the stub.
+              b. If ONLY SOME files were out of scope (the fix contained both in-scope and out-of-scope edits), the partial fix is committed without the out-of-scope files. The finding remains disposition "fixed" only if the in-scope portion of the fix is sufficient to address the finding. If the in-scope portion alone does not address the finding (the core fix was in the discarded file), apply the same full-revert path above (re-classify to "scope-reverted", append to {{conductor_reverted_fixes}}, re-route inline). If the in-scope portion is sufficient: commit and record disposition "fixed" normally; log the partial discard in {{build_log}} as a warning.
+          — Commit the applied fix (in-scope edits only, after the guard above):
+              `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
+            (Only reached when the write-scope guard did NOT reclassify F — i.e., the fix landed in-scope and is valid.)
 
         CASE disposition == "dismissed":
           — Validate non-empty rationale: if F.dismissal_rationale is empty or missing, treat as invalid — log error in {{build_log}} and re-present F to the fixer in the next iteration (do not record as dismissed until a rationale is supplied).
@@ -454,14 +649,58 @@ Ready to begin?</output>
                 — Append to {{mid_flight_escalations}} (accumulated for dispatch to step 2.F after all findings are processed).
               ELSE (timing_tier == "end-gate-expanded" OR timing_tier not set):
                 — The finding is stakes-class but does NOT meet the mid-flight bar. Route to end-gate-expanded tier (the default and safety net).
-                — Append to {{end_gate_escalations}}: { finding_id: F.finding_id, stakes_class: stakes_class, timing_tier: "end-gate-expanded", summary: summary, evidence: evidence, suggested_fix: suggested_fix }
+                — Append to {{story_end_gate_escalations}}: { finding_id: F.finding_id, stakes_class: stakes_class, timing_tier: "end-gate-expanded", summary: summary, evidence: evidence, suggested_fix: suggested_fix }
                 — Record in {{build_log}}: { slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_summary: summary }
                 — Continue the fix loop. This escalation does NOT pause the build or stop other findings from completing.
       </action>
 
-      <!-- ── Optional Phase C: /simplify cleanup pass ─────────────── -->
+      <!-- ── Phase C: /simplify cleanup pass ──────────────────────── -->
+      <!--                                                               -->
+      <!-- TRIGGER RULE (single, non-conflicting): the /simplify pass   -->
+      <!-- runs on EVERY story, once per fix-loop iteration, immediately -->
+      <!-- after Phase B returns. No size/diff threshold. No on-demand  -->
+      <!-- opt-in. No second condition elsewhere in this step overrides  -->
+      <!-- this rule. The pass is always executed when Phase B applies   -->
+      <!-- at least one fix; when Phase B finds nothing to fix (empty    -->
+      <!-- stage2_findings) the fix loop exits at the empty-findings     -->
+      <!-- check above and this action is never reached.                 -->
 
-      <note>PHASE C (/simplify) is an optional post-fixer cleanup pass. It runs AFTER the fixer (Phase B), NEVER concurrently — it mutates the tree and must not double-mutate code the fixer just touched. /simplify is NOT a bug hunter; it applies cleanup only. Its findings, if any, feed back into the next Phase B iteration as routine cleanup findings.</note>
+      <action>PHASE C — SIMPLIFY CLEANUP: Spawn the /simplify skill as a subagent (individual-agent, NOT TeamCreate):
+        Input:
+          - worktree_path: `.worktrees/story-{S.slug}` (the story's worktree after Phase B fixes have been committed)
+          - writable_files: {{writable_files}} (same scope constraint as the Phase B fixer)
+        Constraint passed to subagent: "Apply code simplification and cleanup only. Do not introduce new logic,
+          fix bugs, or expand scope. Do not mutate git. Return a findings list of cleanup changes applied
+          (each entry: { finding_id, type: 'cleanup', severity: 'low', summary, location, suggested_fix }).
+          If nothing warrants cleanup, return an empty list."
+        Bind {{simplify_findings}} = the subagent's returned findings list (may be empty).
+      </action>
+
+      <action>PHASE C — CAPTURE AND COMMIT: If {{simplify_findings}} is non-empty:
+        Verify that every file modified by the /simplify subagent is in {{writable_files}}. Apply the same
+        write-scope guard used in Phase B: unstage and discard any out-of-scope edits before committing.
+        The Conductor (sole git-mutation authority) commits the cleanup output:
+          `git -C .worktrees/story-{S.slug} add -u`
+          (apply write-scope guard before proceeding)
+          `git -C .worktrees/story-{S.slug} commit -m "refactor({S.slug}): simplify cleanup pass"`
+        Record in {{build_log}}: { slug: S.slug, event: "stage3-simplify-pass", findings_count: length({{simplify_findings}}), committed: true }
+        If {{simplify_findings}} is empty: record in {{build_log}}: { slug: S.slug, event: "stage3-simplify-pass", findings_count: 0, committed: false }
+        Do NOT invoke momentum:triage for simplify findings — they are cleanup-only, not defects.
+      </action>
+
+      <action>PHASE C — FEED BACK: Merge {{simplify_findings}} into the unresolved findings list for the next
+        Phase B iteration. Each entry in {{simplify_findings}} is tagged stakes_class: "routine" and
+        disposition: null (unresolved). Append to {{remaining_findings}} so they are presented to the Phase B
+        fixer in the next iteration as routine cleanup candidates.
+        Note: this feedback is ONLY meaningful when the loop is about to re-enter Phase B (i.e., when
+        {{remaining_findings}} from Phase D is non-empty or {{simplify_findings}} itself is non-empty and the
+        loop has iterations remaining). If all other findings are resolved AND {{simplify_findings}} is empty,
+        Phase D will find {{remaining_findings}} empty and the loop exits cleanly — no re-entry to Phase B.
+        If {{simplify_findings}} is non-empty but all fix-attempt budgets are at {{MAX_FIX_ATTEMPTS}}: the
+        simplify findings do NOT extend the fix budget beyond {{MAX_FIX_ATTEMPTS}} — they are treated
+        as iteration-zero findings ({{fix_attempts}}[F.id] initialized to 0) and are subject to the same
+        per-finding retry bound.
+      </action>
 
       <!-- ── Mid-flight dispatch for bar-clearing escalations ───────── -->
 
@@ -477,16 +716,21 @@ Ready to begin?</output>
       <!-- ── Phase D: RE-CHECK gate — loop control ─────────────────── -->
 
       <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
-        Collect {{remaining_findings}} = findings not yet resolved (status not fixed | dismissed | triaged-out | escalated).
-        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop.
+        Collect {{remaining_findings}} = UNION of:
+          (a) findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted | blocked), AND
+          (b) any entries in {{simplify_findings}} with disposition: null that are not already present in set (a).
+        This additive collect ensures simplify findings appended by Phase C FEED BACK survive into the next Phase B
+        iteration — they carry disposition: null and were never in stage2_findings, so a status-only filter would drop them.
+        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop. Scope-reverted findings are also removed — they were fully discarded by the write-scope guard and re-routed inline; re-presenting them to the fixer would be incorrect (the defect is out-of-scope for this story). Blocked findings are also excluded — their fix budget is exhausted and they are handled by the blocked-then-continue path below.
+        DIFF RANGE FOR RE-CHECK: Use the same canonical pre-merge merge-base pattern as stage 2. The story branch is still pre-merge at this point. Canonical pattern: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review).
       </action>
 
       <check if="{{remaining_findings}} is empty">
-        <note>All findings are resolved (fixed, dismissed, triaged-out, or escalated). The fix loop is clean. Proceed to stage-4 (merge).</note>
+        <note>All findings are resolved (fixed, dismissed, triaged-out, escalated, scope-reverted, or blocked). The fix loop is clean. Proceed to stage-4 (merge).</note>
         <action>Proceed to stage-4 (merge) for story S.
           Emit partial pipeline signal payload (for eventual terminal signal from stage-4):
             leftover_findings: [] (none remaining)
-            escalations: {{end_gate_escalations}} (held for Phase 5 end-gate; mid-flight escalations already dispatched)
+            escalations: {{story_end_gate_escalations}} (per-story accumulator; consumed by step 2.2 accumulation action into Conductor-scoped {{end_gate_escalations}}; mid-flight escalations already dispatched)
         </action>
       </check>
 
@@ -498,22 +742,22 @@ Ready to begin?</output>
           Increment {{fix_attempts}}[F.id] (initialize to 0 if absent).
         </action>
 
-        <check if="any F in {{remaining_findings}} has {{fix_attempts}}[F.id] less than 3">
+        <check if="any F in {{remaining_findings}} has {{fix_attempts}}[F.id] less than {{MAX_FIX_ATTEMPTS}}">
           <note>Retry budget available for at least one remaining finding. Loop back to Phase B with the unresolved findings.</note>
           <action>Return to Phase B (CONVERGE): invoke the directed fixer again with {{remaining_findings}} (the subset still unresolved).
-            Do not pass already-fixed, dismissed, triaged-out, or escalated findings back to the fixer — pass only the genuinely unresolved ones.
+            Do not pass already-fixed, dismissed, triaged-out, escalated, or scope-reverted findings back to the fixer — pass only the genuinely unresolved ones.
           </action>
         </check>
 
-        <check if="all F in {{remaining_findings}} have {{fix_attempts}}[F.id] >= 3">
-          <note>Retry budget exhausted for all remaining findings. Mark each exhausted finding BLOCKED. Continue to the next story — do NOT halt the whole build.</note>
-          <action>For each finding F in {{remaining_findings}} (where {{fix_attempts}}[F.id] >= 3):
+        <check if="all F in {{remaining_findings}} have {{fix_attempts}}[F.id] >= {{MAX_FIX_ATTEMPTS}}">
+          <note>Retry budget exhausted for all remaining findings ({{MAX_FIX_ATTEMPTS}} attempts reached). Mark each exhausted finding BLOCKED. Continue to the next story — do NOT halt the whole build.</note>
+          <action>For each finding F in {{remaining_findings}} (where {{fix_attempts}}[F.id] >= {{MAX_FIX_ATTEMPTS}}):
             Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "blocked", summary: F.summary, attempts: {{fix_attempts}}[F.id] }
             Append to {{build_log}}: { slug: S.slug, event: "stage3-finding-blocked", finding_id: F.id, finding_summary: F.summary, attempts: {{fix_attempts}}[F.id] }
           </action>
           <action>Emit partial pipeline signal payload:
             leftover_findings: blocked findings list (for end-gate report and triage spin-out)
-            escalations: {{end_gate_escalations}} (held for Phase 5 end-gate)
+            escalations: {{story_end_gate_escalations}} (per-story accumulator; consumed by step 2.2 accumulation action into Conductor-scoped {{end_gate_escalations}})
             Note: mid-flight escalations were already dispatched inline; they do not appear in leftover_findings.
           </action>
           <note>BLOCKED-then-continue: the whole-build is NOT halted. However, per spec §3 stage-3 ('BLOCKED -> spin a stub via momentum:triage, leave unmerged'), story S is NOT merged. The Conductor removes S from {{running}} WITHOUT transitioning it to stage-4, spins a triage stub for the blocked findings, and continues building other stories in {{running}} and {{frontier}} unaffected. The story remains unmerged; dependents whose >= gate requires S's merge become unsatisfiable, which is the intended consequence of an unmergeable story.</note>
@@ -606,7 +850,7 @@ Ready to begin?</output>
         </action>
         <note>GUARDRAIL — no second run. Once this routing outcome is returned and the deferral is recorded, the Conductor must NOT perform an additional dedicated verification run for S during the build phase. The deferral is a one-way routing decision for the build phase; it does not prevent the integration scenario from running at AVFL/merge — it ensures the dedicated build-time run does not also run. Double-running wastes effort and can produce contradictory signals.</note>
         <note>STAKES-CLASS BOUNDARY — deferral does not weaken routing. If the integration scenario at AVFL/merge surfaces a stakes-class finding (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture), that finding is still routed out of the silent auto-fix path and rendered in the report by the finding schema and report. The deferral from this build-phase branch does not weaken, suppress, or narrow that routing. The timing/venue changed; the routing rules did not.</note>
-        <note>DOWNSTREAM DISCHARGE — forward reference. The `coverage-disposition-deferred` build_log record and the `covered_by_scenario` field are informational markers that a named integration scenario owns discharge of this story's verification debt. Consumption of this record — actually running the named integration scenario at AVFL/merge and verifying its outcome — is NOT wired in the current Conductor Phase 3 (step 3). Wiring that consumer is owned by a downstream story/spec section (§5 AVFL). Until that downstream story lands, the deferral record is a correct and complete artifact of the build phase; the discharge loop closes in a later sprint increment. This is an intentional incremental gap, not a spec defect in this story's diff.</note>
+        <note>DOWNSTREAM DISCHARGE — wired in Phase 3 step 3.D. The `coverage-disposition-deferred` build_log record and the `covered_by_scenario` field drive the discharge consumer at AVFL/merge (Phase 3 step 3.D). Step 3.D reads all deferred records, runs each named integration scenario, records the outcome as `verified-by-composition` on pass, and surfaces any undischarged deferral as a leftover finding at the end-gate. The discharge loop is closed — the deferral is not silently assumed satisfied.</note>
       </check>
 
     </step>
@@ -643,6 +887,19 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
         </check>
 
         <check if="hook returns 'continue' OR hook resolution completes">
+          <!-- ── Accumulate end-gate-expanded escalations into Conductor scope ──── -->
+          <action>Accumulate end-gate-expanded findings from this story into the Conductor-scoped accumulator:
+            For each entry E in S.escalations where E.timing_tier == "end-gate-expanded":
+              Append { finding_id: E.finding_id, stakes_class: E.stakes_class, timing_tier: "end-gate-expanded",
+                       summary: E.summary, evidence: E.evidence, suggested_fix: E.suggested_fix,
+                       story_slug: S.slug }
+              to {{end_gate_escalations}}.
+            This is the consumer-side aggregation that closes the seam between the per-story
+            {{story_end_gate_escalations}} (reset each story in step 2.S3; emitted as S.escalations
+            in the pipeline signal payload) and the Conductor-scoped {{end_gate_escalations}}
+            that step 5 Source 1 reads to build decision cards.
+          </action>
+
           <!-- ═══════════════════════════════════════════════════════════════════════ -->
           <!-- STEP 2.2.M — PER-STORY INTEGRATION: REBASE → MERGE → CONFLICT PATH    -->
           <!-- Conductor is the sole git-mutation authority for all operations below. -->
@@ -1058,47 +1315,299 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
   <!-- PHASE 3: AVFL-ON-MERGE                                      -->
   <!-- ═══════════════════════════════════════════════════════════ -->
 
-  <step n="3" goal="AVFL-on-merge — sprint-level quality scan on the full integrated sprint branch">
-    <note>AVFL runs once after ALL stories are merged to the sprint branch. It is a read-only scan at this phase — findings are not fixed here; they are held for the end-gate report. This phase runs silently; no developer interaction unless a finding triggers mid-flight escalation criteria (which are delivered by a downstream story).</note>
+  <step n="3" goal="AVFL-on-merge — run avfl-merge-review Workflow over the precise integrated sprint-vs-main diff">
 
-    <action>Capture sprint diff: identify files changed by all merged stories (union of all `touches` arrays in {{story_map}}).
-      [INTERIM NOTE: The authoritative spec (§5, §6) calls for a 3-dot merge-base diff (`git diff <merge-base>...sprint/{{sprint_slug}}`) fed to an avfl-merge-review Workflow (not this prose skill). The touches-union approach here is an interim approximation. The AVFL-as-Workflow + 3-dot-diff rewrite is tracked as a downstream story per spec §10 PROSE→WF build order. When that story lands, replace this touches-union diff with the spec's merge-base 3-dot diff so AVFL inspects the net integrated change rather than a file-name union. This deviation is intentional and tracked — not a silent gap.]
-    </action>
-    <action>Collect acceptance criteria from all sprint story files. Concatenate as {{all_acs}}.</action>
+    <note>AVFL-on-merge runs once after ALL stories are merged to the sprint branch. It uses the avfl-merge-review Workflow (skills/momentum/skills/avfl/workflow-merge-review.md), which inspects the 3-dot merge-base diff of the sprint branch versus main — the net integrated change the developer would actually ship. This phase runs silently; no developer interaction. The workflow returns a typed CLEAN | NON_CONVERGENT result the Conductor consumes directly.</note>
 
-    <action>Spawn `momentum:avfl` (individual-agent, not TeamCreate) with:
-      - task_context: "Sprint {{sprint_slug}} — full codebase after {{sprint_stories | length}} stories merged"
-      - output_to_validate: {{sprint_diff}}
-      - source_material: {{all_acs}}
-      - profile: checkpoint
-      - stage: final
-      Constraint passed to agent: "Do not mutate git. Do not spawn build agents. Return findings only."
+    <!-- ── 3.1 — Assemble inputs for the merge-review Workflow ── -->
+
+    <action>Build the {{merged_stories}} input for the merge-review Workflow:
+      For each story slug S in {{merged}} (stories that reached status >= review):
+        Resolve the files this story touched from the story spec (the `touches` array in {{story_map}}[S]).
+      Bind {{merged_stories}} = array of { slug: S.slug, files_touched: S.touches }
+        for each S in {{merged}}.
     </action>
 
-    <action>Store {{avfl_findings}} = full findings list from AVFL output, tagged with source="avfl" and severity per finding.</action>
+    <action>Build the {{story_contracts}} map for the merge-review Workflow:
+      For each story S in {{merged}}:
+        Resolve S's contract path from `story_assignments[S.slug].contract.path` in the sprint record.
+      Bind {{story_contracts}} = map from slug to contract path
+        (used by the fixer for cross-story contradiction resolution — higher-authority contract wins).
+    </action>
 
-    <action>Route AVFL findings through the escalation engine (references/escalation.md):
-      For each finding F in {{avfl_findings}}:
-        If F.stakes_class == "routine": add to end-gate report as routine finding; no escalation check.
+    <!-- ── 3.2 — Invoke the avfl-merge-review Workflow ─────────── -->
+
+    <note>The avfl-merge-review Workflow owns the 3-dot diff capture, the dual-reviewer parallel fan-out, the declining-skepticism fix loop, and the typed result. The Conductor does NOT spawn momentum:avfl here — it invokes the avfl-merge-review Workflow, which handles its own subagent spawning. The Conductor remains the sole git-mutation authority: the workflow's fixer produces file content and a commit message label; the Conductor commits after each fix iteration.</note>
+
+    <action>Invoke the avfl-merge-review Workflow (skills/momentum/skills/avfl/workflow-merge-review.md) with:
+      - sprint_branch: "sprint/{{sprint_slug}}"
+      - base_ref: "main"
+      - merged_stories: {{merged_stories}}
+      - story_contracts: {{story_contracts}}
+      Constraint: "Do not ask the developer anything. Do not commit. Return the typed result when done."
+      The workflow runs through its validate → consolidate → evaluate → fix loop autonomously.
+      For each fix iteration where the workflow's fixer produces corrected file content:
+        The Conductor stages and commits the output:
+          `git checkout sprint/{{sprint_slug}}`
+          `git add -u && git commit -m "fix(avfl): resolve integration findings — iteration {N}"`
+        The workflow then re-captures the updated diff and continues its loop.
+      Bind {{merge_review_result}} = the typed result object returned by the Workflow.
+    </action>
+
+    <!-- ── 3.3 — Consume the typed result ──────────────────────── -->
+
+    <action>Extract findings from the merge-review result to populate {{avfl_findings}}:
+      Bind {{avfl_findings}} = array built from {{merge_review_result}} as follows:
+
+      From fixes_applied (findings that were fixed during the review loop):
+        For each fix F: emit { source: "avfl-merge-review", finding_id: F.id, severity: F.severity,
+          summary: F.change, disposition: "fixed", story_slug: F.owning_stories[0] or "sprint-integration",
+          stakes_class: "routine" }
+
+      From leftovers (only present when status == NON_CONVERGENT):
+        For each leftover L: emit { source: "avfl-merge-review", finding_id: L.id,
+          severity: L.severity, confidence: L.confidence, classification: L.classification,
+          summary: L.description, evidence: L.evidence, suggested_fix: L.suggestion,
+          why_unresolved: L.why_unresolved,
+          story_slug: L.owning_stories[0] or "sprint-integration",
+          location: L.location, owning_stories: L.owning_stories,
+          disposition: "residual", stakes_class: L.stakes_class or "routine",
+          type: "integration" }
+        Note: stakes_class is carried from L.stakes_class (populated by the merge-review leftover schema).
+        Default to "routine" only when L.stakes_class is absent. This preserves non-routine stakes
+        classifications so Source 2 at step 5 can correctly surface them as decision cards.
+
+      Tag all entries: source = "avfl-merge-review".
+
+      From Group-A fixer escalations (findings the directed fixer returned with disposition "escalated"
+        during the merge-review inner fix loop — tracked via workflow-merge-review.md step 5 Group-A
+        handling at ~line 280-282, where escalated dispositions are carried forward as leftovers with
+        why_unresolved: "escalated (stakes-class — held for end-gate)"):
+        For each leftover L where L.why_unresolved starts with "escalated":
+          Append to {{end_gate_escalations}}: { finding_id: L.id,
+            stakes_class: L.stakes_class or "routine",
+            timing_tier: "end-gate-expanded",
+            summary: L.description, evidence: L.evidence, suggested_fix: L.suggestion,
+            story_slug: L.owning_stories[0] or "sprint-integration",
+            source: "avfl-merge-review" }
+          Tag the corresponding {{avfl_findings}} entry with timing_tier: "end-gate-expanded" and
+          disposition: "escalated" (overriding "residual") so Source 2 de-dup at step 5 correctly
+          identifies these as already escalated and avoids double-counting.
+    </action>
+
+    <!-- ── 3.4 — Route residual leftovers through escalation ─── -->
+
+    <action>Route remaining (non-fixed) AVFL findings through the escalation engine (references/escalation.md):
+      For each finding F in {{avfl_findings}} where F.disposition == "residual":
+        If F.stakes_class == "routine": hold for end-gate report as routine finding; no escalation check.
         If F.stakes_class is stakes-class (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture):
           Invoke escalation engine with F.
           If engine returns { outcome: "continue" }: tag F with timing_tier: "end-gate-expanded"; hold for end-gate report.
           If engine returns { outcome: "pause-branch" }: invoke step 2.F pause-ask-resume logic for F.
-            Note: AVFL runs post-merge; mid-flight escalations from AVFL are post-merge pauses. The engine evaluates the bar identically regardless of phase.
-            Post-merge resolution outcome differences: Proceed = spawn fixer + commit to sprint branch; Change = fixer with alternative + commit to sprint branch. Abort-that-branch does NOT apply post-merge (no in-flight story branch exists); if the developer rejects the finding, open a follow-up backlog story instead.
-      ANTI-FIREHOSE: Only findings explicitly flagged irreversible-and-imminent or build-invalidating by AVFL fire a pause-ask. Non-imminent stakes-class findings go to end-gate-expanded.
+            Note: AVFL runs post-merge; post-merge resolution: Proceed = spawn fixer + commit to sprint branch;
+            Change = fixer with alternative + commit; Abort-that-branch does NOT apply (no in-flight story branch
+            exists) — open a follow-up backlog story instead.
+      ANTI-FIREHOSE: Only findings explicitly flagged irreversible-and-imminent or build-invalidating fire a pause-ask. Non-imminent stakes-class findings go to end-gate-expanded.
     </action>
 
-    <action>Append AVFL results to {{build_log}}: { phase: "avfl-on-merge", findings_count, stakes_findings_count, mid_flight_escalations_count }.</action>
-    <note>No general developer ask here. AVFL findings are held for the end-gate unless the escalation engine fires a pause-ask for a bar-clearing finding. Proceed to Phase 4.</note>
+    <!-- ── 3.5 — Record result and proceed ─────────────────────── -->
+
+    <action>Append AVFL-on-merge results to {{build_log}}:
+      { phase: "avfl-on-merge",
+        result_status: {{merge_review_result}}.status,
+        final_score: {{merge_review_result}}.final_score,
+        iterations: {{merge_review_result}}.iterations,
+        scores_per_iteration: {{merge_review_result}}.scores_per_iteration,
+        fixes_applied_count: length({{merge_review_result}}.fixes_applied),
+        leftovers_count: length({{merge_review_result}}.leftovers or []),
+        fix_commits: {{merge_review_result}}.commits,
+        findings_count: length({{avfl_findings}}),
+        stakes_findings_count: count of F in {{avfl_findings}} where F.stakes_class != "routine",
+        mid_flight_escalations_count: count of F in {{avfl_findings}} where F.timing_tier == "mid-flight" }
+    </action>
+
+    <check if="{{merge_review_result}}.status == 'NON_CONVERGENT'">
+      <note>The merge review could not fully converge. Leftovers carry full context (what/where/evidence/suggestion/why_unresolved). These are already in {{avfl_findings}} with disposition="residual" and will appear as decision cards or residual items in the end-gate report. The build is NOT halted — proceed to Phase 4 (E2E) with the known leftovers. The end-gate report surfaces them to the developer for acknowledgment.</note>
+      <action>Continue to Phase 4. Do not halt or ask the developer. The NON_CONVERGENT result is surfaced at the end-gate.</action>
+    </check>
+
+    <note>No developer ask here on the routine path. The avfl-merge-review Workflow ran over the precise 3-dot integrated diff. AVFL findings are held for the end-gate unless the escalation engine fires a pause-ask for a bar-clearing finding. Proceed to step 3.D.</note>
+
+    <!-- ── 3.D — Coverage-disposition discharge consumer ──────── -->
+    <!--
+      Discharge all coverage-composition deferrals that were recorded in Phase 2.
+      Step 2.C wrote, for each covered-by-composition story S:
+        { slug, title, event: "coverage-disposition-deferred",
+          covered_by_scenario: <scenario-id>,
+          coverage_disposition: "covered-by-composition" }
+      This step is the mandatory consumer: it actually runs the named scenario,
+      verifies the deferred story's acceptance behavior is observed, and records
+      whether the debt is discharged.  A deferral is NEVER silently assumed satisfied.
+    -->
+
+    <step n="3.D" goal="Coverage-disposition discharge consumer — run each named integration scenario for deferred stories; record verified-by-composition on pass; surface undischarged deferrals as end-gate leftovers on fail or missing">
+
+      <note>CONSUMER INVARIANT. This step runs after the AVFL merge-review loop (steps 3.1–3.5) because the integration scenario runs on the fully-integrated sprint branch — the same surface AVFL reviewed. The scenario must observe the deferred story's acceptance behavior in the integrated state, not in a per-story worktree. Running before AVFL would mean running against a partially-integrated surface, which would not satisfy the discharge contract.</note>
+
+      <note>SILENT-GAP PREVENTION. A coverage-composition deferral records a DEBT. That debt is discharged only when the named scenario (a) is found, (b) is run, and (c) observes the deferred story's required behavior. If any of these three conditions fails, the debt is NOT silently closed — it is surfaced as an undischarged-coverage-deferral leftover at the end-gate. The developer sees it as an unverified item. Nothing in this step auto-resolves the deferral based on assumption or proximity to passing work.</note>
+
+      <!-- ── 3.D.1 — Collect all deferred records ─────────────── -->
+
+      <action>Collect {{deferred_records}} from {{build_log}}:
+        Filter {{build_log}} to all entries where event == "coverage-disposition-deferred".
+        Each entry has shape: { slug, title, covered_by_scenario, coverage_disposition }.
+        Bind {{deferred_records}} = the filtered list.
+      </action>
+
+      <check if="{{deferred_records}} is empty">
+        <note>No covered-by-composition deferrals were recorded in this build. Nothing to discharge. This step is a no-op for builds where all stories ran dedicated verification. Proceed to Phase 4.</note>
+        <action>Skip 3.D.2 and 3.D.3. Proceed to Phase 4 (E2E).</action>
+      </check>
+
+      <!-- ── 3.D.2 — Run each named integration scenario ───────── -->
+
+      <action>For each deferred record R in {{deferred_records}} (process concurrently if multiple):
+
+        Bind {{scenario_id}} = R.covered_by_scenario.
+
+        LOCATE THE SCENARIO:
+          Attempt to resolve {{scenario_id}} against the known integration scenario registry for
+          this sprint (e.g., contract files under `.momentum/sprints/{{sprint_slug}}/specs/`,
+          or any file whose scenario `name` field matches {{scenario_id}}).
+          Bind {{scenario_found}} = true if the scenario is located; false otherwise.
+
+        CHECK if {{scenario_found}} == false:
+          — The named scenario cannot be located. The deferral CANNOT be discharged.
+          — Record in {{build_log}}:
+              { slug: R.slug, title: R.title,
+                event: "coverage-deferral-undischarged",
+                covered_by_scenario: {{scenario_id}},
+                outcome: "scenario-not-found",
+                note: "Named integration scenario could not be located; deferral remains open." }
+          — Append an undischarged-deferral leftover to {{avfl_findings}}:
+              { source: "coverage-discharge-consumer",
+                finding_id: "undischarged-deferral-{{R.slug}}",
+                severity: "major",
+                type: "coverage-gap",
+                stakes_class: "routine",
+                disposition: "residual",
+                story_slug: R.slug,
+                location: R.slug,
+                summary: "Coverage deferral for `{{R.slug}}` is undischarged — named scenario `{{scenario_id}}` not found.",
+                detail: "Story `{{R.slug}}` was deferred from build-time QA with the expectation that integration scenario `{{scenario_id}}` would verify its acceptance behavior at AVFL/merge. The scenario cannot be located. The verification debt is unresolved.",
+                evidence: "coverage-disposition-deferred record: slug={{R.slug}}, covered_by_scenario={{scenario_id}}; scenario file not found under `.momentum/sprints/{{sprint_slug}}/specs/`.",
+                suggestion: "Locate or create the named integration scenario `{{scenario_id}}`, run it against the sprint branch, and confirm it observes `{{R.slug}}`'s required behavior. Alternatively, re-run story `{{R.slug}}` with `coverage_disposition: dedicated-run`." }
+          — Skip to the next deferred record. Do NOT proceed to the run step.
+
+        RUN THE SCENARIO (when {{scenario_found}} == true):
+          Spawn an integration-scenario executor agent (individual-agent, NOT TeamCreate) with:
+            - scenario_id: {{scenario_id}}
+            - scenario_path: the resolved path to the scenario file
+            - sprint_branch: "sprint/{{sprint_slug}}"
+            - deferred_story_slug: R.slug
+            - deferred_story_title: R.title
+            - story_spec: ".momentum/stories/{{R.slug}}.md"
+            - contract_path: the path to R.slug's verification contract (from `story_assignments[R.slug].contract.path` in the sprint record)
+          Constraint passed to agent: "Run the named integration scenario against the integrated sprint branch. Verify that the scenario observes the deferred story's required acceptance behavior. Return a structured result: { scenario_id, ran: bool, passed: bool, deferred_story_observed: bool, evidence: string, stakes_findings: array }. The `stakes_findings` array contains any non-routine stakes-class concerns you observe while running the scenario — each entry has shape: { stakes_class: string, summary: string, location: string, evidence: string, suggested_fix: string }. Include only findings whose stakes_class is one of: security-auth-isolation | irreversible-destructive | high-blast-radius-architecture. Routine findings are not included in this array. The array may be empty. Do not mutate git. Do not spawn build agents."
+          Bind {{scenario_result}} = the agent's returned result for this record.
+
+        EVALUATE DISCHARGE:
+          A deferral is DISCHARGED only when ALL three conditions hold:
+            (1) {{scenario_result}}.ran == true          — the scenario was actually executed
+            (2) {{scenario_result}}.passed == true       — the scenario passed
+            (3) {{scenario_result}}.deferred_story_observed == true  — the deferred story's
+                  acceptance behavior was observed by the scenario (not merely that the scenario
+                  passed on its own — the scenario must provide positive evidence that it covers
+                  R.slug's required behavior)
+          If ANY condition is false: the deferral is NOT discharged.
+      </action>
+
+      <!-- ── 3.D.3 — Record outcomes ─────────────────────────────── -->
+
+      <action>For each deferred record R and its {{scenario_result}}:
+
+        CASE: all three discharge conditions hold (ran AND passed AND deferred_story_observed):
+          — Record discharge in {{build_log}}:
+              { slug: R.slug, title: R.title,
+                event: "coverage-deferral-discharged",
+                covered_by_scenario: {{scenario_id}},
+                outcome: "verified-by-composition",
+                evidence: {{scenario_result}}.evidence,
+                note: "Deferred story's acceptance behavior was observed by the named integration scenario. Verification debt discharged." }
+          — Tag the story as verified-by-composition in the Conductor's in-memory state:
+              {{coverage_discharge_results}}[R.slug] = { outcome: "verified-by-composition", scenario_id: {{scenario_id}}, evidence: {{scenario_result}}.evidence }
+          — No undischarged-deferral leftover is appended to {{avfl_findings}} for this record.
+          — STAKES-FINDINGS PASS-THROUGH: Even when a deferral is discharged, the executor may have observed non-routine stakes-class concerns while running the scenario. These must not be silently dropped.
+            For each entry SF in {{scenario_result}}.stakes_findings (may be empty):
+              If SF.stakes_class is one of { security-auth-isolation, irreversible-destructive, high-blast-radius-architecture }:
+                Append to {{avfl_findings}}:
+                  { source: "coverage-discharge-consumer",
+                    finding_id: "discharge-stakes-{{R.slug}}-{{loop_index}}",
+                    severity: "major",
+                    type: "stakes-finding",
+                    stakes_class: SF.stakes_class,
+                    disposition: "residual",
+                    story_slug: R.slug,
+                    location: SF.location,
+                    summary: SF.summary,
+                    detail: "Stakes-class concern observed by the discharge executor while running scenario `{{scenario_id}}` for deferred story `{{R.slug}}`. The deferral itself was discharged (scenario passed), but this concern requires a human decision — it is not on the routine auto-fix path.",
+                    evidence: SF.evidence,
+                    suggestion: SF.suggested_fix }
+                (Routine findings from the executor are NOT added here — they are out of scope for this path.)
+
+        CASE: any discharge condition fails (scenario ran but did not pass, OR ran and passed but deferred story's behavior was not observed, OR scenario could not run):
+          — Determine the failure mode for evidence:
+              If {{scenario_result}}.ran == false: failure_mode = "scenario-did-not-run"
+              Else if {{scenario_result}}.passed == false: failure_mode = "scenario-failed"
+              Else: failure_mode = "deferred-story-behavior-not-observed"
+          — Record in {{build_log}}:
+              { slug: R.slug, title: R.title,
+                event: "coverage-deferral-undischarged",
+                covered_by_scenario: {{scenario_id}},
+                outcome: failure_mode,
+                evidence: {{scenario_result}}.evidence,
+                note: "Deferral is not discharged; see leftover finding in end-gate report." }
+          — Append an undischarged-deferral leftover to {{avfl_findings}}:
+              { source: "coverage-discharge-consumer",
+                finding_id: "undischarged-deferral-{{R.slug}}",
+                severity: "major",
+                type: "coverage-gap",
+                stakes_class: "routine",
+                disposition: "residual",
+                story_slug: R.slug,
+                location: R.slug,
+                summary: "Coverage deferral for `{{R.slug}}` is undischarged — {{failure_mode}} for scenario `{{scenario_id}}`.",
+                detail: "Story `{{R.slug}}` was deferred from build-time QA. Its named integration scenario `{{scenario_id}}` was expected to observe its acceptance behavior at AVFL/merge. The discharge failed: {{failure_mode}}. The verification debt is unresolved.",
+                evidence: {{scenario_result}}.evidence,
+                suggestion: "Investigate why scenario `{{scenario_id}}` did not discharge the deferral ({{failure_mode}}). Ensure the scenario explicitly covers story `{{R.slug}}`'s acceptance criteria. Re-run Phase 3 after fixing the scenario, or re-run story `{{R.slug}}` with `coverage_disposition: dedicated-run`." }
+      </action>
+
+      <action>Append coverage-discharge summary to {{build_log}}:
+        { phase: "avfl-on-merge",
+          event: "coverage-discharge-consumer-complete",
+          deferred_count: length({{deferred_records}}),
+          discharged_count: count of entries in {{coverage_discharge_results}} where outcome == "verified-by-composition",
+          undischarged_count: count of entries in {{build_log}} where event == "coverage-deferral-undischarged" }
+      </action>
+
+      <note>STAKES-ROUTING NOTE. Two categories of findings flow out of this step:
+        (1) Undischarged-deferral leftovers — injected into {{avfl_findings}} with stakes_class:"routine" and disposition:"residual". Because they are routine, Phase 3 step 3.4 holds them (no escalation check) and Phase 5 Source 2 excludes them from {{stakes_findings}} (which filters to non-routine residuals only). They surface to the developer via the {{undischarged_deferrals}} variable computed in Phase 5's supporting-variables step and rendered in §05 of the end-gate report — not via the §04 decision-card path.
+        (2) Stakes-class findings returned by the discharge executor — injected into {{avfl_findings}} with the executor-reported stakes_class (non-routine) and disposition:"residual", source:"coverage-discharge-consumer". Because their stakes_class is non-routine, Phase 5 Source 2 picks them up for {{stakes_findings}} and they render as decision cards in §04 of the end-gate report. This holds EVEN WHEN the deferral itself was discharged (scenario passed). A passing scenario does not suppress a stakes-class concern the executor observed during the run. This routing closes the gap identified at step 2.C's STAKES-CLASS BOUNDARY: a deferral does not weaken stakes routing — it only defers the venue, never the path.</note>
+
+      <note>Proceed to Phase 4 (E2E).</note>
+    </step>
+
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!-- PHASE 4: END-TO-END (E2E) VALIDATION                        -->
   <!-- ═══════════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="E2E validation — end-to-end behavioral check on the integrated sprint branch">
-    <note>E2E validation runs silently. No developer interaction unless a finding hits the mid-flight escalation bar (downstream story delivers that logic). Results are held for the end-gate report.</note>
+  <step n="4" goal="E2E validation — end-to-end behavioral check on the integrated sprint branch, with normalization and escalation routing">
+
+    <note>E2E validation runs silently. No developer interaction unless a finding hits the narrow mid-flight escalation bar (irreversible-and-imminent or build-invalidating). All other findings — including non-urgent stakes-class E2E findings — are held for the end-gate as decision cards. The E2E findings follow the SAME normalization and escalation-routing path as build findings. They are not stored only as a raw count.</note>
+
+    <!-- ── 4.1 — Spawn E2E validator ─────────────────────────── -->
 
     <action>Spawn E2E validator agent (individual-agent, not TeamCreate):
       Resolve agent via: `momentum-tools agent resolve --role e2e-validator`
@@ -1107,97 +1616,241 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
     </action>
 
     <action>Store {{e2e_results}} = structured E2E validation report from agent output.</action>
-    <action>Append E2E results to {{build_log}}: { phase: "e2e", scenarios_checked, passed, failed, blocked }.</action>
-    <note>No developer ask here. E2E results are held for the end-gate. Proceed to Phase 5.</note>
+
+    <!-- ── 4.2 — Normalize each E2E failure to canonical finding schema ── -->
+
+    <action>NORMALIZE E2E FINDINGS. For each FAIL or ERROR scenario in {{e2e_results}}:
+
+      Extract the following from the e2e-validator's report structure:
+        - story_slug: the story key from the scenario's "[story]:[AC]" label; if no story key, use "e2e-integration" as a sentinel slug indicating a sprint-level integration failure not tied to a single story
+        - location: "[story]:[AC]" label from the validator output, or "sprint-integration" for sprint-level failures
+        - summary: one-sentence plain-English description — use the validator's "Expected: ... Actual: ..." pair as the source material; rephrase as a declarative statement of what is wrong
+        - detail: full explanation of what failed, why it matters as an observable consequence (not just a count), and what the expected vs. actual behavior was
+        - evidence: the concrete artifact excerpt quoted from the validator output — the command run, the actual output observed, or the error message; NEVER substitute a count ("1 failure") for inline evidence
+        - verdict: "FAIL" for behavior-divergence findings; "ERROR" for execution failures
+        - severity: derive from the AC's character:
+            - If the failed AC is a core user-visible behavior or a build-blocking scenario: "major"
+            - If the failure is a non-critical edge case: "minor"
+            - If execution cannot proceed at all (ERROR, environment broken): "critical"
+            - If the failure is a style or presentation detail: "low"
+            Default to "major" when the character is unclear — err toward attention.
+        - type: derive from the failure character:
+            - Behavior diverges from spec: "spec-compliance"
+            - Integration seam between two components is broken: "integration"
+            - Required behavior is entirely absent: "completeness"
+            - Security or auth-isolation observable failure: "security"
+            - Other bug: "bug"
+        - stakes_class: apply the stakes-classification rubric (references/stakes-classification-rubric.md):
+            - If the failing scenario touches auth, security, or isolation boundaries: "security-auth-isolation"
+            - If the scenario validates an irreversible/destructive action (migration, data-delete, force-push, prod-deploy): "irreversible-destructive"
+            - If the failure reveals a cross-cutting architectural contract break: "high-blast-radius-architecture"
+            - Otherwise: "routine"
+        - source: "e2e-validator"
+        - ac_id: the AC identifier from the scenario label, or null if not present
+        - legitimate: true for all FAIL/ERROR findings from the validator (the validator is the verifier of record for E2E; its FAIL verdict is taken as legitimate)
+        - suggested_fix: the validator's suggested remediation if any; null otherwise
+        - timing_tier: default "end-gate-expanded"; override to "mid-flight" only if the finding is BOTH stakes-class AND (irreversible-and-imminent OR build-invalidating) — apply the narrow bar from references/stakes-classification-rubric.md
+
+      Produce {{e2e_findings}} = array of normalized finding records in the canonical shape above.
+      PASS and SKIP scenarios from the validator do NOT produce findings — they produce no entry in {{e2e_findings}}.
+      MANUAL scenarios from the validator produce a finding only if the manual review revealed a failure; otherwise no entry.
+
+      EVIDENCE INVARIANT: Every finding in {{e2e_findings}} must carry non-empty `evidence` quoting inline from the validator's output. A finding with evidence == "" or evidence reduced to a count is malformed and must be rejected before proceeding.
+    </action>
+
+    <!-- ── 4.3 — Route E2E findings through the escalation engine ─── -->
+
+    <action>ROUTE E2E FINDINGS. For each finding F in {{e2e_findings}}:
+
+      CASE F.stakes_class == "routine":
+        — Routine E2E findings are handled on the transparent auto-fix path (parallel to routine build findings).
+        — The Conductor spawns a directed fixer (individual-agent) scoped to F: fix the integration defect.
+          The fixer returns a disposition: fixed | dismissed (with non-empty rationale) | triaged-out.
+          The Conductor commits any fix applied by the fixer:
+            `git checkout sprint/{{sprint_slug}}`
+            `git add -u && git commit -m "fix(e2e): auto-fix {F.summary}"`
+          Record the disposition in {{e2e_findings}}:
+            F.disposition = the fixer's returned value ("fixed" | "dismissed" | "triaged-out").
+            If "dismissed": also set F.dismissal_rationale = fixer-returned rationale (non-empty required).
+            If "triaged-out": invoke momentum:triage to spin a backlog stub for F (per finding-schema Rule 4 — triaged-out findings are not silently dropped). Record stub slug in F.triage_stub_slug.
+          Append to {{build_log}}: { phase: "e2e", event: "e2e-finding-auto-fixed", story_slug: F.story_slug, summary: F.summary, disposition: F.disposition }
+
+      CASE F.stakes_class != "routine" (stakes-class finding):
+        — Stakes-class E2E findings are NEVER silently auto-fixed. Route to escalation.
+        — Set F.disposition = "escalated".
+        — Set F.timing_tier = F.timing_tier (already set in normalization step; default "end-gate-expanded").
+        — Route by timing tier:
+            IF F.timing_tier == "mid-flight":
+              — Finding is irreversible-and-imminent OR build-invalidating.
+              — Invoke step 2.F (mid-flight escalation consumption hook) with F as a single-finding escalations array.
+              — The engine evaluates the bar and returns "pause-branch" or "continue".
+              — Record in {{build_log}}: { phase: "e2e", event: "e2e-mid-flight-escalation", story_slug: F.story_slug, stakes_class: F.stakes_class, summary: F.summary }
+            ELSE (timing_tier == "end-gate-expanded" OR not set):
+              — Finding is stakes-class but does NOT meet the mid-flight bar. Hold for end-gate.
+              — Append to {{end_gate_escalations}}: { finding_id: generated-id, story_slug: F.story_slug, source: "e2e-validator", stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", severity: F.severity, type: F.type, location: F.location, summary: F.summary, detail: F.detail, evidence: F.evidence, suggested_fix: F.suggested_fix, ac_id: F.ac_id, legitimate: true, disposition: "escalated" }
+              — Record in {{build_log}}: { phase: "e2e", event: "e2e-stakes-escalation", story_slug: F.story_slug, stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", summary: F.summary }
+    </action>
+
+    <!-- ── 4.4 — Build log and phase completion ──────────────────── -->
+
+    <action>Append E2E phase summary to {{build_log}}:
+      { phase: "e2e",
+        scenarios_checked: (count of all scenarios in validator output),
+        passed: (count of PASS scenarios),
+        failed: (count of FAIL scenarios),
+        blocked: (count of ERROR/BLOCKED scenarios),
+        e2e_findings_count: length({{e2e_findings}}),
+        routine_auto_fixed: (count of findings where disposition == "fixed"),
+        routine_dismissed: (count of findings where disposition == "dismissed"),
+        stakes_escalated_end_gate: (count of findings with stakes_class != routine AND timing_tier == "end-gate-expanded"),
+        stakes_escalated_mid_flight: (count of findings with stakes_class != routine AND timing_tier == "mid-flight") }
+    </action>
+
+    <note>No developer ask here on the routine path. Routine E2E findings are auto-fixed silently. Stakes-class E2E findings with timing_tier == "end-gate-expanded" are held for the end-gate as decision cards. Only timing_tier == "mid-flight" findings trigger the narrow mid-flight pause (step 2.F). Proceed to Phase 5.</note>
   </step>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- STORY TERMINAL STATES — COMPLETE ENUMERATION                -->
+  <!-- Every named terminal state has exactly one defined path     -->
+  <!-- that reaches it. No named terminal state is unreachable.    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+
+  <!--
+    TERMINAL STATES AND THEIR REACHABLE PATHS:
+
+    done
+      PATH: Story merged to sprint branch (step 2.2.M.6 → status "review") → developer approves
+        at end-gate (Phase 5) → Conductor transitions review → verify → done (two-step, Phase 5
+        approve action). This is the success path for every story that completes the build pipeline.
+      FINDING APPROVED-AS-IS (stakes-class finding acknowledged at end-gate without a code fix):
+        The story itself still lands in "done". Acknowledging a decision card at the end-gate
+        means the developer has reviewed the stakes-class finding and accepted the current state.
+        The finding's own disposition remains "escalated" in the build record — it is NOT marked
+        "fixed" — but the story status transitions to done regardless. The stakes-class finding
+        is preserved in the build log and may produce a follow-up backlog stub via the
+        MAJOR-RESIDUAL GOVERNANCE GUARD (Phase 5 approve action).
+
+    closed-incomplete
+      PATH: Story did NOT merge successfully. Any of the following produces closed-incomplete:
+        (a) Retry-exhausted at pipeline level ({{retries}} >= PIPELINE_RETRY_BOUND=2, step 2.2
+            failed-signal handler). Terminal transition deferred to Phase 5 approve.
+        (b) Stage-3 finding budget exhausted (all {{fix_attempts}} >= {{MAX_FIX_ATTEMPTS}}=3,
+            step 2.S3). Story left unmerged. Terminal transition deferred to Phase 5 approve.
+        (c) Merge-attempts exhausted ({{merge_attempts}} >= 3, step 2.2.M.5 quarantine).
+            Terminal transition deferred to Phase 5 approve.
+        (d) Mid-flight Abort-that-branch choice by developer (step 2.F). Terminal transition
+            deferred to Phase 5 approve.
+        (e) Build-phase completion sweep: story still in ready-for-dev with unsatisfiable
+            depends_on (step 2.2 completion check). Transitioned to closed-incomplete inline.
+        In all cases the Conductor performs the transition via:
+          `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
+
+    dropped
+      PATH: A story is transitioned to "dropped" when the DEVELOPER explicitly removes it from
+        the sprint scope before or during the build — outside the automated pipeline. Specifically:
+        the developer invokes `momentum-tools sprint status-transition --story {slug} --target dropped`
+        directly (a manual operation, not performed by the Conductor). The Conductor observes
+        "dropped" during H5 inconsistency check (line 134: "dropped" is in the canonical valid-
+        status set). If the Conductor encounters a story in "dropped" status when seeding {{merged}}
+        at step 2.0, it treats it as a non-blocking story (not added to {{frontier}}, not expected
+        to merge). The Conductor NEVER transitions a story to "dropped" itself — that is a developer
+        act. Stories the Conductor cannot merge go to closed-incomplete, not dropped.
+      NOTE: "dropped" is reachable only via direct developer action outside the automated build.
+        It is in the valid-status set (H5 check) because the Conductor must tolerate it as input
+        state, not because the Conductor produces it as output.
+
+    INVARIANT: No named terminal state is unreachable. Every terminal state listed in the
+    canonical valid-status set has a defined path above. The Conductor produces "done" and
+    "closed-incomplete"; "dropped" is produced by direct developer action and tolerated as input.
+  -->
 
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!-- PHASE 5: SINGLE HUMAN END-GATE                              -->
   <!-- ═══════════════════════════════════════════════════════════ -->
 
   <step n="5" goal="Single human end-gate — the one mandatory developer acceptance point for the sprint build">
-    <note>This is Touchpoint 2 — the only mandatory human acceptance gate in the entire build. It is unambiguously last: Phase 5 runs after E2E completes, and no second mandatory acceptance gate follows it. The end-gate report organizes findings by user-facing functionality (DEC-035 D6). Stakes-class items appear as expanded decision cards requiring explicit acknowledgment (DEC-036 D4). Dismissed findings appear in a "Dismissed / not-actioned" section with rationale (DEC-036 D3). The Approve control is not pre-checked (DEC-036 D4 anti-rubber-stamp).</note>
+    <note>This is Touchpoint 2 — the only mandatory human acceptance gate in the entire build. It is unambiguously last: Phase 5 runs after E2E completes, and no second mandatory acceptance gate follows it. The end-gate report is a self-contained HTML file that organizes findings by user-facing functionality (DEC-035 D6). Stakes-class items appear as expanded decision cards requiring explicit acknowledgment (DEC-036 D4). Dismissed findings appear in a "Waved off" section with rationale (DEC-036 D3). The Approve control is not pre-checked (DEC-036 D4 anti-rubber-stamp). Full rendering spec: references/endgate-report-renderer.md.</note>
 
-    <action>Compile the end-gate report from {{build_log}}, {{avfl_findings}}, and {{e2e_results}}:
-      - Organize by user-facing functionality (not by story or implementation detail)
-      - Routine findings section: auto-fixed items (what changed + what was dismissed with rationale)
-      - Stakes-class section (if any): expanded decision cards — one per finding — requiring explicit developer acknowledgment before Approve enables
-      - Dismissed / not-actioned section: findings the auto-fix loop dismissed, each with rationale
-      - Mid-flight escalations section (if any): findings that were escalated during the build, with disposition recorded
-      - Quarantined stories section (if any): from {{build_log}} entries where outcome == "quarantined";
-        surface as informational — the story branch is preserved and the conflict detail is recorded;
-        these are stories that exhausted the 3-attempt merge bound and could not be integrated this sprint;
-        no developer action is required during the report itself; quarantined stories are surfaced for
-        post-sprint follow-up (create backlog stories or manually resolve the conflict)
-      - Contract-integrity-stops section (if any): from {{contract_integrity_stops}} directly (a dedicated collection —
-        not filtered from {{escalations}}); surface as informational — no developer action required during the report;
-        these are stories that need follow-up because their verification contract fingerprint did not match the
-        frozen_sha256 recorded at assignment
-      - E2E summary: scenarios passed, failed, blocked
+    <!-- ── Assemble {{stakes_findings}} from all three escalation sources ── -->
+
+    <action>Assemble {{stakes_findings}} — the full set of escalated decisions requiring human acknowledgment:
+      Source 1 — Per-story fix-loop escalations (step 2.S3):
+        Collect ALL entries from {{end_gate_escalations}} (written by every story's fix loop, accumulated at Conductor scope in step 2.2).
+        Each entry carries: finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug.
+      Source 2 — Post-merge AVFL escalations (Phase 3):
+        From {{avfl_findings}}: filter to entries where stakes_class != "routine" AND disposition in {"residual", "escalated"}.
+        (Most AVFL-on-merge leftovers carry disposition "residual". Group-A fixer escalations carry disposition
+        "escalated" — step 3.3 tags these and also appends them directly to {{end_gate_escalations}}. The
+        dedup at Bind {{stakes_findings}} below handles any overlap between Source 1 and Source 2 for those entries.)
+        For each, carry: finding_id (or generate one), stakes_class, summary, evidence, suggested_fix, source:"avfl".
+      Source 3 — E2E failed/stakes scenarios (Phase 4):
+        From the normalized {{e2e_findings}} (Phase 4) and {{e2e_results}}.failed_scenarios: include E2E findings whose stakes_class != "routine" (and any failed scenario whose failure_reason indicates a stakes-class behavioral gap).
+        For each, carry: finding_id (the normalized "e2e-{scenario_name}"), stakes_class, summary (the scenario name in plain language), evidence (failure_reason), suggested_fix, source:"e2e-validator".
+      Bind {{stakes_findings}} = concat(Source 1, Source 2, Source 3), deduplicated by finding_id (Source 1 already carries E2E stakes findings appended by Phase 4; the dedup prevents double-counting with Source 3).
+      If {{stakes_findings}} is empty: the build is clean; the gate can be approved without any decision cards.
     </action>
 
-    <output>## Conductor End-Gate — Sprint `{{sprint_slug}}`
+    <action>Assemble supporting report variables:
 
-**Stories built:** {{sprint_stories | length}}
-**AVFL findings:** {{avfl_findings_count}} ({{routine_count}} routine, {{stakes_count}} stakes-class)
-**E2E:** {{e2e_passed}} passed / {{e2e_failed}} failed / {{e2e_blocked}} blocked
+      CONDUCTOR-REVERT RECONCILIATION (must run BEFORE computing {{routine_auto_fixed_count}}):
+        Collect {{reverted_fix_ids}} = { finding_id : entry } for every entry in {{conductor_reverted_fixes}}.
+        Scan all per-story {{finding_dispositions}} records in {{build_log}}. For each record R where:
+          R.disposition == "fixed" AND R.finding_id is in {{reverted_fix_ids}}:
+          — Override R.disposition to "scope-reverted" in the assembled report data (do NOT mutate the raw {{build_log}}; apply the override only to the variables assembled here for the end-gate report).
+          — Log a Conductor warning in {{build_log}}: { event: "scorecard-revert-reconciliation", finding_id: R.finding_id, story_slug: R.story_slug, note: "disposition overridden from fixed to scope-reverted — fix was discarded by write-scope guard; reroute_stub_slug: {{reverted_fix_ids}}[R.finding_id].reroute_stub_slug" }.
+        Bind {{reconciled_finding_dispositions}} = the per-story disposition records with the overrides applied.
+        Note: this reconciliation ensures the scorecard counts ONLY findings whose fixes actually reached the merged result. A fix that was reverted by scope discipline (write-scope guard discarded it) cannot be counted as fixed — the underlying defect was re-routed to a backlog stub via {{conductor_reverted_fixes}} at stage-3 time, but the overstate risk arises if the raw "fixed" disposition is used without cross-checking.
+        SCOPE CLARIFICATION — this cross-check is load-bearing only for the partial-revert case (b) where the fix partially landed and disposition remains "fixed" in the raw record but the in-scope portion was insufficient (or as an end-gate safety net for any other edge case where a "fixed" record survived into the raw log while the fix was actually reverted). Full-revert case (a) findings are already written with disposition "scope-reverted" at stage-3 time — they never carry "fixed" in the raw record and so never satisfy the predicate above. Those entries are therefore already excluded from {{routine_auto_fixed_count}} without this cross-check. The reconciliation correctly handles both cases: full-reverts are excluded at source; partial-revert stragglers are caught here.
 
----
+      {{routine_auto_fixed_count}} = count of findings with disposition == "fixed" across {{avfl_findings}} and all per-story records in {{reconciled_finding_dispositions}} (NOT from the raw {{build_log}} directly — use the reconciled view to exclude scope-reverted fixes).
+      {{dismissed_findings}}       = entries with disposition == "dismissed" (must each carry dismissal_rationale; reject any without one and surface as a Conductor warning in {{build_log}}).
+      {{stories_built_count}}      = count of entries in {{merged}}.
+      {{blocked_stories}}          = stories never added to {{merged}} (quarantined, integrity-stopped, fix-budget-exhausted, or mid-flight-aborted); derive from {{build_log}} events.
+      {{quarantined_stories}}      = subset of {{blocked_stories}} where outcome == "quarantined" in {{build_log}}.
+      {{contract_integrity_stops}} = from Conductor in-memory state (step 2.2 integrity-check path).
+      {{mid_flight_escalations}}   = {{escalations}} — the Conductor-scoped accumulator (initialized step 2.0 ~line 227, appended per story at step 2.S3 Phase mid-flight dispatch ~line 712). This is the durable record of all mid-flight escalations raised during the build. Do NOT source from the per-story transient {{mid_flight_escalations}} reset in step 2.S3 — that variable is a within-story accumulator that resets each story and under-reports at Phase 5.
+      {{high_risk_divergences}}    = per-story finding records from {{reconciled_finding_dispositions}} where disposition was "fixed" (auto-fixed after review, NOT scope-reverted) AND severity in { blocker, critical, major } — these are the consequential divergences that were caught and resolved; they populate §03 of the report. Scope-reverted "fixes" are excluded from this set — they were NOT resolved, they were re-routed.
+      {{undischarged_deferrals}}   = entries from {{avfl_findings}} where source == "coverage-discharge-consumer" AND disposition == "residual" AND stakes_class == "routine" — these are deferred stories whose named integration scenario could not be found or did not pass; they are routine findings excluded from {{stakes_findings}} and must be surfaced explicitly in §05 so the developer can see them at the gate. (Non-routine stakes-class entries from the discharge executor carry stakes_class != "routine" and are already captured by Source 2 of {{stakes_findings}} above — they are NOT included here to avoid double-rendering.)
+    </action>
 
-### What Changed (by user-facing area)
-{{build_summary_by_functionality}}
+    <!-- ── Build the self-contained HTML end-gate report ── -->
 
-### Auto-fix Loop — What Was Fixed
-{{auto_fixed_summary}}
+    <action>BUILD THE END-GATE REPORT as a self-contained HTML file at `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`.
 
-### Auto-fix Loop — Dismissed / Not-Actioned
-{{dismissed_summary}}
-<!-- Each dismissed item includes: finding, rationale for dismissal, disposition: dismissed -->
+      Rendering authority: references/endgate-report-renderer.md (full data contract, CSS tokens, section spec, decision-card markup, gate JavaScript, and voice rules).
+      Voice authority: _bmad-output/planning-artifacts/conduct-endgate-report-format-and-voice.md (the canonical Format & Voice spec).
+      Bar: .momentum/handoffs/sprint-2026-06-02-conduct-core-hitl-report.html (the worked example; reproduce its structure and voice, not its sprint-specific content).
 
-{{#if stakes_findings}}
-### Stakes-Class Findings — Requires Explicit Acknowledgment
-<!-- These findings were held out of silent auto-fix per DEC-036 D2. Each requires acknowledgment before Approve enables. -->
-{{#each stakes_findings}}
-**[{{stakes_class}}]** {{file}}: {{description}}
-  - Evidence: {{evidence}}
-  - Recommended action: {{recommended_action}}
-  - Acknowledge: [ ] Yes, I have reviewed this finding
-{{/each}}
-{{/if}}
+      The report MUST contain all eight sections in fixed order:
+        HERO    — metrics strip: stories built · high-risk divergences caught · decisions-for-you count · auto-fixed count · waved-off count · blocked/broken count.
+        §01     — What shipped: before/after plain terms, concrete new capabilities, one-line completeness caveat linking to §06.
+        §02     — What each piece is for: one plain paragraph per story (job + guarantee + what breaks without it); each carries a "Review this work item" expand containing: (1) verification first — what had to be true + how it was checked + honest inspection-vs-execution note + result; (2) architectural rationale with named decision/spec references + files changed; (3) actual diff in a collapsed <pre class="diff">; (4) visual evidence for any UI item (data-URI screenshots, or explicit gap note).
+        §03     — Where it diverged: {{high_risk_divergences}} told as 5-beat risk narratives (per renderer §7), scariest-first, collapsible <details class="risk"> cards; routine excluded entirely.
+        §04     — The decision(s) for you: one <div class="decision"> card per entry in {{stakes_findings}}; if {{stakes_findings}} is empty, render "No decisions required — this build raised no stakes-class items." No card is blank; each states in plain language: what the decision is about, what is at stake, options with trade-offs, and a recommendation. No option pre-selected. No acknowledge checkbox pre-checked.
+        §05     — Waved off & routine: {{dismissed_findings}} as a table (what flagged | why safe to leave); {{routine_auto_fixed_count}} as a single count sentence — NOT itemized. If {{undischarged_deferrals}} is non-empty, render a "Unresolved coverage deferrals" subsection: one row per entry showing story slug, named scenario, and failure reason — clearly flagged as unverified acceptance behavior requiring follow-up. This is the primary visibility surface for routine undischarged deferrals (excluded from §04 because they are routine, not stakes-class).
+        §06     — How done is this, really? Two tables: live-vs-hollow. Explicit "what approving actually does" callout. If the sprint is a partial slice, state it plainly.
+        §07     — Merge & push preview: commits/diffstat; exact approve sequence; "push is a separate confirmation."
+        GATE    — Single control: Approve / Request Changes; copy-decision-as-prompt textarea; approve <button> disabled until every §04 card has been acknowledged AND has a selection (per renderer §6 paint() logic); if {{stakes_findings}} is empty, approve enables after gate choice is made (no forcing function for a clean build).
 
-{{#if mid_flight_escalations}}
-### Mid-flight Escalations During Build
-{{#each mid_flight_escalations}}
-- Story `{{slug}}`: {{finding_summary}} — Disposition: {{disposition}}
-{{/each}}
-{{/if}}
+      Informational-only sections (render if non-empty, no developer action required):
+        Mid-flight escalations: {{escalations}} — findings already raised during the build (sourced from the Conductor-scoped {{escalations}} accumulator, not the per-story transient), with their recorded disposition.
+        Quarantined stories: {{quarantined_stories}} — branches not merged; preserved; post-sprint follow-up.
+        Contract-integrity stops: {{contract_integrity_stops}} — stories not verified due to fingerprint mismatch.
 
-{{#if quarantined_stories}}
-### Quarantined Stories (Informational)
-<!-- These stories exhausted the 3-attempt per-story merge bound and could not be integrated this sprint. Their work is preserved on the story branch. No developer action is required during the build — this section informs you that these stories need post-sprint follow-up. -->
-{{#each quarantined_stories}}
-- Story `{{slug}}` — {{title}}: could not be merged after {{merge_attempts}} attempts. Conflicted files: {{conflict_files}}. Branch `story/{{slug}}` preserved. Recommend: create a backlog follow-up story or manually resolve the conflict.
-{{/each}}
-{{/if}}
+      HTML requirements:
+        - Inline <style> and <script> only; zero external dependencies; no CDN links; no remote fonts.
+        - CSS tokens per renderer §3 (ivory/slate/clay/olive palette, --fs-scale:1.28 variable).
+        - Single --fs-scale CSS variable for global font scaling.
+        - All diffs HTML-escaped inside <pre> tags.
+        - File must open correctly in a browser with no network access.
+    </action>
 
-{{#if contract_integrity_stops}}
-### Contract-Integrity Stops (Informational)
-<!-- These stories were not verified: the contract file on disk did not match the fingerprint frozen at assignment. No verification result was recorded for them. The contract freeze check (spec §7 step 2) caught the drift before it could corrupt a result. No action required from you during the build — this section informs you that these stories need follow-up. -->
-{{#each contract_integrity_stops}}
-- Story `{{slug}}`: contract fingerprint mismatch. Contract path: `{{contract_path}}`. Frozen sha256: `{{frozen_sha256}}`. Live sha256: `{{live_sha256}}`. Story was not verified; no verification result recorded.
-{{/each}}
-{{/if}}
+    <action>Open the report in the cmux Browser viewer pane as a new tab (right pane; does not create a new structural pane):
+      Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
+      Verify the surface opens: cmux browser {surface} wait --load-state complete --timeout-ms 15000
+    </action>
 
-### E2E Validation
-{{e2e_results_summary}}
-
----
-
-**Approve:** [ ] I accept this build and authorize merge to main.
-<!-- This control is not pre-checked. If stakes-class findings are present above, acknowledge each before approving. -->
-</output>
-
-    <ask>Review the end-gate report. Acknowledge any stakes-class findings. Approve the build to merge to main, or request fixes.</ask>
+    <ask>The end-gate report is open in the viewer. Review each section. Acknowledge any decision cards in §04. Then approve to merge to main, or request changes.</ask>
 
     <check if="developer approves">
       <action>Merge sprint branch to main:
@@ -1216,6 +1869,32 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
             Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
       </action>
+      <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
+        Sources of residual findings to scan:
+          (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized in step 3.3 (avfl_findings): fixed | residual | escalated).
+          (b) {{build_log}} entries with event == "stage3-finding-blocked" — per-story pipeline findings that exhausted the fix retry budget; each carries disposition: "blocked".
+          (c) {{e2e_findings}} — E2E findings (Phase 4); each has severity and disposition fields (normalized at Phase 4 step 4.3: fixed | dismissed | triaged-out | escalated). Findings where disposition != "fixed" AND disposition != "dismissed" are residuals.
+        Combine all three sources into {{all_build_findings}}.
+
+        Collect {{major_residuals}} = all findings F in {{all_build_findings}} where:
+          - F.severity is in {blocker, critical, major}  — the upper severity tier
+          - F.disposition is NOT "fixed" AND NOT "dismissed" — finding was not resolved; it is a residual
+        Note: "fixed" and "dismissed" findings are fully resolved and need no stub.
+        Note: "blocked" findings (step 2.S3 retry-exhausted path) and "escalated" and "residual" AVFL findings all satisfy the NOT-fixed/NOT-dismissed condition and are included.
+        Note: "blocked" findings already had a triage stub spun at block time (step 2.S3). momentum:triage's own dedup gate prevents duplicate stubs if the guard re-invokes it for the same finding.
+
+        Initialize {{triage_stubs_created}} = [].
+
+        For each finding F in {{major_residuals}}:
+            Invoke momentum:triage with F's descriptive fields (summary, detail, evidence, location, story_slug, severity, stakes_class) to create a backlog stub for this residual finding.
+            Append F.finding_id to {{triage_stubs_created}}.
+            Append to {{build_log}}: { event: "major-residual-stub-created", finding_id: F.finding_id, severity: F.severity, summary: F.summary, story_slug: F.story_slug }
+
+        Bind {{stubs_created_this_pass}} = count of stubs created in the loop above.
+        If {{stubs_created_this_pass}} > 0: surface a note in the push summary output: "{{stubs_created_this_pass}} MAJOR-severity residual(s) from this build now have linked backlog stubs — review via momentum:refine before next sprint."
+
+        INVARIANT: When this action completes, every finding in {{major_residuals}} has a corresponding backlog stub. No MAJOR-severity residual may leave this sprint without one.
+      </action>
       <action>Show push summary: `git log @{u}..HEAD --oneline`</action>
       <ask>Push to origin/main?</ask>
       <check if="developer confirms push">
@@ -1224,9 +1903,233 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <output>Sprint `{{sprint_slug}}` complete. All stories merged to main.</output>
     </check>
 
-    <check if="developer requests fixes">
-      <note>Developer-requested fixes at the end-gate are out of scope for this scaffold story. The end-gate fix flow (spawning targeted fix agents from end-gate findings) is delivered by downstream conduct stories. At this stage: acknowledge the request, record the findings for follow-up, and surface them as backlog candidates.</note>
-      <action>For each finding the developer wants fixed: offer to create a follow-up backlog story with title, AC, and source reference.</action>
+    <check if="developer requests changes">
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- END-GATE CHANGE-WORKFLOW (REQUEST-CHANGES REDISPATCH LOOP)  -->
+      <!-- One bounded pass over developer-specified fixer items;      -->
+      <!-- no developer prompt inside the loop; re-render then return  -->
+      <!-- to the same end-gate <ask> above.                           -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+
+      <note>REQUEST-CHANGES PATH. The developer has declined to approve and has submitted a change request. The Conductor now parses that request into discrete fixer items, runs one bounded autonomous pass over them using the directed-fixer machinery (momentum:dev fix-mode via the directed-fix-invocation-contract), re-renders the end-gate report, and returns control to the same end-gate ask above. The developer is never asked a follow-up question while the pass is running — they give the request once and the pass runs to completion. This is an autonomous loop with the Conductor as sole agent-spawning and git-mutation authority throughout.</note>
+
+      <note>LOOP BOUND. The attempt bound for the change-workflow pass is {{MAX_FIX_ATTEMPTS}} (canonical value: 3, declared at step 2.S3). No additional canonical bound is declared here — all mentions of the retry limit in this section defer to the step 2.S3 declaration of {{MAX_FIX_ATTEMPTS}}. After {{MAX_FIX_ATTEMPTS}} fix attempts on a given item, remaining unresolved items are held as residuals and surfaced in the re-rendered report, then the loop returns to the gate without further looping. The Conductor does not loop indefinitely.</note>
+
+      <note>GATE INVARIANT. This change-workflow path does NOT add a second mandatory human acceptance gate. It re-presents the SAME end-gate (the single mandatory human gate in Phase 5). The redispatch loop is: request received → parse → autonomous pass → re-render report → return to the Phase 5 <ask> above. The developer sees the gate again at the top of this same Phase 5 step. No new step is inserted.</note>
+
+      <!-- ── 5.RC.1 — Parse change request into discrete fixer items ── -->
+
+      <action>5.RC.1 — PARSE CHANGE REQUEST into discrete fixer items:
+        Read the developer's full change-request text (the text they submitted at the gate).
+        Parse it into a list {{endgate_fixer_items}} of discrete, independently addressable items:
+          — Each item is a self-contained instruction or finding referencing a specific story, section,
+            code location, report section, or acceptance concern.
+          — Items separated by conjunctions ("and also"), numbered lists, bullet points, or commas
+            each become a distinct entry.
+          — Do NOT collapse the full request into a single monolithic entry; every separately named
+            change must be its own item. Example: "fix the auth check in conductor.md and clean up
+            the Phase 3 note" → two items.
+          — If the request is a single non-separable instruction, {{endgate_fixer_items}} is a
+            single-element list.
+          — Bind {{endgate_fixer_items}} = the parsed list (minimum 1 entry).
+        Assign each item a fixer_id: "endgate-fix-{N}" (N = 1-based index).
+        Initialize {{endgate_fix_attempts}} = {} — per-item retry counter keyed by fixer_id.
+        Initialize {{endgate_fix_dispositions}} = [] — per-item outcome records.
+        Initialize {{endgate_fix_pass_count}} = 0 — total pass iterations in this change-workflow.
+        Log: { event: "endgate-change-request-parsed", item_count: length({{endgate_fixer_items}}),
+               items: {{endgate_fixer_items}} }.
+      </action>
+
+      <!-- ── 5.RC.2 — Autonomous change-workflow pass (bounded) ──────── -->
+
+      <action>5.RC.2 — AUTONOMOUS CHANGE-WORKFLOW PASS:
+        GIT WORKING CONTEXT INVARIANT: The end-gate runs post-merge in the MAIN session on the
+        already-checked-out sprint branch (`sprint/{{sprint_slug}}`). There is no per-story worktree
+        at end-gate time. All fixer edits, write-scope guard operations, and commit commands in this
+        step operate directly in the main worktree on `sprint/{{sprint_slug}}`. This is a single
+        declared invariant — never reasserted mid-loop with a git checkout call.
+
+        Collect {{unresolved_endgate_items}} = all items in {{endgate_fixer_items}} not yet resolved
+          (not yet in {{endgate_fix_dispositions}} with outcome "fixed" or "dismissed" or "triaged-out" or "residual").
+        On the first pass: {{unresolved_endgate_items}} = {{endgate_fixer_items}} (all items).
+
+        For each item I in {{unresolved_endgate_items}} (process as fan-out individual-agent spawns
+        where items are independent; do NOT use TeamCreate):
+
+          Determine {{endgate_item_writable_files}} for item I:
+            — If I references a specific named story slug S: use {{writable_files}} as established for
+              S at build time (the story's declared writable file set from step 2.1 STAGE-1). Enforce
+              all write-scope constraints from the directed-fix-invocation-contract.
+            — If I references a sprint-level artifact (e.g., Phase 5 report, AVFL findings,
+              integration-level issue): use the sprint branch's touched files as the scope (files
+              modified since the sprint branch diverged from main).
+            — If scope cannot be determined from the item text: record I as disposition "triaged-out"
+              with rationale "scope could not be determined from change request — item added to backlog
+              for follow-up". Invoke momentum:triage with I's text as the stub. Skip the fixer spawn
+              for this item; it is resolved without a fix attempt.
+
+          Determine {{endgate_item_stakes_class}} for item I:
+            COMMON CASE (routine-by-authorization): an ordinary change the developer requested and
+            authorized at the gate is treated as routine and auto-applied autonomously. This is the
+            default path and covers the vast majority of requested changes.
+            STAKES-CLASS OVERRIDE: if the item text explicitly references a security, auth, isolation,
+            irreversible, destructive, or high-blast-radius operation (e.g., "delete all", "drop table",
+            "remove auth check", "force-push", "production deploy"), classify as the matching
+            stakes_class ("security-auth-isolation", "irreversible-destructive", or
+            "high-blast-radius-architecture"). Otherwise: "routine".
+            Bind {{endgate_item_stakes_class}} = classified value.
+
+          Spawn momentum:dev in fix-mode (individual-agent, NOT TeamCreate) for item I:
+            Input:
+              — directed_fix: {
+                    findings: [
+                      { finding_id: I.fixer_id,
+                        summary: I.text,
+                        stakes_class: {{endgate_item_stakes_class}},
+                        legitimate: true,
+                        severity: "major",
+                        source: "developer-endgate-request",
+                        location: (referenced story slug or file path if identifiable, else "sprint-level"),
+                        detail: I.text }
+                    ],
+                    story_file: (referenced story slug or file path if identifiable, else "sprint-level"),
+                    sprint_slug: "{{sprint_slug}}"
+                  }
+              — writable_files: {{endgate_item_writable_files}} (Conductor-side scope guard; not read by fixer from payload)
+            Constraint passed to fixer: "Do not mutate git. Do not spawn build agents. Apply the
+              requested change and return a per-finding disposition. Produce output only.
+              WRITE-SCOPE: You may ONLY create or modify files listed in writable_files.
+              FORBIDDEN: Do NOT edit any story's own spec file under .momentum/stories/ or its
+              verification contract under .momentum/sprints/.
+              FORBIDDEN: Do NOT edit any file outside the declared writable_files set.
+              CROSS-ARTIFACT RULE: If the change targets a file outside writable_files, return
+              disposition triaged-out so the Conductor can route a reconciliation stub."
+            Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
+            MODE NOTE: The directed_fix wrapper is required — its presence is the mode-select gate in dev/workflow.md step 0. Without it, momentum:dev defaults to green-field build mode and ignores the finding.
+
+          When the fixer returns its disposition for item I:
+
+            CASE disposition == "fixed":
+              — WRITE-SCOPE COMMIT GUARD (mirrors step 2.S3 Phase B guard exactly):
+                Run `git diff --name-only` on the affected file set. For each modified file P not
+                in {{endgate_item_writable_files}}: unstage and discard the edit
+                (`git checkout -- P`) before committing.
+                (All git commands operate in the main worktree on the already-checked-out
+                `sprint/{{sprint_slug}}` branch — per the GIT WORKING CONTEXT INVARIANT above.)
+              — Commit the applied fix (in-scope edits only):
+                  `git add -u && git commit -m "fix(endgate): apply requested change — {I.text | truncate 60}"`
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "fixed",
+                  summary: I.text, commit: <sha> }
+              — Remove I from {{unresolved_endgate_items}}.
+
+            CASE disposition == "dismissed":
+              — Validate non-empty rationale; if missing: re-present I on the next pass.
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "dismissed",
+                  summary: I.text, dismissal_rationale: <fixer's rationale> }
+              — Remove I from {{unresolved_endgate_items}}.
+
+            CASE disposition == "triaged-out":
+              — Invoke momentum:triage with I's text and any context to create a backlog stub.
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "triaged-out",
+                  summary: I.text, triage_stub_slug: <returned slug> }
+              — Remove I from {{unresolved_endgate_items}}.
+
+            CASE disposition == "escalated":
+              — This fires when the synthetic finding was classified as a non-routine stakes_class
+                (security-auth-isolation, irreversible-destructive, or high-blast-radius-architecture).
+                The fixer correctly declined to auto-apply it.
+              — Route to {{end_gate_escalations}}: append { finding_id: I.fixer_id, stakes_class: {{endgate_item_stakes_class}},
+                  timing_tier: (fixer's escalation.timing_tier, default "end-gate-expanded"),
+                  summary: I.text, evidence: (fixer's escalation.evidence), suggested_fix: I.text }
+                This entry will surface as a §04 decision card on the re-rendered end-gate report.
+              — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "escalated",
+                  summary: I.text, stakes_class: {{endgate_item_stakes_class}} }
+              — Remove I from {{unresolved_endgate_items}}.
+              — Log: { event: "endgate-change-escalated", fixer_id: I.fixer_id, stakes_class: {{endgate_item_stakes_class}}, summary: I.text }
+
+        Increment {{endgate_fix_pass_count}}.
+        Log: { event: "endgate-change-workflow-pass", pass: {{endgate_fix_pass_count}},
+               items_resolved_this_pass: (count of items removed from unresolved),
+               items_remaining: length({{unresolved_endgate_items}}) }.
+      </action>
+
+      <!-- ── 5.RC.3 — Retry gate (bounded) ───────────────────────────── -->
+
+      <check if="{{unresolved_endgate_items}} is non-empty">
+        <action>For each unresolved item I in {{unresolved_endgate_items}}:
+          Increment {{endgate_fix_attempts}}[I.fixer_id].
+        </action>
+
+        <check if="any item in {{unresolved_endgate_items}} has {{endgate_fix_attempts}}[I.fixer_id] less than {{MAX_FIX_ATTEMPTS}}">
+          <note>At least one item still has budget. Re-enter the pass (5.RC.2) with the unresolved items only. Do NOT re-present already-resolved items. The Conductor does not ask the developer anything during this re-entry — the loop is autonomous.</note>
+          <action>Return to 5.RC.2 with {{unresolved_endgate_items}} (items whose budget is not yet exhausted).
+            Do not re-include items that are already in {{endgate_fix_dispositions}}.
+          </action>
+        </check>
+
+        <check if="all items in {{unresolved_endgate_items}} have {{endgate_fix_attempts}}[I.fixer_id] >= {{MAX_FIX_ATTEMPTS}}">
+          <note>Fix budget exhausted for all remaining items. Mark each as residual — do NOT loop further. The unresolved items will appear in the re-rendered report as residual end-gate items requiring follow-up. This terminates the autonomous loop; control passes to the re-render step.</note>
+          <action>For each item I in {{unresolved_endgate_items}}:
+            Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "residual",
+              summary: I.text, attempts: {{endgate_fix_attempts}}[I.fixer_id],
+              note: "fix-budget exhausted — item carried forward as residual in re-rendered report" }
+            Invoke momentum:triage with I's text to create a backlog stub so the item is not silently dropped.
+            Log: { event: "endgate-fix-budget-exhausted", fixer_id: I.fixer_id, attempts: {{endgate_fix_attempts}}[I.fixer_id], summary: I.text }
+          </action>
+        </check>
+      </check>
+
+      <!-- ── 5.RC.4 — Commit change-workflow summary and re-render report ── -->
+
+      <action>5.RC.4 — RE-RENDER THE END-GATE REPORT:
+        Rendering authority: references/endgate-report-renderer.md — identical to the initial build.
+        The re-render reproduces the same eight-section fixed-order contract, decision-card markup,
+        and gate JS as the initial BUILD action, only ADDING the informational "Changes applied this pass"
+        section described below.
+        Re-assemble all end-gate report variables using the same logic as the initial report-build
+        action above (the "BUILD THE END-GATE REPORT" action in Phase 5). Re-read from live state:
+          — Re-assemble {{stakes_findings}} from {{end_gate_escalations}}, {{avfl_findings}},
+            and {{e2e_findings}} (these are unchanged by the change-workflow pass; the pass
+            targeted story-level or sprint-level code changes, not finding metadata).
+          — Re-assemble supporting variables ({{routine_auto_fixed_count}}, {{dismissed_findings}},
+            {{stories_built_count}}, {{blocked_stories}}, etc.) from live Conductor state.
+          — Append a "Changes applied this pass" section to the report body: a summary table
+            listing each item from {{endgate_fix_dispositions}}:
+              columns: item # | change requested | outcome | commit (if fixed) | note (if residual or triaged-out)
+            This section is informational. It shows the developer what the autonomous pass did.
+          — If any items in {{endgate_fix_dispositions}} have outcome == "residual": add a
+            "Residual change-request items" note in the report's §05 area listing the unresolved
+            items with their triage stub slugs.
+        Overwrite the same HTML file at `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
+          (same path as the initial report; re-render in place).
+        Log: { event: "endgate-report-re-rendered", pass: {{endgate_fix_pass_count}},
+               items_fixed: count of "fixed" in {{endgate_fix_dispositions}},
+               items_triaged_out: count of "triaged-out" in {{endgate_fix_dispositions}},
+               items_residual: count of "residual" in {{endgate_fix_dispositions}} }
+      </action>
+
+      <action>5.RC.5 — OPEN THE RE-RENDERED REPORT in the viewer:
+        Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
+        (The `--focus false` flag keeps the developer in context; the tab is available in the viewer pane.)
+      </action>
+
+      <!-- ── 5.RC.6 — Return to the end-gate ask (redispatch) ─────────── -->
+
+      <note>REDISPATCH. The autonomous pass is complete and the report is re-rendered. The Conductor now returns control to the same end-gate ask above (the single Phase 5 ask: "approve or request changes"). This is not a new gate — it is the same gate re-presented with the updated report. The developer may now: (a) approve (proceeds to the approve branch above), or (b) submit another change request (re-enters this request-changes path for another bounded pass). There is no limit on how many times the developer may cycle through this gate, but each pass is bounded by {{MAX_FIX_ATTEMPTS}} per item internally.</note>
+
+      <output>The requested changes have been applied (or carried forward as residuals where the fix budget was exhausted). The end-gate report has been re-rendered and is open in the viewer.
+
+**Change pass summary:**
+- Items fixed: {{count of "fixed" in endgate_fix_dispositions}}
+- Items dismissed: {{count of "dismissed" in endgate_fix_dispositions}}
+- Items triaged to backlog: {{count of "triaged-out" in endgate_fix_dispositions}}
+- Items carried forward as residuals: {{count of "residual" in endgate_fix_dispositions}}
+
+Review the updated report, acknowledge any decision cards in §04, then approve to merge to main, or request further changes.</output>
+
+      <ask>The end-gate report is open in the viewer. Review each section. Acknowledge any decision cards in §04. Then approve to merge to main, or request changes.</ask>
+
     </check>
   </step>
 

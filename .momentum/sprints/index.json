@@ -2501,6 +2501,511 @@
       "status": "done",
       "completed": "2026-06-04",
       "retro_run_at": "2026-06-05"
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "stories": [
+        "conduct-momentum-tools-path-resolution",
+        "conduct-entry-point-command",
+        "conduct-register-skill-and-refresh-cache",
+        "conduct-wire-caller-and-discovery",
+        "conduct-planning-emit-contract-schema",
+        "conduct-per-story-build-review-dispatch",
+        "conduct-endgate-decision-card-rendering",
+        "conduct-coverage-disposition-discharge-consumer",
+        "conduct-e2e-finding-normalization-escalation",
+        "conduct-e2e-validation-and-test-fixture",
+        "conduct-verification-method-enum-alignment",
+        "conduct-planning-reconcile-gherkin-and-specs-rule",
+        "avfl-merge-review-as-workflow",
+        "conduct-endgate-request-changes-redispatch",
+        "conduct-simplify-and-convergence-questions",
+        "conduct-cleanup-dead-agent-paths-and-validate-resolve",
+        "conduct-per-project-verification-harness-config",
+        "contract-seam-stories-two-sided-review-scope",
+        "reconcile-fix-disposition-with-conductor-scope-reverts",
+        "decision-grade-presentation-standard",
+        "conduct-state-machine-defects-shipped-unfixed",
+        "tighten-dev-fixer-write-scope-stop-story-spec-edits",
+        "controlled-enums-and-stable-ledger-schema-finding-cards",
+        "exercise-conduct-escalation-machinery-end-to-end",
+        "extract-shared-diff-range-helper-for-per-story-review"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "conduct-momentum-tools-path-resolution",
+            "conduct-verification-method-enum-alignment",
+            "conduct-entry-point-command",
+            "conduct-cleanup-dead-agent-paths-and-validate-resolve",
+            "decision-grade-presentation-standard"
+          ]
+        },
+        {
+          "wave": 2,
+          "stories": [
+            "conduct-planning-emit-contract-schema",
+            "conduct-register-skill-and-refresh-cache",
+            "conduct-planning-reconcile-gherkin-and-specs-rule",
+            "conduct-per-project-verification-harness-config",
+            "conduct-state-machine-defects-shipped-unfixed",
+            "controlled-enums-and-stable-ledger-schema-finding-cards",
+            "extract-shared-diff-range-helper-for-per-story-review"
+          ]
+        },
+        {
+          "wave": 3,
+          "stories": [
+            "conduct-wire-caller-and-discovery",
+            "conduct-per-story-build-review-dispatch",
+            "contract-seam-stories-two-sided-review-scope"
+          ]
+        },
+        {
+          "wave": 4,
+          "stories": [
+            "conduct-endgate-decision-card-rendering",
+            "conduct-coverage-disposition-discharge-consumer",
+            "conduct-e2e-finding-normalization-escalation",
+            "avfl-merge-review-as-workflow",
+            "reconcile-fix-disposition-with-conductor-scope-reverts",
+            "tighten-dev-fixer-write-scope-stop-story-spec-edits"
+          ]
+        },
+        {
+          "wave": 5,
+          "stories": [
+            "conduct-endgate-request-changes-redispatch",
+            "conduct-simplify-and-convergence-questions",
+            "exercise-conduct-escalation-machinery-end-to-end"
+          ]
+        },
+        {
+          "wave": 6,
+          "stories": [
+            "conduct-e2e-validation-and-test-fixture"
+          ]
+        }
+      ],
+      "slug": "sprint-2026-06-05-conduct-runnable",
+      "planned": "2026-06-05",
+      "team": {
+        "story_assignments": {
+          "conduct-momentum-tools-path-resolution": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 1
+          },
+          "conduct-entry-point-command": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 1
+          },
+          "conduct-register-skill-and-refresh-cache": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          },
+          "conduct-wire-caller-and-discovery": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 3
+          },
+          "conduct-planning-emit-contract-schema": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          },
+          "conduct-per-story-build-review-dispatch": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 3
+          },
+          "conduct-endgate-decision-card-rendering": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 4
+          },
+          "conduct-coverage-disposition-discharge-consumer": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 4
+          },
+          "conduct-e2e-finding-normalization-escalation": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 4
+          },
+          "conduct-e2e-validation-and-test-fixture": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 6
+          },
+          "conduct-verification-method-enum-alignment": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 1
+          },
+          "conduct-planning-reconcile-gherkin-and-specs-rule": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          },
+          "avfl-merge-review-as-workflow": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 4
+          },
+          "conduct-endgate-request-changes-redispatch": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 5
+          },
+          "conduct-simplify-and-convergence-questions": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 5
+          },
+          "conduct-cleanup-dead-agent-paths-and-validate-resolve": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 1
+          },
+          "conduct-per-project-verification-harness-config": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          },
+          "contract-seam-stories-two-sided-review-scope": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 3
+          },
+          "reconcile-fix-disposition-with-conductor-scope-reverts": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 4
+          },
+          "decision-grade-presentation-standard": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 1
+          },
+          "conduct-state-machine-defects-shipped-unfixed": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          },
+          "tighten-dev-fixer-write-scope-stop-story-spec-edits": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 4
+          },
+          "controlled-enums-and-stable-ledger-schema-finding-cards": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          },
+          "exercise-conduct-escalation-machinery-end-to-end": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 5
+          },
+          "extract-shared-diff-range-helper-for-per-story-review": {
+            "role": [
+              "dev",
+              "qa"
+            ],
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present",
+            "wave": 2
+          }
+        },
+        "review_roles": [
+          "qa-reviewer",
+          "e2e-validator",
+          "architecture-guard"
+        ],
+        "specialist_note": "dev-skills for all 25 (markdown/bash repo, per DEC-035 sprint mandate)"
+      },
+      "approvals": [
+        {
+          "story_slug": "conduct-momentum-tools-path-resolution",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "09a9193df15049bf8e81667734c8231c111dee7e05f22019e696e507b623af4d"
+        },
+        {
+          "story_slug": "conduct-entry-point-command",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "fc37d0a21f835183f3055711ceb9ef447f1d8e135f91ba6fa05741976dc65f08"
+        },
+        {
+          "story_slug": "conduct-register-skill-and-refresh-cache",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "13e7f9f14f8588ae39e4bb2eaec3528643edb1565a0f3f072d46858fa81fa426"
+        },
+        {
+          "story_slug": "conduct-wire-caller-and-discovery",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "9d15b779b8c9f3ad3d71fbf23bd964a72871ff267ca945b7573b958661375a00"
+        },
+        {
+          "story_slug": "conduct-planning-emit-contract-schema",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "65cace0dbab3298ec692e124f0d58fab0b91ac2856b36bf87b817d0a61ceb7e6"
+        },
+        {
+          "story_slug": "conduct-per-story-build-review-dispatch",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "6a00a4b9f984927b65875012430242b952bb141c3961a55889ed890c767007a1"
+        },
+        {
+          "story_slug": "conduct-endgate-decision-card-rendering",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "53fcb309bbe573a3ea85c25a26b878f1dfaf698c4393d8e84bddf92544f58f84"
+        },
+        {
+          "story_slug": "conduct-coverage-disposition-discharge-consumer",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "143171bd78df32f3f29a73ecabc9e08b89d2103e386d99dd974406063f56195b"
+        },
+        {
+          "story_slug": "conduct-e2e-finding-normalization-escalation",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "34a589ee6b61b121070b1e062ed6e502eb1a2bababb7b29cbd1c6d0a678bb92c"
+        },
+        {
+          "story_slug": "conduct-e2e-validation-and-test-fixture",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "7b64ff3b668d46439e7995f404ddbbea294041d4590dc5c3228d33da0ed7e8b3"
+        },
+        {
+          "story_slug": "conduct-verification-method-enum-alignment",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "221e552bcfc07c59bcdc10dba0fb4db7c519ff632f1e6f4fd9b1102d3834bf81"
+        },
+        {
+          "story_slug": "conduct-planning-reconcile-gherkin-and-specs-rule",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "2f5f38dfcccb43cbb225bdef7c572a804fb4eb5df750075b5c0ef6029f6b8026"
+        },
+        {
+          "story_slug": "avfl-merge-review-as-workflow",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "a6675506e33d4ab9a21f2c65dfbf8a43025706338f7fd7c884df300879572b08"
+        },
+        {
+          "story_slug": "conduct-endgate-request-changes-redispatch",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:38Z",
+          "story_file_sha": "02cb66a1128b53826e559d57dc115af41a76b5256744181d05dfb9511456c8b3"
+        },
+        {
+          "story_slug": "conduct-simplify-and-convergence-questions",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "17f83003986a012509a4a1eb7c285ece75fbb82acc5bd65fe9dfa217aa57fb5a"
+        },
+        {
+          "story_slug": "conduct-cleanup-dead-agent-paths-and-validate-resolve",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "e56e5b67884e169041733bf08275326c30b94765f96a84696aca7d76b33a83f9"
+        },
+        {
+          "story_slug": "conduct-per-project-verification-harness-config",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "1dff9d9270db6ceabc2566a331ad2c34d7fea8b4ee6f6c69c061acb56b5dbfc5"
+        },
+        {
+          "story_slug": "contract-seam-stories-two-sided-review-scope",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "d220326a2faf967ad4c9e2fd9213da8ad2c2a71ab0989cfb8c721b189e409058"
+        },
+        {
+          "story_slug": "reconcile-fix-disposition-with-conductor-scope-reverts",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "df1ad32426ed77554c768bfcc2395f0edb8f6ab5ab6e5f0f867f93331e577aeb"
+        },
+        {
+          "story_slug": "decision-grade-presentation-standard",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "0c50109468121f1d9aa9791165d399dc273f1d23f15efb817dd36a4cc4a34718"
+        },
+        {
+          "story_slug": "conduct-state-machine-defects-shipped-unfixed",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "9fa73ffe29f8ef2c9913b51c56ee4f2b40505e6e3c3587734c4ebb8c5593b540"
+        },
+        {
+          "story_slug": "tighten-dev-fixer-write-scope-stop-story-spec-edits",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "e0050dca118d55a884ed4defca6de111c9c00de1eb93a1a559186a265af71686"
+        },
+        {
+          "story_slug": "controlled-enums-and-stable-ledger-schema-finding-cards",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "ece871c0715f395b6623d2a38063377c041f992439bd270881ba5325b3c99ce1"
+        },
+        {
+          "story_slug": "exercise-conduct-escalation-machinery-end-to-end",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "eecbda26bf798e1b29495964710d4ca58401b31c0df209d1c8f9064cba5db095"
+        },
+        {
+          "story_slug": "extract-shared-diff-range-helper-for-per-story-review",
+          "decision": "approved",
+          "approved_at": "2026-06-08T02:54:39Z",
+          "story_file_sha": "ac2123479398058f44f92fca12f5296052511cdf5f6689b774fa7ca757de07da"
+        }
+      ],
+      "started": "2026-06-07",
+      "completed": "2026-06-08",
+      "retro_run_at": null
     }
   ],
   "quickfixes": [

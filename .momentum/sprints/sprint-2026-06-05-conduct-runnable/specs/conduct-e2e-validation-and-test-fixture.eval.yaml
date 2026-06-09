@@ -1,0 +1,85 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-e2e-validation-and-test-fixture
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-e2e-validation-and-test-fixture.eval.yaml
+how_dev_self_checks: |
+  This story has two coupled parts — a planning-to-build handoff check and an activated
+  fixture sprint that lets a real build run be exercised end to end. The heaviest, most
+  decisive verification is running the in-session build orchestrator against that fixture from
+  start to finish, so the dedicated run is a skill-invoke run; the lighter handoff check
+  (asserting a planned sprint's record is shaped so the orchestrator can consume it) is folded
+  into the same dedicated run and its observable clauses below. Both are exercised together.
+
+  Before you signal done, first confirm the planning-to-build handoff actually closes: take a
+  freshly planned-and-activated small sprint (planned through the normal planning path, not
+  hand-assembled) and confirm its sprint record is something the build orchestrator can consume
+  without you patching it — each story's verification contract file named in the record exists
+  on disk, the recorded fingerprint of each contract matches the file as it stands, each
+  contract carries the standard dev-readable header, each story's stated verification method is
+  one the build knows how to run, and each story's coverage disposition is one of the
+  recognized values. A fresh reader should be able to confirm all of this by inspecting the
+  record and the named files alone.
+
+  Then prove a real run: with that activated fixture sprint in place, invoke the build
+  orchestrator and let it run all the way through — preparation, building and reviewing each
+  story, validating the merged result, end-to-end validation, the single report, and the
+  approve/push offer — without you doing the building or committing by hand. When it finishes,
+  confirm the world actually changed: each fixture story's intended change exists in the
+  repository as real files, the run's commits are present in history, and a single end-gate
+  report was produced summarizing what shipped and what (if anything) needs your decision.
+  Confirm the run reached that end-gate without asking you anything between starting and the
+  final approve/push point. This is the first time the whole capability is exercised together;
+  run it yourself and do not delegate the judgment.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-e2e-validation-and-test-fixture.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFICATION CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A freshly planned-and-activated sprint yields a build-consumable record
+    invocation: Plan and activate a small sprint through the normal planning path, then inspect its sprint record and the contract files it names — without hand-editing either.
+    given: A small sprint planned and activated through the ordinary planning path, with a per-story verification contract produced for each story.
+    when: The resulting sprint record and the contract files it references are inspected.
+    then:
+      - For each story, the verification contract file named in the record exists on disk at the recorded location.
+      - For each story, the recorded fingerprint of the contract matches the contract file as it currently stands on disk.
+      - Each contract carries the standard dev-readable verification header.
+      - Each story's recorded verification method is one the build can run, and its coverage disposition is one of the recognized values.
+    pass_criteria: Every story's contract is present, fingerprint-matched, header-bearing, and recorded with a runnable verification method and a recognized coverage disposition — confirmable from the record and the named files alone.
+    fail_criteria: Any named contract is missing, its recorded fingerprint does not match the file, a contract lacks the standard header, or a story records an unrunnable verification method or an unrecognized coverage disposition.
+
+  - name: An activated fixture sprint exists and is ready to be built
+    invocation: Inspect the practice state for an activated sprint and confirm it presents ready stories each backed by a frozen contract.
+    given: The story's fixture has been created.
+    when: The active-sprint state is inspected.
+    then:
+      - There is an active sprint (the active selection is populated, not empty).
+      - The active sprint presents one or more stories that are ready to build, each backed by a frozen verification contract recorded in the sprint.
+    pass_criteria: An active sprint is present with at least one build-ready story carrying a frozen contract — the precondition a real build run requires.
+    fail_criteria: There is no active sprint, the active selection is empty, or the active sprint has no build-ready story with a frozen contract.
+
+  - name: A real end-to-end build run completes against the fixture and changes the world
+    invocation: Invoke the in-session build orchestrator against the activated fixture sprint, let it run to completion, then inspect the repository working files, the history, and the produced report.
+    given: The activated fixture sprint with one or more build-ready stories.
+    when: The build orchestrator runs from invocation through to its final approve/push offer.
+    then:
+      - The run carries every fixture story through building and review without the developer authoring or committing any of the work by hand.
+      - After the run, each fixture story's intended change exists in the repository as real edited or added files.
+      - The run's commits are present in the repository history.
+      - A single end-gate report is produced that summarizes what shipped and any items needing a developer decision.
+      - The run reaches the end-gate without asking the developer anything between the start and the final approve/push point.
+    pass_criteria: The orchestrator runs the fixture sprint end to end — preparation, per-story build and review, merged-result validation, end-to-end validation, one report, and the approve/push offer — producing real file changes and commits with no mid-run developer question.
+    fail_criteria: The run cannot start against the fixture, fails to produce file changes or commits for a story, requires the developer to build or commit by hand, produces no single end-gate report, or pauses to ask the developer a question between starting and the approve/push point.
+
+  - name: The completed run produces an approve-or-changes end-gate, not a silent finish
+    invocation: At the end of the fixture build run, read the single end-gate the orchestrator presents.
+    given: A fixture build run that has passed merged-result and end-to-end validation.
+    when: The end of the run is reached and its developer-facing gate is read.
+    then:
+      - Exactly one developer-facing acceptance gate is presented at the end, resolving to either request-changes or approve.
+      - The gate is reached after merged-result validation and end-to-end validation, not before.
+      - On approve, the run offers a push as a distinct, separately-confirmed step.
+    pass_criteria: The run ends at a single approve-or-changes gate positioned after all validation, with push offered as its own confirmation.
+    fail_criteria: The run finishes with no acceptance gate, presents more than one mandatory acceptance gate, places the gate before validation completes, or pushes without a separate confirmation.

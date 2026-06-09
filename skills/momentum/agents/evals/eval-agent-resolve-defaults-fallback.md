@@ -20,13 +20,10 @@ without pattern matching.
 ```json
 {
   "defaults": {
-    "architect": "skills/momentum/agents/architect.md",
-    "pm": "skills/momentum/agents/pm.md",
     "ux": "skills/momentum/agents/ux.md",
     "analyst": "skills/momentum/agents/analyst.md",
     "researcher": "skills/momentum/agents/researcher.md",
     "dev": "skills/momentum/agents/dev.md",
-    "sm": "skills/momentum/agents/sm.md",
     "qa-reviewer": "skills/momentum/agents/qa-reviewer.md",
     "e2e-validator": "skills/momentum/agents/e2e-validator.md"
   },
@@ -34,7 +31,7 @@ without pattern matching.
     {
       "role": "dev",
       "slug": "dev-cmp",
-      "agent": ".claude/guidelines/agents/dev-cmp.md",
+      "agent": "skills/momentum/agents/dev-build.md",
       "patterns": ["**/src/**/ui/**", "**/*.kt"],
       "write_permissions": ["src/main/kotlin/**/ui/**"]
     }

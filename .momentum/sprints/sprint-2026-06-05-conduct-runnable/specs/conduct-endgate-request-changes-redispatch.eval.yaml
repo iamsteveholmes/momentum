@@ -1,0 +1,66 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-endgate-request-changes-redispatch
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-endgate-request-changes-redispatch.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run a sprint build to its single final acceptance gate. At the gate,
+  instead of approving, give it a change request that names two or three distinct changes you
+  want made. Confirm the build does not simply acknowledge the request and stop — it acts on it:
+  it carries out the requested changes and then hands you a freshly re-rendered report reflecting
+  the new state, returning you to the same gate to decide again. Confirm that while it is working
+  through your change request it never stops to ask you a follow-up question mid-way — you give
+  the request once and it runs the changes through without further prompting. Confirm each distinct
+  change you named is addressed as its own item rather than the whole request being treated as one
+  lump. Confirm the change pass is bounded — it does not loop indefinitely; it makes a finite pass
+  and comes back to the gate. Repeat with a single-change request and confirm the same act-then-
+  re-render-then-return-to-gate behavior. Finally, confirm that after the change pass you can still
+  approve normally, and that the re-rendered report carries the same plain-language quality and
+  decision gating as the original.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-endgate-request-changes-redispatch.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A change request at the gate is acted on, not merely acknowledged
+    invocation: Run a build to its final acceptance gate, then submit a change request naming the changes you want instead of approving.
+    given: A completed build sitting at its single final acceptance gate.
+    when: A change request is submitted at the gate rather than an approval.
+    then:
+      - The build carries out the requested changes rather than only acknowledging the request and stopping.
+      - After the changes are made, the build hands back a freshly re-rendered report reflecting the new state.
+      - Control returns to the same final acceptance gate so the developer can decide again on the updated result.
+    pass_criteria: Submitting a change request produces actual changes followed by an updated report and a return to the gate.
+    fail_criteria: The build only acknowledges the change request without making changes, never re-renders the report, or does not return to the gate.
+
+  - name: Multiple requested changes are handled as discrete items in one bounded pass
+    invocation: Submit a change request naming two or three distinct changes and observe how they are handled.
+    given: A build at the gate receiving a change request that names several distinct changes.
+    when: The change request is processed.
+    then:
+      - Each distinct named change is addressed as its own item rather than the whole request being treated as a single lump.
+      - The change pass is bounded — it makes a finite pass and returns to the gate rather than looping indefinitely.
+    pass_criteria: Every distinct change named is addressed individually and the pass terminates and returns to the gate without unbounded looping.
+    fail_criteria: The named changes are collapsed into one undifferentiated change, some are silently dropped, or the pass loops without terminating.
+
+  - name: The change pass runs without prompting the developer mid-way
+    invocation: Submit a change request at the gate and watch for any developer-facing question between submission and the re-rendered report.
+    given: A change request submitted once at the gate.
+    when: The build works through the requested changes.
+    then:
+      - The build does not stop to ask the developer any follow-up question while carrying out the requested changes.
+      - The only developer touchpoints on this path are submitting the request and receiving the re-rendered report back at the gate.
+    pass_criteria: The change request is given once and processed to completion with no mid-pass developer prompt.
+    fail_criteria: The build pauses to ask the developer a question while processing the change request.
+
+  - name: After a change pass the gate behaves normally and the report keeps its quality
+    invocation: Complete a change pass, then approve at the gate, and inspect the re-rendered report.
+    given: A build that has just completed a requested change pass and re-rendered its report.
+    when: The updated report is inspected and approval is attempted.
+    then:
+      - The developer can approve normally at the gate after the change pass.
+      - The re-rendered report carries the same plain-language quality and the same decision-gating behavior as the original report.
+    pass_criteria: Approval works normally after a change pass and the re-rendered report retains its plain-language and decision-gating properties.
+    fail_criteria: Approval is broken after a change pass, or the re-rendered report loses its plain-language quality or its decision gating.

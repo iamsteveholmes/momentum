@@ -401,7 +401,7 @@ Proceeding to validation.</output>
         - Escalated findings (disposition=escalated): surface as-is — do NOT auto-resolve or widen escalation criteria.
     </action>
 
-    <action>Merge {{avfl_findings}} and {{code_review_findings}} into {{all_findings}}, sorted by severity: critical → high → medium → low.</action>
+    <action>Merge {{avfl_findings}} and {{code_review_findings}} into {{all_findings}}, sorted by severity: critical → major → minor → low.</action>
 
     <output>Code review complete. Combined findings for {{story_slug}}:
 

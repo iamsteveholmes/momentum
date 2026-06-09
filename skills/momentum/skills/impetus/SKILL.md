@@ -58,6 +58,23 @@ Check whether the sanctum exists at `{project-root}/_bmad/memory/impetus/`.
 
 Sanctum location: `{project-root}/_bmad/memory/impetus/`
 
+## Presentation Standard
+
+All developer-facing output produced by this skill is governed by the
+**Decision-Grade Presentation Standard** (`skills/momentum/references/rules/decision-grade-presentation.md`).
+
+**Named surface cap that applies here:**
+
+| Surface | Cap |
+|---|---|
+| Situational report (session greeting — the orientation output after Rebirth) | ≤ 2 sentences |
+
+**Floor (non-negotiable):** The situational report must carry the **honest ledger counts** and any **recurring-pattern signal** inline within its 2-sentence budget. These are decision-relevant signals — omitting them is a defect, not a space-saving choice. If the budget feels tight, trim other wording (e.g., the voice framing); do not drop the counts or the signal.
+
+**Caps-vs-floor:** The 2-sentence cap governs the greeting's length. It does not override the floor's requirement that ledger counts and recurring-pattern signals appear inline. Trim the irrelevant; preserve the signal.
+
+`effort: low` is set for startup performance. It does not change the completeness requirements for the situational report.
+
 ## Session Close
 
 Before ending any session, load `references/memory-guidance.md` and follow its discipline: write a session log, update sanctum files with anything learned.

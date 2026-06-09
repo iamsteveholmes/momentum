@@ -1,0 +1,64 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-wire-caller-and-discovery
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-wire-caller-and-discovery.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, check both ways a developer reaches the build: the front-door
+  conversation and the direct command. First, start a fresh session and, in plain language, ask
+  the practice's always-on companion to "run the sprint build" (and similar phrasings like
+  "build the sprint" / "continue the sprint build"). Confirm it routes you to the conduct build
+  orchestrator — the in-session, build-the-whole-sprint flow — and not to the older wave-by-wave
+  loop. Second, type the conduct slash command directly and confirm it lands you in that same
+  build orchestrator as the top-level driver of the session. Then confirm the older sprint-dev
+  capability still exists and still behaves as it always did when you invoke it on its own — the
+  point is that conduct is now reachable, not that sprint-dev was removed or rewritten. Walk the
+  conduct flow far enough to see it actually drive a sprint's build (it begins processing the
+  sprint's stories), proving the path leads somewhere live rather than into a dead capability. If
+  asking the companion to run the build still drops you into the old wave loop, the discovery
+  route is not wired.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-wire-caller-and-discovery.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: Asking the practice front door to run the sprint build routes to the conduct orchestrator
+    invocation: In a fresh session, ask the practice's always-on companion in plain language to "run the sprint build" (also try "build the sprint" and "continue the sprint build").
+    given: A fresh session and a sprint with ready stories to build.
+    when: The developer asks the companion to run or continue the sprint build.
+    then:
+      - The companion routes the request to the conduct build orchestrator — the in-session flow that builds the whole sprint.
+      - The request is not routed to the older wave-by-wave build loop.
+    pass_criteria: A plain-language request to run the sprint build lands the developer in the conduct orchestrator.
+    fail_criteria: The request drops the developer into the older wave-loop build flow, or routes nowhere.
+
+  - name: The conduct command dispatches to the orchestrator as the top-level session driver
+    invocation: In a fresh session, type the conduct slash command directly.
+    given: A fresh session.
+    when: The developer invokes the conduct command directly.
+    then:
+      - The conduct orchestrator comes up and acts as the top-level driver of the session.
+      - It is the build orchestrator, not a stale or unrelated build flow.
+    pass_criteria: Typing the conduct command brings up the conduct orchestrator running as the session's top-level build driver.
+    fail_criteria: The command brings up the older wave-loop flow, an unrelated skill, or nothing.
+
+  - name: The conduct path actually drives a sprint build (leads to a live engine, not dead code)
+    invocation: From the conduct orchestrator, begin a build for a sprint that has ready stories and observe whether it starts processing stories.
+    given: The conduct orchestrator is running and a sprint with ready stories exists.
+    when: The build is started.
+    then:
+      - The orchestrator begins driving the sprint's build — it starts processing the sprint's stories rather than stalling immediately.
+    pass_criteria: Starting a build from the conduct orchestrator visibly begins processing the sprint's stories, proving the discovery path reaches a live build engine.
+    fail_criteria: Starting the build does nothing, or the orchestrator is reachable but never advances into building any story.
+
+  - name: The legacy sprint-dev capability remains present and unchanged when invoked on its own
+    invocation: In a fresh session, invoke the legacy sprint-dev capability directly.
+    given: A fresh session.
+    when: The developer invokes sprint-dev directly (not via conduct).
+    then:
+      - sprint-dev still resolves and still behaves as it did before this change.
+      - Wiring conduct as the build front door did not remove or repurpose sprint-dev.
+    pass_criteria: sprint-dev invoked directly still loads and behaves as before, confirming conduct was added as a coexisting path rather than replacing sprint-dev.
+    fail_criteria: sprint-dev no longer resolves, errors on load, or has been silently turned into the conduct flow.

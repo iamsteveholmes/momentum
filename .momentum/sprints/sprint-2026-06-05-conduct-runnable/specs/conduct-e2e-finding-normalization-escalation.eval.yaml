@@ -1,0 +1,78 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-e2e-finding-normalization-escalation
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/conduct-e2e-finding-normalization-escalation.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run the in-session build orchestrator end to end against a small
+  activated sprint that you have arranged to surface at least one end-to-end (integration)
+  problem after the stories merge — for example, a sprint whose merged result fails an
+  integration check the build runs after merging. Then read the single end-gate report the
+  run produces and confirm the integration problem is actionable there, not just counted.
+
+  Concretely, confirm that an end-to-end problem appears in the report as a self-contained
+  decision item that a reader who never watched the run could act on: it states in plain
+  language what is wrong, where, why it matters as an observable consequence, and quotes the
+  proof inline — not merely a number like "1 integration failure". Confirm an ordinary
+  (routine) end-to-end problem is corrected automatically and shown for transparency with its
+  fix and re-validation, while a high-stakes end-to-end problem (one touching security,
+  something destructive/irreversible, or a wide-blast-radius architectural break) is surfaced
+  as a decision for you rather than silently fixed.
+
+  Confirm that a high-stakes, build-invalidating end-to-end problem can interrupt the run
+  before the end-gate (the narrow early-escalation path), while a high-stakes problem that is
+  not urgent is instead held and presented at the single end-gate. Confirm no end-to-end
+  problem reaches the report only as a bare count with no plain-language explanation, evidence,
+  or — where a decision is required — options and a recommendation. Run the cases yourself; do
+  not delegate the judgment.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-e2e-finding-normalization-escalation.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: End-to-end problems appear in the report as self-contained items, not bare counts
+    invocation: Run the build orchestrator to completion against a small activated sprint arranged to surface an end-to-end (integration) problem after its stories merge, then read the single end-gate report it produces.
+    given: An activated sprint whose merged result will fail at least one end-to-end (integration) check the build runs after merging.
+    when: The build runs through merge and end-to-end validation and the end-gate report is read.
+    then:
+      - The end-to-end problem appears in the report as a self-contained item stating in plain language what is wrong.
+      - The item names where the problem is and states why it matters as an observable consequence.
+      - The item quotes the supporting proof inline rather than referring the reader elsewhere.
+      - The problem is not represented solely as a count with no explanation or evidence.
+    pass_criteria: Each end-to-end problem is rendered as a self-contained, evidence-backed item a reader who never watched the run could act on — never only a tally.
+    fail_criteria: An end-to-end problem appears in the report only as a number or summary line, lacks a plain-language statement, omits where/why-it-matters, or omits inline evidence.
+
+  - name: A routine end-to-end problem is auto-corrected and shown for transparency
+    invocation: Arrange the merged result to surface an ordinary (non-stakes) end-to-end problem, run the build to completion, and inspect both the final committed result and the report.
+    given: An activated sprint whose merged result surfaces an ordinary, routine end-to-end problem with no security, destructive, or architecture-level character.
+    when: The build runs through end-to-end validation and its autonomous fix step, then produces the report.
+    then:
+      - The routine end-to-end problem is corrected automatically; the defect is absent from the final committed result.
+      - The orchestrator does not stop to ask the developer whether to fix the routine problem.
+      - The report shows the problem with its applied fix and re-validation, marked as needing no decision.
+    pass_criteria: The routine end-to-end problem is auto-fixed and re-validated, surfaced in the report only for transparency, with no developer fix-or-defer question.
+    fail_criteria: The routine problem survives into the final result, the build pauses to ask whether to fix it, or it is escalated as a decision the developer must make.
+
+  - name: A high-stakes end-to-end problem is escalated as a decision, not silently fixed
+    invocation: Arrange the merged result to surface a high-stakes end-to-end problem (security, destructive/irreversible, or wide-blast-radius architectural), run the build to completion, and read the report's decisions area.
+    given: An activated sprint whose merged result surfaces an end-to-end problem of a high-stakes character (security/auth-isolation, irreversible/destructive, or high-blast-radius architecture).
+    when: The build runs through end-to-end validation and produces the end-gate report.
+    then:
+      - The high-stakes end-to-end problem is presented to the developer as a decision item rather than being corrected silently.
+      - The decision item carries self-contained background, the question/contradiction, options with their trade-offs, and a recommendation.
+      - The high-stakes problem is not folded into the auto-fixed-for-transparency area as though it needed no decision.
+    pass_criteria: The high-stakes end-to-end problem reaches the developer as a fully contextualized decision card with options and a recommendation, distinct from auto-fixed routine items.
+    fail_criteria: A high-stakes end-to-end problem is silently auto-fixed, appears only as a count, or is rendered without options/recommendation in the decisions area.
+
+  - name: Urgent, build-invalidating end-to-end problems can escalate before the end-gate
+    invocation: Run two builds — one whose end-to-end problem is high-stakes and build-invalidating, one whose end-to-end problem is high-stakes but not urgent — and observe where each surfaces.
+    given: Two activated sprints; one surfaces an end-to-end problem that is high-stakes and build-invalidating (or irreversible-and-imminent), the other surfaces a high-stakes problem that is neither urgent nor build-invalidating.
+    when: Each build runs through end-to-end validation and the points at which it engages the developer are observed.
+    then:
+      - The build-invalidating (or irreversible-and-imminent) end-to-end problem can interrupt the run before the end-gate, surfacing for developer input mid-run.
+      - The high-stakes but non-urgent end-to-end problem is held and presented at the single end-gate report instead of interrupting mid-run.
+      - The early-interruption path is reserved for the urgent case and is not entered for ordinary or non-urgent findings.
+    pass_criteria: Only the build-invalidating/irreversible-and-imminent high-stakes problem escalates before the end-gate; the non-urgent high-stakes problem is deferred to the end-gate.
+    fail_criteria: A non-urgent or routine problem interrupts the run before the end-gate, or a build-invalidating high-stakes problem cannot escalate before the end-gate and is silently deferred.

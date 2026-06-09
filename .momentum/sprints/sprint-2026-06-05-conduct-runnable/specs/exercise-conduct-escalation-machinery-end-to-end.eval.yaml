@@ -1,0 +1,67 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: exercise-conduct-escalation-machinery-end-to-end
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/exercise-conduct-escalation-machinery-end-to-end.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, actually fire the escalation machinery rather than just reading about it.
+  First, drive a real stakes-class finding — one that qualifies for the mid-flight tier (irreversible
+  and imminent, or build-invalidating) — into the build while a story is still being worked, and
+  confirm the build's report shows that finding taking the mid-flight escalation path: the build
+  pauses mid-flight, surfaces it, and the report records its timing as mid-flight, not as something
+  deferred to the end. Second, drive an ordinary stakes-class finding that does NOT meet the
+  mid-flight bar and confirm it is held for the expanded end gate instead — its recorded timing is
+  end-gate-expanded. Seeing both means both timing tiers were genuinely exercised by real findings,
+  not just one. Third, drive a finding through the fix loop until the fix attempts are exhausted
+  without converging, and confirm the resulting disposition is BLOCKED — the report shows that finding
+  ended blocked because its bound ran out. Fourth, drive a finding all the way to an escalated
+  disposition and confirm the report shows it escalated. Each of these four — mid-flight path,
+  end-gate-expanded path, BLOCKED disposition, escalated disposition — must show up as an observable
+  outcome in the build's own report for a real finding, at least once each.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/exercise-conduct-escalation-machinery-end-to-end.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A real stakes-class finding drives the mid-flight escalation path
+    invocation: Drive a stakes-class finding that qualifies for mid-flight (irreversible-and-imminent or build-invalidating) into a build while a story is still in progress, then read the build's report.
+    given: A build in progress on a story, into which a qualifying mid-flight stakes-class finding is introduced.
+    when: The finding is surfaced during the in-progress story and the build's handling is observed.
+    then:
+      - The build pauses mid-flight to surface the finding rather than deferring it to the end gate.
+      - The report records that finding's timing as mid-flight.
+      - The mid-flight branch is shown firing on a real per-story finding, not only on a post-merge finding.
+    pass_criteria: The build's report shows a real stakes-class finding taking the mid-flight path with a mid-flight timing recorded and a mid-flight pause observed.
+    fail_criteria: The qualifying finding is held to the end gate, no mid-flight pause occurs, or no finding ever records mid-flight timing.
+
+  - name: A non-qualifying stakes-class finding is held for the expanded end gate
+    invocation: Drive a stakes-class finding that does not meet the mid-flight bar into a build, then read its recorded timing in the report.
+    given: A build into which a stakes-class finding that fails the mid-flight test (not irreversible-and-imminent and not build-invalidating) is introduced.
+    when: The finding is surfaced and the build's handling is observed.
+    then:
+      - The finding is held for the expanded end gate rather than pausing the build mid-flight.
+      - The report records that finding's timing as end-gate-expanded.
+    pass_criteria: A non-qualifying stakes-class finding records end-gate-expanded timing and does not trigger a mid-flight pause.
+    fail_criteria: The non-qualifying finding triggers a mid-flight pause, or records mid-flight timing despite failing the bar.
+
+  - name: A finding whose fix bound is exhausted ends BLOCKED
+    invocation: Drive a finding through the fix loop until its fix attempts are exhausted without converging, then read its disposition in the report.
+    given: A finding routed into the fix loop with a bounded number of fix attempts, set up so it does not converge within that bound.
+    when: The fix loop runs to exhaustion and the finding's final disposition is observed.
+    then:
+      - The finding's recorded disposition is BLOCKED.
+      - The report attributes the BLOCKED disposition to the fix bound being exhausted without convergence.
+    pass_criteria: The report shows the finding ending in a BLOCKED disposition because its fix bound ran out.
+    fail_criteria: The finding is reported as fixed despite not converging, or the bound-exhausted case never produces a BLOCKED disposition.
+
+  - name: A finding is driven to an escalated disposition
+    invocation: Drive a finding all the way to an escalated disposition, then read the disposition in the report.
+    given: A finding handled such that it reaches escalation rather than being silently fixed or deferred.
+    when: The build completes and the finding's disposition is observed.
+    then:
+      - The finding's recorded disposition is escalated.
+      - The escalated disposition is visible as an observable outcome in the build's report.
+    pass_criteria: The report shows at least one finding reaching an escalated disposition.
+    fail_criteria: No finding ever reaches an escalated disposition, or escalation is not observable in the report.

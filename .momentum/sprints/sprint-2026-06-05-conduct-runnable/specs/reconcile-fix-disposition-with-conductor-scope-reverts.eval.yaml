@@ -1,0 +1,68 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: reconcile-fix-disposition-with-conductor-scope-reverts
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/reconcile-fix-disposition-with-conductor-scope-reverts.eval.yaml
+how_dev_self_checks: |
+  Before you signal done, run a sprint build that produces a finding whose fix gets reverted under
+  scope discipline — i.e. the fixer changed something out of scope (such as a story's own spec text
+  rather than a deliverable), and the build backed that change out so it never lands in the merged
+  result. Walk the build to its final acceptance gate and check three things. First: open the merged
+  files and confirm the reverted change is genuinely gone — the content the fix was supposed to alter
+  still reads in its original (unfixed) state. Second: in the build's report and its per-finding
+  status, confirm that finding is NOT reported as "fixed" — a fix that was backed out must not still
+  count as resolved; its status must reflect that it was reverted / not actually applied. Third:
+  confirm the final scorecard / tally does not overstate convergence — it cannot show "all findings
+  fixed" when one fix was reverted; the reverted one is excluded from the fixed count and the
+  discrepancy is visible, not hidden. Confirm the reverted correction is re-routed so the underlying
+  defect is still recorded for follow-up rather than dropped. Then run a control build where every fix
+  applies cleanly with no revert, and confirm those findings DO report as fixed and the scorecard
+  counts them — so the reconciliation only withholds "fixed" from genuinely reverted fixes.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/reconcile-fix-disposition-with-conductor-scope-reverts.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFIER CONTRACT BODY (Part B) ===
+scenarios:
+  - name: A fix reverted under scope discipline is not reported as fixed
+    invocation: Run a build that produces a finding whose fix is backed out under scope discipline, then read that finding's status at the final gate.
+    given: A build in which a fix edited something out of scope and that edit was reverted so it never lands in the merged result.
+    when: The build reaches the final acceptance gate and the finding's status is read.
+    then:
+      - The merged files show the reverted change is genuinely absent — the content the fix targeted still reads in its original unfixed state.
+      - The finding for that reverted fix is not reported as "fixed".
+      - The finding's status reflects that the fix was reverted / not actually applied.
+    pass_criteria: A reverted fix's finding shows a not-fixed status consistent with the merged files, which still carry the original unfixed content.
+    fail_criteria: The finding is reported as "fixed" even though its change was reverted, or its status is silently unchanged while the merged content remains unfixed.
+
+  - name: The scorecard does not overstate convergence when a fix was reverted
+    invocation: Read the final scorecard / tally for a build that had one fix reverted under scope discipline.
+    given: A completed build in which one of several findings had its fix backed out.
+    when: The final scorecard or convergence tally is inspected at the gate.
+    then:
+      - The scorecard does not report all findings as fixed when one fix was reverted.
+      - The reverted finding is excluded from the fixed count.
+      - The discrepancy is visible in the report rather than hidden.
+    pass_criteria: The fixed count excludes the reverted fix and the report makes the reverted/unresolved status visible.
+    fail_criteria: The scorecard shows full convergence (e.g. all-fixed) despite a reverted fix, or the reverted fix is silently counted as fixed.
+
+  - name: The reverted correction is re-routed so the defect is still recorded
+    invocation: After a build reverts a fix under scope discipline, inspect what becomes of the underlying correction.
+    given: A finding whose fix was reverted because it was out of scope for the build.
+    when: The build completes and the disposition of the reverted correction is examined.
+    then:
+      - The underlying defect is re-routed for follow-up rather than dropped.
+      - There is a durable record that the correction is still owed, distinct from a "fixed" status.
+    pass_criteria: The reverted correction is captured for follow-up and visibly tracked as still-owed rather than discarded or marked done.
+    fail_criteria: The reverted correction disappears with no follow-up record, or is marked done despite never being applied.
+
+  - name: Cleanly applied fixes still report as fixed and count toward convergence
+    invocation: Run a control build in which every fix applies cleanly with no revert, then read the finding statuses and scorecard.
+    given: A build whose fixes all land in the merged result with none reverted.
+    when: The build reaches the final acceptance gate.
+    then:
+      - Each cleanly applied fix's finding is reported as fixed.
+      - The scorecard counts those fixes toward convergence.
+    pass_criteria: With no reverts, all applied fixes report as fixed and the scorecard reflects full convergence — the reconciliation withholds "fixed" only from genuinely reverted fixes.
+    fail_criteria: A cleanly applied fix is withheld from the fixed count or reported as not-fixed when nothing was reverted.
