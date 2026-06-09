@@ -406,6 +406,9 @@ Ready to begin?</output>
                 - story_slug: S.slug
                 - story_diff: {{story_diff}}
                 - worktree_path: `.worktrees/story-{S.slug}`
+                - review_depth: S.review_depth if set in the story spec (see DEEPER-REVIEW OPT-IN above);
+                    omit this field (or pass null) when the story spec does not set it, which triggers
+                    standard-depth review. Passing "deep" triggers the higher-rigor pass.
               Constraint: "Report-only mode. Do not modify code. Do not mutate git. Produce findings only."
               Returns: normalized finding records per canonical finding schema (finding-schema.md),
                 stakes_class populated on every record. Source field: `bmad-code-review`.
@@ -496,6 +499,38 @@ Ready to begin?</output>
     </step>
 
     <!-- ─────────────────────────────────────────────────────── -->
+    <!-- DEEPER-REVIEW OPT-IN (review_depth:deep)                -->
+    <!-- Names the requesting party and triggering signal.        -->
+    <!-- ─────────────────────────────────────────────────────── -->
+
+    <!--
+      REVIEW DEPTH GOVERNANCE:
+
+      Standard depth (default): REVIEWER B (momentum:code-reviewer) runs at its default
+      rigor level on every story in every build. No explicit parameter is required.
+
+      Deeper review (review_depth:deep): a higher-rigor code-review pass. It is dispatched
+      as REVIEWER B with the additional input `review_depth: "deep"` passed to the skill.
+
+      REQUESTING PARTY: The developer is the ONLY party permitted to request review_depth:deep.
+      The Conductor never upgrades to deep review on its own authority.
+
+      TRIGGERING SIGNAL: The developer sets `review_depth: "deep"` in the story's spec file
+      (`.momentum/stories/{slug}.md`) under the story's build-options block (or equivalent
+      top-level field). When the Conductor reads the story spec at launch (step 2.1 STAGE-1),
+      it checks for this field and passes it to REVIEWER B if present.
+
+      ROUTINE PATH: On a routine build the developer does not set this field. REVIEWER B
+      runs at standard depth. The deeper-review opt-in is NOT triggered automatically and
+      does NOT insert any mid-run developer question. It is a planning-time decision by
+      the developer, recorded in the story spec before the build starts.
+
+      BEHAVIORAL INVARIANT: review_depth:deep never reopens a human question on the
+      routine build path. Setting it is a planning action (pre-flight), not a mid-run
+      escalation.
+    -->
+
+    <!-- ─────────────────────────────────────────────────────── -->
     <!-- STEP 2.S3 — Stage-3 fix loop (Phase B–D, per story)     -->
     <!-- Invoked after stage-2 (QA + code-review) returns        -->
     <!-- findings for story S. Governs: spec §3 Phase B–D + §4.  -->
@@ -503,7 +538,7 @@ Ready to begin?</output>
 
     <step n="2.S3" goal="Stage-3 per-story fix loop — directed fixer with retry-bound-3, escalation routing (DEC-036 D1/D2)">
 
-      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, optionally run /simplify, re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
+      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, run /simplify (every story, once per iteration, after Phase B), re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
 
       Stage-2 callers (QA reviewer + code-review adapter) and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
 
@@ -513,9 +548,30 @@ Ready to begin?</output>
 
       <note>ISOLATION INVARIANT. An escalated finding for one item does NOT stop routine findings on other items from completing their normal fix → re-check → bound-3 cycle. The escalation path is non-destructive to the routine path. Within a single story's findings list, escalated findings exit the retry loop; routine findings continue their fix/re-check cycle to completion regardless.</note>
 
+      <!-- ── CANONICAL RETRY BOUNDS (declared once; all per-loop mentions defer to these) ───── -->
+      <!--                                                                                        -->
+      <!-- FIX-LOOP BOUND ({{MAX_FIX_ATTEMPTS}}): governs Phase B→D iterations per finding.      -->
+      <!--   Canonical value: 3. Every Phase D check that tests {{fix_attempts}} against a        -->
+      <!--   numeric limit MUST reference {{MAX_FIX_ATTEMPTS}}, not a hardcoded literal.          -->
+      <!--   If the retry budget is ever changed, it is changed here and only here.               -->
+      <!--                                                                                        -->
+      <!-- MERGE-ATTEMPT BOUND: governs rebase-then-merge attempts per story.                    -->
+      <!--   Canonical value: 3. Declared at step 2.0 init ({{merge_attempts}} bound: 3)          -->
+      <!--   and enforced in step 2.2.M.4. Each mention in 2.2.M refers to that step 2.0         -->
+      <!--   declaration; no merge-attempt mention may state a different number.                  -->
+      <!--                                                                                        -->
+      <!-- PIPELINE-RETRY BOUND: governs Conductor-level story-pipeline retries on failure.      -->
+      <!--   Canonical value: 2. Declared at the step 2.2 failed-signal handler note             -->
+      <!--   ("default retry bound is 2"); all checks in that handler defer to that statement.   -->
+      <!--   Pipeline retries are a distinct loop from the fix-loop and merge-attempt loop.       -->
+      <!--   The three loops are separate; each has its own canonical bound declared once.        -->
+
       <!-- ── Entry: bind findings, initialize per-finding retry state ─── -->
 
-      <action>Bind {{stage2_findings}} = merged findings array from stage-2 (qa-reviewer + bmad-code-review output for story S),
+      <action>Bind {{MAX_FIX_ATTEMPTS}} = 3 — the canonical fix-loop bound for this step. Every Phase D check
+        that tests {{fix_attempts}} against a retry limit uses {{MAX_FIX_ATTEMPTS}}. Declared once here;
+        never hardcoded elsewhere in 2.S3.
+        Bind {{stage2_findings}} = merged findings array from stage-2 (qa-reviewer + bmad-code-review output for story S),
         deduplicated and severity-sorted (highest severity first).
         Bind {{fix_attempts}} = {} — per-finding retry counter keyed by finding ID.
         Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked | scope-reverted).
@@ -598,9 +654,53 @@ Ready to begin?</output>
                 — Continue the fix loop. This escalation does NOT pause the build or stop other findings from completing.
       </action>
 
-      <!-- ── Optional Phase C: /simplify cleanup pass ─────────────── -->
+      <!-- ── Phase C: /simplify cleanup pass ──────────────────────── -->
+      <!--                                                               -->
+      <!-- TRIGGER RULE (single, non-conflicting): the /simplify pass   -->
+      <!-- runs on EVERY story, once per fix-loop iteration, immediately -->
+      <!-- after Phase B returns. No size/diff threshold. No on-demand  -->
+      <!-- opt-in. No second condition elsewhere in this step overrides  -->
+      <!-- this rule. The pass is always executed when Phase B applies   -->
+      <!-- at least one fix; when Phase B finds nothing to fix (empty    -->
+      <!-- stage2_findings) the fix loop exits at the empty-findings     -->
+      <!-- check above and this action is never reached.                 -->
 
-      <note>PHASE C (/simplify) is an optional post-fixer cleanup pass. It runs AFTER the fixer (Phase B), NEVER concurrently — it mutates the tree and must not double-mutate code the fixer just touched. /simplify is NOT a bug hunter; it applies cleanup only. Its findings, if any, feed back into the next Phase B iteration as routine cleanup findings.</note>
+      <action>PHASE C — SIMPLIFY CLEANUP: Spawn the /simplify skill as a subagent (individual-agent, NOT TeamCreate):
+        Input:
+          - worktree_path: `.worktrees/story-{S.slug}` (the story's worktree after Phase B fixes have been committed)
+          - writable_files: {{writable_files}} (same scope constraint as the Phase B fixer)
+        Constraint passed to subagent: "Apply code simplification and cleanup only. Do not introduce new logic,
+          fix bugs, or expand scope. Do not mutate git. Return a findings list of cleanup changes applied
+          (each entry: { finding_id, type: 'cleanup', severity: 'low', summary, location, suggested_fix }).
+          If nothing warrants cleanup, return an empty list."
+        Bind {{simplify_findings}} = the subagent's returned findings list (may be empty).
+      </action>
+
+      <action>PHASE C — CAPTURE AND COMMIT: If {{simplify_findings}} is non-empty:
+        Verify that every file modified by the /simplify subagent is in {{writable_files}}. Apply the same
+        write-scope guard used in Phase B: unstage and discard any out-of-scope edits before committing.
+        The Conductor (sole git-mutation authority) commits the cleanup output:
+          `git -C .worktrees/story-{S.slug} add -u`
+          (apply write-scope guard before proceeding)
+          `git -C .worktrees/story-{S.slug} commit -m "refactor({S.slug}): simplify cleanup pass"`
+        Record in {{build_log}}: { slug: S.slug, event: "stage3-simplify-pass", findings_count: length({{simplify_findings}}), committed: true }
+        If {{simplify_findings}} is empty: record in {{build_log}}: { slug: S.slug, event: "stage3-simplify-pass", findings_count: 0, committed: false }
+        Do NOT invoke momentum:triage for simplify findings — they are cleanup-only, not defects.
+      </action>
+
+      <action>PHASE C — FEED BACK: Merge {{simplify_findings}} into the unresolved findings list for the next
+        Phase B iteration. Each entry in {{simplify_findings}} is tagged stakes_class: "routine" and
+        disposition: null (unresolved). Append to {{remaining_findings}} so they are presented to the Phase B
+        fixer in the next iteration as routine cleanup candidates.
+        Note: this feedback is ONLY meaningful when the loop is about to re-enter Phase B (i.e., when
+        {{remaining_findings}} from Phase D is non-empty or {{simplify_findings}} itself is non-empty and the
+        loop has iterations remaining). If all other findings are resolved AND {{simplify_findings}} is empty,
+        Phase D will find {{remaining_findings}} empty and the loop exits cleanly — no re-entry to Phase B.
+        If {{simplify_findings}} is non-empty but all fix-attempt budgets are at {{MAX_FIX_ATTEMPTS}}: the
+        simplify findings do NOT extend the fix budget beyond {{MAX_FIX_ATTEMPTS}} — they are treated
+        as iteration-zero findings ({{fix_attempts}}[F.id] initialized to 0) and are subject to the same
+        per-finding retry bound.
+      </action>
 
       <!-- ── Mid-flight dispatch for bar-clearing escalations ───────── -->
 
@@ -616,13 +716,17 @@ Ready to begin?</output>
       <!-- ── Phase D: RE-CHECK gate — loop control ─────────────────── -->
 
       <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
-        Collect {{remaining_findings}} = findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted).
-        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop. Scope-reverted findings are also removed — they were fully discarded by the write-scope guard and re-routed inline; re-presenting them to the fixer would be incorrect (the defect is out-of-scope for this story).
+        Collect {{remaining_findings}} = UNION of:
+          (a) findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted | blocked), AND
+          (b) any entries in {{simplify_findings}} with disposition: null that are not already present in set (a).
+        This additive collect ensures simplify findings appended by Phase C FEED BACK survive into the next Phase B
+        iteration — they carry disposition: null and were never in stage2_findings, so a status-only filter would drop them.
+        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop. Scope-reverted findings are also removed — they were fully discarded by the write-scope guard and re-routed inline; re-presenting them to the fixer would be incorrect (the defect is out-of-scope for this story). Blocked findings are also excluded — their fix budget is exhausted and they are handled by the blocked-then-continue path below.
         DIFF RANGE FOR RE-CHECK: Use the same canonical pre-merge merge-base pattern as stage 2. The story branch is still pre-merge at this point. Canonical pattern: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review).
       </action>
 
       <check if="{{remaining_findings}} is empty">
-        <note>All findings are resolved (fixed, dismissed, triaged-out, escalated, or scope-reverted). The fix loop is clean. Proceed to stage-4 (merge).</note>
+        <note>All findings are resolved (fixed, dismissed, triaged-out, escalated, scope-reverted, or blocked). The fix loop is clean. Proceed to stage-4 (merge).</note>
         <action>Proceed to stage-4 (merge) for story S.
           Emit partial pipeline signal payload (for eventual terminal signal from stage-4):
             leftover_findings: [] (none remaining)
@@ -638,16 +742,16 @@ Ready to begin?</output>
           Increment {{fix_attempts}}[F.id] (initialize to 0 if absent).
         </action>
 
-        <check if="any F in {{remaining_findings}} has {{fix_attempts}}[F.id] less than 3">
+        <check if="any F in {{remaining_findings}} has {{fix_attempts}}[F.id] less than {{MAX_FIX_ATTEMPTS}}">
           <note>Retry budget available for at least one remaining finding. Loop back to Phase B with the unresolved findings.</note>
           <action>Return to Phase B (CONVERGE): invoke the directed fixer again with {{remaining_findings}} (the subset still unresolved).
             Do not pass already-fixed, dismissed, triaged-out, escalated, or scope-reverted findings back to the fixer — pass only the genuinely unresolved ones.
           </action>
         </check>
 
-        <check if="all F in {{remaining_findings}} have {{fix_attempts}}[F.id] >= 3">
-          <note>Retry budget exhausted for all remaining findings. Mark each exhausted finding BLOCKED. Continue to the next story — do NOT halt the whole build.</note>
-          <action>For each finding F in {{remaining_findings}} (where {{fix_attempts}}[F.id] >= 3):
+        <check if="all F in {{remaining_findings}} have {{fix_attempts}}[F.id] >= {{MAX_FIX_ATTEMPTS}}">
+          <note>Retry budget exhausted for all remaining findings ({{MAX_FIX_ATTEMPTS}} attempts reached). Mark each exhausted finding BLOCKED. Continue to the next story — do NOT halt the whole build.</note>
+          <action>For each finding F in {{remaining_findings}} (where {{fix_attempts}}[F.id] >= {{MAX_FIX_ATTEMPTS}}):
             Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "blocked", summary: F.summary, attempts: {{fix_attempts}}[F.id] }
             Append to {{build_log}}: { slug: S.slug, event: "stage3-finding-blocked", finding_id: F.id, finding_summary: F.summary, attempts: {{fix_attempts}}[F.id] }
           </action>
@@ -1585,6 +1689,61 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
     <note>No developer ask here on the routine path. Routine E2E findings are auto-fixed silently. Stakes-class E2E findings with timing_tier == "end-gate-expanded" are held for the end-gate as decision cards. Only timing_tier == "mid-flight" findings trigger the narrow mid-flight pause (step 2.F). Proceed to Phase 5.</note>
   </step>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- STORY TERMINAL STATES — COMPLETE ENUMERATION                -->
+  <!-- Every named terminal state has exactly one defined path     -->
+  <!-- that reaches it. No named terminal state is unreachable.    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+
+  <!--
+    TERMINAL STATES AND THEIR REACHABLE PATHS:
+
+    done
+      PATH: Story merged to sprint branch (step 2.2.M.6 → status "review") → developer approves
+        at end-gate (Phase 5) → Conductor transitions review → verify → done (two-step, Phase 5
+        approve action). This is the success path for every story that completes the build pipeline.
+      FINDING APPROVED-AS-IS (stakes-class finding acknowledged at end-gate without a code fix):
+        The story itself still lands in "done". Acknowledging a decision card at the end-gate
+        means the developer has reviewed the stakes-class finding and accepted the current state.
+        The finding's own disposition remains "escalated" in the build record — it is NOT marked
+        "fixed" — but the story status transitions to done regardless. The stakes-class finding
+        is preserved in the build log and may produce a follow-up backlog stub via the
+        MAJOR-RESIDUAL GOVERNANCE GUARD (Phase 5 approve action).
+
+    closed-incomplete
+      PATH: Story did NOT merge successfully. Any of the following produces closed-incomplete:
+        (a) Retry-exhausted at pipeline level ({{retries}} >= PIPELINE_RETRY_BOUND=2, step 2.2
+            failed-signal handler). Terminal transition deferred to Phase 5 approve.
+        (b) Stage-3 finding budget exhausted (all {{fix_attempts}} >= {{MAX_FIX_ATTEMPTS}}=3,
+            step 2.S3). Story left unmerged. Terminal transition deferred to Phase 5 approve.
+        (c) Merge-attempts exhausted ({{merge_attempts}} >= 3, step 2.2.M.5 quarantine).
+            Terminal transition deferred to Phase 5 approve.
+        (d) Mid-flight Abort-that-branch choice by developer (step 2.F). Terminal transition
+            deferred to Phase 5 approve.
+        (e) Build-phase completion sweep: story still in ready-for-dev with unsatisfiable
+            depends_on (step 2.2 completion check). Transitioned to closed-incomplete inline.
+        In all cases the Conductor performs the transition via:
+          `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
+
+    dropped
+      PATH: A story is transitioned to "dropped" when the DEVELOPER explicitly removes it from
+        the sprint scope before or during the build — outside the automated pipeline. Specifically:
+        the developer invokes `momentum-tools sprint status-transition --story {slug} --target dropped`
+        directly (a manual operation, not performed by the Conductor). The Conductor observes
+        "dropped" during H5 inconsistency check (line 134: "dropped" is in the canonical valid-
+        status set). If the Conductor encounters a story in "dropped" status when seeding {{merged}}
+        at step 2.0, it treats it as a non-blocking story (not added to {{frontier}}, not expected
+        to merge). The Conductor NEVER transitions a story to "dropped" itself — that is a developer
+        act. Stories the Conductor cannot merge go to closed-incomplete, not dropped.
+      NOTE: "dropped" is reachable only via direct developer action outside the automated build.
+        It is in the valid-status set (H5 check) because the Conductor must tolerate it as input
+        state, not because the Conductor produces it as output.
+
+    INVARIANT: No named terminal state is unreachable. Every terminal state listed in the
+    canonical valid-status set has a defined path above. The Conductor produces "done" and
+    "closed-incomplete"; "dropped" is produced by direct developer action and tolerated as input.
+  -->
 
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!-- PHASE 5: SINGLE HUMAN END-GATE                              -->
