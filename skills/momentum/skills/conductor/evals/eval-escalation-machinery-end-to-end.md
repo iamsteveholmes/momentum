@@ -170,11 +170,12 @@ step 2.S3). The stage-2 findings for this story include **Fixture A** (`irrevers
      "disposition": "escalated", "timing_tier": "mid-flight",
      "finding_count": 1 }
    ```
-3. **`{{escalations}}` contains a mid-flight record** for this finding:
+3. **`{{escalations}}` contains a mid-flight record** for this finding (workflow.md line 612
+   writes exactly these four fields — no `resolution` key is written to the accumulator;
+   resolution is observable via the answered pause-ask and the committed fix):
    ```json
    { "slug": "fixture-story-alpha", "stakes_class": "irreversible-destructive",
-     "timing_tier": "mid-flight", "disposition": "escalated",
-     "resolution": "fix-applied" }
+     "timing_tier": "mid-flight", "disposition": "escalated" }
    ```
 4. **The timing recorded is `mid-flight`** — not `end-gate-expanded`. The mid-flight branch
    fired on a per-story in-progress finding, not on a post-merge AVFL result.
@@ -273,12 +274,18 @@ convergence is never reached within the retry bound of 3.
      "summary": "Fix loop does not increment {{fix_attempts}} counter...",
      "attempts": 3 }
    ```
-2. **`{{build_log}}` records the BLOCKED outcome** for `fixture-story-beta`:
+2. **`{{build_log}}` records the BLOCKED outcome** for `fixture-story-beta` via two entries
+   (per workflow.md step 2.S3 — one per-finding entry and one per-story entry):
    ```json
-   { "slug": "fixture-story-beta",
-     "event": "stage3-blocked",
-     "blocked_findings": ["fix-C-blocked"],
-     "note": "story left unmerged; triage stub spun" }
+   { "slug": "fixture-story-beta", "event": "stage3-finding-blocked",
+     "finding_id": "fix-C-blocked",
+     "finding_summary": "Fix loop does not increment {{fix_attempts}} counter...",
+     "attempts": 3 }
+   ```
+   ```json
+   { "slug": "fixture-story-beta", "event": "stage3-story-blocked",
+     "leftover_count": 1, "stranded": true,
+     "note": "story left unmerged per spec §3; terminal status transition deferred to Phase 5 approve" }
    ```
 3. **Story `fixture-story-beta` is NOT merged** — it is removed from `{{running}}` and
    never transitions to stage-4.
@@ -317,9 +324,11 @@ inspected for escalated disposition records.
 **Then:**
 
 1. **Fixture A (mid-flight):** `{{escalations}}` contains at least one record with
-   `disposition: escalated`, `timing_tier: mid-flight`, `resolution: fix-applied` for
-   `fixture-story-alpha`. This record is visible in the Phase 5 end-gate report's
-   "Mid-flight Escalations During Build" section.
+   `disposition: escalated` and `timing_tier: mid-flight` for `fixture-story-alpha`
+   (workflow.md line 612 writes these four fields: `slug`, `stakes_class`, `timing_tier`,
+   `disposition` — no `resolution` field is written to the accumulator; the Proceed resolution
+   is observable via the developer's answered pause-ask and the committed fix). This record is
+   visible in the Phase 5 end-gate report's "Mid-flight Escalations During Build" section.
 2. **Fixture B (end-gate-expanded):** `{{end_gate_escalations}}` contains an entry for
    `fix-B-end-gate` with `disposition: escalated`, `timing_tier: end-gate-expanded`. This
    entry surfaces as a decision card at Phase 5.
@@ -365,7 +374,10 @@ findings and observing the resulting state in `{{build_log}}`, `{{escalations}}`
    - Confirm `## Mid-flight Escalation — Branch Paused` appears in the output.
    - Confirm the pause-ask carries What / Why / Evidence / Options inline (self-sufficiency
      floor from `references/escalation.md`).
-   - Respond **Proceed**. Confirm `resolution: fix-applied` is recorded in `{{escalations}}`.
+   - Respond **Proceed**. Confirm `{{escalations}}` contains a record with
+     `disposition: escalated` and `timing_tier: mid-flight` for `fixture-story-alpha`
+     (the accumulator does not carry a `resolution` field — Proceed resolution is evidenced
+     by the developer's response to the pause-ask and the subsequent committed fix).
 
 4. **Observe Fixture B** routed without a pause:
    - Confirm no second pause-ask surfaces for Fixture B.
