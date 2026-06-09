@@ -5422,7 +5422,7 @@
     "story_type": "maintenance"
   },
   "conduct-simplify-and-convergence-questions": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Wire /simplify Phase C invocation and resolve the §13 convergence open questions",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5586,7 +5586,7 @@
     "story_type": "feature"
   },
   "exercise-conduct-escalation-machinery-end-to-end": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Exercise the conduct escalation machinery end-to-end before trusting it",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
