@@ -1,7 +1,7 @@
 ---
 title: Exercise the conduct escalation machinery end-to-end before trusting it
 story_key: exercise-conduct-escalation-machinery-end-to-end
-status: review
+status: backlog
 epic_slug: momentum-sprint-orchestration
 story_type: feature
 priority: medium
@@ -24,38 +24,3 @@ Retro finding (sprint-2026-06-02-conduct-core): the stakes-and-timing engine fir
 ## References
 - Retro findings (v2): `.momentum/sprints/sprint-2026-06-02-conduct-core/retro-transcript-audit.md`
 - Related: `conduct-stakes-timing-escalation-mechanism` (done), `stakes-classification-rubric` (done), `stage3-fix-loop-via-directed-dev` (done)
-
-## Dev Agent Record
-
-### Completion Notes
-
-Delivered `skills/momentum/skills/conductor/evals/eval-escalation-machinery-end-to-end.md` — an
-execution-primary eval that seeds four concrete fixture findings and drives each of the four
-escalation outcomes the conduct-core retro found never exercised:
-
-1. **Mid-flight path (Fixture A):** `irreversible-destructive` + `timing_tier=mid-flight` → step 2.F
-   fires, pause-ask surfaces mid-build, resolution `fix-applied` recorded in `{{escalations}}`.
-
-2. **End-gate-expanded path (Fixture B):** `high-blast-radius-architecture` +
-   `timing_tier=end-gate-expanded` → no pause-ask, routed to `{{end_gate_escalations}}`, surfaces as
-   decision card at Phase 5.
-
-3. **BLOCKED disposition (Fixture C):** `routine` finding that fails to converge in 3 fix/re-check
-   iterations → `disposition: blocked` in `{{finding_dispositions}}`, story left unmerged, triage stub
-   spun via `momentum:triage`.
-
-4. **Escalated disposition (Fixtures A + B):** both paths produce `disposition: escalated` records
-   observable in `{{build_log}}`, `{{escalations}}`, and `{{end_gate_escalations}}`.
-
-Each scenario specifies Given/When/Then, pass criteria, and fail criteria aligned to the frozen
-contract scenarios in
-`.momentum/sprints/sprint-2026-06-05-conduct-runnable/specs/exercise-conduct-escalation-machinery-end-to-end.eval.yaml`.
-
-The eval includes a verification method section and an inspection-vs-execution note explaining
-why static inspection of workflow.md is insufficient — the four outcomes depend on runtime
-accumulator state (`{{build_log}}`, `{{escalations}}`, etc.) that can only be confirmed by
-driving real findings through the loop.
-
-### File List
-
-- `skills/momentum/skills/conductor/evals/eval-escalation-machinery-end-to-end.md` (new)
