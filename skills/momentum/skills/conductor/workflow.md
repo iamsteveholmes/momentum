@@ -517,8 +517,10 @@ Ready to begin?</output>
       <action>Bind {{stage2_findings}} = merged findings array from stage-2 (qa-reviewer + bmad-code-review output for story S),
         deduplicated and severity-sorted (highest severity first).
         Bind {{fix_attempts}} = {} — per-finding retry counter keyed by finding ID.
-        Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked).
-          [NOTE: "blocked" is Conductor-internal-only, used when retry budget is exhausted. It is NOT in the canonical four-value disposition set (fixed | dismissed | triaged-out | escalated) defined by finding-schema.md. Before blocked findings reach the end-gate report or any schema consumer, they are treated as escalated findings (the canonical catch-all for findings that cannot be fixed, dismissed, or triaged-out per finding-schema.md §73). The triage spin-out path for blocked findings serves the same routing purpose as the escalated path.]
+        Bind {{finding_dispositions}} = [] — per-finding outcome records (fixed | dismissed | triaged-out | escalated | blocked | scope-reverted).
+          [NOTE: "blocked" and "scope-reverted" are Conductor-internal-only values. They are NOT in the canonical four-value disposition set (fixed | dismissed | triaged-out | escalated) defined by finding-schema.md.
+            "blocked" — used when retry budget is exhausted; treated as escalated for schema consumers.
+            "scope-reverted" — used when the write-scope guard fully discards a fix (stage-3 SCOPE-REVERT PATH case a or case b with insufficient in-scope portion). The scope-reverted disposition has its own inline reroute path (momentum:triage called immediately, not deferred) and MUST NOT be picked up by the build-phase-completion deferred triaged-out router, which would create a duplicate stub. For schema consumers, scope-reverted maps to triaged-out.]
         Bind {{end_gate_escalations}} = [] — escalated findings routed to end-gate-expanded tier (held for Phase 5).
           [WIRED: {{end_gate_escalations}} is written here, emitted in the pipeline signal payload, and consumed by the end-gate report at step 5. Step 5 merges these per-story escalations with AVFL and E2E escalation leftovers into {{stakes_findings}} — the decision-card section of the HTML report. Each entry must carry: finding_id, stakes_class, summary, evidence, suggested_fix. These fields populate the decision cards. See references/endgate-report-renderer.md for the full data contract and rendering spec.]
         Bind {{mid_flight_escalations}} = [] — escalated findings accumulated for single dispatch to step 2.F (the shared-primitive escalation hook).
@@ -548,6 +550,7 @@ Ready to begin?</output>
       <!-- ── Route each finding by disposition returned by fixer ───── -->
 
       <action>For each finding F in the fixer's returned dispositions:
+        RESET per-finding locals: {{fix_reverted_files}} = [] — must be cleared at the top of each iteration so a prior finding's discarded paths cannot bleed into the current finding's scope-revert check.
 
         CASE disposition == "fixed":
           — Stakes-class guard: VERIFY that F.stakes_class == "routine". If the fixer returns "fixed" for a stakes-class finding (non-routine), treat it as an implementation error — do NOT commit the fix. Log a warning in {{build_log}} and re-classify F as escalated (see escalated path below).
@@ -556,12 +559,14 @@ Ready to begin?</output>
             SCOPE-REVERT PATH (fires when {{fix_reverted_files}} is non-empty after discarding):
               a. If ALL files the fixer modified were out of scope (the fix produced ONLY out-of-scope edits — nothing was committed), the fix was entirely reverted:
                  — Do NOT commit. The finding's "fixed" disposition is INVALID — the fix never landed.
-                 — Re-classify F: change disposition from "fixed" to "triaged-out" in {{finding_dispositions}}.
-                 — Append to {{conductor_reverted_fixes}}: { finding_id: F.id, story_slug: S.slug, summary: F.summary, reverted_files: {{fix_reverted_files}}, reroute_stub_slug: null }.
-                 — Log in {{build_log}}: { slug: S.slug, event: "stage3-fix-scope-reverted", finding_id: F.id, finding_summary: F.summary, reverted_files: {{fix_reverted_files}}, note: "fix entirely discarded by write-scope guard — disposition reclassified from fixed to triaged-out; defect re-routed for follow-up" }.
-                 — RE-ROUTE for follow-up (defect must not be silently dropped): invoke momentum:triage with the inbound finding I's descriptive fields (finding_id: F.id, summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix, story_slug: S.slug, severity: I.severity, stakes_class: I.stakes_class) to create a backlog stub so the defect remains on record. Bind the returned stub slug into {{conductor_reverted_fixes}}[last].reroute_stub_slug.
+                 — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover summary, detail, location, suggested_fix, severity, stakes_class (mirroring the triaged-out and escalated cases at lines 575/580; these descriptive fields are needed for the triage stub below).
+                 — Re-classify F: change disposition from "fixed" to "scope-reverted" in {{finding_dispositions}}.
+                   [NOTE: "scope-reverted" is Conductor-internal (parallel to "blocked" at line 521). It is NOT in the canonical four-value set (fixed | dismissed | triaged-out | escalated). Before any schema consumer sees this record it maps to "triaged-out". Using a distinct value prevents the build-phase-completion deferred-triage router (CASE disposition == "triaged-out") from picking up this record a second time and creating a duplicate stub — the inline reroute below is the sole routing owner for scope-reverted findings.]
+                 — Append to {{conductor_reverted_fixes}}: { finding_id: F.id, story_slug: S.slug, summary: I.summary, reverted_files: {{fix_reverted_files}}, reroute_stub_slug: null }.
+                 — Log in {{build_log}}: { slug: S.slug, event: "stage3-fix-scope-reverted", finding_id: F.id, finding_summary: I.summary, reverted_files: {{fix_reverted_files}}, note: "fix entirely discarded by write-scope guard — disposition reclassified from fixed to scope-reverted; defect re-routed inline for follow-up" }.
+                 — RE-ROUTE for follow-up (defect must not be silently dropped): invoke momentum:triage with the inbound finding I's descriptive fields (finding_id: F.id, summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix, story_slug: S.slug, severity: I.severity, stakes_class: I.stakes_class) to create a backlog stub so the defect remains on record. This triage call is inline because the scope-reverted disposition does NOT enter the deferred-triage router. Bind the returned stub slug into {{conductor_reverted_fixes}}[last].reroute_stub_slug.
                  — Do NOT pass F to the fixer again in the next iteration — the defect is out-of-scope for this story's deliverables and will be addressed through the stub.
-              b. If ONLY SOME files were out of scope (the fix contained both in-scope and out-of-scope edits), the partial fix is committed without the out-of-scope files. The finding remains disposition "fixed" only if the in-scope portion of the fix is sufficient to address the finding. If the in-scope portion alone does not address the finding (the core fix was in the discarded file), apply the same full-revert path above (re-classify to triaged-out, append to {{conductor_reverted_fixes}}, re-route). If the in-scope portion is sufficient: commit and record disposition "fixed" normally; log the partial discard in {{build_log}} as a warning.
+              b. If ONLY SOME files were out of scope (the fix contained both in-scope and out-of-scope edits), the partial fix is committed without the out-of-scope files. The finding remains disposition "fixed" only if the in-scope portion of the fix is sufficient to address the finding. If the in-scope portion alone does not address the finding (the core fix was in the discarded file), apply the same full-revert path above (re-classify to "scope-reverted", append to {{conductor_reverted_fixes}}, re-route inline). If the in-scope portion is sufficient: commit and record disposition "fixed" normally; log the partial discard in {{build_log}} as a warning.
           — Commit the applied fix (in-scope edits only, after the guard above):
               `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
@@ -610,13 +615,13 @@ Ready to begin?</output>
       <!-- ── Phase D: RE-CHECK gate — loop control ─────────────────── -->
 
       <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
-        Collect {{remaining_findings}} = findings not yet resolved (status not fixed | dismissed | triaged-out | escalated).
-        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop.
+        Collect {{remaining_findings}} = findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted).
+        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop. Scope-reverted findings are also removed — they were fully discarded by the write-scope guard and re-routed inline; re-presenting them to the fixer would be incorrect (the defect is out-of-scope for this story).
         DIFF RANGE FOR RE-CHECK: Use the same canonical pre-merge merge-base pattern as stage 2. The story branch is still pre-merge at this point. Canonical pattern: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review).
       </action>
 
       <check if="{{remaining_findings}} is empty">
-        <note>All findings are resolved (fixed, dismissed, triaged-out, or escalated). The fix loop is clean. Proceed to stage-4 (merge).</note>
+        <note>All findings are resolved (fixed, dismissed, triaged-out, escalated, or scope-reverted). The fix loop is clean. Proceed to stage-4 (merge).</note>
         <action>Proceed to stage-4 (merge) for story S.
           Emit partial pipeline signal payload (for eventual terminal signal from stage-4):
             leftover_findings: [] (none remaining)
@@ -635,7 +640,7 @@ Ready to begin?</output>
         <check if="any F in {{remaining_findings}} has {{fix_attempts}}[F.id] less than 3">
           <note>Retry budget available for at least one remaining finding. Loop back to Phase B with the unresolved findings.</note>
           <action>Return to Phase B (CONVERGE): invoke the directed fixer again with {{remaining_findings}} (the subset still unresolved).
-            Do not pass already-fixed, dismissed, triaged-out, or escalated findings back to the fixer — pass only the genuinely unresolved ones.
+            Do not pass already-fixed, dismissed, triaged-out, escalated, or scope-reverted findings back to the fixer — pass only the genuinely unresolved ones.
           </action>
         </check>
 
@@ -1452,6 +1457,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           — Log a Conductor warning in {{build_log}}: { event: "scorecard-revert-reconciliation", finding_id: R.finding_id, story_slug: R.story_slug, note: "disposition overridden from fixed to scope-reverted — fix was discarded by write-scope guard; reroute_stub_slug: {{reverted_fix_ids}}[R.finding_id].reroute_stub_slug" }.
         Bind {{reconciled_finding_dispositions}} = the per-story disposition records with the overrides applied.
         Note: this reconciliation ensures the scorecard counts ONLY findings whose fixes actually reached the merged result. A fix that was reverted by scope discipline (write-scope guard discarded it) cannot be counted as fixed — the underlying defect was re-routed to a backlog stub via {{conductor_reverted_fixes}} at stage-3 time, but the overstate risk arises if the raw "fixed" disposition is used without cross-checking.
+        SCOPE CLARIFICATION — this cross-check is load-bearing only for the partial-revert case (b) where the fix partially landed and disposition remains "fixed" in the raw record but the in-scope portion was insufficient (or as an end-gate safety net for any other edge case where a "fixed" record survived into the raw log while the fix was actually reverted). Full-revert case (a) findings are already written with disposition "scope-reverted" at stage-3 time — they never carry "fixed" in the raw record and so never satisfy the predicate above. Those entries are therefore already excluded from {{routine_auto_fixed_count}} without this cross-check. The reconciliation correctly handles both cases: full-reverts are excluded at source; partial-revert stragglers are caught here.
 
       {{routine_auto_fixed_count}} = count of findings with disposition == "fixed" across {{avfl_findings}} and all per-story records in {{reconciled_finding_dispositions}} (NOT from the raw {{build_log}} directly — use the reconciled view to exclude scope-reverted fixes).
       {{dismissed_findings}}       = entries with disposition == "dismissed" (must each carry dismissal_rationale; reject any without one and surface as a Conductor warning in {{build_log}}).
