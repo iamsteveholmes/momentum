@@ -5292,7 +5292,7 @@
     "story_type": "feature"
   },
   "avfl-merge-review-as-workflow": {
-    "status": "in-progress",
+    "status": "done",
     "title": "AVFL-on-merge as a Workflow (3-dot diff)",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
