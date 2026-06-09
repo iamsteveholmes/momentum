@@ -5392,7 +5392,7 @@
     "story_type": "feature"
   },
   "conduct-e2e-validation-and-test-fixture": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Add a producer→consumer smoke/eval proving a planned sprint yields a conduct-runnable record, and create an activated te",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
