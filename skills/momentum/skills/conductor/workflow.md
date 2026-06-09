@@ -538,7 +538,7 @@ Ready to begin?</output>
 
     <step n="2.S3" goal="Stage-3 per-story fix loop — directed fixer with retry-bound-3, escalation routing (DEC-036 D1/D2)">
 
-      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, optionally run /simplify, re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
+      <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 (QA reviewer + code-review) has returned findings for story S. It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, run /simplify (every story, once per iteration, after Phase B), re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the merged findings list from stage-2. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
 
       Stage-2 callers (QA reviewer + code-review adapter) and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
 
@@ -716,13 +716,17 @@ Ready to begin?</output>
       <!-- ── Phase D: RE-CHECK gate — loop control ─────────────────── -->
 
       <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
-        Collect {{remaining_findings}} = findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted).
-        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop. Scope-reverted findings are also removed — they were fully discarded by the write-scope guard and re-routed inline; re-presenting them to the fixer would be incorrect (the defect is out-of-scope for this story).
+        Collect {{remaining_findings}} = UNION of:
+          (a) findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted | blocked), AND
+          (b) any entries in {{simplify_findings}} with disposition: null that are not already present in set (a).
+        This additive collect ensures simplify findings appended by Phase C FEED BACK survive into the next Phase B
+        iteration — they carry disposition: null and were never in stage2_findings, so a status-only filter would drop them.
+        Note: escalated findings (both end-gate-expanded and mid-flight) are ALREADY removed from {{remaining_findings}} — they exit the retry loop at escalation time and are never re-checked inside the loop. Scope-reverted findings are also removed — they were fully discarded by the write-scope guard and re-routed inline; re-presenting them to the fixer would be incorrect (the defect is out-of-scope for this story). Blocked findings are also excluded — their fix budget is exhausted and they are handled by the blocked-then-continue path below.
         DIFF RANGE FOR RE-CHECK: Use the same canonical pre-merge merge-base pattern as stage 2. The story branch is still pre-merge at this point. Canonical pattern: references/per-story-review-diff-range.md (Scenario A — Pre-Merge Review).
       </action>
 
       <check if="{{remaining_findings}} is empty">
-        <note>All findings are resolved (fixed, dismissed, triaged-out, escalated, or scope-reverted). The fix loop is clean. Proceed to stage-4 (merge).</note>
+        <note>All findings are resolved (fixed, dismissed, triaged-out, escalated, scope-reverted, or blocked). The fix loop is clean. Proceed to stage-4 (merge).</note>
         <action>Proceed to stage-4 (merge) for story S.
           Emit partial pipeline signal payload (for eventual terminal signal from stage-4):
             leftover_findings: [] (none remaining)
