@@ -338,7 +338,7 @@ This is a BLOCKING GATE — the sprint cannot activate until every story is expl
       1. Compute `verification_method` from the story's `change_type`:
          Run: `momentum-tools sprint compute-verification-method --story {{story_slug}}`
          The output field `verification_method` is the closed-enum token (skill-invoke |
-         behavioral-trigger | bash | smoke-ui | curl | document-review) drawn from the
+         behavioral-trigger | bash | smoke | curl | document-review) drawn from the
          method-routing table in verification-standard.md Section 1. Store as {{vm}}.
          harness_profile equals {{vm}} (no project override applies unless explicitly declared
          in momentum/verification-harness.json). `verification_method` and `harness_profile`

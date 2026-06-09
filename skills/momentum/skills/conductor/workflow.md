@@ -229,7 +229,7 @@ Ready to begin?</output>
         {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
         {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
         {{conductor_reverted_fixes}} = []    — findings whose fix commit was reverted by scope discipline (write-scope guard in stage-3 or stage-1); each entry: { finding_id, story_slug, summary, reverted_files: [], reroute_stub_slug: null }. Consumed at end-gate scorecard assembly to exclude from {{routine_auto_fixed_count}}.
-        {{coverage_discharge_results}} = {}  — { slug: { outcome, scenario_id, evidence } } — populated by Phase 3 step 3.D; outcome is "verified-by-composition" for discharged deferrals
+        {{coverage_discharge_results}} = {}  — { slug: { outcome, scenario_id, evidence } } — populated by Phase 3 step 3.D; outcome is "verified-by-composition" for discharged deferrals. Consumed at the build_log discharge summary (~step 3.5); NOT consumed at the end-gate scorecard.
       </action>
 
       <action>Seed {{merged}} from current story statuses to support partial-run resume:
@@ -578,8 +578,8 @@ Ready to begin?</output>
           [NOTE: "blocked" and "scope-reverted" are Conductor-internal-only values. They are NOT in the canonical four-value disposition set (fixed | dismissed | triaged-out | escalated) defined by finding-schema.md.
             "blocked" — used when retry budget is exhausted; treated as escalated for schema consumers.
             "scope-reverted" — used when the write-scope guard fully discards a fix (stage-3 SCOPE-REVERT PATH case a or case b with insufficient in-scope portion). The scope-reverted disposition has its own inline reroute path (momentum:triage called immediately, not deferred) and MUST NOT be picked up by the build-phase-completion deferred triaged-out router, which would create a duplicate stub. For schema consumers, scope-reverted maps to triaged-out.]
-        Bind {{end_gate_escalations}} = [] — escalated findings routed to end-gate-expanded tier (held for Phase 5).
-          [WIRED: {{end_gate_escalations}} is written here, emitted in the pipeline signal payload, and consumed by the end-gate report at step 5. Step 5 merges these per-story escalations with AVFL and E2E escalation leftovers into {{stakes_findings}} — the decision-card section of the HTML report. Each entry must carry: finding_id, stakes_class, summary, evidence, suggested_fix. These fields populate the decision cards. See references/endgate-report-renderer.md for the full data contract and rendering spec.]
+        Bind {{story_end_gate_escalations}} = [] — per-story accumulator for escalated findings routed to end-gate-expanded tier within this story's pipeline. Reset at the start of each story. Emitted in the pipeline signal payload; consumed by step 2.2's accumulation action which appends entries into the Conductor-scoped {{end_gate_escalations}} accumulator.
+          [WIRED: {{story_end_gate_escalations}} is written here, emitted in the pipeline signal payload, and consumed by step 2.2 to populate the Conductor-scoped {{end_gate_escalations}}. Step 5 reads {{end_gate_escalations}} (Conductor-scoped) to build decision cards. Each entry must carry: finding_id, stakes_class, summary, evidence, suggested_fix. These fields populate the decision cards. See references/endgate-report-renderer.md for the full data contract and rendering spec.]
         Bind {{mid_flight_escalations}} = [] — escalated findings accumulated for single dispatch to step 2.F (the shared-primitive escalation hook).
       </action>
 
@@ -649,7 +649,7 @@ Ready to begin?</output>
                 — Append to {{mid_flight_escalations}} (accumulated for dispatch to step 2.F after all findings are processed).
               ELSE (timing_tier == "end-gate-expanded" OR timing_tier not set):
                 — The finding is stakes-class but does NOT meet the mid-flight bar. Route to end-gate-expanded tier (the default and safety net).
-                — Append to {{end_gate_escalations}}: { finding_id: F.finding_id, stakes_class: stakes_class, timing_tier: "end-gate-expanded", summary: summary, evidence: evidence, suggested_fix: suggested_fix }
+                — Append to {{story_end_gate_escalations}}: { finding_id: F.finding_id, stakes_class: stakes_class, timing_tier: "end-gate-expanded", summary: summary, evidence: evidence, suggested_fix: suggested_fix }
                 — Record in {{build_log}}: { slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_summary: summary }
                 — Continue the fix loop. This escalation does NOT pause the build or stop other findings from completing.
       </action>
@@ -730,7 +730,7 @@ Ready to begin?</output>
         <action>Proceed to stage-4 (merge) for story S.
           Emit partial pipeline signal payload (for eventual terminal signal from stage-4):
             leftover_findings: [] (none remaining)
-            escalations: {{end_gate_escalations}} (held for Phase 5 end-gate; mid-flight escalations already dispatched)
+            escalations: {{story_end_gate_escalations}} (per-story accumulator; consumed by step 2.2 accumulation action into Conductor-scoped {{end_gate_escalations}}; mid-flight escalations already dispatched)
         </action>
       </check>
 
@@ -757,7 +757,7 @@ Ready to begin?</output>
           </action>
           <action>Emit partial pipeline signal payload:
             leftover_findings: blocked findings list (for end-gate report and triage spin-out)
-            escalations: {{end_gate_escalations}} (held for Phase 5 end-gate)
+            escalations: {{story_end_gate_escalations}} (per-story accumulator; consumed by step 2.2 accumulation action into Conductor-scoped {{end_gate_escalations}})
             Note: mid-flight escalations were already dispatched inline; they do not appear in leftover_findings.
           </action>
           <note>BLOCKED-then-continue: the whole-build is NOT halted. However, per spec §3 stage-3 ('BLOCKED -> spin a stub via momentum:triage, leave unmerged'), story S is NOT merged. The Conductor removes S from {{running}} WITHOUT transitioning it to stage-4, spins a triage stub for the blocked findings, and continues building other stories in {{running}} and {{frontier}} unaffected. The story remains unmerged; dependents whose >= gate requires S's merge become unsatisfiable, which is the intended consequence of an unmergeable story.</note>
@@ -895,8 +895,9 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
                        story_slug: S.slug }
               to {{end_gate_escalations}}.
             This is the consumer-side aggregation that closes the seam between the per-story
-            {{end_gate_escalations}} (reset each story in step 2.S3) and the Conductor-scoped
-            {{end_gate_escalations}} that step 5 Source 1 reads to build decision cards.
+            {{story_end_gate_escalations}} (reset each story in step 2.S3; emitted as S.escalations
+            in the pipeline signal payload) and the Conductor-scoped {{end_gate_escalations}}
+            that step 5 Source 1 reads to build decision cards.
           </action>
 
           <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -1366,14 +1367,32 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       From leftovers (only present when status == NON_CONVERGENT):
         For each leftover L: emit { source: "avfl-merge-review", finding_id: L.id,
           severity: L.severity, confidence: L.confidence, classification: L.classification,
-          summary: L.description, evidence: L.evidence, suggestion: L.suggestion,
+          summary: L.description, evidence: L.evidence, suggested_fix: L.suggestion,
           why_unresolved: L.why_unresolved,
           story_slug: L.owning_stories[0] or "sprint-integration",
           location: L.location, owning_stories: L.owning_stories,
-          disposition: "residual", stakes_class: "routine",
+          disposition: "residual", stakes_class: L.stakes_class or "routine",
           type: "integration" }
+        Note: stakes_class is carried from L.stakes_class (populated by the merge-review leftover schema).
+        Default to "routine" only when L.stakes_class is absent. This preserves non-routine stakes
+        classifications so Source 2 at step 5 can correctly surface them as decision cards.
 
       Tag all entries: source = "avfl-merge-review".
+
+      From Group-A fixer escalations (findings the directed fixer returned with disposition "escalated"
+        during the merge-review inner fix loop — tracked via workflow-merge-review.md step 5 Group-A
+        handling at ~line 280-282, where escalated dispositions are carried forward as leftovers with
+        why_unresolved: "escalated (stakes-class — held for end-gate)"):
+        For each leftover L where L.why_unresolved starts with "escalated":
+          Append to {{end_gate_escalations}}: { finding_id: L.id,
+            stakes_class: L.stakes_class or "routine",
+            timing_tier: "end-gate-expanded",
+            summary: L.description, evidence: L.evidence, suggested_fix: L.suggestion,
+            story_slug: L.owning_stories[0] or "sprint-integration",
+            source: "avfl-merge-review" }
+          Tag the corresponding {{avfl_findings}} entry with timing_tier: "end-gate-expanded" and
+          disposition: "escalated" (overriding "residual") so Source 2 de-dup at step 5 correctly
+          identifies these as already escalated and avoids double-counting.
     </action>
 
     <!-- ── 3.4 — Route residual leftovers through escalation ─── -->
@@ -1759,12 +1778,11 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         Collect ALL entries from {{end_gate_escalations}} (written by every story's fix loop, accumulated at Conductor scope in step 2.2).
         Each entry carries: finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug.
       Source 2 — Post-merge AVFL escalations (Phase 3):
-        From {{avfl_findings}}: filter to entries where stakes_class != "routine" AND disposition == "residual".
-        (AVFL-on-merge leftovers carry disposition "residual" — they never carry "escalated". The directed fixer
-        inside the AVFL loop emits "fixed", "dismissed", "triaged-out", or "escalated" per the canonical vocabulary,
-        but the Conductor's Phase 3 step 3.3 normalizes unfixed leftovers to disposition "residual" when
-        assembling {{avfl_findings}}. No AVFL entry in {{avfl_findings}} carries "escalated".)
-        For each, carry: finding_id (or generate one), stakes_class, summary, evidence, suggested_fix (from recommended_action if present), source:"avfl".
+        From {{avfl_findings}}: filter to entries where stakes_class != "routine" AND disposition in {"residual", "escalated"}.
+        (Most AVFL-on-merge leftovers carry disposition "residual". Group-A fixer escalations carry disposition
+        "escalated" — step 3.3 tags these and also appends them directly to {{end_gate_escalations}}. The
+        dedup at Bind {{stakes_findings}} below handles any overlap between Source 1 and Source 2 for those entries.)
+        For each, carry: finding_id (or generate one), stakes_class, summary, evidence, suggested_fix, source:"avfl".
       Source 3 — E2E failed/stakes scenarios (Phase 4):
         From the normalized {{e2e_findings}} (Phase 4) and {{e2e_results}}.failed_scenarios: include E2E findings whose stakes_class != "routine" (and any failed scenario whose failure_reason indicates a stakes-class behavioral gap).
         For each, carry: finding_id (the normalized "e2e-{scenario_name}"), stakes_class, summary (the scenario name in plain language), evidence (failure_reason), suggested_fix, source:"e2e-validator".
@@ -1790,7 +1808,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       {{blocked_stories}}          = stories never added to {{merged}} (quarantined, integrity-stopped, fix-budget-exhausted, or mid-flight-aborted); derive from {{build_log}} events.
       {{quarantined_stories}}      = subset of {{blocked_stories}} where outcome == "quarantined" in {{build_log}}.
       {{contract_integrity_stops}} = from Conductor in-memory state (step 2.2 integrity-check path).
-      {{mid_flight_escalations}}   = escalations already raised to the developer during the build (informational only in the end-gate report).
+      {{mid_flight_escalations}}   = {{escalations}} — the Conductor-scoped accumulator (initialized step 2.0 ~line 227, appended per story at step 2.S3 Phase mid-flight dispatch ~line 712). This is the durable record of all mid-flight escalations raised during the build. Do NOT source from the per-story transient {{mid_flight_escalations}} reset in step 2.S3 — that variable is a within-story accumulator that resets each story and under-reports at Phase 5.
       {{high_risk_divergences}}    = per-story finding records from {{reconciled_finding_dispositions}} where disposition was "fixed" (auto-fixed after review, NOT scope-reverted) AND severity in { blocker, critical, major } — these are the consequential divergences that were caught and resolved; they populate §03 of the report. Scope-reverted "fixes" are excluded from this set — they were NOT resolved, they were re-routed.
       {{undischarged_deferrals}}   = entries from {{avfl_findings}} where source == "coverage-discharge-consumer" AND disposition == "residual" AND stakes_class == "routine" — these are deferred stories whose named integration scenario could not be found or did not pass; they are routine findings excluded from {{stakes_findings}} and must be surfaced explicitly in §05 so the developer can see them at the gate. (Non-routine stakes-class entries from the discharge executor carry stakes_class != "routine" and are already captured by Source 2 of {{stakes_findings}} above — they are NOT included here to avoid double-rendering.)
     </action>
@@ -1815,7 +1833,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         GATE    — Single control: Approve / Request Changes; copy-decision-as-prompt textarea; approve <button> disabled until every §04 card has been acknowledged AND has a selection (per renderer §6 paint() logic); if {{stakes_findings}} is empty, approve enables after gate choice is made (no forcing function for a clean build).
 
       Informational-only sections (render if non-empty, no developer action required):
-        Mid-flight escalations: {{mid_flight_escalations}} — findings already raised during the build, with their recorded disposition.
+        Mid-flight escalations: {{escalations}} — findings already raised during the build (sourced from the Conductor-scoped {{escalations}} accumulator, not the per-story transient), with their recorded disposition.
         Quarantined stories: {{quarantined_stories}} — branches not merged; preserved; post-sprint follow-up.
         Contract-integrity stops: {{contract_integrity_stops}} — stories not verified due to fingerprint mismatch.
 
@@ -1853,7 +1871,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       </action>
       <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
         Sources of residual findings to scan:
-          (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized at L1078: fixed | dismissed | escalated | residual).
+          (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized in step 3.3 (avfl_findings): fixed | residual | escalated).
           (b) {{build_log}} entries with event == "stage3-finding-blocked" — per-story pipeline findings that exhausted the fix retry budget; each carries disposition: "blocked".
           (c) {{e2e_findings}} — E2E findings (Phase 4); each has severity and disposition fields (normalized at Phase 4 step 4.3: fixed | dismissed | triaged-out | escalated). Findings where disposition != "fixed" AND disposition != "dismissed" are residuals.
         Combine all three sources into {{all_build_findings}}.
@@ -1964,16 +1982,21 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
           Spawn momentum:dev in fix-mode (individual-agent, NOT TeamCreate) for item I:
             Input:
-              — finding: a synthetic finding object constructed from item I:
-                  { finding_id: I.fixer_id,
-                    summary: I.text,
-                    stakes_class: {{endgate_item_stakes_class}},
-                    legitimate: true,
-                    severity: "major",
-                    source: "developer-endgate-request",
-                    location: (referenced story slug or file path if identifiable, else "sprint-level"),
-                    detail: I.text }
-              — writable_files: {{endgate_item_writable_files}}
+              — directed_fix: {
+                    findings: [
+                      { finding_id: I.fixer_id,
+                        summary: I.text,
+                        stakes_class: {{endgate_item_stakes_class}},
+                        legitimate: true,
+                        severity: "major",
+                        source: "developer-endgate-request",
+                        location: (referenced story slug or file path if identifiable, else "sprint-level"),
+                        detail: I.text }
+                    ],
+                    story_file: (referenced story slug or file path if identifiable, else "sprint-level"),
+                    sprint_slug: "{{sprint_slug}}"
+                  }
+              — writable_files: {{endgate_item_writable_files}} (Conductor-side scope guard; not read by fixer from payload)
             Constraint passed to fixer: "Do not mutate git. Do not spawn build agents. Apply the
               requested change and return a per-finding disposition. Produce output only.
               WRITE-SCOPE: You may ONLY create or modify files listed in writable_files.
@@ -1983,6 +2006,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               CROSS-ARTIFACT RULE: If the change targets a file outside writable_files, return
               disposition triaged-out so the Conductor can route a reconciliation stub."
             Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
+            MODE NOTE: The directed_fix wrapper is required — its presence is the mode-select gate in dev/workflow.md step 0. Without it, momentum:dev defaults to green-field build mode and ignores the finding.
 
           When the fixer returns its disposition for item I:
 

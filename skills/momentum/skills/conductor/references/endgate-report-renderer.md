@@ -64,7 +64,7 @@ At the top of step 5, before rendering, bind:
 ```
 {{stakes_findings}} = concat(
   {{end_gate_escalations}},                                    -- per-story fix-loop escalations
-  {{avfl_findings}} filtered to { stakes_class != "routine" AND disposition in { escalated, residual } },
+  {{avfl_findings}} filtered to { stakes_class != "routine" AND disposition in { "escalated", "residual" } },
   {{e2e_results}}.failed_scenarios filtered to { failure_reason indicates a stakes-class behavioral gap }
 )
 ```
@@ -78,8 +78,10 @@ Bind supporting report variables:
 {{blocked_stories}}           = stories from {{build_log}} that never reached stage-4 merge
 {{quarantined_stories}}       = stories with outcome == "quarantined" in {{build_log}}
 {{contract_integrity_stops}}  = from Conductor in-memory state (step 2.2 integrity-check path)
-{{mid_flight_escalations}}    = escalations already raised to the developer during the build (informational)
+{{mid_flight_escalations}}    = escalations already raised to the developer during the build (informational); sourced from {{escalations}} Conductor-scoped accumulator
 {{stories_built_count}}       = count of stories in {{merged}}
+{{high_risk_divergences}}     = per-story finding records where disposition == "fixed" AND severity in {blocker, critical, major} (auto-fixed consequential divergences caught during review); rendered in §03. Each entry shape: { finding_id, severity, summary, evidence, story_slug }
+{{undischarged_deferrals}}    = entries from {{avfl_findings}} where source == "coverage-discharge-consumer" AND disposition == "residual" AND stakes_class == "routine" (deferred stories whose named integration scenario could not be verified); rendered in §05. Each entry shape: { slug, scenario_id, failure_reason }
 ```
 
 ---

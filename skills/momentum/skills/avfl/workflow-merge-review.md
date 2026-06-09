@@ -142,9 +142,10 @@
          5. Remove any finding lacking evidence.
          6. CLASSIFY each surviving finding: INTEGRATION (implicates >1 story OR location is in integration_surface) | LOCAL (single-story).
          7. Populate owning_stories for each finding from the blame index and changed_files.
-         8. Score: start 100, apply critical -15, major -8, minor -3, low -1.
-         9. Sort: critical first, then location.
-         10. Assign grade: >=95 Clean, >=85 Good, >=70 Fair, >=50 Poor, <50 Failing."
+         8. Assign stakes_class for each finding: if the finding involves security, auth, isolation, irreversible or destructive operations, or high-blast-radius architectural changes, assign the matching stakes_class (security-auth-isolation | irreversible-destructive | high-blast-radius-architecture). Otherwise assign routine. This field is mandatory — every leftover must carry it.
+         9. Score: start 100, apply critical -15, major -8, minor -3, low -1.
+         10. Sort: critical first, then location.
+         11. Assign grade: >=95 Clean, >=85 Good, >=70 Fair, >=50 Poor, <50 Failing."
       Returns: { findings: [...], score: N, grade: string }
       Constraint: "Do not mutate git. Return consolidated findings only."
 
@@ -190,7 +191,7 @@
           "fixes_applied": {{fix_log}},
           "leftovers": {{consolidated_findings}}
             (each leftover carries: id, severity, confidence, classification, owning_stories,
-             location, description, evidence, suggestion, why_unresolved: "max_iterations"),
+             location, description, evidence, suggestion, stakes_class, why_unresolved: "max_iterations"),
           "commits": {{fix_commits}}
         }
       </action>

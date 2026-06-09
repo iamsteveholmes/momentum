@@ -382,7 +382,7 @@ def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
 
     Required fields:
       --slug                Story slug
-      --verification-method Closed-enum token (skill-invoke|behavioral-trigger|bash|smoke-ui|curl|document-review)
+      --verification-method Closed-enum token (skill-invoke|behavioral-trigger|bash|smoke|curl|document-review)
       --contract-path       Relative path to the contract file from project root
       --harness-profile     Harness profile name (usually same as verification_method)
       --coverage-disposition  dedicated-run | covered-by-composition
@@ -478,7 +478,7 @@ CHANGE_TYPE_TO_VERIFICATION_METHOD: dict[str, str] = {
     "script-code": "bash",
     "script-cli": "bash",
     "backend": "curl",
-    "app-ui": "smoke-ui",
+    "app-ui": "smoke",
     "research-spike": "document-review",
     "specification": "document-review",
     "config-structure": "document-review",
