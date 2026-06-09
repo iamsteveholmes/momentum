@@ -1416,7 +1416,11 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         Collect ALL entries from {{end_gate_escalations}} (written by every story's fix loop, accumulated at Conductor scope in step 2.2).
         Each entry carries: finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug.
       Source 2 — Post-merge AVFL escalations (Phase 3):
-        From {{avfl_findings}}: filter to entries where stakes_class != "routine" AND disposition in { "escalated", "residual" }.
+        From {{avfl_findings}}: filter to entries where stakes_class != "routine" AND disposition == "residual".
+        (AVFL-on-merge leftovers carry disposition "residual" — they never carry "escalated". The directed fixer
+        inside the AVFL loop emits "fixed", "dismissed", "triaged-out", or "escalated" per the canonical vocabulary,
+        but the Conductor's Phase 3 step 3.3 normalizes unfixed leftovers to disposition "residual" when
+        assembling {{avfl_findings}}. No AVFL entry in {{avfl_findings}} carries "escalated".)
         For each, carry: finding_id (or generate one), stakes_class, summary, evidence, suggested_fix (from recommended_action if present), source:"avfl".
       Source 3 — E2E failed/stakes scenarios (Phase 4):
         From the normalized {{e2e_findings}} (Phase 4) and {{e2e_results}}.failed_scenarios: include E2E findings whose stakes_class != "routine" (and any failed scenario whose failure_reason indicates a stakes-class behavioral gap).

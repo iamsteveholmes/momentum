@@ -206,7 +206,8 @@
           "scores_per_iteration": {{iteration_scores}},
           "fixes_applied": {{fix_log}},
           "leftovers": {{consolidated_findings}}
-            (each leftover why_unresolved: "oscillation"),
+            (each leftover carries: id, severity, confidence, classification, owning_stories,
+             location, description, evidence, suggestion, why_unresolved: "oscillation"),
           "commits": {{fix_commits}}
         }
       </action>
@@ -244,27 +245,41 @@
     <!-- ── Group A: Integration code findings → directed fixer ── -->
 
     <check if="{{code_findings}} is non-empty">
-      <action>Spawn momentum:dev in fix-mode as a subagent (individual-agent, NOT TeamCreate):
-        Inputs:
-          - findings: {{code_findings}} (normalized to canonical finding schema)
-          - branch: {{sprint_branch}}
-          - story_contracts: {{story_contracts}}
-          - merged_stories: {{merged_stories}}
-        Constraint: "Do not commit. Do not spawn build agents. Apply fixes to the sprint branch working tree
-          and return per-finding dispositions: fixed | dismissed (with non-empty rationale) | unresolved_contradiction.
-          For cross-story contradictions: resolve toward the higher-authority contract if resolvable;
-          if both have equal authority or no contract exists for a story, mark unresolved_contradiction and leave unchanged."
-        Returns: per-finding dispositions + corrected file contents.
+      <action>Spawn momentum:dev in fix-mode as a subagent (individual-agent, NOT TeamCreate).
 
-        For each returned finding:
+        INVOCATION: Pass a directed_fix wrapper object so momentum:dev selects fix-mode (not green-field).
+        The presence of the directed_fix key is the mode-select gate in dev/workflow.md step 0.
+        Invocation contract: skills/momentum/references/directed-fix-invocation-contract.md.
+
+        Input payload:
+          directed_fix: {
+            findings: {{code_findings}} (normalized to canonical finding schema; each finding carries finding_id, stakes_class, legitimate, summary, detail, evidence, suggested_fix),
+            story_file: "sprint-integration/{{sprint_branch}}" (integration handle — identifies the context for cross-story scope checks),
+            sprint_slug: "{{sprint_slug}}"
+          }
+
+        Constraint: "Do not mutate git. Do not spawn build agents. Apply fixes to the sprint branch working tree
+          and return per-finding dispositions per the directed-fix-invocation-contract canonical output shape.
+          For cross-story contradictions: resolve toward the higher-authority contract if resolvable;
+          if both have equal authority or no contract exists for a story, return disposition: triaged-out
+          so the Conductor can route a reconciliation note via momentum:triage.
+          WRITE-SCOPE: You may only edit files implicated by the code findings. Do not edit story spec files
+          or verification contracts."
+        Returns: { mode: "fix", story_file: ..., dispositions: [ { finding_id, disposition, files_changed, dismissal_rationale, escalation } ] }
+
+        The Conductor (not the fixer) commits any applied fixes after the fixer returns.
+        Commit authority: the Conductor stages and commits the fixer's output per Phase 3 step 3.2.
+
+        For each returned finding disposition D:
           - disposition == "fixed":
-              Append to {{fix_log}}: { id: F.id, iteration: {{iteration}}, severity: F.severity,
-                owning_stories: F.owning_stories, change: "applied", rationale: F.suggested_fix }
+              Append to {{fix_log}}: { id: D.finding_id, iteration: {{iteration}}, severity: (look up in {{code_findings}} by finding_id), owning_stories: (look up), change: "applied by directed fixer", rationale: (look up suggested_fix) }
           - disposition == "dismissed":
-              Record dismissal; exclude from next-iteration findings.
-          - disposition == "unresolved_contradiction":
-              Carry forward to next iteration's leftovers if max_iterations not reached;
-              mark why_unresolved: "unresolved_contradiction" in final leftovers.
+              Record dismissal with D.dismissal_rationale; exclude from next-iteration findings.
+          - disposition == "triaged-out":
+              Carry forward to leftover findings; mark why_unresolved: "triaged-out (cross-artifact)" in final leftovers if max_iterations reached.
+          - disposition == "escalated":
+              Carry forward as a leftover finding; mark why_unresolved: "escalated (stakes-class — held for end-gate)" in final leftovers.
+              The Conductor routes the escalation payload (D.escalation) to {{end_gate_escalations}} at Phase 3 step 3.3.
       </action>
     </check>
 
