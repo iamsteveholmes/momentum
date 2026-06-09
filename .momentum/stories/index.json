@@ -5312,7 +5312,7 @@
     "story_type": "feature"
   },
   "conduct-coverage-disposition-discharge-consumer": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Coverage-disposition discharge consumer",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5476,7 +5476,7 @@
     "story_type": "feature"
   },
   "reconcile-fix-disposition-with-conductor-scope-reverts": {
-    "status": "ready-for-dev",
+    "status": "done",
     "title": "Reconcile fix-disposition with Conductor scope-discipline reverts",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
