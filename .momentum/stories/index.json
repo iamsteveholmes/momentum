@@ -5715,5 +5715,45 @@
       "agent-definition",
       "specification"
     ]
+  },
+  "conduct-qa-execute-verification-method": {
+    "status": "backlog",
+    "title": "Conduct QA leg executes the story's verification method (smoke), not diff-only review",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "defect"
+  },
+  "sprint-planning-cross-story-coherence-gate": {
+    "status": "backlog",
+    "title": "Sprint-planning cross-story coherence gate for depends_on deliverables",
+    "epic_slug": "momentum-sprint-planning-to-ready",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
+  },
+  "create-story-dependency-deliverable-check": {
+    "status": "backlog",
+    "title": "create-story validates dependency-delivered inputs exist",
+    "epic_slug": "momentum-sprint-planning-to-ready",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
+  },
+  "dev-block-on-missing-dependency-contract": {
+    "status": "backlog",
+    "title": "Dev agents block on missing dependency contract instead of fabricating fallback",
+    "epic_slug": "momentum-agent-role-contracts",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "feature"
   }
 }
