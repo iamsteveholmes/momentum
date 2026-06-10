@@ -5624,5 +5624,96 @@
     "touches": [],
     "priority": "low",
     "story_type": "maintenance"
+  },
+  "conduct-worktree-and-branch-creation": {
+    "status": "ready-for-dev",
+    "title": "Conductor creates story worktrees and branches — close the unexecutable first step of the per-story pipeline",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/conductor/evals/",
+      "skills/momentum/skills/dev/workflow.md"
+    ],
+    "priority": "high",
+    "story_type": "defect"
+  },
+  "conduct-coverage-deferral-preserve-code-review": {
+    "status": "ready-for-dev",
+    "title": "covered-by-composition must defer only the dedicated QA run — adversarial code review still runs on every story",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "conduct-coverage-disposition-branch",
+      "conduct-per-story-build-review-dispatch"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
+    "story_type": "bug",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-qa-reviewer-normalization-adapter": {
+    "status": "ready-for-dev",
+    "title": "Build the qa-reviewer → canonical finding schema normalization adapter the Conductor already consumes",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [
+      "directed-fix-finding-schema"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/agents/qa-reviewer.md",
+      "skills/momentum/skills/conductor/evals/"
+    ],
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction",
+      "agent-definition"
+    ]
+  },
+  "conduct-build-state-persistence-and-resume": {
+    "status": "ready-for-dev",
+    "title": "Persist Conductor build state to an append-only ledger — end-gate and resume must survive session death and compaction",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/conductor/references/build-ledger.md",
+      "skills/momentum/references/build-results-ledger-schema.md"
+    ],
+    "priority": "critical",
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction"
+    ],
+    "verification_method": "skill-invoke"
+  },
+  "conduct-dev-commit-authority-reconciliation": {
+    "status": "ready-for-dev",
+    "title": "Reconcile commit authority across the Conductor↔dev seam — one owner, effective write-scope guard",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [
+      "skills/momentum/agents/dev.md",
+      "skills/momentum/agents/dev-build.md",
+      "skills/momentum/agents/dev-frontend.md",
+      "skills/momentum/agents/dev-skills.md",
+      "skills/momentum/skills/dev/workflow.md",
+      "skills/momentum/references/directed-fix-invocation-contract.md",
+      "_bmad-output/planning-artifacts/sprint-dev-redesign-spec.md"
+    ],
+    "story_type": "feature",
+    "change_type": [
+      "skill-instruction",
+      "agent-definition",
+      "specification"
+    ]
   }
 }
