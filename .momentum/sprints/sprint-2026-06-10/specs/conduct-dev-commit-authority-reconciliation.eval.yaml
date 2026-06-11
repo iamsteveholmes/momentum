@@ -1,0 +1,102 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-dev-commit-authority-reconciliation
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-10/specs/conduct-dev-commit-authority-reconciliation.eval.yaml
+how_dev_self_checks: |
+  Invoke momentum:dev on a representative story in a prepared worktree, and again in
+  fix mode on a representative routine finding set. Confirm three observable facts
+  in each case: (1) the implementation or fix edits are present in the worktree;
+  (2) `git log` in that worktree shows no new commit was created during the dev
+  run — the changes sit uncommitted in the working tree; (3) the structured
+  completion output still arrives in its usual shape (implementation-complete with
+  the file list, or disposition: fixed with files_changed). Then read the shipped
+  dev-side instruction documents (the dev agent definition, its three role
+  variants, the dev skill's workflow, and the directed-fix contract reference) and
+  confirm no remaining sentence instructs the dev side to stage or commit —
+  every commit duty named in them belongs to the build orchestration.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-dev-commit-authority-reconciliation.md#acceptance-criteria
+platforms: [host]
+
+# conduct-dev-commit-authority-reconciliation.eval.yaml
+harness_profile: skill-invoke
+
+# Producer / Consumer scope:
+#   Producer — the dev agent (momentum:dev in green-field or fix mode): delivers
+#   uncommitted working-tree changes plus a structured completion record naming the
+#   files it changed.
+#   Consumer — the conduct build orchestration: stages the delivered changes,
+#   filters anything outside the story's declared file scope, and produces the
+#   commit.
+#   The hand-off record is "dirty worktree + file list, no commit". The scenarios
+#   below include one agree case (producer delivers uncommitted changes, consumer's
+#   commit step finds and commits them; gate passes) and one disagree case
+#   (producer delivers a commit instead, leaving the consumer nothing to stage;
+#   gate fails naming the cross-side record-shape mismatch).
+
+scenarios:
+  - name: "Green-field dev run leaves changes uncommitted with its output schema intact"
+    invocation: "momentum:dev with a representative implementation story, run inside a prepared story worktree"
+    given: "A story worktree on its story branch with a clean working tree and a known `git log` tip"
+    when: "The dev run completes implementation"
+    then:
+      - "Implementation edits are present in the worktree working tree"
+      - "`git log` in the worktree shows the same tip as before the run — no new commit was authored during the dev run"
+      - "The structured completion output arrives with its usual fields, including the list of files changed"
+    pass_criteria: "Dirty working tree plus unchanged git history plus intact completion output"
+    fail_criteria: "A new commit appears in the worktree's history during the dev run, or the completion output is missing or changed in shape"
+
+  - name: "Fix-mode dev run applies the fix without committing"
+    invocation: "momentum:dev in fix mode with a representative set of routine findings, run inside a prepared story worktree"
+    given: "A story worktree containing a known finding to fix, clean working tree, known `git log` tip"
+    when: "The fix run completes"
+    then:
+      - "The affected file(s) are edited in the working tree"
+      - "The returned record reports disposition: fixed with the changed files listed"
+      - "`git log` shows no new commit authored during the fix run"
+      - "For findings the run escalates or dismisses rather than fixes, the no-edit guarantee holds: zero file edits and zero commits for those findings"
+    pass_criteria: "Fix edits present and reported, history unchanged, no-edit guarantee preserved for non-fixed dispositions"
+    fail_criteria: "The fix run produces a commit, fails to report changed files, or edits files for findings it did not fix"
+
+  - name: "Story commits are produced by the build orchestration and respect the story's declared file scope"
+    invocation: "momentum:conduct building a story whose dev output includes an edit to a file outside the story's declared touch scope"
+    given: "A conduct build where the dev run returned uncommitted changes including one out-of-scope file edit"
+    when: "The build's commit step runs for the story"
+    then:
+      - "A commit for the story appears on the story branch after the dev run returned — authored by the build step, not during the dev run"
+      - "The committed diff contains only files within the story's declared touch scope; the out-of-scope edit is excluded from the commit"
+    pass_criteria: "Commit exists post-handoff and `git show --name-only` on it lists no out-of-scope path"
+    fail_criteria: "No commit is produced after handoff, or the out-of-scope edit rides into the committed diff unfiltered"
+
+  - name: "Seam agree case — producer delivers uncommitted changes, consumer commits them"
+    invocation: "momentum:conduct building one story end-to-end on the standard path"
+    given: "A dev run that returns implementation-complete with uncommitted worktree changes and a file list"
+    when: "The build's staging and commit step consumes the hand-off"
+    then:
+      - "The consumer finds a dirty working tree matching the producer's reported file list"
+      - "The resulting commit's contents correspond to the producer's reported files (minus any out-of-scope exclusions)"
+    pass_criteria: "The record shapes agree across the seam — dirty tree plus file list in, commit out — and the gate passes"
+    fail_criteria: "The consumer's commit step finds nothing to stage, or the commit bears no relation to the reported file list"
+
+  - name: "Seam disagree case — a producer-authored commit is detected as a record-shape mismatch, not silently absorbed"
+    invocation: "momentum:conduct evaluated against a hand-off state where the worktree is already clean because a commit was authored during the dev run"
+    given: "A story hand-off whose worktree has no uncommitted changes and whose history gained a commit during the dev run"
+    when: "The seam is checked"
+    then:
+      - "The check fails and names the mismatch as a cross-side record-shape incompatibility: the consumer expects uncommitted working-tree changes plus a file list, but the producer delivered an already-committed change"
+      - "The failure is surfaced rather than passed over — a clean tree at the staging step is not treated as a normal empty result"
+    pass_criteria: "The disagreement is detected and reported naming both sides' expectations"
+    fail_criteria: "The staging step silently stages nothing and the story proceeds as if scope filtering had run"
+
+  - name: "No shipped dev-side instruction assigns commit duties to the dev agent"
+    invocation: "Inspection of the shipped dev-side instruction documents: the dev agent definition, the three role-variant definitions, the dev skill workflow, and the directed-fix contract reference"
+    given: "The published plugin artifact set after this story merges"
+    when: "A reader searches those documents for staging or committing duties"
+    then:
+      - "No sentence instructs the dev side — in any mode or variant — to run git add, git commit, or otherwise produce a commit"
+      - "Every remaining mention of committing in those documents attributes the duty to the build orchestration, or describes the no-edit/no-commit guarantee"
+      - "The documents agree with each other: dev writes in the provided worktree and returns output; the orchestration stages and commits"
+    pass_criteria: "A full-text search over the named documents finds zero commit instructions addressed to the dev side"
+    fail_criteria: "Any surviving sentence directs the dev side to commit, or two documents still contradict each other on who commits"

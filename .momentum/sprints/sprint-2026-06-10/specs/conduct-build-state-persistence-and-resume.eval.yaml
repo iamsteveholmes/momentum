@@ -1,0 +1,69 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-build-state-persistence-and-resume
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-10/specs/conduct-build-state-persistence-and-resume.eval.yaml
+how_dev_self_checks: |
+  Run a conduct build against a sample sprint (or walk one story through the build
+  end-to-end). Confirm four observable facts: (1) a file named build-ledger.jsonl
+  appears in the sprint's folder under .momentum/sprints/ as soon as build events
+  start happening — not only at the end; (2) each line of that file is one valid
+  JSON object that names the story it belongs to and the kind of event it records;
+  (3) stop the session partway through the build, start a fresh session, re-invoke
+  the build for the same sprint — it resumes without redoing completed stories, and
+  the final report still shows the findings and dispositions recorded before the
+  interruption; (4) compare the ledger lines that existed before the resume with the
+  same lines after the build finishes — they are unchanged, and any correction
+  appears as an additional line rather than an edit.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-build-state-persistence-and-resume.md#acceptance-criteria
+platforms: [host]
+
+# conduct-build-state-persistence-and-resume.eval.yaml
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Build events are written to a durable ledger as they happen"
+    invocation: "momentum:conduct with a prepared sample sprint containing at least one story ready to build"
+    given: "An active sprint whose folder under .momentum/sprints/ contains no build-ledger.jsonl"
+    when: "The build is invoked and proceeds through at least one story — launch, review, finding handling, and merge or failure"
+    then:
+      - "A file named build-ledger.jsonl exists in the sprint's folder before the build reaches its final report — its first rows appear when the first story starts, not at the end of the run"
+      - "Every line in the file parses as a standalone JSON object"
+      - "Rows exist for the story's launch, its progress through review, each finding outcome (fixed / dismissed / escalated / blocked or equivalent recorded outcome), and its terminal result (merged or failed)"
+      - "Each row tied to a story carries that story's slug; each row carries an event-type value from a fixed vocabulary rather than free prose"
+    pass_criteria: "Reading the file mid-build shows rows accumulating in step with build progress; every row is valid JSON with a story slug and an event field"
+    fail_criteria: "No ledger file exists until the build ends, rows appear only in batches at phase boundaries, any line fails to parse as JSON, or rows lack a story slug or event field"
+
+  - name: "A resumed build picks up from the ledger instead of starting blind"
+    invocation: "momentum:conduct re-invoked for a sprint whose build-ledger.jsonl already contains rows from an interrupted earlier run"
+    given: "A sprint folder containing a build-ledger.jsonl with recorded launches, finding outcomes, and terminal results for some stories, plus stories not yet built"
+    when: "The build is invoked again in a fresh session for that same sprint"
+    then:
+      - "The run resumes: stories already recorded as merged are not rebuilt"
+      - "The findings, dispositions, and escalations recorded in the ledger before the interruption are carried into the resumed run's bookkeeping"
+      - "Already-recorded events are not appended a second time for stories that are not re-run"
+    pass_criteria: "After resume, the build proceeds directly to unfinished work, and the ledger shows no duplicate rows for previously recorded events"
+    fail_criteria: "The resumed build rebuilds completed stories, loses previously recorded findings or dispositions, or duplicates existing ledger rows"
+
+  - name: "The final report is assembled from the ledger — interrupted equals uninterrupted"
+    invocation: "momentum:conduct run to completion across an interruption: build several stories, kill the session, resume, finish the sprint"
+    given: "A sprint where findings were recorded, dispositioned, and escalated before the interruption point"
+    when: "The resumed build reaches its single end-of-build report"
+    then:
+      - "The report's findings, dispositions, escalations, quarantine records, and scorecard counts include the pre-interruption stories' records exactly as an uninterrupted run would have shown them"
+      - "Nothing recorded before the interruption is silently missing, and no pre-interruption record is double-counted"
+    pass_criteria: "Comparing the end report of the interrupted-then-resumed run against the ledger's accumulated rows shows every recorded finding and disposition represented once"
+    fail_criteria: "The end report omits findings or dispositions that exist as ledger rows, or counts any of them twice"
+
+  - name: "The ledger is append-only — corrections never rewrite history"
+    invocation: "momentum:conduct on a sprint where a recorded outcome is later overridden (for example a fix later reverted for being out of scope)"
+    given: "A build-ledger.jsonl containing a row recording a finding's original outcome"
+    when: "The build later supersedes that outcome"
+    then:
+      - "The original row remains byte-identical in the file"
+      - "The override is expressed as a new appended row that references the superseded record"
+      - "At no point during the build does the line count of the file decrease, and no existing line changes"
+    pass_criteria: "A snapshot of the file taken before the override is a strict prefix of the file after it"
+    fail_criteria: "Any previously written line is edited or deleted, or an override replaces a row in place"

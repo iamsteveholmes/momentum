@@ -1,0 +1,102 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-qa-reviewer-normalization-adapter
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-10/specs/conduct-qa-reviewer-normalization-adapter.eval.yaml
+how_dev_self_checks: |
+  Exercise the build's review step with a sample QA review report containing one
+  PARTIAL, one MISSING, and one BLOCKED finding. Confirm: (1) every finding record
+  the build goes on to use carries a complete set of canonical fields — story slug,
+  source, verdict, severity, stakes class, type, location, summary, detail,
+  evidence, AC reference, legitimacy flag, and a suggested-fix field — with nothing
+  left blank or to be inferred later; (2) severity comes out as critical for
+  BLOCKED, major for MISSING, minor for PARTIAL — and nothing else; (3) a report
+  where every AC passed produces zero finding records and the build proceeds
+  normally; (4) a finding whose stakes class is security-auth-isolation comes out
+  with type security. Then read the shipped QA reviewer agent definition and the
+  build workflow side by side and confirm they describe the same hand-off — no
+  document still points at a normalization owner that does not exist.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-qa-reviewer-normalization-adapter.md#acceptance-criteria
+platforms: [host]
+
+# conduct-qa-reviewer-normalization-adapter.eval.yaml
+harness_profile: skill-invoke
+
+# Producer / Consumer scope:
+#   Producer — the QA reviewer agent: emits a QA Review Report whose findings carry
+#   AC, Verdict (PARTIAL | MISSING | BLOCKED), stakes class, Location, Summary,
+#   Detail, and Evidence.
+#   Consumer — the conduct build's finding-handling machinery (the directed fix
+#   loop): requires canonical finding records carrying story slug, source, verdict,
+#   severity, stakes class, type, location, summary, detail, evidence, AC
+#   reference, legitimacy flag, and suggested fix.
+#   The hand-off record is the finding. The scenarios below include one agree case
+#   (every producer field maps onto the canonical record and the gate passes) and
+#   one disagree case (a producer record that cannot be totally mapped fails the
+#   gate naming the cross-side field-shape incompatibility).
+
+scenarios:
+  - name: "A QA report with findings yields complete canonical records with the fixed severity mapping"
+    invocation: "momentum:conduct review step exercised with a sample QA review report containing one PARTIAL, one MISSING, and one BLOCKED finding for a known story"
+    given: "A story under review whose QA report contains exactly three findings with verdicts PARTIAL, MISSING, and BLOCKED"
+    when: "The build processes the report into the finding records it uses downstream"
+    then:
+      - "Three finding records result — one per producer finding, none fabricated, none dropped"
+      - "Every record carries a populated value for each canonical field: story slug, source, verdict, severity, stakes class, type, location, summary, detail, evidence, AC reference, legitimacy flag, and suggested fix — no field is absent or left for later inference"
+      - "Severity is critical on the BLOCKED finding, major on the MISSING finding, minor on the PARTIAL finding — derived from the verdict alone, never from the stakes class"
+      - "Each record's source value is qa-reviewer, its legitimacy flag is true, its story slug is the story under review, its AC reference and stakes class carry through from the producer finding unchanged, and its suggested fix is null"
+    pass_criteria: "All three records are complete, severities match the fixed verdict mapping exactly, and carried-through fields equal the producer values"
+    fail_criteria: "Any record is missing a canonical field, any severity deviates from the BLOCKED→critical / MISSING→major / PARTIAL→minor mapping, severity varies with stakes class, or fixed/carried values differ from specification"
+
+  - name: "An all-passed QA report yields zero records and the build proceeds"
+    invocation: "momentum:conduct review step exercised with a sample QA review report in which every AC is VERIFIED and no findings are listed"
+    given: "A story whose QA report contains zero findings"
+    when: "The build processes the report"
+    then:
+      - "Zero finding records result from the QA stream — no fabricated placeholder records"
+      - "The build proceeds normally with whatever findings the code-review stream produced, without error"
+    pass_criteria: "Empty in, empty out, no error, build continues"
+    fail_criteria: "Records are fabricated for a clean report, or the empty case errors or stalls the story"
+
+  - name: "Security-stakes findings are typed as security"
+    invocation: "momentum:conduct review step exercised with a sample QA report containing one finding whose stakes class is security-auth-isolation"
+    given: "A QA report finding carrying stakes class security-auth-isolation"
+    when: "The build processes the report"
+    then:
+      - "The resulting record's type is security"
+      - "Findings with any other stakes class come out with type spec-compliance"
+    pass_criteria: "Type assignment follows the stakes-class rule deterministically"
+    fail_criteria: "A security-stakes finding is typed spec-compliance, or any other type value appears"
+
+  - name: "Seam agree case — producer fields map totally onto the consumer record"
+    invocation: "momentum:conduct review step exercised with a well-formed QA report finding carrying all producer fields"
+    given: "A producer finding with AC, Verdict, stakes class, Location, Summary, Detail, and Evidence all present"
+    when: "The hand-off is checked"
+    then:
+      - "Every producer field lands in its canonical counterpart and every remaining canonical field is filled by the stated fixed values or build-known facts"
+      - "The gate passes: the two sides agree on the record's shape"
+    pass_criteria: "Total mapping with no unmapped producer field and no unfilled canonical field"
+    fail_criteria: "Any producer field has no destination, or any canonical field remains unfilled after mapping"
+
+  - name: "Seam disagree case — an unmappable producer record fails the gate naming the mismatch"
+    invocation: "momentum:conduct review step exercised with a malformed QA report finding — for example a verdict value outside PARTIAL/MISSING/BLOCKED, or a finding missing its stakes class"
+    given: "A producer finding that cannot be totally mapped to the canonical record"
+    when: "The hand-off is checked"
+    then:
+      - "The gate fails and names the failure as a cross-side field-shape incompatibility — identifying which producer field or value the consumer-side mapping cannot place"
+      - "The malformed finding is not silently passed downstream with missing canonical fields"
+    pass_criteria: "Mismatch detected and reported with the offending field or value named"
+    fail_criteria: "A malformed finding flows downstream incomplete, or the failure is reported without naming the mismatched field"
+
+  - name: "The shipped documents on both sides describe the same hand-off"
+    invocation: "Inspection of the shipped QA reviewer agent definition and the build workflow document"
+    given: "The published plugin artifact set after this story merges"
+    when: "A reader compares what the reviewer document says it emits against what the build document says it consumes"
+    then:
+      - "The reviewer document states it emits its own report format and names the build's review step as the owner of the mapping to the canonical record"
+      - "No document references a normalization owner that does not exist in the shipped artifact set"
+      - "The build document states that the reviewer returns its report format and that the build performs the mapping — it no longer claims the reviewer itself returns canonical records"
+    pass_criteria: "A full-text search for normalization-adapter language across the shipped artifacts resolves only to the implemented build-side mapping; both documents describe the identical producer/consumer contract"
+    fail_criteria: "Any shipped document still points at a nonexistent adapter owner, or the two documents disagree about who maps the record"
