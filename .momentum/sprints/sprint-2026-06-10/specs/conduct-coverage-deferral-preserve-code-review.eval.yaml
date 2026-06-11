@@ -27,7 +27,7 @@ harness_profile: skill-invoke
 scenarios:
   - name: "A covered-by-composition story still receives adversarial code review at build time"
     invocation: "momentum:conduct building a story whose planned coverage disposition is covered-by-composition"
-    given: "A sprint plan marking the story covered-by-composition with a named integration scenario, and a story diff containing a deliberately seeded reviewable defect"
+    given: "A sprint plan marking the story covered-by-composition with a named integration scenario, and a story diff containing a deliberately seeded reviewable defect — for example a clearly incorrect conditional or an obvious null-dereference in a modified file"
     when: "The build processes the story through its review step"
     then:
       - "An adversarial code review runs against the story's own diff at build time"

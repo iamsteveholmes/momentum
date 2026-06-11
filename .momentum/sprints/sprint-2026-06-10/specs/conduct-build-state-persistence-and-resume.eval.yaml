@@ -15,6 +15,12 @@ how_dev_self_checks: |
   interruption; (4) compare the ledger lines that existed before the resume with the
   same lines after the build finishes — they are unchanged, and any correction
   appears as an additional line rather than an edit.
+  EDD deliverable check (AC 9): list skills/momentum/skills/conductor/evals/ and
+  confirm three eval files exist covering these behaviors — ledger rows appended at
+  event time, a resumed build rehydrating from an existing ledger, and the final
+  report assembled from the ledger (exact names may vary; coverage of the three
+  behaviors is what matters). Run each eval per its stated scenario and confirm the
+  described behavior occurs.
 coverage_disposition: dedicated-run
 covered_by_scenario: null
 acceptance_criteria_ref: .momentum/stories/conduct-build-state-persistence-and-resume.md#acceptance-criteria

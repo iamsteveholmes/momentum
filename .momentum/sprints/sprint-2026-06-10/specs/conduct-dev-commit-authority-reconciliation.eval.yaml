@@ -1,4 +1,11 @@
 # === VERIFICATION HEADER (Part A) ===
+# NOTE — multi-change-type story: per verification-standard.md §1, each change type
+# is verified by its own method applied to that type's tasks. The specification-typed
+# AC (AC 8 — planning-doc annotation) is verified here by document inspection within
+# this skill-invoke contract. Precedence: agent-definition change type determines the
+# contract format; the verification_method: field is the machine-readable routing
+# signal (single token required). The document-review sub-verification for AC 8 is
+# expressed as a scenario below, not via a separate contract.
 story_slug: conduct-dev-commit-authority-reconciliation
 verification_method: skill-invoke
 harness_profile: skill-invoke
@@ -89,3 +96,14 @@ scenarios:
       - "The failure is surfaced rather than passed over — a clean tree at the staging step is not treated as a normal empty result"
     pass_criteria: "The disagreement is detected and reported naming both sides' expectations"
     fail_criteria: "The staging step silently stages nothing and the story proceeds as if scope filtering had run"
+
+  - name: "Spec drift annotated — planning document carries dated supersession notes at all three named locations (AC 8)"
+    invocation: "document-review: open _bmad-output/planning-artifacts/sprint-dev-redesign-spec.md and inspect the three named locations"
+    given: "The published planning artifact _bmad-output/planning-artifacts/sprint-dev-redesign-spec.md as produced by this story's Task 7"
+    when: "A reader checks the three locations specified in AC 8: (a) §6 line ~424 — the 'Dev subagents write and commit inside their worktrees' sentence; (b) §6 line ~426 — the 'commit all work in the worktree' sentence; (c) the file-touch table row ~929 — the 'worktree-local commit' entry"
+    then:
+      - "Each of the three locations carries a dated supersession note (date in ISO format or prose equivalent) stating that as-built, the build orchestration is the sole commit point"
+      - "Each note names DEC-035 and the sole-commit-authority invariant as the governing decisions"
+      - "The original text at each location is preserved — the notes are additive annotations, not replacements"
+    pass_criteria: "All three locations contain a dated supersession note naming DEC-035 and the sole-commit-authority invariant"
+    fail_criteria: "Any of the three locations still reads as dev-commits without annotation, or a note omits the governing decision references"

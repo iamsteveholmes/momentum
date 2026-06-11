@@ -13,6 +13,13 @@ how_dev_self_checks: |
   fork from main; (3) repeat the launch with a leftover story/<slug> branch and a
   leftover .worktrees/story-<slug> directory already present — the build replaces
   both with fresh ones based on the current sprint tip, without asking you anything.
+  EDD deliverable check (AC 6): list skills/momentum/skills/conductor/evals/ and
+  confirm two eval files exist covering these behaviors — one for the fresh-launch
+  path (branch created from the sprint tip, worktree present before implementation
+  work begins) and one for the stale-collision path (deterministic
+  remove-and-recreate, no prompt, no improvised base). Exact names may vary;
+  coverage of both behaviors is what matters. Run each eval per its stated scenario
+  and confirm the described behavior occurs.
 coverage_disposition: dedicated-run
 covered_by_scenario: null
 acceptance_criteria_ref: .momentum/stories/conduct-worktree-and-branch-creation.md#acceptance-criteria
