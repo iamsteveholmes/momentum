@@ -129,3 +129,40 @@ _DRAFT — this section is populated by the dev agent after create-story enrichm
 ### Completion Notes List
 
 ### File List
+
+## Triage Notes — dedup sweep 2026-06-11
+
+Full-backlog dedup sweep (multi-agent, adversarially verified): **no duplicate — genuinely
+new work.** Binding constraints for create-story enrichment:
+
+- **Premise correction:** the draft AC claims qa-reviewer "already reads
+  verification-harness routing." Not corroborated — `skills/momentum/agents/qa-reviewer.md`
+  and `conductor/workflow.md` have zero hits for `verification_method`/`harness_profile`.
+  Harness-routed execution exists only in `agents/e2e-validator.md` (Team Review) and the
+  rule layer. Rewrite that AC: the gap is routing AND execution in the build-phase QA leg.
+- **Normative source exists — don't re-author the rule:**
+  `skills/momentum/references/rules/verification-standard.md` already defines smoke =
+  build + launch + drive and prohibits method substitution without contract-frozen written
+  justification (shipped by `enforced-verification-rule-change-type-method-routing-harness-profile-requirement-adversarial-guard`,
+  done). This story is enforcement wiring in conductor stage-2 + qa-reviewer.md; cite the
+  rule as normative, define the silent-downgrade guard as a violation of it.
+- **Reuse anchors:** `agents/e2e-validator.md` (harness-driven method-polymorphic executor;
+  BLOCKED-on-absent-harness, BLOCKED-on-environment-startup-failure) is the direct
+  template. qa-reviewer.md:55 already mandates execute-don't-read with BLOCKED semantics
+  (lines 59, 109) — extend, don't duplicate. Dev side already reads the contract Part-A
+  header (`dev-read-contract-part-a-header`, done) — precedent for the QA side.
+  `momentum/verification-harness.json` exists at the repo root.
+- **Sequencing (binding):** enrich AFTER sprint-2026-06-10 merges.
+  `conduct-qa-reviewer-normalization-adapter` rewrites the REVIEWER A "Returns:" block and
+  `conduct-coverage-deferral-preserve-code-review` edits the same stage-2 routing — anchor
+  all edits against post-sprint text and do not regress the normalization action.
+- **Cross-references to carry:** `qa-reviewer-rescope-per-story-contract` (done — the
+  contract being extended; carry its hard constraints forward),
+  `e2e-validator-black-box-hardening` (backlog — same defect class in Team Review; author
+  the guard language once and share), `widen-document-review-whole-doc-contradiction-scan`
+  (backlog — sibling per-method rigor story; keep one coherent per-method rigor table),
+  `verification-method-two-column-smoke-ui-model` and
+  `re-emit-frozen-app-ui-contracts-via-producer` (upstream enum/data-quality dependencies —
+  note their index entries claim story_file:true but no files exist on disk),
+  `e2e-client-side-coverage` (shared ASR-004 lineage), `agent-state-verification-hook`
+  (borrow its kill+relaunch/reinstall concrete verification steps).

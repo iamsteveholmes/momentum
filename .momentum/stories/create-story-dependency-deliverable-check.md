@@ -114,3 +114,33 @@ _DRAFT — this section is populated by the dev agent after create-story enrichm
 ### Completion Notes List
 
 ### File List
+
+## Triage Notes — dedup sweep 2026-06-11
+
+Full-backlog dedup sweep (multi-agent, adversarially verified): **no duplicate — diagnosis
+confirmed verbatim** (`create-story/workflow.md` Step 7, lines 239–262, copies depends_on
+from the epic record with no deliverable resolution; every existing depends_on mechanism in
+the practice checks status/membership only, never deliverable content). Binding constraints
+for create-story enrichment:
+
+- **Step numbering will drift:** `create-story-method-selection-step` (done) already
+  inserted a step in the same classification→AVFL region — re-derive the insertion point
+  against the live workflow, not this stub's Step 7/8 framing. `create-story-update`
+  (backlog) would remove the Step-8 AVFL checkpoint this stub's "before AVFL" anchor
+  references; the resolution step is independent of whether that checkpoint survives.
+- **Evals pin current behavior:** B2
+  (`b2-create-story-input-routing-read-epic-context-instead-of`, done) built the current
+  extract-from-epic-record Step 7 and its evals pin it
+  (`evals/eval-reads-epic-context-from-epicsjson.md`) — cite B2 and update the pinned evals.
+- **Resolution sources:** frozen verification contracts (Part-A headers) are a legitimate
+  resolution source for the "existing contracts" clause.
+- **Cross-references to carry:** siblings `sprint-planning-cross-story-coherence-gate`
+  (whole-sprint half) and `dev-block-on-missing-dependency-contract` (dev-time last line);
+  `avfl-cross-story-integration-lens` (merge-time backstop);
+  `dev-previous-story-continuity` (shared depends_on-story-loading extraction pattern —
+  keep the two implementations from diverging);
+  `contract-seam-stories-two-sided-review-scope` (done — same seam-mismatch family at the
+  QA gate); `create-story-blast-radius-and-citation-discipline` and
+  `story-spec-completeness-checklist` (adjacent create-story gates — both insert scan
+  steps; sequence deliberately and cross-cite; if this story lands first, the checklist
+  should add "no UNRESOLVED INPUT marker present" to its blocking conditions).
