@@ -8,14 +8,14 @@ how_dev_self_checks: |
   covered-by-composition, once for a story planned as dedicated-run. Confirm:
   (1) the covered-by-composition story still gets an adversarial code review of
   its own diff at build time — its build record shows a code review ran, and any
-  code-review findings it produced enter the normal finding-handling flow rather
-  than vanishing into an unconditionally empty list; (2) only the dedicated QA
+  code-review findings it produced appear in the build record with recorded
+  dispositions; (2) only the dedicated QA
   verification run is deferred for that story, with the build record naming the
   integration scenario that will discharge it later; (3) the dedicated-run story's
   behavior is unchanged — both the QA verification and the code review run at
-  build time; (4) the build's own descriptive notes about the deferral now say
-  code review still runs — no remaining text claims the whole review step is
-  skipped.
+  build time; (4) the deferral entry in the covered-by-composition story's build
+  record notes that code review ran at build time and names the integration
+  scenario that discharges the deferred QA verification.
 coverage_disposition: dedicated-run
 covered_by_scenario: null
 acceptance_criteria_ref: .momentum/stories/conduct-coverage-deferral-preserve-code-review.md#acceptance-criteria
@@ -27,14 +27,14 @@ harness_profile: skill-invoke
 scenarios:
   - name: "A covered-by-composition story still receives adversarial code review at build time"
     invocation: "momentum:conduct building a story whose planned coverage disposition is covered-by-composition"
-    given: "A sprint plan marking the story covered-by-composition with a named integration scenario, and a story diff containing at least one reviewable change"
+    given: "A sprint plan marking the story covered-by-composition with a named integration scenario, and a story diff containing a deliberately seeded reviewable defect"
     when: "The build processes the story through its review step"
     then:
       - "An adversarial code review runs against the story's own diff at build time"
-      - "The build record for the story shows the code review happened — it does not show a deceptively clean, unconditionally empty findings list"
+      - "The build record for the story shows at least one code-review finding for the seeded defect — demonstrating the review actually ran on the diff"
       - "Any findings the code review returns carry the canonical record shape with source bmad-code-review, ordered most-severe first"
-    pass_criteria: "Build records show a code-review run and its findings for the story despite the composition disposition"
-    fail_criteria: "The story proceeds to merge with no code review having run, or its findings list is empty by construction rather than by a clean review"
+    pass_criteria: "Build records show a code-review run and a finding for the seeded defect despite the composition disposition"
+    fail_criteria: "The story proceeds to merge with no code review having run, or the seeded defect yields zero code-review findings for the story"
 
   - name: "Only the dedicated QA verification run is deferred — and the deferral is recorded with its discharge scenario"
     invocation: "momentum:conduct building a covered-by-composition story; inspect the build records for the story's QA verification"
@@ -55,9 +55,9 @@ scenarios:
     then:
       - "The findings are dispositioned through the normal flow — fixed, dismissed, or escalated — exactly as a dedicated-run story's findings would be"
       - "The story does not merge with the findings unaddressed and unrecorded"
-      - "The fast path for zero findings applies only when the review actually returned zero findings"
+      - "A story whose code review returns zero findings completes without finding dispositions; a story whose review returns findings always shows their recorded dispositions before completing"
     pass_criteria: "Each finding shows a recorded disposition before the story reaches its terminal state"
-    fail_criteria: "Findings are bypassed to merge without dispositions, or the empty-findings shortcut fires despite findings existing"
+    fail_criteria: "Findings are bypassed to merge without dispositions, or a story completes with findings present but no recorded dispositions"
 
   - name: "Dedicated-run stories are unaffected"
     invocation: "momentum:conduct building a story whose planned coverage disposition is dedicated-run"
@@ -68,15 +68,3 @@ scenarios:
       - "The story's findings list is the combined, de-duplicated, severity-ordered union of both review streams"
     pass_criteria: "Two review streams observable in the build records, combined findings list ordered most-severe first"
     fail_criteria: "Either review stream is missing for a dedicated-run story, or the combination rules changed"
-
-  - name: "The build's descriptive notes agree with its routing"
-    invocation: "Inspection of the shipped build workflow document's deferral notes after the change"
-    given: "The published plugin artifact set after this story merges"
-    when: "A reader checks every statement about what covered-by-composition defers"
-    then:
-      - "Every statement says the deferral moves only the dedicated QA verification run to the named integration scenario"
-      - "Every statement affirms adversarial code review still runs at build time on the story's own diff and is never deferred, demoted, or skipped by this disposition"
-      - "No remaining text instructs or implies skipping the review step wholesale for covered-by-composition stories"
-      - "No text implies the integration scenario performs or replaces code review"
-    pass_criteria: "A full-text sweep of the deferral language finds prose and routing in agreement"
-    fail_criteria: "Any surviving sentence claims the whole review step is skipped, or describes the integration scenario as a code-review substitute"

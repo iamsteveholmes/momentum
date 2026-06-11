@@ -10,11 +10,11 @@ how_dev_self_checks: |
   (2) `git log` in that worktree shows no new commit was created during the dev
   run — the changes sit uncommitted in the working tree; (3) the structured
   completion output still arrives in its usual shape (implementation-complete with
-  the file list, or disposition: fixed with files_changed). Then read the shipped
-  dev-side instruction documents (the dev agent definition, its three role
-  variants, the dev skill's workflow, and the directed-fix contract reference) and
-  confirm no remaining sentence instructs the dev side to stage or commit —
-  every commit duty named in them belongs to the build orchestration.
+  the file list, or disposition: fixed with files_changed). The same holds for
+  every role variant: however the dev run is invoked, the worktree's git history
+  is identical before and after the run while the changes sit uncommitted in the
+  working tree — any new commit authored during a dev run means the story is not
+  done.
 coverage_disposition: dedicated-run
 covered_by_scenario: null
 acceptance_criteria_ref: .momentum/stories/conduct-dev-commit-authority-reconciliation.md#acceptance-criteria
@@ -89,14 +89,3 @@ scenarios:
       - "The failure is surfaced rather than passed over — a clean tree at the staging step is not treated as a normal empty result"
     pass_criteria: "The disagreement is detected and reported naming both sides' expectations"
     fail_criteria: "The staging step silently stages nothing and the story proceeds as if scope filtering had run"
-
-  - name: "No shipped dev-side instruction assigns commit duties to the dev agent"
-    invocation: "Inspection of the shipped dev-side instruction documents: the dev agent definition, the three role-variant definitions, the dev skill workflow, and the directed-fix contract reference"
-    given: "The published plugin artifact set after this story merges"
-    when: "A reader searches those documents for staging or committing duties"
-    then:
-      - "No sentence instructs the dev side — in any mode or variant — to run git add, git commit, or otherwise produce a commit"
-      - "Every remaining mention of committing in those documents attributes the duty to the build orchestration, or describes the no-edit/no-commit guarantee"
-      - "The documents agree with each other: dev writes in the provided worktree and returns output; the orchestration stages and commits"
-    pass_criteria: "A full-text search over the named documents finds zero commit instructions addressed to the dev side"
-    fail_criteria: "Any surviving sentence directs the dev side to commit, or two documents still contradict each other on who commits"

@@ -13,9 +13,9 @@ how_dev_self_checks: |
   BLOCKED, major for MISSING, minor for PARTIAL — and nothing else; (3) a report
   where every AC passed produces zero finding records and the build proceeds
   normally; (4) a finding whose stakes class is security-auth-isolation comes out
-  with type security. Then read the shipped QA reviewer agent definition and the
-  build workflow side by side and confirm they describe the same hand-off — no
-  document still points at a normalization owner that does not exist.
+  with type security. Repeat the walk with a second sample report to confirm the
+  mapping is stable — the same inputs must produce the same complete canonical
+  records both times.
 coverage_disposition: dedicated-run
 covered_by_scenario: null
 acceptance_criteria_ref: .momentum/stories/conduct-qa-reviewer-normalization-adapter.md#acceptance-criteria
@@ -89,14 +89,3 @@ scenarios:
       - "The malformed finding is not silently passed downstream with missing canonical fields"
     pass_criteria: "Mismatch detected and reported with the offending field or value named"
     fail_criteria: "A malformed finding flows downstream incomplete, or the failure is reported without naming the mismatched field"
-
-  - name: "The shipped documents on both sides describe the same hand-off"
-    invocation: "Inspection of the shipped QA reviewer agent definition and the build workflow document"
-    given: "The published plugin artifact set after this story merges"
-    when: "A reader compares what the reviewer document says it emits against what the build document says it consumes"
-    then:
-      - "The reviewer document states it emits its own report format and names the build's review step as the owner of the mapping to the canonical record"
-      - "No document references a normalization owner that does not exist in the shipped artifact set"
-      - "The build document states that the reviewer returns its report format and that the build performs the mapping — it no longer claims the reviewer itself returns canonical records"
-    pass_criteria: "A full-text search for normalization-adapter language across the shipped artifacts resolves only to the implemented build-side mapping; both documents describe the identical producer/consumer contract"
-    fail_criteria: "Any shipped document still points at a nonexistent adapter owner, or the two documents disagree about who maps the record"

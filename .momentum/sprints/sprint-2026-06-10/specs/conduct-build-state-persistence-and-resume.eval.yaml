@@ -42,7 +42,7 @@ scenarios:
     when: "The build is invoked again in a fresh session for that same sprint"
     then:
       - "The run resumes: stories already recorded as merged are not rebuilt"
-      - "The findings, dispositions, and escalations recorded in the ledger before the interruption are carried into the resumed run's bookkeeping"
+      - "The findings, dispositions, and escalations recorded in the ledger before the interruption reappear in the resumed run's observable outputs — its progress records and its final report — with none missing"
       - "Already-recorded events are not appended a second time for stories that are not re-run"
     pass_criteria: "After resume, the build proceeds directly to unfinished work, and the ledger shows no duplicate rows for previously recorded events"
     fail_criteria: "The resumed build rebuilds completed stories, loses previously recorded findings or dispositions, or duplicates existing ledger rows"
