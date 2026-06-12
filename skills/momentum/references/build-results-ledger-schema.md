@@ -100,6 +100,12 @@ No entry in either ledger may be keyed to a value that is not a real story slug.
 
 ---
 
+## Companion Schema: Event-Level Build Ledger
+
+The story-level build-results row defined here and the event-level build ledger (`skills/momentum/skills/conductor/references/build-ledger.md`) are companion schemas at different granularities. A build-results row is derivable by folding a story's event-level ledger rows (collecting terminal outcome, finding counts, disposition counts, merge status). The two schemas join on the story slug: `slug` in build-results, `story_slug` in the event ledger.
+
+---
+
 ## Source Decisions
 
 - **DEC-035** — Adopt conduct; one human end-gate; no story-count cap; legible auto-fix loop.
