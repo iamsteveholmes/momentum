@@ -170,7 +170,7 @@ The sprint and story records are inconsistent. This may mean the sprint index an
 
     <action>Verify the sprint branch `sprint/{{sprint_slug}}` is checked out and up to date. If the branch does not exist, this is an H5-class inconsistency — report it and HALT (this path should not be reached if H5 passed, but guard defensively).</action>
 
-    <note>Reconcile end condition: all story branches and worktrees from prior sessions are removed; all stories that were `in-progress` are reset to `ready-for-dev`; `git worktree list` shows only the main worktree and the sprint branch worktree (if applicable); the sprint branch exists and is clean. The build begins from this known-good state.</note>
+    <note>Reconcile end condition: all story branches and worktrees belonging to `in-progress` stories from prior sessions are removed; all stories that were `in-progress` are reset to `ready-for-dev`; `git worktree list` shows only the main worktree and the sprint branch worktree (if applicable); the sprint branch exists and is clean. Stories that were not `in-progress` (e.g., `ready-for-dev`, `blocked`) may still have leftover branches or worktree directories from other circumstances — these are handled by the launch-time idempotent collision handling in step 2.1 STAGE-1 when those stories are dispatched. The build begins from this known-good state.</note>
 
     <!-- ─── Touchpoint 1: confirm to start ───────────────────── -->
 
@@ -311,21 +311,40 @@ Ready to begin?</output>
           Act on the routing outcome as specified in step 2.C. Do NOT dispatch the verifier at build time
           for a story whose coverage_disposition is "covered-by-composition".
 
-        2.1.3 — STAGE-1 → STAGE-2 → STAGE-3 PIPELINE: Fire asynchronously after 2.1.4/2.1.5 resolve.
+        2.1.3 — STAGE-1 → STAGE-2 → STAGE-3 PIPELINE: Fire asynchronously after 2.1.4/2.1.5 resolve,
+          and ONLY IF S is NOT in {{contract_integrity_stops}}. An integrity-stopped story skips 2.1.3
+          entirely — no branch, no worktree, no dev spawn, no pipeline stages are executed for it.
           Each story's pipeline runs independently and concurrently with other stories' pipelines.
           The pipeline emits a single terminal signal when complete; step 2.2 consumes that signal.
           The launch loop does NOT block on any stage — all per-story pipelines run concurrently.
 
           ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
 
-          CREATE STORY BRANCH AND WORKTREE (Conductor-executed, before dev spawn):
+          CREATE STORY BRANCH AND WORKTREE (Conductor-executed, before dev spawn, Conductor-serial):
+            Placement: deliberately first action of STAGE-1, after 2.1.4/2.1.5 gates resolve and only
+            when S is NOT in {{contract_integrity_stops}}, so a gate-stopped story never acquires an
+            orphan worktree. This placement is intentional and must not be moved later in the pipeline.
+
             Rationale: forking from the sprint tip keeps the merge-base diff exactly story-scoped
             (references/per-story-review-diff-range.md Scenario A — pre-merge review isolates only
             the story's own commits when the branch diverged from sprint/{{sprint_slug}}).
 
-            Idempotent collision handling (mirrors Phase 1 reconcile removal semantics, ~lines 159-160):
-              If `.worktrees/story-{S.slug}` exists: `git worktree remove --force .worktrees/story-{S.slug}`
-              If branch `story/{S.slug}` exists: `git branch -D story/{S.slug}`
+            CWD anchor: all relative paths below resolve from repo root. The Conductor normalizes
+            CWD via `git rev-parse --show-toplevel` before executing any git mutations in this block.
+
+            Note on concurrency: the Conductor performs branch and worktree creation for each story
+            serially (one story at a time) to prevent `.git` lock contention. Concurrency applies to
+            the dev agents that run afterward — not to the Conductor's git mutations.
+
+            Idempotent collision handling (mirrors the RECONCILE ON START action in Phase 1):
+              1. `git worktree prune` — clear any stale worktree registrations first.
+              2. Check `git worktree list` for any entry whose path matches `.worktrees/story-{S.slug}`.
+                 If found: `git worktree remove --force --force .worktrees/story-{S.slug}`
+                 If remove fails (e.g., unregistered path): `rm -rf .worktrees/story-{S.slug}` then
+                 `git worktree prune` again.
+              3. Check whether branch `story/{S.slug}` exists. Before deleting, check `git worktree list`
+                 for any entry currently on `story/{S.slug}` and force-remove that worktree first.
+                 Then: `git branch -D story/{S.slug}`
 
             Create branch and worktree:
               `git branch story/{S.slug} sprint/{{sprint_slug}}`

@@ -32,8 +32,9 @@ STAGE-1 DEV SPAWN block (sub-step 2.1.3).
 
 ## Pass Criteria
 
-- The workflow text at the STAGE-1 DEV SPAWN block contains explicit branch creation and
-  worktree-add commands with `sprint/{{sprint_slug}}` stated as the base ref.
+- The workflow text at the STAGE-1 DEV SPAWN block contains an explicit branch creation
+  command with `sprint/{{sprint_slug}}` stated as the base ref (the worktree-add command
+  correctly omits a separate base-ref argument — the branch carries the base).
 - The creation action appears before the `Resolve agent:` / `Spawn {{dev_agent}}` lines.
 - The action includes a rationale note citing `per-story-review-diff-range.md` Scenario A.
 - The creation is Conductor-executed (no delegation to dev agent; the existing "Do not
@@ -50,10 +51,21 @@ STAGE-1 DEV SPAWN block (sub-step 2.1.3).
 
 ## Verification Method
 
-**Inspection of workflow text.**
+**Inspection of workflow text (static leg):**
 
 1. Read `skills/momentum/skills/conductor/workflow.md` at the STAGE-1 DEV SPAWN block
    inside step 2.1.3. Confirm the branch-and-worktree creation action is present, appears
-   before agent resolve/spawn, states `sprint/{{sprint_slug}}` as the base, and cites
-   the diff-range reference.
+   before agent resolve/spawn, states `sprint/{{sprint_slug}}` as the base (in the branch
+   creation command), and cites the diff-range reference.
 2. Confirm the dev spawn constraint text still includes "Do not mutate git" — unchanged.
+
+**Behavioral leg (scratch-repo git exercise):**
+
+3. In a scratch git repository, create a branch `sprint/test-sprint` from an initial commit.
+   Simulate the workflow instructions by executing:
+   - `git branch story/my-feature sprint/test-sprint`
+   - `git worktree add .worktrees/story-my-feature story/my-feature`
+4. Confirm the resulting worktree is checked out on branch `story/my-feature` and that
+   `git -C .worktrees/story-my-feature log --oneline -1` matches the tip of `sprint/test-sprint`.
+5. Confirm the branch was NOT created from HEAD of the main branch when `sprint/test-sprint`
+   and `main` diverge — the base ref isolation is verified, not just assumed.
