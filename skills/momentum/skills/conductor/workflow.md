@@ -477,16 +477,11 @@ Ready to begin?</output>
             Spawn REVIEWER B ONLY as an individual agent (fan-out, NOT TeamCreate):
 
               REVIEWER B — momentum:code-reviewer skill (bmad-code-review adapter):
-                Inputs:
-                  - story_slug: S.slug
-                  - story_diff: {{story_diff}}
-                  - worktree_path: `.worktrees/story-{S.slug}`
-                  - review_depth: S.review_depth if set in the story spec (see DEEPER-REVIEW OPT-IN above);
-                      omit this field (or pass null) when the story spec does not set it, which triggers
-                      standard-depth review. Passing "deep" triggers the higher-rigor pass.
-                Constraint: "Report-only mode. Do not modify code. Do not mutate git. Produce findings only."
-                Returns: normalized finding records per canonical finding schema (finding-schema.md),
-                  stakes_class populated on every record. Source field: `bmad-code-review`.
+                Dispatch with Inputs, Constraint, and Returns IDENTICAL to the REVIEWER B block in the
+                dedicated-run branch above — that block is the single canonical REVIEWER B specification
+                (story_slug, story_diff: {{story_diff}}, worktree_path, review_depth per DEEPER-REVIEW
+                OPT-IN; report-only constraint; returns normalized finding-schema.md records with
+                stakes_class populated on every record, source field `bmad-code-review`).
 
             REVIEWER A (qa-reviewer) is NOT dispatched — the dedicated QA verification run is deferred
             to the named integration scenario at AVFL/merge (per step 2.C Path B). This is not a code
@@ -618,7 +613,7 @@ Ready to begin?</output>
 
     <!-- ─────────────────────────────────────────────────────── -->
     <!-- STEP 2.S3 — Stage-3 fix loop (Phase B–D, per story)     -->
-    <!-- Invoked after stage-2 returns findings for story S.      -->
+    <!-- Invoked after stage-2 returns findings for story S.     -->
     <!-- Governs: spec §3 Phase B–D + §4.                        -->
     <!-- ─────────────────────────────────────────────────────── -->
 
@@ -626,7 +621,7 @@ Ready to begin?</output>
 
       <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 has returned findings for story S (from the QA reviewer + code-review adapter on the dedicated-run path, or from the code-review adapter only on the covered-by-composition path). It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, run /simplify (every story, once per iteration, after Phase B), re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the stage-2 findings list for story S. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
 
-      Stage-2 callers (QA reviewer + code-review adapter) and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
+      Stage-2 callers and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
 
       <note>ROUTINE-PATH GUARANTEE (DEC-035 D1, always-on default). Routine findings (stakes_class == routine) are ALWAYS auto-fixed inside this loop with no human gate. The always-auto-fix behavior for routine findings is UNCHANGED and PRESERVED. This is the anti-firehose baseline: the vast majority of findings complete Phase B→D autonomously without any escalation or human contact.</note>
 
@@ -924,14 +919,14 @@ Ready to begin?</output>
 
       <!-- ── Path B: covered-by-composition ───────────────────── -->
       <check if="{{coverage_disposition}} == 'covered-by-composition' AND {{covered_by_scenario}} is present AND non-empty">
-        <note>This story's dedicated QA verification run is deferred to a named integration scenario at AVFL/merge. No dedicated QA verification run (REVIEWER A / qa-reviewer) is performed for this story at build time. Adversarial code review (REVIEWER B / momentum:code-reviewer) still runs at build time on the per-story diff — coverage disposition does not defer, skip, or weaken code review. The Conductor records the deferral explicitly — it does not silently drop the QA verification. The named integration scenario ({{covered_by_scenario}}) is the downstream discharge point at AVFL/merge (Phase 3). The deferral record is informational: it states THAT the dedicated QA run was skipped and WHICH scenario owns the discharge, and notes that code review ran at build time. Nothing in this record changes how findings from either the code review or the integration scenario are classified, escalated, or reported.</note>
+        <note>This story's dedicated QA verification run is deferred to a named integration scenario at AVFL/merge. No dedicated QA verification run (REVIEWER A / qa-reviewer) is performed for this story at build time. Adversarial code review (REVIEWER B / momentum:code-reviewer) still runs at build time on the per-story diff — coverage disposition does not defer, skip, or weaken code review. The Conductor records the deferral explicitly — it does not silently drop the QA verification. The named integration scenario ({{covered_by_scenario}}) is the downstream discharge point at AVFL/merge (Phase 3). The deferral record is informational: it states THAT the dedicated QA run was skipped and WHICH scenario owns the discharge, and notes that code review still runs at build time. Nothing in this record changes how findings from either the code review or the integration scenario are classified, escalated, or reported.</note>
         <note>PRECONDITION — a named scenario is required. This path is reached only when covered_by_scenario is present and non-empty. When it is null/missing/empty, the guard above fires first and routes to dedicated-run instead. This ensures AC 3's naming requirement is a hard precondition for skipping the dedicated build-time run.</note>
         <action>Skip the dedicated QA verification run for story S at build time. Do NOT dispatch REVIEWER A (qa-reviewer) for S during this build phase. Stage-2 still dispatches REVIEWER B (momentum:code-reviewer) on the per-story diff — coverage disposition defers only the QA verification run, not the code review.
           Record the deferral in {{build_log}}:
             { slug: S.slug, title: S.title, event: "coverage-disposition-deferred",
               coverage_disposition: "covered-by-composition",
               covered_by_scenario: {{covered_by_scenario}},
-              note: "Dedicated build-time QA run (REVIEWER A) skipped. Adversarial code review (REVIEWER B) dispatched at build time on the per-story diff. QA verification debt to be discharged at AVFL/merge by the named integration scenario." }
+              note: "Dedicated build-time QA run (REVIEWER A) skipped. Adversarial code review (REVIEWER B) still runs at build time on the per-story diff (stage-2). QA verification debt to be discharged at AVFL/merge by the named integration scenario." }
           Return routing outcome to step 2.1.5: { outcome: "covered-by-composition", integration_scenario: {{covered_by_scenario}} }.
           Do not produce a VERIFIED / PARTIAL / MISSING / BLOCKED verification disposition for story S from this build-phase step — the verification result belongs to the integration scenario at AVFL/merge.
         </action>
