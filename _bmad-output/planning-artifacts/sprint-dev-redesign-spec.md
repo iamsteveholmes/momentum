@@ -423,6 +423,8 @@ Build `avfl-merge-review` as a **Workflow** under the avfl skill (alongside the 
 
 All git mutation in the build phase is owned by the **Conductor** — the only actor that runs `rebase`, `merge`, branch/worktree create/remove, or conflict resolution. Dev subagents write and commit inside their worktrees; they never merge. This replaces five HALT/ask gates from the audit with autonomous Conductor logic. **Zero developer HALT exists anywhere in the git lifecycle.** The only developer interaction is the end-gate push confirmation (mandated by git-discipline), which sits at the very end.
 
+> **[Superseded 2026-06-11]** "Dev subagents write and commit inside their worktrees" — as-built, the Conductor is the sole commit point per DEC-035 (`_bmad-output/planning-artifacts/decisions/dec-035-conduct-execution-engine-in-session-workflows-2026-05-30.md`) and the conductor skill's Authority Invariant 1 (`skills/momentum/skills/conductor/SKILL.md`). Dev subagents write in the Conductor-provided worktree and return uncommitted output; the Conductor stages (under the write-scope guard) and commits. This supersession also covers the "commit all work in the worktree" sentence below and the file-touch table entry at line ~929.
+
 The dev skill's `<critical>` "Never auto-execute git merge... wait for explicit user confirmation" is **deleted**. The dev skill no longer merges or cleans up — its merge step reduces to "commit all work in the worktree, emit completion signal." Merge, conflict resolution, and cleanup move entirely to the Conductor. This resolves the audit's finding that the two skills disagreed on the merge gate: there is now exactly one merge authority.
 
 ### Branch / worktree topology
