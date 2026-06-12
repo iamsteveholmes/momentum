@@ -170,7 +170,7 @@ The sprint and story records are inconsistent. This may mean the sprint index an
 
     <action>Verify the sprint branch `sprint/{{sprint_slug}}` is checked out and up to date. If the branch does not exist, this is an H5-class inconsistency — report it and HALT (this path should not be reached if H5 passed, but guard defensively).</action>
 
-    <note>Reconcile end condition: all story branches and worktrees belonging to `in-progress` stories from prior sessions are removed; all stories that were `in-progress` are reset to `ready-for-dev`; `git worktree list` shows only the main worktree and the sprint branch worktree (if applicable); the sprint branch exists and is clean. Stories that were not `in-progress` (e.g., `ready-for-dev`, `blocked`) may still have leftover branches or worktree directories from other circumstances — these are handled by the launch-time idempotent collision handling in step 2.1 STAGE-1 when those stories are dispatched. The build begins from this known-good state.</note>
+    <note>Reconcile end condition: all story branches and worktrees belonging to `in-progress` stories from prior sessions are removed; all stories that were `in-progress` are reset to `ready-for-dev`; `git worktree list` shows only the main worktree, the sprint branch worktree (if applicable), and any leftover entries for non-`in-progress` stories; the sprint branch exists and is clean. Stories that were not `in-progress` (e.g., `ready-for-dev`, `blocked`) may still have leftover branches or worktree directories from other circumstances — these are handled by the launch-time idempotent collision handling in step 2.1 STAGE-1 when those stories are dispatched. The build begins from this known-good state.</note>
 
     <!-- ─── Touchpoint 1: confirm to start ───────────────────── -->
 
@@ -336,7 +336,9 @@ Ready to begin?</output>
             serially (one story at a time) to prevent `.git` lock contention. Concurrency applies to
             the dev agents that run afterward — not to the Conductor's git mutations.
 
-            Idempotent collision handling (mirrors the RECONCILE ON START action in Phase 1):
+            Idempotent collision handling (same removal ordering as the RECONCILE ON START
+            action in Phase 1 — worktree first, then branch — extended with prune and an
+            unregistered-path fallback):
               1. `git worktree prune` — clear any stale worktree registrations first.
               2. Check `git worktree list` for any entry whose path matches `.worktrees/story-{S.slug}`.
                  If found: `git worktree remove --force --force .worktrees/story-{S.slug}`
