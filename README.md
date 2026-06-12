@@ -41,12 +41,12 @@ Momentum organizes the practice as a six-phase loop. Each phase is a set of skil
 
 ```mermaid
 graph LR
-    E["<b>ENTER</b><br/>impetus"]
-    K["<b>KNOW</b><br/>assessment · research<br/>decision"]
-    C["<b>CAPTURE</b><br/>intake · triage<br/>refine · epics"]
-    P["<b>PLAN</b><br/>sprint-planning<br/>create-story"]
-    B["<b>BUILD</b><br/>conductor"]
-    X["<b>CLOSE</b><br/>retro"]
+    E(["<b>ENTER</b><br/>impetus"])
+    K(["<b>KNOW</b><br/>assessment · research<br/>decision"])
+    C(["<b>CAPTURE</b><br/>intake · triage<br/>refine · epics"])
+    P(["<b>PLAN</b><br/>sprint-planning<br/>create-story"])
+    B(["<b>BUILD</b><br/>conductor"])
+    X(["<b>CLOSE</b><br/>retro"])
 
     E --> K --> C --> P --> B --> X
     X --> E
@@ -58,6 +58,7 @@ graph LR
     style P fill:#9C3F1C,stroke:#7E3214,color:#fff
     style B fill:#9C3F1C,stroke:#7E3214,color:#fff
     style X fill:#DBA960,stroke:#C28F47,color:#333
+    linkStyle default stroke:#C28F47,stroke-width:2px
 ```
 
 ### 1 · Enter
@@ -128,12 +129,12 @@ Producer-verifier separation is implemented, not aspirational: writers never ver
 
 ```mermaid
 graph LR
-    D["<b>dev</b><br/>implements in<br/>isolated worktree"]
-    QA["<b>qa-reviewer</b><br/>read-only review"]
-    CR["<b>code-reviewer</b><br/>read-only review"]
-    F["<b>dev fix-mode</b><br/>applies directed fixes"]
-    M["<b>rebase-merge</b><br/>by Conductor"]
-    A["<b>AVFL</b><br/>on integrated diff"]
+    D(["<b>dev</b><br/>implements in<br/>isolated worktree"])
+    QA(["<b>qa-reviewer</b><br/>read-only review"])
+    CR(["<b>code-reviewer</b><br/>read-only review"])
+    F(["<b>dev fix-mode</b><br/>applies directed fixes"])
+    M(["<b>rebase-merge</b><br/>by Conductor"])
+    A(["<b>AVFL</b><br/>on integrated diff"])
 
     D --> QA --> F
     D --> CR --> F
@@ -145,6 +146,7 @@ graph LR
     style F fill:#C25A1F,stroke:#A04A18,color:#fff
     style M fill:#DBA960,stroke:#C28F47,color:#333
     style A fill:#9C3F1C,stroke:#7E3214,color:#fff
+    linkStyle default stroke:#C28F47,stroke-width:2px
 ```
 
 After merge, the **Adversarial Validate-Fix Loop (AVFL)** runs its five-worker fleet — `validator-enum`, `validator-adv`, `consolidator`, `fixer`, `merge-review` — over the integrated sprint diff, iterating to convergence. E2E behavioral validation then routes each story by change type through `verification-harness.json` drivers (skill-invoke, bash, curl, Maestro, document-review).

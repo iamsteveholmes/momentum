@@ -16,9 +16,9 @@ Specifications are the primary engineering artifact. Human-written acceptance cr
 
 ```mermaid
 graph TD
-    S["<b>SPECIFICATIONS</b><br/><i>Immutable source of truth</i><br/>Human-written acceptance criteria"]
-    T["<b>TESTS</b><br/><i>Read-only to coding agents</i><br/>Verify specs are satisfied"]
-    C["<b>CODE</b><br/><i>Disposable, generated output</i><br/>Replaceable if it fails"]
+    S(["<b>SPECIFICATIONS</b><br/><i>Immutable source of truth</i><br/>Human-written acceptance criteria"])
+    T(["<b>TESTS</b><br/><i>Read-only to coding agents</i><br/>Verify specs are satisfied"])
+    C(["<b>CODE</b><br/><i>Disposable, generated output</i><br/>Replaceable if it fails"])
 
     S -- "governs" --> T
     T -- "governs" --> C
@@ -28,6 +28,7 @@ graph TD
     style S fill:#9C3F1C,stroke:#7E3214,color:#fff
     style T fill:#C25A1F,stroke:#A04A18,color:#fff
     style C fill:#DBA960,stroke:#C28F47,color:#333
+    linkStyle default stroke:#C28F47,stroke-width:2px
 ```
 
 ### Producer-Verifier Separation
@@ -37,16 +38,16 @@ The agent that writes code does not review it. Verification happens in a separat
 ```mermaid
 graph TD
     subgraph producer ["PRODUCER CONTEXT"]
-        P1["Read spec and acceptance criteria"]
-        P2["Write implementation"]
-        P3["Write unit tests"]
+        P1(["Read spec and acceptance criteria"])
+        P2(["Write implementation"])
+        P3(["Write unit tests"])
         P1 --> P2 --> P3
     end
 
     subgraph verifier ["VERIFIER CONTEXT"]
-        V1["Read spec, code, and test results"]
-        V2["Challenge every claim"]
-        V3["Produce findings report"]
+        V1(["Read spec, code, and test results"])
+        V2(["Challenge every claim"])
+        V3(["Produce findings report"])
         V1 --> V2 --> V3
     end
 
@@ -61,6 +62,7 @@ graph TD
     style V1 fill:#9C3F1C,stroke:#7E3214,color:#fff
     style V2 fill:#9C3F1C,stroke:#7E3214,color:#fff
     style V3 fill:#9C3F1C,stroke:#7E3214,color:#fff
+    linkStyle default stroke:#C28F47,stroke-width:2px
 ```
 
 ### Evaluation Flywheel
@@ -69,12 +71,12 @@ When output fails quality standards, trace the failure upstream via navigable `d
 
 ```mermaid
 graph TD
-    BUILD["<b>BUILD</b><br/>Execute specs with<br/>AI agents"]
-    VERIFY["<b>VERIFY</b><br/>Adversarial review<br/>finds defects"]
-    RECORD["<b>RECORD</b><br/>Log findings in<br/>structured ledger"]
-    ANALYZE["<b>ANALYZE</b><br/>Retrospective reveals<br/>cross-story patterns"]
-    TRACE["<b>TRACE UPSTREAM</b><br/>Root cause: workflow?<br/>spec? rule?"]
-    FIX["<b>FIX UPSTREAM</b><br/>Correct the source,<br/>not the symptom"]
+    BUILD(["<b>BUILD</b><br/>Execute specs with<br/>AI agents"])
+    VERIFY(["<b>VERIFY</b><br/>Adversarial review<br/>finds defects"])
+    RECORD(["<b>RECORD</b><br/>Log findings in<br/>structured ledger"])
+    ANALYZE(["<b>ANALYZE</b><br/>Retrospective reveals<br/>cross-story patterns"])
+    TRACE(["<b>TRACE UPSTREAM</b><br/>Root cause: workflow?<br/>spec? rule?"])
+    FIX(["<b>FIX UPSTREAM</b><br/>Correct the source,<br/>not the symptom"])
 
     BUILD --> VERIFY
     VERIFY --> RECORD
@@ -89,6 +91,7 @@ graph TD
     style ANALYZE fill:#C25A1F,stroke:#A04A18,color:#fff
     style TRACE fill:#9C3F1C,stroke:#7E3214,color:#fff
     style FIX fill:#9C3F1C,stroke:#7E3214,color:#fff
+    linkStyle default stroke:#C28F47,stroke-width:2px
 ```
 
 ### Three Tiers of Enforcement
@@ -102,24 +105,24 @@ Quality standards are enforced at three levels, from most to least reliable:
 ```mermaid
 graph TD
     subgraph tier1 ["TIER 1 — DETERMINISTIC"]
-        D1["Linters and formatters"]
-        D2["Test suite execution"]
-        D3["File protection gates"]
-        D4["Pre-commit hooks"]
+        D1(["Linters and formatters"])
+        D2(["Test suite execution"])
+        D3(["File protection gates"])
+        D4(["Pre-commit hooks"])
     end
 
     subgraph tier2 ["TIER 2 — STRUCTURED"]
-        S1["Workflow validation steps"]
-        S2["Review checklists"]
-        S3["Acceptance test gates"]
-        S4["Verification before completion"]
+        S1(["Workflow validation steps"])
+        S2(["Review checklists"])
+        S3(["Acceptance test gates"])
+        S4(["Verification before completion"])
     end
 
     subgraph tier3 ["TIER 3 — ADVISORY"]
-        A1["Agent context rules"]
-        A2["Coding standards"]
-        A3["Anti-pattern guidance"]
-        A4["Architecture conventions"]
+        A1(["Agent context rules"])
+        A2(["Coding standards"])
+        A3(["Anti-pattern guidance"])
+        A4(["Architecture conventions"])
     end
 
     tier3 -. "promote when<br/>advisory isn't enough" .-> tier2
@@ -140,6 +143,7 @@ graph TD
     style A2 fill:#DBA960,stroke:#C28F47,color:#333
     style A3 fill:#DBA960,stroke:#C28F47,color:#333
     style A4 fill:#DBA960,stroke:#C28F47,color:#333
+    linkStyle default stroke:#C28F47,stroke-width:2px
 ```
 
 ### Cost as a Managed Dimension
