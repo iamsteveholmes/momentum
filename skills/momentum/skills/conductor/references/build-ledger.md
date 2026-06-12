@@ -43,6 +43,15 @@ Additional fields vary by event type (see Event Type Set below). Every row uses 
 
 `story_slug` is the canonical join key, consistent with finding-schema.md's canonical-join-key rule. No `key` field (banned per build-results-ledger-schema.md). No prose-label values.
 
+**Sanctioned sentinel values**: Two slug values are explicitly permitted as non-story-slug identifiers for sprint-level integration events where no single story owns the row:
+
+| Sentinel | Used for |
+|---|---|
+| `e2e-integration` | E2E findings not attributable to a single story (sprint-level integration failures) |
+| `sprint-integration` | AVFL and coverage-discharge findings attributable to the sprint as a whole rather than one story |
+
+These two values are the ONLY permitted exceptions to the "must be a real story slug" rule. Any new sprint-level sentinel slug requires explicit addition to this table.
+
 ---
 
 ## Controlled Event-Type Set
@@ -55,7 +64,7 @@ Event names reuse the existing `{{build_log}}` vocabulary. No renames.
 |---|---|---|
 | `story-launched` | Step 2.1 pipeline spawn | `title` |
 | `stage-transition` | Stage-1 → stage-2 and stage-2 → stage-3 boundaries | `from_stage`, `to_stage` |
-| `finding-disposition` | Each individual finding disposition in step 2.S3 | `finding_id`, `disposition` (fixed\|dismissed\|triaged-out\|escalated\|blocked\|scope-reverted), `summary`, `stakes_class`. When dismissed: `dismissal_rationale` (non-empty, per Required-Rationale Rule). When escalated: `timing_tier`. |
+| `finding-disposition` | Each individual finding disposition in step 2.S3 | `finding_id`, `disposition` (fixed\|dismissed\|triaged-out\|escalated\|blocked\|scope-reverted), `summary`, `stakes_class`, `severity`. When dismissed: `dismissal_rationale` (non-empty, per Required-Rationale Rule). When escalated: `timing_tier`. |
 | `stage3-fix-scope-reverted` | Write-scope guard fully discards a fix (step 2.S3) | `finding_id`, `finding_summary`, `reverted_files` |
 | `stage3-escalation` | End-gate-expanded escalation recorded in step 2.S3 | `disposition: "escalated"`, `timing_tier: "end-gate-expanded"`, `finding_summary` |
 | `stage3-mid-flight-escalation` | Mid-flight escalation dispatched in step 2.S3 | `disposition: "escalated"`, `timing_tier: "mid-flight"`, `finding_count` |
@@ -83,6 +92,7 @@ Event names reuse the existing `{{build_log}}` vocabulary. No renames.
 | Event | When appended | Additional fields |
 |---|---|---|
 | `avfl-on-merge-complete` | Step 3.5 AVFL results recorded | `result_status`, `final_score`, `iterations`, `fixes_applied_count`, `leftovers_count`, `findings_count`, `stakes_findings_count` |
+| `avfl-finding` | Step 3.3 — one row per AVFL finding (both fixed and residual) | `finding_id`, `disposition` (fixed\|residual\|escalated), `severity`, `stakes_class`, `summary`, `evidence`, `suggested_fix`, `source:"avfl-merge-review"` |
 
 ### E2E Events
 
@@ -115,6 +125,7 @@ These events are the only permitted exceptions to the `story_slug`-required rule
 | `coverage-discharge-consumer-complete` | Step 3.D consumer summary | Summarizes across all deferred stories. |
 | `avfl-on-merge-complete` | Step 3.5 AVFL summary | Sprint-level integration review. |
 | `e2e-phase-complete` | Step 4.4 E2E summary | Sprint-level E2E summary. |
+| `conductor-warning` | Any phase — Conductor-detected anomaly | `story_slug` (optional — omit for sprint-level warnings), `reason` (non-empty string describing the anomaly). Used for: write-scope guard violations, invalid fixer behavior, dismissed findings with missing rationale, and similar Conductor-detected issues that are not findings in the canonical sense but must be recorded. |
 
 For these events, `story_slug` may be omitted or set to `null`. All other events must carry a real story slug.
 
