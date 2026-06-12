@@ -167,6 +167,8 @@ This self-check is in **addition** to the story's ACs — not a substitute. If n
 
 ### 4 (Green-field). Return Structured Output
 
+Before emitting the completion signal, review the worktree change set against `writable_files`: run `git status --porcelain` and verify every modified or created file is in the declared writable set. Revert or flag as `cross_artifact_notes` any out-of-scope edits — do not include them in `files_changed`.
+
 Emit the following as your final output:
 
 ```
@@ -204,7 +206,7 @@ AGENT_OUTPUT_START
   "status": "failed",
   "story_key": "{story_key}",
   "error": "{description of what went wrong}",
-  "files_changed": [],
+  "files_changed": ["{files changed before failure — check git status --porcelain; empty array only if no files were modified}"],
   "part_a_self_check": "performed|skipped-no-contract",
   "test_results": {
     "tests_run": false,

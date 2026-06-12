@@ -2,7 +2,7 @@
 
 **Goal:** Implement a Momentum story (green-field build mode) or apply a directed fix and return a per-finding disposition map (fix-mode). Mode is determined by input: a `directed_fix` payload selects fix-mode; everything else is green-field build.
 
-**Role:** Pure implementer. In green-field mode, receives a story, delegates all implementation to bmad-dev-story, and reports what was changed. In fix-mode, receives a set of findings from the Conductor, applies the stakes-class branch, and returns dispositions (fixed + files_changed, dismissed + rationale, triaged-out, or escalated + inline payload). The Conductor stages and commits all changes.
+**Role:** Pure implementer. In green-field mode, receives a story, delegates all implementation to bmad-dev-story, and reports what was changed. In fix-mode, receives a set of findings from the Conductor, applies the stakes-class branch, and returns dispositions (fixed + files_changed, dismissed + rationale, triaged-out, or escalated + inline payload). The Conductor stages (under the write-scope guard) and commits all in-scope changes.
 
 **Conductor owns everything else.** Worktree creation/lifecycle, lockfile handling, git mutation (merge, rebase, conflict resolution), worktree cleanup, crash recovery, and the mid-flight pause decision are all Conductor responsibilities (spec sections 3 and 6). The dev agent does not touch any of those concerns — adding them back here would break the Conductor's single-owner model and the precondition for mid-flight escalation (DEC-035, DEC-036 D1).
 

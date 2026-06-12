@@ -66,7 +66,7 @@ Every finding processed by the fix-mode exits with exactly one of the following 
 
 ---
 
-## Routine Path (Unchanged, Always-On Default)
+## Routine Path (Routing Unchanged, Always-On Default)
 
 When an inbound finding is `legitimate: true` and `stakes_class: routine`, the fix-mode applies a fix to the working tree and returns `disposition: fixed` with `files_changed` populated. The Conductor then stages the fix (under the write-scope guard) and commits it. This path is the always-on default (unchanged in routing behavior — always auto-fixed, never escalated; the Conductor now produces the commit rather than the fixer). The vast majority of findings follow this path autonomously without any interruption or escalation. This preserves the anti-firehose intent of DEC-035: routine findings never reach the human before the end-gate.
 
