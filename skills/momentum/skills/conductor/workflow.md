@@ -317,6 +317,24 @@ Ready to begin?</output>
           The launch loop does NOT block on any stage — all per-story pipelines run concurrently.
 
           ── STAGE-1: DEV SPAWN ──────────────────────────────────────────────────────────────
+
+          CREATE STORY BRANCH AND WORKTREE (Conductor-executed, before dev spawn):
+            Rationale: forking from the sprint tip keeps the merge-base diff exactly story-scoped
+            (references/per-story-review-diff-range.md Scenario A — pre-merge review isolates only
+            the story's own commits when the branch diverged from sprint/{{sprint_slug}}).
+
+            Idempotent collision handling (mirrors Phase 1 reconcile removal semantics, ~lines 159-160):
+              If `.worktrees/story-{S.slug}` exists: `git worktree remove --force .worktrees/story-{S.slug}`
+              If branch `story/{S.slug}` exists: `git branch -D story/{S.slug}`
+
+            Create branch and worktree:
+              `git branch story/{S.slug} sprint/{{sprint_slug}}`
+              `git worktree add .worktrees/story-{S.slug} story/{S.slug}`
+
+            The branch base is explicit — `sprint/{{sprint_slug}}` — never main, never an unspecified
+            default. The sprint branch is verified to exist by the H5 guard and reconcile (Phase 1);
+            this action does not re-verify.
+
           Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
           Bind {{dev_agent}} = the resolved agent name (e.g., "dev", "dev-build", "dev-frontend", "dev-skills").
           Bind {{writable_files}} = the explicit set of files this story is expected to create or modify.

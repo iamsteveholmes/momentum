@@ -144,7 +144,7 @@ Where {{disposition_map}} is the array of per-finding disposition objects built 
     </action>
 
     <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
-    <note>Working directory: the Conductor spawns this agent already scoped to the story worktree. The dev agent writes in the Conductor-provided worktree; the Conductor stages (under the write-scope guard) and commits (conductor/workflow.md stage-1 sequence). The dev agent neither creates nor enters/exits worktrees, and it does not commit.</note>
+    <note>Working directory: the Conductor creates the story branch (`story/{slug}` forked from `sprint/{{sprint_slug}}`) and the worktree (`.worktrees/story-{slug}`) at story launch (conductor workflow step 2.1, STAGE-1 DEV SPAWN block) immediately before spawning this agent. The dev agent is spawned already scoped to that worktree and writes within it. The Conductor stages (under the write-scope guard) and commits (conductor/workflow.md stage-1 sequence). The dev agent neither creates nor enters/exits worktrees, and it does not commit.</note>
   </step>
 
   <step n="2.5" goal="Part-A header self-check">
