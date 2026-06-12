@@ -178,7 +178,7 @@ Protected paths (`.claude/momentum/protected-paths.json`) cover acceptance tests
 
 ## Skill Catalog
 
-28 skills ship in `skills/momentum/` (one is an internal workspace helper for constitution-builder). Grouped by phase:
+27 skills ship in `skills/momentum/` (plus an internal workspace helper for constitution-builder). Grouped by phase:
 
 <details>
 <summary><b>Enter</b> — 1 skill</summary>
