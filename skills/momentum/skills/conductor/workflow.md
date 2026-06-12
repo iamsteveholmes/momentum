@@ -872,10 +872,9 @@ Ready to begin?</output>
       <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
         RE-CHECK NORMALIZATION: qa-reviewer output from a Phase D re-check passes through
         the same stage-2 normalization mapping (above) before resolution matching — the
-        re-check producer format is identical to the original and the same canonical
-        mapping rules apply. Do not attempt resolution matching against producer-format
-        re-check output; normalize first, then match against {{remaining_findings}} by
-        location and summary.
+        re-check producer format is identical to the original. Do not attempt resolution
+        matching against producer-format re-check output; normalize first, then match
+        against {{remaining_findings}} by location and summary.
         Collect {{remaining_findings}} = UNION of:
           (a) findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted | blocked), AND
           (b) any entries in {{simplify_findings}} with disposition: null that are not already present in set (a).
