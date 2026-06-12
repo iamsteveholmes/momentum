@@ -206,8 +206,8 @@ The research that informed the practice design:
 
 **Core Research**
 - [Consolidated Agentic Engineering Research](research/AI-Solo-Dev-Consolidated-Research-2026-03-07-final.md) — the primary research synthesis that grounds the practice plan
-- [Solo Dev Workflow Optimization](research/AI%20Solo%20Dev%20Workflow%20Optimization%20Report.md) — patterns for effective solo AI-assisted development
-- [AI Engineering Maturity and Adoption](research/AI%20Engineering%20Maturity%20and%20Adoption.md) — industry maturity models and adoption patterns
+- [Solo Dev Workflow Optimization](research/AI-Solo-Dev-Workflow-Optimization-Report.md) — patterns for effective solo AI-assisted development
+- [AI Engineering Maturity and Adoption](research/AI-Engineering-Maturity-and-Adoption.md) — industry maturity models and adoption patterns
 - [Spec Fatigue Research](research/spec-fatigue-research-2026-03-21.md) — empirical evidence for specification review fatigue as a named anti-pattern, with design implications
 
 **Technical Architecture**
