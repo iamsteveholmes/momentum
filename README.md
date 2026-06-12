@@ -99,7 +99,7 @@ Before planning, establish what is true. `assessment` spawns parallel discovery 
 | `/momentum:sprint-planning` | Story selection, team composition, Gherkin specs, activation |
 | `/momentum:create-story` | Story creation with change-type classification and AVFL validation |
 | `sprint-manager` <sub>(spawned)</sub> | Sole writer of `stories/index.json` and `sprints/index.json` |
-| `plan-audit` <sub>(spawned)</sub> | Audits plans for spec impact before plan mode exits |
+| `plan-audit` <sub>(runs before plan mode exits)</sub> | Audits plans for spec impact, classifies trivial vs. substantive |
 
 ### 5 · Build
 
@@ -221,7 +221,7 @@ Protected paths (`.claude/momentum/protected-paths.json`) cover acceptance tests
 | `/momentum:sprint-planning` | Story selection, team composition, Gherkin specs, and activation |
 | `/momentum:create-story` | Story creation with change-type classification, EDD/TDD guidance, AVFL validation |
 | `sprint-manager` <sub>(spawned by sprint-planning)</sub> | Sole writer of `stories/index.json` and `sprints/index.json`; validates state transitions, activates sprints |
-| `plan-audit` <sub>(spawned by sprint-planning)</sub> | Audits the active plan for spec impact before plan mode exits |
+| `plan-audit` <sub>(runs before plan mode exits)</sub> | Audits the active plan for spec impact and writes a Spec Impact section |
 
 </details>
 
@@ -253,7 +253,7 @@ Protected paths (`.claude/momentum/protected-paths.json`) cover acceptance tests
 |---|---|
 | `avfl` <sub>(spawned for AVFL-on-merge; user-invocable standalone)</sub> | Adversarial Validate-Fix Loop — parallel validation lenses with iterative fix |
 | `code-reviewer` <sub>(spawned by conductor)</sub> | bmad-code-review adapter — adversarial bug-hunt in report-only mode, findings normalized with `stakes_class` |
-| `architecture-guard` <sub>(spawned by impetus; user-invocable)</sub> | Detects pattern drift against architecture decisions; read-only enforcer |
+| `architecture-guard` <sub>(invoked by impetus — not directly)</sub> | Detects pattern drift against architecture decisions; read-only enforcer |
 | `/momentum:upstream-fix` | Traces quality failures upstream to spec, rule, or workflow root cause |
 
 </details>
@@ -266,7 +266,7 @@ Protected paths (`.claude/momentum/protected-paths.json`) cover acceptance tests
 | `/momentum:canvas` | Launch the Momentum Cycle live dashboard (Hono+Bun, port 3456) |
 | `/momentum:agent-builder` | Tier 2 agent composer — base body + constitution + manifesto → composed agent |
 | `/momentum:constitution-builder` | Builds the hot constitution (Permissions + Standing Rules + Quick Routing) for KB-backed agents |
-| `agent-guidelines` <sub>(spawned by agent-builder)</sub> | Discovers project stack, researches breaking changes, generates path-scoped rules |
+| `/momentum:agent-guidelines` | Discovers project stack, researches breaking changes, generates path-scoped rules |
 | `/momentum:feature-status` | Deprecated — outputs a pointer to `/momentum:canvas` and halts |
 
 </details>

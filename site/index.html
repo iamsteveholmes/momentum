@@ -714,7 +714,7 @@ var PHASES = [
         desc: "Creates a Momentum story with change-type classification, injected EDD/TDD guidance, and AVFL validation." },
       { slug: "sprint-manager", cmd: "spawned by sprint-planning", user: false,
         desc: "Sole writer of stories/index.json and sprints/index.json — validates state transitions, activates sprints, manages epic membership." },
-      { slug: "plan-audit", cmd: "spawned by sprint-planning", user: false,
+      { slug: "plan-audit", cmd: "runs before plan mode exits", user: false,
         desc: "Audits the active plan for spec impact, classifies trivial vs. substantive, and writes a Spec Impact section before plan mode exits." }
     ],
     reads: [
@@ -789,7 +789,7 @@ var CROSSCUT = {
       desc: "Adversarial Validate-Fix Loop — multi-agent validation catching errors, hallucinations, and quality issues via parallel lenses and iterative fix." },
     { slug: "code-reviewer", cmd: "spawned by conductor", user: false,
       desc: "Non-interactive bmad-code-review adapter for conduct. Accepts a single story diff, drives adversarial bug-hunt in report-only mode, normalizes surviving findings to the canonical schema with stakes_class populated." },
-    { slug: "architecture-guard", cmd: "spawned by impetus for state ledger — user-invocable for drift checking", user: true,
+    { slug: "architecture-guard", cmd: "invoked by impetus — not directly", user: false,
       desc: "Detects pattern drift against architecture decisions. Read-only enforcer." },
     { slug: "upstream-fix", cmd: "/momentum:upstream-fix", user: true,
       desc: "Traces quality failures upstream to spec, rule, or workflow root cause. Proposes fixes at the right level." }
@@ -801,7 +801,7 @@ var CROSSCUT = {
       desc: "Tier 2 agent composer: base body + constitution + manifesto → composed agent + routing entry in momentum/agents.json." },
     { slug: "constitution-builder", cmd: "/momentum:constitution-builder", user: true,
       desc: "Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill." },
-    { slug: "agent-guidelines", cmd: "spawned by agent-builder", user: false,
+    { slug: "agent-guidelines", cmd: "/momentum:agent-guidelines", user: true,
       desc: "Discovers project stack, researches breaking changes, consults on recommendations, generates path-scoped rules and reference docs." },
     { slug: "feature-status", cmd: "/momentum:feature-status", user: true,
       desc: "Deprecated. Use /momentum:canvas instead. This stub outputs a deprecation message and halts." }
