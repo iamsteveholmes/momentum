@@ -255,7 +255,7 @@ Ready to begin?</output>
             "coverage-deferral-undischarged", "coverage-discharge-consumer-complete",
             "avfl-on-merge-complete", "avfl-finding",
             "e2e-finding-auto-fixed", "e2e-mid-flight-escalation",
-            "e2e-stakes-escalation", "e2e-stakes-finding", "e2e-phase-complete",
+            "e2e-stakes-escalation", "e2e-phase-complete",
             "endgate-change-request-parsed",
             "endgate-change-workflow-pass", "endgate-change-escalated", "endgate-fix-budget-exhausted",
             "endgate-report-re-rendered", "major-residual-stub-created",
@@ -2095,7 +2095,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
     <action>Assemble {{stakes_findings}} — the full set of escalated decisions requiring human acknowledgment:
 
-      LEDGER SOURCE: Read all rows from the build ledger at {{ledger_path}}. The ledger is the authoritative record; in-context accumulators are the write-through cache.
+      LEDGER SOURCE: Read all rows from the build ledger at {{ledger_path}}.
 
       Source 1 — Per-story fix-loop escalations (step 2.S3):
         From the ledger only: collect all rows where event == "stage3-escalation" AND timing_tier == "end-gate-expanded".
