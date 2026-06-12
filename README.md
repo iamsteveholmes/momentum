@@ -42,13 +42,13 @@ Momentum organizes the practice as a six-phase loop. Each phase is a set of skil
 ```mermaid
 graph LR
     E["<b>ENTER</b><br/>impetus"]
-    C["<b>CAPTURE</b><br/>intake · triage<br/>refine · epics"]
     K["<b>KNOW</b><br/>assessment · research<br/>decision"]
+    C["<b>CAPTURE</b><br/>intake · triage<br/>refine · epics"]
     P["<b>PLAN</b><br/>sprint-planning<br/>create-story"]
     B["<b>BUILD</b><br/>conductor"]
     X["<b>CLOSE</b><br/>retro"]
 
-    E --> C --> K --> P --> B --> X
+    E --> K --> C --> P --> B --> X
     X --> E
     X -- "practice-ledger handoff<br/><i>flywheel</i>" --> P
 
@@ -68,9 +68,19 @@ Every session starts at `/momentum`. Impetus reads the landscape — sprint stat
 |---|---|
 | `/momentum` | Session orientation, sprint intelligence, and workflow dispatch |
 
-### 2 · Capture
+### 2 · Know
 
-Ideas arrive mid-conversation; Capture keeps them from evaporating. `intake` preserves a story idea as a backlog stub in seconds. `triage` runs observations through a dedup gate and classifies them into five classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT), routing each to the right destination. `refine` keeps the backlog honest, and the epic skills keep the taxonomy coherent — `epic-grooming` is the sole writer of `epics.json`.
+Establish what is true before it becomes work. `assessment` spawns parallel discovery agents and validates every finding with the developer before writing an ASR document. `research` runs a six-phase pipeline (SCOPE → EXECUTE → VERIFY → Q&A → SYNTHESIZE → COMMIT) with Gemini CLI triangulation and AVFL corpus validation. `decision` walks the findings and records adopt/reject/defer outcomes as SDR documents with provenance chains back to their sources.
+
+| Command | What it does |
+|---|---|
+| `/momentum:assessment` | Parallel discovery agents → developer-validated ASR document |
+| `/momentum:research` | Deep research pipeline with triangulation, AVFL validation, provenance |
+| `/momentum:decision` | Record adopt/reject/defer decisions as linked SDR documents |
+
+### 3 · Capture
+
+Everything that should become work funnels into the backlog here — assessment findings, research conclusions, retro lessons, and ideas that arrive mid-conversation. `intake` preserves a story idea as a backlog stub in seconds. `triage` runs observations through a dedup gate and classifies them into five classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT), routing each to the right destination. `refine` keeps the backlog honest, and the epic skills keep the taxonomy coherent — `epic-grooming` is the sole writer of `epics.json`.
 
 | Command | What it does |
 |---|---|
@@ -79,16 +89,6 @@ Ideas arrive mid-conversation; Capture keeps them from evaporating. `intake` pre
 | `/momentum:refine` | Backlog hygiene — drift detection, status mismatches, stale-story triage |
 | `/momentum:epic-grooming` | Epic taxonomy, value analysis, orphan resolution, `epics.json` maintenance |
 | `/momentum:epic-breakdown` | Enumerate the missing stories needed to ship an epic |
-
-### 3 · Know
-
-Before planning, establish what is true. `assessment` spawns parallel discovery agents and validates every finding with the developer before writing an ASR document. `research` runs a six-phase pipeline (SCOPE → EXECUTE → VERIFY → Q&A → SYNTHESIZE → COMMIT) with Gemini CLI triangulation and AVFL corpus validation. `decision` walks the findings and records adopt/reject/defer outcomes as SDR documents with provenance chains back to their sources.
-
-| Command | What it does |
-|---|---|
-| `/momentum:assessment` | Parallel discovery agents → developer-validated ASR document |
-| `/momentum:research` | Deep research pipeline with triangulation, AVFL validation, provenance |
-| `/momentum:decision` | Record adopt/reject/defer decisions as linked SDR documents |
 
 ### 4 · Plan
 
@@ -190,6 +190,17 @@ Protected paths (`.claude/momentum/protected-paths.json`) cover acceptance tests
 </details>
 
 <details>
+<summary><b>Know</b> — 3 skills</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum:assessment` | Guided product state evaluation — parallel discovery, developer validation, ASR document |
+| `/momentum:research` | Deep research pipeline with parallel subagents, Gemini triangulation, AVFL corpus validation |
+| `/momentum:decision` | Capture strategic decisions — walk findings, record adopt/reject/defer, write a linked SDR |
+
+</details>
+
+<details>
 <summary><b>Capture</b> — 5 skills</summary>
 
 | Command | Description |
@@ -199,17 +210,6 @@ Protected paths (`.claude/momentum/protected-paths.json`) cover acceptance tests
 | `/momentum:refine` | Backlog hygiene — drift detection, status mismatches, stale-story triage, batch approval |
 | `/momentum:epic-grooming` | Unified epic taxonomy, value analysis, orphan resolution, `epics.json` maintenance |
 | `/momentum:epic-breakdown` | Enumerate missing stories for an epic end to end |
-
-</details>
-
-<details>
-<summary><b>Know</b> — 3 skills</summary>
-
-| Command | Description |
-|---|---|
-| `/momentum:assessment` | Guided product state evaluation — parallel discovery, developer validation, ASR document |
-| `/momentum:research` | Deep research pipeline with parallel subagents, Gemini triangulation, AVFL corpus validation |
-| `/momentum:decision` | Capture strategic decisions — walk findings, record adopt/reject/defer, write a linked SDR |
 
 </details>
 

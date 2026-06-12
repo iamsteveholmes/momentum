@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" role="img" aria-label="Momentum — a practice framework for agentic engineering. A six-stage cycle: Enter, Capture, Know, Plan, Build, Close.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" role="img" aria-label="Momentum — a practice framework for agentic engineering. A six-stage cycle: Enter, Know, Capture, Plan, Build, Close.">
   <title>Momentum — a practice framework for agentic engineering</title>
   <style>
     text { font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
@@ -88,13 +88,13 @@
     <circle class="halo" cx="1062.58" cy="135" r="22"/>
     <circle class="nbase" cx="1062.58" cy="135" r="14"/>
     <circle class="lit" cx="1062.58" cy="135" r="14"/>
-    <text class="lbl" x="1086" y="126" text-anchor="start">CAPTURE</text>
+    <text class="lbl" x="1086" y="126" text-anchor="start">KNOW</text>
   </g>
   <g class="n2">
     <circle class="halo" cx="1062.58" cy="265" r="22"/>
     <circle class="nbase" cx="1062.58" cy="265" r="14"/>
     <circle class="lit" cx="1062.58" cy="265" r="14"/>
-    <text class="lbl" x="1086" y="280" text-anchor="start">KNOW</text>
+    <text class="lbl" x="1086" y="280" text-anchor="start">CAPTURE</text>
   </g>
   <g class="n3">
     <circle class="halo" cx="950" cy="330" r="22"/>

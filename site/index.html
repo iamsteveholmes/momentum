@@ -500,7 +500,7 @@
       <div class="cycle-layout">
         <div class="ring-wrap">
           <svg id="ring" viewBox="0 0 1000 1000" role="group"
-               aria-label="The six-phase Momentum cycle: Enter, Capture, Know, Plan, Build, Close — with a flywheel edge from Close back to Plan via the practice ledger. Each phase is a button; activate one to view its details.">
+               aria-label="The six-phase Momentum cycle: Enter, Know, Capture, Plan, Build, Close — with a flywheel edge from Close back to Plan via the practice ledger. Each phase is a button; activate one to view its details.">
           </svg>
         </div>
 
@@ -660,8 +660,29 @@ var PHASES = [
     ]
   },
   {
-    id: "capture", num: "02", name: "CAPTURE",
-    story: "Ideas decay fast in conversation. intake preserves story stubs without ceremony, while triage runs every observation through a dedup gate and routes it into one of five classes — ARTIFACT, DECISION, SHAPING, DEFER, REJECT. refine keeps the backlog honest, and epic-grooming with epic-breakdown keeps the epic taxonomy coherent and complete.",
+    id: "know", num: "02", name: "KNOW",
+    story: "Strategic moves deserve evidence. assessment spawns parallel discovery agents and validates every finding with the developer before an ASR is written; research runs a six-phase pipeline — SCOPE, EXECUTE, VERIFY, Q&A, SYNTHESIZE, COMMIT — with Gemini triangulation and AVFL corpus validation. decision records each adopt / reject / defer call as an SDR with a provenance chain back to its source.",
+    skills: [
+      { slug: "assessment", cmd: "/momentum:assessment", user: true,
+        desc: "Guided product state evaluation. Spawns parallel discovery agents, validates findings with the developer, and produces a structured ASR document." },
+      { slug: "research", cmd: "/momentum:research", user: true,
+        desc: "Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking." },
+      { slug: "decision", cmd: "/momentum:decision", user: true,
+        desc: "Capture strategic decisions from assessments or research. Walk findings, record adopt/reject/defer, write a linked SDR document." }
+    ],
+    reads: [
+      "The product itself — parallel discovery agents evaluate live state",
+      "<code>docs/planning-artifacts/</code> — PRD, architecture decisions, epic narratives"
+    ],
+    writes: [
+      "ASR documents — structured assessment findings, every one developer-validated",
+      "SDR documents — adopt/reject/defer decisions with provenance chains",
+      "<code>docs/research/</code> — synthesis from the SCOPE/EXECUTE/VERIFY/Q&amp;A/SYNTHESIZE/COMMIT pipeline"
+    ]
+  },
+  {
+    id: "capture", num: "03", name: "CAPTURE",
+    story: "Everything that should become work funnels into the backlog here — assessment findings, research conclusions, retro lessons, and ideas that decay fast in conversation. intake preserves story stubs without ceremony, while triage runs every observation through a dedup gate and routes it into one of five classes — ARTIFACT, DECISION, SHAPING, DEFER, REJECT. refine keeps the backlog honest, and epic-grooming with epic-breakdown keeps the epic taxonomy coherent and complete.",
     skills: [
       { slug: "intake", cmd: "/momentum:intake", user: true,
         desc: "Capture a story idea from conversation into the backlog as a stub — fast context preservation without the full create-story pipeline." },
@@ -681,27 +702,6 @@ var PHASES = [
     writes: [
       "<code>docs/intake/</code> — backlog stubs from conversation",
       "<code>_bmad-output/planning-artifacts/epics.json</code> — epic taxonomy, value analysis, lifecycle tracking (epic-grooming is its sole writer)"
-    ]
-  },
-  {
-    id: "know", num: "03", name: "KNOW",
-    story: "Strategic moves deserve evidence. assessment spawns parallel discovery agents and validates every finding with the developer before an ASR is written; research runs a six-phase pipeline — SCOPE, EXECUTE, VERIFY, Q&A, SYNTHESIZE, COMMIT — with Gemini triangulation and AVFL corpus validation. decision records each adopt / reject / defer call as an SDR with a provenance chain back to its source.",
-    skills: [
-      { slug: "assessment", cmd: "/momentum:assessment", user: true,
-        desc: "Guided product state evaluation. Spawns parallel discovery agents, validates findings with the developer, and produces a structured ASR document." },
-      { slug: "research", cmd: "/momentum:research", user: true,
-        desc: "Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking." },
-      { slug: "decision", cmd: "/momentum:decision", user: true,
-        desc: "Capture strategic decisions from assessments or research. Walk findings, record adopt/reject/defer, write a linked SDR document." }
-    ],
-    reads: [
-      "The product itself — parallel discovery agents evaluate live state",
-      "<code>docs/planning-artifacts/</code> — PRD, architecture decisions, epic narratives"
-    ],
-    writes: [
-      "ASR documents — structured assessment findings, every one developer-validated",
-      "SDR documents — adopt/reject/defer decisions with provenance chains",
-      "<code>docs/research/</code> — synthesis from the SCOPE/EXECUTE/VERIFY/Q&amp;A/SYNTHESIZE/COMMIT pipeline"
     ]
   },
   {
