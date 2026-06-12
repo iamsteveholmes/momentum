@@ -7,20 +7,28 @@ The Conductor's stage-2 pipeline has received a qa-reviewer report for story `ad
 ```
 ## QA Review Report
 
-### Test Results
+**Story:** add-user-profile-screen
+**Worktree:** .worktrees/story-add-user-profile-screen
+**Verdict:** PASS
 
-| AC# | Description | Status | Evidence | Stakes Class |
-|---|---|---|---|---|
-| AC-1 | Profile screen displays user name | VERIFIED | Name renders correctly in snapshot | routine |
-| AC-2 | Profile screen displays avatar | VERIFIED | Avatar component present with correct src | routine |
-| AC-3 | Edit button navigates to edit screen | VERIFIED | Navigation observed via route change | routine |
+### Test Results
+- Total: 3 | Passed: 3 | Failed: 0 | Skipped: 0
+- Command: ./gradlew :shared:testDebugUnitTest --tests "*.ProfileScreenTest"
+
+### AC Verification
+
+| AC# | Description | Status | Evidence (file:line) | Stakes Class |
+|-----|-------------|--------|----------------------|--------------|
+| AC-1 | Profile screen displays user name | VERIFIED | ProfileScreenTest.kt:14 | routine |
+| AC-2 | Profile screen displays avatar | VERIFIED | ProfileScreenTest.kt:28 | routine |
+| AC-3 | Edit button navigates to edit screen | VERIFIED | ProfileScreenTest.kt:41 | routine |
 
 ### Findings
 
 (none)
 
 ### Summary
-All 3 ACs verified. No findings.
+All 3 ACs verified. No findings. No non-routine stakes classes.
 ```
 
 ## The Conductor Should

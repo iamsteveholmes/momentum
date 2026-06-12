@@ -467,14 +467,29 @@ Ready to begin?</output>
 
             When BOTH reviewers have returned:
 
-            ── NORMALIZE REVIEWER A (qa-reviewer) → CANONICAL FINDING SCHEMA ──────────────
-            The qa-reviewer agent returns its producer-format report (per-AC classification
-            with stakes_class). Normalize each finding-bearing entry (Verdict is PARTIAL,
-            MISSING, or BLOCKED) into a canonical finding record per
-            `skills/momentum/references/finding-schema.md`. Entries with Verdict VERIFIED
-            carry no finding and are not normalized.
+            REVIEWER A RETURN VALIDATION: Before normalization, confirm that REVIEWER A
+            returned a parseable QA Review Report containing a recognizable `### Findings`
+            section (or an explicit `(none)` marker). If REVIEWER A's return is absent,
+            is an error string, or is prose that cannot be parsed as a QA Review Report
+            (i.e. there is no `## QA Review Report` header and no `### Findings` section),
+            treat this as a REVIEWER A failure — invoke the pipeline-retry path for
+            REVIEWER A exactly as if REVIEWER A had returned an explicit `failed` signal.
+            Do NOT fall through to the Empty case; an unparseable return is a reviewer
+            failure, not a clean zero-findings report.
 
-            For each finding in the qa-reviewer report's ### Findings section, emit one
+            ── NORMALIZE REVIEWER A (qa-reviewer) → CANONICAL FINDING SCHEMA ──────────────
+            Authoritative predicate: a finding is any entry in the `### Findings` section
+            of the QA Review Report whose Verdict is `PARTIAL`, `MISSING`, or `BLOCKED`.
+            These two selection criteria are equivalent and must agree — a `### Findings`
+            entry whose Verdict is not one of those three values is malformed (reviewer
+            failure), and a finding with Verdict PARTIAL/MISSING/BLOCKED that does not
+            appear in `### Findings` is also malformed. If the table's non-VERIFIED rows
+            and the `### Findings` section diverge (different set of findings), treat the
+            report as malformed and invoke the REVIEWER A failure path rather than
+            silently producing a partial result. Entries with Verdict VERIFIED carry no
+            finding and are not normalized.
+
+            For each finding in the qa-reviewer report's `### Findings` section, emit one
             canonical record with every base field populated:
 
             - `story_slug` — S.slug from the per-story pipeline context
@@ -489,14 +504,28 @@ Ready to begin?</output>
                 else `spec-compliance` (qa-reviewer findings are AC-verification findings)
             - `location` — carry through from the producer finding's Location field;
                 `"unspecified"` if absent
-            - `summary` — carry through from the producer finding's Summary field
-            - `detail` — carry through from the producer finding's Detail field
-            - `evidence` — carry through from the producer finding's Evidence field
-            - `ac_id` — carry through from the producer finding's AC field
+            - `summary` — carry through from the producer finding's Summary field;
+                `""` (empty string) if absent
+            - `detail` — carry through from the producer finding's Detail field;
+                `""` (empty string) if absent
+            - `evidence` — carry through from the producer finding's Evidence field;
+                `""` (empty string) if absent (BLOCKED findings definitionally may carry
+                no evidence — this is not a data error)
+            - `ac_id` — carry through from the producer finding's AC field;
+                `null` if absent
             - `legitimate` — `true` (qa-reviewer is the verifier of record; it emits
                 only findings it judges genuine)
             - `suggested_fix` — `null` (the qa-reviewer producer format has no explicit
                 fix field; Detail describes expected state, not remediation steps)
+
+            BLOCKED routing note: a finding with `verdict: BLOCKED` and `severity: critical`
+            reflects that test execution was prevented (missing infrastructure, unreachable
+            service, absent harness) — it is an environment condition, not a code defect.
+            The fixer cannot resolve environment gaps; if a BLOCKED finding exhausts the
+            fix budget without resolution, the blocked-then-continue path applies
+            (budget-exhausted → mark BLOCKED, spin triage stub, story remains unmerged).
+            This routing note does not alter the AC-mandated severity mapping
+            (BLOCKED → critical stays).
 
             Empty case: when the qa-reviewer report contains zero findings (all ACs
             VERIFIED), the normalization produces an empty array. No error, no fabricated
@@ -841,6 +870,12 @@ Ready to begin?</output>
       <!-- ── Phase D: RE-CHECK gate — loop control ─────────────────── -->
 
       <action>PHASE D — RE-CHECK: Re-run only the reviewer(s) that originally raised unresolved routine findings.
+        RE-CHECK NORMALIZATION: qa-reviewer output from a Phase D re-check passes through
+        the same stage-2 normalization mapping (above) before resolution matching — the
+        re-check producer format is identical to the original and the same canonical
+        mapping rules apply. Do not attempt resolution matching against producer-format
+        re-check output; normalize first, then match against {{remaining_findings}} by
+        location and summary.
         Collect {{remaining_findings}} = UNION of:
           (a) findings not yet resolved (status not fixed | dismissed | triaged-out | escalated | scope-reverted | blocked), AND
           (b) any entries in {{simplify_findings}} with disposition: null that are not already present in set (a).

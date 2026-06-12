@@ -11,9 +11,9 @@ The Conductor's stage-2 pipeline has received a qa-reviewer report for story `fi
   **Verdict:** BLOCKED
   **stakes_class:** routine
   **Location:** src/auth/token.kt:42
-  **Summary:** Token refresh endpoint returns 500 when refresh token is expired
-  **Detail:** The refresh endpoint throws an unhandled exception instead of returning a 401. Expected: graceful 401 with error body.
-  **Evidence:** curl -X POST /api/auth/refresh -H "Authorization: Bearer expired_token" → HTTP 500
+  **Summary:** Token refresh endpoint unreachable — test environment has no auth service running
+  **Detail:** The refresh endpoint could not be exercised because the auth service did not start. Expected: graceful 401 with error body when refresh token is expired.
+  **Evidence:** docker-compose up auth-service → connection refused on port 8080; test execution aborted before first request
 
 - **AC:** AC-3
   **Verdict:** MISSING
@@ -42,4 +42,4 @@ Apply the stage-2 normalization action and produce three canonical finding recor
 
 3. **PARTIAL finding (AC-5):** `severity: minor`, `type: spec-compliance`, `source: "qa-reviewer"`, `story_slug: "fix-auth-token-refresh"`, `legitimate: true`, `suggested_fix: null`, `verdict: "PARTIAL"`, `stakes_class: "routine"`, `ac_id: "AC-5"`, plus location/summary/detail/evidence carried through.
 
-No field on any record is left blank, null (except `suggested_fix`), or deferred to inference. The severity mapping is deterministic from the verdict alone and does not consult `stakes_class`. The `type` field is `security` only for the finding whose `stakes_class` is `security-auth-isolation`; the other two are `spec-compliance`.
+No base field on any record is left blank, null (except `suggested_fix`), or deferred to inference. Fixer-assigned fields (`disposition`, `dismissal_rationale`, `timing_tier`) are intentionally absent — normalization does not set them. The severity mapping is deterministic from the verdict alone and does not consult `stakes_class`. The `type` field is `security` only for the finding whose `stakes_class` is `security-auth-isolation`; the other two are `spec-compliance`.
