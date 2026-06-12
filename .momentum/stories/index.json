@@ -5755,5 +5755,25 @@
     "touches": [],
     "priority": "critical",
     "story_type": "feature"
+  },
+  "compute-verification-method-accepts-list-change-type": {
+    "status": "backlog",
+    "title": "compute-verification-method accepts list-valued change_type — stop crashing on multi-type stories",
+    "epic_slug": "momentum-sprint-planning-to-ready",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "defect"
+  },
+  "fail-loud-on-empty-or-unrecognized-change-type": {
+    "status": "backlog",
+    "title": "Fail loud on empty/unrecognized change_type and reconcile index from story frontmatter — stop silent document-review mis-routes",
+    "epic_slug": "momentum-sprint-planning-to-ready",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "defect"
   }
 }

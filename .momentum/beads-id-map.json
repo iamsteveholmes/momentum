@@ -6,5 +6,8 @@
   "conduct-qa-execute-verification-method": "agent-ad5e86c17b33b028d-te8",
   "sprint-planning-cross-story-coherence-gate": "agent-ad5e86c17b33b028d-acy",
   "create-story-dependency-deliverable-check": "agent-ad5e86c17b33b028d-2z5",
-  "dev-block-on-missing-dependency-contract": "agent-ad5e86c17b33b028d-nah"
+  "dev-block-on-missing-dependency-contract": "agent-ad5e86c17b33b028d-nah",
+  "bd-discovery-root": "agent-ad5e86c17b33b028d-0ja",
+  "compute-verification-method-accepts-list-change-type": "agent-ad5e86c17b33b028d-6az",
+  "fail-loud-on-empty-or-unrecognized-change-type": "agent-ad5e86c17b33b028d-dhh"
 }
