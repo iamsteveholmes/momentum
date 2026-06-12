@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" role="img" aria-label="Momentum — a practice framework for agentic engineering. A six-stage cycle: Enter, Capture, Know, Plan, Build, Close.">
+  <title>Momentum — a practice framework for agentic engineering</title>
+  <style>
+    text { font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .wm   { font-size: 72px; font-weight: 700; letter-spacing: 13px; fill: #09637E; }
+    .tag  { font-size: 21px; font-weight: 400; letter-spacing: 0.5px; fill: #333333; opacity: 0.85; }
+    .lbl  { font-size: 15px; font-weight: 600; letter-spacing: 2px; fill: #09637E; opacity: 0.6;
+            animation: lbl 12s linear infinite; }
+    .rule      { stroke: #088395; stroke-width: 2; opacity: 0.28; }
+    .rulepulse { stroke: #088395; stroke-width: 2; stroke-linecap: round; fill: none; opacity: 0.75;
+                 stroke-dasharray: 70 900; stroke-dashoffset: 70;
+                 animation: sweep 12s linear infinite; }
+    .oring { fill: none; stroke: #09637E; stroke-width: 1; opacity: 0.15; stroke-dasharray: 3 10; }
+    .arc   { fill: none; stroke: #09637E; stroke-width: 2; opacity: 0.3; }
+    .pulse { fill: none; stroke: #088395; stroke-width: 3.5; stroke-linecap: round; opacity: 0.9;
+             stroke-dasharray: 26 240; stroke-dashoffset: 26;
+             animation: flow 12s linear infinite; }
+    .nbase { fill: #7AB2B2; fill-opacity: 0.18; stroke: #088395; stroke-opacity: 0.55; stroke-width: 1.5; }
+    .lit   { fill: #088395; stroke: #09637E; stroke-width: 1.5; opacity: 0;
+             animation: lit 12s linear infinite; }
+    .halo  { fill: #7AB2B2; opacity: 0; animation: halo 12s linear infinite; }
+    .cdot  { fill: #088395; animation: breathe 6s ease-in-out infinite; }
+
+    @keyframes lit     { 0%, 10% { opacity: 1; }    26% { opacity: 0; }    90% { opacity: 0; }    100% { opacity: 1; } }
+    @keyframes halo    { 0%, 8%  { opacity: 0.35; } 22% { opacity: 0; }    92% { opacity: 0; }    100% { opacity: 0.35; } }
+    @keyframes lbl     { 0%, 10% { opacity: 1; }    26% { opacity: 0.6; }  90% { opacity: 0.6; }  100% { opacity: 1; } }
+    @keyframes flow    { 0% { stroke-dashoffset: 26; } 17% { stroke-dashoffset: -104; } 100% { stroke-dashoffset: -104; } }
+    @keyframes sweep   { 0% { stroke-dashoffset: 70; } 22% { stroke-dashoffset: -500; } 100% { stroke-dashoffset: -500; } }
+    @keyframes breathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.2; } }
+
+    .n1 .lit, .n1 .halo, .n1 .lbl { animation-delay: -10s; }
+    .n2 .lit, .n2 .halo, .n2 .lbl { animation-delay: -8s; }
+    .n3 .lit, .n3 .halo, .n3 .lbl { animation-delay: -6s; }
+    .n4 .lit, .n4 .halo, .n4 .lbl { animation-delay: -4s; }
+    .n5 .lit, .n5 .halo, .n5 .lbl { animation-delay: -2s; }
+    .a1 { animation-delay: -10s; }
+    .a2 { animation-delay: -8s; }
+    .a3 { animation-delay: -6s; }
+    .a4 { animation-delay: -4s; }
+    .a5 { animation-delay: -2s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .lit, .halo, .lbl, .pulse, .rulepulse, .cdot { animation: none; }
+      .lit { opacity: 0.45; }
+      .lbl { opacity: 0.85; }
+    }
+  </style>
+
+  <!-- Wordmark block -->
+  <text class="wm" x="80" y="192">MOMENTUM</text>
+  <line class="rule" x1="83" y1="216" x2="580" y2="216"/>
+  <line class="rulepulse" x1="83" y1="216" x2="580" y2="216"/>
+  <text class="tag" x="82" y="252">A practice framework for agentic engineering</text>
+
+  <!-- Slow-rotating outer ring -->
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="0 950 200" to="360 950 200" dur="90s" repeatCount="indefinite"/>
+    <circle class="oring" cx="950" cy="200" r="150"/>
+  </g>
+
+  <!-- Center dot -->
+  <circle class="cdot" cx="950" cy="200" r="5"/>
+
+  <!-- Base arcs (static ring structure), clockwise, 8-degree gaps at nodes -->
+  <path class="arc" d="M968.09 71.27 A130 130 0 0 1 1052.44 119.96"/>
+  <path class="arc" d="M1070.53 151.3 A130 130 0 0 1 1070.53 248.7"/>
+  <path class="arc" d="M1052.44 280.04 A130 130 0 0 1 968.09 328.73"/>
+  <path class="arc" d="M931.91 328.73 A130 130 0 0 1 847.56 280.04"/>
+  <path class="arc" d="M829.47 248.7 A130 130 0 0 1 829.47 151.3"/>
+  <path class="arc" d="M847.56 119.96 A130 130 0 0 1 931.91 71.27"/>
+
+  <!-- Flowing pulses (one per segment, staggered clockwise) -->
+  <path class="pulse a0" d="M968.09 71.27 A130 130 0 0 1 1052.44 119.96"/>
+  <path class="pulse a1" d="M1070.53 151.3 A130 130 0 0 1 1070.53 248.7"/>
+  <path class="pulse a2" d="M1052.44 280.04 A130 130 0 0 1 968.09 328.73"/>
+  <path class="pulse a3" d="M931.91 328.73 A130 130 0 0 1 847.56 280.04"/>
+  <path class="pulse a4" d="M829.47 248.7 A130 130 0 0 1 829.47 151.3"/>
+  <path class="pulse a5" d="M847.56 119.96 A130 130 0 0 1 931.91 71.27"/>
+
+  <!-- Nodes: 60-degree increments, clockwise from top -->
+  <g class="n0">
+    <circle class="halo" cx="950" cy="70" r="22"/>
+    <circle class="nbase" cx="950" cy="70" r="14"/>
+    <circle class="lit" cx="950" cy="70" r="14"/>
+    <text class="lbl" x="950" y="42" text-anchor="middle">ENTER</text>
+  </g>
+  <g class="n1">
+    <circle class="halo" cx="1062.58" cy="135" r="22"/>
+    <circle class="nbase" cx="1062.58" cy="135" r="14"/>
+    <circle class="lit" cx="1062.58" cy="135" r="14"/>
+    <text class="lbl" x="1086" y="126" text-anchor="start">CAPTURE</text>
+  </g>
+  <g class="n2">
+    <circle class="halo" cx="1062.58" cy="265" r="22"/>
+    <circle class="nbase" cx="1062.58" cy="265" r="14"/>
+    <circle class="lit" cx="1062.58" cy="265" r="14"/>
+    <text class="lbl" x="1086" y="280" text-anchor="start">KNOW</text>
+  </g>
+  <g class="n3">
+    <circle class="halo" cx="950" cy="330" r="22"/>
+    <circle class="nbase" cx="950" cy="330" r="14"/>
+    <circle class="lit" cx="950" cy="330" r="14"/>
+    <text class="lbl" x="950" y="372" text-anchor="middle">PLAN</text>
+  </g>
+  <g class="n4">
+    <circle class="halo" cx="837.42" cy="265" r="22"/>
+    <circle class="nbase" cx="837.42" cy="265" r="14"/>
+    <circle class="lit" cx="837.42" cy="265" r="14"/>
+    <text class="lbl" x="814" y="280" text-anchor="end">BUILD</text>
+  </g>
+  <g class="n5">
+    <circle class="halo" cx="837.42" cy="135" r="22"/>
+    <circle class="nbase" cx="837.42" cy="135" r="14"/>
+    <circle class="lit" cx="837.42" cy="135" r="14"/>
+    <text class="lbl" x="814" y="126" text-anchor="end">CLOSE</text>
+  </g>
+</svg>
