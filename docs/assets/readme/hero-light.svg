@@ -2,24 +2,24 @@
   <title>Momentum — a practice framework for agentic engineering</title>
   <style>
     text { font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
-    .wm   { font-size: 72px; font-weight: 700; letter-spacing: 13px; fill: #09637E; }
-    .tag  { font-size: 21px; font-weight: 400; letter-spacing: 0.5px; fill: #333333; opacity: 0.85; }
-    .lbl  { font-size: 15px; font-weight: 600; letter-spacing: 2px; fill: #09637E; opacity: 0.6;
+    .wm   { font-size: 72px; font-weight: 700; letter-spacing: 13px; fill: #9C3F1C; }
+    .tag  { font-size: 21px; font-weight: 400; letter-spacing: 0.5px; fill: #43382E; opacity: 0.85; }
+    .lbl  { font-size: 15px; font-weight: 600; letter-spacing: 2px; fill: #9C3F1C; opacity: 0.6;
             animation: lbl 12s linear infinite; }
-    .rule      { stroke: #088395; stroke-width: 2; opacity: 0.28; }
-    .rulepulse { stroke: #088395; stroke-width: 2; stroke-linecap: round; fill: none; opacity: 0.75;
+    .rule      { stroke: #C25A1F; stroke-width: 2; opacity: 0.28; }
+    .rulepulse { stroke: #C25A1F; stroke-width: 2; stroke-linecap: round; fill: none; opacity: 0.75;
                  stroke-dasharray: 70 900; stroke-dashoffset: 70;
                  animation: sweep 12s linear infinite; }
-    .oring { fill: none; stroke: #09637E; stroke-width: 1; opacity: 0.15; stroke-dasharray: 3 10; }
-    .arc   { fill: none; stroke: #09637E; stroke-width: 2; opacity: 0.3; }
-    .pulse { fill: none; stroke: #088395; stroke-width: 3.5; stroke-linecap: round; opacity: 0.9;
+    .oring { fill: none; stroke: #9C3F1C; stroke-width: 1; opacity: 0.15; stroke-dasharray: 3 10; }
+    .arc   { fill: none; stroke: #9C3F1C; stroke-width: 2; opacity: 0.3; }
+    .pulse { fill: none; stroke: #C25A1F; stroke-width: 3.5; stroke-linecap: round; opacity: 0.9;
              stroke-dasharray: 26 240; stroke-dashoffset: 26;
              animation: flow 12s linear infinite; }
-    .nbase { fill: #7AB2B2; fill-opacity: 0.18; stroke: #088395; stroke-opacity: 0.55; stroke-width: 1.5; }
-    .lit   { fill: #088395; stroke: #09637E; stroke-width: 1.5; opacity: 0;
+    .nbase { fill: #DBA960; fill-opacity: 0.18; stroke: #C25A1F; stroke-opacity: 0.55; stroke-width: 1.5; }
+    .lit   { fill: #C25A1F; stroke: #9C3F1C; stroke-width: 1.5; opacity: 0;
              animation: lit 12s linear infinite; }
-    .halo  { fill: #7AB2B2; opacity: 0; animation: halo 12s linear infinite; }
-    .cdot  { fill: #088395; animation: breathe 6s ease-in-out infinite; }
+    .halo  { fill: #DBA960; opacity: 0; animation: halo 12s linear infinite; }
+    .cdot  { fill: #C25A1F; animation: breathe 6s ease-in-out infinite; }
 
     @keyframes lit     { 0%, 10% { opacity: 1; }    26% { opacity: 0; }    90% { opacity: 0; }    100% { opacity: 1; } }
     @keyframes halo    { 0%, 8%  { opacity: 0.35; } 22% { opacity: 0; }    92% { opacity: 0; }    100% { opacity: 0.35; } }

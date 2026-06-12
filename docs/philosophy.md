@@ -25,9 +25,9 @@ graph TD
     C -. "never flows back up" .-> T
     C -. "never flows back up" .-> S
 
-    style S fill:#09637E,stroke:#074f65,color:#fff
-    style T fill:#088395,stroke:#066a78,color:#fff
-    style C fill:#7AB2B2,stroke:#629e9e,color:#333
+    style S fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style T fill:#C25A1F,stroke:#A04A18,color:#fff
+    style C fill:#DBA960,stroke:#C28F47,color:#333
 ```
 
 ### Producer-Verifier Separation
@@ -53,14 +53,14 @@ graph TD
     P3 -- "handoff" --> V1
     V3 -- "findings only, never code changes" --> P1
 
-    style producer fill:#EBF4F6,stroke:#088395,color:#333
-    style verifier fill:#EBF4F6,stroke:#09637E,color:#333
-    style P1 fill:#088395,stroke:#066a78,color:#fff
-    style P2 fill:#088395,stroke:#066a78,color:#fff
-    style P3 fill:#088395,stroke:#066a78,color:#fff
-    style V1 fill:#09637E,stroke:#074f65,color:#fff
-    style V2 fill:#09637E,stroke:#074f65,color:#fff
-    style V3 fill:#09637E,stroke:#074f65,color:#fff
+    style producer fill:#F7EFE3,stroke:#C25A1F,color:#333
+    style verifier fill:#F7EFE3,stroke:#9C3F1C,color:#333
+    style P1 fill:#C25A1F,stroke:#A04A18,color:#fff
+    style P2 fill:#C25A1F,stroke:#A04A18,color:#fff
+    style P3 fill:#C25A1F,stroke:#A04A18,color:#fff
+    style V1 fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style V2 fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style V3 fill:#9C3F1C,stroke:#7E3214,color:#fff
 ```
 
 ### Evaluation Flywheel
@@ -83,12 +83,12 @@ graph TD
     TRACE --> FIX
     FIX -- "improved practice produces<br/>better results next sprint" --> BUILD
 
-    style BUILD fill:#088395,stroke:#066a78,color:#fff
-    style VERIFY fill:#09637E,stroke:#074f65,color:#fff
-    style RECORD fill:#7AB2B2,stroke:#629e9e,color:#333
-    style ANALYZE fill:#088395,stroke:#066a78,color:#fff
-    style TRACE fill:#09637E,stroke:#074f65,color:#fff
-    style FIX fill:#09637E,stroke:#074f65,color:#fff
+    style BUILD fill:#C25A1F,stroke:#A04A18,color:#fff
+    style VERIFY fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style RECORD fill:#DBA960,stroke:#C28F47,color:#333
+    style ANALYZE fill:#C25A1F,stroke:#A04A18,color:#fff
+    style TRACE fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style FIX fill:#9C3F1C,stroke:#7E3214,color:#fff
 ```
 
 ### Three Tiers of Enforcement
@@ -125,21 +125,21 @@ graph TD
     tier3 -. "promote when<br/>advisory isn't enough" .-> tier2
     tier2 -. "promote when<br/>workflow isn't enough" .-> tier1
 
-    style tier1 fill:#EBF4F6,stroke:#09637E,color:#333
-    style tier2 fill:#EBF4F6,stroke:#088395,color:#333
-    style tier3 fill:#EBF4F6,stroke:#7AB2B2,color:#333
-    style D1 fill:#09637E,stroke:#074f65,color:#fff
-    style D2 fill:#09637E,stroke:#074f65,color:#fff
-    style D3 fill:#09637E,stroke:#074f65,color:#fff
-    style D4 fill:#09637E,stroke:#074f65,color:#fff
-    style S1 fill:#088395,stroke:#066a78,color:#fff
-    style S2 fill:#088395,stroke:#066a78,color:#fff
-    style S3 fill:#088395,stroke:#066a78,color:#fff
-    style S4 fill:#088395,stroke:#066a78,color:#fff
-    style A1 fill:#7AB2B2,stroke:#629e9e,color:#333
-    style A2 fill:#7AB2B2,stroke:#629e9e,color:#333
-    style A3 fill:#7AB2B2,stroke:#629e9e,color:#333
-    style A4 fill:#7AB2B2,stroke:#629e9e,color:#333
+    style tier1 fill:#F7EFE3,stroke:#9C3F1C,color:#333
+    style tier2 fill:#F7EFE3,stroke:#C25A1F,color:#333
+    style tier3 fill:#F7EFE3,stroke:#DBA960,color:#333
+    style D1 fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style D2 fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style D3 fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style D4 fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style S1 fill:#C25A1F,stroke:#A04A18,color:#fff
+    style S2 fill:#C25A1F,stroke:#A04A18,color:#fff
+    style S3 fill:#C25A1F,stroke:#A04A18,color:#fff
+    style S4 fill:#C25A1F,stroke:#A04A18,color:#fff
+    style A1 fill:#DBA960,stroke:#C28F47,color:#333
+    style A2 fill:#DBA960,stroke:#C28F47,color:#333
+    style A3 fill:#DBA960,stroke:#C28F47,color:#333
+    style A4 fill:#DBA960,stroke:#C28F47,color:#333
 ```
 
 ### Cost as a Managed Dimension

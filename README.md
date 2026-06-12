@@ -52,12 +52,12 @@ graph LR
     X --> E
     X -- "practice-ledger handoff<br/><i>flywheel</i>" --> P
 
-    style E fill:#09637E,stroke:#074f65,color:#fff
-    style C fill:#088395,stroke:#066a78,color:#fff
-    style K fill:#088395,stroke:#066a78,color:#fff
-    style P fill:#09637E,stroke:#074f65,color:#fff
-    style B fill:#09637E,stroke:#074f65,color:#fff
-    style X fill:#7AB2B2,stroke:#629e9e,color:#333
+    style E fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style C fill:#C25A1F,stroke:#A04A18,color:#fff
+    style K fill:#C25A1F,stroke:#A04A18,color:#fff
+    style P fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style B fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style X fill:#DBA960,stroke:#C28F47,color:#333
 ```
 
 ### 1 · Enter
@@ -139,12 +139,12 @@ graph LR
     D --> CR --> F
     F --> M --> A
 
-    style D fill:#088395,stroke:#066a78,color:#fff
-    style QA fill:#09637E,stroke:#074f65,color:#fff
-    style CR fill:#09637E,stroke:#074f65,color:#fff
-    style F fill:#088395,stroke:#066a78,color:#fff
-    style M fill:#7AB2B2,stroke:#629e9e,color:#333
-    style A fill:#09637E,stroke:#074f65,color:#fff
+    style D fill:#C25A1F,stroke:#A04A18,color:#fff
+    style QA fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style CR fill:#9C3F1C,stroke:#7E3214,color:#fff
+    style F fill:#C25A1F,stroke:#A04A18,color:#fff
+    style M fill:#DBA960,stroke:#C28F47,color:#333
+    style A fill:#9C3F1C,stroke:#7E3214,color:#fff
 ```
 
 After merge, the **Adversarial Validate-Fix Loop (AVFL)** runs its five-worker fleet — `validator-enum`, `validator-adv`, `consolidator`, `fixer`, `merge-review` — over the integrated sprint diff, iterating to convergence. E2E behavioral validation then routes each story by change type through `verification-harness.json` drivers (skill-invoke, bash, curl, Maestro, document-review).

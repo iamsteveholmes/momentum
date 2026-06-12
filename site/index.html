@@ -7,17 +7,17 @@
 <meta name="description" content="An explorable walkthrough of the Momentum cycle: six phases, 27 skills, deterministic enforcement, and a flywheel that compounds every sprint.">
 <style>
   :root {
-    --deep:   #09637E;
-    --teal:   #088395;
-    --soft:   #7AB2B2;
+    --deep:   #9C3F1C;
+    --teal:   #C25A1F;
+    --soft:   #DBA960;
     --ink:    #333;
     --paper:  #fff;
-    --tint:   #f3f8f9;
-    --tint-2: #e9f2f3;
-    --line:   #d8e6e8;
-    --line-strong: #b9d2d5;
-    --muted:  #5e7479;
-    --faint:  #8aa3a7;
+    --tint:   #faf3ea;
+    --tint-2: #f5e9d9;
+    --line:   #e9dcc9;
+    --line-strong: #d8c3a4;
+    --muted:  #7c6a55;
+    --faint:  #a9937a;
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
@@ -199,7 +199,7 @@
   .phase-node.active .body  { fill: var(--deep); stroke: var(--deep); }
   .phase-node.active .p-num   { fill: var(--soft); }
   .phase-node.active .p-name  { fill: #fff; }
-  .phase-node.active .p-count { fill: #cfe3e3; }
+  .phase-node.active .p-count { fill: #f0dcc3; }
   .phase-node:focus { outline: none; }
   .phase-node:focus-visible .body { stroke: var(--deep); stroke-width: 5; }
 
@@ -208,7 +208,7 @@
     border: 1px solid var(--line);
     border-radius: 14px;
     background: var(--paper);
-    box-shadow: 0 4px 22px rgba(9, 99, 126, 0.07);
+    box-shadow: 0 4px 22px rgba(156, 63, 28, 0.08);
     position: sticky;
     top: 24px;
     overflow: hidden;
@@ -832,11 +832,11 @@ function buildRing() {
   var defs = el("defs", {});
   var mk = el("marker", { id: "arrow-teal", viewBox: "0 0 10 10", refX: "8", refY: "5",
                           markerWidth: "4.4", markerHeight: "4.4", orient: "auto-start-reverse" });
-  mk.appendChild(el("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#088395" }));
+  mk.appendChild(el("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#C25A1F" }));
   defs.appendChild(mk);
   var mk2 = el("marker", { id: "arrow-deep", viewBox: "0 0 10 10", refX: "8", refY: "5",
                            markerWidth: "4.6", markerHeight: "4.6", orient: "auto-start-reverse" });
-  mk2.appendChild(el("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#09637E" }));
+  mk2.appendChild(el("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#9C3F1C" }));
   defs.appendChild(mk2);
   svg.appendChild(defs);
 
