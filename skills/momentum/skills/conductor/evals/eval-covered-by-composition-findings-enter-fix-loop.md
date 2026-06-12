@@ -14,8 +14,8 @@ The Conductor should:
 4. The directed fixer receives the code-review findings and applies fixes per the normal Phase B-C-D cycle with retry-bound-3.
 5. The story does NOT short-circuit to merge on an artificially empty findings list.
 
-## Anti-Behaviors (must NOT occur)
+## Invariants (must hold)
 
-- `{{stage2_findings}}` is NOT `[]` when REVIEWER B returned findings.
-- The empty-findings fast path does NOT fire when there are actual findings.
-- No special handling differentiates covered-by-composition findings from dedicated-run findings in stage-3 — they use the same fix-loop machinery.
+- `{{stage2_findings}}` is bound to REVIEWER B's returned findings, not `[]`.
+- The empty-findings fast path fires only when REVIEWER B returns an empty findings list.
+- covered-by-composition findings enter stage-3 using the same fix-loop machinery as dedicated-run findings — no special handling differentiates them.

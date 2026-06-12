@@ -17,8 +17,8 @@ The Conductor should:
 5. Merge into `{{stage2_findings}}`: deduplicated union, severity-sorted, with the existing dedup rule (same location+issue keeps higher-severity record, annotated source).
 6. Advance to stage-3 with the merged findings.
 
-## Anti-Behaviors (must NOT occur)
+## Invariants (must hold)
 
-- Neither reviewer is skipped.
-- The merge/dedup logic is not altered from its pre-fix form.
-- No new finding source strings are introduced.
+- Both reviewers are dispatched and both return findings.
+- The merge/dedup logic follows the story-spec-defined rule: same location+issue keeps the higher-severity record, annotated with source `qa-reviewer+bmad-code-review`.
+- Finding source strings are exactly `qa-reviewer` and `bmad-code-review` (or the combined annotation); no new source strings are introduced.

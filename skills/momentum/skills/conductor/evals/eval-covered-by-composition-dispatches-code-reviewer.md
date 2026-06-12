@@ -15,9 +15,9 @@ The Conductor should:
 5. NOT bind `{{stage2_findings}}` unconditionally to `[]`.
 6. Advance to stage-3 with those findings so the fix loop runs normally on any code-review findings.
 
-## Anti-Behaviors (must NOT occur)
+## Invariants (must hold)
 
-- Stage-2 is NOT skipped entirely.
-- `{{stage2_findings}}` is NOT unconditionally bound to `[]`.
-- REVIEWER A is NOT dispatched at build time for this story.
-- The code-review dispatch is NOT construed as a QA verification run anywhere in the routing.
+- Stage-2 runs (REVIEWER B is dispatched).
+- `{{stage2_findings}}` is bound to REVIEWER B's returned findings, not unconditionally to `[]`.
+- REVIEWER A is not dispatched at build time for this story.
+- The code-review dispatch is not construed as a QA verification run anywhere in the routing.
