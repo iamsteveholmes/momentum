@@ -1,104 +1,321 @@
-# Momentum
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/hero-dark.svg">
+    <img src="docs/assets/readme/hero-light.svg" alt="Momentum" width="640">
+  </picture>
+</p>
 
-**A practice framework for agentic engineering.**
+<p align="center"><b>A practice framework for agentic engineering — specs govern the code, producers never verify their own output, and the practice improves itself every cycle.</b></p>
 
-Momentum is a philosophy and process for building software with AI agents as primary code producers. It defines how specifications govern code generation, how quality is enforced when AI writes the code, and how the practice itself improves over time. The principles apply whether you're a solo developer or a team — anyone directing AI agents to produce code faces the same quality challenges.
+Momentum is a philosophy and process for building software with AI agents as primary code producers. It defines how specifications govern code generation, how quality is enforced when agents write the code, and how the practice itself improves with each sprint. It is implemented as Claude Code skills atop [BMAD Method](https://github.com/bmadcode/BMAD-METHOD), but the principles are tool-agnostic — any agentic coding tool could serve as the implementation layer. Whether you are a solo developer or a team, directing AI agents to produce code raises the same quality problems, and Momentum is a complete, running answer to them.
 
-Momentum is currently implemented using [BMAD Method](https://github.com/bmadcode/BMAD-METHOD) and [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but the principles and process are tool-agnostic. Any agentic coding tool and workflow framework could serve as the implementation layer.
+**[Explore the interactive cycle →](https://iamsteveholmes.github.io/momentum/)**
 
 ---
 
 ## Quick Start
 
-**Claude Code (Tier 1 — full enforcement):**
-
 ```bash
 npx skills add https://github.com/iamsteveholmes/momentum --all
 ```
 
-Then in Claude Code:
+Then, in Claude Code:
 
 ```
 /momentum
 ```
 
-Impetus (the Momentum orchestrator) runs first-time setup: installs global rules, configures hooks, sets up MCP integrations, and orients you to available workflows.
+Impetus — the Momentum orchestrator — runs first-time setup (rules, hooks, MCP integrations) and orients you to the available workflows.
 
-**Cursor or other tools (Tier 2 — advisory):**
+Momentum operates at three enforcement tiers. The same skill files install everywhere; what changes is how much is enforced for you:
 
-```bash
-npx skills add https://github.com/iamsteveholmes/momentum -a cursor
+- **Tier 1 — Full deterministic (Claude Code).** Hooks fire automatically on file changes, rules auto-load into every session, verification agents run in isolated contexts, and `/momentum` provides session orientation. Deterministic gates cannot be skipped or forgotten.
+- **Tier 2 — Advisory (Cursor and other Agent Skills tools).** `npx skills add https://github.com/iamsteveholmes/momentum -a cursor`. Skill workflows, checklists, and quality guidance all function as advisory instructions; Claude Code-specific frontmatter is silently ignored. No hooks, no subagent isolation, no orchestrator.
+- **Tier 3 — Philosophy only (no tooling).** Read the [principles](#principles) and [docs/philosophy.md](docs/philosophy.md), and apply spec-driven development, the authority hierarchy, and producer-verifier separation by hand. No installation needed.
+
+---
+
+## The Cycle
+
+Momentum organizes the practice as a six-phase loop. Each phase is a set of skills; the close of one sprint feeds the planning of the next.
+
+```mermaid
+graph LR
+    E["<b>ENTER</b><br/>impetus"]
+    C["<b>CAPTURE</b><br/>intake · triage<br/>refine · epics"]
+    K["<b>KNOW</b><br/>assessment · research<br/>decision"]
+    P["<b>PLAN</b><br/>sprint-planning<br/>create-story"]
+    B["<b>BUILD</b><br/>conductor"]
+    X["<b>CLOSE</b><br/>retro"]
+
+    E --> C --> K --> P --> B --> X
+    X --> E
+    X -- "practice-ledger handoff<br/><i>flywheel</i>" --> P
+
+    style E fill:#09637E,stroke:#074f65,color:#fff
+    style C fill:#088395,stroke:#066a78,color:#fff
+    style K fill:#088395,stroke:#066a78,color:#fff
+    style P fill:#09637E,stroke:#074f65,color:#fff
+    style B fill:#09637E,stroke:#074f65,color:#fff
+    style X fill:#7AB2B2,stroke:#629e9e,color:#333
 ```
 
-Skills install and are invocable immediately. No additional setup required.
+### 1 · Enter
 
-**No tooling (Tier 3 — philosophy only):**
+Every session starts at `/momentum`. Impetus reads the landscape — sprint state, story status, outstanding signals — and orients you before offering a path forward. It presents a state ledger and a workflow menu, then dispatches to the right skill. It never acts without consent; its power is knowing which skill to summon and when.
 
-Read the [Principles](#the-principles) section below and the [Philosophy](#philosophy) section for the full framework. No installation needed.
+| Command | What it does |
+|---|---|
+| `/momentum` | Session orientation, sprint intelligence, and workflow dispatch |
+
+### 2 · Capture
+
+Ideas arrive mid-conversation; Capture keeps them from evaporating. `intake` preserves a story idea as a backlog stub in seconds. `triage` runs observations through a dedup gate and classifies them into five classes (ARTIFACT / DECISION / SHAPING / DEFER / REJECT), routing each to the right destination. `refine` keeps the backlog honest, and the epic skills keep the taxonomy coherent — `epic-grooming` is the sole writer of `epics.json`.
+
+| Command | What it does |
+|---|---|
+| `/momentum:intake` | Capture a story idea from conversation as a backlog stub |
+| `/momentum:triage` | Dedup gate + batch-classify observations into five classes, then route |
+| `/momentum:refine` | Backlog hygiene — drift detection, status mismatches, stale-story triage |
+| `/momentum:epic-grooming` | Epic taxonomy, value analysis, orphan resolution, `epics.json` maintenance |
+| `/momentum:epic-breakdown` | Enumerate the missing stories needed to ship an epic |
+
+### 3 · Know
+
+Before planning, establish what is true. `assessment` spawns parallel discovery agents and validates every finding with the developer before writing an ASR document. `research` runs a six-phase pipeline (SCOPE → EXECUTE → VERIFY → Q&A → SYNTHESIZE → COMMIT) with Gemini CLI triangulation and AVFL corpus validation. `decision` walks the findings and records adopt/reject/defer outcomes as SDR documents with provenance chains back to their sources.
+
+| Command | What it does |
+|---|---|
+| `/momentum:assessment` | Parallel discovery agents → developer-validated ASR document |
+| `/momentum:research` | Deep research pipeline with triangulation, AVFL validation, provenance |
+| `/momentum:decision` | Record adopt/reject/defer decisions as linked SDR documents |
+
+### 4 · Plan
+
+`sprint-planning` reads the backlog — including handoff events the last retro wrote to the practice ledger — selects stories, fleshes them via `create-story` (change-type classification, injected EDD/TDD guidance, AVFL validation), writes Gherkin specs, composes the team, and activates the sprint. At activation, verification contracts are frozen into `.momentum/sprints/{sprint}/specs/`. All index writes go through `sprint-manager`, the sole writer of the story and sprint registries.
+
+| Command | What it does |
+|---|---|
+| `/momentum:sprint-planning` | Story selection, team composition, Gherkin specs, activation |
+| `/momentum:create-story` | Story creation with change-type classification and AVFL validation |
+| `sprint-manager` <sub>(spawned)</sub> | Sole writer of `stories/index.json` and `sprints/index.json` |
+| `plan-audit` <sub>(spawned)</sub> | Audits plans for spec impact before plan mode exits |
+
+### 5 · Build
+
+`/momentum:conduct` runs the build end to end — pre-flight through a single human end-gate, with no story-count cap. The Conductor orchestrates per-story pipelines on an event-driven dependency frontier, never writes code itself, and holds sole git-mutation authority. After stories merge, AVFL validates the integrated diff, E2E validation runs through the verification harness, and the build proceeds silently to the end-gate. Mid-flight escalation exists only for findings that are irreversible-and-imminent or build-invalidating. For a single story, `quick-fix` is the streamlined alternative: define, specify, implement, validate, and merge in one flow.
+
+| Command | What it does |
+|---|---|
+| `/momentum:conduct` | Sprint build orchestrator — per-story pipelines, AVFL-on-merge, E2E, end-gate |
+| `/momentum:quick-fix` | Single-story define → specify → implement → validate → merge |
+| `sprint-dev` <sub>(spawned)</sub> | Dependency-driven story development with post-merge AVFL |
+| `dev` <sub>(spawned)</sub> | Pure implementer — delegates to bmad-dev-story, emits completion signal |
+
+### 6 · Close
+
+`retro` extracts and audits the sprint's transcripts in one dynamic workflow (Discover → Verify → Synthesize), verifies stories against what actually shipped, and turns findings into backlog stubs. Findings that are not actioned are written to `practice-ledger.jsonl` as handoff events — which the next `sprint-planning` reads in its first step. That edge is the flywheel: every sprint's lessons are structurally guaranteed to reach the next sprint's plan.
+
+| Command | What it does |
+|---|---|
+| `/momentum:retro` | Transcript audit, story verification, findings document, sprint closure |
 
 ---
 
-## Enforcement Tiers
+## Quality Machinery
 
-Momentum operates at three tiers depending on your tool environment. The same skill files install at every tier — what changes is the enforcement level.
+Producer-verifier separation is implemented, not aspirational: writers never verify, verifiers never write. In the per-story pipeline, `dev` implements in an isolated worktree, then `qa-reviewer` and `code-reviewer` examine the diff concurrently and read-only. Their findings come back as a directed fix list that `dev` applies in fix-mode; the Conductor — never a subagent — performs the rebase-merge.
 
-### Tier 1: Full Deterministic — Claude Code
+```mermaid
+graph LR
+    D["<b>dev</b><br/>implements in<br/>isolated worktree"]
+    QA["<b>qa-reviewer</b><br/>read-only review"]
+    CR["<b>code-reviewer</b><br/>read-only review"]
+    F["<b>dev fix-mode</b><br/>applies directed fixes"]
+    M["<b>rebase-merge</b><br/>by Conductor"]
+    A["<b>AVFL</b><br/>on integrated diff"]
 
-Claude Code provides the complete enforcement stack:
+    D --> QA --> F
+    D --> CR --> F
+    F --> M --> A
 
-- **Hooks** fire automatically on file changes — linting, formatting, and file protection run without developer action
-- **Rules** auto-load into every session from `~/.claude/rules/` — authority hierarchy, anti-pattern rules, and coding standards are always in context
-- **Subagent isolation** via `context: fork` — verification agents run in separate contexts with restricted tool access, enforcing producer-verifier separation
-- **Model routing** — skills specify `model:` and `effort:` frontmatter; Claude Code routes to the appropriate model tier
-- **Impetus orchestration** — `/momentum` provides session orientation, sprint awareness, install/upgrade management, and workflow access
+    style D fill:#088395,stroke:#066a78,color:#fff
+    style QA fill:#09637E,stroke:#074f65,color:#fff
+    style CR fill:#09637E,stroke:#074f65,color:#fff
+    style F fill:#088395,stroke:#066a78,color:#fff
+    style M fill:#7AB2B2,stroke:#629e9e,color:#333
+    style A fill:#09637E,stroke:#074f65,color:#fff
+```
 
-**What "full deterministic" means:** Quality standards at the deterministic enforcement tier (hooks, test gates, file protection) execute automatically. They cannot be skipped, deprioritized, or forgotten. Structured enforcement (workflow steps, review checklists) executes as part of skill workflows. Advisory enforcement (rules in context) is always loaded.
+After merge, the **Adversarial Validate-Fix Loop (AVFL)** runs its five-worker fleet — `validator-enum`, `validator-adv`, `consolidator`, `fixer`, `merge-review` — over the integrated sprint diff, iterating to convergence. E2E behavioral validation then routes each story by change type through `verification-harness.json` drivers (skill-invoke, bash, curl, Maestro, document-review).
 
-**Install:** `npx skills add https://github.com/iamsteveholmes/momentum --all`, then `/momentum`
+Every finding carries a canonical schema with a `stakes_class` — `security-auth-isolation`, `irreversible-destructive`, `high-blast-radius-architecture`, or `routine` — and disposition follows fixed rules:
 
-### Tier 2: Advisory — Cursor and Other Tools
+| Finding | Disposition |
+|---|---|
+| Legitimate + routine | Auto-fix silently; collapsed to counts at the end-gate |
+| Legitimate + stakes-class | Escalate — decision card at the end-gate; mid-flight only if irreversible-and-imminent or build-invalidating |
+| Non-legitimate | Dismiss with recorded rationale |
+| Out of scope | Route to triage |
 
-Tools that support the [Agent Skills](https://github.com/anthropic-ai/skills) standard can install Momentum skills:
-
-- **Skill instructions execute** — all SKILL.md files are available and functional
-- **Guidance is advisory** — the tool provides instructions to the agent, but enforcement depends on the agent following them
-- **Extra frontmatter is silently ignored** — `context: fork`, `model:`, `effort:`, and `allowed-tools` fields are Claude Code-specific; other tools skip them without error
-
-**What is NOT available at Tier 2:**
-
-- Hooks (no automatic linting, formatting, or file protection)
-- Global rules (no `~/.claude/rules/` auto-loading)
-- Subagent isolation (no `context: fork` — all work happens in a single context)
-- Model routing (no `model:` frontmatter enforcement)
-- Impetus orchestration (no `/momentum` session management)
-
-Skills still provide significant value at Tier 2 — workflow structure, acceptance criteria enforcement, review checklists, and quality guidance all function as advisory instructions.
-
-**Install:** `npx skills add https://github.com/iamsteveholmes/momentum -a cursor`
-
-### Tier 3: Philosophy Only — No Tooling
-
-Momentum's principles are designed to be valuable without any tooling. A developer or team can adopt the practice by reading the documentation:
-
-1. **Read the principles** — The [Principles](#the-principles) section summarizes the core ideas. The [Philosophy](#philosophy) section provides full explanations with diagrams.
-2. **Apply spec-driven development** — Write acceptance criteria before generating code. Review specifications, not just code.
-3. **Enforce the authority hierarchy** — Specifications govern tests, tests govern code. Never modify specs to match generated output.
-4. **Separate production from verification** — Don't review your own AI-generated code in the same context that produced it. Use a fresh session or a different tool.
-5. **Trace failures upstream** — When output is wrong, ask whether the spec, the workflow, or the rule was the root cause. Fix the source, not the symptom.
-
-No installation, no tooling dependency. The principles apply to any AI-assisted development workflow.
+The build ends at a **single human end-gate**: stakes-class findings presented as decision cards, routine work collapsed to counts, one approval, then merge to main.
 
 ---
 
-## The Principles
+## Deterministic Enforcement
 
-Momentum is built on these core principles. Each is explained in detail in the [Philosophy](#philosophy) section.
+Three hooks make the non-negotiable parts non-negotiable:
+
+| Hook | Event | What it does |
+|---|---|---|
+| `file-protection.sh` | PreToolUse | Blocks writes to protected paths before they happen |
+| `lint-format.sh` | PostToolUse | Lints and formats every edited file automatically |
+| `stop-gate.sh` | Stop | Quality gate before an agent may finish its turn |
+
+Protected paths (`.claude/momentum/protected-paths.json`) cover acceptance tests, project rules, planning artifacts, frozen sprint specs, and the index files. Sole-writer rules are enforced the same way: `sprint-manager` is the only writer of `stories/index.json` and `sprints/index.json`, and `epic-grooming` is the only writer of `epics.json`.
+
+---
+
+## Skill Catalog
+
+28 skills ship in `skills/momentum/` (one is an internal workspace helper for constitution-builder). Grouped by phase:
+
+<details>
+<summary><b>Enter</b> — 1 skill</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum` | Impetus — session orientation, sprint intelligence, and workflow dispatch |
+
+</details>
+
+<details>
+<summary><b>Capture</b> — 5 skills</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum:intake` | Capture a story idea from conversation into the backlog as a stub |
+| `/momentum:triage` | Dedup gate + batch-classify observations into five classes, enrich ARTIFACTs, delegate or queue |
+| `/momentum:refine` | Backlog hygiene — drift detection, status mismatches, stale-story triage, batch approval |
+| `/momentum:epic-grooming` | Unified epic taxonomy, value analysis, orphan resolution, `epics.json` maintenance |
+| `/momentum:epic-breakdown` | Enumerate missing stories for an epic end to end |
+
+</details>
+
+<details>
+<summary><b>Know</b> — 3 skills</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum:assessment` | Guided product state evaluation — parallel discovery, developer validation, ASR document |
+| `/momentum:research` | Deep research pipeline with parallel subagents, Gemini triangulation, AVFL corpus validation |
+| `/momentum:decision` | Capture strategic decisions — walk findings, record adopt/reject/defer, write a linked SDR |
+
+</details>
+
+<details>
+<summary><b>Plan</b> — 4 skills</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum:sprint-planning` | Story selection, team composition, Gherkin specs, and activation |
+| `/momentum:create-story` | Story creation with change-type classification, EDD/TDD guidance, AVFL validation |
+| `sprint-manager` <sub>(spawned by sprint-planning)</sub> | Sole writer of `stories/index.json` and `sprints/index.json`; validates state transitions, activates sprints |
+| `plan-audit` <sub>(spawned by sprint-planning)</sub> | Audits the active plan for spec impact before plan mode exits |
+
+</details>
+
+<details>
+<summary><b>Build</b> — 4 skills</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum:conduct` | In-session sprint build orchestrator — per-story pipelines, AVFL-on-merge, E2E, single end-gate |
+| `/momentum:quick-fix` | Single-story fix — define, specify, implement, validate, and merge in one streamlined flow |
+| `sprint-dev` <sub>(spawned by conductor)</sub> | Dependency-driven story development, post-merge AVFL, team review |
+| `dev` <sub>(spawned by conductor)</sub> | Pure implementer — delegates to bmad-dev-story, emits implementation-complete signal |
+
+</details>
+
+<details>
+<summary><b>Close</b> — 1 skill</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum:retro` | Transcript audit engine, story verification, findings document, sprint closure |
+
+</details>
+
+<details>
+<summary><b>Quality</b> — 4 skills</summary>
+
+| Command | Description |
+|---|---|
+| `avfl` <sub>(spawned for AVFL-on-merge; user-invocable standalone)</sub> | Adversarial Validate-Fix Loop — parallel validation lenses with iterative fix |
+| `code-reviewer` <sub>(spawned by conductor)</sub> | bmad-code-review adapter — adversarial bug-hunt in report-only mode, findings normalized with `stakes_class` |
+| `architecture-guard` <sub>(spawned by impetus; user-invocable)</sub> | Detects pattern drift against architecture decisions; read-only enforcer |
+| `/momentum:upstream-fix` | Traces quality failures upstream to spec, rule, or workflow root cause |
+
+</details>
+
+<details>
+<summary><b>Infrastructure</b> — 5 skills</summary>
+
+| Command | Description |
+|---|---|
+| `/momentum:canvas` | Launch the Momentum Cycle live dashboard (Hono+Bun, port 3456) |
+| `/momentum:agent-builder` | Tier 2 agent composer — base body + constitution + manifesto → composed agent |
+| `/momentum:constitution-builder` | Builds the hot constitution (Permissions + Standing Rules + Quick Routing) for KB-backed agents |
+| `agent-guidelines` <sub>(spawned by agent-builder)</sub> | Discovers project stack, researches breaking changes, generates path-scoped rules |
+| `/momentum:feature-status` | Deprecated — outputs a pointer to `/momentum:canvas` and halts |
+
+</details>
+
+The `avfl` skill carries its own five-worker sub-skill fleet (`validator-enum`, `validator-adv`, `consolidator`, `fixer`, `merge-review`). No `bmad-*` skills are vendored in this repo — `dev` and `code-reviewer` delegate to BMAD Method skills installed alongside Momentum.
+
+---
+
+## Architecture
+
+Momentum keeps its operational state in plain JSON and JSONL files in your project:
+
+```
+.momentum/
+├── sprints/index.json            # sprint registry — sole writer: sprint-manager
+├── stories/index.json            # story registry — sole writer: sprint-manager
+├── practice-ledger.jsonl         # quality findings, triage outcomes, handoff events
+└── sprints/{sprint}/
+    ├── specs/                    # verification contracts, frozen at activation
+    └── audit-extracts/           # retro transcript extractions (jsonl)
+.claude/momentum/
+├── protected-paths.json          # file-protection policy patterns
+└── installed.json                # install state + version registry
+momentum/
+├── agents.json                   # agent routing table
+└── verification-harness.json     # change_type → E2E driver routing
+docs/
+├── planning-artifacts/           # PRD, architecture decisions, epics
+├── research/                     # research pipeline outputs
+└── intake/                       # observations, backlog stubs
+```
+
+(`epics.json` currently lives at `_bmad-output/planning-artifacts/epics.json`, written solely by epic-grooming.)
+
+- **momentum-tools** — a deterministic CLI (`skills/momentum/bin/momentum-tools`) for sprint, session, agent-routing, quickfix, practice-ledger, triage, and version operations. Skills shell out to it instead of hand-editing state.
+- **canvas** — a live dashboard (Hono+Bun, port 3456) showing the cycle and sprint state.
+- **Three-tier agent composition** — a hot constitution embedded in the skill (Permissions, Standing Rules, Quick Routing), a composed agent built by `agent-builder` from one of 9 base bodies plus constitution and manifesto, and a cold knowledge base reached via wiki-query.
+
+---
+
+## Principles
+
+Full essays with diagrams live in [docs/philosophy.md](docs/philosophy.md).
 
 1. **Spec-Driven Development** — Specifications are the primary artifact. Code is generated, verified output.
 2. **Authority Hierarchy** — Specifications > Tests > Code. Never modify upstream artifacts to accommodate downstream failures.
 3. **Producer-Verifier Separation** — The agent that writes code never reviews it. Verification happens in a separate context.
 4. **Evaluation Flywheel** — Trace quality failures upstream. Fix the workflow, spec, or rule — not just the code.
-5. **Three Tiers of Enforcement** — Deterministic (automated gates), Structured (workflow steps), Advisory (context rules). Promote standards to higher tiers when possible.
+5. **Three Tiers of Enforcement** — Deterministic, Structured, Advisory. Promote standards to higher tiers when possible.
 6. **Cost as a Managed Dimension** — Model selection and effort levels are engineering decisions. Use flagship models for unvalidated outputs.
 7. **Provenance as Infrastructure** — Every claim traces to a source. `derives_from` chains are navigable infrastructure, not documentation.
 8. **Protocol-Based Integration** — Every integration point is a configurable protocol. Implementations are substitutable without modifying workflows.
@@ -107,291 +324,16 @@ Momentum is built on these core principles. Each is explained in detail in the [
 
 ---
 
-## Philosophy
-
-### Spec-Driven Development
-
-Specifications are the primary engineering artifact. Human-written acceptance criteria define correctness. Code is a generated, verified output — disposable and replaceable. The spec is what matters. The practice is responsible for keeping specifications reviewable — a spec nobody can sustain attention through is no better than no spec at all.
-
-### Authority Hierarchy
-
-**Specifications > Tests > Code.** Agents never modify specifications or pre-existing tests to make code pass. If a test fails, the code is wrong. If a spec is ambiguous, the agent asks — it doesn't assume. This hierarchy is encoded into machine-readable `derives_from` chains in document frontmatter, enforced by tooling — not just a guideline, but navigable infrastructure.
-
-```mermaid
-graph TD
-    S["<b>SPECIFICATIONS</b><br/><i>Immutable source of truth</i><br/>Human-written acceptance criteria"]
-    T["<b>TESTS</b><br/><i>Read-only to coding agents</i><br/>Verify specs are satisfied"]
-    C["<b>CODE</b><br/><i>Disposable, generated output</i><br/>Replaceable if it fails"]
-
-    S -- "governs" --> T
-    T -- "governs" --> C
-    C -. "never flows back up" .-> T
-    C -. "never flows back up" .-> S
-
-    style S fill:#09637E,stroke:#074f65,color:#fff
-    style T fill:#088395,stroke:#066a78,color:#fff
-    style C fill:#7AB2B2,stroke:#629e9e,color:#333
-```
-
-### Producer-Verifier Separation
-
-The agent that writes code does not review it. Verification happens in a separate context with a separate agent whose only job is to find problems. Verifiers produce findings — they never modify code.
-
-```mermaid
-graph TD
-    subgraph producer ["PRODUCER CONTEXT"]
-        P1["Read spec and acceptance criteria"]
-        P2["Write implementation"]
-        P3["Write unit tests"]
-        P1 --> P2 --> P3
-    end
-
-    subgraph verifier ["VERIFIER CONTEXT"]
-        V1["Read spec, code, and test results"]
-        V2["Challenge every claim"]
-        V3["Produce findings report"]
-        V1 --> V2 --> V3
-    end
-
-    P3 -- "handoff" --> V1
-    V3 -- "findings only, never code changes" --> P1
-
-    style producer fill:#EBF4F6,stroke:#088395,color:#333
-    style verifier fill:#EBF4F6,stroke:#09637E,color:#333
-    style P1 fill:#088395,stroke:#066a78,color:#fff
-    style P2 fill:#088395,stroke:#066a78,color:#fff
-    style P3 fill:#088395,stroke:#066a78,color:#fff
-    style V1 fill:#09637E,stroke:#074f65,color:#fff
-    style V2 fill:#09637E,stroke:#074f65,color:#fff
-    style V3 fill:#09637E,stroke:#074f65,color:#fff
-```
-
-### Evaluation Flywheel
-
-When output fails quality standards, trace the failure upstream via navigable `derives_from` chains. Don't just fix the code — fix the workflow, specification, or rule that caused the defect. Every upstream fix prevents a class of errors permanently. Each sprint's learnings compound into the next, building continuous improvement momentum.
-
-```mermaid
-graph TD
-    BUILD["<b>BUILD</b><br/>Execute specs with<br/>AI agents"]
-    VERIFY["<b>VERIFY</b><br/>Adversarial review<br/>finds defects"]
-    RECORD["<b>RECORD</b><br/>Log findings in<br/>structured ledger"]
-    ANALYZE["<b>ANALYZE</b><br/>Retrospective reveals<br/>cross-story patterns"]
-    TRACE["<b>TRACE UPSTREAM</b><br/>Root cause: workflow?<br/>spec? rule?"]
-    FIX["<b>FIX UPSTREAM</b><br/>Correct the source,<br/>not the symptom"]
-
-    BUILD --> VERIFY
-    VERIFY --> RECORD
-    RECORD --> ANALYZE
-    ANALYZE --> TRACE
-    TRACE --> FIX
-    FIX -- "improved practice produces<br/>better results next sprint" --> BUILD
-
-    style BUILD fill:#088395,stroke:#066a78,color:#fff
-    style VERIFY fill:#09637E,stroke:#074f65,color:#fff
-    style RECORD fill:#7AB2B2,stroke:#629e9e,color:#333
-    style ANALYZE fill:#088395,stroke:#066a78,color:#fff
-    style TRACE fill:#09637E,stroke:#074f65,color:#fff
-    style FIX fill:#09637E,stroke:#074f65,color:#fff
-```
-
-### Three Tiers of Enforcement
-
-Quality standards are enforced at three levels, from most to least reliable:
-
-1. **Deterministic** — Automated gates that always execute: linters, test suites, file protection, pre-commit hooks. These cannot be ignored or deprioritized.
-2. **Structured** — Workflow steps that enforce standards during execution: review checklists, validation gates, required verification before completion.
-3. **Advisory** — Rules and guidelines loaded into agent context. Always available but may be deprioritized under context pressure. When possible, promote advisory standards to a higher tier.
-
-```mermaid
-graph TD
-    subgraph tier1 ["TIER 1 — DETERMINISTIC"]
-        D1["Linters and formatters"]
-        D2["Test suite execution"]
-        D3["File protection gates"]
-        D4["Pre-commit hooks"]
-    end
-
-    subgraph tier2 ["TIER 2 — STRUCTURED"]
-        S1["Workflow validation steps"]
-        S2["Review checklists"]
-        S3["Acceptance test gates"]
-        S4["Verification before completion"]
-    end
-
-    subgraph tier3 ["TIER 3 — ADVISORY"]
-        A1["Agent context rules"]
-        A2["Coding standards"]
-        A3["Anti-pattern guidance"]
-        A4["Architecture conventions"]
-    end
-
-    tier3 -. "promote when<br/>advisory isn't enough" .-> tier2
-    tier2 -. "promote when<br/>workflow isn't enough" .-> tier1
-
-    style tier1 fill:#EBF4F6,stroke:#09637E,color:#333
-    style tier2 fill:#EBF4F6,stroke:#088395,color:#333
-    style tier3 fill:#EBF4F6,stroke:#7AB2B2,color:#333
-    style D1 fill:#09637E,stroke:#074f65,color:#fff
-    style D2 fill:#09637E,stroke:#074f65,color:#fff
-    style D3 fill:#09637E,stroke:#074f65,color:#fff
-    style D4 fill:#09637E,stroke:#074f65,color:#fff
-    style S1 fill:#088395,stroke:#066a78,color:#fff
-    style S2 fill:#088395,stroke:#066a78,color:#fff
-    style S3 fill:#088395,stroke:#066a78,color:#fff
-    style S4 fill:#088395,stroke:#066a78,color:#fff
-    style A1 fill:#7AB2B2,stroke:#629e9e,color:#333
-    style A2 fill:#7AB2B2,stroke:#629e9e,color:#333
-    style A3 fill:#7AB2B2,stroke:#629e9e,color:#333
-    style A4 fill:#7AB2B2,stroke:#629e9e,color:#333
-```
-
-### Cost as a Managed Dimension
-
-Model selection, effort levels, and retry loop economics are engineering decisions, not afterthoughts. The **cognitive hazard rule:** for outputs without automated validation, use flagship models — invisible errors from cheaper models cost more than the price premium. Effort levels control thinking depth and therefore cost; every skill and agent specifies `model:` and `effort:` frontmatter explicitly.
-
-### Provenance as Infrastructure
-
-Every specification claim traces to a source. Every artifact tracks what it derives from (`derives_from` frontmatter) and what depends on it (auto-generated `referenced_by`). Ungrounded claims are marked, not assumed valid. When upstream documents change, downstream documents are flagged as suspect. This is not documentation hygiene — it is load-bearing infrastructure that enables the flywheel, prevents hallucination propagation, and stops obsolete decisions from resurfacing.
-
-### Protocol-Based Integration
-
-Every integration point in the practice is a configurable protocol. The project configures which implementation satisfies each protocol — which agent performs a role, which tool runs tests, which LLM provides research, which document structure constitutes the spec tree. Implementations can be substituted across teams, tools, and environments without modifying the workflows that depend on them. This is dependency inversion applied to the practice layer.
-
-### Impermanence Principle
-
-Processes and tooling that grow and improve are better than those that stay unchanged. Research has a short half-life in fast-moving domains. Decisions must be revisited, tools must be re-evaluated, and the practice itself must evolve. The anti-pattern is not change — it's unmanaged change.
-
-### Attention as a Finite Resource
-
-The spec-driven methodology only works if humans review specifications with care. Attention is finite, degrades predictably under load, and cannot be replenished by willpower. Cognitive science establishes that vigilance decrement — the decline in detection accuracy during sustained monitoring — begins within 10-15 minutes under high-demand conditions. Spec fatigue, the progressive loss of review quality over time, is a natural consequence of generating more specification material than humans can sustainably review.
-
-Every workflow, checkpoint, and review gate must be designed with the assumption that the reviewer's attention is a depletable resource, not an infinite constant. The 39-point perception gap between actual and perceived performance (METR, 2025) means developers cannot self-assess their own review degradation. The practice must enforce sustainability rather than relying on self-regulation.
-
-Three design principles follow: (1) minimize what requires human review — automate verification where possible, (2) direct review effort where uncertainty is highest — not where volume is highest, and (3) respect cognitive recovery time between review demands — sequential approvals degrade in quality independent of content.
-
----
-
-## Quality Model
-
-### Five AI-Induced Debt Types
-
-Momentum's quality rules are organized around five categories of debt that AI-augmented development amplifies:
-
-- **Verification Debt** — Unreviewed or inadequately tested AI-generated output accumulates faster than human-written code because generation is cheap. Layered verification (acceptance tests, unit tests, adversarial review, human review) counteracts this.
-- **Cognitive Debt** — Code the developer cannot explain is a liability. If generated code can't be clearly explained, it gets rewritten. Understanding is not optional.
-- **Pattern Drift** — AI amplifies whatever patterns it sees. If the codebase has anti-patterns, the AI will replicate them at scale. Architectural standards and explicit rules counteract this.
-- **Technical Debt** — Compounds exponentially with AI-generated code because the volume is higher and the feedback loop is weaker. Adversarial review and refactoring discipline counteract this.
-- **Review Debt** — Specifications approved without genuine scrutiny. Spec-driven development amplifies this: the methodology generates review demands faster than humans can sustain quality attention. Unlike Cognitive Debt (can you explain it?), Review Debt is a stamina failure (did you actually check it?). Automation monitoring research shows a 55% omission rate, and the expertise reversal effect means experienced users are *more* susceptible, not less. Review Debt is invisible and self-reinforcing. Mitigations: attention-aware checkpoints, confidence-directed review that focuses scrutiny where uncertainty is highest, and expertise-adaptive guidance that fades as competence grows.
-
-Left unaddressed, these debts interact and compound: verification debt feeds cognitive debt (unreviewed code you don't understand), cognitive debt enables pattern drift (you can't spot what you don't comprehend), pattern drift accelerates technical debt (bad patterns replicate at AI speed), and review debt feeds all of them — specifications approved without scrutiny become the authoritative source for downstream code generation, verification, and architectural decisions.
-
-### Anti-Pattern Awareness
-
-**Code Generation Anti-Patterns:** Momentum includes corrective rules targeting seven known AI code generation anti-patterns (based on [Ox Security research](https://www.ox.security/the-7-deadly-sins-of-ai-generated-code/)): excessive comments, textbook fixation, refactoring avoidance, over-specification, code duplication, monolithic tendencies, and dependency ignorance. Each rule prescribes the correct behavior rather than describing the problem.
-
-**Practice Anti-Patterns:** Spec-driven development introduces its own failure modes — not in what AI generates, but in what the practice demands of humans:
-
-- **Spec Fatigue** — The progressive degradation of review quality under sustained specification review load. Distinguished from Knowledge Gap (a navigation problem — "I don't know what to do") by being a stamina problem ("I can't make myself care about reviewing this anymore"). Naive attempts to solve Knowledge Gap with more information make Spec Fatigue worse for experienced users through the expertise reversal effect — instructional techniques effective for novices become actively harmful for experts. The corrective: design review checkpoints for sustainability, not completeness.
-
----
-
-## Process
-
-### Development Flow
-
-The full lifecycle of a unit of work — from specification through verified completion:
-
-```mermaid
-graph TD
-    SPEC["<b>SPECIFICATION</b><br/>Human writes acceptance<br/>criteria and constraints"]
-    ATDD["<b>ACCEPTANCE TESTS</b><br/>Write failing tests<br/>from acceptance criteria"]
-    IMPL["<b>IMPLEMENTATION</b><br/>Producer agent writes<br/>code and unit tests"]
-    GATE["<b>QUALITY GATE</b><br/>Full test suite must pass<br/>Linters must pass"]
-    REVIEW["<b>ADVERSARIAL REVIEW</b><br/>Verifier agent checks<br/>every AC against code"]
-    DECIDE{Findings?}
-    DONE["<b>VERIFIED COMPLETE</b>"]
-    REWORK["<b>REWORK</b><br/>Fix issues in<br/>producer context"]
-    FLYWHEEL["<b>FLYWHEEL</b><br/>Systemic issue?<br/>Trace and fix upstream"]
-
-    SPEC --> ATDD
-    ATDD --> IMPL
-    IMPL --> GATE
-    GATE --> REVIEW
-    REVIEW --> DECIDE
-    DECIDE -- "none" --> DONE
-    DECIDE -- "implementation<br/>issues" --> REWORK
-    DECIDE -- "systemic<br/>pattern" --> FLYWHEEL
-    REWORK --> GATE
-    FLYWHEEL --> REWORK
-
-    style SPEC fill:#09637E,stroke:#074f65,color:#fff
-    style ATDD fill:#088395,stroke:#066a78,color:#fff
-    style IMPL fill:#088395,stroke:#066a78,color:#fff
-    style GATE fill:#09637E,stroke:#074f65,color:#fff
-    style REVIEW fill:#09637E,stroke:#074f65,color:#fff
-    style DECIDE fill:#7AB2B2,stroke:#629e9e,color:#333
-    style DONE fill:#088395,stroke:#066a78,color:#fff
-    style REWORK fill:#7AB2B2,stroke:#629e9e,color:#333
-    style FLYWHEEL fill:#09637E,stroke:#074f65,color:#fff
-```
-
-### Process Task Backlog
-
-Practice improvements run concurrently with product work, not instead of it. A dedicated process backlog tracks infrastructure tasks at three priority levels:
-
-- **Critical** — Cannot continue product work without these.
-- **High** — Resolve during the current sprint, between stories.
-- **Low** — Batch at sprint boundaries or defer to future sprints.
-
-Process tasks flow through the same spec-driven workflow as product stories: write a spec, execute it, verify the result.
-
-### Continuous Improvement Cycle
-
-The practice improves through a structured cycle:
-
-1. **Build** — Execute stories and process tasks using spec-driven development.
-2. **Verify** — Adversarial review catches defects and anti-patterns.
-3. **Record** — Quality findings are logged in a structured ledger.
-4. **Analyze** — Retrospectives identify cross-story patterns in findings.
-5. **Trace upstream** — Each pattern is traced to its root cause (workflow gap, spec ambiguity, missing rule).
-6. **Fix upstream** — The root cause is corrected, preventing the entire class of defects permanently.
-7. **Repeat** — The improved practice produces better results next sprint.
-
----
-
-## Reference Documents
-
-### The Practice Plan
-
-The comprehensive plan defining Momentum's philosophy, process, and implementation roadmap:
-
-- [Solo Agentic Engineering: Process, Philosophy, and Implementation Plan](docs/planning-artifacts/AI-Solo-Dev-Workflow-Plan-2026-03-07-final.md)
-
-### Research Foundation
-
-The research that informed the practice design:
-
-**Core Research**
-- [Consolidated Agentic Engineering Research](docs/research/AI-Solo-Dev-Consolidated-Research-2026-03-07-final.md) — the primary research synthesis that grounds the practice plan
-- [Solo Dev Workflow Optimization](docs/research/AI%20Solo%20Dev%20Workflow%20Optimization%20Report.md) — patterns for effective solo AI-assisted development
-- [AI Engineering Maturity and Adoption](docs/research/AI%20Engineering%20Maturity%20and%20Adoption.md) — industry maturity models and adoption patterns
-- [Spec Fatigue Research](docs/research/spec-fatigue-research-2026-03-21.md) — empirical evidence for specification review fatigue as a named anti-pattern, with design implications
-
-**Technical Architecture**
-- [Agentic Architecture: BMAD vs Claude Code Native](docs/research/technical-agentic-architecture-bmad-vs-claude-code-2026-03-07.md) — tradeoffs between framework-managed and native agent patterns
-- [Claude Code Tool Permissions](docs/research/technical-claude-code-tool-permissions-research-2026-03-07.md) — permission model for agent tool access
-- [Subagent Permissions Reference](docs/research/technical-subagent-permissions-reference-2026-03-07.md) — schema for sub-agent capability constraints
-
----
-
 ## Project Structure
 
-- `docs/` — Planning artifacts, research, process backlog, implementation specs
-- `module/` — Canonical practice files (rules, agents, templates)
+- `skills/momentum/` — the skill suite, agents, hooks, references, and the momentum-tools CLI
+- `momentum/` — agent routing and verification-harness configuration
+- `docs/` — philosophy, planning artifacts, research, implementation specs
+- `module/` — canonical practice files (rules, agents, templates)
 
 ## Status
 
-Momentum is in early development. The philosophy and process are defined. Implementation of the core practice layer (quality rules, verification agents, install workflow) is in progress.
+The practice layer exists and runs real sprints today: planning, conducted builds with AVFL and E2E validation, retrospectives, and the practice-ledger flywheel are all operational. Current version: **1.0.0** (see [version.md](version.md)).
 
 ## License
 
