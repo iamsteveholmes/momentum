@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/hero-dark.svg">
-    <img src="docs/assets/readme/hero-light.svg" alt="Momentum" width="640">
+    <img src="docs/assets/readme/hero-light.svg" alt="Momentum">
   </picture>
 </p>
 
