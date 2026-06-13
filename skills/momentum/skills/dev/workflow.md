@@ -141,10 +141,12 @@ Where {{disposition_map}} is the array of per-finding disposition objects built 
       - {{file_list}}: from the story's File List section — files created/modified/deleted
       - {{tests_run}}: true if bmad-dev-story ran tests, false otherwise (from the Dev Agent Record or implementation output)
       - {{test_result}}: "pass", "fail", or "not_run" — the outcome of the test run (from the same source; use "not_run" if {{tests_run}} is false)
+      - {{cross_artifact_notes}}: list any adjacent-artifact issues discovered during implementation that belong to a DIFFERENT artifact outside this story's write scope. Each entry: { artifact: "path or name", note: "description of the issue" }. Use an empty array when none are identified.
     </action>
 
     <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
     <note>Working directory: the Conductor creates the story branch (`story/{slug}` forked from `sprint/{{sprint_slug}}`) and the worktree (`.worktrees/story-{slug}`) at story launch (conductor workflow step 2.1, STAGE-1 DEV SPAWN block) immediately before spawning this agent. The dev agent is spawned already scoped to that worktree and writes within it. The Conductor stages (under the write-scope guard) and commits (conductor/workflow.md stage-1 sequence). The dev agent neither creates nor enters/exits worktrees, and it does not commit.</note>
+    <note>DEV COMMIT AUTHORITY. The Conductor is the sole git-mutation authority in the conduct seam. When invoking bmad-dev-story, explicitly instruct it to leave ALL changes uncommitted — no `git add`, no `git commit`. bmad-dev-story must finish with all its file writes in the working tree, uncommitted — changes may be unstaged or staged, but must not be committed; the Conductor owns every commit. If bmad-dev-story nevertheless commits (violating this instruction), the Conductor's SEAM-DISAGREE GUARD fires on the next checkpoint (it detects tip-advance — git rev-parse HEAD != {{S.launch_base_sha}} — and fails the story with a record-shape mismatch rather than silently proceeding).</note>
   </step>
 
   <step n="2.5" goal="Part-A header self-check">
@@ -186,11 +188,12 @@ AGENT_OUTPUT_START
   "test_results": {
     "tests_run": {{tests_run}},
     "outcome": "{{test_result}}"
-  }
+  },
+  "cross_artifact_notes": [{{cross_artifact_notes}}]
 }
 AGENT_OUTPUT_END
 ```
-Where {{file_list}} is the comma-separated list of files from the story's File List section; {{part_a_self_check}} is "performed" or "skipped-no-contract" from Step 2.5; {{tests_run}} is true|false and {{test_result}} is "pass", "fail", or "not_run" — all captured in Step 2 from bmad-dev-story's Dev Agent Record.
+Where {{file_list}} is the comma-separated list of files from the story's File List section; {{part_a_self_check}} is "performed" or "skipped-no-contract" from Step 2.5; {{tests_run}} is true|false and {{test_result}} is "pass", "fail", or "not_run" — all captured in Step 2 from bmad-dev-story's Dev Agent Record. {{cross_artifact_notes}} is the array (may be empty []) of adjacent-artifact issues discovered during implementation but outside this story's write scope, captured in Step 2; the Conductor reads this field to route cross-artifact concerns to momentum:triage at build-phase completion.
 
 If implementation failed (bmad-dev-story did not reach story status "review"), emit the failed variant instead. Populate files_changed with whatever files were changed in the worktree before the failure (check `git status` / `git diff --name-only`); use an empty array only if no files were modified:
 ```

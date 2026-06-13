@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Given a sprint plan where story S has `coverage_disposition: "dedicated-run"` (or defaulted to it), and the stage-1 dev agent has committed changes:
+Given a sprint plan where story S has `coverage_disposition: "dedicated-run"` (or defaulted to it), and the Conductor has committed the stage-1 dev agent's output, producing a non-trivial diff on the story branch:
 
 ## Expected Behavior
 
@@ -13,7 +13,7 @@ The Conductor should:
    - REVIEWER A (`qa-reviewer`) with story_slug, worktree_path, verification_contract, story_diff
    - REVIEWER B (`momentum:code-reviewer`) with story_slug, story_diff, worktree_path, review_depth
 3. Wait for BOTH to return.
-4. Bind `{{qa_findings}}` and `{{cr_findings}}` from their respective outputs.
+4. Bind `{{qa_findings}}` to the normalized canonical records produced by the stage-2 normalization of REVIEWER A's report (not the raw producer-format QA Review Report); bind `{{cr_findings}}` directly from REVIEWER B's output.
 5. Merge into `{{stage2_findings}}`: deduplicated union, severity-sorted, with the existing dedup rule (same location+issue keeps higher-severity record, annotated source).
 6. Advance to stage-3 with the merged findings.
 

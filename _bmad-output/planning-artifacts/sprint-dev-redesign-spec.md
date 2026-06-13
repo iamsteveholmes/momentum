@@ -928,7 +928,7 @@ Status legend: **REAL** = working body exists · **STUB** = file exists, placeho
 | File | Change |
 |---|---|
 | `skills/momentum/skills/sprint-dev/workflow.md` | Replace the wave loop + global Phases 3–7 with the Conductor build phase + AVFL-on-merge + E2E + end-gate; retain Phase-1 pre-flight HALTs only; switch AVFL capture to 3-dot diff. |
-| `skills/momentum/skills/dev/workflow.md` | Strip merge gate, cleanup, lock, crash-ask; reduce to worktree-local commit + completion signal [Superseded 2026-06-12 — see §6 note]; add Part-A header consumption. |
+| `skills/momentum/skills/dev/workflow.md` | Strip merge gate, cleanup, lock, crash-ask; reduce to worktree-local commit + completion signal [Superseded 2026-06-12 — as-built, the Conductor is the sole commit authority per DEC-035 and conductor SKILL.md Authority Invariant 1; see §6 note]; add Part-A header consumption. |
 | `skills/momentum/agents/dev.md` | Remove the `<critical>` no-auto-merge rule; remove merge/cleanup authority. |
 | `skills/momentum/skills/conductor/` (new) | New orchestrator skill + `workflow.md` — owns the end gate, report, change-workflow, approve sequence, all git mutation. |
 | `skills/momentum/agents/dev.md` + `skills/momentum/skills/dev/workflow.md` | Extended with fix-mode (the directed fixer); replaces the proposed separate `agents/code-fixer.md`. |

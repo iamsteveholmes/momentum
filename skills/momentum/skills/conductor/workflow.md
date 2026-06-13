@@ -206,7 +206,15 @@ Ready to begin?</output>
 
     <note>This is the engine of the autonomous build. It is event-driven: the Conductor reacts to per-story terminal signals (merged | failed) rather than advancing a sequential queue. No story-count cap applies. No human gate separates stories on the routine path. The sole exception is the narrow mid-flight escalation consumption hook (step 2.F), which fires only when the escalation mechanism surfaces a finding meeting the strict stakes-and-timing bar.</note>
 
-    <critical>LEDGER-APPEND STANDING RULE (applies to every {{build_log}} append in Phases 2–5): Every instruction that appends a row to {{build_log}} ALSO appends the same row to the build ledger at {{ledger_path}} — per references/build-ledger.md. The append is a single-line Bash printf: `printf '%s\n' '&lt;row-json&gt;' >> {{ledger_path}}`. The row carries an `event` field from the controlled event-type set (references/build-ledger.md), a `story_slug` field (real story slug; exceptions enumerated in the reference), and a `ts` field (ISO 8601 timestamp). Terminal rows use `event: "story-terminal"` with `outcome` as a payload field. KEY VOCABULARY: all rows use `story_slug:` as the canonical join key (per finding-schema.md). Do NOT use `slug:` as a key name in any new or updated {{build_log}} or ledger row — `story_slug:` is the single, uniform field name for identifying a story. This standing rule eliminates the need to repeat "AND append to the ledger" at each of the ~30 build_log sites — every build_log append is implicitly also a ledger append. The ledger is the durable copy; the in-context {{build_log}} is the volatile write-through cache. REHYDRATION EXEMPTION: the rehydration replay loop in step 2.0 (which reads ledger rows and appends them back into {{build_log}}) is a REBUILD operation only — these replay appends do NOT trigger a second ledger append. The standing rule applies to new live-event appends only, not to rows being replayed from the ledger during resume. Failure to honor this exemption doubles the ledger on every resume.</critical>
+    <critical>LEDGER-APPEND STANDING RULE (applies to every {{build_log}} append in Phases 2–5):
+
+      THE RULE: Every instruction that appends a row to {{build_log}} ALSO appends the same row to the build ledger at {{ledger_path}} — per references/build-ledger.md. The append is a single-line Bash printf: `printf '%s\n' '&lt;row-json&gt;' >> {{ledger_path}}`. This standing rule eliminates the need to repeat "AND append to the ledger" at each of the ~30 build_log sites — every build_log append is implicitly also a ledger append. The ledger is the durable copy; the in-context {{build_log}} is the volatile write-through cache.
+
+      KEY VOCABULARY: Every row carries an `event` field from the controlled event-type set (references/build-ledger.md), a `story_slug` field (real story slug; exceptions enumerated in the reference), and a `ts` field (ISO 8601 timestamp). Terminal rows use `event: "story-terminal"` with `outcome` as a payload field. All rows use `story_slug:` as the canonical join key (per finding-schema.md). Do NOT use `slug:` as a key name in any new or updated {{build_log}} or ledger row — `story_slug:` is the single, uniform field name for identifying a story (see CARVE-OUT below for the step 2.2 pipeline-signal exception).
+
+      CARVE-OUT: Pipeline terminal signals (e.g., `{ slug: S.slug, outcome: "merged" }` or `{ slug: S.slug, outcome: "failed" }`) emitted by per-story pipelines to step 2.2 are point-to-point control messages — they are NOT ledger rows and intentionally use the bare `slug:` key; this carve-out is scoped to the step 2.2 signal vocabulary and does not affect any ledger or build_log append.
+
+      REHYDRATION EXEMPTION: The rehydration replay loop in step 2.0 (which reads ledger rows and appends them back into {{build_log}}) is a REBUILD operation only — these replay appends do NOT trigger a second ledger append. The standing rule applies to new live-event appends only, not to rows being replayed from the ledger during resume. Failure to honor this exemption doubles the ledger on every resume.</critical>
 
     <!-- ─────────────────────────────────────────────────────── -->
     <!-- STEP 2.0 — Initialize frontier state                    -->
@@ -221,17 +229,20 @@ Ready to begin?</output>
 
       <action>Initialize Conductor state:
         {{frontier}}    = []    — unblocked stories not yet launched
-        {{running}}     = {}    — { slug: pipeline_handle } for in-flight stories
+        {{running}}     = {}    — { story_slug: pipeline_handle } for in-flight stories
         {{merged}}      = []    — stories that have reached status >= review on the sprint branch
         {{blocked}}     = []    — stories that exhausted retries or have an unsatisfiable dependency
-        {{retries}}     = {}    — { slug: int } per-story retry counter (pipeline-level; distinct from merge_attempts)
-        {{merge_attempts}}           = {}    — { slug: int } per-story rebase-then-merge attempt counter (bound: 3); owned by step 2.2.M
+        {{retries}}     = {}    — { story_slug: int } per-story retry counter (pipeline-level; distinct from merge_attempts)
+        {{merge_attempts}}           = {}    — { story_slug: int } per-story rebase-then-merge attempt counter (bound: 3); owned by step 2.2.M
         {{escalations}}              = []    — mid-flight escalation records (stakes-class, strict bar only)
         {{end_gate_escalations}}     = []    — Conductor-scoped accumulator for end-gate-expanded stakes findings across ALL stories; populated by step 2.2 signal handler from each story's S.escalations (end-gate-expanded subset); consumed by step 5 Source 1 to build decision cards. Each entry: { finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug }.
         {{contract_integrity_stops}} = []    — Conductor-facing integrity stops (per story, contract fingerprint mismatch; not stakes-class, not escalations)
         {{build_log}}                = []    — per-story pipeline outcomes for the end-gate report
         {{conductor_reverted_fixes}} = []    — findings whose fix commit was reverted by scope discipline (write-scope guard in stage-3 or stage-1); each entry: { finding_id, story_slug, summary, reverted_files: [], reroute_stub_slug: null }. Consumed at end-gate scorecard assembly to exclude from {{routine_auto_fixed_count}}.
-        {{coverage_discharge_results}} = {}  — { slug: { outcome, scenario_id, evidence } } — populated by Phase 3 step 3.D; outcome is "verified-by-composition" for discharged deferrals. Consumed at the build_log discharge summary (~step 3.5); NOT consumed at the end-gate scorecard.
+        {{coverage_discharge_results}} = {}  — { story_slug: { outcome, scenario_id, evidence } } — populated by Phase 3 step 3.D; outcome is "verified-by-composition" for discharged deferrals. Consumed at the build_log discharge summary (~step 3.5); NOT consumed at the end-gate scorecard.
+        {{build_cross_artifact_notes}} = []  — accumulated by stage-1 CROSS-ARTIFACT ROUTING; flushed to momentum:triage at build-phase completion; no ledger event — empty-init every session start is correct.
+        {{avfl_findings}}              = []  — populated by step 3.3 (avfl-merge-review result); rehydrated from avfl-finding ledger rows on resume.
+        {{e2e_findings}}               = []  — populated by Phase 4 step 4.2 normalization; rehydrated from e2e-stakes-escalation and e2e-finding-auto-fixed ledger rows on resume.
       </action>
 
       <!-- ── BUILD LEDGER: init + rehydration ──────────────────── -->
@@ -271,14 +282,27 @@ Ready to begin?</output>
             "stage3-escalation":
               → Append R to {{build_log}}.
               → If R.timing_tier == "end-gate-expanded": append { finding_id: R.finding_id, stakes_class: R.stakes_class,
-                  timing_tier: "end-gate-expanded", summary: R.finding_summary, story_slug: R.story_slug }
+                  timing_tier: "end-gate-expanded", summary: R.finding_summary, evidence: R.evidence,
+                  suggested_fix: R.suggested_fix, story_slug: R.story_slug }
                   to {{end_gate_escalations}}.
 
-            "stage3-mid-flight-escalation", "mid-flight-escalation":
+            "stage3-mid-flight-escalation":
+              → Append R to {{build_log}}.
+              → Append { story_slug: R.story_slug, timing_tier: "mid-flight",
+                  disposition: "escalated", finding_count: R.finding_count } to {{escalations}}.
+              Note: stage3-mid-flight-escalation rows do NOT carry resolution or stakes_class at the row level
+              (the writer at step 2.S3 ~1076 emits only story_slug, event, disposition, timing_tier, finding_count).
+              Do NOT read R.resolution or R.stakes_class for this event type — those fields are absent; the
+              rehydrated {{escalations}} entry therefore omits stakes_class (it is a count-level mid-flight
+              record, not a per-finding stakes record). The mid-flight-escalation event (developer-facing,
+              ~line 297) is the variant that DOES carry resolution and stakes_class.
+
+            "mid-flight-escalation":
               → Append R to {{build_log}}.
               → Append { story_slug: R.story_slug, stakes_class: R.stakes_class, timing_tier: "mid-flight",
                   disposition: "escalated", resolution: R.resolution,
                   finding_count: R.finding_count } to {{escalations}}.
+              → If R.resolution == "branch-aborted" AND R.story_slug not in {{blocked}}: add R.story_slug to {{blocked}}.
 
             "stage3-fix-scope-reverted":
               → Append R to {{build_log}}.
@@ -303,7 +327,7 @@ Ready to begin?</output>
             "story-terminal":
               → Append R to {{build_log}}.
               → If R.outcome == "merged": add R.story_slug to {{merged}} (if not already present).
-              → If R.outcome in {"blocked", "quarantined", "stranded", "contract-integrity-stop"}: add R.story_slug to {{blocked}} (if not already present).
+              → If R.outcome in {"blocked", "quarantined", "stranded", "contract-integrity-stop", "failed"}: add R.story_slug to {{blocked}} (if not already present).
               → If R.outcome == "quarantined": note the quarantine record for end-gate report.
               → If R.merge_attempts is present (quarantine rows carry it): set {{merge_attempts}}[R.story_slug] = R.merge_attempts.
 
@@ -319,23 +343,57 @@ Ready to begin?</output>
               → Also populate {{coverage_discharge_results}}[R.story_slug] = { outcome: "verified-by-composition",
                   scenario_id: R.covered_by_scenario, evidence: R.evidence }.
 
+            "avfl-finding" (rehydration into {{avfl_findings}}):
+              → Append R to {{build_log}} (already covered by the generic avfl-finding route above).
+              → ALSO append to {{avfl_findings}}: { source: "avfl-merge-review", finding_id: R.finding_id,
+                  severity: R.severity, stakes_class: R.stakes_class, summary: R.summary,
+                  evidence: R.evidence, suggested_fix: R.suggested_fix,
+                  disposition: R.disposition, story_slug: R.story_slug }
+                This rehydrates {{avfl_findings}} so the MAJOR-RESIDUAL GOVERNANCE GUARD (Phase 5 approve)
+                and the 5.RC.4 re-render can read non-empty accumulators on resume, consistent with an
+                uninterrupted build where these accumulators were populated by step 3.3.
+              NOTE: "avfl-finding" rows are listed generically above for build_log only; this clause
+              extends that routing to also rebuild {{avfl_findings}}. The generic entry already handles
+              the build_log append — do not double-append.
+
+            "e2e-stakes-escalation" (rehydration into {{e2e_findings}}):
+              → Build_log append already handled by the generic route above.
+              → ALSO append to {{e2e_findings}}: { source: "e2e-validator", finding_id: R.finding_id,
+                  stakes_class: R.stakes_class, timing_tier: R.timing_tier,
+                  summary: R.summary, evidence: R.evidence, suggested_fix: R.suggested_fix,
+                  story_slug: R.story_slug, disposition: "escalated" }
+
+            "e2e-finding-auto-fixed" (rehydration into {{e2e_findings}}):
+              → Build_log append already handled by the generic route above.
+              → ALSO append to {{e2e_findings}}: { source: "e2e-validator", finding_id: R.finding_id,
+                  stakes_class: R.stakes_class, severity: R.severity,
+                  summary: R.summary, story_slug: R.story_slug,
+                  disposition: R.disposition }
+                This rehydrates the routine-fixed portion of {{e2e_findings}} so the complete accumulator
+                (both stakes-escalated and routine-auto-fixed entries) is available to the MAJOR-RESIDUAL
+                GOVERNANCE GUARD and the 5.RC.4 re-render on resume. Without this clause, routine E2E
+                residuals with MAJOR severity would escape the guard invariant after a mid-session interrupt.
+
           Track seen events: build a set of (story_slug, event, finding_id) tuples from all rows.
           Bind {{ledger_seen_events}} = this set, used for duplicate-prevention on resume.
 
           PHASE CHECKPOINT RULE (resume): After rehydrating, check which phases have already produced
           their phase-completion summary rows in the ledger, and skip those phases if their completion
           event is present:
-            — If a row with event == "avfl-on-merge-complete" exists: skip Phase 3 (AVFL-on-merge) on resume.
+            — If a row with event == "avfl-on-merge-complete" exists: skip steps 3.1–3.5 (AVFL-on-merge proper) on resume.
+              Step 3.D (coverage-deferral discharge) is ALWAYS evaluated on resume, independent of this rule.
+              Step 3.D is gated solely by its own checkpoint: if a row with event == "coverage-discharge-consumer-complete"
+              exists from a prior run, skip step 3.D on resume; otherwise, run it — regardless of whether
+              avfl-on-merge-complete is present. A deferral is never silently assumed satisfied (NFR23 invariant).
             — If a row with event == "e2e-phase-complete" exists: skip Phase 4 (E2E) on resume.
           For step 3.D counts: scope the deferred/discharged/undischarged counts to rows with
           ts >= the latest "avfl-on-merge-complete" row's ts (i.e., from the current consumer run
-          only) when re-running; if "coverage-discharge-consumer-complete" exists from a prior run,
-          skip step 3.D entirely on resume.
+          only) when re-running.
           This prevents AVFL and E2E from re-executing wholesale after an interrupt, which would
           append duplicate summary rows and inflate Phase 5 counts.
         </action>
 
-        <note>After rehydration: in-context accumulators ({{build_log}}, {{escalations}}, {{end_gate_escalations}}, {{contract_integrity_stops}}, {{conductor_reverted_fixes}}, {{coverage_discharge_results}}, {{merged}}, {{blocked}}, {{retries}}, {{merge_attempts}}) are populated from the durable ledger. The status-based {{merged}} seed below cross-checks and supplements this — the ledger provides the richer record (findings, dispositions, escalations, retry counts) while story statuses provide the authoritative membership check.</note>
+        <note>After rehydration: in-context accumulators ({{build_log}}, {{escalations}}, {{end_gate_escalations}}, {{contract_integrity_stops}}, {{conductor_reverted_fixes}}, {{coverage_discharge_results}}, {{avfl_findings}}, {{e2e_findings}}, {{merged}}, {{blocked}}, {{retries}}, {{merge_attempts}}, {{ledger_seen_events}}) are populated from the durable ledger. The status-based {{merged}} seed below cross-checks and supplements this — the ledger provides the richer record (findings, dispositions, escalations, retry counts) while story statuses provide the authoritative membership check.</note>
       </check>
 
       <check if="file does NOT exist at {{ledger_path}}">
@@ -343,7 +401,7 @@ Ready to begin?</output>
         <action>Bind {{ledger_seen_events}} = {} (empty set).</action>
       </check>
 
-      <note>DUPLICATE-PREVENTION USE OF {{ledger_seen_events}}: Before appending a `finding-disposition` or `stage3-escalation` row to the ledger during a live build, check whether the tuple (story_slug, event, finding_id) is already in {{ledger_seen_events}}. If it is, skip the append — the event was already recorded in a prior session for a story that is not being re-run. Add each newly appended tuple to {{ledger_seen_events}} so the check is current throughout the build. This prevents duplicate rows for the same finding when a story's events survive from a prior session into the current session's ledger. The per-story re-run convention (step 2.0 reconcile resets in-progress stories) determines which stories produce new events; events for stories NOT re-run must not be re-appended even if they enter the event-processing path again.</note>
+      <note>DUPLICATE-PREVENTION USE OF {{ledger_seen_events}}: Before appending a `finding-disposition`, `stage3-escalation`, or `avfl-finding` row to the ledger during a live build, check whether the tuple (story_slug, event, finding_id) is already in {{ledger_seen_events}}. If it is, skip the append — the event was already recorded in a prior session for a story that is not being re-run. Add each newly appended tuple to {{ledger_seen_events}} so the check is current throughout the build. This prevents duplicate rows for the same finding when a story's events survive from a prior session into the current session's ledger. Coverage of avfl-finding rows additionally prevents step 3.D {{avfl_findings}} in-context appends from duplicating rehydrated entries on resume. The per-story re-run convention (step 2.0 reconcile resets in-progress stories) determines which stories produce new events; events for stories NOT re-run must not be re-appended even if they enter the event-processing path again.</note>
 
       <action>Seed {{merged}} from current story statuses to support partial-run resume:
         For each story S in {{story_map}}:
@@ -401,6 +459,8 @@ Ready to begin?</output>
       <note>All stories currently in {{frontier}} are launched as concurrent per-story pipelines in a single turn. There is NO story-count cap: if 10 stories are unblocked at once, all 10 are launched. None are deferred solely because of how many are ready. This invariant is absolute — it derives from DEC-035 D4 and the no-cap critical above.</note>
 
       <action>For each story S in {{frontier}} (launch ALL simultaneously, not sequentially):
+
+        EXECUTION ORDER: 2.1.1 → 2.1.2 → 2.1.2a → 2.1.4 (contract-freeze gate) → 2.1.5 (coverage-disposition gate) → 2.1.3 (pipeline — fires LAST, only after both gates resolve; numbered out of order for historical reasons).
 
         2.1.1 — Remove S from {{frontier}}. Add S to {{running}}.
 
@@ -481,6 +541,7 @@ Ready to begin?</output>
             Create branch and worktree:
               `git branch story/{S.slug} sprint/{{sprint_slug}}`
               `git worktree add .worktrees/story-{S.slug} story/{S.slug}`
+            Bind {{S.launch_base_sha}} = `git rev-parse sprint/{{sprint_slug}}` (the sprint tip at launch time; used by the seam-disagree guard in the stage-1 commit step).
 
             The branch base is explicit — `sprint/{{sprint_slug}}` — never main, never an unspecified
             default. The sprint branch is verified to exist by the H5 guard and reconcile (Phase 1);
@@ -525,6 +586,24 @@ Ready to begin?</output>
               If P is NOT in {{writable_files}} AND P is not `.momentum/stories/{S.slug}.md` (always forbidden),
               append { event: "conductor-warning", story_slug: S.slug, reason: "staged file outside writable_files — unstaged: " + P, ts: NOW() } to {{build_log}} and the build ledger, then UNSTAGE P (`git -C .worktrees/story-{S.slug} restore --staged P`)
               before committing. Do NOT commit out-of-scope edits.
+          SEAM-DISAGREE GUARD: Before staging, detect the cross-side record-shape mismatch.
+            Trigger condition: has the worktree tip advanced beyond the launch base?
+              git rev-parse HEAD != {{S.launch_base_sha}}
+            If the tip has advanced, the dev agent authored a commit during its run instead of leaving
+            changes uncommitted — a record-shape incompatibility. The consumer expects uncommitted
+            working-tree changes plus a file list; the producer delivered an already-committed change.
+            Fire the guard on tip-advance alone. A clean worktree (git diff --quiet && git diff
+            --cached --quiet) alongside a tip-advance is consistent with the dev agent having committed
+            all its changes — that context may be included in the reason string for debugging, but the
+            guard triggers on tip-advance regardless of worktree cleanliness.
+            — Do NOT proceed with staging.
+            — Append to {{build_log}} (and the build ledger per standing rule):
+              { event: "story-terminal", story_slug: S.slug, outcome: "failed",
+                reason: "seam-disagree: consumer expects uncommitted working-tree changes; history tip advanced beyond launch base — likely the dev agent committed changes rather than leaving them uncommitted (worktree clean: <bool>)",
+                ts: NOW() }
+            — Route this story to the story failure path (emit terminal signal { slug: S.slug, outcome: "failed" }).
+            — Do NOT continue to stage or commit.
+
           The Conductor (sole git-mutation authority) commits the produced output:
             `git -C .worktrees/story-{S.slug} add -u`
             (apply write-scope guard above before proceeding)
@@ -666,6 +745,16 @@ Ready to begin?</output>
 
             Bind {{qa_findings}} = the normalized canonical records produced by the
               normalization action above (not REVIEWER A's raw producer-format report).
+
+            REVIEWER B FAILURE HANDLING (dedicated-run — CANONICAL): If REVIEWER B errors, fails to return, or
+            returns output that does not conform to the canonical finding schema (finding-schema.md),
+            treat this as a stage-2 failure — do NOT bind [] and do NOT silently advance to stage-3.
+            Re-dispatch REVIEWER B once (single retry). If the retry also fails, emit the pipeline
+            failed terminal signal for story S: { slug: S.slug, outcome: "failed",
+            reason: "stage-2 REVIEWER B non-return or schema-invalid output after retry" }.
+            Do NOT ask the developer. Do NOT bind [] as a fallback.
+            (This is the single canonical REVIEWER B dispatch and failure-handling specification — the covered-by-composition branch below defers to this block for all dispatch and failure-handling behavior.)
+
             Bind {{cr_findings}} = findings array from REVIEWER B.
             Merge into {{stage2_findings}}: deduplicated union of {{qa_findings}} and {{cr_findings}},
               severity-sorted (critical → major → minor → low).
@@ -675,27 +764,15 @@ Ready to begin?</output>
 
             ── covered-by-composition ──
             If {{coverage_disposition}}[S.slug] == "covered-by-composition":
-            Spawn REVIEWER B ONLY as an individual agent (fan-out, NOT TeamCreate):
-
-              REVIEWER B — momentum:code-reviewer skill (bmad-code-review adapter):
-                Dispatch with Inputs, Constraint, and Returns IDENTICAL to the REVIEWER B block in the
-                dedicated-run branch above — that block is the single canonical REVIEWER B specification
-                (story_slug, story_diff: {{story_diff}}, worktree_path, review_depth per DEEPER-REVIEW
-                OPT-IN; report-only constraint; returns normalized finding-schema.md records with
-                stakes_class populated on every record, source field `bmad-code-review`).
-
-            REVIEWER A (qa-reviewer) is NOT dispatched — the dedicated QA verification run is deferred
-            to the named integration scenario at AVFL/merge (per step 2.C Path B). This is not a code
-            review — it is a QA verification run, and its deferral is the sole effect of the
-            covered-by-composition disposition.
-
-            REVIEWER B FAILURE HANDLING: If REVIEWER B errors, fails to return, or returns
-            output that does not conform to the canonical finding schema (finding-schema.md), treat
-            this as a stage-2 failure — do NOT bind [] and do NOT silently advance to stage-3.
-            Re-dispatch REVIEWER B once (single retry). If the retry also fails, emit the pipeline
-            failed terminal signal for story S: { slug: S.slug, outcome: "failed",
-            reason: "stage-2 REVIEWER B non-return or schema-invalid output after retry" }.
-            Do NOT ask the developer. Do NOT bind [] as a fallback.
+            Spawn REVIEWER B ONLY as an individual agent (fan-out, NOT TeamCreate). REVIEWER B dispatch,
+            inputs, constraint, returns, and failure handling are governed entirely by the canonical
+            REVIEWER B block in the dedicated-run branch above (the single canonical REVIEWER B
+            specification — see ~line 661). This branch adds only two deltas:
+              (1) REVIEWER A (qa-reviewer) is NOT dispatched — the dedicated QA verification run is deferred
+                  to the named integration scenario at AVFL/merge (per step 2.C Path B). That is a QA
+                  verification run, not a code review; its deferral is the sole effect of the
+                  covered-by-composition disposition.
+              (2) Only one reviewer runs, so no merge/dedup is performed (see binding below).
 
             When REVIEWER B has returned (with valid schema-conforming output):
             Bind {{cr_findings}} = findings array from REVIEWER B.
@@ -825,7 +902,7 @@ Ready to begin?</output>
 
       <note>INVOCATION CONTEXT. Step 2.S3 runs after stage-2 has returned findings for story S (from the QA reviewer + code-review adapter on the dedicated-run path, or from the code-review adapter only on the covered-by-composition path). It is the Phase B→C→D loop per spec §3 and §4: apply fixes via the directed fixer, run /simplify (every story, once per iteration, after Phase B), re-check, and repeat — bounded at 3 attempts per finding. The Conductor invokes this step with the stage-2 findings list for story S. The Conductor remains the sole git-mutation authority; the directed fixer (subagent) produces output only and never commits itself.
 
-      Stage-2 callers and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
+      Stage-2 reviewers (REVIEWER A on the dedicated-run path, REVIEWER B on both paths) and Phase D re-check callers must derive the per-story diff using the canonical pre-merge merge-base pattern (Scenario A). Canonical pattern: references/per-story-review-diff-range.md.</note>
 
       <note>ROUTINE-PATH GUARANTEE (DEC-035 D1, always-on default). Routine findings (stakes_class == routine) are ALWAYS auto-fixed inside this loop with no human gate. The always-auto-fix behavior for routine findings is UNCHANGED and PRESERVED. This is the anti-firehose baseline: the vast majority of findings complete Phase B→D autonomously without any escalation or human contact.</note>
 
@@ -865,7 +942,7 @@ Ready to begin?</output>
             "blocked" — used when retry budget is exhausted; treated as escalated for schema consumers.
             "scope-reverted" — used when the write-scope guard fully discards a fix (stage-3 SCOPE-REVERT PATH case a or case b with insufficient in-scope portion). The scope-reverted disposition has its own inline reroute path (momentum:triage called immediately, not deferred) and MUST NOT be picked up by the build-phase-completion deferred triaged-out router, which would create a duplicate stub. For schema consumers, scope-reverted maps to triaged-out.]
         Bind {{story_end_gate_escalations}} = [] — per-story accumulator for escalated findings routed to end-gate-expanded tier within this story's pipeline. Reset at the start of each story. Emitted in the pipeline signal payload; consumed by step 2.2's accumulation action which appends entries into the Conductor-scoped {{end_gate_escalations}} accumulator.
-          [WIRED: {{story_end_gate_escalations}} is written here, emitted in the pipeline signal payload, and consumed by step 2.2 to populate the Conductor-scoped {{end_gate_escalations}}. Step 5 reads {{end_gate_escalations}} (Conductor-scoped) to build decision cards. Each entry must carry: finding_id, stakes_class, summary, evidence, suggested_fix. These fields populate the decision cards. See references/endgate-report-renderer.md for the full data contract and rendering spec.]
+          [WIRED: {{story_end_gate_escalations}} is written here, emitted in the pipeline signal payload, and consumed by step 2.2 to populate the Conductor-scoped {{end_gate_escalations}}. The Conductor-scoped {{end_gate_escalations}} is the volatile write-through cache. The actual stage3-escalation ledger appends happen at step 2.S3 (CASE escalated path, ~line 1017) and at AVFL Phase 3 step 3.3 (Group-A fixer escalations, ~line 1779) — NOT at step 2.2. Step 2.2 only accumulates into the in-context {{end_gate_escalations}} accumulator. Phase 5 Source 1 reads stage3-escalation ledger rows (not the in-context {{end_gate_escalations}} accumulator) to build decision cards — the ledger is the authoritative durable source. Each entry must carry: finding_id, stakes_class, finding_summary, evidence, suggested_fix. These fields populate the decision cards. See references/endgate-report-renderer.md for the full data contract and rendering spec.]
         Bind {{mid_flight_escalations}} = [] — escalated findings accumulated for single dispatch to step 2.F (the shared-primitive escalation hook).
       </action>
 
@@ -902,9 +979,9 @@ Ready to begin?</output>
             SCOPE-REVERT PATH (fires when {{fix_reverted_files}} is non-empty after discarding):
               a. If ALL files the fixer modified were out of scope (the fix produced ONLY out-of-scope edits — nothing was committed), the fix was entirely reverted:
                  — Do NOT commit. The finding's "fixed" disposition is INVALID — the fix never landed.
-                 — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover summary, detail, location, suggested_fix, severity, stakes_class (mirroring the triaged-out and escalated cases at lines 575/580; these descriptive fields are needed for the triage stub below).
+                 — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover summary, detail, location, suggested_fix, severity, stakes_class (mirroring the triaged-out and escalated CASE blocks in step 2.S3; these descriptive fields are needed for the triage stub below).
                  — Re-classify F: change disposition from "fixed" to "scope-reverted" in {{finding_dispositions}}.
-                   [NOTE: "scope-reverted" is Conductor-internal (parallel to "blocked" at line 521). It is NOT in the canonical four-value set (fixed | dismissed | triaged-out | escalated). Before any schema consumer sees this record it maps to "triaged-out". Using a distinct value prevents the build-phase-completion deferred-triage router (CASE disposition == "triaged-out") from picking up this record a second time and creating a duplicate stub — the inline reroute below is the sole routing owner for scope-reverted findings.]
+                   [NOTE: "scope-reverted" is Conductor-internal (parallel to the "blocked" disposition in the Phase-D budget-exhaustion path). It is NOT in the canonical four-value set (fixed | dismissed | triaged-out | escalated). Before any schema consumer sees this record it maps to "triaged-out". Using a distinct value prevents the build-phase-completion deferred-triage router (CASE disposition == "triaged-out") from picking up this record a second time and creating a duplicate stub — the inline reroute below is the sole routing owner for scope-reverted findings.]
                  — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "scope-reverted", summary: I.summary, severity: I.severity, ts: NOW() }
                  — Append to {{conductor_reverted_fixes}}: { finding_id: F.id, story_slug: S.slug, summary: I.summary, reverted_files: {{fix_reverted_files}}, reroute_stub_slug: null }.
                  — RE-ROUTE for follow-up (defect must not be silently dropped): invoke momentum:triage with the inbound finding I's descriptive fields (finding_id: F.id, summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix, story_slug: S.slug, severity: I.severity, stakes_class: I.stakes_class) to create a backlog stub so the defect remains on record. This triage call is inline because the scope-reverted disposition does NOT enter the deferred-triage router. Bind the returned stub slug into {{reroute_stub_slug}}.
@@ -917,8 +994,9 @@ Ready to begin?</output>
               `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
             (Only reached when the write-scope guard did NOT reclassify F — i.e., the fix landed in-scope and is valid.)
+          — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover severity.
           — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine", severity: I.severity, ts: NOW() }
-            Note: I.severity is recovered from the inbound finding I for F.finding_id in {{stage2_findings}} — the same lookup used above to validate stakes_class.
+            Note: I.severity is recovered from the inbound finding I for F.finding_id in {{stage2_findings}} — the explicit lookup on the line immediately above (mirroring the same lookup present in the dismissed, triaged-out, escalated, and blocked CASE blocks).
 
         CASE disposition == "dismissed":
           — Validate non-empty rationale: if F.dismissal_rationale is empty or missing, treat as invalid — log error in {{build_log}} and re-present F to the fixer in the next iteration (do not record as dismissed until a rationale is supplied).
@@ -936,7 +1014,7 @@ Ready to begin?</output>
           — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's escalated disposition object carries these in the nested escalation object and does not echo them at the top level; join by finding_id). Canonical shape defined in directed-fix-invocation-contract.md §"Canonical Fixer Output Shape".
             Resolve fields: stakes_class = I.stakes_class; timing_tier = F.escalation.timing_tier (NESTED — read from inside the escalation object, NOT from F.timing_tier; default "end-gate-expanded" if absent); summary = I.summary; evidence = F.escalation.evidence (inline from fixer) or I.evidence; suggested_fix = I.suggested_fix.
           — Record in {{finding_dispositions}}: { finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, evidence: evidence, suggested_fix: suggested_fix }
-          — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, severity: I.severity, ts: NOW() }
+          — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, evidence: evidence, suggested_fix: suggested_fix, severity: I.severity, ts: NOW() }
           — F is removed from the retry-bound-3 loop IMMEDIATELY. No further fix/re-check attempts will be run against F inside this loop.
           — Route by timing tier:
               IF timing_tier == "mid-flight":
@@ -945,7 +1023,8 @@ Ready to begin?</output>
               ELSE (timing_tier == "end-gate-expanded" OR timing_tier not set):
                 — The finding is stakes-class but does NOT meet the mid-flight bar. Route to end-gate-expanded tier (the default and safety net).
                 — Append to {{story_end_gate_escalations}}: { finding_id: F.finding_id, stakes_class: stakes_class, timing_tier: "end-gate-expanded", summary: summary, evidence: evidence, suggested_fix: suggested_fix }
-                — Record in {{build_log}}: { story_slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_summary: summary }
+                — Record in {{build_log}} (and the build ledger per standing rule): { story_slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_id: F.finding_id, stakes_class: stakes_class, finding_summary: summary, evidence: evidence, suggested_fix: suggested_fix }
+                  (finding_id, stakes_class, finding_summary (= summary), evidence, and suggested_fix are available from the CASE escalated resolution above — same bindings. These fields are required by Phase 5 Source 1 for decision card assembly and anti-rubber-stamp verification.)
                 — Continue the fix loop. This escalation does NOT pause the build or stop other findings from completing.
       </action>
 
@@ -1139,14 +1218,14 @@ Ready to begin?</output>
 
       <!-- ── Path B: covered-by-composition ───────────────────── -->
       <check if="{{coverage_disposition}} == 'covered-by-composition' AND {{covered_by_scenario}} is present AND non-empty">
-        <note>This story's dedicated QA verification run is deferred to a named integration scenario at AVFL/merge. No dedicated QA verification run (REVIEWER A / qa-reviewer) is performed for this story at build time. Adversarial code review (REVIEWER B / momentum:code-reviewer) still runs at build time on the per-story diff — coverage disposition does not defer, skip, or weaken code review. The Conductor records the deferral explicitly — it does not silently drop the QA verification. The named integration scenario ({{covered_by_scenario}}) is the downstream discharge point at AVFL/merge (Phase 3). The deferral record is informational: it states THAT the dedicated QA run was skipped and WHICH scenario owns the discharge, and notes that code review still runs at build time. Nothing in this record changes how findings from either the code review or the integration scenario are classified, escalated, or reported.</note>
+        <note>This story's dedicated QA verification run is deferred to a named integration scenario at AVFL/merge. No dedicated QA verification run (REVIEWER A / qa-reviewer) is performed for this story at build time. (REVIEWER B code review is unaffected — see TIMING-AND-VENUE note above.) The Conductor records the deferral explicitly — it does not silently drop the QA verification. The named integration scenario ({{covered_by_scenario}}) is the downstream discharge point at AVFL/merge (Phase 3). The deferral record is informational: it states THAT the dedicated QA run was skipped and WHICH scenario owns the discharge. Nothing in this record changes how findings from either the code review or the integration scenario are classified, escalated, or reported.</note>
         <note>PRECONDITION — a named scenario is required. This path is reached only when covered_by_scenario is present and non-empty. When it is null/missing/empty, the guard above fires first and routes to dedicated-run instead. This ensures AC 3's naming requirement is a hard precondition for skipping the dedicated build-time run.</note>
-        <action>Skip the dedicated QA verification run for story S at build time. Do NOT dispatch REVIEWER A (qa-reviewer) for S during this build phase. Stage-2 still dispatches REVIEWER B (momentum:code-reviewer) on the per-story diff — coverage disposition defers only the QA verification run, not the code review.
+        <action>Skip the dedicated QA verification run for story S at build time. Do NOT dispatch REVIEWER A (qa-reviewer) for S during this build phase. Stage-2 still dispatches REVIEWER B (momentum:code-reviewer) on the per-story diff — see TIMING-AND-VENUE note for full rationale.
           Record the deferral in {{build_log}}:
             { story_slug: S.slug, title: S.title, event: "coverage-disposition-deferred",
               coverage_disposition: "covered-by-composition",
               covered_by_scenario: {{covered_by_scenario}},
-              note: "Dedicated build-time QA run (REVIEWER A) skipped. Adversarial code review (REVIEWER B) still runs at build time on the per-story diff (stage-2). QA verification debt to be discharged at AVFL/merge by the named integration scenario." }
+              note: "Dedicated QA run (REVIEWER A) deferred. Code review (REVIEWER B) runs at build time. QA debt discharged at AVFL/merge by named scenario." }
           Return routing outcome to step 2.1.5: { outcome: "covered-by-composition", integration_scenario: {{covered_by_scenario}} }.
           Do not produce a VERIFIED / PARTIAL / MISSING / BLOCKED verification disposition for story S from this build-phase step — the verification result belongs to the integration scenario at AVFL/merge.
         </action>
@@ -1519,6 +1598,10 @@ Note on signal vocabulary: spec §3 lists three reactions — merged, blocked, f
             Add to {{blocked}}; transition to "closed-incomplete" via `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`; append to {{build_log}} (and the build ledger per standing rule): { event: "story-terminal", story_slug: slug, outcome: "blocked", reason: "dependency never reached >= review", ts: NOW() }.
           For any story in {{story_map}} still in "in-progress" not handled by step 2.0 reconcile:
             Record in {{build_log}} (and the build ledger per standing rule): { event: "story-terminal", story_slug: slug, outcome: "stranded", note: "defer to spec §6 reconcile-on-start handler", ts: NOW() }.
+          If {{build_cross_artifact_notes}} is non-empty:
+            Invoke momentum:triage once with the full batch (each entry carries artifact, note, story_slug).
+            Append to {{build_log}} (and the build ledger per standing rule):
+              { event: "conductor-warning", story_slug: null, reason: "cross-artifact batch routed to triage: " + length({{build_cross_artifact_notes}}) + " note(s)", ts: NOW() }.
           Proceed to Phase 3 (AVFL-on-merge).
         </action>
       </check>
@@ -1683,13 +1766,6 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
       Tag all entries: source = "avfl-merge-review".
 
-      LEDGER — Per-finding AVFL events: For each entry in {{avfl_findings}}, append to {{build_log}} and the build ledger:
-        { event: "avfl-finding", story_slug: (F.story_slug or "sprint-integration"), finding_id: F.finding_id,
-          disposition: F.disposition, severity: F.severity, stakes_class: F.stakes_class,
-          summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix,
-          source: "avfl-merge-review", ts: NOW() }
-      This makes AVFL finding-level data durable — Phase 5 Sources 2-3 can reconstruct {{avfl_findings}} from the ledger on resume.
-
       From Group-A fixer escalations (findings the directed fixer returned with disposition "escalated"
         during the merge-review inner fix loop — tracked via workflow-merge-review.md step 5 Group-A
         handling at ~line 280-282, where escalated dispositions are carried forward as leftovers with
@@ -1704,10 +1780,24 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           Append to {{build_log}} (and the build ledger per standing rule — REQUIRED so this escalation survives session death):
             { event: "stage3-escalation", story_slug: (L.owning_stories[0] or "sprint-integration"),
               finding_id: L.id, stakes_class: L.stakes_class or "routine",
-              timing_tier: "end-gate-expanded", finding_summary: L.description, ts: NOW() }
+              timing_tier: "end-gate-expanded", finding_summary: L.description,
+              evidence: L.evidence, suggested_fix: L.suggestion, ts: NOW() }
+            (evidence and suggested_fix are available from the L bindings at {{end_gate_escalations}} append above — same source. These fields complete the unified rich field set claimed by build-ledger.md: both append sites (2.S3 and AVFL Phase 3) now produce the full evidence + suggested_fix payload required by Phase 5 Source 1 for decision card assembly.)
           Tag the corresponding {{avfl_findings}} entry with timing_tier: "end-gate-expanded" and
           disposition: "escalated" (overriding "residual") so Source 2 de-dup at step 5 correctly
           identifies these as already escalated and avoids double-counting.
+
+      LEDGER — Per-finding AVFL events (runs AFTER the Group-A re-tag above so rows capture the
+        final disposition — "escalated" for Group-A findings, not the stale "residual" they started with):
+        For each entry F in {{avfl_findings}}, append to {{build_log}} and the build ledger:
+        { event: "avfl-finding", story_slug: (F.story_slug or "sprint-integration"), finding_id: F.finding_id,
+          disposition: F.disposition, severity: F.severity, stakes_class: F.stakes_class,
+          summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix,
+          source: "avfl-merge-review", ts: NOW() }
+        Skip if (F.story_slug or "sprint-integration", "avfl-finding", F.finding_id) is already in {{ledger_seen_events}}
+        (dedup key on finding_id from ledger rows — idempotent on resume).
+        Add each newly appended tuple to {{ledger_seen_events}}.
+      This makes AVFL finding-level data durable — Phase 5 Sources 2-3 can reconstruct {{avfl_findings}} from the ledger on resume.
     </action>
 
     <!-- ── 3.4 — Route residual leftovers through escalation ─── -->
@@ -1794,12 +1884,14 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
 
         CHECK if {{scenario_found}} == false:
           — The named scenario cannot be located. The deferral CANNOT be discharged.
-          — Record in {{build_log}}:
+          — Record in {{build_log}} (and the build ledger per standing rule):
               { story_slug: R.story_slug, title: R.title,
                 event: "coverage-deferral-undischarged",
                 covered_by_scenario: {{scenario_id}},
                 outcome: "scenario-not-found",
-                note: "Named integration scenario could not be located; deferral remains open." }
+                note: "Named integration scenario could not be located; deferral remains open.",
+                ts: NOW() }
+          — Before appending below: skip if an entry with finding_id "undischarged-deferral-{{R.story_slug}}" already exists in {{avfl_findings}} (rehydrated from a prior session's avfl-finding rows via step 2.0).
           — Append an undischarged-deferral leftover to {{avfl_findings}}:
               { source: "coverage-discharge-consumer",
                 finding_id: "undischarged-deferral-{{R.story_slug}}",
@@ -1813,6 +1905,14 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
                 detail: "Story `{{R.story_slug}}` was deferred from build-time QA with the expectation that integration scenario `{{scenario_id}}` would verify its acceptance behavior at AVFL/merge. The scenario cannot be located. The verification debt is unresolved.",
                 evidence: "coverage-disposition-deferred record: slug={{R.story_slug}}, covered_by_scenario={{scenario_id}}; scenario file not found under `.momentum/sprints/{{sprint_slug}}/specs/`.",
                 suggestion: "Locate or create the named integration scenario `{{scenario_id}}`, run it against the sprint branch, and confirm it observes `{{R.story_slug}}`'s required behavior. Alternatively, re-run story `{{R.story_slug}}` with `coverage_disposition: dedicated-run`." }
+          — Also append an avfl-finding ledger row at this time (and the build ledger per standing rule):
+              { event: "avfl-finding", story_slug: R.story_slug, finding_id: "undischarged-deferral-{{R.story_slug}}",
+                disposition: "residual", severity: "major", stakes_class: "routine",
+                summary: "Coverage deferral for `{{R.story_slug}}` is undischarged — named scenario `{{scenario_id}}` not found.",
+                evidence: "coverage-disposition-deferred record: slug={{R.story_slug}}, covered_by_scenario={{scenario_id}}; scenario file not found under `.momentum/sprints/{{sprint_slug}}/specs/`.",
+                suggested_fix: "Locate or create the named integration scenario and re-run, or switch to dedicated-run.",
+                source: "coverage-discharge-consumer", ts: NOW() }
+            (This ledger row ensures Phase 5 Source 2 picks up this undischarged deferral from the durable ledger on resume — the 3.3 write loop has already run at this point, so the row is persisted here at append time.)
           — Skip to the next deferred record. Do NOT proceed to the run step.
 
         RUN THE SCENARIO (when {{scenario_found}} == true):
@@ -1843,20 +1943,22 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <action>For each deferred record R and its {{scenario_result}}:
 
         CASE: all three discharge conditions hold (ran AND passed AND deferred_story_observed):
-          — Record discharge in {{build_log}}:
+          — Record discharge in {{build_log}} (and the build ledger per standing rule):
               { story_slug: R.story_slug, title: R.title,
                 event: "coverage-deferral-discharged",
                 covered_by_scenario: {{scenario_id}},
                 outcome: "verified-by-composition",
                 evidence: {{scenario_result}}.evidence,
-                note: "Deferred story's acceptance behavior was observed by the named integration scenario. Verification debt discharged." }
+                note: "Deferred story's acceptance behavior was observed by the named integration scenario. Verification debt discharged.",
+                ts: NOW() }
           — Tag the story as verified-by-composition in the Conductor's in-memory state:
               {{coverage_discharge_results}}[R.story_slug] = { outcome: "verified-by-composition", scenario_id: {{scenario_id}}, evidence: {{scenario_result}}.evidence }
           — No undischarged-deferral leftover is appended to {{avfl_findings}} for this record.
           — STAKES-FINDINGS PASS-THROUGH: Even when a deferral is discharged, the executor may have observed non-routine stakes-class concerns while running the scenario. These must not be silently dropped.
             For each entry SF in {{scenario_result}}.stakes_findings (may be empty):
               If SF.stakes_class is one of { security-auth-isolation, irreversible-destructive, high-blast-radius-architecture }:
-                Append to {{avfl_findings}}:
+                Before appending: skip if an entry with finding_id "discharge-stakes-{{R.story_slug}}-{{loop_index}}" already exists in {{avfl_findings}} (rehydrated from a prior session's avfl-finding rows via step 2.0).
+                Append to {{avfl_findings}} (and the build ledger per standing rule):
                   { source: "coverage-discharge-consumer",
                     finding_id: "discharge-stakes-{{R.story_slug}}-{{loop_index}}",
                     severity: "major",
@@ -1869,6 +1971,12 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
                     detail: "Stakes-class concern observed by the discharge executor while running scenario `{{scenario_id}}` for deferred story `{{R.story_slug}}`. The deferral itself was discharged (scenario passed), but this concern requires a human decision — it is not on the routine auto-fix path.",
                     evidence: SF.evidence,
                     suggestion: SF.suggested_fix }
+                Also append an avfl-finding ledger row at this time (required — the 3.3 write loop has already run; this is the only opportunity to persist this finding to the ledger):
+                  { event: "avfl-finding", story_slug: R.story_slug,
+                    finding_id: "discharge-stakes-{{R.story_slug}}-{{loop_index}}",
+                    disposition: "residual", severity: "major", stakes_class: SF.stakes_class,
+                    summary: SF.summary, evidence: SF.evidence, suggested_fix: SF.suggested_fix,
+                    source: "coverage-discharge-consumer", ts: NOW() }
                 (Routine findings from the executor are NOT added here — they are out of scope for this path.)
 
         CASE: any discharge condition fails (scenario ran but did not pass, OR ran and passed but deferred story's behavior was not observed, OR scenario could not run):
@@ -1876,14 +1984,16 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               If {{scenario_result}}.ran == false: failure_mode = "scenario-did-not-run"
               Else if {{scenario_result}}.passed == false: failure_mode = "scenario-failed"
               Else: failure_mode = "deferred-story-behavior-not-observed"
-          — Record in {{build_log}}:
+          — Record in {{build_log}} (and the build ledger per standing rule):
               { story_slug: R.story_slug, title: R.title,
                 event: "coverage-deferral-undischarged",
                 covered_by_scenario: {{scenario_id}},
                 outcome: failure_mode,
                 evidence: {{scenario_result}}.evidence,
-                note: "Deferral is not discharged; see leftover finding in end-gate report." }
-          — Append an undischarged-deferral leftover to {{avfl_findings}}:
+                note: "Deferral is not discharged; see leftover finding in end-gate report.",
+                ts: NOW() }
+          — Before appending below: skip if an entry with finding_id "undischarged-deferral-{{R.story_slug}}" already exists in {{avfl_findings}} (rehydrated from a prior session's avfl-finding rows via step 2.0).
+          — Append an undischarged-deferral leftover to {{avfl_findings}} (and the build ledger per standing rule):
               { source: "coverage-discharge-consumer",
                 finding_id: "undischarged-deferral-{{R.story_slug}}",
                 severity: "major",
@@ -1896,6 +2006,14 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
                 detail: "Story `{{R.story_slug}}` was deferred from build-time QA. Its named integration scenario `{{scenario_id}}` was expected to observe its acceptance behavior at AVFL/merge. The discharge failed: {{failure_mode}}. The verification debt is unresolved.",
                 evidence: {{scenario_result}}.evidence,
                 suggestion: "Investigate why scenario `{{scenario_id}}` did not discharge the deferral ({{failure_mode}}). Ensure the scenario explicitly covers story `{{R.story_slug}}`'s acceptance criteria. Re-run Phase 3 after fixing the scenario, or re-run story `{{R.story_slug}}` with `coverage_disposition: dedicated-run`." }
+          — Also append an avfl-finding ledger row at this time (required — the 3.3 write loop has already run; this is the only opportunity to persist this finding to the ledger):
+              { event: "avfl-finding", story_slug: R.story_slug,
+                finding_id: "undischarged-deferral-{{R.story_slug}}",
+                disposition: "residual", severity: "major", stakes_class: "routine",
+                summary: "Coverage deferral for `{{R.story_slug}}` is undischarged — {{failure_mode}} for scenario `{{scenario_id}}`.",
+                evidence: {{scenario_result}}.evidence,
+                suggested_fix: "Investigate why scenario `{{scenario_id}}` did not discharge the deferral and re-run, or switch to dedicated-run.",
+                source: "coverage-discharge-consumer", ts: NOW() }
       </action>
 
       <action>Append coverage-discharge summary to {{build_log}} (and the build ledger per standing rule):
@@ -1907,8 +2025,8 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       </action>
 
       <note>STAKES-ROUTING NOTE. Two categories of findings flow out of this step:
-        (1) Undischarged-deferral leftovers — injected into {{avfl_findings}} with stakes_class:"routine" and disposition:"residual". Because they are routine, Phase 3 step 3.4 holds them (no escalation check) and Phase 5 Source 2 excludes them from {{stakes_findings}} (which filters to non-routine residuals only). They surface to the developer via the {{undischarged_deferrals}} variable computed in Phase 5's supporting-variables step and rendered in §05 of the end-gate report — not via the §04 decision-card path.
-        (2) Stakes-class findings returned by the discharge executor — injected into {{avfl_findings}} with the executor-reported stakes_class (non-routine) and disposition:"residual", source:"coverage-discharge-consumer". Because their stakes_class is non-routine, Phase 5 Source 2 picks them up for {{stakes_findings}} and they render as decision cards in §04 of the end-gate report. This holds EVEN WHEN the deferral itself was discharged (scenario passed). A passing scenario does not suppress a stakes-class concern the executor observed during the run. This routing closes the gap identified at step 2.C's STAKES-CLASS BOUNDARY: a deferral does not weaken stakes routing — it only defers the venue, never the path.</note>
+        (1) Undischarged-deferral leftovers — injected into {{avfl_findings}} with stakes_class:"routine" and disposition:"residual", AND persisted to the ledger as avfl-finding rows at append time (the 3.3 write loop has already completed; these rows are written here). Because they are routine, Phase 3 step 3.4 holds them (no escalation check) and Phase 5 Source 2 excludes them from {{stakes_findings}} (which filters to non-routine residuals only). They surface to the developer via the {{undischarged_deferrals}} variable computed in Phase 5's supporting-variables step and rendered in §05 of the end-gate report — not via the §04 decision-card path.
+        (2) Stakes-class findings returned by the discharge executor — injected into {{avfl_findings}} with the executor-reported stakes_class (non-routine) and disposition:"residual", source:"coverage-discharge-consumer", AND persisted to the ledger as avfl-finding rows at append time. Because their stakes_class is non-routine, Phase 5 Source 2 picks them up from the durable ledger rows for {{stakes_findings}} and they render as decision cards in §04 of the end-gate report. This holds EVEN WHEN the deferral itself was discharged (scenario passed). A passing scenario does not suppress a stakes-class concern the executor observed during the run. This routing closes the gap identified at step 2.C's STAKES-CLASS BOUNDARY: a deferral does not weaken stakes routing — it only defers the venue, never the path.</note>
 
       <note>Proceed to Phase 4 (E2E).</note>
     </step>
@@ -1989,7 +2107,8 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             F.disposition = the fixer's returned value ("fixed" | "dismissed" | "triaged-out").
             If "dismissed": also set F.dismissal_rationale = fixer-returned rationale (non-empty required).
             If "triaged-out": invoke momentum:triage to spin a backlog stub for F (per finding-schema Rule 4 — triaged-out findings are not silently dropped). Record stub slug in F.triage_stub_slug.
-          Append to {{build_log}}: { phase: "e2e", event: "e2e-finding-auto-fixed", story_slug: F.story_slug, summary: F.summary, disposition: F.disposition }
+          Append to {{build_log}} (and the build ledger per standing rule): { phase: "e2e", event: "e2e-finding-auto-fixed", finding_id: F.finding_id, story_slug: F.story_slug, summary: F.summary, disposition: F.disposition, severity: F.severity, stakes_class: "routine" }
+            (finding_id, severity, and stakes_class: "routine" are required so rehydration can reconstruct the complete {{e2e_findings}} accumulator — including routine entries — from this row on resume.)
 
       CASE F.stakes_class != "routine" (stakes-class finding):
         — Stakes-class E2E findings are NEVER silently auto-fixed. Route to escalation.
@@ -2000,11 +2119,13 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               — Finding is irreversible-and-imminent OR build-invalidating.
               — Invoke step 2.F (mid-flight escalation consumption hook) with F as a single-finding escalations array.
               — The engine evaluates the bar and returns "pause-branch" or "continue".
-              — Record in {{build_log}}: { phase: "e2e", event: "e2e-mid-flight-escalation", story_slug: F.story_slug, stakes_class: F.stakes_class, summary: F.summary }
+              — Record in {{build_log}} (and the build ledger per standing rule): { phase: "e2e", event: "e2e-mid-flight-escalation", story_slug: F.story_slug, stakes_class: F.stakes_class, summary: F.summary }
             ELSE (timing_tier == "end-gate-expanded" OR not set):
               — Finding is stakes-class but does NOT meet the mid-flight bar. Hold for end-gate.
-              — Append to {{end_gate_escalations}}: { finding_id: generated-id, story_slug: F.story_slug, source: "e2e-validator", stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", severity: F.severity, type: F.type, location: F.location, summary: F.summary, detail: F.detail, evidence: F.evidence, suggested_fix: F.suggested_fix, ac_id: F.ac_id, legitimate: true, disposition: "escalated" }
-              — Record in {{build_log}}: { phase: "e2e", event: "e2e-stakes-escalation", story_slug: F.story_slug, stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", summary: F.summary }
+              — Bind {{e2e_finding_id}} = generated unique id for this finding (e.g., "e2e-{story_slug}-{loop_index}" with loop_index ensuring uniqueness per story within this E2E run). Used in both appends below.
+              — Append to {{end_gate_escalations}}: { finding_id: {{e2e_finding_id}}, story_slug: F.story_slug, source: "e2e-validator", stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", severity: F.severity, type: F.type, location: F.location, summary: F.summary, detail: F.detail, evidence: F.evidence, suggested_fix: F.suggested_fix, ac_id: F.ac_id, legitimate: true, disposition: "escalated" }
+              — Record in {{build_log}} (and the build ledger per standing rule): { phase: "e2e", event: "e2e-stakes-escalation", finding_id: {{e2e_finding_id}}, story_slug: F.story_slug, stakes_class: F.stakes_class, timing_tier: "end-gate-expanded", summary: F.summary, evidence: F.evidence, suggested_fix: F.suggested_fix }
+                (finding_id is generated once and shared with the {{end_gate_escalations}} append above; evidence and suggested_fix are required by Phase 5 Source 3 for decision card rendering.)
     </action>
 
     <!-- ── 4.4 — Build log and phase completion ──────────────────── -->
@@ -2100,17 +2221,18 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       Source 1 — Per-story fix-loop escalations (step 2.S3):
         From the ledger only: collect all rows where event == "stage3-escalation" AND timing_tier == "end-gate-expanded".
         Under the write-through standing rule, every end-gate-expanded escalation is appended to the ledger at the time it is recorded in step 2.S3 — there are no unflushed events. The {{end_gate_escalations}} in-context accumulator is the write-through cache; the ledger is the authoritative source. Do not also collect from {{end_gate_escalations}} — the ledger already contains every entry that accumulator holds.
-        Each entry carries: finding_id, stakes_class, timing_tier:"end-gate-expanded", summary, evidence, suggested_fix, story_slug.
+        Each entry carries: finding_id, stakes_class, timing_tier:"end-gate-expanded", evidence, suggested_fix, story_slug.
+        Read remap: summary: R.finding_summary — note the stage3-escalation row field name is finding_summary (both producer sites at 2.S3 and AVFL Phase 3 write finding_summary, not summary; the rehydration route at step 2.0 applies the same remap).
       Source 2 — Post-merge AVFL escalations (Phase 3):
         From the ledger: collect rows where event == "avfl-finding" AND stakes_class != "routine" AND disposition in {"residual", "escalated"}.
         (Most AVFL-on-merge leftovers carry disposition "residual". Group-A fixer escalations carry disposition
         "escalated". The dedup at Bind {{stakes_findings}} below handles any overlap between Source 1 and Source 2.)
         For each, carry: finding_id, stakes_class, summary, evidence, suggested_fix, source:"avfl-merge-review".
-        Note: do NOT read from {{avfl_findings}} in-context accumulator — it is a volatile cache that does not survive session death. The durable ledger rows (event == "avfl-finding") are the authoritative source.
+        Note: do NOT read from {{avfl_findings}} in-context accumulator — it is a volatile cache that does not survive session death. The durable ledger rows (event == "avfl-finding") are the authoritative source. (The rehydrated {{avfl_findings}} accumulator is an equivalent view rebuilt from these same ledger rows at step 2.0; the MAJOR-RESIDUAL GOVERNANCE GUARD and 5.RC.4 re-render read those rehydrated views by design — they do not re-read the ledger directly at Phase 5 time.)
       Source 3 — E2E failed/stakes scenarios (Phase 4):
         From the ledger: collect rows where event == "e2e-stakes-escalation" AND stakes_class != "routine".
-        For each, carry: finding_id (generated at append time or "e2e-{story_slug}"), stakes_class, summary, evidence (from the row), suggested_fix, source:"e2e-validator".
-        Note: do NOT read from {{e2e_findings}} in-context accumulator — it is a volatile cache. The durable ledger rows (event == "e2e-stakes-escalation") are the authoritative source.
+        For each, carry: finding_id (generated at append time per step 4.3 — unique per finding, e.g. "e2e-{story_slug}-{NN}"), stakes_class, summary, evidence (from the row), suggested_fix, source:"e2e-validator".
+        Note: do NOT read from {{e2e_findings}} in-context accumulator — it is a volatile cache. The durable ledger rows (event == "e2e-stakes-escalation") are the authoritative source. (The rehydrated {{e2e_findings}} accumulator is an equivalent view rebuilt from these same ledger rows — including e2e-finding-auto-fixed rows — at step 2.0; the MAJOR-RESIDUAL GOVERNANCE GUARD and 5.RC.4 re-render read those rehydrated views by design — they do not re-read the ledger directly at Phase 5 time.)
       Bind {{stakes_findings}} = concat(Source 1, Source 2, Source 3), deduplicated by finding_id (Source 1 already carries E2E stakes findings appended by Phase 4; the dedup prevents double-counting with Source 3).
       If {{stakes_findings}} is empty: the build is clean; the gate can be approved without any decision cards.
     </action>
@@ -2134,7 +2256,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       {{dismissed_findings}}       = ledger rows where event == "finding-disposition" AND disposition == "dismissed" (must each carry non-empty dismissal_rationale; reject any without one and append { event: "conductor-warning", story_slug: R.story_slug, reason: "dismissed finding " + R.finding_id + " has empty or missing dismissal_rationale — excluded from dismissed_findings", ts: NOW() } to {{build_log}} and the build ledger).
       {{stories_built_count}}      = count of entries in {{merged}} (cross-checked against ledger rows where event == "story-terminal" AND outcome == "merged").
       {{blocked_stories}}          = stories never added to {{merged}} (quarantined, integrity-stopped, fix-budget-exhausted, or mid-flight-aborted); derive from the union of:
-        (a) ledger rows where event == "story-terminal" AND outcome in {"blocked", "quarantined", "stranded"},
+        (a) ledger rows where event == "story-terminal" AND outcome in {"blocked", "quarantined", "stranded", "failed"},
         (b) ledger rows where event == "contract-integrity-stop" (integrity-stopped stories never produce a story-terminal row),
         (c) ledger rows where event == "stage3-story-blocked",
         (d) ledger rows where event == "mid-flight-escalation" AND resolution == "branch-aborted".
@@ -2206,12 +2328,13 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
         Sources of residual findings to scan:
           (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized in step 3.3 (avfl_findings): fixed | residual | escalated).
-          (b) {{build_log}} entries with event == "stage3-finding-blocked" — per-story pipeline findings that exhausted the fix retry budget; each carries disposition: "blocked".
+          (b) ledger rows where event == "finding-disposition" AND disposition == "blocked" — per-story pipeline findings that exhausted the fix retry budget; each carries finding_id, summary, severity, and disposition fields directly on the row (written at budget-exhaustion time in step 2.S3).
           (c) {{e2e_findings}} — E2E findings (Phase 4); each has severity and disposition fields (normalized at Phase 4 step 4.3: fixed | dismissed | triaged-out | escalated). Findings where disposition != "fixed" AND disposition != "dismissed" are residuals.
         Combine all three sources into {{all_build_findings}}.
+        Note: sources (a) and (c) read the rehydrated in-context accumulators ({{avfl_findings}} and {{e2e_findings}}), which are equivalent views of the same durable ledger rows rebuilt at step 2.0 rehydration — consistent with the AUTHORITATIVE SOURCE note above and the reconciliation clauses at Source 2 and Source 3.
 
         Collect {{major_residuals}} = all findings F in {{all_build_findings}} where:
-          - F.severity is in {blocker, critical, major}  — the upper severity tier
+          - F.severity is in {critical, major}  — the upper severity tier
           - F.disposition is NOT "fixed" AND NOT "dismissed" — finding was not resolved; it is a residual
         Note: "fixed" and "dismissed" findings are fully resolved and need no stub.
         Note: "blocked" findings (step 2.S3 retry-exhausted path) and "escalated" and "residual" AVFL findings all satisfy the NOT-fixed/NOT-dismissed condition and are included.
@@ -2430,6 +2553,9 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           — Re-assemble {{stakes_findings}} from {{end_gate_escalations}}, {{avfl_findings}},
             and {{e2e_findings}} (these are unchanged by the change-workflow pass; the pass
             targeted story-level or sprint-level code changes, not finding metadata).
+            Note: {{avfl_findings}} and {{e2e_findings}} here are the rehydrated accumulators —
+            equivalent views of the durable ledger rows rebuilt at step 2.0, consistent with
+            the reconciliation clauses at Source 2 and Source 3 above.
           — Re-assemble supporting variables ({{routine_auto_fixed_count}}, {{dismissed_findings}},
             {{stories_built_count}}, {{blocked_stories}}, etc.) from live Conductor state.
           — Append a "Changes applied this pass" section to the report body: a summary table

@@ -64,14 +64,14 @@ Event names reuse the existing `{{build_log}}` vocabulary. No renames.
 |---|---|---|
 | `story-launched` | Step 2.1 pipeline spawn | `title` |
 | `stage-transition` | Stage-1 → stage-2 and stage-2 → stage-3 boundaries | `from_stage`, `to_stage` |
-| `finding-disposition` | Each individual finding disposition in step 2.S3 | `finding_id`, `disposition` (fixed\|dismissed\|triaged-out\|escalated\|blocked\|scope-reverted), `summary`, `stakes_class`, `severity`. When dismissed: `dismissal_rationale` (non-empty, per Required-Rationale Rule). When escalated: `timing_tier`. |
-| `stage3-fix-scope-reverted` | Write-scope guard fully discards a fix (step 2.S3) | `finding_id`, `finding_summary`, `reverted_files` |
-| `stage3-escalation` | End-gate-expanded escalation recorded in step 2.S3 | `disposition: "escalated"`, `timing_tier: "end-gate-expanded"`, `finding_summary` |
+| `finding-disposition` | Each individual finding disposition in step 2.S3 | `finding_id`, `disposition` (fixed\|dismissed\|triaged-out\|escalated\|blocked\|scope-reverted), `summary`, `severity`. When fixed or escalated: `stakes_class`. When dismissed: `dismissal_rationale` (non-empty, per Required-Rationale Rule). When escalated: `timing_tier`, `evidence`, `suggested_fix` (required for Phase 5 anti-rubber-stamp decision card rendering per DEC-036 D4). |
+| `stage3-fix-scope-reverted` | Write-scope guard fully discards a fix (step 2.S3) | `finding_id`, `finding_summary`, `reverted_files`, `reroute_stub_slug` |
+| `stage3-escalation` | End-gate-expanded escalation recorded in step 2.S3 (and AVFL Phase 3 step 3.3 Group-A fixer escalations) | `disposition: "escalated"`, `timing_tier: "end-gate-expanded"`, `finding_id`, `stakes_class`, `finding_summary`, `evidence`, `suggested_fix`. Both append sites (2.S3 and AVFL Phase 3) produce this unified rich field set — Phase 5 Source 1 reads all fields unconditionally. Note: the AVFL Phase 3 site may write the sentinel story_slug `"sprint-integration"` for findings not attributable to a single story (per the sanctioned sentinel values table above). |
 | `stage3-mid-flight-escalation` | Mid-flight escalation dispatched in step 2.S3 | `disposition: "escalated"`, `timing_tier: "mid-flight"`, `finding_count` |
 | `stage3-finding-blocked` | Finding exhausts retry budget in step 2.S3 | `finding_id`, `finding_summary`, `attempts` |
 | `stage3-simplify-pass` | Phase C simplify cleanup completes | `findings_count`, `committed` (bool) |
 | `stage3-story-blocked` | Story left unmerged after fix budget exhaustion | `leftover_count`, `stranded: true` |
-| `story-terminal` | Story pipeline emits terminal signal (merged or failed/blocked/quarantined) | `outcome` (merged\|blocked\|quarantined\|contract-integrity-stop\|stranded), `title`. When merged: `findings_summary`, `escalations`. When blocked/quarantined: `reason`, `retry_count` or `merge_attempts`, `conflict_files` (quarantine). |
+| `story-terminal` | Story pipeline emits terminal signal (merged or failed/blocked/quarantined) | `outcome` (merged\|blocked\|quarantined\|contract-integrity-stop\|stranded\|failed), `title`. When merged: `findings_summary`, `escalations`. When blocked/quarantined: `reason`, `retry_count` or `merge_attempts`, `conflict_files` (quarantine). When failed: `reason`. Note: `failed` is emitted by the SEAM-DISAGREE GUARD when the dev agent commits changes instead of leaving them uncommitted — the guard fires on tip-advance and routes the story to the failure path. |
 | `retry` | Pipeline-level retry in step 2.2 | `attempt` |
 | `mid-flight-escalation` | Developer-facing mid-flight pause resolution (step 2.F) | `disposition: "escalated"`, `resolution` (fix-applied\|changed-action\|branch-aborted), `finding_summary` |
 | `contract-integrity-stop` | Contract fingerprint mismatch at step 2.V | `contract_path`, `frozen_sha256`, `live_sha256` |
@@ -85,7 +85,7 @@ Event names reuse the existing `{{build_log}}` vocabulary. No renames.
 | `coverage-disposition-incomplete` | Step 2.C covered-by-composition with no named scenario | `reason`, `observed_coverage_disposition`, `observed_covered_by_scenario` |
 | `coverage-deferral-discharged` | Step 3.D scenario passes all three conditions | `covered_by_scenario`, `outcome: "verified-by-composition"`, `evidence` |
 | `coverage-deferral-undischarged` | Step 3.D scenario fails or not found | `covered_by_scenario`, `outcome` (scenario-not-found\|scenario-failed\|...), `evidence` |
-| `coverage-discharge-consumer-complete` | Step 3.D consumer completes | `deferred_count`, `discharged_count`, `undischarged_count` |
+| `coverage-discharge-consumer-complete` | Step 3.D consumer completes | `deferred_count`, `discharged_count`, `undischarged_count`. Conductor-level event — see Conductor-Level Events table; story_slug may be omitted/null. |
 
 ### AVFL Events
 
@@ -98,9 +98,9 @@ Event names reuse the existing `{{build_log}}` vocabulary. No renames.
 
 | Event | When appended | Additional fields |
 |---|---|---|
-| `e2e-finding-auto-fixed` | Step 4.3 routine E2E finding fixed | `summary`, `disposition` |
+| `e2e-finding-auto-fixed` | Step 4.3 routine E2E finding fixed | `finding_id`, `summary`, `disposition`, `severity`, `stakes_class` (always `routine` on this row). The `finding_id` + `severity` fields are required so resume rehydration can rebuild the complete routine-fixed portion of `{{e2e_findings}}` and the MAJOR-RESIDUAL guard can filter routine residuals durably — without them a MAJOR triaged-out E2E residual would escape the guard invariant after an interrupt (NFR23). Producer: workflow step 4.3. Consumer: step 2.0 rehydration `e2e-finding-auto-fixed` route. |
 | `e2e-mid-flight-escalation` | Step 4.3 mid-flight E2E escalation | `stakes_class`, `summary` |
-| `e2e-stakes-escalation` | Step 4.3 end-gate-expanded E2E escalation | `stakes_class`, `timing_tier`, `summary` |
+| `e2e-stakes-escalation` | Step 4.3 end-gate-expanded E2E escalation | `finding_id` (generated unique id, e.g. "e2e-{story_slug}-{NN}", bound once and shared with the {{end_gate_escalations}} append), `stakes_class`, `timing_tier`, `summary`, `evidence`, `suggested_fix` |
 | `e2e-phase-complete` | Step 4.4 E2E phase summary | `scenarios_checked`, `passed`, `failed`, `blocked`, `e2e_findings_count` |
 
 ### End-Gate Events
@@ -135,7 +135,7 @@ For these events, `story_slug` may be omitted or set to `null`. All other events
 
 All controlled enums are defined in companion schemas and reused verbatim:
 
-- **`disposition`**: `fixed | dismissed | triaged-out | escalated` — per finding-schema.md v1.1. Plus workflow-documented extensions: `blocked` (maps to `escalated` for schema consumers), `scope-reverted` (maps to `triaged-out` for schema consumers) — per step 2.S3 line 577-580.
+- **`disposition`**: `fixed | dismissed | triaged-out | escalated` — per finding-schema.md v1.1. Plus workflow-documented extensions: `blocked` (maps to `escalated` for schema consumers), `scope-reverted` (maps to `triaged-out` for schema consumers) — per the step 2.S3 disposition CASE blocks.
 - **`severity`**: `critical | major | minor | low` — per finding-schema.md v1.1 Severity Enum.
 - **`type`**: 10-value closed set — per finding-schema.md v1.1 Type Enum.
 - **`stakes_class`**: `security-auth-isolation | irreversible-destructive | high-blast-radius-architecture | routine` — per finding-schema.md v1.1. Default: `routine`.

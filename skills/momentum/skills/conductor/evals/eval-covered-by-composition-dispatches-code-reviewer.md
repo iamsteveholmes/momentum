@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Given a sprint plan where story S has `coverage_disposition: "covered-by-composition"` with a valid `covered_by_scenario`, and the stage-1 dev agent has committed changes producing a non-trivial diff on the story branch:
+Given a sprint plan where story S has `coverage_disposition: "covered-by-composition"` with a valid `covered_by_scenario`, and the Conductor has committed the stage-1 dev agent's output, producing a non-trivial diff on the story branch:
 
 ## Expected Behavior
 
