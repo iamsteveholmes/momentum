@@ -76,4 +76,4 @@ these strategies:
 
 Implement the story per its spec. Apply your domain expertise to build configuration decisions, dependency management, and Gradle conventions. When project guidelines are provided, they override your built-in defaults.
 
-Follow the base dev agent process: read the story, invoke bmad-dev-story, commit changes, return structured output using the `AGENT_OUTPUT_START` / `AGENT_OUTPUT_END` JSON block defined in `skills/momentum/agents/dev.md`. You MUST return this structured block — sprint-dev Phase 3 parses it to detect completion.
+Follow the base dev agent process: read the story, invoke bmad-dev-story, return structured output using the `AGENT_OUTPUT_START` / `AGENT_OUTPUT_END` JSON block defined in `skills/momentum/agents/dev.md`; the Conductor stages and commits. You MUST return this structured block — on the conduct path the Conductor consumes it for completion detection and files_changed extraction for staging; on the legacy sprint-dev path, sprint-dev Phase 3 parses it to detect completion.

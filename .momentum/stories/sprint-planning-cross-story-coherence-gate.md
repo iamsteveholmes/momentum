@@ -120,3 +120,33 @@ _DRAFT — this section is populated by the dev agent after create-story enrichm
 ### Completion Notes List
 
 ### File List
+
+## Triage Notes — dedup sweep 2026-06-11
+
+Full-backlog dedup sweep (multi-agent, adversarially verified): **no duplicate — safe to
+enrich.** Binding constraints for create-story enrichment:
+
+- **Extend, don't duplicate:** `skills/momentum/skills/sprint-planning/workflow.md`
+  (~line 229) already runs a depends_on presence/status check at selection time (warning +
+  developer override). The semantic deliverable-matching half is the missing piece — extend
+  that check rather than adding a second dependency pass. Step 3.5 (frozen per-story
+  contracts) + Step 8 activation gate are the natural insertion point, and the frozen
+  contracts are the machine-readable producer-deliverable source for the matcher.
+- **Deterministic, not AVFL:** workflow Step 6's whole-sprint AVFL checkpoint is the gate
+  that demonstrably failed to catch the nornspun edge — implement the gate as a dedicated
+  deterministic edge-enumeration step, not another generic AVFL prompt.
+- **Vocabulary hazard:** "contract-freeze" already means temporal sha256 integrity of one
+  story's contract (`conduct-contract-freeze-check`, frozen_sha256 machinery). Choose
+  non-colliding wording for cross-story semantic coherence.
+- **Sequencing option:** `conduct-planning-emit-contract-schema` (backlog, critical) emits
+  machine-readable story_assignments[].contract{} at the same planning altitude — if it
+  lands first, consume its Part-A headers as the producer-deliverable source.
+- **Cross-references to carry:** `avfl-cross-story-integration-lens` (backlog — merge-time
+  backstop; note `avfl/workflow-merge-review.md` already implements much of that lens, so
+  the lens stub may be partially stale — flag to refine, do not absorb),
+  `contract-seam-stories-two-sided-review-scope` (done — wiring stories this gate forces
+  into existence inherit its two-sided review scope),
+  `sprint-planning-frozen-per-story-contract-holistic-coverage` (done — structural anchor),
+  `sprint-planning-pre-sprint-class-1-render-gate` (backlog — open coherence failures
+  belong among its blocking flags; gate first if same sprint), sibling
+  `create-story-dependency-deliverable-check` (per-story half).

@@ -2,7 +2,7 @@
 
 **Goal:** Implement a Momentum story (green-field build mode) or apply a directed fix and return a per-finding disposition map (fix-mode). Mode is determined by input: a `directed_fix` payload selects fix-mode; everything else is green-field build.
 
-**Role:** Pure implementer. In green-field mode, receives a story, delegates all implementation to bmad-dev-story, and reports what was changed. In fix-mode, receives a set of findings from the Conductor, applies the stakes-class branch, and returns dispositions (fixed + commit, dismissed + rationale, triaged-out, or escalated + inline payload).
+**Role:** Pure implementer. In green-field mode, receives a story, delegates all implementation to bmad-dev-story, and reports what was changed. In fix-mode, receives a set of findings from the Conductor, applies the stakes-class branch, and returns dispositions (fixed + files_changed, dismissed + rationale, triaged-out, or escalated + inline payload). The Conductor stages (under the write-scope guard) and commits all in-scope changes.
 
 **Conductor owns everything else.** Worktree creation/lifecycle, lockfile handling, git mutation (merge, rebase, conflict resolution), worktree cleanup, crash recovery, and the mid-flight pause decision are all Conductor responsibilities (spec sections 3 and 6). The dev agent does not touch any of those concerns — adding them back here would break the Conductor's single-owner model and the precondition for mid-flight escalation (DEC-035, DEC-036 D1).
 
@@ -64,8 +64,7 @@
 
     <check if="finding.stakes_class is 'routine' AND finding.legitimate is true AND finding is in scope for this story">
       <action>ROUTINE FIX PATH: Apply the fix by editing the affected file(s) per finding.suggested_fix (or derive the fix from finding.summary, finding.detail, and finding.evidence if no suggested_fix is provided).</action>
-      <action>Commit the change with a conventional commit message. Stage only the files changed by this fix — never git add -A.</action>
-      <action>Capture {{files_fixed}} = list of files edited and committed.</action>
+      <action>Capture {{files_fixed}} = list of files edited in the working tree. Do not stage or commit — the Conductor stages and commits after the fixer returns.</action>
       <action>Append to {{disposition_map}}: { finding_id, disposition: "fixed", files_changed: [{{files_fixed}}], dismissal_rationale: null, escalation: null }</action>
     </check>
 
@@ -94,7 +93,7 @@ Where {{disposition_map}} is the array of per-finding disposition objects built 
     </output>
     <action>HALT. Fix-mode is complete. The Conductor owns all routing from here — including whether and when to surface mid-flight escalations to the human.</action>
 
-    <note>Fix-mode contract reference: `skills/momentum/references/directed-fix-invocation-contract.md` — see §"Canonical Fixer Output Shape" for the authoritative per-finding object schema. Fix-mode finding schema: `skills/momentum/references/finding-schema.md`. Dispositions vocabulary: fixed | dismissed (non-empty rationale required) | triaged-out | escalated. Timing tiers: end-gate-expanded (default) | mid-flight (narrow: irreversible-and-imminent OR build-invalidating ONLY). The mutual exclusivity invariant: a finding receives exactly one disposition; fix+commit and escalation are never both produced for the same finding. Shape invariant: `timing_tier` is ALWAYS nested inside the `escalation` object — never at the top level of the disposition object. `stakes_class` and `summary` are NOT echoed in the disposition object; the Conductor recovers them by joining on `finding_id` to the inbound findings it provided.</note>
+    <note>Fix-mode contract reference: `skills/momentum/references/directed-fix-invocation-contract.md` — see §"Canonical Fixer Output Shape" for the authoritative per-finding object schema. Fix-mode finding schema: `skills/momentum/references/finding-schema.md`. Dispositions vocabulary: fixed | dismissed (non-empty rationale required) | triaged-out | escalated. Timing tiers: end-gate-expanded (default) | mid-flight (narrow: irreversible-and-imminent OR build-invalidating ONLY). The mutual exclusivity invariant: a finding receives exactly one disposition; a fix and an escalation are never both produced for the same finding. Shape invariant: `timing_tier` is ALWAYS nested inside the `escalation` object — never at the top level of the disposition object. `stakes_class` and `summary` are NOT echoed in the disposition object; the Conductor recovers them by joining on `finding_id` to the inbound findings it provided.</note>
   </step>
 
   <step n="1" goal="Resolve story to develop (green-field only)">
@@ -142,10 +141,12 @@ Where {{disposition_map}} is the array of per-finding disposition objects built 
       - {{file_list}}: from the story's File List section — files created/modified/deleted
       - {{tests_run}}: true if bmad-dev-story ran tests, false otherwise (from the Dev Agent Record or implementation output)
       - {{test_result}}: "pass", "fail", or "not_run" — the outcome of the test run (from the same source; use "not_run" if {{tests_run}} is false)
+      - {{cross_artifact_notes}}: list any adjacent-artifact issues discovered during implementation that belong to a DIFFERENT artifact outside this story's write scope. Each entry: { artifact: "path or name", note: "description of the issue" }. Use an empty array when none are identified.
     </action>
 
     <note>bmad-dev-story handles: story loading, sprint tracking, review continuation detection, task implementation loop, definition-of-done gate, story transition to review status. The Momentum Implementation Guide in the story tells it to use EDD for skill-instruction tasks rather than TDD.</note>
-    <note>Working directory: the Conductor spawns this agent already scoped to the story worktree (spec section 6 — 'Dev subagents write and commit inside their worktrees'). The dev agent neither creates nor enters/exits worktrees; bmad-dev-story writes and commits land in the Conductor-provided worktree automatically.</note>
+    <note>Working directory: the Conductor creates the story branch (`story/{slug}` forked from `sprint/{{sprint_slug}}`) and the worktree (`.worktrees/story-{slug}`) at story launch (conductor workflow step 2.1, STAGE-1 DEV SPAWN block) immediately before spawning this agent. The dev agent is spawned already scoped to that worktree and writes within it. The Conductor stages (under the write-scope guard) and commits (conductor/workflow.md stage-1 sequence). The dev agent neither creates nor enters/exits worktrees, and it does not commit.</note>
+    <note>DEV COMMIT AUTHORITY. The Conductor is the sole git-mutation authority in the conduct seam. When invoking bmad-dev-story, explicitly instruct it to leave ALL changes uncommitted — no `git add`, no `git commit`. bmad-dev-story must finish with all its file writes in the working tree, uncommitted — changes may be unstaged or staged, but must not be committed; the Conductor owns every commit. If bmad-dev-story nevertheless commits (violating this instruction), the Conductor's SEAM-DISAGREE GUARD fires on the next checkpoint (it detects tip-advance — git rev-parse HEAD != {{S.launch_base_sha}} — and fails the story with a record-shape mismatch rather than silently proceeding).</note>
   </step>
 
   <step n="2.5" goal="Part-A header self-check">
@@ -187,20 +188,21 @@ AGENT_OUTPUT_START
   "test_results": {
     "tests_run": {{tests_run}},
     "outcome": "{{test_result}}"
-  }
+  },
+  "cross_artifact_notes": [{{cross_artifact_notes}}]
 }
 AGENT_OUTPUT_END
 ```
-Where {{file_list}} is the comma-separated list of files from the story's File List section; {{part_a_self_check}} is "performed" or "skipped-no-contract" from Step 2.5; {{tests_run}} is true|false and {{test_result}} is "pass", "fail", or "not_run" — all captured in Step 2 from bmad-dev-story's Dev Agent Record.
+Where {{file_list}} is the comma-separated list of files from the story's File List section; {{part_a_self_check}} is "performed" or "skipped-no-contract" from Step 2.5; {{tests_run}} is true|false and {{test_result}} is "pass", "fail", or "not_run" — all captured in Step 2 from bmad-dev-story's Dev Agent Record. {{cross_artifact_notes}} is the array (may be empty []) of adjacent-artifact issues discovered during implementation but outside this story's write scope, captured in Step 2; the Conductor reads this field to route cross-artifact concerns to momentum:triage at build-phase completion.
 
-If implementation failed (bmad-dev-story did not reach story status "review"), emit the failed variant instead. Populate files_changed with whatever files were committed before the failure (check git log in the worktree); use an empty array only if no commits were made:
+If implementation failed (bmad-dev-story did not reach story status "review"), emit the failed variant instead. Populate files_changed with whatever files were changed in the worktree before the failure (check `git status` / `git diff --name-only`); use an empty array only if no files were modified:
 ```
 AGENT_OUTPUT_START
 {
   "status": "failed",
   "story_key": "{{story_key}}",
   "error": "{{error_description}}",
-  "files_changed": [{{files_committed_before_failure_or_empty}}],
+  "files_changed": [{{files_changed_before_failure_or_empty}}],
   "part_a_self_check": "{{part_a_self_check}}",
   "test_results": {
     "tests_run": false,

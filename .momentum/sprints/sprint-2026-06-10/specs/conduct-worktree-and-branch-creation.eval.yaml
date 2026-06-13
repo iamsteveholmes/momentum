@@ -1,0 +1,83 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-worktree-and-branch-creation
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-10/specs/conduct-worktree-and-branch-creation.eval.yaml
+how_dev_self_checks: |
+  Launch a conduct build for a sample sprint and watch the first story start.
+  Confirm with plain git commands: (1) before any implementation work begins on the
+  story, a worktree exists at .worktrees/story-<slug> (git worktree list shows it)
+  checked out on branch story/<slug>; (2) the new branch's fork point is the sprint
+  branch tip — git merge-base sprint/<sprint-slug> story/<slug> equals the commit
+  the sprint branch pointed at when the story launched, and the branch does not
+  fork from main; (3) repeat the launch with a leftover story/<slug> branch and a
+  leftover .worktrees/story-<slug> directory already present — the build replaces
+  both with fresh ones based on the current sprint tip, without asking you anything.
+  EDD deliverable check (AC 6): list skills/momentum/skills/conductor/evals/ and
+  confirm two eval files exist covering these behaviors — one for the fresh-launch
+  path (branch created from the sprint tip, worktree present before implementation
+  work begins) and one for the stale-collision path (deterministic
+  remove-and-recreate, no prompt, no improvised base). Exact names may vary;
+  coverage of both behaviors is what matters. Run each eval per its stated scenario
+  and confirm the described behavior occurs.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-worktree-and-branch-creation.md#acceptance-criteria
+platforms: [host]
+
+# conduct-worktree-and-branch-creation.eval.yaml
+harness_profile: skill-invoke
+
+# Producer / Consumer scope:
+#   Producer — the conduct build orchestration (creates the story branch and worktree
+#   and communicates the worktree location to the implementation work it launches).
+#   Consumer — the per-story implementation agent (performs all its file edits inside
+#   the worktree location it was given).
+#   The hand-off record is the worktree path. The scenarios below include one
+#   agree case (path communicated == path that exists; gate passes) and one
+#   disagree case (path communicated != path on disk; gate fails naming the
+#   cross-side mismatch).
+
+scenarios:
+  - name: "Fresh story launch creates the branch and worktree from the sprint tip before any implementation work"
+    invocation: "momentum:conduct with a prepared sample sprint; observe the first story launch"
+    given: "An active sprint branch, and a story with no existing story branch and no existing worktree directory"
+    when: "The build launches the story"
+    then:
+      - "Before any implementation activity starts for the story, `git worktree list` shows a worktree at .worktrees/story-<slug> checked out on branch story/<slug>"
+      - "`git merge-base sprint/<sprint-slug> story/<slug>` equals the commit the sprint branch pointed at when the story launched — the branch base is the sprint tip, not main and not an arbitrary commit"
+      - "The implementation work for the story produces file changes inside .worktrees/story-<slug>, not in the main checkout"
+    pass_criteria: "Git commands confirm the worktree and branch exist with the sprint tip as fork point before implementation output appears"
+    fail_criteria: "Implementation work begins with no worktree at the expected path, the branch forks from main or an unspecified base, or changes land outside the story worktree"
+
+  - name: "Stale leftovers at launch are replaced deterministically without prompting"
+    invocation: "momentum:conduct launching a story while a leftover story/<slug> branch and .worktrees/story-<slug> directory from a previous run still exist"
+    given: "A stale story branch and worktree directory for the same story slug, left over from an earlier interrupted run"
+    when: "The build launches the story"
+    then:
+      - "The stale worktree and branch are removed and recreated fresh from the current sprint tip"
+      - "No question is put to the developer and no error halts the launch"
+      - "`git merge-base sprint/<sprint-slug> story/<slug>` equals the current sprint tip, not the stale branch's old fork point"
+    pass_criteria: "The launch completes hands-off and the recreated branch demonstrably forks from the current sprint tip"
+    fail_criteria: "The launch errors out, prompts the developer, silently reuses the stale branch, or the recreated branch keeps the old fork point"
+
+  - name: "Seam agree case — the story's changes land inside the worktree that exists on disk"
+    invocation: "momentum:conduct launching one story; after implementation output appears, check `git worktree list` and where the story's file changes landed"
+    given: "A story launching normally on a fresh sprint"
+    when: "The build hands off to implementation"
+    then:
+      - "`git worktree list` reports a worktree at .worktrees/story-<slug> on branch story/<slug> when implementation begins"
+      - "The story's resulting file changes appear inside that same worktree path — not in the main checkout or any other location"
+    pass_criteria: "The conventional worktree location exists and is demonstrably where the story's changes land; the gate passes"
+    fail_criteria: "Story changes appear somewhere other than the worktree at .worktrees/story-<slug>, or no such worktree exists when implementation output appears"
+
+  - name: "Seam disagree case — a missing worktree at the conventional location is surfaced as a cross-side mismatch, not improvised around"
+    invocation: "momentum:conduct driven into a launch state where no worktree exists at .worktrees/story-<slug> at the moment implementation would begin (for example the worktree directory was removed after launch)"
+    given: "A story whose conventional worktree location is absent at hand-off time"
+    when: "The build proceeds to implementation hand-off"
+    then:
+      - "The build surfaces the problem in its observable records — an error or build-record entry naming the story and the missing worktree location — instead of proceeding silently"
+      - "No implementation changes for the story appear in the main checkout or any improvised location"
+      - "The surfaced record identifies both sides of the disagreement — the location expected for the story's work and the fact that nothing exists there — as a producer/consumer mismatch"
+    pass_criteria: "The mismatch is reported in observable build records naming the expected location, and no story changes land outside it"
+    fail_criteria: "Implementation proceeds in an improvised location, or the build's observable records contain no entry identifying the missing-worktree mismatch"

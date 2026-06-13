@@ -1,0 +1,70 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-coverage-deferral-preserve-code-review
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-10/specs/conduct-coverage-deferral-preserve-code-review.eval.yaml
+how_dev_self_checks: |
+  Walk the build's review routing twice — once for a story planned as
+  covered-by-composition, once for a story planned as dedicated-run. Confirm:
+  (1) the covered-by-composition story still gets an adversarial code review of
+  its own diff at build time — its build record shows a code review ran, and any
+  code-review findings it produced appear in the build record with recorded
+  dispositions; (2) only the dedicated QA
+  verification run is deferred for that story, with the build record naming the
+  integration scenario that will discharge it later; (3) the dedicated-run story's
+  behavior is unchanged — both the QA verification and the code review run at
+  build time; (4) the deferral entry in the covered-by-composition story's build
+  record notes that code review ran at build time and names the integration
+  scenario that discharges the deferred QA verification.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-coverage-deferral-preserve-code-review.md#acceptance-criteria
+platforms: [host]
+
+# conduct-coverage-deferral-preserve-code-review.eval.yaml
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "A covered-by-composition story still receives adversarial code review at build time"
+    invocation: "momentum:conduct building a story whose planned coverage disposition is covered-by-composition"
+    given: "A sprint plan marking the story covered-by-composition with a named integration scenario, and a story diff containing a deliberately seeded reviewable defect — for example a clearly incorrect conditional or an obvious null-dereference in a modified file"
+    when: "The build processes the story through its review step"
+    then:
+      - "An adversarial code review runs against the story's own diff at build time"
+      - "The build record for the story shows at least one code-review finding for the seeded defect — demonstrating the review actually ran on the diff"
+      - "Any findings the code review returns carry the canonical record shape with source bmad-code-review, ordered most-severe first"
+    pass_criteria: "Build records show a code-review run and a finding for the seeded defect despite the composition disposition"
+    fail_criteria: "The story proceeds to merge with no code review having run, or the seeded defect yields zero code-review findings for the story"
+
+  - name: "Only the dedicated QA verification run is deferred — and the deferral is recorded with its discharge scenario"
+    invocation: "momentum:conduct building a covered-by-composition story; inspect the build records for the story's QA verification"
+    given: "The same covered-by-composition story"
+    when: "The build records the story's review outcome"
+    then:
+      - "No dedicated QA verification run happens for the story at build time"
+      - "The build record names the integration scenario that will discharge the deferred QA verification later"
+      - "The deferral record reflects that code review ran at build time — the deferral covers the QA verification run only"
+      - "Exactly one QA verification ultimately covers the story — the named integration scenario; no second dedicated run is introduced"
+    pass_criteria: "Deferral recorded with scenario name, code review noted as run, no dedicated QA run at build time and none added later"
+    fail_criteria: "A dedicated QA run fires at build time anyway, the deferral record is missing or unnamed, or the record claims the entire review step was skipped"
+
+  - name: "Code-review findings on a deferred story enter the normal finding-handling flow"
+    invocation: "momentum:conduct building a covered-by-composition story whose code review returns at least one finding"
+    given: "A covered-by-composition story with a deliberate reviewable defect in its diff"
+    when: "The code review returns findings"
+    then:
+      - "The findings are dispositioned through the normal flow — fixed, dismissed, or escalated — exactly as a dedicated-run story's findings would be"
+      - "The story does not merge with the findings unaddressed and unrecorded"
+      - "A story whose code review returns zero findings completes without finding dispositions; a story whose review returns findings always shows their recorded dispositions before completing"
+    pass_criteria: "Each finding shows a recorded disposition before the story reaches its terminal state"
+    fail_criteria: "Findings are bypassed to merge without dispositions, or a story completes with findings present but no recorded dispositions"
+
+  - name: "Dedicated-run stories are unaffected"
+    invocation: "momentum:conduct building a story whose planned coverage disposition is dedicated-run"
+    given: "A sprint plan marking the story dedicated-run"
+    when: "The build processes the story through its review step"
+    then:
+      - "Both the QA verification run and the adversarial code review happen at build time"
+      - "The story's findings list is the combined, de-duplicated, severity-ordered union of both review streams"
+    pass_criteria: "Two review streams observable in the build records, combined findings list ordered most-severe first"
+    fail_criteria: "Either review stream is missing for a dedicated-run story, or the combination rules changed"

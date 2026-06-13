@@ -121,3 +121,41 @@ _DRAFT — this section is populated by the dev agent after create-story enrichm
 ### Completion Notes List
 
 ### File List
+
+## Triage Notes — dedup sweep 2026-06-11
+
+Full-backlog dedup sweep (multi-agent, adversarially verified): **no duplicate — the
+green-field missing-dependency BLOCKED path is genuinely uncovered.** Binding constraints
+for create-story enrichment:
+
+- **New terminal outcome, not a tweak:** `skills/momentum/skills/dev/workflow.md`
+  (~line 214) pins the terminal contract to "implementation-complete + file_list. Nothing
+  more." This story adds a BLOCKED terminal signal alongside it.
+- **Reuse the escalation payload pattern:** fix-mode already has escalate-don't-act
+  machinery (`agents/dev.md`: zero edits, zero commits, return inline escalation payload
+  {what, why, evidence, timing_tier} per `references/directed-fix-invocation-contract.md`).
+  Mirror that payload shape for the BLOCKED signal — do not invent a new one.
+- **Conductor consumption is partially built:** {{blocked}} story accumulator
+  (conductor/workflow.md ~224), Conductor-internal "blocked" finding disposition
+  (~577–579, ~753–756), and conduct-build-phase-frontier AC4 ("marks that story blocked
+  and continues"). What's missing is mostly the dev→Conductor signal and a launch/stage-1
+  consumption branch — vocabulary already in place.
+- **Delegation path confirmed real work:** `bmad-dev-story` HALT conditions cover
+  ambiguity and new package dependencies, but have NO trigger for an AC-named
+  input/endpoint/payload that cannot be located.
+- **Eval + vocabulary consistency:** mirror
+  `skills/momentum/agents/evals/eval-qa-reviewer-reports-blocked-on-missing-infrastructure.md`
+  (shipped by `harden-sprint-dev-phase5-spawn-prompts`, done — the identical
+  block-don't-substitute doctrine on the QA/E2E side) and qa-reviewer's BLOCKED semantics.
+  `researcher-base-body` (done) has a CREED-style no-fabrication clause worth echoing.
+- **Sequencing (binding):** enrich AFTER `conduct-dev-commit-authority-reconciliation`
+  (sprint-2026-06-10) lands — it redefines the exact terminal contract this story extends,
+  across the same files.
+- **Conflict to resolve in enrichment:** `dev-previous-story-continuity` AC2 ("skip it
+  silently, no error" when a predecessor artifact is missing) is in tension with this
+  story's stop-and-report doctrine — silent skip stays correct only when no AC requires
+  the dependency's deliverable. State the boundary explicitly.
+- **Batch candidate:** `dev-agent-executor-not-decider` (backlog) is the sibling binding
+  rule in the same agent contracts (ambiguity→clarify vs unimplementable→BLOCKED; the
+  nornspun failure was NOT ambiguity). Consider enriching/implementing both in one batch —
+  same files, both ship dev-agent behavioral evals.
