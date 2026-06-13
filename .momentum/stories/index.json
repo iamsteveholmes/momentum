@@ -5626,7 +5626,7 @@
     "story_type": "maintenance"
   },
   "conduct-worktree-and-branch-creation": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor creates story worktrees and branches — close the unexecutable first step of the per-story pipeline",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5640,7 +5640,7 @@
     "story_type": "defect"
   },
   "conduct-coverage-deferral-preserve-code-review": {
-    "status": "review",
+    "status": "done",
     "title": "covered-by-composition must defer only the dedicated QA run — adversarial code review still runs on every story",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5659,7 +5659,7 @@
     "priority": "low"
   },
   "conduct-qa-reviewer-normalization-adapter": {
-    "status": "review",
+    "status": "done",
     "title": "Build the qa-reviewer → canonical finding schema normalization adapter the Conductor already consumes",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5679,7 +5679,7 @@
     "priority": "low"
   },
   "conduct-build-state-persistence-and-resume": {
-    "status": "review",
+    "status": "done",
     "title": "Persist Conductor build state to an append-only ledger — end-gate and resume must survive session death and compaction",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5697,7 +5697,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-dev-commit-authority-reconciliation": {
-    "status": "review",
+    "status": "done",
     "title": "Reconcile commit authority across the Conductor↔dev seam — one owner, effective write-scope guard",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5788,5 +5788,55 @@
     "touches": [],
     "priority": "low",
     "story_type": "maintenance"
+  },
+  "conduct-adoption-retire-sprint-dev": {
+    "status": "backlog",
+    "title": "Retire momentum:sprint-dev — soft-deprecate, soak, then hard-remove the legacy builder",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "conduct-conductor-staging-and-ledger-append-safety": {
+    "status": "backlog",
+    "title": "Conductor staging must see new files, and the ledger append must be shell-safe",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "defect"
+  },
+  "conduct-qa-normalization-stakes-validation-and-dedup-merge": {
+    "status": "backlog",
+    "title": "Harden stage-2 QA normalization — validate stakes_class and field-merge on dedup",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "defect"
+  },
+  "dev-avfl-invocation-strip-commit-assumption": {
+    "status": "backlog",
+    "title": "Strip the residual dev-commits assumption from avfl-invocation.md",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "defect"
+  },
+  "dev-workflow-step3-add-cross-artifact-notes": {
+    "status": "backlog",
+    "title": "Add cross_artifact_notes to the dev workflow Step 3 success template",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "defect"
   }
 }

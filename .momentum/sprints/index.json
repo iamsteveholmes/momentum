@@ -1,183 +1,5 @@
 {
-  "active": {
-    "locked": true,
-    "status": "active",
-    "stories": [
-      "conduct-build-state-persistence-and-resume",
-      "conduct-worktree-and-branch-creation",
-      "conduct-dev-commit-authority-reconciliation",
-      "conduct-qa-reviewer-normalization-adapter",
-      "conduct-coverage-deferral-preserve-code-review"
-    ],
-    "waves": [
-      {
-        "wave": 1,
-        "stories": [
-          "conduct-build-state-persistence-and-resume",
-          "conduct-worktree-and-branch-creation",
-          "conduct-dev-commit-authority-reconciliation",
-          "conduct-qa-reviewer-normalization-adapter",
-          "conduct-coverage-deferral-preserve-code-review"
-        ]
-      }
-    ],
-    "approvals": [
-      {
-        "story_slug": "conduct-build-state-persistence-and-resume",
-        "decision": "approved",
-        "approved_at": "2026-06-11T03:12:00Z",
-        "story_file_sha": "fdbed98f4d90131977099124e185b37d8d5a18efdf3ed977200040d94ed78bf5"
-      },
-      {
-        "story_slug": "conduct-worktree-and-branch-creation",
-        "decision": "approved",
-        "approved_at": "2026-06-11T06:25:55Z",
-        "story_file_sha": "40b0d04b7503bc5943add9c4f07bc02f9e054c9d22707c8c88170540ee132af5"
-      },
-      {
-        "story_slug": "conduct-dev-commit-authority-reconciliation",
-        "decision": "approved",
-        "approved_at": "2026-06-11T06:26:13Z",
-        "story_file_sha": "1d4f505e931585b8d094708f33fa0d036b3980692192d7fb74963833fda88e11"
-      },
-      {
-        "story_slug": "conduct-qa-reviewer-normalization-adapter",
-        "decision": "approved",
-        "approved_at": "2026-06-11T06:26:56Z",
-        "story_file_sha": "e43c8e65eecbb779d46aaf85e10c6f552ff6a6f8d5775fb398d9ec488288cf3b"
-      },
-      {
-        "story_slug": "conduct-coverage-deferral-preserve-code-review",
-        "decision": "approved",
-        "approved_at": "2026-06-11T15:44:25Z",
-        "story_file_sha": "efebad22de9664dc55f8497d40e972b1d815dbe154532a703de8f5a2c89525ba"
-      }
-    ],
-    "team": {
-      "story_assignments": {
-        "conduct-build-state-persistence-and-resume": {
-          "verification_method": "skill-invoke",
-          "can_merge_independently": true,
-          "contract": {
-            "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-build-state-persistence-and-resume.eval.yaml",
-            "harness_profile": "skill-invoke",
-            "coverage_disposition": "dedicated-run",
-            "covered_by_scenario": null,
-            "frozen_sha256": "f0ab73bfcc7e191fe8c0522e0e38f06011b2b4486ec5e05be826dee9f3eb6625"
-          },
-          "role": "dev",
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present"
-        },
-        "conduct-worktree-and-branch-creation": {
-          "verification_method": "skill-invoke",
-          "can_merge_independently": true,
-          "contract": {
-            "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-worktree-and-branch-creation.eval.yaml",
-            "harness_profile": "skill-invoke",
-            "coverage_disposition": "dedicated-run",
-            "covered_by_scenario": null,
-            "frozen_sha256": "9c8e3d2f77d10e3aaf4bade76d9f62c43ad0c1e959d3bf573970eb7170a1c5b7"
-          },
-          "role": "dev",
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present"
-        },
-        "conduct-dev-commit-authority-reconciliation": {
-          "verification_method": "skill-invoke",
-          "can_merge_independently": true,
-          "contract": {
-            "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-dev-commit-authority-reconciliation.eval.yaml",
-            "harness_profile": "skill-invoke",
-            "coverage_disposition": "dedicated-run",
-            "covered_by_scenario": null,
-            "frozen_sha256": "026fe283637c69146d7ad46427b745fc79e30f635a69d844e47fa687bed780bf"
-          },
-          "role": "dev",
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present"
-        },
-        "conduct-qa-reviewer-normalization-adapter": {
-          "verification_method": "skill-invoke",
-          "can_merge_independently": false,
-          "contract": {
-            "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-qa-reviewer-normalization-adapter.eval.yaml",
-            "harness_profile": "skill-invoke",
-            "coverage_disposition": "dedicated-run",
-            "covered_by_scenario": null,
-            "frozen_sha256": "aac363c3673ade06ef9579e6b0161e0a06cc73652f30a04d8d11bcbdd8717094"
-          },
-          "role": "dev",
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present"
-        },
-        "conduct-coverage-deferral-preserve-code-review": {
-          "verification_method": "skill-invoke",
-          "can_merge_independently": false,
-          "contract": {
-            "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-coverage-deferral-preserve-code-review.eval.yaml",
-            "harness_profile": "skill-invoke",
-            "coverage_disposition": "dedicated-run",
-            "covered_by_scenario": null,
-            "frozen_sha256": "0d99600c7df0b7fb57231fb8d2a02a7696cd8bc3574458ebfacf18dda1b904e9"
-          },
-          "role": "dev",
-          "specialist": "dev-skills",
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_status": "present"
-        }
-      },
-      "roles": {
-        "dev": {
-          "specialist": "dev-skills",
-          "stories": [
-            "conduct-build-state-persistence-and-resume",
-            "conduct-worktree-and-branch-creation",
-            "conduct-dev-commit-authority-reconciliation",
-            "conduct-qa-reviewer-normalization-adapter",
-            "conduct-coverage-deferral-preserve-code-review"
-          ],
-          "guidelines": ".claude/rules/dev-skills.md",
-          "guidelines_source": "project-specific"
-        },
-        "qa-reviewer": {
-          "agent": "skills/momentum/agents/qa-reviewer.md",
-          "stories": [
-            "conduct-build-state-persistence-and-resume",
-            "conduct-worktree-and-branch-creation",
-            "conduct-dev-commit-authority-reconciliation",
-            "conduct-qa-reviewer-normalization-adapter",
-            "conduct-coverage-deferral-preserve-code-review"
-          ]
-        },
-        "e2e-validator": {
-          "agent": "skills/momentum/agents/e2e-validator.md",
-          "stories": [
-            "conduct-build-state-persistence-and-resume",
-            "conduct-worktree-and-branch-creation",
-            "conduct-dev-commit-authority-reconciliation",
-            "conduct-qa-reviewer-normalization-adapter",
-            "conduct-coverage-deferral-preserve-code-review"
-          ]
-        },
-        "architecture-guard": {
-          "skill": "momentum:architecture-guard",
-          "stories": [
-            "conduct-build-state-persistence-and-resume",
-            "conduct-worktree-and-branch-creation",
-            "conduct-dev-commit-authority-reconciliation"
-          ]
-        }
-      }
-    },
-    "slug": "sprint-2026-06-10",
-    "planned": "2026-06-11",
-    "started": "2026-06-11"
-  },
+  "active": null,
   "planning": null,
   "completed": [
     {
@@ -3183,6 +3005,187 @@
       ],
       "started": "2026-06-07",
       "completed": "2026-06-08",
+      "retro_run_at": null
+    },
+    {
+      "locked": true,
+      "status": "done",
+      "stories": [
+        "conduct-build-state-persistence-and-resume",
+        "conduct-worktree-and-branch-creation",
+        "conduct-dev-commit-authority-reconciliation",
+        "conduct-qa-reviewer-normalization-adapter",
+        "conduct-coverage-deferral-preserve-code-review"
+      ],
+      "waves": [
+        {
+          "wave": 1,
+          "stories": [
+            "conduct-build-state-persistence-and-resume",
+            "conduct-worktree-and-branch-creation",
+            "conduct-dev-commit-authority-reconciliation",
+            "conduct-qa-reviewer-normalization-adapter",
+            "conduct-coverage-deferral-preserve-code-review"
+          ]
+        }
+      ],
+      "approvals": [
+        {
+          "story_slug": "conduct-build-state-persistence-and-resume",
+          "decision": "approved",
+          "approved_at": "2026-06-11T03:12:00Z",
+          "story_file_sha": "fdbed98f4d90131977099124e185b37d8d5a18efdf3ed977200040d94ed78bf5"
+        },
+        {
+          "story_slug": "conduct-worktree-and-branch-creation",
+          "decision": "approved",
+          "approved_at": "2026-06-11T06:25:55Z",
+          "story_file_sha": "40b0d04b7503bc5943add9c4f07bc02f9e054c9d22707c8c88170540ee132af5"
+        },
+        {
+          "story_slug": "conduct-dev-commit-authority-reconciliation",
+          "decision": "approved",
+          "approved_at": "2026-06-11T06:26:13Z",
+          "story_file_sha": "1d4f505e931585b8d094708f33fa0d036b3980692192d7fb74963833fda88e11"
+        },
+        {
+          "story_slug": "conduct-qa-reviewer-normalization-adapter",
+          "decision": "approved",
+          "approved_at": "2026-06-11T06:26:56Z",
+          "story_file_sha": "e43c8e65eecbb779d46aaf85e10c6f552ff6a6f8d5775fb398d9ec488288cf3b"
+        },
+        {
+          "story_slug": "conduct-coverage-deferral-preserve-code-review",
+          "decision": "approved",
+          "approved_at": "2026-06-11T15:44:25Z",
+          "story_file_sha": "efebad22de9664dc55f8497d40e972b1d815dbe154532a703de8f5a2c89525ba"
+        }
+      ],
+      "team": {
+        "story_assignments": {
+          "conduct-build-state-persistence-and-resume": {
+            "verification_method": "skill-invoke",
+            "can_merge_independently": true,
+            "contract": {
+              "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-build-state-persistence-and-resume.eval.yaml",
+              "harness_profile": "skill-invoke",
+              "coverage_disposition": "dedicated-run",
+              "covered_by_scenario": null,
+              "frozen_sha256": "f0ab73bfcc7e191fe8c0522e0e38f06011b2b4486ec5e05be826dee9f3eb6625"
+            },
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present"
+          },
+          "conduct-worktree-and-branch-creation": {
+            "verification_method": "skill-invoke",
+            "can_merge_independently": true,
+            "contract": {
+              "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-worktree-and-branch-creation.eval.yaml",
+              "harness_profile": "skill-invoke",
+              "coverage_disposition": "dedicated-run",
+              "covered_by_scenario": null,
+              "frozen_sha256": "9c8e3d2f77d10e3aaf4bade76d9f62c43ad0c1e959d3bf573970eb7170a1c5b7"
+            },
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present"
+          },
+          "conduct-dev-commit-authority-reconciliation": {
+            "verification_method": "skill-invoke",
+            "can_merge_independently": true,
+            "contract": {
+              "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-dev-commit-authority-reconciliation.eval.yaml",
+              "harness_profile": "skill-invoke",
+              "coverage_disposition": "dedicated-run",
+              "covered_by_scenario": null,
+              "frozen_sha256": "026fe283637c69146d7ad46427b745fc79e30f635a69d844e47fa687bed780bf"
+            },
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present"
+          },
+          "conduct-qa-reviewer-normalization-adapter": {
+            "verification_method": "skill-invoke",
+            "can_merge_independently": false,
+            "contract": {
+              "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-qa-reviewer-normalization-adapter.eval.yaml",
+              "harness_profile": "skill-invoke",
+              "coverage_disposition": "dedicated-run",
+              "covered_by_scenario": null,
+              "frozen_sha256": "aac363c3673ade06ef9579e6b0161e0a06cc73652f30a04d8d11bcbdd8717094"
+            },
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present"
+          },
+          "conduct-coverage-deferral-preserve-code-review": {
+            "verification_method": "skill-invoke",
+            "can_merge_independently": false,
+            "contract": {
+              "path": ".momentum/sprints/sprint-2026-06-10/specs/conduct-coverage-deferral-preserve-code-review.eval.yaml",
+              "harness_profile": "skill-invoke",
+              "coverage_disposition": "dedicated-run",
+              "covered_by_scenario": null,
+              "frozen_sha256": "0d99600c7df0b7fb57231fb8d2a02a7696cd8bc3574458ebfacf18dda1b904e9"
+            },
+            "role": "dev",
+            "specialist": "dev-skills",
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_status": "present"
+          }
+        },
+        "roles": {
+          "dev": {
+            "specialist": "dev-skills",
+            "stories": [
+              "conduct-build-state-persistence-and-resume",
+              "conduct-worktree-and-branch-creation",
+              "conduct-dev-commit-authority-reconciliation",
+              "conduct-qa-reviewer-normalization-adapter",
+              "conduct-coverage-deferral-preserve-code-review"
+            ],
+            "guidelines": ".claude/rules/dev-skills.md",
+            "guidelines_source": "project-specific"
+          },
+          "qa-reviewer": {
+            "agent": "skills/momentum/agents/qa-reviewer.md",
+            "stories": [
+              "conduct-build-state-persistence-and-resume",
+              "conduct-worktree-and-branch-creation",
+              "conduct-dev-commit-authority-reconciliation",
+              "conduct-qa-reviewer-normalization-adapter",
+              "conduct-coverage-deferral-preserve-code-review"
+            ]
+          },
+          "e2e-validator": {
+            "agent": "skills/momentum/agents/e2e-validator.md",
+            "stories": [
+              "conduct-build-state-persistence-and-resume",
+              "conduct-worktree-and-branch-creation",
+              "conduct-dev-commit-authority-reconciliation",
+              "conduct-qa-reviewer-normalization-adapter",
+              "conduct-coverage-deferral-preserve-code-review"
+            ]
+          },
+          "architecture-guard": {
+            "skill": "momentum:architecture-guard",
+            "stories": [
+              "conduct-build-state-persistence-and-resume",
+              "conduct-worktree-and-branch-creation",
+              "conduct-dev-commit-authority-reconciliation"
+            ]
+          }
+        }
+      },
+      "slug": "sprint-2026-06-10",
+      "planned": "2026-06-11",
+      "started": "2026-06-11",
+      "completed": "2026-06-12",
       "retro_run_at": null
     }
   ],
