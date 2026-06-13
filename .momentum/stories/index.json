@@ -5626,7 +5626,7 @@
     "story_type": "maintenance"
   },
   "conduct-worktree-and-branch-creation": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Conductor creates story worktrees and branches — close the unexecutable first step of the per-story pipeline",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5640,7 +5640,7 @@
     "story_type": "defect"
   },
   "conduct-coverage-deferral-preserve-code-review": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "covered-by-composition must defer only the dedicated QA run — adversarial code review still runs on every story",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5655,10 +5655,11 @@
     "change_type": [
       "skill-instruction"
     ],
-    "verification_method": "skill-invoke"
+    "verification_method": "skill-invoke",
+    "priority": "low"
   },
   "conduct-qa-reviewer-normalization-adapter": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Build the qa-reviewer → canonical finding schema normalization adapter the Conductor already consumes",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5674,10 +5675,11 @@
     "change_type": [
       "skill-instruction",
       "agent-definition"
-    ]
+    ],
+    "priority": "low"
   },
   "conduct-build-state-persistence-and-resume": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Persist Conductor build state to an append-only ledger — end-gate and resume must survive session death and compaction",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5695,7 +5697,7 @@
     "verification_method": "skill-invoke"
   },
   "conduct-dev-commit-authority-reconciliation": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Reconcile commit authority across the Conductor↔dev seam — one owner, effective write-scope guard",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5714,7 +5716,8 @@
       "skill-instruction",
       "agent-definition",
       "specification"
-    ]
+    ],
+    "priority": "low"
   },
   "conduct-qa-execute-verification-method": {
     "status": "backlog",
@@ -5775,5 +5778,15 @@
     "touches": [],
     "priority": "low",
     "story_type": "defect"
+  },
+  "refresh-readme-skill-counts-after-sprint-merge": {
+    "status": "backlog",
+    "title": "Refresh README skill counts after sprint merge",
+    "epic_slug": "ad-hoc",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
   }
 }
