@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momentum — A practice framework for agentic engineering</title>
+<meta name="description" content="An explorable walkthrough of the Momentum cycle: six phases, 27 skills, deterministic enforcement, and a flywheel that compounds every sprint.">
+<style>
+  :root {
+    --deep:   #9C3F1C;
+    --teal:   #C25A1F;
+    --soft:   #DBA960;
+    --ink:    #333;
+    --paper:  #fff;
+    --tint:   #faf3ea;
+    --tint-2: #f5e9d9;
+    --line:   #e9dcc9;
+    --line-strong: #d8c3a4;
+    --muted:  #7c6a55;
+    --faint:  #a9937a;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--teal); }
+  a:hover { color: var(--deep); }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--tint-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+  }
+  :focus-visible {
+    outline: 3px solid var(--teal);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+
+  /* ───────────────────────── Header ───────────────────────── */
+  .site-header {
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .site-header .wrap {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+  .wordmark {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.22em;
+    color: var(--deep);
+    text-decoration: none;
+  }
+  .tagline {
+    color: var(--muted);
+    font-size: 15px;
+    border-left: 1px solid var(--line-strong);
+    padding-left: 18px;
+  }
+  .gh-link {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--deep);
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 7px 16px;
+    transition: background-color .18s ease, border-color .18s ease;
+  }
+  .gh-link:hover { background: var(--tint); border-color: var(--soft); color: var(--deep); }
+  .gh-link svg { width: 18px; height: 18px; fill: currentColor; }
+
+  /* ───────────────────────── Hero / cycle ───────────────────────── */
+  .hero { padding: 56px 0 72px; }
+  .hero h1 {
+    margin: 0 0 10px;
+    font-size: clamp(30px, 4.4vw, 44px);
+    line-height: 1.12;
+    letter-spacing: -0.5px;
+    color: var(--deep);
+  }
+  .lede {
+    max-width: 72ch;
+    color: var(--muted);
+    font-size: 17.5px;
+    margin: 0 0 14px;
+  }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+    margin: 18px 0 8px;
+    padding: 0;
+    list-style: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    color: var(--faint);
+  }
+  .facts b { color: var(--teal); font-weight: 600; }
+  .install-line {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .install-line code { white-space: nowrap; }
+
+  .cycle-layout {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.92fr);
+    gap: 44px;
+    align-items: start;
+  }
+  .ring-wrap { position: relative; max-width: 660px; margin: 0 auto; width: 100%; }
+  .ring-wrap svg { display: block; width: 100%; height: auto; }
+
+  /* ring pieces */
+  .ring-decor {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 2;
+    stroke-dasharray: 3 14;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ring-rotate 90s linear infinite;
+  }
+  @keyframes ring-rotate { to { transform: rotate(360deg); } }
+  .arc { fill: none; stroke: var(--teal); stroke-width: 5; stroke-linecap: round; }
+  .chord {
+    fill: none;
+    stroke: var(--deep);
+    stroke-width: 4;
+    stroke-dasharray: 10 9;
+    stroke-linecap: round;
+    opacity: 0.85;
+  }
+  .chord-label {
+    font-family: var(--mono);
+    font-size: 19px;
+    letter-spacing: 0.08em;
+    fill: var(--deep);
+    paint-order: stroke;
+    stroke: var(--paper);
+    stroke-width: 8px;
+    stroke-linejoin: round;
+  }
+  .hub-circle { fill: var(--tint); stroke: var(--soft); stroke-width: 2; }
+  .hub-glyph { font-size: 44px; fill: var(--teal); }
+  .hub-title { font-size: 26px; font-weight: 800; letter-spacing: 0.18em; fill: var(--deep); }
+  .hub-sub { font-size: 17px; fill: var(--muted); }
+
+  .phase-node { cursor: pointer; }
+  .phase-node .halo {
+    fill: var(--soft);
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: node-pulse 7.2s ease-out infinite;
+  }
+  @keyframes node-pulse {
+    0%   { transform: scale(1);    opacity: 0.45; }
+    18%  { transform: scale(1.22); opacity: 0; }
+    100% { transform: scale(1.22); opacity: 0; }
+  }
+  .phase-node .body {
+    fill: var(--paper);
+    stroke: var(--teal);
+    stroke-width: 3;
+    transition: fill .2s ease, stroke .2s ease;
+  }
+  .phase-node text { pointer-events: none; }
+  .phase-node .p-num  { font-family: var(--mono); font-size: 19px; letter-spacing: 0.12em; fill: var(--soft); }
+  .phase-node .p-name { font-size: 27px; font-weight: 800; letter-spacing: 0.1em; fill: var(--deep); transition: fill .2s ease; }
+  .phase-node .p-count{ font-family: var(--mono); font-size: 16px; fill: var(--faint); transition: fill .2s ease; }
+  .phase-node:hover .body, .phase-node:focus-visible .body { fill: var(--tint-2); }
+  .phase-node.active .body  { fill: var(--deep); stroke: var(--deep); }
+  .phase-node.active .p-num   { fill: var(--soft); }
+  .phase-node.active .p-name  { fill: #fff; }
+  .phase-node.active .p-count { fill: #f0dcc3; }
+  .phase-node:focus { outline: none; }
+  .phase-node:focus-visible .body { stroke: var(--deep); stroke-width: 5; }
+
+  /* ───────────────────────── Detail panel ───────────────────────── */
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper);
+    box-shadow: 0 4px 22px rgba(156, 63, 28, 0.08);
+    position: sticky;
+    top: 24px;
+    overflow: hidden;
+  }
+  .panel-intro {
+    padding: 26px 28px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .panel-intro p { margin: 0 0 10px; }
+  .panel-intro p:last-child { margin-bottom: 0; }
+  .panel-intro .hint { color: var(--teal); font-weight: 600; }
+  .panel-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .45s cubic-bezier(.4, 0, .2, 1);
+  }
+  .panel.open .panel-body { grid-template-rows: 1fr; }
+  .panel.open .panel-intro { display: none; }
+  .panel-inner { overflow: hidden; }
+  .panel-content { padding: 26px 28px 28px; animation: panel-in .35s ease; }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .panel-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .panel-head .num { font-family: var(--mono); font-size: 13px; letter-spacing: 0.18em; color: var(--soft); }
+  .panel-head h3 { margin: 0; font-size: 24px; letter-spacing: 0.06em; color: var(--deep); }
+  .panel-story { margin: 0 0 20px; font-size: 15px; color: var(--ink); }
+  .panel h4 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 700;
+  }
+  .skill-cards { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 10px; }
+  .skill-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--tint);
+  }
+  .skill-card .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
+  .skill-card .cmd { font-family: var(--mono); font-size: 13.5px; font-weight: 600; color: var(--deep); }
+  .skill-card .spawn { font-size: 12px; font-style: italic; color: var(--faint); }
+  .skill-card p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  .badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+  }
+  .badge.user { background: var(--teal); color: #fff; }
+  .badge.spawned { background: transparent; color: var(--muted); border: 1px solid var(--line-strong); }
+  .artifacts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .artifacts h5 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 700;
+  }
+  .artifacts ul { margin: 0; padding-left: 16px; }
+  .artifacts li { font-size: 12.5px; color: var(--muted); margin: 4px 0; }
+  .artifacts li code { font-size: 11.5px; background: var(--paper); }
+
+  /* ───────────────────────── Story flow stepper ───────────────────────── */
+  .flow { background: var(--tint); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 64px 0 70px; }
+  .flow h2, .spine h2, .crosscut h2 {
+    margin: 0 0 8px;
+    font-size: clamp(24px, 3vw, 32px);
+    letter-spacing: -0.3px;
+    color: var(--deep);
+  }
+  .section-lede { max-width: 76ch; color: var(--muted); margin: 0 0 30px; font-size: 16px; }
+
+  .stepper-groups {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .group-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    border-bottom: 2px solid var(--line-strong);
+    padding-bottom: 6px;
+    text-align: center;
+  }
+  .group-label.per-story { grid-column: 1 / span 4; }
+  .group-label.integrated { grid-column: 5 / span 3; border-bottom-color: var(--soft); color: var(--teal); }
+
+  .stepper {
+    list-style: none;
+    margin: 0 0 22px;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 14px;
+  }
+  .step { position: relative; }
+  .step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -13px;
+    width: 12px;
+    height: 2px;
+    background: var(--line-strong);
+  }
+  .step button {
+    width: 100%;
+    min-height: 86px;
+    font: inherit;
+    text-align: center;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 8px;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+  .step button:hover { border-color: var(--soft); transform: translateY(-2px); }
+  .step button[aria-expanded="true"] {
+    border-color: var(--teal);
+    box-shadow: 0 4px 14px rgba(8, 131, 149, 0.18);
+  }
+  .step .s-num { display: block; font-family: var(--mono); font-size: 11px; color: var(--soft); letter-spacing: 0.14em; margin-bottom: 4px; }
+  .step .s-name { display: block; font-weight: 700; font-size: 13.5px; color: var(--deep); line-height: 1.25; }
+  .step .s-sub { display: block; font-size: 11px; color: var(--faint); margin-top: 4px; }
+
+  .step-detail {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--teal);
+    border-radius: 12px;
+    padding: 18px 22px;
+    min-height: 92px;
+  }
+  .step-detail h3 { margin: 0 0 6px; font-size: 15px; color: var(--deep); }
+  .step-detail h3 span { font-family: var(--mono); font-size: 11px; color: var(--soft); letter-spacing: 0.14em; margin-right: 8px; }
+  .step-detail p { margin: 0; font-size: 14.5px; color: var(--muted); }
+
+  .escalation {
+    margin-top: 22px;
+    background: var(--paper);
+    border: 1px solid var(--line-strong);
+    border-left: 4px solid var(--deep);
+    border-radius: 12px;
+    padding: 16px 22px;
+  }
+  .escalation h3 {
+    margin: 0 0 4px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--deep);
+  }
+  .escalation p { margin: 0; font-size: 14.5px; color: var(--muted); }
+  .escalation b { color: var(--ink); }
+
+  /* ───────────────────────── Deterministic spine ───────────────────────── */
+  .spine { padding: 64px 0 70px; }
+  .spine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 16px;
+  }
+  .spine-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+    background: var(--paper);
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+  .spine-card:hover { border-color: var(--soft); box-shadow: 0 4px 16px rgba(9, 99, 126, 0.08); }
+  .spine-card h3 { margin: 0 0 6px; font-size: 15.5px; color: var(--deep); }
+  .spine-card p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  .spine-card code { font-size: 12px; }
+
+  /* ───────────────────────── Cross-cutting ───────────────────────── */
+  .crosscut { background: var(--tint); border-top: 1px solid var(--line); padding: 64px 0 72px; }
+  .cc-group { margin-top: 28px; }
+  .cc-group h3 {
+    margin: 0 0 14px;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 700;
+  }
+  .cc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .cc-grid .skill-card { background: var(--paper); }
+
+  /* ───────────────────────── Footer ───────────────────────── */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 36px 0 48px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 30px; align-items: baseline; }
+  footer .license { color: var(--faint); }
+  footer nav { display: flex; gap: 22px; flex-wrap: wrap; margin-left: auto; }
+  footer a { text-decoration: none; font-weight: 600; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ───────────────────────── Responsive ───────────────────────── */
+  @media (max-width: 980px) {
+    .cycle-layout { grid-template-columns: 1fr; }
+    .panel { position: static; }
+    .stepper-groups, .stepper { grid-template-columns: repeat(4, 1fr); }
+    .group-label.per-story { grid-column: 1 / span 4; }
+    .group-label.integrated { grid-column: 1 / span 4; border-bottom-color: var(--line-strong); margin-top: 6px; }
+    .stepper-groups { display: none; }
+    .step:nth-child(4n)::after { display: none; }
+  }
+  @media (max-width: 620px) {
+    .stepper { grid-template-columns: repeat(2, 1fr); }
+    .step:nth-child(4n)::after { display: block; }
+    .step:nth-child(2n)::after { display: none; }
+    .artifacts { grid-template-columns: 1fr; }
+    .tagline { border-left: none; padding-left: 0; }
+  }
+
+  /* ───────────────────────── Reduced motion ───────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .phase-node .halo { display: none; }
+    .ring-decor { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="https://github.com/iamsteveholmes/momentum">MOMENTUM</a>
+    <span class="tagline">A practice framework for agentic engineering</span>
+    <a class="gh-link" href="https://github.com/iamsteveholmes/momentum">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      View on GitHub
+    </a>
+  </div>
+</header>
+
+<main>
+  <!-- ═══════════════ The cycle ═══════════════ -->
+  <section class="hero" aria-labelledby="cycle-title">
+    <div class="wrap">
+      <h1 id="cycle-title">The Momentum Cycle</h1>
+      <p class="lede">
+        Six phases on a continuous loop. Each sprint ends by writing handoff events to the
+        practice ledger — and the next sprint-planning reads them in its first step. The cycle
+        is a flywheel: every rotation compounds.
+      </p>
+      <ul class="facts" aria-label="Momentum by the numbers">
+        <li><b>27</b> momentum skills</li>
+        <li><b>9</b> agents</li>
+        <li><b>5</b> AVFL workers</li>
+        <li><b>3</b> deterministic hooks</li>
+      </ul>
+      <p class="install-line">
+        Install: <code>npx skills add https://github.com/iamsteveholmes/momentum --all</code>
+        &nbsp;then&nbsp; <code>/momentum</code>
+      </p>
+
+      <div class="cycle-layout">
+        <div class="ring-wrap">
+          <svg id="ring" viewBox="0 0 1000 1000" role="group"
+               aria-label="The six-phase Momentum cycle: Enter, Know, Capture, Plan, Build, Close — with a flywheel edge from Close back to Plan via the practice ledger. Each phase is a button; activate one to view its details.">
+          </svg>
+        </div>
+
+        <aside class="panel" id="phase-panel" aria-label="Phase detail">
+          <div class="panel-intro" id="panel-intro">
+            <p><span class="hint">Select a phase on the ring</span> — click or Tab to a node and
+              press Enter — to expand its story, skills, and artifacts.</p>
+            <p><strong>ENTER</strong> orients the session · <strong>CAPTURE</strong> turns conversation
+              into backlog · <strong>KNOW</strong> builds evidence · <strong>PLAN</strong> freezes the
+              contracts · <strong>BUILD</strong> ships the sprint · <strong>CLOSE</strong> feeds the
+              flywheel.</p>
+          </div>
+          <div class="panel-body">
+            <div class="panel-inner">
+              <div class="panel-content" id="panel-content" aria-live="polite"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ How a story flows ═══════════════ -->
+  <section class="flow" aria-labelledby="flow-title">
+    <div class="wrap">
+      <h2 id="flow-title">How a story flows</h2>
+      <p class="section-lede">
+        Inside BUILD, the conductor advances stories on an event-driven dependency frontier.
+        The first four stages run per story; the last three run once on the integrated sprint
+        diff. Hover or select a stage to see what happens there.
+      </p>
+
+      <div class="stepper-groups" aria-hidden="true">
+        <div class="group-label per-story">per story — repeated across the frontier</div>
+        <div class="group-label integrated">integrated sprint diff — once</div>
+      </div>
+
+      <ol class="stepper" id="stepper"></ol>
+
+      <div class="step-detail" id="step-detail" aria-live="polite"></div>
+
+      <div class="escalation">
+        <h3>Mid-flight escalation — the only interruption rule</h3>
+        <p>
+          The pipeline runs uninterrupted unless a finding is <b>stakes-class</b> and either
+          <b>irreversible-and-imminent</b> or <b>build-invalidating</b>. Everything else —
+          however interesting — waits for the single human end-gate.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Deterministic spine ═══════════════ -->
+  <section class="spine" aria-labelledby="spine-title">
+    <div class="wrap">
+      <h2 id="spine-title">The deterministic spine</h2>
+      <p class="section-lede">
+        Discipline that does not depend on a model remembering to behave. These mechanisms
+        execute automatically — they cannot be skipped, deprioritized, or forgotten.
+      </p>
+      <div class="spine-grid">
+        <div class="spine-card">
+          <h3>Three hooks</h3>
+          <p><code>file-protection</code> (PreToolUse) · <code>lint-format</code> (PostToolUse) ·
+             <code>stop-gate</code> (Stop). Deterministic enforcement that fires on every
+             matching event, no exceptions.</p>
+        </div>
+        <div class="spine-card">
+          <h3>Sole-writer rules</h3>
+          <p><code>sprint-manager</code> is the only writer of <code>sprints/index.json</code> and
+             <code>stories/index.json</code>; <code>epic-grooming</code> owns <code>epics.json</code>.
+             Enforced by the file-protection hook via <code>protected-paths.json</code>.</p>
+        </div>
+        <div class="spine-card">
+          <h3>Frozen contracts</h3>
+          <p>Verification contracts — <code>.feature</code>, <code>.eval.yaml</code>,
+             <code>.smoke.sh</code>, <code>.review.md</code> per change_type — are locked into
+             <code>.momentum/sprints/{sprint}/specs/</code> at sprint activation.</p>
+        </div>
+        <div class="spine-card">
+          <h3>Practice ledger</h3>
+          <p><code>.momentum/practice-ledger.jsonl</code> — a structured event log of quality
+             findings, triage outcomes, and consumption records across sprints. The next
+             sprint-planning reads it first. This is the flywheel's memory.</p>
+        </div>
+        <div class="spine-card">
+          <h3>Producer–verifier separation</h3>
+          <p>Everywhere in the cycle: writers never verify, verifiers never write. Reviewers run
+             read-only; the implementer returns in fix-mode only with directed findings in hand.</p>
+        </div>
+        <div class="spine-card">
+          <h3>Canonical finding schema</h3>
+          <p>Every finding carries a <code>stakes_class</code>: security-auth-isolation ·
+             irreversible-destructive · high-blast-radius-architecture · routine. Legitimate +
+             routine auto-fixes; legitimate + stakes-class escalates; non-legitimate is dismissed
+             with rationale; out-of-scope is triaged.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Cross-cutting skills ═══════════════ -->
+  <section class="crosscut" aria-labelledby="crosscut-title">
+    <div class="wrap">
+      <h2 id="crosscut-title">Alongside the wheel</h2>
+      <p class="section-lede">
+        Quality and infrastructure skills run beside the six phases rather than inside any one
+        of them — validation loops, drift detection, the live dashboard, and the 3-tier agent
+        composition system (hot constitution / composed agent / cold KB).
+      </p>
+      <div class="cc-group">
+        <h3>Quality</h3>
+        <ul class="cc-grid" id="cc-quality"></ul>
+      </div>
+      <div class="cc-group">
+        <h3>Infrastructure</h3>
+        <ul class="cc-grid" id="cc-infra"></ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="license">Apache License 2.0</span>
+    <span>Built for developers directing AI agents as primary code producers.</span>
+    <nav aria-label="Footer">
+      <a href="https://github.com/iamsteveholmes/momentum">Repository</a>
+      <a href="https://github.com/iamsteveholmes/momentum/blob/main/README.md">README</a>
+      <a href="https://github.com/iamsteveholmes/momentum/blob/main/docs/philosophy.md">Philosophy</a>
+      <a href="https://github.com/iamsteveholmes/momentum/blob/main/LICENSE">License</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════ Data ═══════════════════════════ */
+
+var PHASES = [
+  {
+    id: "enter", num: "01", name: "ENTER",
+    story: "Every session starts the same way: /momentum. Impetus orients you — a state ledger with signal counts, sprint intelligence, and a workflow menu offering sprint-planning, continue-sprint, or run-retrospective. One command in, full situational awareness out.",
+    skills: [
+      { slug: "impetus", cmd: "/momentum", user: true,
+        desc: "Impetus — Momentum practice orchestrator. Session orientation, sprint intelligence, and workflow dispatch for the Momentum agentic engineering practice." }
+    ],
+    reads: [
+      "<code>.momentum/sprints/index.json</code> — central sprint registry",
+      "<code>.momentum/stories/index.json</code> — master story registry",
+      "<code>.momentum/practice-ledger.jsonl</code> — signal counts for the state ledger"
+    ],
+    writes: [
+      "<code>.claude/momentum/installed.json</code> — install state and version registry for upgrade detection",
+      "Dispatches every other workflow — Impetus orchestrates rather than producing artifacts"
+    ]
+  },
+  {
+    id: "know", num: "02", name: "KNOW",
+    story: "Strategic moves deserve evidence. assessment spawns parallel discovery agents and validates every finding with the developer before an ASR is written; research runs a six-phase pipeline — SCOPE, EXECUTE, VERIFY, Q&A, SYNTHESIZE, COMMIT — with Gemini triangulation and AVFL corpus validation. decision records each adopt / reject / defer call as an SDR with a provenance chain back to its source.",
+    skills: [
+      { slug: "assessment", cmd: "/momentum:assessment", user: true,
+        desc: "Guided product state evaluation. Spawns parallel discovery agents, validates findings with the developer, and produces a structured ASR document." },
+      { slug: "research", cmd: "/momentum:research", user: true,
+        desc: "Deep research pipeline with parallel subagents, Gemini CLI triangulation, AVFL corpus validation, and provenance tracking." },
+      { slug: "decision", cmd: "/momentum:decision", user: true,
+        desc: "Capture strategic decisions from assessments or research. Walk findings, record adopt/reject/defer, write a linked SDR document." }
+    ],
+    reads: [
+      "The product itself — parallel discovery agents evaluate live state",
+      "<code>docs/planning-artifacts/</code> — PRD, architecture decisions, epic narratives"
+    ],
+    writes: [
+      "ASR documents — structured assessment findings, every one developer-validated",
+      "SDR documents — adopt/reject/defer decisions with provenance chains",
+      "<code>docs/research/</code> — synthesis from the SCOPE/EXECUTE/VERIFY/Q&amp;A/SYNTHESIZE/COMMIT pipeline"
+    ]
+  },
+  {
+    id: "capture", num: "03", name: "CAPTURE",
+    story: "Everything that should become work funnels into the backlog here — assessment findings, research conclusions, retro lessons, and ideas that decay fast in conversation. intake preserves story stubs without ceremony, while triage runs every observation through a dedup gate and routes it into one of five classes — ARTIFACT, DECISION, SHAPING, DEFER, REJECT. refine keeps the backlog honest, and epic-grooming with epic-breakdown keeps the epic taxonomy coherent and complete.",
+    skills: [
+      { slug: "intake", cmd: "/momentum:intake", user: true,
+        desc: "Capture a story idea from conversation into the backlog as a stub — fast context preservation without the full create-story pipeline." },
+      { slug: "triage", cmd: "/momentum:triage", user: true,
+        desc: "Dedup gate + batch-classify observations into five classes, enrich ARTIFACTs, batch-approve, delegate to intake/decision or queue." },
+      { slug: "refine", cmd: "/momentum:refine", user: true,
+        desc: "Backlog hygiene — planning artifact drift detection, status mismatches, stale-story triage, and batch approval." },
+      { slug: "epic-grooming", cmd: "/momentum:epic-grooming", user: true,
+        desc: "Epic grooming — unified epic taxonomy, value analysis, orphan resolution, and epics.json maintenance." },
+      { slug: "epic-breakdown", cmd: "/momentum:epic-breakdown", user: true,
+        desc: "Enumerating missing stories for an epic end to end. Use when the developer wants to enumerate stories needed to ship an epic." }
+    ],
+    reads: [
+      "<code>docs/intake/</code> — observations and unprocessed discovery",
+      "<code>_bmad-output/planning-artifacts/epics.json</code> — current epic taxonomy"
+    ],
+    writes: [
+      "<code>docs/intake/</code> — backlog stubs from conversation",
+      "<code>_bmad-output/planning-artifacts/epics.json</code> — epic taxonomy, value analysis, lifecycle tracking (epic-grooming is its sole writer)"
+    ]
+  },
+  {
+    id: "plan", num: "04", name: "PLAN",
+    story: "sprint-planning synthesizes the backlog with the handoffs the last retro wrote to the practice ledger, selects the sprint's stories, and fleshes them through create-story — change-type classification, Gherkin specs for E2E, team composition. Verification contracts are frozen into the sprint's specs/ directory at activation. sprint-manager, the sole writer of the sprint and story indexes, validates every state transition.",
+    skills: [
+      { slug: "sprint-planning", cmd: "/momentum:sprint-planning", user: true,
+        desc: "Sprint planning — story selection, team composition, Gherkin specs, and activation." },
+      { slug: "create-story", cmd: "/momentum:create-story", user: true,
+        desc: "Creates a Momentum story with change-type classification, injected EDD/TDD guidance, and AVFL validation." },
+      { slug: "sprint-manager", cmd: "spawned by sprint-planning", user: false,
+        desc: "Sole writer of stories/index.json and sprints/index.json — validates state transitions, activates sprints, manages epic membership." },
+      { slug: "plan-audit", cmd: "runs before plan mode exits", user: false,
+        desc: "Audits the active plan for spec impact, classifies trivial vs. substantive, and writes a Spec Impact section before plan mode exits." }
+    ],
+    reads: [
+      "<code>.momentum/practice-ledger.jsonl</code> — handoff events from the last retro, read in sprint-planning's first step",
+      "<code>docs/planning-artifacts/</code> — PRD, architecture decisions, sprint plans"
+    ],
+    writes: [
+      "<code>.momentum/sprints/index.json</code> and <code>.momentum/stories/index.json</code> — via sprint-manager only",
+      "<code>.momentum/sprints/{sprint}/specs/</code> — verification contracts frozen at activation"
+    ]
+  },
+  {
+    id: "build", num: "05", name: "BUILD",
+    story: "The conductor runs the sprint in-session, from pre-flight guards through the final human end-gate, with no story-count cap. Stories advance on an event-driven dependency frontier: implemented in isolated worktrees, reviewed concurrently by read-only reviewers, fixed, rebase-merged. The integrated diff then faces AVFL, E2E behavioral validation, and a single end-gate. quick-fix is the single-story alternative — define, specify, implement, validate, merge.",
+    skills: [
+      { slug: "conductor", cmd: "/momentum:conduct", user: true,
+        desc: "In-session sprint build orchestrator — per-story pipelines, AVFL-on-merge, E2E, single end-gate. No story-count cap." },
+      { slug: "quick-fix", cmd: "/momentum:quick-fix", user: true,
+        desc: "Single-story fix — define, specify, implement, validate, and merge in one streamlined flow." },
+      { slug: "sprint-dev", cmd: "spawned by conductor", user: false,
+        desc: "Sprint execution — dependency-driven story development, post-merge AVFL, and team review." },
+      { slug: "dev", cmd: "spawned by conductor", user: false,
+        desc: "Pure implementer — resolves a story, delegates to bmad-dev-story, emits an implementation-complete + file_list signal." }
+    ],
+    reads: [
+      "<code>.momentum/sprints/{sprint}/specs/</code> — the frozen verification contracts",
+      "<code>momentum/verification-harness.json</code> — change_type → driver routing for E2E"
+    ],
+    writes: [
+      "Story implementations in isolated worktrees → rebase-merged onto the sprint line",
+      "Merge to <code>main</code> — only after the human end-gate approves"
+    ]
+  },
+  {
+    id: "close", num: "06", name: "CLOSE",
+    story: "retro turns the sprint's transcripts into knowledge through one dynamic workflow — Discover, Verify, Synthesize — verifying that stories actually shipped and converting findings into backlog stubs. Whatever goes un-actioned is written to the practice ledger as handoff events, which the next sprint-planning reads in its very first step. That is the flywheel.",
+    skills: [
+      { slug: "retro", cmd: "/momentum:retro", user: true,
+        desc: "Sprint retrospective — transcript audit engine (dynamic Workflow), story verification, findings document, and sprint closure." }
+    ],
+    reads: [
+      "Sprint transcripts — the raw material of the audit"
+    ],
+    writes: [
+      "<code>.momentum/sprints/{sprint}/audit-extracts/</code> — agent-summaries.jsonl, errors.jsonl, team-messages.jsonl, user-messages.jsonl",
+      "Findings document and backlog stubs in <code>docs/intake/</code>",
+      "<code>.momentum/practice-ledger.jsonl</code> — handoff events for the next sprint-planning"
+    ]
+  }
+];
+
+var STEPS = [
+  { num: "1", name: "dev", sub: "isolated worktree", group: "story",
+    tip: "A pure implementer working in an isolated worktree. It resolves the story, delegates to bmad-dev-story, and emits an implementation-complete signal with a file_list. Worktree, merge, and cleanup belong to the conductor." },
+  { num: "2", name: "qa-reviewer + code-reviewer", sub: "concurrent, read-only", group: "story",
+    tip: "Two reviewers verify the story diff concurrently, both read-only. code-reviewer drives an adversarial bug-hunt in report-only mode and normalizes surviving findings to the canonical schema with stakes_class populated." },
+  { num: "3", name: "fix-mode", sub: "directed fixes", group: "story",
+    tip: "dev returns in fix-mode and applies the directed fixes from review findings. Producer–verifier separation holds: the reviewers never write, and the writer never verifies its own work." },
+  { num: "4", name: "rebase-merge", sub: "frontier advances", group: "story",
+    tip: "The story branch is rebase-merged onto the sprint's integration line and the event-driven dependency frontier advances — stories it was blocking start immediately." },
+  { num: "5", name: "AVFL", sub: "validate-fix loop", group: "sprint",
+    tip: "The Adversarial Validate-Fix Loop runs on the integrated sprint diff: parallel enumerator and adversary validators, a consolidator, and a fixer iterate to convergence. Five workers — validator-enum, validator-adv, consolidator, fixer, merge-review." },
+  { num: "6", name: "E2E", sub: "behavioral validation", group: "sprint",
+    tip: "Behavioral validation routed by verification-harness.json: each story's change_type selects its driver — skill-invoke, bash, curl, Maestro, or document-review." },
+  { num: "7", name: "end-gate", sub: "human decision", group: "sprint",
+    tip: "One human gate for the whole sprint. Findings arrive as decision cards; routine items are collapsed to counts. Approve, and the sprint merges to main." }
+];
+
+var CROSSCUT = {
+  quality: [
+    { slug: "avfl", cmd: "spawned by conductor for AVFL-on-merge — user-invocable for standalone validation", user: true,
+      desc: "Adversarial Validate-Fix Loop — multi-agent validation catching errors, hallucinations, and quality issues via parallel lenses and iterative fix." },
+    { slug: "code-reviewer", cmd: "spawned by conductor", user: false,
+      desc: "Non-interactive bmad-code-review adapter for conduct. Accepts a single story diff, drives adversarial bug-hunt in report-only mode, normalizes surviving findings to the canonical schema with stakes_class populated." },
+    { slug: "architecture-guard", cmd: "invoked by impetus — not directly", user: false,
+      desc: "Detects pattern drift against architecture decisions. Read-only enforcer." },
+    { slug: "upstream-fix", cmd: "/momentum:upstream-fix", user: true,
+      desc: "Traces quality failures upstream to spec, rule, or workflow root cause. Proposes fixes at the right level." }
+  ],
+  infra: [
+    { slug: "canvas", cmd: "/momentum:canvas", user: true,
+      desc: "Launch the Momentum Cycle live dashboard (Hono+Bun, port 3456). Checks if running, starts if not; opens http://localhost:3456 in the viewer pane." },
+    { slug: "agent-builder", cmd: "/momentum:agent-builder", user: true,
+      desc: "Tier 2 agent composer: base body + constitution + manifesto → composed agent + routing entry in momentum/agents.json." },
+    { slug: "constitution-builder", cmd: "/momentum:constitution-builder", user: true,
+      desc: "Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill." },
+    { slug: "agent-guidelines", cmd: "/momentum:agent-guidelines", user: true,
+      desc: "Discovers project stack, researches breaking changes, consults on recommendations, generates path-scoped rules and reference docs." },
+    { slug: "feature-status", cmd: "/momentum:feature-status", user: true,
+      desc: "Deprecated. Use /momentum:canvas instead. This stub outputs a deprecation message and halts." }
+  ]
+};
+
+/* ═══════════════════════════ Ring ═══════════════════════════ */
+
+var SVG_NS = "http://www.w3.org/2000/svg";
+var CX = 500, CY = 500, R = 330, NODE_R = 82;
+
+function polar(deg, radius) {
+  var rad = deg * Math.PI / 180;
+  return { x: CX + radius * Math.cos(rad), y: CY + radius * Math.sin(rad) };
+}
+function el(name, attrs, text) {
+  var node = document.createElementNS(SVG_NS, name);
+  for (var k in attrs) node.setAttribute(k, attrs[k]);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function fmt(n) { return Math.round(n * 100) / 100; }
+
+function buildRing() {
+  var svg = document.getElementById("ring");
+
+  // defs: arrow markers
+  var defs = el("defs", {});
+  var mk = el("marker", { id: "arrow-teal", viewBox: "0 0 10 10", refX: "8", refY: "5",
+                          markerWidth: "4.4", markerHeight: "4.4", orient: "auto-start-reverse" });
+  mk.appendChild(el("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#C25A1F" }));
+  defs.appendChild(mk);
+  var mk2 = el("marker", { id: "arrow-deep", viewBox: "0 0 10 10", refX: "8", refY: "5",
+                           markerWidth: "4.6", markerHeight: "4.6", orient: "auto-start-reverse" });
+  mk2.appendChild(el("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#9C3F1C" }));
+  defs.appendChild(mk2);
+  svg.appendChild(defs);
+
+  // slow-rotating decorative dashed ring
+  svg.appendChild(el("circle", { class: "ring-decor", cx: CX, cy: CY, r: 448 }));
+
+  // forward arcs between consecutive phases (clockwise)
+  var GAP = 18; // degrees of clearance around each node
+  for (var i = 0; i < 6; i++) {
+    var a1 = -90 + i * 60 + GAP;
+    var a2 = -90 + (i + 1) * 60 - GAP - 2.5; // leave room for arrowhead
+    var p1 = polar(a1, R), p2 = polar(a2, R);
+    svg.appendChild(el("path", {
+      class: "arc",
+      d: "M " + fmt(p1.x) + " " + fmt(p1.y) + " A " + R + " " + R + " 0 0 1 " + fmt(p2.x) + " " + fmt(p2.y),
+      "marker-end": "url(#arrow-teal)"
+    }));
+  }
+
+  // flywheel chord: CLOSE → PLAN (practice-ledger handoff)
+  var closeC = polar(-90 + 5 * 60, R);   // CLOSE center
+  var planC  = polar(-90 + 3 * 60, R);   // PLAN center
+  var ctrl = { x: 300, y: 650 };
+  function toward(p, q, d) {
+    var dx = q.x - p.x, dy = q.y - p.y, len = Math.sqrt(dx * dx + dy * dy);
+    return { x: p.x + dx / len * d, y: p.y + dy / len * d };
+  }
+  var cStart = toward(closeC, ctrl, NODE_R + 12);
+  var cEnd   = toward(planC,  ctrl, NODE_R + 18);
+  svg.appendChild(el("path", {
+    class: "chord",
+    d: "M " + fmt(cStart.x) + " " + fmt(cStart.y) +
+       " Q " + ctrl.x + " " + ctrl.y + " " + fmt(cEnd.x) + " " + fmt(cEnd.y),
+    "marker-end": "url(#arrow-deep)"
+  }));
+  var label = el("text", {
+    class: "chord-label", x: 0, y: 0,
+    transform: "translate(288 608) rotate(60)",
+    "text-anchor": "middle"
+  }, "practice-ledger handoff");
+  svg.appendChild(label);
+
+  // hub
+  svg.appendChild(el("circle", { class: "hub-circle", cx: CX, cy: CY, r: 118 }));
+  svg.appendChild(el("text", { class: "hub-glyph", x: CX, y: CY - 32, "text-anchor": "middle" }, "↻"));
+  svg.appendChild(el("text", { class: "hub-title", x: CX, y: CY + 14, "text-anchor": "middle" }, "MOMENTUM"));
+  svg.appendChild(el("text", { class: "hub-sub", x: CX, y: CY + 46, "text-anchor": "middle" }, "each cycle compounds"));
+
+  // phase nodes
+  PHASES.forEach(function (phase, i) {
+    var c = polar(-90 + i * 60, R);
+    var g = el("g", {
+      class: "phase-node",
+      role: "button",
+      tabindex: "0",
+      "data-phase": phase.id,
+      "aria-pressed": "false",
+      "aria-label": phase.name + " — phase " + phase.num + " of 06, " +
+        phase.skills.length + (phase.skills.length === 1 ? " skill" : " skills") +
+        ". Activate to view details."
+    });
+    var halo = el("circle", { class: "halo", cx: c.x, cy: c.y, r: NODE_R });
+    halo.style.animationDelay = (i * 1.2) + "s";
+    g.appendChild(halo);
+    g.appendChild(el("circle", { class: "body", cx: c.x, cy: c.y, r: NODE_R }));
+    g.appendChild(el("text", { class: "p-num",  x: c.x, y: c.y - 28, "text-anchor": "middle" }, phase.num));
+    g.appendChild(el("text", { class: "p-name", x: c.x, y: c.y + 8,  "text-anchor": "middle" }, phase.name));
+    g.appendChild(el("text", { class: "p-count", x: c.x, y: c.y + 40, "text-anchor": "middle" },
+      phase.skills.length + (phase.skills.length === 1 ? " skill" : " skills")));
+    g.addEventListener("click", function () { selectPhase(phase.id); });
+    g.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        selectPhase(phase.id);
+      }
+    });
+    svg.appendChild(g);
+  });
+}
+
+/* ═══════════════════════════ Detail panel ═══════════════════════════ */
+
+function skillCard(s) {
+  var invocation = s.cmd.charAt(0) === "/"
+    ? '<span class="cmd">' + s.cmd + "</span>"
+    : '<span class="cmd">' + s.slug + '</span><span class="spawn">' + s.cmd + "</span>";
+  var badge = s.user
+    ? '<span class="badge user">user-invocable</span>'
+    : '<span class="badge spawned">orchestrator-spawned</span>';
+  return '<li class="skill-card"><div class="row">' + invocation + badge +
+         "</div><p>" + s.desc + "</p></li>";
+}
+
+function selectPhase(id) {
+  var phase = null;
+  for (var i = 0; i < PHASES.length; i++) if (PHASES[i].id === id) phase = PHASES[i];
+  if (!phase) return;
+
+  document.querySelectorAll(".phase-node").forEach(function (n) {
+    var active = n.getAttribute("data-phase") === id;
+    n.classList.toggle("active", active);
+    n.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+
+  var content = document.getElementById("panel-content");
+  var html =
+    '<div class="panel-head"><span class="num">PHASE ' + phase.num + '</span><h3>' + phase.name + "</h3></div>" +
+    '<p class="panel-story">' + phase.story + "</p>" +
+    "<h4>Skills</h4><ul class=\"skill-cards\">" + phase.skills.map(skillCard).join("") + "</ul>" +
+    "<h4>Artifacts</h4><div class=\"artifacts\">" +
+    '<div><h5>Reads</h5><ul>' + phase.reads.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></div>" +
+    '<div><h5>Writes</h5><ul>' + phase.writes.map(function (w) { return "<li>" + w + "</li>"; }).join("") + "</ul></div>" +
+    "</div>";
+
+  // re-trigger the entry animation on content swap
+  var fresh = content.cloneNode(false);
+  fresh.innerHTML = html;
+  content.parentNode.replaceChild(fresh, content);
+
+  document.getElementById("phase-panel").classList.add("open");
+  if (history.replaceState) history.replaceState(null, "", "#" + id);
+}
+
+/* ═══════════════════════════ Stepper ═══════════════════════════ */
+
+var pinnedStep = 0;
+
+function renderStepDetail(i) {
+  var s = STEPS[i];
+  document.getElementById("step-detail").innerHTML =
+    "<h3><span>STAGE " + s.num + (s.group === "story" ? " · PER STORY" : " · INTEGRATED SPRINT") +
+    "</span>" + s.name + "</h3><p>" + s.tip + "</p>";
+}
+
+function buildStepper() {
+  var ol = document.getElementById("stepper");
+  STEPS.forEach(function (s, i) {
+    var li = document.createElement("li");
+    li.className = "step";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("aria-expanded", i === pinnedStep ? "true" : "false");
+    btn.innerHTML = '<span class="s-num">' + s.num + ' / 7</span>' +
+                    '<span class="s-name">' + s.name + "</span>" +
+                    '<span class="s-sub">' + s.sub + "</span>";
+    btn.addEventListener("click", function () {
+      pinnedStep = i;
+      document.querySelectorAll("#stepper button").forEach(function (b, j) {
+        b.setAttribute("aria-expanded", j === i ? "true" : "false");
+      });
+      renderStepDetail(i);
+    });
+    btn.addEventListener("pointerenter", function () { renderStepDetail(i); });
+    btn.addEventListener("focus", function () { renderStepDetail(i); });
+    li.appendChild(btn);
+    ol.appendChild(li);
+  });
+  document.getElementById("stepper").addEventListener("pointerleave", function () {
+    renderStepDetail(pinnedStep);
+  });
+  renderStepDetail(pinnedStep);
+}
+
+/* ═══════════════════════════ Cross-cutting ═══════════════════════════ */
+
+function buildCrosscut() {
+  document.getElementById("cc-quality").innerHTML = CROSSCUT.quality.map(skillCard).join("");
+  document.getElementById("cc-infra").innerHTML = CROSSCUT.infra.map(skillCard).join("");
+}
+
+/* ═══════════════════════════ Init ═══════════════════════════ */
+
+buildRing();
+buildStepper();
+buildCrosscut();
+
+// deep link: /#plan opens the PLAN panel
+var hash = location.hash.replace("#", "");
+for (var h = 0; h < PHASES.length; h++) {
+  if (PHASES[h].id === hash) { selectPhase(hash); break; }
+}
+</script>
+</body>
+</html>

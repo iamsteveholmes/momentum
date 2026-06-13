@@ -2,8 +2,8 @@
 stepsCompleted: [1, 2, 3, 4, 5]
 inputDocuments:
   - docs/research/AI-Solo-Dev-Consolidated-Research-2026-03-07-final.md
-  - docs/research/AI Solo Dev Workflow Optimization Report.md
-  - docs/research/AI Engineering Maturity and Adoption.md
+  - docs/research/AI-Solo-Dev-Workflow-Optimization-Report.md
+  - docs/research/AI-Engineering-Maturity-and-Adoption.md
   - docs/research/technical-agentic-architecture-bmad-vs-claude-code-2026-03-07.md
   - docs/research/technical-claude-code-tool-permissions-research-2026-03-07.md
   - docs/research/technical-subagent-permissions-reference-2026-03-07.md
