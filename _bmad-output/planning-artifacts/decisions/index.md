@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-06-01'
+lastEdited: '2026-06-16'
 
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
@@ -52,3 +52,5 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-034 | [Epic-Layer Consolidation — Unify Features and Categorical Epics Into One Concept](dec-034-epic-layer-consolidation-2026-05-25.md) | 2026-05-25 | AES-003 | decided |
 | DEC-035 | [Conduct Execution Engine — In-Session Dynamic Workflows, Feature-Grained HITL, Gas City Deferred](dec-035-conduct-execution-engine-in-session-workflows-2026-05-30.md) | 2026-05-30 | execution-architecture council brief + (conversation) | decided (amended by DEC-036) |
 | DEC-036 | [Conduct HITL Calibration — Stakes-and-Timing Escalation, Legible Auto-Fix, Anti-Rubber-Stamp, and Decision-Grade Presentation](dec-036-conduct-hitl-calibration-2026-06-01.md) | 2026-06-01 | AES-004 | decided |
+| DEC-037 | [Conduct Invocation Model — Standalone /momentum:conduct Skill, Coexisting with sprint-dev](dec-037-conduct-invocation-model-standalone-skill-2026-06-04.md) | 2026-06-04 | sprint-2026-06-02-conduct-core-hitl-report | decided |
+| DEC-038 | [Manifesto as Per-Agent Diagnostic Table + Per-Project Multi-KB Architecture](dec-038-manifesto-diagnostic-table-multi-kb-2026-06-16.md) | 2026-06-16 | manifesto-cmp-dev-recovery-2026-06-16 | decided |
