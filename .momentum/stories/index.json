@@ -5838,5 +5838,25 @@
     "touches": [],
     "priority": "low",
     "story_type": "defect"
+  },
+  "momentum-knowledge-base-buildout": {
+    "status": "backlog",
+    "title": "Momentum knowledge base buildout",
+    "epic_slug": "momentum-agent-composition-pipeline",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
+  },
+  "manifesto-builder-skill-generate-then-curate": {
+    "status": "backlog",
+    "title": "manifesto-builder skill (generate-then-curate)",
+    "epic_slug": "momentum-agent-composition-pipeline",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "feature"
   }
 }

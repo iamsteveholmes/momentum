@@ -10,5 +10,7 @@
   "bd-discovery-root": "agent-ad5e86c17b33b028d-0ja",
   "compute-verification-method-accepts-list-change-type": "agent-ad5e86c17b33b028d-6az",
   "fail-loud-on-empty-or-unrecognized-change-type": "agent-ad5e86c17b33b028d-dhh",
-  "refresh-readme-skill-counts-after-sprint-merge": "agent-ad5e86c17b33b028d-m1h"
+  "refresh-readme-skill-counts-after-sprint-merge": "agent-ad5e86c17b33b028d-m1h",
+  "momentum-knowledge-base-buildout": "agent-ad5e86c17b33b028d-x9g",
+  "manifesto-builder-skill-generate-then-curate": "agent-ad5e86c17b33b028d-3yq"
 }
