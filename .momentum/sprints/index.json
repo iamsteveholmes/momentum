@@ -1,6 +1,20 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "build-guidelines-skill",
+      "agent-manifesto-format-specification",
+      "constitutionmd-generation-acceptance-criteria",
+      "constitution-builder-write-mode-parameterization",
+      "wiki-query-interface-block-for-hot-constitution",
+      "nornspun-agent-constitution",
+      "conduct-assign-finding-id-before-directed-fix-invocation",
+      "conduct-ledger-append-site-dedup-guards"
+    ],
+    "waves": []
+  },
   "completed": [
     {
       "locked": true,
