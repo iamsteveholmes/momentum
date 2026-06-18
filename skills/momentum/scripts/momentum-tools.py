@@ -499,15 +499,25 @@ CHANGE_TYPE_PRECEDENCE: list[str] = [
 ]
 
 
-def compute_verification_method(change_type_raw: str) -> str:
+def compute_verification_method(change_type_raw) -> str:
     """Compute the closed-enum verification_method from a story's change_type field.
 
     Handles multi-value change_type strings (e.g. "skill-instruction + code") by
     splitting on ' + ' and '+' and applying the precedence table to pick the highest-
     weight type. Falls back to 'document-review' for unknown/empty change_type values.
+
+    Tolerates a list/tuple change_type (e.g. a story-frontmatter YAML list mistakenly
+    written to the index) by coercing it to the canonical "+"-joined string form, so a
+    bad write degrades gracefully instead of aborting the whole sprint's Step 3.5.
     """
     if not change_type_raw:
         return "document-review"
+
+    # Defense-in-depth: coerce a list/tuple to the canonical string form before splitting.
+    if isinstance(change_type_raw, (list, tuple)):
+        change_type_raw = " + ".join(str(p) for p in change_type_raw if str(p).strip())
+        if not change_type_raw:
+            return "document-review"
 
     # Split on common separators used in the existing data
     import re as _re
