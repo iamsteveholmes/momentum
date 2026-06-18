@@ -158,7 +158,7 @@
     "story_file": true,
     "depends_on": [],
     "touches": [],
-    "priority": "low",
+    "priority": "medium",
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "agent-spawn-preflight-check": {
@@ -184,7 +184,7 @@
   "architect-base-body": {
     "status": "backlog",
     "title": "Architect base body",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -195,7 +195,7 @@
   "architecture-decision-26-update-for-base-body-collapse": {
     "status": "backlog",
     "title": "Architecture Decision 26 update for base-body collapse",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -410,7 +410,7 @@
   "base-body-collapse-rollback": {
     "status": "backlog",
     "title": "Base-body collapse rollback",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -453,7 +453,7 @@
   "build-guidelines-invocation-surface-in-sprint-planning": {
     "status": "backlog",
     "title": "Build-guidelines invocation surface in sprint-planning",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -464,7 +464,7 @@
   "build-guidelines-skill": {
     "status": "backlog",
     "title": "Build-Guidelines Skill — Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -474,7 +474,7 @@
   "build-guidelines-soft-stop-ux-for-missing-vault": {
     "status": "backlog",
     "title": "build-guidelines soft-stop UX for missing vault",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -578,7 +578,7 @@
   "citation-integrity-validation-in-build-guidelines-avfl": {
     "status": "backlog",
     "title": "Citation integrity validation in build-guidelines AVFL",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -636,7 +636,7 @@
   "constitutionmd-generation-acceptance-criteria": {
     "status": "backlog",
     "title": "Constitution.md generation acceptance criteria",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -647,7 +647,7 @@
   "coverage-analysis-deduplication": {
     "status": "backlog",
     "title": "Coverage Analysis Deduplication — Cache Results, Never Re-Spawn for Same Target",
-    "epic_slug": "momentum-sprint-orchestration",
+    "epic_slug": "momentum-backlog-refinement",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -1929,7 +1929,7 @@
     "priority": "low"
   },
   "multi-model-research-workflow-active": {
-    "status": "backlog",
+    "status": "dropped",
     "title": "Multi Model Research Workflow Active",
     "epic_slug": "momentum-deep-research-pipeline",
     "story_file": false,
@@ -2083,7 +2083,7 @@
   "pm-base-body": {
     "status": "backlog",
     "title": "PM base body",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -2166,7 +2166,7 @@
   "agent-manifesto-format-specification": {
     "status": "backlog",
     "title": "Agent manifesto format specification",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -2410,7 +2410,7 @@
   "rename-base-body-files-to-canonical-naming": {
     "status": "backlog",
     "title": "Rename base body files to canonical naming",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -2766,7 +2766,7 @@
   "sm-base-body": {
     "status": "backlog",
     "title": "SM base body",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -2795,7 +2795,7 @@
   "specialist-classify-update-for-gen-2-paths": {
     "status": "backlog",
     "title": "Specialist-classify update for gen-2 paths",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -2837,7 +2837,7 @@
   "sprint-dev-composed-file-spawn-wiring": {
     "status": "backlog",
     "title": "Sprint-dev composed-file spawn wiring",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -2978,7 +2978,7 @@
   "sprint-planning-composed-file-preference-update": {
     "status": "backlog",
     "title": "Sprint-planning composed-file preference update",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3507,7 +3507,7 @@
   "nornspun-agent-constitution": {
     "status": "backlog",
     "title": "Build Nornspun Agent Constitution (Tier 1 Hot Context)",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3517,7 +3517,7 @@
   "skills-kb-query-injection-audit": {
     "status": "backlog",
     "title": "Skills KB Query Injection Audit — Enumerate Injection Points Across All Momentum Skills",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3528,7 +3528,7 @@
   "validator-agent-definition": {
     "status": "backlog",
     "title": "Validator Agent Definition — Abstract Base Role for AVFL/Distill Validation",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3539,7 +3539,7 @@
   "enumerator-agent-definition": {
     "status": "backlog",
     "title": "Enumerator Agent Definition — Shipped AVFL/Distill Validation Custom",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3550,7 +3550,7 @@
   "adversary-agent-definition": {
     "status": "backlog",
     "title": "Adversary Agent Definition — Shipped AVFL/Distill Validation Custom",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3561,7 +3561,7 @@
   "retro-auditor-agent-definition": {
     "status": "backlog",
     "title": "Retro Auditor Agent Definition — Abstract Base Role for Sprint Retrospective Auditors",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3572,7 +3572,7 @@
   "auditor-human-agent-definition": {
     "status": "backlog",
     "title": "Auditor Human Agent Definition — Shipped Retro Auditor for User Messages",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3583,7 +3583,7 @@
   "auditor-execution-agent-definition": {
     "status": "backlog",
     "title": "Auditor Execution Agent Definition — Shipped Retro Auditor for Agent Summaries",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3594,7 +3594,7 @@
   "auditor-review-agent-definition": {
     "status": "backlog",
     "title": "Auditor Review Agent Definition — Shipped Retro Auditor for Team Review Messages",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3605,7 +3605,7 @@
   "documenter-agent-definition": {
     "status": "backlog",
     "title": "Documenter Agent Definition — Retro Synthesis Coordinator Base Body",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3616,7 +3616,7 @@
   "code-reviewer-agent-definition": {
     "status": "backlog",
     "title": "Code Reviewer Agent Definition — Sprint-Dev Team Review Base Body",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3627,7 +3627,7 @@
   "architect-guard-agent-definition": {
     "status": "backlog",
     "title": "Architect Guard Agent Definition — Sprint-Dev Team Review Architecture Body",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3638,7 +3638,7 @@
   "dev-fixer-agent-definition": {
     "status": "backlog",
     "title": "Dev Fixer Agent Definition — Sprint-Dev Fix Phase Base Body",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3649,7 +3649,7 @@
   "agents-md-manifest-format": {
     "status": "backlog",
     "title": "Agents.md Manifest Format — Per-Skill Agent Role Configuration Spec",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3682,7 +3682,7 @@
   "nornspun-agent-constitution-wiki-query-block": {
     "status": "backlog",
     "title": "Add Wiki-Query Interface Block to Nornspun Agent Constitution (Tier 1)",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3692,7 +3692,7 @@
   "wiki-query-interface-block-for-hot-constitution": {
     "status": "backlog",
     "title": "Wiki-Query Interface Block for Hot Constitution",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3702,7 +3702,7 @@
   "drop-superseded-kb-stories-dec-018": {
     "status": "backlog",
     "title": "Drop Superseded KB Stories — DEC-018 Wiki Skills Replace KB/Vault Story Suite",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3950,7 +3950,7 @@
   "constitution-builder-write-mode-parameterization": {
     "status": "backlog",
     "title": "Constitution-Builder Write-Mode Parameterization — In-Place SKILL vs Composed Agent File vs Standalone Constitution",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -3961,7 +3961,7 @@
   "project-local-skill-md-migration-to-gen-2": {
     "status": "backlog",
     "title": "Project-Local SKILL.md Migration to Gen-2 Composed Agent Files",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -4038,7 +4038,7 @@
   "specialist-classify-multi-result": {
     "status": "backlog",
     "title": "specialist-classify-multi-result",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -4176,7 +4176,7 @@
   "creed-blocks-for-new-base-bodies": {
     "status": "backlog",
     "title": "Add CREED behavioral anchors to ux, analyst, and researcher base bodies",
-    "epic_slug": "momentum-agent-spawn-orchestration",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
     "touches": [],
@@ -4358,7 +4358,7 @@
   "inject-constitution-md-path-into-create-story-flesh-out-prompts": {
     "status": "backlog",
     "title": "Inject constitution.md path into create-story flesh-out prompts",
-    "epic_slug": "momentum-impetus-session-orientation",
+    "epic_slug": "momentum-agent-composition-pipeline",
     "depends_on": [],
     "touches": [],
     "priority": "medium",
@@ -5528,7 +5528,7 @@
   "surface-decision-record-conflicts-on-plan-supersession": {
     "status": "backlog",
     "title": "Surface decision-record conflicts when a new plan supersedes prior commitments",
-    "epic_slug": "momentum-assessment-decision-pipeline",
+    "epic_slug": "momentum-provenance-chain",
     "story_file": true,
     "depends_on": [],
     "touches": [],
