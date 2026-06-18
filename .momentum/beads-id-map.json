@@ -13,5 +13,6 @@
   "refresh-readme-skill-counts-after-sprint-merge": "agent-ad5e86c17b33b028d-m1h",
   "momentum-knowledge-base-buildout": "agent-ad5e86c17b33b028d-x9g",
   "manifesto-builder-skill-generate-then-curate": "agent-ad5e86c17b33b028d-3yq",
-  "conduct-assign-finding-id-before-directed-fix-invocation": "agent-ad5e86c17b33b028d-izh"
+  "conduct-assign-finding-id-before-directed-fix-invocation": "agent-ad5e86c17b33b028d-izh",
+  "conduct-resume-and-rehydration-idempotency-hardening": "agent-ad5e86c17b33b028d-5bt"
 }
