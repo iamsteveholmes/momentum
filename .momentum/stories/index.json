@@ -5858,5 +5858,35 @@
     "touches": [],
     "priority": "medium",
     "story_type": "feature"
+  },
+  "conduct-assign-finding-id-before-directed-fix-invocation": {
+    "status": "backlog",
+    "title": "Conduct — assign finding_id before directed-fix invocation",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "defect"
+  },
+  "conduct-ledger-append-site-dedup-guards": {
+    "status": "backlog",
+    "title": "Conduct — ledger append-site dedup guards",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "defect"
+  },
+  "conduct-resume-and-rehydration-idempotency-hardening": {
+    "status": "backlog",
+    "title": "Conduct — resume and rehydration idempotency hardening",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "defect"
   }
 }
