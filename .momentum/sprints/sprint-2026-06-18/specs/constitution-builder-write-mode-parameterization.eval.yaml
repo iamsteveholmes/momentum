@@ -1,0 +1,164 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: constitution-builder-write-mode-parameterization
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-18/specs/constitution-builder-write-mode-parameterization.eval.yaml
+how_dev_self_checks: |
+  Invoke momentum:constitution-builder three times, once per write_mode value, and once
+  with a bogus write_mode value. Confirm by observation:
+  1. A bogus write_mode value is refused, and the refusal message names exactly the three
+     accepted values: in_place_skill, composed_agent_file, standalone_constitution.
+  2. With write_mode=in_place_skill or composed_agent_file and NO target path given, the skill
+     asks "where should this constitution be written?" before producing any content; when a path
+     IS given, it does not ask.
+  3. With write_mode=standalone_constitution the skill writes to .claude/guidelines/constitution.md
+     without asking for a path.
+  4. In every produced/written output, read the file and confirm it has NO "## Quick Routing"
+     section, NO agent-specific "## Permissions" section, and NO agent-specific "## Standing Rules"
+     section; it DOES contain an embedded-facts section, a KB-sourced-context section, and the
+     wiki-query interface block.
+  5. in_place_skill written into a pre-existing SKILL.md leaves the file's other content intact.
+  6. Open skills/momentum/skills/constitution-builder/SKILL.md: the description field is
+     150 characters or fewer, names the write_mode behavior, no longer advertises generating
+     Permissions/Standing Rules/Quick Routing, and the model:/effort: fields are still present.
+  7. The skill's instructions contain a stated note that routing-table / per-agent-routing
+     generation is the responsibility of agent-builder, and contain no step that emits routing.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/constitution-builder-write-mode-parameterization.md#acceptance-criteria
+platforms: [host]
+
+# === BODY (Part B) ===
+harness_profile: skill-invoke
+
+scenarios:
+  - name: Unknown write_mode value is rejected and names the three valid values
+    invocation: >
+      Invoke momentum:constitution-builder with write_mode set to an invalid value such as
+      "full_agent" (any string outside the accepted set).
+    given: >
+      A project is available in which the skill could otherwise run.
+    when: >
+      The skill is invoked with write_mode="full_agent".
+    then:
+      - The skill refuses to generate or write any constitution content.
+      - The refusal message names exactly three accepted values for write_mode.
+      - The three named values are in_place_skill, composed_agent_file, and standalone_constitution.
+    pass_criteria: >
+      The invocation halts without producing constitution output, and the message returned to the
+      developer lists all three of in_place_skill, composed_agent_file, standalone_constitution and
+      no fourth value as an accepted write_mode.
+    fail_criteria: >
+      The skill proceeds to generate or write content despite the invalid value, OR the message
+      omits any of the three valid values, OR it names a value not in that set as accepted.
+
+  - name: Missing target path triggers a path prompt for path-required modes; supplied path skips it
+    invocation: >
+      Invoke momentum:constitution-builder twice with write_mode="in_place_skill": once with no
+      target path supplied, then once with an explicit target path supplied.
+    given: >
+      For the first invocation no write-target path is provided; for the second invocation an
+      explicit existing SKILL.md path is provided.
+    when: >
+      The skill is invoked in each of the two configurations.
+    then:
+      - In the no-path invocation, the skill asks where the constitution should be written before any constitution content is generated.
+      - In the path-supplied invocation, the skill does not re-ask for the target path.
+      - The target path is never inferred from the write_mode value alone for in_place_skill or composed_agent_file.
+    pass_criteria: >
+      The no-path run produces a question to the developer about the write-target location ahead of
+      generating content, and the path-supplied run proceeds without asking for a path.
+    fail_criteria: >
+      The no-path run generates or writes content without first asking for the path, OR the
+      path-supplied run still asks for the path, OR the skill picks a path on its own for
+      in_place_skill/composed_agent_file when none was supplied.
+
+  - name: standalone_constitution writes to the canonical path without a path prompt
+    invocation: >
+      Invoke momentum:constitution-builder with write_mode="standalone_constitution" and no target
+      path supplied.
+    given: >
+      A project is available; no write-target path is provided.
+    when: >
+      The skill is invoked in standalone_constitution mode.
+    then:
+      - The skill does not ask the developer for a target path.
+      - The constitution is written to .claude/guidelines/constitution.md.
+    pass_criteria: >
+      After the run, a file exists at .claude/guidelines/constitution.md containing the produced
+      constitution, and no path prompt was shown to the developer.
+    fail_criteria: >
+      The skill asks for a path in standalone_constitution mode, OR writes to a path other than
+      .claude/guidelines/constitution.md.
+
+  - name: Produced output is domain-knowledge only — no routing, no agent-specific permissions or rules
+    invocation: >
+      Invoke momentum:constitution-builder with each valid write_mode and inspect the
+      produced/written output file.
+    given: >
+      A valid write_mode and (where required) a write-target path are supplied so the skill writes output.
+    when: >
+      The skill completes and the resulting output file is opened and read.
+    then:
+      - The output contains an embedded-facts section covering stack identity, key conventions, and architectural constraints.
+      - The output contains a KB-sourced-context section drawn from wiki-query lookups scoped to the invoking project's own knowledge base.
+      - The output contains the wiki-query interface block as shared infrastructure.
+      - The output contains no "## Quick Routing" section.
+      - The output contains no agent-specific "## Permissions" section.
+      - The output contains no agent-specific "## Standing Rules" section.
+    pass_criteria: >
+      Reading the produced output, the embedded-facts, KB-sourced-context, and wiki-query interface
+      content are all present, and the strings "## Quick Routing", an agent-specific "## Permissions"
+      heading, and an agent-specific "## Standing Rules" heading are absent. (Project-universal
+      cross-cutting permissions/rules, e.g. "never commit secrets", MAY appear and do not fail this.)
+    fail_criteria: >
+      A "## Quick Routing" section appears, OR an agent-specific "## Permissions" / "## Standing
+      Rules" section appears, OR any of the three required domain-knowledge components is missing,
+      OR the KB-sourced context draws on another project's knowledge base.
+
+  - name: in_place_skill preserves existing SKILL.md content; composed_agent_file writes a standalone file
+    invocation: >
+      Invoke momentum:constitution-builder with write_mode="in_place_skill" against a pre-existing
+      SKILL.md that already has unrelated content, then with write_mode="composed_agent_file"
+      against a fresh target path.
+    given: >
+      An existing SKILL.md containing identifiable unrelated content is available for the first run;
+      a fresh target path is available for the second run.
+    when: >
+      Each invocation completes and the target files are read.
+    then:
+      - After the in_place_skill run, the domain-knowledge sections are present in the existing SKILL.md.
+      - After the in_place_skill run, the file's previously existing unrelated content is still present.
+      - After the composed_agent_file run, a standalone agent file exists at the supplied path containing the domain-knowledge sections.
+    pass_criteria: >
+      The in_place_skill target retains its original unrelated content alongside the newly inserted
+      domain-knowledge sections, and the composed_agent_file target is a standalone file at the
+      supplied path carrying the domain-knowledge sections.
+    fail_criteria: >
+      The in_place_skill run drops or overwrites the file's unrelated content, OR the
+      composed_agent_file run fails to write a standalone file at the supplied path, OR either target
+      lacks the domain-knowledge sections.
+
+  - name: SKILL.md self-description and routing-delegation note reflect the narrowed behavior
+    invocation: >
+      Open skills/momentum/skills/constitution-builder/SKILL.md and read its frontmatter, its body,
+      and its workflow instructions.
+    given: >
+      The constitution-builder skill document is available on disk.
+    when: >
+      The frontmatter description, the model:/effort: fields, and the procedural instructions are inspected.
+    then:
+      - The description field is 150 characters or fewer.
+      - The description describes the domain-knowledge-only behavior and the write_mode parameter, and does not advertise generating "## Permissions" + "## Standing Rules" + "## Quick Routing" as the skill's purpose.
+      - "The model: and effort: frontmatter fields are both present."
+      - The instructions contain a stated note that routing-table / per-agent-routing generation is owned by agent-builder.
+      - The instructions contain no step that generates routing tables or per-agent routing entries.
+    pass_criteria: >
+      The description is at most 150 characters, mentions write_mode and the narrowed behavior, omits
+      the Permissions/Standing-Rules/Quick-Routing advertisement; model: and effort: are present; and
+      the instructions both state the agent-builder routing-ownership note and contain no
+      routing-generation step.
+    fail_criteria: >
+      The description exceeds 150 characters, OR still advertises generating Permissions/Standing
+      Rules/Quick Routing, OR model: or effort: is missing, OR a routing-generation step remains, OR
+      the agent-builder routing-ownership note is absent.

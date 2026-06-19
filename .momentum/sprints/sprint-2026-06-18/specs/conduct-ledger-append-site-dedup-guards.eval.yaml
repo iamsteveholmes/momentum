@@ -1,0 +1,209 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-ledger-append-site-dedup-guards
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-18/specs/conduct-ledger-append-site-dedup-guards.eval.yaml
+how_dev_self_checks: |
+  Resume a conduct build against a build ledger that already holds prior-session
+  finding rows for a story that is NOT being re-run this pass. After the resume
+  pass completes, count the ledger rows for each prior-session finding key:
+  for every distinct (story_slug, event, finding_id) tuple that was present
+  before the pass, there is still exactly ONE matching row — the resume did not
+  add a second. Repeat with a story that IS legitimately re-run (its state was
+  reset to ready-for-dev during reconcile): its fresh finding rows DO appear.
+  You are done when: (a) no prior-session finding key for a non-re-run story
+  ever has more than one row after a resume, across the disposition, escalation,
+  and count-level batch event kinds; (b) a re-run story still produces its new
+  rows; (c) the resume completes without error or a duplicate-row warning.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-ledger-append-site-dedup-guards.md#acceptance-criteria
+platforms: [host]
+
+# === BODY (Part B) ===
+#
+# Producer / Consumer scope (SEAM CONTRACT)
+# -----------------------------------------
+# This contract governs a hand-off between two distinct sides of the conduct build:
+#
+#   PRODUCER — the build-ledger APPEND operations. During a live build the
+#   Conductor emits finding rows into the durable build ledger. Each emitted row
+#   is identified by the field shape (story_slug, event, finding_id):
+#     * finding-disposition rows  (one per disposed finding)
+#     * stage3-escalation rows    (one per escalated finding)
+#     * avfl-finding rows         (one per AVFL finding)
+#     * stage3-mid-flight-escalation rows — a COUNT-LEVEL batch row that carries
+#       a finding count and NO per-finding finding_id; its identity field shape
+#       is therefore (story_slug, event, null).
+#
+#   CONSUMER — the duplicate-prevention guard keyed on (story_slug, event,
+#   finding_id). Before any append, the guard checks whether that identity tuple
+#   has already been recorded for this build (the recorded set is rehydrated from
+#   the durable ledger on resume); if it has, the append is suppressed. After a
+#   genuine append, the guard records the tuple so later passes see it.
+#
+# OBSERVABLE CONTRACT: appending the same (story_slug, event, finding_id) twice
+# yields exactly ONE ledger entry. PASS when a duplicate append is suppressed;
+# FAIL when a duplicate identity yields two entries. For the count-level batch
+# row, the agreed identity field is (story_slug, event, null): producer and
+# consumer must AGREE that the finding_id component is null for that event kind.
+# If the producer emits a row whose identity field shape the consumer cannot key
+# on (e.g. a batch row presented without the agreed null finding_id component, or
+# a disposition row missing finding_id), that is a cross-side field-shape
+# incompatibility and the gate FAILS, naming the mismatched field.
+#
+# All scenarios are black-box: drive the conduct build via skill invocation
+# against a prepared build-ledger fixture, then inspect the resulting ledger
+# rows (counts per identity tuple). No internal file paths, line numbers, or
+# instruction prose are inspected.
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: Resume suppresses a duplicate per-finding disposition append (producer/consumer AGREE on field shape — PASS)
+    invocation: "/momentum:conduct"
+    given: >
+      A durable build ledger that already contains, from a prior session, exactly one
+      finding-disposition row for story "story-x" with finding_id "F-001"
+      (identity tuple ("story-x", "finding-disposition", "F-001")). Story "story-x"
+      is NOT scheduled to be re-run this pass — its prior state is preserved, not
+      reset to ready-for-dev by the resume reconcile.
+    when: >
+      The conduct build is resumed and runs its disposition pass to completion.
+    then:
+      - The build completes without error and without a duplicate-row warning.
+      - >
+        After the pass, the ledger contains exactly ONE finding-disposition row whose
+        identity is ("story-x", "finding-disposition", "F-001") — the prior-session row,
+        not a second copy.
+      - >
+        The in-context accumulator total derived from disposition rows (e.g. the
+        auto-fixed/disposition count) reflects that finding exactly once, not twice.
+    pass_criteria: >
+      Exactly one ledger row exists for ("story-x", "finding-disposition", "F-001")
+      after the resume pass; the duplicate append was suppressed.
+    fail_criteria: >
+      Two or more finding-disposition rows exist for ("story-x", "finding-disposition",
+      "F-001"), or the disposition-derived count double-counts the finding, or the pass
+      errors while reconciling the existing row.
+
+  - name: Resume suppresses a duplicate stage3-escalation append (producer/consumer AGREE — PASS)
+    invocation: "/momentum:conduct"
+    given: >
+      A durable build ledger that already contains, from a prior session, exactly one
+      stage3-escalation row for story "story-x" with finding_id "F-007"
+      (identity tuple ("story-x", "stage3-escalation", "F-007")). Story "story-x"
+      is NOT being re-run this pass.
+    when: >
+      The conduct build is resumed and reaches the escalation handling path.
+    then:
+      - The build completes without error.
+      - >
+        After the pass, the ledger contains exactly ONE stage3-escalation row whose
+        identity is ("story-x", "stage3-escalation", "F-007").
+      - The escalation accumulator counts that escalation exactly once.
+    pass_criteria: >
+      Exactly one ledger row exists for ("story-x", "stage3-escalation", "F-007") after
+      the resume pass; no second escalation row was appended.
+    fail_criteria: >
+      Two or more stage3-escalation rows exist for that identity, or the escalation
+      accumulator double-counts the escalation.
+
+  - name: Resume suppresses a duplicate count-level batch row using the null finding_id key (producer/consumer AGREE that finding_id is null — PASS)
+    invocation: "/momentum:conduct"
+    given: >
+      A durable build ledger that already contains, from a prior session, exactly one
+      stage3-mid-flight-escalation batch row for story "story-x". This row carries a
+      finding count and NO per-finding finding_id; both sides agree its identity field
+      shape is ("story-x", "stage3-mid-flight-escalation", null). Story "story-x" is NOT
+      being re-run this pass.
+    when: >
+      The conduct build is resumed and reaches the mid-flight escalation batch path.
+    then:
+      - The build completes without error.
+      - >
+        After the pass, the ledger contains exactly ONE stage3-mid-flight-escalation row
+        for "story-x" — keyed by the agreed null finding_id identity — not a second copy.
+      - The mid-flight escalation count for "story-x" is recorded at most once per story.
+    pass_criteria: >
+      Exactly one stage3-mid-flight-escalation row exists for "story-x" after the resume
+      pass; the batch row's null-finding_id identity was recognized and the duplicate
+      append suppressed.
+    fail_criteria: >
+      Two or more stage3-mid-flight-escalation rows exist for "story-x", OR the batch
+      row's identity is not recognized because the null finding_id component is not
+      treated as part of the key (i.e. the count-level event kind is excluded from the
+      dedup-guarded event types) — yielding a duplicate.
+
+  - name: A legitimately re-run story still appends fresh finding rows (guard does not over-suppress — PASS)
+    invocation: "/momentum:conduct"
+    given: >
+      A durable build ledger from a prior session, and story "story-y" whose state was
+      reset to ready-for-dev by the resume reconcile so it is legitimately re-run this
+      pass, producing new findings.
+    when: >
+      The conduct build is resumed and re-runs "story-y" to completion.
+    then:
+      - >
+        New finding-disposition / escalation rows for "story-y" (carrying identity
+        tuples not present in the prior-session ledger) ARE appended.
+      - The new findings are reflected once each in the relevant accumulators.
+      - No fresh, legitimately-new event is suppressed by the dedup guard.
+    pass_criteria: >
+      The fresh finding rows for the re-run story "story-y" appear in the ledger exactly
+      once each; the guard suppressed nothing for the re-run story.
+    fail_criteria: >
+      Any fresh finding row for "story-y" is missing because the guard wrongly suppressed
+      a new (not-previously-recorded) identity tuple.
+
+  - name: Field-shape mismatch on the count-level batch row is named as a cross-side incompatibility (producer/consumer DISAGREE — FAIL)
+    invocation: "/momentum:conduct"
+    given: >
+      A durable build ledger whose prior-session stage3-mid-flight-escalation batch row
+      for "story-x" was recorded WITHOUT the agreed null finding_id identity component
+      (the consumer's recorded set has no key it can match this batch row against),
+      simulating a producer that emits a count-level row whose identity field shape the
+      keyed-on-(story_slug, event, finding_id) consumer cannot reconcile. "story-x" is
+      NOT being re-run.
+    when: >
+      The conduct build is resumed and the mid-flight escalation batch path runs.
+    then:
+      - >
+        The duplicate is NOT suppressed because the producer's row and the consumer's key
+        disagree on the finding_id component for the count-level event — a cross-side
+        field-shape incompatibility.
+      - >
+        A second stage3-mid-flight-escalation row for "story-x" is appended, observable as
+        a duplicate, demonstrating the gate's FAIL condition and naming finding_id (the
+        agreed null component) as the mismatched field between producer and consumer.
+    pass_criteria: >
+      This scenario PASSES the contract's intent only when the implementation has CLOSED
+      the gap — i.e. producer and consumer agree the count-level identity is
+      ("story-x", "stage3-mid-flight-escalation", null) and the duplicate is suppressed,
+      leaving exactly one row. (Under the agreed field shape the prior gap is gone.)
+    fail_criteria: >
+      Two stage3-mid-flight-escalation rows for "story-x" remain after the pass because
+      the count-level event is not covered by the dedup guard or the null finding_id
+      component is not part of the agreed identity — the gate FAILS and reports a
+      cross-side field-shape incompatibility on the finding_id component.
+
+  - name: Previously-guarded avfl-finding append is still deduplicated after the change (no regression — PASS)
+    invocation: "/momentum:conduct"
+    given: >
+      A durable build ledger that already contains, from a prior session, exactly one
+      avfl-finding row with identity ("story-x", "avfl-finding", "AF-003") for a story
+      not being re-run this pass.
+    when: >
+      The conduct build is resumed and reaches the AVFL finding-recording path.
+    then:
+      - The build completes without error.
+      - >
+        After the pass, exactly ONE avfl-finding row exists for
+        ("story-x", "avfl-finding", "AF-003") — the previously-working guard is intact.
+      - The change adds guards elsewhere without weakening this existing one.
+    pass_criteria: >
+      Exactly one avfl-finding row exists for ("story-x", "avfl-finding", "AF-003") after
+      the resume pass; the pre-existing guard still suppresses the duplicate.
+    fail_criteria: >
+      Two or more avfl-finding rows exist for that identity, indicating the previously
+      working dedup guard regressed.
