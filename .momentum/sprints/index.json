@@ -13,7 +13,31 @@
       "conduct-assign-finding-id-before-directed-fix-invocation",
       "conduct-ledger-append-site-dedup-guards"
     ],
-    "waves": [],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "agent-manifesto-format-specification",
+          "conduct-assign-finding-id-before-directed-fix-invocation",
+          "constitutionmd-generation-acceptance-criteria",
+          "nornspun-agent-constitution",
+          "wiki-query-interface-block-for-hot-constitution"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "conduct-ledger-append-site-dedup-guards",
+          "constitution-builder-write-mode-parameterization"
+        ]
+      },
+      {
+        "wave": 3,
+        "stories": [
+          "build-guidelines-skill"
+        ]
+      }
+    ],
     "approvals": [
       {
         "story_slug": "build-guidelines-skill",
