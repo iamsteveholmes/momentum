@@ -11,6 +11,7 @@ change_type:
 verification_method_advisory: skill-invoke
 depends_on:
   - constitution-builder-write-mode-parameterization
+  - agent-manifesto-format-specification
 touches:
   - skills/momentum/skills/build-guidelines/SKILL.md
   - skills/momentum/skills/build-guidelines/workflow.md

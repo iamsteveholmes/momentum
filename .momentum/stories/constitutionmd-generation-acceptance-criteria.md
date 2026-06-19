@@ -6,8 +6,7 @@ epic_slug: momentum-agent-composition-pipeline
 feature_slug: momentum-composable-specialist-agents
 story_type: feature
 priority: high
-depends_on:
-  - constitution-builder-write-mode-parameterization
+depends_on: []
 touches:
   - skills/momentum/skills/constitution-builder/SKILL.md
   - skills/momentum/skills/build-guidelines/SKILL.md

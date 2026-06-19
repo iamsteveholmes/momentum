@@ -6,7 +6,9 @@ epic_slug: momentum-agent-composition-pipeline
 feature_slug: momentum-composable-specialist-agents
 story_type: feature
 priority: medium
-depends_on: []
+depends_on:
+  - wiki-query-interface-block-for-hot-constitution
+  - constitutionmd-generation-acceptance-criteria
 touches:
   - skills/momentum/skills/constitution-builder/SKILL.md
   - skills/momentum/skills/constitution-builder/workflow.md

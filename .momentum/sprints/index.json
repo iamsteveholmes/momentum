@@ -42,8 +42,8 @@
       {
         "story_slug": "build-guidelines-skill",
         "decision": "approved",
-        "approved_at": "2026-06-18T23:50:54Z",
-        "story_file_sha": "ba8aa143ef6e7514f93401f9d6a956b8922d9c71cbe71531306d2146b6d5b6f9"
+        "approved_at": "2026-06-19T01:03:26Z",
+        "story_file_sha": "1d3f46c775e5c84fe0954ae7e87e3780741d13146921adb79fa8c3d8b58d0cff"
       },
       {
         "story_slug": "agent-manifesto-format-specification",
@@ -54,14 +54,14 @@
       {
         "story_slug": "constitutionmd-generation-acceptance-criteria",
         "decision": "approved",
-        "approved_at": "2026-06-18T23:50:54Z",
-        "story_file_sha": "b9d7debb1a2b17b4e842640bddc78cee2e13cadaea8f5d39ca2aa0e7628c5eca"
+        "approved_at": "2026-06-19T01:03:26Z",
+        "story_file_sha": "c9f9b14e0ada372ec13bc4a08ec485a3039e58c217a5e6ca2823abc4caf4c248"
       },
       {
         "story_slug": "constitution-builder-write-mode-parameterization",
         "decision": "approved",
-        "approved_at": "2026-06-18T23:50:54Z",
-        "story_file_sha": "a75adee46e8a39d9913b5a0d6ef20c958ee143c06e3516b754641ed7d4fe10ea"
+        "approved_at": "2026-06-19T01:03:26Z",
+        "story_file_sha": "240741f94b4ea19e18a37facb1906c948d571fac3ce6e329dd070e60a2a0e5d0"
       },
       {
         "story_slug": "wiki-query-interface-block-for-hot-constitution",
