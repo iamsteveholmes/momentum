@@ -29,11 +29,11 @@ so that resuming a conduct build never double-appends finding rows, and finding 
 
 Only **one** append site actually implements the guard: the per-finding `avfl-finding` append at `:1797` (`Skip if (F.story_slug or "sprint-integration", "avfl-finding", F.finding_id) is already in {{ledger_seen_events}}` … `Add each newly appended tuple to {{ledger_seen_events}}`). Every other mandated site appends unconditionally:
 
-- The **five `finding-disposition` append sites** in step 2.S3 — `:985` (scope-reverted), `:998` (fixed), `:1005` (dismissed), `:1010` (triaged-out), `:1017` (escalated) — all read "append per standing rule" but contain no skip-if-seen check and no add-after step.
-- The **`stage3-escalation` append at `:1026`** (end-gate-expanded tier) — same omission.
+- The **six `finding-disposition` append sites** — five in step 2.S3: `:985` (scope-reverted), `:998` (fixed), `:1005` (dismissed), `:1010` (triaged-out), `:1017` (escalated); plus a sixth at `:1136` (blocked) in the Phase-D retry-budget-exhausted path (NOT step 2.S3) — all read "append per standing rule" but contain no skip-if-seen check and no add-after step. The `:1136` site keys on `F.id` (same as `:985`/`:998`/`:1005`); its `disposition: "blocked"` value does not change the `(story_slug, "finding-disposition", finding_id)` key.
+- The **two `stage3-escalation` append sites** — `:1026` (step 2.S3, end-gate-expanded tier) and `:1781` (AVFL Phase 3 step 3.3, Group-A fixer escalations, keyed `((L.owning_stories[0] or "sprint-integration"), "stage3-escalation", L.id)`) — same omission. The workflow's own line-945/1785 acknowledgement states stage3-escalation appends occur at both step 2.S3 and AVFL Phase 3.
 - The **`stage3-mid-flight-escalation` append at `:1085`** — a count-level batch row that carries `finding_count` but **no `finding_id`**, so the `(story_slug, event, finding_id)` tuple as literally written does not key it. Two defects compound here: (1) this event type is **absent from the `:404` standing rule's dedup event-type list entirely** (the list names only `finding-disposition`, `stage3-escalation`, `avfl-finding`), and (2) even if added, the guard's key must be adapted for a row with no `finding_id`.
 
-On resume, step 2.0 rehydrates `{{ledger_seen_events}}` from the durable ledger, but because these eight live-build append sites never consult it before appending (and the avfl-finding site is the only one that adds back to it), any story whose events survive from a prior session into the current session's ledger — and which is NOT re-run by the step 2.0 reconcile — can have its `finding-disposition` / `stage3-escalation` / `stage3-mid-flight-escalation` rows re-appended on the resume pass. That doubles ledger rows for the same finding, inflating `{{routine_auto_fixed_count}}`, the escalation accumulators, and the Phase 5 stakes-finding counts that drive the end-gate decision cards and governance guards.
+On resume, step 2.0 rehydrates `{{ledger_seen_events}}` from the durable ledger, but because these nine live-build append sites never consult it before appending (and the avfl-finding site is the only one that adds back to it), any story whose events survive from a prior session into the current session's ledger — and which is NOT re-run by the step 2.0 reconcile — can have its `finding-disposition` / `stage3-escalation` / `stage3-mid-flight-escalation` rows re-appended on the resume pass. That doubles ledger rows for the same finding, inflating `{{routine_auto_fixed_count}}`, the escalation accumulators, and the Phase 5 stakes-finding counts that drive the end-gate decision cards and governance guards.
 
 From the 2026-06-14 conduct sub-skills audit (`.momentum/handoffs/conduct-subskills-audit-2026-06-14.html`).
 
@@ -41,9 +41,9 @@ From the 2026-06-14 conduct sub-skills audit (`.momentum/handoffs/conduct-subski
 
 ## Acceptance Criteria
 
-1. Each of the five `finding-disposition` append sites in step 2.S3 — `:985` (scope-reverted), `:998` (fixed), `:1005` (dismissed), `:1010` (triaged-out), `:1017` (escalated) — performs the `(story_slug, event, finding_id)` dedup check against `{{ledger_seen_events}}` **before** appending: if the tuple is already present, the append is skipped; otherwise the row is appended and the tuple is added to `{{ledger_seen_events}}` immediately after. The pattern mirrors the existing `avfl-finding` guard at `:1797` (skip-if-seen, then add-after).
+1. Each of the six `finding-disposition` append sites — the five in step 2.S3 (`:985` scope-reverted, `:998` fixed, `:1005` dismissed, `:1010` triaged-out, `:1017` escalated) plus the sixth at `:1136` (blocked) in the Phase-D retry-budget-exhausted path — performs the `(story_slug, event, finding_id)` dedup check against `{{ledger_seen_events}}` **before** appending: if the tuple is already present, the append is skipped; otherwise the row is appended and the tuple is added to `{{ledger_seen_events}}` immediately after. The pattern mirrors the existing `avfl-finding` guard at `:1797` (skip-if-seen, then add-after). The `:1136` site keys on `F.id` (same as `:985`/`:998`/`:1005`); its `disposition: "blocked"` value does not change the `(story_slug, "finding-disposition", finding_id)` key.
 
-2. The `stage3-escalation` append at `:1026` (end-gate-expanded tier) performs the same `(story_slug, "stage3-escalation", finding_id)` dedup check before appending and adds the tuple to `{{ledger_seen_events}}` after appending.
+2. Both `stage3-escalation` append sites perform the same `(story_slug, "stage3-escalation", finding_id)` dedup check before appending and add the tuple to `{{ledger_seen_events}}` after appending: `:1026` (step 2.S3, end-gate-expanded tier, keyed `(S.slug, "stage3-escalation", F.finding_id)`) and `:1781` (AVFL Phase 3 step 3.3, keyed `((L.owning_stories[0] or "sprint-integration"), "stage3-escalation", L.id)`, mirroring the `:1797` story-slug-or-`"sprint-integration"` fallback). Each performs skip-if-seen before append and add-after.
 
 3. The `stage3-mid-flight-escalation` append at `:1085` performs a dedup check before appending and adds its key to `{{ledger_seen_events}}` after appending. Because this row is count-level and carries no per-finding `finding_id`, the guard uses a documented key adapted for this event type (e.g., `(story_slug, "stage3-mid-flight-escalation", null)` so the batch row is recorded at most once per story per session — consistent with how the existing `story-terminal` guard at `:422` keys a no-finding_id row as `(S.slug, "story-terminal", null)`). The chosen key is stated explicitly in the workflow text so a reader can reproduce the dedup semantics.
 
@@ -55,12 +55,14 @@ From the 2026-06-14 conduct sub-skills audit (`.momentum/handoffs/conduct-subski
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Guard the five `finding-disposition` append sites in step 2.S3.** (AC: 1, 6)
-  - Edit `:985`, `:998`, `:1005`, `:1010`, `:1017` so each "LEDGER (phantom-store closure): append per standing rule …" instruction is preceded by a skip-if-seen check on `(story_slug, "finding-disposition", finding_id)` against `{{ledger_seen_events}}` and followed by an add-to-`{{ledger_seen_events}}` step on the appended tuple. Use the `:1797` avfl-finding guard as the canonical phrasing template so the four append sites are textually consistent.
-  - Note: `:985` keys on `F.id`, `:998` on `F.id`, `:1005` on `F.id`, `:1010` on `F.finding_id`, `:1017` on `F.finding_id` — preserve each site's existing finding-id field name when forming the tuple; do not normalize the field references away.
+- [ ] **Task 1 — Guard the six `finding-disposition` append sites.** (AC: 1, 6)
+  - Edit `:985`, `:998`, `:1005`, `:1010`, `:1017`, `:1136` so each "LEDGER (phantom-store closure): append per standing rule …" instruction is preceded by a skip-if-seen check on `(story_slug, "finding-disposition", finding_id)` against `{{ledger_seen_events}}` and followed by an add-to-`{{ledger_seen_events}}` step on the appended tuple. Use the `:1797` avfl-finding guard as the canonical phrasing template so the append sites are textually consistent.
+  - Note: `:985` keys on `F.id`, `:998` on `F.id`, `:1005` on `F.id`, `:1010` on `F.finding_id`, `:1017` on `F.finding_id`, `:1136` on `F.id` — preserve each site's existing finding-id field name when forming the tuple; do not normalize the field references away.
+  - Note: `:1136` lives in the Phase-D retry-budget-exhausted path (NOT step 2.S3); it keys on `F.id` and its `disposition: "blocked"` value does not alter the `(story_slug, "finding-disposition", finding_id)` key.
 
-- [ ] **Task 2 — Guard the `stage3-escalation` append at `:1026`.** (AC: 2, 6)
-  - Add a skip-if-seen check on `(S.slug, "stage3-escalation", F.finding_id)` before the `:1026` append and an add-after step on the appended tuple, mirroring the avfl-finding guard at `:1797`.
+- [ ] **Task 2 — Guard both `stage3-escalation` append sites.** (AC: 2, 6)
+  - Add a skip-if-seen check on `(S.slug, "stage3-escalation", F.finding_id)` before the `:1026` append (step 2.S3) and an add-after step on the appended tuple, mirroring the avfl-finding guard at `:1797`.
+  - Add a skip-if-seen check on `((L.owning_stories[0] or "sprint-integration"), "stage3-escalation", L.id)` before the `:1781` append (AVFL Phase 3 step 3.3, Group-A fixer escalations) and an add-after step on the appended tuple, mirroring the `:1797` story-slug-or-`"sprint-integration"` fallback.
 
 - [ ] **Task 3 — Guard the `stage3-mid-flight-escalation` batch append at `:1085` with an adapted no-finding_id key.** (AC: 3, 6)
   - Add a skip-if-seen check before the `:1085` append and an add-after step. Because the row carries `finding_count` and no `finding_id`, key it as `(S.slug, "stage3-mid-flight-escalation", null)` (parallel to the `story-terminal` no-finding_id guard at `:422`). State the chosen key explicitly in the workflow text.
@@ -88,8 +90,8 @@ This is part of the conduct resume/rehydration idempotency cluster surfaced by t
 
 - **`:404` standing rule** — DUPLICATE-PREVENTION USE OF `{{ledger_seen_events}}`. Names exactly three guarded event types: `finding-disposition`, `stage3-escalation`, `avfl-finding`. **Omits `stage3-mid-flight-escalation`.** Defines the dedup tuple as `(story_slug, event, finding_id)`.
 - **`:422`** — existing precedent for a no-finding_id guard: the `story-terminal` site checks/keys `(S.slug, "story-terminal", null)`. This is the template for the count-level `stage3-mid-flight-escalation` key in AC 3 / Task 3.
-- **`:985`, `:998`, `:1005`, `:1010`, `:1017`** — the five `finding-disposition` append sites in step 2.S3 (scope-reverted, fixed, dismissed, triaged-out, escalated). All say "append per standing rule" but **none implement the skip-if-seen / add-after guard.** Finding-id field names differ per site (`F.id` at `:985`/`:998`/`:1005`; `F.finding_id` at `:1010`/`:1017`) — preserve each.
-- **`:1026`** — the `stage3-escalation` (end-gate-expanded) append in the CASE escalated block. No guard.
+- **`:985`, `:998`, `:1005`, `:1010`, `:1017`, `:1136`** — the six `finding-disposition` append sites: five in step 2.S3 (scope-reverted, fixed, dismissed, triaged-out, escalated) plus `:1136` (blocked) in the Phase-D retry-budget-exhausted path (NOT step 2.S3). All say "append per standing rule" but **none implement the skip-if-seen / add-after guard.** Finding-id field names differ per site (`F.id` at `:985`/`:998`/`:1005`/`:1136`; `F.finding_id` at `:1010`/`:1017`) — preserve each. The `:1136` `disposition: "blocked"` value does not change the `(story_slug, "finding-disposition", finding_id)` key.
+- **`:1026`, `:1781`** — the two `stage3-escalation` append sites: `:1026` (end-gate-expanded) in the step 2.S3 CASE escalated block, keyed `(S.slug, "stage3-escalation", F.finding_id)`; and `:1781` (Group-A fixer escalations) in AVFL Phase 3 step 3.3, keyed `((L.owning_stories[0] or "sprint-integration"), "stage3-escalation", L.id)`. Neither has a guard. The workflow's own line-945/1785 acknowledgement states stage3-escalation appends occur at both step 2.S3 and AVFL Phase 3.
 - **`:1085`** — the `stage3-mid-flight-escalation` batch append. Carries `finding_count`, no `finding_id`. No guard, and its event type is absent from the `:404` list.
 - **`:1797`** — the **only** correctly guarded append: `avfl-finding`. Skip-if-`(F.story_slug or "sprint-integration", "avfl-finding", F.finding_id)`-seen, then add-after. **This is the canonical pattern to replicate.**
 - **`:1894`, `:1960`, `:1995`** — Phase 3 coverage-discharge / undischarged-deferral appends. These already guard against in-context `{{avfl_findings}}` duplication (skip if an entry with a synthetic finding_id already exists). Leave their behavior intact (AC 5).
@@ -124,7 +126,7 @@ This is part of the conduct resume/rehydration idempotency cluster surfaced by t
 - `skills/momentum/skills/conductor/workflow.md:404` — DUPLICATE-PREVENTION standing rule (the authority; event-type list to extend).
 - `skills/momentum/skills/conductor/workflow.md:1797` — canonical guarded append pattern (`avfl-finding`).
 - `skills/momentum/skills/conductor/workflow.md:422` — no-finding_id guard precedent (`(S.slug, "story-terminal", null)`).
-- `skills/momentum/skills/conductor/workflow.md:985,:998,:1005,:1010,:1017,:1026,:1085` — unguarded append sites this story fixes.
+- `skills/momentum/skills/conductor/workflow.md:985,:998,:1005,:1010,:1017,:1136,:1026,:1781,:1085` — unguarded append sites this story fixes.
 - `skills/momentum/references/rules/verification-standard.md` §1 — change_type → verification-method routing.
 - `skills/momentum/skills/create-story/references/change-types.md` — skill-instruction EDD template.
 - `.momentum/handoffs/conduct-subskills-audit-2026-06-14.html` — source audit.
@@ -148,7 +150,7 @@ This is part of the conduct resume/rehydration idempotency cluster surfaced by t
    - Test the skip-vs-append decision and resulting ledger row counts, not the exact prose of the instructions.
 
 **Then implement:**
-2. Edit the eight append sites (`:985`, `:998`, `:1005`, `:1010`, `:1017`, `:1026`, `:1085`) to add the skip-if-seen / add-after guard, and extend the `:404` standing-rule event-type list. Use the `:1797` avfl-finding guard as the canonical phrasing template.
+2. Edit the nine append sites (`:985`, `:998`, `:1005`, `:1010`, `:1017`, `:1136`, `:1026`, `:1781`, `:1085`) to add the skip-if-seen / add-after guard, and extend the `:404` standing-rule event-type list. Use the `:1797` avfl-finding guard as the canonical phrasing template.
 
 **Then verify:**
 3. Run evals: for each eval file, use the Agent tool to spawn a subagent. Give it the eval's scenario as its task and load the conductor SKILL.md + workflow.md as context. Observe whether the subagent's behavior (skip vs. append) matches the eval's expected outcome.
@@ -162,7 +164,7 @@ This is part of the conduct resume/rehydration idempotency cluster surfaced by t
 **Additional DoD items for skill-instruction tasks (added to standard bmad-dev-story DoD):**
 - [ ] 2+ behavioral evals written in `skills/momentum/skills/conductor/evals/`.
 - [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation).
-- [ ] Every one of the eight named append sites carries a skip-if-seen check AND an add-after step.
+- [ ] Every one of the nine named append sites carries a skip-if-seen check AND an add-after step.
 - [ ] The `:404` standing-rule event-type list names all four guarded events, including `stage3-mid-flight-escalation`, with the `null` finding_id note for the count-level row.
 - [ ] No existing guard (`:1797`, `:1894`, `:1960`, `:1995`) regressed — change is additive only.
 - [ ] AVFL checkpoint on produced artifact documented (momentum:dev runs this automatically — validates the implemented workflow.md against story ACs).
