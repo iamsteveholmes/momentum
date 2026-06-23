@@ -195,7 +195,7 @@ Write the domain-knowledge sections to `{{target_path}}`.
 
 **Write behavior by mode:**
 
-`standalone_constitution` — Write to `.claude/guidelines/constitution.md`. Create `.claude/guidelines/` if it does not exist. Write sections in order: Wiki-Query Interface Block first, then Embedded Facts sections (Project Identity, Core Values, Constraints, Glossary, Cross-Cutting Standing Rules, Cross-Cutting Permissions). This is the full Tier 1 constitution.
+`standalone_constitution` — Write to `.claude/guidelines/constitution.md`. Create `.claude/guidelines/` if it does not exist. Write sections in this order: Embedded Facts sections first (Project Identity, Core Values, Constraints, Glossary, Cross-Cutting Standing Rules, Cross-Cutting Permissions), then Wiki-Query Interface Block last. This is the full Tier 1 constitution (7 sections total; canonical order per AC-1).
 
 `in_place_skill` — Insert or replace the domain-knowledge sections in the existing `SKILL.md` at `{{target_path}}`. Preserve all other content in the file (frontmatter, skill description, workflow phases, etc.). Place domain-knowledge sections after the opening description block.
 
