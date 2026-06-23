@@ -1,6 +1,6 @@
 ---
 title: Decision-Grade Presentation Standard
-applies_to: All Momentum human-facing output
+applies_to: All AI human-facing output — Momentum surfaces and everyday conversational replies
 status: Active
 source_decisions: DEC-036 D5
 cascade: global → project → path-scoped
@@ -55,6 +55,7 @@ Each named surface type below has a stated budget. A surface without a declared 
 | **End-gate report section** | Routine items: 1 count line. High-risk items: the 5-beat risk narrative (per conduct report spec §3/§5). Collapsibles for depth-on-demand. | Length tracks risk surface, not story count |
 | **Findings digest / retro digest** | ≤ 7 actionable findings surfaced. Routine findings collapsed to a count. | Each surfaced finding carries what/why/evidence (floor wins) |
 | **Recommendations / next steps** | ≤ 5 items, each ≤ 2 sentences | Each item is specific and actionable; "consider X" is not an item |
+| **Conversational reply** (everyday assistant turn) | Answer-first: the direct answer is the first sentence, before any setup. Default ≤ 150 words for a direct question. For a genuinely multi-part question, use section headers + the global ≤ 7-bullet cap and push supporting detail to depth-on-demand ("want the detail?") rather than inlining it. No process narration ("I searched X, then ran Y…"). | Length tracks the genuine complexity of the question, never the effort spent answering it (§1). Any item requiring a developer decision still carries what/why/evidence inline (floor wins, §3). |
 
 ### 2.3 What Caps Cut
 
@@ -136,6 +137,7 @@ developer-facing output is a gap — the owning skill must declare its applicabl
 | End-gate report section | Conductor end-gate renderer | §2.2 row 5 |
 | Findings digest | Retro | §2.2 row 6 |
 | Recommendations / next steps | Assessment | §2.2 row 7 |
+| Conversational reply | Any session / conversational turn | §2.2 row 8 |
 
 ---
 
