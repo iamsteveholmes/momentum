@@ -725,6 +725,10 @@ Ready to begin?</output>
                 only findings it judges genuine)
             - `suggested_fix` — `null` (the qa-reviewer producer format has no explicit
                 fix field; Detail describes expected state, not remediation steps)
+            - `finding_id` — NOT assigned here. `finding_id` is a Conductor-internal correlation key
+                assigned exclusively by the step 2.S3 FINDING-ID ASSIGNMENT action (after {{stage2_findings}}
+                is bound and before Phase B). It is not a base field of finding-schema.md and is not
+                populated by normalization. This note documents the single source of assignment.
 
             BLOCKED routing note: a finding with `verdict: BLOCKED` and `severity: critical`
             reflects that test execution was prevented (missing infrastructure, unreachable
@@ -951,10 +955,22 @@ Ready to begin?</output>
         <action>Proceed to stage-4 (merge) for story S. Do not invoke the directed fixer.</action>
       </check>
 
+      <!-- ── Assign finding_id (Conductor-owned, pre-fixer) ─────────── -->
+
+      <action>FINDING-ID ASSIGNMENT — For each finding F in {{stage2_findings}}, if F.finding_id is absent or empty,
+        assign F.finding_id = F.source + "-" + zero-based index of F in {{stage2_findings}}.
+        Skip any finding that already carries a non-empty finding_id (idempotent: re-presenting a finding on a later
+        loop iteration or rehydrating from the build ledger on resume must not change its id).
+        Uniqueness scope: each finding_id is unique within this story's {{stage2_findings}} array (one fix-mode invocation).
+        Assignment ownership: the Conductor assigns finding_id here. No reviewer (qa-reviewer, bmad-code-review) and no
+        fixer (momentum:dev fix mode) may assign or alter finding_id. This is the single assignment site per
+        skills/momentum/references/directed-fix-invocation-contract.md §"Finding Identification".
+      </action>
+
       <!-- ── Phase B: CONVERGE — directed fixer invocation ──────────── -->
 
       <action>PHASE B — Invoke the directed fixer (momentum:dev in fix mode) as a subagent (individual-agent, NOT TeamCreate):
-        Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration).
+        Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration) — every finding carries finding_id assigned by the Conductor above.
         Pass {{writable_files}} (the same set passed to the stage-1 dev spawn for story S) to the fixer.
         Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only.
           WRITE-SCOPE: You may ONLY create or modify files listed in writable_files for this story.
