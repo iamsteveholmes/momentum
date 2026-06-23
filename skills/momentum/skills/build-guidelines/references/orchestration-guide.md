@@ -110,8 +110,8 @@ Located at `momentum/agents.json` in the project root. Schema (as consumed by `m
       "domain": "kotlin-compose",
       "slug": "dev-kotlin-compose",
       "agent": ".claude/guidelines/agents/dev-kotlin-compose.md",
-      "patterns": [],
-      "write_permissions": []
+      "patterns": ["composeApp/**", "shared/**", "*.kt"],
+      "write_permissions": ["composeApp/**", "shared/**", "*.kt"]
     }
   ]
 }
@@ -120,8 +120,8 @@ Located at `momentum/agents.json` in the project root. Schema (as consumed by `m
 **Field notes:**
 - `slug` = `{role}-{domain}` — unique key, used by `momentum-tools agent resolve`
 - `agent` — path to the composed agent file
-- `patterns` — file glob patterns this agent owns (set per sprint story; left empty at registration time)
-- `write_permissions` — same as patterns; filled at spawn time
+- `patterns` — file glob patterns this agent owns; **populated at registration time** by agent-builder from the `permissions_scope` build-guidelines supplies. Never empty after registration. Used by `momentum-tools agent resolve --touches` to match the correct composed agent.
+- `write_permissions` — mirrors `patterns`; the set of globs the agent is authorised to write. Populated at registration time alongside `patterns`.
 
 **Creation:** if `momentum/agents.json` does not exist, create it with `{"defaults": {}, "project": []}`. Never overwrite the `defaults` block — it may have entries set by other tooling.
 
@@ -129,25 +129,36 @@ Located at `momentum/agents.json` in the project root. Schema (as consumed by `m
 
 ## Sprint-Dev Detection Contract (AC7)
 
-Sprint-dev detects composed agent files using two signals:
+Sprint-dev and the Conductor resolve the correct composed agent via `momentum-tools agent resolve --touches <touches>`. The tool matches the story's `touches` paths against the populated `patterns` arrays in `momentum/agents.json` and returns the matching composed slug and agent path.
 
-1. **`momentum/build-guidelines-last-run.json`** — handoff record written by this skill; lists all composed agent slugs and paths
-2. **Direct filesystem check** — `.claude/guidelines/agents/{role}-{domain}.md` existence
-
-Detection logic (in sprint-dev workflow, Phase 2, step 0):
+Detection logic (in sprint-dev / Conductor, Phase 2):
 
 ```
-specialist_domain = story's specialist classification (e.g., "kotlin-compose")
-role = story's assigned role (e.g., "dev")
-composed_path = ".claude/guidelines/agents/{role}-{specialist_domain}.md"
+touches = story's declared file-touch list (e.g., ["composeApp/**", "shared/src/**"])
 
-IF composed_path EXISTS:
-  Use composed_path as agent_path (guidelines already in system prompt)
+result = momentum-tools agent resolve --touches <touches>
+# → returns: { "slug": "dev-kotlin-compose",
+#              "agent": ".claude/guidelines/agents/dev-kotlin-compose.md" }
+
+IF result.agent EXISTS:
+  Use result.agent as agent_path (guidelines already baked into system prompt)
 ELSE:
   Fall back to generic skills/momentum/agents/{role}.md + guidelines-verification-gate warning
 ```
 
+**Path naming:** when a composed-agent path must be referenced directly, it is always `.claude/guidelines/agents/{role}-{domain}.md` where `{domain}` is the manifesto's domain id (e.g. `kotlin-compose`). Never construct a path from the story's coarse `specialist` classification — always resolve via `agent resolve --touches`.
+
 Deep spawn-wiring mechanics are owned by story `sprint-dev-composed-file-spawn-wiring`. Build-guidelines establishes the detection/fallback contract only.
+
+---
+
+## Known Limitation: patterns Derivation Is Best-Effort
+
+Build-guidelines derives the `permissions_scope` globs (which become `patterns` in `agents.json`) from the manifesto's `## Project Stack` prose via LLM inference. This is a best-effort derivation — it is reliable for well-structured manifestos but is not fully deterministic.
+
+**Root cause:** the manifesto-format spec (`skills/momentum/references/manifesto-format.md`) does not yet define a normative, machine-readable file-ownership / patterns field. Until it does, there is no structured source for build-guidelines to read globs from.
+
+**Follow-up (cross-artifact — out of scope for this story):** for fully-deterministic G1 resolution, a normative `file_patterns` (or equivalent) field should be added to `manifesto-format.md`. This is owned by the `manifesto-format` story, not build-guidelines. Do not edit `manifesto-format.md` here.
 
 ---
 
