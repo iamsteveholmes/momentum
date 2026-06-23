@@ -36,10 +36,17 @@ The Phase B fixer invocation input lists both findings with `finding_id` present
 ## Pass condition
 
 The assignment step in step 2.S3 is placed after BOTH the dedicated-run `{{stage2_findings}}`
-bind (line ~759) AND the covered-by-composition `{{stage2_findings}}` bind (line ~779), so it
-fires unconditionally for any non-empty `{{stage2_findings}}`, no matter which reviewer path
-produced it. Reading the workflow top-to-bottom: the assignment instruction appears after the
-last `{{stage2_findings}}` bind and before Phase B — meaning it covers both paths without
+bind (line ~763: `Merge into {{stage2_findings}}: deduplicated union of {{qa_findings}} and
+{{cr_findings}}`) AND the covered-by-composition `{{stage2_findings}}` bind (line ~783:
+`Bind {{stage2_findings}} = {{cr_findings}}, severity-sorted`), so it fires unconditionally
+for any non-empty `{{stage2_findings}}`, no matter which reviewer path produced it.
+
+The mechanism that guarantees this coverage is the step 2.S3 entry re-bind at line ~940:
+`Bind {{stage2_findings}} = findings array from stage-2 for story S`. This re-bind absorbs
+whichever path's output was written into `{{stage2_findings}}` (dedicated-run merge at ~763,
+or covered-by-composition direct bind at ~783) and makes it the input to the FINDING-ID
+ASSIGNMENT action that follows. Reading the workflow top-to-bottom: the assignment instruction
+appears after this 2.S3 re-bind and before Phase B — meaning it covers both paths without
 branching.
 
 ## Fail condition
@@ -51,6 +58,7 @@ without also covering `{{cr_findings}}`-only scenarios.
 ## Why this matters
 
 The covered-by-composition path sets `{{stage2_findings}} = {{cr_findings}}` directly (workflow.md
-line ~779) without a merge step. If the finding_id assignment were placed before that bind (or only
-in the qa-reviewer branch), bmad-code-review-only findings would reach Phase B without a
-`finding_id`, silently violating the directed-fix invocation contract on this path.
+line ~783) without a merge step. If the finding_id assignment were placed before the 2.S3
+re-bind at line ~940 (or only in the qa-reviewer branch), bmad-code-review-only findings would
+reach Phase B without a `finding_id`, silently violating the directed-fix invocation contract
+on this path.

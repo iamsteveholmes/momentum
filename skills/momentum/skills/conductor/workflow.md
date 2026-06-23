@@ -961,7 +961,11 @@ Ready to begin?</output>
         assign F.finding_id = F.source + "-" + zero-based index of F in {{stage2_findings}}.
         Skip any finding that already carries a non-empty finding_id (idempotent: re-presenting a finding on a later
         loop iteration or rehydrating from the build ledger on resume must not change its id).
-        Uniqueness scope: each finding_id is unique within this story's {{stage2_findings}} array (one fix-mode invocation).
+        Uniqueness scope: each finding_id is unique within the freshly assigned findings in this
+        story's {{stage2_findings}} array (source + zero-based index guarantees no two newly
+        computed ids collide). Pre-existing ids that survive the skip-if-present check are assumed
+        non-colliding with each other and with freshly assigned ids — the reviewer is responsible
+        for assigning stable, distinct ids when it pre-populates finding_id.
         Assignment ownership: the Conductor assigns finding_id here. No reviewer (qa-reviewer, bmad-code-review) and no
         fixer (momentum:dev fix mode) may assign or alter finding_id. This is the single assignment site per
         skills/momentum/references/directed-fix-invocation-contract.md §"Finding Identification".
