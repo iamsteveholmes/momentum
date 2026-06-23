@@ -840,18 +840,26 @@ For each missing domain, choose:
       </action>
     </check>
     <!-- Gen-2 Composed Agent Detection (build-guidelines integration) -->
-    <!-- build-guidelines is the upstream producer of composed specialist agent files.       -->
-    <!-- When .claude/guidelines/agents/{role}-{domain}.md files exist, sprint-dev uses      -->
-    <!-- them instead of generic agents + guidelines injection. Check for composed files now  -->
-    <!-- so the execution plan reflects which stories will use gen-2 composed agents.         -->
+    <!-- build-guidelines is the upstream producer of composed specialist agent files.         -->
+    <!-- agent-builder produces files named {role}-{domain}.md where domain is the manifesto  -->
+    <!-- stack id (e.g., "kotlin-compose"), NOT the coarse specialist value ("dev-frontend").  -->
+    <!-- sprint-dev uses momentum-tools agent resolve --touches to find composed agents at      -->
+    <!-- spawn time — the routing table (agents.json with non-empty patterns[]) is the source  -->
+    <!-- of truth. This detection step is informational only.                                  -->
     <action>Check for gen-2 composed agent files produced by momentum:build-guidelines:
       · Read momentum/build-guidelines-last-run.json if present — lists composed agent slugs/paths
+        with their exact slug names (e.g., "dev-kotlin-compose") and file paths under .claude/guidelines/agents/
       · Also check .claude/guidelines/agents/ for {role}-{domain}.md files
-      · For each specialist domain with a composed agent file: note "composed agent available"
-      · For specialist domains WITHOUT a composed agent file: note "falls back to generic agent"
-      · Store: {{composed_agents_map}} = { domain → { available: true|false, path } }
+        (domain here is the manifesto domain id — e.g., "kotlin-compose" — not the coarse specialist like "dev-frontend")
+      · For each composed agent in last-run.json (or discovered in the agents/ dir):
+          note "composed agent available: {{slug}} at {{path}}"
+      · For specialist domains from the story assignments that have NO matching composed agent:
+          note "falls back to generic agent (run /momentum:build-guidelines with a conformant manifesto to produce a composed agent)"
+      · Store: {{composed_agents_map}} = { slug → { available: true|false, path } }
       · This is informational — planning does not block on composed agent availability.
-        sprint-dev Phase 2 handles the detection/fallback logic at spawn time.
+        sprint-dev Phase 2 resolves composed agents via momentum-tools agent resolve --touches,
+        which matches agents.json entries by patterns[]. If patterns[] is empty, --touches falls
+        back to the generic agent regardless of whether a composed file exists on disk.
       · If no composed agents exist at all: add a note to the execution plan output:
         "ℹ No gen-2 composed agent files found (.claude/guidelines/agents/ empty or absent).
          Run /momentum:build-guidelines before the sprint to bake project guidelines into agent files."
@@ -909,8 +917,10 @@ Proceeding to AVFL validation.</output>
 
       For each story in {{selected_stories}}:
         · Verify story has an entry in {{team}}.story_assignments with a non-null specialist or "dev"
-        · Verify the specialist agent file exists: `skills/momentum/agents/{specialist}.md`
-          If it does not exist, the story has no valid agent definition — flag as gap
+        · Verify the base agent file exists: `skills/momentum/agents/{specialist}.md`
+          (this is the base body — the generic fallback. The gen-2 composed agent, if any, is
+          resolved at spawn time via momentum-tools agent resolve --touches and may override this.
+          If the base file does not exist, the story has no valid fallback agent — flag as gap.)
 
       For team review roles (applied to the sprint as a whole):
         · Verify `skills/momentum/agents/qa-reviewer.md` exists

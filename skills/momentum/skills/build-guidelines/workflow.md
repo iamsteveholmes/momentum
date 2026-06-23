@@ -1,15 +1,15 @@
 # momentum:build-guidelines — Workflow
 
-**Six-phase orchestration:** Discover → Consult → Fan Out to constitution-builder (Tier 2) → Generate Tier 1 → Register + Wire → Validate
+**Six-phase orchestration:** Discover → Consult → Fan Out to agent-builder (Tier 2 composition + registration) → Generate Tier 1 → Verify Registration → Validate
 
-**Orchestrator purity contract:** This workflow contains ZERO KB-synthesis logic. Every Permissions / Standing Rules / Quick Routing generation step is delegated to `momentum:constitution-builder`. This skill loops, registers, wires, and validates only.
+**Orchestrator purity contract:** This workflow contains ZERO KB-synthesis logic and ZERO agents.json self-writes. Tier 2 composition (file assembly + routing-table registration with non-empty patterns[]) is delegated entirely to `momentum:agent-builder`. Domain-knowledge synthesis is optionally delegated to `momentum:constitution-builder`. This skill loops, verifies, and validates only.
 
 ---
 
 <workflow>
   <critical>The manifesto is NEVER a per-sprint context overlay. Read it as stable, sprint-invariant input. Do not inject any sprint slug, story slug, or sprint-scoped context into any composed output. DEC-038 D1.</critical>
-  <critical>This skill is an orchestrator only — it invokes constitution-builder for all KB synthesis. Do not inline any Permissions / Standing Rules / routing-table generation. DEC-038 G1, AC6.</critical>
-  <critical>G1 gate is pass/fail: at least one composed agent file written to disk AND registered in momentum/agents.json. A run that does not meet G1 is a failed run. DEC-038 G1.</critical>
+  <critical>This skill is an orchestrator only — it invokes agent-builder for Tier 2 composition+registration and optionally constitution-builder for KB synthesis. Do not inline any composition, permissions, routing-table generation, or agents.json writes. DEC-038 G1, AC6.</critical>
+  <critical>G1 gate is pass/fail: at least one composed agent file written to disk AND registered in momentum/agents.json WITH non-empty patterns[]. An agents.json entry with patterns:[] is NEVER matched by momentum-tools agent resolve --touches — the composed agent is functionally dead. G1 requires the --touches resolver to return the composed slug, not the generic fallback. A run that does not meet G1 is a failed run. DEC-038 G1.</critical>
   <critical>Dependency check FIRST: if constitution-builder does not support composed_agent_file / standalone_constitution write modes, HALT with clear message before any other work.</critical>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -129,7 +129,14 @@ DRY RUN — no files will be written. Preview only.
   <!-- PHASE 3: FAN OUT — Tier 2 Composed Agent Files         -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="3" goal="Invoke constitution-builder per role × domain pair for Tier 2 composition">
+  <step n="3" goal="Invoke agent-builder per role × domain pair for Tier 2 composition + registration">
+
+    <!-- ORCHESTRATION NOTE: This skill delegates ALL composition and agents.json registration to
+         momentum:agent-builder. build-guidelines NEVER self-assembles composed files or self-registers
+         agents.json entries. agent-builder is the canonical Tier 2 composer — it assembles
+         frontmatter + domain-knowledge ABOVE the --- separator + full unmodified base body BELOW
+         the separator, and writes the agents.json routing entry with non-empty patterns populated
+         from permissions_scope. This is what makes the --touches resolver match. -->
 
     <action>Initialize: {{composed_agents}} = [] (accumulator for successfully composed files)</action>
 
@@ -142,42 +149,57 @@ DRY RUN — no files will be written. Preview only.
          Extract: identity block, ## Project Stack content, ## Diagnostic Table content (verbatim — do NOT rephrase or rewrite)
          Store as {{manifesto_content}}
 
-      2. Read the base body at {{current.base_body_path}}
-         Store as {{base_body_content}}
+      2. OPTIONAL — get domain-knowledge sections from constitution-builder:
+         If the manifesto's diagnostic table requires synthesis against the project KB
+         (i.e., wiki-query terms need to be validated or cross-referenced):
+           Invoke momentum:constitution-builder with:
+             write_mode: composed_agent_file
+             target_path: {{target_path}}.domain-knowledge (temp path)
+             project_kb: {{current.project_kb}}
+             Context: Role, Domain, Project Stack, Diagnostic Table (verbatim)
+             Instruction: "Generate ONLY domain-knowledge sections (Project Guidelines + Diagnostic Table)
+               for a {{current.role}} × {{current.domain}} agent. Do NOT assemble the base body.
+               Do NOT generate Quick Routing or per-agent permissions (those belong at agent-builder layer per DEC-038).
+               Target: {{target_path}}.domain-knowledge (assembly by agent-builder)"
+           Store the output as {{domain_knowledge_content}}
+         If the manifesto already provides complete domain knowledge inline (Project Stack +
+         Diagnostic Table are sufficient without KB synthesis):
+           Build {{manifesto_context}} directly from the manifesto's ## Project Stack and
+           ## Diagnostic Table sections (verbatim — do NOT rephrase or rewrite).
+           Set {{domain_knowledge_content}} = {{manifesto_context}}
 
-      3. Invoke momentum:constitution-builder with:
-           write_mode: composed_agent_file
-           target_path: {{target_path}}
-           project_kb: {{current.project_kb}}
-           Context to pass:
-             - Role: {{current.role}}
-             - Domain: {{current.domain}}
-             - Project KB: {{current.project_kb}}
-             - Project Stack: {{manifesto_content.project_stack}} (verbatim from manifesto)
-             - Diagnostic Table: {{manifesto_content.diagnostic_table}} (verbatim — stable, sprint-invariant)
-             - Base body path: {{current.base_body_path}}
-           Instruction: "Generate domain-knowledge sections for a {{current.role}} × {{current.domain}} composed agent.
-             The Diagnostic Table below is stable and sprint-invariant — embed it verbatim.
-             Do NOT generate Quick Routing or per-agent permissions (per DEC-038, those belong at agent-builder layer).
-             Target file: {{target_path}}"
+      3. DELEGATE TO momentum:agent-builder for full composition + registration:
+         Invoke momentum:agent-builder with:
+           base_body_path: {{current.base_body_path}}      (e.g., skills/momentum/agents/dev.md)
+           role: {{current.role}}                          (e.g., "dev")
+           domain: {{current.domain}}                     (e.g., "kotlin-compose" — the manifesto domain id)
+           constitution_path: {{constitution_path}}        (pass current run's constitution path)
+           manifesto_context: {{domain_knowledge_content}} (domain-knowledge block from step 2)
+           permissions_scope: <file patterns this role owns in this domain — derive from manifesto's
+             ## Project Stack "Shared UI" / "Shared logic" paths, or from any "File ownership" section
+             in the manifesto. These patterns MUST be non-empty so momentum-tools agent resolve
+             --touches matches. Examples:
+               dev × kotlin-compose → ["composeApp/**", "shared/**", "*.kt"]
+               dev × skills         → ["skills/**/*.md", "skills/**/*.yaml", "skills/**/*.sh"]
+               qa × kotlin-compose  → ["**/test/**/*.kt", "**/androidTest/**/*.kt"]
+             If no ownership section exists in the manifesto, use the ## Project Stack paths
+             as the basis and default to broad-match patterns for this domain.>
+           output_dir: {{output_dir}}
+         agent-builder will:
+           a. Draft composed file: YAML frontmatter + domain specialization block ABOVE --- + full base body BELOW ---
+           b. Validate via skill-creator
+           c. Write to {{target_path}} (= {{output_dir}}/{{current.role}}-{{current.domain}}.md)
+           d. Write routing entry to momentum/agents.json with patterns = permissions_scope (NON-EMPTY)
+         If dry_run = true: pass dry_run=true to agent-builder and report "Would write: {{target_path}}" — do not write
 
-      CRITICAL ASSEMBLY RULE — the composed file must match the cmp-dev exemplar shape:
-        a. YAML frontmatter: name, model, tools (at minimum)
-        b. ## Project Guidelines — {domain} ({date}) section with critical rules
-        c. The ## Diagnostic Table (verbatim from manifesto — NO rewriting)
-        d. A `---` separator line
-        e. The full unmodified base body ({{base_body_content}}) below the separator
-        NO sprint identifier, NO story identifier anywhere in the file.
-
-      4. After constitution-builder writes the file:
+      4. After agent-builder completes:
          Confirm file exists at {{target_path}}
-         If dry_run = true: report "Would write: {{target_path}}" — do not write
-         If confirmed: append to {{composed_agents}} = {{composed_agents}} + [{role, domain, path: target_path}]
+         If confirmed: append to {{composed_agents}} = {{composed_agents}} + [{role, domain, path: target_path, slug: "{{current.role}}-{{current.domain}}"}]
 
       5. Report per-pair result:
          "✓ {{current.role}}-{{current.domain}} → {{target_path}}"
          or
-         "✗ {{current.role}}-{{current.domain}} — constitution-builder error: {{error}}"
+         "✗ {{current.role}}-{{current.domain}} — agent-builder error: {{error}}"
     </action>
 
     <output>
@@ -226,42 +248,45 @@ Line count: {{N}} lines {{if N > 750: ⚠ OVER CEILING (750 max)}}
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- PHASE 5: REGISTER + WIRE                                -->
+  <!-- PHASE 5: VERIFY REGISTRATION + WIRE                     -->
   <!-- ═══════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Register composed agents in momentum/agents.json + record paths for sprint-dev">
+  <step n="5" goal="Verify agent-builder registered agents correctly + record paths for sprint-dev">
 
-    <action>For each successfully composed agent in {{composed_agents}}:
+    <!-- REGISTRATION NOTE: momentum/agents.json is written by momentum:agent-builder in Phase 3 —
+         NOT by this skill. build-guidelines NEVER writes agents.json directly. This phase only
+         verifies the entries that agent-builder produced and writes the sprint-dev handoff record. -->
 
-      Load momentum/agents.json:
-        If not exists: create with structure {"defaults": {}, "project": []}
-        If exists: read it
+    <action>Verify each composed agent in {{composed_agents}} is correctly registered:
 
-      Build registration entry:
-      {
-        "role": "{{agent.role}}",
-        "domain": "{{agent.domain}}",
-        "slug": "{{agent.role}}-{{agent.domain}}",
-        "agent": "{{agent.path}}",
-        "patterns": [],
-        "write_permissions": []
-      }
-      Note: patterns and write_permissions are left empty here — they are set per-story
-      when sprint-dev resolves the agent. The slug-keyed registration is what matters for G1.
+      Read momentum/agents.json (written by agent-builder in Phase 3).
 
-      Check project[] array:
-        If entry with slug = "{{agent.role}}-{{agent.domain}}" exists: UPDATE it
-        If not exists: APPEND the new entry
-
-      Write updated momentum/agents.json
+      For each agent in {{composed_agents}}:
+        expected_slug = "{{agent.role}}-{{agent.domain}}"
+        Find the project[] entry where slug == expected_slug.
+        Assert:
+          a. Entry exists in project[]
+          b. entry.agent points to a file that exists on disk ({{agent.path}})
+          c. entry.patterns is NON-EMPTY (this is the critical G1 resolver requirement —
+             empty patterns means --touches will never match this entry)
+        If any assertion fails: log "REGISTRATION FAILURE: {{expected_slug}} — {{reason}}"
+          and flag for the G1 gate in Phase 6.
     </action>
 
-    <action>Verify registration resolves via momentum-tools:
-      For at least the first composed agent in {{composed_agents}}:
-        Run: momentum-tools agent resolve --touches "{{any file path typical for this domain}}"
-        OR: momentum-tools agent resolve --role {{agent.role}} (if role matches a defaults entry)
-      Confirm the result includes the registered slug or agent path.
-      If resolution fails: log warning — "agent resolve did not return {{slug}}; verify momentum-tools path and agents.json schema"
+    <action>Verify resolvability via momentum-tools --touches (CRITICAL — this is the production code path):
+      For each composed agent in {{composed_agents}}:
+        Derive a representative file path that this agent's patterns should match.
+          Example: for dev-kotlin-compose with patterns ["composeApp/**"], use "composeApp/src/main/MyScreen.kt"
+          Example: for dev-skills with patterns ["skills/**/*.md"], use "skills/momentum/skills/example/SKILL.md"
+        Run: momentum-tools agent resolve --touches "{{representative_path}}"
+        Parse the returned results array.
+        Assert: at least one result has slug == "{{expected_slug}}" (the COMPOSED slug — not "dev" or generic).
+        If assertion passes: log "✓ {{expected_slug}} resolves via --touches"
+        If assertion fails (returns generic 'dev' fallback or no match):
+          log "✗ RESOLVER FAILURE: {{expected_slug}} — --touches returned {{actual_result}} not the composed slug.
+            Cause: patterns[] in agents.json entry is likely empty or does not match {{representative_path}}.
+            Fix: re-run momentum:agent-builder with correct permissions_scope for this domain."
+          Flag for G1 gate.
     </action>
 
     <action>Record composed-file paths for sprint-dev handoff:
@@ -279,11 +304,11 @@ Line count: {{N}} lines {{if N > 750: ⚠ OVER CEILING (750 max)}}
     </action>
 
     <output>
-## Register + Wire
+## Verify Registration + Wire
 
-momentum/agents.json updated:
+momentum/agents.json (written by agent-builder):
 {{for each composed agent:
-  project[slug="{{slug}}"] → {{agent_path}}
+  project[slug="{{slug}}"] → {{agent_path}} · patterns: {{patterns_count}} entries · --touches: {{resolve_status}}
 }}
 
 Handoff record: momentum/build-guidelines-last-run.json
@@ -299,8 +324,13 @@ Handoff record: momentum/build-guidelines-last-run.json
     <action>Assert G1 condition explicitly:
       G1 check:
         a. Count composed agent files on disk in {{output_dir}}: at least 1
-        b. Count project[] entries in momentum/agents.json: at least 1
-        c. For (a) and (b): at least one slug matches between disk and agents.json
+        b. Count project[] entries in momentum/agents.json with non-empty patterns[]: at least 1
+           (entries with patterns:[] are NOT resolvable — they do not satisfy G1)
+        c. For (a) and (b): at least one slug matches between disk and agents.json AND has non-empty patterns[]
+        d. For at least one composed agent, run: momentum-tools agent resolve --touches "{{representative_path}}"
+           Assert the returned slug is the COMPOSED slug (e.g., "dev-kotlin-compose"), NOT the generic
+           fallback (e.g., "dev"). A result of the generic fallback means patterns[] is empty or wrong
+           and G1 is NOT met — the --touches resolver is the production code path that sprint-dev uses.
       If G1 not met: emit "G1 Gate: FAILED" with details and HALT.
       If G1 met: emit "G1 Gate: PASSED"
     </action>

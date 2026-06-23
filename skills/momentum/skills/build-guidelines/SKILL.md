@@ -12,7 +12,7 @@ Orchestrates the three-tier agent guidelines architecture for a project. Produce
 - **Tier 1 (Hot Constitution):** `.claude/guidelines/constitution.md` — project-wide, always loaded.
 - **Tier 2 (Composed Agent Files):** `.claude/guidelines/agents/{role}-{domain}.md` — base body + manifesto merged per role × domain pair.
 
-This skill is an **orchestrator over `momentum:constitution-builder`** — it contains no KB-synthesis logic of its own. It loops the agent manifesto's role × domain matrix, invokes `constitution-builder` for each pair, registers composed agents in `momentum/agents.json`, and validates the outputs.
+This skill is an **orchestrator over `momentum:agent-builder`** (Tier 2 composer) and optionally `momentum:constitution-builder` (domain-knowledge synthesis). It contains no KB-synthesis logic of its own. It loops the agent manifesto's role × domain matrix, invokes `agent-builder` for each pair (which assembles the full composed file AND writes `momentum/agents.json` with non-empty `patterns[]`), and validates that the resulting agents are resolvable via `momentum-tools agent resolve --touches`.
 
 **DEC-038 G1 gate:** At least one composed agent file must be written to disk AND registered in `momentum/agents.json`. This is the key observable.
 

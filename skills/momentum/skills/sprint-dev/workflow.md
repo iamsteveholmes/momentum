@@ -258,21 +258,31 @@ Task list created for progress tracking.</output>
          f. If agent_path does not exist on disk: log a warning and substitute `skills/momentum/agents/dev.md`
 
          <!-- Gen-2 Composed Agent Detection (build-guidelines AC7 — detection/fallback contract) -->
-         g. AFTER resolving agent_path via routing table, check for a gen-2 composed agent file:
-            - Determine specialist_domain from {{team}}.story_assignments[slug].specialist (e.g., "kotlin-compose")
-            - Determine role from {{team}}.story_assignments[slug].role (e.g., "dev")
-            - If specialist_domain is set (not "base Dev"):
-                composed_path = ".claude/guidelines/agents/{{role}}-{{specialist_domain}}.md"
-                IF composed_path EXISTS on disk:
-                  Override agent_path with composed_path
-                  Note: "Using gen-2 composed agent for {{role}}-{{specialist_domain}} (guidelines baked in)"
-                  The composed file's system prompt already contains the project guidelines — do NOT
-                  additionally inject a guidelines path for this agent.
-                ELSE:
-                  Keep the routing-table agent_path unchanged
-                  Log warning: "guidelines-verification-gate: no composed agent at {{composed_path}};
-                    falling back to generic agent. Run /momentum:build-guidelines to produce composed files."
-            - If specialist_domain is not set: no composed-file check needed.
+         g. AFTER resolving agent_path via routing table, check if a gen-2 composed agent is available:
+            The routing table result from step (b) is the canonical resolver — if build-guidelines
+            ran and agent-builder populated agents.json with non-empty patterns[], step (b) already
+            returns the composed agent slug and path directly. No additional path construction needed.
+
+            Check the routing result from step (b):
+            - If the result slug is a COMPOSED slug (e.g., "dev-kotlin-compose", "dev-skills") AND
+              the agent_path points to a file under .claude/guidelines/agents/:
+                The gen-2 composed agent is already active from the routing-table result.
+                Note: "Using gen-2 composed agent {{result.slug}} (guidelines baked in)"
+                The composed file's system prompt already contains the project guidelines — do NOT
+                additionally inject a guidelines path for this agent.
+            - If the result slug is a GENERIC slug (e.g., "dev", base fallback) AND
+              build-guidelines-last-run.json exists (momentum:build-guidelines was run):
+                Check .claude/guidelines/agents/ for files whose names share the role prefix.
+                If a composed file exists but --touches did not match it: this is a patterns[]
+                misconfiguration in agents.json — the entry was registered with empty patterns.
+                Log warning: "guidelines-verification-gate: routing table returned generic '{{result.slug}}'
+                  for story {{slug}}; a composed agent may exist in .claude/guidelines/agents/ but
+                  its agents.json entry has empty patterns[] — run /momentum:build-guidelines to fix."
+                Keep the routing-table agent_path (generic) unchanged.
+            - If no composed files exist (build-guidelines not run):
+                Keep the routing-table agent_path unchanged.
+                Log warning (only once per run, not per story): "No gen-2 composed agent files found.
+                  Run /momentum:build-guidelines before the sprint to bake project guidelines into agent files."
          <!-- End Gen-2 Composed Agent Detection -->
 
          Compute dedup key per result: `{slug}::{agent_slug}` where agent_slug = routing result's `slug` field.
