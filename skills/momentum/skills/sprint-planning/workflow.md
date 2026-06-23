@@ -839,6 +839,24 @@ For each missing domain, choose:
         2. Set guidelines_status = "skipped" for affected stories
       </action>
     </check>
+    <!-- Gen-2 Composed Agent Detection (build-guidelines integration) -->
+    <!-- build-guidelines is the upstream producer of composed specialist agent files.       -->
+    <!-- When .claude/guidelines/agents/{role}-{domain}.md files exist, sprint-dev uses      -->
+    <!-- them instead of generic agents + guidelines injection. Check for composed files now  -->
+    <!-- so the execution plan reflects which stories will use gen-2 composed agents.         -->
+    <action>Check for gen-2 composed agent files produced by momentum:build-guidelines:
+      · Read momentum/build-guidelines-last-run.json if present — lists composed agent slugs/paths
+      · Also check .claude/guidelines/agents/ for {role}-{domain}.md files
+      · For each specialist domain with a composed agent file: note "composed agent available"
+      · For specialist domains WITHOUT a composed agent file: note "falls back to generic agent"
+      · Store: {{composed_agents_map}} = { domain → { available: true|false, path } }
+      · This is informational — planning does not block on composed agent availability.
+        sprint-dev Phase 2 handles the detection/fallback logic at spawn time.
+      · If no composed agents exist at all: add a note to the execution plan output:
+        "ℹ No gen-2 composed agent files found (.claude/guidelines/agents/ empty or absent).
+         Run /momentum:build-guidelines before the sprint to bake project guidelines into agent files."
+    </action>
+    <!-- End Gen-2 Composed Agent Detection -->
     <!-- End Guidelines Verification Gate -->
 
     <action>Check for `touches` path overlaps across stories:

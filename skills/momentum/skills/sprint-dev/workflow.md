@@ -256,6 +256,25 @@ Task list created for progress tracking.</output>
          e. If the routing table returns multiple results (multi-domain story): N agent spawns per story,
             each scoped to its file_scope and carrying its write_permissions
          f. If agent_path does not exist on disk: log a warning and substitute `skills/momentum/agents/dev.md`
+
+         <!-- Gen-2 Composed Agent Detection (build-guidelines AC7 — detection/fallback contract) -->
+         g. AFTER resolving agent_path via routing table, check for a gen-2 composed agent file:
+            - Determine specialist_domain from {{team}}.story_assignments[slug].specialist (e.g., "kotlin-compose")
+            - Determine role from {{team}}.story_assignments[slug].role (e.g., "dev")
+            - If specialist_domain is set (not "base Dev"):
+                composed_path = ".claude/guidelines/agents/{{role}}-{{specialist_domain}}.md"
+                IF composed_path EXISTS on disk:
+                  Override agent_path with composed_path
+                  Note: "Using gen-2 composed agent for {{role}}-{{specialist_domain}} (guidelines baked in)"
+                  The composed file's system prompt already contains the project guidelines — do NOT
+                  additionally inject a guidelines path for this agent.
+                ELSE:
+                  Keep the routing-table agent_path unchanged
+                  Log warning: "guidelines-verification-gate: no composed agent at {{composed_path}};
+                    falling back to generic agent. Run /momentum:build-guidelines to produce composed files."
+            - If specialist_domain is not set: no composed-file check needed.
+         <!-- End Gen-2 Composed Agent Detection -->
+
          Compute dedup key per result: `{slug}::{agent_slug}` where agent_slug = routing result's `slug` field.
          For each result entry:
          - If key EXISTS in {{spawn_registry}}: skip this agent — continue to next result.
