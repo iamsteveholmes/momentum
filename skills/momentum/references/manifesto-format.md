@@ -253,7 +253,7 @@ Tech: **<version-pinned tech line>**
 
 ## Exemplar Conformance Check (AC7)
 
-The reference exemplar — `docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md` — is the verbatim nornspun `cmp-dev.md` artifact. It is a **format reference only — never a Momentum agent.** Its diagnostic table (`## Quick Routing — wiki-query Delegation Table`, lines 121–192) contains ~35 worked symptom→`wiki-query` entries across 9 technology areas.
+The reference exemplar — `docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md` — is the verbatim nornspun `cmp-dev.md` artifact. It is a **format reference only — never a Momentum agent.** Its diagnostic table (`## Quick Routing — wiki-query Delegation Table`, lines 121–192) contains 36 worked symptom→`wiki-query` entries across 9 technology areas.
 
 This section confirms that every exemplar entry is expressible in this format with no loss of meaning.
 
@@ -355,7 +355,7 @@ The `momentum:build-guidelines` skill (story `build-guidelines-skill`) consumes 
 
 **Sprint invariance:** build-guidelines does not re-scope or regenerate the diagnostic table per sprint. The manifesto is consumed as-is; the composed agent embeds the table verbatim. Any change to the table requires editing the manifesto file itself — not a per-sprint override.
 
-**Un-routed territory:** when the composed agent (the output of build-guidelines + agent-builder) hits a situation for which no diagnostic-table entry matches, it emits the incompleteness signal defined in the Completeness Criterion section above. This is the manifesto-incompleteness feedback loop: agent encounters un-routed territory → logs incompleteness signal → developer updates the manifesto → manifesto author re-runs agent-builder → improved composed agent.
+**Un-routed territory:** when the composed agent (the output of agent-builder, orchestrated by build-guidelines) hits a situation for which no diagnostic-table entry matches, it emits the incompleteness signal defined in the Completeness Criterion section above. This is the manifesto-incompleteness feedback loop: agent encounters un-routed territory → logs incompleteness signal → developer updates the manifesto → manifesto author re-runs agent-builder → improved composed agent.
 
 ---
 
