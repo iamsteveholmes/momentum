@@ -3072,6 +3072,12 @@ Key clarifications:
 
 **Traceability:** Introduced by agent-builder story (sprint-2026-05-16). Implements DEC-026 D3 (constitution-builder), D4 (manifesto = diagnostic table), and D5 (agent-builder pipeline). build-agents orchestrates both. **Manifesto definition, routing ownership, multi-KB / project-scoped agents, and the FR136/FR138 annotation added per DEC-038 (2026-06-16).**
 
+**Manifesto format specification (AC9 — story `agent-manifesto-format-specification`, sprint-2026-06-18):** The canonical format reference for the manifesto file is:
+
+- **Format spec:** `skills/momentum/references/manifesto-format.md` — the single authoritative specification of the manifesto file: its location convention, identity fields, content model, and completeness rule. A conformant manifesto can be authored from that document alone.
+- **Manifesto file location and naming convention:** `.claude/manifests/{role}-{domain}.md` — one file per role×domain pair, stored in the project's `.claude/manifests/` directory.
+- **Composed agent output location:** `.claude/guidelines/agents/{role}-{domain}.md` — the file agent-builder writes after merging base body + constitution + manifesto (diagnostic table) + CREED anchors.
+
 ---
 
 **Decision 57 — Beads Dual-Write Adoption (DEC-028, sprint-2026-05-16)**
