@@ -112,6 +112,74 @@
           "check": "! grep -qi 'if needed\\|you may want\\|consider consulting\\|feel free to' routing-table.md"
         }
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Generate the standalone hot constitution for a project with one knowledge base configured. Include the wiki-query interface block.",
+      "expected_output": "A ## Wiki-Query Interface section that documents both normal mode (tiered retrieval, [[wikilinks]]) and fast/index-only mode, with all four trigger prefixes listed: 'quick answer:', 'just scan:', 'don't read the pages:', 'fast lookup:'. Block is always-loaded, not conditional.",
+      "files": ["eval-constitution-emits-wiki-query-block-both-modes.md"],
+      "assertions": [
+        {
+          "text": "Output contains a '## Wiki-Query Interface' section",
+          "check": "grep -q '## Wiki-Query Interface' constitution.md"
+        },
+        {
+          "text": "Normal-mode invocation is exactly 'wiki-query [question]'",
+          "check": "grep -q 'wiki-query \\[' constitution.md"
+        },
+        {
+          "text": "Fast-mode invocation is exactly 'wiki-query quick answer: [question]'",
+          "check": "grep -q 'wiki-query quick answer:' constitution.md"
+        },
+        {
+          "text": "All four fast-mode trigger prefixes are listed",
+          "check": "grep -q 'just scan:' constitution.md && grep -q \"don't read the pages:\" constitution.md && grep -q 'fast lookup:' constitution.md"
+        },
+        {
+          "text": "Block is not placed under a conditional heading",
+          "check": "! grep -qi 'if.*kb\\|when.*kb\\|conditional' constitution.md"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Generate the standalone hot constitution for a project with two knowledge bases configured: one for Momentum and one for a client project.",
+      "expected_output": "A ## Wiki-Query Interface block that makes KB selection explicit for multi-KB projects, showing '--kb [project-name]' syntax. Single-KB plain syntax is also shown for contrast. Block degrades cleanly — no mandatory ceremony for single-KB form.",
+      "files": ["eval-multi-kb-selection-explicit.md"],
+      "assertions": [
+        {
+          "text": "Multi-KB syntax shown with --kb flag",
+          "check": "grep -q '\\-\\-kb' constitution.md"
+        },
+        {
+          "text": "Single-KB plain form also documented",
+          "check": "grep -q 'wiki-query \\[' constitution.md"
+        },
+        {
+          "text": "Explicit mention that multi-KB requires specifying which KB",
+          "check": "grep -qi 'multiple.*kb\\|more than one.*kb\\|multi.*kb\\|specify.*kb\\|select.*kb' constitution.md"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Generate the standalone hot constitution for a TypeScript + Vitest project. Include the wiki-query interface block with required triggers.",
+      "expected_output": "A ## Wiki-Query Interface block whose trigger section uses only imperative prescriptive phrasing ('Before [moment], run wiki-query [exact question]'). Zero permissive phrases ('if you need', 'you may want to', 'consult if needed'). No per-agent symptom→query diagnostic rows.",
+      "files": ["eval-triggers-are-prescriptive-not-permissive.md"],
+      "assertions": [
+        {
+          "text": "At least 2 prescriptive trigger entries present",
+          "check": "grep -ci 'before.*run.*wiki-query\\|before.*wiki-query' constitution.md | awk '{exit ($1 < 2)}'"
+        },
+        {
+          "text": "No permissive trigger language",
+          "check": "! grep -qi 'if you need\\|you may want\\|consider consulting\\|feel free to\\|as needed\\|when helpful\\|consult.*if needed' constitution.md"
+        },
+        {
+          "text": "No per-agent symptom table rows",
+          "check": "! grep -qi 'symptom.*→\\|observed symptom\\|agent role.*query' constitution.md"
+        }
+      ]
     }
   ]
 }
