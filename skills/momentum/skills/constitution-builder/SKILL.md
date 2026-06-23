@@ -1,32 +1,33 @@
 ---
 name: constitution-builder
-description: "Builds or regenerates the hot constitution (## Permissions + ## Standing Rules + ## Quick Routing) for any KB-backed agent skill. Covers what the agent owns, what it can't touch, always-on behavioral constraints, and symptom→wiki-query routing. Use when: creating a new KB-backed skill, the wiki KB has grown and routing entries are stale, or you hear 'build constitution', 'generate routing table', 'update quick routing', 'add routing to this skill', 'add standing rules', 'define agent permissions', or 'momentum:constitution-builder'. Also invoke proactively after wiki-ingest adds a major new technology area to the KB."
+description: "Builds hot constitution for KB-backed agent skills. Triggers: build constitution, generate routing table, update quick routing, add standing rules."
 model: claude-opus-4-6
 effort: medium
 ---
 
 # momentum:constitution-builder
 
-Builds the hot constitution for KB-backed agent skills — three always-loaded sections that together define what an agent can touch, how it must behave, and where to look things up.
+Builds the hot constitution for KB-backed agent skills — four always-loaded sections that together define what an agent can touch, how it must behave, where to look things up, and how to invoke the wiki-query interface.
 
 ## Architecture
 
 Three tiers:
-- **Tier 1 — Hot Constitution** — `## Permissions` + `## Standing Rules` + `## Quick Routing` in SKILL.md. Project-wide, shared by every agent, always loaded.
+- **Tier 1 — Hot Constitution** — `## Permissions` + `## Standing Rules` + `## Quick Routing` + `## Wiki-Query Interface` in SKILL.md. Project-wide, shared by every agent, always loaded.
 - **Tier 2 — Composed Agent File** — per-agent system prompt assembled from `base_body` + constitution + manifesto. Built at agent-spawn time.
 - **Tier 3 — Cold KB** — full wiki vault (vault path from `~/.obsidian-wiki/config`). Not in context. Accessed on-demand via `wiki-query`.
 
 The **runtime retrieval pattern** — symptom fires → `wiki-query` pull-in from Tier 3 — is a usage pattern, not a tier.
 
-**Three distinct jobs:**
+**Four distinct jobs:**
 
 | Section | Purpose | Enforced by |
 |---|---|---|
 | `## Permissions` | What the agent owns, what it cannot touch | Claude Code harness (path patterns + tool restrictions) |
 | `## Standing Rules` | Always-on behavioral constraints | Agent judgment, informed by this section |
 | `## Quick Routing` | Symptom → `wiki-query` fast path to cold KB | Agent judgment, informed by routing table |
+| `## Wiki-Query Interface` | Shared invocation contract for cold-KB access | Agent judgment; cross-cutting, not per-agent |
 
-Never collapse these. Permissions are enforced by the harness. Rules are honored by the agent. Routing is consulted by the agent.
+Never collapse these. Permissions are enforced by the harness. Rules are honored by the agent. Routing is consulted by the agent. The Wiki-Query Interface is the shared access contract for Tier 3.
 
 ## Permission Pattern Syntax
 
@@ -46,12 +47,68 @@ Claude Code's permission system supports path-pattern restrictions on file tools
 
 Permissions restrict downward only — a subagent cannot have more access than its parent session.
 
+## Canonical Wiki-Query Interface Block (DEC-018 D2, DEC-038 D2)
+
+This block is **Tier 1 hot-constitution content** — always-loaded by every agent. When generating the standalone hot constitution, emit this block verbatim (adjusted for KB count per KB Selection below) as a top-level section, not behind any conditional.
+
+**Ownership boundary (DEC-038 D1):** This block holds the shared invocation contract and cross-cutting trigger scenarios ONLY. Per-agent symptom→query routing rows (diagnostic table entries keyed by agent role or observed symptom) belong at the manifesto layer, NOT here.
+
+```markdown
+## Wiki-Query Interface
+
+Use `wiki-query` to access the cold KB (Tier 3). Two modes:
+
+**Normal mode** — tiered retrieval (index scan → section grep → full page read as needed).
+Returns cited answers with `[[wikilinks]]`.
+
+    wiki-query [your question]
+
+**Fast / index-only mode** — answers from page summaries and index.md only.
+No page bodies opened. Cheaper. Good for factual lookups.
+
+    wiki-query quick answer: [your question]
+
+Also triggered by these equivalent prefixes: `just scan:` · `don't read the pages:` · `fast lookup:`
+
+### KB Selection
+
+<!-- Single-KB form (use when exactly one KB is configured): -->
+Use the invocations above as-is — no explicit KB selection required.
+
+<!-- Multi-KB form (use when more than one KB is configured): -->
+When multiple project KBs are available, specify the target KB by project scope:
+
+    wiki-query --kb [project-name] [your question]
+    wiki-query --kb [project-name] quick answer: [your question]
+
+Select the KB that matches your current project context. Do not assume a single global vault.
+
+### Required Triggers (prescriptive — DEC-015 D3)
+
+These scenarios require a KB lookup before proceeding. Do not skip:
+
+- Before selecting a test pattern for a new library, run `wiki-query what test patterns apply to [library name]`
+- Before choosing between two architecture approaches on this stack, run `wiki-query [approach A] vs [approach B] on [stack]`
+- Before applying a framework convention you have not applied in this session, run `wiki-query [framework] [convention name] pattern`
+- Before implementing a pattern that conflicts with what you recall from training, run `wiki-query [pattern] current practice [project-name]`
+```
+
+**Emit rules:**
+- Single-KB project: use the Single-KB form; omit the Multi-KB form and the `--kb` flag guidance.
+- Multi-KB project: include both forms; make KB selection explicit.
+- The `### Required Triggers` section is always emitted regardless of KB count; update the example query strings to match the project's actual technology domains.
+- Never add per-agent symptom→query rows to this block. Those belong in the agent's manifesto (diagnostic table layer).
+
 ## Routing Entry Format (DEC-018)
+
+Quick-Routing entries in `## Quick Routing` use this pattern:
 
 ```
 **[developer symptom or trigger scenario]** → `wiki-query [specific question]`
 **[symptom]** → `wiki-query quick answer: [question]`  ← for fast index-only lookups
 ```
+
+Note: `wiki-query quick answer:` and these equivalent prefixes all trigger fast / index-only mode: `just scan:`, `don't read the pages:`, `fast lookup:`. When multiple KBs are configured, add `--kb [project-name]` before the question.
 
 Never write "consult KB if needed." Name the exact moment and exact query string.
 
@@ -195,8 +252,9 @@ Group into thematic subsections. Avoid routing to anything already covered by St
 
 ### Phase 7 — Review
 
-Present all three sections together.
+Present all four sections together.
 
+For Wiki-Query Interface: does the KB count (single/multi) match the project? Are the required trigger scenarios appropriate?
 For Permissions: are the path patterns right? Too broad, too narrow? Anything missing?
 For Standing Rules: anything missing, wrong, or too rigid?
 For Quick Routing: missing symptoms? Wrong query strings? Anything to cut?
@@ -205,11 +263,22 @@ Incorporate feedback. Target: complete permission coverage, 3–8 standing rule 
 
 ### Phase 8 — Write
 
-Write all three sections into `{{target_skill_path}}`.
+Write all sections into `{{target_skill_path}}`.
 
-**Order in SKILL.md:** Permissions first, then Standing Rules, then Quick Routing. All go after the skill's opening description.
+**When generating the standalone hot constitution** (not per-agent SKILL.md — i.e., the shared `constitution.md` Tier 1 file), also emit the **Canonical Wiki-Query Interface Block** defined in this skill under "Canonical Wiki-Query Interface Block". Place it first — as the always-loaded top-level section before Permissions/Standing Rules — not under a conditional. Use the single-KB or multi-KB form based on the project's KB count. Update `### Required Triggers` example query strings to match the project's technology domains. Never add per-agent diagnostic table rows.
+
+**Order in SKILL.md (per-agent constitution):** Permissions first, then Standing Rules, then Quick Routing. All go after the skill's opening description.
+
+**Order in standalone constitution.md (hot constitution):** Wiki-Query Interface Block first (Tier 1 always-loaded interface), then Permissions, then Standing Rules, then Quick Routing.
 
 ```markdown
+## Wiki-Query Interface
+
+[emit canonical block from "Canonical Wiki-Query Interface Block" section above,
+ adjusted for single-KB or multi-KB based on project configuration]
+
+---
+
 ## Permissions
 
 ### Owns — may read and write
@@ -241,10 +310,11 @@ Use this table first. Match your situation to a scenario and run the wiki-query 
 ```
 
 Write behavior:
-- No existing sections: insert all three after the opening description
+- No existing sections: insert all four after the opening description
 - Partial: show existing, confirm replacement per section, then write
+- Hot constitution mode: always include the Wiki-Query Interface Block
 
-Report: "Constitution written — permissions defined, N standing rules across M groups, P routing entries across Q subsections."
+Report: "Constitution written — wiki-query interface block emitted (single-KB/multi-KB), permissions defined, N standing rules across M groups, P routing entries across Q subsections."
 
 ---
 
