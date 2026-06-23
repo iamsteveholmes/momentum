@@ -30,17 +30,21 @@ This is stated explicitly in the workflow text at the append site so the semanti
 
 **Given** a durable build ledger pre-seeded with prior-session rows for story `"story-y"` —
 including `finding-disposition`, `stage3-escalation`, and `stage3-mid-flight-escalation` rows —
+AND step 2.0 rehydration has bound ALL of those prior-session tuples into `{{ledger_seen_events}}`,
 AND story `"story-y"` IS reset to `ready-for-dev` by the step 2.0 reconcile (it was `in-progress`
 in the prior session and had a clean worktree),
-AND step 2.0 rehydration has cleared `"story-y"`'s prior-session keys from `{{ledger_seen_events}}`
-(because re-run stories' prior events are superseded, not carried forward as dedup keys),
+AND the step 2.0 reconcile's RE-RUN KEY CLEARING action removes every `("story-y", *, *)` tuple
+from `{{ledger_seen_events}}` immediately after the status reset — so `"story-y"`'s prior-session
+tuples are no longer present in the set when the fresh build pass runs,
 
 **When** the conduct build runs story `"story-y"` fresh this pass and the disposition pass
 produces new `finding-disposition`, `stage3-escalation`, and/or `stage3-mid-flight-escalation` rows,
 
 **Then:**
-1. The Conductor appends the new rows — the tuples are NOT in `{{ledger_seen_events}}` for this pass.
-2. After the pass, the ledger contains fresh finding rows for story `"story-y"` from the current session.
+1. The Conductor appends the new rows — the tuples are NOT in `{{ledger_seen_events}}` (they were
+   cleared by the reconcile's RE-RUN KEY CLEARING step), so the dedup guard does not suppress them.
+2. After the pass, the ledger contains BOTH the prior-session rows (preserved, not deleted) AND the
+   fresh current-session rows for story `"story-y"`.
 3. Phase 5's SUPERSESSION RULE (latest row by `ts` wins per `(story_slug, event, finding_id)` tuple)
    correctly identifies the current-session rows as the superseding ones for `"story-y"`.
 4. No prior-session rows for `"story-y"` are double-counted — the supersession rule handles them.

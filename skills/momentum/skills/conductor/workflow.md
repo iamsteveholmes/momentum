@@ -417,6 +417,15 @@ Ready to begin?</output>
             via `momentum-tools sprint status-transition --story {S.slug} --target ready-for-dev --force`
             (--force is required: in-progress -> ready-for-dev is a backward transition; intentional for crash-recovery)
             and admit S to the frontier on the pass below.
+            RE-RUN KEY CLEARING: After resetting S to ready-for-dev, remove ALL tuples of the form
+            (S.slug, *, *) from {{ledger_seen_events}} — that is, every entry whose story_slug component
+            equals S.slug, regardless of event or finding_id. This allows the fresh re-run pass to
+            append its new finding-disposition, stage3-escalation, avfl-finding, and
+            stage3-mid-flight-escalation rows without the dedup guard suppressing them.
+            Note: the prior-session ledger rows for S.slug are NOT deleted from the durable ledger —
+            they remain as a historical record. Phase-5 SUPERSESSION (latest row by ts wins per
+            (story_slug, event, finding_id) tuple) reconciles the resulting dual presence: the
+            current-session rows carry a higher ts and supersede the prior-session rows for S.slug.
             If S.slug IS in {{blocked}} (rehydrated from a prior session): do NOT reset or re-launch S — it was already blocked; leave it blocked and defer to Phase 5 approve.
           Option B (dirty worktree): if no prior "story-terminal" row for S.slug already exists in
             the ledger (check {{ledger_seen_events}} — skip if (S.slug, "story-terminal", null) is present),
