@@ -157,11 +157,20 @@ DRY RUN — no files will be written. Preview only.
              target_path: {{target_path}}.domain-knowledge (temp path)
              project_kb: {{current.project_kb}}
              Context: Role, Domain, Project Stack, Diagnostic Table (verbatim)
-             Instruction: "Generate ONLY domain-knowledge sections (Project Guidelines + Diagnostic Table)
+             Instruction: "Generate ONLY domain-knowledge sections (Project Guidelines — prose context)
                for a {{current.role}} × {{current.domain}} agent. Do NOT assemble the base body.
-               Do NOT generate Quick Routing or per-agent permissions (those belong at agent-builder layer per DEC-038).
+               Do NOT generate Quick Routing, Diagnostic Table, or per-agent permissions
+               (Diagnostic Table is carried verbatim from the manifesto; routing belongs at agent-builder
+               layer per DEC-038).
                Target: {{target_path}}.domain-knowledge (assembly by agent-builder)"
-           Store the output as {{domain_knowledge_content}}
+           Store constitution-builder's prose output as {{constitution_prose}}
+           Build {{domain_knowledge_content}} by combining:
+             1. {{constitution_prose}}  (KB-synthesized Project Guidelines prose)
+             2. The verbatim ## Diagnostic Table extracted from {{manifesto_content}} in step 1
+                (do NOT rephrase or rewrite — pass it exactly as read)
+           NOTE: constitution-builder never emits a Diagnostic Table (see DEC-038 D1 / SKILL.md:35,
+           204-206). The manifesto's ## Diagnostic Table MUST be preserved here and passed to
+           agent-builder; relying on constitution-builder to supply it silently discards it.
          If the manifesto already provides complete domain knowledge inline (Project Stack +
          Diagnostic Table are sufficient without KB synthesis):
            Build {{manifesto_context}} directly from the manifesto's ## Project Stack and
