@@ -462,14 +462,23 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "build-guidelines-skill": {
-    "status": "backlog",
+    "status": "review",
     "title": "Build-Guidelines Skill — Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "constitution-builder-write-mode-parameterization",
+      "agent-manifesto-format-specification"
+    ],
+    "touches": [
+      "skills/momentum/skills/build-guidelines/SKILL.md",
+      "skills/momentum/skills/build-guidelines/workflow.md",
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md"
+    ],
     "priority": "critical",
-    "feature_slug": "momentum-composable-specialist-agents"
+    "feature_slug": "momentum-composable-specialist-agents",
+    "change_type": "skill-instruction"
   },
   "build-guidelines-soft-stop-ux-for-missing-vault": {
     "status": "backlog",
@@ -634,15 +643,19 @@
     "priority": "low"
   },
   "constitutionmd-generation-acceptance-criteria": {
-    "status": "backlog",
+    "status": "review",
     "title": "Constitution.md generation acceptance criteria",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/constitution-builder/SKILL.md",
+      "skills/momentum/skills/build-guidelines/SKILL.md"
+    ],
     "priority": "high",
     "story_type": "feature",
-    "feature_slug": "momentum-composable-specialist-agents"
+    "feature_slug": "momentum-composable-specialist-agents",
+    "change_type": "specification"
   },
   "coverage-analysis-deduplication": {
     "status": "backlog",
@@ -2164,15 +2177,19 @@
     "priority": "low"
   },
   "agent-manifesto-format-specification": {
-    "status": "backlog",
+    "status": "review",
     "title": "Agent manifesto format specification",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/references/manifesto-format.md",
+      "_bmad-output/planning-artifacts/architecture.md"
+    ],
     "priority": "high",
     "story_type": "feature",
-    "feature_slug": "momentum-composable-specialist-agents"
+    "feature_slug": "momentum-composable-specialist-agents",
+    "change_type": "specification"
   },
   "promptfoo-configuration-benchmarks-skills-across-model-tiers": {
     "status": "backlog",
@@ -3505,14 +3522,17 @@
     "story_type": "exploration"
   },
   "nornspun-agent-constitution": {
-    "status": "backlog",
+    "status": "review",
     "title": "Build Nornspun Agent Constitution (Tier 1 Hot Context)",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "/Users/steve/projects/nornspun/.claude/guidelines/constitution.md"
+    ],
     "priority": "medium",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": "specification"
   },
   "skills-kb-query-injection-audit": {
     "status": "backlog",
@@ -3690,14 +3710,17 @@
     "story_type": "feature"
   },
   "wiki-query-interface-block-for-hot-constitution": {
-    "status": "backlog",
+    "status": "review",
     "title": "Wiki-Query Interface Block for Hot Constitution",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/constitution-builder/SKILL.md"
+    ],
     "priority": "medium",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": "specification + skill-instruction"
   },
   "drop-superseded-kb-stories-dec-018": {
     "status": "backlog",
@@ -3948,15 +3971,22 @@
     "story_type": "feature"
   },
   "constitution-builder-write-mode-parameterization": {
-    "status": "backlog",
+    "status": "review",
     "title": "Constitution-Builder Write-Mode Parameterization — In-Place SKILL vs Composed Agent File vs Standalone Constitution",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "wiki-query-interface-block-for-hot-constitution",
+      "constitutionmd-generation-acceptance-criteria"
+    ],
+    "touches": [
+      "skills/momentum/skills/constitution-builder/SKILL.md",
+      "skills/momentum/skills/constitution-builder/workflow.md"
+    ],
     "priority": "medium",
     "story_type": "feature",
-    "feature_slug": "momentum-composable-specialist-agents"
+    "feature_slug": "momentum-composable-specialist-agents",
+    "change_type": "skill-instruction"
   },
   "project-local-skill-md-migration-to-gen-2": {
     "status": "backlog",
@@ -5860,24 +5890,32 @@
     "story_type": "feature"
   },
   "conduct-assign-finding-id-before-directed-fix-invocation": {
-    "status": "backlog",
+    "status": "review",
     "title": "Conduct — assign finding_id before directed-fix invocation",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
     "priority": "critical",
-    "story_type": "defect"
+    "story_type": "defect",
+    "change_type": "skill-instruction"
   },
   "conduct-ledger-append-site-dedup-guards": {
-    "status": "backlog",
+    "status": "review",
     "title": "Conduct — ledger append-site dedup guards",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "conduct-assign-finding-id-before-directed-fix-invocation"
+    ],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
     "priority": "high",
-    "story_type": "defect"
+    "story_type": "defect",
+    "change_type": "skill-instruction"
   },
   "conduct-resume-and-rehydration-idempotency-hardening": {
     "status": "backlog",
@@ -5888,5 +5926,15 @@
     "touches": [],
     "priority": "high",
     "story_type": "defect"
+  },
+  "visual-hitl-gates-presentation-form-standard-leg": {
+    "status": "backlog",
+    "title": "Visual HITL gates + presentation-form standard leg",
+    "epic_slug": "momentum-impetus-experience",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
   }
 }

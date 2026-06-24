@@ -1,0 +1,170 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: build-guidelines-skill
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-18/specs/build-guidelines-skill.eval.yaml
+how_dev_self_checks: |
+  Before signaling done, confirm the gate observable by inspection — no source access needed:
+  1. Run the build-guidelines skill against this project.
+  2. Confirm at least one composed agent file now exists on disk at
+     .claude/guidelines/agents/{role}-{domain}.md (e.g. dev-kotlin-compose.md).
+  3. Open that file and confirm its shape: YAML frontmatter carrying name + model + tools;
+     a project-guidelines / critical-rules block with a symptom -> wiki-query diagnostic
+     table ABOVE a `---` separator; the full unmodified base role body BELOW the separator.
+  4. Confirm no sprint identifier and no story identifier (no sprint slug, no story slug,
+     no "overlay" text) appears anywhere in the composed file.
+  5. Confirm momentum/agents.json exists, parses as JSON with a top-level "defaults" object
+     and a "project" array, and contains a project[] entry keyed by the composed agent's slug
+     matching the file you just inspected.
+  6. Confirm the registered agent resolves by slug through momentum-tools `agent resolve`.
+  7. Confirm the composed file's citations reference only this project's own KB pages
+     (the resolved project's knowledge base), not a different project's KB.
+  If all seven hold, the load-bearing G1 observable is met.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/build-guidelines-skill.md#acceptance-criteria
+platforms: [host]
+
+# === BODY (Part B) ===
+harness_profile: skill-invoke
+
+# --- Producer / Consumer scope (SEAM declaration) ---
+# This story modifies a hand-off contract between two distinct agents:
+#   PRODUCER: the build-agents orchestrator (invoked as /momentum:build-guidelines).
+#             A run EMITS a composed specialist agent file on disk under
+#             .claude/guidelines/agents/{role}-{domain}.md AND REGISTERS a corresponding
+#             record in the project's momentum/agents.json "project" array.
+#   CONSUMER: the later sprint build, which SELECTS and SPAWNS a registered agent by reading
+#             that same agents.json record (resolving the agent by slug) and detecting the
+#             composed file under .claude/guidelines/agents/ for a story's role x domain.
+# The seam is the record's field shape: the producer's on-disk file and its agents.json
+# registration entry must carry the fields the consumer reads (a slug-keyed entry that
+# resolves, pointing at a composed file whose shape matches the cmp-dev exemplar). The
+# load-bearing observable is Gate G1: a run produces >=1 composed file AND a matching,
+# shape-conformant registration. Scenarios below assert BOTH sides agree (gate passes) and
+# the failure case where the sides DISAGREE on the record's field shape (gate fails, naming
+# the cross-side mismatch).
+
+scenarios:
+  - name: Producer emits a composed agent file and registers it (G1 happy path — sides agree)
+    invocation: "/momentum:build-guidelines"
+    given: >
+      A project that has a per-role x domain diagnostic-table manifesto (observable symptom ->
+      wiki-query lookups plus scoping stack facts) and a resolvable project knowledge base, and
+      a plugin base body available for at least one role. momentum/agents.json may be absent at
+      the start of the run.
+    when: >
+      The developer invokes the build-guidelines skill and lets it complete a full run for at
+      least one role x domain pair.
+    then:
+      - "At least one composed agent file exists on disk at .claude/guidelines/agents/{role}-{domain}.md (e.g. dev-kotlin-compose.md)."
+      - "A Tier 1 hot constitution file exists on disk at .claude/guidelines/constitution.md."
+      - "momentum/agents.json exists and parses as JSON with a top-level object containing a 'defaults' object and a 'project' array."
+      - "The 'project' array contains an entry keyed by the slug of the composed agent file produced (the producer-emitted record)."
+      - "That registered slug resolves through the momentum-tools `agent resolve` path (the consumer-read record exposes the field the consumer needs)."
+    pass_criteria: >
+      A composed file is present on disk AND a slug-keyed project[] entry exists in agents.json
+      that resolves via `agent resolve`. Producer's emitted record shape and consumer's
+      read/resolve path AGREE: the gate (G1) passes.
+    fail_criteria: >
+      No composed file is written, OR agents.json has no project[] entry for the composed agent,
+      OR the registered slug does not resolve via `agent resolve`. Any of these means G1 is unmet.
+
+  - name: Composed file shape conforms to the cmp-dev exemplar (consumer can read the seam record)
+    invocation: "/momentum:build-guidelines"
+    given: >
+      A completed run that wrote at least one composed agent file (as in the happy-path scenario)
+      and the format-reference exemplar at docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md
+      is available for shape comparison.
+    when: >
+      A black-box inspector opens a produced .claude/guidelines/agents/{role}-{domain}.md file
+      and compares its structure to the exemplar's structure.
+    then:
+      - "The file opens with a YAML frontmatter block carrying at minimum name, model, and tools fields."
+      - "Above a `---` separator sits a project-guidelines / critical-rules block that includes a per-role x domain symptom -> wiki-query diagnostic table."
+      - "Below the `---` separator sits the full base role body, unmodified from the plugin base body for that role."
+      - "The frontmatter field set, the section ordering (guidelines block then base body), and the presence of the diagnostic table match the exemplar's shape."
+    pass_criteria: >
+      Frontmatter fields, section order, and diagnostic-table presence match the cmp-dev exemplar
+      shape — so the consumer's expected record shape is satisfied at the on-disk file.
+    fail_criteria: >
+      The file is missing required frontmatter fields, omits the diagnostic table, places the
+      base body before the guidelines block, or otherwise deviates from the exemplar's structure.
+
+  - name: Seam mismatch — registration field shape disagrees with what the consumer reads (gate FAILS)
+    invocation: "/momentum:build-guidelines"
+    given: >
+      A run has written a composed agent file to disk, but the agents.json registration entry for
+      that agent is malformed against the consumer's contract: e.g. the slug-keyed field the
+      consumer resolves on is absent or wrong, or the entry does not point at the on-disk composed
+      file, or agents.json lacks the top-level 'project' array shape the consumer reads.
+    when: >
+      The consumer side (the later sprint build) attempts to select and spawn the agent by
+      resolving it through the `agent resolve` path against agents.json.
+    then:
+      - "`agent resolve` fails to resolve the composed agent's slug to a usable registration entry."
+      - "The mismatch is reported as a cross-side field-shape incompatibility: the producer-emitted registration record does not carry the field shape the consumer reads (the slug-keyed project[] entry that resolves to the composed file)."
+      - "The Gate G1 check does NOT report success — a composed file on disk alone is insufficient without a consumer-readable registration."
+    pass_criteria: >
+      The verifier detects and names the disagreement — the producer's record shape and the
+      consumer's read/resolve expectation are incompatible — and G1 is reported as FAILED with
+      the mismatch identified as a cross-side field-shape incompatibility.
+    fail_criteria: >
+      The verifier reports G1 as passing despite the unresolvable / mis-shaped registration, or
+      it does not name the producer/consumer record-shape disagreement.
+
+  - name: Project-scoped multi-KB — composed citations reference only the resolved project's KB
+    invocation: "/momentum:build-guidelines"
+    given: >
+      Two distinct projects each with their own knowledge base; the skill is run once for the
+      project whose agents are being composed (e.g. the Momentum project resolving against the
+      Momentum KB).
+    when: >
+      A produced composed agent file's citations / referenced KB pages are inspected.
+    then:
+      - "Every KB citation in the composed file references a page belonging to the resolved project's own knowledge base."
+      - "No citation references a different project's KB (e.g. a Momentum composition contains no nornspun KB pages)."
+    pass_criteria: >
+      All KB citations in the composed file resolve to the run's resolved project KB, with no
+      cross-project KB conflation.
+    fail_criteria: >
+      Any KB citation in the composed file references a knowledge base other than the resolved
+      project's own KB.
+
+  - name: Diagnostic-table framing preserved — no per-sprint/per-story overlay in output
+    invocation: "/momentum:build-guidelines"
+    given: >
+      A run completes and writes at least one composed agent file. The run is performed inside an
+      active sprint context that has a known sprint identifier and story identifiers.
+    when: >
+      A black-box inspector reads the full text of every produced composed agent file and the
+      produced constitution.md.
+    then:
+      - "No sprint identifier (sprint slug or sprint name) appears anywhere in any produced file."
+      - "No story identifier (story slug) appears anywhere in any produced file."
+      - "No 'context overlay' artifact is produced and no produced file contains overlay/per-sprint-patch text."
+      - "The manifesto content present in the composed file is the stable per-role x domain diagnostic table (symptom -> wiki-query entries), not a sprint-scoped overlay."
+    pass_criteria: >
+      Produced files contain only the stable diagnostic-table manifesto content; no sprint or
+      story identifier and no overlay artifact appear in any output.
+    fail_criteria: >
+      Any produced file contains a sprint identifier, a story identifier, or overlay/per-sprint
+      context-patch content.
+
+  - name: Error/edge — a missing composition prerequisite causes a clear HALT, not a silent workaround
+    invocation: "/momentum:build-guidelines"
+    given: >
+      A project in which a prerequisite the skill needs to compose an agent is unavailable, so the
+      run cannot produce a valid composed agent.
+    when: >
+      The developer invokes the build-guidelines skill.
+    then:
+      - "The run halts with a clear, human-readable message stating the prerequisite is unavailable."
+      - "No composed agent file is written under a fabricated or worked-around shape."
+      - "agents.json is not populated with a partial or invalid registration as a workaround."
+    pass_criteria: >
+      The run stops with an explicit message about the missing prerequisite and produces no composed
+      file and no registration — failing loudly rather than emitting a malformed seam record.
+    fail_criteria: >
+      The run silently works around the missing prerequisite, or writes a composed file / agents.json
+      entry despite the prerequisite being unavailable.

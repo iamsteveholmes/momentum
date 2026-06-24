@@ -1,0 +1,170 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-assign-finding-id-before-directed-fix-invocation
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-18/specs/conduct-assign-finding-id-before-directed-fix-invocation.eval.yaml
+how_dev_self_checks: |
+  Run the directed fix loop against a batch of review findings for a single story and watch the
+  hand-off between the side that emits findings and the side that fixes them.
+  1. Feed the fix loop a findings batch where NO finding carries a finding_id. Confirm that, by the
+     time the fixer is asked to act, every finding in the batch carries a finding_id, and that no two
+     findings in the same batch share the same finding_id.
+  2. Feed it a batch where one finding already carries a finding_id. Confirm that finding keeps its
+     original id unchanged, and the others still receive fresh, distinct ids.
+  3. Confirm the fixer reports back one disposition per finding, and each disposition repeats the same
+     finding_id it was handed — so dispositions can be matched to inbound findings without relying on
+     their order in the batch.
+  4. Confirm the only path a finding can take to reach the fixer is one where finding_id is already
+     present — including a batch whose findings all originated from the code-review side. There is no
+     route by which a finding arrives at the fixer with finding_id absent.
+  Done means: every finding the fixer touches carries a stable finding_id, ids are unique per batch,
+  pre-existing ids are never overwritten, and every returned disposition echoes its finding_id.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-assign-finding-id-before-directed-fix-invocation.md#acceptance-criteria
+platforms: [host]
+
+# === BODY (Part B) ===
+#
+# Producer / Consumer scope (SEAM CONTRACT — two distinct agents across one hand-off):
+#   PRODUCER  — the build stage that emits review findings for a single story. It hands a batch of
+#               finding records up to the orchestrator that drives the fix loop.
+#   CONSUMER  — the directed fixer that is invoked on that batch and acts on each finding, then
+#               returns one disposition per finding.
+#   SEAM      — the observable hand-off where the finding batch crosses from the producer side to the
+#               consumer side. The frozen contract: every finding that reaches the consumer carries a
+#               stable, batch-unique finding_id, and every disposition the consumer returns echoes the
+#               finding_id it was handed.
+#   FIELD-SHAPE INVARIANT — finding_id is REQUIRED and non-empty on every record at the seam. A record
+#               arriving at the consumer without finding_id is a cross-side field-shape incompatibility:
+#               the producer-side record shape does not satisfy what the consumer side requires.
+#
+# All scenarios are described observably: inputs are finding batches, actions are conduct-build runs,
+# outcomes are the finding records observed at the hand-off and the dispositions returned, read from
+# the build's recorded finding/disposition outputs. No internal variable names, file lines, workflow
+# step identifiers, or implementation routing are asserted.
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: producer-and-consumer-agree-on-field-shape-gate-passes
+    invocation: >
+      Run a conduct build (momentum:conduct) on a single story whose review produces a representative
+      set of three findings, letting the build reach the stage where it fixes those findings. Observe,
+      via the build's recorded finding and disposition outputs, the finding records handed to the
+      fixer and the dispositions returned.
+    given: >
+      A finding batch for one story containing three distinct findings, every finding lacking a
+      finding_id field (the producer side emits records without the seam key).
+    when: >
+      The fix loop runs and the batch crosses the producer-to-consumer seam — i.e. the directed
+      fixer is invoked on the batch.
+    then:
+      - Every finding observed at the hand-off to the fixer carries a non-empty finding_id.
+      - No two findings in the batch share the same finding_id (unique within this one fix call).
+      - The fixer returns one disposition per finding, and each disposition repeats the finding_id
+        that was handed to it.
+      - Dispositions can be matched to inbound findings by finding_id alone, without relying on the
+        order of findings in the batch.
+    pass_criteria: >
+      The producer side and consumer side AGREE on the record's field shape at the seam: all three
+      findings reach the fixer with a present, distinct finding_id, and every returned disposition
+      echoes its finding_id. The seam gate PASSES.
+    fail_criteria: >
+      Any finding reaches the fixer without a finding_id, two findings share one finding_id, or a
+      returned disposition omits / does not match its inbound finding_id.
+
+  - name: producer-omits-required-key-disagreement-gate-fails-named-mismatch
+    invocation: >
+      Run a conduct build (momentum:conduct) on a story and inspect a fix-stage hand-off in which a
+      finding reaches the fixer without a finding_id, to observe what the consumer side requires at
+      the boundary.
+    given: >
+      A hand-off batch of two findings in which at least one finding has NO finding_id (an empty or
+      absent finding_id field) — the producer-side record shape does not satisfy the consumer-side
+      requirement.
+    when: >
+      The batch is presented at the producer-to-consumer seam (the fixer is asked to act on it).
+    then:
+      - The boundary surfaces a cross-side field-shape incompatibility — a finding arriving at the
+        consumer side without the required finding_id.
+      - The condition is reported as a mismatch in the record's field shape between the side that
+        emits the finding and the side that consumes it (the required finding_id key is absent on a
+        record at the seam), not as a generic processing error.
+    pass_criteria: >
+      The seam gate FAILS and the failure is attributable to the named cross-side field-shape
+      incompatibility: a finding crossing the seam lacks the required finding_id. This is the
+      EXPECTED outcome for this disagreement scenario — observing this named FAIL is the PASS for
+      this test.
+    fail_criteria: >
+      The batch is consumed silently as if valid (no finding_id present yet no incompatibility
+      surfaced), OR the failure is reported as an unrelated/generic error rather than as a missing
+      finding_id at the producer-to-consumer seam.
+
+  - name: pre-existing-finding-id-is-not-reassigned-idempotent
+    invocation: >
+      Run a conduct build (momentum:conduct) on a story and observe a fix-stage hand-off whose
+      finding set mixes one finding that already carries a finding_id (as happens when a finding is
+      re-presented on a later loop pass or recovered from a build's prior record on resume) with
+      findings that carry none.
+    given: >
+      A finding batch of three findings for one story where exactly one finding already carries a
+      specific, non-empty finding_id (call it the pinned id) and the other two carry no finding_id.
+    when: >
+      The fix loop runs and hands the batch to the fixer; then the same batch is presented to the
+      assignment a second time (re-run / later loop pass).
+    then:
+      - The finding that arrived with the pinned id still carries that exact same finding_id at the
+        hand-off — its id is not overwritten.
+      - The two findings that arrived without an id each receive a fresh, non-empty finding_id.
+      - All three finding_ids in the batch remain distinct from one another.
+      - Re-presenting the same batch does not change any finding_id already present.
+    pass_criteria: >
+      The pinned finding_id is preserved unchanged across the hand-off and across the re-run, fresh
+      ids are minted only for findings that lacked one, and all ids stay distinct. Assignment is
+      idempotent over a batch with pre-existing ids.
+    fail_criteria: >
+      The pinned finding_id is changed/regenerated, a re-run alters an already-present finding_id, or
+      two findings end up sharing the same finding_id.
+
+  - name: code-review-only-batch-is-keyed-no-unkeyed-route-to-fixer
+    invocation: >
+      Run a conduct build (momentum:conduct) on a story whose findings all originate from the
+      code-review pass, none carrying a finding_id, and observe the finding records at the fix-stage
+      hand-off.
+    given: >
+      A finding batch for one story in which every finding originated from the code-review producer
+      path and none carries a finding_id.
+    when: >
+      The fix loop runs and the batch crosses the seam to the fixer.
+    then:
+      - Every code-review-originated finding observed at the hand-off carries a non-empty finding_id.
+      - The finding_ids across the batch are distinct.
+      - There is no observable route by which a code-review-only finding reaches the fixer with
+        finding_id absent.
+    pass_criteria: >
+      The code-review-only batch reaches the fixer fully keyed (every finding has a distinct
+      finding_id), confirming no unkeyed path to the consumer exists for this producer composition.
+    fail_criteria: >
+      Any code-review-originated finding reaches the fixer without a finding_id, or two such findings
+      share an id.
+
+  - name: empty-findings-batch-edge-path
+    invocation: >
+      Run a conduct build (momentum:conduct) on a story whose review produces zero findings, and
+      observe the fix stage over the empty finding set.
+    given: >
+      A story whose review produced zero findings — the producer hands an empty batch to the seam.
+    when: >
+      The fix loop runs over the empty batch.
+    then:
+      - No finding crosses the seam, so no finding_id is assigned and the fixer is not asked to act
+        on any finding.
+      - The loop completes without surfacing a missing-finding_id incompatibility (there is nothing
+        to key) and without error.
+    pass_criteria: >
+      The empty batch is handled cleanly: zero assignments, no fixer action on findings, no false
+      field-shape-incompatibility report, loop completes normally.
+    fail_criteria: >
+      The empty batch raises a missing-finding_id error, invents a phantom finding/finding_id, or the
+      loop aborts abnormally.

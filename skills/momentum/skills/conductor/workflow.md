@@ -401,7 +401,7 @@ Ready to begin?</output>
         <action>Bind {{ledger_seen_events}} = {} (empty set).</action>
       </check>
 
-      <note>DUPLICATE-PREVENTION USE OF {{ledger_seen_events}}: Before appending a `finding-disposition`, `stage3-escalation`, or `avfl-finding` row to the ledger during a live build, check whether the tuple (story_slug, event, finding_id) is already in {{ledger_seen_events}}. If it is, skip the append — the event was already recorded in a prior session for a story that is not being re-run. Add each newly appended tuple to {{ledger_seen_events}} so the check is current throughout the build. This prevents duplicate rows for the same finding when a story's events survive from a prior session into the current session's ledger. Coverage of avfl-finding rows additionally prevents step 3.D {{avfl_findings}} in-context appends from duplicating rehydrated entries on resume. The per-story re-run convention (step 2.0 reconcile resets in-progress stories) determines which stories produce new events; events for stories NOT re-run must not be re-appended even if they enter the event-processing path again.</note>
+      <note>DUPLICATE-PREVENTION USE OF {{ledger_seen_events}}: Before appending a `finding-disposition`, `stage3-escalation`, `avfl-finding`, or `stage3-mid-flight-escalation` row to the ledger during a live build, check whether the tuple (story_slug, event, finding_id) is already in {{ledger_seen_events}}. If it is, skip the append — the event was already recorded in a prior session for a story that is not being re-run. Add each newly appended tuple to {{ledger_seen_events}} so the check is current throughout the build. This prevents duplicate rows for the same finding when a story's events survive from a prior session into the current session's ledger. Coverage of avfl-finding rows additionally prevents step 3.D {{avfl_findings}} in-context appends from duplicating rehydrated entries on resume. The per-story re-run convention (step 2.0 reconcile resets in-progress stories) determines which stories produce new events; events for stories NOT re-run must not be re-appended even if they enter the event-processing path again. Note: for the count-level `stage3-mid-flight-escalation` row, there is no per-finding `finding_id`; the dedup key is (story_slug, "stage3-mid-flight-escalation", null) — parallel to the `story-terminal` no-finding_id guard at step 2.0 which keys (S.slug, "story-terminal", null).</note>
 
       <action>Seed {{merged}} from current story statuses to support partial-run resume:
         For each story S in {{story_map}}:
@@ -417,6 +417,15 @@ Ready to begin?</output>
             via `momentum-tools sprint status-transition --story {S.slug} --target ready-for-dev --force`
             (--force is required: in-progress -> ready-for-dev is a backward transition; intentional for crash-recovery)
             and admit S to the frontier on the pass below.
+            RE-RUN KEY CLEARING: After resetting S to ready-for-dev, remove ALL tuples of the form
+            (S.slug, *, *) from {{ledger_seen_events}} — that is, every entry whose story_slug component
+            equals S.slug, regardless of event or finding_id. This allows the fresh re-run pass to
+            append its new finding-disposition, stage3-escalation, avfl-finding, and
+            stage3-mid-flight-escalation rows without the dedup guard suppressing them.
+            Note: the prior-session ledger rows for S.slug are NOT deleted from the durable ledger —
+            they remain as a historical record. Phase-5 SUPERSESSION (latest row by ts wins per
+            (story_slug, event, finding_id) tuple) reconciles the resulting dual presence: the
+            current-session rows carry a higher ts and supersede the prior-session rows for S.slug.
             If S.slug IS in {{blocked}} (rehydrated from a prior session): do NOT reset or re-launch S — it was already blocked; leave it blocked and defer to Phase 5 approve.
           Option B (dirty worktree): if no prior "story-terminal" row for S.slug already exists in
             the ledger (check {{ledger_seen_events}} — skip if (S.slug, "story-terminal", null) is present),
@@ -725,6 +734,10 @@ Ready to begin?</output>
                 only findings it judges genuine)
             - `suggested_fix` — `null` (the qa-reviewer producer format has no explicit
                 fix field; Detail describes expected state, not remediation steps)
+            - `finding_id` — NOT assigned here. `finding_id` is a Conductor-internal correlation key
+                assigned exclusively by the step 2.S3 FINDING-ID ASSIGNMENT action (after {{stage2_findings}}
+                is bound and before Phase B). It is not a base field of finding-schema.md and is not
+                populated by normalization. This note documents the single source of assignment.
 
             BLOCKED routing note: a finding with `verdict: BLOCKED` and `severity: critical`
             reflects that test execution was prevented (missing infrastructure, unreachable
@@ -951,10 +964,26 @@ Ready to begin?</output>
         <action>Proceed to stage-4 (merge) for story S. Do not invoke the directed fixer.</action>
       </check>
 
+      <!-- ── Assign finding_id (Conductor-owned, pre-fixer) ─────────── -->
+
+      <action>FINDING-ID ASSIGNMENT — For each finding F in {{stage2_findings}}, if F.finding_id is absent or empty,
+        assign F.finding_id = F.source + "-" + zero-based index of F in {{stage2_findings}}.
+        Skip any finding that already carries a non-empty finding_id (idempotent: re-presenting a finding on a later
+        loop iteration or rehydrating from the build ledger on resume must not change its id).
+        Uniqueness scope: each finding_id is unique within the freshly assigned findings in this
+        story's {{stage2_findings}} array (source + zero-based index guarantees no two newly
+        computed ids collide). Pre-existing ids that survive the skip-if-present check are assumed
+        non-colliding with each other and with freshly assigned ids — the reviewer is responsible
+        for assigning stable, distinct ids when it pre-populates finding_id.
+        Assignment ownership: the Conductor assigns finding_id here. No reviewer (qa-reviewer, bmad-code-review) and no
+        fixer (momentum:dev fix mode) may assign or alter finding_id. This is the single assignment site per
+        skills/momentum/references/directed-fix-invocation-contract.md §"Finding Identification".
+      </action>
+
       <!-- ── Phase B: CONVERGE — directed fixer invocation ──────────── -->
 
       <action>PHASE B — Invoke the directed fixer (momentum:dev in fix mode) as a subagent (individual-agent, NOT TeamCreate):
-        Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration).
+        Input: {{stage2_findings}} (or the subset of findings still unresolved in the current loop iteration) — every finding carries finding_id assigned by the Conductor above.
         Pass {{writable_files}} (the same set passed to the stage-1 dev spawn for story S) to the fixer.
         Constraint passed to fixer subagent: "Do not mutate git. Do not spawn build agents. Apply fixes and return per-finding dispositions. Produce output only.
           WRITE-SCOPE: You may ONLY create or modify files listed in writable_files for this story.
@@ -982,7 +1011,7 @@ Ready to begin?</output>
                  — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover summary, detail, location, suggested_fix, severity, stakes_class (mirroring the triaged-out and escalated CASE blocks in step 2.S3; these descriptive fields are needed for the triage stub below).
                  — Re-classify F: change disposition from "fixed" to "scope-reverted" in {{finding_dispositions}}.
                    [NOTE: "scope-reverted" is Conductor-internal (parallel to the "blocked" disposition in the Phase-D budget-exhaustion path). It is NOT in the canonical four-value set (fixed | dismissed | triaged-out | escalated). Before any schema consumer sees this record it maps to "triaged-out". Using a distinct value prevents the build-phase-completion deferred-triage router (CASE disposition == "triaged-out") from picking up this record a second time and creating a duplicate stub — the inline reroute below is the sole routing owner for scope-reverted findings.]
-                 — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "scope-reverted", summary: I.summary, severity: I.severity, ts: NOW() }
+                 — LEDGER (phantom-store closure): Skip if (S.slug, "finding-disposition", F.id) is already in {{ledger_seen_events}}. Otherwise append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "scope-reverted", summary: I.summary, severity: I.severity, ts: NOW() }. Add (S.slug, "finding-disposition", F.id) to {{ledger_seen_events}} after appending.
                  — Append to {{conductor_reverted_fixes}}: { finding_id: F.id, story_slug: S.slug, summary: I.summary, reverted_files: {{fix_reverted_files}}, reroute_stub_slug: null }.
                  — RE-ROUTE for follow-up (defect must not be silently dropped): invoke momentum:triage with the inbound finding I's descriptive fields (finding_id: F.id, summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix, story_slug: S.slug, severity: I.severity, stakes_class: I.stakes_class) to create a backlog stub so the defect remains on record. This triage call is inline because the scope-reverted disposition does NOT enter the deferred-triage router. Bind the returned stub slug into {{reroute_stub_slug}}.
                  — Bind {{conductor_reverted_fixes}}[last].reroute_stub_slug = {{reroute_stub_slug}}.
@@ -995,26 +1024,26 @@ Ready to begin?</output>
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
             (Only reached when the write-scope guard did NOT reclassify F — i.e., the fix landed in-scope and is valid.)
           — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover severity.
-          — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine", severity: I.severity, ts: NOW() }
+          — LEDGER (phantom-store closure): Skip if (S.slug, "finding-disposition", F.id) is already in {{ledger_seen_events}}. Otherwise append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine", severity: I.severity, ts: NOW() }. Add (S.slug, "finding-disposition", F.id) to {{ledger_seen_events}} after appending.
             Note: I.severity is recovered from the inbound finding I for F.finding_id in {{stage2_findings}} — the explicit lookup on the line immediately above (mirroring the same lookup present in the dismissed, triaged-out, escalated, and blocked CASE blocks).
 
         CASE disposition == "dismissed":
           — Validate non-empty rationale: if F.dismissal_rationale is empty or missing, treat as invalid — log error in {{build_log}} and re-present F to the fixer in the next iteration (do not record as dismissed until a rationale is supplied).
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "dismissed", summary: F.summary, dismissal_rationale: F.dismissal_rationale }
           — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover severity.
-          — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "dismissed", summary: F.summary, dismissal_rationale: F.dismissal_rationale, severity: I.severity, ts: NOW() }
+          — LEDGER (phantom-store closure): Skip if (S.slug, "finding-disposition", F.id) is already in {{ledger_seen_events}}. Otherwise append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "dismissed", summary: F.summary, dismissal_rationale: F.dismissal_rationale, severity: I.severity, ts: NOW() }. Add (S.slug, "finding-disposition", F.id) to {{ledger_seen_events}} after appending.
 
         CASE disposition == "triaged-out":
           — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover summary, detail, location, and suggested_fix (the fixer's triaged-out disposition object carries only finding_id and disposition; the descriptive fields live on the inbound finding).
           — Record F in {{finding_dispositions}}: { finding_id: F.finding_id, disposition: "triaged-out", summary: I.summary, detail: I.detail, location: I.location, suggested_fix: I.suggested_fix }
-          — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.finding_id, disposition: "triaged-out", summary: I.summary, severity: I.severity, ts: NOW() }
+          — LEDGER (phantom-store closure): Skip if (S.slug, "finding-disposition", F.finding_id) is already in {{ledger_seen_events}}. Otherwise append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.finding_id, disposition: "triaged-out", summary: I.summary, severity: I.severity, ts: NOW() }. Add (S.slug, "finding-disposition", F.finding_id) to {{ledger_seen_events}} after appending.
           — The Conductor will route triaged-out findings to momentum:triage at build-phase completion (not inline here — triage is deferred to avoid blocking the fix loop). The recovered descriptive fields ensure the triage stub has actionable content.
 
         CASE disposition == "escalated":
           — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's escalated disposition object carries these in the nested escalation object and does not echo them at the top level; join by finding_id). Canonical shape defined in directed-fix-invocation-contract.md §"Canonical Fixer Output Shape".
             Resolve fields: stakes_class = I.stakes_class; timing_tier = F.escalation.timing_tier (NESTED — read from inside the escalation object, NOT from F.timing_tier; default "end-gate-expanded" if absent); summary = I.summary; evidence = F.escalation.evidence (inline from fixer) or I.evidence; suggested_fix = I.suggested_fix.
           — Record in {{finding_dispositions}}: { finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, evidence: evidence, suggested_fix: suggested_fix }
-          — LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, evidence: evidence, suggested_fix: suggested_fix, severity: I.severity, ts: NOW() }
+          — LEDGER (phantom-store closure): Skip if (S.slug, "finding-disposition", F.finding_id) is already in {{ledger_seen_events}}. Otherwise append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.finding_id, disposition: "escalated", stakes_class: stakes_class, timing_tier: timing_tier, summary: summary, evidence: evidence, suggested_fix: suggested_fix, severity: I.severity, ts: NOW() }. Add (S.slug, "finding-disposition", F.finding_id) to {{ledger_seen_events}} after appending.
           — F is removed from the retry-bound-3 loop IMMEDIATELY. No further fix/re-check attempts will be run against F inside this loop.
           — Route by timing tier:
               IF timing_tier == "mid-flight":
@@ -1023,7 +1052,7 @@ Ready to begin?</output>
               ELSE (timing_tier == "end-gate-expanded" OR timing_tier not set):
                 — The finding is stakes-class but does NOT meet the mid-flight bar. Route to end-gate-expanded tier (the default and safety net).
                 — Append to {{story_end_gate_escalations}}: { finding_id: F.finding_id, stakes_class: stakes_class, timing_tier: "end-gate-expanded", summary: summary, evidence: evidence, suggested_fix: suggested_fix }
-                — Record in {{build_log}} (and the build ledger per standing rule): { story_slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_id: F.finding_id, stakes_class: stakes_class, finding_summary: summary, evidence: evidence, suggested_fix: suggested_fix }
+                — LEDGER (phantom-store closure): Skip if (S.slug, "stage3-escalation", F.finding_id) is already in {{ledger_seen_events}}. Otherwise record in {{build_log}} (and the build ledger per standing rule): { story_slug: S.slug, event: "stage3-escalation", disposition: "escalated", timing_tier: "end-gate-expanded", finding_id: F.finding_id, stakes_class: stakes_class, finding_summary: summary, evidence: evidence, suggested_fix: suggested_fix }. Add (S.slug, "stage3-escalation", F.finding_id) to {{ledger_seen_events}} after appending.
                   (finding_id, stakes_class, finding_summary (= summary), evidence, and suggested_fix are available from the CASE escalated resolution above — same bindings. These fields are required by Phase 5 Source 1 for decision card assembly and anti-rubber-stamp verification.)
                 — Continue the fix loop. This escalation does NOT pause the build or stop other findings from completing.
       </action>
@@ -1082,7 +1111,7 @@ Ready to begin?</output>
         <note>One or more findings in the current iteration were classified mid-flight by the fixer. Per the SHARED-PRIMITIVE CONTRACT (step 2.F / references/escalation.md), the Conductor does NOT pre-classify or loop over candidates itself. It passes the full {{mid_flight_escalations}} array to the escalation engine (step 2.F) in a single invocation — the engine owns bar evaluation and the pause/continue decision. Other routine findings continue their fix/re-check cycle unaffected.</note>
         <action>Invoke step 2.F (the mid-flight escalation consumption hook) once with the full {{mid_flight_escalations}} array as the findings input.
           The escalation engine evaluates the bar for each finding and returns "pause-branch" or "continue" per its contract (references/escalation.md).
-          Record outcome in {{build_log}}: { story_slug: S.slug, event: "stage3-mid-flight-escalation", disposition: "escalated", timing_tier: "mid-flight", finding_count: length({{mid_flight_escalations}}) }
+          LEDGER (phantom-store closure): Skip if (S.slug, "stage3-mid-flight-escalation", null) is already in {{ledger_seen_events}} (dedup key uses null finding_id — this is a count-level batch row with no per-finding finding_id, parallel to the story-terminal guard at step 2.0 which keys (S.slug, "story-terminal", null)). Otherwise record outcome in {{build_log}} (and the build ledger per standing rule): { story_slug: S.slug, event: "stage3-mid-flight-escalation", disposition: "escalated", timing_tier: "mid-flight", finding_count: length({{mid_flight_escalations}}) }. Add (S.slug, "stage3-mid-flight-escalation", null) to {{ledger_seen_events}} after appending.
           Append each finding to {{escalations}}: { story_slug: S.slug, stakes_class: F.stakes_class, timing_tier: "mid-flight", disposition: "escalated" }
         </action>
       </check>
@@ -1133,7 +1162,7 @@ Ready to begin?</output>
           <action>For each finding F in {{remaining_findings}} (where {{fix_attempts}}[F.id] >= {{MAX_FIX_ATTEMPTS}}):
             Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "blocked", summary: F.summary, attempts: {{fix_attempts}}[F.id] }
             Look up the inbound finding I for F.id in {{stage2_findings}} to recover severity.
-            LEDGER (phantom-store closure): append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "blocked", summary: F.summary, severity: I.severity, attempts: {{fix_attempts}}[F.id], ts: NOW() }
+            LEDGER (phantom-store closure): Skip if (S.slug, "finding-disposition", F.id) is already in {{ledger_seen_events}}. Otherwise append per standing rule: { event: "finding-disposition", story_slug: S.slug, finding_id: F.id, disposition: "blocked", summary: F.summary, severity: I.severity, attempts: {{fix_attempts}}[F.id], ts: NOW() }. Add (S.slug, "finding-disposition", F.id) to {{ledger_seen_events}} after appending.
             Append to {{build_log}}: { story_slug: S.slug, event: "stage3-finding-blocked", finding_id: F.id, finding_summary: F.summary, attempts: {{fix_attempts}}[F.id] }
           </action>
           <action>Emit partial pipeline signal payload:
@@ -1777,12 +1806,13 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             summary: L.description, evidence: L.evidence, suggested_fix: L.suggestion,
             story_slug: L.owning_stories[0] or "sprint-integration",
             source: "avfl-merge-review" }
-          Append to {{build_log}} (and the build ledger per standing rule — REQUIRED so this escalation survives session death):
+          LEDGER (phantom-store closure): Skip if ((L.owning_stories[0] or "sprint-integration"), "stage3-escalation", L.id) is already in {{ledger_seen_events}}. Otherwise append to {{build_log}} (and the build ledger per standing rule — REQUIRED so this escalation survives session death):
             { event: "stage3-escalation", story_slug: (L.owning_stories[0] or "sprint-integration"),
               finding_id: L.id, stakes_class: L.stakes_class or "routine",
               timing_tier: "end-gate-expanded", finding_summary: L.description,
               evidence: L.evidence, suggested_fix: L.suggestion, ts: NOW() }
             (evidence and suggested_fix are available from the L bindings at {{end_gate_escalations}} append above — same source. These fields complete the unified rich field set claimed by build-ledger.md: both append sites (2.S3 and AVFL Phase 3) now produce the full evidence + suggested_fix payload required by Phase 5 Source 1 for decision card assembly.)
+          Add ((L.owning_stories[0] or "sprint-integration"), "stage3-escalation", L.id) to {{ledger_seen_events}} after appending.
           Tag the corresponding {{avfl_findings}} entry with timing_tier: "end-gate-expanded" and
           disposition: "escalated" (overriding "residual") so Source 2 de-dup at step 5 correctly
           identifies these as already escalated and avoids double-counting.
@@ -2252,8 +2282,8 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         Note: this reconciliation ensures the scorecard counts ONLY findings whose fixes actually reached the merged result. A fix that was reverted by scope discipline (write-scope guard discarded it) cannot be counted as fixed — the underlying defect was re-routed to a backlog stub via {{conductor_reverted_fixes}} at stage-3 time, but the overstate risk arises if the raw "fixed" disposition is used without cross-checking.
         SCOPE CLARIFICATION — this cross-check is load-bearing only for the partial-revert case (b) where the fix partially landed and disposition remains "fixed" in the raw record but the in-scope portion was insufficient (or as an end-gate safety net for any other edge case where a "fixed" record survived into the raw log while the fix was actually reverted). Full-revert case (a) findings are already written with disposition "scope-reverted" at stage-3 time — they never carry "fixed" in the raw record and so never satisfy the predicate above. Those entries are therefore already excluded from {{routine_auto_fixed_count}} without this cross-check. The reconciliation correctly handles both cases: full-reverts are excluded at source; partial-revert stragglers are caught here.
 
-      {{routine_auto_fixed_count}} = count the set of finding_ids where: (a) the ledger has a finding-disposition row with disposition == "fixed" for that finding_id, OR the ledger has an avfl-finding row with disposition == "fixed" for that finding_id; AND (b) that finding_id is NOT in {{reverted_fix_ids}}. Use set semantics (cardinality of the set), not arithmetic subtraction — MINUS means "exclude from the set", not "subtract a count". This prevents over-subtraction when a finding_id in {{reverted_fix_ids}} was never counted as fixed in the first place (full-revert case where the raw record was written as scope-reverted, not fixed).
-      {{dismissed_findings}}       = ledger rows where event == "finding-disposition" AND disposition == "dismissed" (must each carry non-empty dismissal_rationale; reject any without one and append { event: "conductor-warning", story_slug: R.story_slug, reason: "dismissed finding " + R.finding_id + " has empty or missing dismissal_rationale — excluded from dismissed_findings", ts: NOW() } to {{build_log}} and the build ledger).
+      {{routine_auto_fixed_count}} = count the set of finding_ids where: (a) the ledger has a finding-disposition row with disposition == "fixed" for that finding_id, OR the ledger has an avfl-finding row with disposition == "fixed" for that finding_id; AND (b) that finding_id is NOT in {{reverted_fix_ids}}. Apply supersession (latest row by ts wins per (story_slug, event, finding_id)) before computing this set — when a re-run changes a finding's disposition (e.g., prior "fixed" → current "dismissed"), only the latest row for that key tuple is considered. Use set semantics (cardinality of the set), not arithmetic subtraction — MINUS means "exclude from the set", not "subtract a count". This prevents over-subtraction when a finding_id in {{reverted_fix_ids}} was never counted as fixed in the first place (full-revert case where the raw record was written as scope-reverted, not fixed).
+      {{dismissed_findings}}       = ledger rows where event == "finding-disposition" AND disposition == "dismissed". Apply supersession (latest row by ts wins per (story_slug, event, finding_id)) before computing this set — when a re-run changes a finding's disposition (e.g., prior "fixed" → current "dismissed"), only the latest row for that key tuple is considered; this prevents a stale "fixed" row from the prior attempt from excluding the finding from {{dismissed_findings}}. Each row must carry non-empty dismissal_rationale; reject any without one and append { event: "conductor-warning", story_slug: R.story_slug, reason: "dismissed finding " + R.finding_id + " has empty or missing dismissal_rationale — excluded from dismissed_findings", ts: NOW() } to {{build_log}} and the build ledger.
       {{stories_built_count}}      = count of entries in {{merged}} (cross-checked against ledger rows where event == "story-terminal" AND outcome == "merged").
       {{blocked_stories}}          = stories never added to {{merged}} (quarantined, integrity-stopped, fix-budget-exhausted, or mid-flight-aborted); derive from the union of:
         (a) ledger rows where event == "story-terminal" AND outcome in {"blocked", "quarantined", "stranded", "failed"},

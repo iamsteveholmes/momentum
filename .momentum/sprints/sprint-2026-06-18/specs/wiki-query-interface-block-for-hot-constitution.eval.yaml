@@ -1,0 +1,110 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: wiki-query-interface-block-for-hot-constitution
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-18/specs/wiki-query-interface-block-for-hot-constitution.eval.yaml
+how_dev_self_checks: |
+  Generate a hot constitution and read what comes out. To self-check this is done:
+  1. Invoke the constitution-builder skill (`/momentum:constitution-builder`) asking it to
+     generate the standalone hot constitution for a project that has more than one knowledge
+     base configured. Capture the generated constitution text.
+  2. Read the generated text and confirm it contains a wiki-query interface block that:
+     - documents NORMAL mode with the exact invocation `wiki-query [question]` and says it
+       does tiered retrieval (index scan, then section grep, then full-page read) returning
+       cited answers with [[wikilinks]];
+     - documents FAST / index-only mode with the exact invocation
+       `wiki-query quick answer: [question]`, says it answers from page summaries and the
+       index only (no page bodies opened, cheaper, good for factual lookups), and lists ALL
+       four trigger prefixes: `quick answer:`, `just scan:`, `don't read the pages:`,
+       `fast lookup:`;
+     - states triggers as imperative named moments each paired with an exact query string
+       (e.g. "before selecting a test pattern for a new library, run `wiki-query ...`") and
+       contains NONE of the permissive phrases "if you need" or "consult the KB if needed";
+     - makes knowledge-base selection explicit when more than one KB is available
+       (project-scoped selection), and degrades to the plain single-KB syntax when only one
+       KB is configured;
+     - contains NO per-agent symptom-to-query routing rows (no table mapping an observed
+       symptom to a specific lookup) — only the shared invocation contract and cross-cutting
+       triggers.
+  3. Confirm the block sits in always-loaded top-level constitution content, not under a
+     conditional/optional heading.
+  4. Generate a second constitution for a project with exactly ONE KB configured and confirm
+     the same block appears in single-KB form (no explicit-selection ceremony required).
+  5. Confirm the nornspun-agent constitution, when generated, carries the identical block
+     text (verbatim, not a reworded variant).
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/wiki-query-interface-block-for-hot-constitution.md#acceptance-criteria
+platforms: [host]
+
+# === VERIFICATION BODY (Part B) ===
+harness_profile: skill-invoke
+
+scenarios:
+  - name: Generated constitution emits the wiki-query block with both modes and exact syntax
+    invocation: "/momentum:constitution-builder — request generation of the standalone hot constitution for a project that has at least one knowledge base configured; capture the generated constitution text"
+    given: A project with at least one configured knowledge base, and the constitution-builder skill available for invocation.
+    when: The skill is invoked to generate (or regenerate) the standalone hot constitution and the produced constitution text is captured.
+    then:
+      - The captured text contains a single, clearly headed wiki-query interface block.
+      - The block documents a NORMAL mode whose exact invocation form is `wiki-query [question]`.
+      - The NORMAL-mode description states it performs tiered retrieval (index scan, then section grep, then full-page read as needed) and returns cited answers containing `[[wikilinks]]`.
+      - "The block documents a FAST / index-only mode whose exact invocation form is `wiki-query quick answer: [question]`."
+      - The FAST-mode description states answers come from page summaries and the index only, that no page bodies are opened, and that it is cheaper and suited to factual lookups.
+    pass_criteria: The captured constitution text contains the wiki-query block with both modes present, each shown with its exact invocation string, and each mode's stated behavior matches the description above.
+    fail_criteria: "The block is absent, either mode is missing, an invocation string differs from `wiki-query [question]` or `wiki-query quick answer: [question]`, or a mode's behavior description is missing or contradicts the above (e.g. fast mode said to open page bodies)."
+
+  - name: All four fast-mode trigger prefixes are listed
+    invocation: "/momentum:constitution-builder — generate the standalone hot constitution and capture its text"
+    given: A generated hot constitution produced by the skill.
+    when: The wiki-query block's fast-mode section is inspected for trigger prefixes.
+    then:
+      - The block lists the prefix `quick answer:`.
+      - The block lists the prefix `just scan:`.
+      - The block lists the prefix `don't read the pages:`.
+      - The block lists the prefix `fast lookup:`.
+    pass_criteria: All four exact prefixes (`quick answer:`, `just scan:`, `don't read the pages:`, `fast lookup:`) appear in the generated block as fast / index-only mode triggers.
+    fail_criteria: Any one of the four prefixes is missing, misspelled, or shown with different punctuation/wording.
+
+  - name: Triggers are prescriptive imperatives, never permissive
+    invocation: "/momentum:constitution-builder — generate the standalone hot constitution and capture its text"
+    given: A generated hot constitution produced by the skill.
+    when: The trigger language in the wiki-query block is inspected.
+    then:
+      - At least one trigger is written as an imperative that names a specific moment AND includes an exact query string (e.g. "before selecting a test pattern for a new library, run `wiki-query ...`").
+      - The block contains the literal phrase "if you need" zero times.
+      - The block contains the phrase "consult the KB if needed" (or equivalent permissive "...if needed" hedging) zero times.
+    pass_criteria: Every trigger names an exact moment and an exact query string, and no permissive hedging phrasing ("if you need", "consult the KB if needed", or similar "...if needed" softeners) appears anywhere in the block.
+    fail_criteria: Any trigger uses permissive phrasing, omits the exact moment, or omits the exact query string.
+
+  - name: Multi-KB selection is explicit when more than one KB exists, and degrades for a single KB
+    invocation: "/momentum:constitution-builder — generate the constitution twice: once for a project with TWO or more configured knowledge bases, once for a project with exactly ONE; capture both texts"
+    given: Two generation runs are available — one for a multi-KB project and one for a single-KB project.
+    when: The wiki-query block from each run is compared.
+    then:
+      - In the multi-KB run, the block's syntax and trigger guidance make knowledge-base selection explicit (a project-scoped KB is named or selected as part of the invocation guidance), rather than assuming one global vault.
+      - In the single-KB run, the block presents the plain invocation forms without requiring explicit KB selection.
+    pass_criteria: The multi-KB output requires/shows explicit project-scoped KB selection in the wiki-query invocation guidance; the single-KB output shows the unadorned single-KB form with no mandatory selection step.
+    fail_criteria: The multi-KB output omits explicit KB selection (assumes a single global vault), or the single-KB output forces unnecessary selection ceremony.
+
+  - name: Block sits in always-loaded Tier 1 content and carries no per-agent routing rows
+    invocation: "/momentum:constitution-builder — generate the standalone hot constitution and capture its text"
+    given: A generated hot constitution produced by the skill.
+    when: The placement and contents of the wiki-query block are inspected against the rest of the constitution.
+    then:
+      - The wiki-query block appears as part of the constitution's always-present top-level content, not under any conditional, optional, or per-workflow heading.
+      - The block contains NO table or list of rows that map an observed symptom to a specific wiki-query lookup (no per-agent diagnostic / symptom-to-query routing).
+      - The block carries only the shared invocation contract and cross-cutting trigger scenarios.
+    pass_criteria: The block is positioned in unconditional top-level constitution content AND contains zero per-agent symptom-to-query routing rows.
+    fail_criteria: The block is gated behind a conditional/optional/per-workflow heading, OR it contains any symptom-to-query routing rows beyond the shared cross-cutting triggers.
+
+  - name: Skill's existing wiki-query references stay consistent — no stale single-KB-only syntax (edge/consistency)
+    invocation: "/momentum:constitution-builder — generate constitution output and also review every wiki-query usage example the skill itself prints/documents during the run"
+    given: A generation run whose output includes both the emitted constitution block and any wiki-query syntax the skill surfaces from its own routing-entry guidance.
+    when: All wiki-query syntax shown across the run is collected and compared.
+    then:
+      - "Every wiki-query invocation shown across the run uses the same two-mode contract (`wiki-query [question]` and `wiki-query quick answer: [question]`) as the canonical block."
+      - No wiki-query example shows a single-KB-only form that contradicts the multi-KB selection guidance when more than one KB is configured.
+      - The two-mode invocation contract and the multi-KB selection rule are described once authoritatively, with no contradictory duplicate definitions.
+    pass_criteria: All wiki-query syntax across the run is mutually consistent with the canonical block; there is exactly one authoritative definition of the two-mode contract and multi-KB selection, and no stale single-KB-only syntax conflicts with it.
+    fail_criteria: Any wiki-query example contradicts the canonical block's syntax, a stale single-KB-only form persists alongside multi-KB guidance, or the two-mode/multi-KB contract is defined in two conflicting places.

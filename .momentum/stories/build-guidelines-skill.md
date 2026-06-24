@@ -1,11 +1,17 @@
 ---
-title: Build-Guidelines Skill — Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files
+title: "Build-Guidelines Skill — Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files"
 story_key: build-guidelines-skill
-status: backlog
-epic_slug: agent-team-model
+status: ready-for-dev
+epic_slug: momentum-agent-composition-pipeline
 feature_slug: momentum-composable-specialist-agents
+priority: critical
+story_type: skill
+change_type:
+  - skill-instruction
+verification_method_advisory: skill-invoke
 depends_on:
   - constitution-builder-write-mode-parameterization
+  - agent-manifesto-format-specification
 touches:
   - skills/momentum/skills/build-guidelines/SKILL.md
   - skills/momentum/skills/build-guidelines/workflow.md
@@ -17,7 +23,7 @@ touches:
 
 ## What This Is
 
-> **Grooming note (2026-05-12):** Reframed from "new KB-synthesis skill" to "orchestrator over `momentum:constitution-builder`." The KB synthesis work (Permissions + Standing Rules + Quick Routing generation) lives in `constitution-builder` — already shipped. This skill is the orchestrator that drives `constitution-builder` for each role × domain composed file plus generates the standalone Tier 1 constitution. Depends on `constitution-builder` gaining a `composed_agent_file` write-mode parameter (see new story: `constitution-builder-write-mode-parameterization`).
+> **Grooming note (2026-05-12):** Reframed from "new KB-synthesis skill" to "orchestrator over `momentum:constitution-builder`." The KB synthesis work (Permissions + Standing Rules + Quick Routing generation) lives in `constitution-builder` — already shipped. This skill is the orchestrator that drives `constitution-builder` for each role × domain composed file plus generates the standalone Tier 1 constitution. Depends on `constitution-builder` gaining a `composed_agent_file` write-mode parameter (see story: `constitution-builder-write-mode-parameterization`).
 
 A skill (`/momentum:build-guidelines`) that orchestrates the Tier 1 and Tier 2 artifacts
 of the three-tier agent guidelines architecture by composing the agent manifesto with
@@ -59,6 +65,14 @@ the logic. Instead, this skill loops over the agent manifesto's role × domain m
 invokes `constitution-builder` for each pair, and assembles the resulting outputs into
 the on-disk `.claude/guidelines/` tree.
 
+**Why this story is the keystone of the epic:** Of the 22 stories in
+`momentum-agent-composition-pipeline`, this is the one that turns the pieces into a working
+pipeline. The format spec, the constitution write-mode parameter, and the multi-KB
+extensions are all *inputs*; this orchestrator is the *consumer* that exercises them and
+produces the first artifact the pipeline has never produced — a real composed agent
+registered in `agents.json`. **DEC-038 Decision Gate G1** — "Does the pipeline actually
+produce a composed agent?" — is satisfied (or not) by this story.
+
 Steve's exact words (April 9): *"Is there a way we could essentially create specialist
 agent files for the TeamCreate? Right now our idea is to use guideline injection
 essentially but couldn't we instead bake the manifest into the agent file and create
@@ -81,6 +95,9 @@ different specialized agents?"*
         compose-antipatterns.md    ← JIT reference (pointed to from constitution)
         compose-testing.md
         ...
+  momentum/
+    agents.json                    ← routing registry: each composed agent's
+                                     project[] entry (DEC-038 G1 registration target)
 ```
 
 ## Composed Agent File Format
@@ -107,22 +124,30 @@ tools: [Read, Glob, Grep, Bash, Edit, Write, Agent, Skill]
 {full base agent body, unchanged from skills/momentum/agents/dev.md}
 ```
 
+The composed file's shape (frontmatter fields, section order, diagnostic-table presence)
+must match the `cmp-dev` exemplar
+(`docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md`) — the only worked example of the
+per-role×domain symptom → `wiki-query` diagnostic table. The exemplar is a **format
+reference only** (a nornspun artifact); the produced Momentum agent queries the Momentum KB,
+not nornspun's.
+
 ## Workflow Phases (high level — orchestrator pattern)
 
 1. **Discover** — read the agent's diagnostic-table manifesto (symptom→`wiki-query`
    entries + the stack facts that scope them, per role × domain); resolve the **project**
    the agents are scoped to and its **KB** (project-scoped, multi-KB per DEC-038); detect
-   which roles need composed bodies and which plugin base bodies are required as input
+   which roles need composed bodies and which plugin base bodies are required as input.
 2. **Consult** — interactive: confirm the role × domain matrix is current, review the
-   existing constitution (if any), decide reference-doc scope
+   existing constitution (if any), decide reference-doc scope.
 3. **Fan out to constitution-builder** — for each role × domain pair in the manifest,
    invoke `momentum:constitution-builder` with:
    - target write mode = `composed_agent_file`
    - target path = `.claude/guidelines/agents/{role}-{domain}.md`
    - base body source = `skills/momentum/agents/{role}.md`
    - project context = the manifesto slice for this domain
-   - target KB = the **project's own KB** (per DEC-038 multi-KB support — momentum agents
+   - target KB = the **project's own KB** (per DEC-038 multi-KB support — Momentum agents
      resolve against the Momentum KB, not a nornspun KB)
+
    `constitution-builder` performs the KB synthesis (`wiki-query` against the **correct
    project KB**, Permissions + Standing Rules + Quick Routing generation) and writes the
    composed file.
@@ -130,56 +155,311 @@ tools: [Read, Glob, Grep, Bash, Edit, Write, Agent, Skill]
    mode = `standalone_constitution`, target = `.claude/guidelines/constitution.md`. This
    produces the universal hot constitution (wiki-query interface block, prescriptive
    triggers, critical rules).
-5. **Wire** — register composed file paths in the sprint record so sprint-dev Phase 2
-   spawns them (depends on `sprint-dev-composed-file-spawn-wiring`)
+5. **Register + Wire** — register each composed agent file in the `agents.json` project
+   block (DEC-038 G1) and record composed-file paths in the sprint record so sprint-dev
+   Phase 2 spawns them (handoff to `sprint-dev-composed-file-spawn-wiring`).
 6. **Validate** — AVFL checkpoint: verify line counts, role-bleed boundaries, citation
-   integrity. Existing AVFL stories (`citation-integrity-validation-in-build-guidelines-avfl`,
+   integrity, and `cmp-dev`-exemplar shape conformance. Existing AVFL stories
+   (`citation-integrity-validation-in-build-guidelines-avfl`,
    `build-guidelines-soft-stop-ux-for-missing-vault`) define the gates. **DEC-038 G1:** at
    least one composed agent file must be written to disk **and registered in the
-   `agents.json` project block**, with its shape validated against the `cmp-dev` exemplar
-   (`docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md`) — this gate has never been met.
+   `agents.json` project block**, with its shape validated against the `cmp-dev` exemplar —
+   this gate has never been met.
 
 ## Sprint-Dev Integration
 
 When composed agent files exist in `.claude/guidelines/agents/`, `sprint-dev` uses them
 instead of the generic `skills/momentum/agents/*.md` files. Detection:
 - Check `.claude/guidelines/agents/` for `{role}-{domain}.md` matching the story's
-  specialist classification
-- If found: spawn the composed file (guidelines already in system prompt)
-- If not found: fall back to generic agent + `guidelines-verification-gate` warning
+  specialist classification.
+- If found: spawn the composed file (guidelines already in system prompt).
+- If not found: fall back to generic agent + `guidelines-verification-gate` warning.
 
 ## DEC-038 Alignment
 
 DEC-038 (Manifesto as Per-Agent Diagnostic Table + Per-Project Multi-KB Architecture)
 refines what "manifesto" means and what "build the agents" entails. This skill is the
 keystone of DEC-038 Phase 2: the missing build-agents orchestrator that turns diagnostic
-tables into composed agents. The following acceptance criteria reconcile this spec to the
-canon:
+tables into composed agents.
 
-- **AC1 — Consumes the diagnostic table as a composition input.** The skill reads the
-  agent's stable, per-role×domain diagnostic-table manifesto (observable symptom → exact
-  `wiki-query` lookup, plus scoping stack facts) and uses it to compose gen-2 agent
-  guidelines. It treats the manifesto as standing, sprint-invariant input — it does **not**
-  read or build a per-sprint/per-story "context overlay."
-- **AC2 — Project-scoped, multi-KB.** The pipeline resolves the project its agents are
-  scoped to and drives every `wiki-query` against that project's own KB. Composing Momentum
-  agents resolves against the Momentum KB; the same pipeline works for a different project
-  against a different KB without conflating the two.
-- **AC3 — Produces and registers at least one composed agent (DEC-038 G1).** A run produces
-  at least one composed agent file written to disk **and** registered in the `agents.json`
-  project block, with its shape validated against the `cmp-dev` exemplar. This is the gate
-  DEC-038 G1 has never met.
-- **AC4 — Diagnostic-table framing throughout.** No part of this skill's behavior or output
-  treats the manifesto as a context/overlay artifact; all manifesto handling follows the
-  diagnostic-table definition, and an agent encountering a situation its manifesto does not
-  guide is treated as a manifesto-incompleteness signal, not a per-sprint gap to patch here.
+## Acceptance Criteria
 
-## Context References
+1. **The skill consumes the diagnostic table as a stable composition input.** When
+   `/momentum:build-guidelines` runs, it reads the agent's per-role×domain diagnostic-table
+   manifesto (observable symptom → exact `wiki-query` lookup, plus scoping stack facts) and
+   uses it to compose gen-2 agent guidelines. The run treats the manifesto as standing,
+   sprint-invariant input: it does **not** read, build, or write any per-sprint/per-story
+   "context overlay," and no sprint or story identifier appears anywhere in the composed
+   output. (DEC-038 D1; supersedes the PRD FR136 "context overlay" reading.)
+
+2. **The pipeline is project-scoped and multi-KB.** A run resolves the project its agents
+   are scoped to and drives every `wiki-query` against that project's own KB. Composing
+   Momentum agents resolves against the Momentum KB; running the same pipeline against a
+   different project resolves against that project's KB without conflating the two —
+   observable in the composed file's citations, which reference only the resolved project's
+   KB pages. (DEC-038 D2.)
+
+3. **A run produces and registers at least one composed agent — DEC-038 G1.** A successful
+   run writes at least one composed agent file to disk at
+   `.claude/guidelines/agents/{role}-{domain}.md` **and** registers that agent in the
+   `momentum/agents.json` `project[]` block (creating `agents.json` with `{"defaults": {},
+   "project": []}` if it does not yet exist). The registration entry is keyed by the
+   composed agent's slug and resolves via the existing `agent resolve` path in
+   `momentum-tools`. This is the gate (G1) the pipeline has never met. (DEC-038 G1, Phase 2.)
+
+4. **The composed file conforms to the `cmp-dev` exemplar shape.** Each composed agent file
+   written by a run matches the structural shape of the `cmp-dev` exemplar
+   (`docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md`): YAML frontmatter with
+   `name`/`model`/`tools`, a project-guidelines/critical-rules block ahead of the base body,
+   the full unmodified base body appended below a `---` separator, and a per-role×domain
+   `wiki-query` diagnostic table. Shape conformance is asserted by AVFL against the exemplar
+   as the format reference (not as a Momentum agent). (DEC-038 G1 criteria; AC4 of original
+   spec.)
+
+5. **Diagnostic-table framing is preserved throughout.** No part of the skill's behavior or
+   output treats the manifesto as a context/overlay artifact; all manifesto handling follows
+   the diagnostic-table definition. The skill documents that an agent encountering a
+   situation its manifesto does not guide is a manifesto-incompleteness signal — not a
+   per-sprint gap for this skill to patch — and the skill takes no overlay-patching action in
+   that case. (DEC-038 D1 completeness criterion; AC4 of original spec.)
+
+6. **The skill is an orchestrator over `constitution-builder`, not a re-implementation of
+   KB synthesis.** The skill invokes `momentum:constitution-builder` for each role × domain
+   pair (write mode `composed_agent_file`) and once for the Tier 1 constitution (write mode
+   `standalone_constitution`); it contains no inline Permissions / Standing Rules / Quick
+   Routing synthesis logic of its own. The dependency on
+   `constitution-builder-write-mode-parameterization` is honored — the skill passes the
+   `composed_agent_file` / `standalone_constitution` write-mode parameter rather than
+   working around its absence.
+
+7. **Sprint-dev resolves composed files when present.** `sprint-dev`'s spawn path detects
+   `.claude/guidelines/agents/{role}-{domain}.md` matching a story's specialist
+   classification and spawns the composed file when found; when absent, it falls back to the
+   generic `skills/momentum/agents/{role}.md` body. The `sprint-planning` workflow surfaces
+   build-guidelines as the upstream producer of these composed files. (Detailed spawn-wiring
+   mechanics are owned by `sprint-dev-composed-file-spawn-wiring`; this story establishes the
+   detection/fallback contract and the sprint-planning reference.)
+
+8. **NFR + skill-package compliance.** The produced `build-guidelines/SKILL.md` carries a
+   `description` ≤150 characters, present `model:` and `effort:` frontmatter, the
+   `momentum:` namespace, and a body ≤500 lines / 5000 tokens (overflow in `references/`).
+   The skill package follows `skills/momentum/references/agent-skill-development-guide.md`.
+
+## Tasks / Subtasks
+
+1. **Create the `build-guidelines` skill package** (SKILL.md + workflow.md). (AC1, AC5, AC6, AC8)
+   - Write `skills/momentum/skills/build-guidelines/SKILL.md` with `momentum:` namespace,
+     `description` ≤150 chars, `model:`/`effort:` frontmatter, body ≤500 lines.
+   - Write `skills/momentum/skills/build-guidelines/workflow.md` implementing the six
+     orchestrator phases (Discover → Consult → Fan out → Generate Tier 1 → Register + Wire →
+     Validate).
+   - Encode the diagnostic-table framing: the workflow reads the manifesto as stable
+     per-role×domain input and explicitly never builds a per-sprint/per-story overlay. (AC1, AC5)
+
+2. **Implement the discover + project/KB resolution phase.** (AC1, AC2)
+   - Read the per-role×domain diagnostic-table manifesto.
+   - Resolve the target project and its KB (project-scoped, multi-KB per DEC-038 D2); every
+     `wiki-query` downstream targets that KB.
+   - Detect which roles need composed bodies and which plugin base bodies
+     (`skills/momentum/agents/{role}.md`) are required as input.
+
+3. **Implement the fan-out to `constitution-builder` for Tier 2 composition.** (AC4, AC6)
+   - For each role × domain pair, invoke `momentum:constitution-builder` with write mode
+     `composed_agent_file`, the target path, the base body source, the manifesto slice, and
+     the resolved project KB.
+   - No inline KB-synthesis logic in this skill — delegate entirely to `constitution-builder`.
+   - Pass the write-mode parameter from `constitution-builder-write-mode-parameterization`;
+     do not work around its absence (HALT with a clear message if the parameter is unavailable).
+
+4. **Implement the Tier 1 constitution generation phase.** (AC6)
+   - Invoke `constitution-builder` once with write mode `standalone_constitution`, target
+     `.claude/guidelines/constitution.md`.
+
+5. **Implement registration into `momentum/agents.json` (G1) + sprint-record wiring.** (AC3)
+   - After each composed file is written, register a `project[]` entry in
+     `momentum/agents.json` keyed by the agent slug; create the file with
+     `{"defaults": {}, "project": []}` if absent.
+   - Confirm the entry resolves via the existing `agent resolve` path in `momentum-tools`.
+   - Record composed-file paths in the sprint record for sprint-dev consumption (handoff to
+     `sprint-dev-composed-file-spawn-wiring`).
+
+6. **Implement the validate phase (AVFL checkpoint, exemplar-shape conformance).** (AC3, AC4)
+   - Verify line counts, role-bleed boundaries, citation integrity, and that the composed
+     file's shape matches the `cmp-dev` exemplar.
+   - Assert the G1 condition explicitly: at least one composed file on disk AND registered in
+     `agents.json`; surface a clear failure if not met.
+
+7. **Wire sprint-dev composed-file detection + fallback.** (AC7)
+   - In `skills/momentum/skills/sprint-dev/workflow.md`, add detection: if
+     `.claude/guidelines/agents/{role}-{domain}.md` matches a story's specialist
+     classification, spawn the composed file; else fall back to the generic base body.
+   - Keep deep spawn-wiring mechanics deferred to `sprint-dev-composed-file-spawn-wiring`;
+     establish only the detection/fallback contract here.
+
+8. **Surface build-guidelines in sprint-planning.** (AC7)
+   - In `skills/momentum/skills/sprint-planning/workflow.md`, reference build-guidelines as
+     the upstream producer of composed agent files (the invocation-surface detail is owned by
+     `build-guidelines-invocation-surface-in-sprint-planning`; this task adds the cross-reference).
+
+9. **EDD: write and run behavioral evals.** (AC1–AC8)
+   - Author 2–3 evals in `skills/momentum/skills/build-guidelines/evals/` covering: produces +
+     registers ≥1 composed agent (G1), resolves the correct project KB, and preserves
+     diagnostic-table framing (no overlay).
+   - Run the EDD cycle; confirm behaviors or document failures.
+
+## Dev Notes
+
+### Decision Authority
+
+- **DEC-038** (`_bmad-output/planning-artifacts/decisions/dec-038-manifesto-diagnostic-table-multi-kb-2026-06-16.md`)
+  is the governing decision. D1 fixes "manifesto = stable per-role×domain diagnostic table"
+  (rejecting the PRD FR136 per-sprint/per-story overlay reading). D2 establishes project-scoped,
+  multi-KB agents. **Decision Gate G1** ("at least one composed agent file written + registered
+  in `agents.json` project block — it never has — validated against the `cmp-dev` exemplar shape")
+  is the pass/fail gate this story must satisfy. Phase 2 names `build-guidelines-skill` as a key
+  story.
+- **DEC-001** (`dec-001-three-tier-agent-guidelines-2026-04-09.md`) — the three-tier
+  architecture (hot constitution / composed agent file / cold KB) this skill assembles.
+- The original story content (What This Is, Why This Matters, file structure, composed-file
+  format, workflow phases) is authoritative and preserved above; the ACs and tasks below
+  operationalize it against DEC-038.
+
+### Current State of Affected Files
+
+- `skills/momentum/skills/build-guidelines/` — **does not exist yet.** This story creates
+  the full skill package (SKILL.md + workflow.md, plus evals/).
+- `momentum/agents.json` — **does not exist yet** in this project. The schema is established:
+  `momentum-tools.py` reads it as `{"defaults": {...}, "project": [...]}` (see
+  `skills/momentum/scripts/momentum-tools.py` ~line 1981, `agent resolve` path). The
+  `momentum:agent-builder` skill is the per-agent Tier 2 composer that already writes
+  `project[]` routing entries to this file (`skills/momentum/skills/agent-builder/workflow.md`).
+  `build-guidelines` is the orchestrator above `agent-builder`/`constitution-builder`; align
+  its registration writes with that established schema and `agent resolve` contract — do not
+  invent a new shape.
+- `skills/momentum/skills/sprint-planning/workflow.md` — exists (~1150 lines). This story adds
+  a cross-reference to build-guidelines as the composed-file producer; it does not restructure
+  the workflow.
+- `skills/momentum/skills/sprint-dev/workflow.md` — exists (~770 lines). This story adds the
+  composed-file detection + fallback contract to the spawn path; deep mechanics are deferred to
+  `sprint-dev-composed-file-spawn-wiring`.
+- `skills/momentum/skills/constitution-builder/SKILL.md` — exists (shipped). This story
+  consumes it as the KB-synthesis engine via the `composed_agent_file` / `standalone_constitution`
+  write modes added by `constitution-builder-write-mode-parameterization` (hard dependency).
+- `docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md` — exists; the format-only exemplar
+  for the composed-file shape. **Never** register, spawn, or treat it as a Momentum agent.
+
+### Architecture Compliance
+
+- This is the keystone orchestrator of epic `momentum-agent-composition-pipeline`. The epic's
+  acceptance condition: "A developer can run build-guidelines on a project and observe that one
+  project-wide constitution is produced AND one manifesto per (role × domain) is produced, with
+  sprint-dev composing all three (base body + constitution + manifesto) into each spawned
+  subagent's system prompt."
+- Orchestrator purity: the skill produces NO KB-synthesis output of its own. It loops the role ×
+  domain matrix and delegates every synthesis step to `constitution-builder`; it loops, registers,
+  wires, and validates. This mirrors the `agent-builder` pipeline position (constitution-builder →
+  agent-builder × N → `agents.json`).
+- Composition formula (per epics.json `momentum-agent-composition-pipeline`): `agent = base_body
+  + constitution + manifesto`, where the constitution is project-wide (one) and the manifesto is
+  per role × domain (many).
+- Diagnostic-table invariance (DEC-038 D1): the manifesto is stable across sprints/stories. No
+  sprint or story identifier may flow into the composed output.
+
+### Testing Requirements
+
+- **Verification method (advisory): `skill-invoke`** — `change_type: skill-instruction` routes to
+  `skill-invoke` per `skills/momentum/references/rules/verification-standard.md` Section 1. Verify
+  by invoking `/momentum:build-guidelines` and observing: a composed agent file appears at
+  `.claude/guidelines/agents/{role}-{domain}.md`, a matching `project[]` entry appears in
+  `momentum/agents.json` and resolves via `agent resolve`, and the composed file's shape matches
+  the `cmp-dev` exemplar.
+- **EDD (not TDD):** SKILL.md/workflow.md are non-deterministic LLM prompts — use Eval-Driven
+  Development. Author evals in `skills/momentum/skills/build-guidelines/evals/` before writing the
+  skill body.
+- **G1 is the load-bearing assertion:** the single most important observable is "≥1 composed agent
+  written AND registered in `agents.json`, shape-validated against the exemplar." If a run does not
+  produce that, the story is not done.
+- A frozen verification contract exists for this sprint at
+  `sprints/{sprint-slug}/specs/build-guidelines-skill.{ext}`. Dev reads the Part-A header
+  (`how_dev_self_checks`, `verification_method`, `harness_profile`) as a self-check before signaling
+  done. Dev does NOT read the verifier body (Part B: scenarios/assertions) beyond sections referenced
+  by `how_dev_self_checks`.
+
+### Project Context Reference
+
+The Momentum agent-composition pipeline (epic `momentum-agent-composition-pipeline`) is the
+project-knowledge layer: it produces project-conditioned agent prompts by composing plugin base
+bodies + a project-wide constitution (Tier 1) + per-agent manifestos (Tier 2). Without this
+keystone orchestrator, every spawned subagent runs on generic role-contract knowledge only.
+
+### References
 
 - Decision document: `_bmad-output/planning-artifacts/decisions/dec-038-manifesto-diagnostic-table-multi-kb-2026-06-16.md`
 - Format exemplar (format-only; never a Momentum agent): `docs/research/manifesto-cmp-dev-exemplar-2026-06-16.md`
 - Decision document: `_bmad-output/planning-artifacts/decisions/dec-001-three-tier-agent-guidelines-2026-04-09.md`
 - Assessment document: `_bmad-output/planning-artifacts/assessments/aes-001-agent-guidelines-current-state-2026-04-09.md`
 - Gen-1 predecessor: `_bmad-output/implementation-artifacts/stories/agent-guidelines-skill.md` (done)
-- Depends on: `kb-init` (vault needed for distill phase to have source material)
+- Per-agent Tier 2 composer (registers `agents.json` entries): `skills/momentum/skills/agent-builder/workflow.md`
+- KB-synthesis engine (consumed by this orchestrator): `skills/momentum/skills/constitution-builder/SKILL.md`
+- `agents.json` schema + `agent resolve` path: `skills/momentum/scripts/momentum-tools.py` (~line 1981)
+- Depends on: `constitution-builder-write-mode-parameterization` (write-mode parameter — hard dependency)
+- Related: `kb-init` (vault needed for distill phase to have source material)
 - Related: `kb-ingest` (keeps vault current so distill phase has fresh knowledge)
+- Related stories (epic `momentum-agent-composition-pipeline`): `sprint-dev-composed-file-spawn-wiring`,
+  `build-guidelines-invocation-surface-in-sprint-planning`, `specialist-classify-update-for-gen-2-paths`,
+  `citation-integrity-validation-in-build-guidelines-avfl`, `build-guidelines-soft-stop-ux-for-missing-vault`
+- Epic context: `momentum-agent-composition-pipeline` (from _bmad-output/planning-artifacts/epics.json)
+
+## Momentum Implementation Guide
+
+**Change Types in This Story:**
+- Tasks 1–9 → skill-instruction (EDD)
+
+All work in this story modifies skill instruction files (SKILL.md / workflow.md across
+build-guidelines, sprint-planning, and sprint-dev) plus their evals. The `agents.json`
+registration and `.claude/guidelines/` outputs are *runtime products* of invoking the skill,
+not files this story hand-authors — so the whole story is `skill-instruction`. Verify the
+behavior by invoking the skill (`skill-invoke`), not by editing config by hand.
+
+---
+
+### skill-instruction Tasks: Eval-Driven Development (EDD)
+
+**Do NOT use TDD for SKILL.md or workflow.md files.** Skill instructions are non-deterministic LLM prompts — unit tests do not apply. Use EDD:
+
+**Before writing a single line of the skill:**
+1. Write 2–3 behavioral evals in `skills/momentum/skills/build-guidelines/evals/` (create `evals/` if it doesn't exist):
+   - One `.md` file per eval, named descriptively (e.g., `eval-produces-and-registers-one-composed-agent.md`, `eval-resolves-correct-project-kb.md`, `eval-preserves-diagnostic-table-framing.md`).
+   - Format each eval as: "Given [describe the input and context], the skill should [observable behavior — what Claude does or produces]".
+   - Test behaviors and decisions, not exact output text. The G1 eval is mandatory: given a manifesto + base body + resolved KB, the run writes ≥1 composed agent file AND registers it in `agents.json`, shape-matching the `cmp-dev` exemplar.
+
+**Then implement:**
+2. Write/modify the SKILL.md, workflow.md, and the sprint-planning / sprint-dev cross-references.
+
+**Then verify:**
+3. Run evals: for each eval file, use the Agent tool to spawn a subagent. Give it the eval's scenario as its task and load the skill (SKILL.md + workflow.md contents as context, or invoke via the installed Agent Skills name). Observe whether behavior matches the eval's expected outcome.
+4. If all evals match → task complete.
+5. If any eval fails → diagnose the gap in the skill instructions, revise, re-run (max 3 cycles; surface to user if still failing).
+
+**NFR compliance — mandatory for every skill-instruction task:**
+- SKILL.md `description` field must be ≤150 characters (NFR1) — count precisely.
+- `model:` and `effort:` frontmatter fields must be present (model routing per FR23).
+- SKILL.md body must stay under 500 lines / 5000 tokens; overflow content goes in `references/` with clear load instructions (NFR3).
+- Skill names use `momentum:` namespace prefix (NFR12 — no naming collision with BMAD skills).
+
+**Additional DoD items for skill-instruction tasks (added to standard bmad-dev-story DoD):**
+- [ ] 2+ behavioral evals written in `skills/momentum/skills/build-guidelines/evals/` (incl. the mandatory G1 eval)
+- [ ] EDD cycle ran — all eval behaviors confirmed (or failures documented with explanation)
+- [ ] SKILL.md description ≤150 characters confirmed (count the actual characters)
+- [ ] `model:` and `effort:` frontmatter present and correct
+- [ ] SKILL.md body ≤500 lines / 5000 tokens confirmed (overflow in `references/` if needed)
+- [ ] G1 satisfied: ≥1 composed agent file on disk AND registered in `momentum/agents.json`, shape-validated against the `cmp-dev` exemplar
+- [ ] AVFL checkpoint on produced artifact documented (momentum:dev runs this automatically — validates the implemented SKILL.md against story ACs)
+
+---
+
+**Frozen verification contract reminder:** A frozen verification contract exists for this
+sprint at `sprints/{sprint-slug}/specs/build-guidelines-skill.{ext}`. Before signaling done,
+Dev reads the Part-A header (`how_dev_self_checks`, `verification_method`, `harness_profile`)
+as a self-check. Dev never reads the verifier body (Part B: scenarios, assertion scripts,
+Gherkin) beyond sections explicitly referenced by `how_dev_self_checks`.

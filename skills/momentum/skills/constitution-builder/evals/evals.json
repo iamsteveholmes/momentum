@@ -3,113 +3,157 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Build the constitution for a compose+kotest skill I'm creating. It covers Kotlin coroutines in tests, Kotest assertion styles (shouldBe, shouldThrow, etc.), and Compose UI testing with composeTestRule.",
-      "expected_output": "A ## Quick Routing section with symptom→wiki-query entries for the covered technologies. Should surface gaps if Kotest is not in the KB. Should use exact wiki-query invocations, not advisory language.",
-      "files": [],
+      "prompt": "Build the standalone constitution for a TypeScript + Vitest project. Invoke with write_mode=standalone_constitution.",
+      "expected_output": "A complete constitution written to .claude/guidelines/constitution.md. The output must NOT contain any ## Quick Routing section, symptom→wiki-query routing table, per-agent diagnostic table, ## Permissions section, or ## Standing Rules section. It MUST contain an embedded-facts section, a KB-sourced context section, and the wiki-query interface block.",
+      "files": ["eval-output-has-no-quick-routing.md"],
       "assertions": [
         {
-          "text": "Output contains a '## Quick Routing' header",
-          "check": "grep -q '## Quick Routing' routing-table.md"
+          "text": "No '## Quick Routing' header in constitution output",
+          "check": "! grep -q '## Quick Routing' constitution.md"
         },
         {
-          "text": "Routing entries use wiki-query invocations (not static file paths)",
-          "check": "grep -q 'wiki-query' routing-table.md && ! grep -q 'references/' routing-table.md"
+          "text": "No symptom→wiki-query routing rows in output",
+          "check": "! grep -qi 'symptom.*→\\|observed symptom' constitution.md"
         },
         {
-          "text": "Output contains thematic subsections (H3 headers)",
-          "check": "grep -c '^###' routing-table.md | awk '{exit ($1 < 2)}'"
+          "text": "No per-agent diagnostic table in output",
+          "check": "! grep -qi 'agent role.*query\\|agent.*diagnostic' constitution.md"
         },
         {
-          "text": "Output surfaces KB gap for Kotest or notes limited coverage",
-          "check": "grep -qi 'gap\\|not found\\|missing\\|partial\\|no.*coverage\\|kotest.*not' routing-table.md || grep -qi 'gap\\|not found\\|missing\\|partial\\|no.*coverage\\|kotest.*not' process-notes.md"
+          "text": "No ## Permissions section in output",
+          "check": "! grep -q '## Permissions' constitution.md"
         },
         {
-          "text": "Routing entries use bold symptom format (**symptom** →)",
-          "check": "grep -q '\\*\\*.*\\*\\*.*→' routing-table.md"
+          "text": "No ## Standing Rules section in output",
+          "check": "! grep -q '## Standing Rules' constitution.md"
         },
         {
-          "text": "No advisory routing language ('if needed', 'you may want to')",
-          "check": "! grep -qi 'if needed\\|you may want\\|consider consulting\\|feel free to' routing-table.md"
+          "text": "Embedded-facts section is present",
+          "check": "grep -qi 'project identity\\|stack\\|conventions\\|embedded.*fact\\|fact.*embedded' constitution.md"
         },
         {
-          "text": "Output has at least 8 routing entries",
-          "check": "grep -c '\\*\\*.*\\*\\*.*→' routing-table.md | awk '{exit ($1 < 8)}'"
+          "text": "Wiki-query interface block is present",
+          "check": "grep -q '## Wiki-Query Interface' constitution.md"
+        },
+        {
+          "text": "Completion message does not reference routing entries as generated",
+          "check": "! grep -qi 'routing entr' constitution.md"
         }
       ]
     },
     {
       "id": 2,
-      "prompt": "Update the Quick Routing section in my fastapi-pydantic SKILL.md — we've added agent integration docs to the KB since the routing was last generated. The skill covers FastAPI dependency injection, Pydantic v2 models, and PydanticAI agent patterns.",
-      "expected_output": "A regenerated ## Quick Routing section that replaces the stale one. Should show awareness of existing section and offer to replace. Entries should reflect current KB state including newly ingested agent integration content.",
-      "files": [],
+      "prompt": "Run constitution-builder with write_mode=hot. That's not a valid write_mode.",
+      "expected_output": "The skill immediately rejects the invocation and names all three accepted values: in_place_skill, composed_agent_file, and standalone_constitution. No constitution content is generated or written.",
+      "files": ["eval-rejects-unknown-write-mode.md"],
       "assertions": [
         {
-          "text": "Output contains a '## Quick Routing' header",
-          "check": "grep -q '## Quick Routing' routing-table.md"
+          "text": "Skill halts without generating constitution content",
+          "check": "! test -f constitution.md || ! grep -qi 'wiki-query interface\\|embedded.*fact' constitution.md"
         },
         {
-          "text": "Routing entries use wiki-query invocations",
-          "check": "grep -q 'wiki-query' routing-table.md"
+          "text": "Rejection message names 'in_place_skill'",
+          "check": "grep -q 'in_place_skill' process-notes.md"
         },
         {
-          "text": "Output mentions replacement/update of existing section",
-          "check": "grep -qi 'replac\\|existing\\|stale\\|update\\|regenerat' routing-table.md || grep -qi 'replac\\|existing\\|stale\\|update\\|regenerat' process-notes.md"
+          "text": "Rejection message names 'composed_agent_file'",
+          "check": "grep -q 'composed_agent_file' process-notes.md"
         },
         {
-          "text": "Output includes PydanticAI-specific entries (the new content area)",
-          "check": "grep -qi 'pydanticai\\|agent.*pattern\\|agent.*route\\|agent.*integration' routing-table.md"
+          "text": "Rejection message names 'standalone_constitution'",
+          "check": "grep -q 'standalone_constitution' process-notes.md"
         },
         {
-          "text": "Output uses bold symptom format",
-          "check": "grep -q '\\*\\*.*\\*\\*.*→' routing-table.md"
-        },
-        {
-          "text": "Output has thematic subsections",
-          "check": "grep -c '^###' routing-table.md | awk '{exit ($1 < 2)}'"
-        },
-        {
-          "text": "At least 10 routing entries total",
-          "check": "grep -c '\\*\\*.*\\*\\*.*→' routing-table.md | awk '{exit ($1 < 10)}'"
+          "text": "No fourth or alternative value listed as accepted",
+          "check": "! grep -qi '\"hot\"\\|\"full_agent\"\\|\"inline\"' process-notes.md"
         }
       ]
     },
     {
       "id": 3,
-      "prompt": "Generate the routing table for a React + Next.js skill. It covers React hooks (useState, useEffect, useCallback, useMemo), Next.js App Router, server components, and data fetching patterns.",
-      "expected_output": "A complete ## Quick Routing section. Should audit the KB for React/Next.js coverage, generate well-organized thematic subsections, 15-40 entries total, all using wiki-query invocations.",
-      "files": [],
+      "prompt": "Build the constitution for a compose+kotest skill I'm creating. Use write_mode=in_place_skill with no target path supplied.",
+      "expected_output": "The skill pauses at Phase 1 and asks the developer for the target SKILL.md path before generating any content. No constitution content is produced before the path is provided.",
+      "files": ["eval-write-mode-path-and-target-behavior.md"],
       "assertions": [
         {
-          "text": "Output contains a '## Quick Routing' header",
-          "check": "grep -q '## Quick Routing' routing-table.md"
+          "text": "Skill asks developer for target path (elicitation prompt issued)",
+          "check": "grep -qi 'where.*written\\|target.*path\\|which.*file\\|skill\\.md.*path\\|path.*skill\\.md' process-notes.md"
         },
         {
-          "text": "Routing entries use wiki-query invocations",
-          "check": "grep -q 'wiki-query' routing-table.md"
+          "text": "No constitution content generated before path supplied",
+          "check": "! test -f constitution.md || ! grep -qi 'wiki-query interface' constitution.md"
         },
         {
-          "text": "Output has thematic subsections covering multiple domains",
-          "check": "grep -c '^###' routing-table.md | awk '{exit ($1 < 3)}'"
+          "text": "No path invented or guessed by the skill",
+          "check": "! grep -qi 'assuming.*path\\|defaulting.*path\\|guessing.*path' process-notes.md"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Generate the standalone hot constitution for a project with one knowledge base configured. Include the wiki-query interface block.",
+      "expected_output": "A ## Wiki-Query Interface section that documents both normal mode (tiered retrieval, [[wikilinks]]) and fast/index-only mode, with all four trigger prefixes listed: 'quick answer:', 'just scan:', 'don't read the pages:', 'fast lookup:'. Block is always-loaded, not conditional.",
+      "files": ["eval-constitution-emits-wiki-query-block-both-modes.md"],
+      "assertions": [
+        {
+          "text": "Output contains a '## Wiki-Query Interface' section",
+          "check": "grep -q '## Wiki-Query Interface' constitution.md"
         },
         {
-          "text": "Coverage includes hooks-related entries",
-          "check": "grep -qi 'hook\\|useEffect\\|useState\\|useMemo\\|useCallback' routing-table.md"
+          "text": "Normal-mode invocation is exactly 'wiki-query [question]'",
+          "check": "grep -q 'wiki-query \\[' constitution.md"
         },
         {
-          "text": "Coverage includes server component or App Router entries",
-          "check": "grep -qi 'server component\\|app router\\|RSC\\|client component' routing-table.md"
+          "text": "Fast-mode invocation is exactly 'wiki-query quick answer: [question]'",
+          "check": "grep -q 'wiki-query quick answer:' constitution.md"
         },
         {
-          "text": "Entry count is 10 or more",
-          "check": "grep -c '\\*\\*.*\\*\\*.*→' routing-table.md | awk '{exit ($1 < 10)}'"
+          "text": "All four fast-mode trigger prefixes are listed",
+          "check": "grep -q 'just scan:' constitution.md && grep -q \"don't read the pages:\" constitution.md && grep -q 'fast lookup:' constitution.md"
         },
         {
-          "text": "KB audit report present (covered/gap categorization or coverage mention)",
-          "check": "grep -qi 'covered\\|gap\\|partial\\|index\\|audit\\|coverage' routing-table.md || grep -qi 'covered\\|gap\\|partial\\|index\\|audit\\|coverage' process-notes.md"
+          "text": "Block is not placed under a conditional heading",
+          "check": "! grep -qi 'if.*kb\\|when.*kb\\|conditional' constitution.md"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Generate the standalone hot constitution for a project with two knowledge bases configured: one for Momentum and one for a client project.",
+      "expected_output": "A ## Wiki-Query Interface block that makes KB selection explicit for multi-KB projects, showing '--kb [project-name]' syntax. Single-KB plain syntax is also shown for contrast. Block degrades cleanly — no mandatory ceremony for single-KB form.",
+      "files": ["eval-multi-kb-selection-explicit.md"],
+      "assertions": [
+        {
+          "text": "Multi-KB syntax shown with --kb flag",
+          "check": "grep -q '\\-\\-kb' constitution.md"
         },
         {
-          "text": "No advisory routing language",
-          "check": "! grep -qi 'if needed\\|you may want\\|consider consulting\\|feel free to' routing-table.md"
+          "text": "Single-KB plain form also documented",
+          "check": "grep -q 'wiki-query \\[' constitution.md"
+        },
+        {
+          "text": "Explicit mention that multi-KB requires specifying which KB",
+          "check": "grep -qi 'multiple.*kb\\|more than one.*kb\\|multi.*kb\\|specify.*kb\\|select.*kb' constitution.md"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Generate the standalone hot constitution for a TypeScript + Vitest project. Include the wiki-query interface block with required triggers.",
+      "expected_output": "A ## Wiki-Query Interface block whose trigger section uses only imperative prescriptive phrasing ('Before [moment], run wiki-query [exact question]'). Zero permissive phrases ('if you need', 'you may want to', 'consult if needed'). No per-agent symptom→query diagnostic rows.",
+      "files": ["eval-triggers-are-prescriptive-not-permissive.md"],
+      "assertions": [
+        {
+          "text": "At least 2 prescriptive trigger entries present",
+          "check": "grep -ci 'before.*run.*wiki-query\\|before.*wiki-query' constitution.md | awk '{exit ($1 < 2)}'"
+        },
+        {
+          "text": "No permissive trigger language",
+          "check": "! grep -qi 'if you need\\|you may want\\|consider consulting\\|feel free to\\|as needed\\|when helpful\\|consult.*if needed' constitution.md"
+        },
+        {
+          "text": "No per-agent symptom table rows",
+          "check": "! grep -qi 'symptom.*→\\|observed symptom\\|agent role.*query' constitution.md"
         }
       ]
     }

@@ -24,17 +24,76 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
   <critical>Do not duplicate bmad-create-story logic. Delegate all story creation to that skill.</critical>
   <critical>The Momentum Implementation Guide section you inject is the developer's authoritative guide — make it precise and actionable.</critical>
 
-  <step n="1" goal="Invoke bmad-create-story">
-    <action>Invoke the `bmad-create-story` skill. Pass through any story identifier, sprint context, or story path the user provided. Wait for full completion.</action>
-    <action>After bmad-create-story completes, capture:
-      - {{story_file}}: the output file path (from bmad-create-story's completion message)
-      - {{story_key}}: the story key (e.g., "1-2-repository-structure")
-    </action>
-    <note>bmad-create-story handles: epic analysis, architecture extraction, web research, previous story intelligence, git analysis, Dev Notes population, sprint status update to "ready-for-dev". We own none of this.</note>
-    <note>{{story_file}} is parsed from bmad-create-story's completion message. If it cannot be parsed (e.g., non-standard output format), derive it as `{{implementation_artifacts}}/{{story_key}}.md` and continue.</note>
+  <step n="1" goal="Resolve target story and select mode (enrich existing vs create from epic)">
+    <critical>Momentum stories are slug-keyed and live at `.momentum/stories/{{story_key}}.md`.
+      bmad-create-story is a CREATE-FROM-EPIC engine: it keys off `epic_num-story_num-title`
+      IDs, auto-discovers from `sprint-status.yaml`, and INITIALIZES the output file from a
+      template. Running it against an existing Momentum slug-story would overwrite the file
+      and destroy its content. So: enrich existing Momentum stories IN PLACE; only delegate
+      to bmad-create-story when creating a brand-new story that does not yet exist.</critical>
+
+    <action>Resolve the target from the story identifier the user/orchestrator passed (a slug,
+      a story key, or a path). Set {{story_key}} = the basename without extension if a path was
+      given, else the slug/key verbatim. Set {{story_file}} = `.momentum/stories/{{story_key}}.md`.</action>
+
+    <check if="{{story_file}} already exists under .momentum/stories/">
+      <action>Set {{mode}} = "enrich". This is an existing Momentum story (commonly a
+        `momentum:intake` stub). Enrich it IN PLACE — do NOT invoke bmad-create-story.</action>
+
+      <action>Read the FULL existing {{story_file}}. Its current Story, Description, Acceptance
+        Criteria, decision/DEC alignment, and References are AUTHORITATIVE content to PRESERVE
+        and refine — never to discard.</action>
+      <action>Reconcile epic membership (the index is authoritative — sprint-manager owns it):
+        if this story already has an entry in `.momentum/stories/index.json` with a non-blank
+        `epic_slug`, set {{epic_slug}} = that index value and update the story FILE frontmatter
+        `epic_slug` to match (this self-heals stale frontmatter left by an epic move). Otherwise
+        set {{epic_slug}} = the frontmatter value. Use {{epic_slug}} for all later epic-record
+        lookups and for the index write.</action>
+
+      <action>Load enrichment context (large-file protocol — Grep/chunk; NEVER full-read
+        architecture.md, prd.md, epics.json, or stories/index.json):
+        · the epics.json record for {{epic_slug}} (`{{planning_artifacts}}/epics.json`)
+        · architecture.md sections relevant to this story (Grep by topic / decision id)
+        · prd.md FRs relevant to this story (Grep by FR id / keyword)
+        · recent git history for touched areas: `git log --oneline -8 -- {{frontmatter touches}}`
+        · each existing file the story will modify (from frontmatter `touches`) — capture
+          current state, what this story changes, and what must be preserved.</action>
+
+      <action>Refine the story IN PLACE, preserving existing content:
+        · Rewrite DRAFT/rough Acceptance Criteria into validated, testable, OBSERVABLE ACs
+          (numbered) — keep their intent and any decision references; remove "DRAFT" and
+          "INTAKE STUB" markers and stub disclaimers.
+        · Add a `## Tasks / Subtasks` breakdown with explicit AC references per task.
+        · Populate `## Dev Notes` (Decision Authority, Current State of affected files,
+          Architecture Compliance, Testing Requirements, Project Context Reference),
+          preserving the existing `### References` subsection.
+        · Frontmatter: ensure story_type, priority, depends_on, touches are present — PRESERVE
+          existing values; only ADD missing ones derived from analysis. NEVER drop an existing
+          `depends_on` edge.
+        · Set frontmatter `status: ready-for-dev`.</action>
+
+      <action>Write the refined {{story_file}} in place. Do NOT relocate, template-initialize,
+        or regenerate from scratch. Then GOTO Step 3 (Step 2's relocate does not apply —
+        the file is already at its canonical path).</action>
+    </check>
+
+    <check if="{{story_file}} does NOT exist (new story to be created from an epic)">
+      <action>Set {{mode}} = "create".</action>
+      <action>Invoke the `bmad-create-story` skill. Pass through any story identifier, sprint context, or story path the user provided. Wait for full completion.</action>
+      <action>After bmad-create-story completes, capture:
+        - {{story_file}}: the output file path (from bmad-create-story's completion message)
+        - {{story_key}}: the story key (e.g., "1-2-repository-structure")
+      </action>
+      <note>bmad-create-story handles: epic analysis, architecture extraction, web research, previous story intelligence, git analysis, Dev Notes population, sprint status update to "ready-for-dev". We own none of this.</note>
+      <note>{{story_file}} is parsed from bmad-create-story's completion message. If it cannot be parsed (e.g., non-standard output format), derive it as `{{implementation_artifacts}}/{{story_key}}.md` and continue.</note>
+    </check>
   </step>
 
   <step n="2" goal="Verify story file was written and relocate to .momentum/stories/">
+    <check if="{{mode}} == 'enrich'">
+      <action>SKIP this step — enrich mode already wrote the story in place at its canonical
+        path during Step 1. Proceed directly to Step 3.</action>
+    </check>
     <action>Confirm {{story_file}} exists and is non-empty</action>
     <check if="bmad-create-story halted or story file missing">
       <action>Set {{reason}} = "story file was not produced by bmad-create-story"</action>
@@ -115,6 +174,15 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     <action>Produce a classification list: each task tagged with its change type (or `unclassified`). A story may contain multiple types.</action>
     <action>Store {{classification_list}}: the classification list produced above, with each task number/name and its assigned change type</action>
     <action>Store {{change_types_summary}}: e.g., "2 ui-component tasks, 1 config-structure task"</action>
+
+    <action>Persist the classified change types to the story frontmatter so downstream
+      sprint-planning steps can route on them (Step 4 Gherkin routing and Step 5 specialist
+      assignment read `change_type` from frontmatter). Read {{story_file}}; in the YAML
+      frontmatter set `change_type:` to the DISTINCT classified types (exclude `unclassified`),
+      written as a YAML list. Preserve all other frontmatter. Write {{story_file}} back.
+      Store {{change_type_list}} = that distinct list; store {{change_type_index_str}} =
+      the list joined with " + " (e.g., "skill-instruction + config-structure"). If every task
+      was `unclassified`, set {{change_type_list}} = [] and {{change_type_index_str}} = "".</action>
 
     <output>## Change Type Classification
 
@@ -249,12 +317,27 @@ field whose slugs match other entries in `stories/index.json`. Also scan
 Collect these as {{touches}} (e.g., ["skills/momentum/skills/dev/", ".claude/settings.json"]).
 If no paths are identifiable, set {{touches}} = [].</action>
 
+    <!-- Preserve real edges: union epic-derived metadata with the story frontmatter so an
+         enriched story never loses a depends_on edge or touches path it already declares. -->
+    <action>Read the story frontmatter `depends_on` and `touches` (if present). Set
+{{depends_on}} = the de-duplicated UNION of {{depends_on}} and the frontmatter `depends_on`.
+Set {{touches}} = the de-duplicated UNION of {{touches}} and the frontmatter `touches`.
+NEVER drop an edge or path the story file already declares.</action>
+
     <action>Read `.momentum/stories/index.json`</action>
+    <critical>The index `change_type` is the STRING `{{change_type_index_str}}` — never the
+      YAML list `{{change_type_list}}` (that list goes ONLY to the story frontmatter in Step 4).
+      The two variables are near-identical but opposite-typed; do not swap them. The index entry
+      is the consumer for `compute-verification-method`, which expects a "+"-joined string.</critical>
+    <critical>The `depends_on`/`touches` union in this step is intentionally ADDITIVE — it never
+      drops an edge or path. A developer-removed edge can therefore reappear on a re-enrichment
+      pass; that is by design (the story file frontmatter is treated as the floor of truth).</critical>
     <action>Add or update the entry keyed by {{story_key}} with:
       - status: "ready-for-dev"
       - title: human-readable title derived from story key
       - epic_slug: {{epic_slug}}
       - story_file: true
+      - change_type: {{change_type_index_str}}   (STRING form, e.g. "skill-instruction + config-structure")
       - depends_on: {{depends_on}}
       - touches: {{touches}}
     </action>

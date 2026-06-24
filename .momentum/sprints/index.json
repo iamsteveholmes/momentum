@@ -1,5 +1,188 @@
 {
-  "active": null,
+  "active": {
+    "locked": true,
+    "status": "active",
+    "stories": [
+      "build-guidelines-skill",
+      "agent-manifesto-format-specification",
+      "constitutionmd-generation-acceptance-criteria",
+      "constitution-builder-write-mode-parameterization",
+      "wiki-query-interface-block-for-hot-constitution",
+      "nornspun-agent-constitution",
+      "conduct-assign-finding-id-before-directed-fix-invocation",
+      "conduct-ledger-append-site-dedup-guards"
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "agent-manifesto-format-specification",
+          "conduct-assign-finding-id-before-directed-fix-invocation",
+          "constitutionmd-generation-acceptance-criteria",
+          "nornspun-agent-constitution",
+          "wiki-query-interface-block-for-hot-constitution"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "conduct-ledger-append-site-dedup-guards",
+          "constitution-builder-write-mode-parameterization"
+        ]
+      },
+      {
+        "wave": 3,
+        "stories": [
+          "build-guidelines-skill"
+        ]
+      }
+    ],
+    "approvals": [
+      {
+        "story_slug": "build-guidelines-skill",
+        "decision": "approved",
+        "approved_at": "2026-06-19T01:03:26Z",
+        "story_file_sha": "1d3f46c775e5c84fe0954ae7e87e3780741d13146921adb79fa8c3d8b58d0cff"
+      },
+      {
+        "story_slug": "agent-manifesto-format-specification",
+        "decision": "approved",
+        "approved_at": "2026-06-18T23:50:54Z",
+        "story_file_sha": "902e13fa4ffd75fb2c849e9928aa73faabb9334a68944538ee1060831dbb386c"
+      },
+      {
+        "story_slug": "constitutionmd-generation-acceptance-criteria",
+        "decision": "approved",
+        "approved_at": "2026-06-19T01:03:26Z",
+        "story_file_sha": "c9f9b14e0ada372ec13bc4a08ec485a3039e58c217a5e6ca2823abc4caf4c248"
+      },
+      {
+        "story_slug": "constitution-builder-write-mode-parameterization",
+        "decision": "approved",
+        "approved_at": "2026-06-19T01:03:26Z",
+        "story_file_sha": "240741f94b4ea19e18a37facb1906c948d571fac3ce6e329dd070e60a2a0e5d0"
+      },
+      {
+        "story_slug": "wiki-query-interface-block-for-hot-constitution",
+        "decision": "approved",
+        "approved_at": "2026-06-18T23:50:54Z",
+        "story_file_sha": "3de7d19212f7001e8c23e1013da5f346fc31d284582b2bfb64c57119b53e23f9"
+      },
+      {
+        "story_slug": "nornspun-agent-constitution",
+        "decision": "approved",
+        "approved_at": "2026-06-18T23:50:54Z",
+        "story_file_sha": "3de42b9fd4eb1bbecddfec91d91cfa69b2c64202c7965ba4a3bcd09f64243a8d"
+      },
+      {
+        "story_slug": "conduct-assign-finding-id-before-directed-fix-invocation",
+        "decision": "approved",
+        "approved_at": "2026-06-18T23:50:54Z",
+        "story_file_sha": "abf019a8549b36452c0d33a227f23f70ad4006f4d5e4cac0e94a339a21c8f1af"
+      },
+      {
+        "story_slug": "conduct-ledger-append-site-dedup-guards",
+        "decision": "approved",
+        "approved_at": "2026-06-22T02:19:05Z",
+        "story_file_sha": "01ce54d382e64644fe5462b23981dec3979196f33e6419f0b82bbd313f748291"
+      }
+    ],
+    "slug": "sprint-2026-06-18",
+    "planned": "2026-06-18",
+    "team": {
+      "story_assignments": {
+        "build-guidelines-skill": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/build-guidelines-skill.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "0590c37d0ccbf761f397734ca1a1ba4f32a9c3bbfd470d64ac7fb8cbdfad9f45"
+          }
+        },
+        "agent-manifesto-format-specification": {
+          "verification_method": "document-review",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/agent-manifesto-format-specification.review.md",
+            "harness_profile": "document-review",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "765194fa7f8fffd9e095440672f0629b4708f97e3883d7a68ef25fd1382d59fc"
+          }
+        },
+        "constitutionmd-generation-acceptance-criteria": {
+          "verification_method": "document-review",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/constitutionmd-generation-acceptance-criteria.review.md",
+            "harness_profile": "document-review",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "bc72670fff4576f8c792b89ed14b752b1281a05c80673288ee54a46bb9fc1a73"
+          }
+        },
+        "constitution-builder-write-mode-parameterization": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/constitution-builder-write-mode-parameterization.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "14bd1a1b1d25a5733d5948e033fa57e2efb88748522a4e7c002a2331751cd8af"
+          }
+        },
+        "wiki-query-interface-block-for-hot-constitution": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/wiki-query-interface-block-for-hot-constitution.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "809549341d9b744f3b912c843c2882e0ea825b1290c595252999e2997a20671e"
+          }
+        },
+        "nornspun-agent-constitution": {
+          "verification_method": "document-review",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/nornspun-agent-constitution.review.md",
+            "harness_profile": "document-review",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "c8c1d9ba0bb1e7c93f8733912c1eda0c248ac0b48ffc21c6a05008fd8c051fca"
+          }
+        },
+        "conduct-assign-finding-id-before-directed-fix-invocation": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/conduct-assign-finding-id-before-directed-fix-invocation.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "76625fd0376442418c2ec75831399cf2821f2a93cb2ced5db717f19a91b421b3"
+          }
+        },
+        "conduct-ledger-append-site-dedup-guards": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-06-18/specs/conduct-ledger-append-site-dedup-guards.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "3e004da89058b77f7061a3df34ae7b134207ac73545b7d8c45fde6a1e6d944c9"
+          }
+        }
+      }
+    },
+    "started": "2026-06-21"
+  },
   "planning": null,
   "completed": [
     {
