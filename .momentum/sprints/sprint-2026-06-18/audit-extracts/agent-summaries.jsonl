@@ -1,0 +1,1 @@
+{"agent_id": "agent-a15ded3edf9026a0d", "agent_type": "claude-code-guide", "size_kb": 219, "parse_error": "Invalid Input Error: Malformed JSON at byte 1 of input: unexpected character.  Input: \"{'bytes': 59680, 'code': 200, 'codeText': OK, '...\""}
