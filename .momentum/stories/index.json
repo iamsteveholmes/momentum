@@ -462,7 +462,7 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "build-guidelines-skill": {
-    "status": "review",
+    "status": "done",
     "title": "Build-Guidelines Skill — Gen-2 Agent Guidelines: Constitution + Composed Specialist Agent Files",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -643,7 +643,7 @@
     "priority": "low"
   },
   "constitutionmd-generation-acceptance-criteria": {
-    "status": "review",
+    "status": "done",
     "title": "Constitution.md generation acceptance criteria",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -2177,7 +2177,7 @@
     "priority": "low"
   },
   "agent-manifesto-format-specification": {
-    "status": "verify",
+    "status": "done",
     "title": "Agent manifesto format specification",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -3522,7 +3522,7 @@
     "story_type": "exploration"
   },
   "nornspun-agent-constitution": {
-    "status": "review",
+    "status": "done",
     "title": "Build Nornspun Agent Constitution (Tier 1 Hot Context)",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -3710,7 +3710,7 @@
     "story_type": "feature"
   },
   "wiki-query-interface-block-for-hot-constitution": {
-    "status": "review",
+    "status": "done",
     "title": "Wiki-Query Interface Block for Hot Constitution",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -3971,7 +3971,7 @@
     "story_type": "feature"
   },
   "constitution-builder-write-mode-parameterization": {
-    "status": "review",
+    "status": "done",
     "title": "Constitution-Builder Write-Mode Parameterization — In-Place SKILL vs Composed Agent File vs Standalone Constitution",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -5890,7 +5890,7 @@
     "story_type": "feature"
   },
   "conduct-assign-finding-id-before-directed-fix-invocation": {
-    "status": "review",
+    "status": "done",
     "title": "Conduct — assign finding_id before directed-fix invocation",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
@@ -5903,7 +5903,7 @@
     "change_type": "skill-instruction"
   },
   "conduct-ledger-append-site-dedup-guards": {
-    "status": "review",
+    "status": "done",
     "title": "Conduct — ledger append-site dedup guards",
     "epic_slug": "momentum-sprint-orchestration",
     "story_file": true,
