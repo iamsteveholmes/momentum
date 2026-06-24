@@ -5936,5 +5936,35 @@
     "touches": [],
     "priority": "medium",
     "story_type": "practice"
+  },
+  "manifesto-format-normative-file-pattern-ownership-field": {
+    "status": "backlog",
+    "title": "Manifesto format: normative file-pattern / ownership field for deterministic agent resolution",
+    "epic_slug": "momentum-agent-composition-pipeline",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
+  },
+  "build-guidelines-orchestrated-headless-bypass-for-role-domain-ask": {
+    "status": "backlog",
+    "title": "build-guidelines: orchestrated/headless bypass for the role×domain confirmation ask",
+    "epic_slug": "momentum-agent-composition-pipeline",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
+  },
+  "live-e2e-compose-register-resolve-gen-2-agent": {
+    "status": "backlog",
+    "title": "Live E2E: compose + register + resolve a Gen-2 agent against a real manifest + KB",
+    "epic_slug": "momentum-agent-composition-pipeline",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "exploration"
   }
 }
