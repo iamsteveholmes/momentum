@@ -61,10 +61,11 @@ _DRAFT — requires rewrite via create-story before this story is dev-ready._
 
 The following are rough draft ACs captured from conversation:
 
-**A. Extend the decision-grade-presentation standard**
-- [ ] Add two `§2.2` per-surface budget rows: **pre-sprint plan gate** and **post-sprint results gate** (close the two declared gaps).
-- [ ] Add a third leg beyond caps + floor — **presentation form** — stating that decision gates render as **visual HTML surfaces**, lead with a **plain-language purpose** (what the work accomplishes), and **diagram the structure** (dependencies / waves / status) rather than describing it in prose. Treat it as non-overridable-at-lower-scope, alongside the caps-vs-floor boundary.
-- [ ] Keep the standard self-sufficient (an agent loading only that file can apply the presentation-form leg).
+**A. Extend the decision-grade-presentation standard** — ✅ DELIVERED 2026-06-23 (branch `feat/companion-decision-surface-standard`), generalized into a reusable **Companion-Surface Obligation** rather than two one-off gate rows.
+- [x] §2.2 budget row added — **Companion decision surface** (row 9); the pre-sprint plan gate and post-sprint results gate are named instances of it in §6's surface schema (closes the two declared gaps). `references/rules/decision-grade-presentation.md` §2.2 + §6.
+- [x] Third leg added beyond caps + floor — **presentation form** (§5.1): decision gates render as **visual HTML**, lead with a **plain-language purpose hero**, and **diagram the structure** (deps/waves/status). Listed as non-overridable-at-lower-scope in §8 alongside the caps-vs-floor boundary.
+- [x] Standard kept self-sufficient (§5 + §5.1 state the obligation in full); a reusable skeleton ships at `references/templates/companion-decision-surface.html`, generalized from the validated prototype `nornspun/.momentum/plan-gate-sprint-2026-06-18.html`.
+- [ ] (remaining) Wire bulk-derivation paths (`intake` / ad-hoc plan workflows) to emit the companion surface from the new template. ACs **B** and **C** below remain the live-gate build work.
 
 **B. Build the pre-sprint plan gate (new surface)**
 - [ ] `momentum:sprint-planning` emits a Layer-0 plan-gate surface as its final step (HTML, visual sibling of `endgate-report.html`).

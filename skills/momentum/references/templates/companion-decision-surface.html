@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  COMPANION DECISION SURFACE — reusable skeleton (decision-grade-presentation.md §5 / §5.1)
+
+  WHAT THIS IS
+  The visual HTML surface a process MUST emit alongside any large review document
+  (a sprint plan, an intake plan, an audit, a migration scope) that exceeds the
+  Decision-card budget. The large document is the depth-on-demand backing; THIS is
+  what the human is actually handed. See the rule: references/rules/decision-grade-presentation.md.
+
+  HOW TO USE
+  1. Fill every {{PLACEHOLDER}}. Delete regions that do not apply (e.g. drop the
+     diagram if there is no dependency structure — but say so, don't silently omit).
+  2. Keep the order: PURPOSE HERO → ✓ VERIFIED LINE → STRUCTURE DIAGRAM →
+     ITEMS-AT-A-GLANCE → DECISION CARDS → RISKS → DEFAULTED-TO-STANDARDS → SIGN-OFF.
+  3. Caps still apply: ≤ 7 genuine forks as decision cards; collapse everything
+     routine to a count line or the <details> "defaulted to standards" block.
+  4. Floor still applies: every decision card carries What · Why · Evidence ·
+     Recommendation inline. A missing field is a defect, not a blank.
+  5. LINK to the source artifacts (the story/spec .md files); never inline or edit them.
+  6. Sign-off forces a one-line written verdict per fork — a blanket "approve all"
+     must not be sufficient (anti-rubber-stamp).
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{GATE TITLE}} · {{SCOPE ID}}</title>
+<style>
+  :root{
+    --bg:#faf7f0; --ink:#2c2417; --muted:#6b5e4a; --line:#e3dccb; --card:#fffdf8;
+    --amber:#7a5a1e; --green:#3f6b3a; --red:#9a3b2f; --blue:#3a5a7a;
+    --hi:#fdf3d8; --redbg:#f6ddd6; --amberbg:#fbeccf; --greenbg:#e5efe2; --bluebg:#dce8f2;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 90px}
+  h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:20px;margin:42px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:20px 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 8px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--amber);margin:0 0 8px}
+
+  /* purpose hero — the plain-language "what this accomplishes", read in seconds */
+  .hero{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--amber);border-radius:12px;padding:22px 26px;margin:22px 0 8px}
+  .hero .big{font-size:23px;line-height:1.35;font-weight:600;margin:0 0 16px;letter-spacing:-.01em}
+  .hero .big b{color:var(--amber)}
+  .deliver{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}
+  .deliver li{position:relative;padding:3px 0 3px 24px;font-size:15px}
+  .deliver li:before{content:"\25B8";position:absolute;left:2px;color:var(--amber);font-weight:700}
+  .heroline{margin:16px 0 0;font-size:15px;color:var(--muted);border-top:1px dashed var(--line);padding-top:14px}
+  .heroline b{color:var(--ink)}
+
+  /* ✓ verified line — all mechanically-verifiable claims collapse to stat tiles */
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .stat b{font-size:22px;display:block;line-height:1.1}
+  .stat span{color:var(--muted);font-size:12.5px}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;vertical-align:middle;letter-spacing:.02em}
+  .ok{background:var(--greenbg);color:var(--green)} .warn{background:var(--amberbg);color:var(--amber)}
+  .hipill{background:var(--redbg);color:var(--red)} .info{background:var(--bluebg);color:var(--blue)}
+  .low{background:#efeadd;color:var(--muted)}
+  .call{background:#f4e4c0;color:var(--amber)} .batch{background:var(--greenbg);color:var(--green)}
+
+  /* structure diagram — deps / waves / status as an actual picture, not prose */
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 10px 6px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .dlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);padding:6px 14px 10px}
+  .dlegend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid}
+
+  /* items at a glance — routine items collapse to a single scannable line each */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  .scard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:13px 15px}
+  .scard.s-high{border-left-color:var(--red)} .scard.s-med{border-left-color:var(--amber)} .scard.s-low{border-left-color:#cdc6b4}
+  .scard .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .scard .id{font-weight:700;font-size:15px}
+  .scard .val{color:var(--muted);font-size:14px;margin:5px 0 0}
+  .scard .meta{margin:8px 0 0;font-size:12px;color:var(--muted)}
+
+  /* decision cards — the genuine forks; each carries What/Why/Evidence/Recommend inline */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .card.dec{border-left:5px solid var(--red)} .card.decmed{border-left:5px solid var(--amber)}
+  .card h3{margin-top:0;font-size:16.5px}
+  .field{margin:9px 0}
+  .field .lab{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
+  .ev{background:#f3eee1;border-radius:6px;padding:8px 11px;font-size:13px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .rec{background:var(--greenbg);border-radius:7px;padding:9px 12px;margin:12px 0 0;font-size:14.5px}
+  .rec.cond{background:var(--amberbg)}
+  .rec .lab{color:var(--green);font-weight:700} .rec.cond .lab{color:var(--amber)}
+
+  ol.risks{margin:10px 0;padding-left:0;list-style:none;counter-reset:r}
+  ol.risks li{position:relative;padding:9px 0 9px 34px;border-bottom:1px solid var(--line);font-size:14.5px;counter-increment:r}
+  ol.risks li:before{content:counter(r);position:absolute;left:0;top:9px;width:22px;height:22px;border-radius:50%;background:var(--hi);color:var(--amber);font-size:12px;font-weight:700;text-align:center;line-height:22px}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:4px 16px;margin:12px 0}
+  details summary{cursor:pointer;font-weight:600;padding:10px 0}
+  details ul{margin:4px 0 14px}
+
+  .gate{background:#22307a0d;border:2px solid var(--blue);border-radius:12px;padding:20px 22px;margin:34px 0}
+  .gate h2{border:0;margin-top:0;color:var(--blue)}
+  .chk{margin:10px 0;padding-left:28px;position:relative;font-size:15px}
+  .chk:before{content:"\2610";position:absolute;left:0;top:-2px;font-size:20px}
+  .chk .blank{display:inline-block;min-width:200px;border-bottom:1px solid var(--muted);margin-left:4px}
+  code{font-size:13px;background:#f1ead9;padding:1px 5px;border-radius:4px}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>{{GATE TITLE}} — <code style="font-size:18px">{{SCOPE ID}}</code></h1>
+<p class="sub">{{one-line context: what kind of review, when in the cycle, what the sign-off authorizes}}</p>
+
+<!-- ░░ PURPOSE HERO — required. Plain language. What does this WORK accomplish? ░░ -->
+<div class="hero">
+  <p class="eyebrow">What this {{plan / sprint / change}} does</p>
+  <p class="big">{{One or two sentences a non-implementer understands in seconds. Bold the
+  load-bearing nouns with <b>…</b>.}}</p>
+  <ul class="deliver">
+    <li><b>{{deliverable 1}}</b> — {{plain outcome}}</li>
+    <li><b>{{deliverable 2}}</b> — {{plain outcome}}</li>
+    <li><b>{{deliverable 3}}</b> — {{plain outcome}}</li>
+    <li><b>{{deliverable 4}}</b> — {{plain outcome}}</li>
+  </ul>
+  <p class="heroline">{{N}} items · <b>{{K}} need a yes/no from you</b> · {{M}} ready as-specified · {{C}} to cut · ~{{T}} min to review.</p>
+</div>
+
+<!-- ░░ ✓ VERIFIED LINE — every mechanically-checkable claim collapses here. Not for review. ░░ -->
+<div class="grid">
+  <div class="stat"><b>{{count}}</b><span>{{what it is — e.g. stories, all client UI}}</span></div>
+  <div class="stat"><b>{{count}}</b><span>{{e.g. waves; mark any SPOF ⚠}}</span></div>
+  <div class="stat"><b>{{count}}</b><span>genuine decisions for you (★ CALL)</span></div>
+  <div class="stat"><b>{{count}}</b><span>{{irreversible ops — deploys / migrations}}</span></div>
+</div>
+
+<!-- ░░ STRUCTURE DIAGRAM — required when there IS structure. Draw it; don't describe it. ░░ -->
+<h2>{{How it builds — the order, and the one piece everything hangs off}}</h2>
+<div class="diagram">
+<svg viewBox="0 0 880 320" role="img" aria-label="{{accessible description of the dependency / wave diagram}}">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#b9ad95"/>
+    </marker>
+  </defs>
+  <!-- wave/phase headers -->
+  <text x="120" y="20" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">{{WAVE 1 · START NOW}}</text>
+  <!-- connectors: draw a <path …marker-end="url(#arr)"/> from each prerequisite to its dependents -->
+  <!-- nodes: one <g><rect/><text/><text/></g> per item.
+       HIGH-stakes / SPOF node → fill #f6ddd6 stroke #9a3b2f stroke-width 3, label with ⚠.
+       medium → fill #fbeccf stroke #7a5a1e.  low / as-specified → fill #fffdf8 stroke #cdc6b4. -->
+  <g>
+    <rect x="20" y="130" width="200" height="50" rx="8" fill="#f6ddd6" stroke="#9a3b2f" stroke-width="3"/>
+    <text x="32" y="152" font-size="14" font-weight="800" fill="#2c2417">{{HUB ITEM ⚠}}</text>
+    <text x="32" y="169" font-size="11.5" font-weight="600" fill="#9a3b2f">★ CALL · HIGH · gates {{N}} items</text>
+  </g>
+</svg>
+<div class="dlegend">
+  <span><i class="sw" style="background:#f6ddd6;border-color:#9a3b2f"></i> HIGH stakes</span>
+  <span><i class="sw" style="background:#fbeccf;border-color:#7a5a1e"></i> medium</span>
+  <span><i class="sw" style="background:#fffdf8;border-color:#cdc6b4"></i> low</span>
+  <span>★ CALL = needs your decision</span>
+  <span>✓ batch = build as-specified</span>
+  <span>⚠ = single point of failure</span>
+</div>
+</div>
+<p class="muted" style="font-size:14px">Read this as: <b>{{the one-sentence takeaway of the diagram — what must land first / what hangs off what}}</b></p>
+
+<!-- ░░ ITEMS AT A GLANCE — one collapsed line per item; routine ones get ✓ batch ░░ -->
+<h2>The {{N}} {{items}} at a glance</h2>
+<div class="cards">
+  <div class="scard s-high">
+    <div class="top"><span class="id">{{item id · title}}</span><span class="pill call">★ CALL</span></div>
+    <p class="val">{{one-line plain value}}</p>
+    <p class="meta">{{wave · deps · stakes}}</p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">{{item id · title}}</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">{{one-line plain value}}</p>
+    <p class="meta">{{wave · deps · low · build as-specified}}</p>
+  </div>
+  <!-- … one .scard per item … -->
+</div>
+
+<!-- ░░ DECISION CARDS — the genuine forks ONLY (≤ 7). What/Why/Evidence/Recommend inline. ░░ -->
+<h2>{{K}} decisions need a yes/no from you</h2>
+<p class="muted" style="margin-top:-4px">Each is decidable from this card alone. My recommendation is in the green/amber band; write a different call to override.</p>
+
+<div class="card dec">  <!-- .dec = HIGH stakes (red) · .decmed = medium (amber) -->
+<h3>{{The fork as a question}} <span class="pill hipill">{{HIGH · category}}</span></h3>
+<div class="field"><span class="lab">What</span>{{The concrete thing at stake, stated plainly. Inline the substance — no bare handles (no "per SDR-X"; quote it).}}</div>
+<div class="field"><span class="lab">Why it matters</span>{{The stakes — what goes wrong or improves; the tradeoff being made.}}</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">{{checkable detail — file:line · count · ratified decision · observed behavior}}</div></div>
+<div class="rec"><span class="lab">Recommend — {{Approve / the default call}}.</span> {{one-line why this is the safe default}}</div>
+</div>
+
+<!-- conditional recommendation variant: <div class="rec cond">…<span class="lab">Recommend — Accept only if …</span>…</div> -->
+
+<!-- ░░ RISKS — optional. Where the reviewer should spend skepticism. ░░ -->
+<h2>Where to spend your skepticism — top risks</h2>
+<ol class="risks">
+<li><b>{{risk}} <span class="pill hipill">HIGH</span></b> — {{what could go wrong + which items it hits}}</li>
+</ol>
+
+<!-- ░░ DEFAULTED TO STANDARDS — depth-on-demand; proves nothing was silently dropped ░░ -->
+<details>
+<summary>Defaulted to standards — {{X}} choices handled, no decision needed (click to expand)</summary>
+<ul>
+<li>{{convention-governed choice resolved to the standard, with the standard named}}</li>
+</ul>
+</details>
+
+<!-- ░░ SIGN-OFF — anti-rubber-stamp: one written verdict + reason per fork ░░ -->
+<div class="gate">
+<h2>Sign-off</h2>
+<p>Approve the <b>{{✓ batch items}}</b> batch (build as-specified) to start? <span style="font-size:20px">&#9744;</span></p>
+<p style="margin-top:16px"><b>For each decision, write a one-line verdict + reason</b> (the blank forces a real read — a blanket "approve all" defeats the gate):</p>
+<div class="chk">{{fork 1 — short restatement}} <span class="blank"></span></div>
+<div class="chk">{{fork 2 — short restatement}} <span class="blank"></span></div>
+<!-- … one .chk per genuine fork … -->
+<p style="margin-top:16px" class="muted">Nothing is built until you sign off. The full machine-grade detail ({{ACs, specs, tasks}}) lives in <code>{{path to source artifacts}}</code> — one click away, deliberately not in this view.</p>
+</div>
+
+<p class="sub" style="margin-top:30px">{{Surface name}} · generated from {{source}} · companion decision surface per decision-grade-presentation.md §5</p>
+
+</div>
+</body>
+</html>
