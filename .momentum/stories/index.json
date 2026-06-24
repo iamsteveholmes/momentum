@@ -2177,7 +2177,7 @@
     "priority": "low"
   },
   "agent-manifesto-format-specification": {
-    "status": "review",
+    "status": "verify",
     "title": "Agent manifesto format specification",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
