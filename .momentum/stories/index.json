@@ -6040,13 +6040,17 @@
     "change_type": "skill-instruction"
   },
   "companion-surface-rule-sync-and-bulk-derivation": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Companion surface — sync project rule + wire bulk-derivation paths to template",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      ".claude/rules/decision-grade-presentation.md",
+      "skills/momentum/skills/intake/"
+    ],
     "priority": "medium",
-    "story_type": "practice"
+    "story_type": "practice",
+    "change_type": "skill-instruction + rule-hook"
   }
 }
