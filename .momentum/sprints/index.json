@@ -1,6 +1,17 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "companion-surface-pre-sprint-plan-gate",
+      "companion-surface-post-sprint-results-gate",
+      "companion-surface-rule-sync-and-bulk-derivation",
+      "manifesto-format-normative-file-pattern-ownership-field",
+      "live-e2e-compose-register-resolve-gen-2-agent"
+    ],
+    "waves": []
+  },
   "completed": [
     {
       "locked": true,
