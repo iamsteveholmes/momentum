@@ -5965,14 +5965,20 @@
     "story_type": "maintenance"
   },
   "live-e2e-compose-register-resolve-gen-2-agent": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Live E2E: compose + register + resolve a Gen-2 agent against a real manifest + KB",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "manifesto-format-normative-file-pattern-ownership-field"
+    ],
+    "touches": [
+      "skills/momentum/skills/build-guidelines/e2e/",
+      "docs/research/"
+    ],
     "priority": "medium",
-    "story_type": "exploration"
+    "story_type": "exploration",
+    "change_type": "script-code + research-spike"
   },
   "sprint-planning-handoff-artifact": {
     "title": "Add mandatory handoff artifact to sprint-planning workflow terminal step",
