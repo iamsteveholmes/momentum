@@ -6010,24 +6010,34 @@
     "depends_on": []
   },
   "companion-surface-pre-sprint-plan-gate": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Companion surface — pre-sprint plan gate emitted by sprint-planning",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-planning/SKILL.md",
+      "skills/momentum/skills/sprint-planning/references/plan-gate-renderer.md",
+      "skills/momentum/skills/sprint-planning/evals/"
+    ],
     "priority": "high",
-    "story_type": "practice"
+    "story_type": "practice",
+    "change_type": "skill-instruction"
   },
   "companion-surface-post-sprint-results-gate": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Companion surface — post-sprint results gate (conduct end-gate + retro digest, fused)",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/conductor/",
+      "skills/momentum/skills/retro/"
+    ],
     "priority": "high",
-    "story_type": "practice"
+    "story_type": "practice",
+    "change_type": "skill-instruction"
   },
   "companion-surface-rule-sync-and-bulk-derivation": {
     "status": "backlog",
