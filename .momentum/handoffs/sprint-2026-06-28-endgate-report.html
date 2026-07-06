@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  END-GATE REPORT — sprint-2026-06-28 (RESULTS-FIRST companion decision surface)
+  Rendered by the Conductor per the results-first end-gate spec built by story ② this very sprint
+  (skills/momentum/skills/conductor/references/endgate-report-renderer.md §00 ship-status lead).
+  The single mandatory human acceptance gate. Depth-on-demand backing: the build ledger +
+  story/spec files, linked, never inlined.
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>End-Gate · sprint-2026-06-28</title>
+<style>
+  :root{
+    --bg:#faf7f0; --ink:#2c2417; --muted:#6b5e4a; --line:#e3dccb; --card:#fffdf8;
+    --amber:#7a5a1e; --green:#3f6b3a; --red:#9a3b2f; --blue:#3a5a7a;
+    --hi:#fdf3d8; --redbg:#f6ddd6; --amberbg:#fbeccf; --greenbg:#e5efe2; --bluebg:#dce8f2;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;margin:0}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 90px}
+  h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:20px;margin:40px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:18px 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 8px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--amber);margin:0 0 8px}
+  .hero{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--green);border-radius:12px;padding:20px 24px;margin:20px 0 8px}
+  .hero .big{font-size:22px;line-height:1.35;font-weight:600;margin:0 0 14px}
+  .hero .big b{color:var(--green)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+  .stat b{font-size:21px;display:block;line-height:1.1}
+  .stat span{color:var(--muted);font-size:12px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.02em}
+  .ok{background:var(--greenbg);color:var(--green)} .warn{background:var(--amberbg);color:var(--amber)}
+  .hipill{background:var(--redbg);color:var(--red)} .info{background:var(--bluebg);color:var(--blue)} .low{background:#efeadd;color:var(--muted)}
+  .ship{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+  .shipcard{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:8px;padding:10px 13px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .shipcard .id{font-weight:700;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .decision{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .decision.arch{border-left:5px solid var(--amber)} .decision.open{border-left:5px solid var(--red)}
+  .decision h3{margin-top:0;font-size:16.5px}
+  .field{margin:9px 0}
+  .field .lab{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
+  .ev{background:#f3eee1;border-radius:6px;padding:8px 11px;font-size:13px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .rec{background:var(--greenbg);border-radius:7px;padding:9px 12px;margin:11px 0 0;font-size:14.5px}
+  .rec.cond{background:var(--amberbg)} .rec .lab{color:var(--green);font-weight:700} .rec.cond .lab{color:var(--amber)}
+  .opts{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
+  .ack{margin:11px 0 0;padding:9px 12px;background:var(--hi);border-radius:7px;font-size:14px}
+  .ack input{transform:scale(1.15);margin-right:7px}
+  ol.risks{margin:10px 0;padding-left:0;list-style:none;counter-reset:r}
+  ol.risks li{position:relative;padding:9px 0 9px 34px;border-bottom:1px solid var(--line);font-size:14.5px;counter-increment:r}
+  ol.risks li:before{content:counter(r);position:absolute;left:0;top:9px;width:22px;height:22px;border-radius:50%;background:var(--hi);color:var(--amber);font-size:12px;font-weight:700;text-align:center;line-height:22px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:4px 16px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;padding:9px 0}
+  .live{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  .livebox{border:1px solid var(--line);border-radius:9px;padding:12px 15px}
+  .livebox.g{background:var(--greenbg);border-color:#c5d8bf} .livebox.h{background:var(--amberbg);border-color:#e6d3a5}
+  .livebox h3{margin:0 0 6px} .livebox ul{margin:4px 0;padding-left:18px;font-size:13.5px}
+  .gate{background:#22307a0d;border:2px solid var(--blue);border-radius:12px;padding:20px 22px;margin:32px 0}
+  .gate h2{border:0;margin-top:0;color:var(--blue)}
+  code{font-size:13px;background:#f1ead9;padding:1px 5px;border-radius:4px}
+  .muted{color:var(--muted)} a{color:var(--blue)}
+  pre{background:#f3eee1;border-radius:7px;padding:11px 13px;overflow:auto;font-size:12.5px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>End-Gate — <code style="font-size:18px">sprint-2026-06-28</code></h1>
+<p class="sub">Single acceptance gate. This report leads with <b>results</b> (per the fused results-gate spec story ② built this very sprint), then the decisions that need you. Approving merges the sprint to main.</p>
+
+<!-- HERO -->
+<div class="hero">
+  <p class="eyebrow">The work is done</p>
+  <p class="big">Momentum now <b>practices what it just wrote into its rules</b>: the two visual decision gates the companion-surface standard mandates are built, and the last determinism gap in agent composition is closed.</p>
+</div>
+<div class="grid">
+  <div class="stat"><b>5 / 5</b><span>stories shipped-merged</span></div>
+  <div class="stat"><b>3</b><span>decisions for you (§04)</span></div>
+  <div class="stat"><b>31</b><span>routine findings auto-fixed</span></div>
+  <div class="stat"><b>0</b><span>blocked / broken</span></div>
+</div>
+<p class="muted" style="font-size:13px;margin-top:-4px">Review gates: AVFL-on-merge <b>CLEAN · 100/100</b> · adversarial Outsider-Test guard <b>GUARD_CLEAN</b> · 2 reviewers/story caught <b>39 real findings</b> (all resolved or surfaced below) · E2E: implementations confirmed present, runtime <b>blocked on unset fixtures</b> (see §06 — honest, not hidden).</p>
+
+<!-- §00 SHIP STATUS -->
+<h2>§00 · Ship status</h2>
+<div class="ship">
+  <div class="shipcard"><span class="id">④ manifesto-ownership</span><span class="pill ok">✓ shipped-merged</span></div>
+  <div class="shipcard"><span class="id">① pre-sprint plan gate</span><span class="pill ok">✓ shipped-merged</span></div>
+  <div class="shipcard"><span class="id">② post-sprint results gate</span><span class="pill ok">✓ shipped-merged</span></div>
+  <div class="shipcard"><span class="id">⑤ live-e2e driver</span><span class="pill ok">✓ shipped-merged</span></div>
+  <div class="shipcard"><span class="id">③ project-rule sync</span><span class="pill ok">✓ shipped-merged</span></div>
+</div>
+<p class="muted" style="font-size:13.5px">All five reached the sprint branch. None blocked, quarantined, or incomplete. (⑤ carries an open decision about its <i>live proof</i> — §04 card 3 — but its code is merged.)</p>
+
+<!-- §01 WHAT SHIPPED -->
+<h2>§01 · What shipped</h2>
+<p><b>Before:</b> the companion-surface standard existed only as a rule; the two highest-leverage gates weren't emitted by any skill, and composed agents fell back silently to the generic <code>dev</code> agent. <b>After:</b></p>
+<ul>
+  <li><b>Pre-sprint plan gate</b> — <code>sprint-planning</code> emits a visual-HTML plan gate at its developer-review step (this run hand-rendered one to prove the shape; ① automates it).</li>
+  <li><b>Post-sprint results gate</b> — <code>conduct</code>'s end-gate now leads results-first + folds <code>retro</code>'s ≤7 digest into one surface (this very report is rendered to that new spec).</li>
+  <li><b>Deterministic agent resolution</b> — the manifesto declares a normative <code>## File Ownership</code> field, read verbatim into <code>agents.json patterns[]</code> — no more silent <code>dev</code> fallback.</li>
+  <li><b>Project-rule parity</b> — the project decision-grade rule is synced byte-for-byte to canonical (§5/§5.1/row 9).</li>
+  <li><b>Live E2E driver</b> — a committed, hardened bash driver that asserts compose+resolve against a real fixture (the live <i>run</i> is deferred — §04 card 3).</li>
+</ul>
+
+<!-- §02 WHAT EACH IS FOR -->
+<h2>§02 · What each piece is for</h2>
+<table>
+<tr><th>Story</th><th>Its job · what breaks without it</th></tr>
+<tr><td><b>① plan gate</b></td><td>Turns the ~37.5k-word spec wall into a scannable go/no-go surface. Without it, the highest-leverage HITL moment stays a rubber-stamp. <a href="../stories/companion-surface-pre-sprint-plan-gate.md">story</a></td></tr>
+<tr><td><b>② results gate</b></td><td>One fused, results-first surface after a build (this report). Without it, results + process review live in two disconnected artifacts. <a href="../stories/companion-surface-post-sprint-results-gate.md">story</a></td></tr>
+<tr><td><b>③ rule sync</b></td><td>Project tier now enforces what global mandates. Without it, the project silently under-enforces the companion-surface obligation. <a href="../stories/companion-surface-rule-sync-and-bulk-derivation.md">story</a></td></tr>
+<tr><td><b>④ File Ownership</b></td><td>Deterministic resolver globs. Without it, composed agents are unreachable and fall back to generic <code>dev</code>. <a href="../stories/manifesto-format-normative-file-pattern-ownership-field.md">story</a></td></tr>
+<tr><td><b>⑤ live driver</b></td><td>Turns the agent-cohort integration TRACE into an executable proof. Without a live run it remains an <i>executable</i> trace (§04 card 3). <a href="../stories/live-e2e-compose-register-resolve-gen-2-agent.md">story</a></td></tr>
+</table>
+
+<!-- §03 WHERE IT DIVERGED -->
+<h2>§03 · Where it diverged — caught &amp; fixed</h2>
+<p class="muted" style="font-size:13.5px;margin-top:-4px">The per-story reviewers found real defects. These were <b>all fixed during the build</b> (shown for confidence — the gates work because these were caught). Scariest first.</p>
+<ol class="risks">
+<li><b>① plan-gate JS would never enable sign-off <span class="pill hipill">was CRITICAL</span></b> — the gate script bound <code>FORK_COUNT</code> to <code>call_count</code> (a superset of the fork count), null-dereferencing on the story's own example so the approve button stayed permanently disabled. Fixed: bound to the genuine-fork count. <i>The anti-rubber-stamp gate now actually works.</i></li>
+<li><b>② results-gate anti-rubber-stamp silently defeated <span class="pill hipill">was CRITICAL</span></b> — <code>paint()</code> looped over an undefined <code>STAKES_DECISION_COUNT</code>, so the highest-severity decision cards never forced acknowledgment. Fixed: unified the constant across renderer + retro re-render. (Surfaced as §04 card 2 for your awareness.)</li>
+<li><b>① anti-rubber-stamp lived only in bypassable page JS <span class="pill warn">was MAJOR</span></b> — a bare <code>A</code> could activate with zero written verdicts. Fixed: the workflow now validates pasted per-fork verdicts before activation.</li>
+<li><b>② results gate branched on outcomes conduct never emits <span class="pill warn">was MAJOR</span></b> — assumed a vocabulary + a phantom <code>stage-4-merge-complete</code> event; the real ledger writes only <code>merged</code>/<code>failed</code>. Fixed to the real schema.</li>
+<li><b>④ Phase-1 validity flags were never gated <span class="pill warn">was MAJOR</span></b> — a manifesto flagged invalid still ran composition. Fixed: the Phase-3 loop now gates on the flag.</li>
+<li><b>⑤ deterministic proof compared to a typed env var, not the manifesto <span class="pill warn">was MAJOR</span></b> — proved "patterns == what I typed." Fixed: the driver now parses the manifesto File Ownership field on disk.</li>
+<li><span class="muted">+ 33 more routine findings (minor/low) across all 5 stories — auto-fixed; see §05.</span></li>
+</ol>
+
+<!-- §04 DECISIONS -->
+<h2>§04 · The decisions for you</h2>
+<p class="muted" style="margin-top:-4px">Two are architecture-tagged findings that were <b>already fixed</b> — acknowledge you've seen them. One is a genuine open choice.</p>
+
+<div class="decision arch">
+<h3>1 · [②] The §13 gate contradiction — fixed, confirm you've seen it <span class="pill warn">architecture · FIXED</span></h3>
+<div class="field"><span class="lab">What</span>The results-gate renderer spec said "sign-off on the process section only," contradicting the both-section anti-rubber-stamp gate (§3/§6 + the fused eval).</div>
+<div class="field"><span class="lab">Why it matters</span>Left unreconciled, the retro re-render would either re-litigate already-approved results cards or leave the gate unreachable — the standard's core enforcement mechanism, tagged high-blast-radius.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">code review [0]; fixed in endgate-report-renderer.md §13 → dual-section gate + ledger-state pre-population. Spot-check: 0 "process section only", 4 both-section refs.</div></div>
+<div class="rec cond"><span class="lab">Recommend — Acknowledge.</span> Fixed during the build; no action needed beyond confirming awareness of an architecture-level catch.</div>
+<div class="ack"><label><input type="checkbox" class="ackcard"> Acknowledged — I've seen this fixed architecture finding.</label></div>
+</div>
+
+<div class="decision arch">
+<h3>2 · [②] The paint() undefined-constant defeat — fixed, confirm you've seen it <span class="pill warn">architecture · FIXED</span></h3>
+<div class="field"><span class="lab">What</span><code>paint()</code> read an undefined <code>STAKES_DECISION_COUNT</code>; the documented <code>DECISION_COUNT</code> was unused — so the stakes-card acknowledgment loop never ran.</div>
+<div class="field"><span class="lab">Why it matters</span>The anti-rubber-stamp forcing function on the highest-severity cards would silently do nothing — the exact failure the standard exists to prevent. High-blast-radius.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">code review [1]; fixed by unifying on STAKES_DECISION_COUNT across §5b/§6/clean-guard + retro Phase 4.5. Spot-check: 5 refs, 0 bare-DECISION_COUNT loops. AVFL-on-merge additionally pinned its literal emission form.</div></div>
+<div class="rec cond"><span class="lab">Recommend — Acknowledge.</span> Fixed during the build. (This report's own gate below uses the corrected mechanism.)</div>
+<div class="ack"><label><input type="checkbox" class="ackcard"> Acknowledged — I've seen this fixed architecture finding.</label></div>
+</div>
+
+<div class="decision open">
+<h3>3 · [⑤] Live-run proof was NOT produced — your call <span class="pill hipill">architecture · OPEN</span></h3>
+<div class="field"><span class="lab">What</span>⑤'s driver is committed, hardened, and correct (verified by both reviewers), but the <b>live composition run against the nornspun fixture never happened</b> — so AC1's "real pipeline ran" and AC6's "running-app proof" are unmet. The committed evidence is a template.</div>
+<div class="field"><span class="lab">Why it matters</span>⑤'s whole purpose was to replace the sprint-2026-06-18 integration TRACE with live proof of the DEC-038 G1 gate. A committed-but-never-run driver is an <i>executable</i> trace — the same gap at a different level. The blocker is real infrastructure: <code>~/projects/nornspun</code> has no <code>momentum/agents.json</code>, no <code>.claude/manifests/</code>, no composed agents; composition is an LLM skill beat with no headless CLI.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">qa FAIL + code [0] + E2E: driver exits 1 at manifesto lookup; nornspun fixture dirs absent. Driver logic itself is sound (reviewers confirmed CLAUDE_PROJECT_DIR targeting, JSON parse, negative control).</div></div>
+<div class="rec cond"><span class="lab">Recommend — (A) Accept + follow-up.</span> Accept the hardened driver, merge, and open a follow-up to run the live composition once a nornspun File-Ownership manifest + KB fixture exists. The deterministic path (④) is merged, so the run is unblocked the moment a fixture is staged.</div>
+<p class="opts"><b>Options:</b> <b>(A)</b> accept driver + open follow-up [recommended] · <b>(B)</b> invest in nornspun fixture setup + live run now (bigger, cross-repo) · <b>(C)</b> force-close ⑤ as closed-incomplete until a real run is committed.</p>
+<div class="ack"><label>Your choice + one-line reason: <input type="text" class="ackopen" style="min-width:280px"></label></div>
+</div>
+
+<!-- §05 WAVED OFF & ROUTINE -->
+<h2>§05 · Waved off &amp; routine</h2>
+<table>
+<tr><th>What flagged</th><th>Why safe to leave</th></tr>
+<tr><td>① qa-reviewer BLOCKED 9 ACs</td><td>Not defects — a read-only reviewer can't invoke sprint-planning to observe the emitted HTML. Runtime verification is the E2E validator's job; deferred there (and confirmed as an environment gap, not a code defect). The code review then caught the real bugs independently.</td></tr>
+</table>
+<p class="muted"><b>31 routine findings auto-fixed</b> across the build (plus 2 AVFL cross-story consistency fixes) — not itemized. Full record: <code>.momentum/sprints/sprint-2026-06-28/build-ledger.jsonl</code> (57 events).</p>
+
+<!-- §06 HOW DONE, REALLY -->
+<h2>§06 · How done is this, <i>really</i>?</h2>
+<div class="live">
+  <div class="livebox g">
+    <h3>✓ Live-verified</h3>
+    <ul>
+      <li><b>③ rule sync</b> — grep-confirmed, byte-for-byte identical to canonical.</li>
+      <li><b>④ File Ownership field</b> — declared as required, document-confirmed present + normatively complete.</li>
+      <li><b>Every implementation</b> — confirmed present in source, internally consistent, 2-reviewer + AVFL-clean.</li>
+      <li><b>Cross-story integration</b> — AVFL-on-merge 100/100, all 5 seams verified.</li>
+    </ul>
+  </div>
+  <div class="livebox h">
+    <h3>◒ Hollow — runtime-unverified</h3>
+    <ul>
+      <li><b>① plan-gate emission</b> — needs a live <code>sprint-planning</code> run (no fixture). Partly evidenced: this run hand-rendered a working plan gate.</li>
+      <li><b>② results-gate emission</b> — needs a completed-sprint run. Partly dogfooded: <i>this report</i> follows ②'s new spec.</li>
+      <li><b>④ deterministic resolution + ⑤ live driver</b> — need a composed nornspun fixture (§04 card 3).</li>
+    </ul>
+  </div>
+</div>
+<p class="muted"><b>What approving actually does:</b> merges 5 code-complete, reviewed, AVFL-clean stories to main. The runtime proof for the three skill-invoke/composition stories remains deferred — ⑤'s live-run (card 3) is the tracked follow-up that closes it. This is an honest partial slice: the <i>build</i> is done; the <i>live proof</i> for the composition path is not.</p>
+
+<!-- §07 MERGE & PUSH PREVIEW -->
+<h2>§07 · Merge &amp; push preview</h2>
+<pre>30 commits on sprint/sprint-2026-06-28 (5 per-story merge commits)
+54 files changed, +5427 / -194
+  skills/momentum/skills/{sprint-planning, conductor, retro, build-guidelines}  (skill wiring + renderer specs + evals)
+  skills/momentum/references/manifesto-format.md                                (File Ownership field)
+  .claude/rules/decision-grade-presentation.md                                  (project-rule sync)
+  _bmad-output/planning-artifacts/{prd.md, architecture.md}                     (spec-impact cascade)</pre>
+<p><b>Approve sequence:</b> acknowledge the 3 §04 cards → Approve → the Conductor merges <code>sprint/sprint-2026-06-28</code> → <code>main</code> and transitions all 5 stories to <code>done</code>. <b>Push is a separate confirmation</b> after the merge.</p>
+
+<!-- GATE -->
+<div class="gate">
+<h2>Sign-off</h2>
+<p>Acknowledge each §04 card (2 checkboxes + 1 written choice) — a blanket approve is not enough:</p>
+<div class="ack"><label><input type="checkbox" class="ackcard"> Card 1 (② §13) acknowledged &nbsp;·&nbsp; also check it in §04</label></div>
+<p style="margin-top:14px"><b>Then:</b> Approve &amp; merge to main? <span style="font-size:20px">&#9744;</span> &nbsp;—or—&nbsp; Request changes (describe what to fix; the Conductor runs one autonomous fix pass and re-renders this gate).</p>
+<p class="muted" style="margin-top:12px">Nothing merges until you sign off. Full machine detail is one click away in the linked story/spec files and the build ledger — deliberately not inlined here.</p>
+</div>
+
+<p class="sub" style="margin-top:28px">End-gate · sprint-2026-06-28 · rendered results-first per story ②'s spec · decision-grade §5/§5.1 · assembled from build-ledger.jsonl</p>
+
+</div>
+</body>
+</html>
