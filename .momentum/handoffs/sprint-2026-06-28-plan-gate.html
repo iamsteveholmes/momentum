@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  PRE-SPRINT PLAN GATE — sprint-2026-06-28
+  Companion decision surface per decision-grade-presentation.md §5 / §5.1.
+  Hand-rendered this run (dogfood): story ① of THIS sprint automates this emission.
+  The large review artifacts (story .md files + frozen contracts) are the depth-on-demand
+  backing, linked below; THIS surface is what the developer is handed.
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pre-Sprint Plan Gate · sprint-2026-06-28</title>
+<style>
+  :root{
+    --bg:#faf7f0; --ink:#2c2417; --muted:#6b5e4a; --line:#e3dccb; --card:#fffdf8;
+    --amber:#7a5a1e; --green:#3f6b3a; --red:#9a3b2f; --blue:#3a5a7a;
+    --hi:#fdf3d8; --redbg:#f6ddd6; --amberbg:#fbeccf; --greenbg:#e5efe2; --bluebg:#dce8f2;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 90px}
+  h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:20px;margin:42px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:20px 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 8px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--amber);margin:0 0 8px}
+  .hero{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--amber);border-radius:12px;padding:22px 26px;margin:22px 0 8px}
+  .hero .big{font-size:23px;line-height:1.35;font-weight:600;margin:0 0 16px;letter-spacing:-.01em}
+  .hero .big b{color:var(--amber)}
+  .deliver{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}
+  .deliver li{position:relative;padding:3px 0 3px 24px;font-size:15px}
+  .deliver li:before{content:"\25B8";position:absolute;left:2px;color:var(--amber);font-weight:700}
+  .heroline{margin:16px 0 0;font-size:15px;color:var(--muted);border-top:1px dashed var(--line);padding-top:14px}
+  .heroline b{color:var(--ink)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .stat b{font-size:22px;display:block;line-height:1.1}
+  .stat span{color:var(--muted);font-size:12.5px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;vertical-align:middle;letter-spacing:.02em}
+  .ok{background:var(--greenbg);color:var(--green)} .warn{background:var(--amberbg);color:var(--amber)}
+  .hipill{background:var(--redbg);color:var(--red)} .info{background:var(--bluebg);color:var(--blue)}
+  .low{background:#efeadd;color:var(--muted)}
+  .call{background:#f4e4c0;color:var(--amber)} .batch{background:var(--greenbg);color:var(--green)}
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 10px 6px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .dlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);padding:6px 14px 10px}
+  .dlegend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  .scard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:13px 15px}
+  .scard.s-high{border-left-color:var(--red)} .scard.s-med{border-left-color:var(--amber)} .scard.s-low{border-left-color:#cdc6b4}
+  .scard .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .scard .id{font-weight:700;font-size:15px}
+  .scard .val{color:var(--muted);font-size:14px;margin:5px 0 0}
+  .scard .meta{margin:8px 0 0;font-size:12px;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .card.dec{border-left:5px solid var(--red)} .card.decmed{border-left:5px solid var(--amber)}
+  .card h3{margin-top:0;font-size:16.5px}
+  .field{margin:9px 0}
+  .field .lab{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
+  .ev{background:#f3eee1;border-radius:6px;padding:8px 11px;font-size:13px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .rec{background:var(--greenbg);border-radius:7px;padding:9px 12px;margin:12px 0 0;font-size:14.5px}
+  .rec.cond{background:var(--amberbg)}
+  .rec .lab{color:var(--green);font-weight:700} .rec.cond .lab{color:var(--amber)}
+  .opts{margin:8px 0 0;font-size:13.5px;color:var(--muted)}
+  ol.risks{margin:10px 0;padding-left:0;list-style:none;counter-reset:r}
+  ol.risks li{position:relative;padding:9px 0 9px 34px;border-bottom:1px solid var(--line);font-size:14.5px;counter-increment:r}
+  ol.risks li:before{content:counter(r);position:absolute;left:0;top:9px;width:22px;height:22px;border-radius:50%;background:var(--hi);color:var(--amber);font-size:12px;font-weight:700;text-align:center;line-height:22px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:4px 16px;margin:12px 0}
+  details summary{cursor:pointer;font-weight:600;padding:10px 0}
+  details ul{margin:4px 0 14px}
+  .gate{background:#22307a0d;border:2px solid var(--blue);border-radius:12px;padding:20px 22px;margin:34px 0}
+  .gate h2{border:0;margin-top:0;color:var(--blue)}
+  .chk{margin:10px 0;padding-left:28px;position:relative;font-size:15px}
+  .chk:before{content:"\2610";position:absolute;left:0;top:-2px;font-size:20px}
+  .chk .blank{display:inline-block;min-width:220px;border-bottom:1px solid var(--muted);margin-left:4px}
+  code{font-size:13px;background:#f1ead9;padding:1px 5px;border-radius:4px}
+  .muted{color:var(--muted)}
+  a{color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Pre-Sprint Plan Gate — <code style="font-size:18px">sprint-2026-06-28</code></h1>
+<p class="sub">Final go/no-go before the build. Sign-off activates 5 stories across 2 waves. This is the companion decision surface (decision-grade-presentation.md §5/§5.1) — the very gate this sprint's story ① will teach sprint-planning to emit automatically.</p>
+
+<!-- ░░ PURPOSE HERO ░░ -->
+<div class="hero">
+  <p class="eyebrow">What this sprint does</p>
+  <p class="big">Momentum <b>practices what it just wrote into its own rules</b>: it builds the two visual <b>decision gates</b> the companion-surface standard now mandates, and closes the last <b>determinism</b> gap in agent composition.</p>
+  <ul class="deliver">
+    <li><b>Pre-sprint plan gate</b> — sprint-planning emits this surface, automatically</li>
+    <li><b>Post-sprint results gate</b> — conduct + retro fused into one results-first surface</li>
+    <li><b>Project-rule sync</b> — the stale project rule brought up to the new standard</li>
+    <li><b>Deterministic resolution</b> — manifesto File-Ownership field; no more silent <code>dev</code> fallback</li>
+    <li><b>Live agent-composition E2E</b> — proves the cohort composes + resolves against a real fixture</li>
+  </ul>
+  <p class="heroline">5 stories, all specified · contracted · AVFL-clean. <b>2 plan-level calls need a yes/no from you</b> · 0 to cut · ~4 min to review.</p>
+</div>
+
+<!-- ░░ ✓ VERIFIED LINE ░░ -->
+<div class="grid">
+  <div class="stat"><b>5</b><span>stories — all specified + contracted</span></div>
+  <div class="stat"><b>2</b><span>waves · &#9888; ④ gates ⑤ (only cross-wave dep)</span></div>
+  <div class="stat"><b>2</b><span>plan-level decisions for you (&#9733;)</span></div>
+  <div class="stat"><b>CLEAN</b><span>AVFL checkpoint · 95/100</span></div>
+</div>
+<p class="muted" style="font-size:13.5px;margin-top:-4px">Mechanically verified, no review needed: 5 frozen contracts authored &amp; adversarial-guard <b>GUARD_CLEAN</b> (Outsider Test) · coverage plan complete (all dedicated-run) · spec impact cascaded (FR143 added; NFR22/FR139/FR96/FR136 + Decisions 29/56/59 updated) · all reviewer &amp; specialist agent definitions resolve.</p>
+
+<!-- ░░ STRUCTURE DIAGRAM ░░ -->
+<h2>How it builds — and the one piece everything hangs off</h2>
+<div class="diagram">
+<svg viewBox="0 0 880 320" role="img" aria-label="Wave 1 runs four independent stories in parallel; Wave 2 runs the live E2E, which depends on the manifesto File-Ownership story.">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#b9ad95"/>
+    </marker>
+  </defs>
+  <text x="150" y="20" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 1 · START NOW (parallel)</text>
+  <text x="705" y="20" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 2 · after ④</text>
+
+  <!-- ① -->
+  <g>
+    <rect x="30" y="40" width="240" height="46" rx="8" fill="#fffdf8" stroke="#cdc6b4" stroke-width="1.5"/>
+    <text x="42" y="62" font-size="13.5" font-weight="800" fill="#2c2417">① plan-gate</text>
+    <text x="42" y="78" font-size="11" font-weight="600" fill="#6b5e4a">&#10003; batch · HIGH · dev-skills</text>
+  </g>
+  <!-- ② -->
+  <g>
+    <rect x="30" y="100" width="240" height="46" rx="8" fill="#fffdf8" stroke="#cdc6b4" stroke-width="1.5"/>
+    <text x="42" y="122" font-size="13.5" font-weight="800" fill="#2c2417">② results-gate</text>
+    <text x="42" y="138" font-size="11" font-weight="600" fill="#6b5e4a">&#10003; batch · HIGH · dev-skills</text>
+  </g>
+  <!-- ③ -->
+  <g>
+    <rect x="30" y="160" width="240" height="46" rx="8" fill="#fffdf8" stroke="#cdc6b4" stroke-width="1.5"/>
+    <text x="42" y="182" font-size="13.5" font-weight="800" fill="#2c2417">③ rule-sync</text>
+    <text x="42" y="198" font-size="11" font-weight="600" fill="#6b5e4a">&#10003; batch · MED · dev-skills</text>
+  </g>
+  <!-- ④ hub / SPOF -->
+  <g>
+    <rect x="30" y="228" width="240" height="52" rx="8" fill="#fbeccf" stroke="#7a5a1e" stroke-width="3"/>
+    <text x="42" y="250" font-size="13.5" font-weight="800" fill="#2c2417">④ manifesto-ownership &#9888;</text>
+    <text x="42" y="267" font-size="11" font-weight="700" fill="#7a5a1e">HIGH · gates ⑤ — land first</text>
+  </g>
+  <!-- connector ④ -> ⑤ -->
+  <path d="M270,254 L588,254" fill="none" stroke="#b9ad95" stroke-width="2" marker-end="url(#arr)"/>
+  <!-- ⑤ -->
+  <g>
+    <rect x="590" y="228" width="250" height="52" rx="8" fill="#fffdf8" stroke="#cdc6b4" stroke-width="1.5"/>
+    <text x="602" y="250" font-size="13.5" font-weight="800" fill="#2c2417">⑤ live-e2e</text>
+    <text x="602" y="267" font-size="11" font-weight="600" fill="#6b5e4a">&#10003; batch · MED · dev · needs ④</text>
+  </g>
+</svg>
+<div class="dlegend">
+  <span><i class="sw" style="background:#fbeccf;border-color:#7a5a1e"></i> hub / land first</span>
+  <span><i class="sw" style="background:#fffdf8;border-color:#cdc6b4"></i> independent</span>
+  <span>&#10003; batch = build as-specified</span>
+  <span>&#9888; = single point of failure</span>
+</div>
+</div>
+<p class="muted" style="font-size:14px">Read this as: <b>④ (manifesto File-Ownership) is the only cross-wave dependency — it must land first; ⑤'s live E2E is blocked until ④ merges. The other three Wave-1 stories are fully independent and merge in parallel.</b></p>
+
+<!-- ░░ ITEMS AT A GLANCE ░░ -->
+<h2>The 5 stories at a glance</h2>
+<p class="muted" style="margin-top:-6px">All five are approved, contract-frozen, and AVFL-clean — they build as-specified. The two decisions below are plan-level, not story-level.</p>
+<div class="cards">
+  <div class="scard s-high">
+    <div class="top"><span class="id">① plan-gate</span><span class="pill batch">&#10003; batch</span></div>
+    <p class="val">Sprint-planning emits this very gate — automatically, from the shipped template.</p>
+    <p class="meta">Wave 1 · deps none · HIGH · <a href="../stories/companion-surface-pre-sprint-plan-gate.md">story</a></p>
+  </div>
+  <div class="scard s-high">
+    <div class="top"><span class="id">② results-gate</span><span class="pill batch">&#10003; batch</span></div>
+    <p class="val">Conduct end-gate + retro digest fused into one results-first surface.</p>
+    <p class="meta">Wave 1 · deps none · HIGH · <a href="../stories/companion-surface-post-sprint-results-gate.md">story</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">③ rule-sync</span><span class="pill batch">&#10003; batch</span></div>
+    <p class="val">Project rule brought up to the companion-surface standard. (Rule-sync only — bulk-derivation scoped out.)</p>
+    <p class="meta">Wave 1 · deps none · MED · <a href="../stories/companion-surface-rule-sync-and-bulk-derivation.md">story</a></p>
+  </div>
+  <div class="scard s-high">
+    <div class="top"><span class="id">④ manifesto-ownership &#9888;</span><span class="pill batch">&#10003; batch</span></div>
+    <p class="val">Deterministic agent resolution — File-Ownership field read verbatim; no silent <code>dev</code> fallback.</p>
+    <p class="meta">Wave 1 · <b>gates ⑤</b> · HIGH · <a href="../stories/manifesto-format-normative-file-pattern-ownership-field.md">story</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">⑤ live-e2e</span><span class="pill batch">&#10003; batch</span></div>
+    <p class="val">Live proof the cohort composes + resolves against a real fixture, superseding the old trace.</p>
+    <p class="meta">Wave 2 · deps ④ · MED · <a href="../stories/live-e2e-compose-register-resolve-gen-2-agent.md">story</a></p>
+  </div>
+</div>
+
+<!-- ░░ DECISION CARDS — genuine forks (2) ░░ -->
+<h2>2 decisions need a yes/no from you</h2>
+<p class="muted" style="margin-top:-4px">Each is decidable from this card alone. My recommendation is in the band; write a different call to override.</p>
+
+<div class="card decmed">
+<h3>1 · Epic placement — regroom the stories now, or after activation? <span class="pill warn">MED · taxonomy</span></h3>
+<div class="field"><span class="lab">What</span>The three companion-surface stories (①②③) are filed under <code>momentum-impetus-experience</code> — an epic scoped to Impetus's visual identity / session-opening personality. Their actual content is decision-grade presentation + rule work. And ④⑤ aren't yet registered in their epic's <code>stories[]</code> array in <code>epics.json</code>.</div>
+<div class="field"><span class="lab">Why it matters</span>Epic membership drives grooming, reporting, and each epic's done/remaining counts — it does <b>not</b> affect what gets built or how the sprint runs. Mis-homed stories skew the taxonomy but block nothing.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">AVFL minor (3 lenses converged); slug absent from the epic's stories[]; flagged by every per-story enrichment pass. Re-homing is momentum:epic-grooming / sprint-manager authority, deliberately not done by story creation.</div></div>
+<div class="rec cond"><span class="lab">Recommend — Activate now, run epic-grooming after.</span> Grooming owns epic membership; deferring it keeps the build moving and costs nothing (execution is epic-agnostic).</div>
+<p class="opts"><b>Options:</b> (A) run epic-grooming now — pauses activation · (B) after activation <b>[recommended]</b> · (C) leave as-is.</p>
+</div>
+
+<div class="card decmed">
+<h3>2 · Branch base — ratify building on the feature branch, not <code>main</code>? <span class="pill warn">MED · git</span></h3>
+<div class="field"><span class="lab">What</span>The sprint branch <code>sprint/sprint-2026-06-28</code> was cut from the current feature branch HEAD (<code>feat/companion-decision-surface-standard</code>), which is 2 commits ahead of main — <code>da70fed</code> (the companion-surface rule foundation this sprint builds on) + the sprint-2026-06-18 retro-close. The workflow's default is "branch from main."</div>
+<div class="field"><span class="lab">Why it matters</span>Branching from <code>main</code> would strand <code>da70fed</code> — the §5/§5.1 rule that story ③ syncs and that both gate stories build on lives only on this branch. When the sprint merges, those 2 commits ride to main with it.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">git log main..HEAD = da70fed (feat/rules) + 9699b27 (retro-close). The companion template is already on main; the rule change is not.</div></div>
+<div class="rec"><span class="lab">Recommend — Keep.</span> The sprint needs its own prerequisite in scope; basing on the feature branch is the correct call. Rebasing onto main would only add cherry-pick risk.</div>
+<p class="opts"><b>Options:</b> (A) keep <b>[recommended]</b> · (B) rebase onto main + cherry-pick da70fed.</p>
+</div>
+
+<!-- ░░ RISKS ░░ -->
+<h2>Where to spend your skepticism — top risks</h2>
+<ol class="risks">
+<li><b>④→⑤ critical path <span class="pill low">LOW-MED</span></b> — ⑤'s live E2E can't prove determinism until ④'s File-Ownership field lands and the fixture manifest carries it; if ④'s design slips, ⑤ is blocked. Mitigated by wave sequencing + ⑤'s built-in wrong-file guard (a mis-targeted resolver fails loudly, not silently).</li>
+<li><b>② results-gate cross-skill coupling <span class="pill low">LOW</span></b> — retro re-renders conduct's persisted end-gate data model; assumes that model is available/stable across the two skills. Defaulted to "retro owns the fused re-render"; ACs hold under any ownership option.</li>
+<li><b>AVFL self-read caveat <span class="pill low">LOW</span></b> — the AVFL validator lenses did not deliver structured findings back to the coordinator; the CLEAN/95 verdict is a thorough first-hand artifact read, not the full multi-lens spawn. The independent adversarial Outsider-Test guard on all 5 contracts <b>did</b> run and returned GUARD_CLEAN.</li>
+</ol>
+
+<!-- ░░ DEFAULTED TO STANDARDS ░░ -->
+<details>
+<summary>Defaulted to standards — 6 choices handled, no decision needed (click to expand)</summary>
+<ul>
+<li><b>③ scope</b> → rule-sync only; bulk-derivation AC4/AC5 recorded N/A and split to <code>companion-surface-bulk-derivation-wiring</code> (backlog). Ratified by you at the per-story gate.</li>
+<li><b>② render-ownership</b> → retro owns the fused re-render (decoupled; ACs observable under any option).</li>
+<li><b>⑤ verification headline</b> → <code>bash</code> executable driver, not document-review/trace (standards-default — avoids the "trace not run" weakness).</li>
+<li><b>③ verification driver</b> → <code>document-review</code> (override per verification-standard §2 — delivered scope is a rule-doc sync, verified by grep/read).</li>
+<li><b>Contracts</b> → all 5 pass the decorrelated adversarial Outsider-Test guard (GUARD_CLEAN, no rewrite passes needed).</li>
+<li><b>Spec-impact cascade</b> → FR143 added; NFR22/FR139/FR96/FR136 + architecture Decisions 29/56/59 updated to reflect planned scope.</li>
+</ul>
+</details>
+
+<!-- ░░ SIGN-OFF ░░ -->
+<div class="gate">
+<h2>Sign-off</h2>
+<p>Approve the <b>5-story batch</b> (build as-specified, 2 waves) to activate the sprint? <span style="font-size:20px">&#9744;</span></p>
+<p style="margin-top:16px"><b>For each decision, write a one-line verdict + reason</b> (the blank forces a real read — a blanket "approve all" defeats the gate):</p>
+<div class="chk">1 · Epic placement (now / after / leave) <span class="blank"></span></div>
+<div class="chk">2 · Branch base (keep / rebase) <span class="blank"></span></div>
+<p style="margin-top:16px" class="muted">Nothing is built until you sign off. The full machine-grade detail (ACs, frozen contracts, coverage plan, tasks) lives in <code>.momentum/stories/</code> and <code>.momentum/sprints/sprint-2026-06-28/specs/</code> — one click away via the story links above, deliberately not in this view.</p>
+</div>
+
+<p class="sub" style="margin-top:30px">Pre-sprint plan gate · sprint-2026-06-28 · hand-rendered from <code>companion-decision-surface.html</code> · companion decision surface per decision-grade-presentation.md §5/§5.1</p>
+
+</div>
+</body>
+</html>
