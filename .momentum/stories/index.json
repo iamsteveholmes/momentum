@@ -6079,11 +6079,13 @@
   "retro-audit-workflow-process-findings-return": {
     "status": "backlog",
     "title": "retro audit-workflow.js: return structured process_findings (<=7 Keep/Stop/Change) + routine_process_count for the fused results gate",
-    "epic_slug": "momentum-impetus-experience",
+    "epic_slug": "momentum-sprint-retro",
     "story_file": true,
-    "depends_on": [],
+    "depends_on": [
+      "retro-phase4-dynamic-workflow-audit-engine"
+    ],
     "touches": [],
-    "priority": "medium",
+    "priority": "high",
     "story_type": "maintenance"
   },
   "endgate-format-spec-section00-alignment": {
@@ -6105,5 +6107,35 @@
     "touches": [],
     "priority": "critical",
     "story_type": "defect"
+  },
+  "repair-phantom-story-file-entries-and-backfill-live-fixture-scope": {
+    "status": "backlog",
+    "title": "Repair phantom story_file entries + sprint-manager invariant; backfill conduct-live-run-against-fixture-sprint with live-fixture scope",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "defect"
+  },
+  "harden-avfl-checkpoint-validator-mailbox-delivery": {
+    "status": "backlog",
+    "title": "Harden AVFL checkpoint-validator mailbox delivery — no self-read fallback, degraded state on failure",
+    "epic_slug": "momentum-quality-gates-enforced",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "defect"
+  },
+  "epic-fit-flag-enforcement-and-companion-surface-epic-correction": {
+    "status": "backlog",
+    "title": "Enforce unresolved epic-fit flags at grooming/planning + correct companion-surface-pre-sprint-plan-gate epic",
+    "epic_slug": "momentum-backlog-refinement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
   }
 }

@@ -28,6 +28,8 @@ so that sprint planning runs end-to-end without requiring manual re-invocation m
 
 Two concurrent defects in the sprint-planning workflow found in sprint-2026-05-16: (1) inter-step confirmation gates break continuous execution — the orchestrator halts for confirmations between steps, and a /model switch mid-workflow resets execution state; (2) stale CLI subcommands and wrong skill namespaces — sprint-current and sprint-stories CLI refs are stale, and bare skill names (avfl, create-story) are used instead of the momentum: prefix (momentum:avfl, momentum:create-story). Both defects degrade the quality of sprint planning sessions. Source: sprint-2026-05-16 retro handoff iq-20260518043634.
 
+**Folded in from the sprint-2026-06-28 retro (2026-07-06, approved at the Phase 5 gate):** a third confirmed instance of defect class (2) lives downstream in `skills/momentum/skills/create-story/workflow.md:349`, which invokes the bare `avfl` skill name at the AVFL checkpoint step — a live `Unknown skill: avfl` tool-use error was captured in errors.jsonl at 2026-06-29 02:33Z, and the error recurs on every create-story run reaching that step. Fix it as part of this story's namespace sweep.
+
 **Pain context:** Sprint planning broke twice in sprint-2026-05-16 — once from confirmation gate halts, once from stale CLI refs. Developer had to manually re-invoke multiple times. Blocks reliable sprint execution.
 
 ## Acceptance Criteria
@@ -45,6 +47,7 @@ The following are rough draft ACs captured from conversation:
 - (3) CLI calls use current sprint subcommands (not stale refs)
 - (4) skill invocations use momentum: namespace prefix (momentum:avfl, momentum:create-story)
 - (5) full sprint planning workflow produces an activated sprint in a single continuous run on a standard session
+- (6) `create-story/workflow.md:349` invokes `momentum:avfl` (not bare `avfl`); a create-story run reaching the AVFL checkpoint produces zero Unknown-skill errors (folded from sprint-2026-06-28 retro)
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
