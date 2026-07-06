@@ -94,9 +94,15 @@ Bind supporting report variables:
 ```
 {{routine_auto_fixed_count}}  = count of findings with disposition == "fixed" across all sources
 {{dismissed_findings}}        = findings with disposition == "dismissed" — each must carry dismissal_rationale
-{{blocked_stories}}           = stories from {{build_log}} with event == "story-terminal" AND outcome == "failed",
-                                PLUS stories absent from any story-terminal row (integrity-stopped, stage3-blocked);
-                                supersession applied (latest row wins per story_slug); {{merged}} slugs excluded
+{{blocked_stories}}           = stories never added to {{merged}}, per the conductor/workflow.md
+                                Phase-5 assembly (authoritative). The union of: (a) ledger rows where
+                                event == "story-terminal" AND outcome == "failed"; (b) event ==
+                                "contract-integrity-stop"; (c) event == "stage3-story-blocked";
+                                (d) event == "mid-flight-escalation" AND resolution == "branch-aborted".
+                                Sources (b)–(d) never produce a story-terminal row, so equivalently:
+                                outcome == "failed" terminal rows PLUS any story absent from every
+                                story-terminal row (integrity-stopped, stage3-blocked, mid-flight-aborted).
+                                Supersession applied (latest row wins per story_slug); {{merged}} slugs excluded
 {{quarantined_stories}}       = reserved for post-hoc administrative quarantine (set during Phase 5 approve for
                                 stories that require branch preservation); not emitted as a ledger outcome during
                                 conduct build — the conduct ledger only writes outcome == "merged" or "failed"
@@ -282,6 +288,24 @@ The gate has two phases matching the two-phase rendering of the file:
 
 The JavaScript below is the **full fused gate** (Phase 2 form). Conduct's initial render uses the
 same structure with `PROCESS_COUNT = 0` (§08 absent), making the process checks no-ops.
+
+**Constant emission contract (conduct MUST emit — parse-stable for the retro re-render).**
+Conduct's initial render MUST emit all three gate constants as literal, single-line `var`
+declarations at the top of the gate `<script>` block, immediately before the `paint()` definition,
+in exactly this form (one `var` per line, `var` keyword, `= value;` terminator):
+
+```javascript
+var STAKES_DECISION_COUNT = {{stakes_findings | count}};        // stakes-class D-cards only; 0 for a clean build
+var FC_SLUGS = [{{blocked_stories | map(slug) | json_array}}];   // e.g. ["event-logging"]; [] for a clean build
+var PROCESS_COUNT = 0;                                            // always 0 at conduct render — retro Phase 4.5 rewrites this
+```
+
+This emission form is a **contract with retro's fused re-render (§13):** retro reads
+`STAKES_DECISION_COUNT` back out by parsing the literal line `var STAKES_DECISION_COUNT = N;`,
+preserves it, and rewrites only `PROCESS_COUNT`. Emitting these constants any other way
+(`const`/`let`, inlined into `paint()`, renamed, or split across lines) breaks that parse and
+silently resets the §04 gate state on re-render. The literal `var NAME = value;` form is
+mandatory, not stylistic. The comments below document the three constants paint() consumes:
 
 ```javascript
 // STAKES_DECISION_COUNT = number of stakes-class D-cards (D1..Dn; does NOT include force-close cards); 0 for clean build
