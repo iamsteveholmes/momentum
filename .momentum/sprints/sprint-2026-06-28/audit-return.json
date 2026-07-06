@@ -1,0 +1,159 @@
+{
+  "priority_action_items": [
+    {
+      "title": "Backfill missing story-stub file for conduct-live-run-against-fixture-sprint",
+      "priority": "high",
+      "source_detail": "stories/index.json (lines 5628-5637) registers story_file:true and priority:high for this slug, but .momentum/stories/conduct-live-run-against-fixture-sprint.md does not exist \u2014 confirmed via ls. The next sprint-planning pass that selects this high-priority backlog item will hit a missing-file error.",
+      "suggested_ac": [
+        ".momentum/stories/conduct-live-run-against-fixture-sprint.md exists with frontmatter matching the index entry",
+        "Story content specifies the live-fixture scope (agents.json, .claude/manifests/, composed-sprint sample) needed by 3 blocked stories this sprint",
+        "A bookkeeping check (sprint-manager or create-story) verifies story_file:true entries have a backing file before the flag is set"
+      ]
+    },
+    {
+      "title": "Harden AVFL Agent-tool checkpoint-validator mailbox delivery",
+      "priority": "high",
+      "source_detail": "The pre-sprint plan gate's shipped 'CLEAN/95' verdict was a single orchestrator's self-graded artifact read after all 3 async-spawned checkpoint validators (structural/coherence/domain) failed to deliver structured findings back via the mailbox path. The orchestrator disclosed this honestly as a caveat on the shipped HTML, but nothing in the pipeline enforces that disclosure \u2014 a differently-behaved orchestrator could report CLEAN/95 with no caveat and nothing would catch it.",
+      "suggested_ac": [
+        "Structural/Coherence/Domain checkpoint validators deliver findings back to the orchestrator via the mailbox path without requiring a self-read fallback",
+        "If mailbox delivery fails, the consolidator surfaces an explicit degraded/BLOCKED state rather than a scored CLEAN/N verdict",
+        "A dry run confirms end-to-end 3-lens finding delivery before the next plan gate ships"
+      ]
+    },
+    {
+      "title": "Stand up a live fixture/test harness for the companion-surface / live-e2e story family",
+      "priority": "high",
+      "source_detail": "Missing agents.json / .claude/manifests/ / completed-sprint fixture blocked QA on companion-surface-pre-sprint-plan-gate (9/9 ACs BLOCKED), the sprint-wide E2E validator (51 turns, most expensive validator this sprint, zero net-new yield, 16/27 scenarios BLOCKED), and both the manifesto-format and live-e2e-compose stories' headline ACs. Same root cause independently rediscovered 3+ times with no resolution.",
+      "suggested_ac": [
+        "A committed nornspun fixture provides a real momentum/agents.json, .claude/manifests/, and a composed sprint sample",
+        "sprint-planning -> build-guidelines -> agent-builder can be driven to completion against the fixture",
+        "Story-level QA/E2E for the 3 affected stories reports PASS/FAIL against the fixture instead of BLOCKED-on-missing-fixture"
+      ]
+    },
+    {
+      "title": "Fix retro's audit-workflow.js to emit process_findings and routine_process_count",
+      "priority": "high",
+      "source_detail": "retro/workflow.md:304-305 documents the Phase 4.5 fused-re-render contract, but skills/momentum/skills/retro/audit-workflow.js was never updated to emit these fields (confirmed by grep: zero matches, file last modified Jun 5). This sprint's own retro Phase 4.5 will silently skip and fall back to 'review separately' until fixed.",
+      "suggested_ac": [
+        "audit-workflow.js emits both process_findings and routine_process_count per the documented contract",
+        "A retro run against a real sprint produces the fused re-render instead of the fallback path",
+        "A backlog story or practice-ledger entry tracks this until closed (currently untracked anywhere)"
+      ]
+    },
+    {
+      "title": "Fix avfl -> momentum:avfl skill-name typo in create-story/workflow.md:349",
+      "priority": "medium",
+      "source_detail": "Confirmed still present in the repo via grep. Caused a live tool-use error during this sprint's create-story pass for companion-surface-pre-sprint-plan-gate (errors.jsonl @ 2026-06-29 02:33:03.811: 'Unknown skill: avfl'). Causes a guaranteed error on every create-story run reaching the AVFL checkpoint step.",
+      "suggested_ac": [
+        "create-story/workflow.md:349 invokes momentum:avfl, not avfl",
+        "A create-story run reaching the AVFL checkpoint produces zero Unknown skill errors"
+      ]
+    },
+    {
+      "title": "Assign a remediation owner for AVFL pre-build findings against story/spec/contract files",
+      "priority": "medium",
+      "source_detail": "STRUCTURAL-001 (duplicate harness_profile key across 3 eval.yaml files) and STRUCTURAL-002 (change_type/Dev-Notes mismatch in companion-surface-rule-sync-and-bulk-derivation.md) were raised correctly pre-build and remain unresolved in the repo (confirmed by grep). Dev-fixers are scoped to code only; AVFL-on-merge is explicitly forbidden from touching .momentum/stories/ and .momentum/sprints/ files, so these findings have no accountable closer.",
+      "suggested_ac": [
+        "A named pipeline stage (sprint-planning, epic-grooming, or a new remediation step) is documented as accountable for spec/contract-file AVFL findings",
+        "STRUCTURAL-001 and STRUCTURAL-002 are resolved in the repo"
+      ]
+    },
+    {
+      "title": "Reassign companion-surface-pre-sprint-plan-gate off epic_slug momentum-impetus-experience",
+      "priority": "medium",
+      "source_detail": "Dual-lens HIGH-confidence create-story finding: 'this slug isn't in that epic's stories[] array... Recommend reassigning before sprint selection.' Still unchanged 7 days and one full sprint build later \u2014 the story shipped and merged under a demonstrably wrong epic, silently, because create-story correctly declines authority to reassign and no downstream stage picked up the flag.",
+      "suggested_ac": [
+        "The story's epic_slug is corrected to an epic listing it in stories[] (or the target epic's stories[] is updated to include it)",
+        "epic-grooming or sprint-planning gains a check for unresolved 'flagged, not changed' epic-fit findings before a story is selected into a sprint"
+      ]
+    }
+  ],
+  "handoff_candidates": [
+    {
+      "title": "Next-sprint priority: subagents feature + manifesto/hot-constitution + KB",
+      "slug": "next-sprint-priority-subagents-manifesto-kb",
+      "description": "Developer stated an explicit standing priority for the next sprint's story selection (user msg 2026-07-06 20:26:08): using the powerful subagents feature paired with manifesto/hot-constitution and KB work. Carry this explicitly into the next sprint-planning run rather than relying on the developer to restate it.",
+      "feature_state_transition": {
+        "from": "verbal-intent",
+        "to": "sprint-planning-input"
+      }
+    },
+    {
+      "title": "Read-before-write tool-efficiency pattern across story-authoring agents",
+      "slug": "create-story-read-before-write-pattern",
+      "description": "100% (6/6) of independent create-story/dev-skills agents this sprint hit 'File has not been read yet' at least once, each self-correcting via immediate Read+retry. Shared prompt/skill gap, not randomness \u2014 worth a fix in create-story/dev-skills guidance even though the harness safety net makes every instance recoverable."
+    },
+    {
+      "title": "No checkpoint/resume mechanism for interrupted subagent lifecycles",
+      "slug": "subagent-checkpoint-resume-mechanism",
+      "description": "Two subagent lifecycles were fully discarded and restarted from zero this sprint (a dropped connection mid-enrichment; a 32-minute zero-diff stall on rule-sync), each re-paying all prior context-gathering turns. The Conductor's stall detection worked, but recovery cost is high with no cheaper resume path.",
+      "failure_diagnosis": {
+        "root_cause": "no mid-agent checkpoint/resume; full restart is the only recovery",
+        "occurrences": 2,
+        "sample_size_agents": 68
+      }
+    },
+    {
+      "title": "Retro's own transcript extractor loses 75% of agent-summary records",
+      "slug": "retro-audit-extractor-json-repr-parse-fix",
+      "description": "50 of 67 records in agent-summaries.jsonl carry a parse_error because the extractor calls json.loads on Python-dict-repr (single-quoted) content instead of tolerating it. Forces every future retro auditor to reconstruct tool-efficiency evidence by hand via raw session-file SQL, as this audit did."
+    },
+    {
+      "title": "Post-sprint-gate eval.yaml under-specifies the Recommendation field of the WWE contract",
+      "slug": "post-sprint-gate-eval-yaml-recommendation-field-gap",
+      "description": "companion-surface-post-sprint-results-gate's frozen eval.yaml and AC2 require only what/why/evidence + two options, omitting 'recommendation' entirely, yet the shipped renderer emits one. Correct today by coincidence \u2014 a future edit that silently dropped the Recommendation field would pass this frozen contract undetected."
+    },
+    {
+      "title": "Severity miscalibration: AC-defeating bug tagged 'minor'",
+      "slug": "manifesto-phase1-validity-gate-severity-miscalibration",
+      "description": "code-reviewer tagged the Phase-1 validity-flag-never-gated defect (manifesto-format story) as 'minor/routine' even though it silently defeated AC5 (a manifesto flagged invalid still ran composition) \u2014 the endgate report's own retrospective narrative separately calls it 'was MAJOR.' Routine stakes_class happened to still route it through auto-fix this time; the classification logic itself should weight 'strikes a named AC' higher.",
+      "epic_slug": "manifesto-format-normative-file-pattern-ownership-field"
+    },
+    {
+      "title": "Story completion metadata (index.json vs per-story .md) drifts on every conduct run",
+      "slug": "story-md-completion-metadata-backfill",
+      "description": "At least 3 stories this sprint (manifesto-format, live-e2e-compose-register-resolve-gen-2-agent, and implicitly others) show index.json status:done while the per-story .md still reads status:ready-for-dev with blank Dev Agent Record and unchecked task boxes. The conduct pipeline updates the authoritative index but never writes completion metadata back to the story file of record."
+    },
+    {
+      "title": "Structured 'pass' status can mask deferred/failed work admitted only in trailing prose",
+      "slug": "dev-agent-structured-status-vs-prose-admission-gap",
+      "description": "The live-e2e-compose stage-1 dev agent's structured JSON output read outcome:pass immediately followed by prose admitting the composition run was deferred and never executed. Any downstream automation consuming only the structured field would conclude the E2E genuinely passed."
+    },
+    {
+      "title": "live-e2e-compose-register-resolve-gen-2-agent shipped done with headline AC1/AC6 unmet",
+      "slug": "live-e2e-compose-ac1-ac6-unmet-shipped-done",
+      "description": "Both driver runs failed identically at the first check (agents.json not found); index.json still records status:done. There is no hard gate preventing merge/completion when a code-reviewer major finding is dispositioned as 'escalate to human end-gate' rather than 'block'.",
+      "epic_slug": "live-e2e-compose-register-resolve-gen-2-agent",
+      "failure_diagnosis": {
+        "root_cause": "missing live fixture (see priority item 3); disposition path allows escalation-not-block for major findings on headline ACs"
+      }
+    },
+    {
+      "title": "Foreseen risks closed by spec rewording recur downstream without a real mechanism",
+      "slug": "create-story-risk-flags-need-mechanism-not-wording",
+      "description": "AVFL's DOMAIN-001 finding on live-e2e-compose (pipeline is LLM skill invocation, not a headless CLI) was closed a week before dev by rewording the spec only. The identical gap was then independently rediscovered 3 more times downstream (dev, code review, sprint E2E) because no mechanism ensured the fixture precondition was ever actually run."
+    },
+    {
+      "title": "team-messages.jsonl is structurally near-empty for Conductor fan-out sprints \u2014 expected, not a bug",
+      "slug": "retro-team-messages-signal-for-fanout-sprints",
+      "description": "This sprint's coordination model is async fan-out-and-notify, not peer chat, so team-messages.jsonl contains exactly 1 line. Future retro auditors assessing inter-agent handoff clarity from this file alone will find it uninformative and must fall back to raw transcript-query SQL."
+    }
+  ],
+  "metrics": {
+    "user_msgs": 96,
+    "subagents": 67,
+    "errors": 24,
+    "team_msgs": 1,
+    "struggles": 25,
+    "successes": 8
+  },
+  "doc_path": ".momentum/sprints/sprint-2026-06-28/retro-transcript-audit.md",
+  "synthesize_status": "ok",
+  "verify_stats": {
+    "candidates": 35,
+    "deduped": 35,
+    "survived": 33,
+    "refuted": 2,
+    "unverified": 0
+  }
+}
