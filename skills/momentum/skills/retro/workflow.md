@@ -343,29 +343,42 @@ For each of these, choose:
     <check if="{{process_findings}} is empty">
       <output>No process findings returned by the audit Workflow — skipping fused gate re-render.
       The existing endgate HTML remains unchanged.</output>
+      <action>Set {{fused_render_completed}} = false</action>
       <action>Update task 4.5 to completed</action>
     </check>
 
     <check if="{{process_findings}} is non-empty">
       <action>Verify the endgate HTML exists:
         Check `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`.
-        If absent: warn ("endgate HTML not found at expected path — conduct may not have run for this sprint")
-        and set {{skip_fused_render}} = true.
+        If absent:
+          Emit: "WARNING: endgate HTML not found at `.momentum/handoffs/{{sprint_slug}}-endgate-report.html` — conduct may not have run for this sprint. Fused gate re-render SKIPPED. Process findings will NOT be added to the endgate surface."
+          Set {{fused_render_completed}} = false.
+          Set {{skip_fused_render}} = true.
       </action>
 
       <check if="{{skip_fused_render}} != true">
 
-        <action>Assemble the §08 Process review HTML fragment from {{process_findings}}:
+        <action>Apply ≤7 cap and assemble the §08 Process review HTML fragment from {{process_findings}}:
           - Sort findings: Stop first, then Change, then Keep (most-actionable disposition first)
-          - For each finding, render a process-finding div per renderer spec §12 — each with:
-            * Disposition eyebrow (STOP / CHANGE / KEEP)
+          - ENFORCE CAP: if process_findings.length > 7, take only the first 7 after sorting;
+            increment routine_process_count by (original process_findings.length - 7)
+          - Assign 1-based sequential index N (1..capped length) to each finding for pf-reason-N
+          - For each finding (N = 1..capped length), render a process-finding div per renderer spec §12:
+            * div id = this.id (e.g. "pf-1") — no additional "pf-" prefix
+            * Disposition eyebrow: uppercase of this.disposition (STOP / CHANGE / KEEP)
             * What (the finding headline)
             * Why it matters (inline — no deferred "see audit doc")
             * Evidence (inline — from the audit Workflow return)
-            * Written-response textarea (id="pf-reason-{{loop.index}}", required for gate)
+            * Written-response textarea (id="pf-reason-N", required for gate; N = 1-based index)
           - After the finding list: a count line for routine observations:
             "{{routine_process_count}} routine observations not surfaced — <a href='{{audit_doc_path}}'>full findings doc</a>"
           Store the assembled HTML fragment as {{process_section_html}}.
+          Store capped count as {{surfaced_process_count}} (= min(original length, 7)).
+        </action>
+
+        <action>Read STAKES_DECISION_COUNT from the existing endgate HTML:
+          Parse the `<script>` block for the line `var STAKES_DECISION_COUNT = N;` or equivalent.
+          Store as {{existing_stakes_decision_count}} for use in the updated script block.
         </action>
 
         <action>Extend the endgate HTML with the process section:
@@ -373,11 +386,18 @@ For each of these, choose:
           2. Insert {{process_section_html}} immediately before the gate `<div>` (the element
              containing `id="gate"` or `id="go"` — the approve control section)
           3. Update the JavaScript constants in the `<script>` block:
-             - Set `PROCESS_COUNT = {{process_findings | length}}`
+             - Set `STAKES_DECISION_COUNT = {{existing_stakes_decision_count}}` (preserve existing value)
+             - Set `PROCESS_COUNT = {{surfaced_process_count}}`
              - Replace the `paint()` function with the full fused version from renderer spec §6
                (which checks both §04 decision cards AND §08 process finding written reasons)
-          4. Write the updated HTML back to `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
+          4. Pre-populate §04 card state from the build ledger per renderer spec §13:
+             - For each force-close card (FC_SLUGS): if ledger records the prior choice, emit
+               `checked` / `selected` on the matching checkbox / radio in the HTML
+             - For each stakes-class card D_N: if ledger records prior approval, emit
+               `checked` / `selected` on the matching checkbox / radio
+          5. Write the updated HTML back to `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
         </action>
+        <action>Set {{fused_render_completed}} = true</action>
 
         <action>Open the updated endgate HTML in the cmux viewer pane as a tab:
           ```bash
@@ -692,9 +712,13 @@ These will be surfaced automatically in the next sprint planning session (Step 1
   · {{error_count}} tool errors (actual indicators)
   · {{team_msg_count}} inter-agent messages
 
+{{#if fused_render_completed}}
 **Post-sprint review (fused gate):**
   `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
   (Results + process digest in one surface — process sign-off completed in Phase 4.5)
+{{else}}
+**Post-sprint review:** Fused gate re-render was skipped ({{#if process_findings.length == 0}}no process findings{{else}}endgate HTML not found{{/if}}). The existing endgate HTML was not extended with process findings. Review separately if needed.
+{{/if}}
 
 **Full audit findings (depth-on-demand):**
   `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
