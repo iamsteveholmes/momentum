@@ -5938,7 +5938,7 @@
     "story_type": "practice"
   },
   "manifesto-format-normative-file-pattern-ownership-field": {
-    "status": "review",
+    "status": "done",
     "title": "Manifesto format: normative file-pattern / ownership field for deterministic agent resolution",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -5965,7 +5965,7 @@
     "story_type": "maintenance"
   },
   "live-e2e-compose-register-resolve-gen-2-agent": {
-    "status": "review",
+    "status": "done",
     "title": "Live E2E: compose + register + resolve a Gen-2 agent against a real manifest + KB",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -6023,7 +6023,7 @@
     "depends_on": []
   },
   "companion-surface-pre-sprint-plan-gate": {
-    "status": "review",
+    "status": "done",
     "title": "Companion surface — pre-sprint plan gate emitted by sprint-planning",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
@@ -6039,7 +6039,7 @@
     "change_type": "skill-instruction"
   },
   "companion-surface-post-sprint-results-gate": {
-    "status": "review",
+    "status": "done",
     "title": "Companion surface — post-sprint results gate (conduct end-gate + retro digest, fused)",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
@@ -6053,7 +6053,7 @@
     "change_type": "skill-instruction"
   },
   "companion-surface-rule-sync-and-bulk-derivation": {
-    "status": "review",
+    "status": "done",
     "title": "Companion surface — sync project rule + wire bulk-derivation paths to template",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
