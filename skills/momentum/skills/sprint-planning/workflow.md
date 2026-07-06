@@ -1019,6 +1019,10 @@ Address all findings before the plan can proceed.</output>
     Do NOT emit a flat-text plan summary — the HTML gate IS the review artifact.</note>
 
     <!-- Phase A: Synthesize gate data from in-context sprint plan state -->
+    <action>Read `references/templates/companion-decision-surface.html` in full before
+    generating any HTML — use its CSS tokens and component classes exactly as shipped; do not
+    reinvent the palette or layout (finding [10]).</action>
+
     <action>Read `references/plan-gate-renderer.md` fully before synthesizing. Then synthesize
     the gate data model per §2 of that spec:
 
@@ -1031,10 +1035,21 @@ Address all findings before the plan can proceed.</output>
       Compute derived counts:
         · wave_count = distinct wave numbers in {{story_wave}}
         · call_count = count of gate_stories where verdict == "★ CALL"
-        · irrev_count = count of stories whose title/ACs contain keywords: migrate, deploy,
-          schema, delete, drop, seed
-        · spof_story = slug with the most dependents from other selected stories (or null if none)
+        · irrev_count = count of stories whose title/ACs contain the canonical keyword list
+          from renderer §2d (whole-word matching): "migrate", "deploy", "schema", "delete",
+          "drop", "seed" — use the renderer §2d list as the single source of truth; do not
+          duplicate it here
+        · spof_story = slug with the most TRANSITIVE dependents (see renderer §2d tie-break:
+          most transitive dependents → lowest wave → alpha slug); null if none
         · batch_count = count of gate_stories where verdict == "✓ batch"
+
+      For each story, resolve the concrete spec file extension and compute absolute paths:
+        · Run: ls .momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.* to find the actual
+          extension (e.g., .eval.yaml, .feature, .review.md) — no glob in the final href
+        · Run: pwd to get {{cwd}}
+        · Set abs_story_path = "{{cwd}}/.momentum/stories/{{story_slug}}.md"
+        · Set abs_spec_path  = "{{cwd}}/.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}"
+        · Store per-story abs_story_path and abs_spec_path for use in Phase B hrefs
 
       Build {{genuine_forks}} (≤ 7 ForkItems) using fork detection rules from renderer §4:
         · Same-wave touch overlaps across stories
@@ -1064,19 +1079,25 @@ Address all findings before the plan can proceed.</output>
 
     Rendering rules:
       · Zero external dependencies — inline all CSS and JS
-      · Links to canonical story files: `file://$PWD/.momentum/stories/{{slug}}.md`
-      · Links to spec files: `file://$PWD/.momentum/sprints/{{sprint_slug}}/specs/{{slug}}.*`
+      · Links to canonical story files: use abs_story_path computed in Phase A;
+        href form: `file://{{abs_story_path}}` (absolute path → browser resolves as
+        file:///Users/… correctly; never use `$PWD` or `$(pwd)` in href values — they do
+        not expand in authored HTML)
+      · Links to spec files: use abs_spec_path computed in Phase A;
+        href form: `file://{{abs_spec_path}}` (concrete extension resolved in Phase A — no glob)
       · NEVER inline story body, ACs, Dev Notes, or Tasks into the gate
-      · Anti-rubber-stamp JS: submit button disabled until all fork verdict fields filled (if forks > 0)
-      · Follow renderer §5.8 for the JavaScript gate enforcement code
+      · Anti-rubber-stamp JS: set FORK_COUNT = {{genuine_forks|count}} (NOT call_count);
+        submit button disabled until all genuine-fork verdict fields filled (if forks > 0)
+      · Follow renderer §5.8 for the single canonical JavaScript gate enforcement code
     </action>
 
     <action>Write the gate to: `.momentum/handoffs/{{sprint_slug}}-plan-gate.html`</action>
 
-    <!-- Phase C: Open in viewer -->
+    <!-- Phase C: Open in viewer — capture surface ref for re-render -->
     <action>Open the gate in the cmux viewer pane as a browser tab. Do NOT create a new
-    structural pane — add a tab to the existing viewer pane:
-      Run: `cmux browser new "file://$(pwd)/.momentum/handoffs/{{sprint_slug}}-plan-gate.html" --workspace "$CMUX_WORKSPACE_ID" --focus false`
+    structural pane — add a tab to the existing viewer pane. Capture and store the surface ref:
+      Run: `PLAN_GATE_SURFACE=$(cmux --json browser new "file://$(pwd)/.momentum/handoffs/{{sprint_slug}}-plan-gate.html" --workspace "$CMUX_WORKSPACE_ID" --focus false | python3 -c "import json,sys; print(json.load(sys.stdin)['surface'])")`
+    Store PLAN_GATE_SURFACE for re-render use in the M-branch (do NOT call browser new again).
     </action>
 
     <output>Plan gate written to .momentum/handoffs/{{sprint_slug}}-plan-gate.html and opened in the viewer.
@@ -1097,7 +1118,10 @@ Review the gate, record your per-fork verdicts (if any), then enter your decisio
       </action>
       <action>Re-synthesize all gate data (Phase A) and re-render the HTML gate (Phase B) with the updated plan state</action>
       <action>Re-write to `.momentum/handoffs/{{sprint_slug}}-plan-gate.html`</action>
-      <action>Open the updated gate in the viewer (Phase C)</action>
+      <action>Reload the existing viewer tab — do NOT call `cmux browser new` again (prevents
+      stale tab accumulation). Use the stored PLAN_GATE_SURFACE ref:
+        Run: `cmux browser $PLAN_GATE_SURFACE goto "file://$(pwd)/.momentum/handoffs/{{sprint_slug}}-plan-gate.html"`
+      If PLAN_GATE_SURFACE is unset, fall back to Phase C and re-capture the ref.</action>
       <action>Re-present the sign-off prompt</action>
     </check>
 
@@ -1106,6 +1130,20 @@ Review the gate, record your per-fork verdicts (if any), then enter your decisio
     </check>
 
     <check if="developer selects A (Approve)">
+      <check if="{{genuine_forks|count}} > 0">
+        <output>Use the 'Copy decision' button in the gate to copy your signed-off decision
+block, then paste it here. The block must contain a non-empty Fork line for each of the
+{{genuine_forks|count}} fork(s). A bare "A" or "approve" without per-fork verdicts will not
+be accepted — the anti-rubber-stamp gate requires written reasoning per fork.</output>
+        <ask>Paste the decision block from the gate:</ask>
+        <action>Validate the pasted block:
+          1. It starts with "Sprint plan decision — {{sprint_slug}}"
+          2. It contains exactly {{genuine_forks|count}} "Fork N:" lines (N = 1..fork_count)
+          3. Each "Fork N:" line has non-whitespace text after the colon
+          If any check fails: explain the specific failure and re-ask. Only proceed when all
+          checks pass. A developer who types bare "A" or omits fork lines must be re-prompted.
+        </action>
+      </check>
       <action>Update task 7 (Developer review) to completed</action>
       <action>Proceed to Step 8</action>
     </check>

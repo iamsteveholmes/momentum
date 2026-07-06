@@ -80,7 +80,14 @@ gate_story = {
   one_line_value: string                   ← see §3 value synthesis rule,
   verdict:        "★ CALL" | "✓ batch"    ← see §3 verdict rule,
   story_path:     ".momentum/stories/{{slug}}.md",
-  spec_path:      ".momentum/sprints/{{sprint_slug}}/specs/{{slug}}.*"
+  spec_path:      ".momentum/sprints/{{sprint_slug}}/specs/{{slug}}.{{ext}}"
+                  ← resolve {{ext}} at assembly time: list the specs dir and identify the
+                    concrete file extension for this slug (e.g., .eval.yaml, .feature,
+                    .review.md). Shell globs must NOT appear in the final spec_path.
+                  Also compute absolute path variants (using pwd, not shell expansion tokens):
+                    abs_story_path = "{{cwd}}/.momentum/stories/{{slug}}.md"
+                    abs_spec_path  = "{{cwd}}/.momentum/sprints/{{sprint_slug}}/specs/{{slug}}.{{ext}}"
+                  These absolute variants are used in all href attributes (§5.4, §7).
 }
 ```
 
@@ -89,6 +96,12 @@ gate_story = {
 ```
 genuine_forks = list of ForkItem (≤ 7)    ← see §4 fork detection rules
 ```
+
+**Overflow rule (>7 detected genuine forks):** Sort candidates by stakes (HIGH first, then
+medium). Surface the top-7 as ForkItem cards. Append a single non-card escalation line inside
+the decision-cards section: "N additional genuine decisions detected — this sprint scope may be
+too large to activate safely; consider splitting before proceeding." Never silently truncate;
+the escalation line is required whenever the raw fork count exceeds 7.
 
 ### 2c. Defaulted choices list
 
@@ -99,11 +112,29 @@ defaulted_choices = list of string        ← choices resolved to standards, no 
 ### 2d. Structure metadata
 
 ```
-spof_story      = slug of the story with the most dependents (set ⚠ marker); null if no deps
+spof_story      = slug of the story with the most TRANSITIVE dependents (stories this story
+                  blocks, directly or through the dependency chain). Null if no story has any
+                  dependents.
+                  Tie-break rule: most transitive dependents → then lowest wave number → then
+                  alphabetical slug.
+
 wave_count      = count of distinct waves
+
 call_count      = count of gate_stories where verdict == "★ CALL"
-irrev_count     = count of stories that involve irreversible ops (deploy, migration, db-schema change)
-                  (detect from: story title / AC keywords: "migrate", "deploy", "schema", "delete", "drop")
+                  NOTE: call_count ≥ genuine_forks|count. A story can be ★CALL without having a
+                  genuine fork (e.g., HIGH stakes with no conflicting choices). Use call_count
+                  for the ★CALL stat tile (§5.2) ONLY. Use {{genuine_forks|count}} for the JS
+                  FORK_COUNT, the decision-card section header (§5.5), and per-fork verdict
+                  inputs (§5.8). Never drive the JS gate loop from call_count.
+
+batch_count     = count of gate_stories where verdict == "✓ batch"
+
+irrev_count     = count of stories that involve irreversible ops.
+                  Detect using WHOLE-WORD / contextual phrase matching (not substring) against
+                  story title and AC text. Canonical keyword list (single source of truth —
+                  reference this list from the workflow rather than duplicating it):
+                    "migrate", "deploy", "schema", "delete", "drop", "seed"
+                  A word like "schematic", "deployer", or "dropdown" does NOT match.
 ```
 
 ---
@@ -112,11 +143,13 @@ irrev_count     = count of stories that involve irreversible ops (deploy, migrat
 
 ### 3.1 Stakes synthesis
 
-Assign `stakes` by reading the story's `acceptance_criteria` text and `change_type`:
+Assign `stakes` by reading the story's `acceptance_criteria` text and `change_type`.
+Use **whole-word / contextual phrase matching** (not substring) — "deployed" matches "deploy",
+but "deployer-config" or "deployment-guide" in an unrelated context does not.
 
 | Signal | Stakes |
 |--------|--------|
-| AC mentions "auth", "security", "credential", "permission", "data loss", "irreversible", "migration", "deploy" | **HIGH** |
+| AC contains whole-word match for "auth", "security", "credential", "permission", "data loss", "irreversible", "migration", "deploy" | **HIGH** |
 | `change_type` includes `app-ui` + `backend`, or multiple change types affecting user-facing behavior | **medium** |
 | `change_type` is single `skill-instruction`, `config-structure`, or `specification` | **low** |
 | `change_type` is `research-spike` | **low** |
@@ -228,17 +261,24 @@ Four `.stat` tiles (mechanically verified — not for human review):
 
 ### 5.3 Structure diagram (inline SVG)
 
-Render as a `<svg viewBox="0 0 880 {{height}}">` where height scales with story count (approx 80px per story row + 40px per wave header).
+Render as a `<svg viewBox="0 0 {{width}} {{height}}">` where:
+- `width` = max(880, wave_count × 220) — scales horizontally with wave count (minimum 880px)
+- `height` = (story_count × 80) + (wave_count × 40) — scales vertically with story count
 
 Layout rules:
 - Group stories by wave horizontally. Wave N is a column of nodes.
 - Draw arrow connectors (`<path marker-end="url(#arr)">`) from each story to its dependents.
-- Node styling:
-  - `stakes == HIGH` → fill `#f6ddd6` stroke `#9a3b2f` stroke-width 3 (red border)
-  - `stakes == medium` → fill `#fbeccf` stroke `#7a5a1e` (amber border)
-  - `stakes == low` or routine → fill `#fffdf8` stroke `#cdc6b4` (light border)
-  - SPOF story → additionally label with `⚠` and use stroke-width 4
-- Node label: story slug (abbreviated to ≤ 18 chars) + wave tag
+  "Dependents" means **transitive** dependents — stories that cannot run until this one lands
+  (directly or through a chain). Use transitive count for SPOF determination (§2d).
+- Node styling (evaluated in this order — SPOF overrides stakes fill):
+  - SPOF story → fill `#f6ddd6` stroke `#9a3b2f` stroke-width 4 AND label with `⚠`
+                 (SPOF fill overrides the stakes-based fill regardless of the story's stakes
+                 value — a low-stakes SPOF still gets red to make the critical path unmistakable)
+  - `stakes == HIGH` (non-SPOF) → fill `#f6ddd6` stroke `#9a3b2f` stroke-width 3 (red border)
+  - `stakes == medium` (non-SPOF) → fill `#fbeccf` stroke `#7a5a1e` (amber border)
+  - `stakes == low` or routine (non-SPOF) → fill `#fffdf8` stroke `#cdc6b4` (light border)
+- Node label: story slug (abbreviated per this rule: if slug.length ≤ 18, use as-is; else
+  take the first 8 characters + "…" + the last 9 characters, giving exactly 18 chars) + wave tag
 - Include `verdict` badge: `★ CALL` or `✓` inside the node text
 
 Below the SVG, add:
@@ -259,7 +299,7 @@ One `.scard` per story, ordered by wave then by stakes (HIGH first within wave):
     <span class="pill call|batch">★ CALL|✓ batch</span>
   </div>
   <p class="val">{{one_line_value}}</p>
-  <p class="meta">Wave {{wave}} · deps: {{deps|join(", ")|default("none")}} · {{stakes}} · <a href="file://{{story_path}}">story ↗</a> · <a href="file://{{spec_path}}">spec ↗</a></p>
+  <p class="meta">Wave {{wave}} · deps: {{deps|join(", ")|default("none")}} · {{stakes}} · <a href="file://{{abs_story_path}}">story ↗</a> · <a href="file://{{abs_spec_path}}">spec ↗</a></p>
 </div>
 ```
 
@@ -267,9 +307,9 @@ Stake-to-scard-class mapping: HIGH → `s-high`, medium → `s-med`, low → `s-
 
 ### 5.5 Decision cards
 
-Header: `<h2>{{call_count}} decision{{call_count != 1 ? 's' : ''}} need a yes/no from you</h2>`
+Header: `<h2>{{genuine_forks|count}} decision{{genuine_forks|count != 1 ? 's' : ''}} need a yes/no from you</h2>`
 
-If `call_count == 0`: render `<p class="muted">All stories build as-specified — no forks found. Clean-plan path: approve the batch below.</p>` instead of cards.
+If `genuine_forks|count == 0`: render `<p class="muted">All stories build as-specified — no forks found. Clean-plan path: approve the batch below.</p>` instead of cards.
 
 For each genuine fork (capped at 7), render:
 
@@ -312,24 +352,12 @@ Always include this `<details>` block. List every defaulted choice:
 
 ### 5.8 Sign-off gate
 
-**Anti-rubber-stamp requirement:** When `call_count > 0`, the gate must require a written one-line verdict per fork before activation can proceed. A blanket "approve all" with no per-fork reasoning must not satisfy the gate.
+**Anti-rubber-stamp requirement:** When `genuine_forks|count > 0`, the gate must require a
+written one-line verdict per genuine fork before activation can proceed. A blanket "approve all"
+with no per-fork reasoning must not satisfy the gate.
 
-**Implementation:** Use JavaScript to enforce the gate:
-
-```javascript
-function checkGate() {
-  var allSigned = true;
-  for (var i = 1; i <= FORK_COUNT; i++) {
-    var v = document.getElementById('verdict-' + i).value.trim();
-    if (!v) { allSigned = false; break; }
-  }
-  var decision = document.querySelector('input[name="decision"]:checked');
-  document.getElementById('submit-btn').disabled = !(allSigned && decision);
-  document.getElementById('gate-hint').textContent = allSigned && decision
-    ? 'Ready — paste the decision text back into the chat.'
-    : 'Write a one-line verdict for each fork above, then select Approve or Modify.';
-}
-```
+**Implementation:** Use the single canonical JavaScript gate below (do NOT define a second or
+illustrative `checkGate()` function — duplicates cause agents to emit the wrong variant):
 
 Gate HTML structure:
 
@@ -339,10 +367,10 @@ Gate HTML structure:
   <p>Approve the <b>{{batch_count}} ✓ batch</b> items to build as-specified?
      <span style="font-size:20px">&#9744;</span></p>
 
-  {{if call_count > 0:}}
+  {{if genuine_forks|count > 0:}}
   <p style="margin-top:16px"><b>For each fork, write a one-line verdict + reason</b>
      (the blank forces a real read — blanket approve-all is insufficient):</p>
-  {{for each fork with index i:}}
+  {{for each fork in genuine_forks with index i:}}
   <div class="chk">
     <b>Fork {{i}}:</b> {{fork.title}}
     <input id="verdict-{{i}}" type="text" class="blank" placeholder="your call + one-line reason"
@@ -358,14 +386,14 @@ Gate HTML structure:
   </div>
 
   <p id="gate-hint" style="margin-top:12px;color:#6b5e4a;font-size:14px">
-    {{if call_count > 0: Write a one-line verdict for each fork above, then select Approve or Modify.
+    {{if genuine_forks|count > 0: Write a one-line verdict for each fork above, then select Approve or Modify.
       else: Select Approve to activate, or Modify to adjust the plan.}}
   </p>
   <button id="submit-btn" disabled style="margin-top:8px;padding:10px 22px;background:#3a5a7a;color:#fff;border:none;border-radius:7px;font-size:15px;cursor:pointer">
     Copy decision → paste into chat
   </button>
   <script>
-    var FORK_COUNT = {{call_count}};
+    var FORK_COUNT = {{genuine_forks|count}};  /* NOT call_count — see §2d note */
     document.getElementById('submit-btn').addEventListener('click', function() {
       var lines = ['Sprint plan decision — ' + '{{sprint_slug}}'];
       var dec = document.querySelector('input[name="decision"]:checked').value;
@@ -395,7 +423,7 @@ Gate HTML structure:
 </div>
 ```
 
-**Clean-plan path (zero forks):** When `call_count == 0`, render only the batch-approve radio group with no per-fork blanks. `checkGate()` requires only a selected radio, not written verdicts.
+**Clean-plan path (zero forks):** When `genuine_forks|count == 0`, render only the batch-approve radio group with no per-fork blanks. `checkGate()` requires only a selected radio, not written verdicts. (call_count may still be > 0 — those ★CALL items are flagged in the items-at-a-glance section but have no fork cards requiring a verdict.)
 
 ---
 
@@ -405,14 +433,26 @@ Gate HTML structure:
 .momentum/handoffs/{{sprint_slug}}-plan-gate.html
 ```
 
-After writing, open in the cmux Browser viewer pane as a tab (never a new structural pane):
+**Initial open** — capture and store the surface ref:
 
 ```bash
-cmux browser new "file://$(pwd)/.momentum/handoffs/{{sprint_slug}}-plan-gate.html" \
-  --workspace "$CMUX_WORKSPACE_ID" --focus false
+PLAN_GATE_SURFACE=$(cmux --json browser new "file://$(pwd)/.momentum/handoffs/{{sprint_slug}}-plan-gate.html" \
+  --workspace "$CMUX_WORKSPACE_ID" --focus false | python3 -c "import json,sys; print(json.load(sys.stdin)['surface'])")
 ```
 
-The `--focus false` flag keeps the developer's main workspace active.
+Store `$PLAN_GATE_SURFACE` for the session. The `--focus false` flag keeps the developer's main
+workspace active.
+
+**Re-render (Modify path — finding [8] fix):** On subsequent renders (Modify / M-branch), do
+NOT call `cmux browser new` again — this creates a stale duplicate tab. Instead, reload the
+existing surface:
+
+```bash
+cmux browser $PLAN_GATE_SURFACE goto "file://$(pwd)/.momentum/handoffs/{{sprint_slug}}-plan-gate.html"
+```
+
+If `$PLAN_GATE_SURFACE` is unset (first render failed to capture the ref), fall back to
+`cmux browser new` and re-capture the surface ref.
 
 ---
 
@@ -420,8 +460,13 @@ The `--focus false` flag keeps the developer's main workspace active.
 
 The gate **links to** canonical story files and specs as depth-on-demand. It **never inlines** their full body and **never edits** them. The rule:
 
-- Use `<a href="file://$(pwd)/{{story_path}}">story ↗</a>` for each story's `.md` file
-- Use `<a href="file://$(pwd)/{{spec_path}}">spec ↗</a>` for each story's contract file
+- Use `<a href="file://{{abs_story_path}}">story ↗</a>` for each story's `.md` file
+- Use `<a href="file://{{abs_spec_path}}">spec ↗</a>` for each story's contract file
+
+`abs_story_path` and `abs_spec_path` are absolute paths computed in Phase A (see §2a). An
+absolute path starting with `/` produces `file:///Users/...` (three slashes) which browsers
+resolve correctly as a local file. Shell expansion tokens (`$(pwd)`, `$PWD`) must NOT appear
+in authored HTML — they do not expand at author time and break the links.
 - Do NOT paste story ACs, Dev Notes, or Tasks/Subtasks into the gate HTML
 - The machine band (full spec detail for the dev agent) stays in the source files
 

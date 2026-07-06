@@ -50,16 +50,32 @@ Then:
    Modify scope / Remove from sprint)
 6. ALL five fields are present; none are blank or omitted
 
-## Scenario D: The gate links to story files rather than inlining them
+## Scenario D: The gate links to story files using a resolved absolute path
 
 Given a plan gate for a 3-story sprint
 
 When a reader looks for the full detail of story `my-story-slug`
 
 Then:
-1. The gate contains an `<a href="file://…/my-story-slug.md">` or `<a href="file://…/my-story-slug.*">` link
-2. The full body of `my-story-slug.md` (its ACs, Dev Notes, Tasks) does NOT appear as inline text in the gate
-3. The machine band detail is reachable via the link, not embedded in the review surface
+1. The gate contains an `<a href="file://…/my-story-slug.md">` link with a resolved file
+   extension (`.md` for story files) — NOT a glob pattern like `my-story-slug.*`
+2. The href is an absolute path (`file:///Users/…/my-story-slug.md`) — NOT a relative path
+   where `.momentum` would be misread as a URL hostname
+3. The full body of `my-story-slug.md` (its ACs, Dev Notes, Tasks) does NOT appear as inline text in the gate
+4. The machine band detail is reachable via the link, not embedded in the review surface
+
+## Scenario E: Workflow A-branch validates per-fork verdicts before activating
+
+Given a sprint plan gate with 2 genuine forks ({{genuine_forks|count}} == 2)
+
+When the developer types "A" without first using the gate's Copy button (no paste-back)
+
+Then:
+1. The workflow asks the developer to paste the decision block from the gate
+2. The workflow rejects a response that omits the "Sprint plan decision —" header
+3. The workflow rejects a response that contains fewer than 2 "Fork N:" lines
+4. The workflow rejects a response where any "Fork N:" line has no text after the colon
+5. Only after all 2 fork lines carry written text does the workflow proceed to Step 8 (activation)
 
 ## Pass Criteria
 
@@ -67,7 +83,9 @@ Then:
 - With forks: submit button enables after all fork verdicts are filled
 - Zero forks: submit button enables on radio selection alone (no blank-filling required)
 - Each fork card has all five fields: What, Why it matters, Evidence, Recommendation, Options
-- Story links point to canonical `.md` files; story body is not inlined
+- Story links use absolute paths pointing to canonical `.md` files (no glob, no relative path)
+- Story body is not inlined in the gate
+- Workflow A-branch rejects a bare "A" when genuine forks > 0; requires pasted decision block
 
 ## Fail Criteria
 
@@ -75,3 +93,5 @@ Then:
 - A fork card is missing one or more of the five required fields
 - Fork card references a decision by handle only ("per DEC-036") without inlining the substance
 - Full story AC text appears inline in the gate body
+- Story href uses a glob pattern (`.*`) or relative path (`.momentum` as URL host)
+- Workflow routes to Step 8 (activation) from a bare "A" response when genuine forks > 0

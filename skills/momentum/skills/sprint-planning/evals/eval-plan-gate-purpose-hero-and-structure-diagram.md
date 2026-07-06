@@ -28,17 +28,19 @@ Then:
 3. At least one `<path>` connector element appears representing the `story-a → story-c` dependency
 4. The structure is NOT described only in prose (no "Wave 1 contains story-a and story-b" text node replacing a diagram)
 
-## Scenario C: Critical-path / SPOF story is visibly marked in the diagram
+## Scenario C: Critical-path / SPOF story is visibly marked in the diagram regardless of stakes
 
-Given a sprint where `story-a` (Wave 1) is depended on by 2 other stories (`story-c` and `story-d`)
-making it the single point of failure for the sprint
+Given a sprint where `story-a` (Wave 1, **low stakes**) is depended on by 2 other stories
+(`story-c` and `story-d`) making it the single point of failure for the sprint
 
 When a reader inspects the SVG diagram
 
 Then:
-1. The `story-a` node has visually distinct styling (red border / fill `#f6ddd6` stroke `#9a3b2f`) indicating HIGH stakes or SPOF
-2. A `⚠` marker or equivalent visual indicator is present on or near the `story-a` node
-3. The `story-b` node (no dependents) does NOT receive the same high-stakes styling (correct differentiation)
+1. The `story-a` node uses the SPOF override styling: fill `#f6ddd6` stroke `#9a3b2f`
+   stroke-width 4 — even though its stakes value is **low** (SPOF fill overrides stakes fill)
+2. A `⚠` marker is present on or near the `story-a` node
+3. The `story-b` node (no dependents, low stakes) uses the default low-stakes styling
+   (fill `#fffdf8` stroke `#cdc6b4` stroke-width ≤ 2) with NO `⚠` marker
 
 ## Scenario D: Every story appears exactly once in the at-a-glance table
 
@@ -55,12 +57,13 @@ Then:
 
 - `<div class="hero">` appears before `<div class="cards">` in the HTML document order
 - An inline `<svg>` element with at least one `<rect>` and one `<path>` is present
-- SPOF story node uses the high-stakes fill/stroke colors from the template
+- SPOF story node uses fill `#f6ddd6` stroke `#9a3b2f` stroke-width 4 AND displays a `⚠` marker,
+  regardless of its stakes value (SPOF override is independent of stakes)
 - Story count in `.scard` elements matches `selected_stories` count (no extras, no missing)
 
 ## Fail Criteria
 
 - First content block after `<h1>` is a table, story list, or decision card (hero buried)
 - Structure described only in prose; no `<svg>` element in the HTML
-- SPOF story rendered identically to low-stakes stories (no visual differentiation)
+- SPOF story rendered identically to non-SPOF low-stakes stories (no red fill, no ⚠, no stroke-width 4)
 - A story appears zero times or more than once in the cards section
