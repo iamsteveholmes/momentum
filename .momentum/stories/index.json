@@ -6095,5 +6095,15 @@
     "touches": [],
     "priority": "low",
     "story_type": "maintenance"
+  },
+  "conductor-endgate-viewer-hijack-and-silent-gate": {
+    "status": "backlog",
+    "title": "Conductor end-gate — stop viewer pane hijack and silent gate turn-end",
+    "epic_slug": "momentum-sprint-orchestration",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "critical",
+    "story_type": "defect"
   }
 }
