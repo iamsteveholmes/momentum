@@ -1011,43 +1011,82 @@ Address all findings before the plan can proceed.</output>
     <action>Update task 6 (Run AVFL) to completed</action>
   </step>
 
-  <step n="7" goal="Developer review of complete sprint plan">
+  <step n="7" goal="Developer review of complete sprint plan — visual companion plan gate">
     <action>Update task 7 (Developer review) to in_progress</action>
-    <output>Sprint Plan — {{sprint_slug}}
+    <note>This step emits a visual HTML companion decision surface (the plan gate) per the
+    decision-grade-presentation standard §2.2 row 9 / §5 / §5.1. Follow
+    `references/plan-gate-renderer.md` as the data contract and rendering spec.
+    Do NOT emit a flat-text plan summary — the HTML gate IS the review artifact.</note>
 
-Stories ({{count}}):
-  {{for each story, grouped by wave:
-    Wave N:
-      · story_slug — Title · Specialist: {{specialist}} · Role: Dev[, QA][, E2E][, Arch Guard] · Guidelines: {{guidelines_status}}
-  }}
+    <!-- Phase A: Synthesize gate data from in-context sprint plan state -->
+    <action>Read `references/plan-gate-renderer.md` fully before synthesizing. Then synthesize
+    the gate data model per §2 of that spec:
 
-Team Composition:
-  {{for each role:
-    · Role — {{story_count}} stories · Guidelines: {{guideline_source}}
-  }}
-  Dev Specialists:
-  {{for each specialist type:
-    · {{specialist}}: {{story_slugs}} (guidelines: {{guideline_source}})
-  }}
+      For each story in {{selected_stories}}, produce a gate_story record:
+        · slug, title, wave (from {{story_wave}}), deps (from story depends_on)
+        · stakes: HIGH | medium | low — use the stakes synthesis rule from renderer §3.1
+        · one_line_value: ≤ 15-word plain-English outcome — use synthesis rule from renderer §3.2
+        · verdict: "★ CALL" | "✓ batch" — use verdict rule from renderer §3.3
 
-Dependency Graph:
-  {{for each wave:
-    Wave N: {{story_slugs}} ({{concurrency note}})
-  }}
+      Compute derived counts:
+        · wave_count = distinct wave numbers in {{story_wave}}
+        · call_count = count of gate_stories where verdict == "★ CALL"
+        · irrev_count = count of stories whose title/ACs contain keywords: migrate, deploy,
+          schema, delete, drop, seed
+        · spof_story = slug with the most dependents from other selected stories (or null if none)
+        · batch_count = count of gate_stories where verdict == "✓ batch"
 
-Verification Contracts: {{contract_count}} files in sprints/{{sprint_slug}}/specs/
-Gherkin Specs: {{gherkin_spec_count}} .feature files in sprints/{{sprint_slug}}/specs/
-Coverage Plan: sprints/{{sprint_slug}}/coverage-plan.md ({{composition_count}} covered-by-composition, {{dedicated_count}} dedicated-run)
-Guard Status: {{guard_status}}
+      Build {{genuine_forks}} (≤ 7 ForkItems) using fork detection rules from renderer §4:
+        · Same-wave touch overlaps across stories
+        · Unresolved external depends_on not in sprint and not status "done"
+        · AVFL findings with severity critical/major
+        · Guard failures accepted with the developer's P override
+        · Wave bottlenecks (single early-wave story gating all others with uncertain readiness)
 
-AVFL: {{avfl_result}}
-    </output>
+      Build {{defaulted_choices}} list per renderer §4 for items not needing a decision.
+    </action>
 
-    <ask>Approve this sprint plan, or request adjustments?
+    <!-- Phase B: Generate and write the HTML plan gate -->
+    <action>Generate a self-contained HTML plan gate following the fixed section spine from
+    renderer §5. Use the CSS tokens and component classes from
+    `references/templates/companion-decision-surface.html` exactly as shipped.
 
-  A — Approve and activate
-  M — Modify (add/remove stories, change waves, adjust team)
-  R — Re-run AVFL after changes</ask>
+    Section order (must not reorder or omit):
+      1. Page title + `<p class="sub">` eyebrow line
+      2. Purpose hero (`<div class="hero">`) — plain-language sprint purpose, deliver list, heroline
+      3. Verified stat tiles (`<div class="grid">`) — story count · wave count · CALL count · irrev count
+      4. Structure diagram (`<div class="diagram">` with inline SVG) — waves + dep edges; SPOF node ⚠ marked
+      5. Items at a glance — one `.scard` per story (stakes · wave · deps · verdict · story link · spec link)
+      6. Decision cards — one `.card` per genuine fork (≤ 7); each carries What · Why · Evidence · Recommendation · Options inline; zero cards if no forks with clean-plan message
+      7. Risks section (conditional — include only if risks exist beyond fork cards)
+      8. Defaulted to standards `<details>` collapsible
+      9. Sign-off gate (`<div class="gate">`) — written verdict per fork (anti-rubber-stamp), clean-plan path when zero forks
+
+    Rendering rules:
+      · Zero external dependencies — inline all CSS and JS
+      · Links to canonical story files: `file://$PWD/.momentum/stories/{{slug}}.md`
+      · Links to spec files: `file://$PWD/.momentum/sprints/{{sprint_slug}}/specs/{{slug}}.*`
+      · NEVER inline story body, ACs, Dev Notes, or Tasks into the gate
+      · Anti-rubber-stamp JS: submit button disabled until all fork verdict fields filled (if forks > 0)
+      · Follow renderer §5.8 for the JavaScript gate enforcement code
+    </action>
+
+    <action>Write the gate to: `.momentum/handoffs/{{sprint_slug}}-plan-gate.html`</action>
+
+    <!-- Phase C: Open in viewer -->
+    <action>Open the gate in the cmux viewer pane as a browser tab. Do NOT create a new
+    structural pane — add a tab to the existing viewer pane:
+      Run: `cmux browser new "file://$(pwd)/.momentum/handoffs/{{sprint_slug}}-plan-gate.html" --workspace "$CMUX_WORKSPACE_ID" --focus false`
+    </action>
+
+    <output>Plan gate written to .momentum/handoffs/{{sprint_slug}}-plan-gate.html and opened in the viewer.
+
+Review the gate, record your per-fork verdicts (if any), then enter your decision:
+  A — Approve and activate (all forks signed off in the gate)
+  M — Modify (add/remove stories, change waves, adjust team — gate will re-render)
+  R — Re-run AVFL before deciding</output>
+
+    <ask>Your decision [A/M/R]:</ask>
 
     <check if="developer selects M (Modify)">
       <action>Accept the developer's adjustments:
@@ -1056,7 +1095,10 @@ AVFL: {{avfl_result}}
         · Reassign waves: re-run wave computation after changes
         · Modify team composition: update role assignments
       </action>
-      <action>After modifications, re-display the updated sprint plan and re-present the approval prompt</action>
+      <action>Re-synthesize all gate data (Phase A) and re-render the HTML gate (Phase B) with the updated plan state</action>
+      <action>Re-write to `.momentum/handoffs/{{sprint_slug}}-plan-gate.html`</action>
+      <action>Open the updated gate in the viewer (Phase C)</action>
+      <action>Re-present the sign-off prompt</action>
     </check>
 
     <check if="developer selects R (Re-run AVFL)">
