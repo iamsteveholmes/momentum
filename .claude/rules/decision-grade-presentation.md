@@ -56,6 +56,7 @@ Each named surface type below has a stated budget. A surface without a declared 
 | **Findings digest / retro digest** | ≤ 7 actionable findings surfaced. Routine findings collapsed to a count. | Each surfaced finding carries what/why/evidence (floor wins) |
 | **Recommendations / next steps** | ≤ 5 items, each ≤ 2 sentences | Each item is specific and actionable; "consider X" is not an item |
 | **Conversational reply** (everyday assistant turn) | Answer-first: the direct answer is the first sentence, before any setup. Default ≤ 150 words for a direct question. For a genuinely multi-part question, use section headers + the global ≤ 7-bullet cap and push supporting detail to depth-on-demand ("want the detail?") rather than inlining it. No process narration ("I searched X, then ran Y…"). | Length tracks the genuine complexity of the question, never the effort spent answering it (§1). Any item requiring a developer decision still carries what/why/evidence inline (floor wins, §3). |
+| **Companion decision surface** (paired with a large review document; incl. the pre-sprint plan gate & post-sprint results gate) | Lead with a plain-language purpose; one ✓ line for all verified mechanics; structure diagrammed (deps/waves/status); ≤ 7 genuine forks, each a What/Why/Evidence/Recommendation/Options card per the Pause-Ask template; the large document linked as depth-on-demand. Rendered as a **visual HTML** surface (§5.1), not flat prose. | Mandatory whenever a process emits a review document exceeding the Decision-card budget (§5). The large document is the backing, not the review artifact (floor wins on the forks). |
 
 ### 2.3 What Caps Cut
 
@@ -122,7 +123,65 @@ content only.
 
 ---
 
-## 5. Named Output Surfaces and Surface Schema
+## 5. The Companion-Surface Obligation — Large Review Documents
+
+A large document and a decision surface serve **two different readers** and pull in opposite
+directions. The work-list (for the next pipeline stage — a skill, a machine, an implementing
+agent) wants to be exhaustive: every item, every field, *more is safer*. The review surface (for
+the human deciding) wants the handful of genuine forks with defaulted recommendations: *less is
+safer*. **One artifact cannot serve both.** A 600-line database handed to a human as "the thing to
+evaluate" is the failure mode this section exists to prevent.
+
+**Trigger (checkable):** Any process — skill, workflow, or agent turn — that emits a document
+**for human review, approval, or choice** which **exceeds the Decision-card budget** (§2.2:
+≤ 5 lines prose + ≤ 3 bullets) MUST also emit a **companion decision surface** modeled on the
+canonical Pause-Ask template (§7) and the skeleton at
+`references/templates/companion-decision-surface.html`.
+
+The large document is **not** the review artifact — it is the **depth-on-demand backing** (the
+machine work-list, the full record). The companion surface is what the human is actually handed.
+
+**The companion surface MUST:**
+
+1. **Lead with the decision** asked (approve / reject / choose) — not background the reader owns.
+2. **Collapse every mechanically-verifiable claim to one ✓ line** (counts, slug-uniqueness, DAG
+   validity, coverage tallies). These are validator work — never human-review material.
+3. **Surface only the genuine forks** — items needing judgment an agent cannot default to
+   standards (≤ 7, per the bullet cap). Everything defaultable is defaulted silently.
+4. For **each fork**, carry inline (per the Pause-Ask template): **What** (at stake) · **Why**
+   (the stakes) · **Evidence** (checkable detail) · **Recommendation** (the defaulted call) ·
+   **Options** (the resolutions, e.g. Adopt / Change / Reject-or-Defer).
+5. **Reference the large document as depth-on-demand** — never require opening it to decide.
+
+### 5.1 Presentation form — the third leg (non-overridable)
+
+The caps (§2) govern *which information and how much*; the floor (§3) governs *what must be
+present*. **Neither governs *form*** — and a surface can satisfy both halves and still be an
+unreadable text wall. (Observed: a fully caps-and-floor-compliant Markdown gate drew the reaction
+*"no visuals or diagrams, I have no idea after reading it for over a minute what it's trying to
+accomplish."*) Presentation form is therefore a **third, co-equal leg** of this standard for
+decision gates and companion surfaces:
+
+- **Render as a visual HTML surface**, not flat prose — a companion decision surface for a
+  sprint / plan / large-review gate is HTML (sibling of `endgate-report.html`), opened in the viewer.
+- **Lead with a plain-language purpose hero** — what the work accomplishes, in words a
+  non-implementer reads in seconds, *before* any table or list.
+- **Diagram the structure** — dependencies / waves / status as an actual diagram (e.g. inline
+  SVG), not described in prose. Mark any critical-path or single-point-of-failure node.
+- **Link to source artifacts; never inline or edit them** — the machine band (full specs, ACs,
+  tasks) stays one click away in its source files so implementing agents keep their source of truth.
+- **Anti-rubber-stamp** — sign-off forces a written one-line verdict + reason per genuine fork; a
+  blanket "approve all" is not sufficient.
+
+**Pairing is mandatory, not optional.** Emitting the large document alone — or emitting a
+form-compliant-but-text-wall surface — is a **defect**, the same defect as a database-shaped HITL
+surface. A process that produces a review document without its companion surface **has not
+finished.** This holds even when the producing process is an ad-hoc Workflow with no governing
+skill: the obligation attaches to the *act of emitting a review document*, not to any one skill.
+
+---
+
+## 6. Named Output Surfaces and Surface Schema
 
 These are the recurring human-facing surfaces in the Momentum practice. Each is named so the
 caps table (§2.2) has a stable reference. A surface type not listed here that produces
@@ -138,10 +197,13 @@ developer-facing output is a gap — the owning skill must declare its applicabl
 | Findings digest | Retro | §2.2 row 6 |
 | Recommendations / next steps | Assessment | §2.2 row 7 |
 | Conversational reply | Any session / conversational turn | §2.2 row 8 |
+| Companion decision surface | Any process emitting a large review document (§5) | §2.2 row 9 |
+| Pre-sprint plan gate | `sprint-planning` (final step) | §2.2 row 9 (companion-surface instance) |
+| Post-sprint results gate | `conduct` end-gate + `retro` digest, fused | §2.2 row 9 (companion-surface instance) |
 
 ---
 
-## 6. Cross-References — Existing Instances This Rule Generalizes
+## 7. Cross-References — Existing Instances This Rule Generalizes
 
 This rule generalizes two existing conduct-specific floor enforcement points. It does not
 replace or contradict them — they are instances under this practice-wide umbrella.
@@ -167,7 +229,7 @@ This rule is the umbrella; §9 is the conduct-report instance under it. The two 
 
 ---
 
-## 7. Cascade Order
+## 8. Cascade Order
 
 ```
 global:  ~/.claude/rules/decision-grade-presentation.md
@@ -183,3 +245,5 @@ path:    .claude/rules/<path-scoped>/decision-grade-presentation.md
 - The caps-vs-floor boundary (§4) — the floor always wins, practice-wide.
 - The three required fields (§3) — what/why/evidence are never optional for decision-relevant items.
 - The core convention (§1) — effort never earns wider verbosity.
+- The companion-surface obligation (§5) — a large review document without its paired decision surface is always a defect, regardless of which process produced it.
+- The presentation-form leg (§5.1) — decision gates render as visual, purpose-first, diagrammed surfaces; non-overridable alongside the caps-vs-floor boundary.
