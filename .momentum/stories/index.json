@@ -5938,7 +5938,7 @@
     "story_type": "practice"
   },
   "manifesto-format-normative-file-pattern-ownership-field": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Manifesto format: normative file-pattern / ownership field for deterministic agent resolution",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -5965,7 +5965,7 @@
     "story_type": "maintenance"
   },
   "live-e2e-compose-register-resolve-gen-2-agent": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Live E2E: compose + register + resolve a Gen-2 agent against a real manifest + KB",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -6023,7 +6023,7 @@
     "depends_on": []
   },
   "companion-surface-pre-sprint-plan-gate": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Companion surface — pre-sprint plan gate emitted by sprint-planning",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
@@ -6039,7 +6039,7 @@
     "change_type": "skill-instruction"
   },
   "companion-surface-post-sprint-results-gate": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Companion surface — post-sprint results gate (conduct end-gate + retro digest, fused)",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
@@ -6053,7 +6053,7 @@
     "change_type": "skill-instruction"
   },
   "companion-surface-rule-sync-and-bulk-derivation": {
-    "status": "ready-for-dev",
+    "status": "review",
     "title": "Companion surface — sync project rule + wire bulk-derivation paths to template",
     "epic_slug": "momentum-impetus-experience",
     "story_file": true,
@@ -6075,5 +6075,25 @@
     "touches": [],
     "priority": "low",
     "story_type": "practice"
+  },
+  "retro-audit-workflow-process-findings-return": {
+    "status": "backlog",
+    "title": "retro audit-workflow.js: return structured process_findings (<=7 Keep/Stop/Change) + routine_process_count for the fused results gate",
+    "epic_slug": "momentum-impetus-experience",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
+  },
+  "endgate-format-spec-section00-alignment": {
+    "status": "backlog",
+    "title": "Align conduct-endgate-report-format-and-voice.md section 3 spine with new section-00 ship-status lead + section-08 process review rows",
+    "epic_slug": "momentum-impetus-experience",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "low",
+    "story_type": "maintenance"
   }
 }

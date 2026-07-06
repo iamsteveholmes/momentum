@@ -1,0 +1,2 @@
+{"story_slug": "companion-surface-post-sprint-results-gate", "artifact": "skills/momentum/skills/retro/audit-workflow.js", "note": "must return process_findings (structured <=7 Keep/Stop/Change array) + routine_process_count in synthesize-stage return contract"}
+{"story_slug": "companion-surface-post-sprint-results-gate", "artifact": "_bmad-output/planning-artifacts/conduct-endgate-report-format-and-voice.md", "note": "section 3 spine may need matching update for the section-00 ship-status lead + section-08 process review rows"}
