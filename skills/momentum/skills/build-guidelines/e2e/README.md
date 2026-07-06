@@ -128,9 +128,13 @@ file_ownership:
 - **Server-sent events or streaming response** → `wiki-query SSE streaming Ktor client Flow collect reconnection buffer`
 ```
 
-**Important:** the `file_ownership` list (`["composeApp/**","shared/**"]`) is the exact value
-that must be passed as `OWNERSHIP_GLOBS` when running the driver. Any change here requires
-updating the driver invocation accordingly.
+**Important:** the driver reads the `## File Ownership` field **directly from this manifesto
+file** at `${FIXTURE_DIR}/.claude/manifests/${COMPOSED_SLUG}.md` (the default path). The parsed
+list is used for the AC3/AC7 verbatim-equality assertion against `agents.json patterns[]`, so
+the assertion proves "patterns == the manifesto field on disk" rather than "patterns == what was
+typed at the prompt". If you need to override (e.g., for debugging), pass `OWNERSHIP_GLOBS`
+explicitly. Any change to `file_ownership` here takes effect automatically on the next driver run
+with no env-var update needed.
 
 ### B. Pre-create agents.json with a defaults block
 
@@ -199,9 +203,12 @@ FIXTURE_DIR=~/projects/nornspun \
 COMPOSED_SLUG=dev-kotlin-compose \
 MATCH_PATH="composeApp/src/commonMain/kotlin/App.kt" \
 NONMATCH_PATH="README.md" \
-OWNERSHIP_GLOBS='["composeApp/**","shared/**"]' \
 bash skills/momentum/skills/build-guidelines/e2e/live-compose-resolve.sh
 ```
+
+`OWNERSHIP_GLOBS` is no longer required — the driver parses the `## File Ownership` field
+directly from `${FIXTURE_DIR}/.claude/manifests/${COMPOSED_SLUG}.md`. Pass `OWNERSHIP_GLOBS`
+only if you need to override the parsed value (debugging).
 
 Expected output on success:
 
@@ -220,8 +227,13 @@ Expected output on success:
   PASS: AC5: resolve --touches 'README.md' → 'dev' (genuine pattern match, not vacuous)
 
 PASS — all assertions hold.
-Evidence artifact: docs/research/live-e2e-compose-resolve-evidence-YYYY-MM-DD.md
+Evidence artifact: docs/research/live-e2e-compose-resolve-evidence.md
 ```
+
+The evidence artifact uses a **fixed filename** (no date embedded). The run timestamp is written
+inside the file header. Each successful run overwrites the previous artifact, so exactly one
+regenerable evidence file exists in `docs/research/`. The file is committed after a passing run
+as AC6 proof.
 
 Exit 0 = DEC-038 G1 gate is met.
 
@@ -231,12 +243,15 @@ Exit 0 = DEC-038 G1 gate is met.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
+| `manifesto not found at ...` | Manifesto not staged before Phase 1 | Create manifesto per Fixture Setup step A |
+| `## File Ownership section not found` | Manifesto missing the File Ownership block | Add `## File Ownership` + `file_ownership:` list to manifesto |
 | `fixture agents.json not found` | Phase 1 not run, or FIXTURE_DIR wrong | Run Phase 1 first; check FIXTURE_DIR |
 | `composed project entry missing` | agent-builder did not register the entry | Re-run Phase 1; check build-guidelines output |
 | `patterns != ownership field verbatim` | Manifesto file_ownership was edited after composition | Re-run Phase 1 with updated manifesto |
 | `resolve returned 'dev' on matching path` | fnmatch mismatch between MATCH_PATH and patterns | Verify MATCH_PATH actually matches the declared globs |
+| `momentum-tools exited non-zero` (AC2) | Resolver failed before returning JSON | Check momentum-tools logs; verify FIXTURE_DIR is set correctly |
 | `momentum-tools exited non-zero` (AC5) | `defaults.dev` in agents.json points to a missing file | Re-run Fixture Setup step B |
-| `composed file missing base-body marker` | Composition incomplete or wrong base body merged | Inspect composed file; re-run Phase 1 |
+| `composed file missing 'You are a dev agent'` | Composition incomplete or wrong base body merged | Inspect composed file; re-run Phase 1 |
 
 ---
 

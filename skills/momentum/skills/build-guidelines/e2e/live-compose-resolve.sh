@@ -24,9 +24,12 @@
 #                     default: composeApp/src/commonMain/kotlin/App.kt
 #   NONMATCH_PATH     a file path that does NOT match any declared ownership glob
 #                     default: README.md
-#   OWNERSHIP_GLOBS   the manifest File Ownership field verbatim, as a JSON array string
-#                     default: ["composeApp/**","shared/**"]
-#                     MUST equal the manifesto file_ownership list exactly (AC3/AC7)
+#   OWNERSHIP_GLOBS   (optional) override — the manifest File Ownership field as a JSON array
+#                     string, e.g. '["composeApp/**","shared/**"]'
+#                     If unset, the driver parses the ## File Ownership field directly from
+#                     ${FIXTURE_DIR}/.claude/manifests/${COMPOSED_SLUG}.md (the authoritative
+#                     source) so the assertion proves "patterns == the manifesto field on disk",
+#                     not "patterns == what was typed at the command line" (AC3/AC7).
 #   EVIDENCE_OUT_DIR  directory to write the evidence artifact into
 #                     default: docs/research   (relative to cwd = Momentum repo root)
 #
@@ -40,12 +43,17 @@ FIXTURE_DIR="${FIXTURE_DIR:-$HOME/projects/nornspun}"
 COMPOSED_SLUG="${COMPOSED_SLUG:-dev-kotlin-compose}"
 MATCH_PATH="${MATCH_PATH:-composeApp/src/commonMain/kotlin/App.kt}"
 NONMATCH_PATH="${NONMATCH_PATH:-README.md}"
-OWNERSHIP_GLOBS="${OWNERSHIP_GLOBS:-[\"composeApp/**\",\"shared/**\"]}"
 EVIDENCE_OUT_DIR="${EVIDENCE_OUT_DIR:-docs/research}"
 
 AGENTS_JSON="$FIXTURE_DIR/momentum/agents.json"
 COMPOSED_FILE="$FIXTURE_DIR/.claude/guidelines/agents/${COMPOSED_SLUG}.md"
-EVIDENCE_FILE="${EVIDENCE_OUT_DIR}/live-e2e-compose-resolve-evidence-$(date +%Y-%m-%d).md"
+MANIFESTO_FILE="$FIXTURE_DIR/.claude/manifests/${COMPOSED_SLUG}.md"
+
+# Fixed evidence filename — no embedded date; timestamp lives inside the file.
+# This ensures exactly one regenerable artifact exists under EVIDENCE_OUT_DIR:
+# the driver always overwrites it on each run. A pre-composition partial artifact
+# is replaced automatically the next time the driver succeeds.
+EVIDENCE_FILE="${EVIDENCE_OUT_DIR}/live-e2e-compose-resolve-evidence.md"
 
 # --- helpers ---
 
@@ -53,12 +61,53 @@ mkdir -p "$EVIDENCE_OUT_DIR"
 
 _log() { echo "$1" | tee -a "$EVIDENCE_FILE"; }
 pass()  { _log "  PASS: $1"; }
+# fail() emits ALL arguments so multi-arg diagnostic messages reach output + evidence.
 fail()  {
-  _log "  FAIL: $1"
+  _log "  FAIL: $*"
   _log ""
   _log "Driver exited non-zero. Evidence (partial): $EVIDENCE_FILE"
   exit 1
 }
+
+# --- resolve OWNERSHIP_GLOBS from manifesto if not supplied as env override ---
+#
+# Manifesto path: ${FIXTURE_DIR}/.claude/manifests/${COMPOSED_SLUG}.md
+# Expected section format:
+#   ## File Ownership
+#   file_ownership:
+#     - "composeApp/**"
+#     - "shared/**"
+#
+# The parsed list is used verbatim for the AC3/AC7 equality assertion against agents.json,
+# so the assertion proves "agents.json patterns == the ## File Ownership field on disk"
+# (deterministic-path proof) rather than "patterns == what the operator typed at the prompt".
+
+if [ -z "${OWNERSHIP_GLOBS:-}" ]; then
+  [ -f "$MANIFESTO_FILE" ] || \
+    fail "AC3/AC7: manifesto not found at $MANIFESTO_FILE — cannot parse ## File Ownership. " \
+         "Set OWNERSHIP_GLOBS to override, or stage the manifesto per e2e/README.md."
+
+  OWNERSHIP_GLOBS=$(python3 - "$MANIFESTO_FILE" <<'PY'
+import re, json, sys
+
+text = open(sys.argv[1]).read()
+m = re.search(
+    r'## File Ownership\s+file_ownership:\s+((?:\s*-\s+"[^"]+"\s*)+)',
+    text
+)
+if not m:
+    raise SystemExit(
+        "## File Ownership section not found or malformed in %s" % sys.argv[1]
+    )
+entries = re.findall(r'-\s+"([^"]+)"', m.group(1))
+if not entries:
+    raise SystemExit(
+        "No file_ownership entries parsed from ## File Ownership in %s" % sys.argv[1]
+    )
+print(json.dumps(entries))
+PY
+  )
+fi
 
 # --- initialize evidence artifact ---
 
@@ -130,7 +179,17 @@ _log ""
 _log "Path: $MATCH_PATH"
 _log ""
 
+# Wrap in set +e so a non-zero exit surfaces as a named AC2 failure
+# rather than a cryptic bash abort under set -euo pipefail.
+set +e
 RESOLVE_JSON=$(CLAUDE_PROJECT_DIR="$FIXTURE_DIR" momentum-tools agent resolve --touches "$MATCH_PATH")
+RESOLVE_AC2_EXIT=$?
+set -e
+
+if [ "$RESOLVE_AC2_EXIT" -ne 0 ]; then
+  fail "AC2: momentum-tools exited $RESOLVE_AC2_EXIT for '$MATCH_PATH' — resolver failed before returning JSON"
+fi
+
 _log '```json'
 _log "$RESOLVE_JSON"
 _log '```'
@@ -154,7 +213,7 @@ _log ""
 
 # ============================================================
 # AC4: composed agent file exists and contains:
-#   (a) a base-body marker
+#   (a) a base-body marker specific to dev.md
 #   (b) the ## Diagnostic Table section from the manifesto
 # ============================================================
 
@@ -167,16 +226,18 @@ _log ""
 grep -qi "Diagnostic Table" "$COMPOSED_FILE" || \
   fail "AC4: composed file missing '## Diagnostic Table' section"
 
-# Base-body markers: any of these prove the base body was merged in
-grep -qiE "You are a dev agent|## Critical Constraints|## Process|Green-field build" \
-  "$COMPOSED_FILE" || \
-  fail "AC4: composed file missing a base-body marker (expected dev.md content)"
+# Require the dev.md-specific base-body marker "You are a dev agent".
+# Generic headings (## Process, ## Critical Constraints) are intentionally
+# excluded — they can appear in constitution/manifesto content and would
+# give a false-positive if the base body was not actually merged.
+grep -qi "You are a dev agent" "$COMPOSED_FILE" || \
+  fail "AC4: composed file missing dev.md base-body marker ('You are a dev agent' not found)"
 
 {
   echo "File:                  $COMPOSED_FILE"
   echo "Lines:                 $(wc -l < "$COMPOSED_FILE")"
   echo "Diagnostic Table hits: $(grep -ci 'Diagnostic Table' "$COMPOSED_FILE")"
-  echo "Base-body marker:      present"
+  echo "Base-body marker:      present (You are a dev agent)"
 }  | tee -a "$EVIDENCE_FILE"
 _log ""
 
@@ -195,10 +256,14 @@ _log ""
 
 # Use set +e so a missing defaults.dev path (common on fresh fixtures)
 # surfaces as a named failure rather than a cryptic bash exit.
+# Capture stdout only (not 2>&1) so any stderr does not contaminate the
+# JSON variable and crash python3 -c json.load with a traceback.
 set +e
+RESOLVE_NEG_STDERR_TMP=$(mktemp)
 RESOLVE_NEG_JSON=$(CLAUDE_PROJECT_DIR="$FIXTURE_DIR" momentum-tools agent resolve \
-  --touches "$NONMATCH_PATH" 2>&1)
+  --touches "$NONMATCH_PATH" 2>"$RESOLVE_NEG_STDERR_TMP")
 RESOLVE_NEG_EXIT=$?
+RESOLVE_NEG_STDERR=$(cat "$RESOLVE_NEG_STDERR_TMP"; rm -f "$RESOLVE_NEG_STDERR_TMP")
 set -e
 
 _log '```json'
@@ -211,7 +276,8 @@ if [ "$RESOLVE_NEG_EXIT" -ne 0 ]; then
   # in the fixture's agents.json. Surface as a named failure.
   fail "AC5 (negative control): momentum-tools exited $RESOLVE_NEG_EXIT for '$NONMATCH_PATH'. " \
        "Likely cause: defaults.dev in $AGENTS_JSON points to a missing file. " \
-       "See e2e/README.md § Fixture Setup for how to set defaults.dev."
+       "See e2e/README.md § Fixture Setup for how to set defaults.dev." \
+       "${RESOLVE_NEG_STDERR:+stderr: $RESOLVE_NEG_STDERR}"
 fi
 
 GOT_NEG=$(echo "$RESOLVE_NEG_JSON" \
