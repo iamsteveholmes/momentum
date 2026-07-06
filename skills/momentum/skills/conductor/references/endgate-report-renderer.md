@@ -55,6 +55,25 @@ Used to derive:
 - **Blocked/quarantined stories:** stories with outcome == "quarantined" or disposition == "blocked"
 - **Per-story diffs and summaries:** derive from story slugs + their touches arrays
 
+### 1e. {{process_findings}} — structured process digest from retro (fused re-render)
+
+Populated by `momentum:retro` Phase 4.5 (not by conduct). Shape: an array of ≤7 entries, each:
+
+```
+{
+  id:          string    — unique identifier, e.g. "pf-1"
+  disposition: string    — "keep" | "stop" | "change"
+  what:        string    — plain-language statement of the finding
+  why:         string    — why it matters to the practice
+  evidence:    string    — observable evidence from the sprint transcript
+}
+```
+
+**At conduct render time this binding is empty.** It is injected during retro's fused re-render
+(Phase 4.5). Conduct's initial render omits §08 (the Process review section); retro extends the
+file by adding §08 and updating the gate logic. Routine process findings (beyond the ≤7 cap)
+are collapsed to a count line, not itemized.
+
 ---
 
 ## 2. Assembly — binding {{stakes_findings}} and the report data model
@@ -82,7 +101,11 @@ Bind supporting report variables:
 {{stories_built_count}}       = count of stories in {{merged}}
 {{high_risk_divergences}}     = per-story finding records where disposition == "fixed" AND severity in {blocker, critical, major} (auto-fixed consequential divergences caught during review); rendered in §03. Each entry shape: { finding_id, severity, summary, evidence, story_slug }
 {{undischarged_deferrals}}    = entries from {{avfl_findings}} where source == "coverage-discharge-consumer" AND disposition == "residual" AND stakes_class == "routine" (deferred stories whose named integration scenario could not be verified); rendered in §05. Each entry shape: { slug, scenario_id, failure_reason }
+{{all_sprint_stories}}        = ordered list of all sprint story slugs (from sprint index); used to render §00 ship-status lead
 ```
+
+**{{process_findings}} is not assembled here.** It is injected by `momentum:retro` Phase 4.5
+when the fused re-render runs. Conduct's initial render omits §08; retro extends the file.
 
 ---
 
@@ -104,17 +127,22 @@ Open it in the cmux viewer pane (right pane, as a browser tab) so the developer 
 
 ### Section spine (fixed order):
 
-| Anchor | Section | Content |
-|--------|---------|---------|
-| hero   | Metrics strip | Items built/merged · high-risk divergences caught · decisions for you count · auto-fixed count · waved-off count · shipped-broken/blocked count |
-| #what  | §01 What shipped | Before/after in plain terms; concrete new capabilities; one-line completeness caveat pointing to §06 |
-| #pieces | §02 What each piece is for | Every story: one plain paragraph (job + guarantee + what breaks without it); "Review this work item" expand per §3 below |
-| #risk  | §03 Where it diverged | High-risk divergences told as 5-beat narratives (§4 below), scariest-first, collapsible `<details>` cards; routine excluded |
-| #decision | §04 The decision(s) for you | One card per {{stakes_findings}} entry; anti-rubber-stamp gate per §5 below |
-| #waved | §05 Waved off & routine | Dismissed findings with rationale; routine remainder as a single count — not itemized |
-| #done  | §06 How done is this, really? | Two tables: live vs hollow; explicit "what approving does" callout |
-| #merge | §07 Merge & push preview | Commits/diffstat; exact approve sequence; "push is a separate confirmation" |
-| gate   | Single gate control | Approve / Request Changes; copy-decision-as-prompt; approve disabled until all §04 cards answered |
+| Anchor | Section | Phase | Content |
+|--------|---------|-------|---------|
+| hero   | Metrics strip | conduct | Items built/merged · high-risk divergences caught · decisions for you count · auto-fixed count · waved-off count · shipped-broken/blocked count |
+| #status | **§00 Ship status** (RESULTS-FIRST LEAD) | conduct | Per-story ship outcome block — every sprint story listed with a status pill: `shipped-merged` / `blocked` / `closed-incomplete` / `quarantined`. Sourced from `{{all_sprint_stories}}`, `{{merged}}`, `{{blocked_stories}}`, `{{quarantined_stories}}`. Rendered as a scannable status strip (pills), not prose. **This section leads ahead of §01.** |
+| #what  | §01 What shipped | conduct | Before/after in plain terms; concrete new capabilities; one-line completeness caveat pointing to §06 |
+| #pieces | §02 What each piece is for | conduct | Every story: one plain paragraph (job + guarantee + what breaks without it); "Review this work item" expand per §4 below |
+| #risk  | §03 Where it diverged | conduct | High-risk divergences told as 5-beat narratives (§7 below), scariest-first, collapsible `<details>` cards; routine excluded |
+| #decision | §04 The decision(s) for you | conduct | One card per {{stakes_findings}} entry + one force-close-or-investigate card per non-shipped story (see §5b below); anti-rubber-stamp gate per §6 below |
+| #waved | §05 Waved off & routine | conduct | Dismissed findings with rationale; routine remainder as a single count — not itemized |
+| #done  | §06 How done is this, really? | conduct | Two tables: live vs hollow; explicit "what approving does" callout |
+| #merge | §07 Merge & push preview | conduct | Commits/diffstat; exact approve sequence; "push is a separate confirmation" |
+| #process | **§08 Process review (Keep / Stop / Change)** | **retro** | `{{process_findings}}` ≤7 entries organized by disposition (Stop → Change → Keep order); each with what/why/evidence inline; routine findings collapsed to a single count line. Added by retro's fused re-render (Phase 4.5). See §12 for rendering spec. |
+| gate   | Single gate control | conduct+retro | Approve / Request Changes; copy-decision-as-prompt; approve disabled until all §04 cards answered AND (if §08 is present) all process findings have written reasons. One gate control governs both sections. |
+
+**Phases:** "conduct" = present in the initial conduct render; "retro" = added by the retro fused re-render.
+§08 is absent in the initial conduct render. Retro's Phase 4.5 extends the HTML to add §08 and update the gate logic.
 
 ---
 
@@ -169,24 +197,99 @@ For each entry E in {{stakes_findings}}, render one `<div class="decision">` car
 
 ---
 
+## 5b. Force-close-or-investigate cards (§04) — one per non-shipped story
+
+For each story S in `{{blocked_stories}}` ∪ `{{quarantined_stories}}` (i.e., stories that did NOT
+reach `stage-4-merge-complete` in the build), render one additional `<div class="decision">` card
+in §04, positioned after any stakes-class cards:
+
+```html
+<div class="decision" id="d-fc-{{S.slug}}">
+  <h3>Incomplete story: {{S.title}}</h3>
+  <p><strong>What.</strong> This story did not ship during the build.
+    Current outcome: <code>{{S.outcome}}</code>.
+    Reason: {{S.failure_reason}} (from build ledger).</p>
+  <p><strong>Why it matters.</strong> The capability described by this story is not live.
+    Any work that depends on it is blocked or deferred until this is resolved.</p>
+  <p><strong>Evidence.</strong> Build ledger event: <code>{{S.ledger_event}}</code>,
+    story slug: <code>{{S.slug}}</code>, last status: <code>{{S.last_status}}</code>.</p>
+  <div class="opt rec"><b>Option A — Force-close.</b> Record this story as <code>closed-incomplete</code>.
+    A triage stub will be created for follow-up investigation. Choose this when the work is
+    deferred to a future sprint.</div>
+  <div class="opt"><b>Option B — Investigate.</b> Do not close the story yet; leave it at its
+    current status and investigate the blocker before the next sprint planning. Choose this when
+    you believe the story can be unblocked quickly.</div>
+  <p><strong>Recommendation:</strong> Option A (Force-close) — keeping non-terminal stories past
+    their sprint increases state machine drift. Investigate items typically become backlog stubs anyway.</p>
+  <div class="ack">
+    <label><input type="checkbox" id="ack-fc-{{S.slug}}" onchange="paint()">
+      I've read this and understand the call for {{S.title}}.</label>
+  </div>
+  <div class="choices">
+    <label onclick="sel(this)"><input type="radio" name="fc-{{S.slug}}" value="A" onchange="paint()">
+      Option A — Force-close as closed-incomplete</label>
+    <label onclick="sel(this)"><input type="radio" name="fc-{{S.slug}}" value="B" onchange="paint()">
+      Option B — Investigate</label>
+  </div>
+</div>
+```
+
+**Clean-sprint path:** When `{{blocked_stories}}` and `{{quarantined_stories}}` are both empty,
+no force-close cards are rendered. §04 states "No decisions required — this build raised no
+stakes-class items and all stories shipped."
+
+**Gate wiring:** Force-close cards participate in the same `paint()` gate as stakes-class cards.
+The DECISION_COUNT used in paint() is the total count of ALL §04 cards (stakes-class + force-close).
+The gate does not distinguish between card types — every §04 card must be acknowledged with an
+option selected before approve is enabled.
+
+---
+
 ## 6. Anti-rubber-stamp gate (§GATE)
 
+The gate has two phases matching the two-phase rendering of the file:
+
+**Phase 1 — conduct render (initial):** Only §04 decision cards (stakes-class + force-close) are checked.
+**Phase 2 — retro fused re-render:** §08 process findings written reasons are added to the check.
+
+The JavaScript below is the **full fused gate** (Phase 2 form). Conduct's initial render uses the
+same structure with `PROCESS_COUNT = 0` (§08 absent), making the process checks no-ops.
+
 ```javascript
+// DECISION_COUNT  = total §04 cards (stakes-class + force-close combined); 0 for clean build
+// PROCESS_COUNT   = number of surfaced process findings in §08; 0 before retro fused re-render
+// FC_SLUGS        = array of story slugs with force-close cards (e.g. ['event-logging'])
+
 function paint() {
   var gateChoice = val('gate');   // APPROVE or CHANGES
   var allDecisionsAck = true;
   var allDecisionsPicked = true;
 
-  // For each decision card D1..Dn:
-  for (var i = 1; i <= DECISION_COUNT; i++) {
+  // §04: stakes-class decision cards (D1..Dn, where n = non-force-close count)
+  for (var i = 1; i <= STAKES_DECISION_COUNT; i++) {
     if (!document.getElementById('ack-d' + i).checked) allDecisionsAck = false;
     if (!val('d' + i)) allDecisionsPicked = false;
   }
 
+  // §04: force-close-or-investigate cards (one per non-shipped story)
+  for (var k = 0; k < FC_SLUGS.length; k++) {
+    var slug = FC_SLUGS[k];
+    if (!document.getElementById('ack-fc-' + slug).checked) allDecisionsAck = false;
+    if (!val('fc-' + slug)) allDecisionsPicked = false;
+  }
+
+  // §08: process findings written reasons (added by retro fused re-render)
+  var allProcessResponded = true;
+  for (var j = 1; j <= PROCESS_COUNT; j++) {
+    var ta = document.getElementById('pf-reason-' + j);
+    if (!ta || ta.value.trim().length < 3) allProcessResponded = false;
+  }
+
   var ok = false, why = '';
   if (gateChoice === 'APPROVE') {
-    if (!allDecisionsAck)    why = 'Read each decision and check the acknowledgment box before approving.';
-    else if (!allDecisionsPicked) why = 'Pick an option for each decision (A / B / C) before approving.';
+    if (!allDecisionsAck)       why = 'Read each decision and check the acknowledgment box before approving.';
+    else if (!allDecisionsPicked) why = 'Pick an option for each decision (A / B) before approving.';
+    else if (!allProcessResponded) why = 'Enter a written response for each process finding before approving.';
     else { ok = true; why = 'Ready to approve — copy the prompt and paste it back.'; }
   } else if (gateChoice === 'CHANGES') {
     var changes = document.getElementById('changes').value.trim();
@@ -201,7 +304,11 @@ function paint() {
 }
 ```
 
-**When DECISION_COUNT == 0** (clean sprint with no escalations): `paint()` skips the decision-card checks entirely; the gate's approve path enables once the developer selects "Approve & finish". No forcing function is applied to a clean build.
+**When DECISION_COUNT == 0 AND PROCESS_COUNT == 0** (clean build, conduct-only render):
+`paint()` skips all card and process checks; approve enables once the developer selects gate choice.
+
+**One gate control, one approve button:** The document contains exactly one `<button id="go">`.
+It is not replicated per section. The gate governs both §04 and §08 together.
 
 ---
 
@@ -252,3 +359,125 @@ Followed by a `<div class="callout">` labeled "So what does approving actually d
 The `{{routine_auto_fixed_count}}` count plus one sentence ("N routine problems — wording, consistency, doc-drift, reachability nits — were auto-fixed and are not itemized here") satisfies §05 for routine findings. Itemizing them is the firehose.
 
 Dismissed findings (each with `dismissal_rationale`) appear as a table: `What was flagged` | `Why it was safe to leave`.
+
+---
+
+## 11. Ship-status lead (§00) — visual rendering spec
+
+§00 is the first content section after the metrics hero. It is the RESULTS-FIRST LEAD mandated
+by the companion-surface standard (decision-grade-presentation.md §5).
+
+**Purpose:** Give the developer an immediate scannable answer to "what shipped?" before any prose.
+
+**Rendering:**
+
+```html
+<section id="status">
+  <h2>Sprint results — what happened</h2>
+  <p class="sub">Every story's outcome at a glance. Details follow in §01–§07.</p>
+  <div class="status-strip">
+    <!-- One pill row per story, in sprint order -->
+    {{#each all_sprint_stories}}
+    <div class="story-status">
+      <span class="story-title">{{this.title}}</span>
+      <span class="pill {{statusClass(this.outcome)}}">{{statusLabel(this.outcome)}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+```
+
+**Status labels and pill classes:**
+
+| Outcome | Label | Pill class |
+|---------|-------|-----------|
+| merged  | `shipped-merged` | `ok` (green) |
+| blocked | `blocked` | `hipill` (red) |
+| quarantined | `quarantined` | `warn` (amber) |
+| closed-incomplete | `closed-incomplete` | `warn` (amber) |
+
+**CSS:** Reuse the `.pill` class and color tokens from §3. The `.story-status` row is a flex row
+(`display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line)`).
+
+**Voice:** No prose sentence per story — only the label pill. Plain-language section header above.
+
+**Presentation-form requirement (§5.1):** The full endgate HTML leads with a plain-language
+**results-first purpose hero** — a callout box (`.hero` class from the `companion-decision-surface.html`
+skeleton) above §00 that states in 1–2 sentences what this sprint accomplished and where the developer
+should focus attention. This hero is the entry point for someone who has not watched the build.
+Use the `--amber` accent border matching the companion-surface design family.
+
+---
+
+## 12. Process review section (§08) — rendering spec
+
+§08 is added to the HTML by `momentum:retro` Phase 4.5 (not by conduct). It appears after §07
+in document order, before the gate control.
+
+**Structure:**
+
+```html
+<section id="process">
+  <h2>Process review — Keep / Stop / Change</h2>
+  <p class="sub">{{process_findings.length}} findings from the sprint retrospective.
+    {{routine_process_count}} routine observations not surfaced
+    — <a href="{{audit_doc_path}}">full findings document</a>.</p>
+
+  <!-- Stop findings first (highest urgency), then Change, then Keep -->
+  {{#each process_findings}}
+  <div class="process-finding" id="pf-{{this.id}}">
+    <div class="eyebrow">{{disposition | upper}}</div>
+    <h3>{{this.what}}</h3>
+    <p><strong>Why it matters.</strong> {{this.why}}</p>
+    <p><strong>Evidence.</strong> {{this.evidence}}</p>
+    <div class="pf-response">
+      <label for="pf-reason-{{loop.index}}">Your response (required — note action or acknowledgment):</label>
+      <textarea id="pf-reason-{{loop.index}}" rows="2"
+        placeholder="E.g. 'Acknowledged — will create story for next sprint' or 'Deferred — not recurring enough to act on'"
+        onchange="paint()" oninput="paint()"></textarea>
+    </div>
+  </div>
+  {{/each}}
+
+  {{#if routine_process_count > 0}}
+  <p class="muted">{{routine_process_count}} routine observations collapsed — see
+    <a href="{{audit_doc_path}}">{{audit_doc_path}}</a> for the full list.</p>
+  {{/if}}
+</section>
+```
+
+**CSS:** `.process-finding` uses the `.scard` base with a left-border accent:
+`stop` = `--red`, `change` = `--amber`, `keep` = `--olive`. The `.pf-response` block is a full-width
+textarea with `border: 1px solid var(--line); border-radius: 6px; padding: 8px; width: 100%; font: inherit`.
+
+**Disposition order:** Stop → Change → Keep within §08 (most urgent first).
+
+**Cap enforcement:** At most 7 entries in `{{process_findings}}`; routine observations beyond the cap
+appear only in the count line. This is enforced by retro Phase 4.5 at digest-assembly time.
+
+**Self-sufficiency floor:** Each surfaced finding carries what, why, and evidence inline. No finding
+defers to the audit document — the developer can respond without opening `retro-transcript-audit.md`.
+
+---
+
+## 13. Fused re-render path (retro-owned)
+
+**Single-surface invariant:** For a completed sprint, exactly one human-facing HTML decision surface
+exists: `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`. `momentum:retro` Phase 4.5 **extends
+this file** — it does not create a new parallel document.
+
+**Re-render mechanism:**
+1. Retro reads the existing `{{sprint_slug}}-endgate-report.html`.
+2. It inserts §08 (the Process review section) immediately before the gate `<div>` element.
+3. It updates the `PROCESS_COUNT` JavaScript constant and the gate's `paint()` function to cover §08.
+4. It writes the extended HTML back to the same path.
+5. It opens the updated file in the cmux viewer pane (as a tab, per §8).
+
+**Source links (never inline):**
+- Build ledger: link to `.momentum/sprints/{{sprint_slug}}/build-ledger.jsonl`
+- Story files: link to `.momentum/stories/{{slug}}.md` per story in §02
+- Retro findings: link to `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md` in §08
+
+The gate asks for sign-off on the process section only (the results gate was already approved
+by the developer during the conduct build). The approve control in the post-sprint context
+reflects the process sign-off; the gate copy should say "Acknowledge process findings" or equivalent.

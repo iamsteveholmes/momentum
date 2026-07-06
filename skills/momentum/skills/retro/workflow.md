@@ -32,11 +32,12 @@
   <!-- ═══════════════════════════════════════════════════════ -->
 
   <step n="0" goal="Initialize phase-level task tracking">
-    <action>Create tasks for the 7 retro phases:
+    <action>Create tasks for the 8 retro phases:
       1. Sprint identification — find the sprint to retro
       2. Transcript preprocessing — DuckDB extraction of session data into audit-extracts/
       3. Story verification — check status of every sprint story
       4. Audit engine — invoke the audit Workflow (one Workflow-tool call); it fans out internally and returns structured findings + writes the findings doc
+      4.5. Fused gate re-render — fold the structured process digest into {{sprint_slug}}-endgate-report.html; developer signs off on process findings
       5. Story stub creation — propose and approve actionable backlog items from findings
       5.5. Handoff to practice ledger — write un-actioned findings to practice-ledger.jsonl for next planning cycle
       6. Sprint closure — call sprint complete + retro-complete, show summary
@@ -254,6 +255,14 @@ For each of these, choose:
     This step is reached only after the Phase 2 zero-session HALT has passed, so the Workflow never
     runs on empty extracts.</note>
 
+    <note>STRUCTURED PROCESS DIGEST: The audit Workflow's Synthesize stage is expected to return
+    `process_findings` — a structured ≤7 Keep/Stop/Change digest in addition to the flat
+    `retro-transcript-audit.md` findings document. Each entry: { id, disposition: keep|stop|change,
+    what, why, evidence }. Routine findings (beyond the ≤7 cap) are counted in `routine_process_count`.
+    This structured digest is consumed by Phase 4.5 to fold the process section into the fused gate.
+    If the Workflow returns `process_findings: null` or omits the field (older version), Phase 4.5
+    skips the re-render and logs a warning — the retro completes without the fused process gate.</note>
+
     <action>Resolve the audit Workflow script path (store {{audit_workflow_path}}) — highest-semver
     plugin-cache copy wins, with an in-repo fallback for dogfood runs:
       ```
@@ -285,9 +294,15 @@ For each of these, choose:
       {{audit_metrics}}         = return.metrics
       {{audit_doc_path}}        = return.doc_path
       {{synthesize_status}}     = return.synthesize_status
+      {{process_findings}}      = return.process_findings         (consumed by Phase 4.5 — fused gate re-render)
+      {{routine_process_count}} = return.routine_process_count    (count of process observations beyond the ≤7 cap)
       {{user_msg_count}}, {{agent_count}}, {{error_count}}, {{team_msg_count}} remain as bound in
       Phase 2 (authoritative extract line counts). Additionally bind {{struggle_count}} =
       audit_metrics.struggles and {{success_count}} = audit_metrics.successes for the Phase 6 summary.
+
+      {{process_findings}} shape: array of ≤7 entries, each { id, disposition: keep|stop|change, what, why, evidence }.
+      If the audit Workflow does not return process_findings (older version or Workflow failure): set
+      {{process_findings}} = [] and {{routine_process_count}} = 0. Phase 4.5 will skip the fused re-render.
     </action>
 
     <check if="{{synthesize_status}} == 'ok' AND a findings document exists at {{audit_doc_path}}">
@@ -305,6 +320,93 @@ For each of these, choose:
     </check>
 
     <action>Update task 4 to completed</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- PHASE 4.5: FUSED GATE RE-RENDER                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <step n="4.5" goal="Fold the structured process digest into the endgate HTML (single-surface invariant)">
+    <action>Update task 4.5 to in_progress</action>
+
+    <critical>SINGLE-SURFACE INVARIANT: For a completed sprint, exactly one human-facing HTML
+    decision surface exists: `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`.
+    This step EXTENDS that file — it does NOT create a new parallel HTML document.
+    Do not write any other `.html` file for this sprint's process findings.</critical>
+
+    <note>The fused gate is the post-sprint results gate named in the Decision-Grade Presentation
+    Standard (decision-grade-presentation.md §6: "post-sprint results gate — conduct end-gate +
+    retro digest, fused"). Retro owns the fused re-render: conduct emitted the results-first HTML;
+    retro now adds the ≤7 Keep/Stop/Change process digest beneath the results.
+    Rendering spec: `skills/momentum/skills/conductor/references/endgate-report-renderer.md` §12–§13.</note>
+
+    <check if="{{process_findings}} is empty">
+      <output>No process findings returned by the audit Workflow — skipping fused gate re-render.
+      The existing endgate HTML remains unchanged.</output>
+      <action>Update task 4.5 to completed</action>
+    </check>
+
+    <check if="{{process_findings}} is non-empty">
+      <action>Verify the endgate HTML exists:
+        Check `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`.
+        If absent: warn ("endgate HTML not found at expected path — conduct may not have run for this sprint")
+        and set {{skip_fused_render}} = true.
+      </action>
+
+      <check if="{{skip_fused_render}} != true">
+
+        <action>Assemble the §08 Process review HTML fragment from {{process_findings}}:
+          - Sort findings: Stop first, then Change, then Keep (most-actionable disposition first)
+          - For each finding, render a process-finding div per renderer spec §12 — each with:
+            * Disposition eyebrow (STOP / CHANGE / KEEP)
+            * What (the finding headline)
+            * Why it matters (inline — no deferred "see audit doc")
+            * Evidence (inline — from the audit Workflow return)
+            * Written-response textarea (id="pf-reason-{{loop.index}}", required for gate)
+          - After the finding list: a count line for routine observations:
+            "{{routine_process_count}} routine observations not surfaced — <a href='{{audit_doc_path}}'>full findings doc</a>"
+          Store the assembled HTML fragment as {{process_section_html}}.
+        </action>
+
+        <action>Extend the endgate HTML with the process section:
+          1. Read `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
+          2. Insert {{process_section_html}} immediately before the gate `<div>` (the element
+             containing `id="gate"` or `id="go"` — the approve control section)
+          3. Update the JavaScript constants in the `<script>` block:
+             - Set `PROCESS_COUNT = {{process_findings | length}}`
+             - Replace the `paint()` function with the full fused version from renderer spec §6
+               (which checks both §04 decision cards AND §08 process finding written reasons)
+          4. Write the updated HTML back to `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
+        </action>
+
+        <action>Open the updated endgate HTML in the cmux viewer pane as a tab:
+          ```bash
+          cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" \
+            --workspace "$CMUX_WORKSPACE_ID" --focus false
+          ```
+        </action>
+
+        <output>## Fused post-sprint gate ready — `{{sprint_slug}}`
+
+  **Process findings surfaced:** {{process_findings | length}} ({{routine_process_count}} routine collapsed)
+  **File:** `.momentum/handoffs/{{sprint_slug}}-endgate-report.html` (extended in place)
+
+  Scroll to the "Process review" section. Enter a written response for each finding.
+  The approve control is blocked until all process findings have a response.
+
+  Source links in the gate (depth-on-demand — do not need to open these to respond):
+  · Full audit findings: `{{audit_doc_path}}`
+  · Build ledger: `.momentum/sprints/{{sprint_slug}}/build-ledger.jsonl`
+  </output>
+
+        <ask>Review the Process review section in the fused gate. Enter a written response for
+  each finding, then approve. The gate will unlock once all responses are written.
+  Return here with your approval or with change requests.</ask>
+
+      </check>
+
+      <action>Update task 4.5 to completed</action>
+    </check>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -590,7 +692,11 @@ These will be surfaced automatically in the next sprint planning session (Step 1
   · {{error_count}} tool errors (actual indicators)
   · {{team_msg_count}} inter-agent messages
 
-**Findings document:**
+**Post-sprint review (fused gate):**
+  `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`
+  (Results + process digest in one surface — process sign-off completed in Phase 4.5)
+
+**Full audit findings (depth-on-demand):**
   `.momentum/sprints/{{sprint_slug}}/retro-transcript-audit.md`
 
 **Story stubs created:** {{approved_count}} added to backlog
@@ -602,7 +708,7 @@ These will be surfaced automatically in the next sprint planning session (Step 1
 **Sprint summary:** `.momentum/sprints/{{sprint_slug}}/sprint-summary.md`
 
 ---
-Review the findings document and backlog stubs when planning the next sprint.
+Review the backlog stubs when planning the next sprint.
 Retro handoff items will surface automatically in sprint planning Step 1 (backlog synthesis).
 </output>
 
