@@ -102,6 +102,64 @@ The stack facts section scopes every entry in the diagnostic table. A `wiki-quer
 
 ---
 
+## File Ownership Section (Required)
+
+Every manifesto must include a `## File Ownership` section immediately after `## Project Stack`. This section declares the machine-readable list of file-glob patterns that the composed agent owns — the exact patterns that `momentum-tools agent resolve --touches` matches on when routing stories to this agent.
+
+**Why normative and machine-readable:** build-guidelines reads this field verbatim as the source of `permissions_scope` passed to `agent-builder`. That `permissions_scope` becomes the `patterns[]` array in the `momentum/agents.json` project entry. The resolver matches a touched file path against those patterns; a wrong, vague, or empty list means the agent is never reached — stories fall through to the generic `dev` fallback. A declared field is always correct; an LLM-inferred value from `## Project Stack` prose is not deterministic.
+
+**Field name:** `file_ownership`
+
+**Value shape:** a YAML list of glob strings. Each glob must be concrete enough to match the agent's actual owned files.
+
+**Placement:** immediately after `## Project Stack`, before `## Diagnostic Table`.
+
+**Normative authoring rules:**
+
+1. The list must be non-empty. An empty list `[]` is equivalent to a missing field — the agent becomes unresolvable.
+2. Every glob must match at least one real file path the agent is expected to touch in a typical sprint story.
+3. Globs must use standard glob syntax: `**` for directory wildcards, `*` for filename wildcards, `?` for single-character wildcards.
+4. Include every file type the agent routinely edits (e.g., `.md`, `.sh`, `.yaml` for a skills-domain agent).
+5. Do NOT use only the broadest possible glob (e.g., `**/*`) unless the agent genuinely owns the whole tree — over-broad patterns break multi-agent resolution when multiple composed agents coexist.
+
+**Mandatory-field rule (tied to the Completeness Criterion):** a manifesto without a `## File Ownership` section, or with an empty `file_ownership` list, is **incomplete**. The omission is mechanically detectable: a consumer checks for the absence of this section heading and signals `[MANIFESTO INCOMPLETE: missing ## File Ownership section]`.
+
+**Worked example:**
+
+For a `dev` × `skills` agent owning the Momentum skills tree:
+
+```yaml
+## File Ownership
+
+file_ownership:
+  - "skills/**/*.md"
+  - "skills/**/*.sh"
+  - "skills/**/*.yaml"
+```
+
+For a `dev` × `kotlin-compose` agent:
+
+```yaml
+## File Ownership
+
+file_ownership:
+  - "composeApp/**"
+  - "shared/**"
+  - "*.kt"
+```
+
+For a `qa` × `kotlin-compose` agent:
+
+```yaml
+## File Ownership
+
+file_ownership:
+  - "**/test/**/*.kt"
+  - "**/androidTest/**/*.kt"
+```
+
+---
+
 ## Diagnostic Table Section (Required)
 
 The diagnostic table is the manifesto's core. It maps *observable developer symptoms* to *exact `wiki-query` KB lookups*.
@@ -235,6 +293,14 @@ Tech: **<version-pinned tech line>**
 
 ---
 
+## File Ownership
+
+file_ownership:
+  - "<glob matching files this agent owns>"
+  - "<glob matching files this agent owns>"
+
+---
+
 ## Diagnostic Table
 
 ### <Technology Area 1>
@@ -350,7 +416,8 @@ The `momentum:build-guidelines` skill (story `build-guidelines-skill`) consumes 
 | `role` | Identity block | Determines which base body to merge (`agents/{role}.md`) |
 | `domain` | Identity block | Determines the output file name (`{role}-{domain}.md`) |
 | `project_kb` | Identity block | Scopes `wiki-query` resolution to the correct project KB |
-| `## Project Stack` | Stack section | Bakes stack facts into the composed agent for disambiguation |
+| `## Project Stack` | Stack section | Bakes stack facts into the composed agent for disambiguation; **not** used as the source of resolver patterns |
+| `## File Ownership` (`file_ownership` list) | File Ownership section | **Populates the composed agent's `agents.json` `patterns[]` (`permissions_scope`) deterministically — verbatim from the declared glob list.** This is the authoritative source for resolver-critical patterns; LLM inference from `## Project Stack` prose is not used. A manifesto without this field is flagged invalid in Phase 1 Discover. |
 | `## Diagnostic Table` | Diagnostic table section | Injects the full symptom→`wiki-query` routing table into the composed agent |
 
 **Sprint invariance:** build-guidelines does not re-scope or regenerate the diagnostic table per sprint. The manifesto is consumed as-is; the composed agent embeds the table verbatim. Any change to the table requires editing the manifesto file itself — not a per-sprint override.
