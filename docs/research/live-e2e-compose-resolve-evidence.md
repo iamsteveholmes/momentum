@@ -15,3 +15,6 @@ composed fixture state, per story live-e2e-compose-register-resolve-gen-2-agent 
   FAIL: fixture agents.json not found at /Users/steve/projects/nornspun/momentum/agents.json — was the composition pipeline run against FIXTURE_DIR?
 
 Driver exited non-zero. Evidence (partial): docs/research/live-e2e-compose-resolve-evidence-2026-07-06.md
+  FAIL: AC3/AC7: manifesto not found at /Users/steve/projects/nornspun/.claude/manifests/dev-kotlin-compose.md — cannot parse ## File Ownership.  Set OWNERSHIP_GLOBS to override, or stage the manifesto per e2e/README.md.
+
+Driver exited non-zero. Evidence (partial): docs/research/live-e2e-compose-resolve-evidence.md
