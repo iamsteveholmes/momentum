@@ -56,3 +56,5 @@
 {"event": "stage-transition", "story_slug": "companion-surface-rule-sync-and-bulk-derivation", "from_stage": "stage-1", "to_stage": "stage-2", "ts": "2026-07-06T17:33:27Z"}
 {"event": "story-terminal", "story_slug": "companion-surface-rule-sync-and-bulk-derivation", "outcome": "merged", "findings_summary": [], "ts": "2026-07-06T17:37:18Z"}
 {"event": "conductor-warning", "story_slug": null, "reason": "cross-artifact batch routed to backlog: 2 notes (retro audit-workflow process_findings; endgate format spec \u00a73 alignment)", "ts": "2026-07-06T17:37:57Z"}
+{"event": "avfl-on-merge-complete", "phase": "avfl-on-merge", "result_status": "CLEAN", "final_score": 100, "iterations": 2, "fixes_applied_count": 2, "leftovers_count": 0, "findings_count": 0, "stakes_findings_count": 0, "ts": "2026-07-06T17:52:33Z"}
+{"event": "coverage-discharge-consumer-complete", "phase": "avfl-on-merge", "deferred_count": 0, "discharged_count": 0, "undischarged_count": 0, "note": "all 5 stories dedicated-run \u2014 no deferrals to discharge", "ts": "2026-07-06T17:52:33Z"}
