@@ -219,10 +219,20 @@ to "the act of emitting a review document," not to any one skill.
   driver (see Verification note below); the rule-hook tasks remain independently checkable via
   behavioral-trigger at the task level per verification-standard.md §1.
 
-### Open product fork — resolve at the approval gate
+### Product fork — RESOLVED at the plan gate
+
+> **RESOLVED (ratified by the developer at the `sprint-2026-06-28` plan gate): resolution (C) —
+> scope intake OUT.** intake has no over-budget review-document emission today (single-stub capture
+> only), so Task 3 lands on (C): the under-budget single-stub path is already-compliant (**AC6 holds,
+> AC4 and AC5 are recorded N/A** with this justification, not left unmet). This story's delivered
+> scope is the **project-rule sync only (AC1–AC3, AC6 + Tasks 1–2)**. The genuine bulk-derivation
+> wiring — emitting a paired companion surface from an over-budget review document — is **split to a
+> separate backlog story** (`companion-surface-bulk-derivation-wiring`), since the real over-budget
+> emitters live in `momentum:triage` batch intake or the sprint-planning pre-sprint gate, not intake.
+> Tasks 4–6 (the wiring half) are therefore out of scope for this story; do not build them here.
 
 This story carries one genuine fork an agent cannot default purely to standards, plus two
-membership observations. All three are surfaced here so the developer can decide before dev.
+membership observations. All three are surfaced here (the fork above is now resolved).
 
 - **Fork — does intake actually have an over-budget review-document path to wire?**
   *What:* the wiring half (Tasks 3–6, AC4–AC6) assumes a bulk / ad-hoc-plan path under

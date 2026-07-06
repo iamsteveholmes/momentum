@@ -10,7 +10,39 @@
       "manifesto-format-normative-file-pattern-ownership-field",
       "live-e2e-compose-register-resolve-gen-2-agent"
     ],
-    "waves": []
+    "waves": [],
+    "approvals": [
+      {
+        "story_slug": "companion-surface-pre-sprint-plan-gate",
+        "decision": "approved",
+        "approved_at": "2026-07-06T15:30:07Z",
+        "story_file_sha": "c8a4840ddb4b2b9a067d0514e8421cb5009d86481d9e2bd33b208f2eadb5ea0f"
+      },
+      {
+        "story_slug": "companion-surface-post-sprint-results-gate",
+        "decision": "approved",
+        "approved_at": "2026-07-06T15:30:07Z",
+        "story_file_sha": "304d5aa4f74d4dba4c7eaaa78b48ef34a2a97c5a95f2e71ac4ece7db36bf3d6d"
+      },
+      {
+        "story_slug": "companion-surface-rule-sync-and-bulk-derivation",
+        "decision": "approved",
+        "approved_at": "2026-07-06T15:30:07Z",
+        "story_file_sha": "7d86cdcf1d36837c53888e6984b249f8cde1dd0a10073e028e1282d0d7295ef1"
+      },
+      {
+        "story_slug": "manifesto-format-normative-file-pattern-ownership-field",
+        "decision": "approved",
+        "approved_at": "2026-07-06T15:30:07Z",
+        "story_file_sha": "c10ada78f17d340302e0250066fcd9397281ee799e7e2d6eea96aa7ee0501b51"
+      },
+      {
+        "story_slug": "live-e2e-compose-register-resolve-gen-2-agent",
+        "decision": "approved",
+        "approved_at": "2026-07-06T15:30:07Z",
+        "story_file_sha": "943cbd971a14b568ef309b351919add3ee8a2152add8d6e1345d2921857e3e9d"
+      }
+    ]
   },
   "completed": [
     {
