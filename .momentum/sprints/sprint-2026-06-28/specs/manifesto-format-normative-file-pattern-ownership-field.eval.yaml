@@ -1,0 +1,64 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: manifesto-format-normative-file-pattern-ownership-field
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-28/specs/manifesto-format-normative-file-pattern-ownership-field.eval.yaml
+how_dev_self_checks: |
+  Confirm the manifesto format document declares a Required section for a machine-readable
+  file-ownership / file-pattern field (a list of glob strings), with normative rules and a worked
+  example — not buried as optional prose. Then take a manifest whose ownership field is a known
+  list of globs, run the agent-composition process against it, and confirm the produced
+  momentum/agents.json entry's patterns equal that list verbatim — no added, dropped, or reworded
+  globs. Take a second manifest that omits the ownership field and confirm the process produces an
+  explicit "missing ownership field" signal rather than a populated, guessed patterns set. Finally,
+  confirm `momentum-tools agent resolve --touches <a path matching a declared glob>` returns the
+  composed {role}-{domain} slug, not the generic dev fallback.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/manifesto-format-normative-file-pattern-ownership-field.md#acceptance-criteria
+platforms: [host]
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Manifesto format declares a required, machine-readable ownership field"
+    invocation: "Read the manifesto format document"
+    given: "The manifesto format specification"
+    when: "A reader inspects its required-section set"
+    then:
+      - "A required section defines a machine-readable file-ownership field whose value is a list of glob strings (e.g. skills/**/*.md)"
+      - "The section states its field name, value shape, placement, normative rules, and at least one worked example"
+      - "The field is part of the required-section set, not optional prose; the format states a manifest without it is incomplete and the omission is mechanically detectable"
+    pass_criteria: "The ownership field is documented as a required, machine-readable list of globs with a worked example"
+    fail_criteria: "No such required section exists, or the field is described only as optional prose"
+
+  - name: "Ownership field is consumed verbatim into resolver patterns"
+    invocation: "Run the agent-composition process against a manifest whose ownership field is a known list of globs"
+    given: "A manifest declaring an ownership field of [\"skills/**/*.md\", \"skills/**/*.sh\"]"
+    when: "The composition process builds and registers the agent for that manifest"
+    then:
+      - "The produced momentum/agents.json entry for the composed agent has a patterns list equal to [\"skills/**/*.md\", \"skills/**/*.sh\"] exactly"
+      - "No glob is added, dropped, or reworded relative to the manifest's ownership field"
+    pass_criteria: "The registered patterns equal the ownership field verbatim"
+    fail_criteria: "The registered patterns differ from the ownership field (inferred, reordered, reworded, or added/dropped globs)"
+
+  - name: "Missing ownership field surfaces a signal, never a silent guess"
+    invocation: "Run the agent-composition process against a manifest that omits the ownership field"
+    given: "A manifest with no ownership field"
+    when: "The composition process attempts to build/register the agent"
+    then:
+      - "An explicit 'missing ownership field' signal is produced (the manifest is flagged invalid, or the process halts/warns)"
+      - "No populated-but-guessed patterns set is produced from prose"
+    pass_criteria: "The run produces a detectable missing-field signal instead of a guessed patterns set"
+    fail_criteria: "The run silently infers a patterns set from prose with no missing-field signal"
+
+  - name: "Composed agent resolves deterministically to its own slug, not the dev fallback"
+    invocation: "momentum-tools agent resolve --touches <path matching a declared ownership glob>"
+    given: "An agent composed from a manifest with a populated ownership field, registered in momentum/agents.json"
+    when: "Resolution is requested for a file path that matches one of the declared ownership globs"
+    then:
+      - "The resolver returns the composed {role}-{domain} slug"
+      - "It does NOT return the generic dev fallback"
+      - "The match is driven by the declared ownership field, not by inference"
+    pass_criteria: "Resolution on a matching path returns the composed slug"
+    fail_criteria: "Resolution returns the generic dev fallback for a path that matches a declared glob"

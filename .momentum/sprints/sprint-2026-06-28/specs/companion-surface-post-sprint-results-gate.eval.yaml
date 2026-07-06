@@ -1,0 +1,78 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: companion-surface-post-sprint-results-gate
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-28/specs/companion-surface-post-sprint-results-gate.eval.yaml
+how_dev_self_checks: |
+  Take a completed sprint through its post-sprint review. Confirm exactly one human-facing
+  decision surface is produced for that sprint (a single HTML file), and open it. Confirm:
+  (1) the surface leads with a per-story ship-status block — every story listed with an explicit
+  outcome — before any narrative; (2) any story that did not ship/merge shows a force-close-or-
+  investigate card with what/why/evidence and two options; (3) beneath the results, a "Process
+  review" section presents at most seven Keep/Stop/Change findings, each with what/why/evidence,
+  with routine findings collapsed to a count line; (4) you cannot approve until each results card
+  and each surfaced process finding has a per-decision response with a written reason; (5) the
+  surface links out to the build record, story files, and the retro findings rather than pasting
+  them. Confirm no second, separate post-sprint review surface is produced for the same sprint.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/companion-surface-post-sprint-results-gate.md#acceptance-criteria
+platforms: [host]
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Post-sprint review emits a single fused surface, results-first"
+    invocation: "Run a completed sprint through its post-sprint review"
+    given: "A finished sprint whose stories reached mixed outcomes (some merged, at least one not)"
+    when: "The post-sprint review is produced"
+    then:
+      - "Exactly one human-facing HTML decision surface is emitted for the sprint"
+      - "Its first content section (after any headline metrics) is a per-story ship-status block listing every story with an explicit outcome (e.g. shipped-merged / blocked / closed-incomplete / quarantined)"
+      - "The ship-status block leads ahead of any 'what shipped' narrative prose"
+    pass_criteria: "One surface exists; per-story ship status is the first substantive section"
+    fail_criteria: "Two separate post-sprint surfaces exist for the same sprint, or narrative prose precedes the per-story ship status"
+
+  - name: "Incomplete stories surface force-close-or-investigate cards"
+    invocation: "Open the post-sprint surface for a sprint with an unfinished story"
+    given: "A sprint in which at least one story did not reach a shipped/merged outcome"
+    when: "A reader inspects the decision section"
+    then:
+      - "Each non-shipped story shows a decision card carrying what, why-it-matters, and evidence inline"
+      - "Each such card offers two options: force-close (record as closed-incomplete) or investigate"
+      - "A sprint in which every story merged renders no such card"
+    pass_criteria: "Every unfinished story has a self-contained force-close/investigate card; a clean sprint has none"
+    fail_criteria: "An unfinished story has no decision card, or a card omits what/why/evidence or the two options"
+
+  - name: "Retro process digest is folded beneath results in the same file"
+    invocation: "Open the post-sprint surface and scroll beneath the results"
+    given: "A completed sprint with process observations from its retrospective"
+    when: "A reader inspects the process-review section"
+    then:
+      - "A 'Process review' section appears beneath the results sections in the same surface (not a separate document)"
+      - "It presents at most seven findings organized as Keep / Stop / Change"
+      - "Routine findings collapse to a single count line; each surfaced finding carries what, why-it-matters, and evidence"
+    pass_criteria: "Process findings live in the same file beneath results, capped at seven, each self-contained"
+    fail_criteria: "Process findings appear in a separate file, exceed seven without collapsing routine ones, or omit what/why/evidence"
+
+  - name: "Sign-off is blocked across both results and process sections"
+    invocation: "Attempt to approve the post-sprint surface"
+    given: "A rendered post-sprint surface with results decision cards and surfaced process findings"
+    when: "The developer attempts to record approval"
+    then:
+      - "Approval is blocked until each results decision card has an option chosen"
+      - "Approval is blocked until each surfaced process finding has a per-decision response with a written one-line reason"
+      - "A blanket 'approve all' does not satisfy the gate"
+    pass_criteria: "Approval requires per-item responses on both the results and process sections"
+    fail_criteria: "The surface can be approved in one action without responding to each results card and each process finding"
+
+  - name: "Source artifacts are linked, never inlined or edited"
+    invocation: "Open the post-sprint surface and follow its references"
+    given: "A post-sprint surface for a completed sprint"
+    when: "A reader looks for the underlying detail behind a result or finding"
+    then:
+      - "The surface links to the build record, the canonical story files, and the retro findings as depth-on-demand"
+      - "It does not paste their full contents inline"
+      - "Producing the surface does not modify the story files"
+    pass_criteria: "Underlying detail is reachable by link; the story files are unchanged by rendering"
+    fail_criteria: "The surface inlines full source content, or story files are altered when the surface is produced"

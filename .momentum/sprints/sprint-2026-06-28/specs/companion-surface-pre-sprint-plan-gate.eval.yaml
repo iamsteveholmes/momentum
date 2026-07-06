@@ -1,0 +1,96 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: companion-surface-pre-sprint-plan-gate
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-06-28/specs/companion-surface-pre-sprint-plan-gate.eval.yaml
+how_dev_self_checks: |
+  Take a sprint plan (a set of selected, specified stories with a dependency/wave graph)
+  through to its developer-review step. Confirm a self-contained HTML plan-gate file appears
+  at .momentum/handoffs/{sprint-slug}-plan-gate.html and opens in the viewer. Open it and
+  confirm, in order: (1) the first thing you read is a plain-language statement of what the
+  sprint accomplishes — not a table or a story list; (2) the dependency/wave structure is drawn
+  as a diagram, not described in prose, with any single-point-of-failure story visibly marked;
+  (3) every selected story appears exactly once in a scannable table (stakes, wave, dependency,
+  and a call-vs-batch verdict); (4) each genuine fork has a card carrying What, Why-it-matters,
+  Evidence, Recommendation, and Options; (5) you cannot record approval without writing a
+  one-line reason for each genuine fork; (6) the gate links out to the story files rather than
+  pasting their full bodies.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/companion-surface-pre-sprint-plan-gate.md#acceptance-criteria
+platforms: [host]
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Plan gate HTML is emitted at the developer-review moment"
+    invocation: "Run a sprint plan to the point where it is presented to the developer for go/no-go review"
+    given: "A sprint plan exists with a set of selected stories and a computed dependency/wave graph"
+    when: "The plan reaches the developer-review step"
+    then:
+      - "A self-contained HTML file exists at .momentum/handoffs/{sprint-slug}-plan-gate.html (inline styling/scripts, no external dependencies)"
+      - "The file is opened for the developer in the viewer"
+    pass_criteria: "The HTML file is present after the review step runs and renders standalone in a browser"
+    fail_criteria: "No HTML plan-gate file is produced, or the developer is shown only flat prose / a raw concatenation of story specs"
+
+  - name: "Purpose hero leads the surface"
+    invocation: "Open the emitted plan-gate HTML"
+    given: "A plan-gate HTML file produced for a multi-story sprint"
+    when: "A reader looks at the top of the rendered page"
+    then:
+      - "The first content block is a plain-language purpose statement describing what the sprint accomplishes, readable by a non-implementer in seconds"
+      - "It appears before any table, story list, or decision card"
+    pass_criteria: "A non-implementer can state the sprint's purpose after reading only the top of the page"
+    fail_criteria: "The page opens with a table, a story list, or background/setup prose before stating the purpose"
+
+  - name: "Structure is diagrammed and the critical-path story is marked"
+    invocation: "Open the emitted plan-gate HTML"
+    given: "A sprint whose stories have dependency edges and more than one wave"
+    when: "A reader inspects the structure section"
+    then:
+      - "The dependency/wave structure is rendered as an inline diagram, not described in prose"
+      - "Any single-point-of-failure / critical-path story is visibly marked in the diagram"
+    pass_criteria: "The dependency/wave relationships and the critical-path node are readable from the diagram alone"
+    fail_criteria: "Dependencies are described only in prose, or no critical-path node is distinguished when one exists"
+
+  - name: "Every story appears once in a scannable table"
+    invocation: "Open the emitted plan-gate HTML"
+    given: "A sprint with N selected stories"
+    when: "A reader inspects the story table"
+    then:
+      - "Each of the N stories appears exactly once with stakes, wave, dependency, and a call-vs-batch verdict"
+      - "As-specified / routine stories collapse to a single line rather than expanding inline"
+    pass_criteria: "All selected stories are accounted for once, at a glance, with the four columns present"
+    fail_criteria: "A story is missing or duplicated, or routine stories are expanded into multi-line blocks"
+
+  - name: "Genuine forks carry the full five-field decision card, capped at seven"
+    invocation: "Open the emitted plan-gate HTML for a plan that contains genuine forks"
+    given: "A plan whose review surfaced one or more genuine forks (choices not defaultable to standards)"
+    when: "A reader inspects the decision-card section"
+    then:
+      - "A decision card is rendered only for genuine forks, at most seven of them"
+      - "Each card carries What, Why-it-matters, Evidence, Recommendation, and Options inline, with the substance stated rather than referenced by a bare handle"
+      - "Choices that were defaulted to standards are accounted for in a separate collapsed 'defaulted' summary rather than as cards"
+    pass_criteria: "Each fork card is self-contained — the developer can decide from the card alone without opening another document"
+    fail_criteria: "A card is missing one of the five fields, references a decision by handle only, exceeds seven cards, or renders defaultable items as forks"
+
+  - name: "Sign-off forces a written reason per fork (anti-rubber-stamp)"
+    invocation: "Attempt to approve the plan from the gate"
+    given: "A rendered plan gate with one or more genuine fork cards"
+    when: "The developer attempts to record approval"
+    then:
+      - "Approval cannot be recorded until each genuine fork has a written one-line verdict and reason"
+      - "A blanket 'approve all' with no per-fork reason does not satisfy the gate"
+      - "When a plan has zero genuine forks, a clean-plan approval path is available without per-fork forcing"
+    pass_criteria: "Approval is blocked until per-fork reasons are supplied (or the clean-plan path applies)"
+    fail_criteria: "The plan can be approved in one click with no per-fork reasoning when genuine forks exist"
+
+  - name: "The gate links to story files rather than inlining them"
+    invocation: "Open the emitted plan-gate HTML and follow a story reference"
+    given: "A plan gate for a sprint of specified stories"
+    when: "A reader looks for the full detail of a story"
+    then:
+      - "The gate links to the canonical story file (depth-on-demand) rather than pasting its full body"
+      - "The full machine detail (tasks, dev notes) is reachable via the link, not embedded in the review surface"
+    pass_criteria: "The review surface stays scannable; full story detail is one click away, not inline"
+    fail_criteria: "The gate inlines full story bodies, reproducing the text-wall it exists to replace"
