@@ -12,7 +12,9 @@ Orchestrates the three-tier agent guidelines architecture for a project. Produce
 - **Tier 1 (Hot Constitution):** `.claude/guidelines/constitution.md` — project-wide, always loaded.
 - **Tier 2 (Composed Agent Files):** `.claude/guidelines/agents/{role}-{domain}.md` — base body + manifesto merged per role × domain pair.
 
-This skill is an **orchestrator over `momentum:agent-builder`** (Tier 2 composer) and optionally `momentum:constitution-builder` (domain-knowledge synthesis). It contains no KB-synthesis logic of its own. It loops the agent manifesto's role × domain matrix, invokes `agent-builder` for each pair (which assembles the full composed file AND writes `momentum/agents.json` with non-empty `patterns[]`), and validates that the resulting agents are resolvable via `momentum-tools agent resolve --touches`.
+This skill is an **orchestrator over `momentum:agent-builder`** (Tier 2 composer) and optionally `momentum:constitution-builder` (domain-knowledge synthesis). It contains no KB-synthesis logic of its own. It loops the agent manifesto's role × domain matrix, reads the `## File Ownership` field verbatim from each manifesto, and passes it to `agent-builder` as `permissions_scope` — agent-builder assembles the composed file AND writes `momentum/agents.json` with non-empty `patterns[]` = `permissions_scope`. After each pair, the skill validates that the resulting agents are resolvable via `momentum-tools agent resolve --touches`.
+
+**Manifesto validation:** Phase 1 (Discover) requires every manifesto to declare a non-empty `## File Ownership` section. A manifesto without this field is flagged invalid and skipped — build-guidelines never infers resolver patterns from prose.
 
 **DEC-038 G1 gate:** At least one composed agent file must be written to disk AND registered in `momentum/agents.json`. This is the key observable.
 

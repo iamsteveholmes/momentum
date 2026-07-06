@@ -31,7 +31,8 @@ Per `skills/momentum/references/manifesto-format.md` (AC8):
 | `role` | Identity block | Determines base body to merge (`agents/{role}.md`) |
 | `domain` | Identity block | Determines output file name (`{role}-{domain}.md`) |
 | `project_kb` | Identity block | Scopes `wiki-query` resolution to the correct project KB |
-| `## Project Stack` | Stack section | Bakes stack facts into composed agent for disambiguation |
+| `## Project Stack` | Stack section | Bakes stack facts into composed agent for disambiguation; **not** the source of resolver patterns |
+| `## File Ownership` (`file_ownership` list) | File Ownership section | **Populates `agents.json` `patterns[]` (`permissions_scope`) verbatim — authoritative source for resolver-critical globs.** Manifests missing this field are flagged invalid in Phase 1. |
 | `## Diagnostic Table` | Diagnostic table section | Injects full symptom→`wiki-query` routing table (verbatim) |
 
 **Sprint invariance (DEC-038 D1):** The manifesto is consumed as-is. The composed agent embeds the diagnostic table verbatim. Any change to the table requires editing the manifesto file — not a per-sprint override. No sprint or story identifier is added.
@@ -152,13 +153,15 @@ Deep spawn-wiring mechanics are owned by story `sprint-dev-composed-file-spawn-w
 
 ---
 
-## Known Limitation: patterns Derivation Is Best-Effort
+## Deterministic patterns Derivation via Declared File Ownership
 
-Build-guidelines derives the `permissions_scope` globs (which become `patterns` in `agents.json`) from the manifesto's `## Project Stack` prose via LLM inference. This is a best-effort derivation — it is reliable for well-structured manifestos but is not fully deterministic.
+Build-guidelines reads the `permissions_scope` globs (which become `patterns` in `agents.json`) directly from the manifesto's `## File Ownership` section — verbatim, without LLM inference. This is fully deterministic: the declared `file_ownership` list in the manifesto is the authoritative, machine-readable source.
 
-**Root cause:** the manifesto-format spec (`skills/momentum/references/manifesto-format.md`) does not yet define a normative, machine-readable file-ownership / patterns field. Until it does, there is no structured source for build-guidelines to read globs from.
+**How it works:** the manifesto-format spec (`skills/momentum/references/manifesto-format.md`) defines `## File Ownership` as a required section containing a `file_ownership` YAML list of glob strings. Build-guidelines Phase 3 reads that list and passes it unchanged as `permissions_scope` to agent-builder, which writes `patterns = permissions_scope` into `momentum/agents.json`. The `momentum-tools agent resolve --touches` resolver then matches a touched file path against those patterns to return the correct composed slug.
 
-**Follow-up (cross-artifact — out of scope for this story):** for fully-deterministic G1 resolution, a normative `file_patterns` (or equivalent) field should be added to `manifesto-format.md`. This is owned by the `manifesto-format` story, not build-guidelines. Do not edit `manifesto-format.md` here.
+**Validation (Phase 1):** a manifesto missing the `## File Ownership` section, or with an empty `file_ownership` list, is marked invalid in Phase 1 Discover and skipped. Build-guidelines never infers patterns from `## Project Stack` prose — a missing-field manifesto produces an explicit signal rather than a guessed patterns set.
+
+**G1 determinism:** because `patterns` now equals the declared `file_ownership` field verbatim, the `--touches` resolver is deterministic: a correctly authored manifesto guarantees the composed agent is reachable, not dependent on LLM inference quality.
 
 ---
 

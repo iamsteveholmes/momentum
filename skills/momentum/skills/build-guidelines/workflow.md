@@ -38,9 +38,14 @@
         1. Read the YAML frontmatter block (identity fields: role, domain, project_kb)
         2. Confirm required fields: role, domain, project_kb — all present
         3. Confirm ## Project Stack section present
-        4. Confirm ## Diagnostic Table section present with ≥1 entry
-        5. Confirm base body exists: skills/momentum/agents/{role}.md
-      Build: {{manifest_matrix}} = list of {role, domain, project_kb, manifesto_path, base_body_path, valid: true|false}
+        4. Confirm ## File Ownership section present AND file_ownership list is non-empty
+           If missing or empty: mark manifest invalid with reason
+             "missing or empty ## File Ownership field — resolver patterns cannot be determined"
+           A manifesto without this field is incomplete per manifesto-format.md; do NOT infer
+           patterns from ## Project Stack prose. Surface the missing-field signal explicitly.
+        5. Confirm ## Diagnostic Table section present with ≥1 entry
+        6. Confirm base body exists: skills/momentum/agents/{role}.md
+      Build: {{manifest_matrix}} = list of {role, domain, project_kb, manifesto_path, base_body_path, valid: true|false, invalid_reason: string|null}
       Note any invalid manifests (missing required fields) — surface in Consult phase.
 
       CRITICAL: Read the diagnostic table as stable, sprint-invariant data.
@@ -76,8 +81,8 @@ Manifests found: {{manifest_matrix | count}} at {{manifests_dir}}
 }}
 
 {{if invalid manifests:
-⚠ Invalid manifests (skipped — missing required fields):
-{{list them with reason}}
+⚠ Invalid manifests (skipped):
+{{list them with reason — including "missing or empty ## File Ownership field" where applicable}}
 }}
 
 Existing composed agents: {{existing_agents | count or "none"}}
@@ -142,7 +147,10 @@ DRY RUN — no files will be written. Preview only.
 
     <action>For each entry in {{confirmed_matrix}} (sequential — one pair at a time for clarity):
 
-      current = {role, domain, project_kb, manifesto_path, base_body_path}
+      current = {role, domain, project_kb, manifesto_path, base_body_path, valid, invalid_reason}
+      If not current.valid:
+        Report "⚠ Skipping {{current.role}}-{{current.domain}}: {{current.invalid_reason}}" and continue to next entry.
+
       target_path = "{{output_dir}}/{{current.role}}-{{current.domain}}.md"
 
       1. Read the manifesto file at {{current.manifesto_path}}
@@ -184,15 +192,17 @@ DRY RUN — no files will be written. Preview only.
            domain: {{current.domain}}                     (e.g., "kotlin-compose" — the manifesto domain id)
            constitution_path: {{constitution_path}}        (pass current run's constitution path)
            manifesto_context: {{domain_knowledge_content}} (domain-knowledge block from step 2)
-           permissions_scope: <file patterns this role owns in this domain — derive from manifesto's
-             ## Project Stack "Shared UI" / "Shared logic" paths, or from any "File ownership" section
-             in the manifesto. These patterns MUST be non-empty so momentum-tools agent resolve
-             --touches matches. Examples:
-               dev × kotlin-compose → ["composeApp/**", "shared/**", "*.kt"]
-               dev × skills         → ["skills/**/*.md", "skills/**/*.yaml", "skills/**/*.sh"]
-               qa × kotlin-compose  → ["**/test/**/*.kt", "**/androidTest/**/*.kt"]
-             If no ownership section exists in the manifesto, use the ## Project Stack paths
-             as the basis and default to broad-match patterns for this domain.>
+           permissions_scope: <read the manifesto's ## File Ownership section verbatim and pass it
+             unchanged as permissions_scope. This is the authoritative, machine-readable source for
+             resolver-critical patterns (manifesto-format.md AC8). DO NOT infer patterns from
+             ## Project Stack prose. DO NOT default to broad-match patterns.
+             (Invalid manifests — missing or empty ## File Ownership field — are already gated out
+             at the loop top by the current.valid check above; this step is only reached for
+             valid manifests with a non-empty file_ownership list.)
+             Examples of correctly declared ownership fields:
+               dev × kotlin-compose: file_ownership: ["composeApp/**", "shared/**", "*.kt"]
+               dev × skills:         file_ownership: ["skills/**/*.md", "skills/**/*.sh", "skills/**/*.yaml"]
+               qa × kotlin-compose:  file_ownership: ["**/test/**/*.kt", "**/androidTest/**/*.kt"]>
            output_dir: {{output_dir}}
          agent-builder will:
            a. Draft composed file: YAML frontmatter + domain specialization block ABOVE --- + full base body BELOW ---
