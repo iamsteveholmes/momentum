@@ -147,7 +147,10 @@ DRY RUN — no files will be written. Preview only.
 
     <action>For each entry in {{confirmed_matrix}} (sequential — one pair at a time for clarity):
 
-      current = {role, domain, project_kb, manifesto_path, base_body_path}
+      current = {role, domain, project_kb, manifesto_path, base_body_path, valid, invalid_reason}
+      If not current.valid:
+        Report "⚠ Skipping {{current.role}}-{{current.domain}}: {{current.invalid_reason}}" and continue to next entry.
+
       target_path = "{{output_dir}}/{{current.role}}-{{current.domain}}.md"
 
       1. Read the manifesto file at {{current.manifesto_path}}
@@ -193,9 +196,9 @@ DRY RUN — no files will be written. Preview only.
              unchanged as permissions_scope. This is the authoritative, machine-readable source for
              resolver-critical patterns (manifesto-format.md AC8). DO NOT infer patterns from
              ## Project Stack prose. DO NOT default to broad-match patterns.
-             If the manifesto lacks a ## File Ownership section or has an empty file_ownership list:
-             this manifest was already flagged invalid in Phase 1 — do not proceed here; skip this
-             entry and report "missing ownership field — skipping {{current.role}}-{{current.domain}}".
+             (Invalid manifests — missing or empty ## File Ownership field — are already gated out
+             at the loop top by the current.valid check above; this step is only reached for
+             valid manifests with a non-empty file_ownership list.)
              Examples of correctly declared ownership fields:
                dev × kotlin-compose: file_ownership: ["composeApp/**", "shared/**", "*.kt"]
                dev × skills:         file_ownership: ["skills/**/*.md", "skills/**/*.sh", "skills/**/*.yaml"]

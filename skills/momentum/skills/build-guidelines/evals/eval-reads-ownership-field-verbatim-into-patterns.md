@@ -1,5 +1,8 @@
 # Eval: Ownership field flows verbatim into agents.json patterns
 
+**Eval ID:** build-guidelines-ownership-verbatim-flow
+**Stakes:** correctness — verbatim flow is required; inference produces wrong resolver patterns
+
 **Given** a manifesto whose `## File Ownership` section declares:
 
 ```yaml

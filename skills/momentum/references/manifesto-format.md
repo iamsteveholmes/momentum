@@ -122,41 +122,37 @@ Every manifesto must include a `## File Ownership` section immediately after `##
 4. Include every file type the agent routinely edits (e.g., `.md`, `.sh`, `.yaml` for a skills-domain agent).
 5. Do NOT use only the broadest possible glob (e.g., `**/*`) unless the agent genuinely owns the whole tree — over-broad patterns break multi-agent resolution when multiple composed agents coexist.
 
-**Mandatory-field rule (tied to the Completeness Criterion):** a manifesto without a `## File Ownership` section, or with an empty `file_ownership` list, is **incomplete**. The omission is mechanically detectable: a consumer checks for the absence of this section heading and signals `[MANIFESTO INCOMPLETE: missing ## File Ownership section]`.
+**Mandatory-field rule (tied to the Completeness Criterion):** a manifesto without a `## File Ownership` section, or with an empty `file_ownership` list, is **incomplete**. The omission is mechanically detectable: a consumer checks that the `## File Ownership` heading is present AND `file_ownership` is non-empty. A manifesto failing either check signals `[MANIFESTO INCOMPLETE: missing or empty ## File Ownership field — resolver patterns cannot be determined]`.
+
+**Note on `permissions_scope`:** when build-guidelines passes the `file_ownership` list to `agent-builder` as `permissions_scope`, the value is the list entries under the `## File Ownership` heading — verbatim, not derived from `## Project Stack` prose.
 
 **Worked example:**
 
 For a `dev` × `skills` agent owning the Momentum skills tree:
 
-```yaml
 ## File Ownership
 
 file_ownership:
   - "skills/**/*.md"
   - "skills/**/*.sh"
   - "skills/**/*.yaml"
-```
 
 For a `dev` × `kotlin-compose` agent:
 
-```yaml
 ## File Ownership
 
 file_ownership:
   - "composeApp/**"
   - "shared/**"
   - "*.kt"
-```
 
 For a `qa` × `kotlin-compose` agent:
 
-```yaml
 ## File Ownership
 
 file_ownership:
   - "**/test/**/*.kt"
   - "**/androidTest/**/*.kt"
-```
 
 ---
 

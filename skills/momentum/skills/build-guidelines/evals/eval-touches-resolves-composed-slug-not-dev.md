@@ -1,5 +1,8 @@
 # Eval: Composed agent resolves deterministically to its own slug, not the dev fallback
 
+**Eval ID:** build-guidelines-touches-resolves-composed-slug
+**Stakes:** load-bearing — resolver must return composed slug; fallback to generic slug means the composed agent is functionally dead at sprint time
+
 **Given** an agent composed from a manifesto whose `## File Ownership` section declares:
 
 ```yaml

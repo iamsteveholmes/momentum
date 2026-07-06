@@ -1,10 +1,13 @@
 # Eval: Missing ownership field surfaces a signal, never a silent guess
 
+**Eval ID:** build-guidelines-flags-missing-ownership
+**Stakes:** correctness — a missing-field signal is required; silent pass leads to guessed patterns
+
 **Given** a manifesto that omits the `## File Ownership` section entirely (or has an empty `file_ownership: []` list),
 
 **When** build-guidelines Phase 1 (Discover) scans and validates that manifesto,
 
-**Then** the manifesto is marked `valid: false` in `{{manifest_matrix}}` with an explicit reason: `"missing or empty ## File Ownership field"`. It is surfaced in the Discover output under "Invalid manifests (skipped)" with that reason. Phase 3 does not attempt to build this manifest — it is skipped with the missing-field error, not processed with a guessed `permissions_scope` inferred from prose.
+**Then** the manifesto is marked `valid: false` in `{{manifest_matrix}}` with an explicit reason: `"missing or empty ## File Ownership field — resolver patterns cannot be determined"`. It is surfaced in the Discover output under "Invalid manifests (skipped)" with that reason. Phase 3 does not attempt to build this manifest — it is skipped with the missing-field error, not processed with a guessed `permissions_scope` inferred from prose.
 
 ## Verification approach
 
@@ -17,7 +20,7 @@ Read build-guidelines `workflow.md` Phase 1 Discover action. Confirm:
 
 ## Pass criteria
 
-A manifesto missing `## File Ownership` produces an explicit "missing or empty ## File Ownership field" signal in the Discover phase — the manifest is flagged invalid, not silently processed.
+A manifesto missing `## File Ownership` produces an explicit "missing or empty ## File Ownership field — resolver patterns cannot be determined" signal in the Discover phase — the manifest is flagged invalid, not silently processed.
 
 ## Fail criteria
 
