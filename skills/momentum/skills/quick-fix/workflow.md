@@ -192,6 +192,7 @@ Options:
     </check>
 
     <!-- 2c: Specialist classification -->
+    <!-- MIGRATION (2026-07-06): `specialist-classify` is legacy — this is its last live call site. Replace with `momentum-tools agent resolve --touches ...` (multi-result, gen-2 routing-table paths) when this step is next touched. -->
     <action>Read the story's `touches` array from {{story_file}} frontmatter.
     Run: `momentum-tools specialist-classify --touches "{{comma_separated_touches}}"`
     Store {{specialist}} and {{agent_file}} from the output.
