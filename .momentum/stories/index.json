@@ -6144,5 +6144,25 @@
     "touches": [],
     "priority": "medium",
     "story_type": "maintenance"
+  },
+  "story-file-completion-metadata-write-back-sweep": {
+    "status": "backlog",
+    "title": "Sweep and fix the index-done / story-file-stale drift class (completion metadata never written back)",
+    "epic_slug": "momentum-conductor-core",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "maintenance"
+  },
+  "avfl-spec-contract-finding-owner-assignment": {
+    "status": "backlog",
+    "title": "Assign an owner for AVFL pre-build findings against spec/contract files",
+    "epic_slug": "momentum-quality-gates-enforced",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "maintenance"
   }
 }

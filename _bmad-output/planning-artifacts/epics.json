@@ -377,10 +377,11 @@
       "cross-artifact-note-ledger-event",
       "inter-skill-seam-contracts",
       "repair-phantom-story-file-entries-and-backfill-live-fixture-scope",
-      "stakes-class-validation-code-reviewer-conductor"
+      "stakes-class-validation-code-reviewer-conductor",
+      "story-file-completion-metadata-write-back-sweep"
     ],
     "stories_done": 32,
-    "stories_remaining": 13,
+    "stories_remaining": 14,
     "system_context": "Sits at the center of the modern build flow: sprint-planning produces an activated sprint with per-story contracts; the Conductor consumes it, resolves agents via the routing table (momentum-agent-composition-pipeline), spawns dev/QA/E2E roles (momentum-agent-role-contracts), applies quality gates (momentum-quality-gates-enforced), and hands the completed sprint to retro (momentum-sprint-retro). Its end-gate report and pause-ask surfaces are governed by the decision-grade-presentation rule.",
     "type": "flow",
     "value_analysis": "The Conductor is the primary build path for the practice: every 'run the sprint build' request dispatches here, and every quality gate, escalation, and merge decision in a modern sprint flows through its phase model. Before the carve-out these ~50 stories were interleaved with 100+ legacy sprint-dev and planning stories inside one mega-epic, which meant planning surfaces could not see conductor health (open seam contracts, end-gate defects, resume hardening) as a coherent burn-down.\n\nAs a dedicated epic, the conductor's remaining work is legible: seam contracts between the skills it orchestrates (inter-skill-seam-contracts, consumer-integration-review-contract), verification integrity at the QA/E2E stages (stakes-class validation, verification-method execution), operational hardening (resume/rehydration idempotency, staging and ledger append safety), and the live proof run against the fixture sprint. These are the stories that decide whether the practice can trust an autonomous build end-to-end.\n\nThe epic also owns the retirement of the legacy path: conduct-adoption-retire-sprint-dev tracks the soft-deprecate \u2192 soak \u2192 hard-remove sequence, after which momentum-sprint-orchestration narrows to planning-adjacent execution infrastructure."
@@ -767,6 +768,7 @@
       "avfl-fixer-required-gate",
       "avfl-invoke-code-reviewer-via-skill-not-task",
       "avfl-migration-story-exhaustive-call-site-audit",
+      "avfl-spec-contract-finding-owner-assignment",
       "avfl-timeout-surfacing-scoring-stability",
       "code-reviewer-withmartian-replay-fixture",
       "compare-explore-fallback-vs-code-reviewer-prompt-quality",
@@ -801,7 +803,7 @@
       "workflow-fidelity-rule"
     ],
     "stories_done": 8,
-    "stories_remaining": 31,
+    "stories_remaining": 32,
     "system_context": "The enforcement layer that makes all other features trustworthy. Without gates, any feature can regress silently. With them, 'working software at sprint end' is the default expectation, not the optimistic one.",
     "type": "quality",
     "value_analysis": "Quality gates change the developer's relationship with defects. Without them, defects are discovered after merge, sometimes after demo. With automated gates, defects surface before they compound. The developer gets immediate feedback when a story breaks its acceptance criteria.\n\nBut the deeper value is the psychological safety it creates. A developer who knows that every merge is gated can move faster \u2014 because they know the system will catch what they miss. The gates are not bureaucratic checkpoints; they are the reason confident, rapid development is possible.\n\nCurrently working: AVFL and team review gates run in every sprint. The practice catches real issues. The developer doesn't need to manually review every merge.\n\nGaps: The AVFL fixer (automated remediation for common defects) is not yet implemented. Some gate failures require manual analysis and fixing. Known defect escapes exist in practice."
