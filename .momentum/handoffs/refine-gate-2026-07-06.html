@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refine Gate — 2026-07-06</title>
+<style>
+  :root {
+    --bg: #faf7f0; --panel: #ffffff; --ink: #2c2a25; --muted: #6f6a5e;
+    --line: #e3ddd0; --ok: #2e7d4f; --okbg: #eaf5ee; --warn: #b0722a;
+    --accent: #4a5d8a; --accentbg: #eef1f8; --drop: #a34040; --dropbg: #f9eeee;
+    --chip: #f0ece2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1e1c19; --panel:#282520; --ink:#e8e3d8; --muted:#a49d8e;
+      --line:#3a362e; --ok:#7fc79b; --okbg:#243428; --warn:#d99a55;
+      --accent:#93a8d8; --accentbg:#2a3042; --drop:#d98080; --dropbg:#3a2a2a; --chip:#33302a; }
+  }
+  :root[data-theme="light"] {
+    --bg:#faf7f0; --panel:#ffffff; --ink:#2c2a25; --muted:#6f6a5e; --line:#e3ddd0;
+    --ok:#2e7d4f; --okbg:#eaf5ee; --warn:#b0722a; --accent:#4a5d8a; --accentbg:#eef1f8;
+    --drop:#a34040; --dropbg:#f9eeee; --chip:#f0ece2;
+  }
+  :root[data-theme="dark"] {
+    --bg:#1e1c19; --panel:#282520; --ink:#e8e3d8; --muted:#a49d8e; --line:#3a362e;
+    --ok:#7fc79b; --okbg:#243428; --warn:#d99a55; --accent:#93a8d8; --accentbg:#2a3042;
+    --drop:#d98080; --dropbg:#3a2a2a; --chip:#33302a;
+  }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.55 -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 1.5rem; }
+  main { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 1.45rem; margin: 0 0 .3rem; }
+  h2 { font-size: 1.05rem; margin: 1.6rem 0 .6rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .hero { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.3rem; }
+  .hero p { margin: .4rem 0 0; }
+  .ask { color: var(--accent); font-weight: 600; }
+  .diagram-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .8rem; }
+  .checks { background: var(--okbg); border: 1px solid var(--line); border-radius: 10px; padding: .8rem 1.1rem; }
+  .checks li { margin: .3rem 0; list-style: none; }
+  .checks li::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+  .checks ul { margin: 0; padding: 0; }
+  .fork { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 1rem 1.2rem; margin: .9rem 0; }
+  .fork h3 { margin: 0 0 .5rem; font-size: 1.02rem; }
+  .fork dt { font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: .55rem; }
+  .fork dd { margin: .15rem 0 0; }
+  .rec { background: var(--accentbg); border-radius: 6px; padding: .5rem .7rem; margin-top: .6rem; }
+  .chip { display: inline-block; background: var(--chip); border-radius: 999px; padding: .05rem .55rem; font-size: .78rem; margin-right: .3rem; }
+  .drop-chip { background: var(--dropbg); color: var(--drop); }
+  table { border-collapse: collapse; width: 100%; font-size: .86rem; margin: .5rem 0; }
+  th, td { text-align: left; border-bottom: 1px solid var(--line); padding: .3rem .5rem; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  details { margin: .5rem 0; }
+  summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+  code { background: var(--chip); border-radius: 4px; padding: .05rem .3rem; font-size: .85em; }
+  .backing { color: var(--muted); font-size: .85rem; }
+  .options span { display: inline-block; margin-right: .8rem; }
+</style>
+</head>
+<body>
+<main>
+
+<div class="hero">
+  <h1>Refine gate — clear the backlog before “cohort goes live” planning</h1>
+  <p>This batch removes 24 dead stories, repairs 7 orphaned epic references, applies the 6 priority changes you ratified, and closes 4 ledger entries whose gaps are verifiably shipped — so next sprint’s planning selects from a backlog that reflects reality.</p>
+  <p class="ask">Three forks need your verdict (cards below). Everything else is verified mechanics or defaulted to standards and applies with the batch.</p>
+</div>
+
+<h2>The batch at a glance</h2>
+<div class="diagram-wrap">
+<svg viewBox="0 0 840 190" width="840" height="190" role="img" aria-label="Batch structure diagram">
+  <style>
+    .box { fill: var(--panel); stroke: var(--line); rx: 8; }
+    .lbl { font: 600 13px sans-serif; fill: var(--ink); }
+    .sub { font: 11px sans-serif; fill: var(--muted); }
+    .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+  </style>
+  <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="none" stroke="var(--muted)" stroke-width="1.2"/></marker></defs>
+  <rect class="box" x="10" y="60" width="130" height="70" rx="8"/>
+  <text class="lbl" x="75" y="88" text-anchor="middle">Backlog today</text>
+  <text class="sub" x="75" y="106" text-anchor="middle">288 prioritized + 7 unprioritized</text>
+  <path class="arrow" d="M140 95 H 185"/>
+  <rect class="box" x="185" y="10" width="150" height="52" rx="8" style="stroke: var(--drop)"/>
+  <text class="lbl" x="260" y="31" text-anchor="middle">FORK 1 · drop 24</text>
+  <text class="sub" x="260" y="48" text-anchor="middle">7 superseded · 12 stale · 5 dupes</text>
+  <rect class="box" x="185" y="70" width="150" height="52" rx="8"/>
+  <text class="lbl" x="260" y="91" text-anchor="middle">Reassign 6 epics</text>
+  <text class="sub" x="260" y="108" text-anchor="middle">3 orphan slugs repaired</text>
+  <rect class="box" x="185" y="130" width="150" height="52" rx="8"/>
+  <text class="lbl" x="260" y="151" text-anchor="middle">6 priority changes</text>
+  <text class="sub" x="260" y="168" text-anchor="middle">ratified at Step 7</text>
+  <path class="arrow" d="M335 36 H 385"/>
+  <path class="arrow" d="M335 95 H 385"/>
+  <path class="arrow" d="M335 155 H 385"/>
+  <rect class="box" x="385" y="10" width="150" height="52" rx="8" style="stroke: var(--accent)"/>
+  <text class="lbl" x="460" y="31" text-anchor="middle">FORK 2 · epic splits</text>
+  <text class="sub" x="460" y="48" text-anchor="middle">121 + 103 story mega-epics</text>
+  <rect class="box" x="385" y="70" width="150" height="52" rx="8" style="stroke: var(--accent)"/>
+  <text class="lbl" x="460" y="91" text-anchor="middle">FORK 3 · 2 new stubs</text>
+  <text class="sub" x="460" y="108" text-anchor="middle">unowned recurrence gaps</text>
+  <rect class="box" x="385" y="130" width="150" height="52" rx="8"/>
+  <text class="lbl" x="460" y="151" text-anchor="middle">4 ledger consumes</text>
+  <text class="sub" x="460" y="168" text-anchor="middle">gaps shipped by done stories</text>
+  <path class="arrow" d="M535 36 C 590 36 600 80 630 88"/>
+  <path class="arrow" d="M535 95 H 630"/>
+  <path class="arrow" d="M535 155 C 590 155 600 110 630 102"/>
+  <rect class="box" x="630" y="60" width="200" height="70" rx="8" style="stroke: var(--ok)"/>
+  <text class="lbl" x="730" y="88" text-anchor="middle">Clean backlog</text>
+  <text class="sub" x="730" y="106" text-anchor="middle">→ sprint-planning: cohort goes live</text>
+</svg>
+</div>
+
+<h2>Verified mechanics — apply with the batch, no review needed</h2>
+<div class="checks"><ul>
+  <li>All 24 drop targets confirmed present in the index, every one still <code>backlog</code> — nothing in-flight is touched.</li>
+  <li>6 priority changes ratified at Step 7 (incl. AVFL survivor absorbing its dropped twin at high).</li>
+  <li>6 epic reassignments defaulted: 4 <code>conduct-core</code> → sprint-orchestration, handoff-artifact → sprint-planning-to-ready, transcript-fix → sprint-retro (their epic slugs exist nowhere in epics.json).</li>
+  <li>epics.json refresh at write: 9 stale story arrays recomputed, 15 overdue <code>last_verified</code> stamps, type annotations for <code>ad-hoc</code>/<code>_migration</code>.</li>
+  <li>Assessments/decisions clean: all 4 stale assessments covered by later decisions; both canvas decisions fully shipped (dashboard shell + all lenses done); the intake-queue decision’s intent landed as practice-ledger.</li>
+  <li>Agent findings re-verified against source: 5 of 6 “new epic” claims rejected as overlaps of existing epics; 18 of 26 recurrence story-slugs were fabricated and re-grounded before anything reached this gate.</li>
+  <li>One-line migration note added to quick-fix workflow (legacy <code>specialist-classify</code> call site → <code>agent resolve</code>); base-body trio needs no index change — co-select at planning per handoff §4.</li>
+</ul></div>
+
+<h2>Fork 1 — drop 24 stories</h2>
+<div class="fork">
+  <h3><span class="chip drop-chip">24 drops</span> 7 superseded · 12 stale-eval · 5 dedup</h3>
+  <dl>
+    <dt>What</dt><dd>Batch status-transition to <code>dropped</code> for 24 backlog stories: 5 high, 5 medium, 13 low, 1 unprioritized.</dd>
+    <dt>Why</dt><dd>Each is superseded by shipped work, targets a replaced design, or duplicates a surviving story — leaving them inflates the backlog sprint-planning selects from.</dd>
+    <dt>Evidence</dt><dd>Every row carries its supersession evidence below; all verified on disk this session.</dd>
+  </dl>
+  <details open><summary>7 superseded (handoff §2 — evidence verified on disk)</summary>
+    <table>
+      <tr><th>Story</th><th>Superseded by</th></tr>
+      <tr><td><code>specialist-classify-update-for-gen-2-paths</code> (high)</td><td><code>agent resolve</code> already returns gen-2 project paths (momentum-tools.py:1972–2090)</td></tr>
+      <tr><td><code>specialist-classify-multi-result</code> (med)</td><td><code>agent resolve</code> is already multi-result</td></tr>
+      <tr><td><code>sprint-dev-composed-file-spawn-wiring</code> (high)</td><td>Conductor spawns via routing table; sprint-dev is retiring</td></tr>
+      <tr><td><code>nornspun-agent-constitution-wiki-query-block</code> (med)</td><td>constitution-builder emits the block unconditionally (SKILL.md:46–69)</td></tr>
+      <tr><td><code>drop-superseded-kb-stories-dec-018</code> (high)</td><td>its 6 target slugs no longer exist in the index (grep: zero hits)</td></tr>
+      <tr><td><code>constitution-builder-evals-phases-2-and-3</code> (med)</td><td>DEC-038 removed the phases it tests; 7-eval suite covers the new shape</td></tr>
+      <tr><td><code>agents-md-manifest-format</code> (low)</td><td>agents.json + manifesto-format.md deliver it via a different design</td></tr>
+    </table>
+  </details>
+  <details><summary>12 stale-eval drops (all backlog/low, no story file — keep/drop evaluated per story)</summary>
+    <table>
+      <tr><td><code>project-configuration-file-defines-protocol-bindings</code></td><td rowspan="4">protocol-abstraction epic marked premature; 0 of its runtime stories started; substitution proved domain-specific in practice</td></tr>
+      <tr><td><code>protocol-gap-resolution-creates-valid-config-entries</code></td></tr>
+      <tr><td><code>protocol-substitution-satisfies-interface-contract</code></td></tr>
+      <tr><td><code>workflow-steps-resolve-through-protocol-interfaces-at-invocation-time</code></td></tr>
+      <tr><td><code>mcp-provider-registration-and-cursor-tool-ceiling-compliance</code></td><td>future-facing resilience, no blocking value now</td></tr>
+      <tr><td><code>findings-ledger-accumulates-quality-findings-across-stories</code></td><td>ledger schema + per-sprint findings already shipped via retro ceremony</td></tr>
+      <tr><td><code>bash-benchmarking-script-captures-time-cost-and-tokens</code></td><td rowspan="6">benchmark family: project chose micro-eval YAML fixtures + skill-specific golden fixtures over promptfoo/pydantic-ai/centralized datasets; 6+ sprints unprioritized</td></tr>
+      <tr><td><code>benchmark-results-drive-model-effort-frontmatter-updates-in-skill-files</code></td></tr>
+      <tr><td><code>golden-dataset-provides-canonical-benchmark-inputs-and-reference-outputs</code></td></tr>
+      <tr><td><code>promptfoo-configuration-benchmarks-skills-across-model-tiers</code></td></tr>
+      <tr><td><code>pydantic-ai-harness-benchmarks-agent-workflows-with-agent-override</code></td></tr>
+      <tr><td><code>benchmark-capture-from-session-transcripts</code></td></tr>
+    </table>
+    <p class="backing">21 other no-file backlog stories were evaluated KEEP — untouched by this batch.</p>
+  </details>
+  <details><summary>5 dedup drops (retro corpus dedup, §3.4)</summary>
+    <table>
+      <tr><td><code>fix-sprint-planning-workflow-cli-surface-and-skill-namespace-refs</code> (high)</td><td>spec-less near-duplicate of <code>sprint-planning-continuous-execution-and-cli-fixes</code> (survives, high)</td></tr>
+      <tr><td><code>avfl-fixer-required-gate</code> (high)</td><td>half of one always-fix policy; survivor <code>avfl-default-fix-all-legit-findings</code> promoted to high, absorbs the gate AC</td></tr>
+      <tr><td><code>session-handoff-prompt-as-artifact</code> (med)</td><td>already absorbed by <code>plain-anchor-and-durable-handoff-on-returning-turns</code> (backlog/high)</td></tr>
+      <tr><td><code>sprint-planning-activation-gate</code></td><td>merged into <code>sprint-planning-handoff-artifact</code> (survivor → high, ratified Step 7)</td></tr>
+      <tr><td><code>retro-fixture-documenter-no-replication-without-verification</code> (med)</td><td>targets the pre-rewrite documenter design the audit-engine rewrite replaces</td></tr>
+    </table>
+  </details>
+  <div class="rec"><strong>Recommendation:</strong> approve all 24.
+    <div class="options"><span>▸ Approve all</span><span>▸ Adjust (name exclusions)</span><span>▸ Reject batch</span></div>
+  </div>
+</div>
+
+<h2>Fork 2 — mega-epic splits: defer or adopt</h2>
+<div class="fork">
+  <h3><span class="chip">structure</span> Two epics hold 78% of the active backlog</h3>
+  <dl>
+    <dt>What</dt><dd><code>momentum-impetus-session-orientation</code> (121 stories — mixing impetus UX, retro pipeline, and sprint workflow) and <code>momentum-sprint-orchestration</code> (103 — with a distinct 14-story conductor cluster). Discovery recommends splitting both.</dd>
+    <dt>Why</dt><dd>Oversized epics blunt planning signal — but a split reassigns dozens of active stories mid-refine and is orthogonal to this sprint’s goal.</dd>
+    <dt>Evidence</dt><dd>Keyword clustering over the index: impetus(14)/retro(9)/sprint(7) concerns in the first; conductor(14)/sprint(11)/refine(5) in the second.</dd>
+  </dl>
+  <div class="rec"><strong>Recommendation: defer</strong> to a dedicated grooming session after the cohort sprint — today’s conduct-core reassignment parks 4 more conductor stories in sprint-orchestration, strengthening the eventual split without blocking anything now.
+    <div class="options"><span>▸ Defer</span><span>▸ Adopt now</span><span>▸ Split one only</span></div>
+  </div>
+</div>
+
+<h2>Fork 3 — two new stubs for unowned recurring failures</h2>
+<div class="fork">
+  <h3><span class="chip">new work</span> Recurrence patterns with no owning story</h3>
+  <dl>
+    <dt>What</dt><dd>(a) <code>avfl-spec-contract-finding-owner-assignment</code> (high) — route AVFL pre-build findings against spec/contract files to an owner. (b) <code>story-file-completion-metadata-write-back-sweep</code> (medium) — backfill the ~160-story class where the index says done but the story .md still reads ready-for-dev with a blank Dev Agent Record.</dd>
+    <dt>Why</dt><dd>(a) STRUCTURAL-001/002 (duplicate <code>harness_profile</code> key; change_type mismatch) died unowned in sprint-2026-06-28 — same failure will recur every sprint AVFL runs pre-build. (b) Story files are the source of record; 160 stale ones poison every future audit and dedup pass.</dd>
+    <dt>Evidence</dt><dd>(a) verified: no story in any status covers AVFL finding ownership. (b) retro finding, distinct from the 8 phantom entries already owned by the approved repair stub.</dd>
+  </dl>
+  <div class="rec"><strong>Recommendation:</strong> create both via create-story at apply time.
+    <div class="options"><span>▸ Create both</span><span>▸ Create one</span><span>▸ Skip</span></div>
+  </div>
+</div>
+
+<h2>Depth-on-demand</h2>
+<p class="backing">Backing artifacts (not needed to decide): handoff <code>.momentum/handoffs/next-sprint-cohort-review-2026-07-06.md</code> · stale-eval agent detail <code>~/.claude/projects/…/workflows/wf_3c9f6b5f-59c/journal.jsonl</code> · epic discovery agents A/B transcripts in the session subagents dir · <code>_bmad-output/planning-artifacts/epics.json</code>.</p>
+
+</main>
+</body>
+</html>
