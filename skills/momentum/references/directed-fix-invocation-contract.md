@@ -180,6 +180,13 @@ These rules encode the DEC-036 amendment to DEC-035's binding decision #1.
 | `legitimate: true`, out of scope for this story | `triaged-out` — tracked separately; not silently dropped |
 | `legitimate: true`, finding targets a file outside this story's declared writable set | `triaged-out` — cross-artifact routing; DO NOT edit the out-of-scope file |
 
+> **Amended by DEC-039 (2026-07-10, implementation pending):** the first `triaged-out` row's
+> blanket framing is amended — goal-critical discovered work routes via the DEC-039
+> goal-criticality matrix (auto-pull / pause-ask / new-sprint recommendation) instead of
+> unconditional triage-out. The second row (file-boundary / writable-set enforcement) is a
+> separate mechanism and is unaffected. Until the DEC-039 stories land, both rows as written
+> remain the implemented behavior.
+
 ---
 
 ## Source Decisions

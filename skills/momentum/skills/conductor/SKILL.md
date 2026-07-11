@@ -41,6 +41,7 @@ The full phase sequence and step-by-step orchestration instructions live in `./w
 
 - **DEC-035** — adopt conduct; one human gate at the end; no story-count cap; report organized by user-facing functionality; legible auto-fix loop.
 - **DEC-036** — narrow, high-bar, stakes-gated mid-flight escalation tier amending DEC-035 D1; routine findings stay always auto-fixed; anti-firehose intent preserved.
+- **DEC-039** — sprint goal + goal-criticality scope mutability: discovered work that is necessary to deliver the sprint goal routes to citation-gated auto-pull / pause-ask / new-sprint recommendation instead of unconditional triage-out, and the end-gate gains a goal-delivered verdict alongside per-story ship status. **Decided 2026-07-10; implementation pending via stories — until those land, the DEC-036 stakes-and-timing tier remains the only implemented mid-flight exception and discovered work still triages out.**
 
 ## Governing Spec Sections (by number)
 

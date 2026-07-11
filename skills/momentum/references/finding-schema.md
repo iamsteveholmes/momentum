@@ -153,6 +153,13 @@ When `legitimate` is `false`, the fixer sets `disposition` to `dismissed` with a
 
 When `legitimate` is `true` but the finding is out of scope for this story (e.g., it belongs to a different component or requires work tracked separately), the fixer sets `disposition` to `triaged-out` and spins a backlog stub via momentum:triage. Triaged-out findings appear in the report's out-of-scope section; they are not silently dropped.
 
+> **Amended by DEC-039 (2026-07-10, implementation pending):** out-of-scope-for-this-story no
+> longer implies out-of-scope-for-the-sprint. Before triaging out, goal-criticality is tested
+> against the sprint goal: goal-critical work routes via the DEC-039 matrix (citation-gated
+> auto-pull / pause-ask / new-sprint recommendation); only non-goal-critical work follows this
+> rule's unconditional triage-out path. Until the DEC-039 stories land, Rule 4 as written
+> remains the implemented behavior.
+
 ### Severity and Stakes Class Are Independent Axes
 
 Severity and stakes class are assessed independently. The disposition rules reference `stakes_class`, not `severity`, as the escalation trigger. A critical-severity routine finding is still auto-fixed (Rule 1). A minor-severity security finding is still escalated (Rule 2). Both axes appear in the report and in the end-gate decision cards so the human has full context.

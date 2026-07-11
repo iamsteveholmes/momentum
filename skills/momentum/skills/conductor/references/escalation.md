@@ -2,7 +2,7 @@
 
 **Reference for:** `skills/momentum/skills/conductor/workflow.md` step 2.F  
 **Invoked by:** Build-phase frontier (step 2.2) and merge/conflict-resolution leg (step 2.2.M)  
-**Governing decisions:** DEC-035 D1 (one end-gate; anti-firehose), DEC-036 D1 (two-tier timing model), D2 (stakes classes), D5 (self-sufficiency floor), Decision Gate (anti-firehose — never widen the bar)
+**Governing decisions:** DEC-035 D1 (one end-gate; anti-firehose), DEC-036 D1 (two-tier timing model), D2 (stakes classes), D5 (self-sufficiency floor), Decision Gate (anti-firehose — never widen the bar), DEC-039 (goal-criticality trigger class for discovered work — decided 2026-07-10, implementation pending; see amendment note under the anti-firehose guard)
 
 ---
 
@@ -61,6 +61,14 @@ The engine receives a findings array from a per-story pipeline or validation res
 > The end-gate-expanded tier (DEC-036 D1 tier a) is the safety net for EVERYTHING that does not clear the mid-flight bar. Routine work goes there. Non-imminent stakes-class findings go there. The mid-flight tier is the exception; end-gate-expanded is the norm.
 >
 > **The bar must never be widened beyond `irreversible-and-imminent OR build-invalidating`.** Any pressure to widen the bar — adding timing conditions, adding stakes classes, adding "probably important" cases — must be resisted. If a finding seems important but does not meet the bar, it goes to end-gate-expanded. The end-gate provides the safety net.
+
+> **Amended by DEC-039 (2026-07-10) — one ratified widening, implementation pending:** the bar
+> gains exactly one additional trigger class — **goal-critical discovered work** (new scope
+> necessary to deliver the sprint goal): undesigned or upstream-touching → pause-ask; oversized
+> → new-sprint recommendation; already covered by design/architecture/PRD → autonomous
+> auto-pull with citation, no pause. The anti-firehose intent stands unchanged — no timing
+> conditions, no new stakes classes, no "probably important" cases. Until the DEC-039 stories
+> land, the two-condition bar above remains the implemented behavior.
 
 ---
 
@@ -151,7 +159,7 @@ Any finding raised mid-flight via this engine is recorded with the **`escalated`
 |---|---|---|
 | `fixed` | Fixer (dev fix-mode) — routine path | Silently resolved; developer not involved |
 | `dismissed` | Fixer (dev fix-mode) — requires non-empty rationale | Waved off by the fixer; rationale recorded |
-| `triaged-out` | Fixer (dev fix-mode) | Outside scope; not actioned |
+| `triaged-out` | Fixer (dev fix-mode) | Outside scope; not actioned. **Amended by DEC-039 (2026-07-10, implementation pending):** goal-critical discovered work no longer triages out unconditionally — it routes via the goal-criticality matrix (auto-pull / pause-ask / new-sprint recommendation) |
 | `escalated` | Fixer (dev fix-mode) — per `finding-schema.md` Rule 2 and `directed-fix-invocation-contract.md` | Raised for human attention; not silently fixed |
 
 The `escalated` disposition is **assigned by the fixer (dev fix-mode)** per the canonical finding schema (`skills/momentum/references/finding-schema.md` Rule 2) and the directed-fix invocation contract. This engine is the **sole owner of the mid-flight pause primitive** — it consumes already-`escalated` findings whose `timing_tier` is `mid-flight` and decides whether to raise a developer-facing pause-ask. Disposition assignment and mid-flight routing are distinct roles: the fixer assigns dispositions; this engine routes the mid-flight subset. The `escalated` disposition is visible in the end-gate report's "Mid-flight Escalations During Build" section so the developer can see what was raised and how it was resolved.

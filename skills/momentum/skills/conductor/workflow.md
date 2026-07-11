@@ -15,7 +15,7 @@
 - Touchpoint 2 — End-gate (Phase 5, after E2E) — includes the push confirmation folded into the approve sequence (per spec §2 line 76 and git-discipline; the push ask is part of end-gate, not a separate acceptance gate)
 - Touchpoint 3 (narrow exception) — Mid-flight escalation (within Phase 2, stakes-and-timing only)
 
-**Governing decisions:** DEC-035 (conduct as execution engine; one end-gate; no story-count cap), DEC-036 (stakes-and-timing escalation tier amending DEC-035 D1).
+**Governing decisions:** DEC-035 (conduct as execution engine; one end-gate; no story-count cap), DEC-036 (stakes-and-timing escalation tier amending DEC-035 D1), DEC-039 (sprint goal + goal-criticality routing of discovered work; dual end-gate verdict — decided 2026-07-10, implementation pending via stories; until those land the stakes-and-timing tier remains the only implemented mid-flight exception).
 
 **Governing spec sections:** §2 (end-to-end flow), §3 (Conductor role + per-story pipeline), §8 (single end-gate).
 
