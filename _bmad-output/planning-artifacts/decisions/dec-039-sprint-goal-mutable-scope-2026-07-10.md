@@ -8,10 +8,14 @@ source_research:
     type: developer-conversation
     date: '2026-07-10'
 prior_decisions_reviewed:
+  - DEC-005 (Momentum Cycle Redesign — D3 per-sprint North Star, superseded by this decision)
   - DEC-030 (Dependency-Driven Execution Model — D3 frozen-story-scope verification epoch, amended by this decision; D2 discovered-from/never-silently-absorbed mechanism preserved)
+  - DEC-035 (Conduct Execution Engine — D3 epic/feature plan-and-evaluate unit, composes with the sprint goal)
   - DEC-036 (Conduct HITL Calibration — pause-ask surface contract reused as the escalation vehicle for tier-c routing)
 architecture_decisions_affected:
+  - DEC-005 — SUPERSEDED (D3) — the never-built per-sprint North Star is subsumed by the sprint goal; one goal-bearing field, with the orientation intent (every agent holds the goal) carried forward.
   - DEC-030 — AMENDED — D3's asymmetric freeze ("scope may not be added") no longer holds for goal-critical work admitted via the D2 routing matrix; subtract-and-perturb, the behavior/AC-level scope boundary, how-vs-what adjudication, and D2's discovered-from linkage all stand.
+  - DEC-035 — COMPOSES — the epic/feature acceptance_condition remains the feature-done test; the sprint goal states the slice of value THIS sprint delivers, usually derived from (and cited to) an epic's acceptance_condition. D3 is unamended.
   - DEC-036 — AMENDED — the mid-flight escalation tier's trigger bar (D1: irreversible-and-imminent / build-invalidating only) widens to include goal-critical discovered work under tiers (c)/(d); the pause-ask surface contract itself is unchanged, and DEC-036's intent (no routine-ask firehose) is preserved — these asks are rare and goal-stakes-gated.
 ---
 
@@ -57,6 +61,15 @@ Nothing in the current cycle answers to a sprint-level outcome. A sprint whose e
 passes can still ship a broken product, and the system has no vocabulary to even express
 that failure. The goal is what the developer actually approves at the plan gate; the story
 set is the plan for reaching it.
+
+**Goal-anchor ruling (2026-07-10):** the goal lives on the **sprint record**, composing with
+DEC-035 D3 rather than amending it — the epic/feature `acceptance_condition` remains the
+feature-done test, and the sprint goal states the slice of value this sprint delivers, usually
+derived from (and cited to) an epic's acceptance_condition. This also supersedes DEC-005 D3's
+never-built per-sprint North Star: one goal-bearing field, not two. DEC-005 D3's rationale —
+"we delivered every carefully-speced story and still did not reach the floor" — is the same
+failure this decision addresses; DEC-039 adds the enforcement machinery (plan-gate approval,
+goal-delivered verdict, goal-criticality scope routing) that D3 lacked.
 
 ---
 

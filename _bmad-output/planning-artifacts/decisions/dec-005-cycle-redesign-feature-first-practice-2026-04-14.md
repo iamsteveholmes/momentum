@@ -90,6 +90,14 @@ This directly **supersedes DEC-002 D1's claim** that "features and epics are ort
 
 **Decision:** Adopted with adaptation. Each sprint touching a feature has its own North Star — a value-floor it must cross — not just Sprint 1. Subsequent sprints install new floors as the feature matures. Every cycle agent (SM, dev, QA, architect, validator, any other) is oriented toward the current sprint's floor; it is not just a planning concern.
 
+> **Superseded by DEC-039 (2026-07-10):** the per-sprint North Star was never implemented — no
+> `north_star` field ever landed in the sprint record, and the same failure this D3 diagnosed
+> (every story delivered, value floor not reached) recurred in the nornspun and chorgi sprints.
+> DEC-039's **sprint goal** subsumes it: one goal-bearing field on the sprint record, captured
+> at planning, approved at the plan gate, and — unlike this D3 — enforced by machinery (a
+> goal-delivered end-gate verdict and goal-criticality routing of discovered work). The
+> orientation intent (every agent holds the goal) carries forward under DEC-039.
+
 **Rationale:**
 I have spent no fewer than four sprints trying to get a working UI talking to the LLM, and every time that was my focus, we delivered every carefully-speced story and still did not reach the floor. We MUST have that focus or we are not delivering anything of value. Every agent from SM to dev to QA to architect to validator must hold the current floor as the orientation for their work during the sprint. A single-floor-per-feature model is insufficient because subsequent sprints also need a crossing discipline — each sprint is its own "did we move the user?" judgment.
 
