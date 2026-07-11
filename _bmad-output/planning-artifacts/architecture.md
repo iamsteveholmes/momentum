@@ -1775,6 +1775,15 @@ Every standalone `momentum:dev` session runs in its own git worktree from the st
 
 **Sprint immutability rule:** Once `momentum-tools sprint activate` is called, the sprint is locked. No patching in-place. Recovery path: close sprint (set status `closed-incomplete`), migrate incomplete stories to next sprint backlog.
 
+> **Amended by DEC-039 (2026-07-10):** immutability is relaxed for **goal-critical discovered
+> work** — each sprint carries a goal (captured at planning, approved at the plan gate), and
+> work discovered during conduct that is necessary to deliver that goal may enter the active
+> sprint via the goal-criticality routing matrix: citation-gated autonomous auto-pull when
+> design/architecture/PRD already account for it; pause-ask escalation when undesigned or
+> upstream-touching; developer-ruled new-sprint recommendation when oversized. Non-goal-critical
+> discovered work still punts to triage. Implementation lands via stories (sprint-planning,
+> conductor, sprint-manager, retro).
+
 ### Sprint Planning Workflow (Decision 29)
 
 Sprint planning is a dedicated skill (`/momentum:sprint-planning`) with 8 steps. Invoked by Impetus when the developer selects "Plan a sprint" from the session menu, or directly by the user.
@@ -3150,6 +3159,14 @@ Conduct is Momentum's in-session sprint build orchestrator, adopted as the execu
 **Invocation model (DEC-037 D1):** Conduct ships as a **standalone `/momentum:conduct` skill that coexists with `/momentum:sprint-dev`**. A thin command invokes the existing `conductor` skill **as the top-level session**. Because it runs as the top-level session (not a spawned subagent), it legitimately owns commits, merges, and the approve-time `git push` — orchestrator-purity forbids only *spawned* skills from mutating git. `sprint-dev` remains the live builder, unchanged, during the transition; retiring sprint-dev's wave loop is a separate later **adoption** step (`conduct-adoption-retire-sprint-dev`), at which point spec §10/§12's "replace the build phase inside sprint-dev" is finally honored.
 
 **Execution model (DEC-035 D1/D3/D4):** the Conductor runs each story through a **per-story pipeline** — dev → concurrent QA + `bmad-code-review` (via the `code-reviewer` adapter) → fix → self-merge — with a **Conductor-owns-git invariant**: spawned dev/reviewer subagents never touch git; the Conductor performs every worktree, merge, and push operation. On each merge it runs **AVFL-on-merge** as a dynamic Workflow over the merge-base diff, returning a typed `CLEAN | NON_CONVERGENT` verdict (distinct from sprint-dev's post-all-merge stop-gate — see Decision 31). After all stories land it runs **E2E validation**, then presents **exactly one human acceptance gate at the end**. The HITL plan-and-evaluate unit is a **finite-lived epic / complete feature** evaluated against its `acceptance_condition` — the arbitrary 2–8 story-count cap (DEC-030) is **removed**; the unit is whatever the feature requires. The auto-fix loop stays autonomous but is **legible**: the end-gate report renders both what the fixer **changed** and what it **dismissed** (with rationale), organized by user-facing functionality and divergences from plan (DEC-035 D5/D6, DEC-036 D3).
+
+> **Amended by DEC-039 (2026-07-10):** the end-gate gains a **second verdict** — alongside
+> per-story ship status it must render **goal delivered / not delivered** against the sprint
+> goal captured at planning. Discovered work during the build routes by goal-criticality
+> (citation-gated auto-pull / pause-ask / new-sprint recommendation / punt-to-triage) rather
+> than being unconditionally dispositioned out of scope; auto-pulled stories are reported at
+> the end-gate with their covering-artifact citations. The DEC-036 stakes-and-timing mid-flight
+> bar widens to include goal-critical discovered work as a trigger class.
 
 **Branch-base rule (sprint-2026-06-10, conductor seam-fix):** at story launch the Conductor creates `story/{slug}` from the **current tip of `sprint/{sprint-slug}`** — never `main`, never an inferred default branch — then adds the worktree `.worktrees/story-{slug}`, before the stage-1 dev spawn. Stale branches or worktrees from a prior interrupted run are handled idempotently: remove and recreate. Rationale: forking from the sprint tip keeps the merge-base review diff exactly story-scoped — the diff a reviewer sees contains the story's changes and nothing else. (See also the conduct-path note under Parallel Story Execution Model.)
 

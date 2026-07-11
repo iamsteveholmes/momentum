@@ -98,6 +98,11 @@ born as a separate node linked `discovered-from` its origin and is never silentl
 into an open container. The DAG sequences; the container only reports value and certifies a
 frozen scope.
 
+> **Amended by DEC-039 (2026-07-10):** "never *silently* absorbed" still holds, but absorption
+> itself is now legal for goal-critical work — DEC-039's auto-pull arm admits discovered work
+> into the active sprint loudly (covering artifact citation required, `discovered-from` edge,
+> end-gate report).
+
 **Rationale:**
 "When is it done?" is unanswerable for a container that accretes scope freely; frozen scope
 plus `discovered-from` makes it answerable and kills the partially-completed-frankenstein
@@ -125,6 +130,12 @@ story's acceptance criteria/behavior is a new story, not a modification (the *ho
 boundary, adjudicated via change-type classification, enforced at `sprint-manager`). The
 dispatcher claims from `bd ready ∩ the frozen sprint set`; a blocked story drops and re-enters
 a future sprint via the DAG, so no story can stall a sprint.
+
+> **Amended by DEC-039 (2026-07-10):** the never-add invariant no longer holds for
+> goal-critical work admitted via DEC-039's goal-criticality routing matrix (citation-gated
+> auto-pull; pause-ask for undesigned/upstream-touching work; developer-ruled new-sprint
+> recommendation for oversized work). Subtract-and-perturb, the behavior/AC-level scope
+> boundary, and how-vs-what adjudication all stand.
 
 **Rationale:**
 Sprint-closure and epic-closure become orthogonal cuts on the same flowing DAG, which is what
@@ -290,5 +301,12 @@ the validate-fix pipeline and state-ledger abstraction this dispatch model runs 
   verification): an under-specified/ambiguous story is not adjudicated mid-sprint; it drops
   and the human decision relocates to the next pre-sprint planning. Simpler than the
   recommendation (no ladder, no override). Full analysis: discovery doc §4.
+
+  > **Amended by DEC-036 (2026-06-01) and DEC-039 (2026-07-10):** the "no mid-sprint
+  > human-in-the-loop" absolutism is relaxed twice. DEC-036 reintroduced a narrow
+  > stakes-and-timing mid-flight escalation tier (irreversible-and-imminent /
+  > build-invalidating). DEC-039 adds goal-critical discovered work as a trigger class:
+  > undesigned or upstream-touching work pause-asks, oversized work gets a developer-ruled
+  > new-sprint recommendation, and already-designed work auto-pulls with citation (no ask).
 - **Gate 3 / Gate 4 — OPEN by design** (DEC-028 beads verdict; real-sprint subtract-only
   validation) — not resolvable in discovery.

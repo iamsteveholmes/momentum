@@ -12,7 +12,7 @@ prior_decisions_reviewed:
   - DEC-036 (Conduct HITL Calibration — pause-ask surface contract reused as the escalation vehicle for tier-c routing)
 architecture_decisions_affected:
   - DEC-030 — AMENDED — D3's asymmetric freeze ("scope may not be added") no longer holds for goal-critical work admitted via the D2 routing matrix; subtract-and-perturb, the behavior/AC-level scope boundary, how-vs-what adjudication, and D2's discovered-from linkage all stand.
-  - DEC-036 — COMPOSES — the pause-ask surface contract (what/why/evidence + options) is the escalation vehicle for tier (c)/(d) routing; no change to the contract itself.
+  - DEC-036 — AMENDED — the mid-flight escalation tier's trigger bar (D1: irreversible-and-imminent / build-invalidating only) widens to include goal-critical discovered work under tiers (c)/(d); the pause-ask surface contract itself is unchanged, and DEC-036's intent (no routine-ask firehose) is preserved — these asks are rare and goal-stakes-gated.
 ---
 
 # DEC-039: Sprint Goal + Goal-Criticality Scope Mutability — Amending the DEC-030 Never-Add Freeze

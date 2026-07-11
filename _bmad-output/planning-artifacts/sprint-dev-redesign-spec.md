@@ -716,6 +716,14 @@ APPROVE_SEQUENCE():
 
 A story never blocks closure and never stays open. During build, a dev that exhausts retries marks `blocked` and the build continues. At the report, every blocked story appears in its own section with full context. At approve, it is fed to `momentum:triage` → `momentum:intake` creates a fresh backlog stub (not a story in this sprint); the original transitions to `closed-incomplete`. Newly-discovered work that is *not* a change to existing sprint work is likewise collected and passed to triage at approve — keeping the sprint's scope fixed while capturing discovery as stubs.
 
+> **Amended by DEC-039 (2026-07-10):** unconditional punt-to-triage no longer holds. Discovered
+> work is first tested for **goal-criticality** against the sprint goal: not goal-critical →
+> triage as above; goal-critical + already covered by design/architecture/PRD → auto-pull into
+> the active sprint (citation required, `discovered-from` edge, end-gate report); goal-critical +
+> undesigned/upstream-touching → pause-ask; goal-critical + oversized → new-sprint
+> recommendation, developer rules. The `triaged-out` disposition and this section's flow need
+> rework via stories.
+
 ---
 
 ## 9. The HTML report (HITL surface) — decision 8
