@@ -30,6 +30,8 @@ Sprint-dev Phase 4c AVFL pass should default to fixing all confirmed-legit findi
 
 **Pain context:** Developer-stated preference; reduces per-finding gate friction in sprint-dev AVFL loop. Source: triage — conversation.
 
+**Expanded scope from the sprint-2026-06-28 retro (2026-07-06, approved at the Phase 5 gate) — out-of-scope-file routing:** "always fix" presupposes AVFL *can* act, but some legit findings target files AVFL-on-merge is explicitly forbidden from touching (`.momentum/stories/`, `.momentum/sprints/` spec/contract files), and dev-fixers are code-scoped. Live evidence: STRUCTURAL-001 (duplicate `harness_profile` key across 3 eval.yaml files) and STRUCTURAL-002 (change_type/Dev-Notes mismatch in `companion-surface-rule-sync-and-bulk-derivation.md`) were raised correctly pre-build and remain unresolved in the repo — with no accountable closer, and retiring "defer" would leave such findings with literally no valid disposition. This story must therefore also design the second remediation pathway: when a legit finding targets a file outside AVFL's touch scope, route it to a named owning pipeline stage (sprint-planning, epic-grooming, or a new remediation step) instead of silently dropping it.
+
 ## Acceptance Criteria
 
 <!-- DRAFT: These are rough acceptance criteria captured from conversation. They have NOT
@@ -43,6 +45,8 @@ The following are rough draft ACs captured from conversation:
 - No per-finding fix/defer gate fires in Phase 4c of sprint-dev
 - A legit finding always results in a fix attempt; defer is not a valid outcome for legit findings
 - The behavioral change is reflected in the AVFL workflow/skill
+- When a legit finding targets a file outside AVFL-on-merge's touch scope (e.g. `.momentum/stories|sprints/` spec/contract files), it is routed to a named owning pipeline stage — never silently dropped; failed routing surfaces an explicit unresolved state (folded from sprint-2026-06-28 retro)
+- STRUCTURAL-001 (duplicate `harness_profile` key, 3 eval.yaml files) and STRUCTURAL-002 (change_type/Dev-Notes mismatch) are resolved in the repo as this routing's proof case (folded from sprint-2026-06-28 retro)
 
 > Note: The ACs above are rough captures from conversation. They are starting points
 > only. Create-story will replace them with validated, testable acceptance criteria.
