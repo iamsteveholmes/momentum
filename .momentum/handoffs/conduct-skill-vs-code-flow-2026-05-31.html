@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Conduct flow: skill-dev vs code-feature · house style after anthropics/html-effectiveness · charset-first <head> · self-contained -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Conduct Works — Skill Dev vs Code Feature</title>
+<style>
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --blue:#2F557E; --blue-bg:#E7EEF6;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 96px}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  h1{font-family:var(--serif);font-weight:600;font-size:29px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px;max-width:86ch}
+  section{margin-top:34px}
+  h2{font-family:var(--serif);font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  .lead{color:var(--gray-700);font-size:13.8px;margin:0 0 14px;max-width:90ch}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 6px;font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--gray-700)}
+  .sw{width:13px;height:13px;border-radius:4px;display:inline-block;border:1.5px solid}
+  .sw.common{background:#EFF3E9;border-color:var(--olive)}
+  .sw.fork{background:#FFF7F3;border-color:var(--clay)}
+  /* common pipeline strip */
+  .pipe{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-top:6px}
+  .stage{flex:1;min-width:120px;border:1.5px solid var(--olive);border-radius:9px;background:#EFF3E9;padding:10px 12px;position:relative}
+  .stage.fork{border-color:var(--clay);background:#FFF7F3}
+  .stage .s{font:700 9px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--gray-500);display:block;margin-bottom:4px}
+  .stage b{font-size:12.5px}
+  .arrow{align-self:center;color:var(--gray-400);font-weight:700}
+  /* two-lane comparison */
+  .lanes{display:grid;grid-template-columns:148px 1fr 1fr;gap:0;border:var(--border);border-radius:var(--radius-panel);overflow:hidden;box-shadow:var(--shadow);background:#fff;margin-top:8px}
+  .lanes .hd{padding:12px 14px;font:700 12px/1.2 var(--sans);border-bottom:1.5px solid var(--gray-200);background:var(--gray-50)}
+  .lanes .hd.skill{background:#FFF7F3;color:var(--clay-d)}
+  .lanes .hd.code{background:var(--blue-bg);color:var(--blue)}
+  .lanes .rl{padding:11px 14px;border-bottom:1px solid var(--gray-100);border-right:1.5px solid var(--gray-200);font:700 10.5px/1.3 var(--mono);letter-spacing:.02em;text-transform:uppercase;color:var(--gray-700);background:var(--gray-50)}
+  .lanes .cell{padding:11px 14px;border-bottom:1px solid var(--gray-100);font-size:12.4px;color:var(--gray-700)}
+  .lanes .cell.skill{border-right:1px solid var(--gray-100)}
+  .lanes .cell b{color:var(--slate)}
+  .lanes .row-common .cell{background:#F6F8F2}
+  .lanes .row-common .rl{background:#EFF3E9;color:#46552F}
+  .tagc{font:700 9px/1 var(--mono);padding:2px 5px;border-radius:4px;margin-left:4px;vertical-align:1px}
+  .tagc.same{background:#EAF0E2;color:#46552F}
+  code{font-family:var(--mono);font-size:.85em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px;color:var(--clay-d)}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:18px 20px;box-shadow:var(--shadow)}
+  .callout{border:1.5px solid var(--clay-d);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFF7F3,#FFF);padding:16px 20px;box-shadow:var(--shadow)}
+  .callout .k-label{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-d);margin-bottom:7px;display:block}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-700)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li b{color:var(--slate)}
+  .fork4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+  .fork4 .f{border:1.5px solid var(--clay);border-radius:9px;background:#FFF7F3;padding:12px 13px}
+  .fork4 .f .n{font:700 10px/1 var(--mono);color:var(--clay-d);display:block;margin-bottom:5px}
+  .fork4 .f b{font-size:12.5px} .fork4 .f span{font-size:11.5px;color:var(--gray-700);display:block;margin-top:3px}
+  .foot{margin-top:44px;text-align:center;color:var(--gray-400);font-size:12px}
+  .nb{font-size:12px;color:var(--gray-500);margin-top:8px}
+  @media(max-width:820px){.lanes{grid-template-columns:1fr}.lanes .rl{border-right:none}.fork4{grid-template-columns:1fr 1fr}.pipe{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Conduct Design · Skill Development vs Code Feature</div>
+    <h1>One Pipeline, Routed by <code>change_type</code></h1>
+    <div class="sub">Conduct runs every story through the <b>same</b> per-story pipeline. What differs between developing a <b>skill</b> and a <b>code feature</b> isn't the shape — it's the <b>routing at four points</b>: how the story is created, which dev specialist runs it, what the verification contract looks like, and which driver verifies it. Grounded in DEC-029 (method-routed verification), DEC-023 (the agent routing table), and the spec §7 contract handoff.</div>
+  </header>
+
+  <!-- 00 -->
+  <section>
+    <h2><span class="num">00</span>The pipeline is identical for both</h2>
+    <p class="lead">Every story — skill or code — flows through this. The Conductor owns it; the human sees one gate at the end.</p>
+    <div class="legend">
+      <span><span class="sw common"></span> identical for skill &amp; code</span>
+      <span><span class="sw fork"></span> routes differently by <code>change_type</code></span>
+    </div>
+    <div class="pipe">
+      <div class="stage fork"><span class="s">per story</span><b>DEV</b><br><span style="font-size:11px;color:var(--gray-700)">routed specialist</span></div>
+      <span class="arrow">→</span>
+      <div class="stage fork"><span class="s">per story · concurrent</span><b>QA ∥ code-review</b><br><span style="font-size:11px;color:var(--gray-700)">QA routes; review is common</span></div>
+      <span class="arrow">→</span>
+      <div class="stage"><span class="s">per story</span><b>FIX</b><br><span style="font-size:11px;color:var(--gray-700)">directed dev</span></div>
+      <span class="arrow">→</span>
+      <div class="stage"><span class="s">per story</span><b>MERGE</b><br><span style="font-size:11px;color:var(--gray-700)">Conductor</span></div>
+      <span class="arrow">→</span>
+      <div class="stage"><span class="s">feature</span><b>AVFL</b><br><span style="font-size:11px;color:var(--gray-700)">on merge</span></div>
+      <span class="arrow">→</span>
+      <div class="stage fork"><span class="s">feature</span><b>E2E</b><br><span style="font-size:11px;color:var(--gray-700)">method-routed</span></div>
+      <span class="arrow">→</span>
+      <div class="stage"><span class="s">feature</span><b>END-GATE</b><br><span style="font-size:11px;color:var(--gray-700)">one HITL report</span></div>
+    </div>
+    <p class="nb">Three stages fork (DEV, QA, E2E); the rest are identical. Upstream of all this, <b>story creation</b> and <b>verification-method assignment</b> also fork — shown next.</p>
+  </section>
+
+  <!-- 01 -->
+  <section>
+    <h2><span class="num">01</span>The four fork points</h2>
+    <p class="lead">A single signal drives all four: the story's <code>change_type</code>. Planning maps it to a closed <code>verification_method</code> enum (precedence-weighted), and the routing table maps it to a dev specialist. Everything else is deterministic.</p>
+    <div class="fork4">
+      <div class="f"><span class="n">① CREATE-STORY</span><b>EDD vs TDD guidance</b><span>create-story injects eval-driven guidance for skills, test-driven for code; ACs are framed as skill behaviors vs runtime behaviors.</span></div>
+      <div class="f"><span class="n">② DEV SPECIALIST</span><b>routing-table resolve</b><span><code>agent resolve --touches</code> picks a <i>specialist variant of dev</i> — not a different skill.</span></div>
+      <div class="f"><span class="n">③ CONTRACT FORMAT</span><b>method → contract file</b><span>verification_method selects the contract's shape: an eval, a smoke script, a Gherkin feature, etc.</span></div>
+      <div class="f"><span class="n">④ VERIFIER DRIVER</span><b>method → driver</b><span>the harness routes the method to the driver that runs it: <code>Skill</code>, <code>cmux</code>/bash, Maestro, curl…</span></div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section>
+    <h2><span class="num">02</span>Side by side — a skill story vs a code story</h2>
+    <p class="lead">Read top to bottom. <b>Clay</b> rows fork by <code>change_type</code>; <b>green</b> rows are identical. (Momentum's own repo is markdown/bash, so you'll mostly see the <span style="color:var(--clay-d)">skill</span> lane; the <span style="color:var(--blue)">code</span> lane is what conduct does when it runs in a code project.)</p>
+    <div class="lanes">
+      <div class="rl" style="background:var(--gray-100)">Stage</div>
+      <div class="hd skill">SKILL story &nbsp;<code style="font-size:10px">skill-instruction / agent-definition</code></div>
+      <div class="hd code">CODE story &nbsp;<code style="font-size:10px">script-code / backend / app-ui</code></div>
+
+      <div class="rl">① Classify<br>(change_type)</div>
+      <div class="cell skill"><b>skill-instruction</b> (or <b>agent-definition</b> for an agent body, <b>rule-hook</b> for a rule)</div>
+      <div class="cell"><b>script-code</b> / <b>backend</b> / <b>app-ui</b> / <b>script-cli</b></div>
+
+      <div class="rl">② Create story<br>(create-story)</div>
+      <div class="cell skill"><b>EDD</b> guidance injected — the eval IS the spec. ACs are observable skill <i>behaviors</i> ("invoking X against Y yields Z"). Touches <code>skills/</code></div>
+      <div class="cell"><b>TDD</b> guidance injected. ACs are runtime <i>behaviors</i> ("endpoint returns 200", "screen renders"). Touches <code>src/</code></div>
+
+      <div class="rl">③ Method assigned<br>(planning, §7)</div>
+      <div class="cell skill"><code>skill-invoke</code> (rules → <code>behavioral-trigger</code>; pure-spec → <code>document-review</code>)</div>
+      <div class="cell"><code>bash</code> (tests/smoke); UI → <code>smoke-ui</code>; HTTP → <code>curl</code></div>
+
+      <div class="rl">④ Contract file<br>(Part B)</div>
+      <div class="cell skill"><code>.eval.yaml</code> — scenarios that <b>invoke the skill</b> and assert its output/behavior (rules: <code>.trigger.md</code>; spec: <code>.review.md</code>)</div>
+      <div class="cell"><code>.smoke.sh</code> — an assertion script; UI: <code>.feature</code> (Gherkin); HTTP: <code>.smoke.sh</code> (curl)</div>
+
+      <div class="rl">⑤ DEV<br>(routed)</div>
+      <div class="cell skill"><b>momentum:dev-skills</b> — knows SKILL.md / workflow.md / frontmatter, the 500-line limit, EDD patterns</div>
+      <div class="cell"><b>momentum:dev-frontend</b> (Compose) / <b>dev-build</b> (Gradle) / <b>dev</b> base — stack-specific</div>
+
+      <div class="rl">⑥ QA<br>(verify the contract)</div>
+      <div class="cell skill"><b>Skill driver</b> runs the <code>.eval.yaml</code> — actually invokes the skill in a live session and checks the result</div>
+      <div class="cell"><b>cmux/bash</b> runs the test suite + <code>.smoke.sh</code>; <b>Maestro/Playwright</b> for UI; <b>curl</b> for HTTP</div>
+
+      <div class="row-common" style="display:contents">
+        <div class="rl">⑦ Code-review<span class="tagc same">same</span></div>
+        <div class="cell skill"><b>bmad-code-review</b> on the diff — for a skill, the "code" is the SKILL.md / workflow.md prose (it IS code)</div>
+        <div class="cell"><b>bmad-code-review</b> on the diff — same adversarial bug hunt (Blind Hunter, Edge-Case, Acceptance Auditor)</div>
+      </div>
+
+      <div class="row-common" style="display:contents">
+        <div class="rl">⑧ Fix<span class="tagc same">same</span></div>
+        <div class="cell skill"><b>directed momentum:dev</b> — fix-mode applies findings, commits</div>
+        <div class="cell"><b>directed momentum:dev</b> — identical mechanism</div>
+      </div>
+
+      <div class="row-common" style="display:contents">
+        <div class="rl">⑨ Merge<span class="tagc same">same</span></div>
+        <div class="cell skill">Conductor rebases + merges the story's worktree → feature branch</div>
+        <div class="cell">identical</div>
+      </div>
+
+      <div class="row-common" style="display:contents">
+        <div class="rl">⑩ AVFL on merge<span class="tagc same">same</span></div>
+        <div class="cell skill">Reviews the integrated 3-dot diff for cross-story integration defects</div>
+        <div class="cell">identical</div>
+      </div>
+
+      <div class="rl">⑪ E2E<br>(feature, routed)</div>
+      <div class="cell skill"><b>Invoke the skill live</b> end-to-end via the Skill driver against the feature's scenarios</div>
+      <div class="cell"><b>Run the app / smoke</b> via Maestro/Playwright/curl against the running system</div>
+
+      <div class="row-common" style="display:contents">
+        <div class="rl">⑫ End-gate<span class="tagc same">same</span></div>
+        <div class="cell skill">One self-sufficient HTML report, organized by user-facing functionality → you approve or request changes</div>
+        <div class="cell">identical</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section>
+    <h2><span class="num">03</span>The answers to your specific questions</h2>
+    <div class="panel">
+      <ul class="clean">
+        <li><b>How are stories created differently?</b> Same skill (<code>momentum:create-story</code>), but it injects <b>EDD</b> guidance for skills (the eval is the spec) vs <b>TDD</b> for code, and frames ACs as skill behaviors vs runtime behaviors. The story's <code>change_type</code> is the switch.</li>
+        <li><b>Does dev use a different skill?</b> <b>No — a specialist <i>variant</i> of the same dev base.</b> The routing table (<code>agent resolve --touches</code>) picks <code>momentum:dev-skills</code> for skill work, <code>dev-frontend</code>/<code>dev-build</code>/etc. for code. They share the dev base body (DEC-020/026); the specialist layers stack-specific knowledge. Under DEC-035, dev stays a <i>pure builder</i> and the same body is invoked in "fix-mode" for fixes.</li>
+        <li><b>How does verification differ?</b> This is the real divergence (DEC-029 method-routing). The story's <code>verification_method</code> enum selects both the <b>contract format</b> (③) and the <b>driver</b> (④): a skill is verified by <i>invoking it</i> (<code>.eval.yaml</code> via the Skill driver); code is verified by <i>running it</i> (<code>.smoke.sh</code>/<code>.feature</code> via bash/Maestro/curl). QA (⑥) and E2E (⑪) both follow that routing.</li>
+        <li><b>What's identical?</b> code-review (bmad-code-review on the diff), the fix mechanism (directed dev), merge, AVFL-on-merge, and the single end-gate report. The pipeline <i>shape</i> never changes.</li>
+      </ul>
+    </div>
+    <div class="callout" style="margin-top:14px">
+      <span class="k-label">The one-line model</span>
+      Conduct is <b>change-type-polymorphic</b>: one pipeline, with <code>change_type</code> → (EDD/TDD story shape · dev specialist · verification_method → contract format + driver). A skill is <i>invoked</i> to verify it; code is <i>run</i> to verify it. Everything else is shared.
+    </div>
+    <p class="nb">Note for the first conduct sprint: all 18 stories build conduct itself in this markdown/bash repo, so they're <i>all</i> skill/agent-definition stories on the left lane — verified by <code>skill-invoke</code> evals, built by <code>dev-skills</code>. The code lane only lights up when conduct later runs in a code project.</p>
+  </section>
+
+  <div class="foot">Conduct flow — skill-dev vs code-feature · 2026-05-31 · grounded in DEC-029 / DEC-023 / spec §7 · self-contained HTML, charset-first &lt;head&gt;</div>
+</div>
+</body>
+</html>

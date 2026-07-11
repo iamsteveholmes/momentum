@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Sprint-Dev loop internals — step B · house style after anthropics/html-effectiveness (self-contained, inline CSS+JS, no deps). charset meta is the first line of <head> on purpose: keeps it inside the browser's 1024-byte encoding pre-scan. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint-Dev Loop Internals — Validate-Fix Loops</title>
+<style>
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 96px}
+  a{color:var(--clay-d)}
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px;max-width:82ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1.5px solid transparent;white-space:nowrap}
+  .pill.ok{background:#EAF0E2;border-color:var(--olive);color:#46552F}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 4px}
+  .toc a{font:600 12px/1 var(--mono);text-decoration:none;color:var(--gray-700);border:var(--border);border-radius:999px;padding:7px 12px;background:#fff;transition:.12s}
+  .toc a:hover{border-color:var(--clay);color:var(--clay-d)}
+  section{margin-top:36px}
+  h2{font-family:var(--serif);font-size:21px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  h3{font-family:var(--sans);font-size:14px;font-weight:600;margin:18px 0 8px;color:var(--slate)}
+  h3 .k{font:700 9.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--gray-500);margin-right:8px}
+  .lead{color:var(--gray-700);font-size:14px;margin:0 0 16px;max-width:86ch}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:22px 24px;box-shadow:var(--shadow)}
+  .panel + .panel{margin-top:14px}
+  .loopcard{border:var(--border);border-left:4px solid var(--clay);border-radius:var(--radius-panel);background:#fff;padding:20px 24px;box-shadow:var(--shadow)}
+  .loopcard .scope{font:700 10.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--clay-d);display:block;margin-bottom:6px}
+  .callout{border:1.5px solid var(--gold);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFFDF7,#FFF);padding:18px 22px;box-shadow:var(--shadow)}
+  .callout.key{border-color:var(--clay-d);background:linear-gradient(180deg,#FFF7F3,#FFF)}
+  .callout .k-label{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-d);margin-bottom:7px;display:block}
+  blockquote{margin:0;font-family:var(--serif);font-size:16px;line-height:1.45;color:var(--slate)}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0;border-bottom:1px solid var(--gray-100);font-size:13.4px;color:var(--gray-700)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li b{color:var(--slate)}
+  .tag{font:700 10px/1 var(--mono);padding:4px 7px;border-radius:5px;letter-spacing:.04em;display:inline-block;margin-right:7px;vertical-align:1px}
+  .tag.guard{background:#EAF0E2;color:#46552F}
+  .tag.risk{background:#F7E1D6;color:#9A4A22}
+  .tag.term{background:#E7EEF6;color:#2F557E}
+  table{width:100%;border-collapse:collapse;font-size:13.2px;margin-top:6px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+  th{font:600 11px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--gray-500);border-bottom:1.5px solid var(--gray-200)}
+  td b{color:var(--slate)} td{color:var(--gray-700)}
+  .ok-cell{color:var(--olive);font-weight:600} .warn-cell{color:var(--gold);font-weight:600}
+  code{font-family:var(--mono);font-size:.87em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px;color:var(--clay-d)}
+  pre{background:#1B1B19;color:#E8E4DA;border-radius:var(--radius-row);padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:12.3px;line-height:1.62;margin:10px 0 0;border:1.5px solid #2C2C29}
+  pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit}
+  pre .c{color:#7E8473;font-style:italic}
+  pre .k{color:#E0A479}
+  pre .fn{color:#A9C08A}
+  pre .s{color:#D9C06B}
+  pre .n{color:#C98B8B}
+  .guards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .guard-item{border:var(--border);border-radius:var(--radius-row);padding:11px 13px;background:var(--gray-50)}
+  .guard-item b{font-size:12.5px} .guard-item span{font-size:12px;color:var(--gray-700);display:block;margin-top:3px}
+  .foot{margin-top:48px;text-align:center;color:var(--gray-400);font-size:12px}
+  .nb{font-size:12.5px;color:var(--gray-500);margin-top:10px}
+  @media(max-width:760px){.guards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">Conduct (sprint-dev) Rebuild · Step B · Loop Internals</div>
+        <h1>The Validate-Fix Loops</h1>
+        <div class="sub">The autonomous loops that run <i>inside</i> the execution workflow — pseudocode, termination guards, budget safety, and how their structured output rolls up to the single HITL gate. Designed to never need a human mid-run.</div>
+      </div>
+      <span class="pill ok"><span class="dot"></span>§03 corrected to real AVFL</span>
+    </div>
+    <div class="toc">
+      <a href="#frame">00 · The frame</a>
+      <a href="#qa">01 · qaReviewFixLoop</a>
+      <a href="#e2e">02 · e2eValidateFixLoop</a>
+      <a href="#avfl">03 · avflLoop</a>
+      <a href="#kit">04 · loopControlKit</a>
+      <a href="#agg">05 · resultAggregation</a>
+      <a href="#obs">06 · observability + resume</a>
+      <a href="#sound">07 · soundness</a>
+    </div>
+  </header>
+
+  <!-- 00 -->
+  <section id="frame">
+    <h2><span class="num">00</span>The frame these loops live in</h2>
+    <div class="callout key">
+      <span class="k-label">Non-negotiable</span>
+      <blockquote>Every loop must reach a terminal state on its own — <i>clean</i>, a <i>score threshold</i>, or a <i>cap</i>. A workflow cannot pause to ask a human, so "ask the developer" is never a loop exit. Unresolved state becomes <b>residual data</b> the end-of-run HITL report surfaces.</blockquote>
+    </div>
+    <p class="lead" style="margin-top:14px">Three loops, one shared control kit. Each loop is a pure function over its inputs that returns a structured result; the execution workflow composes them with <code>pipeline</code> (per-story, no barrier) and sequential phases (sprint-level). All caps below are starting defaults — tune later.</p>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Loop</th><th>Scope</th><th>Exit when</th><th>Default cap</th></tr></thead>
+        <tbody>
+          <tr><td><b>qaReviewFixLoop</b></td><td>per story, pre-merge</td><td>no findings ≥ minor</td><td>3 rounds</td></tr>
+          <tr><td><b>e2eValidateFixLoop</b></td><td>sprint, post-merge</td><td>no FAIL scenarios · or BLOCKED</td><td>2 rounds</td></tr>
+          <tr><td><b>avflLoop</b></td><td>sprint, post-merge</td><td>score ≥ 95 (weighted)</td><td>4 iters · skepticism 3→2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section id="qa">
+    <h2><span class="num">01</span>qaReviewFixLoop <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— per story, pre-merge</span></h2>
+    <div class="loopcard">
+      <span class="scope">Runs as the second stage of <code>pipeline(stories, dev, qaReviewFixLoop)</code> — one per story, no barrier</span>
+      <p class="lead" style="margin:0">QA and code-review run <b>in parallel</b> against one freshly-developed story in its worktree; findings drive fix agents; re-verify; repeat until clean or capped.</p>
+      <pre><code><span class="k">async function</span> <span class="fn">qaReviewFixLoop</span>(built, { maxRounds = <span class="n">3</span> } = {}) {
+  <span class="k">let</span> round = <span class="n">0</span>
+  <span class="k">while</span> (<span class="k">true</span>) {
+    <span class="c">// QA ∥ review — barrier here is fine: both gate the SAME story</span>
+    <span class="k">const</span> [qa, review] = <span class="k">await</span> <span class="fn">parallel</span>([
+      () => <span class="fn">agent</span>(<span class="fn">qaPrompt</span>(built),     { agentType: <span class="s">'momentum:qa-reviewer'</span>, phase: <span class="s">'QA·review'</span>, schema: FINDINGS }),
+      () => <span class="fn">agent</span>(<span class="fn">reviewPrompt</span>(built), { agentType: built.devAgent, phase: <span class="s">'QA·review'</span>, schema: FINDINGS }),
+      <span class="c">//                          ↑ code-reviewer is a SKILL, not an agentType — see §07.</span>
+      <span class="c">//                            run it via a dev/Explore agent told to Skill(momentum:code-reviewer).</span>
+    ])
+    <span class="k">const</span> findings = [...(qa?.findings ?? []), ...(review?.findings ?? [])]
+      .<span class="fn">filter</span>(f => f.severity !== <span class="s">'nit'</span>)            <span class="c">// don't loop on cosmetics</span>
+
+    <span class="k">if</span> (findings.length === <span class="n">0</span>)  <span class="k">return</span> { slug: built.slug, status: <span class="s">'clean'</span>, rounds: round }
+    <span class="k">if</span> (round >= maxRounds)   <span class="k">return</span> { slug: built.slug, status: <span class="s">'capped'</span>, rounds: round, residual: findings }
+
+    round++
+    <span class="c">// fixes are SEQUENTIAL within a worktree — parallel writes to one tree race</span>
+    <span class="k">for</span> (<span class="k">const</span> group <span class="k">of</span> <span class="fn">groupByFile</span>(findings)) {
+      <span class="k">await</span> <span class="fn">agent</span>(<span class="fn">fixPrompt</span>(built, group), { agentType: built.devAgent, phase: <span class="s">'Fix'</span> })
+    }
+    <span class="c">// loop re-verifies the fixes</span>
+  }
+}</code></pre>
+      <div class="guards">
+        <div class="guard-item"><b><span class="tag term">TERMINATES</span></b><span>Clean exit OR <code>round >= maxRounds</code>. No path loops without incrementing <code>round</code>.</span></div>
+        <div class="guard-item"><b><span class="tag guard">null-safe</span></b><span><code>qa?.findings ?? []</code> — a crashed/skipped agent resolves to <code>null</code>, never throws.</span></div>
+        <div class="guard-item"><b><span class="tag guard">no-oscillation</span></b><span>Severity filter + hard cap bound the case where a fix introduces a fresh finding each round.</span></div>
+        <div class="guard-item"><b><span class="tag risk">write-race</span></b><span>Fixes serialized per worktree; the QA∥review barrier is intra-story only, so it doesn't stall other stories.</span></div>
+      </div>
+      <p class="nb"><b>Why a barrier is OK here</b> (despite "default to pipeline"): QA and review both gate the <i>same</i> story and must both finish before the fix decision. The no-barrier win is at the <code>pipeline</code> level above — story B's loop runs while story A's is still iterating.</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="e2e">
+    <h2><span class="num">02</span>e2eValidateFixLoop <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— sprint, post-merge · replaces TeamCreate</span></h2>
+    <div class="loopcard">
+      <span class="scope">Runs once on the integrated sprint branch, after merge + AVFL</span>
+      <p class="lead" style="margin:0">The e2e-validator checks live behavior against <code>verification-harness.json</code>; FAIL scenarios spawn fixes; re-validate; repeat. The cross-agent context TeamCreate used to carry becomes a <b>structured handoff</b> passed into the validator's prompt.</p>
+      <pre><code><span class="k">async function</span> <span class="fn">e2eValidateFixLoop</span>({ sprint, specDeltas }, { maxRounds = <span class="n">2</span> } = {}) {
+  <span class="k">let</span> round = <span class="n">0</span>
+  <span class="k">while</span> (<span class="k">true</span>) {
+    <span class="k">const</span> report = <span class="k">await</span> <span class="fn">agent</span>(<span class="fn">e2ePrompt</span>(sprint, specDeltas), {
+      agentType: <span class="s">'momentum:e2e-validator'</span>, phase: <span class="s">'E2E'</span>, schema: E2E_REPORT,
+    })
+
+    <span class="c">// BLOCKED = harness/env down. Terminal NON-failure — looping can't fix infra.</span>
+    <span class="k">if</span> (report.verdict === <span class="s">'BLOCKED'</span>)
+      <span class="k">return</span> { status: <span class="s">'blocked'</span>, why: report.blockedReason, rounds: round }
+
+    <span class="k">const</span> failures = report.scenarios.<span class="fn">filter</span>(s => s.result === <span class="s">'FAIL'</span>)
+    <span class="k">if</span> (failures.length === <span class="n">0</span>) <span class="k">return</span> { status: <span class="s">'clean'</span>, rounds: round }
+    <span class="k">if</span> (round >= maxRounds)  <span class="k">return</span> { status: <span class="s">'capped'</span>, rounds: round, residual: failures }
+
+    round++
+    <span class="c">// failures touch different files → fixes can run in parallel (barrier OK, all gate re-validate)</span>
+    <span class="k">await</span> <span class="fn">parallel</span>(failures.<span class="fn">map</span>(f => () =>
+      <span class="fn">agent</span>(<span class="fn">fixPrompt</span>(f), { agentType: f.owningDevAgent, phase: <span class="s">'E2E·fix'</span> })))
+    <span class="c">// specDeltas re-passed next round — structured handoff, not TeamCreate chatter</span>
+  }
+}</code></pre>
+      <div class="guards">
+        <div class="guard-item"><b><span class="tag term">TERMINATES</span></b><span>Three exits: clean, capped, or BLOCKED. BLOCKED is the key one — without it, an env outage loops forever.</span></div>
+        <div class="guard-item"><b><span class="tag guard">handoff &gt; chatter</span></b><span><code>specDeltas</code> (what changed vs. the spec) is injected into the validator prompt — replaces the inter-agent messaging TeamCreate provided.</span></div>
+        <div class="guard-item"><b><span class="tag guard">low cap</span></b><span>2 rounds — e2e is expensive; residual failures go to the report, not endless retry.</span></div>
+        <div class="guard-item"><b><span class="tag risk">no pytest fallback</span></b><span>Validator prompt forbids substituting unit tests for live behavior (carry the existing rule verbatim).</span></div>
+      </div>
+      <p class="nb"><b>Why this beats TeamCreate:</b> e2e never needed agents <i>talking</i> — it needs validate → fix → re-validate. Deterministic, resumable, no coordination overhead, and BLOCKED is handled explicitly instead of stalling a team.</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="avfl">
+    <h2><span class="num">03</span>avflLoop <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— sprint, post-merge · AVFL-as-Workflow</span></h2>
+    <div class="loopcard">
+      <span class="scope">Wraps the existing <code>momentum:avfl</code> sub-skills as a workflow, retargeted at the 3-dot merged git result (the integration surface)</span>
+      <p class="lead" style="margin:0">This is Momentum's real AVFL — <b>not</b> a discovery loop. Dual-reviewer lenses → consolidate to a <b>weighted score</b> → fix in severity order → re-validate with <b>declining skepticism</b>. It exits on a score threshold (or an iteration cap), never on "nothing new."</p>
+      <pre><code><span class="k">async function</span> <span class="fn">avflLoop</span>({ integrationSurface, acs }, { threshold = <span class="n">95</span>, maxIters = <span class="n">4</span> } = {}) {
+  <span class="k">if</span> (!integrationSurface) <span class="k">return</span> { status: <span class="s">'clean'</span>, score: <span class="n">100</span>, iters: <span class="n">0</span>, note: <span class="s">'disjoint — nothing to integrate'</span> } <span class="c">// OQ#4</span>
+  <span class="k">let</span> iter = <span class="n">0</span>, history = []
+  <span class="k">while</span> (<span class="k">true</span>) {
+    iter++
+    <span class="k">const</span> skepticism = iter === <span class="n">1</span> ? <span class="n">3</span> : <span class="n">2</span>          <span class="c">// high first pass, then low — FLOOR is 2</span>
+    <span class="c">// 4 lenses × { Enumerator sonnet/med, Adversary opus/high }, all parallel (dual review)</span>
+    <span class="k">const</span> reviews = <span class="k">await</span> <span class="fn">parallel</span>(LENSES.<span class="fn">flatMap</span>(L => [
+      () => <span class="fn">agent</span>(<span class="fn">enumPrompt</span>(L, integrationSurface, acs, skepticism), { model: <span class="s">'sonnet'</span>, phase: <span class="s">'AVFL'</span>, schema: FINDINGS }),
+      () => <span class="fn">agent</span>(<span class="fn">advPrompt</span> (L, integrationSurface, acs, skepticism), { model: <span class="s">'opus'</span>,   phase: <span class="s">'AVFL'</span>, schema: FINDINGS }),
+    ]))
+    <span class="c">// consolidate: confidence (both→HIGH / one→MEDIUM), dedup, drop no-evidence findings</span>
+    <span class="k">const</span> { findings, score } = <span class="fn">consolidate</span>(reviews.<span class="fn">filter</span>(<span class="fn">Boolean</span>))
+    <span class="c">//   score = 100 − Σ( critical −15, high −8, medium −3, low −1 )</span>
+    history.<span class="fn">push</span>(score)
+
+    <span class="k">if</span> (score >= threshold) <span class="k">return</span> { status: <span class="s">'clean'</span>,     score, iters: iter, history }
+    <span class="k">if</span> (iter  >= maxIters)  <span class="k">return</span> { status: <span class="s">'max_iters'</span>, score, iters: iter, history, residual: findings }
+
+    <span class="c">// fix in severity order; carry ORIGINAL acs/source forward UNCHANGED each iteration</span>
+    <span class="k">await</span> <span class="fn">agent</span>(<span class="fn">fixPrompt</span>(findings), { agentType: codeFixer, phase: <span class="s">'AVFL·fix'</span> })
+  }
+}</code></pre>
+      <div class="guards">
+        <div class="guard-item"><b><span class="tag term">TERMINATES</span></b><span><code>score >= 95</code> (CLEAN) OR <code>iter >= 4</code> (MAX_ITERATIONS_REACHED). Two independent stops.</span></div>
+        <div class="guard-item"><b><span class="tag guard">declining skepticism</span></b><span>Iter 1 = high (3); iter 2+ = low (2). <b>Floor is 2</b> — skepticism 1 collapses Enumerator + Adversary into one reviewer.</span></div>
+        <div class="guard-item"><b><span class="tag guard">score, not zero-defect</span></b><span>Pass = 95/100, not "no findings." Low-severity residue is acceptable; the weighted score is the gate.</span></div>
+        <div class="guard-item"><b><span class="tag risk">source carried forward</span></b><span>Every iteration re-validates against ORIGINAL acs/source — never the intermediate fixed output. And Phase 1 always RE-SPAWNS reviewers (no inline validation).</span></div>
+      </div>
+      <div class="callout" style="margin-top:14px">
+        <span class="k-label">Corrected from the first draft</span>
+        My earlier "loop-until-dry / dedup-vs-seen" was a generic discovery pattern, not Momentum's AVFL. Real AVFL scores each pass (<code>100 − weighted severity</code>), exits at <b>≥ 95</b> or <b>4 iterations</b>, and steps skepticism <b>3 → 2</b>. The sprint use is the <code>full</code> profile retargeted at the merged integration surface; if <code>integrationSurface</code> is empty (disjoint stories), short-circuit to CLEAN and log the skip (open question #4).
+      </div>
+      <p class="nb"><b>Reuse, don't reinvent</b> (roadmap item 5): wrap the existing <code>momentum:avfl</code> sub-skills (<code>validator-enum</code>, <code>validator-adv</code>, <code>consolidator</code>, <code>fixer</code>) — integration findings route to <code>code-fixer</code>. The benchmark <code>avfl-declining</code> variant steps skepticism down further each iteration (min 1) — a tunable, not the canonical default, which floors at 2.</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="kit">
+    <h2><span class="num">04</span>loopControlKit <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— shared primitives</span></h2>
+    <p class="lead">Every loop reuses the same termination + safety predicates. Centralize them so all three behave identically.</p>
+    <div class="panel">
+      <pre style="margin-top:0"><code><span class="c">// Hard floor below which we stop spending and bank residual for the report.</span>
+<span class="k">const</span> BUDGET_FLOOR = <span class="n">50_000</span>
+
+<span class="k">const</span> <span class="fn">budgetExhausted</span> = () => budget.total && budget.<span class="fn">remaining</span>() &lt; BUDGET_FLOOR
+
+<span class="c">// Round/score-based loops share this: clean OR capped OR out of budget. Never "ask a human".</span>
+<span class="k">const</span> <span class="fn">shouldStop</span> = (clean, round, cap) =>
+  clean || round >= cap || <span class="fn">budgetExhausted</span>()
+
+<span class="c">// Failure becomes POLICY (a workflow can't ask): one retry, then mark + continue.</span>
+<span class="k">async function</span> <span class="fn">withRetry</span>(thunk, label) {
+  <span class="k">const</span> first = <span class="k">await</span> <span class="fn">thunk</span>().<span class="fn">catch</span>(() => <span class="k">null</span>)
+  <span class="k">if</span> (first) <span class="k">return</span> first
+  <span class="fn">log</span>(<span class="s">`retry: ${label}`</span>)
+  <span class="k">const</span> second = <span class="k">await</span> <span class="fn">thunk</span>().<span class="fn">catch</span>(() => <span class="k">null</span>)
+  <span class="k">return</span> second ?? { status: <span class="s">'failed'</span>, label }   <span class="c">// surfaced in the report, never thrown</span>
+}</code></pre>
+      <div class="guards">
+        <div class="guard-item"><b>Termination kinds</b><span>QA/e2e use round caps + clean; AVFL uses a score threshold + iteration cap. All bounded, none human-gated.</span></div>
+        <div class="guard-item"><b>Budget guard</b><span>Guarded on <code>budget.total</code> being set — else <code>remaining()</code> is Infinity and the guard is a safe no-op.</span></div>
+        <div class="guard-item"><b>Single retry</b><span>One re-spawn on crash, then mark <code>failed</code> and continue — no infinite retry, no human prompt.</span></div>
+        <div class="guard-item"><b>Concurrency</b><span>~16 concurrent / 1000 total are runtime caps; <code>parallel</code> over N reviewers/findings queues safely beyond 16.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="agg">
+    <h2><span class="num">05</span>resultAggregation <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— loops → one data model → the report</span></h2>
+    <p class="lead">Each loop returns structured data; the execution workflow folds it into one <code>SprintResult</code>, which the report-builder agent renders into the HITL HTML. This is the bridge from autonomous loops to the single human gate.</p>
+    <div class="panel">
+      <pre style="margin-top:0"><code>StoryResult = {
+  slug, devAgent, status: <span class="s">'clean'</span>|<span class="s">'capped'</span>|<span class="s">'failed'</span>, rounds,
+  residualFindings: [{ severity, file, what, why }], commits: [sha]
+}
+
+SprintResult = {
+  stories:  [StoryResult],
+  merge:    { merged: [slug], conflicts: [{ slug, files }] },   <span class="c">// conflicts = human's job</span>
+  avfl:     { status: <span class="s">'clean'</span>|<span class="s">'max_iters'</span>, score, iters, history, residual: [finding] },
+  e2e:      { status: <span class="s">'clean'</span>|<span class="s">'capped'</span>|<span class="s">'blocked'</span>, residual: [scenario], why? },
+  failures: [{ slug, label }]                                   <span class="c">// surfaced TOP of report</span>
+}</code></pre>
+      <ul class="clean" style="margin-top:14px">
+        <li><b>Conflicts &amp; failures lead the report.</b> They're the only things that truly need the human; everything else is FYI + approve/request-changes.</li>
+        <li><b>The report-builder is the workflow's final stage</b> — <code>agent(reportPrompt(template, sprintResult), {agentType:&nbsp;…})</code> renders <code>SprintResult</code> against the (charset-fixed) conduct report template.</li>
+        <li><b>Residuals are first-class.</b> A <code>capped</code> round-loop or a <code>max_iters</code> AVFL isn't a failure — it's "we hit the limit, here's what's left at score N," which the human approves, defers, or sends to an <i>encore</i>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="obs">
+    <h2><span class="num">06</span>Observability + resume</h2>
+    <div class="panel">
+      <ul class="clean">
+        <li><b><code>phase()</code> / <code>log()</code> per loop step</b> — phases <code>QA·review</code>, <code>Fix</code>, <code>E2E</code>, <code>E2E·fix</code>, <code>AVFL</code>, <code>AVFL·fix</code> make <code>/workflows</code> show live loop progress (which round/iteration, which story, AVFL score history).</li>
+        <li><b>Resume is cheap for analysis, dangerous for mutation.</b> Pure analysis agents (QA, review, validate, AVFL reviewers) replay from cache on <code>resumeFromRunId</code>. Git-mutating steps (fix-commit, merge) are <i>not</i> safely cacheable.</li>
+        <li><b>Idempotency rule.</b> Any step that mutates the worktree/branch must check-before-act (is this fix already applied? is this branch already merged?), or — preferred, per the handoff's "Conductor owns all git mutation" — <b>keep merges in the Conductor (skill), not the resumable workflow</b>, so a resumed run can't double-merge.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="sound">
+    <h2><span class="num">07</span>Soundness checklist <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— the adversarial pass, inline</span></h2>
+    <p class="lead">These are the checks the verification workflow would have run; I ran them against the designs above. The one real correctness trap is flagged.</p>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Check</th><th>qaReviewFixLoop</th><th>e2eValidateFixLoop</th><th>avflLoop</th></tr></thead>
+        <tbody>
+          <tr><td><b>Terminates</b></td><td class="ok-cell">✓ cap + clean</td><td class="ok-cell">✓ cap + clean + BLOCKED</td><td class="ok-cell">✓ score≥95 or 4 iters</td></tr>
+          <tr><td><b>Budget-safe</b></td><td class="ok-cell">✓ shared guard</td><td class="ok-cell">✓ shared guard</td><td class="ok-cell">✓ shared guard</td></tr>
+          <tr><td><b>Deadlock / hang</b></td><td class="ok-cell">✓ null-safe</td><td class="ok-cell">✓ BLOCKED exit</td><td class="ok-cell">✓ null-safe</td></tr>
+          <tr><td><b>Lost findings</b></td><td class="ok-cell">✓ residual banked</td><td class="ok-cell">✓ residual banked</td><td class="ok-cell">✓ scored, residual banked</td></tr>
+          <tr><td><b>Human-free</b></td><td class="ok-cell">✓</td><td class="ok-cell">✓</td><td class="ok-cell">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout key" style="margin-top:14px">
+      <span class="k-label">Correctness flag — must carry into implementation</span>
+      <p style="margin:0;font-size:13.6px;color:var(--slate)"><b>code-reviewer, avfl, and architecture-guard are SKILLS, not Agent-tool agent types.</b> You cannot pass them as <code>agentType</code>. Run them by spawning a capable agent (e.g. the story's dev agent, or <code>Explore</code>) whose prompt invokes the skill — or, for AVFL, wrap its sub-skills as a saved workflow and call it. <code>momentum:qa-reviewer</code> and <code>momentum:e2e-validator</code> <i>are</i> real agent types and pass cleanly. (Handoff roadmap item 1 confirms <code>momentum:code-reviewer</code> is currently a stub to be wired to <code>bmad-code-review</code>.)</p>
+    </div>
+  </section>
+
+  <div class="foot">Conduct (sprint-dev) rebuild · step B · loop internals · 2026-05-29 · §03 corrected to canonical AVFL semantics · self-contained HTML, charset-first &lt;head&gt;</div>
+</div>
+</body>
+</html>

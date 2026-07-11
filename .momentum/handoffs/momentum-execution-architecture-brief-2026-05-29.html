@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Momentum execution-architecture council decision brief · house style after anthropics/html-effectiveness · charset-first <head> · self-contained, no deps -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Momentum Execution Architecture — Council Decision Brief</title>
+<style>
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:40px 28px 96px}
+  a{color:var(--clay-d)}
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px;max-width:88ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1.5px solid transparent;white-space:nowrap}
+  .pill.warn{background:#FBF1D9;border-color:var(--gold);color:#8A6D12}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 4px}
+  .metric{border:var(--border);border-radius:var(--radius-row);background:#fff;padding:14px 16px}
+  .metric .n{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1}
+  .metric .l{font-size:11px;color:var(--gray-500);margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+  .metric.flag .n{color:var(--gold)} .metric.warn .n{color:var(--rust)}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}
+  .toc a{font:600 12px/1 var(--mono);text-decoration:none;color:var(--gray-700);border:var(--border);border-radius:999px;padding:7px 12px;background:#fff;transition:.12s}
+  .toc a:hover{border-color:var(--clay);color:var(--clay-d)}
+  section{margin-top:34px}
+  h2{font-family:var(--serif);font-size:21px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  h3{font-family:var(--sans);font-size:14.5px;font-weight:600;margin:16px 0 6px}
+  .lead{color:var(--gray-700);font-size:14px;margin:0 0 14px;max-width:90ch}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:20px 22px;box-shadow:var(--shadow)}
+  .panel + .panel{margin-top:12px}
+  .callout{border:1.5px solid var(--gold);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFFDF7,#FFF);padding:18px 22px;box-shadow:var(--shadow)}
+  .callout.key{border-color:var(--clay-d);background:linear-gradient(180deg,#FFF7F3,#FFF)}
+  .callout .k-label{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-d);margin-bottom:7px;display:block}
+  blockquote{margin:0;font-size:14.5px;line-height:1.5;color:var(--slate)}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13.4px;color:var(--gray-700)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li b{color:var(--slate)}
+  .tag{font:700 10px/1 var(--mono);padding:4px 7px;border-radius:5px;letter-spacing:.04em;display:inline-block;margin-right:7px;vertical-align:1px}
+  .tag.rec{background:#EAF0E2;color:#46552F} .tag.no{background:#F2D9D4;color:#7E2B22}
+  .tag.story{background:#E7EEF6;color:#2F557E} .tag.sprint{background:#F7E1D6;color:#9A4A22} .tag.epic{background:#EDE7F2;color:#5A3E7E} .tag.batch{background:var(--gray-100);color:var(--gray-700)}
+  .opt{border:var(--border);border-left:4px solid var(--gray-200);border-radius:var(--radius-panel);background:#fff;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:12px}
+  .opt.rec{border-left-color:var(--olive)} .opt.e{border-left-color:#7CA0C9}
+  .opt h3{margin:0 0 4px;font-size:15px} .opt .oname{font:700 11px/1 var(--mono);color:var(--clay-d)}
+  .opt .summary{font-size:13px;color:var(--gray-700);margin:6px 0 12px}
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pc h4{margin:0 0 6px;font:700 10.5px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase}
+  .pc .pros h4{color:#46552F} .pc .cons h4{color:#9A4A22}
+  .pc ul{margin:0;padding-left:16px} .pc li{font-size:12.5px;color:var(--gray-700);margin-bottom:5px}
+  .cd{margin-top:10px;font-size:12px;color:var(--gray-500);border-top:1px solid var(--gray-100);padding-top:9px}
+  .cd b{color:var(--slate)}
+  .uwgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+  .uw{border:var(--border);border-radius:var(--radius-row);padding:14px 16px;background:#fff}
+  .uw .h{font:700 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;margin-bottom:7px}
+  .uw p{margin:0;font-size:12.7px;color:var(--gray-700)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+  th{font:600 11px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--gray-500);border-bottom:1.5px solid var(--gray-200)}
+  td b{color:var(--slate)} td{color:var(--gray-700)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px;color:var(--clay-d)}
+  .dissent{border:1.5px dashed var(--rust);border-radius:var(--radius-row);background:#FCF1EE;padding:13px 16px;margin-bottom:10px;font-size:13px;color:var(--gray-700)}
+  .dissent b{color:var(--rust)}
+  .risk{border:var(--border);border-radius:var(--radius-row);background:var(--gray-50);padding:11px 14px;margin-bottom:8px;font-size:12.8px;color:var(--gray-700)}
+  .risk b{color:var(--slate);display:block;margin-bottom:2px;font-size:12.5px}
+  .q{border:var(--border);border-left:4px solid var(--clay);border-radius:var(--radius-row);background:#fff;padding:14px 16px;margin-bottom:10px}
+  .q .qn{font:700 11px/1 var(--mono);color:var(--clay-d);margin-right:8px}
+  .q .qt{font-size:14px;font-weight:600;color:var(--slate)}
+  .q .qd{font-size:12.7px;color:var(--gray-700);margin-top:5px}
+  .q .lean{font-size:12px;color:var(--olive);margin-top:6px;font-weight:600}
+  .foot{margin-top:46px;text-align:center;color:var(--gray-400);font-size:12px}
+  .nb{font-size:12.5px;color:var(--gray-500);margin-top:10px}
+  @media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.pc,.uwgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">Council Decision Brief · execution architecture</div>
+        <h1>Dispatcher vs. Conduct vs. Hybrid — and the Unit of Work</h1>
+        <div class="sub">A 15-agent discovery → council → synthesis on how Momentum should execute, stay legible, and automate — and the central question you raised: once stories dispatch continuously, what does the human <i>plan and evaluate</i>? Balanced by design; dissent preserved, not smoothed.</div>
+      </div>
+      <span class="pill warn"><span class="dot"></span>Recommendation ~60% · your call</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="n">15</div><div class="l">Council agents</div></div>
+      <div class="metric"><div class="n">5</div><div class="l">Options (A–E)</div></div>
+      <div class="metric flag"><div class="n">7</div><div class="l">Questions for you</div></div>
+      <div class="metric warn"><div class="n">10</div><div class="l">Live risks</div></div>
+      <div class="metric warn"><div class="n">3</div><div class="l">Devil's-advocate hits</div></div>
+    </div>
+    <div class="toc">
+      <a href="#tldr">00 · TL;DR + binding facts</a>
+      <a href="#options">01 · The five options</a>
+      <a href="#unit">02 · Unit of work</a>
+      <a href="#council">03 · Council roll-call</a>
+      <a href="#dissent">04 · Dissents</a>
+      <a href="#risks">05 · Risks</a>
+      <a href="#rec">06 · Recommendation</a>
+      <a href="#decide">07 · Your decisions</a>
+    </div>
+  </header>
+
+  <!-- 00 -->
+  <section id="tldr">
+    <h2><span class="num">00</span>The short version</h2>
+    <div class="callout key">
+      <span class="k-label">Council lean (moderate, ~60%)</span>
+      <blockquote>Six of seven angles lean to <b>Direction D — "conduct-first, dispatcher-deferred":</b> ship the in-session Conductor / Dynamic-Workflows execution model now, sequence the canvas legibility epic, hold Gas City and beads-authoritative behind their ratified gates. <b>But</b> the devil's advocate landed three verified hits that lower the confidence — preserved below, not smoothed over.</blockquote>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h3>Three hits that change the confidence</h3>
+      <ul class="clean">
+        <li><b>1 · Shared-premise capture.</b> Conduct is the <i>newest, least-scrutinized</i> artifact (DESIGN DRAFT, nothing built, 10 unratified questions, 3 P0 agents that don't exist) — yet it's preferred over the only two options that passed an AVFL'd research pass. Convergence ≠ independent agreement.</li>
+        <li><b>2 · The plan gate stays porous.</b> DEC-031 D1 names the <i>plan-approval</i> gate as the <i>more</i> porous one. Conduct fixes only the <i>verification</i> gate (its HTML report). "Conduct-first" without plan-gate legibility is arguably the inversion DEC-031 forbids.</li>
+        <li><b>3 · Auto-fix is unreviewed authority.</b> Conduct's "ALWAYS auto-fix every legitimate finding" loop (spec lines 13/174/259/283) moves the largest volume of consequential judgment <i>out</i> of your view — in tension with the comprehension mandate.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Verified facts that constrain everything</h3>
+      <ul class="clean">
+        <li><b>The Gas City integration spec is a STUB</b> — <code>gas-city-system-design.md</code> has only step 1 done; zero integration content. Adoption rests on an unfinished design.</li>
+        <li><b>The canvas has no review surface yet</b> — <code>canvas/server.tsx</code> (2,229 lines) renders only the epics table. No Reviewer tab, Planner tab, or attestation strip exists.</li>
+        <li><b>DEC-030 Gate 4 is OPEN</b> — the subtract-only + DAG-reentry sprint model that every option assumes "prevents stalls" has <i>never run on a real sprint</i>.</li>
+        <li><b>The automation GOAL was never stated.</b> The corpus contains <i>zero</i> developer statement of an unattended/overnight-runs goal — the phantom requirement both sides use to argue about Gas City.</li>
+        <li><b>Clean decision point</b> — no active or planning sprint right now.</li>
+        <li><b>The substrates compose, they don't compete</b> (unanimous): Dynamic Workflows = in-session execution; beads = persistent state/DAG; Gas City = out-of-session trigger. Different layers.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section id="options">
+    <h2><span class="num">01</span>The five options on the table</h2>
+    <p class="lead">Directions A–C were proposed going in; D is the council's modal synthesis; E was surfaced by the devil's advocate and deserves a hearing.</p>
+
+    <div class="opt">
+      <div class="oname">OPTION A</div>
+      <h3>Automated + Visual Flow <span style="font-weight:400;color:var(--gray-500)">— Gas City + beads DAG + canvas legibility + continuous dispatch; sprint demoted to a certification cut</span></h3>
+      <div class="summary">The literal phased plan of DEC-030/031/032 — most faithful to the decided text.</div>
+      <div class="pc">
+        <div class="pros"><h4>Pros</h4><ul><li>Honors legibility-before-automation by construction (canvas epic is the hard prerequisite)</li><li><code>bd ready --claim</code> is a genuine asset Momentum lacks: atomic, double-dispatch-safe frontier</li><li>A live canvas can render the DAG frontier + attestation — a static report can't show live state</li><li>Discards nothing decided; it <i>is</i> the ratified arc</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>The integration spec is a verified STUB — never designed past step 1</li><li>Unresolved contradiction: DEC-030 Gate 1 ruled dispatch must be IN-SESSION; Gas City exec orders spawn <code>claude -p</code> OUT-OF-SESSION — it can only <i>trigger</i>, never orchestrate</li><li>Heavy maturity tax for thin value: 262 open issues, Dolt #1930 concurrency catastrophe, <code>convergence.terminated</code> unconfirmed</li></ul></div>
+      </div>
+      <div class="cd"><b>Commits to:</b> the large unbuilt canvas epic, then a pre-1.0 external Go SDK + Dolt as a load-bearing everyday dependency. <b>Discards:</b> in-session simplicity.</div>
+    </div>
+
+    <div class="opt">
+      <div class="oname">OPTION B</div>
+      <h3>Conduct + Dynamic Workflows <span style="font-weight:400;color:var(--gray-500)">— in-session Conductor, per-story pipelines, ONE self-sufficient HTML end-gate; sprint-batched; beads optional</span></h3>
+      <div class="summary">Rewrite sprint-dev as the conduct model — remove all intermediate gates.</div>
+      <div class="pc">
+        <div class="pros"><h4>Pros</h4><ul><li>In-session by construction — satisfies DEC-030 Gate 1 with zero reconciliation debt</li><li>Zero external infra: no Dolt, no Go daemon, no MCP. Smallest footprint for a solo dev</li><li>The report's self-sufficiency mandate is the strongest concrete legibility instrument in the repo</li><li>It's the in-session realization of the decided line (DEC-030 D1, DEC-031 D3, DEC-029 D9), not a pivot</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>DESIGN DRAFT — 3 P0 agents don't exist; 10 questions unratified</li><li>Addresses only the verification gate; the more-porous plan gate is untouched</li><li>"ALWAYS auto-fix" hides the largest volume of judgment; report shows a curated end-state</li><li>Reintroduces a NEW review artifact DEC-031 D2 chose to avoid (canvas) → two surfaces drift</li><li>Long-session context-budget accumulation flagged but unmitigated</li></ul></div>
+      </div>
+      <div class="cd"><b>Commits to:</b> 3 net-new agents + a new loop on an unbuilt substrate, never run on a real sprint. <b>Discards:</b> the decided canvas-as-legibility-surface; the plan-gate work.</div>
+    </div>
+
+    <div class="opt">
+      <div class="oname">OPTION C</div>
+      <h3>Hybrid <span style="font-weight:400;color:var(--gray-500)">— beads state + Dynamic Workflows execution + thin dispatcher + canvas legibility; HITL unit chosen deliberately</span></h3>
+      <div class="summary">Stack the three substrates at the layers they occupy; converge on the full vision via the phased plan.</div>
+      <div class="pc">
+        <div class="pros"><h4>Pros</h4><ul><li>Correctly treats the substrates as composing, not competing</li><li>Conduct's report SCHEMA becomes the canvas Reviewer-tab rendering contract → resolves two-surface drift</li><li>Sequences exactly as DEC-031's ratified plan</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Most moving parts at once — highest integration-seam risk for a solo dev</li><li>Longest critical path: beads spike AND canvas epic AND conduct AND dispatcher</li><li>"Thin dispatcher" underspecified; easy to ship half-done</li></ul></div>
+      </div>
+      <div class="cd"><b>Commits to:</b> 3–4 concurrent substrate workstreams behind multiple open gates. <b>Discards:</b> near-term simplicity.</div>
+    </div>
+
+    <div class="opt rec">
+      <div class="oname">OPTION D · COUNCIL'S MODAL PICK <span class="tag rec" style="margin-left:8px">RECOMMENDED ~60%</span></div>
+      <h3>Conduct-first, dispatcher-and-beads-deferred-behind-gates</h3>
+      <div class="summary">Ship B's in-session execution now; run the beads spike as an independent story; ship the canvas legibility epic — and fold conduct's report SCHEMA into the canvas Reviewer tab rather than ship a second artifact; admit Gas City only later, Version-A trigger-only. End state is C; path avoids C's front-loaded risk.</div>
+      <div class="pc">
+        <div class="pros"><h4>Pros</h4><ul><li>Honors every ratified constraint without forcing an unresolved reconciliation</li><li>Sequences risk: each unproven layer adopted alone, validated, then built on</li><li>Delivers the friction relief you feel today (collapse 5 asks + 2 fix-loop asks + 8 HALTs) on the smallest footprint</li><li>Folding report→canvas resolves the two-surface drift directly</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Defers overnight dispatch — but the corpus has no verified goal requiring it, so possibly moot</li><li>Gate-rot risk: once conduct works, motivation to ship the heavy canvas epic could evaporate</li><li>Doesn't fix the plan gate unless the canvas epic explicitly includes sprint-planning's plain-language output</li><li>Inherits B's auto-fix + context-budget risks unless addressed in the build</li></ul></div>
+      </div>
+      <div class="cd"><b>Commits to:</b> building conduct in-session first, ratifying its 10 questions, treating canvas + beads spike as genuine gating work. <b>Discards:</b> Gas City as "the dispatcher" as written (de-facto relitigation of DEC-032 unless formalized).</div>
+    </div>
+
+    <div class="opt e">
+      <div class="oname">OPTION E · DEVIL'S-ADVOCATE-SURFACED</div>
+      <h3>Minimal legibility-only <span style="font-weight:400;color:var(--gray-500)">— fix the artifacts, not the loop</span></h3>
+      <div class="summary">DEC-031 D1's literal claim is that the bottleneck is artifact legibility, not dispatch. Cheapest intervention: (a) sprint-planning emits the plain-language per-story description it already owes, (b) add an attestation strip to the existing canvas, (c) ship nothing else. Optionally wire <i>only</i> the conduct report generator into the current loop to feel whether it raises catch-rate — before betting the whole loop.</div>
+      <div class="pc">
+        <div class="pros"><h4>Pros</h4><ul><li>The ONLY option that takes "legibility before automation" at its word — ships legibility, zero automation</li><li>Smallest blast radius; no unbuilt agents, no unvalidated substrate</li><li>Directly targets the plan gate that B/D leave untouched</li><li>Unbundles conduct's one cheap high-value idea (the report) from the risky rewrite</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Doesn't deliver continuous DAG dispatch — leaves the head-of-line-blocking defect unaddressed</li><li>May be too minimal if your real pain is the intermediate-gate firehose conduct removes</li><li>Could read as kicking the can on the sequenced rewrite</li></ul></div>
+      </div>
+      <div class="cd"><b>Commits to:</b> only the attestation strip + plain-language output (+ optional report generator). <b>Discards:</b> continuous dispatch + the gate-removal win — deferred until legibility is proven to be the actual bottleneck.</div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="unit">
+    <h2><span class="num">02</span>The central question — unit of work</h2>
+    <p class="lead">Your reframe (story vs. sprint vs. epic, from the HITL who plans then evaluates) is where the genuine, <i>unresolved</i> tradeoff lives. Execution grain is settled; the <b>HITL gate grain</b> is not.</p>
+    <div class="uwgrid">
+      <div class="uw"><div class="h"><span class="tag story">STORY</span>per-gate, worktree-held</div><p><b>Majority rejects; dissent defends.</b> Lowest cognitive load per gate (one self-contained diff); change stays on a worktree until you approve, so the "final-merge" worry dissolves; existence proof = quick-fix; maps 1:1 to <code>bd claim</code>; directly relieves your stated planning pain. The one load-bearing objection: it defeats cross-story integration AVFL — <i>but</i> that assumes integration grain must equal planning grain (see dissent).</p></div>
+      <div class="uw"><div class="h"><span class="tag sprint">SPRINT</span>the modal + decided answer</div><p>One coherent curated evaluation; AVFL-on-merge catches cross-story contradictions; frozen+subtract-only means scope approved = scope verified; five skills already built around it. <b>But:</b> planning a 2–8 story batch is genuinely complex (your flagged pain); partly propped by sunk-cost gravity; its plan-gate weakness is mitigated only by the canvas epic — which doesn't exist yet.</p></div>
+      <div class="uw"><div class="h"><span class="tag epic">EPIC</span>dismissed on a FALSE premise</div><p>The council waved it off as "relitigates the backward-looking epic." <b>Verified false:</b> DEC-034 defines a <i>finite-lived</i> epic as forward-looking with a real <code>acceptance_condition</code>. You evaluate one complete feature ("did it land?") — more meaningful than "is this changeset correct?" — with the fewest gate instances. Cons: worst latency; one blocked story stalls closure; no epic FSM/retro exists. <b>Key collapse:</b> for small finite-lived epics (3–5 stories), epic-as-unit and small-sprint-as-unit may be the same thing — and epic is then <i>strictly better</i> (it carries an acceptance_condition the sprint lacks).</p></div>
+      <div class="uw"><div class="h"><span class="tag batch">DYNAMIC BATCH</span>a scheduler, not a gate</div><p>Near-unanimous: "whatever's ready" has no stable boundary to plan or attest to. It's the right <i>execution</i> model (the Conductor frontier / <code>bd ready --claim</code>) operating <i>within</i> a frozen scope — not the HITL unit. Promoting it re-creates the Hermes failure mode (rejected, DEC-031 D7).</p></div>
+    </div>
+    <div class="callout" style="margin-top:14px">
+      <span class="k-label">The verdict — and the tradeoff to name</span>
+      <b>Execution</b> = story-grained continuous DAG dispatch (settled). The <b>HITL unit</b> is the live question. Majority = SPRINT (defensible on the integration-AVFL argument, but partly sunk-cost). The tradeoff <i>you</i> should decide deliberately, not inherit: optimize for <b>one coherent integration-verified evaluation</b> (sprint, heavy front-loaded planning) — or for <b>low-per-gate-load, just-in-time, worktree-held story approvals</b> (story, with integration coverage moved to a separate periodic sweep)?
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="council">
+    <h2><span class="num">03</span>Council roll-call</h2>
+    <p class="lead">Eight angles; six land near Direction D. Note the near-uniform unit answer — which the devil's advocate flags as monoculture, not robustness.</p>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Angle</th><th>Favored unit</th><th>Lean</th></tr></thead>
+        <tbody>
+          <tr><td><b>Automation &amp; throughput</b></td><td>story exec / sprint gate</td><td>Direction D — conduct delivers the throughput the HITL actually feels</td></tr>
+          <tr><td><b>Human legibility &amp; control</b></td><td>sprint gate / story exec</td><td>Sequence, don't race — DEC-031 D1 is ratified, legibility-first is binding</td></tr>
+          <tr><td><b>Simplicity / YAGNI</b></td><td>sprint</td><td>Minimum = Direction D behind the canvas epic; Gas City likely never needed</td></tr>
+          <tr><td><b>Infra / operational risk</b></td><td>sprint / story exec</td><td>B first (lowest op-risk for a solo dev), evolve to C behind gates</td></tr>
+          <tr><td><b>Investment-coherence steward</b></td><td>sprint / story exec</td><td>B and C are MORE coherent with the decided line than A; leans C</td></tr>
+          <tr><td><b>Process / skill coherence</b></td><td>mixed (story/sprint/epic-view)</td><td>Direction D; Conductor = top-level session (ratify Q#6 this way)</td></tr>
+          <tr><td><b>Visual flow / canvas</b></td><td>story exec / sprint gate</td><td>Canvas first, but reuse the conduct report as its spine, not from scratch</td></tr>
+          <tr><td><b>Unit-of-work granularity</b></td><td>sprint gate / dynamic exec / epic-view</td><td>SPRINT plan+evaluate; per-story execution; epic as orthogonal rollup</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="dissent">
+    <h2><span class="num">04</span>Preserved dissents <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— the threads worth pulling before you commit</span></h2>
+    <div class="dissent"><b>The bundling dissent (strongest, under-developed).</b> The council fused "integration-review grain" and "planning grain" into one object called "the sprint," then declared the bundle inevitable. The <i>only</i> load-bearing reason sprint beats story is cross-story integration AVFL — but that need not coincide with the planning gate. A <b>rolling integration sweep</b> over the last N merged stories preserves coverage <i>without</i> a frozen sprint container — giving you low-per-gate-load worktree-held story approvals AND removing the 2–8-story planning complexity you flagged. No one developed this. It should be developed before the conduct rewrite is storied.</div>
+    <div class="dissent"><b>The epic-as-unit dismissal rests on a false premise (verified).</b> DEC-034 defines finite-lived epics as forward-looking closeable deliverables with acceptance conditions. For small (3–5 story) epics, epic-as-unit ≈ small-sprint-as-unit — and the epic framing is strictly better (it carries a real <code>acceptance_condition</code>). Deserves a genuine hearing.</div>
+    <div class="dissent"><b>A static report may beat a live canvas.</b> A live, filterable canvas <i>invites</i> skimming; a static, linear, build-error-enforced report you must read top-to-bottom may <i>force</i> the attention DEC-031 D1 demands. The canvas is the decided <i>means</i>; legibility is the <i>end</i>. If porting the report schema to the canvas weakens its "missing-field = build error" guarantee, the canvas looks legible but reintroduces the original failure.</div>
+    <div class="dissent"><b>"Fragments attention" is asserted, not evidenced.</b> Every position rejecting story-at-a-time repeats it with no evidence that total attention exceeds reconstructing one integrated multi-story diff. DEC-031 D1's actual diagnosis — humans fast-track through what they can't genuinely understand — cuts the <i>other</i> way: a 2–8-story diff is harder to understand than one story.</div>
+    <div class="dissent"><b>Option E was never costed</b>, including by the self-described skeptic. If the bottleneck really is artifact legibility (not dispatch), the conduct rewrite may be automation work dressed as legibility — and the cheapest honest test of the governing principle was never priced.</div>
+  </section>
+
+  <!-- 05 -->
+  <section id="risks">
+    <h2><span class="num">05</span>Live risks</h2>
+    <div class="risk"><b>Decision-legibility failure (the practice turned on itself)</b>DEC-032 ratified Gas City AS the dispatcher. Every conduct-first option silently hollows it out. That's de-facto relitigation of a ratified decision without a superseding decision + AVFL pass — exactly the failure Momentum exists to prevent. Formally supersede DEC-032 or re-open DEC-030 Gate 1; don't build against an implicit resolution.</div>
+    <div class="risk"><b>Shared-premise capture masquerading as convergence</b>Six of seven angles reason from the same four artifacts and prefer the newest, least-scrutinized, research-unbacked one. Treat the conduct lean as a hypothesis to ratify, not a finding to execute.</div>
+    <div class="risk"><b>Auto-fix-everything is an unreviewed authority</b>(spec lines 13/174/259/283) "Legitimate issues are ALWAYS fixed automatically," the fixer deciding what's legitimate, no human in the loop. The report shows a curated end-state. Conflates the MERGE gate with the COMPREHENSION gate — the two things DEC-031 D1 separates.</div>
+    <div class="risk"><b>The plan gate is left porous</b>DEC-031 D1 names plan-approval as more porous than verification. Conduct addresses only verification. "Conduct-first" without sprint-planning's plain-language output is the precise inversion DEC-031 forbids.</div>
+    <div class="risk"><b>DEC-030 Gate 4 is open</b>The subtract-only + DAG-reentry model every option assumes has never run on a real sprint. The story-execution/sprint-evaluation split is untested end-to-end.</div>
+    <div class="risk"><b>Context-budget exhaustion in the long-lived Conductor session</b>The most likely real-world failure for a solo dev on a non-trivial sprint — flagged but unmitigated. It degrades the very report the single-gate model depends on.</div>
+    <div class="risk"><b>Two-surface drift</b>Conduct ships a new HTML artifact; DEC-031 D2 chose to reuse the canvas. Building both leaves two divergent answers to "what am I attesting to." Fold the schema into the canvas (sound, but unbuilt).</div>
+    <div class="risk"><b>Catastrophic-rework tail at the single end gate</b>If you say "I don't like this approach" after a 6-story autonomous build, the change-workflow triggers large, opaque, expensive rework with no intermediate checkpoint. Story-at-a-time would have caught it at story 1. The end gate was costed as pure savings; this tail was never priced.</div>
+    <div class="risk"><b>Phantom-requirement risk</b>The automation goal (less friction? overnight runs? throughput? legible gates?) was never stated. Each selects a different architecture. Conduct-first defaults to "less friction" — possibly right, but un-examined.</div>
+    <div class="risk"><b>Gate-rot</b>Once conduct works in-session, motivation to ship the heavy canvas epic + run the beads spike could evaporate — stranding the legibility prerequisite and leaving the practice "fast but illegible."</div>
+  </section>
+
+  <!-- 06 -->
+  <section id="rec">
+    <h2><span class="num">06</span>Recommendation <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— moderate confidence ~60%</span></h2>
+    <div class="callout key">
+      <span class="k-label">Direction D — but only after two nearly-free prerequisites</span>
+      <blockquote>Pursue conduct as the in-session execution engine, sequenced behind the canvas legibility epic — <b>but first</b> do two cheap things the council skipped and the devil's advocate correctly demands. This is a <i>lean</i>, not a verdict, because the convergence is partly an artifact of conduct's recency.</blockquote>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h3>Do these FIRST (nearly free, de-risk everything)</h3>
+      <ul class="clean">
+        <li><b>1 · Reconcile the decision record.</b> Write a short superseding decision re-scoping DEC-032 in light of Dynamic Workflows (which postdate it): Gas City → "deferred Version-A out-of-session trigger," and resolve the Gate-1-vs-DEC-032 contradiction on the record. Run it through AVFL.</li>
+        <li><b>2 · Establish the automation GOAL</b> in one sentence: (a) less per-sprint friction, (b) running work while away, (c) raw throughput, or (d) more legible gates? The corpus has zero statement of this, and it changes the answer materially.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>THEN, if the goal is (a)/(d) — the likely default — build in this order</h3>
+      <ul class="clean">
+        <li><b>i · Canvas legibility epic FIRST</b> (DEC-031 Gate 1) — and insist it includes sprint-planning's plain-language per-story output, so the <i>plan</i> gate is made legible, not just verification. Fold conduct's report self-sufficiency schema into the canvas Reviewer tab → one surface, not two.</li>
+        <li><b>ii · Conduct in-session</b>, ratifying the 10 questions (esp. #6: Conductor = top-level session) and <i>closing the auto-fix-authority gap</i> — the report must show what the fixer changed AND dismissed, not just the end-state. Specify a context-budget checkpoint strategy before building.</li>
+        <li><b>iii · Beads dual-write spike</b> as an independent story (closes DEC-030 Gate 3); keep beads optional with depends_on fallback (DEC-029 D11).</li>
+        <li><b>iv · Gas City only after Gate 1 genuinely passes</b>, Version-A trigger-only, never per-story.</li>
+      </ul>
+      <p class="nb"><b>Unit of work:</b> story for execution, sprint for the two human gates — <i>as the default</i>, but treat it as a deliberate choice, because the integration-AVFL argument is decouplable via a rolling sweep, which would make story-at-a-time HITL viable and relieve your planning-complexity pain.</p>
+    </div>
+    <div class="panel">
+      <h3>What would flip this</h3>
+      <ul class="clean">
+        <li><b>A ·</b> If the goal is unattended/overnight runs → flip toward A/Gas City (in-session structurally can't get there).</li>
+        <li><b>B ·</b> If a cheap test of conduct's report on the <i>existing</i> loop (Option E's unbundling) raises catch-rate, the full rewrite is premature — do Option E and stop.</li>
+        <li><b>C ·</b> If planning-complexity is confirmed the dominant pain → seriously develop the rolling-integration-sweep + story-at-a-time-HITL candidate the council never built.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="decide">
+    <h2><span class="num">07</span>Your decisions <span style="font:600 13px/1 var(--mono);color:var(--gray-500)">— answer these and I'll build the plan around them</span></h2>
+    <p class="lead">Seven questions, ordered by leverage. The first two are the prerequisites; the rest shape the architecture.</p>
+    <div class="q"><span class="qn">Q1</span><span class="qt">What is the automation GOAL, in one sentence?</span><div class="qd">(a) less per-sprint friction · (b) running work while away from the keyboard · (c) higher raw throughput · (d) more legible gates. The corpus has none stated — and it changes the architecture: if (b)/(c), conduct's in-session ceiling is the wrong bet and Gas City's out-of-session capability is the point; if (a)/(d), conduct-first is well-aimed.</div></div>
+    <div class="q"><span class="qn">Q2</span><span class="qt">Which is your dominant pain — front-loaded planning, or the in-session firehose?</span><div class="qd">Planning a coherent 2–8 story batch (which you flagged), or the intermediate gates (5 asks + 2 fix-loop asks + 8 HALTs that conduct removes)? Former → story-at-a-time + rolling sweep targets it directly, and sprint may be the wrong default. Latter → conduct's gate removal is the win.</div></div>
+    <div class="q"><span class="qn">Q3</span><span class="qt">Formally supersede DEC-032 (Gas City as "the dispatcher")?</span><div class="qd">Now that Dynamic Workflows exist and satisfy the in-session Gate-1 requirement Gas City cannot. Building conduct-first silently hollows out a ratified decision; your own discipline says reconcile it on the record first.</div><div class="lean">Lean: yes — write the superseding decision + AVFL it.</div></div>
+    <div class="q"><span class="qn">Q4</span><span class="qt">Make conduct's auto-fix loop legible?</span><div class="qd">Require the end report to show what the code-fixer changed AND dismissed, not just the curated end-state. As specified ("ALWAYS auto-fix every legitimate finding," no human deciding legitimacy), it moves the largest volume of judgment out of your view.</div><div class="lean">Lean: yes — it's the comprehension mandate.</div></div>
+    <div class="q"><span class="qn">Q5</span><span class="qt">Run Option E first?</span><div class="qd">Ship ONLY the plain-language plan output + canvas attestation strip + (optionally) the conduct report generator wired into the EXISTING loop — no Conductor, no gate removal — to TEST whether legibility alone raises your catch-rate before committing the full rewrite + 3 unbuilt P0 agents.</div></div>
+    <div class="q"><span class="qn">Q6</span><span class="qt">Does the canvas epic make the PLAN gate legible, not just verification?</span><div class="qd">sprint-planning's plain-language per-story output (DEC-031 D2). Conduct addresses only verification; the plan gate is the more porous one, and leaving it out is the inversion DEC-031 forbids.</div><div class="lean">Lean: yes — hold it in scope.</div></div>
+    <div class="q"><span class="qn">Q7</span><span class="qt">Validate DEC-030 Gate 4 on one small real sprint first?</span><div class="qd">There's no active sprint and the subtract-only + DAG-reentry model has never run end-to-end. Run one small sprint under the current model purely to prove Gate 4 before committing the conduct rewrite to the model it assumes?</div></div>
+  </section>
+
+  <div class="foot">Momentum execution-architecture council · 2026-05-29 · 15 agents (5 discovery · 8 council + devil's advocate · 1 synthesis) · balanced, dissent-preserved · self-contained HTML, charset-first &lt;head&gt;</div>
+</div>
+</body>
+</html>

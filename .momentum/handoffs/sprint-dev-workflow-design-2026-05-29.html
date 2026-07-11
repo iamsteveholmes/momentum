@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<!-- Sprint-Dev × Dynamic Workflows — design analysis · house style after anthropics/html-effectiveness (self-contained, inline CSS+JS, no deps) -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint-Dev × Dynamic Workflows — Design Analysis</title>
+<style>
+  :root{
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --clay-d:#B85C3E;
+    --oat:#E3DACC; --olive:#788C5D; --rust:#B04A3F; --gold:#C9A227;
+    --gray-50:#F4F2EC; --gray-100:#ECE9E0; --gray-200:#DCD8CC; --gray-400:#A8A294;
+    --gray-500:#8A8475; --gray-700:#544F45;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --radius-panel:14px; --radius-row:9px; --border:1.5px solid var(--gray-200);
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 8px 24px rgba(20,20,19,.06);
+  }
+  *{box-sizing:border-box} html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 96px}
+  a{color:var(--clay-d)}
+  header.hero{border:var(--border);border-radius:var(--radius-panel);background:#fff;box-shadow:var(--shadow);padding:30px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--clay)}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--clay-d)}
+  h1{font-family:var(--serif);font-weight:600;font-size:30px;margin:10px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--gray-700);font-size:15px;max-width:80ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--sans);padding:6px 11px;border-radius:999px;border:1.5px solid transparent;white-space:nowrap}
+  .pill.ok{background:#EAF0E2;border-color:var(--olive);color:#46552F}
+  .pill.note{background:#FBF1D9;border-color:var(--gold);color:#8A6D12}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 4px}
+  .toc a{font:600 12px/1 var(--mono);text-decoration:none;color:var(--gray-700);border:var(--border);border-radius:999px;padding:7px 12px;background:#fff;transition:.12s}
+  .toc a:hover{border-color:var(--clay);color:var(--clay-d)}
+  section{margin-top:36px}
+  h2{font-family:var(--serif);font-size:21px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{font:600 12px/1 var(--mono);color:var(--clay-d);margin-right:10px;vertical-align:2px}
+  .lead{color:var(--gray-700);font-size:14px;margin:0 0 16px;max-width:84ch}
+  .panel{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:22px 24px;box-shadow:var(--shadow)}
+  .panel + .panel{margin-top:14px}
+  .callout{border:1.5px solid var(--gold);border-radius:var(--radius-panel);background:linear-gradient(180deg,#FFFDF7,#FFF);padding:20px 24px;box-shadow:var(--shadow)}
+  .callout.key{border-color:var(--clay-d);background:linear-gradient(180deg,#FFF7F3,#FFF)}
+  .callout .k-label{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-d);margin-bottom:8px;display:block}
+  blockquote{margin:0;font-family:var(--serif);font-size:17px;line-height:1.45;color:var(--slate)}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:11px 0;border-bottom:1px solid var(--gray-100);font-size:13.8px;color:var(--gray-700)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li b{color:var(--slate)}
+  .tag{font:700 10px/1 var(--mono);padding:4px 7px;border-radius:5px;letter-spacing:.04em;display:inline-block;margin-right:8px;vertical-align:1px}
+  .tag.wf{background:#E7EEF6;color:#2F557E}
+  .tag.skill{background:#F7E1D6;color:#9A4A22}
+  .tag.yes{background:#EAF0E2;color:#46552F}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+  th{font:600 11.5px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--gray-500);border-bottom:1.5px solid var(--gray-200)}
+  td b{color:var(--slate)} td{color:var(--gray-700)}
+  code{font-family:var(--mono);font-size:.87em;background:var(--gray-50);border:1px solid var(--gray-100);padding:1px 5px;border-radius:4px;color:var(--clay-d)}
+  pre{background:#1B1B19;color:#E8E4DA;border-radius:var(--radius-row);padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;margin:0;border:1.5px solid #2C2C29}
+  pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit}
+  pre .c{color:#7E8473;font-style:italic}
+  pre .k{color:#E0A479}
+  pre .fn{color:#A9C08A}
+  pre .s{color:#D9C06B}
+  pre .p{color:#C98B8B}
+  .diagram{display:grid;grid-template-columns:1fr 56px 1fr;gap:0;align-items:stretch;margin-top:4px}
+  .col{border:var(--border);border-radius:var(--radius-panel);background:#fff;padding:18px 18px 20px;box-shadow:var(--shadow)}
+  .col.skill{border-color:var(--clay);background:linear-gradient(180deg,#FFF8F4,#FFF)}
+  .col.wf{border-color:#7CA0C9;background:linear-gradient(180deg,#F6F9FC,#FFF)}
+  .col h4{margin:0 0 3px;font:600 14px/1.2 var(--sans)}
+  .col .role{font:600 10.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;display:block}
+  .col.skill .role{color:var(--clay-d)} .col.wf .role{color:#2F557E}
+  .node{border:1.5px solid var(--gray-200);border-radius:8px;background:#fff;padding:9px 11px;font-size:12.5px;margin-bottom:8px;position:relative}
+  .node .g{font:700 9px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:3px}
+  .node.loop{border-color:#7CA0C9}
+  .node.loop .g{color:#2F557E}
+  .node.gate{border-color:var(--gold);background:#FFFDF7}
+  .midarrow{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gray-400);font:700 11px/1 var(--mono);gap:6px}
+  .midarrow .a{font-size:22px;color:var(--clay)}
+  .bounce{margin-top:14px;border:1.5px dashed var(--rust);border-radius:var(--radius-row);background:#FCF1EE;padding:12px 16px;font-size:13px;color:var(--gray-700)}
+  .bounce b{color:var(--rust)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .foot{margin-top:48px;text-align:center;color:var(--gray-400);font-size:12px}
+  .nb{font-size:12.5px;color:var(--gray-500);margin-top:10px}
+  @media(max-width:760px){.diagram{grid-template-columns:1fr}.midarrow{flex-direction:row;padding:8px 0}.midarrow .a{transform:rotate(90deg)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">Sprint-Dev Rebuild · Design Analysis</div>
+        <h1>Dynamic Workflows in Sprint-Dev</h1>
+        <div class="sub">How Claude Code dynamic workflows map onto a rebuilt sprint-dev — autonomous validate-fix loops inside workflows, a single human gate in the skill, and the constraint that decides the whole shape.</div>
+      </div>
+      <span class="pill ok"><span class="dot"></span>Good fit — with one hard constraint</span>
+    </div>
+    <div class="toc">
+      <a href="#loops">01 · Do they loop?</a>
+      <a href="#constraint">02 · The constraint</a>
+      <a href="#mapping">03 · Mapping the flow</a>
+      <a href="#teamcreate">04 · Replacing TeamCreate</a>
+      <a href="#caveats">05 · Caveats</a>
+      <a href="#shape">06 · Recommended shape</a>
+    </div>
+  </header>
+
+  <!-- 01 -->
+  <section id="loops">
+    <h2><span class="num">01</span>Do workflows loop? Yes — natively.</h2>
+    <p class="lead">A workflow script is plain JavaScript. <code>while</code>, <code>for</code>, and recursion all work, and the tool ships three canonical loop shapes that map <i>exactly</i> onto what you described. A validate-fix loop isn't a workaround in workflows — it's the headline pattern.</p>
+    <div class="panel">
+      <ul class="clean">
+        <li><span class="tag wf">loop-until-clean</span><b>Your QA / review → fix cycle.</b> &nbsp;<code>while (findings.length && round &lt; cap) { fix; re-verify }</code></li>
+        <li><span class="tag wf">loop-until-dry</span><b>Your AVFL.</b> &nbsp;Keep finding + fixing until <i>K consecutive rounds</i> surface nothing new — catches the long tail a fixed counter misses.</li>
+        <li><span class="tag wf">loop-until-budget</span><b>Depth scaling.</b> &nbsp;Scale rounds to a token target: <code>while (budget.total && budget.remaining() &gt; 50_000) { … }</code></li>
+      </ul>
+      <p class="nb">Every loop you named — dev/QA/review/fix, AVFL, e2e/fix — is a natural workflow loop.</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="constraint">
+    <h2><span class="num">02</span>The one constraint that shapes everything</h2>
+    <p class="lead">A workflow runs autonomously, in the background, to completion. <b>It cannot pause to ask a human anything.</b> There is no <code>AskUserQuestion</code>, no <code>&lt;ask&gt;</code>, no approval gate <i>inside</i> a workflow. It fans out, loops, returns structured data, and notifies you.</p>
+    <div class="callout key">
+      <span class="k-label">Governing principle</span>
+      <blockquote>A workflow can only own a span of work <i>between</i> two human gates. The human gates carve sprint-dev into autonomous segments; each segment is a workflow. The skill is the conductor that runs <i>at</i> the gates.</blockquote>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <p style="margin:0 0 6px;font-size:13.8px"><b>The current <code>workflow.md</code> is shot through with gates</b> — that scatter is exactly why it feels clunky as a workflow today:</p>
+      <ul class="clean">
+        <li>Phase 3 — Retry / Skip / Halt on dev failure</li>
+        <li>Phase 4 — acknowledge AVFL findings</li>
+        <li>Phase 4c — fix / defer queue decision</li>
+        <li>Phase 4d — accept remaining findings</li>
+        <li>Phase 5 — address team-review findings</li>
+        <li>Phase 6 — verification checklist · &nbsp;Phase 7 — push to main</li>
+      </ul>
+      <p class="nb">Seven-plus stop-and-ask points. The rebuild's real move: <b>collapse the gates to one at the end</b> — replace "stop and ask at every phase" with "iterate autonomously to a quality bar, review everything once." Your described flow already does this. That's what makes workflows fit.</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="mapping">
+    <h2><span class="num">03</span>Mapping your flow</h2>
+    <p class="lead">Because there's no human gate until the report, almost the entire execution span can be <b>one autonomous workflow</b> (optionally composed of sub-workflows via <code>workflow()</code>, one level deep). The skill shrinks to a conductor with a single human loop.</p>
+
+    <div class="diagram">
+      <div class="col skill">
+        <h4>The Skill</h4>
+        <span class="role">Conductor · runs at the gates · CAN ask</span>
+        <div class="node"><span class="g">1 · Preflight</span>Read sprint state, approvals gate, dep graph, resolve agents, <code>git checkout</code>. Halts allowed.</div>
+        <div class="node"><span class="g">2 · Launch</span>Fire the execution workflow → walk away → get notified.</div>
+        <div class="node"><span class="g">3 · Triage</span>Surface merge conflicts / failed stories — the things that genuinely need a human.</div>
+        <div class="node gate"><span class="g">4 · HITL gate</span>Present the HTML report → single <code>AskUserQuestion</code>.</div>
+        <div class="node gate"><span class="g">5 · Route decision</span>Approve · Approve + follow-ups · Reject / changes.</div>
+      </div>
+
+      <div class="midarrow">
+        <span class="a">→</span>
+        <span>LAUNCH</span>
+        <span class="a" style="transform:rotate(180deg)">→</span>
+        <span>RESULT</span>
+      </div>
+
+      <div class="col wf">
+        <h4>The Execution Workflow</h4>
+        <span class="role">Autonomous · background · CANNOT ask</span>
+        <div class="node loop"><span class="g">phase · Build</span><code>pipeline(stories, dev, qaReviewFixLoop)</code> — each story flows dev → (QA ∥ review → fix) independently.</div>
+        <div class="node"><span class="g">phase · Integrate</span>Sequential auto-merge → collect conflicts as data (never halt).</div>
+        <div class="node loop"><span class="g">phase · AVFL</span><code>workflow('avfl-sprint')</code> — loop-until-dry.</div>
+        <div class="node loop"><span class="g">phase · E2E</span>validate → fix → re-validate until clean or cap.</div>
+        <div class="node"><span class="g">phase · Report</span>Render HTML from template + accumulated structured results.</div>
+      </div>
+    </div>
+
+    <div class="bounce">
+      <b>↩ Outer loop lives in the skill.</b> &nbsp;On <b>reject / changes</b>, re-launch an execution workflow with the feedback as <code>args</code>: light bounce = e2e-fix workflow only; heavy bounce ("substantive change") = a fresh dev/QA/merge/validate cycle → back to the HITL gate. This loop <i>can't</i> be in a workflow — every iteration gates on human judgment.
+    </div>
+
+    <h2 style="margin-top:28px;font-size:16px"><span class="num" style="font-size:11px">3.1</span>The execution workflow — sketch</h2>
+    <pre style="margin-top:8px"><code><span class="c">// EXECUTION WORKFLOW — launched by the skill, runs to completion, returns a data model</span>
+<span class="fn">phase</span>(<span class="s">'Build'</span>)
+<span class="k">const</span> built = <span class="k">await</span> <span class="fn">pipeline</span>(readyStories,
+  s    => <span class="fn">agent</span>(<span class="fn">devPrompt</span>(s), { agentType: s.devAgent, schema: DEV_RESULT }),  <span class="c">// custom momentum agent</span>
+  done => <span class="fn">qaReviewFixLoop</span>(done),   <span class="c">// while !clean && round&lt;cap: parallel(QA, review) -> fix -> re-verify</span>
+)
+
+<span class="fn">phase</span>(<span class="s">'Integrate'</span>)
+<span class="k">const</span> { merged, conflicts } = <span class="fn">sequentialMerge</span>(built)   <span class="c">// auto-merge; conflicts collected, NOT halted</span>
+
+<span class="fn">phase</span>(<span class="s">'AVFL'</span>)
+<span class="k">const</span> avfl = <span class="k">await</span> <span class="fn">workflow</span>(<span class="s">'avfl-sprint'</span>, { diff, acs })   <span class="c">// loop-until-dry, its own saved workflow</span>
+
+<span class="fn">phase</span>(<span class="s">'E2E'</span>)
+<span class="k">const</span> e2e = <span class="k">await</span> <span class="fn">e2eValidateFixLoop</span>({ <span class="p">...</span> })   <span class="c">// replaces TeamCreate (see §04)</span>
+
+<span class="fn">phase</span>(<span class="s">'Report'</span>)
+<span class="k">const</span> reportPath = <span class="k">await</span> <span class="fn">agent</span>(<span class="fn">reportPrompt</span>(template, { built, avfl, e2e, conflicts }),
+                               { agentType: <span class="s">'momentum:tech-writer'</span> })
+
+<span class="k">return</span> { perStory: built, avfl, e2e, conflicts, reportPath }</code></pre>
+
+    <h2 style="margin-top:28px;font-size:16px"><span class="num" style="font-size:11px">3.2</span>Two-tier loop structure</h2>
+    <div class="panel" style="padding-top:14px">
+      <table>
+        <thead><tr><th>Loop</th><th>Lives in</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td><b>QA/review → fix · AVFL find-fix · E2E validate-fix</b></td><td><span class="tag wf">workflow</span>autonomous</td><td>No human needed — iterate to a quality bar</td></tr>
+          <tr><td><b>Report → approve/reject → re-cycle on changes</b></td><td><span class="tag skill">skill</span>human-gated</td><td>Each turn needs human judgment</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 style="margin-top:24px;font-size:16px"><span class="num" style="font-size:11px">3.3</span>Custom agents — yes, and they compose with schema</h2>
+    <div class="panel" style="padding-top:16px">
+      <p style="margin:0;font-size:13.8px"><span class="tag yes">YES</span><code>agent()</code> takes an <code>agentType</code> that resolves from <b>the same registry as the Agent tool</b> (<code>momentum:dev-frontend</code>, <code>momentum:qa-reviewer</code>, <code>momentum:e2e-validator</code>, …) and <b>composes with <code>schema</code></b> — the custom agent's hot-constitution / AGENT.md / KB system prompt gets a StructuredOutput instruction appended. So your momentum agents staff the workflow's stages directly. The routing-table resolution (<code>momentum-tools agent resolve --touches</code>) becomes a pre-step that emits the agent name passed into <code>agentType</code>.</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="teamcreate">
+    <h2><span class="num">04</span>Replacing TeamCreate for e2e</h2>
+    <div class="panel">
+      <p class="lead" style="margin-bottom:12px">TeamCreate existed because the original rationale was <i>"QA briefs E2E on spec changes mid-review"</i> — agents <b>talking</b>. But e2e doesn't need a conversation; it needs: <b>validate → collect failures → fix each → re-validate → repeat until clean or cap.</b> That's <code>pipeline</code> + a <code>while</code> loop.</p>
+      <ul class="clean">
+        <li><b>Validator</b> = <code>momentum:e2e-validator</code> as the <code>agentType</code>; <b>fixes</b> = dev agents spawned per failure.</li>
+        <li>The cross-agent context TeamCreate provided (spec deltas) becomes a <b>structured handoff</b> — passed into the validator's prompt instead of agent chatter.</li>
+        <li>Result: deterministic, resumable, no inter-agent coordination overhead.</li>
+      </ul>
+      <p class="nb">Note: your current <code>workflow.md</code> Phase 5 already bans TeamCreate and uses individual agents — so whatever TeamCreate pain you hit, the loop replaces it regardless of which version you were running.</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="caveats">
+    <h2><span class="num">05</span>Caveats worth designing for now</h2>
+    <p class="lead">These bite later if ignored.</p>
+    <div class="grid2">
+      <div class="panel">
+        <h4 style="margin:0 0 8px;font-size:14px">① Git mutation + autonomy + resume don't mix</h4>
+        <p style="margin:0;font-size:13px;color:var(--gray-700)">Merges are the danger — a workflow can't halt for conflict resolution, and resuming a half-merged state is risky. <b>Workflow does only clean auto-merges; returns the conflict list as data; the skill resolves conflicts with the human.</b> Keep side-effectful git out of the deepest loops.</p>
+      </div>
+      <div class="panel">
+        <h4 style="margin:0 0 8px;font-size:14px">② Worktree lifecycle ownership</h4>
+        <p style="margin:0;font-size:13px;color:var(--gray-700)"><code>momentum:dev</code> already creates its own worktree; AVFL strategy keeps them alive until clean. The workflow's built-in <code>isolation:'worktree'</code> auto-cleans <i>unchanged</i> ones — which fights that model. <b>Let dev agents own worktrees; make cleanup an explicit final stage.</b></p>
+      </div>
+      <div class="panel">
+        <h4 style="margin:0 0 8px;font-size:14px">③ Failure handling becomes policy, not a prompt</h4>
+        <p style="margin:0;font-size:13px;color:var(--gray-700)">Today Phase 3 asks Retry/Skip/Halt. A workflow can't ask — <b>pre-encode it</b> (e.g. one auto-retry, then mark failed, continue, surface prominently in the report). Better for autonomy, but decide the policy up front.</p>
+      </div>
+      <div class="panel">
+        <h4 style="margin:0 0 8px;font-size:14px">④ Custom-agent resolution is a pre-step</h4>
+        <p style="margin:0;font-size:13px;color:var(--gray-700)"><code>agentType</code> takes the <i>registered name</i> (<code>momentum:dev-frontend</code>) — but your agents are selected via <code>momentum-tools agent resolve --touches</code>. Run that resolution first, then pass the result into <code>agent({agentType})</code>. Worth confirming the registry name matches what the routing table emits.</p>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h4 style="margin:0 0 8px;font-size:14px">⑤ The report gets a real data model</h4>
+      <p style="margin:0;font-size:13px;color:var(--gray-700)">Because the workflow accumulates structured results from every stage, the report-builder renders from <b>complete, faithful data</b> — not reconstructed prose. Template as a skill asset (<code>sprint-dev/assets/hitl-report-template.html</code>), derived from the report you've been hand-asking for. This is exactly the formalization you wanted.</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="shape">
+    <h2><span class="num">06</span>The net</h2>
+    <div class="callout">
+      <p style="margin:0;font-size:14.5px;color:var(--slate)">Your instinct is right: workflows fit sprint-dev <b>specifically because</b> you've collapsed the human gates to one at the end. The development-to-validated-branch span becomes autonomous workflow territory with three nested validate-fix loops; the HITL bounce-back stays in the skill as the outer human loop.</p>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h4 style="margin:0 0 10px;font-size:14px">Next concrete step — pick one</h4>
+      <ul class="clean">
+        <li><span class="tag skill">A</span><b>Reverse-engineer the report template</b> from the existing HITL report into a skill asset.</li>
+        <li><span class="tag wf">B</span><b>Sketch the loop internals in detail</b> — <code>e2eValidateFixLoop</code> / <code>qaReviewFixLoop</code> with budget guards and dry-round counters — so you see the mechanics before committing to a rebuild plan.</li>
+        <li><span class="tag note" style="background:#FBF1D9;color:#8A6D12">C</span><b>Full rebuild plan</b> — break the new sprint-dev into stories (skill shell, execution workflow, sub-workflows, report template, policy decisions).</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="foot">Design analysis · 2026-05-29 · self-contained HTML, house style from anthropics/html-effectiveness · no dependencies</div>
+</div>
+</body>
+</html>
