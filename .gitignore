@@ -85,3 +85,10 @@ node_modules/
 
 # Beads Dolt DB — gitignored per beads-dual-write-spike (beads-id-map.json is tracked)
 .beads/
+
+# Session byproducts — run logs and conduct debug dumps, not source of record
+.momentum/close-stale.log
+.momentum/conduct-core-build-results.jsonl
+.momentum/conduct-core-finding-cards-by-story.json
+.momentum/conduct-core-story-diffs.json
+skills/momentum/skills/retro/err.log
