@@ -33,6 +33,19 @@ non-negotiable, the mediums may be trimmed if sizing balks):
 - `conduct-resume-and-rehydration-idempotency-hardening` (high)
 - `conduct-conductor-staging-and-ledger-append-safety` (high)
 
+## DEC-039 governs this planning session (2026-07-13)
+
+`_bmad-output/planning-artifacts/decisions/dec-039-sprint-goal-mutable-scope-2026-07-10.md`
+landed after this handoff was written and the skill updates are **amendment-pending** — apply it manually:
+
+- **D1:** capture a one-to-few-sentence **sprint goal** during planning, store it in the sprint record
+  (`.momentum/sprints/index.json` entry), and approve it at the plan gate. Stories are the decomposition,
+  not the definition of done. For this sprint the goal derives from the "cohort goes live" intent — the
+  epic acceptance_conditions in epics.json are the citation source (DEC-035 composes).
+- DEC-030 D3's never-add freeze is amended: goal-critical discovered work is admissible via the D2
+  routing matrix (loud absorption — `discovered-from` linked, cited, end-gate-reported). The end-gate
+  verdict is dual: stories delivered AND goal delivered.
+
 ## Notes for the planning session
 
 - §4 shortlist unchanged and active: `momentum-knowledge-base-buildout` (M), `manifesto-builder-skill-generate-then-curate` (M, needs re-enrichment vs manifesto-format.md incl. File Ownership), `base-body-collapse-rollback` (high — co-select/link siblings `rename-base-body-files-to-canonical-naming`, `architecture-decision-26-update-for-base-body-collapse`), `conductor-endgate-viewer-hijack-and-silent-gate` (critical), `conduct-adoption-retire-sprint-dev` Phase 0 only, then Wave 2 `conduct-live-run-against-fixture-sprint` (verification must demand observed driver PASS/FAIL output — never structured status; the shipped driver has never passed).
