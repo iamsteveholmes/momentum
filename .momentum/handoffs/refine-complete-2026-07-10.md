@@ -16,6 +16,23 @@
 - **4 practice-ledger consumes** for entries closed by shipped work; 12 auto close_stale events also landed 2026-07-10.
 - Repo hygiene: 6 stale local branches deleted (all verified merged), leftover worktree removed, stray research run consolidated into `docs/research/`, session byproducts gitignored. Working tree clean.
 
+## Developer-directed additions to the shortlist (2026-07-13)
+
+The developer asked that the sprint-planning and conduct process fixes ride along this sprint —
+pull these into selection alongside the §4 six (planning may wave/sequence them; the criticals are
+non-negotiable, the mediums may be trimmed if sizing balks):
+
+**Sprint-planning fixes (land during the build; improve future planning sessions):**
+- `sprint-planning-cross-story-coherence-gate` (critical)
+- `sprint-planning-continuous-execution-and-cli-fixes` (high) — **co-select/merge check** with `sprint-planning-enforce-continuous-sequential-execution` (high): overlapping scope, likely one story
+- `sprint-planning-handoff-artifact` (high)
+- `sprint-planning-pre-sprint-class-1-render-gate`, `sprint-planning-story-size-heuristic`, `retro-and-planning-ux-defaults` (medium — trim candidates)
+
+**Conduct hardening (beyond the §4 endgate fix + Phase 0 port):**
+- `conduct-qa-execute-verification-method` (critical)
+- `conduct-resume-and-rehydration-idempotency-hardening` (high)
+- `conduct-conductor-staging-and-ledger-append-safety` (high)
+
 ## Notes for the planning session
 
 - §4 shortlist unchanged and active: `momentum-knowledge-base-buildout` (M), `manifesto-builder-skill-generate-then-curate` (M, needs re-enrichment vs manifesto-format.md incl. File Ownership), `base-body-collapse-rollback` (high — co-select/link siblings `rename-base-body-files-to-canonical-naming`, `architecture-decision-26-update-for-base-body-collapse`), `conductor-endgate-viewer-hijack-and-silent-gate` (critical), `conduct-adoption-retire-sprint-dev` Phase 0 only, then Wave 2 `conduct-live-run-against-fixture-sprint` (verification must demand observed driver PASS/FAIL output — never structured status; the shipped driver has never passed).
