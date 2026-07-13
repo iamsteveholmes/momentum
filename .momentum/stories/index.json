@@ -193,15 +193,20 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "architecture-decision-26-update-for-base-body-collapse": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Architecture Decision 26 update for base-body collapse",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "base-body-collapse-rollback"
+    ],
+    "touches": [
+      "_bmad-output/planning-artifacts/architecture.md"
+    ],
     "priority": "medium",
     "story_type": "maintenance",
-    "feature_slug": "momentum-composable-specialist-agents"
+    "feature_slug": "momentum-composable-specialist-agents",
+    "change_type": "specification"
   },
   "architecture-guard-fixture-false-positive-rate": {
     "status": "backlog",
@@ -408,15 +413,33 @@
     "priority": "low"
   },
   "base-body-collapse-rollback": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Base-body collapse rollback",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/agents/dev-frontend.md",
+      "skills/momentum/agents/dev-build.md",
+      "skills/momentum/agents/dev-skills.md",
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/quick-fix/workflow.md",
+      "skills/momentum/skills/sprint-dev/workflow.md",
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/build-guidelines/workflow.md",
+      "skills/momentum/references/sprint-tracking-schema.md",
+      "skills/momentum/skills/sprint-planning/references/plan-gate-renderer.md",
+      "skills/momentum/agents/evals/eval-large-file-guidance-present.md",
+      "skills/momentum/skills/dev/evals/eval-no-commit-instruction-in-any-variant.md",
+      "skills/momentum/agents/evals/eval-agent-resolve-defaults-fallback.md",
+      "skills/momentum/agents/evals/eval-agent-resolve-project-entry-match.md"
+    ],
     "priority": "high",
     "story_type": "maintenance",
-    "feature_slug": "momentum-composable-specialist-agents"
+    "feature_slug": "momentum-composable-specialist-agents",
+    "change_type": "script-code + skill-instruction + agent-definition + specification"
   },
   "bash-benchmarking-script-captures-time-cost-and-tokens": {
     "status": "dropped",
@@ -2425,15 +2448,20 @@
     "priority": "low"
   },
   "rename-base-body-files-to-canonical-naming": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Rename base body files to canonical naming",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "base-body-collapse-rollback"
+    ],
+    "touches": [
+      "_bmad-output/planning-artifacts/decisions/dec-020-universal-agent-role-taxonomy-2026-05-16.md"
+    ],
     "priority": "medium",
     "story_type": "maintenance",
-    "feature_slug": "momentum-composable-specialist-agents"
+    "feature_slug": "momentum-composable-specialist-agents",
+    "change_type": "agent-definition + specification"
   },
   "repository-structure-established": {
     "status": "done",
@@ -4537,15 +4565,21 @@
     "feature_slug": "momentum-model-routing-strategy"
   },
   "sprint-planning-continuous-execution-and-cli-fixes": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "sprint-planning: fix continuous execution breaks and stale CLI namespace bugs",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/create-story/workflow.md",
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py"
+    ],
     "priority": "high",
     "story_type": "defect",
-    "feature_slug": "momentum-sprint-planning-to-ready"
+    "feature_slug": "momentum-sprint-planning-to-ready",
+    "change_type": "skill-instruction + script-cli"
   },
   "fix-architecture-md-decision-58-execution-surfaces-schema": {
     "status": "done",
@@ -5627,14 +5661,21 @@
     "story_type": "feature"
   },
   "conduct-live-run-against-fixture-sprint": {
-    "status": "backlog",
-    "title": "Run /momentum:conduct live against the fixture sprint (the one un-executed acceptance clause)",
+    "status": "ready-for-dev",
+    "title": "Run the shipped build-guidelines E2E driver live against a populated nornspun fixture (compose\u2192register\u2192resolve seam)",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "momentum-knowledge-base-buildout",
+      "manifesto-builder-skill-generate-then-curate",
+      "repair-phantom-story-file-entries-and-backfill-live-fixture-scope"
+    ],
+    "touches": [
+      "docs/research/"
+    ],
     "priority": "high",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": "config-structure + script-code + research-spike"
   },
   "verification-method-two-column-smoke-ui-model": {
     "status": "backlog",
@@ -5751,24 +5792,36 @@
     "priority": "low"
   },
   "conduct-qa-execute-verification-method": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Conduct QA leg executes the story's verification method (smoke), not diff-only review",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
-    "depends_on": [],
-    "touches": [],
+    "depends_on": [
+      "conduct-qa-reviewer-normalization-adapter",
+      "conduct-coverage-deferral-preserve-code-review"
+    ],
+    "touches": [
+      "skills/momentum/agents/qa-reviewer.md",
+      "skills/momentum/skills/conductor/workflow.md"
+    ],
     "priority": "critical",
-    "story_type": "defect"
+    "story_type": "defect",
+    "change_type": "agent-definition + skill-instruction"
   },
   "sprint-planning-cross-story-coherence-gate": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Sprint-planning cross-story coherence gate for depends_on deliverables",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      "skills/momentum/skills/sprint-planning/references/coherence-gate.md",
+      "skills/momentum/skills/sprint-planning/evals/"
+    ],
     "priority": "critical",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": "skill-instruction"
   },
   "create-story-dependency-deliverable-check": {
     "status": "backlog",
@@ -5821,24 +5874,32 @@
     "story_type": "maintenance"
   },
   "conduct-adoption-retire-sprint-dev": {
-    "status": "backlog",
-    "title": "Retire momentum:sprint-dev \u2014 soft-deprecate, soak, then hard-remove the legacy builder",
+    "status": "ready-for-dev",
+    "title": "Conduct completes its own sprint \u2014 port `sprint complete` into the end-gate approve sequence (Phase 0 of sprint-dev retirement)",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/conductor/evals/"
+    ],
     "priority": "high",
-    "story_type": "practice"
+    "story_type": "practice",
+    "change_type": "skill-instruction"
   },
   "conduct-conductor-staging-and-ledger-append-safety": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Conductor staging must see new files, and the ledger append must be shell-safe",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/conductor/references/build-ledger.md"
+    ],
     "priority": "high",
-    "story_type": "defect"
+    "story_type": "defect",
+    "change_type": "skill-instruction"
   },
   "conduct-qa-normalization-stakes-validation-and-dedup-merge": {
     "status": "backlog",
@@ -5871,24 +5932,34 @@
     "story_type": "defect"
   },
   "momentum-knowledge-base-buildout": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Momentum knowledge base buildout",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/build-guidelines/workflow.md",
+      "skills/momentum/skills/build-guidelines/references/orchestration-guide.md",
+      "skills/momentum/references/manifesto-format.md",
+      "~/.obsidian-wiki/config",
+      "~/projects/momentum-agentic-kb/"
+    ],
     "priority": "medium",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": "config-structure + specification + skill-instruction"
   },
   "manifesto-builder-skill-generate-then-curate": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "manifesto-builder skill (generate-then-curate)",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/manifesto-builder/"
+    ],
     "priority": "medium",
-    "story_type": "feature"
+    "story_type": "feature",
+    "change_type": "skill-instruction"
   },
   "conduct-assign-finding-id-before-directed-fix-invocation": {
     "status": "done",
@@ -5919,14 +5990,18 @@
     "change_type": "skill-instruction"
   },
   "conduct-resume-and-rehydration-idempotency-hardening": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Conduct \u2014 resume and rehydration idempotency hardening",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/conductor/references/build-ledger.md"
+    ],
     "priority": "high",
-    "story_type": "defect"
+    "story_type": "defect",
+    "change_type": "skill-instruction"
   },
   "visual-hitl-gates-presentation-form-standard-leg": {
     "status": "backlog",
@@ -5983,10 +6058,17 @@
   },
   "sprint-planning-handoff-artifact": {
     "title": "Add mandatory handoff artifact to sprint-planning workflow terminal step",
-    "status": "backlog",
+    "status": "ready-for-dev",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "depends_on": [],
-    "priority": "high"
+    "priority": "high",
+    "story_file": true,
+    "change_type": "skill-instruction + rule-hook",
+    "touches": [
+      "skills/momentum/skills/sprint-planning/workflow.md",
+      ".claude/rules/handoff-conventions.md",
+      "skills/momentum/skills/sprint-planning/evals/"
+    ]
   },
   "sprint-planning-activation-gate": {
     "title": "Add explicit activation gate to sprint-planning workflow final step",
@@ -6107,24 +6189,40 @@
     "story_type": "maintenance"
   },
   "conductor-endgate-viewer-hijack-and-silent-gate": {
-    "status": "backlog",
+    "status": "ready-for-dev",
     "title": "Conductor end-gate \u2014 stop viewer pane hijack and silent gate turn-end",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/skills/conductor/workflow.md",
+      "skills/momentum/skills/conductor/references/endgate-report-renderer.md"
+    ],
     "priority": "critical",
-    "story_type": "defect"
+    "story_type": "defect",
+    "change_type": "skill-instruction"
   },
   "repair-phantom-story-file-entries-and-backfill-live-fixture-scope": {
-    "status": "backlog",
-    "title": "Repair phantom story_file entries + sprint-manager invariant; backfill conduct-live-run-against-fixture-sprint with live-fixture scope",
+    "status": "ready-for-dev",
+    "title": "Repair phantom story_file entries + sprint-manager invariant; verify live-fixture backfill on conduct-live-run-against-fixture-sprint",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
     "depends_on": [],
-    "touches": [],
+    "touches": [
+      "skills/momentum/scripts/momentum-tools.py",
+      "skills/momentum/scripts/test-momentum-tools.py",
+      "skills/momentum/skills/sprint-manager/workflow.md",
+      ".momentum/stories/index.json",
+      ".momentum/stories/build-guidelines-invocation-surface-in-sprint-planning.md",
+      ".momentum/stories/canvas-gate-review-surface-epic.md",
+      ".momentum/stories/dag-dispatch-blast-radius-discovery.md",
+      ".momentum/stories/endgate-format-spec-section00-alignment.md",
+      ".momentum/stories/re-emit-frozen-app-ui-contracts-via-producer.md",
+      ".momentum/stories/verification-method-two-column-smoke-ui-model.md"
+    ],
     "priority": "high",
-    "story_type": "defect"
+    "story_type": "defect",
+    "change_type": "script-code + skill-instruction + specification"
   },
   "harden-avfl-checkpoint-validator-mailbox-delivery": {
     "status": "backlog",
