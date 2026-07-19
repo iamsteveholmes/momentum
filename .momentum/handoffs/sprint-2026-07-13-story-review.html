@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Review Gate · sprint-2026-07-13</title>
+<style>
+  :root{
+    --bg:#faf7f0; --ink:#2c2417; --muted:#6b5e4a; --line:#e3dccb; --card:#fffdf8;
+    --amber:#7a5a1e; --green:#3f6b3a; --red:#9a3b2f; --blue:#3a5a7a;
+    --hi:#fdf3d8; --redbg:#f6ddd6; --amberbg:#fbeccf; --greenbg:#e5efe2; --bluebg:#dce8f2;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 90px}
+  h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:20px;margin:42px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:20px 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 8px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--amber);margin:0 0 8px}
+  .hero{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--amber);border-radius:12px;padding:22px 26px;margin:22px 0 8px}
+  .hero .big{font-size:23px;line-height:1.35;font-weight:600;margin:0 0 16px;letter-spacing:-.01em}
+  .hero .big b{color:var(--amber)}
+  .deliver{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}
+  .deliver li{position:relative;padding:3px 0 3px 24px;font-size:15px}
+  .deliver li:before{content:"\25B8";position:absolute;left:2px;color:var(--amber);font-weight:700}
+  .heroline{margin:16px 0 0;font-size:15px;color:var(--muted);border-top:1px dashed var(--line);padding-top:14px}
+  .heroline b{color:var(--ink)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .stat b{font-size:22px;display:block;line-height:1.1}
+  .stat span{color:var(--muted);font-size:12.5px}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;vertical-align:middle;letter-spacing:.02em}
+  .ok{background:var(--greenbg);color:var(--green)} .warn{background:var(--amberbg);color:var(--amber)}
+  .hipill{background:var(--redbg);color:var(--red)} .info{background:var(--bluebg);color:var(--blue)}
+  .low{background:#efeadd;color:var(--muted)}
+  .call{background:#f4e4c0;color:var(--amber)} .batch{background:var(--greenbg);color:var(--green)}
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 10px 6px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .dlegend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);padding:6px 14px 10px}
+  .dlegend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  .scard{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:13px 15px}
+  .scard.s-high{border-left-color:var(--red)} .scard.s-med{border-left-color:var(--amber)} .scard.s-low{border-left-color:#cdc6b4}
+  .scard .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .scard .id{font-weight:700;font-size:14px}
+  .scard .val{color:var(--muted);font-size:14px;margin:5px 0 0}
+  .scard .meta{margin:8px 0 0;font-size:12px;color:var(--muted)}
+  .scard a{color:var(--blue);font-size:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  .card.dec{border-left:5px solid var(--red)} .card.decmed{border-left:5px solid var(--amber)}
+  .card h3{margin-top:0;font-size:16.5px}
+  .field{margin:9px 0}
+  .field .lab{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
+  .ev{background:#f3eee1;border-radius:6px;padding:8px 11px;font-size:13px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .rec{background:var(--greenbg);border-radius:7px;padding:9px 12px;margin:12px 0 0;font-size:14.5px}
+  .rec.cond{background:var(--amberbg)}
+  .rec .lab{color:var(--green);font-weight:700} .rec.cond .lab{color:var(--amber)}
+  ol.risks{margin:10px 0;padding-left:0;list-style:none;counter-reset:r}
+  ol.risks li{position:relative;padding:9px 0 9px 34px;border-bottom:1px solid var(--line);font-size:14.5px;counter-increment:r}
+  ol.risks li:before{content:counter(r);position:absolute;left:0;top:9px;width:22px;height:22px;border-radius:50%;background:var(--hi);color:var(--amber);font-size:12px;font-weight:700;text-align:center;line-height:22px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:4px 16px;margin:12px 0}
+  details summary{cursor:pointer;font-weight:600;padding:10px 0}
+  details ul{margin:4px 0 14px}
+  .gate{background:#22307a0d;border:2px solid var(--blue);border-radius:12px;padding:20px 22px;margin:34px 0}
+  .gate h2{border:0;margin-top:0;color:var(--blue)}
+  .chk{margin:10px 0;padding-left:28px;position:relative;font-size:15px}
+  .chk:before{content:"\2610";position:absolute;left:0;top:-2px;font-size:20px}
+  .chk .blank{display:inline-block;min-width:200px;border-bottom:1px solid var(--muted);margin-left:4px}
+  code{font-size:13px;background:#f1ead9;padding:1px 5px;border-radius:4px}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Story Review Gate — <code style="font-size:18px">sprint-2026-07-13</code></h1>
+<p class="sub">Step 3b of sprint planning: per-story approval of the 15 enriched specs, before verification contracts are frozen. Your sign-off here records an A/R/J verdict per story — the whole-plan gate (waves, goal, activation) comes later as its own surface.</p>
+
+<div class="hero">
+  <p class="eyebrow">What this sprint does</p>
+  <p class="big">The <b>agent cohort goes live</b>: a real conduct build runs with composed gen-2 subagents — base body + manifesto + hot constitution + KB — resolved through the routing table, and the shipped E2E driver finally passes <b>with observed output</b> against a real fixture. Ride-along fixes harden planning and conduct so the next cycle runs on corrected rails.</p>
+  <ul class="deliver">
+    <li><b>The proof</b> — driver observed-PASS against a populated nornspun fixture (it has never passed)</li>
+    <li><b>The missing legs</b> — Momentum's own KB vault + the manifesto producer skill</li>
+    <li><b>Conductor hardening</b> — end-gate fix, QA executes real verification, resume safety, staging/ledger safety, sprint-complete port</li>
+    <li><b>Planning hardening</b> — cross-story coherence gate, continuous execution + CLI fixes, mandatory build handoff</li>
+  </ul>
+  <p class="heroline">15 stories · <b>4 need a yes/no from you</b> · 11 ready as-specified · ~12 min to review.</p>
+</div>
+
+<div class="grid">
+  <div class="stat"><b>15/15</b><span>stories enriched, dev-ready, index-reconciled</span></div>
+  <div class="stat"><b>45 → 0</b><span>AVFL findings applied → residual (42 validator lenses)</span></div>
+  <div class="stat"><b>4</b><span>genuine decisions for you (★ CALL)</span></div>
+  <div class="stat"><b>3</b><span>file deletions (base bodies — git-recoverable)</span></div>
+</div>
+
+<h2>How it builds — everything funnels into the proof story</h2>
+<div class="diagram">
+<svg viewBox="0 0 880 340" role="img" aria-label="Dependency diagram: base-body rollback gates two sibling stories; KB, manifesto, and phantom-repair gate the live-run proof story; seven hardening stories are independent">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#b9ad95"/>
+    </marker>
+  </defs>
+  <text x="125" y="20" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 1 · START NOW</text>
+  <text x="435" y="20" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">WAVE 2 · AFTER ROLLBACK</text>
+  <text x="755" y="20" text-anchor="middle" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#6b5e4a">THE PROOF · GOAL VERDICT</text>
+
+  <path d="M235,63 C290,63 290,63 325,63" fill="none" stroke="#b9ad95" stroke-width="1.6" marker-end="url(#arr)"/>
+  <path d="M235,70 C290,70 290,123 325,123" fill="none" stroke="#b9ad95" stroke-width="1.6" marker-end="url(#arr)"/>
+  <path d="M235,140 C450,140 500,180 635,183" fill="none" stroke="#b9ad95" stroke-width="1.6" marker-end="url(#arr)"/>
+  <path d="M235,200 C450,200 500,193 635,193" fill="none" stroke="#b9ad95" stroke-width="1.6" marker-end="url(#arr)"/>
+  <path d="M235,260 C450,260 500,205 635,203" fill="none" stroke="#b9ad95" stroke-width="1.6" marker-end="url(#arr)"/>
+
+  <g>
+    <rect x="25" y="40" width="210" height="46" rx="8" fill="#fbeccf" stroke="#7a5a1e" stroke-width="2"/>
+    <text x="37" y="60" font-size="13" font-weight="800" fill="#2c2417">base-body-collapse-rollback</text>
+    <text x="37" y="76" font-size="11" font-weight="600" fill="#7a5a1e">✓ batch · high · gates 2 siblings</text>
+  </g>
+  <g>
+    <rect x="25" y="117" width="210" height="46" rx="8" fill="#fbeccf" stroke="#7a5a1e" stroke-width="2"/>
+    <text x="37" y="137" font-size="13" font-weight="800" fill="#2c2417">knowledge-base-buildout</text>
+    <text x="37" y="153" font-size="11" font-weight="600" fill="#7a5a1e">★ CALL · gates the proof</text>
+  </g>
+  <g>
+    <rect x="25" y="177" width="210" height="46" rx="8" fill="#fbeccf" stroke="#7a5a1e" stroke-width="2"/>
+    <text x="37" y="197" font-size="13" font-weight="800" fill="#2c2417">manifesto-builder</text>
+    <text x="37" y="213" font-size="11" font-weight="600" fill="#7a5a1e">✓ batch · gates the proof</text>
+  </g>
+  <g>
+    <rect x="25" y="237" width="210" height="46" rx="8" fill="#fbeccf" stroke="#7a5a1e" stroke-width="2"/>
+    <text x="37" y="257" font-size="13" font-weight="800" fill="#2c2417">repair-phantom-entries</text>
+    <text x="37" y="273" font-size="11" font-weight="600" fill="#7a5a1e">✓ batch · gates the proof</text>
+  </g>
+  <g>
+    <rect x="25" y="297" width="210" height="36" rx="8" fill="#fffdf8" stroke="#cdc6b4" stroke-width="2"/>
+    <text x="37" y="319" font-size="12" font-weight="700" fill="#6b5e4a">+ 8 independent hardening stories</text>
+  </g>
+  <g>
+    <rect x="330" y="40" width="210" height="46" rx="8" fill="#fffdf8" stroke="#cdc6b4" stroke-width="2"/>
+    <text x="342" y="60" font-size="13" font-weight="800" fill="#2c2417">rename-base-bodies</text>
+    <text x="342" y="76" font-size="11" font-weight="600" fill="#7a5a1e">★ CALL · Open Decision A/B/Defer</text>
+  </g>
+  <g>
+    <rect x="330" y="100" width="210" height="46" rx="8" fill="#fffdf8" stroke="#cdc6b4" stroke-width="2"/>
+    <text x="342" y="120" font-size="13" font-weight="800" fill="#2c2417">arch-decision-26-update</text>
+    <text x="342" y="136" font-size="11" font-weight="600" fill="#6b5e4a">✓ batch · doc rewrite</text>
+  </g>
+  <g>
+    <rect x="640" y="160" width="225" height="60" rx="8" fill="#f6ddd6" stroke="#9a3b2f" stroke-width="3"/>
+    <text x="652" y="184" font-size="13.5" font-weight="800" fill="#2c2417">conduct-live-run ⚠</text>
+    <text x="652" y="202" font-size="11" font-weight="600" fill="#9a3b2f">★ CALL · driver observed PASS = goal</text>
+  </g>
+</svg>
+<div class="dlegend">
+  <span><i class="sw" style="background:#f6ddd6;border-color:#9a3b2f"></i> goal-critical sink</span>
+  <span><i class="sw" style="background:#fbeccf;border-color:#7a5a1e"></i> gates other work</span>
+  <span><i class="sw" style="background:#fffdf8;border-color:#cdc6b4"></i> independent</span>
+  <span>★ CALL = needs your decision</span>
+  <span>✓ batch = build as-specified</span>
+  <span>⚠ = goal verdict hangs here</span>
+</div>
+</div>
+<p class="muted" style="font-size:14px">Read this as: <b>KB + manifesto + repair must land before the proof story can run; if the driver is never observed to PASS, the sprint fails its DEC-039 goal verdict even if every other story is green.</b></p>
+
+<h2>The 15 stories at a glance</h2>
+<div class="cards">
+  <div class="scard s-med">
+    <div class="top"><span class="id">momentum-knowledge-base-buildout</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Momentum gets its own KB vault; wiki-query learns per-project KB resolution (FR142).</p>
+    <p class="meta">medium · composition-pipeline · no deps · 3 AVFL fixes · <a href="file:///Users/steve/projects/momentum/.momentum/stories/momentum-knowledge-base-buildout.md">spec</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">manifesto-builder-skill</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">The missing producer: generate-then-curate manifestos per role×domain, File Ownership normative.</p>
+    <p class="meta">medium · composition-pipeline · no deps · 7 AVFL fixes · <a href="file:///Users/steve/projects/momentum/.momentum/stories/manifesto-builder-skill-generate-then-curate.md">spec</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">base-body-collapse-rollback</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Deletes the 3 pre-shipped specialist bodies — routing-table resolution becomes the only specialist path.</p>
+    <p class="meta">high · role-contracts · gates 2 siblings · 16 touch points · 4 AVFL fixes · <a href="file:///Users/steve/projects/momentum/.momentum/stories/base-body-collapse-rollback.md">spec</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">rename-base-body-files</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Verifies base-body naming against agents.json; annotates DEC-020's stale short names.</p>
+    <p class="meta">medium · role-contracts · after rollback · Open Decision A/B/Defer · <a href="file:///Users/steve/projects/momentum/.momentum/stories/rename-base-body-files-to-canonical-naming.md">spec</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">arch-decision-26-update</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Architecture Decision 26 rewritten from classification-table lookup to the routing-table model.</p>
+    <p class="meta">medium · role-contracts · after rollback · document-review · <a href="file:///Users/steve/projects/momentum/.momentum/stories/architecture-decision-26-update-for-base-body-collapse.md">spec</a></p>
+  </div>
+  <div class="scard s-high">
+    <div class="top"><span class="id">conductor-endgate-viewer-hijack</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">End-gate stops hijacking your viewer pane and ending its turn without a blocking ask.</p>
+    <p class="meta">critical · conductor-core · land before this sprint's own end-gate · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conductor-endgate-viewer-hijack-and-silent-gate.md">spec</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">conduct-adoption-retire (Phase 0)</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Conductor completes its own sprint: `sprint complete` ported into the end-gate approve path.</p>
+    <p class="meta">high · conductor-core · rescoped per your directive; retirement phases deferred · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conduct-adoption-retire-sprint-dev.md">spec</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">repair-phantom-story-entries</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">6 phantom story_file entries get real stubs; sprint-manager gains a file-must-exist invariant.</p>
+    <p class="meta">high · conductor-core · live-fixture leg rescoped to verify-only · <a href="file:///Users/steve/projects/momentum/.momentum/stories/repair-phantom-story-file-entries-and-backfill-live-fixture-scope.md">spec</a></p>
+  </div>
+  <div class="scard s-high">
+    <div class="top"><span class="id">conduct-live-run (THE proof)</span><span class="pill call">★ CALL</span></div>
+    <p class="val">Shipped E2E driver runs live vs populated nornspun fixture — acceptance is observed PASS + exit 0, nothing less.</p>
+    <p class="meta">high · conductor-core · deps: KB, manifesto, repair · 4 AVFL fixes · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conduct-live-run-against-fixture-sprint.md">spec</a></p>
+  </div>
+  <div class="scard s-high">
+    <div class="top"><span class="id">sprint-planning-coherence-gate</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Planning verifies that when A depends on B, B's spec actually promises what A consumes.</p>
+    <p class="meta">critical · planning-to-ready · new gate after Step 3.5 · <a href="file:///Users/steve/projects/momentum/.momentum/stories/sprint-planning-cross-story-coherence-gate.md">spec</a></p>
+  </div>
+  <div class="scard s-high">
+    <div class="top"><span class="id">conduct-qa-execute-method</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">QA leg executes the routed verification method — build+launch+drive or BLOCKED, never silent diff-only.</p>
+    <p class="meta">critical · conductor-core · deps done · kill+relaunch guard added · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conduct-qa-execute-verification-method.md">spec</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">conduct-resume-idempotency</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Interrupt/resume a build without duplicated dispatches, inflated findings, or lost state.</p>
+    <p class="meta">high · conductor-core · FR141/NFR23 · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conduct-resume-and-rehydration-idempotency-hardening.md">spec</a></p>
+  </div>
+  <div class="scard s-med">
+    <div class="top"><span class="id">conduct-staging-ledger-safety</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">All six commit sites stop dropping brand-new files; ledger appends become shell-safe.</p>
+    <p class="meta">high · conductor-core · scope grew 4→6 sites, 2→3 guards via AVFL · <a href="file:///Users/steve/projects/momentum/.momentum/stories/conduct-conductor-staging-and-ledger-append-safety.md">spec</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">sprint-planning-continuous-cli</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Planning runs gate-to-gate without gratuitous asks; sprint slug persisted via CLI, not raw index edits.</p>
+    <p class="meta">high · planning-to-ready · absorbed the enforce-continuous stub (dropped) · <a href="file:///Users/steve/projects/momentum/.momentum/stories/sprint-planning-continuous-execution-and-cli-fixes.md">spec</a></p>
+  </div>
+  <div class="scard s-low">
+    <div class="top"><span class="id">sprint-planning-handoff-artifact</span><span class="pill batch">✓ batch</span></div>
+    <p class="val">Planning's terminal step emits a mandatory build handoff (goal, waves, contracts, cautions).</p>
+    <p class="meta">high · planning-to-ready · DEC-039 goal carried to the build session · <a href="file:///Users/steve/projects/momentum/.momentum/stories/sprint-planning-handoff-artifact.md">spec</a></p>
+  </div>
+</div>
+
+<h2>4 decisions need a yes/no from you</h2>
+<p class="muted" style="margin-top:-4px">Each is decidable from this card alone. My recommendation is in the green band; write a different call to override.</p>
+
+<div class="card dec">
+<h3>Is the narrowed proof story still THE proof? <span class="pill hipill">HIGH · scope</span></h3>
+<div class="field"><span class="lab">What</span>AVFL caught the proof story's title overclaiming: it never invokes <code>/momentum:conduct</code>. Its real scope is the compose→register→resolve seam — populate the nornspun fixture, run the shipped driver, read the observed PASS/FAIL. It was retitled honestly: "Run the shipped build-guidelines E2E driver live against a populated nornspun fixture."</div>
+<div class="field"><span class="lab">Why it matters</span>The sprint goal says the cohort is proven live. The driver proves a composed agent is reachable through the exact <code>momentum-tools agent resolve --touches</code> path the Conductor routes through — but the "a real conduct build runs with composed subagents" leg is covered by THIS sprint's own build running under /momentum:conduct, not by the proof story. If you want the proof story itself to invoke conduct against a fixture sprint, that's a bigger story than what's specced.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">Driver: skills/momentum/skills/build-guidelines/e2e/live-compose-resolve.sh · resolve seam: conductor/workflow.md:559 · both prior runs died at first check (fixture never populated) · retitle applied per AVFL ACCURACY-001</div></div>
+<div class="rec"><span class="lab">Recommend — Approve the narrowed scope.</span> The driver PASS + this sprint's own conducted build together cover the goal; a conduct-against-fixture-sprint story would duplicate what this sprint's build itself demonstrates.</div>
+</div>
+
+<div class="card decmed">
+<h3>rename-base-bodies: Option A, Option B, or Defer? <span class="pill warn">MEDIUM · Open Decision</span></h3>
+<div class="field"><span class="lab">What</span>The story found the base-body files ALREADY conform to agents.json defaults naming (qa-reviewer.md, e2e-validator.md, etc.) — the "rename" is moot. What's left: (A) verify conformance + annotate DEC-020's stale short names (qa/e2e) as superseded; (B) actually rename files to the short names DEC-020 D1 wanted, sweeping every reference; (Defer) close as already-satisfied, leave the DEC-020 annotation to a doc-hygiene pass.</div>
+<div class="field"><span class="lab">Why it matters</span>Option B would churn 6+ files and every routing reference for purely cosmetic naming — risk with no behavior change. A and Defer differ only in whether DEC-020 gets its supersession annotation now (cheap, prevents the stale doc from misleading a future agent) or later.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">agents.json defaults keys == on-disk files (verified exact) · DEC-020 D1 lists short names qa/e2e · 0 functional call sites use short names · supersession-annotation precedent exists in the same doc</div></div>
+<div class="rec"><span class="lab">Recommend — Option A.</span> Zero renames + the DEC-020 annotation now; it's one doc edit and closes the drift the story exists for.</div>
+</div>
+
+<div class="card decmed">
+<h3>KB story: keep both legs, or trim multi-KB? <span class="pill warn">MEDIUM · sizing</span></h3>
+<div class="field"><span class="lab">What</span>The KB story is the sprint's largest (sized L): Leg A initializes and seeds Momentum's own vault (momentum-agentic-kb); Leg B extends the shared wiki-query skill to resolve per-project KBs (FR142 — currently "planned, not yet implemented"). Tasks are structured at that boundary so Leg B can be split out without re-authoring.</div>
+<div class="field"><span class="lab">Why it matters</span>Without Leg A, every manifesto symptom→wiki-query entry dangles — it gates the proof story. Leg B is what makes multi-project KBs real, but it touches a shared skill used by nornspun today; trimming it defers that risk to a smaller follow-up sprint at the cost of Momentum agents resolving against a single-vault config.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">FR142 (prd.md:898) names this story · ~/.obsidian-wiki/config is single-vault today · manifesto-format.md KB-Scoping table already maps Momentum → momentum-agentic-kb</div></div>
+<div class="rec"><span class="lab">Recommend — Keep both legs.</span> The proof story needs real KB resolution; the task boundary already gives conduct a clean trim point if the build runs long (loud, not silent).</div>
+</div>
+
+<div class="card decmed">
+<h3>Accept the harness override on the proof story? <span class="pill warn">MEDIUM · verification policy</span></h3>
+<div class="field"><span class="lab">What</span>momentum/verification-harness.json defaults every surface to "skip" for this markdown/bash repo — so an automated verifier routing through the harness would silently SKIP the driver run. The story now carries an explicit §2 override: verification is satisfied ONLY by the literal observed driver run (stdout "PASS — all assertions hold." + exit 0); a harness skip/BLOCKED counts as FAILURE. The alternative was adding a real harness-profile entry for this repo.</div>
+<div class="field"><span class="lab">Why it matters</span>This is the story that exists because structured status masked a driver that never ran. The override hard-codes "observed output or nothing" into the acceptance path; a harness entry would instead teach the machinery — more durable, but more moving parts for a one-story need in a repo whose harness posture is deliberately all-skip.</div>
+<div class="field"><span class="lab">Evidence</span><div class="ev">verification-harness.json defaults.execution_surfaces.script-code = "skip" · sole project[] entry is the example-product-app template · override written into AC6 + Dev Notes (2 sites)</div></div>
+<div class="rec"><span class="lab">Recommend — Accept the override.</span> It is the strongest form of this story's own hard rule; revisit a real harness profile when a second story needs an active surface here.</div>
+</div>
+
+<h2>Where to spend your skepticism — top risks</h2>
+<ol class="risks">
+<li><b>The goal hangs on a 3-story chain <span class="pill hipill">HIGH</span></b> — KB → manifesto → fixture → driver. A late failure in any of them fails the DEC-039 goal verdict even with 14 green stories. Mitigation: they're Wave 1, first to build.</li>
+<li><b>Base-body deletion has 16 touch points <span class="pill warn">MED</span></b> — references to the deleted specialist bodies grew since capture; a missed one breaks spawn paths mid-build. Mitigation: story inventories all 16, incl. 4 eval fixtures; AC6 reconciles them.</li>
+<li><b>Cross-repo surface <span class="pill warn">MED</span></b> — the KB vault, wiki-query skill, and nornspun fixture all live outside this repo; conduct verifies against external state. Mitigation: stories pin exact external paths and use config-driven resolution over forking.</li>
+<li><b>This sprint's own end-gate uses the code two stories are fixing <span class="pill warn">MED</span></b> — endgate-hijack and staging/ledger fixes should land early so the build that ships them also benefits from them.</li>
+</ol>
+
+<details>
+<summary>Defaulted to standards — 9 choices handled, no decision needed (click to expand)</summary>
+<ul>
+<li>4 stale epic_slug frontmatters self-healed to the index-authoritative epic (create-story convention).</li>
+<li>All verification_method advisories derived from the change_type routing table (verification-standard.md §1); one multi-method tie resolved by documented precedence (continuous-cli → bash).</li>
+<li>conduct-adoption rescoped to Phase 0 exactly per your directive; deferred phases preserved under "Deferred scope (future story)".</li>
+<li>repair-phantom retitled to verify-only for the live-fixture leg (planning already seeded the file — double-authoring avoided).</li>
+<li>sprint-planning-enforce-continuous-sequential-execution dropped with an absorbed_by pointer after its scope was folded in (your merge ruling).</li>
+<li>45 AVFL findings fixed across 12 stories: stale counts (6-not-4 commit sites, 9-not-6 files, 13-not-9 areas), miscitations (DEC-038 G1, line anchors), EDD task ordering, References placement, observability-class labeling.</li>
+<li>Index writes serialized through the orchestrator (15 staged entries applied in one pass) — no parallel-writer races on stories/index.json.</li>
+<li>Sibling AC ownership across the base-body trio authored by one runner — no diverging ACs on the same file set.</li>
+<li>Upstream gap captured for intake at activation: create-story's change-types.md has no script-cli template (freehanded this run).</li>
+</ul>
+</details>
+
+<div class="gate">
+<h2>Sign-off</h2>
+<p>Approve the <b>11 ✓ batch stories</b> as written? <span style="font-size:20px">&#9744;</span></p>
+<p style="margin-top:16px"><b>For each ★ CALL, write a one-line verdict + reason</b> (a blanket "approve all" defeats the gate):</p>
+<div class="chk">Proof-story narrowed scope (driver seam, not conduct invocation) <span class="blank"></span></div>
+<div class="chk">rename-base-bodies — Option A / B / Defer <span class="blank"></span></div>
+<div class="chk">KB story — both legs / trim Leg B <span class="blank"></span></div>
+<div class="chk">Proof-story harness §2 override — accept / harness entry instead <span class="blank"></span></div>
+<p style="margin-top:16px" class="muted">Reply in the session with your batch verdict + the four fork verdicts (or per-story exceptions as "R: slug — feedback" / "J: slug"). Each story's approval is then recorded individually via <code>momentum-tools sprint story-approve</code>. Full specs live in <code>.momentum/stories/</code> — one click from each card, deliberately not inlined here.</p>
+</div>
+
+<p class="sub" style="margin-top:30px">Story Review Gate · generated from 15 enriched story specs + 42 AVFL validator reports · companion decision surface per decision-grade-presentation.md §5</p>
+
+</div>
+</body>
+</html>
