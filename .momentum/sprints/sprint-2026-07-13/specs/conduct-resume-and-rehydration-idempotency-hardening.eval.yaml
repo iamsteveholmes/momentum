@@ -1,0 +1,54 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-resume-and-rehydration-idempotency-hardening
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/conduct-resume-and-rehydration-idempotency-hardening.eval.yaml
+how_dev_self_checks: |
+  Run a conducted build over a set of fixture stories, and interrupt the session
+  (kill it, or trigger a context compaction) at a few different points: partway
+  through the build before any story is finished, after some review findings
+  have already been recorded, and right after the sprint has been approved and
+  merged. Each time, resume by re-invoking the conduct build on the same sprint
+  and confirm: no already-completed story is redone, re-dispatched, or
+  re-merged; no finding is counted more than once; and the final summary the
+  build presents matches what a single, uninterrupted run over the same
+  stories would have reported — with no errors about re-merging branches or
+  re-transitioning stories that already finished.
+coverage_disposition: covered-by-composition
+covered_by_scenario: "Conducted fixture build — interrupted, resumed, approved"
+acceptance_criteria_ref: .momentum/stories/conduct-resume-and-rehydration-idempotency-hardening.md#acceptance-criteria
+platforms: [host]
+
+# conduct-resume-and-rehydration-idempotency-hardening.eval.yaml
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Resume continues from where it left off without redoing completed stories"
+    invocation: "momentum:conduct run over a fixture sprint with multiple stories"
+    given: "A conducted build is running over a fixture sprint's stories; one or more stories have already completed and merged before the session is killed or the context is compacted mid-build"
+    when: "The developer re-invokes the conduct build against the same activated sprint"
+    then:
+      - "The resumed build does not re-implement, re-dispatch, or re-merge any story that had already completed before the interruption"
+      - "The resumed build picks up with the remaining, not-yet-completed stories and carries the build through to the same conclusion an uninterrupted run would reach"
+    pass_criteria: "Comparing the stories acted on after resume against the stories already completed before interruption shows no overlap — only the remaining stories are worked, and the build reaches the same final outcome as a baseline uninterrupted run over the same fixture stories"
+    fail_criteria: "Any previously completed story is re-implemented, sent back to a developer, or re-merged after resume, or the resumed build's final outcome for that story differs from the uninterrupted baseline"
+
+  - name: "Resume does not duplicate or double-count findings"
+    invocation: "momentum:conduct run over a fixture sprint where review findings were already recorded before interruption"
+    given: "A conducted build has produced one or more review findings for a story — including a case where a story was sent back for rework and re-attempted — and the session is killed or the context compacted after those findings exist but before the build finishes"
+    when: "The developer re-invokes the conduct build on the same sprint, resuming it"
+    then:
+      - "Each finding that existed before the interruption appears exactly once in the findings the resumed build reports"
+      - "Where a story's findings were superseded by a later re-attempt, the final report reflects only the latest disposition per finding — not the old and new counted separately"
+    pass_criteria: "The finding counts and finding list in the resumed build's final report contain no duplicate entries for the same finding, and match what a single, uninterrupted run over the same fixture stories would report"
+    fail_criteria: "A finding appears more than once in the final counts or report, or a superseded finding is still counted alongside its replacement"
+
+  - name: "Resumed build's final summary matches an uninterrupted run, including after approval"
+    invocation: "momentum:conduct run over a fixture sprint that reaches approval before interruption"
+    given: "A conducted build has fully completed — all fixture stories merged and the sprint approved and merged — and the session is killed or the context compacted immediately after approval, before the developer has seen the final summary"
+    when: "The developer re-invokes the conduct build on the same sprint"
+    then:
+      - "The resumed build recognizes the sprint's build is already complete and does not attempt to merge branches or transition story statuses again"
+      - "The resumed build presents the same final end-of-build summary — same stories, same finding counts, same outcome — that a single uninterrupted run would have produced"
+    pass_criteria: "The resumed build's final report is content-equivalent to a baseline uninterrupted run's report over the same fixture stories, with no error about re-merging or re-transitioning already-finished work"
+    fail_criteria: "The resumed build throws an error attempting to merge or transition already-finished work, or its final report shows different counts or outcomes than the uninterrupted baseline"

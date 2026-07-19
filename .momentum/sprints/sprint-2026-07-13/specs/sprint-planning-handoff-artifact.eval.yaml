@@ -1,0 +1,83 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: sprint-planning-handoff-artifact
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/sprint-planning-handoff-artifact.eval.yaml
+how_dev_self_checks: |
+  Run sprint planning on a sprint through to activation. Confirm a markdown file named
+  {sprint-slug}-build-handoff-<activation-date>.md now exists in .momentum/handoffs/, and that
+  the activation success output names this file's path. Open the file and confirm: it opens
+  with a one-line notice that it is a use-then-discard bridge intended for the next build
+  session and should be deleted once consumed; it then carries four sections — a sprint goal
+  statement (or, if no goal was captured at planning, the explicit line "Sprint goal not
+  captured at planning"), the activated stories grouped by wave in execution order, the
+  contract/spec file locations for those stories plus the coverage-plan location, and a
+  planning-time-cautions section (or, if none arose, the explicit line "No planning-time
+  cautions raised."). Separately, open .claude/rules/handoff-conventions.md and confirm its
+  "Applies to" line now names sprint-planning alongside the writers already listed there, with
+  every other clause in the rule unchanged.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/sprint-planning-handoff-artifact.md#acceptance-criteria
+platforms: [host]
+
+scenarios:
+  - name: "Sprint planning activation emits the build handoff artifact and names its path"
+    invocation: "Run sprint planning on a sprint through to activation"
+    given: "a sprint has its stories selected and waved, has been approved, and has not yet been activated"
+    when: "the developer completes sprint planning through activation"
+    then:
+      - "a markdown file appears in .momentum/handoffs/ named {sprint-slug}-build-handoff-<activation-date>.md"
+      - "the activation success output names that file's path"
+      - "activation does not report success without the artifact's path present in its output"
+    pass_criteria: "the file exists at the documented name/location and its path appears verbatim in the activation output"
+    fail_criteria: "no such file exists, the file uses a different name or date, or activation reports success without naming the artifact's path"
+
+  - name: "Handoff artifact gives a fresh build session everything it needs, unaided (producer/consumer match)"
+    invocation: "Open the build handoff artifact from a just-activated sprint, with no other planning context available"
+    given: "the handoff artifact exists and carries its four required sections: sprint goal, stories by wave, contract/spec locations, and planning-time cautions"
+    when: "a reader who was not present for planning reads only this artifact"
+    then:
+      - "the reader can state the sprint's goal from the artifact alone"
+      - "the reader can state the execution-order wave assignment for every activated story from the artifact alone"
+      - "the reader can state where each story's contract/spec and the sprint's coverage plan live from the artifact alone"
+    pass_criteria: "a reader holding only the artifact correctly states the sprint goal and the wave-ordered story list without opening another file or asking a question"
+    fail_criteria: "the reader must open another file, ask a question, or guess to determine the sprint goal, wave assignments, or contract locations"
+
+  - name: "Sprint goal section states the explicit not-captured wording when no goal exists"
+    invocation: "Activate a sprint whose record has no goal captured"
+    given: "the sprint being activated has no goal value stored"
+    when: "the build handoff artifact is produced for that sprint"
+    then:
+      - "the sprint goal section reads exactly \"Sprint goal not captured at planning\" rather than being blank or omitted"
+    pass_criteria: "the goal section is present and carries the exact absence wording when no goal was captured"
+    fail_criteria: "the goal section is missing, left blank, or silently dropped when no goal was captured"
+
+  - name: "A handoff artifact missing a required section is a nameable producer/consumer mismatch"
+    invocation: "Inspect a build handoff artifact instance in which one of the four required sections is entirely absent from the document — not gracefully worded as empty, simply not present"
+    given: "a handoff artifact exists but one of the four required sections (sprint goal, stories by wave, contract/spec locations, planning-time cautions) does not appear anywhere in it"
+    when: "a reader checks the artifact against the four-section requirement"
+    then:
+      - "the reader can name exactly which of the four sections is missing"
+      - "the gap is identified as an incompatibility with what a build session needs from the artifact, not silently treated as a complete handoff"
+    pass_criteria: "a reader comparing the artifact to the four-section requirement names the specific missing section"
+    fail_criteria: "the omission goes unnoticed, or the artifact is accepted as a complete handoff despite a missing section"
+
+  - name: "Handoff artifact opens with the ephemeral-bridge notice"
+    invocation: "Open the build handoff artifact produced by a just-activated sprint"
+    given: "the artifact has been produced by sprint planning activation"
+    when: "the artifact's opening line is read, before any of its four sections"
+    then:
+      - "the first line states that the document is a use-then-discard bridge for the next build session and should be deleted once consumed"
+    pass_criteria: "the opening line carries this notice, in substance, ahead of any section content"
+    fail_criteria: "the notice is missing, appears only after other content, or omits either the use-then-discard framing or the next-build-session framing"
+
+  - name: "Handoff-conventions rule lists sprint-planning among its handoff writers"
+    invocation: "Read the handoff-conventions rule's \"Applies to\" line"
+    given: "the rule previously named retro, assessment, decision, and sprint-dev as handoff writers, without sprint-planning"
+    when: "the rule is read after this story ships"
+    then:
+      - "the \"Applies to\" line now includes sprint-planning alongside the writers already named"
+      - "the rule's naming-convention and write-location clauses are unchanged"
+    pass_criteria: "sprint-planning appears in the Applies-to enumeration and no other clause in the rule changed"
+    fail_criteria: "sprint-planning is absent from the enumeration, or another clause in the rule changed unexpectedly"

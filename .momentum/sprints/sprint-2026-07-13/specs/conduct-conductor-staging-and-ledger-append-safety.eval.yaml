@@ -1,0 +1,69 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-conductor-staging-and-ledger-append-safety
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/conduct-conductor-staging-and-ledger-append-safety.eval.yaml
+how_dev_self_checks: |
+  Run a conducted build over a fixture story whose only deliverable is one
+  brand-new file, and confirm that file is present in the merged result —
+  not silently dropped. Run a conducted build over a fixture story that logs
+  a message containing an apostrophe, a double quote, a dollar sign, and an
+  embedded newline, and confirm every line of the build's ledger file still
+  parses as valid, self-contained JSON with that content preserved intact.
+  Run a conducted build over a fixture story with a narrowly declared scope
+  alongside an unrelated file sitting in the workspace, and confirm the
+  merged commit contains only the in-scope files — the unrelated file does
+  not get swept in. Finally, take a fixture build whose ledger file ends
+  with a malformed, truncated final line (as an interruption mid-write
+  would leave), resume the build, and confirm it continues to a normal
+  completion, surfaces a visible warning naming the truncated content
+  rather than silently dropping or accepting it, and does not abort.
+coverage_disposition: covered-by-composition
+covered_by_scenario: "Conducted fixture build — interrupted, resumed, approved"
+acceptance_criteria_ref: .momentum/stories/conduct-conductor-staging-and-ledger-append-safety.md#acceptance-criteria
+platforms: [host]
+
+# conduct-conductor-staging-and-ledger-append-safety.eval.yaml
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "A brand-new file from a green-field story survives to the merged result"
+    invocation: "momentum:conduct run over a fixture sprint containing a story whose sole deliverable is one new file"
+    given: "A fixture story is defined whose only change is the creation of a single new file (for example, a new reference or test file) with no modifications to any existing file"
+    when: "The story is conducted through to completion and its result is merged"
+    then:
+      - "The new file is present at its expected path in the merged result"
+      - "Nothing in the build's reported outcome or the merged tree indicates the file was dropped, reverted, or removed during cleanup"
+    pass_criteria: "Listing the merged result's files shows the new file present at its expected path with its expected content, and no report of the story omits or flags it as missing"
+    fail_criteria: "The new file is absent from the merged result, or is present only transiently and gone after the build's workspace cleanup completes"
+
+  - name: "Ledger lines remain valid JSON despite hostile prose content"
+    invocation: "momentum:conduct run over a fixture sprint containing a story engineered to generate a logged message containing shell-hazard characters"
+    given: "A fixture story is defined such that, during its build, at least one message gets recorded to the build's ledger file containing a single quote, a double quote, a dollar sign, and a literal embedded newline"
+    when: "The story is conducted through to completion, producing entries in the build's ledger file"
+    then:
+      - "Every line in the ledger file is a syntactically valid, self-contained JSON object — one object per line"
+      - "The hazardous content appears in its corresponding entry exactly as originally logged, with no truncation, no variable-style substitution, and no single logical entry split across more than one line"
+    pass_criteria: "Reading the ledger file line by line and parsing each line as JSON succeeds for every line with no errors, and the entry containing the hazardous content, once parsed, matches the original text byte-for-byte"
+    fail_criteria: "Any line in the ledger file fails to parse as JSON, the hazardous content is truncated, altered, or substituted, or one logged message ends up split across two or more lines"
+
+  - name: "An out-of-scope file is not swept into a story's merged commit"
+    invocation: "momentum:conduct run over a fixture sprint containing a narrowly-scoped story, in a workspace that also holds an unrelated file"
+    given: "A fixture story is defined with a narrow, explicit scope of files it is allowed to change, and the build workspace additionally contains an incidental file — unrelated to the story and not named in its scope — created before or during the build"
+    when: "The story is conducted through to completion and merged"
+    then:
+      - "The merged commit contains exactly the in-scope files the story specified"
+      - "The unrelated, out-of-scope file does not appear anywhere in the merged commit"
+    pass_criteria: "Inspecting the merged commit's file list shows only the story's in-scope files; the unrelated file is absent"
+    fail_criteria: "The unrelated, out-of-scope file appears in the merged commit alongside the story's in-scope changes"
+
+  - name: "A build resumes past a malformed trailing ledger line, warning rather than aborting"
+    invocation: "momentum:conduct resuming a fixture build whose ledger file was left with a malformed, truncated final line"
+    given: "A fixture build's ledger file holds valid, complete entries for all of its already-finished work, followed by one malformed, truncated final line consistent with an interruption that occurred mid-write"
+    when: "The developer resumes the build against that same sprint"
+    then:
+      - "The resumed build continues from the last validly recorded state and carries on to a normal completion rather than stopping with an error"
+      - "The resumed build's output surfaces a visible warning that names or quotes the malformed trailing content, rather than silently discarding or silently accepting it"
+      - "The final summary the resumed build presents is otherwise complete and normal, as if the truncated line had simply been set aside"
+    pass_criteria: "The resumed build reaches a normal final summary, and its output (ledger or terminal report) contains a distinct warning identifying the truncated or malformed content that was set aside"
+    fail_criteria: "The resumed build aborts, errors out, or stalls on encountering the malformed trailing line, or it reaches completion with no visible indication that a malformed line was present and set aside"

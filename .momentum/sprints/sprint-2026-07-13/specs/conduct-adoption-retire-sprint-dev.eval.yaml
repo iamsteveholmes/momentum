@@ -1,0 +1,59 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-adoption-retire-sprint-dev
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/conduct-adoption-retire-sprint-dev.eval.yaml
+how_dev_self_checks: |
+  Run a sprint build through to its end-gate and approve it. Without running any separate
+  completion command yourself, open the sprint index file and confirm the just-built sprint
+  now appears under the completed list with its status marked done and its retrospective
+  timestamp still unset. Then invoke the retrospective on the project and confirm it picks
+  up that sprint rather than reporting that no sprint is awaiting review. Finally, trigger
+  the end-gate approval a second time (or with no build in progress) and confirm the flow
+  continues normally afterward instead of crashing or hanging.
+coverage_disposition: covered-by-composition
+covered_by_scenario: "Conducted fixture build — interrupted, resumed, approved"
+acceptance_criteria_ref: .momentum/stories/conduct-adoption-retire-sprint-dev.md#acceptance-criteria
+platforms: [host]
+
+scenarios:
+  - name: "Approving a built sprint completes it with no manual step"
+    invocation: "A sprint build reaches its end-gate and the developer approves it"
+    given: "A sprint has been built, its stories have reached their terminal review states, and the sprint has not yet been marked complete anywhere"
+    when: "The developer approves the end-gate"
+    then:
+      - "The sprint index file shows the sprint moved from active into the completed list"
+      - "The completed entry's status reads done and its retrospective-run timestamp is unset"
+      - "No separate, manually-run completion command was needed to produce this state"
+    pass_criteria: "Inspecting the sprint index file immediately after approval shows the sprint under completed with status done and the retrospective timestamp unset, produced solely by approving the end-gate"
+    fail_criteria: "The sprint remains outside the completed list after approval, or reaching that state required the developer to run a separate completion command themselves"
+
+  - name: "A freshly completed sprint is found by the retrospective (producer/consumer match)"
+    invocation: "Invoke the project retrospective immediately after a built sprint's end-gate was approved"
+    given: "A sprint's end-gate was just approved and the sprint index shows it completed with its retrospective-run timestamp unset — the shape the retrospective looks for"
+    when: "The developer invokes the retrospective"
+    then:
+      - "The retrospective identifies that sprint as the one awaiting review, by name"
+      - "The retrospective proceeds into its review process rather than stopping"
+    pass_criteria: "The retrospective names and begins reviewing the just-completed sprint without reporting that none is awaiting review"
+    fail_criteria: "The retrospective reports that no sprint is awaiting a retrospective, even though a sprint was completed moments earlier by approving its end-gate"
+
+  - name: "Retrospective names the gap when no completed-and-unreviewed sprint exists (producer/consumer mismatch)"
+    invocation: "Invoke the project retrospective when the sprint index has no sprint that is both completed and not yet reviewed"
+    given: "No sprint in the index is both marked completed and has an unset retrospective-run timestamp — either none is completed, or the only completed entries are already reviewed, or an entry is missing the fields the retrospective depends on"
+    when: "The developer invokes the retrospective"
+    then:
+      - "The retrospective reports plainly that there is nothing for it to review"
+      - "The retrospective does not crash, hang, or exit silently"
+    pass_criteria: "The retrospective exits with a clear, explicit statement that no sprint is awaiting a retrospective"
+    fail_criteria: "The retrospective crashes, hangs, produces no message, or otherwise fails to explain why it did not run a review"
+
+  - name: "Re-approving an end-gate with nothing left to complete does not break the flow"
+    invocation: "The end-gate approval step runs a second time, or runs when no sprint build is currently active"
+    given: "Either the sprint has already been completed by a prior approval, or no sprint build is currently active, and the developer triggers end-gate approval again"
+    when: "The developer approves under this condition"
+    then:
+      - "The flow proceeds to its normal next step after approval (for example, summarizing what is about to be pushed) instead of stopping"
+      - "No crash, stack trace, or unhandled error is shown to the developer"
+    pass_criteria: "Approval under this condition completes and the flow visibly continues to its subsequent normal step"
+    fail_criteria: "Approval under this condition aborts the flow, surfaces an unhandled error, or leaves the developer stuck with no forward progress"

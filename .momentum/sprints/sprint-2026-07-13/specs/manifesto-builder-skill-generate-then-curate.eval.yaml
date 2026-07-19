@@ -1,0 +1,114 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: manifesto-builder-skill-generate-then-curate
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/manifesto-builder-skill-generate-then-curate.eval.yaml
+how_dev_self_checks: |
+  Invoke momentum:manifesto-builder for a role and domain backed by a reachable project
+  knowledge base. Confirm it first shows a drafted diagnostic table grouped under
+  technology-area headings, then pauses to ask you to curate the symptom wording and the
+  file-ownership glob list before writing anything to disk. Confirm the file it finally
+  writes lives at .claude/manifests/{role}-{domain}.md and contains, in order: an identity
+  block (role/domain/project knowledge base), a "## Project Stack" section, a
+  "## File Ownership" section with a non-empty list of concrete glob patterns, and a
+  "## Diagnostic Table" section where every entry's wiki-query is an exact, backticked
+  command (never a vague "search for" placeholder) and every symptom reads as an observable
+  situation, not a question. Finally, invoke momentum:build-guidelines against a project
+  where a base body for that role already exists, and confirm it discovers and accepts the
+  manifesto as valid.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/manifesto-builder-skill-generate-then-curate.md#acceptance-criteria
+platforms: [host]
+
+# NOTE (contract-authoring placeholder): this sprint has no coverage-plan.md yet, so
+# coverage_disposition/covered_by_scenario above are placeholders. Backfill once a
+# coverage-plan.md exists for sprint-2026-07-13.
+
+scenarios:
+  - name: "Skill is addressable and responds to invocation"
+    invocation: "momentum:manifesto-builder, invoked by name with a role and a domain"
+    given: "The skill is installed and addressable under the momentum: namespace"
+    when: "A developer invokes momentum:manifesto-builder for a given role and domain"
+    then:
+      - "The invocation is recognized (not an unknown-skill error) and the manifesto-building flow described in the remaining scenarios begins"
+    pass_criteria: "The skill responds to the invocation and proceeds into the generate step described in the next scenario"
+    fail_criteria: "The name momentum:manifesto-builder is not recognized as an invocable skill, or invoking it produces no manifesto-building behavior at all"
+
+  - name: "Produces a format-conformant manifesto at the canonical path"
+    invocation: "momentum:manifesto-builder with a role and domain, against a reachable project knowledge base, carried through to completion"
+    given: "A role and domain are supplied and a project knowledge base is reachable"
+    when: "The full generate-curate-write flow completes"
+    then:
+      - "A file exists at .claude/manifests/<role>-<domain>.md"
+      - "The file contains, in this order: an identity block naming the role, the domain, and the project knowledge base used; a '## Project Stack' section; a '## File Ownership' section; a '## Diagnostic Table' section"
+    pass_criteria: "Opening the produced file shows all four elements present and in the stated order"
+    fail_criteria: "The file is missing, is written to a different path, omits one of the four elements, or presents them out of order"
+
+  - name: "Draft diagnostic entries are grouped and knowledge-base-sourced, not invented"
+    invocation: "momentum:manifesto-builder with a role and domain whose technology areas are represented in the project's knowledge base"
+    given: "A role and domain whose technology areas are represented in the project's knowledge base"
+    when: "The skill produces its first, pre-curation draft of the diagnostic table"
+    then:
+      - "The draft groups entries under technology-area headings"
+      - "Multiple entries appear, and the terms in each entry's wiki-query trace to concepts that actually exist in the project knowledge base — checkable by running that same wiki-query yourself and confirming it returns non-empty, on-topic results"
+    pass_criteria: "At least one technology-area heading has two or more entries whose wiki-query terms return real, relevant knowledge-base hits when run directly"
+    fail_criteria: "The draft is flat with no technology-area grouping, or entries reference terms that return nothing when queried against the knowledge base — indicating invented rather than sourced content"
+
+  - name: "Curation is required before the file is finalized"
+    invocation: "momentum:manifesto-builder with a role and domain, carried through to completion"
+    given: "A draft diagnostic table and a draft file-ownership glob list have just been produced"
+    when: "The developer continues the flow toward a finalized manifesto"
+    then:
+      - "The skill visibly pauses and asks the developer to review and refine the draft symptom wording and the draft glob list before anything is written to .claude/manifests/"
+      - "No manifesto file appears on disk until the developer has responded to that request"
+    pass_criteria: "An explicit curation exchange — a request for the developer's input on symptom wording and globs — is observed between the draft appearing and the file being written"
+    fail_criteria: "The file is written to .claude/manifests/ with no intervening request for developer input, i.e. the draft is silently finalized as-is"
+
+  - name: "Finalized entries follow the symptom and wiki-query phrasing rules"
+    invocation: "Inspect the finalized .claude/manifests/<role>-<domain>.md after a completed run"
+    given: "A finalized manifesto file has been written"
+    when: "Each entry in its '## Diagnostic Table' section is read"
+    then:
+      - "Every symptom is phrased as an observable, specific situation — not a yes/no question and not vague language like 'issues with X'"
+      - "Every entry supplies an exact wiki-query invocation in backticks (for example: `wiki-query some exact terms`) — never a placeholder like 'search for X if needed' or 'consult the knowledge base'"
+    pass_criteria: "Every entry in the Diagnostic Table satisfies both phrasing rules on inspection"
+    fail_criteria: "Any entry is phrased as a question or is vague and non-diagnostic, or any entry lacks an exact, backticked wiki-query invocation"
+
+  - name: "File Ownership is a non-empty, concrete, role-specific glob list"
+    invocation: "Inspect the finalized .claude/manifests/<role>-<domain>.md after a completed run"
+    given: "A finalized manifesto file has been written for a specific role and domain"
+    when: "Its '## File Ownership' section is read"
+    then:
+      - "A non-empty list of glob strings is present, in standard glob syntax"
+      - "The globs are concrete enough that each matches real files the given role×domain would actually touch, covering every file type that role routinely edits"
+      - "The list is not reduced to a single catch-all pattern such as '**/*' unless the role genuinely owns the entire tree, and it is not identical to the file-ownership list produced for an unrelated role×domain pair"
+    pass_criteria: "The glob list is present, non-empty, concrete, and distinguishable from another role×domain pair's list"
+    fail_criteria: "The section is missing or empty, contains only an unjustified catch-all glob, or is identical to a different role×domain's list"
+
+  # --- Producer / Consumer scope (SEAM) ---
+  # Producer: the momentum:manifesto-builder skill, which writes a manifesto file to
+  #   .claude/manifests/{role}-{domain}.md.
+  # Consumer: the momentum:build-guidelines skill's discovery step, which reads manifesto
+  #   files from .claude/manifests/ and validates them before composing an agent from one.
+  # The two scenarios below verify the field shape both sides agree on: a matching-shape
+  # manifesto is accepted, and a manifesto missing a required element is named and rejected.
+
+  - name: "Producer/Consumer scope — a complete manifesto is discovered and accepted by build-guidelines"
+    invocation: "momentum:build-guidelines run against a project where a base body for <role> already exists and .claude/manifests/<role>-<domain>.md was produced by momentum:manifesto-builder"
+    given: "momentum:manifesto-builder (the producer) has written a finalized manifesto file containing all four required elements, and a base body for the chosen role is already present"
+    when: "momentum:build-guidelines (the consumer) runs its manifest-discovery step over .claude/manifests/"
+    then:
+      - "The manifesto file is discovered and reported as valid: the identity fields, '## Project Stack', a non-empty '## File Ownership', and a '## Diagnostic Table' with at least one entry are all recognized as present"
+    pass_criteria: "momentum:build-guidelines reports the manifesto as valid and proceeds to compose an agent from it — the number of Diagnostic Table entries is informational only and is never treated as a pass/fail gate"
+    fail_criteria: "momentum:build-guidelines reports the manifesto as invalid, or skips it, despite all four required elements being present — this signals a producer/consumer field-shape mismatch"
+
+  - name: "Producer/Consumer scope — an incomplete manifesto is named and rejected, not silently accepted"
+    invocation: "momentum:build-guidelines run against a project where .claude/manifests/<role>-<domain>.md is missing or has emptied one of its four required elements (for example, an empty '## File Ownership' list)"
+    given: "A manifesto file exists at the canonical path but is missing, or has emptied, one of the four required elements: identity fields, '## Project Stack', '## File Ownership', or '## Diagnostic Table'"
+    when: "momentum:build-guidelines runs its manifest-discovery step over .claude/manifests/"
+    then:
+      - "momentum:build-guidelines does not mark the manifesto valid, and does not silently compose an agent from the incomplete file"
+      - "The rejection names which required element is missing or empty, rather than failing silently or with a generic error"
+    pass_criteria: "momentum:build-guidelines's output explicitly identifies the missing/empty element and withholds composition"
+    fail_criteria: "momentum:build-guidelines proceeds to compose an agent from the incomplete manifesto, or fails without naming which element was the problem — either outcome signals the producer's output shape and the consumer's expectation have drifted apart"

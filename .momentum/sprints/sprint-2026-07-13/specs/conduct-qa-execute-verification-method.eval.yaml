@@ -1,0 +1,103 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-qa-execute-verification-method
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/conduct-qa-execute-verification-method.eval.yaml
+how_dev_self_checks: |
+  Run a conducted build over a fixture story whose frozen verification contract declares an
+  executable verification method (for example, smoke) in a supporting environment, and read the
+  QA verdict it produces for that story. Confirm the verdict names the verification method and
+  driver it routed on, matching what the story's frozen contract declares, and that every
+  per-acceptance-criterion verdict cites runtime evidence — a build result, a fresh-launch
+  confirmation, and driven-scenario output — rather than a line quoted from the diff.
+
+  Then run the same build with the target environment unavailable (no reachable device, emulator,
+  or backend) and confirm the verdict comes back BLOCKED, naming the missing prerequisite by name
+  — never a passing verdict derived from diff or source inspection.
+
+  Next, hand the build flow a QA report for an executable-method story that claims a passing
+  verdict but carries no runtime evidence (only diff-based reasoning). Confirm the build flow
+  refuses to advance the story to merge on that report and instead re-verifies or escalates. Confirm
+  a genuine BLOCKED verdict (missing prerequisite named, environment truly unavailable) is accepted
+  and is never treated as the same failure as an unevidenced PASS.
+
+  Finally, run a build over a fixture story whose frozen contract omits its verification-method or
+  harness declaration, and confirm the verdict comes back BLOCKED naming the specific missing field
+  — the build never silently falls back to a diff-only pass because the declaration was absent.
+coverage_disposition: covered-by-composition
+covered_by_scenario: "Conducted fixture build — interrupted, resumed, approved"
+acceptance_criteria_ref: .momentum/stories/conduct-qa-execute-verification-method.md#acceptance-criteria
+platforms: [host]
+
+# === PRODUCER / CONSUMER SCOPE (seam story) ===
+# Producer: the planning process that authors and freezes each story's verification contract
+#   before the build begins, declaring that contract's verification method and harness profile.
+# Consumer: the build's per-story QA verification step, which reads a story's frozen contract to
+#   decide how to verify that story and must route on — and actually execute — exactly what the
+#   contract declares, rather than defaulting to inspecting the code diff.
+# This story changes the consumer side (how the QA step reads and acts on the frozen contract), so
+# the review scope below covers both a shape-match scenario (contract fully declares its method
+# and harness; QA routes and executes accordingly) and a mismatch scenario (contract omits a
+# required field; QA reports BLOCKED naming the missing field rather than silently downgrading).
+# An ordinary single-artifact story would not require this two-sided scope.
+
+scenarios:
+  - name: "An executable verification method is executed, not diff-inspected"
+    invocation: "Run a conducted build over a fixture story whose frozen contract declares an executable verification method (e.g. skill-invoke, bash, curl, or smoke) in a supporting environment, and read the QA verdict for that story"
+    given: "a fixture story whose frozen verification contract declares an executable verification method and a harness profile, running in an environment that supports that method"
+    when: "the conducted build reaches QA verification for that story"
+    then:
+      - "the QA verdict names the verification method and driver it routed on, and that value matches the method the story's frozen contract declares"
+      - "every per-acceptance-criterion verdict cites runtime evidence — an invocation result, a triggered behavior, a command's output, or a driven scenario — never a line quoted from the diff or source"
+    pass_criteria: "the reported method/driver matches the contract's declared method, and each verdict traces to observed runtime evidence rather than to diff or source inspection alone"
+    fail_criteria: "the verdict is silent on which method/driver it used, names a different method than the contract declared, or a VERIFIED/PASS verdict is traceable only to a diff line or source reading"
+
+  - name: "A smoke-routed story is verified by a real build, a fresh launch, and a live drive"
+    invocation: "Run a conducted build over a fixture story whose frozen contract declares the smoke verification method, in an environment with a reachable target, and read the resulting QA verdict"
+    given: "a fixture story whose frozen contract declares verification method smoke, and a target device/emulator/simulator that the harness profile names as reachable"
+    when: "the conducted build reaches QA verification for that story"
+    then:
+      - "the verdict reflects a real build of the app, a fresh launch on the named target (the target is killed and relaunched, or reinstalled, to a clean instance rather than reused from a prior run), and a live drive of the story's scenarios"
+      - "no acceptance criterion for this story is marked VERIFIED on the basis of grep, diff, or source-inspection evidence alone"
+    pass_criteria: "the verdict's supporting evidence names a build result, a fresh-launch confirmation, and driven-scenario output for every VERIFIED acceptance criterion"
+    fail_criteria: "any acceptance criterion is marked VERIFIED without a build result, without evidence of a fresh (non-reused, non-cached) launch, or without driven-scenario output"
+
+  - name: "Environment unavailable produces BLOCKED naming the prerequisite, never a diff-based pass"
+    invocation: "Run a conducted build over the same fixture story with its target environment unavailable (no reachable device, emulator, simulator, or backend), and read the resulting QA verdict"
+    given: "a fixture story whose frozen contract declares an executable verification method, but whose named target environment cannot be reached or fails to become ready after a genuine startup attempt"
+    when: "the conducted build reaches QA verification for that story"
+    then:
+      - "the verdict is BLOCKED, and it names the specific missing or unreachable prerequisite (e.g., which device, emulator, simulator, or backend endpoint was unavailable)"
+      - "no acceptance criterion for this story is marked VERIFIED or PASSED on the basis of diff or source inspection as a substitute for the unavailable execution"
+    pass_criteria: "the verdict is BLOCKED with the missing prerequisite named, and no acceptance criterion is passed by diff/source substitution"
+    fail_criteria: "the verdict reports a VERIFIED/PASS outcome despite the environment being unavailable, or reports BLOCKED without naming which prerequisite was missing"
+
+  - name: "A passing verdict without execution evidence is rejected by the build flow"
+    invocation: "Submit to the conducted build flow a QA report for an executable-method fixture story that claims a passing verdict but whose supporting evidence is only diff or source reasoning, and observe how the build flow responds"
+    given: "a QA report for an executable-method story claims a VERIFIED/PASS verdict on one or more acceptance criteria, but the report's supporting evidence is diff or source inspection only — no build, invocation, trigger, or drive evidence is cited"
+    when: "this report reaches the conducted build flow's acceptance check for QA reports"
+    then:
+      - "the build flow does not advance the story to merge on the basis of that report"
+      - "the build flow triggers a re-verification, or escalates for developer attention, rather than silently accepting the unevidenced passing verdict"
+      - "a separately submitted report that returns BLOCKED with a genuinely missing prerequisite named is accepted and is never treated as the same failure as the unevidenced PASS"
+    pass_criteria: "an unevidenced passing verdict on an executable-method story is not accepted by the build flow, while a genuine BLOCKED-with-named-prerequisite verdict is accepted"
+    fail_criteria: "the story advances to merge on an unevidenced passing verdict, or a genuine BLOCKED-with-named-prerequisite verdict is rejected as though it were the same failure"
+
+  - name: "A contract that fully declares its method and harness drives QA to route and execute exactly that declaration"
+    invocation: "Run a conducted build over a fixture story whose frozen contract declares both a verification method and a harness profile, and confirm the QA verdict's routing matches those declared values"
+    given: "a fixture story whose frozen verification contract declares both a verification method and a harness profile"
+    when: "the conducted build reaches QA verification for that story"
+    then:
+      - "the QA verdict's named method and driver equal exactly what the contract declared — no substitution to a different method occurs"
+    pass_criteria: "the executed method/driver and the contract-declared method/driver are identical for this story"
+    fail_criteria: "the QA verdict routes on a method other than the one the contract declared, or proceeds without referencing the contract's declared method at all"
+
+  - name: "A contract missing a required declaration produces BLOCKED naming the missing field, never a silent downgrade"
+    invocation: "Run a conducted build over a fixture story whose frozen contract omits its verification method or harness profile declaration, and read the resulting QA verdict"
+    given: "a fixture story whose frozen verification contract is missing its verification-method declaration, its harness-profile declaration, or both"
+    when: "the conducted build reaches QA verification for that story"
+    then:
+      - "the verdict is BLOCKED, and it names which specific field (verification method, harness profile, or both) is missing from the contract"
+      - "the build does not silently fall back to a diff-only pass, and does not invent or assume a default method in the declaration's absence"
+    pass_criteria: "the verdict is BLOCKED and names the specific missing contract field"
+    fail_criteria: "the story is verified (VERIFIED/PASS) despite the missing declaration, or the verdict is BLOCKED without identifying which field was missing"

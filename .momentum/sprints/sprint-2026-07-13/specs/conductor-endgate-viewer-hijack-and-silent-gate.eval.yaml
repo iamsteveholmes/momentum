@@ -1,0 +1,97 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conductor-endgate-viewer-hijack-and-silent-gate
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/conductor-endgate-viewer-hijack-and-silent-gate.eval.yaml
+how_dev_self_checks: |
+  Run a sprint build to its end-gate and confirm three things happen together: the report
+  opens in the viewer pane while your focus/cursor stays on the main workspace pane; if a
+  viewer pane was already open showing an earlier report, it updates in place rather than a
+  second pane appearing (a first-time open is expected to create the pane); and immediately
+  after the report opens, a blocking prompt appears asking you to approve merge-to-main or
+  request changes — the turn never ends with the report open and no prompt on screen. Trigger
+  a request-changes redispatch and confirm the same three behaviors hold on the re-render.
+  Then open the published Conductor end-gate instructions and confirm: the no-focus-steal rule
+  is stated as a firm requirement (not a bare command line) with its reason given at both open
+  sites; the instructions no longer claim that opening a viewer automatically reuses an
+  existing pane; and both approval-ask sites explicitly forbid ending the turn between the
+  report opening and the prompt appearing.
+coverage_disposition: covered-by-composition
+covered_by_scenario: "Conducted fixture build — interrupted, resumed, approved"
+acceptance_criteria_ref: .momentum/stories/conductor-endgate-viewer-hijack-and-silent-gate.md#acceptance-criteria
+platforms: [host]
+
+scenarios:
+  # --- Runtime scenarios (observed during a live/simulated end-gate) ---
+
+  - name: "End-gate report open never steals developer focus"
+    invocation: "Run a momentum:conduct sprint build through to its end-gate, then separately trigger a request-changes redispatch and let it reach the re-render open"
+    given: "the developer is actively working in the main workspace pane when the sprint build reaches its end-gate, and again when a request-changes redispatch reaches its re-render open"
+    when: "the Conductor opens (or re-opens) the end-gate report"
+    then:
+      - "the developer's active focus/cursor remains on the main workspace pane through both opens"
+      - "the end-gate report becomes visible in the viewer pane without the developer's active view switching to it"
+    pass_criteria: "an observer watching the session confirms the main pane stays focused at both the initial gate open and the redispatch re-render open, while the report is visible in the viewer pane"
+    fail_criteria: "at either open, the developer's active view switches to the report pane (focus steal)"
+
+  - name: "Existing viewer surface is reused, not duplicated"
+    invocation: "Reach the end-gate while a viewer pane is already open showing earlier content (e.g. a prior plan-gate report)"
+    given: "a viewer pane already exists in the workspace, showing content that the end-gate report will supersede"
+    when: "the Conductor opens the end-gate report"
+    then:
+      - "the existing viewer pane updates in place to show the end-gate report"
+      - "no additional viewer pane appears — the number of viewer panes in the workspace is the same before and after the open"
+    pass_criteria: "a before/after count of viewer panes is identical, and the developer sees the new report replace the prior content in the same pane"
+    fail_criteria: "a second viewer pane appears alongside the first, or the prior pane is left open while a new one is created"
+
+  - name: "First end-gate open creates the viewer pane only when none exists"
+    invocation: "Reach the end-gate in a session where no viewer pane has been opened yet"
+    given: "no viewer pane exists yet in the workspace when the sprint build reaches its end-gate"
+    when: "the Conductor opens the end-gate report"
+    then:
+      - "a viewer pane is created for the first time, showing the end-gate report"
+      - "the developer's active focus remains on the main workspace pane"
+    pass_criteria: "a viewer pane appears where none existed, showing the report, while the main pane stays focused"
+    fail_criteria: "no viewer pane appears, or the developer's focus switches away from the main pane"
+
+  - name: "Approval ask is presented in the same turn as the report render"
+    invocation: "Reach the end-gate (initial open) and, separately, reach a request-changes redispatch re-render"
+    given: "the end-gate report has just finished opening (or re-opening) in the viewer pane"
+    when: "the report open action completes"
+    then:
+      - "a blocking approval prompt (approve to merge to main, or request changes) appears in the developer's terminal within the same turn as the report open, at both the initial gate and the redispatch re-render"
+      - "the turn does not end with the report open and no prompt visible"
+    pass_criteria: "an observer confirms the approval prompt is visible immediately following the report open in both cases, with no gap where the session appears to have stopped without a pending decision"
+    fail_criteria: "the turn ends after either report open with no approval prompt on screen"
+
+  # --- Document-inspection scenarios (static review of published instructions) ---
+
+  - name: "[Document check] No-focus-steal rule is published as a firm requirement"
+    invocation: "Inspect the published Conductor end-gate instructions covering both the initial gate open and the request-changes re-render open"
+    given: "the published instructions are available for a reader to inspect"
+    when: "the no-focus-steal rule for opening the end-gate report is located at both the initial open and the re-render open"
+    then:
+      - "each site states the no-focus-steal requirement as a firm, non-negotiable rule — not as a bare command line or a passing side note"
+      - "each site states the reason: keeping the developer in context"
+    pass_criteria: "a reader can point to explicit, unmistakable requirement wording accompanying the no-focus-steal rule at both sites, each with its rationale stated"
+    fail_criteria: "at either site, the rule appears only as an unlabeled command or a passing remark, or the rule or its rationale is missing"
+
+  - name: "[Document check] Automatic-reuse claim is corrected"
+    invocation: "Inspect the published Conductor end-gate instructions describing how the report is opened and how the viewer pane behaves"
+    given: "the published instructions describe the open procedure and viewer-pane behavior"
+    when: "a reader looks for any claim that opening a new viewer view automatically reuses an existing pane"
+    then:
+      - "no remaining claim states that opening automatically adds to or reuses an existing viewer pane"
+      - "the instructions instead state that opening always creates a new pane, and that reusing an existing pane requires updating it directly"
+    pass_criteria: "a reader finds the corrected behavior stated everywhere the old automatic-reuse claim previously appeared, with no contradicting claim left in place"
+    fail_criteria: "any remaining assertion that opening automatically reuses or tabs into an existing pane"
+
+  - name: "[Document check] Render-then-ask is published as unbreakable"
+    invocation: "Inspect the published Conductor end-gate instructions at both the initial gate ask and the request-changes redispatch ask"
+    given: "the published instructions describe what happens after the report is rendered/opened, at both ask sites"
+    when: "a reader looks for language governing whether the turn may end between the report opening and the approval ask"
+    then:
+      - "each site explicitly forbids ending the turn between the report opening and presenting the approval ask"
+      - "the render and the ask are described as one inseparable step at both sites"
+    pass_criteria: "a reader finds explicit wording forbidding a turn-end between render and ask at both the initial gate site and the redispatch site"
+    fail_criteria: "either site lacks this explicit binding language, leaving open the possibility that the turn ends before the ask appears"

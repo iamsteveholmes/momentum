@@ -1,0 +1,51 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: rename-base-body-files-to-canonical-naming
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/rename-base-body-files-to-canonical-naming.eval.yaml
+how_dev_self_checks: |
+  Confirm every role key in the routing defaults (dev, qa-reviewer, e2e-validator, ux,
+  analyst, researcher) has a matching base-body file, and that no base-body file lacks
+  a matching role key. Run the agent-resolve command for the qa-reviewer role and again
+  for the e2e-validator role, and confirm each returns a path ending in the correspondingly
+  named file. Open the DEC-020 decision document and confirm its D1 section carries an
+  annotation stating that the qa and e2e short-name roles were superseded by the shipped
+  qa-reviewer and e2e-validator names, with the superseding decision named, and with D1's
+  original decision text left unaltered (annotation is additive, not a rewrite).
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/rename-base-body-files-to-canonical-naming.md#acceptance-criteria
+platforms: [host]
+
+scenarios:
+  - name: "Base-body filenames match canonical role keys"
+    invocation: "List the base-body files published under the agents directory and compare them against the routing defaults role keys"
+    given: "the routing defaults map a fixed set of role keys (dev, qa-reviewer, e2e-validator, ux, analyst, researcher) to base-body file paths, and the agents directory contains the plugin-shipped base-body files"
+    when: "the six role keys are compared against the base-body files present in the directory (excluding any evals subdirectory)"
+    then:
+      - "each role key has a corresponding base-body file named exactly after that key"
+      - "every base-body file in the directory corresponds to exactly one role key — no file lacks a matching key and no key lacks a file"
+    pass_criteria: "the six role keys and the six base-body files are in one-to-one correspondence by name"
+    fail_criteria: "any role key has no matching file, any base-body file has no matching role key, or a file uses a different name than its key (e.g., a short name like qa.md where the key is qa-reviewer)"
+
+  - name: "Role resolution returns the canonically named base-body path"
+    invocation: "Resolve the qa-reviewer role and, separately, the e2e-validator role"
+    given: "qa-reviewer and e2e-validator are registered role keys in the routing defaults"
+    when: "the role resolution is run once for qa-reviewer and once for e2e-validator"
+    then:
+      - "the qa-reviewer resolution returns a path ending in qa-reviewer.md"
+      - "the e2e-validator resolution returns a path ending in e2e-validator.md"
+      - "both returned paths point to files that exist"
+    pass_criteria: "each resolution's returned filename matches the role that was requested, and the returned path exists"
+    fail_criteria: "a resolution returns a filename that does not match the requested role (e.g., resolves to qa.md for the qa-reviewer role), the resolution errors, or the returned path does not exist"
+
+  - name: "DEC-020 records the naming supersession"
+    invocation: "Read the DEC-020 decision document's D1 section"
+    given: "the DEC-020 decision document exists and its D1 section lists short role names including qa and e2e"
+    when: "the D1 section of the document is inspected"
+    then:
+      - "D1 carries an annotation stating that the qa and e2e short-name roles were superseded by the shipped descriptive names qa-reviewer and e2e-validator"
+      - "the annotation identifies the decision that superseded them"
+      - "D1's original decision text remains present and unaltered — the annotation is additive"
+    pass_criteria: "a reader can find, in or immediately adjacent to D1, an annotation naming both the superseded short names and the superseding descriptive names, with the superseding decision referenced, in the same supersession-annotation style already used elsewhere in the planning artifacts"
+    fail_criteria: "D1 has no annotation, the annotation omits the superseding decision reference, or D1's original text has been rewritten rather than annotated"

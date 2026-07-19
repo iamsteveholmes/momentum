@@ -1,0 +1,100 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: sprint-planning-cross-story-coherence-gate
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/sprint-planning-cross-story-coherence-gate.eval.yaml
+how_dev_self_checks: |
+  Run sprint planning over a sprint whose story set includes a dependency relationship
+  between two stories — one story (the consumer) names something it expects another story
+  (the producer) to supply, such as a data field, an endpoint, a schema, a config value,
+  or a signal. Carry the planning run through to the point where the developer reviews the
+  sprint before it goes live.
+
+  Confirm: if the producer's story does not actually deliver what the consumer named, the
+  run's output calls this out by name before the sprint goes live — identifying both
+  stories involved, the specific thing that was expected but not delivered, and offering a
+  choice of how to resolve it (change the producer, change the consumer, or add a story to
+  own the missing piece). Confirm separately that when the producer's story does deliver
+  what the consumer named, no such callout appears — the run proceeds without an extra
+  prompt about it. Confirm that a dependency on a story outside the current sprint is
+  checked against that story's recorded completion state and deliverables rather than
+  ignored, and that the sprint is not allowed to go live while an unresolved callout is open
+  unless the developer explicitly says to proceed anyway.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/sprint-planning-cross-story-coherence-gate.md#acceptance-criteria
+platforms: [host]
+
+scenarios:
+  - name: "Incoherent producer/consumer pair surfaces a named seam failure"
+    invocation: "momentum:sprint-planning with a sprint whose selected stories include a consumer story and a producer story, where the consumer's specification names a specific externally-sourced input (for example, a backend response field) as something another story in the sprint must supply, and the producer story's specification does not deliver that input"
+    given: "A sprint has been planned through the point where each selected story has a completed, individual specification, and the consumer story's specification names a concrete input it expects to receive from the producer story, which the producer's specification does not actually deliver"
+    when: "The planning run proceeds to the point where the developer reviews the full sprint before it is allowed to go live"
+    then:
+      - "The developer-facing output names both the consumer story and the producer story explicitly by their identifiers"
+      - "The output names the specific missing item — the thing the consumer expected that the producer does not deliver"
+      - "The output describes this as a mismatch at the seam between the two stories, using wording like 'seam coherence' or 'cross-story coherence' rather than wording that describes freezing or locking a single story's contract"
+      - "The output presents three distinct ways to resolve it: change the producer to deliver the missing item, change the consumer so it no longer needs it, or add a new story whose job is to own the missing piece"
+    pass_criteria: "All four observable elements above are present in the run's output before the sprint reaches the go-live review point"
+    fail_criteria: "The mismatch is absent from the output, is described without naming both story identifiers or the specific missing item, only offers one resolution path or fewer than three, or uses freeze/lock-style wording instead of seam/coherence wording"
+
+  - name: "Coherent producer/consumer pair passes without a callout"
+    invocation: "momentum:sprint-planning with a sprint whose selected stories include a consumer story and a producer story, where the producer story's specification delivers exactly the input the consumer story's specification names as required"
+    given: "A sprint has been planned through the point where each selected story has a completed, individual specification, and the producer story's specification delivers precisely what the consumer story's specification names as an externally-sourced requirement"
+    when: "The planning run proceeds to the point where the developer reviews the full sprint before it is allowed to go live"
+    then:
+      - "No mismatch callout naming this pair appears anywhere in the run's output"
+      - "The developer is not prompted to resolve anything regarding this pair"
+      - "The run proceeds toward the go-live review point as if this pair were never in question"
+    pass_criteria: "The run's full output contains no coherence callout referencing this story pair, and no additional developer prompt about it appears"
+    fail_criteria: "Any callout, warning, or extra prompt about this pair appears even though the producer delivers exactly what the consumer names"
+
+  - name: "Every dependency relationship in the sprint is accounted for"
+    invocation: "momentum:sprint-planning with a sprint whose selected stories include several dependency relationships between stories — a mix where some pairs match and some do not"
+    given: "A sprint's selected story set contains multiple stories, several of which declare a dependency on another story in or out of the sprint, forming a known, countable number of dependency relationships"
+    when: "The planning run proceeds to the point where the developer reviews the full sprint before it is allowed to go live"
+    then:
+      - "The run's output indicates that every one of the known dependency relationships was examined — none are left unmentioned or silently dropped"
+      - "Relationships found to match are not reported as failures, and relationships found not to match are each reported individually"
+    pass_criteria: "Counting the dependency relationships declared among the fixture stories and counting the relationships accounted for in the run's output yields the same number, with each mismatching relationship individually identified"
+    fail_criteria: "The run's output accounts for fewer dependency relationships than were declared among the fixture stories, or is silent about one or more of them"
+
+  - name: "Dependency on a story outside the current sprint that already delivers the requirement passes"
+    invocation: "momentum:sprint-planning with a sprint whose selected consumer story depends on a producer story that is not part of the current sprint but has already been completed and its record shows it delivers the required input"
+    given: "A consumer story in the current sprint names an externally-sourced input it expects from a producer story that is not among the sprint's selected stories, and that producer story's recorded status shows it is complete with a delivery matching the named input"
+    when: "The planning run proceeds to the point where the developer reviews the full sprint before it is allowed to go live"
+    then:
+      - "The dependency on the out-of-sprint story is checked against that story's recorded status and deliverables rather than being skipped for being outside the sprint"
+      - "No mismatch callout is raised for this dependency"
+    pass_criteria: "The run's output or record shows this out-of-sprint dependency was checked and found satisfied, with no callout raised"
+    fail_criteria: "The dependency is absent from what was checked, or a callout is raised despite the out-of-sprint story's recorded delivery matching what was named"
+
+  - name: "Dependency on an out-of-sprint story that does not deliver, or is not complete, is flagged rather than skipped"
+    invocation: "momentum:sprint-planning with a sprint whose selected consumer story depends on a producer story that is not part of the current sprint, and that producer story's recorded status shows it is either not complete or does not deliver the required input"
+    given: "A consumer story in the current sprint names an externally-sourced input it expects from a producer story that is not among the sprint's selected stories, and that producer story's recorded status shows it is either still incomplete or complete without the named input"
+    when: "The planning run proceeds to the point where the developer reviews the full sprint before it is allowed to go live"
+    then:
+      - "The dependency on the out-of-sprint story is flagged as a mismatch rather than being silently skipped for being outside the sprint"
+      - "The flag names the consumer story and the out-of-sprint producer story, and states what is missing or why it is not satisfied"
+    pass_criteria: "The run's output contains a mismatch flag naming both the consumer and the out-of-sprint producer, with the missing or unmet condition stated"
+    fail_criteria: "The dependency is omitted from the output entirely, or no flag is raised despite the out-of-sprint story's incomplete or non-delivering recorded status"
+
+  - name: "Sprint does not go live while a mismatch remains open and unresolved"
+    invocation: "momentum:sprint-planning carried through to the point of making the sprint live, with a known unresolved mismatch still open between a consumer and producer story pair and no explicit developer instruction to proceed anyway"
+    given: "A coherence mismatch between a consumer and producer story pair has been surfaced and the developer has not given any explicit instruction to proceed despite it"
+    when: "The planning run reaches the point where it would otherwise make the sprint live"
+    then:
+      - "The sprint is not made live"
+      - "The developer-facing output states that the sprint is being held because of the open mismatch"
+    pass_criteria: "The run halts short of making the sprint live and the reason given references the open mismatch"
+    fail_criteria: "The sprint is made live despite the open, unresolved mismatch and no explicit developer instruction to proceed"
+
+  - name: "Explicit developer override lets the sprint go live with the override recorded"
+    invocation: "momentum:sprint-planning carried through to the point of making the sprint live, with a known unresolved mismatch still open, where the developer explicitly instructs the run to proceed despite it"
+    given: "A coherence mismatch between a consumer and producer story pair has been surfaced, and the developer explicitly instructs the run to proceed with the sprint despite the open mismatch"
+    when: "The planning run reaches the point where it would otherwise make the sprint live, having received the developer's explicit instruction to proceed"
+    then:
+      - "The sprint is made live"
+      - "A record of the sprint or its run notes that the mismatch was open and that the developer explicitly chose to proceed despite it"
+    pass_criteria: "The sprint goes live and a durable record (visible after the run) shows the override decision and the mismatch it applied to"
+    fail_criteria: "The sprint goes live with no trace of the override decision anywhere in its record, or the sprint fails to go live despite the developer's explicit instruction to proceed"

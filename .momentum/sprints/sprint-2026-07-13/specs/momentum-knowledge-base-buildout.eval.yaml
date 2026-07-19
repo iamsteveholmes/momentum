@@ -1,0 +1,118 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: momentum-knowledge-base-buildout
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-07-13/specs/momentum-knowledge-base-buildout.eval.yaml
+how_dev_self_checks: |
+  Confirm the Momentum-owned KB vault (identifier momentum-agentic-kb) exists on disk with a
+  .obsidian/ config directory and a root index.md, at a path distinct from the nornspun vault.
+  Confirm index.md lists seeded concept pages covering all five domains (skills, workflows,
+  agent architecture, conduct, practice model), and that every wiki-query lookup term declared
+  by any Momentum agent manifesto present in the repo resolves to a real page in this vault
+  (no dangling lookups; if no manifesto exists yet, the five-domain seed is the floor).
+  Confirm the KB registry lists both momentum-agentic-kb and nornspun-agentic-kb, each mapped
+  to a distinct, existing vault path. Invoke wiki-query under a context declaring
+  project_kb: momentum-agentic-kb and confirm it returns a page from the Momentum vault;
+  invoke it under project_kb: nornspun-agentic-kb and confirm it returns a page from the
+  nornspun vault; invoke it with no project_kb declared and confirm the prior single-vault
+  default behavior is unchanged. Run the build-agents pipeline for a Momentum manifesto
+  declaring project_kb: momentum-agentic-kb and confirm the wiki-query operations it performs
+  during that run are scoped to the Momentum vault, not merely recorded as a stored value.
+  Finally, run a project_kb: momentum-agentic-kb symptom→wiki-query lookup end to end (a real
+  Momentum manifesto if one exists, otherwise a minimal fixture lookup declaring the same
+  field) and confirm it returns a real Momentum-vault page — never a nornspun page, never empty.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/momentum-knowledge-base-buildout.md#acceptance-criteria
+platforms: [host]
+
+# === PRODUCER / CONSUMER SCOPE ===
+# This story defines a hand-off seam between:
+#   Producer — the invoking agent/manifesto context that declares a project_kb identifier,
+#              naming which project's knowledge base a lookup should resolve against.
+#   Consumer — wiki-query's KB resolution, which reads the declared project_kb and looks it
+#              up against the registered set of project KBs to select a vault.
+# Field-shape-match proof (pass): scenario "Producer/Consumer match — declared project_kb
+#   resolves to the matching KB page (AC7)".
+# Field-shape-mismatch proof (fail): scenario "Producer/Consumer mismatch — unregistered
+#   project_kb surfaces the incompatibility rather than masking it (seam clause)".
+
+scenarios:
+  - name: "AC1 — Momentum KB vault exists and is distinct from the nornspun vault"
+    invocation: "List the filesystem path where the momentum-agentic-kb vault is expected"
+    given: "the knowledge-base buildout has been completed"
+    when: "the momentum-agentic-kb vault path is listed"
+    then:
+      - "a vault directory exists containing a .obsidian/ config directory and a root index.md"
+      - "the vault path is distinct from any nornspun-agentic-kb vault path"
+    pass_criteria: "listing the momentum-agentic-kb path shows both .obsidian/ and index.md present, at a path different from the nornspun vault"
+    fail_criteria: "the momentum-agentic-kb path does not exist, is missing .obsidian/ or index.md, or resolves to the same path as the nornspun vault"
+
+  - name: "AC2 — Vault is seeded with five-domain concept pages"
+    invocation: "Read the momentum-agentic-kb vault's root index.md and the concept pages it lists"
+    given: "the momentum-agentic-kb vault exists"
+    when: "index.md and its listed pages are inspected"
+    then:
+      - "each of the five domains — skills, workflows, agent architecture, conduct, and the practice model — has at least one concept page whose title or frontmatter identifies that domain"
+      - "index.md lists the seeded pages"
+    pass_criteria: "all five domains are represented by at least one identifiable page, and each is reachable from index.md"
+    fail_criteria: "one or more of the five domains has no identifiable concept page, or index.md fails to list the seeded pages"
+
+  - name: "AC3 — No dangling manifesto wiki-query lookups"
+    invocation: "For every Momentum agent manifesto present in the repository, run each of its symptom-to-wiki-query lookup terms against the momentum-agentic-kb vault"
+    given: "Momentum agent manifestos exist declaring symptom-to-wiki-query entries (or none exist yet, in which case the five-domain baseline from AC2 stands as the coverage floor)"
+    when: "each manifesto's lookup terms are run against the Momentum vault"
+    then:
+      - "every lookup returns at least one matching page in the Momentum vault"
+    pass_criteria: "zero lookup terms return no matching page — every manifesto symptom entry resolves to a real page"
+    fail_criteria: "any manifesto symptom-to-wiki-query entry returns no matching page (a dangling lookup)"
+
+  - name: "AC4 — Multi-KB registry lists both project KBs at distinct paths"
+    invocation: "Inspect the project's KB registry"
+    given: "the multi-KB registry has been established"
+    when: "the registry is read"
+    then:
+      - "the registry contains an entry for momentum-agentic-kb mapped to a vault path"
+      - "the registry contains an entry for nornspun-agentic-kb mapped to a distinct vault path"
+    pass_criteria: "both identifiers are present in the registry, each mapped to a different, existing vault path"
+    fail_criteria: "either identifier is absent from the registry, or both map to the same path"
+
+  - name: "AC5 — wiki-query resolves the vault named by the invoking project_kb, with fallback preserved"
+    invocation: "Invoke wiki-query with a query term three times: once in a context declaring project_kb: momentum-agentic-kb, once declaring project_kb: nornspun-agentic-kb, and once declaring no project_kb"
+    given: "the multi-KB registry (AC4) is established and the Momentum vault is seeded (AC2)"
+    when: "wiki-query is invoked once under each of the three contexts"
+    then:
+      - "under project_kb: momentum-agentic-kb, the result is sourced from the Momentum vault"
+      - "under project_kb: nornspun-agentic-kb, the result is sourced from the nornspun vault"
+      - "under no declared project_kb, the result matches the prior single-vault default behavior (no regression for existing single-KB callers)"
+    pass_criteria: "each of the three invocations' returned content is traceable to the vault its context specifies (or the pre-existing default, when none is specified)"
+    fail_criteria: "a query declaring one project_kb returns content sourced from the other project's vault or from neither, or the no-context invocation fails or resolves differently than the prior default"
+
+  - name: "AC6 — build-agents pipeline routes project_kb operatively"
+    invocation: "Run the build-agents pipeline for a Momentum manifesto declaring project_kb: momentum-agentic-kb, and observe the wiki-query operations it performs during that run"
+    given: "a Momentum manifesto declaring project_kb: momentum-agentic-kb is available as input to the build-agents pipeline"
+    when: "the build-agents pipeline is run for that manifesto"
+    then:
+      - "the wiki-query operations the pipeline performs during the run are scoped to the Momentum vault (momentum-agentic-kb) rather than merely recorded as a stored value"
+    pass_criteria: "every wiki-query lookup observed during the run returns content sourced from the Momentum vault"
+    fail_criteria: "the pipeline run performs wiki-query lookups against a different vault, or produces no observable KB-scoped lookups at all"
+
+  - name: "Producer/Consumer match — declared project_kb resolves to the matching KB page (AC7)"
+    invocation: "Run a manifesto symptom-to-wiki-query lookup declaring project_kb: momentum-agentic-kb through the resolver — a real Momentum manifesto if one exists at implementation time, otherwise a minimal fixture lookup declaring the same field"
+    given: "a symptom-to-wiki-query lookup entry declares project_kb: momentum-agentic-kb"
+    when: "the lookup is run through the resolver"
+    then:
+      - "the returned page is sourced from the Momentum KB vault"
+      - "the returned page is not a nornspun page and is not empty"
+    pass_criteria: "the resolver's output is a real page traceable to the Momentum vault, matching the producer-declared project_kb"
+    fail_criteria: "the resolver returns a nornspun-vault page, an empty result, or no result for a project_kb: momentum-agentic-kb declaration"
+
+  - name: "Producer/Consumer mismatch — unregistered project_kb surfaces the incompatibility rather than masking it (seam clause)"
+    invocation: "Run a symptom-to-wiki-query lookup declaring a project_kb identifier that has no corresponding entry in the KB registry established under AC4"
+    given: "a lookup entry declares a project_kb value the KB registry does not recognize"
+    when: "the lookup is run through the resolver"
+    then:
+      - "the resolver does not silently substitute a different, unrelated project's vault content as though it matched"
+      - "the absence of a matching registry entry for the declared project_kb is observable in the resolver's outcome (e.g., an explicit unresolved/no-match outcome) rather than masked by a wrong-vault result"
+    pass_criteria: "the resolver's outcome makes the mismatch between the producer-declared project_kb and the consumer's registered set observable — it never returns an unrelated project's vault content as if it matched"
+    fail_criteria: "the resolver silently returns content from an unrelated project's vault for the unregistered project_kb declaration, masking the mismatch between what the producer declared and what the consumer's registry recognizes"
