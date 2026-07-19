@@ -20,7 +20,33 @@
       "conduct-resume-and-rehydration-idempotency-hardening",
       "conduct-conductor-staging-and-ledger-append-safety"
     ],
-    "waves": [],
+    "waves": [
+      {
+        "wave": 1,
+        "stories": [
+          "momentum-knowledge-base-buildout",
+          "manifesto-builder-skill-generate-then-curate",
+          "base-body-collapse-rollback",
+          "conductor-endgate-viewer-hijack-and-silent-gate",
+          "conduct-adoption-retire-sprint-dev",
+          "repair-phantom-story-file-entries-and-backfill-live-fixture-scope",
+          "sprint-planning-cross-story-coherence-gate",
+          "conduct-qa-execute-verification-method",
+          "sprint-planning-continuous-execution-and-cli-fixes",
+          "sprint-planning-handoff-artifact",
+          "conduct-resume-and-rehydration-idempotency-hardening",
+          "conduct-conductor-staging-and-ledger-append-safety"
+        ]
+      },
+      {
+        "wave": 2,
+        "stories": [
+          "rename-base-body-files-to-canonical-naming",
+          "architecture-decision-26-update-for-base-body-collapse",
+          "conduct-live-run-against-fixture-sprint"
+        ]
+      }
+    ],
     "slug": "sprint-2026-07-13",
     "approvals": [
       {
