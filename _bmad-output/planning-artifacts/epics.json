@@ -97,7 +97,7 @@
   },
   "momentum-agent-composition-pipeline": {
     "acceptance_conditions": [
-      "A developer can run build-guidelines on a project and observe that one project-wide constitution is produced AND one manifesto per (role \u00d7 domain) is produced, with sprint-dev composing all three (base body + constitution + manifesto) into each spawned subagent's system prompt."
+      "A developer can run build-guidelines on a project and observe that one project-wide constitution is produced AND one manifesto per (role \u00d7 domain) is produced, with the conduct build engine composing all three (base body + constitution + manifesto) into each spawned subagent's system prompt via routing-table resolution (DEC-035; sprint-dev retired in favor of the Conductor)."
     ],
     "audience": "user",
     "description": "The pipeline that produces project-conditioned agent prompts. Composes plugin base bodies + project-wide constitution (Tier 1) + per-agent manifesto (Tier 2 \u2014 role \u00d7 domain routing and permissions) into the system prompt that spawns each subagent.",

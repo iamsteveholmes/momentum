@@ -52,8 +52,8 @@
       {
         "story_slug": "momentum-knowledge-base-buildout",
         "decision": "approved",
-        "approved_at": "2026-07-19T03:03:28Z",
-        "story_file_sha": "18c5af0e7240763dbe83c3af2b3c533aee9441d5f1793c8718f0542f044ee66a"
+        "approved_at": "2026-07-19T06:36:26Z",
+        "story_file_sha": "07aa77e5e320793e7251aa8c87acabc1a579924d5172e419376cee2d64763d60"
       },
       {
         "story_slug": "manifesto-builder-skill-generate-then-curate",
@@ -139,7 +139,8 @@
         "approved_at": "2026-07-19T03:03:29Z",
         "story_file_sha": "373bb24c8df3400c53b27957d1f81c2666591a814f8bb45b8b23afae8a19f8af"
       }
-    ]
+    ],
+    "goal": "The agent cohort goes live: the composition stack — Momentum's own KB, the manifesto producer, and routing-table resolution — lands and is proven by the shipped E2E driver passing live against the nornspun fixture with observed PASS output, exercising the exact resolve seam a /momentum:conduct build uses to spawn composed gen-2 subagents. The ride-along fixes harden the conduct engine and planning rails that this sprint's own conducted build runs on."
   },
   "completed": [
     {

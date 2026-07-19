@@ -103,9 +103,10 @@ the project can check without reading intent.
    exists at implementation time; otherwise prove the resolver with a minimal fixture manifest
    created for this purpose (Task 4). The real *composed-agent* end-to-end proof is discharged
    downstream — by the sibling `manifesto-builder-skill-generate-then-curate` (which authors
-   Momentum manifestos) and the sprint's `live-e2e-compose-register-resolve-gen-2-agent` — once
-   real Momentum manifestos exist. This story owns the KB + resolver, not manifesto authoring
-   (see Architecture Compliance).
+   Momentum manifestos) and the sprint's `conduct-live-run-against-fixture-sprint` (which discharges
+   the prior `live-e2e-compose-register-resolve-gen-2-agent` residual) — once real Momentum
+   manifestos exist. This story owns the KB + resolver, not manifesto authoring (see Architecture
+   Compliance).
 
 ## Tasks / Subtasks
 
