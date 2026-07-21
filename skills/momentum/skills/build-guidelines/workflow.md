@@ -57,7 +57,18 @@
       - If all manifests share the same project_kb: this is a single-KB run
       - If manifests have different project_kb values: this is a multi-KB run — each constitution-builder invocation will carry the specific project_kb for its manifesto
       - Store: {{kb_scope}} = "single" | "multi", {{default_project_kb}} = project_kb from first valid manifest
-      Note: wiki-query multi-KB extension (FR142) is planned, not yet implemented. Store project_kb for pipeline readiness — pass it to constitution-builder as context even if routing is not yet operative.
+      Note: the wiki-query multi-KB extension (FR142) is now operative — a KB registry in
+      ~/.obsidian-wiki/config maps each project_kb to its vault path, and wiki-query's resolution
+      step reads a declared project_kb (via --kb <project-name>) to select the matching vault.
+      This means routing is REAL, not merely stored bookkeeping: passing project_kb to
+      constitution-builder now determines which KB its downstream wiki-query calls actually read.
+      CRITICAL — do not trust the "single-KB" label as license to omit explicit KB scoping:
+      multiple project KBs coexist in the registry at all times (e.g. momentum-agentic-kb and
+      nornspun-agentic-kb are both always registered), so the ambient/default vault is never
+      guaranteed to match the project currently being built. Every constitution-builder
+      invocation in Phase 3 and Phase 4 MUST explicitly instruct wiki-query calls to scope via
+      --kb {{project_kb}} — regardless of {{kb_scope}} — never rely on falling through to
+      whatever vault happens to be the current default.
     </action>
 
     <action>Check current state:
@@ -170,6 +181,10 @@ DRY RUN — no files will be written. Preview only.
                Do NOT generate Quick Routing, Diagnostic Table, or per-agent permissions
                (Diagnostic Table is carried verbatim from the manifesto; routing belongs at agent-builder
                layer per DEC-038).
+               KB scoping (operative, FR142): every wiki-query call you make while gathering
+               KB-sourced context for this manifesto MUST explicitly pass --kb {{current.project_kb}}.
+               Do not omit --kb even for a single-KB run — the registry always has more than one
+               project KB registered, and the ambient default vault may not be this project's KB.
                Target: {{target_path}}.domain-knowledge (assembly by agent-builder)"
            Store constitution-builder's prose output as {{constitution_prose}}
            Build {{domain_knowledge_content}} by combining:
@@ -246,6 +261,10 @@ Successfully composed: {{composed_agents | count}} / {{confirmed_matrix | count}
       Instruction: "Generate the Tier 1 standalone constitution for this project.
         Include the Canonical Wiki-Query Interface Block.
         Do NOT include any ## Quick Routing section or per-agent diagnostic tables (per DEC-038).
+        KB scoping (operative, FR142): every wiki-query call you make while gathering KB-sourced
+        context MUST explicitly pass --kb {{default_project_kb}}. The Wiki-Query Interface Block
+        you emit into the constitution must show the --kb <project-name> form so agents loading
+        this constitution scope their own lookups correctly too.
         Budget: target ~660 lines, hard ceiling 750 lines."
     </action>
 

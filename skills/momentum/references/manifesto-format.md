@@ -224,7 +224,17 @@ Every manifesto must declare which project KB its `wiki-query` entries resolve a
 
 **Why:** multiple project KBs coexist (DEC-038 D2). Momentum agents resolve against the Momentum KB. Nornspun agents resolve against the nornspun KB. The `project_kb` field tells agent-builder (and any future multi-KB-aware `wiki-query` extension) which KB to target.
 
-**Current state:** `wiki-query` (DEC-018) currently resolves against the active vault. The multi-KB extension that routes lookups to the declared `project_kb` is a planned, not yet implemented, extension (FR142 backlog). The manifesto declares the KB now so the pipeline is ready when the extension lands. This document **does not implement** the multi-KB extension — that work is tracked separately under FR142.
+**Current state (operative — `momentum-knowledge-base-buildout` story, FR142):** `wiki-query`
+(DEC-018) now resolves per-`project_kb` via a registry in `~/.obsidian-wiki/config` (each
+`project_kb` identifier maps to its own vault path; `momentum-agentic-kb` and
+`nornspun-agentic-kb` are both registered). A lookup that declares `project_kb` — via an explicit
+`--kb <project-name>` flag or the manifesto's own identity block — resolves against that project's
+vault; a lookup with no declared `project_kb` falls back to the prior single-vault default
+unchanged. The manifesto's `project_kb` field is a live routing key consumed by the build-agents
+pipeline (`momentum:build-guidelines`), which passes it through to every `wiki-query`-performing
+step so the correct KB is used end to end. This document's role remains the same: it defines the
+`project_kb` field's normative requirement on the manifesto; the resolver mechanics live in
+`wiki-query`'s own instructions and the KB registry, not here.
 
 **Normative requirement:** every manifesto's `project_kb` field must be set to the name or identifier of the project KB whose pages the `wiki-query` terms are written to match. A manifesto without `project_kb` is incomplete.
 
@@ -428,7 +438,7 @@ The `momentum:build-guidelines` skill (story `build-guidelines-skill`) consumes 
 |---|---|---|
 | DEC-038 | `_bmad-output/planning-artifacts/decisions/dec-038-manifesto-diagnostic-table-multi-kb-2026-06-16.md` | Binding authority: D1 (diagnostic table definition), D2 (per-project multi-KB) |
 | DEC-026 D4 | architecture.md Decision 56 | Original manifesto definition, refined by DEC-038 |
-| DEC-018 | (architecture.md) | `wiki-query` cold-KB interface; multi-KB extension pending (FR142) |
+| DEC-018 | (architecture.md) | `wiki-query` cold-KB interface; multi-KB extension operative (FR142, `momentum-knowledge-base-buildout`) |
 | architecture.md Decision 56 | `_bmad-output/planning-artifacts/architecture.md` | Manifesto canonical definition + manifesto-format subsection (AC9) |
 | PRD FR136 / FR138 | `_bmad-output/planning-artifacts/prd.md` | Overlay reading superseded by DEC-038 D1 |
 | PRD FR142 | `_bmad-output/planning-artifacts/prd.md` | Multi-KB `wiki-query` extension workstream |
