@@ -1344,6 +1344,46 @@ def test_set_priority_idempotent():
     assert_eq("file still medium", data["s"]["priority"], "medium")
 
 
+# --- story-add invariant tests (story_file mirrors disk truth) ---
+
+def test_story_add_no_backing_file_yields_story_file_false():
+    """story-add for a slug with no backing .md must not claim story_file: true.
+
+    This is the red-phase assertion for the phantom-entry invariant: it fails
+    against the pre-fix hardcoded `"story_file": True` and passes once
+    cmd_story_add derives the flag from disk truth.
+    """
+    print("\n[story-add] No backing file -> story_file is not true")
+    proj = setup_project(stories={})
+    code, out = run_tool(proj, "sprint", "story-add",
+                          "--slug", "phantom-candidate",
+                          "--title", "Phantom Candidate",
+                          "--epic", "test-epic")
+    if code == 0:
+        assert_eq("story_file not true when file absent", out.get("story_file"), False)
+        data = read_stories(proj)
+        assert_eq("index entry not true when file absent", data["phantom-candidate"]["story_file"], False)
+    else:
+        # A non-zero exit + explanatory error is an equally valid guard against phantoms.
+        assert_eq("rejected with success false", out.get("success"), False)
+
+
+def test_story_add_with_backing_file_yields_story_file_true():
+    """story-add for a slug whose backing .md already exists gets story_file: true."""
+    print("\n[story-add] Backing file present -> story_file: true")
+    proj = setup_project(stories={})
+    story_file = proj / ".momentum" / "stories" / "real-story.md"
+    story_file.write_text("# Real Story\n")
+    code, out = run_tool(proj, "sprint", "story-add",
+                          "--slug", "real-story",
+                          "--title", "Real Story",
+                          "--epic", "test-epic")
+    assert_eq("exit code 0", code, 0)
+    assert_eq("story_file true when file present", out.get("story_file"), True)
+    data = read_stories(proj)
+    assert_eq("index entry true when file present", data["real-story"]["story_file"], True)
+
+
 def test_sprint_stories_single_priority():
     """stories --priority filters to matching stories only."""
     print("\n[sprint stories] Single priority filter")
@@ -3075,6 +3115,11 @@ def main():
     test_set_priority_invalid_level()
     test_set_priority_missing_story()
     test_set_priority_idempotent()
+
+    # story-add invariant tests (story_file mirrors disk truth)
+    test_story_add_no_backing_file_yields_story_file_false()
+    test_story_add_with_backing_file_yields_story_file_true()
+
     test_sprint_stories_single_priority()
     test_sprint_stories_all_grouped()
     test_sprint_stories_invalid_priority()

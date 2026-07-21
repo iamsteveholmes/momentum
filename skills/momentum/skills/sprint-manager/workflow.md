@@ -192,3 +192,4 @@ Adds or removes stories from the planning sprint in `.momentum/sprints/index.jso
 3. **Atomic operations**: Read the file, make the change, write the file. Do not make partial writes.
 4. **No story content writes**: You write to `.momentum/stories/index.json` and `.momentum/sprints/index.json` only. Never write to `stories/{slug}.md` files.
 5. **Structured output only**: Always return the JSON response object. Do not return prose or conversational text.
+6. **`story_file` mirrors disk truth**: `story_file: true` is written for an entry only when its backing `.momentum/stories/{slug}.md` exists on disk at write time. Never hardcode `true` — a phantom entry (`story_file: true` with no backing file) crashes any downstream consumer, such as sprint-planning, that trusts the flag. `momentum-tools.py`'s `cmd_story_add` enforces this invariant at the sole write site.

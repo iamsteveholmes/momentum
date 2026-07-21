@@ -2195,11 +2195,18 @@ def cmd_story_add(args: argparse.Namespace) -> None:
     raw_deps = (args.depends_on or "").strip()
     depends_on = [d.strip() for d in raw_deps.split(",") if d.strip()] if raw_deps else []
 
+    # Invariant: story_file must mirror disk truth — true only when the backing
+    # .momentum/stories/{slug}.md actually exists. Never hardcode True; a phantom
+    # entry (story_file: true with no backing file) crashes downstream consumers
+    # like sprint-planning that trust the flag.
+    story_file_path = project_dir / ".momentum" / "stories" / f"{slug}.md"
+    story_file_exists = story_file_path.is_file()
+
     entry = {
         "status": "backlog",
         "title": args.title.strip(),
         "epic_slug": args.epic.strip(),
-        "story_file": True,
+        "story_file": story_file_exists,
         "depends_on": depends_on,
         "touches": [],
         "priority": priority,
