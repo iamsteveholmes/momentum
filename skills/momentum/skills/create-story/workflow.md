@@ -346,7 +346,7 @@ NEVER drop an edge or path the story file already declares.</action>
   </step>
 
   <step n="8" goal="Run AVFL checkpoint on the story file">
-    <action>Invoke the `avfl` skill with these parameters:
+    <action>Invoke the `momentum:avfl` skill with these parameters:
       - domain_expert: "story author"
       - task_context: "Momentum story — {{story_key}}"
       - output_to_validate: full content of {{story_file}}

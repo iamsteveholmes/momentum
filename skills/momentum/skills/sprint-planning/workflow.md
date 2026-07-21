@@ -9,6 +9,16 @@
 ## EXECUTION
 
 <workflow>
+  <critical>This workflow runs CONTINUOUSLY, start to finish, from invocation through
+  `momentum-tools sprint activate` — it does NOT pause for informational "proceed or revise?"
+  confirmations between steps. It pauses for developer input at exactly THREE designed decision
+  gates: (1) story selection (Step 2), (2) per-story A/R/J approval (Step 3), and (3) the
+  plan-gate sign-off (Step 7). It also pauses for genuine BLOCKING error-escalations — a
+  `<check if>` guarding an actual defect/failure state that stops the plan (e.g. AVFL
+  `GATE_FAILED`, contaminated contracts after the rewrite loop, an unresolvable team-composition
+  gap). A condition the workflow itself characterizes as a warning or advisory that "can proceed"
+  is surfaced as a non-blocking notice — state it and continue; do NOT insert an `<ask>` for it.
+  Do not add new inter-step confirmation gates when extending this workflow.</critical>
   <critical>Story markdown files retain ONLY plain English ACs. Verification contracts are written to `sprints/{sprint-slug}/specs/`. Dev agents read the Part-A header of their assigned contract (how_dev_self_checks, verification_method, harness_profile) as a self-check before signaling done. The verifier body (Part B: scenarios, assertion scripts, Gherkin) is for verifier agents only.</critical>
   <critical>One contract of record per story: each planned story must resolve to EXACTLY ONE contract file in `specs/`. Step 3.5 authors the contract for non-app-ui stories (.eval.yaml, .smoke.sh, .trigger.md, or .review.md). Step 3.5 authors the app-ui .feature (Phase A); Step 4 authors .feature ONLY for smoke-routed stories that have NO existing contract file. Never emit a .feature alongside another contract format for the same slug.</critical>
   <critical>AVFL runs ONCE on the complete sprint plan — all stories together as a single validation pass, not per-story.</critical>
@@ -232,12 +242,12 @@ If you want to include a retro handoff item as a story, enter "handoff-N" (where
     If neither condition is met, flag as a dependency warning.</action>
 
     <check if="dependency warnings exist">
-      <output>! Dependency warnings:
+      <output>! Dependency warnings noted (non-blocking — proceeding with current selection):
   · story-slug depends on dep-slug (status: {{dep_status}}, not in this sprint)
   ...
 
-These stories may be blocked during execution. Proceed anyway, or adjust selection?</output>
-      <ask>Proceed with current selection, or revise?</ask>
+These stories may be blocked during execution. Adjust the selection later via
+`momentum-tools sprint plan` if needed.</output>
     </check>
 
     <action>Generate sprint slug: `sprint-YYYY-MM-DD` using today's date. If a sprint with that slug already exists in sprints/index.json completed list, append sequence number: `sprint-YYYY-MM-DD-2`</action>
@@ -249,8 +259,15 @@ These stories may be blocked during execution. Proceed anyway, or adjust selecti
       All planning artifacts (stories, specs, team composition) will be committed to this branch.
       The branch merges to main only when the sprint is complete and verified.</action>
 
-    <action>Register selected stories in the planning sprint:
-      `momentum-tools sprint plan --operation add --stories {{comma-separated-slugs}}`</action>
+    <action>Register selected stories in the planning sprint AND persist {{sprint_slug}} into the
+      durable planning record in the same call — this is what makes AC2's context-reset recovery
+      possible: the slug becomes durable (readable back from `sprints/index.json`) from this point
+      forward, not held only as a workflow variable:
+      `momentum-tools sprint plan --operation add --stories {{comma-separated-slugs}} --slug {{sprint_slug}}`</action>
+    <action>Confirm durability: the selected-story set and {{sprint_slug}} are now both recoverable
+      from `sprints/index.json` via `momentum-tools`, and the per-step task list (Step 0) tracks
+      progress — so a mid-run context reset (e.g. a `/model` switch) can resume from durable state
+      instead of restarting the session.</action>
 
     <output>## Sprint `{{sprint_slug}}` — {{count}} Stories Selected
 
@@ -991,11 +1008,11 @@ Address them before activating the sprint.</output>
     <check if="AVFL returns CHECKPOINT_WARNING">
       <action>Store {{avfl_result}} = "CHECKPOINT_WARNING"</action>
       <action>Synthesize findings: severity indicators (! critical/major, · minor/low), brief descriptions</action>
-      <output>AVFL found issues in the sprint plan:
+      <output>! AVFL found issues in the sprint plan (non-blocking — the plan proceeds):
   {{findings list}}
 
-These are warnings — the plan can proceed, but consider addressing them.</output>
-      <ask>Address findings now, or proceed with warnings noted?</ask>
+These are warnings noted for the record. Proceeding to developer review; address them there
+if you choose to Modify the plan.</output>
     </check>
 
     <check if="AVFL returns GATE_FAILED">
@@ -1219,13 +1236,15 @@ be accepted — the anti-rubber-stamp gate requires written reasoning per fork.<
       once before activation. If any call fails, HALT and surface the error before proceeding.
 
     Then update `.momentum/sprints/index.json` planning section (edit directly):
-        - slug: {{sprint_slug}}
         - team: {{team_composition object — roles with story assignments, specialist types, and guidelines}}
           Each story_assignment entry includes: role, specialist, guidelines path, guidelines_status
           ("present", "missing", "skipped", or "n/a"), AND the contract block + verification_method
           + can_merge_independently fields just written by story-set-contract above
         - waves: {{already stored via momentum-tools}}
         - planned: today's date (YYYY-MM-DD)
+      (The sprint slug is NOT written here — it was already persisted durably via
+      `momentum-tools sprint plan --slug {{sprint_slug}}` in Step 2, keeping momentum-tools the
+      sole writer of the slug field.)
     </action>
 
     <action>Mark planning sprint as ready:
