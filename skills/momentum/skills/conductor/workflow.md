@@ -663,9 +663,15 @@ Ready to begin?</output>
                   - worktree_path: `.worktrees/story-{S.slug}`
                   - verification_contract: `.momentum/sprints/{{sprint_slug}}/specs/{S.slug}.*`
                   - story_diff: {{story_diff}}
-                Constraint: "Read-only. Do not modify code. Do not mutate git. Produce findings only."
+                Constraint: "Read-only. Do not modify code. Do not mutate git. Produce findings only.
+                  Route on and EXECUTE the frozen contract's `verification_method` / `harness_profile`
+                  (Part-A header) — invoke, trigger, run, drive, or (document-review only) inspect, per
+                  the routed method. {{story_diff}} scopes WHICH files/lines belong to this story for
+                  evidence attribution — it is not the verification basis. Do not verdict any
+                  executable-method AC from the diff or from source inspection alone."
                 Returns: the producer-format QA Review Report — per-AC classification
-                  (VERIFIED / PARTIAL / MISSING / BLOCKED) with stakes_class on each finding.
+                  (VERIFIED / PARTIAL / MISSING / BLOCKED) with stakes_class on each finding, and a
+                  report header naming the `verification_method` and driver it routed on.
                   This is the agent's native output shape, NOT the canonical finding schema.
                   The Conductor normalizes it to the canonical schema in the stage-2
                   normalization action below (before the {{qa_findings}} binding).
@@ -693,6 +699,50 @@ Ready to begin?</output>
             REVIEWER A exactly as if REVIEWER A had returned an explicit `failed` signal.
             Do NOT fall through to the Empty case; an unparseable return is a reviewer
             failure, not a clean zero-findings report.
+
+            ── REVIEWER A SILENT-DOWNGRADE GUARD (verification-standard.md §1–§3 enforcement) ──
+            Applies only when the report parsed successfully (above) and only on this
+            dedicated-run path (REVIEWER A actually executed; the covered-by-composition
+            branch never dispatches REVIEWER A, so this guard never fires there).
+
+            Read the frozen contract's Part-A `verification_method` for story S (already
+            available from the contract path passed to REVIEWER A). Read the QA Review
+            Report's header line (`**Verification Method:** ... | **Driver:** ...`).
+
+            A report is a SILENT DOWNGRADE when either:
+              (a) the report's stated Verification Method does not equal the contract's
+                  declared `verification_method`, or the header line is absent while the
+                  contract declares an executable method (not `document-review`); OR
+              (b) the contract's `verification_method` is an executable method (anything
+                  other than `document-review`) AND any AC row in the report's AC
+                  Verification table has Status VERIFIED whose Evidence is traceable only
+                  to a diff line, a grep hit, or a source/file:line citation — i.e., the
+                  Evidence text names no invocation, trigger, command execution, build, or
+                  drive result.
+            A report whose overall Verdict is BLOCKED with a named missing prerequisite is
+            NEVER a silent downgrade, regardless of (a) or (b) — BLOCKED with a named
+            prerequisite is a legitimate outcome (AC5 exemption) and proceeds to
+            normalization exactly as any other BLOCKED report does.
+
+            On a SILENT DOWNGRADE: do NOT bind {{qa_findings}} from this report. Re-dispatch
+            REVIEWER A once more with the same inputs, plus an explicit note that the prior
+            report was rejected because it marked an executable-method AC VERIFIED without
+            execution evidence, and that it must execute the routed `verification_method` —
+            not inspect {{story_diff}} or source — before verdicting.
+              - If the re-run report is compliant (method matches, and every VERIFIED AC on
+                an executable method cites execution evidence, or the report legitimately
+                returns BLOCKED with a named prerequisite): proceed to normalization using
+                the re-run's report.
+              - If the re-run report is STILL a silent downgrade by the same test above:
+                treat this as a REVIEWER A failure — invoke the pipeline-retry path for
+                REVIEWER A exactly as if REVIEWER A had returned an explicit `failed`
+                signal (same treatment as an unparseable return, above). Do NOT bind the
+                unevidenced VERIFIED findings from either attempt, and do NOT advance
+                story S to stage-3/merge on the rejected report. This is the build flow
+                declining to advance on an unevidenced passing verdict (AC5) — it is not a
+                stakes-class mid-flight escalation and does not invoke step 2.F; the
+                existing pipeline-retry-then-quarantine path already ensures S does not
+                silently reach merge and surfaces at the end-gate for developer attention.
 
             ── NORMALIZE REVIEWER A (qa-reviewer) → CANONICAL FINDING SCHEMA ──────────────
             Authoritative predicate: a finding is any entry in the `### Findings` section
