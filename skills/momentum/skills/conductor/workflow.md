@@ -323,6 +323,16 @@ Ready to begin?</output>
             Continue to the next line; never abort the resume over a malformed line.
           IF parsing succeeds, the line is row R — rebuild accumulators per the event-type routing below.
 
+          REHYDRATION EXEMPTION (restated inline — see :217 REHYDRATION EXEMPTION on the LEDGER-APPEND
+          STANDING RULE): every "Append R to {{build_log}}" instruction in the routing below is a REBUILD
+          of the in-context write-through cache only. It does NOT also append to the build ledger at
+          {{ledger_path}}. R is being read FROM the ledger — it already exists there; re-appending it here
+          would duplicate the row on every resume. The standing rule's "every build_log append is also a
+          ledger append" implication does NOT apply anywhere inside this replay loop (all clauses below,
+          including the finding-accumulator rehydration clauses for avfl-finding, e2e-stakes-escalation,
+          and e2e-finding-auto-fixed). Only genuinely NEW live-event appends outside this replay loop
+          trigger a ledger append.
+
           Event-type routing (keyed on R.event):
 
             "story-launched", "stage-transition", "stage3-simplify-pass",
@@ -333,7 +343,7 @@ Ready to begin?</output>
             "e2e-stakes-escalation", "e2e-phase-complete",
             "endgate-change-request-parsed",
             "endgate-change-workflow-pass", "endgate-change-escalated", "endgate-fix-budget-exhausted",
-            "endgate-report-re-rendered", "major-residual-stub-created",
+            "endgate-report-re-rendered", "major-residual-stub-created", "end-gate-phase-complete",
             "conductor-warning":
               → Append R to {{build_log}}.
 
@@ -409,30 +419,47 @@ Ready to begin?</output>
 
             "avfl-finding" (rehydration into {{avfl_findings}}):
               → Append R to {{build_log}} (already covered by the generic avfl-finding route above).
-              → ALSO append to {{avfl_findings}}: { source: "avfl-merge-review", finding_id: R.finding_id,
-                  severity: R.severity, stakes_class: R.stakes_class, summary: R.summary,
-                  evidence: R.evidence, suggested_fix: R.suggested_fix,
-                  disposition: R.disposition, story_slug: R.story_slug }
+              → SUPERSESSION-ON-REHYDRATION: build the candidate entry { source: "avfl-merge-review",
+                  finding_id: R.finding_id, severity: R.severity, stakes_class: R.stakes_class,
+                  summary: R.summary, evidence: R.evidence, suggested_fix: R.suggested_fix,
+                  disposition: R.disposition, story_slug: R.story_slug, ts: R.ts } and UPSERT it into
+                  {{avfl_findings}} keyed on finding_id: if an entry sharing R.finding_id already exists
+                  in {{avfl_findings}}, REPLACE it with this candidate only when R.ts is >= the existing
+                  entry's ts (last-write-wins); otherwise APPEND the candidate as a new entry. Because
+                  ledger rows are read in append order (chronological by ts), a later row for the same
+                  finding_id naturally arrives after the earlier one, so a plain replace-on-match already
+                  yields the correct last-write-wins result — the explicit ts comparison is a safety net
+                  for any out-of-order edge case. This holds whether the duplicate finding_id arises from
+                  an append-only correction/override row (FR141) or from both a prior-attempt and a
+                  current-attempt row for a re-run story. This extends the Phase 5 SUPERSESSION RULE
+                  (:2245) — currently scoped to finding-disposition/story-terminal rows — to this
+                  accumulator, so {{avfl_findings}} never double-counts on resume.
                 This rehydrates {{avfl_findings}} so the MAJOR-RESIDUAL GOVERNANCE GUARD (Phase 5 approve)
-                and the 5.RC.4 re-render can read non-empty accumulators on resume, consistent with an
-                uninterrupted build where these accumulators were populated by step 3.3.
+                and the 5.RC.4 re-render can read non-empty, de-duplicated accumulators on resume,
+                consistent with an uninterrupted build where these accumulators were populated by step 3.3.
               NOTE: "avfl-finding" rows are listed generically above for build_log only; this clause
               extends that routing to also rebuild {{avfl_findings}}. The generic entry already handles
               the build_log append — do not double-append.
 
             "e2e-stakes-escalation" (rehydration into {{e2e_findings}}):
               → Build_log append already handled by the generic route above.
-              → ALSO append to {{e2e_findings}}: { source: "e2e-validator", finding_id: R.finding_id,
-                  stakes_class: R.stakes_class, timing_tier: R.timing_tier,
+              → SUPERSESSION-ON-REHYDRATION: build the candidate entry { source: "e2e-validator",
+                  finding_id: R.finding_id, stakes_class: R.stakes_class, timing_tier: R.timing_tier,
                   summary: R.summary, evidence: R.evidence, suggested_fix: R.suggested_fix,
-                  story_slug: R.story_slug, disposition: "escalated" }
+                  story_slug: R.story_slug, disposition: "escalated", ts: R.ts } and UPSERT it into
+                  {{e2e_findings}} keyed on finding_id, using the same replace-on-match / last-write-wins-
+                  by-ts rule as the avfl-finding clause above (a single {{e2e_findings}} accumulator holds
+                  entries from both this route and the e2e-finding-auto-fixed route below, so the upsert
+                  key spans both — a finding_id must resolve to exactly one entry regardless of which
+                  route wrote it last).
 
             "e2e-finding-auto-fixed" (rehydration into {{e2e_findings}}):
               → Build_log append already handled by the generic route above.
-              → ALSO append to {{e2e_findings}}: { source: "e2e-validator", finding_id: R.finding_id,
-                  stakes_class: R.stakes_class, severity: R.severity,
-                  summary: R.summary, story_slug: R.story_slug,
-                  disposition: R.disposition }
+              → SUPERSESSION-ON-REHYDRATION: build the candidate entry { source: "e2e-validator",
+                  finding_id: R.finding_id, stakes_class: R.stakes_class, severity: R.severity,
+                  summary: R.summary, story_slug: R.story_slug, disposition: R.disposition, ts: R.ts }
+                  and UPSERT it into {{e2e_findings}} keyed on finding_id, using the same replace-on-match /
+                  last-write-wins-by-ts rule as the e2e-stakes-escalation clause above.
                 This rehydrates the routine-fixed portion of {{e2e_findings}} so the complete accumulator
                 (both stakes-escalated and routine-auto-fixed entries) is available to the MAJOR-RESIDUAL
                 GOVERNANCE GUARD and the 5.RC.4 re-render on resume. Without this clause, routine E2E
@@ -450,11 +477,23 @@ Ready to begin?</output>
               exists from a prior run, skip step 3.D on resume; otherwise, run it — regardless of whether
               avfl-on-merge-complete is present. A deferral is never silently assumed satisfied (NFR23 invariant).
             — If a row with event == "e2e-phase-complete" exists: skip Phase 4 (E2E) on resume.
+            — If a row with event == "end-gate-phase-complete" exists: skip the Phase 5 approve-side
+              mutations on resume — the sprint→main merge, the `git branch -d {{sprint_slug}}` branch
+              delete, and the per-story `verify`→`done` / `closed-incomplete` terminal transitions are
+              NOT re-attempted (they would error against already-mutated real state: a re-merge of an
+              already-merged/deleted branch, or a re-transition of an already-terminal story — the
+              state machine rejects any transition FROM a terminal state without --force). Phase 5
+              instead re-renders the end-gate report from the ledger (per the AUTHORITATIVE SOURCE note
+              at step 5) and presents the same completion summary an uninterrupted run would have shown.
+              The existing per-finding `scorecard-revert-reconciliation` idempotency guard (:2277) is
+              unaffected and is not duplicated by this phase-level checkpoint — the two guards operate
+              at different granularities (per-finding vs. per-phase).
           For step 3.D counts: scope the deferred/discharged/undischarged counts to rows with
           ts >= the latest "avfl-on-merge-complete" row's ts (i.e., from the current consumer run
           only) when re-running.
-          This prevents AVFL and E2E from re-executing wholesale after an interrupt, which would
-          append duplicate summary rows and inflate Phase 5 counts.
+          This prevents AVFL, E2E, and the Phase 5 approve-side mutations from re-executing wholesale
+          after an interrupt, which would append duplicate summary rows, inflate Phase 5 counts, or
+          error against already-mutated git/story state.
         </action>
 
         <note>After rehydration: in-context accumulators ({{build_log}}, {{escalations}}, {{end_gate_escalations}}, {{contract_integrity_stops}}, {{conductor_reverted_fixes}}, {{coverage_discharge_results}}, {{avfl_findings}}, {{e2e_findings}}, {{merged}}, {{blocked}}, {{retries}}, {{merge_attempts}}, {{ledger_seen_events}}) are populated from the durable ledger. The status-based {{merged}} seed below cross-checks and supplements this — the ledger provides the richer record (findings, dispositions, escalations, retry counts) while story statuses provide the authoritative membership check.</note>
@@ -486,10 +525,18 @@ Ready to begin?</output>
             equals S.slug, regardless of event or finding_id. This allows the fresh re-run pass to
             append its new finding-disposition, stage3-escalation, avfl-finding, and
             stage3-mid-flight-escalation rows without the dedup guard suppressing them.
+            ACCUMULATOR CLEARING (mirrors the key-clearing above): also remove every entry from
+            {{avfl_findings}} and {{e2e_findings}} whose story_slug equals S.slug. Those entries were
+            rehydrated from S's prior-attempt ledger rows; leaving them in place would let the fresh
+            re-run's live avfl-finding / e2e-stakes-escalation / e2e-finding-auto-fixed appends
+            accumulate alongside the stale prior-attempt entries instead of superseding them, double-
+            counting S's findings at Phase 5. This clearing is scoped to S.slug only — entries for every
+            other story are untouched.
             Note: the prior-session ledger rows for S.slug are NOT deleted from the durable ledger —
             they remain as a historical record. Phase-5 SUPERSESSION (latest row by ts wins per
-            (story_slug, event, finding_id) tuple) reconciles the resulting dual presence: the
-            current-session rows carry a higher ts and supersede the prior-session rows for S.slug.
+            (story_slug, event, finding_id) tuple), together with the SUPERSESSION-ON-REHYDRATION upsert
+            applied to {{avfl_findings}}/{{e2e_findings}} above, reconciles the resulting dual presence:
+            the current-session rows carry a higher ts and supersede the prior-session rows for S.slug.
             If S.slug IS in {{blocked}} (rehydrated from a prior session): do NOT reset or re-launch S — it was already blocked; leave it blocked and defer to Phase 5 approve.
           Option B (dirty worktree): if no prior "story-terminal" row for S.slug already exists in
             the ledger (check {{ledger_seen_events}} — skip if (S.slug, "story-terminal", null) is present),
@@ -2523,27 +2570,37 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
     <ask>The end-gate report is open in the viewer. Review each section. Acknowledge any decision cards in §04. Then approve to merge to main, or request changes.</ask>
 
     <check if="developer approves">
-      <action>Merge sprint branch to main:
-        1. `git checkout main`
-        2. `git merge sprint/{{sprint_slug}}`
-        3. If conflicts: the Conductor resolves them autonomously or fires a fixer subagent, then retries the merge (per spec §2 and decision #9 — "Conductor resolves conflicts; retry"; conflict-resolution engine delivered by conduct-merge-and-conflict-resolution). Never HALT for developer resolution.
-        4. After successful merge: `git branch -d sprint/{{sprint_slug}}`
-      </action>
-      <action>Transition sprint stories to their correct terminal status (per spec §8):
-        For each story in {{sprint_stories}}:
-          IF slug is in {{merged}} (story completed-and-validated, work integrated):
-            Step 1: `momentum-tools sprint status-transition --story {slug} --target verify`
-            Step 2: `momentum-tools sprint status-transition --story {slug} --target done`
-            Note: the state machine requires adjacent transitions — review -> verify -> done (two steps). A direct review -> done skip is invalid. Both steps are performed here in sequence before moving to the next story.
-          ELSE (story is quarantined, integrity-stopped, or blocked/never-merged — not in {{merged}}):
-            `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
-            Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
-      </action>
-      <action>Complete the sprint:
-        Run: `momentum-tools sprint complete`
-        This moves {{sprint_slug}} from `active` into `sprints/index.json` `completed[]`, with `status: "done"` and `retro_run_at: null` — the shape `momentum:retro` Step 1 keys on. No manual completion step is required for a conduct-built sprint after this.
-      </action>
-      <note>Idempotency: if this approve branch re-runs against a sprint already completed by a prior pass (a resumed or re-approved end-gate), `momentum-tools sprint complete` returns `"No active sprint to complete"` (non-zero exit). Treat this as an expected, non-fatal no-op — do not surface it as an error or abort the sequence; continue to the push summary below. This mirrors the idempotency convention `momentum:retro` already documents for its own equivalent call (`retro/workflow.md:698`).</note>
+      <check if="NO row with event == 'end-gate-phase-complete' exists yet in the build ledger for this sprint (first time reaching the approve-side mutations)">
+        <action>Merge sprint branch to main:
+          1. `git checkout main`
+          2. `git merge sprint/{{sprint_slug}}`
+          3. If conflicts: the Conductor resolves them autonomously or fires a fixer subagent, then retries the merge (per spec §2 and decision #9 — "Conductor resolves conflicts; retry"; conflict-resolution engine delivered by conduct-merge-and-conflict-resolution). Never HALT for developer resolution.
+          4. After successful merge: `git branch -d sprint/{{sprint_slug}}`
+          DEFENSIVE FALLBACK: if step 2 fails because `sprint/{{sprint_slug}}` no longer exists as a ref, a prior session already merged and deleted it but died before the checkpoint row below was appended — the narrow crash window inherent to any ledger checkpoint (per build-ledger.md's Crash-Loss Bound). Treat the merge as already complete rather than as an error, and proceed to the transitions step.
+        </action>
+        <action>Transition sprint stories to their correct terminal status (per spec §8):
+          For each story in {{sprint_stories}}:
+            IF slug is in {{merged}} (story completed-and-validated, work integrated):
+              Step 1: `momentum-tools sprint status-transition --story {slug} --target verify`
+              Step 2: `momentum-tools sprint status-transition --story {slug} --target done`
+              Note: the state machine requires adjacent transitions — review -> verify -> done (two steps). A direct review -> done skip is invalid. Both steps are performed here in sequence before moving to the next story.
+              DEFENSIVE FALLBACK: if the story's status is already "done" (the narrow-window case above), skip re-running its two-step transition — the state machine rejects any transition FROM a terminal state without --force, so re-attempting would error, not no-op.
+            ELSE (story is quarantined, integrity-stopped, or blocked/never-merged — not in {{merged}}):
+              `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
+              Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
+              DEFENSIVE FALLBACK: if the story's status is already a terminal state (the narrow-window case above), skip re-running this transition for the same reason.
+        </action>
+        <action>Complete the sprint:
+          Run: `momentum-tools sprint complete`
+          This moves {{sprint_slug}} from `active` into `sprints/index.json` `completed[]`, with `status: "done"` and `retro_run_at: null` — the shape `momentum:retro` Step 1 keys on. No manual completion step is required for a conduct-built sprint after this.
+        </action>
+        <note>Idempotency: if this approve branch re-runs against a sprint already completed by a prior pass (a resumed or re-approved end-gate), `momentum-tools sprint complete` returns `"No active sprint to complete"` (non-zero exit). Treat this as an expected, non-fatal no-op — do not surface it as an error or abort the sequence; continue to the push summary below. This mirrors the idempotency convention `momentum:retro` already documents for its own equivalent call (`retro/workflow.md:698`).</note>
+        <action>END-GATE PHASE-COMPLETE CHECKPOINT: append { event: "end-gate-phase-complete", phase: "end-gate-approve", stories_merged: count of {{merged}}, stories_closed_incomplete: count of stories transitioned to closed-incomplete above, pushed: false, ts: NOW() } to {{build_log}} and the build ledger, per references/build-ledger.md (Conductor-level, sprint-scoped row — story_slug omitted, see Conductor-Level Events). Its presence durably marks that the approve-side mutations above are done; from this point forward, a resume skips them (PHASE CHECKPOINT RULE, step 2.0). `pushed: false` reflects state at this exact append moment, before the push ask further below runs — it is informational only; push itself remains a separate, always-reconfirmed developer decision each session, independent of this checkpoint.</action>
+      </check>
+      <check if="a row with event == 'end-gate-phase-complete' already exists in the build ledger for this sprint (resume after the approve-side mutations already completed in a prior session)">
+        <note>RESUME PAST APPROVAL. The merge, branch delete, per-story terminal transitions, and sprint completion above already completed and are durably checkpointed — per the PHASE CHECKPOINT RULE (step 2.0), they are not repeated: re-running them would error (the branch is already deleted; the state machine rejects re-transitioning stories already at a terminal status without --force; `momentum-tools sprint complete` reports no active sprint). The end-gate report opened above was re-rendered fresh from the ledger and is content-equivalent to what an uninterrupted run would show.</note>
+      </check>
+
       <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
         Sources of residual findings to scan:
           (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized in step 3.3 (avfl_findings): fixed | residual | escalated).
@@ -2551,6 +2608,7 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           (c) {{e2e_findings}} — E2E findings (Phase 4); each has severity and disposition fields (normalized at Phase 4 step 4.3: fixed | dismissed | triaged-out | escalated). Findings where disposition != "fixed" AND disposition != "dismissed" are residuals.
         Combine all three sources into {{all_build_findings}}.
         Note: sources (a) and (c) read the rehydrated in-context accumulators ({{avfl_findings}} and {{e2e_findings}}), which are equivalent views of the same durable ledger rows rebuilt at step 2.0 rehydration — consistent with the AUTHORITATIVE SOURCE note above and the reconciliation clauses at Source 2 and Source 3.
+        Note: this guard is NOT gated by the end-gate-phase-complete checkpoint — it always runs, on both a first-time approve and a resume. It is independently idempotent: momentum:triage carries its own dedup gate against duplicate stubs for the same finding_id, so re-scanning {{all_build_findings}} and re-invoking momentum:triage for a finding that already has a stub is a harmless no-op.
 
         Collect {{major_residuals}} = all findings F in {{all_build_findings}} where:
           - F.severity is in {critical, major}  — the upper severity tier
