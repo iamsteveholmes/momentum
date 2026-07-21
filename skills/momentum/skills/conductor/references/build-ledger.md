@@ -127,7 +127,7 @@ These events are the only permitted exceptions to the `story_slug`-required rule
 | `coverage-discharge-consumer-complete` | Step 3.D consumer summary | Summarizes across all deferred stories. |
 | `avfl-on-merge-complete` | Step 3.5 AVFL summary | Sprint-level integration review. |
 | `e2e-phase-complete` | Step 4.4 E2E summary | Sprint-level E2E summary. |
-| `conductor-warning` | Any phase — Conductor-detected anomaly | `story_slug` (optional — omit for sprint-level warnings), `reason` (non-empty string describing the anomaly). Used for: write-scope guard violations, invalid fixer behavior, dismissed findings with missing rationale, and similar Conductor-detected issues that are not findings in the canonical sense but must be recorded. |
+| `conductor-warning` | Any phase — Conductor-detected anomaly | `story_slug` (optional — omit for sprint-level warnings), `reason` (non-empty string describing the anomaly). Used for: write-scope guard violations, invalid fixer behavior, dismissed findings with missing rationale, and similar Conductor-detected issues that are not findings in the canonical sense but must be recorded. The rehydration-unparseable-line variant additionally carries `line_no` (the 1-indexed line number of the unparseable ledger line) — see Idempotent Re-Append Guidance below for how this field dedups repeat warnings across resumes. |
 
 For these events, `story_slug` may be omitted or set to `null`. All other events must carry a real story slug.
 
@@ -156,6 +156,8 @@ When a `finding-disposition` row has `disposition: "dismissed"`, it must carry a
 When the Conductor resumes a build and rehydrates from an existing ledger:
 
 1. **Read all existing rows** to rebuild Conductor-scoped accumulators. A row that fails to parse as JSON — including a partial, truncated final line left by a crash mid-append — is skipped, not treated as fatal: rehydration appends a `conductor-warning` row naming the unparseable content (this warning IS a new live append — see the LEDGER-APPEND STANDING RULE's REHYDRATION EXEMPTION) and continues to completion. See `workflow.md` step 2.0 for the full skip-and-warn rule.
+
+   **Idempotency across resumes:** because the ledger is append-only, a persistently-corrupt line (never overwritten by a later append) sits at the same fixed 1-indexed line number on every resume. Rehydration warns about a given unparseable line **at most once across all resumes** — it dedups by the `line_no` field carried on the `conductor-warning` row (see the Controlled Event-Type Set table above): before replaying, it pre-scans existing rows for prior `conductor-warning` rows carrying `line_no`, and skips emitting a new warning for any line number already recorded. Distinct unparseable lines (different `line_no` values) each still get their own warning — only the exact same persistent line is deduplicated.
 2. **Track seen events.** Build a set of `(story_slug, event, finding_id)` tuples from existing rows.
 3. **Do not re-append** events for stories that are not re-run. A story already at status `review` or `done` (merged in a prior session) will not be re-dispatched — its prior ledger rows stand.
 4. **Stories that ARE re-run** (reset from `in-progress` to `ready-for-dev` by the reconcile) will produce fresh events; these are new rows and are appended normally. The prior session's rows for that story (if any) remain — they document the interrupted attempt.
