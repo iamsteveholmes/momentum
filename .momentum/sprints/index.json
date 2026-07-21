@@ -1,8 +1,7 @@
 {
-  "active": null,
-  "planning": {
-    "locked": false,
-    "status": "planning",
+  "active": {
+    "locked": true,
+    "status": "active",
     "stories": [
       "momentum-knowledge-base-buildout",
       "manifesto-builder-skill-generate-then-curate",
@@ -140,8 +139,275 @@
         "story_file_sha": "373bb24c8df3400c53b27957d1f81c2666591a814f8bb45b8b23afae8a19f8af"
       }
     ],
-    "goal": "The agent cohort goes live: the composition stack — Momentum's own KB, the manifesto producer, and routing-table resolution — lands and is proven by the shipped E2E driver passing live against the nornspun fixture with observed PASS output, exercising the exact resolve seam a /momentum:conduct build uses to spawn composed gen-2 subagents. The ride-along fixes harden the conduct engine and planning rails that this sprint's own conducted build runs on."
+    "goal": "The agent cohort goes live: the composition stack — Momentum's own KB, the manifesto producer, and routing-table resolution — lands and is proven by the shipped E2E driver passing live against the nornspun fixture with observed PASS output, exercising the exact resolve seam a /momentum:conduct build uses to spawn composed gen-2 subagents. The ride-along fixes harden the conduct engine and planning rails that this sprint's own conducted build runs on.",
+    "team": {
+      "story_assignments": {
+        "momentum-knowledge-base-buildout": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/momentum-knowledge-base-buildout.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "cf0e513dd0396af7faf773ae78153e04fe904fe37ce4c35daaeecbcfcf0f8ed7"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "manifesto-builder-skill-generate-then-curate": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/manifesto-builder-skill-generate-then-curate.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "d27feb5e2333b8ad5e201727661d3e846d7056d78f7a713dc99c300855689f7f"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "base-body-collapse-rollback": {
+          "verification_method": "bash",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/base-body-collapse-rollback.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "6eaa7e9a371dbc86b3958a3e16a4f4969c91d10ce71bc610afabf112146b890f"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "rename-base-body-files-to-canonical-naming": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/rename-base-body-files-to-canonical-naming.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "a81b41e7ce21d62f19f7067dce5540435f3dc7a7a2b53fe87a5a82607b56d281"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "architecture-decision-26-update-for-base-body-collapse": {
+          "verification_method": "document-review",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/architecture-decision-26-update-for-base-body-collapse.review.md",
+            "harness_profile": "document-review",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "2870aad05d1513705193c4f5a43b68d2405de72a06135f9f8ced971583cd10a2"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "conductor-endgate-viewer-hijack-and-silent-gate": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/conductor-endgate-viewer-hijack-and-silent-gate.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "covered-by-composition",
+            "covered_by_scenario": "Conducted fixture build — interrupted, resumed, approved",
+            "frozen_sha256": "ad05e9db7378522415e4a716c30a417ec80c62b84b05f01b5a09a2ab291f0569"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "conduct-adoption-retire-sprint-dev": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/conduct-adoption-retire-sprint-dev.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "covered-by-composition",
+            "covered_by_scenario": "Conducted fixture build — interrupted, resumed, approved",
+            "frozen_sha256": "ba9af61984c0a9d7d89126c5ba5560608e33c8a7d6d0e29c2c9f55e4275ccc2d"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "repair-phantom-story-file-entries-and-backfill-live-fixture-scope": {
+          "verification_method": "bash",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/repair-phantom-story-file-entries-and-backfill-live-fixture-scope.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "db691a023f661fb3bb7f171dba776584e856cb29c3031d03dad754c489b07b69"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "conduct-live-run-against-fixture-sprint": {
+          "verification_method": "bash",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/conduct-live-run-against-fixture-sprint.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "a4aa8177acf84a99eef4b3d9deb6011077ea5028e80c380a4a6e1cf692ee5cf7"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "sprint-planning-cross-story-coherence-gate": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/sprint-planning-cross-story-coherence-gate.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "c7c247167c6997d08d82ccb2dcf64536464277cbceb9e46c8888ec469b444902"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "conduct-qa-execute-verification-method": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": false,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/conduct-qa-execute-verification-method.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "covered-by-composition",
+            "covered_by_scenario": "Conducted fixture build — interrupted, resumed, approved",
+            "frozen_sha256": "d922ca3c8370f1a7cabac45ef968a37d64e1da61dd14c486cdbc4f52396c45b7"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "sprint-planning-continuous-execution-and-cli-fixes": {
+          "verification_method": "bash",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/sprint-planning-continuous-execution-and-cli-fixes.smoke.sh",
+            "harness_profile": "bash",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "ce8aa543e3114e314fce5ff26fa3f1d21cd8a90bdeef6518205c54e5ff04d076"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "sprint-planning-handoff-artifact": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/sprint-planning-handoff-artifact.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "dedicated-run",
+            "covered_by_scenario": null,
+            "frozen_sha256": "8ed8015bc257780015b8c535566e9ff7dc8cf83b3505aec17ffa2579d52178d3"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "conduct-resume-and-rehydration-idempotency-hardening": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/conduct-resume-and-rehydration-idempotency-hardening.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "covered-by-composition",
+            "covered_by_scenario": "Conducted fixture build — interrupted, resumed, approved",
+            "frozen_sha256": "25c30f4b53f08ca2f9adb4535c10aeb8b4acdb15d45aa36dab9a31f0fc46e506"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        },
+        "conduct-conductor-staging-and-ledger-append-safety": {
+          "verification_method": "skill-invoke",
+          "can_merge_independently": true,
+          "contract": {
+            "path": ".momentum/sprints/sprint-2026-07-13/specs/conduct-conductor-staging-and-ledger-append-safety.eval.yaml",
+            "harness_profile": "skill-invoke",
+            "coverage_disposition": "covered-by-composition",
+            "covered_by_scenario": "Conducted fixture build — interrupted, resumed, approved",
+            "frozen_sha256": "303c9fb972e6bc2474be883dee40675c165b3bc5aa049642c63c1617cbf688fe"
+          },
+          "role": "dev",
+          "specialist": "dev",
+          "guidelines": ".claude/rules/dev-skills.md",
+          "guidelines_status": "n/a"
+        }
+      },
+      "roles": {
+        "dev": {
+          "stories": 15,
+          "agent": "skills/momentum/agents/dev.md",
+          "note": "base Dev for all 15 — specialist resolution via momentum-tools agent resolve against momentum/agents.json (routing-table model, DEC-023/ARCH-3); legacy specialist assignments intentionally not used (base-body-collapse-rollback removes those bodies this sprint)"
+        },
+        "qa-reviewer": {
+          "stories": 14,
+          "agent": "skills/momentum/agents/qa-reviewer.md",
+          "note": "all except architecture-decision-26-update-for-base-body-collapse (pure document-review)"
+        },
+        "e2e-validator": {
+          "stories": 15,
+          "agent": "skills/momentum/agents/e2e-validator.md",
+          "note": "per coverage-plan.md: 1 integration scenario discharges 5 conductor stories; 10 dedicated runs"
+        },
+        "architect-guard": {
+          "stories": 3,
+          "skill": "momentum:architecture-guard",
+          "note": "base-body-collapse-rollback, rename-base-body-files-to-canonical-naming, architecture-decision-26-update-for-base-body-collapse"
+        }
+      }
+    },
+    "planned": "2026-07-21",
+    "plan_gate": {
+      "approved_at": "2026-07-21",
+      "decision": "A",
+      "fork_verdicts": {
+        "1_sprint_goal": "Approve as worded",
+        "2_proof_chain": "Accept the chain as sequenced",
+        "3_conductor_file_overlap": "Accept with the sequencing caution",
+        "4_narrowed_proof_scope": "Confirmed — proof story proves the seam, not a conduct invocation",
+        "5_rename_option": "Confirm Option A",
+        "6_kb_legs": "Confirm both legs",
+        "7_harness_override": "Confirm the override"
+      }
+    },
+    "started": "2026-07-21"
   },
+  "planning": null,
   "completed": [
     {
       "locked": true,
