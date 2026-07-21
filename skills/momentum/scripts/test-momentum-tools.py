@@ -336,6 +336,51 @@ def test_sprint_plan_no_duplicates():
     assert_eq("s2 added", "s2" in result["planning"]["stories"], True)
 
 
+def test_sprint_plan_sets_slug():
+    """sprint plan --slug persists the planning entry's slug (AC3 / Task 1)."""
+    print("\n[sprint plan] Sets slug via CLI")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--operation", "add", "--stories", "s1",
+                          "--slug", "sprint-2026-07-13")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("slug persisted", result["planning"]["slug"], "sprint-2026-07-13")
+
+
+def test_sprint_plan_slug_optional_backward_compat():
+    """Calls without --slug behave unchanged: no slug field is introduced."""
+    print("\n[sprint plan] Slug omitted stays backward-compatible")
+    proj = setup_project()
+    code, out = run_tool(proj, "sprint", "plan", "--operation", "add", "--stories", "s1")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("no slug field introduced", "slug" in result["planning"], False)
+
+
+def test_sprint_plan_slug_idempotent():
+    """Re-running with the same slug is a no-op on the slug value."""
+    print("\n[sprint plan] Slug set is idempotent")
+    sprints = {"active": None, "planning": {"slug": "sprint-2026-07-13", "locked": False, "stories": ["s1"], "waves": []}, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "sprint", "plan", "--operation", "add", "--stories", "s2",
+                          "--slug", "sprint-2026-07-13")
+    assert_eq("exit code 0", code, 0)
+    result = read_sprints(proj)
+    assert_eq("slug unchanged", result["planning"]["slug"], "sprint-2026-07-13")
+
+
+def test_sprint_plan_slug_never_clobbers_locked_sprint():
+    """A supplied --slug must not modify an already-activated/locked sprint."""
+    print("\n[sprint plan] Slug never clobbers a locked sprint")
+    sprints = {"active": None, "planning": {"slug": "sprint-original", "locked": True, "stories": ["s1"], "waves": []}, "completed": []}
+    proj = setup_project(sprints=sprints)
+    code, out = run_tool(proj, "sprint", "plan", "--operation", "add", "--stories", "s2",
+                          "--slug", "sprint-hijack")
+    assert_eq("rejected", code, 1)
+    result = read_sprints(proj)
+    assert_eq("original slug untouched", result["planning"]["slug"], "sprint-original")
+
+
 # --- Helpers for new tests ---
 
 def setup_installed_json(project_dir: Path, data: dict) -> Path:
@@ -2953,6 +2998,10 @@ def main():
     test_sprint_plan_remove()
     test_sprint_plan_locked()
     test_sprint_plan_no_duplicates()
+    test_sprint_plan_sets_slug()
+    test_sprint_plan_slug_optional_backward_compat()
+    test_sprint_plan_slug_idempotent()
+    test_sprint_plan_slug_never_clobbers_locked_sprint()
 
     # Sprint status field tests
     test_sprint_plan_sets_status_planning()

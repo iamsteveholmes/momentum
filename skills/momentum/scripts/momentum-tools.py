@@ -13,7 +13,7 @@ Usage:
     momentum-tools.py sprint activate
     momentum-tools.py sprint complete
     momentum-tools.py sprint epic-membership --story SLUG --epic SLUG
-    momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N]
+    momentum-tools.py sprint plan --operation add|remove --stories SLUG[,SLUG,...] [--wave N] [--slug SPRINT_SLUG]
     momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY] [--depends-on SLUG[,SLUG,...]]
     momentum-tools.py sprint story-set-contract --slug SLUG --verification-method METHOD --contract-path PATH --harness-profile PROFILE --coverage-disposition DISPOSITION [--covered-by-scenario SCENARIO] --frozen-sha256 SHA256 --can-merge-independently BOOL
     momentum-tools.py sprint compute-verification-method --story SLUG
@@ -338,6 +338,10 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
     if planning.get("locked"):
         error_result("sprint_plan", "Cannot modify a locked sprint")
 
+    sprint_slug_arg = getattr(args, "slug", None)
+    if sprint_slug_arg:
+        planning["slug"] = sprint_slug_arg
+
     story_slugs = [s.strip() for s in args.stories.split(",")]
 
     if args.operation == "add":
@@ -370,7 +374,8 @@ def cmd_sprint_plan(args: argparse.Namespace) -> None:
         planning["waves"] = [w for w in planning.get("waves", []) if w.get("stories")]
 
     write_json(path, sprints)
-    result("sprint_plan", success=True, operation=args.operation, stories=story_slugs)
+    result("sprint_plan", success=True, operation=args.operation, stories=story_slugs,
+           slug=planning.get("slug"))
 
 
 def cmd_sprint_story_set_contract(args: argparse.Namespace) -> None:
@@ -2882,6 +2887,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--operation", required=True, choices=["add", "remove"], help="Add or remove")
     sp.add_argument("--stories", required=True, help="Comma-separated story slugs")
     sp.add_argument("--wave", type=int, default=None, help="Wave number (for add)")
+    sp.add_argument("--slug", default=None,
+                    help="Set the planning sprint's slug (idempotent; ignored if sprint is locked)")
     sp.set_defaults(func=cmd_sprint_plan)
 
     # sprint ready
