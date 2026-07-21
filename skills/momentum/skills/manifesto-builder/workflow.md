@@ -84,6 +84,15 @@ KB loop. This skill re-invokes that method; it does not re-implement a parallel 
         `- **<observable symptom, drafted>** → \`wiki-query <exact terms drawn from this lookup>\``
       Group all entries drafted from lookups under the same {{technology_areas}} member under one
       `###` heading matching that area name.
+      Anti-pattern (reject at draft time, per manifesto-format.md symptom-phrasing rule 1 —
+      Observable): a task- or goal-shaped entry describes what the developer *wants to do*, not what
+      they *see*. Example of the anti-pattern: `- **Need to bridge a Flow/callback source into
+      Compose State** → ...` — this is a goal statement, not an observed symptom. Rewrite it to the
+      situation the developer is actually facing, e.g. `- **Composable needs to observe values from a
+      callback-based or Flow source without recomposing on every emission** → ...`. Before drafting
+      an entry, ask: "is this what the developer *sees* happening, or what they're *trying to
+      accomplish*?" If it's the latter, restate it as the observable situation that would lead them to
+      look this up.
       If a wiki-query for an area returns nothing usable: do not invent an entry for that area. Note
       it as a KB gap instead (see Phase 1 self-check below) — the Dev Notes "KB dependency (soft)"
       note governs: a sparse KB legitimately yields a sparser draft, never a fabricated one.
@@ -142,7 +151,11 @@ KB gaps (no draft entries — sparse KB, not fabricated): {{list of areas}}
       drawn verbatim from manifesto-format.md's normative rules:
 
       **Symptom phrasing rules (every entry must satisfy all four):**
-      1. Observable — what the developer sees, not an internal cause.
+      1. Observable — what the developer sees, not an internal cause, and not a task or goal
+         they're trying to accomplish. Anti-pattern: `Need to bridge a Flow/callback source into
+         Compose State` (task-shaped, reads as a to-do) — rewrite to the observable situation, e.g.
+         `Composable needs to observe values from a callback-based or Flow source without
+         recomposing on every emission`.
       2. Specific — names the API, behavior, or output that is wrong.
       3. Diagnostic — distinguishes this entry from its neighbors in the same group.
       4. Phrased as a situation, not a question.
@@ -185,19 +198,32 @@ KB gaps (no draft entries — sparse KB, not fabricated): {{list of areas}}
 
   <step n="3" goal="Self-check against the Discover checklist and completeness criterion, then write">
 
-    <action>Assemble the final manifesto content using manifesto-format.md's Manifesto File Template,
-      section order: identity block (`role`, `domain`, `project_kb`) → `## Project Stack` (from Phase
-      1) → `## File Ownership` (`{{curated_file_ownership}}`) → `## Diagnostic Table`
-      (`{{curated_table}}`, grouped under `###` technology-area headings).
+    <action>Assemble the final manifesto content using manifesto-format.md's Manifesto File Template
+      verbatim, including every literal section and separator the template shows — not just the
+      content-bearing sections. Assembly order:
+      1. Identity block: `---` / `role: {{role}}` / `domain: {{domain}}` / `project_kb: {{project_kb}}` / `---`.
+      2. `# {{role}}-{{domain}} — <short human-readable description>` — an H1 title line, derived from
+         {{role}} and {{domain}} plus a short descriptive phrase (e.g. `# dev-kotlin-compose — Kotlin
+         Compose UI development diagnostic agent`).
+      3. A one-sentence summary of what this agent owns and when it is used (derived from {{role}},
+         {{domain}}, and {{technology_areas}}).
+      4. `---`, then `## Project Stack` (from Phase 1).
+      5. `---`, then `## File Ownership` (`{{curated_file_ownership}}`).
+      6. `---`, then `## Diagnostic Table` (`{{curated_table}}`, grouped under `###` technology-area
+         headings).
+      Every `---` separator shown in the template is required — do not collapse or omit them.
     </action>
 
     <action>Self-check against `build-guidelines` Phase 1 Discover's validity checklist before writing
       (do not write if any check fails — surface the failure to the developer instead):
       1. Identity block present with `role`, `domain`, `project_kb` all set (non-placeholder values).
-      2. `## Project Stack` section present.
-      3. `## File Ownership` section present AND `file_ownership` list non-empty.
-      4. `## Diagnostic Table` section present with ≥1 entry.
-      (The 5th Discover check — a base body existing at `skills/momentum/agents/{{role}}.md` — is
+      2. H1 title line present (`# {{role}}-{{domain}} — ...`) and the one-sentence summary present
+         immediately below it.
+      3. `## Project Stack` section present.
+      4. `## File Ownership` section present AND `file_ownership` list non-empty.
+      5. `## Diagnostic Table` section present with ≥1 entry.
+      6. All `---` section separators from the Manifesto File Template are present between sections.
+      (The Discover check for a base body existing at `skills/momentum/agents/{{role}}.md` — is
       outside this skill's control; note its presence/absence in the completion report but do not
       block the write on it.)
     </action>
@@ -212,6 +238,15 @@ KB gaps (no draft entries — sparse KB, not fabricated): {{list of areas}}
         table for what it covers.
     </action>
 
+    <action>Required rewrite-to-symptom pass (final gate before write): re-read every entry in
+      {{curated_table}} one more time and ask, per entry, "is this phrased as what the developer
+      *sees*, or as a task/goal they're trying to accomplish?" (manifesto-format.md symptom-phrasing
+      rule 1). A task/goal-shaped entry (e.g. "Need to bridge X into Y", "Testing a Z that does W") is
+      not conformant even if the developer's curate response didn't catch it. Rewrite any surviving
+      task-shaped entry to the observable situation before writing — do not write it as-is and do not
+      silently drop it.
+    </action>
+
     <action>Write the assembled content to `.claude/manifests/{{role}}-{{domain}}.md`. Create
       `.claude/manifests/` if it does not exist.
     </action>
@@ -223,9 +258,11 @@ KB gaps (no draft entries — sparse KB, not fabricated): {{list of areas}}
 
 **Self-check:**
 - Identity block: {{PASS}}
+- H1 title + summary: {{PASS}}
 - Project Stack: {{PASS}}
 - File Ownership: {{PASS}} ({{N}} globs)
 - Diagnostic Table: {{PASS}} ({{N}} entries across {{M}} technology areas)
+- Symptom-phrasing rewrite pass: {{PASS}} (no task/goal-shaped entries survived)
 - Base body at `skills/momentum/agents/{{role}}.md`: {{present | ABSENT — build-guidelines will still discover this manifesto but cannot compose an agent from it until the base body exists}}
 
 **Next step:** run `momentum:build-guidelines` to discover this manifesto and compose the runnable agent.

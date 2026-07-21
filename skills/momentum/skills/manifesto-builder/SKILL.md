@@ -65,4 +65,5 @@ Gates G1 and G2.
 `.claude/manifests/{role}-{domain}.md` — conformant to `manifesto-format.md`'s Manifesto File Template:
 identity block → `## Project Stack` → `## File Ownership` → `## Diagnostic Table`.
 
-See `workflow.md` for the full GENERATE → CURATE → FINALIZE phase execution.
+Load and follow `./workflow.md` — it is the binding execution protocol; the mandatory curate gate
+lives there and must not be skipped.
