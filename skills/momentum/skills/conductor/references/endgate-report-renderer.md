@@ -386,6 +386,8 @@ Plain-language headline (the risk in human terms) as the `<summary>` so the deve
 
 After writing, open the report in the cmux Browser viewer pane. Query for an existing viewer surface FIRST, then branch — never open unconditionally:
 
+0. Query existing viewer surfaces this session (e.g. `cmux list-panes` then `cmux list-pane-surfaces --pane <viewer-pane>`) to determine whether a viewer browser surface already exists.
+
 - **If a viewer browser surface already exists** in this workspace (showing a prior report — e.g. a plan-gate report, or an earlier end-gate render this one supersedes): navigate it in place —
 ```bash
 cmux browser <existing-surface> goto "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html"
