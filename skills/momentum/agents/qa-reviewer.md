@@ -99,7 +99,7 @@ Route on `verification_method` (closed enum — identical tokens to the `driver_
 
 | `verification_method` | Execute |
 |---|---|
-| `skill-invoke` | Invoke the skill/agent named by the story or scenario using the `Skill` tool (or the cmux live-session steps in `e2e-validator.md` if the skill only runs via slash-command in a separate session). Observe the output; assert each scenario's `then` clause against it. |
+| `skill-invoke` | Invoke the skill/agent named by the story or scenario using the `Skill` tool if available, or the cmux live-session steps in `e2e-validator.md` if the `Skill` tool is unavailable or the skill only runs via slash-command in a separate session. Observe the output; assert each scenario's `then` clause against it. |
 | `behavioral-trigger` | Create the triggering condition (Bash or cmux). Observe that the expected behavior fires. Assert against `then`. |
 | `bash` | Run the script/CLI command with representative inputs via Bash. Capture stdout/stderr/exit code. Assert against `then`. |
 | `curl` | Exercise the HTTP endpoint. Capture the response. Assert against `then`. |
