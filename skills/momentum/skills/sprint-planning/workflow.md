@@ -26,11 +26,12 @@
   <critical>Use task tracking (TaskCreate/TaskUpdate) for sprint planning steps — this prevents context drift in long runs. Ad-hoc narrative summaries are NOT a substitute for tool-queryable task state.</critical>
 
   <step n="0" goal="Initialize task tracking">
-    <action>Create tasks for the 11 workflow steps:
+    <action>Create tasks for the 12 workflow steps:
       1. Synthesize recommendations from master plan and backlog
       2. Story selection
       3. Flesh out stories
       3.5. Author frozen contracts + coverage plan
+      3.6. Cross-story seam coherence check
       4. Generate Gherkin specs
       4.5. Spec impact analysis — update architecture and PRD
       5. Build team composition
@@ -577,6 +578,62 @@ The sprint CANNOT activate silently with known guard failures.</output>
     <action>Update task 3.5 (Author frozen contracts + coverage plan) to completed</action>
   </step>
 
+  <step n="3.6" goal="Cross-story seam coherence check">
+    <action>Update task 3.6 (Cross-story seam coherence check) to in_progress</action>
+    <note>Dedicated deterministic edge-enumeration step — NOT another AVFL prompt. Step 6's
+    whole-sprint AVFL is the gate that demonstrably missed the nornspun seam failure; this step
+    runs here, right after contracts freeze, independently of whatever Step 6 later finds.
+    Extends the depends_on feature Step 2 already checks (presence/status only) with the
+    missing semantic half: does the producer actually deliver what the consumer names. Not a
+    second parallel dependency pass — one depends_on feature, two steps. Vocabulary:
+    "cross-story seam coherence" / "seam coherence failure" — never "contract-freeze" (that
+    term names the unrelated per-story frozen_sha256 integrity check).</note>
+
+    <action>Read `skills/momentum/skills/sprint-planning/references/coherence-gate.md` in full.
+    It defines the edge model, consumer-input extraction, producer-deliverable resolution
+    (in-sprint and out-of-sprint), the matching rule, the failure-card format, and the
+    coherence-report.md file format used below. Follow it exactly — do not improvise a
+    different algorithm.</action>
+
+    <action>Enumerate `{{coherence_edges}}` per coherence-gate.md §1: for every story in
+    `{{selected_stories}}` with a non-empty `depends_on`, and every slug it depends on, create
+    one edge. Every depends_on relationship among the sprint's selected stories produces
+    exactly one edge — in-sprint and out-of-sprint alike, none dropped. Set {{edge_count}} =
+    {{coherence_edges|count}}.</action>
+
+    <action>For each edge: extract the consumer's named external input (coherence-gate.md §2);
+    if one is named, resolve the producer's deliverable text (coherence-gate.md §3 — frozen
+    contract if in-sprint; completed-sprint contract record, falling back to the producer's own
+    story file, if out-of-sprint, after confirming the producer's recorded status is `done`);
+    then match (coherence-gate.md §4). Classify each edge as `satisfied`, `presence-only` (no
+    named input to match — Step 2's presence/status check already covers it), or a coherence
+    failure.</action>
+
+    <action>For every coherence failure, build the failure card per coherence-gate.md §5 (both
+    story slugs, the specific missing deliverable, the seam sentence, and the three
+    remediation options: amend producer / amend consumer / add a wiring story). Store
+    `{{coherence_failures}}` = the list of open failure cards.</action>
+
+    <action>Write `.momentum/sprints/{{sprint_slug}}/coherence-report.md` per
+    coherence-gate.md §6.</action>
+
+    <check if="{{coherence_failures}} is empty">
+      <output>> ✓ Cross-story seam coherence — {{edge_count}} depends_on edge(s) examined, all resolve cleanly. No seam mismatch found.</output>
+    </check>
+
+    <check if="{{coherence_failures}} is non-empty">
+      <output>! Cross-story seam coherence — {{coherence_failures|count}} open mismatch(es) found across {{edge_count}} depends_on edge(s) examined:
+
+{{for each failure:
+  · {{consumer}} ✗ {{producer}} — missing: {{missing}} ({{seam}})
+}}
+
+These surface as decisions at the Step 7 plan gate and block activation at Step 8 unless you explicitly override.</output>
+    </check>
+
+    <action>Update task 3.6 (Cross-story seam coherence check) to completed</action>
+  </step>
+
   <step n="4" goal="Generate Gherkin specs">
     <action>Update task 4 (Generate Gherkin specs) to in_progress</action>
     <action>Create the sprint specs directory (if not already created by Step 3.5):
@@ -984,6 +1041,9 @@ Address them before activating the sprint.</output>
 
   <step n="6" goal="AVFL validation of complete sprint plan">
     <action>Update task 6 (Run AVFL) to in_progress</action>
+    <note>Cross-story seam coherence (Step 3.6) already ran, independently of this AVFL pass —
+    its results ({{coherence_failures}}) feed the Step 7 gate and Step 8 activation check
+    directly, regardless of what this AVFL run finds.</note>
     <action>Gather all sprint plan artifacts for validation:
       · All approved story files (full content)
       · All generated Gherkin specs
@@ -1068,14 +1128,34 @@ Address all findings before the plan can proceed.</output>
         · Set abs_spec_path  = "{{cwd}}/.momentum/sprints/{{sprint_slug}}/specs/{{story_slug}}.{{ext}}"
         · Store per-story abs_story_path and abs_spec_path for use in Phase B hrefs
 
-      Build {{genuine_forks}} (≤ 7 ForkItems) using fork detection rules from renderer §4:
+      Mandatory coherence forks (from Step 3.6): for every entry in {{coherence_failures}},
+      build a ForkItem using the renderer §4 ForkItem shape, content from
+      coherence-gate.md §5, and prepend it to {{genuine_forks}} BEFORE applying the other
+      fork-detection rules below — these are never crowded out by the ≤ 7 cap:
+        · title: "{{consumer}} ↔ {{producer}}: seam coherence mismatch"
+        · stakes: HIGH
+        · what: the specific missing deliverable named in the failure card
+        · why: "the sprint can ship both stories individually passing their own gates while the
+          seam between them belongs to no one" (the nornspun failure mode this check exists to
+          catch)
+        · evidence: both slugs + the missing deliverable, from the failure card
+        · recommendation: the first of the three remediation options on the failure card
+        · options: the three remediation options from the failure card, plus a fourth —
+          "Override — proceed with sprint despite the open mismatch (recorded in
+          coherence-report.md)"
+
+      Then build the remaining {{genuine_forks}} (still ≤ 7 total, coherence forks counted
+      first) using fork detection rules from renderer §4:
         · Same-wave touch overlaps across stories
         · Unresolved external depends_on not in sprint and not status "done"
         · AVFL findings with severity critical/major
         · Guard failures accepted with the developer's P override
         · Wave bottlenecks (single early-wave story gating all others with uncertain readiness)
 
-      Build {{defaulted_choices}} list per renderer §4 for items not needing a decision.
+      Build {{defaulted_choices}} list per renderer §4 for items not needing a decision. If
+      {{coherence_failures}} is empty, add: "Cross-story seam coherence — {{edge_count}}
+      depends_on edge(s) examined, all resolve cleanly" (mirrors the AVFL-CLEAN
+      defaulted-choice pattern).
     </action>
 
     <!-- Phase B: Generate and write the HTML plan gate -->
@@ -1133,6 +1213,10 @@ Review the gate, record your per-fork verdicts (if any), then enter your decisio
         · Reassign waves: re-run wave computation after changes
         · Modify team composition: update role assignments
       </action>
+      <check if="the story set or any story's depends_on changed">
+        <action>Return to Step 3.6 and re-run the cross-story seam coherence check before
+        re-synthesizing gate data — the edge set may have changed.</action>
+      </check>
       <action>Re-synthesize all gate data (Phase A) and re-render the HTML gate (Phase B) with the updated plan state</action>
       <action>Re-write to `.momentum/handoffs/{{sprint_slug}}-plan-gate.html`</action>
       <action>Reload the existing viewer tab — do NOT call `cmux browser new` again (prevents
@@ -1198,6 +1282,42 @@ be accepted — the anti-rubber-stamp gate requires written reasoning per fork.<
   Return to Step 3.5 to author the coverage plan before activating.
 {{/if}}</output>
       <action>HALT — do NOT call `momentum-tools sprint activate` until all artifacts are present</action>
+    </check>
+
+    <!-- Cross-story seam coherence gate (Step 3.6 results) -->
+    <action>Read `.momentum/sprints/{{sprint_slug}}/coherence-report.md`. Determine
+    {{open_coherence_failures}} = the failures still listed under "## Open Coherence Failures"
+    (i.e., not since resolved by an amended producer/consumer contract or an added wiring
+    story).</action>
+
+    <check if="{{open_coherence_failures}} is non-empty">
+      <action>Check whether the developer's Step 7 sign-off decision explicitly overrides
+      EVERY open failure: for each failure's corresponding fork verdict in the pasted decision
+      block (or an explicit instruction given directly at this gate), confirm the verdict text
+      contains an unambiguous instruction to proceed despite the mismatch (e.g., contains
+      "override" or an equivalent explicit "proceed anyway"). Do NOT infer an override from
+      silence, from a bare "A", or from a verdict that only names one of the three remediation
+      options without also saying to proceed now.</action>
+
+      <check if="not every open failure carries an explicit override instruction">
+        <output>✗ Sprint held — {{open_coherence_failures|count}} open cross-story seam coherence mismatch(es) remain unresolved:
+
+{{for each failure: · {{consumer}} ✗ {{producer}} — missing: {{missing}}}}
+
+The sprint will not go live while these are open. Resolve each (amend the producer, amend the consumer, or add a wiring story) and re-run Step 3.6, or explicitly instruct this run to proceed anyway.</output>
+        <ask>Resolve now, or explicitly proceed despite the open mismatch(es)?</ask>
+        <check if="developer explicitly instructs the run to proceed">
+          <action>Treat as an override — continue to the override-recording action below.</action>
+        </check>
+        <check if="developer instead revises stories or contracts">
+          <action>Return to Step 3.5/3.6 to re-author and re-check before returning to Step 8.</action>
+        </check>
+      </check>
+
+      <action>Record the override: append to the "## Override Decisions" section of
+      `coherence-report.md` per coherence-gate.md §7 — timestamp, the list of consumer→producer
+      pairs still open, and the developer's verbatim override instruction.</action>
+      <output>! Proceeding with {{open_coherence_failures|count}} open coherence mismatch(es) overridden. Recorded in coherence-report.md.</output>
     </check>
 
     <!-- Gate passed — proceed with activation -->
