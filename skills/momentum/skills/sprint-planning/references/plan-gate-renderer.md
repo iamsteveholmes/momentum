@@ -199,7 +199,7 @@ A **genuine fork** is a choice the developer must make that cannot be defaulted 
 - Wave ordering follows dependency graph (DAG-valid, no cycles) — state: "wave assignment follows computed dependency graph"
 - AVFL result CLEAN with no findings — state: "AVFL returned CLEAN — no plan defects found"
 - Guard status CLEAN — state: "Adversarial contract guard passed — no insider-knowledge contamination"
-- Any team composition choice that follows the standard routing table (dev-skills for skill stories, etc.)
+- Any team composition choice that follows `momentum-tools agent resolve` against `agents.json` (base `dev`, or a composed project slug when a matching entry exists)
 
 ### Fork card shape
 

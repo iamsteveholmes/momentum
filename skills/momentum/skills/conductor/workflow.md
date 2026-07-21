@@ -668,7 +668,9 @@ Ready to begin?</output>
             this action does not re-verify.
 
           Resolve agent: `momentum-tools agent resolve --touches "{{S.touches | join(',')}}"`
-          Bind {{dev_agent}} = the resolved agent name (e.g., "dev", "dev-build", "dev-frontend", "dev-skills").
+          Bind {{dev_agent}} = the resolved agent slug (e.g., "dev" — the generic base body — or a
+            composed project slug such as "dev-kotlin-compose" when `agents.json` has a matching
+            `project` entry).
           Bind {{writable_files}} = the explicit set of files this story is expected to create or modify.
             Derivation rule (in priority order):
               1. If the story spec contains an explicit `## What's needed` or `## Deliverables` section

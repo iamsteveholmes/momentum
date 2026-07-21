@@ -191,27 +191,21 @@ Options:
       <action>Re-present the approval prompt. Repeat until approved.</action>
     </check>
 
-    <!-- 2c: Specialist classification -->
-    <!-- MIGRATION (2026-07-06): `specialist-classify` is legacy — this is its last live call site. Replace with `momentum-tools agent resolve --touches ...` (multi-result, gen-2 routing-table paths) when this step is next touched. -->
+    <!-- 2c: Specialist resolution -->
     <action>Read the story's `touches` array from {{story_file}} frontmatter.
-    Run: `momentum-tools specialist-classify --touches "{{comma_separated_touches}}"`
-    Store {{specialist}} and {{agent_file}} from the output.
+    Run: `momentum-tools agent resolve --touches "{{comma_separated_touches}}"` against `agents.json`.
+    Parse the returned `results` array. Quick-fix is single-story: take the first (or sole) result entry.
+    Store {{specialist}} (the result's `slug`) and {{agent_file}} (the result's `agent_path`) from the output.
 
-    Specialist classification table (reference — the tool implements this):
-
-      | Pattern                                                    | Specialist     |
-      |------------------------------------------------------------|----------------|
-      | `skills/*/SKILL.md`, `skills/*/workflow.md`, `agents/*.md` | dev-skills     |
-      | `*.gradle*`, `*.kts`, `build.gradle*`                      | dev-build      |
-      | `*compose*`, `*Compose*`, `*ui/*`, `*screen*`              | dev-frontend   |
-      | (no match)                                                 | dev (base)     |
-
-    Multi-match: majority rule, ties break to first in table order.
+    The resolver checks `agents.json` `project` entries first (composed specialists, pattern-matched
+    against `touches`), then falls back to `defaults.dev` (`skills/momentum/agents/dev.md`) when no
+    project entry matches.
     </action>
 
     <!-- 2d: Guidelines verification gate -->
     <action>For the assigned specialist domain, check whether project guidelines exist:
-      - Derive candidate filenames from the specialist domain (e.g., "dev-skills" checks for dev-skills.md, skills.md)
+      - Derive candidate filenames from the specialist slug (e.g., a composed slug "dev-kotlin-compose"
+        checks for kotlin-compose.md, compose.md)
       - Check `.claude/rules/` for any file matching those candidates
       - This is a file existence check only
     </action>
@@ -310,7 +304,8 @@ The fix will be developed in an isolated worktree and merged to `main` when comp
 
     <!-- 3c: Spawn specialist dev agent -->
     <action>Resolve specialist agent definition:
-      - Read {{agent_file}} (e.g., `skills/momentum/agents/dev-skills.md`)
+      - Read {{agent_file}} (e.g., `skills/momentum/agents/dev.md`, or a composed
+        `.claude/guidelines/agents/{role}-{domain}.md` path when the resolver returned a project entry)
       - If the file does not exist, fall back to `skills/momentum/agents/dev.md`
       - Use the model and effort from the agent definition's frontmatter
 

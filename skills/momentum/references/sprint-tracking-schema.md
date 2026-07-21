@@ -109,7 +109,7 @@ Per-story entry keyed by story slug:
 | `test_approach` | string | Testing methodology (TDD, EDD, behavioral, inspection) |
 | `wave` | number | Execution wave number |
 | `dependencies` | string[] | Story slugs this story depends on within the sprint |
-| `specialist` | string | Dev specialist type: `dev-skills`, `dev-build`, `dev-frontend`, or `dev` (base) |
+| `specialist` | string | Resolved agent slug from `momentum-tools agent resolve` against `agents.json`: `dev` (base body) or a composed project slug (e.g., `dev-kotlin-compose`) |
 | `guidelines_status` | string | `present`, `missing`, `skipped`, or `n/a` |
 
 ### Example (no active sprint)

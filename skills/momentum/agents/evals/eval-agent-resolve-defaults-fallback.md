@@ -31,7 +31,7 @@ without pattern matching.
     {
       "role": "dev",
       "slug": "dev-cmp",
-      "agent": "skills/momentum/agents/dev-build.md",
+      "agent": "skills/momentum/agents/dev.md",
       "patterns": ["**/src/**/ui/**", "**/*.kt"],
       "write_permissions": ["src/main/kotlin/**/ui/**"]
     }
