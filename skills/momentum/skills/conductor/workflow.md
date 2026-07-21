@@ -2357,6 +2357,11 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
             `momentum-tools sprint status-transition --story {slug} --target closed-incomplete`
             Note: quarantined stories (never added to {{merged}} per step 2.2.M.5), integrity-stopped stories (removed from {{running}} without a terminal transition), and blocked/aborted stories (retry-exhausted, mid-flight aborted, or stage-3 blocked — all deferred here per the quarantine convention adopted at steps 2.S3, 2.2, and 2.F) all go to closed-incomplete, not done. These stories are at a non-terminal status when they arrive here; this is the single terminal transition for stranded stories. Spinning replacement stubs via momentum:triage for these is handled at build-phase completion (step 2.2 exhausted-retries path); any not yet stubbed should be spun here before push.
       </action>
+      <action>Complete the sprint:
+        Run: `momentum-tools sprint complete`
+        This moves {{sprint_slug}} from `active` into `sprints/index.json` `completed[]`, with `status: "done"` and `retro_run_at: null` — the shape `momentum:retro` Step 1 keys on. No manual completion step is required for a conduct-built sprint after this.
+      </action>
+      <note>Idempotency: if this approve branch re-runs against a sprint already completed by a prior pass (a resumed or re-approved end-gate), `momentum-tools sprint complete` returns `"No active sprint to complete"` (non-zero exit). Treat this as an expected, non-fatal no-op — do not surface it as an error or abort the sequence; continue to the push summary below. This mirrors the idempotency convention `momentum:retro` already documents for its own equivalent call (`retro/workflow.md:698`).</note>
       <action>MAJOR-RESIDUAL GOVERNANCE GUARD — ensure no MAJOR-severity residual leaves the sprint without a linked backlog stub.
         Sources of residual findings to scan:
           (a) {{avfl_findings}} — AVFL post-merge findings (Phase 3); each has severity and disposition fields (normalized in step 3.3 (avfl_findings): fixed | residual | escalated).
