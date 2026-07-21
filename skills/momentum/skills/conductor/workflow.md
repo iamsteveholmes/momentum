@@ -2333,10 +2333,19 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
         - File must open correctly in a browser with no network access.
     </action>
 
-    <action>Open the report in the cmux Browser viewer pane as a new tab (right pane; does not create a new structural pane):
-      Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
-      Verify the surface opens: cmux browser {surface} wait --load-state complete --timeout-ms 15000
+    <action>Open the report in the cmux viewer pane. Query for an existing viewer surface FIRST, then branch — never open unconditionally:
+      1. Query existing viewer surfaces this session (e.g. `cmux list-panes` then `cmux list-pane-surfaces --pane <viewer-pane>`).
+      2a. If a viewer browser surface already exists (e.g. showing a prior plan-gate report): navigate it in place —
+          Run: cmux browser <existing-surface> goto "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html"
+          This updates the existing pane in place; it does NOT create a second viewer pane.
+      2b. Else (no viewer surface exists yet this session):
+          Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
+      Verify the surface loads: cmux browser {surface} wait --load-state complete --timeout-ms 15000
+
+      <critical>`--focus false` is a hard MUST — not a hint — whenever `cmux browser new` is used (branch 2b). It keeps the developer in their working context in the main pane while the report becomes visible in the viewer pane. Never pass `--focus true` here, at this or any end-gate open. Verified behavior: `cmux browser new` ALWAYS creates a new structural pane (returns `placement=split`) — it never adds a tab to, or reuses, an existing viewer pane. The ONLY way to reuse an existing viewer surface is the `goto` branch (2a) above; `cmux browser new` is reserved strictly for the case where no viewer surface exists yet (2b).</critical>
     </action>
+
+    <critical>RENDER-THEN-ASK IS ATOMIC. The turn MUST NOT end between the report open above and the approval ask below — proceed directly from the open action to the ask in the same turn. The end-gate report must never be left open with no approval prompt on screen.</critical>
 
     <ask>The end-gate report is open in the viewer. Review each section. Acknowledge any decision cards in §04. Then approve to merge to main, or request changes.</ask>
 
@@ -2611,10 +2620,17 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
                items_residual: count of "residual" in {{endgate_fix_dispositions}} }
       </action>
 
-      <action>5.RC.5 — OPEN THE RE-RENDERED REPORT in the viewer:
-        Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
-        (The `--focus false` flag keeps the developer in context; the tab is available in the viewer pane.)
+      <action>5.RC.5 — OPEN THE RE-RENDERED REPORT in the viewer. Query for an existing viewer surface FIRST, then branch — never open unconditionally:
+        1. Query existing viewer surfaces (e.g. `cmux list-panes` / `cmux list-pane-surfaces`) to find the viewer browser surface already showing the end-gate report — it was opened at the top of this same Phase 5 step (or by a prior redispatch pass) and will exist by construction at this point in the redispatch path.
+        2a. Navigate that existing surface in place (the expected path on every redispatch pass):
+            Run: cmux browser <existing-surface> goto "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html"
+        2b. Only if no viewer surface exists (should not normally occur at this point in the redispatch path):
+            Run: cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" --workspace "$CMUX_WORKSPACE_ID" --focus false
+
+        <critical>`--focus false` is a hard MUST — not a hint — whenever `cmux browser new` is used (branch 2b). It keeps the developer in context in the main pane while the re-rendered report becomes visible in the viewer pane. Never pass `--focus true`. Verified behavior: `cmux browser new` ALWAYS creates a new structural pane; it never reuses an existing one. Reuse requires the `goto` branch (2a) above, which is the expected path here since a viewer surface already exists from the initial open.</critical>
       </action>
+
+      <critical>RENDER-THEN-ASK IS ATOMIC. The turn MUST NOT end between the re-render open above and the approval ask below — proceed directly through the redispatch note and summary to the ask, all in the same turn. The redispatched gate must never be left open with no approval prompt on screen.</critical>
 
       <!-- ── 5.RC.6 — Return to the end-gate ask (redispatch) ─────────── -->
 

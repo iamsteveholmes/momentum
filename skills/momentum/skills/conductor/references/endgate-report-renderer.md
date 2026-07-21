@@ -137,7 +137,7 @@ when the fused re-render runs. Conduct's initial render omits §08; retro extend
 
 Build a **self-contained single `.html` file** — inline `<style>` and `<script>`, zero external dependencies.
 Output it as `.momentum/handoffs/{{sprint_slug}}-endgate-report.html`.
-Open it in the cmux viewer pane (right pane, as a browser tab) so the developer can read it immediately.
+Open it in the cmux viewer pane (right pane) so the developer can read it immediately — reuse an existing viewer surface via `goto` if one already exists this session, or create one with `cmux browser new --focus false` only when none exists yet (see §8 for the full query-then-branch procedure). `--focus false` is a hard MUST whenever `cmux browser new` is used: the open must never steal focus from the developer's main workspace pane.
 
 **Voice:** Assume nothing. Write for someone who did not watch the build and has never heard of conduct, sprint-dev, or the internal decision names. Define every term inline on first use. Never lead a section with a bare code symbol, file path, or ticket id.
 
@@ -384,12 +384,23 @@ Plain-language headline (the risk in human terms) as the `<summary>` so the deve
 .momentum/handoffs/{{sprint_slug}}-endgate-report.html
 ```
 
-After writing, open in the cmux Browser viewer pane:
+After writing, open the report in the cmux Browser viewer pane. Query for an existing viewer surface FIRST, then branch — never open unconditionally:
+
+- **If a viewer browser surface already exists** in this workspace (showing a prior report — e.g. a plan-gate report, or an earlier end-gate render this one supersedes): navigate it in place —
+```bash
+cmux browser <existing-surface> goto "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html"
+```
+  This updates the existing pane in place. It does NOT create a second viewer pane.
+
+- **Only if no viewer browser surface exists yet** this session:
 ```bash
 cmux browser new "file:///$(pwd)/.momentum/handoffs/{{sprint_slug}}-endgate-report.html" \
   --workspace "$CMUX_WORKSPACE_ID" --focus false
 ```
-(Adds a tab to the existing viewer pane; does not create a new structural pane.)
+
+`--focus false` is a hard MUST — not a hint — whenever `cmux browser new` is used: it keeps the developer in context in the main workspace pane while the report becomes visible in the viewer pane. Never pass `--focus true`.
+
+**Verified behavior (do not assume otherwise): `cmux browser new` ALWAYS creates a new structural pane** (it returns `placement=split`) — it never adds a tab to an existing viewer pane and never reuses one. Reusing an existing viewer surface requires the `goto` branch above; `cmux browser new` is reserved strictly for the case where no viewer surface exists yet.
 
 ---
 
@@ -555,7 +566,7 @@ this file** — it does not create a new parallel document.
    - For each stakes-class card D_N: if the ledger contains an `endgate-change-request-parsed` or `endgate-approved` record for that finding, set `checked` on `ack-d{N}` and set `selected` on the matching radio. This is done by emitting `checked` / `selected` attributes directly in the re-rendered HTML — not via JavaScript `onload`. If ledger state is ambiguous or absent for a card, leave it unchecked (the developer re-acknowledges).
    - For each force-close card: if the ledger records the developer's prior choice (option A/B/C), pre-populate similarly.
 5. It writes the extended HTML back to the same path.
-6. It opens the updated file in the cmux viewer pane (as a tab, per §8).
+6. It opens the updated file in the cmux viewer pane, following the reuse-via-`goto` / `browser-new`-only-when-absent procedure in §8. Since the retro re-render always follows an existing conduct end-gate render, a viewer surface showing that report already exists — this step is expected to take the `goto` branch, navigating that surface in place rather than creating a new one.
 
 **Gate coverage (BOTH sections):** The fused gate (§6 `paint()`) covers BOTH §04 cards AND §08 process findings. §04 state is pre-populated from ledger (step 4 above), so the gate can unlock immediately if all §04 cards have known prior choices AND all §08 responses are written. The developer must write a response for each §08 finding — there is no pre-population for §08 (process findings are new since conduct).
 
