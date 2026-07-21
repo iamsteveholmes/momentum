@@ -1,7 +1,7 @@
 ---
 name: refine
 description: "Backlog hygiene — planning artifact drift detection, status mismatches, stale-story triage, and batch approval."
-model: claude-sonnet-4-6
+model: sonnet
 effort: high
 ---
 

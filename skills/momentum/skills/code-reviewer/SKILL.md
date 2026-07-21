@@ -1,7 +1,6 @@
 ---
 name: code-reviewer
 description: "Non-interactive bmad-code-review adapter for conduct. Accepts a single story diff, drives adversarial bug-hunt in report-only mode, normalizes surviving findings to the canonical schema with stakes_class populated, and returns the finding stream to the Conductor. Invoked by the Conductor — do not invoke directly."
-model: claude-opus-4-6
 context: fork
 allowed-tools: Read Grep Bash
 effort: high

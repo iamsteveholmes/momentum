@@ -1,7 +1,6 @@
 ---
 name: avfl
 description: "Adversarial Validate-Fix Loop — multi-agent validation catching errors, hallucinations, and quality issues via parallel lenses and iterative fix."
-model: claude-opus-4-6
 effort: high
 ---
 

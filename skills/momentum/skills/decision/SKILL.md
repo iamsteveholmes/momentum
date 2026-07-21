@@ -1,7 +1,6 @@
 ---
 name: decision
 description: "Capture strategic decisions from assessments or research. Walk findings, record adopt/reject/defer, write a linked SDR document."
-model: claude-opus-4-7
 effort: high
 ---
 

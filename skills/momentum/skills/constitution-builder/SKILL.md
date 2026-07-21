@@ -1,7 +1,6 @@
 ---
 name: constitution-builder
 description: "Builds Tier 1 domain-knowledge constitution for KB-backed agents. Accepts write_mode: in_place_skill | composed_agent_file | standalone_constitution."
-model: claude-opus-4-6
 effort: medium
 ---
 

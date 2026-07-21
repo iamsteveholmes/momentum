@@ -1,7 +1,7 @@
 ---
 name: assessment
 description: "Guided product state evaluation. Spawns parallel discovery agents, validates findings with the developer, and produces a structured ASR document."
-model: claude-sonnet-4-6
+model: sonnet
 effort: high
 ---
 
