@@ -48,8 +48,13 @@ The nine-role taxonomy aligns with BMAD's proven vocabulary and gives every proj
 > listed above were not the names that shipped. Decision 55 (DEC-023 — Agent Routing Table)
 > establishes `momentum/agents.json` `defaults` keys using the descriptive names `qa-reviewer` and
 > `e2e-validator`, and every base-body file, call site, and downstream architecture reference
-> (architecture.md Decision 55 canonical-9) uses those descriptive names — never the short forms.
-> The nine-role taxonomy itself is unaffected; only the `qa`/`e2e` naming is superseded.
+> (architecture.md Decision 55's 9-role `defaults` list) uses those descriptive names — never the
+> short forms. Only the `qa`/`e2e` naming is corrected by this annotation. The broader role SET
+> evolved separately under Decision 55 and later decisions — architecture.md Decision 55's 9-role
+> `defaults` list is {dev, qa-reviewer, e2e-validator, architect-guard, ux, analyst, researcher,
+> constitution-builder, agent-builder}, which drops `pm`/`sm`, replaces `architect` with
+> `architect-guard`, and adds `constitution-builder`/`agent-builder` — so it is not this D1's nine
+> roles with two renames applied.
 
 ---
 
