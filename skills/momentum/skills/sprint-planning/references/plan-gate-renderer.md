@@ -191,6 +191,7 @@ A **genuine fork** is a choice the developer must make that cannot be defaulted 
 - The story touches a path also touched by another selected story (merge-conflict risk) AND they are in the same wave
 - `guard_status` indicates contaminated contracts that the developer accepted (the acceptance itself becomes a fork card)
 - The wave assignment would create a bottleneck (a single story in an early wave that gates all others, and its scope/readiness is uncertain)
+- A cross-story seam coherence check (Step 3.6) found an open mismatch on one of this story's `depends_on` edges (per coherence-gate.md §5a — these coherence forks are prepended ahead of the other triggers above)
 
 ### Classify as DEFAULTED TO STANDARDS if:
 
@@ -444,7 +445,7 @@ Store `$PLAN_GATE_SURFACE` for the session. The `--focus false` flag keeps the d
 workspace active.
 
 **Re-render (Modify path — finding [8] fix):** On subsequent renders (Modify / M-branch), do
-NOT call `cmux browser new` again — this creates a stale duplicate tab. Instead, reload the
+NOT call `cmux browser new` again — it always creates a new structural pane (`placement=split`) rather than reusing the existing viewer surface. Instead, reload the
 existing surface:
 
 ```bash

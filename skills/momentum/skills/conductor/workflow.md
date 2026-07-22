@@ -333,7 +333,7 @@ Ready to begin?</output>
             Continue to the next line; never abort the resume over a malformed line.
           IF parsing succeeds, the line is row R — rebuild accumulators per the event-type routing below.
 
-          REHYDRATION EXEMPTION (restated inline — see :217 REHYDRATION EXEMPTION on the LEDGER-APPEND
+          REHYDRATION EXEMPTION (restated inline — see the REHYDRATION EXEMPTION on the LEDGER-APPEND
           STANDING RULE): every "Append R to {{build_log}}" instruction in the routing below is a REBUILD
           of the in-context write-through cache only. It does NOT also append to the build ledger at
           {{ledger_path}}. R is being read FROM the ledger — it already exists there; re-appending it here
@@ -442,7 +442,7 @@ Ready to begin?</output>
                   for any out-of-order edge case. This holds whether the duplicate finding_id arises from
                   an append-only correction/override row (FR141) or from both a prior-attempt and a
                   current-attempt row for a re-run story. This extends the Phase 5 SUPERSESSION RULE
-                  (:2245) — currently scoped to finding-disposition/story-terminal rows — to this
+                  — currently scoped to finding-disposition/story-terminal rows — to this
                   accumulator, so {{avfl_findings}} never double-counts on resume.
                 This rehydrates {{avfl_findings}} so the MAJOR-RESIDUAL GOVERNANCE GUARD (Phase 5 approve)
                 and the 5.RC.4 re-render can read non-empty, de-duplicated accumulators on resume,
@@ -489,13 +489,15 @@ Ready to begin?</output>
             — If a row with event == "e2e-phase-complete" exists: skip Phase 4 (E2E) on resume.
             — If a row with event == "end-gate-phase-complete" exists: skip the Phase 5 approve-side
               mutations on resume — the sprint→main merge, the `git branch -d {{sprint_slug}}` branch
-              delete, and the per-story `verify`→`done` / `closed-incomplete` terminal transitions are
+              delete, the per-story `verify`→`done` / `closed-incomplete` terminal transitions, and the
+              `momentum-tools sprint complete` sprint-completion call are
               NOT re-attempted (they would error against already-mutated real state: a re-merge of an
-              already-merged/deleted branch, or a re-transition of an already-terminal story — the
-              state machine rejects any transition FROM a terminal state without --force). Phase 5
+              already-merged/deleted branch, a re-transition of an already-terminal story — the
+              state machine rejects any transition FROM a terminal state without --force — or a
+              `momentum-tools sprint complete` call reporting no active sprint). Phase 5
               instead re-renders the end-gate report from the ledger (per the AUTHORITATIVE SOURCE note
               at step 5) and presents the same completion summary an uninterrupted run would have shown.
-              The existing per-finding `scorecard-revert-reconciliation` idempotency guard (:2277) is
+              The existing per-finding `scorecard-revert-reconciliation` idempotency guard is
               unaffected and is not duplicated by this phase-level checkpoint — the two guards operate
               at different granularities (per-finding vs. per-phase).
           For step 3.D counts: scope the deferred/discharged/undischarged counts to rows with

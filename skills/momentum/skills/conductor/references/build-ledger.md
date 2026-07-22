@@ -24,7 +24,7 @@ One ledger per sprint. Created on first append (no pre-creation step). Sits besi
    {"event":"...","story_slug":"...","ts":"..."}
    CONDUCTOR_LEDGER_ROW
    ```
-   The quoted delimiter (`<<'CONDUCTOR_LEDGER_ROW'`) disables all shell expansion of the heredoc body, so apostrophes, double quotes, and `$` in the row text pass through byte-for-byte. (Equivalently, compose the row through any JSON serializer available to the executing agent and redirect its stdout `>> {{ledger_path}}`.) No new script. No momentum-tools change. No batching. This construction is mandated identically at three sites — this rule, the LEDGER-APPEND STANDING RULE (`workflow.md` ~209–217), and the step 2.0 init append note (`workflow.md` ~254) — keep all three consistent; do not fork the mechanism.
+   The quoted delimiter (`<<'CONDUCTOR_LEDGER_ROW'`) disables all shell expansion of the heredoc body, so apostrophes, double quotes, and `$` in the row text pass through byte-for-byte. (Equivalently, compose the row through any JSON serializer available to the executing agent and redirect its stdout `>> {{ledger_path}}`.) No new script. No momentum-tools change. No batching. This construction is mandated identically at three sites — this rule, the LEDGER-APPEND STANDING RULE (`workflow.md`, Phase 2 preamble), and the step 2.0 init append note (`workflow.md`, step 2.0) — keep all three consistent; do not fork the mechanism.
 4. **Crash-loss bound.** A crash loses at most the event in flight — never previously recorded state.
 
 ---
