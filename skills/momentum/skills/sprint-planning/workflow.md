@@ -1407,14 +1407,44 @@ Return to Step 3 to review and approve each listed story, then retry activation.
       <action>HALT — resolve all missing approvals before retrying `momentum-tools sprint activate`</action>
     </check>
 
+    <!-- Step 8.C: Write the mandatory build-handoff artifact (use-then-discard bridge) -->
+    <action>Read `references/build-handoff-template.md` in full — it is the data contract and
+    exact section skeleton for this artifact. This write is a required terminal action of
+    Step 8: activation is not reported as successful until it completes.</action>
+
+    <action>Set {{handoff_date}} = the active sprint record's `started` field (`YYYY-MM-DD`),
+    read via a targeted query keyed to `active.started` (e.g. a `python3 -c` json read), not
+    independently computed as "today's date". This makes the filename date byte-identical to the
+    `started` field the eval oracle checks, even across a midnight boundary between activation and
+    the write.
+    Set {{handoff_path}} = `.momentum/handoffs/{{sprint_slug}}-build-handoff-{{handoff_date}}.md`.
+
+    Assemble the artifact's data ({{goal}}, {{waves}}, per-story {{contract_path}}, {{cautions}})
+    from the sources in template §4 — all already in scope at Step 8, read by targeted query, no
+    new elicitation. Then write {{handoff_path}} following template §2 exactly, including the §3
+    fallback wording when {{goal}} or {{cautions}} are empty.</action>
+
+    <check if="{{handoff_path}} does not exist, or exists but is 0 bytes">
+      <output>✗ Build-handoff write failed — {{handoff_path}} was not created (or is empty) after
+the Step 8.C write action.
+
+Activation is not reported as successful without this artifact — the terminal action did not
+complete.</output>
+      <action>HALT — re-attempt the write per template §2 before proceeding; do not emit the
+`## ✓ Sprint Activated` output until {{handoff_path}} exists and is non-empty</action>
+    </check>
+
     <output>## ✓ Sprint `{{sprint_slug}}` Activated
 
 **Stories:** {{count}}
 **Waves:** {{wave_count}}
 **Team:** {{role_list}}
 **Started:** {{today}}
+**Build handoff:** {{handoff_path}}
 
-> The sprint is live. Use "Continue sprint" from the session menu to begin execution.</output>
+> The sprint is live. Use "Continue sprint" from the session menu to begin execution.
+> The build handoff above is a use-then-discard bridge — the next `/momentum:conduct` session
+> should read it, then delete it once consumed.</output>
     <action>Update task 8 (Activate sprint) to completed</action>
   </step>
 
