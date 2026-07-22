@@ -44,6 +44,13 @@ The nine-role taxonomy aligns with BMAD's proven vocabulary and gives every proj
 
 **Rationale:** Aligns with BMAD's proven role taxonomy; gives every project a consistent vocabulary for agent composition. The nine roles cover the full practice pipeline from research and analysis through design, development, and verification.
 
+> **Naming superseded by Decision 55 / DEC-023 (2026-05-16):** the short role names `qa` and `e2e`
+> listed above were not the names that shipped. Decision 55 (DEC-023 — Agent Routing Table)
+> establishes `momentum/agents.json` `defaults` keys using the descriptive names `qa-reviewer` and
+> `e2e-validator`, and every base-body file, call site, and downstream architecture reference
+> (architecture.md Decision 55 canonical-9) uses those descriptive names — never the short forms.
+> The nine-role taxonomy itself is unaffected; only the `qa`/`e2e` naming is superseded.
+
 ---
 
 ### D2: code-reviewer and architect-guard are NOT separate base bodies — ADOPTED
