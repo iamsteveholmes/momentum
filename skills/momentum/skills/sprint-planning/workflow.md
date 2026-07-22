@@ -1131,7 +1131,14 @@ Address all findings before the plan can proceed.</output>
       Mandatory coherence forks (from Step 3.6): for every entry in {{coherence_failures}},
       build a ForkItem using the renderer §4 ForkItem shape, content from
       coherence-gate.md §5, and prepend it to {{genuine_forks}} BEFORE applying the other
-      fork-detection rules below — these are never crowded out by the ≤ 7 cap:
+      fork-detection rules below. Coherence forks are EXEMPT from the ≤ 7 cap (floor wins per
+      decision-grade-presentation §4 — a genuine open coherence mismatch is never dropped to
+      make room: if {{coherence_failures}} has 9 entries, all 9 coherence forks appear, and the
+      gate's total fork count exceeds 7 for that render):
+        · id: "{{consumer}}→{{producer}}" — the stable identifier for this fork. This slug pair
+          is the fork's identity for matching at Step 7 approval-validation and Step 8 — never
+          rely on "Fork N" position alone, since the fork list can be rebuilt in a different
+          order across an M-cycle re-run.
         · title: "{{consumer}} ↔ {{producer}}: seam coherence mismatch"
         · stakes: HIGH
         · what: the specific missing deliverable named in the failure card
@@ -1139,13 +1146,16 @@ Address all findings before the plan can proceed.</output>
           seam between them belongs to no one" (the nornspun failure mode this check exists to
           catch)
         · evidence: both slugs + the missing deliverable, from the failure card
-        · recommendation: the first of the three remediation options on the failure card
-        · options: the three remediation options from the failure card, plus a fourth —
+        · recommendation: the first remediation option on the failure card
+        · options: the remediation options from the failure card (3, or 4 when the card's
+          `reason` is "producer not complete" — coherence-gate.md §5), plus one final option —
           "Override — proceed with sprint despite the open mismatch (recorded in
           coherence-report.md)"
 
-      Then build the remaining {{genuine_forks}} (still ≤ 7 total, coherence forks counted
-      first) using fork detection rules from renderer §4:
+      Then build the remaining {{genuine_forks}} from the other fork-detection rules below —
+      these non-coherence forks fill only the remainder of the ≤ 7 total (7 minus the coherence
+      fork count; zero additional non-coherence forks when coherence forks already meet or
+      exceed 7) using fork detection rules from renderer §4:
         · Same-wave touch overlaps across stories
         · Unresolved external depends_on not in sprint and not status "done"
         · AVFL findings with severity critical/major
@@ -1213,9 +1223,15 @@ Review the gate, record your per-fork verdicts (if any), then enter your decisio
         · Reassign waves: re-run wave computation after changes
         · Modify team composition: update role assignments
       </action>
-      <check if="the story set or any story's depends_on changed">
+      <check if="the story set changed, any story's depends_on changed, any producer story's
+      contract deliverable text changed, or any consumer story's Acceptance Criteria changed
+      (this includes amendments made in response to a coherence fork's resolution 1 or 2 —
+      coherence-gate.md §5 — which do not update the match until this re-run happens)">
         <action>Return to Step 3.6 and re-run the cross-story seam coherence check before
-        re-synthesizing gate data — the edge set may have changed.</action>
+        re-synthesizing gate data — the edge set, a producer's delivered contract, or a
+        consumer's stated need may have changed. A genuinely-fixed seam stays listed as an open
+        failure until this re-run confirms it — never take a producer/consumer amendment as
+        self-resolving.</action>
       </check>
       <action>Re-synthesize all gate data (Phase A) and re-render the HTML gate (Phase B) with the updated plan state</action>
       <action>Re-write to `.momentum/handoffs/{{sprint_slug}}-plan-gate.html`</action>
@@ -1285,6 +1301,21 @@ be accepted — the anti-rubber-stamp gate requires written reasoning per fork.<
     </check>
 
     <!-- Cross-story seam coherence gate (Step 3.6 results) -->
+    <action>Before trusting it, check `coherence-report.md` is not stale — do NOT skip this even
+    though Step 7's M-branch is supposed to re-run Step 3.6 on relevant changes; this is the
+    backstop for amendments made outside that flow (e.g., a story or contract file edited
+    directly). Compare the report's mtime against every story file
+    (`.momentum/stories/{{consumer_slug}}.md`, `.momentum/stories/{{producer_slug}}.md`) and, for
+    in-sprint producers, their contract file
+    (`.momentum/sprints/{{sprint_slug}}/specs/{{producer_slug}}.*`) referenced by any edge still
+    listed open in the report:
+      Run: `stat -f %m .momentum/sprints/{{sprint_slug}}/coherence-report.md` and the same for
+      each referenced file.
+    If any referenced file's mtime is newer than the report's: the report predates that
+    amendment and cannot be trusted as-is. Return to Step 3.6, re-run the check now, and
+    re-derive {{open_coherence_failures}} from the fresh output before continuing this gate —
+    never activate against a stale report.</action>
+
     <action>Read `.momentum/sprints/{{sprint_slug}}/coherence-report.md`. Determine
     {{open_coherence_failures}} = the failures still listed under "## Open Coherence Failures"
     (i.e., not since resolved by an amended producer/consumer contract or an added wiring
@@ -1292,11 +1323,18 @@ be accepted — the anti-rubber-stamp gate requires written reasoning per fork.<
 
     <check if="{{open_coherence_failures}} is non-empty">
       <action>Check whether the developer's Step 7 sign-off decision explicitly overrides
-      EVERY open failure: for each failure's corresponding fork verdict in the pasted decision
-      block (or an explicit instruction given directly at this gate), confirm the verdict text
-      contains an unambiguous instruction to proceed despite the mismatch (e.g., contains
-      "override" or an equivalent explicit "proceed anyway"). Do NOT infer an override from
-      silence, from a bare "A", or from a verdict that only names one of the three remediation
+      EVERY open failure: for each entry in {{open_coherence_failures}}, locate its
+      corresponding fork verdict in the pasted decision block by matching the stable identifier
+      "{{consumer}}→{{producer}}" (the ForkItem `id` assigned in Step 7 Phase A, per
+      coherence-gate.md §5) — NOT by "Fork N" list position, since a Step 3.6 re-run or
+      fork-list edit between the Step 7 render and this gate can reorder {{genuine_forks}}
+      relative to {{open_coherence_failures}}. If a "Fork N:" verdict does not clearly identify
+      which consumer→producer pair it addresses (a real risk with 2+ open failures), treat it as
+      NOT an override for any failure rather than guessing the mapping from position. For the
+      matched verdict (or an explicit instruction given directly at this gate), confirm the
+      verdict text contains an unambiguous instruction to proceed despite the mismatch (e.g.,
+      contains "override" or an equivalent explicit "proceed anyway"). Do NOT infer an override
+      from silence, from a bare "A", or from a verdict that only names one of the remediation
       options without also saying to proceed now.</action>
 
       <check if="not every open failure carries an explicit override instruction">
@@ -1305,7 +1343,10 @@ be accepted — the anti-rubber-stamp gate requires written reasoning per fork.<
 {{for each failure: · {{consumer}} ✗ {{producer}} — missing: {{missing}}}}
 
 The sprint will not go live while these are open. Resolve each (amend the producer, amend the consumer, or add a wiring story) and re-run Step 3.6, or explicitly instruct this run to proceed anyway.</output>
-        <ask>Resolve now, or explicitly proceed despite the open mismatch(es)?</ask>
+        <ask>Resolve now, or explicitly proceed despite the open mismatch(es)? The same
+anti-inference bar from above applies to this response: silence, a bare "A"/"proceed", or
+naming a remediation option without also saying to proceed now does NOT count as an override.
+To proceed, say so explicitly and name which consumer→producer pair(s) you are overriding.</ask>
         <check if="developer explicitly instructs the run to proceed">
           <action>Treat as an override — continue to the override-recording action below.</action>
         </check>

@@ -19,8 +19,8 @@ Then:
 1. The edge is enumerated
 2. The consumer's named external input is extracted (the response field)
 3. The producer's deliverable text is matched and found to satisfy it
-4. The edge is recorded as satisfied in `coherence-report.md` under "## Satisfied" — NOT under
-   "## Open Coherence Failures"
+4. The edge is recorded as satisfied in `coherence-report.md` under "## Satisfied /
+   Presence-only" — NOT under "## Open Coherence Failures"
 5. No coherence-failure callout is produced for this pair anywhere in the step's output
 
 When this pair reaches Step 7 (developer review)
@@ -39,8 +39,8 @@ Then:
 
 ## Pass Criteria
 
-- `coherence-report.md` lists this pair under "Satisfied," never under "Open Coherence
-  Failures"
+- `coherence-report.md` lists this pair under "Satisfied / Presence-only," never under "Open
+  Coherence Failures"
 - No fork card, warning, or extra prompt referencing this pair appears at Step 7
 - No block or halt referencing this pair appears at Step 8
 - The step's own summary output uses the "no seam mismatch found" / "all resolve cleanly"

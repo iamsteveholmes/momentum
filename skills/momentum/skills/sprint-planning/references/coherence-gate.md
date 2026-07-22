@@ -124,6 +124,15 @@ plausibly provide the concrete thing the consumer names?
   unrelated logic, an unrelated surface) with no reasonable reading that it delivers the named
   input.
 
+**Invariant — resolve each edge independently.** Match every edge in `{{coherence_edges}}`
+against its own producer separately, even when two or more edges share the same producer slug.
+Never cache, memoize, or reuse a SATISFIED/MISMATCH verdict computed for one edge against a
+different edge just because they share a producer — each consumer names its own
+`{{named_input}}` (§2), and a single producer can satisfy one consumer's ask while missing
+another's entirely. Full accounting means every edge gets its own independently-computed verdict
+recorded in `{{coherence_failures}}` / the report (§6); none is skipped, merged, or inherited
+from a sibling edge.
+
 **Canonical mismatch anchor:** consumer names "the copy sourced from the backend payload."
 Producer's deliverable text describes only an Urd system-prompt edit — no payload field, no
 endpoint, no schema appears anywhere in it. No reasonable reading satisfies "backend payload"
@@ -138,20 +147,30 @@ copy." Producer's deliverable text states the endpoint's response now includes t
 ## 5. Failure card format
 
 Every `MISMATCH` and every "producer not complete" / "no recorded deliverable" edge becomes one
-failure entry:
+failure entry. Set `reason` to exactly one of three values, matching the case that produced the
+failure: `"semantic mismatch"` (§4 MISMATCH), `"producer not complete"` (§3b.1), or `"no
+recorded deliverable"` (§3b.3).
 
 ```
 - consumer: {{consumer_slug}}
   producer: {{producer_slug}}
+  reason:   <"semantic mismatch" | "producer not complete" | "no recorded deliverable">
   missing:  <the specific named input the consumer expects but the producer does not deliver —
              quote or closely paraphrase both the consumer's ask and the producer's actual
              deliverable, so the mismatch is self-evident>
   seam:     <one sentence naming the boundary this crosses, e.g. "backend response payload →
              client render">
   resolutions:
-    1. Amend {{producer_slug}}'s contract to deliver <missing>
-    2. Amend {{consumer_slug}} so it no longer requires <missing>
-    3. Add a new story to own <missing> (a wiring story)
+    1. Amend {{producer_slug}}'s contract to deliver <missing> — then re-run Step 3.6 before
+       treating this edge as resolved (amending alone does not update the match; re-check it)
+    2. Amend {{consumer_slug}} so it no longer requires <missing> — then re-run Step 3.6 before
+       treating this edge as resolved
+    3. Add a new story to own <missing> (a wiring story) — then re-run Step 3.6 before treating
+       this edge as resolved
+    4. Only present when reason == "producer not complete": Acknowledge the sequencing
+       dependency — no contract defect exists, the producer simply has not shipped yet. No
+       contract change needed; re-check this edge once the producer completes, or defer this
+       story to a later sprint.
 ```
 
 Store the full list as `{{coherence_failures}}`.
@@ -168,7 +187,7 @@ Write `.momentum/sprints/{{sprint_slug}}/coherence-report.md`:
 {{edge_count}} depends_on edge(s) examined ({{in_sprint_count}} in-sprint,
 {{out_of_sprint_count}} out-of-sprint).
 
-## Satisfied
+## Satisfied / Presence-only
 - {{consumer}} → {{producer}}: {{named_input}} — satisfied by {{one-line evidence from
   producer_deliverable_text}}
 (or, for presence-only edges: "{{consumer}} → {{producer}}: presence-only — no named
@@ -182,6 +201,13 @@ deliverable.")
 ## Override Decisions
 <empty until Step 8 records one — see §7>
 ```
+
+**Re-run preservation (binding):** If `coherence-report.md` already exists when this step runs
+again (an M-cycle amendment triggered a re-run per workflow.md Step 7), read the existing file
+first and carry its `## Override Decisions` section forward **verbatim** into the new write.
+Only `## Satisfied / Presence-only`, `## Open Coherence Failures`, and the edge-count summary
+line are regenerated from the fresh match. A wholesale rewrite that resets `## Override
+Decisions` to empty destroys a durable record Step 8 already wrote (§7) and is never correct.
 
 This file is the durable record read back by Step 7 (fork synthesis) and Step 8 (activation
 gate).
