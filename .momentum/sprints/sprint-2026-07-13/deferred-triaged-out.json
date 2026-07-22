@@ -1,0 +1,32 @@
+[
+ {
+  "finding_id": "bmad-code-review-0",
+  "story_slug": "repair-phantom-story-file-entries-and-backfill-live-fixture-scope",
+  "summary": "Reverse-phantom caller-ordering: sprint-planning handoff-promotion calls story-add BEFORE writing the stub .md; with disk-truth story_file derivation it records story_file:false for a file that exists moments later",
+  "detail": "Reorder sprint-planning's handoff-promotion steps so the stub .md is written before the story-add call (mirroring intake). Verified: cmd_story_add momentum-tools.py:2197-2198; sprint-planning/workflow.md ~200-210.",
+  "location": "skills/momentum/skills/sprint-planning/workflow.md:207-210",
+  "suggested_fix": "Write stub .md before story-add in handoff promotion.",
+  "severity": "minor",
+  "stakes_class": "routine"
+ },
+ {
+  "finding_id": "qa-reviewer-1",
+  "story_slug": "manifesto-builder-skill-generate-then-curate",
+  "summary": "Story-file Dev Agent Record sections are structurally always blank under conduct (spec files are read-only to dev/fixer agents)",
+  "detail": "Either the Dev Agent Record convention should be retired for conducted stories (ledger is the record), or a sanctioned post-merge writer should fill it. Surfaced by QA on manifesto-builder.",
+  "location": ".momentum/stories/*.md ## Dev Agent Record",
+  "suggested_fix": "Decide: retire the section for conducted builds or designate a sanctioned writer.",
+  "severity": "minor",
+  "stakes_class": "routine"
+ },
+ {
+  "finding_id": "bmad-code-review-2",
+  "story_slug": "momentum-knowledge-base-buildout",
+  "summary": "Sync nornspun-client/.claude/skills/wiki-query/SKILL.md with the canonical user-global copy's multi-KB registry resolution, or confirm the copy is intentionally stale",
+  "detail": "grep for project_kb/KB_REGISTRY/--kb in the nornspun-client copy returns zero matches vs the canonical copy's full Before-You-Start resolution step.",
+  "location": "nornspun-client/.claude/skills/wiki-query/SKILL.md",
+  "suggested_fix": "Sync or annotate as stale.",
+  "severity": "low",
+  "stakes_class": "routine"
+ }
+]
