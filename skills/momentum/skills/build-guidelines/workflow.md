@@ -67,8 +67,9 @@
       nornspun-agentic-kb are both always registered), so the ambient/default vault is never
       guaranteed to match the project currently being built. Every constitution-builder
       invocation in Phase 3 and Phase 4 MUST explicitly instruct wiki-query calls to scope via
-      --kb {{project_kb}} — regardless of {{kb_scope}} — never rely on falling through to
-      whatever vault happens to be the current default.
+      --kb {{current.project_kb}} (Phase 3, per-manifesto) or --kb {{default_project_kb}}
+      (Phase 4, standalone constitution) — regardless of {{kb_scope}} — never rely on falling
+      through to whatever vault happens to be the current default.
     </action>
 
     <action>Check current state:
