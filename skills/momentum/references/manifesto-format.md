@@ -222,7 +222,7 @@ Poor symptom phrasing degrades routing quality. The investment in symptom qualit
 
 Every manifesto must declare which project KB its `wiki-query` entries resolve against via the `project_kb` identity field.
 
-**Why:** multiple project KBs coexist (DEC-038 D2). Momentum agents resolve against the Momentum KB. Nornspun agents resolve against the nornspun KB. The `project_kb` field tells agent-builder (and any future multi-KB-aware `wiki-query` extension) which KB to target.
+**Why:** multiple project KBs coexist (DEC-038 D2). Momentum agents resolve against the Momentum KB. Nornspun agents resolve against the nornspun KB. The `project_kb` field tells agent-builder (and the multi-KB-aware `wiki-query` resolver) which KB to target.
 
 **Current state (operative — `momentum-knowledge-base-buildout` story, FR142):** `wiki-query`
 (DEC-018) now resolves per-`project_kb` via a registry in `~/.obsidian-wiki/config` (each

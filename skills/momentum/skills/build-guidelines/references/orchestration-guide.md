@@ -100,7 +100,7 @@ it is a live routing key.
 **In constitution-builder invocations:** build-guidelines passes `project_kb` as an explicit
 argument to every constitution-builder call (Phase 3 per-manifest, Phase 4 standalone), and
 instructs constitution-builder to scope every `wiki-query` call it makes with
-`--kb {{project_kb}}` explicitly — never relying on the ambient default vault, since more than one
+`--kb <project_kb>` explicitly — never relying on the ambient default vault, since more than one
 project KB is always registered. This is what makes a Momentum manifesto's KB-sourced context
 resolve against `momentum-agentic-kb` rather than whichever vault happens to be `wiki-query`'s
 current default.
