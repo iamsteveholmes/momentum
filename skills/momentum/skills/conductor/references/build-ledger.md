@@ -116,7 +116,7 @@ Event names reuse the existing `{{build_log}}` vocabulary. No renames.
 | `endgate-report-re-rendered` | Step 5.RC.4 report re-rendered | `pass`, `items_fixed`, `items_triaged_out`, `items_residual` |
 | `major-residual-stub-created` | Phase 5 approve major-residual guard | `finding_id`, `severity`, `summary` |
 | `scorecard-revert-reconciliation` | Phase 5 disposition override | `finding_id`, `story_slug`, `note` |
-| `end-gate-phase-complete` | Phase 5 approve — after the sprint→main merge and all per-story terminal transitions complete | `stories_merged`, `stories_closed_incomplete`, `pushed` (bool — reflects state at the moment this row was appended, before the push ask runs; push is a separate, always-reconfirmed developer decision each session and is not itself gated by this checkpoint). Sprint-level completion checkpoint: its presence gates the PHASE CHECKPOINT RULE's Phase 5 approve-side skip on resume (workflow.md) — once appended, the merge, `git branch -d`, and per-story terminal transitions are not re-attempted for this sprint. |
+| `end-gate-phase-complete` | Phase 5 approve — after the sprint→main merge and all per-story terminal transitions complete | `stories_merged`, `stories_closed_incomplete`. Push is a separate, always-reconfirmed developer decision each session — it is not gated by this checkpoint and is not tracked on this row. Sprint-level completion checkpoint: its presence gates the PHASE CHECKPOINT RULE's Phase 5 approve-side skip on resume (workflow.md) — once appended, the merge, `git branch -d`, and per-story terminal transitions are not re-attempted for this sprint. |
 
 ### Conductor-Level Events (no story_slug)
 
