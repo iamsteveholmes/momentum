@@ -296,7 +296,7 @@ Line count: {{N}} lines {{if N > 750: ⚠ OVER CEILING (750 max)}}
       For each composed agent in {{composed_agents}}:
         Derive a representative file path that this agent's patterns should match.
           Example: for dev-kotlin-compose with patterns ["composeApp/**"], use "composeApp/src/main/MyScreen.kt"
-          Example: for dev-skills with patterns ["skills/**/*.md"], use "skills/momentum/skills/example/SKILL.md"
+          Example: for dev-docs with patterns ["docs/**/*.md"], use "docs/architecture/example.md"
         Run: momentum-tools agent resolve --touches "{{representative_path}}"
         Parse the returned results array.
         Assert: at least one result has slug == "{{expected_slug}}" (the COMPOSED slug — not "dev" or generic).
