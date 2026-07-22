@@ -1129,28 +1129,11 @@ Address all findings before the plan can proceed.</output>
         · Store per-story abs_story_path and abs_spec_path for use in Phase B hrefs
 
       Mandatory coherence forks (from Step 3.6): for every entry in {{coherence_failures}},
-      build a ForkItem using the renderer §4 ForkItem shape, content from
-      coherence-gate.md §5, and prepend it to {{genuine_forks}} BEFORE applying the other
-      fork-detection rules below. Coherence forks are EXEMPT from the ≤ 7 cap (floor wins per
-      decision-grade-presentation §4 — a genuine open coherence mismatch is never dropped to
-      make room: if {{coherence_failures}} has 9 entries, all 9 coherence forks appear, and the
-      gate's total fork count exceeds 7 for that render):
-        · id: "{{consumer}}→{{producer}}" — the stable identifier for this fork. This slug pair
-          is the fork's identity for matching at Step 7 approval-validation and Step 8 — never
-          rely on "Fork N" position alone, since the fork list can be rebuilt in a different
-          order across an M-cycle re-run.
-        · title: "{{consumer}} ↔ {{producer}}: seam coherence mismatch"
-        · stakes: HIGH
-        · what: the specific missing deliverable named in the failure card
-        · why: "the sprint can ship both stories individually passing their own gates while the
-          seam between them belongs to no one" (the nornspun failure mode this check exists to
-          catch)
-        · evidence: both slugs + the missing deliverable, from the failure card
-        · recommendation: the first remediation option on the failure card
-        · options: the remediation options from the failure card (3, or 4 when the card's
-          `reason` is "producer not complete" — coherence-gate.md §5), plus one final option —
-          "Override — proceed with sprint despite the open mismatch (recorded in
-          coherence-report.md)"
+      build a ForkItem per coherence-gate.md §5a and prepend it to {{genuine_forks}} BEFORE
+      applying the other fork-detection rules below. Coherence forks are EXEMPT from the ≤ 7 cap
+      (floor wins per decision-grade-presentation §4 — a genuine open coherence mismatch is
+      never dropped to make room: if {{coherence_failures}} has 9 entries, all 9 coherence forks
+      appear, and the gate's total fork count exceeds 7 for that render).
 
       Then build the remaining {{genuine_forks}} from the other fork-detection rules below —
       these non-coherence forks fill only the remainder of the ≤ 7 total (7 minus the coherence
@@ -1326,7 +1309,7 @@ be accepted — the anti-rubber-stamp gate requires written reasoning per fork.<
       EVERY open failure: for each entry in {{open_coherence_failures}}, locate its
       corresponding fork verdict in the pasted decision block by matching the stable identifier
       "{{consumer}}→{{producer}}" (the ForkItem `id` assigned in Step 7 Phase A, per
-      coherence-gate.md §5) — NOT by "Fork N" list position, since a Step 3.6 re-run or
+      coherence-gate.md §5a) — NOT by "Fork N" list position, since a Step 3.6 re-run or
       fork-list edit between the Step 7 render and this gate can reorder {{genuine_forks}}
       relative to {{open_coherence_failures}}. If a "Fork N:" verdict does not clearly identify
       which consumer→producer pair it addresses (a real risk with 2+ open failures), treat it as

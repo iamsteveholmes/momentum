@@ -106,8 +106,7 @@ Store the result as `{{producer_deliverable_text}}`.
       `.momentum/stories/{{producer_slug}}.md` directly — its Acceptance Criteria and
       Description sections stand in as the recorded deliverable text.
 3. If neither source resolves any text at all (a `done` story with no recorded deliverable
-   anywhere — should be rare): treat as a coherence failure, reason "producer marked done but
-   no recorded deliverable found."
+   anywhere — should be rare): treat as a coherence failure, reason "no recorded deliverable."
 
 ---
 
@@ -160,13 +159,11 @@ recorded deliverable"` (§3b.3).
              deliverable, so the mismatch is self-evident>
   seam:     <one sentence naming the boundary this crosses, e.g. "backend response payload →
              client render">
-  resolutions:
-    1. Amend {{producer_slug}}'s contract to deliver <missing> — then re-run Step 3.6 before
-       treating this edge as resolved (amending alone does not update the match; re-check it)
-    2. Amend {{consumer_slug}} so it no longer requires <missing> — then re-run Step 3.6 before
-       treating this edge as resolved
-    3. Add a new story to own <missing> (a wiring story) — then re-run Step 3.6 before treating
-       this edge as resolved
+  resolutions (for options 1–3, re-run Step 3.6 before treating the edge as resolved — amending
+  alone does not update the match):
+    1. Amend {{producer_slug}}'s contract to deliver <missing>
+    2. Amend {{consumer_slug}} so it no longer requires <missing>
+    3. Add a new story to own <missing> (a wiring story)
     4. Only present when reason == "producer not complete": Acknowledge the sequencing
        dependency — no contract defect exists, the producer simply has not shipped yet. No
        contract change needed; re-check this edge once the producer completes, or defer this
@@ -174,6 +171,28 @@ recorded deliverable"` (§3b.3).
 ```
 
 Store the full list as `{{coherence_failures}}`.
+
+---
+
+## 5a. Rendering a failure as a Step 7 fork
+
+Each entry in `{{coherence_failures}}` becomes one mandatory genuine fork at the Step 7 plan
+gate. Build the ForkItem (renderer §4 shape) from the failure card fields:
+
+- id: "{{consumer}}→{{producer}}" — the stable identifier for this fork. This slug pair is the
+  fork's identity for matching at Step 7 approval-validation and Step 8 — never rely on "Fork N"
+  position alone, since the fork list can be rebuilt in a different order across an M-cycle
+  re-run.
+- title: "{{consumer}} ↔ {{producer}}: seam coherence mismatch"
+- stakes: HIGH
+- what: the specific missing deliverable named in the failure card
+- why: "the sprint can ship both stories individually passing their own gates while the seam
+  between them belongs to no one" (the nornspun failure mode this check exists to catch)
+- evidence: both slugs + the missing deliverable, from the failure card
+- recommendation: the first remediation option on the failure card
+- options: the remediation options from the failure card (3, or 4 when the card's `reason` is
+  "producer not complete" — §5), plus one final option — "Override — proceed with sprint despite
+  the open mismatch (recorded in coherence-report.md)"
 
 ---
 
