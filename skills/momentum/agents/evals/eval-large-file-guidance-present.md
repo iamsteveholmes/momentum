@@ -23,9 +23,6 @@ When all agent definitions are correctly implemented, each file in
 ```
 files_to_check:
   - skills/momentum/agents/dev.md
-  - skills/momentum/agents/dev-skills.md
-  - skills/momentum/agents/dev-build.md
-  - skills/momentum/agents/dev-frontend.md
   - skills/momentum/agents/qa-reviewer.md
   - skills/momentum/agents/e2e-validator.md
 ```
@@ -67,15 +64,12 @@ For each file, verify that only the Large File Handling section was added:
 2. Check that no existing section headings were removed or renamed
 3. Check that the section appears in the correct position per the story spec:
    - `dev.md` — after "What NOT to Do"
-   - `dev-skills.md` — after "Conventional Commits", before "Implementation Approach"
-   - `dev-build.md` — after "Common Pitfalls", before "Implementation Approach"
-   - `dev-frontend.md` — after "Common Pitfalls", before "Implementation Approach"
    - `qa-reviewer.md` — after "Cross-Story Integration Check" section, before "Output Format"
    - `e2e-validator.md` — after "Cross-Scenario Consistency" section, before "Output Format"
 
 ## Expected Pass Criteria
 
-- All 6 agent files contain a Large File Handling section
+- All 3 agent files contain a Large File Handling section
 - All sections include: offset/limit mechanics, named large files,
   search-before-read pattern, error recovery
 - No section exceeds 20 lines

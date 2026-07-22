@@ -17,7 +17,7 @@ Usage:
     momentum-tools.py sprint story-add --slug SLUG --title TITLE --epic EPIC [--priority PRIORITY] [--depends-on SLUG[,SLUG,...]]
     momentum-tools.py sprint story-set-contract --slug SLUG --verification-method METHOD --contract-path PATH --harness-profile PROFILE --coverage-disposition DISPOSITION [--covered-by-scenario SCENARIO] --frozen-sha256 SHA256 --can-merge-independently BOOL
     momentum-tools.py sprint compute-verification-method --story SLUG
-    momentum-tools.py specialist-classify --touches "path1,path2,..."
+    momentum-tools.py specialist-classify --touches "path1,path2,..."  (retired no-op shim — always resolves to dev; use "agent resolve")
     momentum-tools.py agent resolve --touches "path1,path2,..."
     momentum-tools.py agent resolve --role qa-reviewer
     momentum-tools.py quickfix register --slug SLUG --story STORY_KEY
@@ -1900,75 +1900,25 @@ def cmd_feature_status_hash(args: argparse.Namespace) -> None:
            hash_result={"hash": digest, "features_present": True})
 
 
-# --- Specialist Classify Command ---
-
-SPECIALIST_PATTERNS: list[tuple[list[str], str]] = [
-    # (glob-like patterns, specialist name) — checked in table order
-    (["skills/*/SKILL.md", "skills/*/workflow.md", "*/agents/*.md", "agents/*.md"], "dev-skills"),
-    (["*.gradle*", "*.kts", "build.gradle*"], "dev-build"),
-    (["*compose*", "*Compose*", "*ui/*", "*screen*"], "dev-frontend"),
-]
-
-
-def _match_specialist(path: str) -> str | None:
-    """Return specialist name if path matches any pattern, else None."""
-    import fnmatch
-    for patterns, specialist in SPECIALIST_PATTERNS:
-        for pat in patterns:
-            if fnmatch.fnmatch(path, pat):
-                return specialist
-    return None
-
+# --- Specialist Classify Command (retired — Decision 55 / DEC-023) ---
+#
+# This command formerly mapped touched paths to a pre-shipped dev specialist
+# body (dev-skills / dev-build / dev-frontend) via a hard-coded pattern table.
+# That table and the three specialist bodies it resolved to have been retired:
+# `momentum-tools agent resolve` against `agents.json` is now the sole
+# specialist spawn path (project-composed entries first, then defaults.dev).
+# This command is kept as a no-op shim — it always resolves to the base `dev`
+# body regardless of input — so existing callers do not break on invocation;
+# new callers should use `agent resolve` directly.
 
 def cmd_specialist_classify(args: argparse.Namespace) -> None:
-    touches_raw = args.touches if args.touches else ""
-    paths = [p.strip() for p in touches_raw.split(",") if p.strip()]
-
-    if not paths:
-        result("specialist_classify", success=True,
-               specialist="dev",
-               agent_file="skills/momentum/agents/dev.md",
-               matches={},
-               fallback=False)
-        return
-
-    tally: dict[str, int] = {}
-    for p in paths:
-        spec = _match_specialist(p)
-        if spec:
-            tally[spec] = tally.get(spec, 0) + 1
-
-    if not tally:
-        # No matches — base dev
-        project_dir = resolve_project_dir()
-        agent_file = "skills/momentum/agents/dev.md"
-        fallback = not (project_dir / agent_file).exists()
-        result("specialist_classify", success=True,
-               specialist="dev",
-               agent_file=agent_file,
-               matches={},
-               fallback=fallback)
-        return
-
-    # Majority rule; ties broken by table order
-    max_count = max(tally.values())
-    winner = None
-    for _patterns, specialist in SPECIALIST_PATTERNS:
-        if tally.get(specialist, 0) == max_count:
-            winner = specialist
-            break
-
-    agent_file = f"skills/momentum/agents/{winner}.md"
     project_dir = resolve_project_dir()
+    agent_file = "skills/momentum/agents/dev.md"
     fallback = not (project_dir / agent_file).exists()
-
-    if fallback:
-        agent_file = "skills/momentum/agents/dev.md"
-
     result("specialist_classify", success=True,
-           specialist=winner,
+           specialist="dev",
            agent_file=agent_file,
-           matches=tally,
+           matches={},
            fallback=fallback)
 
 
@@ -3015,9 +2965,9 @@ def build_parser() -> argparse.ArgumentParser:
     spcc = session_sub.add_parser("plugin-cache-check", help="Compare active plugin cache version to source-tree version")
     spcc.set_defaults(func=cmd_session_plugin_cache_check)
 
-    # specialist-classify command
-    sc_parser = subparsers.add_parser("specialist-classify", help="Classify touched paths to a dev specialist")
-    sc_parser.add_argument("--touches", required=True, help="Comma-separated file paths")
+    # specialist-classify command (retired no-op shim — always resolves to dev; use "agent resolve")
+    sc_parser = subparsers.add_parser("specialist-classify", help="Retired no-op shim — always resolves to dev; use 'agent resolve'")
+    sc_parser.add_argument("--touches", required=True, help="Comma-separated file paths (accepted but ignored)")
     sc_parser.set_defaults(func=cmd_specialist_classify)
 
     # agent command group

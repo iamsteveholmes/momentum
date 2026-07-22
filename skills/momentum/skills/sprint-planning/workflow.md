@@ -846,24 +846,15 @@ Proceeding to team composition.</output>
       · If not, note that the role will use Momentum's generic patterns only
     </action>
 
-    <action>Domain classification — assign a specialist dev agent per story based on `touches` paths:
+    <action>Domain classification — resolve a specialist dev agent per story via the routing table:
 
-    For each story, iterate its `touches` paths and match against this table (order matters — first match wins per path):
+    For each story, run `momentum-tools agent resolve --touches "{{story.touches | join(',')}}"`
+    against `agents.json`. The resolver checks `project` entries first (composed specialists,
+    pattern-matched against `touches`), then falls back to `defaults.dev` (the generic base
+    body, `skills/momentum/agents/dev.md`) when no project entry matches.
 
-      | Pattern                                                        | Specialist     |
-      |----------------------------------------------------------------|----------------|
-      | `skills/*/SKILL.md`, `skills/*/workflow.md`, `agents/*.md`     | dev-skills     |
-      | `*.gradle*`, `*.kts`, `build.gradle*`                          | dev-build      |
-      | `*compose*`, `*Compose*`, `*ui/*`, `*screen*`                  | dev-frontend   |
-      | (no match)                                                     | dev (base)     |
-
-    Resolution when a story's paths match multiple specialist types:
-      · Tally matches per specialist type across all `touches` paths
-      · Assign the specialist with the most matching paths (majority rule)
-      · Ties break to the first specialist in table order (most specific)
-      · If no paths match any pattern, assign `dev` (base agent)
-
-    Store the specialist assignment per story in {{team}}.story_assignments[slug].specialist
+    Store the resolved slug (e.g., `dev`, or a composed slug such as `dev-kotlin-compose`) and
+    agent path per story in {{team}}.story_assignments[slug].specialist and .agent_path
     </action>
 
     <!-- Guidelines Verification Gate -->
@@ -916,7 +907,7 @@ For each missing domain, choose:
     <!-- Gen-2 Composed Agent Detection (build-guidelines integration) -->
     <!-- build-guidelines is the upstream producer of composed specialist agent files.         -->
     <!-- agent-builder produces files named {role}-{domain}.md where domain is the manifesto  -->
-    <!-- stack id (e.g., "kotlin-compose"), NOT the coarse specialist value ("dev-frontend").  -->
+    <!-- stack id (e.g., "kotlin-compose"), NOT the generic role name ("dev").                  -->
     <!-- sprint-dev uses momentum-tools agent resolve --touches to find composed agents at      -->
     <!-- spawn time — the routing table (agents.json with non-empty patterns[]) is the source  -->
     <!-- of truth. This detection step is informational only.                                  -->
@@ -924,7 +915,7 @@ For each missing domain, choose:
       · Read momentum/build-guidelines-last-run.json if present — lists composed agent slugs/paths
         with their exact slug names (e.g., "dev-kotlin-compose") and file paths under .claude/guidelines/agents/
       · Also check .claude/guidelines/agents/ for {role}-{domain}.md files
-        (domain here is the manifesto domain id — e.g., "kotlin-compose" — not the coarse specialist like "dev-frontend")
+        (domain here is the manifesto domain id — e.g., "kotlin-compose" — not the generic role name like "dev")
       · For each composed agent in last-run.json (or discovered in the agents/ dir):
           note "composed agent available: {{slug}} at {{path}}"
       · For specialist domains from the story assignments that have NO matching composed agent:

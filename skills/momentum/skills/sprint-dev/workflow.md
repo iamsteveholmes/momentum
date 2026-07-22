@@ -264,7 +264,9 @@ Task list created for progress tracking.</output>
             returns the composed agent slug and path directly. No additional path construction needed.
 
             Check the routing result from step (b):
-            - If the result slug is a COMPOSED slug (e.g., "dev-kotlin-compose", "dev-skills") AND
+            - If the result slug is a COMPOSED slug (e.g., "dev-kotlin-compose", or a per-project
+              "dev-skills" domain slug — a composed slug from agents.json `project`, distinct from
+              the retired pre-shipped `skills/momentum/agents/dev-skills.md` body) AND
               the agent_path points to a file under .claude/guidelines/agents/:
                 The gen-2 composed agent is already active from the routing-table result.
                 Note: "Using gen-2 composed agent {{result.slug}} (guidelines baked in)"

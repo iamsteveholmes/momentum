@@ -1016,47 +1016,32 @@ def test_startup_preflight_journal_threads():
     _with_global_installed({"components": {"rules": {"version": "1.0.0", "hash": ""}}}, check)
 
 
-# --- Specialist Classify Tests ---
+# --- Specialist Classify Tests (retired mapping — Decision 55 / DEC-023) ---
+#
+# `specialist-classify` no longer maps touches/change_type to a pre-shipped
+# dev-skills/dev-build/dev-frontend specialist body (those files were removed;
+# `momentum-tools agent resolve` against `agents.json` is the sole specialist
+# spawn path now). The command survives as a no-op shim that always resolves
+# to the base `dev` body, regardless of input shape.
 
-def test_specialist_classify_dev_skills():
-    """Single path matching dev-skills."""
-    print("\n[specialist-classify] Single path — dev-skills")
-    proj = setup_project()
-    # Create the agent file so fallback is false
-    agent_dir = proj / "skills" / "momentum" / "agents"
-    agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "dev-skills.md").write_text("# dev-skills\n")
-    code, out = run_tool(proj, "specialist-classify", "--touches", "skills/momentum/SKILL.md")
-    assert_eq("exit code 0", code, 0)
-    assert_eq("specialist", out.get("specialist"), "dev-skills")
-    assert_eq("fallback false", out.get("fallback"), False)
-    assert_eq("matches", out.get("matches"), {"dev-skills": 1})
-
-
-def test_specialist_classify_dev_build():
-    """Single path matching dev-build."""
-    print("\n[specialist-classify] Single path — dev-build")
+def test_specialist_classify_always_resolves_dev():
+    """Previously-classifying path shapes (skill/build/frontend) all resolve to dev now."""
+    print("\n[specialist-classify] Retired — skill/build/frontend-shaped paths all resolve to dev")
     proj = setup_project()
     agent_dir = proj / "skills" / "momentum" / "agents"
     agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "dev-build.md").write_text("# dev-build\n")
-    code, out = run_tool(proj, "specialist-classify", "--touches", "app/build.gradle.kts")
-    assert_eq("exit code 0", code, 0)
-    assert_eq("specialist", out.get("specialist"), "dev-build")
-    assert_eq("fallback false", out.get("fallback"), False)
-
-
-def test_specialist_classify_dev_frontend():
-    """Single path matching dev-frontend."""
-    print("\n[specialist-classify] Single path — dev-frontend")
-    proj = setup_project()
-    agent_dir = proj / "skills" / "momentum" / "agents"
-    agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "dev-frontend.md").write_text("# dev-frontend\n")
-    code, out = run_tool(proj, "specialist-classify", "--touches", "app/src/main/ui/HomeScreen.kt")
-    assert_eq("exit code 0", code, 0)
-    assert_eq("specialist", out.get("specialist"), "dev-frontend")
-    assert_eq("fallback false", out.get("fallback"), False)
+    (agent_dir / "dev.md").write_text("# dev\n")
+    for touches in (
+        "skills/momentum/SKILL.md",
+        "app/build.gradle.kts",
+        "app/src/main/ui/HomeScreen.kt",
+        "skills/foo/SKILL.md,build.gradle.kts,app/src/main/ui/HomeScreen.kt",
+    ):
+        code, out = run_tool(proj, "specialist-classify", "--touches", touches)
+        assert_eq("exit code 0", code, 0)
+        assert_eq(f"specialist for '{touches}'", out.get("specialist"), "dev")
+        assert_eq(f"matches for '{touches}'", out.get("matches"), {})
+        assert_eq(f"fallback false for '{touches}'", out.get("fallback"), False)
 
 
 def test_specialist_classify_no_match():
@@ -1073,38 +1058,6 @@ def test_specialist_classify_no_match():
     assert_eq("fallback false", out.get("fallback"), False)
 
 
-def test_specialist_classify_majority_rule():
-    """Multiple paths — majority wins."""
-    print("\n[specialist-classify] Majority rule")
-    proj = setup_project()
-    agent_dir = proj / "skills" / "momentum" / "agents"
-    agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "dev-skills.md").write_text("# dev-skills\n")
-    (agent_dir / "dev-build.md").write_text("# dev-build\n")
-    touches = "skills/foo/SKILL.md,skills/bar/SKILL.md,skills/baz/workflow.md,build.gradle.kts"
-    code, out = run_tool(proj, "specialist-classify", "--touches", touches)
-    assert_eq("exit code 0", code, 0)
-    assert_eq("specialist", out.get("specialist"), "dev-skills")
-    assert_eq("dev-skills count", out.get("matches", {}).get("dev-skills"), 3)
-    assert_eq("dev-build count", out.get("matches", {}).get("dev-build"), 1)
-
-
-def test_specialist_classify_tie_table_order():
-    """Tie broken by table order — dev-skills wins over dev-build."""
-    print("\n[specialist-classify] Tie — table order wins")
-    proj = setup_project()
-    agent_dir = proj / "skills" / "momentum" / "agents"
-    agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "dev-skills.md").write_text("# dev-skills\n")
-    (agent_dir / "dev-build.md").write_text("# dev-build\n")
-    touches = "skills/foo/SKILL.md,build.gradle.kts"
-    code, out = run_tool(proj, "specialist-classify", "--touches", touches)
-    assert_eq("exit code 0", code, 0)
-    assert_eq("specialist", out.get("specialist"), "dev-skills")
-    assert_eq("dev-skills count", out.get("matches", {}).get("dev-skills"), 1)
-    assert_eq("dev-build count", out.get("matches", {}).get("dev-build"), 1)
-
-
 def test_specialist_classify_empty_touches():
     """Empty touches returns dev base."""
     print("\n[specialist-classify] Empty touches — dev base")
@@ -1116,15 +1069,15 @@ def test_specialist_classify_empty_touches():
 
 
 def test_specialist_classify_fallback_missing_agent():
-    """Agent file missing on disk sets fallback: true."""
-    print("\n[specialist-classify] Fallback — agent file missing")
+    """dev.md missing on disk sets fallback: true."""
+    print("\n[specialist-classify] Fallback — dev.md missing")
     proj = setup_project()
     # Do NOT create any agent files
     code, out = run_tool(proj, "specialist-classify", "--touches", "skills/foo/SKILL.md")
     assert_eq("exit code 0", code, 0)
-    assert_eq("specialist", out.get("specialist"), "dev-skills")
+    assert_eq("specialist", out.get("specialist"), "dev")
     assert_eq("fallback true", out.get("fallback"), True)
-    assert_eq("agent_file falls back to dev", out.get("agent_file"), "skills/momentum/agents/dev.md")
+    assert_eq("agent_file is dev", out.get("agent_file"), "skills/momentum/agents/dev.md")
 
 
 # --- Quickfix Tests ---
@@ -3088,12 +3041,8 @@ def main():
     test_startup_preflight_journal_threads()
 
     # Specialist classify tests
-    test_specialist_classify_dev_skills()
-    test_specialist_classify_dev_build()
-    test_specialist_classify_dev_frontend()
+    test_specialist_classify_always_resolves_dev()
     test_specialist_classify_no_match()
-    test_specialist_classify_majority_rule()
-    test_specialist_classify_tie_table_order()
     test_specialist_classify_empty_touches()
     test_specialist_classify_fallback_missing_agent()
 
