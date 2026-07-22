@@ -176,10 +176,10 @@ The sprint and story records are inconsistent. This may mean the sprint index an
 
     <note>BUILD-HANDOFF CONSUMPTION: `sprint-planning` Step 8.C writes a use-then-discard build-handoff artifact as the terminal action of activation (`.momentum/handoffs/{{sprint_slug}}-build-handoff-<YYYY-MM-DD>.md`, per `.claude/rules/handoff-conventions.md`). It carries planning-time context — sprint goal, stories-by-wave, per-story contract paths, and planning-time cautions — for a fresh build session with no memory of planning. Reading it is a silent pre-flight action, never a developer touchpoint.</note>
 
-    <action>Consume the build-handoff bridge for this sprint:
+    <action>Consume the build-handoff bridge for this sprint (read now; delete only after the Touchpoint-1 confirmation below):
       1. Glob `.momentum/handoffs/{{sprint_slug}}-build-handoff-*.md` (the date suffix is the activation date, unknown here).
-      2. If a file matches: read it into build context — retain the sprint goal and any Planning-Time Cautions for the Pre-flight Complete output and the build — then delete the matched file (`rm`). It is a use-then-discard bridge and is never preserved as history once consumed.
-      3. If no file matches (a sprint activated before this artifact existed, or a resumed session that already consumed it): proceed silently. The handoff is a convenience, not a required input — do not HALT and do not warn the developer.
+      2. If a file matches: read it into build context — retain the sprint goal and any Planning-Time Cautions for the Pre-flight Complete output and the build — and bind its path to {{build_handoff_path}}. Do NOT delete it here: it is a use-then-discard bridge, but deletion is deferred until the developer confirms at Touchpoint 1 below, so that a decline (which leaves the build unstarted) does not destroy the planning context a later re-invocation still needs. It is never preserved as history once the build actually begins.
+      3. If no file matches (a sprint activated before this artifact existed, or a resumed session that already consumed it): leave {{build_handoff_path}} unset and proceed silently. The handoff is a convenience, not a required input — do not HALT and do not warn the developer.
     </action>
 
     <!-- ─── Touchpoint 1: confirm to start ───────────────────── -->
@@ -205,6 +205,9 @@ The build will proceed silently through all stories. The next human touchpoint i
 Ready to begin?</output>
 
     <ask>Confirm to start the build.</ask>
+
+    <action>Now that the Touchpoint-1 confirmation is received and the build is beginning, delete the consumed build-handoff bridge (deferred from the consumption action above): if {{build_handoff_path}} was set during consumption, `rm` it — use-then-discard, never preserved as history once the build begins; if it is unset (no file matched), do nothing. This deletion runs only on the post-confirmation path, so a decline at Touchpoint 1 leaves the bridge intact for a later re-invocation.</action>
+
     <note>This is the only ask on the routine path before the end-gate. Once confirmed, the build runs silently through Phase 2, Phase 3, and Phase 4. No developer-facing HALT exists outside this Phase 1, except: (a) the Conductor-facing section-7 freeze guard (internal, developer does not see it) and (b) the developer-facing mid-flight escalation tier for irreversible-and-imminent or build-invalidating findings only (Phase 2, step 2.F). Routine findings are never raised mid-build. There is no resume/cleanup prompt, no per-story confirmation, and no other mid-build questions.</note>
   </step>
 

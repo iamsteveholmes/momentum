@@ -36,6 +36,11 @@ No other step emits a blocking `<ask>` on this clean-run path. Specifically:
   nor the `GATE_FAILED` HALT branch fires.
 - The adversarial guard (Step 3.5 Phase C) reports `GUARD_CLEAN` on the first pass, so the
   contaminated-contracts halt/ask branch never triggers.
+- The cross-story seam coherence check (Step 3.6) finds no seam mismatches
+  (`{{coherence_failures}}` empty on this clean input), so it emits only a non-blocking `✓`
+  notice and continues — it never asks. Its clean result also carries downstream: the Step 7
+  gate raises no mandatory coherence fork, and the Step 8 activation coherence gate finds zero
+  open failures and imposes no activation hold or override prompt.
 
 The run reaches `## ✓ Sprint {{sprint_slug}} Activated` without the orchestrator inserting
 any of its own additional confirmation pauses between steps.
@@ -49,4 +54,4 @@ any of its own additional confirmation pauses between steps.
   in the transcript.
 - The workflow's own `<critical>` continuous-execution directive (top of workflow.md) is
   honored: the session does not stop to ask "should I continue to the next step?" between
-  Steps 1, 3.5, 4, 4.5, 5, 6, or 8.
+  Steps 1, 3.5, 3.6, 4, 4.5, 5, 6, or 8.
