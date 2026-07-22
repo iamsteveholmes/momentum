@@ -5661,7 +5661,7 @@
     "story_type": "feature"
   },
   "conduct-live-run-against-fixture-sprint": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Run the shipped build-guidelines E2E driver live against a populated nornspun fixture (compose→register→resolve seam)",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,

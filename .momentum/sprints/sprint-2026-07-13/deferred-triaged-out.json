@@ -28,5 +28,15 @@
   "suggested_fix": "Sync or annotate as stale.",
   "severity": "low",
   "stakes_class": "routine"
+ },
+ {
+  "story_slug": "conduct-live-run-against-fixture-sprint",
+  "finding_id": "qa-reviewer-1",
+  "summary": "Frozen verification contract specs/conduct-live-run-against-fixture-sprint.smoke.sh:122 has an anchoring bug: grep -c \"^PASS:\" counts 0 against the driver's two-space-indented PASS: lines, so the contract self-check always false-FAILs even on a genuinely passing run.",
+  "detail": "Contract-authoring defect in a frozen sprint-planning artifact — outside the story's writable scope (contract-freeze). Fix belongs to the contract owner: change to an indentation-tolerant match, e.g. grep -cE \"^[[:space:]]*PASS:\". Also audit sibling smoke contracts for the same anchored-grep pattern.",
+  "location": ".momentum/sprints/sprint-2026-07-13/specs/conduct-live-run-against-fixture-sprint.smoke.sh:122",
+  "suggested_fix": "grep -cE \"^[[:space:]]*PASS:\" (indentation-tolerant); audit sibling smoke contracts for the same pattern",
+  "severity": "minor",
+  "stakes_class": "routine"
  }
 ]
