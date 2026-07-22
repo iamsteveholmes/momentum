@@ -89,9 +89,21 @@ Each manifesto declares `project_kb` in its identity block. Build-guidelines rea
 | nornspun | `nornspun-agentic-kb` |
 | Other project | `{project-name}-kb` |
 
-**Current state:** `wiki-query` (DEC-018) resolves against the active vault. The multi-KB extension (FR142) routes lookups to a declared `project_kb` — planned but not yet implemented. The `project_kb` field is stored now so the pipeline is ready when FR142 lands.
+**Current state (operative — `momentum-knowledge-base-buildout` story, FR142):** the KB registry
+in `~/.obsidian-wiki/config` maps every `project_kb` identifier (`KB_REGISTRY_<NAME>` entries) to
+its own vault path — `momentum-agentic-kb` and `nornspun-agentic-kb` are both registered today.
+`wiki-query`'s resolution step reads a declared `project_kb` — via an explicit `--kb <project-name>`
+flag, or via the invoking manifesto's identity block — and selects the matching registry entry
+instead of the single global vault. The `project_kb` field is no longer merely stored for later:
+it is a live routing key.
 
-**In constitution-builder invocations:** pass `project_kb` as context so constitution-builder can scope its wiki-query calls correctly once FR142 lands.
+**In constitution-builder invocations:** build-guidelines passes `project_kb` as an explicit
+argument to every constitution-builder call (Phase 3 per-manifest, Phase 4 standalone), and
+instructs constitution-builder to scope every `wiki-query` call it makes with
+`--kb <project_kb>` explicitly — never relying on the ambient default vault, since more than one
+project KB is always registered. This is what makes a Momentum manifesto's KB-sourced context
+resolve against `momentum-agentic-kb` rather than whichever vault happens to be `wiki-query`'s
+current default.
 
 ---
 

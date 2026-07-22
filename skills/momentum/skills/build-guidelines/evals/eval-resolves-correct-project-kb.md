@@ -34,4 +34,14 @@
 
 ## Notes
 
-The multi-KB extension to `wiki-query` (FR142) is not yet implemented — current `wiki-query` resolves against the active vault. However, the skill must still read and preserve the `project_kb` field from the manifesto and pass it as context to `constitution-builder` invocations, so the pipeline is ready when FR142 lands. The observable for this eval is that the skill reads and surfaces `project_kb` during the Discover phase, not that it mechanically routes to separate vaults.
+**Update (`momentum-knowledge-base-buildout` story, Task 5):** the multi-KB extension to
+`wiki-query` (FR142) is now operative — the KB registry in `~/.obsidian-wiki/config` maps each
+`project_kb` to its vault path, and `wiki-query`'s resolution step reads a declared `project_kb`
+(via `--kb <project-name>` or the invoking manifesto's identity block) to select the matching
+vault. build-guidelines reads `project_kb` from the manifesto identity block during Discover and
+passes it to every downstream `constitution-builder` invocation (Phase 3 step 2, Phase 4), which
+in turn scopes its own `wiki-query --kb <project_kb>` calls to the declared KB. The observable for
+this eval is now the mechanical one described above (1–5): queries against a `project_kb:
+momentum-agentic-kb` manifesto resolve against the seeded `momentum-agentic-kb` vault, and a
+`project_kb: nornspun-agentic-kb` manifesto resolves against `nornspun-agentic-kb` — not merely
+that `project_kb` is read and stored.
