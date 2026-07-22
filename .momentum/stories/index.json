@@ -193,7 +193,7 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "architecture-decision-26-update-for-base-body-collapse": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Architecture Decision 26 update for base-body collapse",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
@@ -413,7 +413,7 @@
     "priority": "low"
   },
   "base-body-collapse-rollback": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Base-body collapse rollback",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
@@ -2448,7 +2448,7 @@
     "priority": "low"
   },
   "rename-base-body-files-to-canonical-naming": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Rename base body files to canonical naming",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
@@ -5661,7 +5661,7 @@
     "story_type": "feature"
   },
   "conduct-live-run-against-fixture-sprint": {
-    "status": "ready-for-dev",
+    "status": "in-progress",
     "title": "Run the shipped build-guidelines E2E driver live against a populated nornspun fixture (compose→register→resolve seam)",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -5809,7 +5809,7 @@
     "change_type": "agent-definition + skill-instruction"
   },
   "sprint-planning-cross-story-coherence-gate": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Sprint-planning cross-story coherence gate for depends_on deliverables",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "story_file": true,
@@ -5932,7 +5932,7 @@
     "story_type": "defect"
   },
   "momentum-knowledge-base-buildout": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Momentum knowledge base buildout",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -5949,7 +5949,7 @@
     "change_type": "config-structure + specification + skill-instruction"
   },
   "manifesto-builder-skill-generate-then-curate": {
-    "status": "in-progress",
+    "status": "review",
     "title": "manifesto-builder skill (generate-then-curate)",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -5990,7 +5990,7 @@
     "change_type": "skill-instruction"
   },
   "conduct-resume-and-rehydration-idempotency-hardening": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Conduct — resume and rehydration idempotency hardening",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -6058,7 +6058,7 @@
   },
   "sprint-planning-handoff-artifact": {
     "title": "Add mandatory handoff artifact to sprint-planning workflow terminal step",
-    "status": "in-progress",
+    "status": "review",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "depends_on": [],
     "priority": "high",
