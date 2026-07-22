@@ -1412,8 +1412,11 @@ Return to Step 3 to review and approve each listed story, then retry activation.
     exact section skeleton for this artifact. This write is a required terminal action of
     Step 8: activation is not reported as successful until it completes.</action>
 
-    <action>Set {{handoff_date}} = today's date (YYYY-MM-DD) — matches the `started` field
-    `momentum-tools sprint activate` just stamped onto the sprint record.
+    <action>Set {{handoff_date}} = the active sprint record's `started` field (`YYYY-MM-DD`),
+    read via a targeted query keyed to `active.started` — the same mechanism used for {{goal}}
+    below (e.g. a `python3 -c` json read), not independently computed as "today's date". This
+    makes the filename date byte-identical to the `started` field the eval oracle checks, even
+    across a midnight boundary between activation and the write.
     Set {{handoff_path}} = `.momentum/handoffs/{{sprint_slug}}-build-handoff-{{handoff_date}}.md`.
 
     Assemble the artifact's data per template §4 (all already in scope — no new elicitation):
@@ -1429,6 +1432,16 @@ Return to Step 3 to review and approve each listed story, then retry activation.
 
     Write {{handoff_path}} following template §2 exactly, including the §3 fallback wording when
     {{goal}} or {{cautions}} are empty.</action>
+
+    <check if="{{handoff_path}} does not exist, or exists but is 0 bytes">
+      <output>✗ Build-handoff write failed — {{handoff_path}} was not created (or is empty) after
+the Step 8.C write action.
+
+Activation is not reported as successful without this artifact — the terminal action did not
+complete.</output>
+      <action>HALT — re-attempt the write per template §2 before proceeding; do not emit the
+`## ✓ Sprint Activated` output until {{handoff_path}} exists and is non-empty</action>
+    </check>
 
     <output>## ✓ Sprint `{{sprint_slug}}` Activated
 
