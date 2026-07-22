@@ -2,51 +2,56 @@
  {
   "story_slug": "conductor-endgate-viewer-hijack-and-silent-gate",
   "artifact": "~/.claude/rules/cmux.md",
-  "note": "Global rule still asserts cmux browser new returns placement=reuse / adds a tab without creating a structural pane \u2014 stale doctrine corrected in conductor files this sprint; needs a follow-up story to reconcile the global rule."
+  "note": "Global rule still asserts cmux browser new returns placement=reuse / adds a tab without creating a structural pane — stale doctrine corrected in conductor files this sprint; needs a follow-up story to reconcile the global rule."
  },
  {
   "story_slug": "repair-phantom-story-file-entries-and-backfill-live-fixture-scope",
   "artifact": "~/.local/bin/momentum-tools (shim) / skills/momentum/bin/momentum-tools",
-  "note": "Shim resolves ../scripts/momentum-tools.py relative to its own location BEFORE $MOMENTUM_HOME \u2014 worktree self-checks that shell out to bare momentum-tools silently exercise the main repo's code, not the worktree's. Needs a decision: prefer MOMENTUM_HOME first in resolution order."
+  "note": "Shim resolves ../scripts/momentum-tools.py relative to its own location BEFORE $MOMENTUM_HOME — worktree self-checks that shell out to bare momentum-tools silently exercise the main repo's code, not the worktree's. Needs a decision: prefer MOMENTUM_HOME first in resolution order."
  },
  {
   "story_slug": "sprint-planning-continuous-execution-and-cli-fixes",
   "artifact": "skills/momentum/skills/sprint-planning/workflow.md",
-  "note": "~1273 lines \u2014 pre-existing debt beyond the 500-line skill-instruction NFR guidance; flag for a refactor-into-references pass."
+  "note": "~1273 lines — pre-existing debt beyond the 500-line skill-instruction NFR guidance; flag for a refactor-into-references pass."
  },
  {
   "story_slug": "sprint-planning-cross-story-coherence-gate",
   "artifact": "skills/momentum/skills/sprint-planning/references/plan-gate-renderer.md",
-  "note": "Add 'open cross-story seam coherence failure (Step 3.6)' to renderer \u00a74's canonical GENUINE FORK list so the renderer stays the single source of truth (workflow.md Step 7 currently carries the wiring instruction directly)."
+  "note": "Add 'open cross-story seam coherence failure (Step 3.6)' to renderer §4's canonical GENUINE FORK list so the renderer stays the single source of truth (workflow.md Step 7 currently carries the wiring instruction directly)."
  },
  {
   "story_slug": "sprint-planning-cross-story-coherence-gate",
   "artifact": "avfl-cross-story-integration-lens (backlog story)",
-  "note": "Possibly stale stub \u2014 avfl/workflow-merge-review.md may already implement much of it; route to refine, do not absorb."
+  "note": "Possibly stale stub — avfl/workflow-merge-review.md may already implement much of it; route to refine, do not absorb."
  },
  {
   "story_slug": "conduct-conductor-staging-and-ledger-append-safety",
   "artifact": "skills/momentum/skills/conductor/evals/eval-ledger-append-at-state-bearing-events.md",
-  "note": "Line 14 still asserts 'append mechanism is a single-line Bash printf' \u2014 stale after this story's quoted-heredoc/serializer change; needs the assertion updated."
+  "note": "Line 14 still asserts 'append mechanism is a single-line Bash printf' — stale after this story's quoted-heredoc/serializer change; needs the assertion updated."
  },
  {
   "story_slug": "conduct-qa-execute-verification-method",
   "artifact": ".momentum/stories/agent-state-verification-hook.md",
-  "note": "Backlog stub may be largely superseded \u2014 conduct-qa-execute-verification-method authored the concrete fresh-instance (kill+relaunch/reinstall) steps directly in qa-reviewer.md; when enriched, that stub should point back or be re-scoped."
+  "note": "Backlog stub may be largely superseded — conduct-qa-execute-verification-method authored the concrete fresh-instance (kill+relaunch/reinstall) steps directly in qa-reviewer.md; when enriched, that stub should point back or be re-scoped."
  },
  {
   "story_slug": "momentum-knowledge-base-buildout",
   "artifact": "skills/momentum/skills/constitution-builder/SKILL.md",
-  "note": "Phase 3 (~line 151) hedges KB scoping as 'wiki-query --kb [project-name] for multi-KB' \u2014 with FR142 operative and multiple KBs always registered, the --kb scoping should become unconditional. Belongs to constitutionmd-generation-acceptance-criteria or a follow-up."
+  "note": "Phase 3 (~line 151) hedges KB scoping as 'wiki-query --kb [project-name] for multi-KB' — with FR142 operative and multiple KBs always registered, the --kb scoping should become unconditional. Belongs to constitutionmd-generation-acceptance-criteria or a follow-up."
  },
  {
   "story_slug": "momentum-knowledge-base-buildout",
   "artifact": "nornspun-client/.claude/skills/wiki-query/SKILL.md",
-  "note": "Separate physical wiki-query copy in nornspun-client repo is now stale/diverged from the canonical user-global copy updated this sprint \u2014 track if that copy is still live."
+  "note": "Separate physical wiki-query copy in nornspun-client repo is now stale/diverged from the canonical user-global copy updated this sprint — track if that copy is still live."
  },
  {
   "story_slug": "sprint-planning-cross-story-coherence-gate",
   "artifact": "skills/momentum/skills/sprint-planning/references/plan-gate-renderer.md",
-  "note": "\u00a75.8 canonical gate JS should embed each coherence fork's stable consumer->producer identifier into the copied verdict text so Step 8 matching is artifact-based, not positional \u2014 second renderer follow-up from this story (first: add coherence failures to \u00a74 GENUINE FORK list)."
+  "note": "§5.8 canonical gate JS should embed each coherence fork's stable consumer->producer identifier into the copied verdict text so Step 8 matching is artifact-based, not positional — second renderer follow-up from this story (first: add coherence failures to §4 GENUINE FORK list)."
+ },
+ {
+  "story_slug": "architecture-decision-26-update-for-base-body-collapse",
+  "artifact": "_bmad-output/planning-artifacts/architecture.md:1832",
+  "note": "Pre-existing 'Three-Layer Agent Model (Decision 56 / DEC-038)' heading mispairs Decision 56 with DEC-038 (canonical: DEC-026, as amended by DEC-038). Outside this story's diff — follow-up doc-hygiene fix."
  }
 ]

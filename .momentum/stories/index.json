@@ -193,7 +193,7 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "architecture-decision-26-update-for-base-body-collapse": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Architecture Decision 26 update for base-body collapse",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
@@ -2448,7 +2448,7 @@
     "priority": "low"
   },
   "rename-base-body-files-to-canonical-naming": {
-    "status": "in-progress",
+    "status": "review",
     "title": "Rename base body files to canonical naming",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
