@@ -128,7 +128,7 @@ These events are the only permitted exceptions to the `story_slug`-required rule
 | `coverage-discharge-consumer-complete` | Step 3.D consumer summary | Summarizes across all deferred stories. |
 | `avfl-on-merge-complete` | Step 3.5 AVFL summary | Sprint-level integration review. |
 | `e2e-phase-complete` | Step 4.4 E2E summary | Sprint-level E2E summary. |
-| `end-gate-phase-complete` | Phase 5 approve completion | Sprint-level completion checkpoint — the Phase 5 approve-side mutations (merge, branch delete, per-story terminal transitions) apply once per sprint, not per story. |
+| `end-gate-phase-complete` | Phase 5 approve completion | Sprint-level completion checkpoint — applies once per sprint, not per story. |
 | `conductor-warning` | Any phase — Conductor-detected anomaly | `story_slug` (optional — omit for sprint-level warnings), `reason` (non-empty string describing the anomaly). Used for: write-scope guard violations, invalid fixer behavior, dismissed findings with missing rationale, and similar Conductor-detected issues that are not findings in the canonical sense but must be recorded. The rehydration-unparseable-line variant additionally carries `line_no` (the 1-indexed line number of the unparseable ledger line) — see Idempotent Re-Append Guidance below for how this field dedups repeat warnings across resumes. |
 
 For these events, `story_slug` may be omitted or set to `null`. All other events must carry a real story slug.
