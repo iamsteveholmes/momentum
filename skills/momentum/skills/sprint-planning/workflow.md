@@ -1413,25 +1413,16 @@ Return to Step 3 to review and approve each listed story, then retry activation.
     Step 8: activation is not reported as successful until it completes.</action>
 
     <action>Set {{handoff_date}} = the active sprint record's `started` field (`YYYY-MM-DD`),
-    read via a targeted query keyed to `active.started` — the same mechanism used for {{goal}}
-    below (e.g. a `python3 -c` json read), not independently computed as "today's date". This
-    makes the filename date byte-identical to the `started` field the eval oracle checks, even
-    across a midnight boundary between activation and the write.
+    read via a targeted query keyed to `active.started` (e.g. a `python3 -c` json read), not
+    independently computed as "today's date". This makes the filename date byte-identical to the
+    `started` field the eval oracle checks, even across a midnight boundary between activation and
+    the write.
     Set {{handoff_path}} = `.momentum/handoffs/{{sprint_slug}}-build-handoff-{{handoff_date}}.md`.
 
-    Assemble the artifact's data per template §4 (all already in scope — no new elicitation):
-      · {{goal}} — active sprint record's `goal` field, via targeted query (e.g. a `python3 -c`
-        json read keyed to `active.goal`), not a whole-file Read
-      · {{waves}} — active sprint record's `waves` list
-      · {{contract_path}} per story — `active.team.story_assignments[slug].contract.path`
-        (equivalently {{contract_metadata[story_slug].contract_path}}, already in scope)
-      · {{cautions}} — union of: coverage-plan.md's "## Known Guard Failures" section if
-        {{guard_status}} == "accepted_with_failures"; {{avfl_result}} == "CHECKPOINT_WARNING"
-        findings proceeded past in Step 6; per-fork caveats from the developer's pasted plan-gate
-        decision block in Step 7. Empty list if none.
-
-    Write {{handoff_path}} following template §2 exactly, including the §3 fallback wording when
-    {{goal}} or {{cautions}} are empty.</action>
+    Assemble the artifact's data ({{goal}}, {{waves}}, per-story {{contract_path}}, {{cautions}})
+    from the sources in template §4 — all already in scope at Step 8, read by targeted query, no
+    new elicitation. Then write {{handoff_path}} following template §2 exactly, including the §3
+    fallback wording when {{goal}} or {{cautions}} are empty.</action>
 
     <check if="{{handoff_path}} does not exist, or exists but is 0 bytes">
       <output>✗ Build-handoff write failed — {{handoff_path}} was not created (or is empty) after
