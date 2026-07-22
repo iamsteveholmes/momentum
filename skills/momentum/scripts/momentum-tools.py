@@ -2845,7 +2845,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--stories", required=True, help="Comma-separated story slugs")
     sp.add_argument("--wave", type=int, default=None, help="Wave number (for add)")
     sp.add_argument("--slug", default=None,
-                    help="Set the planning sprint's slug (idempotent; ignored if sprint is locked)")
+                    help="Set the planning sprint's slug (idempotent; the command fails if the sprint is locked)")
     sp.set_defaults(func=cmd_sprint_plan)
 
     # sprint ready

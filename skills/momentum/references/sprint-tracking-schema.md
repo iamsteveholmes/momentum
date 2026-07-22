@@ -103,7 +103,7 @@ Per-story entry keyed by story slug:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `roles` | string[] | Agent roles assigned: `dev`, `qa`, `e2e-validator`, `architect-guard` |
+| `roles` | string[] | Agent roles assigned: `dev`, `qa-reviewer`, `e2e-validator`, `architect-guard` |
 | `change_type` | string | Story's change type classification |
 | `guidelines` | object | Per-role guideline strings |
 | `test_approach` | string | Testing methodology (TDD, EDD, behavioral, inspection) |

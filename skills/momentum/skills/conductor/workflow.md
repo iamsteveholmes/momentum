@@ -172,6 +172,16 @@ The sprint and story records are inconsistent. This may mean the sprint index an
 
     <note>Reconcile end condition: all story branches and worktrees belonging to `in-progress` stories from prior sessions are removed; all stories that were `in-progress` are reset to `ready-for-dev`; `git worktree list` shows only the main worktree, the sprint branch worktree (if applicable), and any leftover entries for non-`in-progress` stories; the sprint branch exists and is clean. Stories that were not `in-progress` (e.g., `ready-for-dev`, `blocked`) may still have leftover branches or worktree directories from other circumstances — these are handled by the launch-time idempotent collision handling in step 2.1 STAGE-1 when those stories are dispatched. The build begins from this known-good state.</note>
 
+    <!-- ─── Consume the build-handoff bridge (use-then-discard) ─── -->
+
+    <note>BUILD-HANDOFF CONSUMPTION: `sprint-planning` Step 8.C writes a use-then-discard build-handoff artifact as the terminal action of activation (`.momentum/handoffs/{{sprint_slug}}-build-handoff-<YYYY-MM-DD>.md`, per `.claude/rules/handoff-conventions.md`). It carries planning-time context — sprint goal, stories-by-wave, per-story contract paths, and planning-time cautions — for a fresh build session with no memory of planning. Reading it is a silent pre-flight action, never a developer touchpoint.</note>
+
+    <action>Consume the build-handoff bridge for this sprint:
+      1. Glob `.momentum/handoffs/{{sprint_slug}}-build-handoff-*.md` (the date suffix is the activation date, unknown here).
+      2. If a file matches: read it into build context — retain the sprint goal and any Planning-Time Cautions for the Pre-flight Complete output and the build — then delete the matched file (`rm`). It is a use-then-discard bridge and is never preserved as history once consumed.
+      3. If no file matches (a sprint activated before this artifact existed, or a resumed session that already consumed it): proceed silently. The handoff is a convenience, not a required input — do not HALT and do not warn the developer.
+    </action>
+
     <!-- ─── Touchpoint 1: confirm to start ───────────────────── -->
 
     <action>For each story slug in {{sprint_stories}}, re-read status from {{story_map}} (refresh after reconcile). Collect final list of stories ready for build.</action>
