@@ -208,13 +208,46 @@ Ready to begin?</output>
 
     <critical>LEDGER-APPEND STANDING RULE (applies to every {{build_log}} append in Phases 2–5):
 
-      THE RULE: Every instruction that appends a row to {{build_log}} ALSO appends the same row to the build ledger at {{ledger_path}} — per references/build-ledger.md. The append is a single-line Bash printf: `printf '%s\n' '&lt;row-json&gt;' >> {{ledger_path}}`. This standing rule eliminates the need to repeat "AND append to the ledger" at each of the ~30 build_log sites — every build_log append is implicitly also a ledger append. The ledger is the durable copy; the in-context {{build_log}} is the volatile write-through cache.
+      THE RULE: Every instruction that appends a row to {{build_log}} ALSO appends the same row to the build ledger at {{ledger_path}} — per references/build-ledger.md. This standing rule eliminates the need to repeat "AND append to the ledger" at each of the ~30 build_log sites — every build_log append is implicitly also a ledger append. The ledger is the durable copy; the in-context {{build_log}} is the volatile write-through cache.
+
+      SAFE APPEND CONSTRUCTION (mandatory — supersedes any single-quoted printf): Every free-prose field in the row (`summary`, `finding_summary`, `dismissal_rationale`, `evidence`, `suggested_fix`, developer change-request `items`, and any other field carrying arbitrary text) MUST be run through real JSON serialization — or, equivalently, have every backslash, double-quote, and control character (including a literal embedded newline) escaped to its JSON escape sequence (`\n` for newline, etc.) — BEFORE it is interpolated into the row. This guarantees the composed row is exactly one line with no raw newline and no unescaped quote. Then append that row text WITHOUT passing it through single-quoted shell interpolation — a raw apostrophe in source prose (e.g. a finding summary quoting "can't") would terminate a single-quoted `printf '...'` early and corrupt both that row and every row after it. Use a quoted heredoc instead:
+        ```bash
+        cat >> {{ledger_path}} <<'CONDUCTOR_LEDGER_ROW'
+        &lt;row-json&gt;
+        CONDUCTOR_LEDGER_ROW
+        ```
+      The quoted delimiter (`<<'CONDUCTOR_LEDGER_ROW'`) disables all shell expansion of the heredoc body — apostrophes, double quotes, and `$` in the row text pass through byte-for-byte. (Equivalently: compose the row through any JSON serializer available to the executing agent — e.g. `python3 -c "import json,sys; ..."` or `node -e` with `JSON.stringify` — and redirect its stdout `>> {{ledger_path}}`; the serializer both escapes and emits exactly one line.) This construction is mandated identically at three sites — this standing rule, references/build-ledger.md §Append-Only Rules, and the step 2.0 init append note below — keep all three consistent; do not fork the mechanism.
 
       KEY VOCABULARY: Every row carries an `event` field from the controlled event-type set (references/build-ledger.md), a `story_slug` field (real story slug; exceptions enumerated in the reference), and a `ts` field (ISO 8601 timestamp). Terminal rows use `event: "story-terminal"` with `outcome` as a payload field. All rows use `story_slug:` as the canonical join key (per finding-schema.md). Do NOT use `slug:` as a key name in any new or updated {{build_log}} or ledger row — `story_slug:` is the single, uniform field name for identifying a story (see CARVE-OUT below for the step 2.2 pipeline-signal exception).
 
       CARVE-OUT: Pipeline terminal signals (e.g., `{ slug: S.slug, outcome: "merged" }` or `{ slug: S.slug, outcome: "failed" }`) emitted by per-story pipelines to step 2.2 are point-to-point control messages — they are NOT ledger rows and intentionally use the bare `slug:` key; this carve-out is scoped to the step 2.2 signal vocabulary and does not affect any ledger or build_log append.
 
-      REHYDRATION EXEMPTION: The rehydration replay loop in step 2.0 (which reads ledger rows and appends them back into {{build_log}}) is a REBUILD operation only — these replay appends do NOT trigger a second ledger append. The standing rule applies to new live-event appends only, not to rows being replayed from the ledger during resume. Failure to honor this exemption doubles the ledger on every resume.</critical>
+      REHYDRATION EXEMPTION: The rehydration replay loop in step 2.0 (which reads ledger rows and appends them back into {{build_log}}) is a REBUILD operation only — these replay appends do NOT trigger a second ledger append. The standing rule applies to new live-event appends only, not to rows being replayed from the ledger during resume. Failure to honor this exemption doubles the ledger on every resume. Exception: a `conductor-warning` row appended because a ledger line failed to parse during rehydration (see step 2.0 below) is a NEW live event, not a replayed row — it IS subject to this standing rule's SAFE APPEND CONSTRUCTION and MUST itself be appended to the ledger, not merely to {{build_log}}.</critical>
+
+    <critical>PORCELAIN-ENUMERATED STAGING STANDARD (applies to every Conductor commit site in Phases 2–5):
+
+      THE RULE: Every Conductor commit site stages with `git status --porcelain` enumeration, never blind `git add -u`. `git add -u` only re-stages paths git already tracks — it is blind to untracked (brand-new) files. A green-field story whose sole deliverable is a new file (a new skill, reference, or test — the most common shape) would have that file silently dropped at commit and destroyed at worktree cleanup. `git status --porcelain` lists both tracked-modified paths (a two-character status code) and untracked paths (`?? path`), so a new file is visible to staging.
+
+      MECHANISM: Run `git -C <worktree> status --porcelain` (per-story sites use `-C .worktrees/story-{S.slug}`; sprint-branch sites — AVFL, E2E, end-gate — omit `-C` since the Conductor is already checked out on that branch per the GIT WORKING CONTEXT INVARIANT). Bind the result to {{porcelain_paths}} — the full enumerated change set, tracked-modified AND untracked. Stage ONLY the in-scope paths (documented per site below) explicitly:
+        `git -C <worktree> add -- <in-scope-path-1> <in-scope-path-2> ...`
+      Do NOT stage the full {{porcelain_paths}} set blindly at guarded sites — that would sweep in stray or out-of-scope files. Do NOT use `git add -A` (same blindness as `git add -u`, opposite direction — it also stages out-of-scope untracked files with no guard check).
+
+      PATH PARSING: Each `git status --porcelain` line is a 2-character status code, one space, then the path — recover the path by stripping exactly those first 3 characters, never by splitting on whitespace (a path may itself contain spaces). Two shapes need explicit handling before a path is compared against an in-scope set:
+        — Renames (status `R `): the line reads `R  old-path -> new-path`. Apply the in-scope check and staging to new-path only; old-path is not staged or discarded separately.
+        — Quoted paths: git wraps a path containing a space, quote, or non-ASCII byte in double quotes with C-style escapes (e.g. `"a path.txt"`). Either read with `git status --porcelain -z` and split on the NUL byte (paths arrive unquoted, and a rename's old/new pair stays together as two consecutive records), or un-quote any `"..."`-wrapped path before comparing it — a quoted path compared verbatim against an unquoted {{writable_files}} / {{endgate_item_writable_files}} entry will never match and would be misrouted to DISCARD.
+
+      DISCARD (out-of-scope paths, at the three guarded sites — see WRITE-SCOPE COMMIT GUARD STANDARD below): always path-scoped. Never a blanket `git clean -f` or `git checkout .` / `git restore .` — a path-less discard would also delete in-scope untracked deliverables, reintroducing this same defect in a worse form.
+    </critical>
+
+    <critical>WRITE-SCOPE COMMIT GUARD STANDARD (applies to the three per-scope-guarded sites: the story commit, the Stage-3 Phase-B fix-loop commit [Phase-C /simplify reuses this same guard], and the end-gate change commit):
+
+      Reason over {{porcelain_paths}} (the full enumerated set from the staging standard above — NOT the tracked-only view a plain `git diff --name-only` or `git diff --name-only --cached` returns, which misses untracked new files). For each path P in {{porcelain_paths}}:
+        — If P is the story's own spec file (always forbidden regardless of scope) OR P is NOT in the site's in-scope set ({{writable_files}} or {{endgate_item_writable_files}}): P is out of scope. Discard it by specific path, never a blanket clean/checkout:
+            — Untracked (porcelain status `??`): `git clean -f -d -- P` (the `-d` is required — a plain `git clean -f` skips untracked directories, leaving an out-of-scope untracked directory in the working tree)
+            — Tracked (any other porcelain status): `git checkout -- P` (or `git restore -- P`)
+          Then emit the site's existing `conductor-warning` / scope-revert ledger row naming P (per the LEDGER-APPEND STANDING RULE) before committing. Do NOT commit an out-of-scope edit.
+        — Otherwise P is in scope: stage it (per PORCELAIN-ENUMERATED STAGING STANDARD above).
+    </critical>
 
     <!-- ─────────────────────────────────────────────────────── -->
     <!-- STEP 2.0 — Initialize frontier state                    -->
@@ -250,14 +283,45 @@ Ready to begin?</output>
       <action>Bind {{ledger_path}} = ".momentum/sprints/{{sprint_slug}}/build-ledger.jsonl".
         The build ledger is the durable, append-only record of every state-bearing event in this build.
         Behavioral spec: references/build-ledger.md (event-type set, row shape, append-only rules, enum vocabulary by reference).
-        The ledger file is created on first append (no pre-creation step). All appends use:
-          `printf '%s\n' '&lt;row-json&gt;' >> {{ledger_path}}`
+        The ledger file is created on first append (no pre-creation step). All appends use the SAFE
+        APPEND CONSTRUCTION from the LEDGER-APPEND STANDING RULE above (JSON-escaped row content,
+        appended via quoted heredoc or serializer redirect — never single-quoted `printf`).
       </action>
 
       <check if="file exists at {{ledger_path}} (a prior session wrote events for this sprint)">
         <note>REHYDRATION. A build ledger from a prior session exists. Replay its rows to rebuild all Conductor-scoped accumulators before the status-based {{merged}} seed and in-progress reconcile run. This ensures findings, dispositions, escalations, quarantine records, integrity stops, reverted fixes, coverage deferrals/discharges, and build-log events from a prior session are recovered — not just the story membership that the status-based seed provides.</note>
 
-        <action>Read all lines from {{ledger_path}}. Parse each line as a JSON object. For each row R, rebuild accumulators:
+        <action>UNPARSEABLE-LINE DEDUP PRE-SCAN (idempotency across resumes): Because the ledger is
+          append-only, a persistently-corrupt line (e.g. one truncated by a crash and never
+          overwritten) sits at the same fixed 1-indexed line number on every resume, and a prior
+          resume's warning about it is itself a durable row already in the ledger. Before replaying,
+          do a first pass over {{ledger_path}} collecting {{warned_unparseable_lines}} = the set of
+          `line_no` values from every successfully-parsed row where `event == "conductor-warning"`
+          and a `line_no` field is present (this field is written by this same rule below — see
+          NEW WARNING SHAPE). This set is consulted, not mutated, by the replay pass below.
+        </action>
+
+        <action>Read all lines from {{ledger_path}}, in order, tracking {{line_no}} = the 1-indexed
+          position of the current line (starting at 1). For each line L at position {{line_no}}:
+          Attempt to parse L as a JSON object.
+          IF parsing fails — including a partial/truncated final line, the shape a crash mid-append
+            leaves — do NOT abort rehydration and do NOT treat L as a valid row. Skip L: it
+            contributes to no accumulator, as if it were never written.
+            IF {{line_no}} is already in {{warned_unparseable_lines}} (a prior resume already warned
+              about this exact persistent line): do NOT append a second warning — this is the
+              idempotency guarantee: at most one live `conductor-warning` row per distinct
+              unparseable line, across all resumes. Continue to the next line.
+            OTHERWISE (first time this line has been seen as unparseable): append a warning row —
+              NEW WARNING SHAPE: { event: "conductor-warning", story_slug: null, line_no: {{line_no}},
+              reason: "unparseable ledger line skipped during rehydration — line " + {{line_no}} +
+              ": " + &lt;L, truncated to a safe preview length&gt;, ts: NOW() } — to {{build_log}} AND
+              to the build ledger itself, using the SAFE APPEND CONSTRUCTION from the LEDGER-APPEND
+              STANDING RULE above. This warning is a NEW live event — the REHYDRATION EXEMPTION above
+              covers only rows being successfully replayed, not this warning append. Add {{line_no}}
+              to {{warned_unparseable_lines}} (guards against re-warning if the same line recurs
+              later in this same pass, though it cannot under append-only semantics).
+            Continue to the next line; never abort the resume over a malformed line.
+          IF parsing succeeds, the line is row R — rebuild accumulators per the event-type routing below.
 
           Event-type routing (keyed on R.event):
 
@@ -587,14 +651,26 @@ Ready to begin?</output>
           Bind {{stage1_output}} = the agent's return value (implementation-complete + file_list).
           Bind {{stage1_cross_artifact_notes}} = {{stage1_output}}.cross_artifact_notes (default []).
 
-          WRITE-SCOPE COMMIT GUARD: Before committing, verify that every file staged by `git add -u`
-            falls within {{writable_files}} for story S. To enforce this:
-            — Run `git -C .worktrees/story-{S.slug} diff --name-only --cached` after staging to
-              obtain the actual staged file list.
-            — For each staged path P: confirm P is in {{writable_files}}.
-              If P is NOT in {{writable_files}} AND P is not `.momentum/stories/{S.slug}.md` (always forbidden),
-              append { event: "conductor-warning", story_slug: S.slug, reason: "staged file outside writable_files — unstaged: " + P, ts: NOW() } to {{build_log}} and the build ledger, then UNSTAGE P (`git -C .worktrees/story-{S.slug} restore --staged P`)
-              before committing. Do NOT commit out-of-scope edits.
+          WRITE-SCOPE COMMIT GUARD (per WRITE-SCOPE COMMIT GUARD STANDARD): Before staging, enumerate
+            {{porcelain_paths}} = `git -C .worktrees/story-{S.slug} status --porcelain` — this lists
+            BOTH tracked-modified paths and untracked (brand-new) paths, unlike `git add -u` /
+            `git diff --cached`, which are blind to untracked files. For each path P in
+            {{porcelain_paths}}:
+              — If P is `.momentum/stories/{S.slug}.md` (always forbidden regardless of scope) OR P
+                is NOT in {{writable_files}}: P is out of scope. Discard it by specific path —
+                untracked (porcelain status `??`) via `git -C .worktrees/story-{S.slug} clean -f -d -- P`
+                (the `-d` is required — a plain `clean -f` skips untracked directories);
+                tracked (any other status) via `git -C .worktrees/story-{S.slug} checkout -- P`. Then
+                append { event: "conductor-warning", story_slug: S.slug, reason: "out-of-scope file
+                discarded before commit — " + P, ts: NOW() } to {{build_log}} and the build ledger.
+                Never discard via a blanket `git clean -f` or `git checkout .` — that would also
+                destroy in-scope untracked deliverables.
+              — Otherwise P is in scope: it is staged explicitly at commit time below.
+            Prefer staging the produced file set from {{stage1_output}}.file_list (intersected with
+            the in-scope check above) when non-empty, over staging every in-scope path in
+            {{porcelain_paths}} — this avoids sweeping in stray untouched files that merely sit within
+            writable scope. If file_list is empty or unavailable, stage every in-scope path from
+            {{porcelain_paths}}.
           SEAM-DISAGREE GUARD: Before staging, detect the cross-side record-shape mismatch.
             Trigger condition: has the worktree tip advanced beyond the launch base?
               git rev-parse HEAD != {{S.launch_base_sha}}
@@ -613,9 +689,11 @@ Ready to begin?</output>
             — Route this story to the story failure path (emit terminal signal { slug: S.slug, outcome: "failed" }).
             — Do NOT continue to stage or commit.
 
-          The Conductor (sole git-mutation authority) commits the produced output:
-            `git -C .worktrees/story-{S.slug} add -u`
-            (apply write-scope guard above before proceeding)
+          The Conductor (sole git-mutation authority) stages and commits the produced output (per
+            PORCELAIN-ENUMERATED STAGING STANDARD — staging scope already resolved by the
+            WRITE-SCOPE COMMIT GUARD above; do NOT use `git add -u`, which would silently skip the
+            story's new files):
+            `git -C .worktrees/story-{S.slug} add -- <in-scope-path-1> <in-scope-path-2> ...`
             `git -C .worktrees/story-{S.slug} commit -m "feat({S.slug}): implement {{S.title}}"`
 
           CROSS-ARTIFACT ROUTING: If {{stage1_cross_artifact_notes}} is non-empty, accumulate each
@@ -1054,7 +1132,16 @@ Ready to begin?</output>
         CASE disposition == "fixed":
           — Stakes-class guard: VERIFY that F.stakes_class == "routine". If the fixer returns "fixed" for a stakes-class finding (non-routine), treat it as an implementation error — do NOT commit the fix. Append { event: "conductor-warning", story_slug: S.slug, reason: "fixer returned 'fixed' for stakes-class finding " + F.finding_id + " — re-classifying as escalated", ts: NOW() } to {{build_log}} and the build ledger; then re-classify F as escalated (see escalated path below).
             When re-classifying: look up the inbound finding for F.finding_id in {{stage2_findings}} to recover stakes_class, summary, evidence, and suggested_fix (the fixer's "fixed" disposition object does not carry these fields). Default timing_tier to "end-gate-expanded" (the conservative default per finding-schema.md) since the fixer never sets timing_tier on a "fixed" disposition.
-          — WRITE-SCOPE COMMIT GUARD (fix loop): Before staging the fix, run `git -C .worktrees/story-{S.slug} diff --name-only` to enumerate the files the fixer modified. For each modified file P: if P is NOT in {{writable_files}} for story S, it is out of scope. UNSTAGE and DISCARD the out-of-scope edit (`git -C .worktrees/story-{S.slug} checkout -- P`) before committing. Collect the discarded paths into {{fix_reverted_files}}.
+          — WRITE-SCOPE COMMIT GUARD (fix loop; per WRITE-SCOPE COMMIT GUARD STANDARD): Before staging
+            the fix, enumerate {{porcelain_paths}} = `git -C .worktrees/story-{S.slug} status
+            --porcelain` — tracked-modified AND untracked paths the fixer touched (NOT
+            `git diff --name-only`, which is blind to a brand-new file the fixer created). For each
+            path P in {{porcelain_paths}}: if P is NOT in {{writable_files}} for story S, it is out
+            of scope — DISCARD it by specific path (untracked via `git -C .worktrees/story-{S.slug}
+            clean -f -d -- P` — the `-d` is required, a plain `clean -f` skips untracked directories;
+            tracked via `git -C .worktrees/story-{S.slug} checkout -- P`) before
+            committing. Collect the discarded paths into {{fix_reverted_files}}. Every remaining
+            (in-scope) path in {{porcelain_paths}} is staged explicitly at commit time below.
             SCOPE-REVERT PATH (fires when {{fix_reverted_files}} is non-empty after discarding):
               a. If ALL files the fixer modified were out of scope (the fix produced ONLY out-of-scope edits — nothing was committed), the fix was entirely reverted:
                  — Do NOT commit. The finding's "fixed" disposition is INVALID — the fix never landed.
@@ -1069,8 +1156,12 @@ Ready to begin?</output>
                  Note: reroute_stub_slug is now recorded in the ledger row so that rehydration at step 2.0 recovers the stub link from the durable event rather than defaulting to null.
                  — Do NOT pass F to the fixer again in the next iteration — the defect is out-of-scope for this story's deliverables and will be addressed through the stub.
               b. If ONLY SOME files were out of scope (the fix contained both in-scope and out-of-scope edits), the partial fix is committed without the out-of-scope files. The finding remains disposition "fixed" only if the in-scope portion of the fix is sufficient to address the finding. If the in-scope portion alone does not address the finding (the core fix was in the discarded file), apply the same full-revert path above (re-classify to "scope-reverted", append to {{conductor_reverted_fixes}}, re-route inline). If the in-scope portion is sufficient: commit and record disposition "fixed" normally; log the partial discard in {{build_log}} as a warning.
-          — Commit the applied fix (in-scope edits only, after the guard above):
-              `git -C .worktrees/story-{S.slug} add -u && git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
+          — Commit the applied fix (in-scope edits only, after the guard above; per
+              PORCELAIN-ENUMERATED STAGING STANDARD — stage the surviving in-scope
+              {{porcelain_paths}} explicitly, never `git add -u`, so a new in-scope file the fixer
+              created is not silently dropped):
+              `git -C .worktrees/story-{S.slug} add -- <in-scope-path-1> <in-scope-path-2> ...`
+              `git -C .worktrees/story-{S.slug} commit -m "fix({S.slug}): auto-fix {F.summary}"`
           — Record F in {{finding_dispositions}}: { finding_id: F.id, disposition: "fixed", summary: F.summary, stakes_class: "routine" }
             (Only reached when the write-scope guard did NOT reclassify F — i.e., the fix landed in-scope and is valid.)
           — Look up the inbound finding I for F.finding_id in {{stage2_findings}} to recover severity.
@@ -1130,11 +1221,14 @@ Ready to begin?</output>
       </action>
 
       <action>PHASE C — CAPTURE AND COMMIT: If {{simplify_findings}} is non-empty:
-        Verify that every file modified by the /simplify subagent is in {{writable_files}}. Apply the same
-        write-scope guard used in Phase B: unstage and discard any out-of-scope edits before committing.
-        The Conductor (sole git-mutation authority) commits the cleanup output:
-          `git -C .worktrees/story-{S.slug} add -u`
-          (apply write-scope guard before proceeding)
+        Apply the same WRITE-SCOPE COMMIT GUARD used in Phase B (per WRITE-SCOPE COMMIT GUARD
+        STANDARD): enumerate {{porcelain_paths}} via `git -C .worktrees/story-{S.slug} status
+        --porcelain` (tracked AND untracked paths the /simplify subagent touched — not
+        `git diff --name-only`), discard any out-of-scope path by specific path (never a blanket
+        clean/checkout), and leave every remaining in-scope path to be staged explicitly below.
+        The Conductor (sole git-mutation authority) commits the cleanup output (per
+        PORCELAIN-ENUMERATED STAGING STANDARD — never `git add -u`):
+          `git -C .worktrees/story-{S.slug} add -- <in-scope-path-1> <in-scope-path-2> ...`
           `git -C .worktrees/story-{S.slug} commit -m "refactor({S.slug}): simplify cleanup pass"`
         Record in {{build_log}}: { story_slug: S.slug, event: "stage3-simplify-pass", findings_count: length({{simplify_findings}}), committed: true }
         If {{simplify_findings}} is empty: record in {{build_log}}: { story_slug: S.slug, event: "stage3-simplify-pass", findings_count: 0, committed: false }
@@ -1813,9 +1907,25 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       Constraint: "Do not ask the developer anything. Do not commit. Return the typed result when done."
       The workflow runs through its validate → consolidate → evaluate → fix loop autonomously.
       For each fix iteration where the workflow's fixer produces corrected file content:
-        The Conductor stages and commits the output:
+        The Conductor stages and commits the output (per PORCELAIN-ENUMERATED STAGING STANDARD —
+          never `git add -u`, which would silently skip a brand-new file the fixer created):
           `git checkout sprint/{{sprint_slug}}`
-          `git add -u && git commit -m "fix(avfl): resolve integration findings — iteration {N}"`
+          RUNTIME-STATE EXCLUSION (mandatory at this sprint-branch-level site, and at every other
+            AVFL/E2E/end-gate site that stages directly on `sprint/{{sprint_slug}}`): the Conductor's
+            own `.momentum/` runtime state — the build ledger, sprint index, and other bookkeeping
+            files — lives untracked on this same branch and is NOT gitignored, so a blind
+            `git status --porcelain` capture here would sweep it into a fix commit. Bind
+            {{fixer_changed_paths}} = the changed-path set the fix iteration actually reported:
+            for Group A (integration code findings routed to the directed fixer), the union of
+            `files_changed` across the returned dispositions, per
+            directed-fix-invocation-contract.md §"Canonical Fixer Output Shape"; for Group B (the
+            AVFL internal artifact fixer), the specific doc/spec/skill file it corrected. When
+            {{fixer_changed_paths}} is non-empty, stage exactly those paths. Only when a fix
+            iteration's changed-path set is unavailable, fall back to {{porcelain_paths}} = `git
+            status --porcelain` with every path under `.momentum/` excluded before staging — never
+            stage an unfiltered {{porcelain_paths}}.
+          `git add -- <path-1> <path-2> ...` (the scoped set resolved above)
+          `git commit -m "fix(avfl): resolve integration findings — iteration {N}"`
         The workflow then re-captures the updated diff and continues its loop.
       Bind {{merge_review_result}} = the typed result object returned by the Workflow.
     </action>
@@ -2179,10 +2289,23 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
       CASE F.stakes_class == "routine":
         — Routine E2E findings are handled on the transparent auto-fix path (parallel to routine build findings).
         — The Conductor spawns a directed fixer (individual-agent) scoped to F: fix the integration defect.
-          The fixer returns a disposition: fixed | dismissed (with non-empty rationale) | triaged-out.
-          The Conductor commits any fix applied by the fixer:
+          The fixer returns a disposition: fixed | dismissed (with non-empty rationale) | triaged-out,
+            with `files_changed` populated when fixed (per directed-fix-invocation-contract.md
+            §"Canonical Fixer Output Shape").
+          When the disposition is "fixed", the Conductor commits the fix (per PORCELAIN-ENUMERATED
+            STAGING STANDARD — never `git add -u`, which would silently skip a brand-new file the
+            fixer created):
             `git checkout sprint/{{sprint_slug}}`
-            `git add -u && git commit -m "fix(e2e): auto-fix {F.summary}"`
+            RUNTIME-STATE EXCLUSION (mandatory at this sprint-branch-level site — per the same rule
+              stated at the AVFL commit site in step 3.2 above): the Conductor's own `.momentum/`
+              runtime state (build ledger, sprint index) lives untracked on this same branch and is
+              NOT gitignored. When F's returned `files_changed` is non-empty, stage exactly those
+              paths. Only when `files_changed` is unavailable, fall back to {{porcelain_paths}} =
+              `git status --porcelain` with every path under `.momentum/` excluded before staging —
+              never stage an unfiltered {{porcelain_paths}}.
+            `git add -- <path-1> <path-2> ...` (the scoped set resolved above)
+            `git commit -m "fix(e2e): auto-fix {F.summary}"`
+          When the disposition is "dismissed" or "triaged-out", there is nothing to stage or commit.
           Record the disposition in {{e2e_findings}}:
             F.disposition = the fixer's returned value ("fixed" | "dismissed" | "triaged-out").
             If "dismissed": also set F.dismissal_rationale = fixer-returned rationale (non-empty required).
@@ -2565,14 +2688,20 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
           When the fixer returns its disposition for item I:
 
             CASE disposition == "fixed":
-              — WRITE-SCOPE COMMIT GUARD (mirrors step 2.S3 Phase B guard exactly):
-                Run `git diff --name-only` on the affected file set. For each modified file P not
-                in {{endgate_item_writable_files}}: unstage and discard the edit
-                (`git checkout -- P`) before committing.
+              — WRITE-SCOPE COMMIT GUARD (per WRITE-SCOPE COMMIT GUARD STANDARD; mirrors step 2.S3
+                Phase B guard exactly): Enumerate {{porcelain_paths}} = `git status --porcelain` on
+                the affected file set — tracked AND untracked paths (NOT `git diff --name-only`,
+                which is blind to a brand-new file the fixer created). For each path P in
+                {{porcelain_paths}} NOT in {{endgate_item_writable_files}}: discard it by specific
+                path — untracked via `git clean -f -d -- P` (the `-d` is required — a plain
+                `clean -f` skips untracked directories); tracked via `git checkout -- P` — before
+                committing.
                 (All git commands operate in the main worktree on the already-checked-out
                 `sprint/{{sprint_slug}}` branch — per the GIT WORKING CONTEXT INVARIANT above.)
-              — Commit the applied fix (in-scope edits only):
-                  `git add -u && git commit -m "fix(endgate): apply requested change — {I.text | truncate 60}"`
+              — Commit the applied fix (in-scope edits only; per PORCELAIN-ENUMERATED STAGING
+                STANDARD — never `git add -u`):
+                  `git add -- <in-scope-path-1> <in-scope-path-2> ...`
+                  `git commit -m "fix(endgate): apply requested change — {I.text | truncate 60}"`
               — Record in {{endgate_fix_dispositions}}: { fixer_id: I.fixer_id, outcome: "fixed",
                   summary: I.text, commit: <sha> }
               — Remove I from {{unresolved_endgate_items}}.

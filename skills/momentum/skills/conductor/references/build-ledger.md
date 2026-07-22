@@ -18,11 +18,13 @@ One ledger per sprint. Created on first append (no pre-creation step). Sits besi
 
 1. **Rows are only ever appended.** The Conductor never rewrites, edits, or deletes existing rows.
 2. **Corrections are new rows.** When the Conductor must override a prior record (e.g., the scorecard-revert-reconciliation overriding a `fixed` disposition to `scope-reverted`), it appends a new override row referencing the original `finding_id` — the original row is preserved unchanged.
-3. **Append mechanism.** A single-line Bash append per event:
+3. **Append mechanism.** Every free-prose field in the row (`summary`, `finding_summary`, `dismissal_rationale`, `evidence`, `suggested_fix`, developer change-request `items`, and any other field carrying arbitrary text) is run through real JSON serialization — or, equivalently, has every backslash, double-quote, and control character (including a literal embedded newline) escaped to its JSON escape sequence — BEFORE it is interpolated into the row. This guarantees the composed row is exactly one line with no raw newline and no unescaped quote. The row is then appended WITHOUT single-quoted shell interpolation (a raw apostrophe in source prose would terminate a single-quoted `printf '...'` early and corrupt the row and every row after it). Use a quoted heredoc instead:
    ```bash
-   printf '%s\n' '{"event":"...","story_slug":"...","ts":"..."}' >> {{ledger_path}}
+   cat >> {{ledger_path}} <<'CONDUCTOR_LEDGER_ROW'
+   {"event":"...","story_slug":"...","ts":"..."}
+   CONDUCTOR_LEDGER_ROW
    ```
-   No new script. No momentum-tools change. No batching.
+   The quoted delimiter (`<<'CONDUCTOR_LEDGER_ROW'`) disables all shell expansion of the heredoc body, so apostrophes, double quotes, and `$` in the row text pass through byte-for-byte. (Equivalently, compose the row through any JSON serializer available to the executing agent and redirect its stdout `>> {{ledger_path}}`.) No new script. No momentum-tools change. No batching. This construction is mandated identically at three sites — this rule, the LEDGER-APPEND STANDING RULE (`workflow.md` ~209–217), and the step 2.0 init append note (`workflow.md` ~254) — keep all three consistent; do not fork the mechanism.
 4. **Crash-loss bound.** A crash loses at most the event in flight — never previously recorded state.
 
 ---
@@ -125,7 +127,7 @@ These events are the only permitted exceptions to the `story_slug`-required rule
 | `coverage-discharge-consumer-complete` | Step 3.D consumer summary | Summarizes across all deferred stories. |
 | `avfl-on-merge-complete` | Step 3.5 AVFL summary | Sprint-level integration review. |
 | `e2e-phase-complete` | Step 4.4 E2E summary | Sprint-level E2E summary. |
-| `conductor-warning` | Any phase — Conductor-detected anomaly | `story_slug` (optional — omit for sprint-level warnings), `reason` (non-empty string describing the anomaly). Used for: write-scope guard violations, invalid fixer behavior, dismissed findings with missing rationale, and similar Conductor-detected issues that are not findings in the canonical sense but must be recorded. |
+| `conductor-warning` | Any phase — Conductor-detected anomaly | `story_slug` (optional — omit for sprint-level warnings), `reason` (non-empty string describing the anomaly). Used for: write-scope guard violations, invalid fixer behavior, dismissed findings with missing rationale, and similar Conductor-detected issues that are not findings in the canonical sense but must be recorded. The rehydration-unparseable-line variant additionally carries `line_no` (the 1-indexed line number of the unparseable ledger line) — see Idempotent Re-Append Guidance below for how this field dedups repeat warnings across resumes. |
 
 For these events, `story_slug` may be omitted or set to `null`. All other events must carry a real story slug.
 
@@ -153,7 +155,9 @@ When a `finding-disposition` row has `disposition: "dismissed"`, it must carry a
 
 When the Conductor resumes a build and rehydrates from an existing ledger:
 
-1. **Read all existing rows** to rebuild Conductor-scoped accumulators.
+1. **Read all existing rows** to rebuild Conductor-scoped accumulators. A row that fails to parse as JSON — including a partial, truncated final line left by a crash mid-append — is skipped, not treated as fatal: rehydration appends a `conductor-warning` row naming the unparseable content (this warning IS a new live append — see the LEDGER-APPEND STANDING RULE's REHYDRATION EXEMPTION) and continues to completion. See `workflow.md` step 2.0 for the full skip-and-warn rule.
+
+   **Idempotency across resumes:** because the ledger is append-only, a persistently-corrupt line (never overwritten by a later append) sits at the same fixed 1-indexed line number on every resume. Rehydration warns about a given unparseable line **at most once across all resumes** — it dedups by the `line_no` field carried on the `conductor-warning` row (see the Controlled Event-Type Set table above): before replaying, it pre-scans existing rows for prior `conductor-warning` rows carrying `line_no`, and skips emitting a new warning for any line number already recorded. Distinct unparseable lines (different `line_no` values) each still get their own warning — only the exact same persistent line is deduplicated.
 2. **Track seen events.** Build a set of `(story_slug, event, finding_id)` tuples from existing rows.
 3. **Do not re-append** events for stories that are not re-run. A story already at status `review` or `done` (merged in a prior session) will not be re-dispatched — its prior ledger rows stand.
 4. **Stories that ARE re-run** (reset from `in-progress` to `ready-for-dev` by the reconcile) will produce fresh events; these are new rows and are appended normally. The prior session's rows for that story (if any) remain — they document the interrupted attempt.
