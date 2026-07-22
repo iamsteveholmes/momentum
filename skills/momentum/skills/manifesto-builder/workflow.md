@@ -238,13 +238,11 @@ KB gaps (no draft entries — sparse KB, not fabricated): {{list of areas}}
         table for what it covers.
     </action>
 
-    <action>Required rewrite-to-symptom pass (final gate before write): re-read every entry in
-      {{curated_table}} one more time and ask, per entry, "is this phrased as what the developer
-      *sees*, or as a task/goal they're trying to accomplish?" (manifesto-format.md symptom-phrasing
-      rule 1). A task/goal-shaped entry (e.g. "Need to bridge X into Y", "Testing a Z that does W") is
-      not conformant even if the developer's curate response didn't catch it. Rewrite any surviving
-      task-shaped entry to the observable situation before writing — do not write it as-is and do not
-      silently drop it.
+    <action>Required rewrite-to-symptom pass (final gate before write): apply the Phase 1 task/goal
+      anti-pattern (symptom-phrasing rule 1 — Observable) to every entry in {{curated_table}} one more
+      time, since a task/goal-shaped entry is not conformant even if the developer's curate response
+      didn't catch it. Rewrite any surviving task-shaped entry to the observable situation before
+      writing — do not write it as-is and do not silently drop it.
     </action>
 
     <action>Write the assembled content to `.claude/manifests/{{role}}-{{domain}}.md`. Create
