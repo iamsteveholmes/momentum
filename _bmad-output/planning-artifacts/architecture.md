@@ -344,9 +344,6 @@ momentum/                              ← Plugin root
 │   ├── qa-reviewer.md               ← Pure worker: story AC review (Team Review)
 │   ├── e2e-validator.md             ← Pure worker: behavioral validation (Team Review)
 │   ├── dev.md                        ← Base dev agent for sprint-dev spawning
-│   ├── dev-skills.md                ← Specialist: SKILL.md, workflow.md, agent definitions
-│   ├── dev-build.md                 ← Specialist: Gradle and build system work
-│   ├── dev-frontend.md              ← Specialist: Kotlin Compose and frontend UI work
 │   ├── ux.md                         ← Specialist: UX design and UI specification work
 │   ├── analyst.md                    ← Specialist: business analysis and requirements work
 │   └── researcher.md                 ← Specialist: technical research and discovery work
@@ -1229,9 +1226,6 @@ momentum/                                    ← Plugin root
 │   ├── qa-reviewer.md                       ← Pure worker: story AC review (Team Review)
 │   ├── e2e-validator.md                     ← Pure worker: behavioral validation (Team Review)
 │   ├── dev.md                               ← Base dev agent for sprint-dev spawning
-│   ├── dev-skills.md                        ← Specialist: SKILL.md, workflow.md, agent definitions
-│   ├── dev-build.md                         ← Specialist: Gradle and build system work
-│   ├── dev-frontend.md                      ← Specialist: Kotlin Compose and frontend UI work
 │   ├── ux.md                                ← Specialist: UX design and UI specification work
 │   ├── analyst.md                           ← Specialist: business analysis and requirements work
 │   └── researcher.md                        ← Specialist: technical research and discovery work
@@ -2183,10 +2177,11 @@ The agent journal write infrastructure (`momentum-tools log` CLI, sprint-log dir
 **Decision 25 — Teams Over Waves**
 Dependency-driven concurrency replaces rigid wave tiers. The sprint-dev skill (`/momentum:sprint-dev`) spawns agents for unblocked stories and spawns more as dependencies complete. Wave assignments in sprint records are informational for planning visualization — execution order is determined by dependency resolution at runtime. See Dependency-Driven Execution section.
 
-**Decision 26 — Two-Layer Agent Model**
-Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard). Projects provide role-specific stack guidelines. Sprint planning (`/momentum:sprint-planning`) wires the layers together — for each story, determine which roles apply based on `change_type` and `touches`, then attach the project's guidelines. Team composition is stored in the sprint record. Agent Teams share a working directory; sequential story execution with commit-as-sync-point means no worktree needed within a team. Teammates load skills from project/user settings, not from `.agent.md` `skills` frontmatter — dev agents get workflow instructions through their spawn prompt. See Two-Layer Agent Model section.
+**Decision 26 — Two-Layer Agent Model (Sprint-Planning Team Composition)** — _Superseded in part by Decision 55 / DEC-023 and Decision 56 / DEC-026 (2026-07-13): specialist resolution is now routing-table + composed-specialist (see Three-Layer Agent Model section); the sprint-planning team-composition wiring described below remains in force._
 
-The specialist classification table (dev-skills, dev-build, dev-frontend, dev base) is a **canonical lookup**, not ad-hoc LLM derivation. `momentum-tools specialist-classify` is the deterministic implementation — it maps `change_type` to specialist and validator set. When a story has multiple change types, the dominant change type determines the specialist. This ensures identical inputs always produce identical role assignments across sessions and agents.
+Momentum provides generic roles (Dev, QA, E2E Validator, Architect Guard). Projects provide role-specific stack guidelines, composed into project-specific specialist agents per Decision 56. Sprint planning (`/momentum:sprint-planning`) wires the layers together — for each story, determine which roles apply based on `change_type` and `touches`, then attach the project's guidelines. Team composition is stored in the sprint record. Agent Teams share a working directory; sequential story execution with commit-as-sync-point means no worktree needed within a team. Teammates load skills from project/user settings, not from `.agent.md` `skills` frontmatter — dev agents get workflow instructions through their spawn prompt. See Three-Layer Agent Model section.
+
+Specialist resolution is **routing-table-only**: `momentum-tools agent resolve` glob-matches a story's `touches` paths against `momentum/agents.json` (Decision 55 / DEC-023), returning the matched project-composed specialist — assembled by the agent-builder pipeline (Decision 56 / DEC-026) and located at `.claude/guidelines/agents/{role}-{domain}.md` — or falling back to the plugin-shipped `defaults.<role>` base body when no project entry matches. The formerly pre-shipped `dev-skills`/`dev-build`/`dev-frontend` specialist bodies and the `momentum-tools specialist-classify` table that resolved them by `change_type` have been retired (`base-body-collapse-rollback`, sprint-2026-07-13); `specialist-classify` survives only as a no-op compatibility shim that always resolves to `dev`. This ensures identical inputs (a story's `touches`) always produce identical role assignments across sessions and agents.
 
 **Decision 27 — Transcript Audit Retro (Revised 2026-04-06)**
 
@@ -2321,9 +2316,6 @@ skills/momentum/                     ← Plugin root
 │   ├── qa-reviewer.md               ← Team Review: story AC review
 │   ├── e2e-validator.md             ← Team Review: behavioral validation (Gherkin)
 │   ├── dev.md                       ← Base dev agent for sprint-dev spawning
-│   ├── dev-skills.md                ← Specialist: SKILL.md, workflow.md, agent definitions
-│   ├── dev-build.md                 ← Specialist: Gradle and build system work
-│   ├── dev-frontend.md              ← Specialist: Kotlin Compose and frontend UI work
 │   ├── ux.md                        ← Specialist: UX design and UI specification work
 │   ├── analyst.md                   ← Specialist: business analysis and requirements work
 │   └── researcher.md                ← Specialist: technical research and discovery work
@@ -2454,7 +2446,7 @@ Validators join the team based on story `change_type`, replacing the hardcoded a
 
 The Dev fix agent and Architect Guard are not included — quick-fix is a single-story workflow where the developer is already the implementer and architecture drift is not a concern for targeted fixes. For sprint Team Review (multi-story, post-merge), the full team (Decision 34) still applies.
 
-**Traceability:** `momentum-tools specialist-classify` (Decision 26) provides the deterministic mapping from `change_type` to validator set. The same classification drives both specialist selection and validator selection.
+**Traceability:** The `change_type` → validator-set table above is applied directly by the quick-fix workflow, which reads the story's `change_type` frontmatter and branches on it inline — no CLI classifier is invoked. `momentum-tools specialist-classify`, which formerly provided this mapping alongside specialist selection (Decision 26), is retired to a no-op compatibility shim (`base-body-collapse-rollback`, sprint-2026-07-13); specialist selection is now routing-table-only (Decision 55 / DEC-023).
 
 **Decision 41 — Workflow Team Composition Declarations (2026-04-06)**
 
@@ -3029,7 +3021,7 @@ Formalizes the agent routing table schema and resolution algorithm for `momentum
 
 `momentum/agents.json` has two top-level blocks:
 
-- **`defaults`** — 9 roles defined in the schema (dev, qa-reviewer, e2e-validator, architect-guard, ux, analyst, researcher, constitution-builder, agent-builder). **ARCH-3: Not all 9 are currently shipped. Roles actually shipped as base bodies: dev, qa-reviewer, e2e-validator (method-polymorphic rewrite), ux, analyst, researcher. Roles still backlog (base body not yet shipped): architect-guard, constitution-builder, agent-builder. Backlog story `base-body-collapse-rollback` will REMOVE the pre-shipped dev-frontend/dev-build/dev-skills specialist bodies, collapsing specialist resolution to the routing-table alone; architect-guard adoption sequencing: (1) architect-guard base body ships, (2) `base-body-collapse-rollback` runs and removes legacy specialist bodies, (3) `architecture-decision-26-update-for-base-body-collapse` story updates architecture docs, then (4) constitution-builder and agent-builder follow.** Each role entry specifies `agent_path` (relative to plugin `agents/`) and `write_permissions` (array of glob patterns the agent is authorized to write). Defaults are immutable at runtime — agent-builder never overwrites them.
+- **`defaults`** — 9 roles defined in the schema (dev, qa-reviewer, e2e-validator, architect-guard, ux, analyst, researcher, constitution-builder, agent-builder). **ARCH-3: Not all 9 are currently shipped. Roles actually shipped as base bodies: dev, qa-reviewer, e2e-validator (method-polymorphic rewrite), ux, analyst, researcher. Roles still backlog (base body not yet shipped): architect-guard, constitution-builder, agent-builder. Story `base-body-collapse-rollback` has REMOVED the pre-shipped dev-frontend/dev-build/dev-skills specialist bodies (sprint-2026-07-13), collapsing specialist resolution to the routing-table alone; architect-guard adoption sequencing (planned order shown below; in practice step (2) ran ahead of step (1)): (1) architect-guard base body ships, (2) `base-body-collapse-rollback` runs and removes legacy specialist bodies — **done, sprint-2026-07-13**, (3) `architecture-decision-26-update-for-base-body-collapse` story updates architecture docs, then (4) constitution-builder and agent-builder follow.** Each role entry specifies `agent_path` (relative to plugin `agents/`) and `write_permissions` (array of glob patterns the agent is authorized to write). Defaults are immutable at runtime — agent-builder never overwrites them.
 
 <!-- REVISED 2026-07-06: Removed duplicate e2e-validator entry; noted removal scope for base-body-collapse-rollback; added role sequencing guidance per DEC-038. -->
 - **`project`** — per-role×domain entries written by agent-builder. Each entry adds a domain-specific override (e.g., `dev/android`, `qa-reviewer/canvas`). Resolution prefers `project` entries over `defaults`.
