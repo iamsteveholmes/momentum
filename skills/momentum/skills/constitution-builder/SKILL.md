@@ -35,54 +35,44 @@ The **target path** is supplied as an explicit argument. For `in_place_skill` an
 
 ## Canonical Wiki-Query Interface Block (DEC-018 D2, DEC-038 D2)
 
-This block is **Tier 1 hot-constitution content** — always-loaded by every agent. When generating the standalone hot constitution, emit this block verbatim (adjusted for KB count per KB Selection below) as a top-level section, not behind any conditional.
+This block is **Tier 1 hot-constitution content** — always-loaded by every agent. When generating the standalone hot constitution, emit this block verbatim as a top-level section, not behind any conditional. Per `build-guidelines/workflow.md`'s KB routing mandate (FR142 — the wiki-query multi-KB registry is real routing, not bookkeeping), every `wiki-query` invocation in this block carries `--kb [project-name]` unconditionally — regardless of how many KBs this project currently has registered.
 
 **Ownership boundary (DEC-038 D1):** This block holds the shared invocation contract and cross-cutting trigger scenarios ONLY. Per-agent symptom→query routing rows (diagnostic table entries keyed by agent role or observed symptom) belong at the manifesto layer, NOT here.
 
 ```markdown
 ## Wiki-Query Interface
 
-Use `wiki-query` to access the cold KB (Tier 3). Two modes:
+Use `wiki-query` to access the cold KB (Tier 3). Every invocation MUST scope explicitly to this project's KB via `--kb [project-name]` — never omit it, even when this project is currently the only KB registered. Additional project KBs can be registered at any time (multiple project KBs coexist in the registry as a matter of course), and an unscoped call falls through to whatever vault is the ambient default, not necessarily this project's. Two modes:
 
 **Normal mode** — tiered retrieval (index scan → section grep → full page read as needed).
 Returns cited answers with `[[wikilinks]]`.
 
-    wiki-query [your question]
+    wiki-query --kb [project-name] [your question]
 
 **Fast / index-only mode** — answers from page summaries and index.md only.
 No page bodies opened. Cheaper. Good for factual lookups.
 
-    wiki-query quick answer: [your question]
+    wiki-query --kb [project-name] quick answer: [your question]
 
 Also triggered by these equivalent prefixes: `just scan:` · `don't read the pages:` · `fast lookup:`
 
-### KB Selection
+### KB Scope
 
-<!-- Single-KB form (use when exactly one KB is configured): -->
-Use the invocations above as-is — no explicit KB selection required.
-
-<!-- Multi-KB form (use when more than one KB is configured): -->
-When multiple project KBs are available, specify the target KB by project scope:
-
-    wiki-query --kb [project-name] [your question]
-    wiki-query --kb [project-name] quick answer: [your question]
-
-Select the KB that matches your current project context. Do not assume a single global vault.
+`--kb [project-name]` is unconditional on every `wiki-query` call — not a multi-KB-only flag. Substitute the project's actual `project_kb` (from its KB registry entry) for `[project-name]`. Do not assume a single global vault, and do not drop this flag on the reasoning that the project currently has only one registered KB.
 
 ### Required Triggers (prescriptive — DEC-015 D3)
 
 These scenarios require a KB lookup before proceeding. Do not skip:
 
-When selecting a test pattern for a library the project hasn't used before → `wiki-query test patterns [library name]`
-When choosing between two architecture approaches on this stack → `wiki-query [approach A] vs [approach B] on [stack]`
-When applying a framework convention not yet applied in this session → `wiki-query [framework] [convention name] pattern`
-When implementing a pattern that conflicts with training-data recall → `wiki-query [pattern] current practice [project-name]`
+When selecting a test pattern for a library the project hasn't used before → `wiki-query --kb [project-name] test patterns [library name]`
+When choosing between two architecture approaches on this stack → `wiki-query --kb [project-name] [approach A] vs [approach B] on [stack]`
+When applying a framework convention not yet applied in this session → `wiki-query --kb [project-name] [framework] [convention name] pattern`
+When implementing a pattern that conflicts with training-data recall → `wiki-query --kb [project-name] [pattern] current practice [project-name]`
 ```
 
 **Emit rules:**
-- Single-KB project: use the Single-KB form; omit the Multi-KB form and the `--kb` flag guidance.
-- Multi-KB project: include both forms; make KB selection explicit.
-- The `### Required Triggers` section is always emitted regardless of KB count; update the example query strings to match the project's actual technology domains.
+- Emit this block verbatim, unchanged, regardless of KB count. `--kb [project-name]` scoping is unconditional on every `wiki-query` invocation — per `build-guidelines/workflow.md`'s KB routing mandate (FR142): multiple project KBs are always registered, so the ambient default vault is never guaranteed to match the project being built.
+- The `### Required Triggers` section is always emitted regardless of KB count; update the example query strings to match the project's actual technology domains, keeping `--kb [project-name]` on every example.
 - Never add per-agent symptom→query rows to this block. Those belong in the agent's manifesto (diagnostic table layer).
 
 ---
@@ -148,7 +138,7 @@ Perform wiki-query lookups to populate context the project KB has distilled.
 
 1. `cat ~/.obsidian-wiki/config` — extract `OBSIDIAN_VAULT_PATH` and identify all configured KBs (single-KB or multi-KB per DEC-038).
 2. Read `{vault_path}/index.md` for the invoking project's KB.
-3. For each technology/domain from Phase 1, run: `wiki-query [concept]` (or `wiki-query --kb [project-name] [concept]` for multi-KB).
+3. For each technology/domain from Phase 1, run: `wiki-query --kb {{default_project_kb}} [concept]`. Always pass `--kb` — per `build-guidelines/workflow.md`'s KB routing mandate, this is unconditional even for single-KB projects, since the ambient default vault can never be assumed to match the project being built.
 4. Collect distilled facts, conventions, and architectural patterns returned.
 5. Incorporate relevant findings into the appropriate embedded-facts sections (Core Values, Constraints, Cross-Cutting Standing Rules) — citing the KB source.
 
@@ -168,12 +158,9 @@ If yes: invoke the skill, then re-query before continuing.
 
 ### Phase 5 — Compose Wiki-Query Interface Block
 
-Determine KB count (single-KB or multi-KB) from Phase 3.
-
-Emit the **Canonical Wiki-Query Interface Block** from this skill's "Canonical Wiki-Query Interface Block" section above, adjusted:
-- Single-KB project: use the Single-KB form; omit Multi-KB form and `--kb` flag guidance.
-- Multi-KB project: include both forms.
-- Update `### Required Triggers` example query strings to match this project's actual technology domains (replace placeholder `[library name]`, `[stack]`, etc. with project-specific terms from Phase 1).
+Emit the **Canonical Wiki-Query Interface Block** from this skill's "Canonical Wiki-Query Interface Block" section above, verbatim:
+- `--kb [project-name]` scoping is unconditional on every emitted `wiki-query` invocation, regardless of KB count — per `build-guidelines/workflow.md`'s KB routing mandate (FR142).
+- Update `### Required Triggers` example query strings to match this project's actual technology domains (replace placeholder `[library name]`, `[stack]`, etc. with project-specific terms from Phase 1), keeping `--kb [project-name]` on every example.
 - Do NOT add per-agent symptom→query rows. Those belong in the agent's manifesto.
 
 ### Phase 6 — Review
@@ -210,7 +197,7 @@ Write the domain-knowledge sections to `{{target_path}}`.
 - `## Quick Routing` or any symptom→query routing table
 - Agent-specific `## Permissions` or `## Standing Rules`
 
-Report: "Constitution written — wiki-query interface block emitted ([single-KB/multi-KB]), embedded facts: [N sections], KB-sourced context integrated. Routing generation is delegated to momentum:agent-builder."
+Report: "Constitution written — wiki-query interface block emitted (--kb [project-name] scoped, unconditional), embedded facts: [N sections], KB-sourced context integrated. Routing generation is delegated to momentum:agent-builder."
 
 ---
 
