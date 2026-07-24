@@ -6263,15 +6263,5 @@
     "touches": [],
     "priority": "high",
     "story_type": "maintenance"
-  },
-  "debugprobe1": {
-    "status": "backlog",
-    "title": "x",
-    "epic_slug": "momentum-conductor-core",
-    "story_file": true,
-    "depends_on": [],
-    "touches": [],
-    "priority": "low",
-    "story_type": "feature"
   }
 }
