@@ -730,11 +730,17 @@ Ready to begin?</output>
                 Never discard via a blanket `git clean -f` or `git checkout .` — that would also
                 destroy in-scope untracked deliverables.
               — Otherwise P is in scope: it is staged explicitly at commit time below.
-            Prefer staging the produced file set from {{stage1_output}}.file_list (intersected with
-            the in-scope check above) when non-empty, over staging every in-scope path in
-            {{porcelain_paths}} — this avoids sweeping in stray untouched files that merely sit within
-            writable scope. If file_list is empty or unavailable, stage every in-scope path from
-            {{porcelain_paths}}.
+            Stage the UNION of {{stage1_output}}.file_list and the in-scope subset of
+            {{porcelain_paths}} resolved by the loop above (never file_list alone): a non-empty but
+            incomplete file_list would otherwise silently drop an in-scope deliverable the dev agent
+            actually created, and that path is destroyed at worktree cleanup once the story merges.
+            For each in-scope path P present in {{porcelain_paths}} but absent from file_list: stage
+            P anyway, and append { event: "conductor-warning", story_slug: S.slug, reason: "file
+            present in worktree but missing from dev agent's file_list — staged from porcelain
+            enumeration: " + P, ts: NOW() } to {{build_log}} and the build ledger, so the gap in the
+            self-reported file_list stays visible without blocking the story. If file_list is empty
+            or unavailable, stage every in-scope path from {{porcelain_paths}} (no warning needed —
+            this is the expected shape when the dev agent didn't populate file_list at all).
           SEAM-DISAGREE GUARD: Before staging, detect the cross-side record-shape mismatch.
             Trigger condition: has the worktree tip advanced beyond the launch base?
               git rev-parse HEAD != {{S.launch_base_sha}}
@@ -2768,11 +2774,18 @@ The build has paused story `{{S.slug}}` for a finding that meets the narrow stak
               — WRITE-SCOPE COMMIT GUARD (per WRITE-SCOPE COMMIT GUARD STANDARD; mirrors step 2.S3
                 Phase B guard exactly): Enumerate {{porcelain_paths}} = `git status --porcelain` on
                 the affected file set — tracked AND untracked paths (NOT `git diff --name-only`,
-                which is blind to a brand-new file the fixer created). For each path P in
-                {{porcelain_paths}} NOT in {{endgate_item_writable_files}}: discard it by specific
-                path — untracked via `git clean -f -d -- P` (the `-d` is required — a plain
-                `clean -f` skips untracked directories); tracked via `git checkout -- P` — before
-                committing.
+                which is blind to a brand-new file the fixer created).
+                RUNTIME-STATE EXCLUSION (mandatory at this site, per the same rule stated at the
+                  AVFL commit site in step 3.2 and the E2E commit site in step 4.3 above): every
+                  path under `.momentum/` is excluded from the discard scan before any `git clean -f
+                  -d` — the Conductor's own runtime state (build ledger, sprint index, fresh
+                  reports, handoffs, stubs) lives untracked on this same `sprint/{{sprint_slug}}`
+                  branch and is NOT gitignored, so an unfiltered discard would delete it. Only
+                  non-`.momentum` out-of-scope untracked paths may be discarded.
+                For each path P in {{porcelain_paths}} NOT in {{endgate_item_writable_files}} AND
+                NOT under `.momentum/`: discard it by specific path — untracked via `git clean -f -d
+                -- P` (the `-d` is required — a plain `clean -f` skips untracked directories);
+                tracked via `git checkout -- P` — before committing.
                 (All git commands operate in the main worktree on the already-checked-out
                 `sprint/{{sprint_slug}}` branch — per the GIT WORKING CONTEXT INVARIANT above.)
               — Commit the applied fix (in-scope edits only; per PORCELAIN-ENUMERATED STAGING
