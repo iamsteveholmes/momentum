@@ -11,5 +11,5 @@ Given a conduct build is running for sprint `sprint-2026-06-10` with three stori
 3. Each individual finding disposition (fixed, dismissed, escalated, triaged-out, blocked, scope-reverted) within step 2.S3 produces its own ledger append at the moment the disposition is recorded — not deferred to the story's terminal signal.
 4. Each story terminal signal (merged or blocked/quarantined) produces a ledger append.
 5. Escalation events (mid-flight and end-gate-expanded), coverage deferrals, coverage discharges, contract-integrity stops, and end-gate change-request events each produce their own ledger append.
-6. The append mechanism is a single-line Bash printf to the ledger file — no new script or tool is introduced.
+6. The append mechanism is the SAFE APPEND CONSTRUCTION — a quoted heredoc (`cat >> {{ledger_path}} <<'CONDUCTOR_LEDGER_ROW' ... CONDUCTOR_LEDGER_ROW`) or an equivalent JSON-serializer redirect — never a single-quoted `printf '<row-json>' >> {{ledger_path}}`, since a raw apostrophe in free-prose fields would terminate that single-quoted string early and corrupt the row. No new script or tool is introduced.
 7. A simulated crash after story-b's merge but before story-c starts would leave the ledger containing all events for story-a and story-b but none for story-c — demonstrating event-time writes rather than phase-end batches.
