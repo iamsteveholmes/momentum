@@ -27,7 +27,8 @@ button#go{background:var(--olive-d);color:#fff;border:0;border-radius:8px;paddin
 <h1>Sprint 2026-07-13 — End-Gate</h1>
 <p class="sub">The one decision point of this build. Everything below was assembled from the build's durable ledger.</p>
 <div class="hero"><b>What this sprint accomplished:</b> the agent cohort went live — Momentum's own knowledge vault, the manifesto producer, and routing-table agent resolution all landed, and were <i>proven</i> by the shipped end-to-end driver passing live against a real fixture project (observed three separate times, console output and exit code, never a status field). The build itself was interrupted, resumed from its ledger, and completed — which discharged three of its own verification scenarios by living them.<br>
-<b>Where to focus:</b> the seven decision cards in §04. Everything else on this page is record, not question.</div>
+<b>Where to focus:</b> the seven decision cards in §04. Everything else on this page is record, not question.<br>
+<b>Change pass 1 applied:</b> your seven verdicts are recorded and executed — four fix-now items fixed and committed, the phantom entry removed (its regression contract now passes), one follow-up queued, two acknowledgments recorded. See "Changes applied this pass" above the gate; each §04 card carries its applied note.</div>
 <div class="metrics">
 <div class="m"><b>15 / 15</b><span>stories built &amp; merged</span></div>
 <div class="m"><b>5</b><span>high-risk divergences caught &amp; fixed</span></div>
@@ -5699,67 +5700,74 @@ index b90460f..ecd188b 100644
 <section id="decision"><h2>§04 — The decisions for you</h2><p class="sub">Seven cards. Each needs a read-acknowledgment and a choice before the gate unlocks. Nothing is pre-selected.</p>
 <div class="decision" id="d1"><span class="tag">irreversible-destructive</span>
 <h3>D1 · A commit-staging clause can silently drop a brand-new file</h3>
+<p style="background:#f4f6ef;border:1px solid var(--olive);border-radius:8px;padding:8px 12px"><b>✓ FIX APPLIED THIS PASS (your verdict: Option A, fix now) — stage-1 staging now unions the dev-reported file_list with the in-scope porcelain enumeration; a file present in the worktree but missing from file_list is staged anyway with a visibility warning. Commit 4964ff7.</b></p>
 <p><b>In plain terms.</b> The build&#x27;s staging rule prefers the file list a story&#x27;s dev agent reports. If that list is non-empty but omits a new file the story legitimately created, the file is never staged — and when the story&#x27;s scratch workspace is cleaned up after merge, the only copy is destroyed.</p>
 <p><b>What's actually at stake.</b> A future story could ship &#x27;complete&#x27; while silently missing one of its deliverables, with no error anywhere. This was found during the build and deliberately NOT auto-fixed because changing destructive-adjacent staging logic warrants your sign-off.</p>
 <p><b>Evidence.</b> conduct-conductor-staging-and-ledger-append-safety review finding bmad-code-review-0; suggested fix preserved in the build ledger (union the reported file list with the actual worktree change enumeration instead of preferring one).</p>
 <div class="opt rec"><b>Option A (recommended).</b> Adopt the suggested fix in a follow-up story (union file_list with porcelain enumeration) — queued via triage.</div><div class="opt"><b>Option B.</b> Accept the current behavior and rely on dev agents reporting complete file lists.</div>
 <p><b>My recommendation:</b> Option A — the green-field-file class of loss is exactly what this sprint hardened against elsewhere.</p>
-<div class="ack"><label><input type="checkbox" id="ack-d1" onchange="paint()"> I've read D1 and understand the call.</label></div>
-<div class="choices"><label onclick=""><input type="radio" name="d1" value="A" onchange="paint()">Option A — recommended</label><label onclick=""><input type="radio" name="d1" value="B" onchange="paint()">Option B</label></div></div>
+<div class="ack"><label><input type="checkbox" id="ack-d1" checked onchange="paint()"> I've read D1 and understand the call.</label></div>
+<div class="choices"><label onclick=""><input type="radio" name="d1" value="A" checked onchange="paint()">Option A — recommended (your recorded verdict)</label><label onclick=""><input type="radio" name="d1" value="B" onchange="paint()">Option B</label></div></div>
 <div class="decision" id="d2"><span class="tag">high-blast-radius-architecture</span>
 <h3>D2 · One skill mandates strict vault routing; a sibling skill can still emit the loose form</h3>
+<p style="background:#f4f6ef;border:1px solid var(--olive);border-radius:8px;padding:8px 12px"><b>✓ FIX APPLIED THIS PASS (your verdict: Option A, fix now) — constitution-builder now emits --kb unconditionally at every wiki-query site; the single-KB/multi-KB fork is removed and the FR142 mandate cited. Commit 798a0c5.</b></p>
 <p><b>In plain terms.</b> The composition pipeline now requires every knowledge lookup to name its vault explicitly (--kb). But the constitution-builder skill still decides for itself whether to include the vault flag when it writes Tier-1 constitutions — so a constitution it emits can omit vault scoping.</p>
 <p><b>What's actually at stake.</b> An unscoped lookup falls back to a default vault — potentially the wrong project&#x27;s knowledge — which is precisely the cross-project contamination the routing work exists to prevent.</p>
 <p><b>Evidence.</b> momentum-knowledge-base-buildout review finding bmad-code-review-0; constitution-builder SKILL.md Phase 3 still hedges (&#x27;--kb for multi-KB&#x27;); also independently re-found by the post-merge integration review.</p>
 <div class="opt rec"><b>Option A (recommended).</b> Follow-up story making constitution-builder&#x27;s --kb emission unconditional (already queued as a cross-artifact note).</div><div class="opt"><b>Option B.</b> Accept the hedged form until constitution-builder&#x27;s next scheduled rework.</div>
 <p><b>My recommendation:</b> Option A — one small edit closes the last unscoped-emission path.</p>
-<div class="ack"><label><input type="checkbox" id="ack-d2" onchange="paint()"> I've read D2 and understand the call.</label></div>
-<div class="choices"><label onclick=""><input type="radio" name="d2" value="A" onchange="paint()">Option A — recommended</label><label onclick=""><input type="radio" name="d2" value="B" onchange="paint()">Option B</label></div></div>
+<div class="ack"><label><input type="checkbox" id="ack-d2" checked onchange="paint()"> I've read D2 and understand the call.</label></div>
+<div class="choices"><label onclick=""><input type="radio" name="d2" value="A" checked onchange="paint()">Option A — recommended (your recorded verdict)</label><label onclick=""><input type="radio" name="d2" value="B" onchange="paint()">Option B</label></div></div>
 <div class="decision" id="d3"><span class="tag">irreversible-destructive</span>
 <h3>D3 · The gate&#x27;s own change-request path could delete the build&#x27;s untracked runtime files</h3>
+<p style="background:#f4f6ef;border:1px solid var(--olive);border-radius:8px;padding:8px 12px"><b>✓ FIX APPLIED THIS PASS (your verdict: Option A, fix now) — the RUNTIME-STATE EXCLUSION now stands at the 5.RC guard, mirroring the AVFL/E2E sites (verified present at all three). Commit 4964ff7.</b></p>
 <p><b>In plain terms.</b> If you request changes at this gate, a cleanup guard in the workflow enumerates modified files and discards untracked ones outside the change&#x27;s scope with git clean. Its two sibling cleanup sites explicitly exempt the build&#x27;s own .momentum/ runtime state; this site does not.</p>
 <p><b>What's actually at stake.</b> The first change-request pass could destroy untracked runtime artifacts — for example this very report file before it is committed, or fresh handoffs. (I am aware of it and will apply the sibling exemption manually if the path runs this session, so you are not at live risk at this gate.)</p>
 <p><b>Evidence.</b> conductor/workflow.md ~2763-2777 (no RUNTIME-STATE EXCLUSION) vs the mandatory carve-outs at the AVFL (~1974) and E2E sites; found by the integration review, iteration 1, re-confirmed every iteration.</p>
 <div class="opt rec"><b>Option A (recommended).</b> Apply the same RUNTIME-STATE EXCLUSION carve-out to the end-gate site (small workflow edit; can be done as a change-request in this gate or a follow-up story).</div><div class="opt"><b>Option B.</b> Leave as-is and rely on the Conductor knowing the trap.</div>
 <p><b>My recommendation:</b> Option A — a doctrine that only works when the operator remembers the trap is not a doctrine.</p>
-<div class="ack"><label><input type="checkbox" id="ack-d3" onchange="paint()"> I've read D3 and understand the call.</label></div>
-<div class="choices"><label onclick=""><input type="radio" name="d3" value="A" onchange="paint()">Option A — recommended</label><label onclick=""><input type="radio" name="d3" value="B" onchange="paint()">Option B</label></div></div>
+<div class="ack"><label><input type="checkbox" id="ack-d3" checked onchange="paint()"> I've read D3 and understand the call.</label></div>
+<div class="choices"><label onclick=""><input type="radio" name="d3" value="A" checked onchange="paint()">Option A — recommended (your recorded verdict)</label><label onclick=""><input type="radio" name="d3" value="B" onchange="paint()">Option B</label></div></div>
 <div class="decision" id="d4"><span class="tag">high-blast-radius-architecture</span>
 <h3>D4 · The phantom-entry defect class is back — one leaked entry, one unguarded write path</h3>
+<p style="background:#f4f6ef;border:1px solid var(--olive);border-radius:8px;padding:8px 12px"><b>✓ RESOLVED THIS PASS (your verdict: Option A) — debugprobe1 removed via a ledgered sole-writer exception (no removal CLI exists); the repair-phantom regression contract now passes with exit 0 and zero phantoms. Write-path fix + removal-command gap queued as a follow-up story. Commit e68c34f.</b></p>
 <p><b>In plain terms.</b> Two facets, one family. (1) A junk entry &#x27;debugprobe1&#x27; (title &#x27;x&#x27;, no backing story file) sits in the canonical story index — leaked from the phantom-repair story&#x27;s own test probe in the prior session, and caught by that story&#x27;s own regression contract during E2E. (2) The create-story workflow still hardcodes story_file: true in a direct index write, bypassing the single-enforcer rule this sprint just ratified — the exact write path that lets phantoms in.</p>
 <p><b>What's actually at stake.</b> Phantom entries crash or mislead every tool that trusts the index. The repaired six are fixed, but the class survives while an unguarded write path exists.</p>
 <p><b>Evidence.</b> index.json:6267 debugprobe1 (E2E: &#x27;PHANTOMS: 1&#x27;, expected 0; entered via checkpoint 9afd2d1); create-story/workflow.md:335-339 hardcoded flag vs sprint-manager rule 6 (&#x27;cmd_story_add enforces this invariant at the sole write site&#x27;).</p>
 <div class="opt rec"><b>Option A (recommended).</b> Approve removal of the debugprobe1 entry now (I will route it through the sanctioned index-writer path before the merge to main), and queue the create-story write-path fix as a follow-up story.</div><div class="opt"><b>Option B.</b> Remove the entry only; leave the write path for a future sprint.</div><div class="opt"><b>Option C.</b> Leave both for triage.</div>
 <p><b>My recommendation:</b> Option A — the entry is inarguable debris, and the write-path fix is what keeps this from recurring.</p>
-<div class="ack"><label><input type="checkbox" id="ack-d4" onchange="paint()"> I've read D4 and understand the call.</label></div>
-<div class="choices"><label onclick=""><input type="radio" name="d4" value="A" onchange="paint()">Option A — recommended</label><label onclick=""><input type="radio" name="d4" value="B" onchange="paint()">Option B</label><label onclick=""><input type="radio" name="d4" value="C" onchange="paint()">Option C</label></div></div>
+<div class="ack"><label><input type="checkbox" id="ack-d4" checked onchange="paint()"> I've read D4 and understand the call.</label></div>
+<div class="choices"><label onclick=""><input type="radio" name="d4" value="A" checked onchange="paint()">Option A — recommended (your recorded verdict)</label><label onclick=""><input type="radio" name="d4" value="B" onchange="paint()">Option B</label><label onclick=""><input type="radio" name="d4" value="C" onchange="paint()">Option C</label></div></div>
 <div class="decision" id="d5"><span class="tag">high-blast-radius-architecture</span>
 <h3>D5 · The new planning gate&#x27;s override flow cannot match your verdicts to its questions</h3>
+<p style="background:#f4f6ef;border:1px solid var(--olive);border-radius:8px;padding:8px 12px"><b>ACKNOWLEDGED (your verdict: Option A) — the renderer fork-id fix stays queued for the next sprint, to land before the coherence gate&#x27;s first live firing.</b></p>
 <p><b>In plain terms.</b> The coherence gate mandates that your override decisions be matched by a stable identifier (consumer→producer), and forbids matching by position. But the gate&#x27;s renderer never emits that identifier — its copyable verdict block keys answers by loop position only.</p>
 <p><b>What's actually at stake.</b> When you overrule a coherence failure at a future planning gate, the workflow would classify your verdict as &#x27;not an override&#x27; and hold the sprint against your explicit decision.</p>
 <p><b>Evidence.</b> plan-gate-renderer.md ForkItem shape (no id field) + gate JS &#x27;Fork &#x27; + i; coherence-gate.md §5a mandates id-based matching. Self-identified at build time (queued follow-up) and independently re-confirmed by the integration review.</p>
 <div class="opt rec"><b>Option A (recommended).</b> Acknowledge; the fix (add the id field + embed it in the copied verdict text) is already a queued follow-up — pull it into the next sprint.</div><div class="opt"><b>Option B.</b> Treat as low-urgency (the gate has never fired live yet) and leave in the queue.</div>
 <p><b>My recommendation:</b> Option A — fix before the coherence gate&#x27;s first live firing, or its first real use breaks on its first real disagreement.</p>
-<div class="ack"><label><input type="checkbox" id="ack-d5" onchange="paint()"> I've read D5 and understand the call.</label></div>
-<div class="choices"><label onclick=""><input type="radio" name="d5" value="A" onchange="paint()">Option A — recommended</label><label onclick=""><input type="radio" name="d5" value="B" onchange="paint()">Option B</label></div></div>
+<div class="ack"><label><input type="checkbox" id="ack-d5" checked onchange="paint()"> I've read D5 and understand the call.</label></div>
+<div class="choices"><label onclick=""><input type="radio" name="d5" value="A" checked onchange="paint()">Option A — recommended (your recorded verdict)</label><label onclick=""><input type="radio" name="d5" value="B" onchange="paint()">Option B</label></div></div>
 <div class="decision" id="d6"><span class="tag">high-blast-radius-architecture</span>
 <h3>D6 · One eval still mandates the ledger-write mechanism this sprint retired</h3>
+<p style="background:#f4f6ef;border:1px solid var(--olive);border-radius:8px;padding:8px 12px"><b>✓ FIX APPLIED THIS PASS (your verdict: Option A, fix now) — the stale eval now asserts the SAFE APPEND CONSTRUCTION and explicitly rejects single-quoted printf. Commit d0046be.</b></p>
 <p><b>In plain terms.</b> This sprint replaced the build ledger&#x27;s shell-write mechanism with a quoting-safe construction and wrote &#x27;do not fork the mechanism&#x27; into the standing rule. A pre-existing eval still asserts the OLD mechanism, while a new sibling eval asserts the new one — the eval suite now demands both.</p>
 <p><b>What's actually at stake.</b> A future fix pressured by the stale eval could reintroduce the quoting-unsafe write — the exact corruption vector the story closed.</p>
 <p><b>Evidence.</b> eval-ledger-append-at-state-bearing-events.md:14 (&#x27;single-line Bash printf&#x27;) vs eval-ledger-append-survives-apostrophe.md:10 and build-ledger.md §3 (&#x27;SAFE APPEND CONSTRUCTION — supersedes any single-quoted printf&#x27;). Self-identified at build time (queued) and re-confirmed by the integration review.</p>
 <div class="opt rec"><b>Option A (recommended).</b> Acknowledge; one-line eval update already queued — apply as a change-request here or next sprint.</div><div class="opt"><b>Option B.</b> Leave until the eval next runs.</div>
 <p><b>My recommendation:</b> Option A — a one-line doc fix that removes a standing contradiction.</p>
-<div class="ack"><label><input type="checkbox" id="ack-d6" onchange="paint()"> I've read D6 and understand the call.</label></div>
-<div class="choices"><label onclick=""><input type="radio" name="d6" value="A" onchange="paint()">Option A — recommended</label><label onclick=""><input type="radio" name="d6" value="B" onchange="paint()">Option B</label></div></div>
+<div class="ack"><label><input type="checkbox" id="ack-d6" checked onchange="paint()"> I've read D6 and understand the call.</label></div>
+<div class="choices"><label onclick=""><input type="radio" name="d6" value="A" checked onchange="paint()">Option A — recommended (your recorded verdict)</label><label onclick=""><input type="radio" name="d6" value="B" onchange="paint()">Option B</label></div></div>
 <div class="decision" id="d7"><span class="tag routine">routine</span>
 <h3>D7 · For transparency: an agent stitched the approve-flow merge conflict you are about to exercise</h3>
+<p style="background:#f4f6ef;border:1px solid var(--olive);border-radius:8px;padding:8px 12px"><b>ACKNOWLEDGED (your verdict: Option A) — the stitched approve flow stands as reviewed; it is the flow that executes on your approval.</b></p>
 <p><b>In plain terms.</b> Two stories edited the same Phase-5 approve block (one added automatic sprint completion; one wrapped the block in a resume checkpoint). Their merge conflicted; a directed fixer authored the combined control flow, and I verified the stitch line-by-line before staging. The combined shape — sprint completion inside the checkpoint-gated block — exists in a form neither story validated alone.</p>
 <p><b>What's actually at stake.</b> Low: the integrated text was re-reviewed and its enumeration drift was later auto-fixed. This card exists so a machine-merged change to the gate you are using right now is acknowledged, not slipped past you.</p>
 <p><b>Evidence.</b> conductor/workflow.md ~2589-2620 (checkpoint-gated approve: merge → transitions → sprint complete → checkpoint row; resume branch skips all four); resolution record in the build ledger (merge-semantic-resolution-0).</p>
 <div class="opt rec"><b>Option A (recommended).</b> Acknowledge — the stitched flow is what will execute when you approve.</div><div class="opt"><b>Option B.</b> Request a change to the stitched flow before approving.</div>
 <p><b>My recommendation:</b> Option A — verified twice (Conductor review + integration review iteration 3 fix of its enumeration drift).</p>
-<div class="ack"><label><input type="checkbox" id="ack-d7" onchange="paint()"> I've read D7 and understand the call.</label></div>
-<div class="choices"><label onclick=""><input type="radio" name="d7" value="A" onchange="paint()">Option A — recommended</label><label onclick=""><input type="radio" name="d7" value="B" onchange="paint()">Option B</label></div></div>
+<div class="ack"><label><input type="checkbox" id="ack-d7" checked onchange="paint()"> I've read D7 and understand the call.</label></div>
+<div class="choices"><label onclick=""><input type="radio" name="d7" value="A" checked onchange="paint()">Option A — recommended (your recorded verdict)</label><label onclick=""><input type="radio" name="d7" value="B" onchange="paint()">Option B</label></div></div>
 </section>
 <section id="waved"><h2>§05 — Waved off &amp; routine</h2><table><tr><th>What was flagged</th><th>Why it was safe to leave</th></tr>
 <tr><td>Dev Agent Record blank in story file <span class='muted'>(momentum-knowledge-base-buildout)</span></td><td>Story spec file is read-only to the fixer; durable EDD record lives in the Conductor build ledger; systemic story-template gap already routed to triage</td></tr>
@@ -5794,8 +5802,19 @@ index b90460f..ecd188b 100644
 <tr><td>wiki-query live three-context resolution not executed by a validator (composed artifacts show correct vault scoping; the live invocation awaits a session-level run)</td></tr></table>
 <div class="callout"><b>So what does approving actually do?</b> Approving merges the integrated sprint branch to main, transitions all 15 stories to done, completes the sprint record (retro-ready), and creates backlog stubs for every major residual. It does NOT push anywhere (push is a separate confirmation), does NOT run the retro, and does NOT make the 'still hollow' rows above live — those fire on their next natural use.</div></section>
 <section id="merge"><h2>§07 — Merge &amp; push preview</h2>
-<p><b>Net change:</b>  143 files changed, 9701 insertions(+), 1562 deletions(-) across 74 commits on <code>sprint/sprint-2026-07-13</code>.</p>
+<p><b>Net change:</b>  145 files changed, 15571 insertions(+), 1593 deletions(-) across 80 commits on <code>sprint/sprint-2026-07-13</code>.</p>
 <p><b>Exact approve sequence:</b> resolve D4's index cleanup → merge sprint branch to main → per-story terminal transitions (review → verify → done) → <code>momentum-tools sprint complete</code> → checkpoint row → major-residual stubs → push preview. <b>Push is a separate confirmation</b> — you will see the commit list and be asked again.</p></section>
+<section id="changes"><h2>Changes applied this pass</h2>
+<p class="sub">Your gate verdicts, executed. One bounded autonomous pass; every item resolved.</p>
+<table><tr><th>#</th><th>Change requested</th><th>Outcome</th><th>Commit</th></tr>
+<tr><td>1</td><td>D1 — union file_list with porcelain staging in the stage-1 clause</td><td>fixed</td><td><code>4964ff7</code></td></tr>
+<tr><td>2</td><td>D2 — constitution-builder --kb unconditional</td><td>fixed</td><td><code>798a0c5</code></td></tr>
+<tr><td>3</td><td>D3 — RUNTIME-STATE EXCLUSION at the 5.RC end-gate guard</td><td>fixed</td><td><code>4964ff7</code></td></tr>
+<tr><td>4</td><td>D6 — stale printf eval → SAFE APPEND CONSTRUCTION</td><td>fixed</td><td><code>d0046be</code></td></tr>
+<tr><td>5</td><td>D4a — remove debugprobe1 phantom entry (regression contract re-run: exit 0, zero phantoms)</td><td>fixed</td><td><code>e68c34f</code></td></tr>
+<tr><td>6</td><td>D4b — create-story write-path fix + removal-command gap</td><td>queued as follow-up story</td><td>practice ledger</td></tr>
+</table>
+<p class="muted">D5 and D7 were acknowledgments — D5's fix remains queued for next sprint; D7's stitched flow executes on approval. All seven verdicts are pre-recorded on the cards above; review the applied notes, then approve below.</p></section>
 <div class="gate" id="gatebox"><h2 style="border:0;margin:0 0 8px">The gate</h2>
 <p>Review §04 above. Acknowledge each card and pick an option, then choose:</p>
 <label><input type="radio" name="gate" value="APPROVE" onchange="paint()"> <b>Approve</b> — merge to main and complete the sprint</label><br>
