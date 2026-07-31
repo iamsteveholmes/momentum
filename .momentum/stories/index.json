@@ -193,7 +193,7 @@
     "feature_slug": "momentum-composable-specialist-agents"
   },
   "architecture-decision-26-update-for-base-body-collapse": {
-    "status": "review",
+    "status": "done",
     "title": "Architecture Decision 26 update for base-body collapse",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
@@ -413,7 +413,7 @@
     "priority": "low"
   },
   "base-body-collapse-rollback": {
-    "status": "review",
+    "status": "done",
     "title": "Base-body collapse rollback",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
@@ -2448,7 +2448,7 @@
     "priority": "low"
   },
   "rename-base-body-files-to-canonical-naming": {
-    "status": "review",
+    "status": "done",
     "title": "Rename base body files to canonical naming",
     "epic_slug": "momentum-agent-role-contracts",
     "story_file": true,
@@ -4565,7 +4565,7 @@
     "feature_slug": "momentum-model-routing-strategy"
   },
   "sprint-planning-continuous-execution-and-cli-fixes": {
-    "status": "review",
+    "status": "done",
     "title": "sprint-planning: fix continuous execution breaks and stale CLI namespace bugs",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "story_file": true,
@@ -5661,7 +5661,7 @@
     "story_type": "feature"
   },
   "conduct-live-run-against-fixture-sprint": {
-    "status": "review",
+    "status": "done",
     "title": "Run the shipped build-guidelines E2E driver live against a populated nornspun fixture (compose→register→resolve seam)",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -5792,7 +5792,7 @@
     "priority": "low"
   },
   "conduct-qa-execute-verification-method": {
-    "status": "review",
+    "status": "done",
     "title": "Conduct QA leg executes the story's verification method (smoke), not diff-only review",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -5809,7 +5809,7 @@
     "change_type": "agent-definition + skill-instruction"
   },
   "sprint-planning-cross-story-coherence-gate": {
-    "status": "review",
+    "status": "done",
     "title": "Sprint-planning cross-story coherence gate for depends_on deliverables",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "story_file": true,
@@ -5874,7 +5874,7 @@
     "story_type": "maintenance"
   },
   "conduct-adoption-retire-sprint-dev": {
-    "status": "review",
+    "status": "done",
     "title": "Conduct completes its own sprint — port `sprint complete` into the end-gate approve sequence (Phase 0 of sprint-dev retirement)",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -5888,7 +5888,7 @@
     "change_type": "skill-instruction"
   },
   "conduct-conductor-staging-and-ledger-append-safety": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor staging must see new files, and the ledger append must be shell-safe",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -5932,7 +5932,7 @@
     "story_type": "defect"
   },
   "momentum-knowledge-base-buildout": {
-    "status": "review",
+    "status": "done",
     "title": "Momentum knowledge base buildout",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -5949,7 +5949,7 @@
     "change_type": "config-structure + specification + skill-instruction"
   },
   "manifesto-builder-skill-generate-then-curate": {
-    "status": "review",
+    "status": "done",
     "title": "manifesto-builder skill (generate-then-curate)",
     "epic_slug": "momentum-agent-composition-pipeline",
     "story_file": true,
@@ -5990,7 +5990,7 @@
     "change_type": "skill-instruction"
   },
   "conduct-resume-and-rehydration-idempotency-hardening": {
-    "status": "review",
+    "status": "done",
     "title": "Conduct — resume and rehydration idempotency hardening",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -6058,7 +6058,7 @@
   },
   "sprint-planning-handoff-artifact": {
     "title": "Add mandatory handoff artifact to sprint-planning workflow terminal step",
-    "status": "review",
+    "status": "done",
     "epic_slug": "momentum-sprint-planning-to-ready",
     "depends_on": [],
     "priority": "high",
@@ -6189,7 +6189,7 @@
     "story_type": "maintenance"
   },
   "conductor-endgate-viewer-hijack-and-silent-gate": {
-    "status": "review",
+    "status": "done",
     "title": "Conductor end-gate — stop viewer pane hijack and silent gate turn-end",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
@@ -6203,7 +6203,7 @@
     "change_type": "skill-instruction"
   },
   "repair-phantom-story-file-entries-and-backfill-live-fixture-scope": {
-    "status": "review",
+    "status": "done",
     "title": "Repair phantom story_file entries + sprint-manager invariant; verify live-fixture backfill on conduct-live-run-against-fixture-sprint",
     "epic_slug": "momentum-conductor-core",
     "story_file": true,
