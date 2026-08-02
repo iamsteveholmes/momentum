@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nornspun Delivery — Findings &amp; Decisions</title>
+<style>
+  :root{
+    --bg:#faf7f2; --card:#ffffff; --ink:#1f1d1a; --ink-2:#5f5a52; --ink-3:#8a8378;
+    --line:#e6e0d6; --accent:#a4551e; --accent-soft:#f6e8dc;
+    --good:#1a7a4a; --good-soft:#e3f2e9; --warn:#8f6400; --warn-soft:#f7eed6;
+    --crit:#b3341f; --crit-soft:#f9e5e0; --info:#2b5d8a; --info-soft:#e3edf5;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#191713; --card:#211e19; --ink:#ece7de; --ink-2:#b3aca0; --ink-3:#847d71;
+      --line:#37332c; --accent:#d98a52; --accent-soft:#33251b;
+      --good:#5cba8a; --good-soft:#1d2f26; --warn:#d6a832; --warn-soft:#302917;
+      --crit:#e07a66; --crit-soft:#33201c; --info:#7aa8ce; --info-soft:#1c2833;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-size:27px;line-height:1.25;margin:0 0 10px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:44px 0 14px;letter-spacing:-.01em}
+  p{margin:.5em 0}
+  .lede{font-size:16.5px;color:var(--ink-2);max-width:72ch}
+  .lede strong{color:var(--ink)}
+  .checkline{margin:18px 0 0;padding:10px 14px;background:var(--good-soft);border:1px solid var(--line);
+    border-radius:8px;font-size:13.5px;color:var(--ink-2)}
+  .checkline b{color:var(--good)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:26px 0 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px}
+  .tile .n{font-size:24px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .tile .l{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+  .tile.bad .n{color:var(--crit)} .tile.ok .n{color:var(--good)}
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto;margin-top:14px}
+  .diagram figcaption{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+  .verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:14px}
+  .v{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .v h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+  .v.confirmed h3{color:var(--good)} .v.refined h3{color:var(--warn)} .v.refuted h3{color:var(--crit)}
+  .v ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:13.8px}
+  .v li{margin:.35em 0}
+  .fork{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:10px;padding:18px 20px;margin:14px 0}
+  .fork h3{margin:0 0 6px;font-size:16.5px}
+  .fork .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    border-radius:20px;padding:2px 9px;margin-left:8px;vertical-align:2px}
+  .tag.adopt{background:var(--good-soft);color:var(--good)}
+  .tag.contested{background:var(--warn-soft);color:var(--warn)}
+  .tag.urgent{background:var(--crit-soft);color:var(--crit)}
+  .fork dl{display:grid;grid-template-columns:110px 1fr;gap:6px 14px;margin:12px 0 0;font-size:14px}
+  .fork dt{color:var(--ink-3);font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+  .fork dd{margin:0;color:var(--ink-2)}
+  .fork dd b{color:var(--ink)}
+  .fork .opts{margin-top:10px}
+  .fork .opts span{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:7px;
+    padding:4px 10px;margin:3px 6px 3px 0;font-size:13px}
+  .fork .opts span.rec{border-color:var(--good);color:var(--good);font-weight:600}
+  .fork .sign{margin-top:12px;border-top:1px dashed var(--line);padding-top:9px;font-size:13px;color:var(--ink-3)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);border-radius:4px;padding:1px 5px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600;font-size:14.5px}
+  details ul{color:var(--ink-2);font-size:13.8px}
+  .depth{font-size:13.5px;color:var(--ink-2)}
+  .depth code{background:var(--bg)}
+  .signoff{background:var(--info-soft);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:30px}
+  .signoff h2{margin:0 0 8px}
+  .signoff p{font-size:14px;color:var(--ink-2)}
+  svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Why 91 “done” stories produced 0 done features</h1>
+<p class="lede">Ten sprints of nornspun built a backend that genuinely works and a client that genuinely
+launches — and <strong>zero of 15 features have ever passed their own acceptance condition</strong>,
+because nothing in the practice is obligated to merge the work, run the assembled product, or ask
+“can a user do X.” Your hypothesis was directionally right; the mechanism is sharper and more fixable
+than “stories over functionality.” Below: what was established, the causal chain, and the
+<strong>7 decisions</strong> that are yours to make.</p>
+
+<p class="checkline"><b>✓ Mechanics verified:</b> 26 discovery agents + 6 adversarial council seats, 33 documents,
+all evidence-cited with counter-evidence sections; council independently re-verified load-bearing claims against
+git/code/transcripts and falsified 5 corpus claims (listed below) plus 2 errors in this investigation’s own brief.
+All documents committed under <code>docs/research/nornspun-delivery-discovery-2026-08-02/</code>.</p>
+
+<div class="tiles">
+  <div class="tile bad"><div class="n">0 / 15</div><div class="l">features ever PASS their acceptance condition</div></div>
+  <div class="tile"><div class="n">91</div><div class="l">stories “done” (302 tracked) — throughput rising 3→9/sprint</div></div>
+  <div class="tile bad"><div class="n">53</div><div class="l">finished commits stranded off main, 11 days undecided</div></div>
+  <div class="tile bad"><div class="n">5–6 / 54</div><div class="l">days you launched the app, in 54 days of corpus</div></div>
+  <div class="tile ok"><div class="n">89 min</div><div class="l">actual planning wall-clock for the 12-story sprint</div></div>
+  <div class="tile bad"><div class="n">116 days</div><div class="l">adventure-upload 404 surviving 7 quality instruments</div></div>
+</div>
+
+<h2>The causal chain — fix in this order</h2>
+<figure class="diagram" style="margin:14px 0 0">
+<svg viewBox="0 0 940 300" width="940" height="300" role="img" aria-label="Causal chain: Referent, then Cadence, then Refusal, resting on Runtime reliability">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor" opacity=".55"/>
+    </marker>
+  </defs>
+  <g color="var(--ink-2)">
+    <!-- base bar -->
+    <rect x="20" y="228" width="900" height="52" rx="10" fill="var(--crit-soft)" stroke="var(--crit)" stroke-opacity=".5"/>
+    <text x="470" y="250" text-anchor="middle" font-size="13.5" font-weight="700" fill="var(--crit)">4 · RUNTIME RELIABILITY (beneath everything)</text>
+    <text x="470" y="268" text-anchor="middle" font-size="12" fill="var(--ink-2)">$0.06/M model fails to call save tools — “It is written.” over 0 rows (~5 of 7) · fabricated capture · no process fix reaches it</text>
+
+    <!-- box 1 -->
+    <rect x="20" y="64" width="280" height="130" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+    <text x="160" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="var(--accent)">1 · REFERENT</text>
+    <text x="160" y="106" text-anchor="middle" font-size="12.5" fill="var(--ink)">No artifact IS the product</text>
+    <text x="34" y="128" font-size="11.5" fill="var(--ink-2)">· two repos paired ad hoc at every launch</text>
+    <text x="34" y="144" font-size="11.5" fill="var(--ink-2)">· chimera reviews (sprint client + main backend)</text>
+    <text x="34" y="160" font-size="11.5" fill="var(--ink-2)">· no cross-seam test · no contract · no client CI</text>
+    <text x="34" y="176" font-size="11.5" fill="var(--ink-2)">· corrupted 6 layers of knowledge, incl. this audit</text>
+    <text x="160" y="52" text-anchor="middle" font-size="11" font-weight="700" fill="var(--crit)">START HERE — everything else observes noise until fixed</text>
+
+    <!-- arrow 1-2 -->
+    <line x1="300" y1="129" x2="330" y2="129" stroke="currentColor" stroke-width="2" marker-end="url(#arr)"/>
+
+    <!-- box 2 -->
+    <rect x="332" y="64" width="280" height="130" rx="10" fill="var(--info-soft)" stroke="var(--info)"/>
+    <text x="472" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="var(--info)">2 · CADENCE</text>
+    <text x="472" y="106" text-anchor="middle" font-size="12.5" fill="var(--ink)">Nothing forces work to trunk or into use</text>
+    <text x="346" y="128" font-size="11.5" fill="var(--ink-2)">· delivery = one manual ask, no expiry → 11-day stall</text>
+    <text x="346" y="144" font-size="11.5" fill="var(--ink-2)">· unmerged branch = unfalsifiable branch</text>
+    <text x="346" y="160" font-size="11.5" fill="var(--ink-2)">· product never used → seams never discovered</text>
+    <text x="346" y="176" font-size="11.5" fill="var(--ink-2)">· honest end-gate, advisory verdict, zero state change</text>
+
+    <!-- arrow 2-3 -->
+    <line x1="612" y1="129" x2="642" y2="129" stroke="currentColor" stroke-width="2" marker-end="url(#arr)"/>
+
+    <!-- box 3 -->
+    <rect x="644" y="64" width="276" height="130" rx="10" fill="var(--good-soft)" stroke="var(--good)"/>
+    <text x="782" y="88" text-anchor="middle" font-size="14" font-weight="700" fill="var(--good)">3 · REFUSAL</text>
+    <text x="782" y="106" text-anchor="middle" font-size="12.5" fill="var(--ink)">Nothing may refuse until “a user can do X”</text>
+    <text x="658" y="128" font-size="11.5" fill="var(--ink-2)">· features.json orphaned — 0 workflow references</text>
+    <text x="658" y="144" font-size="11.5" fill="var(--ink-2)">· DoD has no reachability item</text>
+    <text x="658" y="160" font-size="11.5" fill="var(--ink-2)">· verification keyed to diff layer, not user surface</text>
+    <text x="658" y="176" font-size="11.5" fill="var(--ink-2)">· your own bug report entered as priority: low</text>
+
+    <!-- connectors to base -->
+    <line x1="160" y1="194" x2="160" y2="226" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>
+    <line x1="472" y1="194" x2="472" y2="226" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>
+    <line x1="782" y1="194" x2="782" y2="226" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>
+  </g>
+</svg>
+<figcaption>The council’s reconciled model: each layer is worthless without its predecessor. A perfect outcome gate
+(3) reviewing an unmerged build (2) of an undefined artifact (1) measures nothing — which is what happened.</figcaption>
+</figure>
+
+<h2>Your hypothesis, scored by the evidence</h2>
+<div class="verdict">
+  <div class="v confirmed"><h3>Confirmed</h3><ul>
+    <li>Story-done never converts to feature-done — 0/15 ever, by construction: no feature field exists in sprint state</li>
+    <li>ACs pass while capability is absent — the class is real (settings gear, heroes API with no writer, empty prep surface)</li>
+    <li>Verification never drives the app you judge by — desktop E2E has never been launchable on any commit in history</li>
+  </ul></div>
+  <div class="v refined"><h3>Refined</h3><ul>
+    <li>The pipeline didn’t lie — it disclosed honestly and nothing downstream could act (“premature abandonment,” a mode the field doesn’t name)</li>
+    <li>Planning isn’t the time sink (89 min) — decision latency is (7–18-day gaps, 11-day undecided gate)</li>
+    <li>A walking skeleton already works at the API layer; the void is wiring, closure, and usage</li>
+  </ul></div>
+  <div class="v refuted"><h3>Refuted</h3><ul>
+    <li>“The latest sprint finished and the app still failed” — it never merged; you reviewed pre-sprint code, partly a chimera build</li>
+    <li>Spec quality is not the defect — ACs are majority integration/user-scoped and improving; zero reward-hacking fraud found (0/20)</li>
+    <li>Not everything broken is process: the runtime LLM fails to call its save tools — a product defect no sprint machinery reaches</li>
+  </ul></div>
+</div>
+
+<h2>The 7 decisions (F1–F7)</h2>
+
+<div class="fork">
+  <h3>F1 · Dispose of sprint-2026-07-13 — this week<span class="tag urgent">urgent</span></h3>
+  <dl>
+    <dt>What</dt><dd>53 finished commits sit on unmerged branches; the end-gate has no recorded verdict; 12 stories frozen at <code>review</code>; both <code>.conduct-wt</code> worktrees still exist.</dd>
+    <dt>Why</dt><dd>An unmerged branch is unfalsifiable — every walkthrough until this lands tests stale code. All three council seats made this their first action. <b>Not deciding is the operative decision, and the worst one.</b></dd>
+    <dt>Evidence</dt><dd><code>git merge-base --is-ancestor</code> fails both repos; backend 26 / client 27 commits ahead; no <code>endgate-decision.md</code> has ever existed for any sprint.</dd>
+    <dt>Recommendation</dt><dd><b>Merge both branches</b>, resolving <code>urd.py</code> by keeping the hotfix implementation (name <b>and</b> UUID) and deleting the governed test’s <code>assert str(campaign_id) not in result</code> — that assertion is the bug (see F7). Then push, remove worktrees, transition the 12 stories, write the decision file.</dd>
+  </dl>
+  <div class="opts"><span class="rec">Merge + reconcile (rec)</span><span>Abandon branches, eat the loss</span><span>Hold for capture-hardening first (PM’s minority read)</span></div>
+  <div class="sign">Your verdict: ____________________  · reason: ____________________</div>
+</div>
+
+<div class="fork">
+  <h3>F2 · One command that IS the product<span class="tag adopt">consensus</span></h3>
+  <dl>
+    <dt>What</dt><dd>A <code>mise</code> task that starts DB + migrations + backend + client from one explicit SHA pair, refuses a mismatch, prints both SHAs, writes <code>RUNNING.json</code>. Plus the admissibility rule: a walkthrough that didn’t start from it is inadmissible; every bug report cites the two SHAs.</dd>
+    <dt>Why</dt><dd>Your Jul 22/31 review ran a sprint-branch client against a main backend — the false diagnosis it produced propagated through a hotfix, a manufactured merge conflict, two audit documents, and this council’s own brief.</dd>
+    <dt>Evidence</dt><dd>Architect’s six-layer propagation trace, verified by all three seats; backend README is 0 bytes; Docker broken, finch containers 4 months stale.</dd>
+    <dt>Recommendation</dt><dd><b>Adopt</b> — the senior dev would soften “inadmissible” to “always cite SHAs”; either wording works, the mechanism matters.</dd>
+  </dl>
+  <div class="opts"><span class="rec">Adopt with admissibility rule (rec)</span><span>Adopt, SHAs advisory only</span><span>Reject</span></div>
+  <div class="sign">Your verdict: ____________________  · reason: ____________________</div>
+</div>
+
+<div class="fork">
+  <h3>F3 · Scheduled tasting — the 100%-hit-rate oracle<span class="tag adopt">consensus</span></h3>
+  <dl>
+    <dt>What</dt><dd>You drive the app against a correctly-paired build on a fixed cadence; every annoyance is one line in one flat file; findings enter intake at owner-priority (see F5).</dd>
+    <dt>Why</dt><dd>Human walkthroughs found a top-tier defect within minutes on every occasion they ran (~5–6 in 4 months) — the only held-out test in the system, and the only instrument the pipeline didn’t author.</dd>
+    <dt>Evidence</dt><dd>Launch-day extraction across all sessions: Jul 7, 8, 13, 21/22, 31 — each an end-gate review, never a routine day; dev DB after 4 months: 0 heroes, 0 adventures, 0 real sessions.</dd>
+    <dt>Recommendation</dt><dd><b>10 minutes daily</b> (senior dev) over 2×30 weekly (PM) — frequency beats depth for integration-defect discovery; pay for it by deleting equivalent end-gate document-review time.</dd>
+  </dl>
+  <div class="opts"><span class="rec">Daily 10 min (rec)</span><span>2×30 min weekly</span><span>Only at gates (status quo)</span></div>
+  <div class="sign">Your verdict: ____________________  · reason: ____________________</div>
+</div>
+
+<div class="fork">
+  <h3>F4 · End-gate becomes a state transition with an expiry<span class="tag contested">contested</span></h3>
+  <dl>
+    <dt>What</dt><dd>The gate is not complete until merge + push + story transitions execute — or it FAILS loudly; add a 48h expiry that escalates instead of stalling silently.</dd>
+    <dt>Why</dt><dd>The 07-13 gate rendered honest HTML and then nothing happened for 11 days; the 06-18 merge took 46 seconds once you typed “APPROVE.” The gap is a decision vacuum, not slow automation.</dd>
+    <dt>Evidence</dt><dd>Senior dev wanted full auto-merge (“silence means ship”); the PM refuted it on this very sprint — auto-merge on Jul 22 ships a 2-of-7 keystone. The middle path (mandatory recorded decision + expiry) survived both rebuttals.</dd>
+    <dt>Recommendation</dt><dd><b>Adopt the middle path.</b> Reject full auto-merge; reject the status quo.</dd>
+  </dl>
+  <div class="opts"><span class="rec">Decision-forcing gate + 48h expiry (rec)</span><span>Auto-merge on green (senior dev)</span><span>Keep advisory gate</span></div>
+  <div class="sign">Your verdict: ____________________  · reason: ____________________</div>
+</div>
+
+<div class="fork">
+  <h3>F5 · Wire the outcome instrument at both ends<span class="tag adopt">consensus</span></h3>
+  <dl>
+    <dt>What</dt><dd><code>features.json</code> writable only by <code>momentum-tools feature verify --verdict --evidence --build sha:sha</code> recording a <b>human</b> PASS/FAIL; <code>sprint complete</code> refuses to close without one; every sprint titled by the acceptance condition it flips; plan-gate fork #1 becomes “after this sprint a GM can ___”; intake rule: owner-sourced observations enter critical + feature_slug, never <code>low/null/curl</code>.</dd>
+    <dt>Why</dt><dd>The registry is Anthropic’s prescribed “failing-by-default feature list” and it already exists, well-written, wired to nothing — while your own top defect report entered the sprint at priority #10.</dd>
+    <dt>Evidence</dt><dd>0 references to features.json in sprint-planning (both versions); no feature field in sprint state; <code>backend-active-campaign-name-injection-fix</code> frontmatter: <code>priority: low, feature_slug: null</code>.</dd>
+    <dt>Recommendation</dt><dd><b>Adopt</b> — with the architect’s constraint (human-walkthrough-only writes) so it can’t become a fifth drifting registry.</dd>
+  </dl>
+  <div class="opts"><span class="rec">Adopt, human-write-only (rec)</span><span>Adopt board, skip intake rule</span><span>Reject — more registry upkeep</span></div>
+  <div class="sign">Your verdict: ____________________  · reason: ____________________</div>
+</div>
+
+<div class="fork">
+  <h3>F6 · Re-key verification to the assembled surface + DoD reachability<span class="tag adopt">consensus</span></h3>
+  <dl>
+    <dt>What</dt><dd>Change <code>verification-standard.md</code> routing key from <code>change_type</code> (what the diff touches) to assembled surface (where a user meets the behavior); add one DoD item: “reachable from the app’s entry point by a user who has read no code.”</dd>
+    <dt>Why</dt><dd>This is how user-facing conversational stories got curl-only verification, and how a fully-staffed, accountable integration scenario still produced a green run over a broken journey.</dd>
+    <dt>Evidence</dt><dd>Routing table maps backend→curl unconditionally; Scenario A ran <code>platforms:[host]</code> only; all three seats converged on exactly this fix independently.</dd>
+    <dt>Recommendation</dt><dd><b>Adopt</b> — one table edit + one DoD line; retires the unreachable-surface defect class wholesale. Android/Maestro is the real-app driver; desktop stays human-tasted until F7’s model question settles what’s worth building.</dd>
+  </dl>
+  <div class="opts"><span class="rec">Adopt both (rec)</span><span>DoD line only</span><span>Reject</span></div>
+  <div class="sign">Your verdict: ____________________  · reason: ____________________</div>
+</div>
+
+<div class="fork">
+  <h3>F7 · The runtime model question — test before building anything<span class="tag urgent">urgent</span></h3>
+  <dl>
+    <dt>What</dt><dd>Two 1-hour tests on merged trunk: (a) five capture closes with tool-call logging — does the UUID-strip regression starve Urd’s tools and explain the fabricated capture? (b) same protocol on a mid-tier model vs <code>hy3-preview</code> — is cheap-model tool-calling the floor defect?</dd>
+    <dt>Why</dt><dd>The worst product failures (silent capture loss ~5/7, fabricated content) are runtime-LLM behavior. If the model can’t reliably call <code>save_session_events</code>, every process fix above is rearranging furniture.</dd>
+    <dt>Evidence</dt><dd>End-gate D5/D6; ground-truth reproduced a 0-event bind with a fabricated summary; end-gate’s “not a regression” claim was made with no bisect, 29h after a same-sprint commit touched that path.</dd>
+    <dt>Recommendation</dt><dd><b>Run both tests before the next story is written.</b> If the model fails: route Urd’s write path to a stronger model and add transactional receipts (read-back verify before “It is written.”).</dd>
+  </dl>
+  <div class="opts"><span class="rec">Run tests first (rec)</span><span>Upgrade model now, test later</span><span>Add receipts only, keep model</span></div>
+  <div class="sign">Your verdict: ____________________  · reason: ____________________</div>
+</div>
+
+<h2>Corrections — do not cite these corpus claims</h2>
+<details>
+  <summary>5 corpus claims falsified by the council (+ 2 errors in the investigation’s own brief)</summary>
+  <ul>
+    <li>“campaign-name fix is hollow verification / appears in zero prompt templates” — <b>false</b>; the governed story tested the rendered prompt. The real defect is the inverse: its AC enforced stripping a UUID that four tools require (a tested regression).</li>
+    <li>“The hotfix shipped the assertion the story lacked” — false; sourced from the hotfix’s own (false) commit message.</li>
+    <li>“sessionCount=0 is an afternoon fix” — already fixed on the sprint branch (95ccb35), stranded.</li>
+    <li>“Client trunk is the stalest” — inverted; client is the only repo in sync with its remote (backend 23 unpushed, hub 137).</li>
+    <li>“No hero-persistence tool exists” — API + repository + prompt assembler all exist; there is no <i>caller</i>.</li>
+    <li>Brief error: sprint-2026-07-13’s end-gate was never “approved” — no decision record exists anywhere.</li>
+    <li>Brief error: “couldn’t do even the simplest things” appears in no transcript — paraphrase from outside the corpus window.</li>
+  </ul>
+</details>
+
+<h2>Depth on demand</h2>
+<p class="depth">All under <code>momentum/docs/research/nornspun-delivery-discovery-2026-08-02/</code> —
+<code>synthesis.md</code> (full argument) · <code>sprints/</code> (11 dossiers) · <code>lenses/</code> (7 audits) ·
+<code>ground-truth-app-state.md</code> · <code>research/</code> (5 field sweeps + comparison) ·
+<code>council/</code> (3 positions + 3 rebuttals) · <code>00-session-cartography.md</code> (your own words, mapped).</p>
+
+<div class="signoff">
+  <h2>Sign-off — no blanket approvals</h2>
+  <p>Reply with one line per fork — <b>F1–F7: verdict + reason</b>. “Approve all” doesn’t carry the
+  information this investigation was built to get; where you diverge from a recommendation, the reason
+  is the valuable part. F1 and F7 are the only time-sensitive calls.</p>
+</div>
+
+</div>
+</body>
+</html>
