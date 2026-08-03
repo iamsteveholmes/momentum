@@ -1,5 +1,5 @@
 ---
-lastEdited: '2026-07-10'
+lastEdited: '2026-08-02'
 
 
 description: Registry of architectural and strategic decision records that capture the reasoning behind significant choices. Each decision links back to source research and forward to affected stories/architecture decisions.
@@ -44,14 +44,15 @@ Architecture decisions 1-41 remain inline in `architecture.md`. This registry ca
 | DEC-026 | [Build Pipeline Redesign — build-agents, agent-builder, constitution-builder Rework](dec-026-build-pipeline-redesign-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
 | DEC-027 | [Skill/Agent Development — Skill-Creator Pipeline + Change-Type Routing in Sprint-Dev](dec-027-skill-agent-development-skill-creator-pipeline-2026-05-16.md) | 2026-05-16 | (developer-conversation) | decided |
 | DEC-028 | [Beads as Tracker/Dependency/Memory Substrate — Adoption Under Momentum via Dual-Write Spike](dec-028-beads-tracker-memory-substrate-adoption-2026-05-16.md) | 2026-05-16 | beads-vs-momentum-tracker-evaluation-2026-05-16 | decided |
-| DEC-029 | [Method-Routed Acceptance Validation — Harness Profile, Per-Sprint E2E Coverage, and the Unified Validate-Fix Loop](dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md) | 2026-05-17 | (developer-conversation) | decided |
+| DEC-029 | [Method-Routed Acceptance Validation — Harness Profile, Per-Sprint E2E Coverage, and the Unified Validate-Fix Loop](dec-029-method-routed-acceptance-validation-pipeline-2026-05-17.md) | 2026-05-17 | (developer-conversation) | decided (routing re-keyed by DEC-040 D7) |
 | DEC-030 | [Dependency-Driven Execution Model — DAG Dispatch, Closeable Value-Groupings, Frozen-Scope Sprints, and the Dual-Format Integrity Split](dec-030-dag-dispatch-frozen-sprints-dual-format-2026-05-17.md) | 2026-05-17 | (developer-conversation) | decided (D3 amended by DEC-039) |
 | DEC-031 | [Legibility-Before-Automation — Canvas Gate Surface, Pipeline Restructure, and Dispatcher Sequencing](dec-031-legibility-before-automation-canvas-gate-surface-2026-05-20.md) | 2026-05-20 | (developer-conversation) | decided |
 | DEC-032 | [Gas City as Momentum's Dispatcher — Adoption Decision](dec-032-gas-city-dispatcher-adoption-2026-05-22.md) | 2026-05-22 | gas-town-dispatcher-2026-05-20 research corpus | superseded by DEC-035 |
 | DEC-033 | [Practice-Ledger Event-Log Redesign](dec-033-practice-ledger-event-log-redesign-2026-05-25.md) | 2026-05-25 | AES-003 | decided |
-| DEC-034 | [Epic-Layer Consolidation — Unify Features and Categorical Epics Into One Concept](dec-034-epic-layer-consolidation-2026-05-25.md) | 2026-05-25 | AES-003 | decided |
+| DEC-034 | [Epic-Layer Consolidation — Unify Features and Categorical Epics Into One Concept](dec-034-epic-layer-consolidation-2026-05-25.md) | 2026-05-25 | AES-003 | decided (outcome layer amended by DEC-040 D1) |
 | DEC-035 | [Conduct Execution Engine — In-Session Dynamic Workflows, Feature-Grained HITL, Gas City Deferred](dec-035-conduct-execution-engine-in-session-workflows-2026-05-30.md) | 2026-05-30 | execution-architecture council brief + (conversation) | decided (amended by DEC-036) |
-| DEC-036 | [Conduct HITL Calibration — Stakes-and-Timing Escalation, Legible Auto-Fix, Anti-Rubber-Stamp, and Decision-Grade Presentation](dec-036-conduct-hitl-calibration-2026-06-01.md) | 2026-06-01 | AES-004 | decided |
+| DEC-036 | [Conduct HITL Calibration — Stakes-and-Timing Escalation, Legible Auto-Fix, Anti-Rubber-Stamp, and Decision-Grade Presentation](dec-036-conduct-hitl-calibration-2026-06-01.md) | 2026-06-01 | AES-004 | decided (resume-card contract added by DEC-040 D5) |
 | DEC-037 | [Conduct Invocation Model — Standalone /momentum:conduct Skill, Coexisting with sprint-dev](dec-037-conduct-invocation-model-standalone-skill-2026-06-04.md) | 2026-06-04 | sprint-2026-06-02-conduct-core-hitl-report | decided |
 | DEC-038 | [Manifesto as Per-Agent Diagnostic Table + Per-Project Multi-KB Architecture](dec-038-manifesto-diagnostic-table-multi-kb-2026-06-16.md) | 2026-06-16 | manifesto-cmp-dev-recovery-2026-06-16 | decided |
-| DEC-039 | [Sprint Goal + Goal-Criticality Scope Mutability — Amending the DEC-030 Never-Add Freeze](dec-039-sprint-goal-mutable-scope-2026-07-10.md) | 2026-07-10 | (developer-conversation) | decided |
+| DEC-039 | [Sprint Goal + Goal-Criticality Scope Mutability — Amending the DEC-030 Never-Add Freeze](dec-039-sprint-goal-mutable-scope-2026-07-10.md) | 2026-07-10 | (developer-conversation) | decided (completed + amended by DEC-040) |
+| DEC-040 | [Delivery Loop Closure — Feature Verification Registry, Two-Tier Gates, and Nights-and-Weekends HITL Cadence](dec-040-delivery-loop-closure-2026-08-02.md) | 2026-08-02 | nornspun-delivery-discovery-2026-08-02 corpus + F1–F7 verdicts | decided |
