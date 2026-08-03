@@ -17,5 +17,9 @@
   "conduct-resume-and-rehydration-idempotency-hardening": "agent-ad5e86c17b33b028d-5bt",
   "conduct-ledger-append-site-dedup-guards": "agent-ad5e86c17b33b028d-cxv",
   "visual-hitl-gates-presentation-form-standard-leg": "agent-ad5e86c17b33b028d-d2o",
-  "conductor-endgate-viewer-hijack-and-silent-gate": "agent-ad5e86c17b33b028d-jc7"
+  "conductor-endgate-viewer-hijack-and-silent-gate": "agent-ad5e86c17b33b028d-jc7",
+  "momentum-tools-feature-verify-human-verdict-recorder-and": "agent-ad5e86c17b33b028d-eh3",
+  "sprint-planning-goal-conditions-declaration-plan-gate-leads": "agent-ad5e86c17b33b028d-hgu",
+  "sprint-closure-refusal-recorded-human-verdicts-per-goal": "agent-ad5e86c17b33b028d-ric",
+  "conduct-resume-card-impetus-pending-gate-agenda-session": "agent-ad5e86c17b33b028d-2rp"
 }
