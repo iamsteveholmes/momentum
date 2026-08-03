@@ -6453,5 +6453,47 @@
     "touches": [],
     "priority": "high",
     "story_type": "practice"
+  },
+  "impetus-session-greeting-leads-with-n-of-m-feature": {
+    "status": "backlog",
+    "title": "Impetus session greeting leads with N-of-M feature conditions passing",
+    "epic_slug": "momentum-impetus-session-orientation",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
+  },
+  "verification-routing-re-key-to-assembled-surface-dod": {
+    "status": "backlog",
+    "title": "Verification routing re-key to assembled surface + DoD reachability item",
+    "epic_slug": "momentum-quality-gates-enforced",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "daily-tasting-reminder-expected-vs-reality-brief-generator": {
+    "status": "backlog",
+    "title": "Daily tasting reminder + expected-vs-reality brief generator",
+    "epic_slug": "momentum-impetus-experience",
+    "story_file": true,
+    "depends_on": [
+      "momentum-tools-feature-verify-human-verdict-recorder-and"
+    ],
+    "touches": [],
+    "priority": "high",
+    "story_type": "practice"
+  },
+  "intake-owner-priority-validator-owner-sourced-app": {
+    "status": "backlog",
+    "title": "Intake owner-priority validator — owner-sourced app observations enter critical with a feature link",
+    "epic_slug": "momentum-backlog-refinement",
+    "story_file": true,
+    "depends_on": [],
+    "touches": [],
+    "priority": "medium",
+    "story_type": "practice"
   }
 }
