@@ -9,7 +9,7 @@ priority: medium
 change_type:
   - rule-hook
   - skill-instruction
-verification_method_advisory: behavioral-trigger
+verification_method_advisory: skill-invoke
 depends_on:
   - momentum-tools-feature-verify-human-verdict-recorder-and
 touches:
@@ -377,13 +377,10 @@ non-deterministic LLM prompts — unit tests do not apply. Use EDD:
 
 ### Frozen Verification Contract
 
-A frozen verification contract **will exist** for this sprint at
-`.momentum/sprints/sprint-2026-08-03/specs/impetus-session-greeting-leads-with-n-of-m-feature.{ext}`
-once sprint-planning finalizes. It is not on disk yet — the sprint is still in `planning` status.
-
-Read the **Part-A header only** (`how_dev_self_checks`, `verification_method`, `harness_profile`) as a
-self-check before signaling done. Do **not** read the verifier body (Part B: scenarios, assertion
-scripts, Gherkin) beyond sections explicitly referenced by `how_dev_self_checks`.
+A frozen verification contract exists for this sprint at
+`.momentum/sprints/sprint-2026-08-03/specs/impetus-session-greeting-leads-with-n-of-m-feature.eval.yaml`.
+Read the Part-A header (`verification_method`, `harness_profile`, `how_dev_self_checks`) as the
+pre-done self-check; the Part-B body is for verifier agents only.
 
 ## Dev Agent Record
 

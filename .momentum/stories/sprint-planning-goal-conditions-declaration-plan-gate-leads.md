@@ -193,11 +193,11 @@ source of truth for this story.
 - **D3** ties closure to the declaration: "The sprint goal (DEC-039 D1) binds to `goal_conditions`;
   closure requires a human verdict per condition against a correctly-paired build." Closure itself
   is a separate story; this story only produces the conditions closure will key against.
-- `_bmad-output/planning-artifacts/architecture.md` line 1627 already documents the field:
+- `_bmad-output/planning-artifacts/architecture.md` line 1653 already documents the field:
   sprint-record entries carry `goal_conditions`, an array of 0..n feature slugs; "The plan gate's
   first fork presents them in plain language ('after this sprint a GM will be able to ___ —
   approve/change/reject')." Verify implementation against that paragraph; do not re-derive the
-  schema. The schema example at line 1641 shows the shape:
+  schema. The schema example at line 1669 shows the shape:
   `"goal_conditions": ["session-capture", "campaign-identity"]`.
 
 ### Current State of Affected Files
@@ -225,18 +225,18 @@ source of truth for this story.
 ### Architecture Compliance
 
 - **Protected path.** `.momentum/sprints/index.json` is on the Protection Boundaries list
-  (architecture.md line 1388): "sole writer is `momentum-tools.py sprint`. Direct edits by any
+  (architecture.md line 1411): "sole writer is `momentum-tools.py sprint`. Direct edits by any
   other agent are blocked." Every write in this story goes through the CLI. A skill instruction
   that tells an agent to edit the file directly is a defect, not a shortcut.
 - **Registry write authority.** `momentum-tools feature verify` is the sole writer of
-  `.momentum/features.json` (architecture.md line 1351). Sprint planning appears there as a
+  `.momentum/features.json` (architecture.md line 1372). Sprint planning appears there as a
   read-only consumer. Preserve that.
 - **Presentation standard.** The plan gate is a companion decision surface under
   `~/.claude/rules/decision-grade-presentation.md` §2.2 row 9 and §5.1. The capability card must
   carry what, why it matters, and evidence inline — the self-sufficiency floor (§3) makes each of
   those a required field, and §4 makes the floor win over the seven-fork cap, which is the basis for
   AC6's cap exemption. Coherence forks already use this exact exemption; follow that precedent.
-- **Two-tier gate.** Architecture.md line 3189 separates the merge gate from sprint closure.
+- **Two-tier gate.** Architecture.md line 3244 separates the merge gate from sprint closure.
   This story serves tier 2 only — it produces the conditions, and never asserts a verdict against
   them.
 
@@ -304,9 +304,9 @@ clean as scoped:
 ### References
 
 - Source decision: `_bmad-output/planning-artifacts/decisions/dec-040-delivery-loop-closure-2026-08-02.md` — D1 (features registry, three seams), D2 (two-tier gate), D3 (closure refusal)
-- Sprint tracking schema: `_bmad-output/planning-artifacts/architecture.md` lines 1627 and 1641 (`goal_conditions` field and schema example)
-- Write authority and protection: `_bmad-output/planning-artifacts/architecture.md` lines 1350, 1351, 1388
-- Two-tier gate: `_bmad-output/planning-artifacts/architecture.md` line 3189
+- Sprint tracking schema: `_bmad-output/planning-artifacts/architecture.md` lines 1653 and 1669 (`goal_conditions` field and schema example)
+- Write authority and protection: `_bmad-output/planning-artifacts/architecture.md` lines 1371, 1372, 1411
+- Two-tier gate: `_bmad-output/planning-artifacts/architecture.md` line 3244
 - Verification routing: `skills/momentum/references/rules/verification-standard.md` §1
 - Presentation standard: `~/.claude/rules/decision-grade-presentation.md` §2.2 row 9, §3 (self-sufficiency floor), §4 (caps-vs-floor), §5.1 (presentation form)
 - Renderer contract: `skills/momentum/skills/sprint-planning/references/plan-gate-renderer.md` §4 (fork detection and ForkItem shape), §5.1 (purpose hero), §5.5 (decision cards)

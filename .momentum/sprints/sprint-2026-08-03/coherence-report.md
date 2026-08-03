@@ -27,8 +27,8 @@
   presence-only — no named deliverable to match; the dependency is the tier-1/tier-2
   architectural split ("Tier 2 is meaningless until tier 1 stops bundling the two questions"),
   pure ordering that Step 2 covers by presence/status. Note for Step 5: both stories edit the
-  Conductor's step-5 approve sequence — a same-wave touch overlap, handled as a wave/serialization
-  concern, not a seam deliverable.
+  Conductor's step-5 approve sequence — a shared-file overlap (serialized across waves 1→2 by
+  the dependency edge), handled as a wave/serialization concern, not a seam deliverable.
 
 - daily-tasting-reminder-expected-vs-reality-brief-generator → momentum-tools-feature-verify-human-verdict-recorder-and:
   read-only registry entries whose `last_verified.date` drives the 14-day-capped walkthrough
