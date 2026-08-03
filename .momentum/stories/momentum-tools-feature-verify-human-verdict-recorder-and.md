@@ -60,7 +60,7 @@ with zero workflow references. This command is the motor organ that makes the ou
 
 2. **A verdict sets status, and only these two statuses are ever written.** Recording `--verdict pass` sets the target feature's `status` to `passing`; recording `--verdict fail` sets it to `failing`. The command never writes `absent` and never writes any value outside the `absent | failing | passing` enum.
 
-3. **Every recorded verdict stamps a complete `last_verified`.** The target feature's `last_verified` carries the verdict, the ISO date the verdict was recorded, and both paired build SHAs — backend and client kept distinguishable — plus the evidence text as supplied. No field is omitted or left blank. (The first three are D1's schema exactly; `evidence` is a deliberate, flagged extension — see Dev Notes → Decision Authority → "One flagged extension to D1".)
+3. **Every recorded verdict stamps a complete `last_verified`.** The target feature's `last_verified` is an object carrying exactly these keys: `date` (ISO `YYYY-MM-DD`), `verdict` (`pass` or `fail`, lowercase — the flag value as supplied), `backend_sha`, `client_sha`, and `evidence` (the text as supplied). No key is omitted or left blank. The exact shape is pinned in Dev Notes → "Registry entry shape (producer contract)" — downstream consumers read that shape, so it is binding, not illustrative. (The first four are D1's schema; `evidence` is a deliberate, flagged extension — see "One flagged extension to D1".)
 
 4. **A malformed build pair is rejected before anything is written.** `--build` must be exactly two non-empty commit SHAs separated by a single colon. A single SHA, an empty side, extra colons, or a non-hex value is rejected with a message naming the problem, a non-zero exit, and `.momentum/features.json` left byte-identical.
 
@@ -154,6 +154,48 @@ consumer stories read the shape this command writes, this extension is a contrac
 decision owner for confirmation rather than treating it as settled.** If it is rejected, drop
 `evidence` from the persisted object and keep the flag as required-but-unstored input; nothing else
 in this story changes. Everything else in the schema is D1 as written — do not extend further.
+
+### Registry entry shape (producer contract)
+
+This story is the sole writer, so the on-disk shape it produces **is** the contract the three
+consumer seams read. It is pinned here so consumer fixtures and this implementation cannot drift.
+Implement exactly this — the key names and value casing are binding, not illustrative.
+
+```json
+{
+  "<feature-slug>": {
+    "slug": "<feature-slug>",
+    "name": "Human-readable feature name",
+    "acceptance_condition": "A user can ...",
+    "status": "absent | failing | passing",
+    "last_verified": {
+      "date": "2026-08-03",
+      "verdict": "pass",
+      "backend_sha": "a1b2c3d",
+      "client_sha": "e4f5a6b",
+      "evidence": "What the human actually observed."
+    },
+    "epic_slugs": ["optional-informational-only"],
+    "design_ref": "optional link"
+  }
+}
+```
+
+Three shape decisions, resolved to house convention (not open questions):
+
+- **Flat map keyed by slug, no wrapper object.** Matches `.momentum/stories/index.json` and
+  `sprints/index.json`, which are keyed-object state files. A `{"features": {...}}` wrapper is wrong.
+- **`backend_sha` / `client_sha` as sibling snake_case keys inside `last_verified`** — not a nested
+  `build` object, not a single joined `"sha:sha"` string. The `--build <backendSha>:<clientSha>`
+  argument is split on input and stored as two distinguishable values.
+- **Verdict value is lowercase `pass` / `fail`** — the literal flag value, stored unchanged. Every
+  enum in Momentum state is lowercase (`ORDERED_STATES`, `VALID_PRIORITIES`, `VALID_STORY_TYPES`,
+  `PRACTICE_LEDGER_EVENT_TYPES` in `momentum-tools.py`), and D1's own `status` enum is lowercase.
+  Uppercase `PASS`/`FAIL` appears in DEC-040's prose as English, not as a stored value — storing
+  `verdict: "PASS"` beside `status: "passing"` would mix casing inside one object.
+
+`status` and `verdict` are related but distinct: `verdict` records what the human said on this
+occasion; `status` is the resulting state (`pass` → `passing`, `fail` → `failing`).
 
 ### Current State of Affected Files
 

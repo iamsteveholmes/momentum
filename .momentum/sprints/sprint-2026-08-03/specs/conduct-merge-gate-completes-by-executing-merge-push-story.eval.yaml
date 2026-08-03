@@ -1,0 +1,90 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-merge-gate-completes-by-executing-merge-push-story
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-08-03/specs/conduct-merge-gate-completes-by-executing-merge-push-story.eval.yaml
+how_dev_self_checks: |
+  Run the conductor on a fixture sprint until the end-gate report is presented, approve
+  the merge gate, and confirm from the system itself that main contains the sprint
+  branch tip, local main matches origin/main, and the merged stories read done in
+  .momentum/stories/index.json — with no completion message appearing before those
+  checks hold. Then repeat against a fixture whose remote rejects pushes and confirm
+  the gate ends as merge-gate-failed, naming the failing step and error in plain
+  language, with no output anywhere claiming the sprint merged or completed.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-merge-gate-completes-by-executing-merge-push-story.md#acceptance-criteria
+platforms: [host]
+
+# === CONTRACT BODY (Part B) ===
+# conduct-merge-gate-completes-by-executing-merge-push-story.eval.yaml
+
+scenarios:
+  - name: "Approval lands the sprint on origin, verified from the system before any completion claim"
+    invocation: "momentum:conductor run on a fixture sprint until the end-gate report is presented, then the developer answers the merge gate with approve"
+    given: "A fixture project with an active sprint whose branch sprint/<sprint-slug> holds finished story commits ahead of main, a reachable origin remote, and the end-gate report on screen awaiting the developer's decision"
+    when: "The developer approves the merge gate"
+    then:
+      - "main contains the commit that was at the tip of the sprint branch (git merge-base --is-ancestor <sprint-tip-commit> main exits 0)"
+      - "Local main and origin/main point at the same commit (git rev-parse main equals git rev-parse origin/main)"
+      - "Every story the run counted as merged reads status done in .momentum/stories/index.json, and any non-merged story reads closed-incomplete"
+      - "No output, summary, or ledger entry states that the sprint merged before all of the above hold — completion wording appears only after the read-back checks pass"
+      - "The gate outcome is durably recorded as merged in the sprint's build ledger, with the merge commit SHA, the pushed head SHA, and per-story transition results as evidence"
+    pass_criteria: "After the run, a tester with only shell access confirms the two git checks and the index.json statuses, sees the completion message appear in the transcript only after execution, and finds one build-ledger record with outcome merged carrying merge SHA, pushed head SHA, and per-story results"
+    fail_criteria: "Any completion claim while origin/main lags local main or while a counted-merged story is not done in index.json; or no durable merged record with evidence exists after the run"
+
+  - name: "A push that cannot land ends the gate in a loud, specific failure — never a success claim"
+    invocation: "momentum:conductor run on a fixture sprint whose origin remote rejects pushes (unreachable, unauthenticated, or read-only), then the developer approves the merge gate"
+    given: "A fixture sprint at the end-gate whose configured origin remote is guaranteed to refuse the push"
+    when: "The developer approves and the push cannot complete"
+    then:
+      - "The gate outcome is recorded as merge-gate-failed, naming the failing step (push) and including the actual error text"
+      - "The developer is told in plain language that the gate failed, which step failed, and what is now stranded and where"
+      - "No output anywhere in the run claims the sprint merged to main or completed"
+      - "If the run also performed sprint closure and closure succeeded, the merge-gate failure is still surfaced to the developer — closure does not mask it"
+    pass_criteria: "The transcript contains a failure message naming the push step with the underlying error and the stranded-work location; a durable merge-gate-failed record exists with the failing step and error text; grep of the full output finds no 'merged to main' or sprint-complete claim"
+    fail_criteria: "The run prints any merged/complete claim, records a success outcome, omits the failing step or error text, or lets a successful sprint-closure message stand in place of surfacing the merge-gate failure"
+
+  - name: "One informed approve control covers merge and push together"
+    invocation: "momentum:conductor run on a fixture sprint with unpushed commits, until the end-gate report and gate question are presented"
+    given: "A fixture sprint at the end-gate where merging and pushing would send specific, listable commits to origin"
+    when: "The end-gate report and the gate's approve control are presented to the developer, and the developer then approves"
+    then:
+      - "The exact commits that will reach origin are shown to the developer before they act, both ahead of the gate question and in the report's merge-and-push preview section"
+      - "The approve control is described as covering merge and push together — a single decision"
+      - "After approval, no separate standalone 'push to origin?' confirmation prompt appears, and there is no path where the push can be declined while the gate still reports completion"
+      - "The report's 'what approving actually does' callout states plainly that approving merges to main, pushes to origin, and moves stories to done, and that the sprint itself stays open for the separate closure decision; nowhere is the push described as optional or deferred"
+    pass_criteria: "A tester reading only the rendered report and session transcript sees the commit list before the decision point, one combined merge-and-push approve control, no second push prompt after approval, and honest callout/preview wording as described"
+    fail_criteria: "The commit list is absent before the decision, a separate declinable push prompt appears, or any report section describes the push as a later or optional step"
+
+  - name: "A session that ends without a decision leaves the gate recorded as pending, with nothing executed"
+    invocation: "momentum:conductor run on a fixture sprint until the end-gate report is presented, then the session ends with no answer to the gate"
+    given: "A fixture sprint at the end-gate, with the pre-gate commit of main, the origin/main head, and all story statuses captured for comparison"
+    when: "The session terminates without the developer approving or requesting changes"
+    then:
+      - "The gate outcome is durably recorded as pending — not merged, not merge-gate-failed, and not left with no record at all"
+      - "No merge, push, or story status transition executed: main and origin/main are unchanged from their captured values, and story statuses in .momentum/stories/index.json are unchanged"
+      - "No output claims the sprint merged or completed"
+    pass_criteria: "After the session ends, a durable pending record for the gate exists, git rev-parse of main and origin/main match the pre-gate captures, and index.json statuses are byte-identical to the captured state"
+    fail_criteria: "No recorded outcome exists for the undecided gate, or any git ref or story status changed, or a completion claim was emitted"
+
+  - name: "Resume after a recorded merged outcome neither re-executes nor re-announces"
+    invocation: "momentum:conductor invoked again on a fixture sprint whose merge gate a prior run already completed with a recorded merged outcome"
+    given: "A fixture where a previous conductor run merged, pushed, and transitioned stories, with the merged outcome durably recorded; the current heads of main and origin/main and the story statuses are captured before resuming"
+    when: "The conductor resumes"
+    then:
+      - "No new merge commit is created and origin/main is unchanged — the resumed run issues no repeat merge, push, or story transition"
+      - "Story statuses in .momentum/stories/index.json are unchanged"
+      - "The resumed run's output does not announce the merge as if it just happened; at most it reflects the already-recorded state"
+    pass_criteria: "git log and git rev-parse show identical main and origin/main before and after the resume, index.json is unchanged, and the resume transcript contains no fresh just-merged announcement"
+    fail_criteria: "A second merge commit or push occurs, story statuses churn, or the resumed run re-announces the sprint as newly merged"
+
+  - name: "Resume after a recorded failure re-surfaces the failure instead of retrying into a success claim"
+    invocation: "momentum:conductor invoked again on a fixture sprint whose merge gate a prior run recorded as merge-gate-failed with a failing step and error text"
+    given: "A fixture where the durable record shows merge-gate-failed (for example, a rejected push), and the condition that caused the failure still holds"
+    when: "The conductor resumes"
+    then:
+      - "The recorded failure is presented to the developer again, naming the failing step and the error, rather than being silently retried"
+      - "The resumed run never claims the sprint merged unless a genuinely new execution runs and passes the same read-back verification as a first-time approval (main contains the sprint tip, main equals origin/main, stories read done)"
+    pass_criteria: "The resume transcript surfaces the prior failure with its failing step and error text; while the blocking condition holds, no output claims the sprint merged and the durable outcome remains merge-gate-failed"
+    fail_criteria: "The resumed run stays silent about the recorded failure, or emits a merged/complete claim while origin still lacks the sprint commits"

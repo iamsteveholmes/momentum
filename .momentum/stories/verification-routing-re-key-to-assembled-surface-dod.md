@@ -142,13 +142,19 @@ features; a silent-skip CI class alone shipped green three sprints running.
     carries a `change_type` and no declared surface still resolves to a verification method
     through the inference path. Asking the tooling to compute a method for such a story
     returns a valid method token rather than an error or an empty value, so no in-flight
-    sprint is blocked by the re-key.
+    sprint is blocked by the re-key. Conversely, a story whose index entry declares
+    `surface: chat-ui` resolves to `smoke` regardless of its `change_type` — a backend-only
+    diff with a declared chat-ui surface never routes to `curl`.
 
 ## Tasks / Subtasks
 
 - [ ] **Task 1 — Re-key §1 of `verification-standard.md` to assembled surface** (AC 1, 2, 3, 4)
   - [ ] Replace the `change_type` key column with an assembled-surface key column; define the
-        closed surface enum and its one-to-one mapping onto the existing method enum
+        closed surface enum and its one-to-one mapping onto the existing method enum. Two
+        things are pinned now so the frozen contract can seed fixtures (the rest of the enum
+        is this task's design): the declared surface is recorded as a single `surface` token
+        on the story's index entry and frontmatter, and the enum includes at least `chat-ui`
+        and `application-ui`, both routing to `smoke`
   - [ ] Write the prose definition of assembled surface plus the chat-UI governing example
   - [ ] Add the `change_type` → surface inference table, labelled explicitly as a fallback
         that a declared surface overrides

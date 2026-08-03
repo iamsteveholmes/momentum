@@ -1,0 +1,98 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: conduct-resume-card-impetus-pending-gate-agenda-session
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-08-03/specs/conduct-resume-card-impetus-pending-gate-agenda-session.eval.yaml
+how_dev_self_checks: |
+  Run a conduct build to its end-gate and confirm .momentum/sprints/<sprint-slug>/resume-card.json
+  exists on disk with status "pending" and exactly one pending question that says what it gates.
+  Start a fresh session and confirm the greeting leads with that question; repeat two more times
+  and confirm each repeat adds only a single how-long-waited line while the card stays "pending"
+  and never becomes failed or expired. Resolve the gate, start one more session, and confirm the
+  greeting is back to the normal clean-start greeting.
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/conduct-resume-card-impetus-pending-gate-agenda-session.md#acceptance-criteria
+platforms: [host]
+
+# conduct-resume-card-impetus-pending-gate-agenda-session.eval.yaml
+harness_profile: skill-invoke
+
+# === Producer / Consumer scope (seam story — both sides verified by this one contract) ===
+# Producer: the conduct build emits and refreshes the durable resume card at
+#   .momentum/sprints/{sprint_slug}/resume-card.json — at build checkpoints and at the moment
+#   the end-gate is presented — and marks it resolved when the developer decides the gate.
+# Consumer: the session-start greeting reads pending resume cards across sprint state
+#   directories and leads the situational report with the one pending question.
+# Both sides share the card file as their only interface; the scenarios below exercise the
+# producer's writes, the consumer's reads, and the failure mode where the two halves disagree
+# on the card's field shape.
+
+scenarios:
+  - name: "End-gate presentation leaves a durable pending resume card"
+    invocation: "Run a conduct sprint build on a prepared sprint until it presents its end-gate for approval"
+    given: "A sprint with at least one story that merges and at least one story that ends blocked, built to the point where the end-gate approval question is on screen"
+    when: "The end-gate is presented and the developer gives no answer (walks away / session ends)"
+    then:
+      - "A file exists at .momentum/sprints/{sprint_slug}/resume-card.json at the moment the gate is shown — it is already on disk even though the gate was never answered"
+      - "The card's status field reads pending"
+      - "The card states the phase the run reached, a merged count with the merged story slugs, and a blocked count with the blocked story slugs"
+      - "The card carries exactly one pending question — never two — and the question text states what the decision gates"
+      - "The question is accompanied by the answer options available for it and a path to the end-gate report for depth"
+    pass_criteria: "Inspect resume-card.json after abandoning the gate: status is pending, phase/merged/blocked content matches the run's observable outcome, and exactly one what-it-gates question with options and a report path is present"
+    fail_criteria: "No resume-card.json exists after the gate was shown; or the card holds zero or more than one pending question; or the question does not say what it gates; or status is anything other than pending"
+
+  - name: "Pending card leads the next session greeting"
+    invocation: "Start a fresh session in the project"
+    given: "A resume-card.json with status pending and one pending question exists in a sprint state directory under .momentum/sprints/, and that sprint is NOT marked as the active sprint"
+    when: "The session-start greeting runs"
+    then:
+      - "The pending question is the first thing in the situational report — ahead of sprint summary, ledger counts, and handoff mentions"
+      - "The card is found even though its sprint is not the active one"
+      - "The surfaced card stays within budget: a lead of at most two sentences, merged and blocked work as count lines (not enumerated slugs), exactly one question with its options, and the end-gate report linked rather than inlined"
+    pass_criteria: "Read the greeting transcript: its first content element is the pending question with its options; the merged/blocked state appears only as counts; the report is referenced by link/path; total surface is not a wall of text"
+    fail_criteria: "The greeting opens with sprint summary, ledger counts, or anything other than the pending question; or the card is missed because its sprint is not active; or the surface enumerates story lists, inlines the report, or carries more than one question"
+
+  - name: "Malformed card surfaces a shape error, never a silent empty agenda"
+    invocation: "Start a fresh session in the project"
+    given: "A resume-card.json exists in a sprint state directory whose status field or pending-question field is absent or renamed (e.g. the file uses a different key name than the card contract's shape for status or for the question)"
+    when: "The session-start greeting runs"
+    then:
+      - "The greeting surfaces a card-shape error identifying the offending card file — a cross-side field-shape incompatibility between what was written and what the reader expects"
+      - "The session does NOT proceed as if no card existed: the malformed card is named, not silently skipped"
+    pass_criteria: "The greeting visibly reports that a resume card was found but its shape is incompatible (missing/renamed status or question field), naming the file path, so the developer knows a gate may be waiting behind a broken card"
+    fail_criteria: "The greeting is indistinguishable from a clean no-card start — the malformed card is silently ignored and no shape error is shown"
+
+  - name: "Repeated surfacing rises in prominence and never expires"
+    invocation: "Start three consecutive fresh sessions in the project, resolving nothing in between"
+    given: "A single resume-card.json with status pending exists, with simulated ages spanning multiple days across the three session starts"
+    when: "The same still-pending card is surfaced at each of the three session starts"
+    then:
+      - "Each re-surfacing includes one line stating how long the decision has waited and across how many sessions, and those figures rise from session to session"
+      - "After each surfacing, the card's re-surface counter in resume-card.json has increased"
+      - "After all three surfacings the card's status still reads pending — at no point does any status like failed, expired, or auto-resolved appear in the card or on the surface"
+      - "The surfaced card's total length does not grow across the three sessions — prominence rises through the waited-for line alone"
+    pass_criteria: "Compare the three greetings and the card file after each: waited-for figures rise, the counter increments, status remains pending throughout, and the third surface is no longer than the first apart from the updated waited-for line"
+    fail_criteria: "Any surfacing or any card state shows failed/expired/auto-resolved; or the waited-for line is missing or static; or the counter does not increase; or the surface lengthens with repetition"
+
+  - name: "Interrupted mid-build run leaves a resume-the-build card"
+    invocation: "Run a conduct sprint build and interrupt it between stories, after at least one story has merged but before the end-gate"
+    given: "A multi-story sprint whose build is killed mid-run, between one story finishing and the next completing"
+    when: "The interrupted run's sprint state directory is inspected, and a fresh session is then started"
+    then:
+      - "resume-card.json exists and describes the last completed story or phase the run reached before interruption"
+      - "The card's single pending question is to resume the build — not an end-gate approval decision"
+      - "The next session's greeting leads with that resume-the-build question"
+    pass_criteria: "Inspect the card after the kill: it reflects progress up to the interruption point and asks one resume question; the following session start surfaces exactly that question first"
+    fail_criteria: "No card exists after the mid-build interruption; or the card still poses a gate-approval question for a gate that was never reached; or the card carries more than one question"
+
+  - name: "Resolved gate clears the agenda and restores the clean greeting"
+    invocation: "Answer the pending end-gate decision, then start a fresh session in the project"
+    given: "A sprint whose end-gate is pending with its resume card on disk, and a recorded baseline greeting from a session started with no resume cards present anywhere"
+    when: "The developer resolves the gate, then a new session starts"
+    then:
+      - "resume-card.json now shows a resolved status with the resolution and its timestamp recorded"
+      - "The next session's greeting no longer surfaces the card — no pending question, no waited-for line"
+      - "The greeting matches the no-card baseline: the pending-gate agenda adds nothing to a clean start"
+    pass_criteria: "Diff the post-resolution greeting against the recorded no-card baseline greeting: they are behaviorally identical, and the card file shows resolved plus timestamp plus the recorded resolution"
+    fail_criteria: "The resolved card is surfaced again in a later session; or the card lacks the resolution or timestamp; or a clean start's greeting differs from baseline because of the pending-gate machinery"

@@ -1,0 +1,97 @@
+# === VERIFICATION HEADER (Part A) ===
+story_slug: impetus-session-greeting-leads-with-n-of-m-feature
+verification_method: skill-invoke
+harness_profile: skill-invoke
+contract_path: .momentum/sprints/sprint-2026-08-03/specs/impetus-session-greeting-leads-with-n-of-m-feature.eval.yaml
+how_dev_self_checks: |
+  Place a fixture .momentum/features.json containing a known mix of passing and
+  non-passing features, start a fresh session, and confirm the greeting's first fact
+  is "N of M feature acceptance conditions passing" with N matching only the passing
+  features and the honest ledger counts still inline, all within two sentences.
+  Repeat with the registry absent, empty, and with entries missing a status field:
+  the greeting must state the registry situation plainly each time — never an error,
+  never a silently missing slot, never a fabricated count. After every run, confirm
+  .momentum/features.json is byte-identical to the fixture (or still absent).
+coverage_disposition: dedicated-run
+covered_by_scenario: null
+acceptance_criteria_ref: .momentum/stories/impetus-session-greeting-leads-with-n-of-m-feature.md#acceptance-criteria
+platforms: [host]
+
+# === Producer / Consumer scope (seam contract — consumer side) ===
+# Producer: the `momentum-tools feature verify` command — the sole writer of
+#   .momentum/features.json. Its write behavior is verified by the producer
+#   story's own contract, not here.
+# Consumer: the Impetus session-start greeting — this contract's subject. It
+#   reads the registry and never writes it. Every scenario below exercises the
+#   consumer against fixture registry states; no scenario invokes the producer.
+# Seam file: .momentum/features.json (status model: absent | failing | passing;
+#   failing-by-default — a feature with no recorded verdict never counts as passing).
+
+harness_profile: skill-invoke
+
+scenarios:
+  - name: "Feature headline leads the greeting from a populated registry"
+    invocation: "momentum:impetus — start a fresh session in a project whose .momentum/features.json fixture holds 8 features: 2 passing, 5 failing, 1 absent; no pending gate card exists"
+    given: "A fixture .momentum/features.json with 8 feature entries — 2 with status 'passing', 5 with status 'failing', 1 with status 'absent' — and no pending gate card awaiting the developer"
+    when: "A fresh session starts and the greeting renders"
+    then:
+      - "The first fact the developer reads is the feature headline: 2 of 8 feature acceptance conditions passing"
+      - "The honest ledger counts (open entries, this week, older than 30 days, near auto-close) and any recurring-pattern signal still appear inline"
+      - "The whole situational report fits within 2 sentences"
+      - ".momentum/features.json is byte-identical to the fixture after the greeting renders"
+    pass_criteria: "The greeting text opens with the 2-of-8 feature number before any ledger count, sprint name, handoff context, or story number; ledger counts are present inline; the report is at most 2 sentences; a post-run diff of the fixture file shows no change"
+    fail_criteria: "Any other fact precedes the feature number; the headline states numbers other than 2 of 8; the ledger counts are dropped; the report exceeds 2 sentences; or the registry file differs from the fixture after the run"
+
+  - name: "Only passing features count toward N; everything counts toward M"
+    invocation: "momentum:impetus — start a fresh session with a .momentum/features.json fixture of 5 features: 1 passing, 2 failing, 2 absent"
+    given: "A fixture .momentum/features.json with 5 feature entries — 1 'passing', 2 'failing', 2 'absent'"
+    when: "A fresh session starts and the greeting renders"
+    then:
+      - "The headline states 1 of 5 feature acceptance conditions passing"
+      - "Features with status 'failing' or 'absent' are counted in the total but never in the passing number"
+    pass_criteria: "The greeting states exactly 1 of 5 — the passing count excludes every non-passing status while the total includes all 5 entries"
+    fail_criteria: "The greeting counts a 'failing' or 'absent' feature as passing (N greater than 1), or excludes non-passing features from the total (M less than 5)"
+
+  - name: "Missing registry degrades honestly and is never created"
+    invocation: "momentum:impetus — start a fresh session in a project where .momentum/features.json does not exist"
+    given: "No .momentum/features.json file exists in the project"
+    when: "A fresh session starts and the greeting renders"
+    then:
+      - "The greeting states plainly that no features are tracked yet"
+      - "The greeting continues normally — ledger counts inline, within the 2-sentence budget, no error"
+      - ".momentum/features.json still does not exist after the greeting renders"
+    pass_criteria: "The greeting contains an explicit no-features-tracked-yet statement, the session proceeds normally, and a post-run check confirms the registry file was not created"
+    fail_criteria: "The greeting errors, skips the feature slot without comment, renders a count as if a registry existed, or a .momentum/features.json file exists after the run"
+
+  - name: "Empty registry is an honest empty state, not a health signal"
+    invocation: "momentum:impetus — start a fresh session with a .momentum/features.json fixture containing zero feature entries"
+    given: "A fixture .momentum/features.json that is valid but contains no feature entries"
+    when: "A fresh session starts and the greeting renders"
+    then:
+      - "The greeting states that no features are tracked yet, in the same honest form as the missing-file case"
+      - "The greeting does not present '0 of 0' or any phrasing that reads as a healthy or complete state"
+      - "The fixture file is byte-identical after the run"
+    pass_criteria: "The greeting's feature slot reads as an explicit empty state; no zero-of-zero framing that implies health; post-run diff shows the fixture unchanged"
+    fail_criteria: "The greeting renders '0 of 0' as if it were a passing summary, omits the feature slot silently, errors, or modifies the fixture file"
+
+  - name: "Registry entries missing a status field are reported honestly, never fabricated"
+    invocation: "momentum:impetus — start a fresh session with a .momentum/features.json fixture whose feature entries carry no status field (cross-side field-shape incompatibility between what the writer produced and what the greeting expects)"
+    given: "A fixture .momentum/features.json with several feature entries, none of which carries a status field"
+    when: "A fresh session starts and the greeting renders"
+    then:
+      - "The greeting still renders within its 2-sentence budget and does not crash"
+      - "The greeting reports the registry state honestly — for example, that features are tracked but none has a recorded verdict — instead of a fabricated passing count"
+      - "No entry without a status is counted as passing"
+      - "The fixture file is byte-identical after the run — the greeting does not repair or backfill the missing fields"
+    pass_criteria: "The greeting appears, stays within budget, states a truthful account of the malformed registry with a passing count of zero or an explicit cannot-determine statement, and a post-run diff shows the fixture untouched"
+    fail_criteria: "The greeting crashes or errors out, silently omits the feature slot, invents a nonzero passing count for entries with no status, or rewrites the fixture file to add or repair status fields"
+
+  - name: "Story counts never lead any greeting"
+    invocation: "momentum:impetus — start a fresh session in a project with an active sprint carrying several completed stories and a populated .momentum/features.json fixture"
+    given: "An active sprint with multiple completed stories and a fixture .momentum/features.json with a known passing/total mix"
+    when: "A fresh session starts and the greeting renders"
+    then:
+      - "The feature number leads the report"
+      - "If any story number appears, it appears after the feature number as supporting detail"
+    pass_criteria: "Scanning the greeting in reading order, the N-of-M feature number occurs before any count of stories done, in progress, or planned"
+    fail_criteria: "A story count is the first fact in the greeting, or story throughput is presented as the headline with the feature number demoted or absent"
