@@ -160,7 +160,18 @@ Every finding carries a canonical schema with a `stakes_class` — `security-aut
 | Non-legitimate | Dismiss with recorded rationale |
 | Out of scope | Route to triage |
 
-The build ends at a **single human end-gate**: stakes-class findings presented as decision cards, routine work collapsed to counts, one approval, then merge to main.
+The build ends at a **two-tier gate** (DEC-040). Tier 1, the **merge gate**, asks only "is this code something we are comfortable keeping on trunk?" — stakes-class findings as decision cards, routine work collapsed to counts — and completes *by executing* the merge, push, and story transitions (a gate that emits a report and strands commits has failed, not finished). Tier 2, **sprint closure**, is a separate and possibly later decision: "do the sprint's named conditions verifiably work in the app?"
+
+---
+
+## The Delivery Loop
+
+Ten sprints of story-level success with zero feature-level delivery taught the practice its hardest lesson (see DEC-040 and the [nornspun delivery discovery](docs/research/nornspun-delivery-discovery-2026-08-02/synthesis.md)): diagnostic organs without motor organs ship nothing. The delivery loop closes with four mechanisms:
+
+- **The feature registry** — `.momentum/features.json` is a per-project *acceptance-testing* registry, deliberately separate from work-tracking epics: per-feature acceptance conditions ("a GM can ___"), failing-by-default statuses, and verdicts writable **only** by a human running the condition against a paired build (`momentum-tools feature verify`, build SHAs recorded). It integrates at exactly three seams — sprint planning, sprint closure, Impetus reporting — and no epic-facing skill touches it.
+- **Condition-scoped sprints** — every sprint declares `goal_conditions`, the feature conditions it intends to flip (or a verified-fix list for maintenance sprints). The plan gate leads with "after this sprint a user will be able to ___." Discovered work that serves the named conditions joins the sprint instead of punting to backlog; a sprint that cannot reach PASS closes honestly as **FAILED**. Closure requires the human verdict — story counts never close a sprint.
+- **Daily tasting** — ≥10 minutes a day, the developer drives the app against a named build (one launcher command, both repo SHAs recorded — an unattributable build is inadmissible as evidence). Claude prepares an expected-vs-reality brief; every walkthrough in the discovery record found a top-tier defect within minutes.
+- **Resume cards** — a finished build never greets the developer with a wall of text or silently hangs awaiting approval. It emits a card — where we were, what merged, the one question pending — and the next session leads with it. Escalation is re-surfacing, never expiry-failure. The practice serves a nights-and-weekends developer; attention and morale are delivery mechanisms.
 
 ---
 
@@ -323,6 +334,7 @@ Full essays with diagrams live in [docs/philosophy.md](docs/philosophy.md).
 8. **Protocol-Based Integration** — Every integration point is a configurable protocol. Implementations are substitutable without modifying workflows.
 9. **Impermanence Principle** — Processes that grow and improve beat those that stay unchanged. The anti-pattern is unmanaged change.
 10. **Attention as a Finite Resource** — Review quality degrades under load. Design checkpoints for sustainability, not completeness.
+11. **Outcomes Close the Loop** — A story is done when its code merges; a sprint is done when a human verifies its named conditions in the running app. Artifacts about the product never substitute for the product (DEC-040).
 
 ---
 
