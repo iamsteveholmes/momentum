@@ -1,6 +1,21 @@
 {
   "active": null,
-  "planning": null,
+  "planning": {
+    "locked": false,
+    "status": "planning",
+    "stories": [
+      "momentum-tools-feature-verify-human-verdict-recorder-and",
+      "sprint-planning-goal-conditions-declaration-plan-gate-leads",
+      "conduct-merge-gate-completes-by-executing-merge-push-story",
+      "sprint-closure-refusal-recorded-human-verdicts-per-goal",
+      "conduct-resume-card-impetus-pending-gate-agenda-session",
+      "daily-tasting-reminder-expected-vs-reality-brief-generator",
+      "verification-routing-re-key-to-assembled-surface-dod",
+      "impetus-session-greeting-leads-with-n-of-m-feature"
+    ],
+    "waves": [],
+    "slug": "sprint-2026-08-03"
+  },
   "completed": [
     {
       "locked": true,
